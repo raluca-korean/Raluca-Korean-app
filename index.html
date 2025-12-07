@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean – Sentence Builder v4</title>
+  <title>Raluca Korean – Sentence Builder v4.1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -94,7 +94,6 @@
     .legend{font-size:10px;color:var(--text-soft);text-align:center;padding:2px 4px 0;}
     .hidden{display:none !important;}
 
-    /* preview propoziție */
     .preview-card{
       margin-top:6px;padding:8px;border-radius:12px;
       background:#f9f7ff;border:1px solid var(--border);
@@ -207,10 +206,9 @@
         ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).
       </div>
 
-      <!-- preview propoziție / frază -->
       <div class="preview-card">
         <div class="preview-title">
-          <span>Propoziția / fraza (coreeană)</span>
+          <span>Propoziția / fraza (coreeană, cu particule)</span>
         </div>
         <div class="preview-ko" id="previewKo">(alege cuvinte din tabel)</div>
 
@@ -230,7 +228,6 @@
     </div>
   </div>
 
-  <!-- overlay panel -->
   <div class="overlay hidden" id="overlay">
     <div class="panel">
       <div class="panel-header">
@@ -251,7 +248,6 @@
   </div>
 
   <script>
-    // === liste de bază (coreeană) ===
     const subjects = [
       "저","나","너","우리","너희","사람","학생","선생님","직원","전문가","지원자","관리자",
       "부모님","아이","어른","시민","고객","의사","간호사","연구자","관계자","대표","회장",
@@ -297,7 +293,6 @@
       "-게 되다","-아/어지다","-기 마련이다","-기에","-길래","-고 말다","-고자 하다","-(으)ㄹ 뿐이다"
     ];
 
-    // traduceri (parțiale, extindem ușor pe viitor)
     const translations = {
       subject: {
         "저":"eu (formal)","나":"eu (informal)","너":"tu","우리":"noi","너희":"voi",
@@ -470,6 +465,50 @@
     let panelKey="subject";
     let showRo=true;
 
+    // ==== funcții pentru particule ====
+    const hasBatchim = (syl) => {
+      if(!syl) return false;
+      const code = syl.charCodeAt(syl.length-1) - 0xAC00;
+      if(code < 0 || code > 11171) return false;
+      const jong = code % 28;
+      return jong !== 0;
+    };
+
+    const pronouns = new Set(["저","나","너","우리","너희"]);
+
+    function addSubjectWithParticle(word){
+      if(!word) return "";
+      const batchim = hasBatchim(word);
+      if(pronouns.has(word)){
+        return word + (batchim ? "은" : "는");
+      } else {
+        return word + (batchim ? "이" : "가");
+      }
+    }
+
+    function addObjectWithParticle(word){
+      if(!word) return "";
+      const batchim = hasBatchim(word);
+      return word + (batchim ? "을" : "를");
+    }
+
+    const timeAdverbsNoParticle = new Set([
+      "오늘","어제","내일","지금","방금","요즘","항상","자주","가끔","계속","점점","차츰"
+    ]);
+
+    function addTimeWithParticle(word){
+      if(!word) return "";
+      if(timeAdverbsNoParticle.has(word)) return word;
+      return word + "에";
+    }
+
+    function addPlaceWithParticle(word){
+      if(!word) return "";
+      // de bază: loc + 에서 (acțiune se întâmplă acolo)
+      return word + "에서";
+    }
+
+    // ====== UI părți / toggle-uri ======
     function createToggleChips(){
       columns.forEach(col=>{
         const chip1=document.createElement("label");
@@ -546,17 +585,65 @@
       });
     }
 
+    // ====== Construim propoziția cu particule ======
     function buildClauseSentence(state){
-      const order=["subject","time","place","mod","object","numeral","counter","verb","conjug"];
-      const koParts=[], roParts=[];
-      order.forEach(key=>{
-        const val=state[key];
-        if(!val) return;
-        koParts.push(val);
-        const map=translations[key]||{};
-        const ro = map[val] || val;
-        roParts.push(ro);
-      });
+      const koParts=[];
+      const roParts=[];
+
+      const subj = state.subject;
+      if(subj){
+        koParts.push(addSubjectWithParticle(subj));
+        roParts.push((translations.subject && translations.subject[subj]) || subj);
+      }
+
+      const t = state.time;
+      if(t){
+        koParts.push(addTimeWithParticle(t));
+        roParts.push((translations.time && translations.time[t]) || t);
+      }
+
+      const p = state.place;
+      if(p){
+        koParts.push(addPlaceWithParticle(p));
+        roParts.push((translations.place && translations.place[p]) || p);
+      }
+
+      const m = state.mod;
+      if(m){
+        koParts.push(m);
+        roParts.push((translations.mod && translations.mod[m]) || m);
+      }
+
+      const obj = state.object;
+      if(obj){
+        koParts.push(addObjectWithParticle(obj));
+        roParts.push((translations.object && translations.object[obj]) || obj);
+      }
+
+      const num = state.numeral;
+      if(num){
+        koParts.push(num);
+        roParts.push(num);
+      }
+
+      const cnt = state.counter;
+      if(cnt){
+        koParts.push(cnt);
+        roParts.push((translations.counter && translations.counter[cnt]) || cnt);
+      }
+
+      const v = state.verb;
+      if(v){
+        koParts.push(v);
+        roParts.push((translations.verb && translations.verb[v]) || v);
+      }
+
+      const cj = state.conjug;
+      if(cj){
+        koParts.push(cj);
+        roParts.push((translations.conjug && translations.conjug[cj]) || cj);
+      }
+
       return { ko: koParts.join(" "), ro: roParts };
     }
 
@@ -681,16 +768,16 @@
     prevBtn.addEventListener("click",()=>{if(index>0){index--;loadRow(index);render();}});
     nextBtn.addEventListener("click",()=>{if(index<maxLen-1){index++;loadRow(index);render();}});
 
-    // traducere ON/OFF
     toggleRoBtn.addEventListener("click",()=>{
       showRo=!showRo;
       toggleRoBtn.textContent = showRo ? "Ascunde traducerea" : "Arată traducerea";
       updatePreview();
     });
 
-    // random propoziție
+    // 🎲 RANDOM – doar pe coloanele active în Propoziția 1
     randomBtn.addEventListener("click",()=>{
       columns.forEach(col=>{
+        if(!activeP1[col.key]) return; // dacă e debifată, nu o folosim
         const arr=col.data.filter(x=>x!=="" && x!=null);
         if(!arr.length) return;
         const rand = arr[Math.floor(Math.random()*arr.length)];
@@ -699,13 +786,18 @@
       render();
     });
 
-    // audio (dacă e suportat)
+    // 🔊 AUDIO – voce coreeană dacă există
     speakBtn.addEventListener("click",()=>{
       if(!("speechSynthesis" in window)){alert("Browserul nu suportă audio.");return;}
       const text=previewKo.textContent;
       if(!text || text.includes("alege cuvinte")) return;
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang="ko-KR";
+
+      const voices = window.speechSynthesis.getVoices();
+      const koVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith("ko"));
+      if(koVoice) utter.voice = koVoice;
+
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utter);
     });
