@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean – Study App v1.2</title>
+  <title>Raluca Korean – Study App v1.3</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -395,7 +395,10 @@
       </div>
 
       <div class="panel-input-row">
-        <input type="text" id="newWordInput" placeholder="Adaugă cuvânt nou…" />
+        <input type="text" id="newWordInput" placeholder="Cuvânt nou (coreeană sau număr)..." />
+      </div>
+      <div class="panel-input-row">
+        <input type="text" id="newWordTransInput" placeholder="Traducere în română (ex: unu, azi) – opțional" />
         <button id="addWordBtn" class="secondary">+ Add</button>
       </div>
 
@@ -450,6 +453,9 @@
       "-게 되다","-아/어지다","-기 마련이다","-기에","-길래","-고 말다","-고자 하다","-(으)ㄹ 뿐이다"
     ];
 
+    // glosar (lista globală, o actualizăm și la cuvinte noi)
+    const glossaryEntries = [];
+
     const translations = {
       subject: {
         "저":"eu (formal)","나":"eu (informal)","너":"tu","우리":"noi","너희":"voi",
@@ -494,7 +500,7 @@
         "원인":"cauză","방법":"metodă","제품":"produs","서비스":"serviciu",
         "정책":"politică","문화":"cultură"
       },
-      numeral: {},
+      numeral: {}, // aici vor intra și numerele noi + traducere
       counter: {
         "개":"bucată","명":"persoană","권":"volum (carte)","장":"foaie / pagină",
         "대":"aparat / vehicul","병":"sticlă","잔":"cană / pahar",
@@ -623,6 +629,7 @@
     const panelList=document.getElementById("panelList");
     const closePanelBtn=document.getElementById("closePanelBtn");
     const newWordInput=document.getElementById("newWordInput");
+    const newWordTransInput=document.getElementById("newWordTransInput");
     const addWordBtn=document.getElementById("addWordBtn");
 
     const previewKo=document.getElementById("previewKo");
@@ -819,7 +826,8 @@
       const num = state.numeral;
       if(num && use("numeral")){
         koParts.push(num);
-        roParts.push(num);
+        const nm = (translations.numeral && translations.numeral[num]) || num;
+        roParts.push(nm);
       }
       const cnt = state.counter;
       if(cnt && use("counter")){
@@ -884,7 +892,9 @@
       const col=columns.find(c=>c.key===key);if(!col)return;
       panelTitle.textContent=(clause==="p1"?"Propoziția 1 – ":"Propoziția 2 – ")+col.title;
       panelSub.textContent=col.hint||"";
-      newWordInput.value="";panelList.innerHTML="";
+      newWordInput.value="";
+      if(newWordTransInput) newWordTransInput.value="";
+      panelList.innerHTML="";
 
       const map=translations[key]||{};
       col.data.forEach(word=>{
@@ -937,10 +947,28 @@
     closePanelBtn.addEventListener("click",()=>overlay.classList.add("hidden"));
     overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.classList.add("hidden");});
     addWordBtn.addEventListener("click",()=>{
-      const txt=newWordInput.value.trim();if(!txt)return;
+      const txt=newWordInput.value.trim();
+      if(!txt)return;
+      const roTxt = (newWordTransInput.value || "").trim();
       const col=columns.find(c=>c.key===panelKey);
       if(!col||!col.allowCustom)return;
-      col.data.push(txt);newWordInput.value="";
+
+      // adăugăm în lista de cuvinte pentru coloana respectivă
+      col.data.push(txt);
+
+      // salvăm traducerea (dacă există) în dictionarul de traduceri
+      if(!translations[panelKey]) translations[panelKey] = {};
+      if(roTxt){
+        translations[panelKey][txt] = roTxt;
+      }
+
+      // adăugăm și în glosar
+      const roForGloss = roTxt || "(fără traducere încă)";
+      const categoryLabel = col.title || "CUSTOM";
+      glossaryEntries.push({ko: txt, ro: roForGloss, category: categoryLabel});
+
+      newWordInput.value="";
+      if(newWordTransInput) newWordTransInput.value="";
       openPanel(panelClause,panelKey);
     });
 
@@ -994,7 +1022,6 @@
       let idx = arr.indexOf(current);
       if(idx === -1) idx = 0;
       let nextIdx = (idx + 1) % arr.length;
-      // să sară peste multe "" pentru numerals, dacă vrei, dar lăsăm simplu
       state[key] = arr[nextIdx] || "";
       render();
     }
@@ -1075,7 +1102,6 @@
         favorites.push({ko,ro});
       }
       renderFavorites();
-      // mic feedback vizual simplu
       favBtn.textContent = "⭐ Salvat!";
       setTimeout(()=>{favBtn.textContent="⭐ Salvează propoziția";},800);
     });
@@ -1154,54 +1180,29 @@
     // set special pentru particule multiple
     const particlePlusSet = [
       {
-        parts: ["저", " ___ ", " 학교", " ___ ", " 한국어를", " ___ ", " ."],
+        parts: ["오늘 ", "저는 ", "학교에서 ", "한국어를 ", "공부해요."],
         blanks: [
           {
-            label: "Spațiul (1): subiect (저…)",
-            options: ["은","는","이","가"],
-            correct: 1,
-            explanation: "저는 – marcăm subiectul cu 은/는, aici 는."
+            label: "Spațiul (1): după 오늘 / înainte de 저는 (subiectul)",
+            options: ["-는","-이/가","(nimic)"],
+            correct: 2,
+            explanation: "오늘 este adverb de timp, de obicei fără particulă în această propoziție."
           },
           {
-            label: "Spațiul (2): locul acțiunii (학교…)",
-            options: ["에","에서"],
-            correct: 1,
-            explanation: "공부하다 se face undeva → 학교에서 (la școală, acțiune)."
-          },
-          {
-            label: "Spațiul (3): obiectul 한국어를…",
-            options: ["을","를","이","가"],
-            correct: 0,
-            explanation: "한국어를 – deja are 를, aici completăm doar conjugația finală."
-          }
-        ],
-        lastText: "공부해요",
-        globalExplanation: "저는 학교에서 한국어를 공부해요. = Eu învăț coreeană la școală."
-      },
-      {
-        parts: ["오늘", " ___ ", " 집", " ___ ", " 영화를", " ___ ", " ."],
-        blanks: [
-          {
-            label: "Spațiul (1): subiect (저…)",
-            options: ["저는","제가","저를"],
-            correct: 0,
+            label: "Spațiul (2): după 저는 (particula de subiect)",
+            options: ["이","가","는","을"],
+            correct: 2,
             explanation: "저는 – subiect marcat cu 는."
           },
           {
-            label: "Spațiul (2): loc (집…)",
+            label: "Spațiul (3): locul acțiunii (학교…)",
             options: ["에","에서"],
             correct: 1,
-            explanation: "집에서 영화를 봐요. (mă uit la film acasă)."
-          },
-          {
-            label: "Spațiul (3): obiect (영화를…)",
-            options: ["봐요","먹어요","가요"],
-            correct: 0,
-            explanation: "영화를 봐요 = mă uit la film."
+            explanation: "공부하다 se face undeva → 학교에서 (la școală, acțiune)."
           }
         ],
         lastText: "",
-        globalExplanation: "오늘 저는 집에서 영화를 봐요. = Azi mă uit la film acasă."
+        globalExplanation: "오늘 저는 학교에서 한국어를 공부해요. = Azi eu învăț coreeană la școală."
       }
     ];
 
@@ -1221,19 +1222,7 @@
         currentQuestion = set[Math.floor(Math.random()*set.length)];
         selectedMulti = new Array(currentQuestion.blanks.length).fill(null);
 
-        // afișare propoziție cu (1)(2)(3)
-        let sentence = "";
-        let blankCounter = 1;
-        currentQuestion.parts.forEach((part,idx)=>{
-          sentence += part;
-          if(idx < currentQuestion.parts.length-1){
-            // nimic special aici, doar concatenat
-          }
-        });
-        // afișăm simplu cu indicatoare
-        exerciseQuestionEl.textContent = sentence.replace(/___/g, (_,i)=>{
-          return "";
-        }) + "  (completezi spațiile 1, 2, 3 de mai jos)";
+        exerciseQuestionEl.textContent = currentQuestion.globalExplanation.split("=")[0].trim() + " (completezi spațiile de mai jos)";
 
         currentQuestion.blanks.forEach((blank, idx)=>{
           const block = document.createElement("div");
@@ -1268,7 +1257,7 @@
         currentQuestion = set[Math.floor(Math.random()*set.length)];
         selectedOptionIndex = null;
         exerciseQuestionEl.textContent = currentQuestion.sentence;
-        currentQuestion.blanks = undefined; // sigur single-mode
+        currentQuestion.blanks = undefined;
         currentQuestion.options.forEach((opt,idx)=>{
           const id="opt-"+idx;
           const label=document.createElement("label");
@@ -1291,7 +1280,6 @@
       }
 
       if(type === "particlePlus" && currentQuestion.blanks){
-        // verificăm toate spațiile
         for(let i=0;i<currentQuestion.blanks.length;i++){
           if(selectedMulti[i]===null){
             exerciseFeedbackEl.textContent=`Te rog alege răspuns pentru spațiul (${i+1}).`;
@@ -1321,7 +1309,6 @@
         return;
       }
 
-      // modul vechi (un singur blank)
       if(selectedOptionIndex===null){
         exerciseFeedbackEl.textContent="Te rog alege un răspuns.";
         return;
@@ -1342,7 +1329,6 @@
     /* ===== GLOSAR ===== */
     const glossarySearch=document.getElementById("glossarySearch");
     const glossaryList=document.getElementById("glossaryList");
-    const glossaryEntries=[];
 
     function addGlossaryFrom(list, catKey, categoryLabel){
       const map = translations[catKey] || {};
@@ -1361,6 +1347,7 @@
     addGlossaryFrom(counters,"counter","COUNTER");
     addGlossaryFrom(verbs,"verb","VERB");
     addGlossaryFrom(conjugations,"conjug","CONJUGĂRI");
+    addGlossaryFrom(numerals,"numeral","NUMERAL");
 
     function renderGlossary(filter){
       filter = (filter||"").toLowerCase();
