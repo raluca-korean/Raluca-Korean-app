@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean – Sentence Builder v3.1</title>
+  <title>Raluca Korean – Sentence Builder v4</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -46,6 +46,7 @@
     }
     .chip input{margin:0;}
     .section-label{font-size:11px;font-weight:600;color:var(--accent-strong);margin-top:2px;}
+
     .table-block{
       background:var(--card-bg);border-radius:14px;padding:8px;
       box-shadow:0 6px 16px rgba(120,96,190,0.12);border:1px solid var(--border);
@@ -76,6 +77,7 @@
         -45deg,var(--dimmed-bg),var(--dimmed-bg) 4px,#fdfbff 4px,#fdfbff 8px
       );
     }
+
     .controls{
       display:flex;justify-content:space-between;align-items:center;gap:8px;
       padding-top:4px;border-top:1px dashed var(--border);
@@ -91,6 +93,27 @@
     .page-indicator{font-size:11px;color:var(--text-soft);}
     .legend{font-size:10px;color:var(--text-soft);text-align:center;padding:2px 4px 0;}
     .hidden{display:none !important;}
+
+    /* preview propoziție */
+    .preview-card{
+      margin-top:6px;padding:8px;border-radius:12px;
+      background:#f9f7ff;border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:4px;
+    }
+    .preview-title{
+      font-size:11px;font-weight:600;color:var(--accent-strong);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .preview-ko{
+      font-size:14px;font-weight:600;margin-top:2px;
+    }
+    .preview-ro{
+      font-size:12px;color:var(--text-soft);
+    }
+    .preview-buttons{
+      display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;
+    }
+
     .overlay{
       position:fixed;inset:0;background:var(--overlay-bg);
       display:flex;justify-content:center;align-items:flex-end;z-index:1000;
@@ -132,6 +155,7 @@
       display:flex;flex-direction:column;align-items:flex-end;gap:2px;
     }
     .panel-item-tag{font-size:10px;color:var(--accent-strong);}
+
     @media (max-width:600px){
       header h1{font-size:16px;}
       .col{min-width:95px;}
@@ -142,7 +166,7 @@
   <div class="app">
     <header>
       <h1>Raluca Korean – Sentence Builder</h1>
-      <p>Tap pe coloană pentru a alege cuvinte • Propoziția 1 & Fraza (Propoziția 2)</p>
+      <p>Compune propoziții • Panel cu traduceri • Fraze P1/P2 • Random • Audio</p>
     </header>
 
     <div class="mode-panel">
@@ -180,12 +204,33 @@
       </div>
       <div class="legend">
         ➤ Tap pe o coloană pentru a schimba cuvântul (panel cu coreeană + traducere).  
-        ➤ Bifează doar părțile folosite – celelalte se hașurează.  
         ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).
+      </div>
+
+      <!-- preview propoziție / frază -->
+      <div class="preview-card">
+        <div class="preview-title">
+          <span>Propoziția / fraza (coreeană)</span>
+        </div>
+        <div class="preview-ko" id="previewKo">(alege cuvinte din tabel)</div>
+
+        <div class="preview-title">
+          <span>Traducere aproximativă (română – cuvinte)</span>
+          <button id="toggleRoBtn" class="secondary" style="padding:3px 8px;font-size:10px;">
+            Ascunde traducerea
+          </button>
+        </div>
+        <div class="preview-ro" id="previewRo"></div>
+
+        <div class="preview-buttons">
+          <button id="randomBtn">🎲 Random propoziție</button>
+          <button id="speakBtn">🔊 Audio coreeană</button>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- overlay panel -->
   <div class="overlay hidden" id="overlay">
     <div class="panel">
       <div class="panel-header">
@@ -206,7 +251,7 @@
   </div>
 
   <script>
-    // ==== liste de bază (coreeană) ====
+    // === liste de bază (coreeană) ===
     const subjects = [
       "저","나","너","우리","너희","사람","학생","선생님","직원","전문가","지원자","관리자",
       "부모님","아이","어른","시민","고객","의사","간호사","연구자","관계자","대표","회장",
@@ -252,7 +297,7 @@
       "-게 되다","-아/어지다","-기 마련이다","-기에","-길래","-고 말다","-고자 하다","-(으)ㄹ 뿐이다"
     ];
 
-    // traduceri în română (deocamdată parțiale – extindem pe parcurs)
+    // traduceri (parțiale, extindem ușor pe viitor)
     const translations = {
       subject: {
         "저":"eu (formal)","나":"eu (informal)","너":"tu","우리":"noi","너희":"voi",
@@ -282,7 +327,7 @@
         "많이":"mult","조금":"puțin","갑자기":"brusc","미리":"în avans","벌써":"deja",
         "아까":"mai devreme","방금":"chiar acum","금방":"imediat","곧":"în curând",
         "항상":"mereu","자주":"des","가끔":"din când în când","드물게":"rar",
-        "상당히":"destul de","꽤":"binișor","도대체":"(la urma urmei) deloc (în întrebări)",
+        "상당히":"destul de","꽤":"binișor","도대체":"(deloc / în întrebări)",
         "절대로":"niciodată (interdicție)","적극적으로":"activ","충분히":"suficient",
         "특히":"în special","오히려":"mai degrabă","점점":"din ce în ce","차츰":"treptat",
         "계속":"în mod continuu"
@@ -300,9 +345,9 @@
       numeral: {},
       counter: {
         "개":"bucată","명":"persoană","권":"volum (carte)","장":"foaie / pagină",
-        "대":"aparat (mașini, dispozitive)","병":"sticlă","잔":"cană / pahar",
+        "대":"aparat / vehicul","병":"sticlă","잔":"cană / pahar",
         "마리":"animal","번":"dată","살":"ani (vârstă)","송이":"buchet / ciorchine",
-        "줄":"rând / șir","점":"punct","건":"caz / lucru","회":"dată (ocazie)",
+        "줄":"rând / șir","점":"punct","건":"caz","회":"dată (ocazie)",
         "가지":"fel / tip","쪽":"pagină / direcție"
       },
       verb: {
@@ -340,7 +385,7 @@
         "-기 전에":"înainte să...",
         "-(으)면서":"în timp ce...",
         "-(으)ㄹ지도 몰라요":"s-ar putea să...",
-        "-(으)ㄹ게요":"voi (face) pentru tine",
+        "-(으)ㄹ게요":"voi face pentru tine",
         "-(으)ㄹ래요?":"ai chef să...?/vreau să...",
         "-(으)ㄹ까요?":"să facem...?",
         "-는 게 어때요?":"ce-ar fi să...?",
@@ -356,11 +401,11 @@
         "-(으)ㄹ지라도":"chiar dacă...",
         "-(으)ㄴ/는 반면에":"pe de altă parte",
         "-도록 하다":"să faci în așa fel încât să...",
-        "-게 되다":"ajung să..., devine că...",
+        "-게 되다":"ajungi să..., devine că...",
         "-아/어지다":"a deveni...",
         "-기 마련이다":"este firesc să...",
         "-기에":"pentru că..., fiindcă",
-        "-길래":"pentru că (eu am văzut / am simțit)",
+        "-길래":"pentru că (am văzut / simțit eu)",
         "-고 말다":"în cele din urmă ajunge să...",
         "-고자 하다":"a intenționa să...",
         "-(으)ㄹ 뿐이다":"doar..., nimic altceva"
@@ -372,7 +417,7 @@
       "-(으)ㄴ/는 만큼","-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도",
       "-(으)ㄴ/는 반면에","-도록 하다","-기에","-길래","-고 말다","-고자 하다"
     ]);
-    function isLinkingConj(val){return linkingConjugations.has(val);}
+    const isLinkingConj = v => linkingConjugations.has(v);
 
     const columns = [
       { key:"subject", title:"SUBJECT", ko:"주어",   data:subjects,    hint:"Cine?",        allowCustom:true },
@@ -385,39 +430,45 @@
       { key:"verb",    title:"VERB",    ko:"동사",   data:verbs,       hint:"Acțiune",      allowCustom:true },
       { key:"conjug",  title:"CONJUGĂRI", ko:"",    data:conjugations,hint:"Formă (P1/P2)",allowCustom:true }
     ];
-
     const maxLen = Math.max(...columns.map(c => c.data.length));
 
-    let index = 0;
-    const stateP1 = {}, stateP2 = {}, activeP1 = {}, activeP2 = {};
-    columns.forEach(col => {
-      stateP1[col.key] = col.data[0] || "";
-      stateP2[col.key] = col.data[0] || "";
-      activeP1[col.key] = true;
-      activeP2[col.key] = true;
+    let index=0;
+    const stateP1={}, stateP2={}, activeP1={}, activeP2={};
+    columns.forEach(col=>{
+      stateP1[col.key]=col.data[0]||"";
+      stateP2[col.key]=col.data[0]||"";
+      activeP1[col.key]=true;
+      activeP2[col.key]=true;
     });
 
-    const tableP1 = document.getElementById("tableP1");
-    const tableP2 = document.getElementById("tableP2");
-    const titleP2 = document.getElementById("titleP2");
-    const pageInfoEl = document.getElementById("pageInfo");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const enableP2 = document.getElementById("enableP2");
-    const togglesP1 = document.getElementById("togglesP1");
-    const togglesP2 = document.getElementById("togglesP2");
+    const tableP1=document.getElementById("tableP1");
+    const tableP2=document.getElementById("tableP2");
+    const titleP2=document.getElementById("titleP2");
+    const pageInfoEl=document.getElementById("pageInfo");
+    const prevBtn=document.getElementById("prevBtn");
+    const nextBtn=document.getElementById("nextBtn");
+    const resetBtn=document.getElementById("resetBtn");
+    const enableP2=document.getElementById("enableP2");
+    const togglesP1=document.getElementById("togglesP1");
+    const togglesP2=document.getElementById("togglesP2");
 
-    const overlay = document.getElementById("overlay");
-    const panelTitle = document.getElementById("panelTitle");
-    const panelSub = document.getElementById("panelSub");
-    const panelList = document.getElementById("panelList");
-    const closePanelBtn = document.getElementById("closePanelBtn");
-    const newWordInput = document.getElementById("newWordInput");
-    const addWordBtn = document.getElementById("addWordBtn");
+    const overlay=document.getElementById("overlay");
+    const panelTitle=document.getElementById("panelTitle");
+    const panelSub=document.getElementById("panelSub");
+    const panelList=document.getElementById("panelList");
+    const closePanelBtn=document.getElementById("closePanelBtn");
+    const newWordInput=document.getElementById("newWordInput");
+    const addWordBtn=document.getElementById("addWordBtn");
 
-    let panelClause = "p1";
-    let panelKey = "subject";
+    const previewKo=document.getElementById("previewKo");
+    const previewRo=document.getElementById("previewRo");
+    const toggleRoBtn=document.getElementById("toggleRoBtn");
+    const randomBtn=document.getElementById("randomBtn");
+    const speakBtn=document.getElementById("speakBtn");
+
+    let panelClause="p1";
+    let panelKey="subject";
+    let showRo=true;
 
     function createToggleChips(){
       columns.forEach(col=>{
@@ -447,6 +498,7 @@
         const on=enableP2.checked;
         if(on){titleP2.classList.remove("hidden");tableP2.classList.remove("hidden");}
         else{titleP2.classList.add("hidden");tableP2.classList.add("hidden");}
+        updatePreview();
       });
 
       resetBtn.addEventListener("click",()=>{
@@ -480,29 +532,69 @@
 
         const main=document.createElement("div");
         main.className="col-body-main";
-        const value=state[col.key]||"";
-        main.textContent=value;
+        main.textContent=state[col.key]||"";
         colDiv.appendChild(main);
 
         const extra=document.createElement("div");
         extra.className="col-body-extra";
-        if(col.key==="conjug" && value && isLinkingConj(value)){
+        if(col.key==="conjug" && state[col.key] && isLinkingConj(state[col.key])){
           extra.textContent="⭐ cere propoziția 2";
-        }else{
-          extra.textContent="";
-        }
+        }else extra.textContent="";
         colDiv.appendChild(extra);
 
         container.appendChild(colDiv);
       });
     }
 
+    function buildClauseSentence(state){
+      const order=["subject","time","place","mod","object","numeral","counter","verb","conjug"];
+      const koParts=[], roParts=[];
+      order.forEach(key=>{
+        const val=state[key];
+        if(!val) return;
+        koParts.push(val);
+        const map=translations[key]||{};
+        const ro = map[val] || val;
+        roParts.push(ro);
+      });
+      return { ko: koParts.join(" "), ro: roParts };
+    }
+
+    function updatePreview(){
+      const c1=buildClauseSentence(stateP1);
+      let koText=c1.ko;
+      let roWords=[...c1.ro];
+
+      const conj1=stateP1["conjug"];
+      if(enableP2.checked && conj1 && isLinkingConj(conj1)){
+        const c2=buildClauseSentence(stateP2);
+        if(c2.ko){
+          koText = koText + " / " + c2.ko;
+          roWords = roWords.concat(["//"], c2.ro);
+        }
+      }
+
+      if(!koText){
+        previewKo.textContent="(alege cuvinte din tabel)";
+        previewRo.textContent="";
+        return;
+      }
+
+      previewKo.textContent=koText;
+      if(showRo){
+        previewRo.textContent = roWords.length ? roWords.join(" ") : "(fără traducere disponibilă)";
+      }else{
+        previewRo.textContent = "··· traducere ascunsă ···";
+      }
+    }
+
     function render(){
       renderClauseRow(tableP1,activeP1,stateP1,"p1");
-      if(enableP2.checked){renderClauseRow(tableP2,activeP2,stateP2,"p2");}
+      if(enableP2.checked) renderClauseRow(tableP2,activeP2,stateP2,"p2");
       pageInfoEl.textContent=`Rând model: ${index+1} / ${maxLen}`;
       prevBtn.disabled=index===0;
       nextBtn.disabled=index===maxLen-1;
+      updatePreview();
     }
 
     function openPanel(clause,key){
@@ -511,6 +603,8 @@
       panelTitle.textContent=(clause==="p1"?"Propoziția 1 – ":"Propoziția 2 – ")+col.title;
       panelSub.textContent=col.hint||"";
       newWordInput.value="";panelList.innerHTML="";
+
+      const map=translations[key]||{};
 
       col.data.forEach(word=>{
         if(!word)return;
@@ -525,28 +619,25 @@
         const extraBox=document.createElement("div");
         extraBox.className="panel-item-extra";
 
-        const map = translations[col.key] || {};
-        const ro = map[word] || "";
+        const ro=map[word];
         if(ro){
           const roDiv=document.createElement("div");
           roDiv.className="panel-item-tag";
           roDiv.textContent=ro;
           extraBox.appendChild(roDiv);
         }
-
-        if(col.key==="conjug" && isLinkingConj(word)){
+        if(key==="conjug" && isLinkingConj(word)){
           const star=document.createElement("div");
           star.className="panel-item-tag";
           star.textContent="⭐ P2";
           extraBox.appendChild(star);
         }
-
         item.appendChild(extraBox);
 
         item.addEventListener("click",()=>{
-          const targetState=clause==="p1"?stateP1:stateP2;
-          targetState[key]=word;
-          if(col.key==="conjug" && isLinkingConj(word)){
+          const target = clause==="p1" ? stateP1 : stateP2;
+          target[key]=word;
+          if(key==="conjug" && isLinkingConj(word)){
             enableP2.checked=true;
             titleP2.classList.remove("hidden");
             tableP2.classList.remove("hidden");
@@ -562,9 +653,8 @@
       newWordInput.focus();
     }
 
-    closePanelBtn.addEventListener("click",()=>{overlay.classList.add("hidden");});
+    closePanelBtn.addEventListener("click",()=>overlay.classList.add("hidden"));
     overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.classList.add("hidden");});
-
     addWordBtn.addEventListener("click",()=>{
       const txt=newWordInput.value.trim();if(!txt)return;
       const col=columns.find(c=>c.key===panelKey);
@@ -588,12 +678,36 @@
         stateP1[col.key]=v;
       });
     }
+    prevBtn.addEventListener("click",()=>{if(index>0){index--;loadRow(index);render();}});
+    nextBtn.addEventListener("click",()=>{if(index<maxLen-1){index++;loadRow(index);render();}});
 
-    prevBtn.addEventListener("click",()=>{
-      if(index>0){index-=1;loadRow(index);render();}
+    // traducere ON/OFF
+    toggleRoBtn.addEventListener("click",()=>{
+      showRo=!showRo;
+      toggleRoBtn.textContent = showRo ? "Ascunde traducerea" : "Arată traducerea";
+      updatePreview();
     });
-    nextBtn.addEventListener("click",()=>{
-      if(index<maxLen-1){index+=1;loadRow(index);render();}
+
+    // random propoziție
+    randomBtn.addEventListener("click",()=>{
+      columns.forEach(col=>{
+        const arr=col.data.filter(x=>x!=="" && x!=null);
+        if(!arr.length) return;
+        const rand = arr[Math.floor(Math.random()*arr.length)];
+        stateP1[col.key]=rand;
+      });
+      render();
+    });
+
+    // audio (dacă e suportat)
+    speakBtn.addEventListener("click",()=>{
+      if(!("speechSynthesis" in window)){alert("Browserul nu suportă audio.");return;}
+      const text=previewKo.textContent;
+      if(!text || text.includes("alege cuvinte")) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang="ko-KR";
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
     });
 
     createToggleChips();
