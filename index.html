@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean Table – Sentences</title>
+  <title>Raluca Korean – Sentence Builder v3.1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -14,248 +14,127 @@
       --text-soft: #666666;
       --border: #e0d7ff;
       --dimmed-bg: #f2eefc;
+      --overlay-bg: rgba(0, 0, 0, 0.2);
     }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
-      background: radial-gradient(circle at top, #fdfbff, #f4f0ff);
-      color: var(--text-main);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+    *{box-sizing:border-box;}
+    body{
+      margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(circle at top,#fdfbff,#f4f0ff);
+      color:var(--text-main);display:flex;flex-direction:column;min-height:100vh;
     }
-
-    .app {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 10px 10px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      height: 100vh;
+    .app{
+      max-width:1000px;margin:0 auto;padding:10px 10px 18px;
+      display:flex;flex-direction:column;gap:10px;height:100vh;
     }
-
-    header {
-      text-align: center;
-      padding: 4px 8px 4px;
+    header{text-align:center;padding:4px 8px 4px;}
+    header h1{font-size:18px;margin:2px 0;font-weight:700;color:var(--accent-strong);}
+    header p{margin:0;font-size:11px;color:var(--text-soft);}
+    .mode-panel{
+      background:var(--card-bg);border-radius:12px;border:1px solid var(--border);
+      padding:6px 8px;font-size:11px;display:flex;flex-direction:column;gap:4px;
+      box-shadow:0 4px 12px rgba(120,96,190,0.08);
     }
-
-    header h1 {
-      font-size: 18px;
-      margin: 2px 0;
-      font-weight: 700;
-      color: var(--accent-strong);
+    .mode-row{
+      display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;
     }
-
-    header p {
-      margin: 0;
-      font-size: 11px;
-      color: var(--text-soft);
+    .mode-row label{font-size:11px;display:flex;align-items:center;gap:4px;}
+    .part-toggles{display:flex;flex-wrap:wrap;gap:6px;}
+    .chip{
+      display:inline-flex;align-items:center;gap:3px;
+      padding:3px 8px;border-radius:999px;background:#ede7ff;color:var(--accent-strong);
+      font-size:10px;cursor:pointer;
     }
-
-    .mode-panel {
-      background: var(--card-bg);
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      padding: 6px 8px;
-      font-size: 11px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      box-shadow: 0 4px 12px rgba(120, 96, 190, 0.08);
+    .chip input{margin:0;}
+    .section-label{font-size:11px;font-weight:600;color:var(--accent-strong);margin-top:2px;}
+    .table-block{
+      background:var(--card-bg);border-radius:14px;padding:8px;
+      box-shadow:0 6px 16px rgba(120,96,190,0.12);border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;
     }
-
-    .mode-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      justify-content: space-between;
+    .table-title{
+      font-size:11px;font-weight:600;color:var(--text-soft);
+      display:flex;justify-content:space-between;align-items:center;
     }
-
-    .mode-row label {
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+    .table-horizontal{
+      display:flex;flex-direction:row;overflow-x:auto;padding-bottom:4px;gap:6px;
     }
-
-    .part-toggles {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+    .col{
+      min-width:110px;max-width:140px;flex:0 0 auto;background:#faf8ff;border-radius:10px;
+      border:1px solid var(--border);display:flex;flex-direction:column;
+      padding:6px 6px 8px;transition:0.2s;cursor:pointer;
     }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: #ede7ff;
-      color: var(--accent-strong);
-      font-size: 10px;
-      cursor: pointer;
+    .col-header{
+      font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;
+      color:var(--accent-strong);margin-bottom:4px;border-bottom:1px solid var(--border);
+      padding-bottom:3px;
     }
-
-    .chip input {
-      margin: 0;
-    }
-
-    .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent-strong);
-      margin-top: 2px;
-    }
-
-    .table-block {
-      background: var(--card-bg);
-      border-radius: 14px;
-      padding: 8px;
-      box-shadow: 0 6px 16px rgba(120, 96, 190, 0.12);
-      border: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex: 1;
-      min-height: 0;
-    }
-
-    .table-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-soft);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .table-horizontal {
-      display: flex;
-      flex-direction: row;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      gap: 6px;
-    }
-
-    .col {
-      min-width: 110px;
-      max-width: 140px;
-      flex: 0 0 auto;
-      background: #faf8ff;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      padding: 6px 6px 8px;
-      transition: 0.2s;
-    }
-
-    .col-header {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--accent-strong);
-      margin-bottom: 4px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 3px;
-    }
-
-    .col-body-label {
-      font-size: 10px;
-      color: var(--text-soft);
-      margin-bottom: 2px;
-    }
-
-    .col-body-main {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-
-    .col-body-extra {
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    .dimmed {
-      opacity: 0.35;
-      background-image: repeating-linear-gradient(
-        -45deg,
-        var(--dimmed-bg),
-        var(--dimmed-bg) 4px,
-        #fdfbff 4px,
-        #fdfbff 8px
+    .col-body-label{font-size:10px;color:var(--text-soft);margin-bottom:2px;}
+    .col-body-main{font-size:15px;font-weight:600;margin-bottom:2px;}
+    .col-body-extra{font-size:11px;color:var(--text-soft);}
+    .dimmed{
+      opacity:0.35;background-image:repeating-linear-gradient(
+        -45deg,var(--dimmed-bg),var(--dimmed-bg) 4px,#fdfbff 4px,#fdfbff 8px
       );
     }
-
-    .controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      padding-top: 4px;
-      border-top: 1px dashed var(--border);
+    .controls{
+      display:flex;justify-content:space-between;align-items:center;gap:8px;
+      padding-top:4px;border-top:1px dashed var(--border);
     }
-
-    .btn-group {
-      display: flex;
-      gap: 6px;
+    .btn-group{display:flex;gap:6px;}
+    button{
+      border-radius:999px;border:none;padding:6px 10px;font-size:12px;font-weight:600;
+      cursor:pointer;background:var(--accent);color:#fff;display:inline-flex;
+      align-items:center;gap:4px;box-shadow:0 2px 6px rgba(90,70,160,0.25);
     }
-
-    button {
-      border-radius: 999px;
-      border: none;
-      padding: 6px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--accent);
-      color: #fff;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      box-shadow: 0 2px 6px rgba(90, 70, 160, 0.25);
+    button.secondary{background:#ede7ff;color:var(--accent-strong);box-shadow:none;}
+    button:disabled{opacity:0.4;box-shadow:none;cursor:default;}
+    .page-indicator{font-size:11px;color:var(--text-soft);}
+    .legend{font-size:10px;color:var(--text-soft);text-align:center;padding:2px 4px 0;}
+    .hidden{display:none !important;}
+    .overlay{
+      position:fixed;inset:0;background:var(--overlay-bg);
+      display:flex;justify-content:center;align-items:flex-end;z-index:1000;
     }
-
-    button.secondary {
-      background: #ede7ff;
-      color: var(--accent-strong);
-      box-shadow: none;
+    .panel{
+      width:100%;max-width:900px;background:var(--card-bg);
+      border-radius:18px 18px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,0.15);
+      padding:10px 12px 14px;animation:slideUp 0.18s ease-out;
     }
-
-    button:disabled {
-      opacity: 0.4;
-      box-shadow: none;
-      cursor: default;
+    @keyframes slideUp{
+      from{transform:translateY(40px);opacity:0;}
+      to{transform:translateY(0);opacity:1;}
     }
-
-    .page-indicator {
-      font-size: 11px;
-      color: var(--text-soft);
+    .panel-header{
+      display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
     }
-
-    .legend {
-      font-size: 10px;
-      color: var(--text-soft);
-      text-align: center;
-      padding: 2px 4px 0;
+    .panel-title{font-size:13px;font-weight:600;color:var(--accent-strong);}
+    .panel-sub{font-size:11px;color:var(--text-soft);}
+    .panel-close{
+      background:transparent;color:var(--text-soft);box-shadow:none;
+      padding:4px 6px;font-size:14px;
     }
-
-    .hidden {
-      display: none !important;
+    .panel-input-row{display:flex;gap:6px;margin-bottom:6px;}
+    .panel-input-row input{
+      flex:1;border-radius:999px;border:1px solid var(--border);
+      padding:6px 10px;font-size:12px;
     }
-
-    @media (max-width: 600px) {
-      header h1 { font-size: 16px; }
-      .col { min-width: 95px; }
+    .panel-list{
+      max-height:260px;overflow-y:auto;border-radius:10px;
+      border:1px solid var(--border);background:#faf8ff;padding:4px;
+    }
+    .panel-item{
+      padding:4px 8px;border-radius:8px;display:flex;justify-content:space-between;
+      align-items:center;font-size:13px;cursor:pointer;
+    }
+    .panel-item:hover{background:#ede7ff;}
+    .panel-item-main{font-weight:600;}
+    .panel-item-extra{
+      display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+    }
+    .panel-item-tag{font-size:10px;color:var(--accent-strong);}
+    @media (max-width:600px){
+      header h1{font-size:16px;}
+      .col{min-width:95px;}
     }
   </style>
 </head>
@@ -263,10 +142,9 @@
   <div class="app">
     <header>
       <h1>Raluca Korean – Sentence Builder</h1>
-      <p>Vezi ce părți de propoziție folosești (Propoziția 1 & Fraza / Propoziția 2)</p>
+      <p>Tap pe coloană pentru a alege cuvinte • Propoziția 1 & Fraza (Propoziția 2)</p>
     </header>
 
-    <!-- Panou de control: ce părți folosesc Propoziția 1 și Propoziția 2 -->
     <div class="mode-panel">
       <div class="mode-row">
         <span class="section-label">Propoziția 1 – ce părți folosește?</span>
@@ -281,11 +159,10 @@
       </div>
     </div>
 
-    <!-- Bloc tabele propoziția 1 + propoziția 2 -->
     <div class="table-block">
       <div class="table-title">
         <span>Propoziția 1</span>
-        <span id="pageInfo"></span>
+        <span class="page-indicator" id="pageInfo"></span>
       </div>
       <div class="table-horizontal" id="tableP1"></div>
 
@@ -296,55 +173,68 @@
 
       <div class="controls">
         <div class="btn-group">
-          <button id="prevBtn">⬅ Prev</button>
+          <button id="prevBtn">⬅ Prev (rând model)</button>
           <button id="nextBtn">Next ➡</button>
         </div>
         <button class="secondary" id="resetBtn">Reset părți de propoziție</button>
       </div>
       <div class="legend">
-        Bifează ce părți folosește propoziția ta. Coloanele nebifate se „hașurează”.
-        Dacă ai o gramatică de legătură, activează Propoziția 2 și setează părțile ei.
+        ➤ Tap pe o coloană pentru a schimba cuvântul (panel cu coreeană + traducere).  
+        ➤ Bifează doar părțile folosite – celelalte se hașurează.  
+        ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).
       </div>
     </div>
   </div>
 
+  <div class="overlay hidden" id="overlay">
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title" id="panelTitle"></div>
+          <div class="panel-sub" id="panelSub"></div>
+        </div>
+        <button class="panel-close" id="closePanelBtn">✕</button>
+      </div>
+
+      <div class="panel-input-row">
+        <input type="text" id="newWordInput" placeholder="Adaugă cuvânt nou…" />
+        <button id="addWordBtn" class="secondary">+ Add</button>
+      </div>
+
+      <div class="panel-list" id="panelList"></div>
+    </div>
+  </div>
+
   <script>
-    // Datele – la fel ca în versiunea ta anterioară
+    // ==== liste de bază (coreeană) ====
     const subjects = [
       "저","나","너","우리","너희","사람","학생","선생님","직원","전문가","지원자","관리자",
       "부모님","아이","어른","시민","고객","의사","간호사","연구자","관계자","대표","회장",
       "사용자","참가자","운전자","주민","환자"
     ];
-
     const times = [
       "오늘","어제","내일","지금","방금","조금 후에","곧","최근에","요즘","마침내","결국",
       "이전에","이후에","당시에","한동안","계속","가끔","항상","자주","점점","차츰","일찍","늦게"
     ];
-
     const places = [
       "집","학교","회사","식당","카페","도서관","병원","시장","백화점","공항","기차역",
       "버스정류장","연구소","기관","지역사회","환경","대기업","회의실","법원","경찰서",
       "해변","산","공원","은행"
     ];
-
     const mods = [
       "잘","열심히","조용히","천천히","빨리","정말","아주","너무","많이","조금","갑자기","미리",
       "벌써","아까","방금","금방","곧","항상","자주","가끔","드물게","상당히","꽤","도대체","절대로",
       "적극적으로","충분히","특히","오히려","점점","차츰","계속"
     ];
-
     const objects = [
       "책","커피","물","음식","영화","가방","전화","옷","자료","데이터","계획","조건","상황","문제",
       "해결책","요약","보고서","문서","컴퓨터","노트북","편지","선물","의견","정보","관계","결과",
       "원인","방법","제품","서비스","정책","문화"
     ];
-
     const numerals = new Array(60).fill("");
-
     const counters = [
       "개","명","권","장","대","병","잔","마리","번","살","평","송이","줄","점","건","회","가지","쪽"
     ];
-
     const verbs = [
       "가다","오다","먹다","마시다","보다","읽다","쓰다","배우다","사다","주다","받다","일하다",
       "공부하다","요리하다","청소하다","준비하다","도와주다","사용하다","필요하다","좋아하다",
@@ -352,31 +242,160 @@
       "전달하다","유지하다","발생하다","증가하다","감소하다","인정하다","분석하다","관찰하다",
       "해결하다","연구하다","협력하다","요청하다","충족하다","비교하다","설명하다","예상하다"
     ];
-
     const conjugations = [
-      "-아요/어요","-았어요/었어요","-고 있어요","-고 싶어요","-(으)세요","-(으)ㄹ 거예요","-지 마세요",
-      "-아/어 주세요","-아/어야 돼요","-(으)ㄹ 수 있어요","-(으)ㄹ 수 없어요","-더라고요","-네요","-군요",
-      "-고 나서","-기 전에","-(으)면서","-(으)ㄹ지도 몰라요","-(으)ㄹ게요","-(으)ㄹ래요?","-(으)ㄹ까요?",
-      "-는 게 어때요?","-는 중이에요","-아/어도 돼요","-(으)면 안 돼요","-(으)며","-(으)나","-(으)므로",
-      "-(으)ㄴ/는 만큼","-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도","-(으)ㄴ/는 반면에","-도록 하다",
+      "-아요/어요","-았어요/었어요","-고 있어요","-고 싶어요","-(으)세요","-(으)ㄹ 거예요",
+      "-지 마세요","-아/어 주세요","-아/어야 돼요","-(으)ㄹ 수 있어요","-(으)ㄹ 수 없어요",
+      "-더라고요","-네요","-군요","-고 나서","-기 전에","-(으)면서","-(으)ㄹ지도 몰라요",
+      "-(으)ㄹ게요","-(으)ㄹ래요?","-(으)ㄹ까요?","-는 게 어때요?","-는 중이에요",
+      "-아/어도 돼요","-(으)면 안 돼요","-(으)며","-(으)나","-(으)므로","-(으)ㄴ/는 만큼",
+      "-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도","-(으)ㄴ/는 반면에","-도록 하다",
       "-게 되다","-아/어지다","-기 마련이다","-기에","-길래","-고 말다","-고자 하다","-(으)ㄹ 뿐이다"
     ];
 
+    // traduceri în română (deocamdată parțiale – extindem pe parcurs)
+    const translations = {
+      subject: {
+        "저":"eu (formal)","나":"eu (informal)","너":"tu","우리":"noi","너희":"voi",
+        "사람":"persoană","학생":"student/ă","선생님":"profesor","직원":"angajat",
+        "부모님":"părinți","아이":"copil","어른":"adult","고객":"client","의사":"medic",
+        "간호사":"asistentă","연구자":"cercetător","대표":"reprezentant","환자":"pacient"
+      },
+      time: {
+        "오늘":"astăzi","어제":"ieri","내일":"mâine","지금":"acum","방금":"tocmai acum",
+        "조금 후에":"puțin mai târziu","곧":"în curând","최근에":"recent","요즘":"în ultima vreme",
+        "마침내":"în cele din urmă","결국":"până la urmă","이전에":"înainte","이후에":"după",
+        "당시에":"atunci","한동안":"o perioadă","계속":"continuă","가끔":"din când în când",
+        "항상":"întotdeauna","자주":"des","점점":"din ce în ce","차츰":"treptat",
+        "일찍":"devreme","늦게":"târziu"
+      },
+      place: {
+        "집":"acasă","학교":"școală","회사":"firmă / companie","식당":"restaurant","카페":"cafenea",
+        "도서관":"bibliotecă","병원":"spital","시장":"piață","백화점":"magazin universal",
+        "공항":"aeroport","기차역":"gară","버스정류장":"stație de autobuz","연구소":"laborator",
+        "기관":"instituție","지역사회":"comunitate","환경":"mediu","대기업":"corporație mare",
+        "회의실":"sală de ședințe","법원":"instanță","경찰서":"secție de poliție",
+        "해변":"plajă","산":"munte","공원":"parc","은행":"bancă"
+      },
+      mod: {
+        "잘":"bine","열심히":"cu sârguință","조용히":"în liniște","천천히":"încet",
+        "빨리":"repede","정말":"cu adevărat","아주":"foarte","너무":"prea / foarte",
+        "많이":"mult","조금":"puțin","갑자기":"brusc","미리":"în avans","벌써":"deja",
+        "아까":"mai devreme","방금":"chiar acum","금방":"imediat","곧":"în curând",
+        "항상":"mereu","자주":"des","가끔":"din când în când","드물게":"rar",
+        "상당히":"destul de","꽤":"binișor","도대체":"(la urma urmei) deloc (în întrebări)",
+        "절대로":"niciodată (interdicție)","적극적으로":"activ","충분히":"suficient",
+        "특히":"în special","오히려":"mai degrabă","점점":"din ce în ce","차츰":"treptat",
+        "계속":"în mod continuu"
+      },
+      object: {
+        "책":"carte","커피":"cafea","물":"apă","음식":"mâncare","영화":"film",
+        "가방":"geantă","전화":"telefon","옷":"haine","자료":"materiale","데이터":"date",
+        "계획":"plan","조건":"condiție","상황":"situație","문제":"problemă",
+        "해결책":"soluție","요약":"rezumat","보고서":"raport","문서":"document",
+        "컴퓨터":"calculator","노트북":"laptop","편지":"scrisoare","선물":"cadou",
+        "의견":"opinie","정보":"informație","관계":"relație","결과":"rezultat",
+        "원인":"cauză","방법":"metodă","제품":"produs","서비스":"serviciu",
+        "정책":"politică","문화":"cultură"
+      },
+      numeral: {},
+      counter: {
+        "개":"bucată","명":"persoană","권":"volum (carte)","장":"foaie / pagină",
+        "대":"aparat (mașini, dispozitive)","병":"sticlă","잔":"cană / pahar",
+        "마리":"animal","번":"dată","살":"ani (vârstă)","송이":"buchet / ciorchine",
+        "줄":"rând / șir","점":"punct","건":"caz / lucru","회":"dată (ocazie)",
+        "가지":"fel / tip","쪽":"pagină / direcție"
+      },
+      verb: {
+        "가다":"a merge","오다":"a veni","먹다":"a mânca","마시다":"a bea","보다":"a vedea / a se uita",
+        "읽다":"a citi","쓰다":"a scrie","배우다":"a învăța","사다":"a cumpăra","주다":"a da",
+        "받다":"a primi","일하다":"a lucra","공부하다":"a studia","요리하다":"a găti",
+        "청소하다":"a face curat","준비하다":"a pregăti","도와주다":"a ajuta",
+        "사용하다":"a folosi","필요하다":"a fi necesar","좋아하다":"a plăcea",
+        "싫어하다":"a nu plăcea / a urî","기다리다":"a aștepta","쉬다":"a se odihni",
+        "만나다":"a se întâlni","걷다":"a merge pe jos","달리다":"a alerga",
+        "앉다":"a se așeza","서다":"a sta în picioare","결정하다":"a decide",
+        "제안하다":"a propune","전달하다":"a transmite","유지하다":"a menține",
+        "발생하다":"a se produce","증가하다":"a crește","감소하다":"a scădea",
+        "인정하다":"a recunoaște","분석하다":"a analiza","관찰하다":"a observa",
+        "해결하다":"a rezolva","연구하다":"a cerceta","협력하다":"a colabora",
+        "요청하다":"a solicita","충족하다":"a satisface","비교하다":"a compara",
+        "설명하다":"a explica","예상하다":"a anticipa"
+      },
+      conjug: {
+        "-아요/어요":"prezent politicos",
+        "-았어요/었어요":"trecut politicos",
+        "-고 있어요":"(sunt) în curs de a face",
+        "-고 싶어요":"vreau să...",
+        "-(으)세요":"imperativ / onorific",
+        "-(으)ㄹ 거예요":"viitor",
+        "-지 마세요":"nu faceți..., vă rog",
+        "-아/어 주세요":"vă rog să...",
+        "-아/어야 돼요":"trebuie să...",
+        "-(으)ㄹ 수 있어요":"pot să...",
+        "-(으)ㄹ 수 없어요":"nu pot să...",
+        "-더라고요":"chiar am observat că...",
+        "-네요":"exclamativ (observație)",
+        "-군요":"exclamativ (constatare)",
+        "-고 나서":"după ce...",
+        "-기 전에":"înainte să...",
+        "-(으)면서":"în timp ce...",
+        "-(으)ㄹ지도 몰라요":"s-ar putea să...",
+        "-(으)ㄹ게요":"voi (face) pentru tine",
+        "-(으)ㄹ래요?":"ai chef să...?/vreau să...",
+        "-(으)ㄹ까요?":"să facem...?",
+        "-는 게 어때요?":"ce-ar fi să...?",
+        "-는 중이에요":"sunt în mijlocul acțiunii",
+        "-아/어도 돼요":"poți să..., e în regulă",
+        "-(으)면 안 돼요":"nu ai voie să...",
+        "-(으)며":"și (în timp ce)",
+        "-(으)나":"dar / însă",
+        "-(으)므로":"deoarece / fiindcă",
+        "-(으)ㄴ/는 만큼":"pe cât..., atât...",
+        "-(으)ㄹ수록":"cu cât..., cu atât...",
+        "-(으)ㄴ/는데도":"deși...",
+        "-(으)ㄹ지라도":"chiar dacă...",
+        "-(으)ㄴ/는 반면에":"pe de altă parte",
+        "-도록 하다":"să faci în așa fel încât să...",
+        "-게 되다":"ajung să..., devine că...",
+        "-아/어지다":"a deveni...",
+        "-기 마련이다":"este firesc să...",
+        "-기에":"pentru că..., fiindcă",
+        "-길래":"pentru că (eu am văzut / am simțit)",
+        "-고 말다":"în cele din urmă ajunge să...",
+        "-고자 하다":"a intenționa să...",
+        "-(으)ㄹ 뿐이다":"doar..., nimic altceva"
+      }
+    };
+
+    const linkingConjugations = new Set([
+      "-고 나서","-기 전에","-(으)면서","-(으)며","-(으)나","-(으)므로",
+      "-(으)ㄴ/는 만큼","-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도",
+      "-(으)ㄴ/는 반면에","-도록 하다","-기에","-길래","-고 말다","-고자 하다"
+    ]);
+    function isLinkingConj(val){return linkingConjugations.has(val);}
+
     const columns = [
-      { key: "subject",    title: "SUBJECT",   ko: "주어",   data: subjects,    hint: "Cine?" },
-      { key: "time",       title: "TIME",      ko: "시간",   data: times,       hint: "Când?" },
-      { key: "place",      title: "PLACE",     ko: "장소",   data: places,      hint: "Unde?" },
-      { key: "mod",        title: "MOD",       ko: "방법",   data: mods,        hint: "Cum?" },
-      { key: "object",     title: "OBJECT",    ko: "목적어", data: objects,     hint: "Ce?" },
-      { key: "numeral",    title: "NUMERAL",   ko: "",      data: numerals,    hint: "Număr" },
-      { key: "counter",    title: "COUNTER",   ko: "수량사", data: counters,    hint: "Clasificator" },
-      { key: "verb",       title: "VERB",      ko: "동사",   data: verbs,       hint: "Acțiune" },
-      { key: "conjug",     title: "CONJUGĂRI", ko: "",      data: conjugations,hint: "Formă" }
+      { key:"subject", title:"SUBJECT", ko:"주어",   data:subjects,    hint:"Cine?",        allowCustom:true },
+      { key:"time",    title:"TIME",    ko:"시간",   data:times,       hint:"Când?",        allowCustom:true },
+      { key:"place",   title:"PLACE",   ko:"장소",   data:places,      hint:"Unde?",        allowCustom:true },
+      { key:"mod",     title:"MOD",     ko:"방법",   data:mods,        hint:"Cum?",         allowCustom:true },
+      { key:"object",  title:"OBJECT",  ko:"목적어", data:objects,     hint:"Ce?",          allowCustom:true },
+      { key:"numeral", title:"NUMERAL", ko:"",      data:numerals,    hint:"Număr",        allowCustom:true },
+      { key:"counter", title:"COUNTER", ko:"수량사", data:counters,    hint:"Clasificator", allowCustom:true },
+      { key:"verb",    title:"VERB",    ko:"동사",   data:verbs,       hint:"Acțiune",      allowCustom:true },
+      { key:"conjug",  title:"CONJUGĂRI", ko:"",    data:conjugations,hint:"Formă (P1/P2)",allowCustom:true }
     ];
 
     const maxLen = Math.max(...columns.map(c => c.data.length));
 
     let index = 0;
+    const stateP1 = {}, stateP2 = {}, activeP1 = {}, activeP2 = {};
+    columns.forEach(col => {
+      stateP1[col.key] = col.data[0] || "";
+      stateP2[col.key] = col.data[0] || "";
+      activeP1[col.key] = true;
+      activeP2[col.key] = true;
+    });
 
     const tableP1 = document.getElementById("tableP1");
     const tableP2 = document.getElementById("tableP2");
@@ -389,140 +408,196 @@
     const togglesP1 = document.getElementById("togglesP1");
     const togglesP2 = document.getElementById("togglesP2");
 
-    // starea: care părți sunt folosite în propoziția 1 și 2
-    const activeP1 = {};
-    const activeP2 = {};
+    const overlay = document.getElementById("overlay");
+    const panelTitle = document.getElementById("panelTitle");
+    const panelSub = document.getElementById("panelSub");
+    const panelList = document.getElementById("panelList");
+    const closePanelBtn = document.getElementById("closePanelBtn");
+    const newWordInput = document.getElementById("newWordInput");
+    const addWordBtn = document.getElementById("addWordBtn");
 
-    columns.forEach(col => {
-      activeP1[col.key] = true; // implicit le folosim pe toate
-      activeP2[col.key] = true;
-    });
+    let panelClause = "p1";
+    let panelKey = "subject";
 
-    function createToggleChips() {
-      columns.forEach(col => {
-        const chip1 = document.createElement("label");
-        chip1.className = "chip";
-        const cb1 = document.createElement("input");
-        cb1.type = "checkbox";
-        cb1.checked = true;
-        cb1.dataset.key = col.key;
-        cb1.dataset.clause = "p1";
-        chip1.appendChild(cb1);
-        chip1.append(col.title);
-        togglesP1.appendChild(chip1);
+    function createToggleChips(){
+      columns.forEach(col=>{
+        const chip1=document.createElement("label");
+        chip1.className="chip";
+        const cb1=document.createElement("input");
+        cb1.type="checkbox";cb1.checked=true;cb1.dataset.key=col.key;cb1.dataset.clause="p1";
+        chip1.appendChild(cb1);chip1.append(col.title);togglesP1.appendChild(chip1);
 
-        const chip2 = document.createElement("label");
-        chip2.className = "chip";
-        const cb2 = document.createElement("input");
-        cb2.type = "checkbox";
-        cb2.checked = true;
-        cb2.dataset.key = col.key;
-        cb2.dataset.clause = "p2";
-        chip2.appendChild(cb2);
-        chip2.append(col.title);
-        togglesP2.appendChild(chip2);
+        const chip2=document.createElement("label");
+        chip2.className="chip";
+        const cb2=document.createElement("input");
+        cb2.type="checkbox";cb2.checked=true;cb2.dataset.key=col.key;cb2.dataset.clause="p2";
+        chip2.appendChild(cb2);chip2.append(col.title);togglesP2.appendChild(chip2);
       });
 
-      togglesP1.addEventListener("change", e => {
-        const cb = e.target;
-        if (cb.tagName.toLowerCase() !== "input") return;
-        const key = cb.dataset.key;
-        activeP1[key] = cb.checked;
-        render();
+      togglesP1.addEventListener("change",e=>{
+        const cb=e.target;if(cb.tagName.toLowerCase()!=="input")return;
+        activeP1[cb.dataset.key]=cb.checked;render();
+      });
+      togglesP2.addEventListener("change",e=>{
+        const cb=e.target;if(cb.tagName.toLowerCase()!=="input")return;
+        activeP2[cb.dataset.key]=cb.checked;render();
       });
 
-      togglesP2.addEventListener("change", e => {
-        const cb = e.target;
-        if (cb.tagName.toLowerCase() !== "input") return;
-        const key = cb.dataset.key;
-        activeP2[key] = cb.checked;
-        render();
+      enableP2.addEventListener("change",()=>{
+        const on=enableP2.checked;
+        if(on){titleP2.classList.remove("hidden");tableP2.classList.remove("hidden");}
+        else{titleP2.classList.add("hidden");tableP2.classList.add("hidden");}
       });
 
-      enableP2.addEventListener("change", () => {
-        const on = enableP2.checked;
-        if (on) {
-          titleP2.classList.remove("hidden");
-          tableP2.classList.remove("hidden");
-        } else {
-          titleP2.classList.add("hidden");
-          tableP2.classList.add("hidden");
-        }
-      });
-
-      resetBtn.addEventListener("click", () => {
-        Array.from(togglesP1.querySelectorAll("input")).forEach(cb => {
-          cb.checked = true;
-          activeP1[cb.dataset.key] = true;
+      resetBtn.addEventListener("click",()=>{
+        [...togglesP1.querySelectorAll("input")].forEach(cb=>{
+          cb.checked=true;activeP1[cb.dataset.key]=true;
         });
-        Array.from(togglesP2.querySelectorAll("input")).forEach(cb => {
-          cb.checked = true;
-          activeP2[cb.dataset.key] = true;
+        [...togglesP2.querySelectorAll("input")].forEach(cb=>{
+          cb.checked=true;activeP2[cb.dataset.key]=true;
         });
         render();
       });
     }
 
-    function renderClauseRow(container, activeMap) {
-      container.innerHTML = "";
-      columns.forEach(col => {
-        const colDiv = document.createElement("div");
-        colDiv.className = "col";
+    function renderClauseRow(container,activeMap,state,clauseId){
+      container.innerHTML="";
+      columns.forEach(col=>{
+        const colDiv=document.createElement("div");
+        colDiv.className="col";
+        if(!activeMap[col.key])colDiv.classList.add("dimmed");
+        colDiv.dataset.key=col.key;colDiv.dataset.clause=clauseId;
 
-        if (!activeMap[col.key]) {
-          colDiv.classList.add("dimmed");
-        }
-
-        const header = document.createElement("div");
-        header.className = "col-header";
-        header.textContent = col.title + (col.ko ? ` (${col.ko})` : "");
+        const header=document.createElement("div");
+        header.className="col-header";
+        header.textContent=col.title+(col.ko?` (${col.ko})`:"");
         colDiv.appendChild(header);
 
-        const label = document.createElement("div");
-        label.className = "col-body-label";
-        label.textContent = col.hint || "";
+        const label=document.createElement("div");
+        label.className="col-body-label";
+        label.textContent=col.hint||"";
         colDiv.appendChild(label);
 
-        const main = document.createElement("div");
-        main.className = "col-body-main";
-        main.textContent = col.data[index] || "";
+        const main=document.createElement("div");
+        main.className="col-body-main";
+        const value=state[col.key]||"";
+        main.textContent=value;
         colDiv.appendChild(main);
 
-        const extra = document.createElement("div");
-        extra.className = "col-body-extra";
-        extra.textContent = "";
+        const extra=document.createElement("div");
+        extra.className="col-body-extra";
+        if(col.key==="conjug" && value && isLinkingConj(value)){
+          extra.textContent="⭐ cere propoziția 2";
+        }else{
+          extra.textContent="";
+        }
         colDiv.appendChild(extra);
 
         container.appendChild(colDiv);
       });
     }
 
-    function render() {
-      renderClauseRow(tableP1, activeP1);
-      if (enableP2.checked) {
-        renderClauseRow(tableP2, activeP2);
-      }
-      pageInfoEl.textContent = `Pagina ${index + 1} / ${maxLen}`;
-      prevBtn.disabled = index === 0;
-      nextBtn.disabled = index === maxLen - 1;
+    function render(){
+      renderClauseRow(tableP1,activeP1,stateP1,"p1");
+      if(enableP2.checked){renderClauseRow(tableP2,activeP2,stateP2,"p2");}
+      pageInfoEl.textContent=`Rând model: ${index+1} / ${maxLen}`;
+      prevBtn.disabled=index===0;
+      nextBtn.disabled=index===maxLen-1;
     }
 
-    prevBtn.addEventListener("click", () => {
-      if (index > 0) {
-        index -= 1;
-        render();
-      }
+    function openPanel(clause,key){
+      panelClause=clause;panelKey=key;
+      const col=columns.find(c=>c.key===key);if(!col)return;
+      panelTitle.textContent=(clause==="p1"?"Propoziția 1 – ":"Propoziția 2 – ")+col.title;
+      panelSub.textContent=col.hint||"";
+      newWordInput.value="";panelList.innerHTML="";
+
+      col.data.forEach(word=>{
+        if(!word)return;
+        const item=document.createElement("div");
+        item.className="panel-item";
+
+        const main=document.createElement("div");
+        main.className="panel-item-main";
+        main.textContent=word;
+        item.appendChild(main);
+
+        const extraBox=document.createElement("div");
+        extraBox.className="panel-item-extra";
+
+        const map = translations[col.key] || {};
+        const ro = map[word] || "";
+        if(ro){
+          const roDiv=document.createElement("div");
+          roDiv.className="panel-item-tag";
+          roDiv.textContent=ro;
+          extraBox.appendChild(roDiv);
+        }
+
+        if(col.key==="conjug" && isLinkingConj(word)){
+          const star=document.createElement("div");
+          star.className="panel-item-tag";
+          star.textContent="⭐ P2";
+          extraBox.appendChild(star);
+        }
+
+        item.appendChild(extraBox);
+
+        item.addEventListener("click",()=>{
+          const targetState=clause==="p1"?stateP1:stateP2;
+          targetState[key]=word;
+          if(col.key==="conjug" && isLinkingConj(word)){
+            enableP2.checked=true;
+            titleP2.classList.remove("hidden");
+            tableP2.classList.remove("hidden");
+          }
+          overlay.classList.add("hidden");
+          render();
+        });
+
+        panelList.appendChild(item);
+      });
+
+      overlay.classList.remove("hidden");
+      newWordInput.focus();
+    }
+
+    closePanelBtn.addEventListener("click",()=>{overlay.classList.add("hidden");});
+    overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.classList.add("hidden");});
+
+    addWordBtn.addEventListener("click",()=>{
+      const txt=newWordInput.value.trim();if(!txt)return;
+      const col=columns.find(c=>c.key===panelKey);
+      if(!col||!col.allowCustom)return;
+      col.data.push(txt);newWordInput.value="";
+      openPanel(panelClause,panelKey);
     });
 
-    nextBtn.addEventListener("click", () => {
-      if (index < maxLen - 1) {
-        index += 1;
-        render();
-      }
+    tableP1.addEventListener("click",e=>{
+      const colDiv=e.target.closest(".col");if(!colDiv)return;
+      openPanel(colDiv.dataset.clause||"p1",colDiv.dataset.key);
+    });
+    tableP2.addEventListener("click",e=>{
+      const colDiv=e.target.closest(".col");if(!colDiv)return;
+      openPanel(colDiv.dataset.clause||"p2",colDiv.dataset.key);
     });
 
-    // init
+    function loadRow(i){
+      columns.forEach(col=>{
+        const v=col.data[i]||"";
+        stateP1[col.key]=v;
+      });
+    }
+
+    prevBtn.addEventListener("click",()=>{
+      if(index>0){index-=1;loadRow(index);render();}
+    });
+    nextBtn.addEventListener("click",()=>{
+      if(index<maxLen-1){index+=1;loadRow(index);render();}
+    });
+
     createToggleChips();
+    loadRow(index);
     render();
   </script>
 </body>
