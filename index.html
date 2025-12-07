@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean – Sentence Builder v4.1</title>
+  <title>Raluca Korean – Study App v1.1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -23,12 +23,16 @@
       color:var(--text-main);display:flex;flex-direction:column;min-height:100vh;
     }
     .app{
-      max-width:1000px;margin:0 auto;padding:10px 10px 18px;
-      display:flex;flex-direction:column;gap:10px;height:100vh;
+      max-width:1000px;margin:0 auto;padding:10px 10px 60px;
+      display:flex;flex-direction:column;gap:10px;min-height:100vh;
     }
     header{text-align:center;padding:4px 8px 4px;}
     header h1{font-size:18px;margin:2px 0;font-weight:700;color:var(--accent-strong);}
     header p{margin:0;font-size:11px;color:var(--text-soft);}
+
+    .screen{display:none;flex-direction:column;gap:10px;flex:1;min-height:0;}
+    .screen.active{display:flex;}
+
     .mode-panel{
       background:var(--card-bg);border-radius:12px;border:1px solid var(--border);
       padding:6px 8px;font-size:11px;display:flex;flex-direction:column;gap:4px;
@@ -155,79 +159,197 @@
     }
     .panel-item-tag{font-size:10px;color:var(--accent-strong);}
 
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;
+      background:#ffffffee;border-top:1px solid var(--border);
+      display:flex;justify-content:space-around;align-items:center;
+      padding:6px 0;backdrop-filter:blur(8px);z-index:500;
+    }
+    .nav-btn{
+      flex:1;text-align:center;border:none;background:transparent;
+      font-size:11px;color:var(--text-soft);padding:4px 0;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:2px;
+    }
+    .nav-btn span.icon{font-size:18px;}
+    .nav-btn.active{color:var(--accent-strong);font-weight:600;}
+    .nav-btn.active span.icon{transform:translateY(-1px);}
     @media (max-width:600px){
       header h1{font-size:16px;}
       .col{min-width:95px;}
     }
+
+    .card{
+      background:var(--card-bg);border-radius:14px;padding:10px;
+      box-shadow:0 4px 12px rgba(120,96,190,0.12);border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .card h2{
+      margin:0;font-size:14px;color:var(--accent-strong);
+    }
+    .small-label{font-size:11px;color:var(--text-soft);}
+    select{
+      border-radius:999px;border:1px solid var(--border);
+      padding:4px 10px;font-size:12px;background:#fff;
+    }
+    .exercise-question{
+      font-size:14px;font-weight:600;margin-top:4px;
+    }
+    .exercise-options{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+    .exercise-options label{
+      font-size:13px;display:flex;align-items:center;gap:6px;
+    }
+    .exercise-feedback{
+      font-size:12px;margin-top:4px;
+    }
+
+    .glossary-search{
+      display:flex;gap:6px;align-items:center;margin-top:4px;
+    }
+    .glossary-search input{
+      flex:1;border-radius:999px;border:1px solid var(--border);
+      padding:6px 10px;font-size:12px;
+    }
+    .glossary-list{
+      margin-top:6px;max-height:360px;overflow-y:auto;padding-right:2px;
+    }
+    .glossary-item{
+      padding:6px 8px;border-radius:10px;border:1px solid var(--border);
+      background:#faf8ff;margin-bottom:4px;font-size:12px;
+      display:flex;justify-content:space-between;gap:8px;
+    }
+    .glossary-ko{font-weight:600;}
+    .glossary-ro{color:var(--text-soft);}
+    .glossary-cat{font-size:10px;color:var(--accent-strong);}
   </style>
 </head>
 <body>
   <div class="app">
     <header>
-      <h1>Raluca Korean – Sentence Builder</h1>
-      <p>Compune propoziții • Panel cu traduceri • Fraze P1/P2 • Random • Audio</p>
+      <h1>Raluca Korean – Study App</h1>
+      <p id="subtitle">Builder propoziții + particule + audio</p>
     </header>
 
-    <div class="mode-panel">
-      <div class="mode-row">
-        <span class="section-label">Propoziția 1 – ce părți folosește?</span>
-        <div class="part-toggles" id="togglesP1"></div>
+    <!-- SCREEN 1: BUILDER -->
+    <div class="screen active" id="screen-builder">
+      <div class="mode-panel">
+        <div class="mode-row">
+          <span class="section-label">Propoziția 1 – ce părți folosește?</span>
+          <div class="part-toggles" id="togglesP1"></div>
+        </div>
+        <div class="mode-row">
+          <label>
+            <input type="checkbox" id="enableP2" />
+            Activează Propoziția 2 (fraza)
+          </label>
+          <div class="part-toggles" id="togglesP2"></div>
+        </div>
       </div>
-      <div class="mode-row">
-        <label>
-          <input type="checkbox" id="enableP2" />
-          Activează Propoziția 2 (fraza)
-        </label>
-        <div class="part-toggles" id="togglesP2"></div>
+
+      <div class="table-block">
+        <div class="table-title">
+          <span>Propoziția 1</span>
+          <span class="page-indicator" id="pageInfo"></span>
+        </div>
+        <div class="table-horizontal" id="tableP1"></div>
+
+        <div class="table-title hidden" id="titleP2">
+          <span>Propoziția 2 (continuare / frază)</span>
+        </div>
+        <div class="table-horizontal hidden" id="tableP2"></div>
+
+        <div class="controls">
+          <div class="btn-group">
+            <button id="prevBtn">⬅ Prev (rând model)</button>
+            <button id="nextBtn">Next ➡</button>
+          </div>
+          <button class="secondary" id="resetBtn">Reset părți de propoziție</button>
+        </div>
+        <div class="legend">
+          ➤ Tap pe o coloană pentru a schimba cuvântul (panel cu coreeană + traducere).  
+          ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).  
+          ➤ Dacă debifezi o parte sus, dispare și din propoziția de jos și din random.
+        </div>
+
+        <div class="preview-card">
+          <div class="preview-title">
+            <span>Propoziția / fraza (coreeană, cu particule)</span>
+          </div>
+          <div class="preview-ko" id="previewKo">(alege cuvinte din tabel)</div>
+
+          <div class="preview-title">
+            <span>Traducere aproximativă (română – cuvinte)</span>
+            <button id="toggleRoBtn" class="secondary" style="padding:3px 8px;font-size:10px;">
+              Ascunde traducerea
+            </button>
+          </div>
+          <div class="preview-ro" id="previewRo"></div>
+
+          <div class="preview-buttons">
+            <button id="randomBtn">🎲 Random propoziție</button>
+            <button id="speakBtn">🔊 Audio coreeană</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="table-block">
-      <div class="table-title">
-        <span>Propoziția 1</span>
-        <span class="page-indicator" id="pageInfo"></span>
-      </div>
-      <div class="table-horizontal" id="tableP1"></div>
+    <!-- SCREEN 2: EXERCIȚII TOPIK -->
+    <div class="screen" id="screen-exercises">
+      <div class="card">
+        <h2>📝 Exerciții TOPIK – propoziții</h2>
+        <div class="small-label">Alege tipul de exercițiu:</div>
+        <select id="exerciseType">
+          <option value="verb">Alege VERBUL corect</option>
+          <option value="particle">Alege PARTICULA corectă</option>
+          <option value="conjug">Alege CONJUGAREA corectă</option>
+        </select>
 
-      <div class="table-title hidden" id="titleP2">
-        <span>Propoziția 2 (continuare / frază)</span>
-      </div>
-      <div class="table-horizontal hidden" id="tableP2"></div>
-
-      <div class="controls">
-        <div class="btn-group">
-          <button id="prevBtn">⬅ Prev (rând model)</button>
-          <button id="nextBtn">Next ➡</button>
+        <div class="exercise-question" id="exerciseQuestion">
+          Apasă „Întrebare nouă” ca să începi.
         </div>
-        <button class="secondary" id="resetBtn">Reset părți de propoziție</button>
+        <div class="exercise-options" id="exerciseOptions"></div>
+
+        <div class="btn-group">
+          <button id="checkAnswerBtn">Verifică răspunsul</button>
+          <button class="secondary" id="nextQuestionBtn">Întrebare nouă</button>
+        </div>
+        <div class="exercise-feedback" id="exerciseFeedback"></div>
       </div>
       <div class="legend">
-        ➤ Tap pe o coloană pentru a schimba cuvântul (panel cu coreeană + traducere).  
-        ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).
+        ➤ Mai întâi alege tipul de exercițiu, apoi „Întrebare nouă”.  
+        ➤ După ce bifezi un răspuns, apasă „Verifică răspunsul”.
       </div>
+    </div>
 
-      <div class="preview-card">
-        <div class="preview-title">
-          <span>Propoziția / fraza (coreeană, cu particule)</span>
+    <!-- SCREEN 3: GLOSAR -->
+    <div class="screen" id="screen-glossary">
+      <div class="card">
+        <h2>📚 Glosar coreean–român</h2>
+        <div class="small-label">Caută după coreeană sau română:</div>
+        <div class="glossary-search">
+          <input type="text" id="glossarySearch" placeholder="ex: 가다 sau a merge" />
         </div>
-        <div class="preview-ko" id="previewKo">(alege cuvinte din tabel)</div>
-
-        <div class="preview-title">
-          <span>Traducere aproximativă (română – cuvinte)</span>
-          <button id="toggleRoBtn" class="secondary" style="padding:3px 8px;font-size:10px;">
-            Ascunde traducerea
-          </button>
-        </div>
-        <div class="preview-ro" id="previewRo"></div>
-
-        <div class="preview-buttons">
-          <button id="randomBtn">🎲 Random propoziție</button>
-          <button id="speakBtn">🔊 Audio coreeană</button>
-        </div>
+        <div class="glossary-list" id="glossaryList"></div>
       </div>
     </div>
   </div>
 
+  <!-- bottom nav -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-target="builder">
+      <span class="icon">🏗</span>
+      <span>Builder</span>
+    </button>
+    <button class="nav-btn" data-target="exercises">
+      <span class="icon">📝</span>
+      <span>Exerciții</span>
+    </button>
+    <button class="nav-btn" data-target="glossary">
+      <span class="icon">📚</span>
+      <span>Glosar</span>
+    </button>
+  </nav>
+
+  <!-- overlay panel -->
   <div class="overlay hidden" id="overlay">
     <div class="panel">
       <div class="panel-header">
@@ -248,6 +370,7 @@
   </div>
 
   <script>
+    /* === LISTE DE CUVINTE === */
     const subjects = [
       "저","나","너","우리","너희","사람","학생","선생님","직원","전문가","지원자","관리자",
       "부모님","아이","어른","시민","고객","의사","간호사","연구자","관계자","대표","회장",
@@ -461,11 +584,36 @@
     const randomBtn=document.getElementById("randomBtn");
     const speakBtn=document.getElementById("speakBtn");
 
-    let panelClause="p1";
-    let panelKey="subject";
-    let showRo=true;
+    const subtitleEl=document.getElementById("subtitle");
 
-    // ==== funcții pentru particule ====
+    const screens = {
+      builder: document.getElementById("screen-builder"),
+      exercises: document.getElementById("screen-exercises"),
+      glossary: document.getElementById("screen-glossary")
+    };
+    const navButtons = document.querySelectorAll(".nav-btn");
+
+    function setScreen(name){
+      Object.entries(screens).forEach(([k,el])=>{
+        el.classList.toggle("active", k===name);
+      });
+      navButtons.forEach(btn=>{
+        btn.classList.toggle("active", btn.dataset.target===name);
+      });
+      if(name==="builder"){
+        subtitleEl.textContent="Builder propoziții + particule + audio";
+      }else if(name==="exercises"){
+        subtitleEl.textContent="Exerciții TOPIK – verb, particulă, conjugare";
+      }else{
+        subtitleEl.textContent="Glosar coreean–român (cuvinte din aplicație)";
+        renderGlossary("");
+      }
+    }
+    navButtons.forEach(btn=>{
+      btn.addEventListener("click",()=>setScreen(btn.dataset.target));
+    });
+
+    /* funcții particule */
     const hasBatchim = (syl) => {
       if(!syl) return false;
       const code = syl.charCodeAt(syl.length-1) - 0xAC00;
@@ -473,9 +621,7 @@
       const jong = code % 28;
       return jong !== 0;
     };
-
     const pronouns = new Set(["저","나","너","우리","너희"]);
-
     function addSubjectWithParticle(word){
       if(!word) return "";
       const batchim = hasBatchim(word);
@@ -485,30 +631,24 @@
         return word + (batchim ? "이" : "가");
       }
     }
-
     function addObjectWithParticle(word){
       if(!word) return "";
       const batchim = hasBatchim(word);
       return word + (batchim ? "을" : "를");
     }
-
     const timeAdverbsNoParticle = new Set([
       "오늘","어제","내일","지금","방금","요즘","항상","자주","가끔","계속","점점","차츰"
     ]);
-
     function addTimeWithParticle(word){
       if(!word) return "";
       if(timeAdverbsNoParticle.has(word)) return word;
       return word + "에";
     }
-
     function addPlaceWithParticle(word){
       if(!word) return "";
-      // de bază: loc + 에서 (acțiune se întâmplă acolo)
       return word + "에서";
     }
 
-    // ====== UI părți / toggle-uri ======
     function createToggleChips(){
       columns.forEach(col=>{
         const chip1=document.createElement("label");
@@ -533,13 +673,6 @@
         activeP2[cb.dataset.key]=cb.checked;render();
       });
 
-      enableP2.addEventListener("change",()=>{
-        const on=enableP2.checked;
-        if(on){titleP2.classList.remove("hidden");tableP2.classList.remove("hidden");}
-        else{titleP2.classList.add("hidden");tableP2.classList.add("hidden");}
-        updatePreview();
-      });
-
       resetBtn.addEventListener("click",()=>{
         [...togglesP1.querySelectorAll("input")].forEach(cb=>{
           cb.checked=true;activeP1[cb.dataset.key]=true;
@@ -548,6 +681,13 @@
           cb.checked=true;activeP2[cb.dataset.key]=true;
         });
         render();
+      });
+
+      enableP2.addEventListener("change",()=>{
+        const on=enableP2.checked;
+        if(on){titleP2.classList.remove("hidden");tableP2.classList.remove("hidden");}
+        else{titleP2.classList.add("hidden");tableP2.classList.add("hidden");}
+        updatePreview();
       });
     }
 
@@ -585,76 +725,68 @@
       });
     }
 
-    // ====== Construim propoziția cu particule ======
-    function buildClauseSentence(state){
-      const koParts=[];
-      const roParts=[];
+    /* propoziție care respectă ce e bifat */
+    function buildClauseSentence(state, activeMap){
+      const koParts=[], roParts=[];
+      const use = (key) => activeMap[key] !== false;
 
       const subj = state.subject;
-      if(subj){
+      if(subj && use("subject")){
         koParts.push(addSubjectWithParticle(subj));
         roParts.push((translations.subject && translations.subject[subj]) || subj);
       }
-
       const t = state.time;
-      if(t){
+      if(t && use("time")){
         koParts.push(addTimeWithParticle(t));
         roParts.push((translations.time && translations.time[t]) || t);
       }
-
       const p = state.place;
-      if(p){
+      if(p && use("place")){
         koParts.push(addPlaceWithParticle(p));
         roParts.push((translations.place && translations.place[p]) || p);
       }
-
       const m = state.mod;
-      if(m){
+      if(m && use("mod")){
         koParts.push(m);
         roParts.push((translations.mod && translations.mod[m]) || m);
       }
-
       const obj = state.object;
-      if(obj){
+      if(obj && use("object")){
         koParts.push(addObjectWithParticle(obj));
         roParts.push((translations.object && translations.object[obj]) || obj);
       }
-
       const num = state.numeral;
-      if(num){
+      if(num && use("numeral")){
         koParts.push(num);
         roParts.push(num);
       }
-
       const cnt = state.counter;
-      if(cnt){
+      if(cnt && use("counter")){
         koParts.push(cnt);
         roParts.push((translations.counter && translations.counter[cnt]) || cnt);
       }
-
       const v = state.verb;
-      if(v){
+      if(v && use("verb")){
         koParts.push(v);
         roParts.push((translations.verb && translations.verb[v]) || v);
       }
-
       const cj = state.conjug;
-      if(cj){
+      if(cj && use("conjug")){
         koParts.push(cj);
         roParts.push((translations.conjug && translations.conjug[cj]) || cj);
       }
-
       return { ko: koParts.join(" "), ro: roParts };
     }
 
+    let showRo=true;
     function updatePreview(){
-      const c1=buildClauseSentence(stateP1);
+      const c1=buildClauseSentence(stateP1, activeP1);
       let koText=c1.ko;
       let roWords=[...c1.ro];
 
       const conj1=stateP1["conjug"];
       if(enableP2.checked && conj1 && isLinkingConj(conj1)){
-        const c2=buildClauseSentence(stateP2);
+        const c2=buildClauseSentence(stateP2, activeP2);
         if(c2.ko){
           koText = koText + " / " + c2.ko;
           roWords = roWords.concat(["//"], c2.ro);
@@ -666,7 +798,6 @@
         previewRo.textContent="";
         return;
       }
-
       previewKo.textContent=koText;
       if(showRo){
         previewRo.textContent = roWords.length ? roWords.join(" ") : "(fără traducere disponibilă)";
@@ -684,6 +815,9 @@
       updatePreview();
     }
 
+    let panelClause="p1";
+    let panelKey="subject";
+
     function openPanel(clause,key){
       panelClause=clause;panelKey=key;
       const col=columns.find(c=>c.key===key);if(!col)return;
@@ -692,7 +826,6 @@
       newWordInput.value="";panelList.innerHTML="";
 
       const map=translations[key]||{};
-
       col.data.forEach(word=>{
         if(!word)return;
         const item=document.createElement("div");
@@ -749,7 +882,6 @@
       col.data.push(txt);newWordInput.value="";
       openPanel(panelClause,panelKey);
     });
-
     tableP1.addEventListener("click",e=>{
       const colDiv=e.target.closest(".col");if(!colDiv)return;
       openPanel(colDiv.dataset.clause||"p1",colDiv.dataset.key);
@@ -774,10 +906,9 @@
       updatePreview();
     });
 
-    // 🎲 RANDOM – doar pe coloanele active în Propoziția 1
     randomBtn.addEventListener("click",()=>{
       columns.forEach(col=>{
-        if(!activeP1[col.key]) return; // dacă e debifată, nu o folosim
+        if(!activeP1[col.key]) return;
         const arr=col.data.filter(x=>x!=="" && x!=null);
         if(!arr.length) return;
         const rand = arr[Math.floor(Math.random()*arr.length)];
@@ -786,18 +917,15 @@
       render();
     });
 
-    // 🔊 AUDIO – voce coreeană dacă există
     speakBtn.addEventListener("click",()=>{
       if(!("speechSynthesis" in window)){alert("Browserul nu suportă audio.");return;}
       const text=previewKo.textContent;
       if(!text || text.includes("alege cuvinte")) return;
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang="ko-KR";
-
       const voices = window.speechSynthesis.getVoices();
       const koVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith("ko"));
       if(koVoice) utter.voice = koVoice;
-
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utter);
     });
@@ -805,6 +933,179 @@
     createToggleChips();
     loadRow(index);
     render();
+
+    /* ===== EXERCIȚII TOPIK ===== */
+    const exerciseTypeSelect=document.getElementById("exerciseType");
+    const exerciseQuestionEl=document.getElementById("exerciseQuestion");
+    const exerciseOptionsEl=document.getElementById("exerciseOptions");
+    const exerciseFeedbackEl=document.getElementById("exerciseFeedback");
+    const checkAnswerBtn=document.getElementById("checkAnswerBtn");
+    const nextQuestionBtn=document.getElementById("nextQuestionBtn");
+
+    const exerciseSets = {
+      verb: [
+        {
+          sentence: "저는 아침에 커피를 ___ .",
+          options: ["마셔요","먹어요","가요"],
+          correct: 0,
+          explanation: "커피는 보통 마셔요 (a bea cafea), nu 먹어요."
+        },
+        {
+          sentence: "아이들이 공원에서 공을 ___ .",
+          options: ["읽어요","차요","써요"],
+          correct: 1,
+          explanation: "공을 차다 = a șuta/mingea (a lovi cu piciorul)."
+        },
+        {
+          sentence: "저는 집에서 한국어를 ___ .",
+          options: ["공부해요","마셔요","끓여요"],
+          correct: 0,
+          explanation: "한국어를 공부해요 = învăț coreeană."
+        }
+      ],
+      particle: [
+        {
+          sentence: "저___ 내일 친구를 만날 거예요.",
+          options: ["는","를","에"],
+          correct: 0,
+          explanation: "저는 = subiect marcat cu 은/는."
+        },
+        {
+          sentence: "저는 학교___ 공부해요.",
+          options: ["에","에서","을"],
+          correct: 1,
+          explanation: "Acțiunea 'a studia' se întâmplă la școală → 학교에서."
+        },
+        {
+          sentence: "저는 책___ 읽어요.",
+          options: ["을","에","가"],
+          correct: 0,
+          explanation: "책을 읽어요 → obiect + 을/를."
+        }
+      ],
+      conjug: [
+        {
+          sentence: "내일 비가 올 ___ .",
+          options: ["거예요","고 있어요","지 마세요"],
+          correct: 0,
+          explanation: "올 거예요 = va ploua (viitor)."
+        },
+        {
+          sentence: "지금 밥을 먹고 ___ .",
+          options: ["싶어요","있어요","갈 거예요"],
+          correct: 1,
+          explanation: "먹고 있어요 = mănânc acum (acțiune în curs)."
+        },
+        {
+          sentence: "너무 피곤해서 오늘 일찍 자야 ___ .",
+          options: ["돼요","싶어요","수 있어요"],
+          correct: 0,
+          explanation: "자야 돼요 = trebuie să dorm devreme."
+        }
+      ]
+    };
+
+    let currentQuestion = null;
+    let selectedOptionIndex = null;
+
+    function loadRandomExercise(){
+      const type = exerciseTypeSelect.value;
+      const set = exerciseSets[type];
+      if(!set || !set.length)return;
+      currentQuestion = set[Math.floor(Math.random()*set.length)];
+      selectedOptionIndex = null;
+      exerciseQuestionEl.textContent = currentQuestion.sentence;
+      exerciseOptionsEl.innerHTML="";
+      currentQuestion.options.forEach((opt,idx)=>{
+        const id="opt-"+idx;
+        const label=document.createElement("label");
+        const radio=document.createElement("input");
+        radio.type="radio";radio.name="exerciseOption";radio.value=idx;radio.id=id;
+        radio.addEventListener("change",()=>{selectedOptionIndex=idx;});
+        const span=document.createElement("span");
+        span.textContent=opt;
+        label.appendChild(radio);label.appendChild(span);
+        exerciseOptionsEl.appendChild(label);
+      });
+      exerciseFeedbackEl.textContent="";
+      exerciseFeedbackEl.style.color="#333";
+    }
+
+    checkAnswerBtn.addEventListener("click",()=>{
+      if(!currentQuestion){exerciseFeedbackEl.textContent="Mai întâi apasă „Întrebare nouă”.";return;}
+      if(selectedOptionIndex===null){exerciseFeedbackEl.textContent="Te rog alege un răspuns.";return;}
+      if(selectedOptionIndex===currentQuestion.correct){
+        exerciseFeedbackEl.textContent="✔ Corect! " + currentQuestion.explanation;
+        exerciseFeedbackEl.style.color="#2e7d32";
+      }else{
+        const correctText=currentQuestion.options[currentQuestion.correct];
+        exerciseFeedbackEl.textContent=`✘ Nu e corect. Răspuns corect: "${correctText}". ${currentQuestion.explanation}`;
+        exerciseFeedbackEl.style.color="#c62828";
+      }
+    });
+    nextQuestionBtn.addEventListener("click",loadRandomExercise);
+    exerciseTypeSelect.addEventListener("change",loadRandomExercise);
+
+    /* ===== GLOSAR ===== */
+    const glossarySearch=document.getElementById("glossarySearch");
+    const glossaryList=document.getElementById("glossaryList");
+    const glossaryEntries=[];
+
+    function addGlossaryFrom(list, catKey, categoryLabel){
+      const map = translations[catKey] || {};
+      list.forEach(w=>{
+        if(!w) return;
+        const ro = map[w] || "(fără traducere încă)";
+        glossaryEntries.push({ko:w, ro, category:categoryLabel});
+      });
+    }
+
+    addGlossaryFrom(subjects,"subject","SUBJECT");
+    addGlossaryFrom(times,"time","TIME");
+    addGlossaryFrom(places,"place","PLACE");
+    addGlossaryFrom(mods,"mod","MOD");
+    addGlossaryFrom(objects,"object","OBJECT");
+    addGlossaryFrom(counters,"counter","COUNTER");
+    addGlossaryFrom(verbs,"verb","VERB");
+    addGlossaryFrom(conjugations,"conjug","CONJUGĂRI");
+
+    function renderGlossary(filter){
+      filter = (filter||"").toLowerCase();
+      glossaryList.innerHTML="";
+      const filtered = glossaryEntries.filter(e=>{
+        if(!filter) return true;
+        return e.ko.toLowerCase().includes(filter) || e.ro.toLowerCase().includes(filter);
+      });
+      if(!filtered.length){
+        const div=document.createElement("div");
+        div.className="small-label";
+        div.textContent="Nu s-a găsit nimic pentru căutarea introdusă.";
+        glossaryList.appendChild(div);
+        return;
+      }
+      filtered.forEach(e=>{
+        const item=document.createElement("div");
+        item.className="glossary-item";
+        const left=document.createElement("div");
+        const ko=document.createElement("div");
+        ko.className="glossary-ko";
+        ko.textContent=e.ko;
+        const ro=document.createElement("div");
+        ro.className="glossary-ro";
+        ro.textContent=e.ro;
+        left.appendChild(ko);left.appendChild(ro);
+        const cat=document.createElement("div");
+        cat.className="glossary-cat";
+        cat.textContent=e.category;
+        item.appendChild(left);item.appendChild(cat);
+        glossaryList.appendChild(item);
+      });
+    }
+
+    glossarySearch.addEventListener("input",()=>renderGlossary(glossarySearch.value));
+
+    // pornește pe Builder
+    setScreen("builder");
   </script>
 </body>
 </html>
