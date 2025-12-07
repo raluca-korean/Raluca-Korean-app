@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean – Study App v1.1</title>
+  <title>Raluca Korean – Study App v1.2</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -51,6 +51,15 @@
     .chip input{margin:0;}
     .section-label{font-size:11px;font-weight:600;color:var(--accent-strong);margin-top:2px;}
 
+    .small-mode-btn{
+      padding:3px 8px;
+      font-size:10px;
+    }
+    .small-mode-btn.active{
+      background:var(--accent-strong);
+      color:#fff;
+    }
+
     .table-block{
       background:var(--card-bg);border-radius:14px;padding:8px;
       box-shadow:0 6px 16px rgba(120,96,190,0.12);border:1px solid var(--border);
@@ -67,6 +76,7 @@
       min-width:110px;max-width:140px;flex:0 0 auto;background:#faf8ff;border-radius:10px;
       border:1px solid var(--border);display:flex;flex-direction:column;
       padding:6px 6px 8px;transition:0.2s;cursor:pointer;
+      touch-action:manipulation;
     }
     .col-header{
       font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;
@@ -210,7 +220,7 @@
       padding:6px 10px;font-size:12px;
     }
     .glossary-list{
-      margin-top:6px;max-height:360px;overflow-y:auto;padding-right:2px;
+      margin-top:6px;max-height:260px;overflow-y:auto;padding-right:2px;
     }
     .glossary-item{
       padding:6px 8px;border-radius:10px;border:1px solid var(--border);
@@ -220,6 +230,16 @@
     .glossary-ko{font-weight:600;}
     .glossary-ro{color:var(--text-soft);}
     .glossary-cat{font-size:10px;color:var(--accent-strong);}
+
+    .fav-list{
+      margin-top:4px;max-height:140px;overflow-y:auto;padding-right:2px;
+    }
+    .fav-item{
+      padding:4px 6px;border-radius:8px;border:1px solid var(--border);
+      background:#fdfbff;margin-bottom:4px;font-size:11px;
+    }
+    .fav-ko{font-weight:600;margin-bottom:2px;}
+    .fav-ro{color:var(--text-soft);}
   </style>
 </head>
 <body>
@@ -232,6 +252,13 @@
     <!-- SCREEN 1: BUILDER -->
     <div class="screen active" id="screen-builder">
       <div class="mode-panel">
+        <div class="mode-row">
+          <span class="section-label">Mod afișare</span>
+          <div>
+            <button class="secondary small-mode-btn" data-mode="simple">Simplu</button>
+            <button class="secondary small-mode-btn active" data-mode="topik">TOPIK</button>
+          </div>
+        </div>
         <div class="mode-row">
           <span class="section-label">Propoziția 1 – ce părți folosește?</span>
           <div class="part-toggles" id="togglesP1"></div>
@@ -265,7 +292,8 @@
           <button class="secondary" id="resetBtn">Reset părți de propoziție</button>
         </div>
         <div class="legend">
-          ➤ Tap pe o coloană pentru a schimba cuvântul (panel cu coreeană + traducere).  
+          ➤ Tap scurt pe coloană = treci la următorul cuvânt.  
+          ➤ Ține apăsat pe coloană = deschizi lista completă (cu traduceri).  
           ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).  
           ➤ Dacă debifezi o parte sus, dispare și din propoziția de jos și din random.
         </div>
@@ -287,6 +315,7 @@
           <div class="preview-buttons">
             <button id="randomBtn">🎲 Random propoziție</button>
             <button id="speakBtn">🔊 Audio coreeană</button>
+            <button id="favBtn" class="secondary">⭐ Salvează propoziția</button>
           </div>
         </div>
       </div>
@@ -299,7 +328,8 @@
         <div class="small-label">Alege tipul de exercițiu:</div>
         <select id="exerciseType">
           <option value="verb">Alege VERBUL corect</option>
-          <option value="particle">Alege PARTICULA corectă</option>
+          <option value="particle">Alege PARTICULA corectă (simplu)</option>
+          <option value="particlePlus">Particule multiple (은/는, 이/가, 을/를, 에/에서)</option>
           <option value="conjug">Alege CONJUGAREA corectă</option>
         </select>
 
@@ -315,16 +345,20 @@
         <div class="exercise-feedback" id="exerciseFeedback"></div>
       </div>
       <div class="legend">
-        ➤ Mai întâi alege tipul de exercițiu, apoi „Întrebare nouă”.  
-        ➤ După ce bifezi un răspuns, apasă „Verifică răspunsul”.
+        ➤ Pentru „Particule multiple” ai mai multe spații (1), (2), (3).  
+        ➤ Toate trebuie corecte ca să fie propoziția corectă.
       </div>
     </div>
 
-    <!-- SCREEN 3: GLOSAR -->
+    <!-- SCREEN 3: GLOSAR + FAVORITE -->
     <div class="screen" id="screen-glossary">
       <div class="card">
         <h2>📚 Glosar coreean–român</h2>
-        <div class="small-label">Caută după coreeană sau română:</div>
+
+        <div class="small-label">Propoziții favorite:</div>
+        <div id="favoritesList" class="fav-list"></div>
+
+        <div class="small-label" style="margin-top:6px;">Caută în glosar (coreeană sau română):</div>
         <div class="glossary-search">
           <input type="text" id="glossarySearch" placeholder="ex: 가다 sau a merge" />
         </div>
@@ -559,6 +593,19 @@
       activeP2[col.key]=true;
     });
 
+    // mode simplu vs TOPIK
+    let currentMode = "topik";
+    const simpleColumnsSet = {
+      subject:true,
+      time:true,
+      object:true,
+      verb:true,
+      conjug:true
+    };
+    function isColumnVisible(key){
+      return currentMode === "topik" || !!simpleColumnsSet[key];
+    }
+
     const tableP1=document.getElementById("tableP1");
     const tableP2=document.getElementById("tableP2");
     const titleP2=document.getElementById("titleP2");
@@ -583,6 +630,7 @@
     const toggleRoBtn=document.getElementById("toggleRoBtn");
     const randomBtn=document.getElementById("randomBtn");
     const speakBtn=document.getElementById("speakBtn");
+    const favBtn=document.getElementById("favBtn");
 
     const subtitleEl=document.getElementById("subtitle");
 
@@ -592,6 +640,8 @@
       glossary: document.getElementById("screen-glossary")
     };
     const navButtons = document.querySelectorAll(".nav-btn");
+
+    const modeButtons = document.querySelectorAll(".small-mode-btn");
 
     function setScreen(name){
       Object.entries(screens).forEach(([k,el])=>{
@@ -605,12 +655,22 @@
       }else if(name==="exercises"){
         subtitleEl.textContent="Exerciții TOPIK – verb, particulă, conjugare";
       }else{
-        subtitleEl.textContent="Glosar coreean–român (cuvinte din aplicație)";
+        subtitleEl.textContent="Glosar + propoziții favorite";
         renderGlossary("");
+        renderFavorites();
       }
     }
     navButtons.forEach(btn=>{
       btn.addEventListener("click",()=>setScreen(btn.dataset.target));
+    });
+
+    modeButtons.forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const mode = btn.dataset.mode;
+        currentMode = mode;
+        modeButtons.forEach(b=>b.classList.toggle("active", b===btn));
+        render();
+      });
     });
 
     /* funcții particule */
@@ -694,6 +754,7 @@
     function renderClauseRow(container,activeMap,state,clauseId){
       container.innerHTML="";
       columns.forEach(col=>{
+        if(!isColumnVisible(col.key)) return;
         const colDiv=document.createElement("div");
         colDiv.className="col";
         if(!activeMap[col.key])colDiv.classList.add("dimmed");
@@ -725,10 +786,10 @@
       });
     }
 
-    /* propoziție care respectă ce e bifat */
+    /* propoziție care respectă ce e bifat + modul */
     function buildClauseSentence(state, activeMap){
       const koParts=[], roParts=[];
-      const use = (key) => activeMap[key] !== false;
+      const use = (key) => activeMap[key] !== false && isColumnVisible(key);
 
       const subj = state.subject;
       if(subj && use("subject")){
@@ -882,14 +943,6 @@
       col.data.push(txt);newWordInput.value="";
       openPanel(panelClause,panelKey);
     });
-    tableP1.addEventListener("click",e=>{
-      const colDiv=e.target.closest(".col");if(!colDiv)return;
-      openPanel(colDiv.dataset.clause||"p1",colDiv.dataset.key);
-    });
-    tableP2.addEventListener("click",e=>{
-      const colDiv=e.target.closest(".col");if(!colDiv)return;
-      openPanel(colDiv.dataset.clause||"p2",colDiv.dataset.key);
-    });
 
     function loadRow(i){
       columns.forEach(col=>{
@@ -909,6 +962,7 @@
     randomBtn.addEventListener("click",()=>{
       columns.forEach(col=>{
         if(!activeP1[col.key]) return;
+        if(!isColumnVisible(col.key)) return;
         const arr=col.data.filter(x=>x!=="" && x!=null);
         if(!arr.length) return;
         const rand = arr[Math.floor(Math.random()*arr.length)];
@@ -930,9 +984,101 @@
       window.speechSynthesis.speak(utter);
     });
 
+    // click scurt = next word, long press = panel
+    function cycleColumnValue(clause,key){
+      const col = columns.find(c=>c.key===key);
+      if(!col) return;
+      const arr = col.data;
+      const state = clause==="p1" ? stateP1 : stateP2;
+      const current = state[key];
+      let idx = arr.indexOf(current);
+      if(idx === -1) idx = 0;
+      let nextIdx = (idx + 1) % arr.length;
+      // să sară peste multe "" pentru numerals, dacă vrei, dar lăsăm simplu
+      state[key] = arr[nextIdx] || "";
+      render();
+    }
+
+    let longPressTimer = null;
+    let pressTarget = null;
+
+    function attachPressHandlers(tableEl){
+      tableEl.addEventListener("pointerdown",e=>{
+        const colDiv=e.target.closest(".col");if(!colDiv)return;
+        e.preventDefault();
+        pressTarget = colDiv;
+        longPressTimer = setTimeout(()=>{
+          if(pressTarget === colDiv){
+            const key = colDiv.dataset.key;
+            const clause = colDiv.dataset.clause || "p1";
+            openPanel(clause,key);
+            pressTarget = null;
+          }
+        }, 450); // 0.45s long press
+      });
+      tableEl.addEventListener("pointerup",e=>{
+        const colDiv=e.target.closest(".col");
+        if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;}
+        if(pressTarget && colDiv === pressTarget){
+          const key = colDiv.dataset.key;
+          const clause = colDiv.dataset.clause || "p1";
+          cycleColumnValue(clause,key);
+        }
+        pressTarget = null;
+      });
+      tableEl.addEventListener("pointerleave",()=>{
+        if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;}
+        pressTarget = null;
+      });
+    }
+
     createToggleChips();
     loadRow(index);
+    attachPressHandlers(tableP1);
+    attachPressHandlers(tableP2);
     render();
+
+    /* ===== FAVORITE ===== */
+    const favorites = [];
+    const favoritesListEl = document.getElementById("favoritesList");
+
+    function renderFavorites(){
+      favoritesListEl.innerHTML = "";
+      if(!favorites.length){
+        const div=document.createElement("div");
+        div.className="small-label";
+        div.textContent="Nu ai salvat încă nicio propoziție.";
+        favoritesListEl.appendChild(div);
+        return;
+      }
+      favorites.forEach(f=>{
+        const item=document.createElement("div");
+        item.className="fav-item";
+        const ko=document.createElement("div");
+        ko.className="fav-ko";
+        ko.textContent=f.ko;
+        const ro=document.createElement("div");
+        ro.className="fav-ro";
+        ro.textContent=f.ro || "";
+        item.appendChild(ko);item.appendChild(ro);
+        favoritesListEl.appendChild(item);
+      });
+    }
+
+    favBtn.addEventListener("click",()=>{
+      const ko = previewKo.textContent.trim();
+      let ro = previewRo.textContent.trim();
+      if(!ko || ko.includes("alege cuvinte")) return;
+      if(ro.startsWith("···")) ro = "";
+      const exists = favorites.some(f=>f.ko===ko && f.ro===ro);
+      if(!exists){
+        favorites.push({ko,ro});
+      }
+      renderFavorites();
+      // mic feedback vizual simplu
+      favBtn.textContent = "⭐ Salvat!";
+      setTimeout(()=>{favBtn.textContent="⭐ Salvează propoziția";},800);
+    });
 
     /* ===== EXERCIȚII TOPIK ===== */
     const exerciseTypeSelect=document.getElementById("exerciseType");
@@ -1005,35 +1151,181 @@
       ]
     };
 
+    // set special pentru particule multiple
+    const particlePlusSet = [
+      {
+        parts: ["저", " ___ ", " 학교", " ___ ", " 한국어를", " ___ ", " ."],
+        blanks: [
+          {
+            label: "Spațiul (1): subiect (저…)",
+            options: ["은","는","이","가"],
+            correct: 1,
+            explanation: "저는 – marcăm subiectul cu 은/는, aici 는."
+          },
+          {
+            label: "Spațiul (2): locul acțiunii (학교…)",
+            options: ["에","에서"],
+            correct: 1,
+            explanation: "공부하다 se face undeva → 학교에서 (la școală, acțiune)."
+          },
+          {
+            label: "Spațiul (3): obiectul 한국어를…",
+            options: ["을","를","이","가"],
+            correct: 0,
+            explanation: "한국어를 – deja are 를, aici completăm doar conjugația finală."
+          }
+        ],
+        lastText: "공부해요",
+        globalExplanation: "저는 학교에서 한국어를 공부해요. = Eu învăț coreeană la școală."
+      },
+      {
+        parts: ["오늘", " ___ ", " 집", " ___ ", " 영화를", " ___ ", " ."],
+        blanks: [
+          {
+            label: "Spațiul (1): subiect (저…)",
+            options: ["저는","제가","저를"],
+            correct: 0,
+            explanation: "저는 – subiect marcat cu 는."
+          },
+          {
+            label: "Spațiul (2): loc (집…)",
+            options: ["에","에서"],
+            correct: 1,
+            explanation: "집에서 영화를 봐요. (mă uit la film acasă)."
+          },
+          {
+            label: "Spațiul (3): obiect (영화를…)",
+            options: ["봐요","먹어요","가요"],
+            correct: 0,
+            explanation: "영화를 봐요 = mă uit la film."
+          }
+        ],
+        lastText: "",
+        globalExplanation: "오늘 저는 집에서 영화를 봐요. = Azi mă uit la film acasă."
+      }
+    ];
+
     let currentQuestion = null;
     let selectedOptionIndex = null;
+    let selectedMulti = [];
 
     function loadRandomExercise(){
       const type = exerciseTypeSelect.value;
-      const set = exerciseSets[type];
-      if(!set || !set.length)return;
-      currentQuestion = set[Math.floor(Math.random()*set.length)];
-      selectedOptionIndex = null;
-      exerciseQuestionEl.textContent = currentQuestion.sentence;
       exerciseOptionsEl.innerHTML="";
-      currentQuestion.options.forEach((opt,idx)=>{
-        const id="opt-"+idx;
-        const label=document.createElement("label");
-        const radio=document.createElement("input");
-        radio.type="radio";radio.name="exerciseOption";radio.value=idx;radio.id=id;
-        radio.addEventListener("change",()=>{selectedOptionIndex=idx;});
-        const span=document.createElement("span");
-        span.textContent=opt;
-        label.appendChild(radio);label.appendChild(span);
-        exerciseOptionsEl.appendChild(label);
-      });
       exerciseFeedbackEl.textContent="";
       exerciseFeedbackEl.style.color="#333";
+
+      if(type === "particlePlus"){
+        const set = particlePlusSet;
+        if(!set || !set.length) return;
+        currentQuestion = set[Math.floor(Math.random()*set.length)];
+        selectedMulti = new Array(currentQuestion.blanks.length).fill(null);
+
+        // afișare propoziție cu (1)(2)(3)
+        let sentence = "";
+        let blankCounter = 1;
+        currentQuestion.parts.forEach((part,idx)=>{
+          sentence += part;
+          if(idx < currentQuestion.parts.length-1){
+            // nimic special aici, doar concatenat
+          }
+        });
+        // afișăm simplu cu indicatoare
+        exerciseQuestionEl.textContent = sentence.replace(/___/g, (_,i)=>{
+          return "";
+        }) + "  (completezi spațiile 1, 2, 3 de mai jos)";
+
+        currentQuestion.blanks.forEach((blank, idx)=>{
+          const block = document.createElement("div");
+          block.style.marginTop = "4px";
+          const title = document.createElement("div");
+          title.className = "small-label";
+          title.textContent = `(${idx+1}) ${blank.label}`;
+          block.appendChild(title);
+
+          blank.options.forEach((opt, optIdx)=>{
+            const id = `multi-${idx}-${optIdx}`;
+            const label = document.createElement("label");
+            const radio = document.createElement("input");
+            radio.type="radio";
+            radio.name=`blank-${idx}`;
+            radio.value=optIdx;
+            radio.id=id;
+            radio.addEventListener("change",()=>{
+              selectedMulti[idx] = optIdx;
+            });
+            const span=document.createElement("span");
+            span.textContent = opt;
+            label.appendChild(radio);
+            label.appendChild(span);
+            block.appendChild(label);
+          });
+          exerciseOptionsEl.appendChild(block);
+        });
+      } else {
+        const set = exerciseSets[type];
+        if(!set || !set.length)return;
+        currentQuestion = set[Math.floor(Math.random()*set.length)];
+        selectedOptionIndex = null;
+        exerciseQuestionEl.textContent = currentQuestion.sentence;
+        currentQuestion.blanks = undefined; // sigur single-mode
+        currentQuestion.options.forEach((opt,idx)=>{
+          const id="opt-"+idx;
+          const label=document.createElement("label");
+          const radio=document.createElement("input");
+          radio.type="radio";radio.name="exerciseOption";radio.value=idx;radio.id=id;
+          radio.addEventListener("change",()=>{selectedOptionIndex=idx;});
+          const span=document.createElement("span");
+          span.textContent=opt;
+          label.appendChild(radio);label.appendChild(span);
+          exerciseOptionsEl.appendChild(label);
+        });
+      }
     }
 
     checkAnswerBtn.addEventListener("click",()=>{
-      if(!currentQuestion){exerciseFeedbackEl.textContent="Mai întâi apasă „Întrebare nouă”.";return;}
-      if(selectedOptionIndex===null){exerciseFeedbackEl.textContent="Te rog alege un răspuns.";return;}
+      const type = exerciseTypeSelect.value;
+      if(!currentQuestion){
+        exerciseFeedbackEl.textContent="Mai întâi apasă „Întrebare nouă”.";
+        return;
+      }
+
+      if(type === "particlePlus" && currentQuestion.blanks){
+        // verificăm toate spațiile
+        for(let i=0;i<currentQuestion.blanks.length;i++){
+          if(selectedMulti[i]===null){
+            exerciseFeedbackEl.textContent=`Te rog alege răspuns pentru spațiul (${i+1}).`;
+            return;
+          }
+        }
+        let allCorrect = true;
+        let detailLines = [];
+        currentQuestion.blanks.forEach((blank,idx)=>{
+          const isCorrect = selectedMulti[idx] === blank.correct;
+          if(isCorrect){
+            detailLines.push(`(${idx+1}) ✔ ${blank.explanation}`);
+          }else{
+            const correctOpt = blank.options[blank.correct];
+            detailLines.push(`(${idx+1}) ✘ Corect: "${correctOpt}". ${blank.explanation}`);
+            allCorrect = false;
+          }
+        });
+        const fullSentence = currentQuestion.globalExplanation || "";
+        if(allCorrect){
+          exerciseFeedbackEl.style.color="#2e7d32";
+          exerciseFeedbackEl.textContent = "✔ Toate spațiile sunt corecte! " + fullSentence;
+        }else{
+          exerciseFeedbackEl.style.color="#c62828";
+          exerciseFeedbackEl.textContent = detailLines.join(" / ") + " | " + fullSentence;
+        }
+        return;
+      }
+
+      // modul vechi (un singur blank)
+      if(selectedOptionIndex===null){
+        exerciseFeedbackEl.textContent="Te rog alege un răspuns.";
+        return;
+      }
       if(selectedOptionIndex===currentQuestion.correct){
         exerciseFeedbackEl.textContent="✔ Corect! " + currentQuestion.explanation;
         exerciseFeedbackEl.style.color="#2e7d32";
@@ -1043,6 +1335,7 @@
         exerciseFeedbackEl.style.color="#c62828";
       }
     });
+
     nextQuestionBtn.addEventListener("click",loadRandomExercise);
     exerciseTypeSelect.addEventListener("change",loadRandomExercise);
 
