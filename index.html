@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean – Study App v1.0</title>
+  <title>Raluca Korean – Study App v1.1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -159,7 +159,6 @@
     }
     .panel-item-tag{font-size:10px;color:var(--accent-strong);}
 
-    /* bottom nav */
     .bottom-nav{
       position:fixed;bottom:0;left:0;right:0;
       background:#ffffffee;border-top:1px solid var(--border);
@@ -179,7 +178,6 @@
       .col{min-width:95px;}
     }
 
-    /* Exercises */
     .card{
       background:var(--card-bg);border-radius:14px;padding:10px;
       box-shadow:0 4px 12px rgba(120,96,190,0.12);border:1px solid var(--border);
@@ -204,7 +202,6 @@
       font-size:12px;margin-top:4px;
     }
 
-    /* Glossary */
     .glossary-search{
       display:flex;gap:6px;align-items:center;margin-top:4px;
     }
@@ -232,7 +229,6 @@
       <p id="subtitle">Builder propoziții + particule + audio</p>
     </header>
 
-    <!-- SCREEN 1: BUILDER -->
     <div class="screen active" id="screen-builder">
       <div class="mode-panel">
         <div class="mode-row">
@@ -269,7 +265,8 @@
         </div>
         <div class="legend">
           ➤ Tap pe o coloană pentru a schimba cuvântul (panel cu coreeană + traducere).  
-          ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).
+          ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).  
+          ➤ Dacă debifezi o parte sus, dispare și din propoziția de jos și din random.
         </div>
 
         <div class="preview-card">
@@ -294,7 +291,6 @@
       </div>
     </div>
 
-    <!-- SCREEN 2: EXERCIȚII TOPIK -->
     <div class="screen" id="screen-exercises">
       <div class="card">
         <h2>📝 Exerciții TOPIK – propoziții</h2>
@@ -322,7 +318,6 @@
       </div>
     </div>
 
-    <!-- SCREEN 3: GLOSAR -->
     <div class="screen" id="screen-glossary">
       <div class="card">
         <h2>📚 Glosar coreean–român</h2>
@@ -335,7 +330,6 @@
     </div>
   </div>
 
-  <!-- bottom nav -->
   <nav class="bottom-nav">
     <button class="nav-btn active" data-target="builder">
       <span class="icon">🏗</span>
@@ -351,7 +345,6 @@
     </button>
   </nav>
 
-  <!-- overlay panel -->
   <div class="overlay hidden" id="overlay">
     <div class="panel">
       <div class="panel-header">
@@ -372,7 +365,6 @@
   </div>
 
   <script>
-    /* === LISTE DE CUVINTE (CA ÎNAINTE) === */
     const subjects = [
       "저","나","너","우리","너희","사람","학생","선생님","직원","전문가","지원자","관리자",
       "부모님","아이","어른","시민","고객","의사","간호사","연구자","관계자","대표","회장",
@@ -588,7 +580,6 @@
 
     const subtitleEl=document.getElementById("subtitle");
 
-    /* bottom nav & screens */
     const screens = {
       builder: document.getElementById("screen-builder"),
       exercises: document.getElementById("screen-exercises"),
@@ -609,14 +600,13 @@
         subtitleEl.textContent="Exerciții TOPIK – verb, particulă, conjugare";
       }else{
         subtitleEl.textContent="Glosar coreean–român (cuvinte din aplicație)";
-        renderGlossary(""); // la intrare, randăm lista
+        renderGlossary("");
       }
     }
     navButtons.forEach(btn=>{
       btn.addEventListener("click",()=>setScreen(btn.dataset.target));
     });
 
-    /* funcții particule */
     const hasBatchim = (syl) => {
       if(!syl) return false;
       const code = syl.charCodeAt(syl.length-1) - 0xAC00;
@@ -676,13 +666,6 @@
         activeP2[cb.dataset.key]=cb.checked;render();
       });
 
-      enableP2.addEventListener("change",()=>{
-        const on=enableP2.checked;
-        if(on){titleP2.classList.remove("hidden");tableP2.classList.remove("hidden");}
-        else{titleP2.classList.add("hidden");tableP2.classList.add("hidden");}
-        updatePreview();
-      });
-
       resetBtn.addEventListener("click",()=>{
         [...togglesP1.querySelectorAll("input")].forEach(cb=>{
           cb.checked=true;activeP1[cb.dataset.key]=true;
@@ -691,6 +674,13 @@
           cb.checked=true;activeP2[cb.dataset.key]=true;
         });
         render();
+      });
+
+      enableP2.addEventListener("change",()=>{
+        const on=enableP2.checked;
+        if(on){titleP2.classList.remove("hidden");tableP2.classList.remove("hidden");}
+        else{titleP2.classList.add("hidden");tableP2.classList.add("hidden");}
+        updatePreview();
       });
     }
 
@@ -728,64 +718,67 @@
       });
     }
 
-    function buildClauseSentence(state){
+    function buildClauseSentence(state, activeMap){
       const koParts=[], roParts=[];
+      const use = (key) => activeMap[key] !== false;
+
       const subj = state.subject;
-      if(subj){
+      if(subj && use("subject")){
         koParts.push(addSubjectWithParticle(subj));
         roParts.push((translations.subject && translations.subject[subj]) || subj);
       }
       const t = state.time;
-      if(t){
+      if(t && use("time")){
         koParts.push(addTimeWithParticle(t));
         roParts.push((translations.time && translations.time[t]) || t);
       }
       const p = state.place;
-      if(p){
+      if(p && use("place")){
         koParts.push(addPlaceWithParticle(p));
         roParts.push((translations.place && translations.place[p]) || p);
       }
       const m = state.mod;
-      if(m){
+      if(m && use("mod")){
         koParts.push(m);
         roParts.push((translations.mod && translations.mod[m]) || m);
       }
       const obj = state.object;
-      if(obj){
+      if(obj && use("object")){
         koParts.push(addObjectWithParticle(obj));
         roParts.push((translations.object && translations.object[obj]) || obj);
       }
       const num = state.numeral;
-      if(num){
+      if(num && use("numeral")){
         koParts.push(num);
         roParts.push(num);
       }
       const cnt = state.counter;
-      if(cnt){
+      if(cnt && use("counter")){
         koParts.push(cnt);
         roParts.push((translations.counter && translations.counter[cnt]) || cnt);
       }
       const v = state.verb;
-      if(v){
+      if(v && use("verb")){
         koParts.push(v);
         roParts.push((translations.verb && translations.verb[v]) || v);
       }
       const cj = state.conjug;
-      if(cj){
+      if(cj && use("conjug")){
         koParts.push(cj);
         roParts.push((translations.conjug && translations.conjug[cj]) || cj);
       }
       return { ko: koParts.join(" "), ro: roParts };
     }
 
+    let showRo=true;
     function updatePreview(){
-      const c1=buildClauseSentence(stateP1);
+      const c1=buildClauseSentence(stateP1, activeP1);
       let koText=c1.ko;
       let roWords=[...c1.ro];
 
       const conj1=stateP1["conjug"];
       if(enableP2.checked && conj1 && isLinkingConj(conj1)){
-        const c2=buildClauseSentence(stateP2);
+        const c2=buildClauseSentence(stateP2, activeP2);
         if(c2.ko){
           koText = koText + " / " + c2.ko;
           roWords = roWords.concat(["//"], c2.ro);
@@ -813,6 +806,9 @@
       nextBtn.disabled=index===maxLen-1;
       updatePreview();
     }
+
+    let panelClause="p1";
+    let panelKey="subject";
 
     function openPanel(clause,key){
       panelClause=clause;panelKey=key;
@@ -870,6 +866,13 @@
     }
 
     const overlayEl=document.getElementById("overlay");
+    const closePanelBtn=document.getElementById("closePanelBtn");
+    const newWordInput=document.getElementById("newWordInput");
+    const addWordBtn=document.getElementById("addWordBtn");
+    const panelTitle=document.getElementById("panelTitle");
+    const panelSub=document.getElementById("panelSub");
+    const panelList=document.getElementById("panelList");
+
     closePanelBtn.addEventListener("click",()=>overlayEl.classList.add("hidden"));
     overlayEl.addEventListener("click",e=>{if(e.target===overlayEl)overlayEl.classList.add("hidden");});
     addWordBtn.addEventListener("click",()=>{
@@ -897,7 +900,6 @@
     prevBtn.addEventListener("click",()=>{if(index>0){index--;loadRow(index);render();}});
     nextBtn.addEventListener("click",()=>{if(index<maxLen-1){index++;loadRow(index);render();}});
 
-    let showRo=true;
     toggleRoBtn.addEventListener("click",()=>{
       showRo=!showRo;
       toggleRoBtn.textContent = showRo ? "Ascunde traducerea" : "Arată traducerea";
@@ -932,7 +934,6 @@
     loadRow(index);
     render();
 
-    /* ===== EXERCIȚII TOPIK ===== */
     const exerciseTypeSelect=document.getElementById("exerciseType");
     const exerciseQuestionEl=document.getElementById("exerciseQuestion");
     const exerciseOptionsEl=document.getElementById("exerciseOptions");
@@ -1026,6 +1027,7 @@
         exerciseOptionsEl.appendChild(label);
       });
       exerciseFeedbackEl.textContent="";
+      exerciseFeedbackEl.style.color="#333";
     }
 
     checkAnswerBtn.addEventListener("click",()=>{
@@ -1043,7 +1045,6 @@
     nextQuestionBtn.addEventListener("click",loadRandomExercise);
     exerciseTypeSelect.addEventListener("change",loadRandomExercise);
 
-    /* ===== GLOSAR ===== */
     const glossarySearch=document.getElementById("glossarySearch");
     const glossaryList=document.getElementById("glossaryList");
     const glossaryEntries=[];
@@ -1101,7 +1102,6 @@
 
     glossarySearch.addEventListener("input",()=>renderGlossary(glossarySearch.value));
 
-    // pornește pe ecranul builder
     setScreen("builder");
   </script>
 </body>
