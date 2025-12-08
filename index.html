@@ -721,6 +721,7 @@ function buildVerbPhrase(dictVerb,cj){
   if(!dictVerb)return cj||"";
   if(!cj)return dictVerb;
 
+  // 1) finale pe care le știm clar
   if(cj==="-아요/어요")return presentPolite(dictVerb);
   if(cj==="-았어요/었어요")return pastPolite(dictVerb);
   if(cj==="-(으)세요")return futureL(dictVerb)+"세요";
@@ -743,6 +744,7 @@ function buildVerbPhrase(dictVerb,cj){
   if(cj==="-게 되다")return getVerbStem(dictVerb)+"게 돼요";
   if(cj==="-아/어지다")return stemPlusAeo(dictVerb)+"지다";
 
+  // 2) Conjugări de legătură (cer propoziția 2)
   if(isLinkingConj(cj)){
     if(cj==="-고 나서")return getVerbStem(dictVerb)+"고 나서";
     if(cj==="-기 전에")return getVerbStem(dictVerb)+"기 전에";
@@ -754,6 +756,23 @@ function buildVerbPhrase(dictVerb,cj){
     if(cj==="-기에")return getVerbStem(dictVerb)+"기에";
     if(cj==="-길래")return getVerbStem(dictVerb)+"길래";
     return getVerbStem(dictVerb)+cj.replace(/^-/, "");
+  }
+
+  // 3) FINAL NE-CUNOSCUT (adăugat de tine)
+  //    → îl „lipim” inteligent de verb:
+  //    - scoatem cratima
+  //    - dacă începe cu hangul: lipim direct (가 + 고 있었어요 → 가고 있었어요)
+  //    - altfel: punem un spațiu între verb și final
+  let raw = cj.replace(/^-/, "");   // scoatem '-' de la început
+  raw = raw.trimStart();            // fără spații inutile la stânga
+  const stem = getVerbStem(dictVerb);
+  if(!raw) return stem;             // dacă ai scris doar "-"
+
+  if(/^[가-힣]/.test(raw[0])){       // dacă începe cu hangul → lipim direct
+    return stem + raw;
+  }
+  // altfel (ex: " 수 있어요") → păstrăm spațiul
+  return stem + " " + raw;
   }
 
   // fallback – nu o lăsăm goală
