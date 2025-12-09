@@ -949,12 +949,11 @@ const labelsRo={
   verb:"VERB"
 };
 /* Propoziție românească naturală – Ordine B: Timp → Subiect → Loc → Mod → Obiect → Verb */
-// Construiește o propoziție românească cât mai naturală
+/* Propoziție românească naturală – Ordine: Timp → Subiect → Loc → Mod → Obiect → Verb */
 function buildNaturalRomanian(state, activeMap){
   const use = (key) =>
     activeMap[key] !== false && isColumnVisible(key) && state[key];
 
-  // helper pentru a lua traducerea, altfel cuvântul original
   const getRo = (catKey, stateKey) => {
     const dict = translations[catKey] || {};
     const raw = state[stateKey];
@@ -962,15 +961,12 @@ function buildNaturalRomanian(state, activeMap){
     return dict[raw] || raw;
   };
 
-  // părțile românești
   const timeRo    = use("time")    ? getRo("time", "time")       : "";
   const subjRo    = use("subject") ? getRo("subject", "subject") : "";
   const placeRo   = use("place")   ? getRo("place", "place")     : "";
   const modRo     = use("mod")     ? getRo("mod", "mod")         : "";
   const objectRo  = use("object")  ? getRo("object", "object")   : "";
   const numeralRo = use("numeral") ? (state.numeral || "")       : "";
-  // COUNTER îl ignorăm în traducerea cursivă (sună ciudat „bucată carte”)
-  // dar îl păstrăm în dicționare pentru învățat coreeană
 
   const verbRaw   = state.verb || "";
   const verbRoBase =
@@ -981,7 +977,6 @@ function buildNaturalRomanian(state, activeMap){
         state.conjug
       : "";
 
-  // Obiectul: punem număr + substantiv (dacă există)
   let objectPhrase = "";
   if (objectRo) {
     const objPieces = [];
@@ -990,31 +985,30 @@ function buildNaturalRomanian(state, activeMap){
     objectPhrase = objPieces.join(" ");
   }
 
-  // Verbul: scoatem „a ” din față, dar păstrăm explicația dintre paranteze
   let verbPhrase = "";
   if (verbRoBase) {
-    const cleaned = verbRoBase.replace(/^a\s+/, ""); // „a merge” → „merge”
+    const cleaned = verbRoBase.replace(/^a\s+/, ""); // “a merge → merge”
     verbPhrase = cleaned;
     if (conjRo) verbPhrase += ` (${conjRo})`;
   } else if (conjRo) {
     verbPhrase = `(${conjRo})`;
   }
 
-  // Ordinea: TIME + SUBJECT + PLACE + MOD + OBJECT + VERB
   const parts = [];
-  if (timeRo)   parts.push(timeRo);      // Astăzi
-  if (subjRo)   parts.push(subjRo);      // eu (formal)
-  if (placeRo)  parts.push(placeRo);     // acasă
-  if (modRo)    parts.push(modRo);       // bine
-  if (objectPhrase) parts.push(objectPhrase); // 2 cărți
-  if (verbPhrase)   parts.push(verbPhrase);   // citesc (prezent politicos)
+  if (timeRo) parts.push(timeRo);
+  if (subjRo) parts.push(subjRo);
+  if (placeRo) parts.push(placeRo);
+  if (modRo) parts.push(modRo);
+  if (objectPhrase) parts.push(objectPhrase);
+  if (verbPhrase) parts.push(verbPhrase);
 
   if (!parts.length) return "";
 
   let sentence = parts.join(" ");
-  // majusculă + punct
   sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+
   if (!/[.!?]$/.test(sentence)) sentence += ".";
+
   return sentence;
 }
   
