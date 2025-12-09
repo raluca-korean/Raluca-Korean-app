@@ -1110,33 +1110,34 @@ function analyzeNaturalnessP1(){
 
 let showRo=true;
 function updatePreview(){
-  const c1=buildClauseSentence(stateP1,activeP1,null);
-  let koText=c1.ko;
-  let roText=c1.roText;
+  const c1 = buildClauseSentence(stateP1,activeP1,null);
+  let koText = c1.ko || "";
 
-  const conj1=stateP1.conjug;
-  if(enableP2.checked && conj1 && isLinkingConj(conj1)){
-    const c2=buildClauseSentence(stateP2,activeP2,null);
+  if(enableP2.checked && stateP1.conjug && isLinkingConj(stateP1.conjug)){
+    const c2 = buildClauseSentence(stateP2,activeP2,null);
     if(c2.ko){
-      koText += " / " + c2.ko;
-      roText += roText?` // [P2] ${c2.roText}`:`[P2] ${c2.roText}`;
+      koText += " " + c2.ko;
     }
   }
 
-  if(!koText){
+  if(!koText.trim()){
     previewKo.textContent="(alege cuvinte din tabel)";
     previewRo.textContent="";
     naturalHint.textContent="";
     return;
   }
-  previewKo.textContent=koText;
-  previewRo.textContent=showRo
-    ? (roText||"(fără traducere disponibilă încă)")
+
+  previewKo.textContent = koText;
+
+  // ➜ aici folosim traducerea românească NATURALĂ
+  const roNatural = buildNaturalRomanian(stateP1, activeP1);
+  previewRo.textContent = showRo
+    ? (roNatural || "(fără traducere disponibilă încă)")
     : "··· traducere ascunsă ···";
 
-  const nat=analyzeNaturalnessP1();
+  const nat = analyzeNaturalnessP1();
   if(nat.ok){
-    naturalHint.textContent="✅ Naturalitate: OK (după regulile simple din aplicație)";
+    naturalHint.textContent="✅ Propoziție naturală (după regulile simple din aplicație).";
   }else{
     naturalHint.textContent=`⚠ ${nat.msg} 「${nat.suggestion}」`;
   }
