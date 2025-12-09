@@ -948,7 +948,61 @@ const labelsRo={
   counter:"COUNTER",
   verb:"VERB"
 };
+/* Propoziție românească naturală – Ordine B: Timp → Subiect → Loc → Mod → Obiect → Verb */
+function buildNaturalRomanian(state, activeMap){
+  const use = k => activeMap[k] !== false && isColumnVisible(k);
+  const tr = (cat, w) => (translations[cat] && translations[cat][w]) || w || "";
 
+  const parts = [];
+
+  // 1) Timp
+  if(use("time") && state.time){
+    parts.push(tr("time", state.time));
+  }
+
+  // 2) Subiect
+  if(use("subject") && state.subject){
+    parts.push(tr("subject", state.subject));
+  }
+
+  // 3) Loc
+  if(use("place") && state.place){
+    const placeRo = tr("place", state.place);
+    parts.push("la " + placeRo);
+  }
+
+  // 4) Mod
+  if(use("mod") && state.mod){
+    parts.push(tr("mod", state.mod));
+  }
+
+  // 5) Obiect (+ eventual numeral + counter, dacă le folosești în română)
+  if(use("object") && state.object){
+    parts.push(tr("object", state.object));
+  }
+
+  // 6) Verb + explicație final
+  let verbRo = "";
+  if(use("verb") && state.verb){
+    verbRo = tr("verb", state.verb);
+  }
+  if(use("conjug") && state.conjug){
+    const cj = tr("conjug", state.conjug);
+    if(cj && cj !== state.conjug){
+      verbRo += " (" + cj + ")";
+    }
+  }
+  if(verbRo){
+    parts.push(verbRo);
+  }
+
+  let sentence = parts.join(" ").trim();
+  sentence = sentence.replace(/\s+/g," ");
+  if(sentence){
+    sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1) + ".";
+  }
+  return sentence || "";
+}
 function buildClauseSentence(state,activeMap,conjOverride){
   const koParts=[];
   const roSegs=[];
