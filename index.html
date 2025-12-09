@@ -1361,7 +1361,208 @@ favBtn.addEventListener("click",()=>{
   favBtn.textContent="⭐ Salvat!";
   setTimeout(()=>{favBtn.textContent="⭐ Salvează propoziția";},800);
 });
+/* ================== EXERCIȚII TOPIK – modul nou ================== */
 
+// Elemente din HTML pentru exerciții
+const exerciseTypeEl = document.getElementById("exerciseType");
+const exerciseQuestionEl = document.getElementById("exerciseQuestion");
+const exerciseOptionsEl = document.getElementById("exerciseOptions");
+const exerciseFeedbackEl = document.getElementById("exerciseFeedback");
+const checkAnswerBtn = document.getElementById("checkAnswerBtn");
+const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+
+let currentExercise = null;
+
+// helper random
+function randItem(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+// Construim o propoziție coreeană simplă pentru exerciții (fără particule complicate)
+function buildSimpleKoreanSentence(parts){
+  const out = [];
+  if(parts.time) out.push(parts.time);
+  if(parts.subject) out.push(parts.subject);
+  if(parts.place) out.push(parts.place);
+  if(parts.mod) out.push(parts.mod);
+  if(parts.object) out.push(parts.object);
+  if(parts.verb) out.push(parts.verb);
+  return out.join(" ");
+}
+
+// 1) Exercițiu: Alege VERBUL corect
+function makeVerbExercise(){
+  const subj = randItem(subjects);
+  const t = randItem(times);
+  const place = randItem(places);
+  const obj = randItem(objects);
+  const correctVerb = randItem(verbs);
+
+  const sentenceKorean = buildSimpleKoreanSentence({
+    time: t,
+    subject: subj,
+    place: place,
+    object: obj,
+    verb: "___"
+  });
+
+  // opțiuni (4 verbe, 1 corect)
+  const options = new Set();
+  options.add(correctVerb);
+  while(options.size < 4){
+    options.add(randItem(verbs));
+  }
+  const optionsArr = Array.from(options).sort(() => Math.random()-0.5);
+
+  currentExercise = {
+    type: "verb",
+    correct: correctVerb,
+    options: optionsArr
+  };
+
+  exerciseQuestionEl.textContent = `Alege verbul corect pentru propoziția:  ${sentenceKorean}`;
+  renderExerciseOptions(optionsArr);
+  exerciseFeedbackEl.textContent = "";
+}
+
+// 2) Exercițiu: Alege PARTICULA corectă – simplificat
+// De ex: 오늘 ___ 친구를 만나요.
+// răspuns posibil: 에, 에서, 을/를 etc. (facem doar un exercițiu de recunoaștere)
+const simpleParticles = ["은/는","이/가","을/를","에","에서"];
+
+function makeParticleExercise(){
+  const t = randItem(times);
+  const subj = randItem(subjects);
+  const obj = randItem(objects);
+  const place = randItem(places);
+
+  const correct = randItem(simpleParticles);
+
+  const sentence =
+    `${t} ___ ${subj} ___ ${place} ___ ${obj} ___ 가요.`;
+
+  const options = new Set();
+  options.add(correct);
+  while(options.size < 4){
+    options.add(randItem(simpleParticles));
+  }
+  const optionsArr = Array.from(options).sort(() => Math.random()-0.5);
+
+  currentExercise = {
+    type: "particle",
+    correct,
+    options: optionsArr
+  };
+
+  exerciseQuestionEl.textContent = `Alege particula potrivită (simplu):  ${sentence}`;
+  renderExerciseOptions(optionsArr);
+  exerciseFeedbackEl.textContent = "";
+}
+
+// 3) Exercițiu: Alege CONJUGAREA corectă
+function makeConjugExercise(){
+  const verb = randItem(verbs);
+  const cj = randItem(conjugations);
+
+  const baseSentence = `${verb} (___)`;
+  const options = new Set();
+  options.add(cj);
+  while(options.size < 4){
+    options.add(randItem(conjugations));
+  }
+  const optionsArr = Array.from(options).sort(() => Math.random()-0.5);
+
+  currentExercise = {
+    type: "conjug",
+    correct: cj,
+    verb,
+    options: optionsArr
+  };
+
+  exerciseQuestionEl.textContent =
+    `Alege forma corectă pentru verbul:  ${verb}  (forma politicosă / gramaticală potrivită)`;
+  renderExerciseOptions(optionsArr);
+  exerciseFeedbackEl.textContent = "";
+}
+
+// RENDER opțiuni în UI
+function renderExerciseOptions(optionsArr){
+  exerciseOptionsEl.innerHTML = "";
+  optionsArr.forEach((opt, idx)=>{
+    const id = "opt_"+idx+"_"+Date.now();
+    const label = document.createElement("label");
+    label.style.display = "flex";
+    label.style.alignItems = "center";
+    label.style.gap = "6px";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "exerciseOption";
+    radio.value = opt;
+    radio.id = id;
+
+    const span = document.createElement("span");
+    span.textContent = opt;
+
+    label.appendChild(radio);
+    label.appendChild(span);
+    exerciseOptionsEl.appendChild(label);
+  });
+}
+
+// Generator întrebare nouă
+function newExerciseQuestion(){
+  const type = exerciseTypeEl ? exerciseTypeEl.value : "verb";
+
+  if(type === "verb"){
+    makeVerbExercise();
+  }else if(type === "particle"){
+    makeParticleExercise();
+  }else if(type === "conjug" || type === "conjugation"){
+    makeConjugExercise();
+  }else{
+    // fallback: verb
+    makeVerbExercise();
+  }
+}
+
+// Verificare răspuns
+function checkExerciseAnswer(){
+  if(!currentExercise){
+    exerciseFeedbackEl.textContent = "Mai întâi apasă „Întrebare nouă”.";
+    return;
+  }
+  const chosen = Array.from(
+    exerciseOptionsEl.querySelectorAll("input[name='exerciseOption']")
+  ).find(x=>x.checked);
+
+  if(!chosen){
+    exerciseFeedbackEl.textContent = "Te rog să alegi un răspuns.";
+    return;
+  }
+
+  const val = chosen.value;
+  const correct = currentExercise.correct;
+
+  if(val === correct){
+    exerciseFeedbackEl.textContent = "✅ Corect! Bravo!";
+  }else{
+    exerciseFeedbackEl.textContent = `❌ Greșit. Răspunsul corect era: ${correct}`;
+  }
+}
+
+// Legăm butoanele
+if(nextQuestionBtn){
+  nextQuestionBtn.addEventListener("click", newExerciseQuestion);
+}
+if(checkAnswerBtn){
+  checkAnswerBtn.addEventListener("click", checkExerciseAnswer);
+}
+
+// La început: mesaj neutru
+if(exerciseQuestionEl){
+  exerciseQuestionEl.textContent = "Apasă „Întrebare nouă” ca să începi exercițiile.";
+}
+    
 /* glosar simplu (nu schimb) */
 const glossarySearch=document.getElementById("glossarySearch");
 const glossaryList=document.getElementById("glossaryList");
