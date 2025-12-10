@@ -949,59 +949,51 @@ const labelsRo={
   verb:"VERB"
 };
 /* Propoziție românească naturală – Ordine B: Timp → Subiect → Loc → Mod → Obiect → Verb */
-function buildNaturalRomanian(state, activeMap){
-  const use = k => activeMap[k] !== false && isColumnVisible(k);
-  const tr = (cat, w) => (translations[cat] && translations[cat][w]) || w || "";
+function updatePreview() {
+  // 1) Propoziția 1 (P1)
+  const c1 = buildClauseSentence(stateP1, activeP1, null);
+  let fullKo = c1.ko || "";
 
-  const parts = [];
-
-  // 1) Timp
-  if(use("time") && state.time){
-    parts.push(tr("time", state.time));
-  }
-
-  // 2) Subiect
-  if(use("subject") && state.subject){
-    parts.push(tr("subject", state.subject));
-  }
-
-  // 3) Loc
-  if(use("place") && state.place){
-    const placeRo = tr("place", state.place);
-    parts.push("la " + placeRo);
-  }
-
-  // 4) Mod
-  if(use("mod") && state.mod){
-    parts.push(tr("mod", state.mod));
-  }
-
-  // 5) Obiect (+ eventual numeral + counter, dacă le folosești în română)
-  if(use("object") && state.object){
-    parts.push(tr("object", state.object));
-  }
-
-  // 6) Verb + explicație final
-  let verbRo = "";
-  if(use("verb") && state.verb){
-    verbRo = tr("verb", state.verb);
-  }
-  if(use("conjug") && state.conjug){
-    const cj = tr("conjug", state.conjug);
-    if(cj && cj !== state.conjug){
-      verbRo += " (" + cj + ")";
+  // 2) Propoziția 2 (P2) – doar pentru conjuncții de legătură (⭐)
+  let c2 = null;
+  if (
+    enableP2.checked &&
+    stateP1.conjug &&
+    isLinkingConj(stateP1.conjug)
+  ) {
+    c2 = buildClauseSentence(stateP2, activeP2, null);
+    if (c2.ko) {
+      fullKo += " " + c2.ko;
     }
   }
-  if(verbRo){
-    parts.push(verbRo);
+
+  if (!fullKo.trim()) {
+    previewKo.textContent = "(alege cuvinte din tabel)";
+    previewRo.textContent = "";
+    naturalHint.textContent = "";
+    return;
   }
 
-  let sentence = parts.join(" ").trim();
-  sentence = sentence.replace(/\s+/g," ");
-  if(sentence){
-    sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1) + ".";
+  // coreeana completă
+  previewKo.textContent = fullKo;
+
+  // 🔹 traducere românească naturală
+  const ro1 = buildNaturalRomanian(stateP1, activeP1);
+  const ro2 = c2 ? buildNaturalRomanian(stateP2, activeP2) : "";
+  const fullRo = ro1 + (ro2 ? " " + ro2 : "");
+
+  previewRo.textContent = showRo
+    ? (fullRo || "(fără traducere disponibilă încă)")
+    : "··· traducere ascunsă ···";
+
+  // naturalitate
+  const nat = analyzeNaturalnessP1();
+  if (nat.ok) {
+    naturalHint.textContent =
+      "✅ Propoziție naturală (după regulile simple din aplicație).";
+  } else {
+    naturalHint.textContent = `⚠ ${nat.msg} 「${nat.suggestion}」`;
   }
-  return sentence || "";
 }
 function buildClauseSentence(state,activeMap,conjOverride){
   const koParts=[];
