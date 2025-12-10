@@ -974,10 +974,10 @@ function updatePreview() {
     return;
   }
 
-  // coreeana completă
+  // fraza completă în coreeană
   previewKo.textContent = fullKo;
 
-  // 🔹 traducere românească naturală
+  // 🔹 traducere românească naturală (P1 + P2 dacă există)
   const ro1 = buildNaturalRomanian(stateP1, activeP1);
   const ro2 = c2 ? buildNaturalRomanian(stateP2, activeP2) : "";
   const fullRo = ro1 + (ro2 ? " " + ro2 : "");
@@ -986,7 +986,7 @@ function updatePreview() {
     ? (fullRo || "(fără traducere disponibilă încă)")
     : "··· traducere ascunsă ···";
 
-  // naturalitate
+  // mesaj de naturalitate (rămâne ca înainte)
   const nat = analyzeNaturalnessP1();
   if (nat.ok) {
     naturalHint.textContent =
@@ -996,82 +996,73 @@ function updatePreview() {
   }
 }
 function buildClauseSentence(state,activeMap,conjOverride){
-  const koParts=[];
-  const roSegs=[];
-  const use=k=>activeMap[k]!==false && isColumnVisible(k);
+ /* Propoziție românească naturală – Ordine: Timp → Subiect → Loc → Mod → Obiect → Verb */
+function buildNaturalRomanian(state, activeMap){
+  const use = (key) =>
+    activeMap[key] !== false && isColumnVisible(key) && state[key];
 
-  const subj=state.subject;
-  if(subj&&use("subject")){
-    koParts.push(addSubjectWithParticle(subj));
-    const ro=(translations.subject&&translations.subject[subj])||subj;
-    roSegs.push(`${labelsRo.subject}: ${ro}`);
-  }
-
-  const t=state.time;
-  if(t&&use("time")){
-    koParts.push(addTimeWithParticle(t));
-    const ro=(translations.time&&translations.time[t])||t;
-    roSegs.push(`${labelsRo.time}: ${ro}`);
-  }
-
-  const p=state.place;
-  if(p&&use("place")){
-    koParts.push(addPlaceWithParticle(p));
-    const ro=(translations.place&&translations.place[p])||p;
-    roSegs.push(`${labelsRo.place}: ${ro}`);
-  }
-
-  const m=state.mod;
-  if(m&&use("mod")){
-    koParts.push(m);
-    const ro=(translations.mod&&translations.mod[m])||m;
-    roSegs.push(`${labelsRo.mod}: ${ro}`);
-  }
-
-  const obj=state.object;
-  if(obj&&use("object")){
-    koParts.push(addObjectWithParticle(obj));
-    const ro=(translations.object&&translations.object[obj])||obj;
-    roSegs.push(`${labelsRo.object}: ${ro}`);
-  }
-
-  const num=state.numeral;
-  if(num&&use("numeral")){
-    koParts.push(num);
-    const ro=(translations.numeral&&translations.numeral[num])||num;
-    roSegs.push(`${labelsRo.numeral}: ${ro}`);
-  }
-
-  const cnt=state.counter;
-  if(cnt&&use("counter")){
-    koParts.push(cnt);
-    const ro=(translations.counter&&translations.counter[cnt])||cnt;
-    roSegs.push(`${labelsRo.counter}: ${ro}`);
-  }
-
-  const v=state.verb;
-  const cjUsed=conjOverride||state.conjug;
-  if(v||cjUsed){
-    const vp=buildVerbPhrase(v,cjUsed);
-    if(vp){
-      koParts.push(vp);
-      const roVerb=(translations.verb&&translations.verb[v])||v||"";
-      const cjExp=(translations.conjug&&translations.conjug[cjUsed])||"";
-      let combined=roVerb||"";
-      if(cjExp)combined+=` (${cjExp})`;
-      roSegs.push(`${labelsRo.verb}: ${combined}`);
-    }
-  }
-
-  return{
-    ko:koParts.join(" "),
-    roText:roSegs.join(" / "),
-    time:t,
-    conj:cjUsed
+  // ia traducerea românească sau cuvântul original
+  const getRo = (catKey, stateKey) => {
+    const dict = translations[catKey] || {};
+    const raw = state[stateKey];
+    if (!raw) return "";
+    return dict[raw] || raw;
   };
-}
 
-/* NATURALITATE simplă (timp vs timp verbal) */
+  const timeRo    = use("time")    ? getRo("time", "time")       : "";
+  const subjRo    = use("subject") ? getRo("subject", "subject") : "";
+  const placeRo   = use("place")   ? getRo("place", "place")     : "";
+  const modRo     = use("mod")     ? getRo("mod", "mod")         : "";
+  const objectRo  = use("object")  ? getRo("object", "object")   : "";
+  const numeralRo = use("numeral") ? (state.numeral || "")       : "";
+
+  // obiectul = (număr) + substantiv
+  let objectPhrase = "";
+  if (objectRo) {
+    const objPieces = [];
+    if (numeralRo) objPieces.push(numeralRo);
+    objPieces.push(objectRo);
+    objectPhrase = objPieces.join(" ");
+  }
+
+  // verb românesc: scoatem „a ” din față și păstrăm explicația dintre paranteze
+  const verbRaw = state.verb || "";
+  const verbRoBase =
+    (translations.verb && translations.verb[verbRaw]) || verbRaw || "";
+  const conjRo =
+    state.conjug
+      ? (translations.conjug && translations.conjug[state.conjug]) ||
+        state.conjug
+      : "";
+
+  let verbPhrase = "";
+  if (verbRoBase) {
+    // „a merge” → „merge”
+    const cleaned = verbRoBase.replace(/^a\s+/, "");
+    verbPhrase = cleaned;
+    if (conjRo) verbPhrase += ` (${conjRo})`;
+  } else if (conjRo) {
+    verbPhrase = `(${conjRo})`;
+  }
+
+  // Ordinea finală în română
+  const parts = [];
+  if (timeRo)       parts.push(timeRo);        // Astăzi
+  if (subjRo)       parts.push(subjRo);        // eu (formal)
+  if (placeRo)      parts.push(placeRo);       // acasă
+  if (modRo)        parts.push(modRo);         // bine
+  if (objectPhrase) parts.push(objectPhrase);  // carte / 3 cărți
+  if (verbPhrase)   parts.push(verbPhrase);    // merg (prezent politicos)
+
+  if (!parts.length) return "";
+
+  let sentence = parts.join(" ");
+  sentence = sentence.replace(/\s+/g," ");     // spații duble
+  sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+  if (!/[.!?]$/.test(sentence)) sentence += ".";
+  return sentence;
+}
+  
 function analyzeNaturalnessP1(){
   const t=stateP1.time;
   const cj=stateP1.conjug;
