@@ -1113,24 +1113,29 @@ function updatePreview(){
   const c1 = buildClauseSentence(stateP1,activeP1,null);
   let koText = c1.ko || "";
 
-  if(enableP2.checked && stateP1.conjug && isLinkingConj(stateP1.conjug)){
-    const c2 = buildClauseSentence(stateP2,activeP2,null);
-    if(c2.ko){
-      koText += " " + c2.ko;
+  // --- Propoziția 2: concatenează coreeană + traducere română ---
+let fullKo = c1.ko || "";
+
+// dacă există P2 și conjuncția este de legătură (ex: 면서, 고 etc.)
+if (enableP2.checked && stateP1.conjug && isLinkingConj(stateP1.conjug)) {
+    const c2 = buildClauseSentence(stateP2, activeP2, null);
+    if (c2.ko) {
+        fullKo += " " + c2.ko; // lipește propoziția 2
     }
-  }
+}
 
-  if(!koText.trim()){
-    previewKo.textContent="(alege cuvinte din tabel)";
-    previewRo.textContent="";
-    naturalHint.textContent="";
-    return;
-  }
+// afișăm în UI textul coreean complet
+previewKo.textContent = fullKo;
 
-  previewKo.textContent = koText;
+// --- TRADUCERE ROMÂNĂ COMPLETĂ ---
+let ro1 = buildNaturalRomanian(stateP1, activeP1);
+let ro2 = enableP2.checked ? buildNaturalRomanian(stateP2, activeP2) : "";
 
-  // ➜ aici folosim traducerea românească NATURALĂ
-  const roNatural = buildNaturalRomanian(stateP1, activeP1);
+// combinăm traducerile
+let fullRo = ro1;
+if (ro2) fullRo += " " + ro2;
+
+previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
   previewRo.textContent = showRo
     ? (roNatural || "(fără traducere disponibilă încă)")
     : "··· traducere ascunsă ···";
