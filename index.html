@@ -1109,47 +1109,58 @@ function analyzeNaturalnessP1(){
 }
 
 let showRo=true;
-function updatePreview(){
-  const c1 = buildClauseSentence(stateP1,activeP1,null);
-  let koText = c1.ko || "";
 
-  // --- Propoziția 2: concatenează coreeană + traducere română ---
-let fullKo = c1.ko || "";
+function updatePreview() {
+  // --- 1) Construim Propoziția 1 ---
+  const c1 = buildClauseSentence(stateP1, activeP1, null);
+  let fullKo = c1.ko || "";
 
-// dacă există P2 și conjuncția este de legătură (ex: 면서, 고 etc.)
-if (enableP2.checked && stateP1.conjug && isLinkingConj(stateP1.conjug)) {
-    const c2 = buildClauseSentence(stateP2, activeP2, null);
+  // --- 2) Dacă există PROPOZIȚIA 2 și conjuncție de legătură, o adăugăm ---
+  let c2 = null;
+  if (
+    enableP2.checked &&
+    stateP1.conjug &&
+    isLinkingConj(stateP1.conjug)
+  ) {
+    c2 = buildClauseSentence(stateP2, activeP2, null);
     if (c2.ko) {
-        fullKo += " " + c2.ko; // lipește propoziția 2
+      fullKo += " " + c2.ko; // LIPIM propoziția 2
     }
-}
+  }
 
-// afișăm în UI textul coreean complet
-previewKo.textContent = fullKo;
+  // Dacă nu există text → nu afișăm nimic
+  if (!fullKo.trim()) {
+    previewKo.textContent = "(alege cuvinte din tabel)";
+    previewRo.textContent = "";
+    naturalHint.textContent = "";
+    return;
+  }
 
-// --- TRADUCERE ROMÂNĂ COMPLETĂ ---
-let ro1 = buildNaturalRomanian(stateP1, activeP1);
-let ro2 = enableP2.checked ? buildNaturalRomanian(stateP2, activeP2) : "";
+  // --- 3) Afișăm COREEANA COMPLETĂ (P1 + P2) ---
+  previewKo.textContent = fullKo;
 
-// combinăm traducerile
-let fullRo = ro1;
-if (ro2) fullRo += " " + ro2;
+  // --- 4) TRADUCERE ROMÂNĂ NATURALĂ ---
+  const ro1 = buildNaturalRomanian(stateP1, activeP1);
+  const ro2 = c2 ? buildNaturalRomanian(stateP2, activeP2) : "";
+  let fullRo = ro1;
 
-previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
+  if (ro2) fullRo += " " + ro2;
+
+  // afișare traducere
   previewRo.textContent = showRo
-    ? (roNatural || "(fără traducere disponibilă încă)")
+    ? fullRo
     : "··· traducere ascunsă ···";
 
+  // --- 5) Naturalitatea propoziției 1 se păstrează ca la tine ---
   const nat = analyzeNaturalnessP1();
-  if(nat.ok){
-    naturalHint.textContent="✅ Propoziție naturală (după regulile simple din aplicație).";
-  }else{
-    naturalHint.textContent=`⚠ ${nat.msg} 「${nat.suggestion}」`;
+  if (nat.ok) {
+    naturalHint.textContent =
+      "✅ Propoziție naturală (după regulile simple din aplicație).";
+  } else {
+    naturalHint.textContent = `⚠ ${nat.msg} 「${nat.suggestion}」`;
   }
 }
-
-/* încărcare rând model și navigare */
-function loadRow(i){
+    function loadRow(i){
   columns.forEach(col=>{
     stateP1[col.key]=col.data[i]||"";
   });
