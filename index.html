@@ -1111,11 +1111,11 @@ function analyzeNaturalnessP1(){
 let showRo=true;
 
 function updatePreview() {
-  // --- 1) Construim Propoziția 1 ---
+  // 1) Propoziția 1 (P1)
   const c1 = buildClauseSentence(stateP1, activeP1, null);
   let fullKo = c1.ko || "";
 
-  // --- 2) Dacă există PROPOZIȚIA 2 și conjuncție de legătură, o adăugăm ---
+  // 2) Propoziția 2 (P2) – doar dacă există conjuncție de legătură
   let c2 = null;
   if (
     enableP2.checked &&
@@ -1124,11 +1124,11 @@ function updatePreview() {
   ) {
     c2 = buildClauseSentence(stateP2, activeP2, null);
     if (c2.ko) {
-      fullKo += " " + c2.ko; // LIPIM propoziția 2
+      fullKo += " " + c2.ko;  // ➜ AICI SE LIPESC P1 + P2
     }
   }
 
-  // Dacă nu există text → nu afișăm nimic
+  // 3) Dacă nu avem nimic de afișat
   if (!fullKo.trim()) {
     previewKo.textContent = "(alege cuvinte din tabel)";
     previewRo.textContent = "";
@@ -1136,22 +1136,19 @@ function updatePreview() {
     return;
   }
 
-  // --- 3) Afișăm COREEANA COMPLETĂ (P1 + P2) ---
+  // Afișăm coreeana completă
   previewKo.textContent = fullKo;
 
-  // --- 4) TRADUCERE ROMÂNĂ NATURALĂ ---
+  // 4) TRADUCEREA ROMÂNEASCĂ NATURALĂ
   const ro1 = buildNaturalRomanian(stateP1, activeP1);
   const ro2 = c2 ? buildNaturalRomanian(stateP2, activeP2) : "";
-  let fullRo = ro1;
+  const fullRo = ro1 + (ro2 ? " " + ro2 : "");
 
-  if (ro2) fullRo += " " + ro2;
-
-  // afișare traducere
   previewRo.textContent = showRo
     ? fullRo
     : "··· traducere ascunsă ···";
 
-  // --- 5) Naturalitatea propoziției 1 se păstrează ca la tine ---
+  // 5) Naturalitate
   const nat = analyzeNaturalnessP1();
   if (nat.ok) {
     naturalHint.textContent =
