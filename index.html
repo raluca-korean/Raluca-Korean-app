@@ -996,7 +996,90 @@ function updatePreview() {
   }
 }
 function buildClauseSentence(state,activeMap,conjOverride){
- /* Propoziție românească naturală – Ordine: Timp → Subiect → Loc → Mod → Obiect → Verb */
+  const koParts = [];
+  const roSegs  = [];
+  const use = (key) => activeMap[key] !== false && isColumnVisible(key);
+
+  // SUBJECT
+  const subj = state.subject;
+  if (subj && use("subject")) {
+    koParts.push(addSubjectWithParticle(subj));
+    const ro = (translations.subject && translations.subject[subj]) || subj;
+    roSegs.push(`${labelsRo.subject}: ${ro}`);
+  }
+
+  // TIME
+  const t = state.time;
+  if (t && use("time")) {
+    koParts.push(addTimeWithParticle(t));
+    const ro = (translations.time && translations.time[t]) || t;
+    roSegs.push(`${labelsRo.time}: ${ro}`);
+  }
+
+  // PLACE
+  const p = state.place;
+  if (p && use("place")) {
+    koParts.push(addPlaceWithParticle(p));
+    const ro = (translations.place && translations.place[p]) || p;
+    roSegs.push(`${labelsRo.place}: ${ro}`);
+  }
+
+  // MOD
+  const m = state.mod;
+  if (m && use("mod")) {
+    koParts.push(m);
+    const ro = (translations.mod && translations.mod[m]) || m;
+    roSegs.push(`${labelsRo.mod}: ${ro}`);
+  }
+
+  // OBJECT
+  const obj = state.object;
+  if (obj && use("object")) {
+    koParts.push(addObjectWithParticle(obj));
+    const ro = (translations.object && translations.object[obj]) || obj;
+    roSegs.push(`${labelsRo.object}: ${ro}`);
+  }
+
+  // NUMERAL
+  const num = state.numeral;
+  if (num && use("numeral")) {
+    koParts.push(num);
+    const ro = (translations.numeral && translations.numeral[num]) || num;
+    roSegs.push(`${labelsRo.numeral}: ${ro}`);
+  }
+
+  // COUNTER
+  const cnt = state.counter;
+  if (cnt && use("counter")) {
+    koParts.push(cnt);
+    const ro = (translations.counter && translations.counter[cnt]) || cnt;
+    roSegs.push(`${labelsRo.counter}: ${ro}`);
+  }
+
+  // VERB + CONJUGARE (pentru partea „pe părți” – încă îl folosim la naturalitate / exerciții)
+  const v      = state.verb;
+  const cjUsed = conjOverride || state.conjug;
+  if (v || cjUsed) {
+    const vp = buildVerbPhrase(v, cjUsed);
+    if (vp) {
+      koParts.push(vp);
+      const roVerb = (translations.verb && translations.verb[v]) || v || "";
+      const cjExp  = (translations.conjug && translations.conjug[cjUsed]) || "";
+      let combined = roVerb || "";
+      if (cjExp) combined += ` (${cjExp})`;
+      roSegs.push(`${labelsRo.verb}: ${combined}`);
+    }
+  }
+
+  return {
+    ko:    koParts.join(" "),
+    roText: roSegs.join(" / "),
+    time:  t,
+    conj:  cjUsed
+  };
+}
+
+/* Propoziție românească naturală – Ordine: Timp → Subiect → Loc → Mod → Obiect → Verb */
 function buildNaturalRomanian(state, activeMap){
   const use = (key) =>
     activeMap[key] !== false && isColumnVisible(key) && state[key];
@@ -1004,7 +1087,7 @@ function buildNaturalRomanian(state, activeMap){
   // ia traducerea românească sau cuvântul original
   const getRo = (catKey, stateKey) => {
     const dict = translations[catKey] || {};
-    const raw = state[stateKey];
+    const raw  = state[stateKey];
     if (!raw) return "";
     return dict[raw] || raw;
   };
@@ -1026,7 +1109,7 @@ function buildNaturalRomanian(state, activeMap){
   }
 
   // verb românesc: scoatem „a ” din față și păstrăm explicația dintre paranteze
-  const verbRaw = state.verb || "";
+  const verbRaw    = state.verb || "";
   const verbRoBase =
     (translations.verb && translations.verb[verbRaw]) || verbRaw || "";
   const conjRo =
@@ -1062,7 +1145,6 @@ function buildNaturalRomanian(state, activeMap){
   if (!/[.!?]$/.test(sentence)) sentence += ".";
   return sentence;
 }
-  
 function analyzeNaturalnessP1(){
   const t=stateP1.time;
   const cj=stateP1.conjug;
