@@ -1183,6 +1183,55 @@ function buildNaturalRomanian(state, activeMap){
   sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
   if (!/[.!?]$/.test(sentence)) sentence += ".";
   return sentence;
+  /* === Completează tabelul P1 pornind de la propoziția în română === */
+/*
+   Ordinea așteptată (separată prin virgule):
+   0: Timp      – ex: Astăzi
+   1: Subiect   – ex: eu (formal)
+   2: Loc       – ex: acasă
+   3: Mod       – ex: bine
+   4: Obiect    – ex: carte
+   5: Verb      – ex: merg
+   6: Conjugare – ex: prezent politicos   (opțional)
+*/
+if (applyRoSentenceBtn && roSentenceInput){
+  applyRoSentenceBtn.addEventListener("click", () => {
+    const raw = roSentenceInput.value.trim();
+    if (!raw) return;
+
+    const parts = raw
+      .split(",")
+      .map(p => p.trim())
+      .filter(Boolean);
+
+    const [
+      timeRo,
+      subjRo,
+      placeRo,
+      modRo,
+      objRo,
+      verbRo,
+      conjRo
+    ] = parts;
+
+    // helper mic: dacă nu găsim în dicționar, păstrăm textul așa cum e
+    const mapPart = (cat, roVal) => {
+      if (!roVal) return "";
+      return findKoByRomanian(cat, roVal) || roVal;
+    };
+
+    // completăm stateP1
+    if (timeRo)  stateP1.time    = mapPart("time",    timeRo);
+    if (subjRo)  stateP1.subject = mapPart("subject", subjRo);
+    if (placeRo) stateP1.place   = mapPart("place",   placeRo);
+    if (modRo)   stateP1.mod     = mapPart("mod",     modRo);
+    if (objRo)   stateP1.object  = mapPart("object",  objRo);
+    if (verbRo)  stateP1.verb    = mapPart("verb",    verbRo);
+    if (conjRo)  stateP1.conjug  = mapPart("conjug",  conjRo);
+
+    render();   // actualizăm tabelul + propoziția
+  });
+}
 }
 function analyzeNaturalnessP1(){
   const t=stateP1.time;
