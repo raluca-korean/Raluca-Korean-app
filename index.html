@@ -1078,7 +1078,52 @@ function buildClauseSentence(state,activeMap,conjOverride){
     conj:  cjUsed
   };
 }
+// ================= RO HELPERS (traducere RO mai exactă pentru conjugări) =================
 
+function stripInfinitive(roVerb){
+  // "a merge" -> "merge" | "a studia" -> "studia"
+  return (roVerb || "").replace(/^\s*a\s+/i, "").trim();
+}
+
+function roConjExactTemplate(cj){
+  // întoarce o funcție care primește verbul (fără "a") și dă propoziția RO exactă ca sens
+  const map = {
+    "-아요/어요": (v)=> `${v} (prezent, politicos)`,
+    "-았어요/었어요": (v)=> `${v} (trecut, politicos)`,
+    "-고 있어요": (v)=> `${v} acum (acțiune în desfășurare)`,
+    "-고 싶어요": (v)=> `vreau să ${v}`,
+    "-(으)세요": (v)=> `vă rog ${v} / ${v} (imperativ politicos)`,
+    "-(으)ㄹ 거예요": (v)=> `voi ${v}`,
+    "-지 마세요": (v)=> `nu ${v}, vă rog`,
+    "-아/어 주세요": (v)=> `te rog să ${v}`,
+    "-아/어야 돼요": (v)=> `trebuie să ${v}`,
+    "-(으)ㄹ 수 있어요": (v)=> `pot să ${v}`,
+    "-(으)ㄹ 수 없어요": (v)=> `nu pot să ${v}`,
+    "-더라고요": (v)=> `am observat că ${v}`,
+    "-기 전에": (v)=> `înainte să ${v}`,
+    "-고 나서": (v)=> `după ce ${v}`,
+    "-(으)면서": (v)=> `în timp ce ${v}`,
+    "-아/어도 돼요": (v)=> `poți să ${v} / ai voie să ${v}`,
+    "-(으)면 안 돼요": (v)=> `nu ai voie să ${v}`,
+    "-(으)ㄹ까요?": (v)=> `să ${v}?`
+  };
+  return map[cj] || null;
+}
+
+function buildRoVerbPhrase(roVerbInf, cj){
+  const v = stripInfinitive(roVerbInf); // "a merge" -> "merge"
+  if(!v && !cj) return "";
+
+  // dacă nu avem conjugare, întoarcem doar verbul
+  if(!cj) return v;
+
+  const fn = roConjExactTemplate(cj);
+  if(fn) return fn(v || "(verbul)");
+
+  // fallback (dacă nu e în map)
+  const cjExp = (translations.conjug && translations.conjug[cj]) || cj;
+  return (v ? v + " " : "") + `(${cjExp})`;
+}
 /* Propoziție românească naturală – Ordine: Timp → Subiect → Loc → Mod → Obiect → Verb */
 function buildNaturalRomanian(state, activeMap){
   const use = (key) =>
