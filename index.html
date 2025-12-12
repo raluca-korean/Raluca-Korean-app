@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <title>Raluca Korean – Study App v2.0</title>
@@ -323,27 +325,6 @@
             <button id="favBtn" class="secondary">⭐ Salvează propoziția</button>
           </div>
         </div>
-        <!-- Bloc nou: introdu propoziția în română și completează tabelul -->
-<div class="preview-card" style="margin-top:6px;">
-  <div class="preview-title">
-    <span>✏️ Scrie propoziția în română → completează tabelul</span>
-  </div>
-  <div class="small-label">
-    Ordine recomandată:
-    <b>Timp, Subiect, Loc, Mod, Obiect, Verb, Conjugare (opțional)</b><br />
-    Desparte părțile cu virgule.<br />
-    Exemplu: <i>Astăzi, eu (formal), acasă, bine, carte, merg, prezent politicos</i>
-  </div>
-  <textarea
-    id="roSentenceInput"
-    rows="2"
-    style="width:100%;margin-top:4px;border-radius:8px;border:1px solid var(--border);padding:6px 8px;font-size:12px;"
-    placeholder="Scrie aici propoziția în română..."
-  ></textarea>
-  <div class="preview-buttons">
-    <button id="applyRoSentenceBtn">↺ Completează tabelul din română</button>
-  </div>
-</div>
       </div>
     </div>
 
@@ -584,26 +565,8 @@ const translations = {
     "-고자 하다":"a intenționa să...",
     "-(으)ㄹ 뿐이다":"doar..., nimic altceva"
   }
-};   
-    // === helperi pentru potrivire română → coreeană (din propoziția introdusă) ===
-function normalizeRoForMatch(str){
-  return (str || "")
-    .toLowerCase()
-    .replace(/\(.*?\)/g, "")   // scoate parantezele: "eu (formal)" -> "eu"
-    .replace(/[.!?]/g, "")     // scoate . ! ?
-    .trim();
-}
+};
 
-function findKoByRomanian(category, roText){
-  const dict = translations[category] || {};
-  const target = normalizeRoForMatch(roText);
-  if (!target) return "";
-  for (const [ko, roVal] of Object.entries(dict)){
-    const normVal = normalizeRoForMatch(roVal);
-    if (normVal === target) return ko;
-  }
-  return "";
-}
 /* === SALVARE CUVINTE NOI === */
 const STORAGE_KEY="ralucaKoreanCustomWords_v2";
 const customData={
@@ -1181,54 +1144,6 @@ function buildNaturalRomanian(state, activeMap){
   sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
   if (!/[.!?]$/.test(sentence)) sentence += ".";
   return sentence;
-  /* === Completează tabelul P1 pornind de la propoziția în română === */
-/*
-   Ordinea așteptată (separată prin virgule):
-   0: Timp      – ex: Astăzi
-   1: Subiect   – ex: eu (formal)
-   2: Loc       – ex: acasă
-   3: Mod       – ex: bine
-   4: Obiect    – ex: carte
-   5: Verb      – ex: merg
-   6: Conjugare – ex: prezent politicos   (opțional)
-*/
-if (applyRoSentenceBtn && roSentenceInput){
-  applyRoSentenceBtn.addEventListener("click", () => {
-    const raw = roSentenceInput.value.trim();
-    if (!raw) return;
-
-    const parts = raw
-      .split(",")
-      .map(p => p.trim())
-      .filter(Boolean);
-
-    const [
-      timeRo,
-      subjRo,
-      placeRo,
-      modRo,
-      objRo,
-      verbRo,
-      conjRo
-    ] = parts;
-
-    // helper mic: dacă nu găsim în dicționar, păstrăm textul așa cum e
-    const mapPart = (cat, roVal) => {
-      if (!roVal) return "";
-      return findKoByRomanian(cat, roVal) || roVal;
-    };
-  }
-    // completăm stateP1
-    if (timeRo)  stateP1.time    = mapPart("time",    timeRo);
-    if (subjRo)  stateP1.subject = mapPart("subject", subjRo);
-    if (placeRo) stateP1.place   = mapPart("place",   placeRo);
-    if (modRo)   stateP1.mod     = mapPart("mod",     modRo);
-    if (objRo)   stateP1.object  = mapPart("object",  objRo);
-    if (verbRo)  stateP1.verb    = mapPart("verb",    verbRo);
-    if (conjRo)  stateP1.conjug  = mapPart("conjug",  conjRo);
-
-    render();   // actualizăm tabelul + propoziția
-  });
 }
 function analyzeNaturalnessP1(){
   const t=stateP1.time;
