@@ -1894,29 +1894,33 @@ function render(){
 }
 
     function translateRoToKo(roText){
-  roText = roText.trim().toLowerCase();
+  // 1. Parse româna → state logic (subject, time, verb etc.)
+  const parsed = parseRoToState(roText);
 
-  // REGULI SIMPLE (controlate, nu AI haotic)
-  const isToday = roText.includes("astăzi");
-  const isTomorrow = roText.includes("mâine");
-  const wants = roText.includes("vreau");
-  const go = roText.includes("merg");
-  const bank = roText.includes("banc");
+  // 2. Construim coreeana EXACT cu engine-ul tău existent
+  const koResult = buildClauseSentence(
+    parsed.state,
+    {
+      subject:true,time:true,place:true,mod:true,
+      object:true,numeral:false,counter:false,
+      verb:true,conjug:true
+    },
+    null
+  ).ko;
 
-  let ko = "";
-  let roFixed = "";
+  // 3. Construim româna CORECTĂ (verb acordat cu subiectul)
+  const roFixed = buildNaturalRomanian(
+    parsed.state,
+    {
+      subject:true,time:true,place:true,mod:true,
+      object:true,verb:true,conjug:true
+    }
+  );
 
-  if(isToday && wants && go && bank){
-    ko = "오늘 저는 은행에 가고 싶어요.";
-    roFixed = "Astăzi eu vreau să merg la bancă.";
-  }
-
-  if(isTomorrow && roText.includes("voi")){
-    ko = "내일 너희는 시골에 갈 거예요.";
-    roFixed = "Mâine voi veți merge la țară.";
-  }
-
-  return { ko, roFixed };
+  return {
+    ko: koResult || "(nu am putut construi propoziția)",
+    roFixed: roFixed || "(nu am putut corecta româna)"
+  };
 }
     loadRow(index);
 setScreen("builder");
