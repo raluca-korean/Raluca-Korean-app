@@ -1204,20 +1204,58 @@ function roConjExactTemplate(cj){
   return map[cj] || null;
 }
 
-function buildRoVerbPhrase(roVerbInf, cj){
-  const v = stripInfinitive(roVerbInf); // "a merge" -> "merge"
-  if(!v && !cj) return "";
+function roPersonFromSubjectKo(subjKo){
+  if(subjKo==="저"||subjKo==="나") return "1sg";
+  if(subjKo==="너") return "2sg";
+  if(subjKo==="우리") return "1pl";
+  if(subjKo==="너희") return "2pl";
+  return "3sg";
+}
 
-  // dacă nu avem conjugare, întoarcem doar verbul
+// conjugări RO (minim dar util, pentru verbele din app)
+const RO_FORMS = {
+  "a merge":   { "1sg":"merg","2sg":"mergi","3sg":"merge","1pl":"mergem","2pl":"mergeți","3pl":"merg" },
+  "a veni":    { "1sg":"vin","2sg":"vii","3sg":"vine","1pl":"venim","2pl":"veniți","3pl":"vin" },
+  "a mânca":   { "1sg":"mănânc","2sg":"mănânci","3sg":"mănâncă","1pl":"mâncăm","2pl":"mâncați","3pl":"mănâncă" },
+  "a bea":     { "1sg":"beau","2sg":"bei","3sg":"bea","1pl":"bem","2pl":"beți","3pl":"beau" },
+  "a vedea":   { "1sg":"văd","2sg":"vezi","3sg":"vede","1pl":"vedem","2pl":"vedeți","3pl":"văd" },
+  "a citi":    { "1sg":"citesc","2sg":"citești","3sg":"citește","1pl":"citim","2pl":"citiți","3pl":"citesc" },
+  "a scrie":   { "1sg":"scriu","2sg":"scrii","3sg":"scrie","1pl":"scriem","2pl":"scrieți","3pl":"scriu" },
+  "a învăța":  { "1sg":"învăț","2sg":"înveți","3sg":"învață","1pl":"învățăm","2pl":"învățați","3pl":"învață" },
+  "a cumpăra": { "1sg":"cumpăr","2sg":"cumperi","3sg":"cumpără","1pl":"cumpărăm","2pl":"cumpărați","3pl":"cumpără" },
+  "a da":      { "1sg":"dau","2sg":"dai","3sg":"dă","1pl":"dăm","2pl":"dați","3pl":"dau" },
+  "a primi":   { "1sg":"primesc","2sg":"primești","3sg":"primește","1pl":"primim","2pl":"primiți","3pl":"primesc" },
+  "a lucra":   { "1sg":"lucrez","2sg":"lucrezi","3sg":"lucrează","1pl":"lucrăm","2pl":"lucrați","3pl":"lucrează" },
+  "a studia":  { "1sg":"studiez","2sg":"studiezi","3sg":"studiază","1pl":"studiem","2pl":"studiați","3pl":"studiază" },
+  "a găti":    { "1sg":"gătesc","2sg":"gătești","3sg":"gătește","1pl":"gătim","2pl":"gătiți","3pl":"gătesc" },
+  "a ajuta":   { "1sg":"ajut","2sg":"ajuți","3sg":"ajută","1pl":"ajutăm","2pl":"ajutați","3pl":"ajută" },
+  "a folosi":  { "1sg":"folosesc","2sg":"folosești","3sg":"folosește","1pl":"folosim","2pl":"folosiți","3pl":"folosesc" },
+  "a aștepta": { "1sg":"aștept","2sg":"aștepți","3sg":"așteaptă","1pl":"așteptăm","2pl":"așteptați","3pl":"așteaptă" }
+};
+
+function roAgreeVerb(roVerbInf, subjKo){
+  const inf = (roVerbInf||"").trim().toLowerCase();
+  const person = roPersonFromSubjectKo(subjKo);
+  const forms = RO_FORMS[inf];
+  if(forms && forms[person]) return forms[person];
+  // fallback: dacă nu am în tabel, măcar nu stric: scot "a "
+  return stripInfinitive(roVerbInf);
+}
+
+function buildRoVerbPhrase(roVerbInf, cj, subjKo){
+  // verbul în acord cu subiectul
+  const v = roAgreeVerb(roVerbInf, subjKo);
+
+  if(!v && !cj) return "";
   if(!cj) return v;
 
   const fn = roConjExactTemplate(cj);
   if(fn) return fn(v || "(verbul)");
 
-  // fallback (dacă nu e în map)
   const cjExp = (translations.conjug && translations.conjug[cj]) || cj;
   return (v ? v + " " : "") + `(${cjExp})`;
 }
+
 /* Propoziție românească naturală – Ordine: Timp → Subiect → Loc → Mod → Obiect → Verb */
 function buildNaturalRomanian(state, activeMap){
   const use = (key) =>
