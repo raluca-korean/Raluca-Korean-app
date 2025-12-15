@@ -948,53 +948,7 @@ const labelsRo={
   counter:"COUNTER",
   verb:"VERB"
 };
-/* Propoziție românească naturală – Ordine B: Timp → Subiect → Loc → Mod → Obiect → Verb */
-function updatePreview() {
-  // 1) Propoziția 1 (P1)
-  const c1 = buildClauseSentence(stateP1, activeP1, null);
-  let fullKo = c1.ko || "";
-
-  // 2) Propoziția 2 (P2) – doar pentru conjuncții de legătură (⭐)
-  let c2 = null;
-  if (
-    enableP2.checked &&
-    stateP1.conjug &&
-    isLinkingConj(stateP1.conjug)
-  ) {
-    c2 = buildClauseSentence(stateP2, activeP2, null);
-    if (c2.ko) {
-      fullKo += " " + c2.ko;
     }
-  }
-
-  if (!fullKo.trim()) {
-    previewKo.textContent = "(alege cuvinte din tabel)";
-    previewRo.textContent = "";
-    naturalHint.textContent = "";
-    return;
-  }
-
-  // fraza completă în coreeană
-  previewKo.textContent = fullKo;
-
-  // 🔹 traducere românească naturală (P1 + P2 dacă există)
-  const ro1 = buildNaturalRomanian(stateP1, activeP1);
-  const ro2 = c2 ? buildNaturalRomanian(stateP2, activeP2) : "";
-  const fullRo = ro1 + (ro2 ? " " + ro2 : "");
-
-  previewRo.textContent = showRo
-    ? (fullRo || "(fără traducere disponibilă încă)")
-    : "··· traducere ascunsă ···";
-
-  // mesaj de naturalitate (rămâne ca înainte)
-  const nat = analyzeNaturalnessP1();
-  if (nat.ok) {
-    naturalHint.textContent =
-      "✅ Propoziție naturală (după regulile simple din aplicație).";
-  } else {
-    naturalHint.textContent = `⚠ ${nat.msg} 「${nat.suggestion}」`;
-  }
-}
 function buildClauseSentence(state,activeMap,conjOverride){
   const koParts = [];
   const roSegs  = [];
