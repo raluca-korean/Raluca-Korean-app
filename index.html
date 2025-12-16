@@ -371,6 +371,23 @@
       <div class="card">
         <h2>📚 Glosar coreean–român</h2>
 
+<!-- 📅 3 cuvinte/zi -->
+<div class="card" style="margin-top:8px;">
+  <h2>📅 3 cuvinte/zi</h2>
+
+  <div class="small-label" id="dailyDateLabel">Azi</div>
+
+  <div id="dailyWordsBox" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
+
+  <div class="btn-group" style="margin-top:8px;">
+    <button class="secondary" id="dailyPrevBtn">⬅ Ieri</button>
+    <button class="secondary" id="dailyNextBtn">Mâine ➡</button>
+    <button id="dailyMarkBtn">✅ Am învățat azi</button>
+  </div>
+
+  <div class="small-label" id="dailyProgress" style="margin-top:6px;"></div>
+</div>
+
         <div class="small-label">Propoziții favorite:</div>
         <div id="favoritesList" class="fav-list"></div>
 
@@ -1922,10 +1939,195 @@ function translateRoToKo(roText){
     roFixed: roFixed || "(nu am putut corecta româna)"
   };
 }
-    
+    // ================== 📅 3 CUVINTE/ZI (integrat în program) ==================
+const DAILY_KEY = "raluca_daily_words_v1";
+const DAILY_LEARNED_KEY = "raluca_daily_learned_days_v1";
+
+function todayLocalISO(d=new Date()){
+  // YYYY-MM-DD în timezone local (stabil pt user)
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function xmur3(str){
+  let h=1779033703 ^ str.length;
+  for(let i=0;i<str.length;i++){
+    h=Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h=(h<<13)|(h>>>19);
+  }
+  return function(){
+    h=Math.imul(h ^ (h>>>16), 2246822507);
+    h=Math.imul(h ^ (h>>>13), 3266489909);
+    h^=h>>>16;
+    return h>>>0;
+  }
+}
+function mulberry32(a){
+  return function(){
+    let t=a+=0x6D2B79F5;
+    t=Math.imul(t ^ (t>>>15), t | 1);
+    t^=t + Math.imul(t ^ (t>>>7), t | 61);
+    return ((t ^ (t>>>14))>>>0)/4294967296;
+  }
+}
+function shuffleSeeded(arr, seedStr){
+  const seed = xmur3(seedStr)();
+  const rand = mulberry32(seed);
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(rand()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function buildDailyPool(){
+  // pool = cuvinte KO + traducere RO din glosar (fără conjugări, ca să fie „cuvinte” reale)
+  const pool = [];
+  const pushFrom = (list, catKey, catLabel) => {
+    const map = translations[catKey] || {};
+    list.forEach(ko=>{
+      if(!ko) return;
+      // excludem terminațiile de conjugare
+      if(catKey==="conjug") return;
+      pool.push({
+        ko,
+        ro: map[ko] || "",
+        cat: catLabel
+      });
+    });
+  };
+
+  pushFrom(subjects, "subject", "SUBJECT");
+  pushFrom(times, "time", "TIME");
+  pushFrom(places, "place", "PLACE");
+  pushFrom(mods, "mod", "MOD");
+  pushFrom(objects, "object", "OBJECT");
+  pushFrom(counters, "counter", "COUNTER");
+  pushFrom(verbs, "verb", "VERB");
+
+  // eliminăm duplicate
+  const seen = new Set();
+  return pool.filter(x=>{
+    const k = x.ko+"|"+x.cat;
+    if(seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+function getDailyState(){
+  const raw = localStorage.getItem(DAILY_KEY);
+  if(raw){
+    try { return JSON.parse(raw); } catch(e){}
+  }
+  // generăm o ordine fixă (shuffle) care rămâne aceeași
+  const pool = buildDailyPool();
+  const order = shuffleSeeded(pool, "RALUCA-DAILY-SEED-v1");
+  const state = { order, createdAt: Date.now() };
+  localStorage.setItem(DAILY_KEY, JSON.stringify(state));
+  return state;
+}
+
+function getLearnedDays(){
+  try {
+    return JSON.parse(localStorage.getItem(DAILY_LEARNED_KEY) || "[]");
+  } catch(e){
+    return [];
+  }
+}
+function setLearnedDays(arr){
+  localStorage.setItem(DAILY_LEARNED_KEY, JSON.stringify(arr));
+}
+
+function dayOffset(baseISO, offset){
+  const [y,m,d] = baseISO.split("-").map(Number);
+  const dt = new Date(y, m-1, d);
+  dt.setDate(dt.getDate() + offset);
+  return todayLocalISO(dt);
+}
+
+let dailyOffset = 0;
+
+function get3WordsForISO(iso){
+  const { order } = getDailyState();
+  if(!order || !order.length) return [];
+  // index = (numărul zilei în an) * 3
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(y, m-1, d);
+  const start = new Date(y, 0, 1);
+  const dayNum = Math.floor((dt - start) / (1000*60*60*24)); // 0..365
+  const baseIndex = (dayNum * 3) % order.length;
+
+  return [
+    order[baseIndex],
+    order[(baseIndex+1) % order.length],
+    order[(baseIndex+2) % order.length]
+  ];
+}
+
+function renderDailyWords(){
+  const iso = dayOffset(todayLocalISO(), dailyOffset);
+
+  const dateLabel = document.getElementById("dailyDateLabel");
+  const box = document.getElementById("dailyWordsBox");
+  const progress = document.getElementById("dailyProgress");
+  const markBtn = document.getElementById("dailyMarkBtn");
+
+  if(!dateLabel || !box || !progress || !markBtn) return;
+
+  dateLabel.textContent = dailyOffset===0 ? `Azi (${iso})` : `${dailyOffset<0?"Ieri/Mai devreme":"Mai târziu"} (${iso})`;
+
+  const words = get3WordsForISO(iso);
+  box.innerHTML = "";
+
+  words.forEach(w=>{
+    const row = document.createElement("div");
+    row.style.padding = "8px";
+    row.style.border = "1px solid var(--border)";
+    row.style.borderRadius = "12px";
+    row.style.background = "#faf8ff";
+    row.innerHTML = `
+      <div style="font-weight:700;font-size:14px;">${w.ko} <span style="font-size:10px;color:var(--accent-strong);">(${w.cat})</span></div>
+      <div style="font-size:12px;color:var(--text-soft);">${w.ro || "(fără traducere încă)"}</div>
+    `;
+    box.appendChild(row);
+  });
+
+  const learned = getLearnedDays();
+  const isLearned = learned.includes(iso);
+  markBtn.textContent = isLearned ? "✅ Marcat ca învățat" : "✅ Am învățat azi";
+  markBtn.disabled = isLearned;
+
+  progress.textContent = `Zile bifate: ${learned.length}`;
+}
+
+function setupDailyUI(){
+  const prev = document.getElementById("dailyPrevBtn");
+  const next = document.getElementById("dailyNextBtn");
+  const mark = document.getElementById("dailyMarkBtn");
+
+  if(prev) prev.addEventListener("click", ()=>{ dailyOffset--; renderDailyWords(); });
+  if(next) next.addEventListener("click", ()=>{ dailyOffset++; renderDailyWords(); });
+
+  if(mark) mark.addEventListener("click", ()=>{
+    const iso = dayOffset(todayLocalISO(), dailyOffset);
+    const learned = getLearnedDays();
+    if(!learned.includes(iso)){
+      learned.push(iso);
+      setLearnedDays(learned);
+    }
+    renderDailyWords();
+  });
+
+  renderDailyWords();
+}
     loadRow(index);
 setScreen("builder");
 render();
+setupDailyUI();
 </script>
 </body>
 </html> 
