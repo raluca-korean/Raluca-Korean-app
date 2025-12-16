@@ -2012,40 +2012,32 @@ const DAILY_TOP = [
   {ko:"만나다", cat:"verb"}
 ];
 function buildDailyPool(){
-  // pool = cuvinte KO + traducere RO din glosar (fără conjugări, ca să fie „cuvinte” reale)
-  const pool = [];
-  const pushFrom = (list, catKey, catLabel) => {
-    const map = translations[catKey] || {};
-    list.forEach(ko=>{
-      if(!ko) return;
-      // excludem terminațiile de conjugare
-      if(catKey==="conjug") return;
-      pool.push({
-        ko,
-        ro: map[ko] || "",
-        cat: catLabel
-      });
-    });
-  };
+  // folosim strict TOP words (cele mai uzuale) + traduceri din dictionarul tău
+  const out = [];
 
-  pushFrom(subjects, "subject", "SUBJECT");
-  pushFrom(times, "time", "TIME");
-  pushFrom(places, "place", "PLACE");
-  pushFrom(mods, "mod", "MOD");
-  pushFrom(objects, "object", "OBJECT");
-  pushFrom(counters, "counter", "COUNTER");
-  pushFrom(verbs, "verb", "VERB");
+  const pickTranslation = (catKey, ko) => (translations[catKey] && translations[catKey][ko]) ? translations[catKey][ko] : "";
+
+  DAILY_TOP.forEach(x=>{
+    const catKey = x.cat;      // subject/time/place/mod/object/verb etc
+    const ko = x.ko;
+
+    // dacă nu există în listele tale, îl putem ignora sau îl adăugăm (eu recomand să îl adaugi)
+    out.push({
+      ko,
+      ro: pickTranslation(catKey, ko),
+      cat: catKey.toUpperCase()
+    });
+  });
 
   // eliminăm duplicate
   const seen = new Set();
-  return pool.filter(x=>{
-    const k = x.ko+"|"+x.cat;
+  return out.filter(w=>{
+    const k = w.ko+"|"+w.cat;
     if(seen.has(k)) return false;
     seen.add(k);
     return true;
   });
 }
-
 function getDailyState(){
   const raw = localStorage.getItem(DAILY_KEY);
   if(raw){
