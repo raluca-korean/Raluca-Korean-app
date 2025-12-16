@@ -1982,6 +1982,101 @@ function shuffleSeeded(arr, seedStr){
   }
   return a;
 }
+    const DAILY_KEY = "dailyWords_v1";
+
+function shuffle(arr){
+  // Fisher–Yates
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// pool mare: combină TOT ce ai în app (și poți adăuga și pack-uri)
+function buildDailyPool(){
+  const pool = [];
+
+  function addList(list, cat){
+    list.forEach(ko=>{
+      if(!ko) return;
+      pool.push({
+        ko,
+        ro: (translations[cat] && translations[cat][ko]) ? translations[cat][ko] : "",
+        cat: cat.toUpperCase()
+      });
+    });
+  }
+
+  addList(subjects,"subject");
+  addList(times,"time");
+  addList(places,"place");
+  addList(mods,"mod");
+  addList(objects,"object");
+  addList(counters,"counter");
+  addList(verbs,"verb");
+
+  // (opțional) adaugi și un pack mare manual: DAILY_PACK_1 etc.
+  // addList(DAILY_PACK_1, "verb"); // exemplu
+
+  // dedupe pe ko+cat
+  const seen = new Set();
+  return pool.filter(x=>{
+    const k = x.cat+"|"+x.ko;
+    if(seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+function loadDailyState(){
+  try{
+    const raw = localStorage.getItem(DAILY_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){
+    return null;
+  }
+}
+
+function saveDailyState(st){
+  localStorage.setItem(DAILY_KEY, JSON.stringify(st));
+}
+
+function ensureDailyState(){
+  const pool = buildDailyPool();
+  let st = loadDailyState();
+
+  // dacă nu există, sau s-a schimbat mărimea pool-ului (ai adăugat cuvinte noi), reconstruim ordinea
+  if(!st || !Array.isArray(st.order) || st.poolSize !== pool.length){
+    const order = [...Array(pool.length).keys()];
+    shuffle(order);
+    st = { poolSize: pool.length, order, pos: 0 };
+    saveDailyState(st);
+  }
+
+  return { st, pool };
+}
+
+function get3WordsForToday(){
+  const { st, pool } = ensureDailyState();
+
+  // NU REPETĂ: dacă nu mai sunt cuvinte, te anunță
+  if(st.pos + 3 > st.order.length){
+    return {
+      done: true,
+      words: [],
+      msg: `Nu mai am cuvinte noi (ai avut ${st.order.length} în total). Adaugă un pack nou de cuvinte ca să continui fără repetiții.`
+    };
+  }
+
+  const idxs = st.order.slice(st.pos, st.pos + 3);
+  const words = idxs.map(i => pool[i]);
+
+  st.pos += 3;
+  saveDailyState(st);
+
+  return { done:false, words, msg:"" };
+}
 // ===== TOP cuvinte uzuale (poți extinde oricând) =====
 const DAILY_TOP = [
   // SUBJECT (super frecvent)
