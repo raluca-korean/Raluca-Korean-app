@@ -700,6 +700,24 @@ if(!place && /\bbanc(ă|a)\b/i.test(roSentence)) place = "은행";
     }
   }
 
+// ✅ NEW: dacă user scrie „vreau să plec”, luăm cuvântul după „vreau să”
+if(!verb){
+  const m2 = t.match(/\bvreau\s+s(a|ă)\s+([a-zăâîșț]+)/i);
+  if(m2){
+    const roVerbForm = m2[2].toLowerCase(); // ex: "plec"
+    // mapări rapide pt forme foarte frecvente (poți adăuga oricâte)
+    const RO_FORM_TO_INF = {
+      "plec":"a pleca",
+      "merg":"a merge",
+      "mergi":"a merge",
+      "vin":"a veni",
+      "vii":"a veni"
+    };
+    const inf = RO_FORM_TO_INF[roVerbForm];
+    if(inf) verb = REV.verb[inf] || null;
+  }
+}
+
   const conj = detectConjFromRo(roSentence);
 
   if(!subj) msg.push("• Nu am detectat clar subiectul (eu/tu/noi/voi).");
