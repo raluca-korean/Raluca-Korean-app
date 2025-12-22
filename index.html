@@ -691,7 +691,44 @@ function findKoByRo(cat, text){
 function parseRoToState(roSentence){
   const msg = [];
   const t = normRo(roSentence);
+const RO_FORM_TO_INF = {
+  // MERGE / PLECA (le tratăm ca „a merge” → 가다)
+  "plec":"a merge", "pleci":"a merge", "pleacă":"a merge", "plecam":"a merge", "plecați":"a merge", "pleaca":"a merge",
+  "merg":"a merge", "mergi":"a merge", "merge":"a merge", "mergem":"a merge", "mergeți":"a merge",
 
+  // VENI
+  "vin":"a veni", "vii":"a veni", "vine":"a veni", "venim":"a veni", "veniți":"a veni",
+
+  // MÂNCA / BEA (opțional, dar util)
+  "mănânc":"a mânca", "mananc":"a mânca", "mănânci":"a mânca", "mănâncă":"a mânca", "manc":"a mânca", "manci":"a mânca", "manca":"a mânca",
+  "beau":"a bea", "bei":"a bea", "bea":"a bea", "bem":"a bea", "beți":"a bea",
+
+  // CITI / SCRIE (opțional)
+  "citesc":"a citi", "citești":"a citi", "citește":"a citi", "citim":"a citi", "citiți":"a citi",
+  "scriu":"a scrie", "scrii":"a scrie", "scrie":"a scrie", "scriem":"a scrie", "scrieți":"a scrie"
+};
+  let verb = findKoByRo("verb", roSentence);
+if(!verb){
+  const m = t.match(/\ba\s+([a-zăâîșț]+)/i);
+  if(m){
+    const inf = ("a " + m[1]).toLowerCase();
+    verb = REV.verb[inf] || null;
+  }
+}
+  // ✅ NEW: detectăm verbe românești conjugate (plec, merg, citesc etc.)
+if(!verb){
+  const words = t.split(" ");
+  for(const w of words){
+    const inf = RO_FORM_TO_INF[w];
+    if(inf && REV.verb[inf]){
+      verb = REV.verb[inf];
+      break;
+    }
+  }
+}
+
+  
+  
   // SUBJECT: mapăm “eu/tu/noi/voi” la ko
   let subj = null;
   if(/\beu\b/.test(t)) subj = "저";
