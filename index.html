@@ -686,34 +686,90 @@ function findKoByRo(cat, text){
   }
   return null;
 }
+const RO_FORM_TO_INF = {
+  // MERGE / PLECA -> tratăm ca "a merge" (=> 가다)
+  "plec":"a merge","pleci":"a merge","pleacă":"a merge","pleaca":"a merge","plecam":"a merge","plecați":"a merge",
+  "merg":"a merge","mergi":"a merge","merge":"a merge","mergem":"a merge","mergeți":"a merge",
 
+  // VENI
+  "vin":"a veni","vii":"a veni","vine":"a veni","venim":"a veni","veniți":"a veni",
+
+  // MÂNCA / BEA
+  "mănânc":"a mânca","mananc":"a mânca","mănânci":"a mânca","mănâncă":"a mânca","manc":"a mânca","manci":"a mânca","manca":"a mânca",
+  "beau":"a bea","bei":"a bea","bea":"a bea","bem":"a bea","beți":"a bea",
+
+  // CITI / SCRIE
+  "citesc":"a citi","citești":"a citi","citește":"a citi","citim":"a citi","citiți":"a citi",
+  "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie","scriem":"a scrie","scrieți":"a scrie"
+};
 // foarte simplu: găsește subiect (eu/tu/noi/voi) + cuvinte pe care le știe glosarul
 function parseRoToState(roSentence){
   const msg = [];
   const t = normRo(roSentence);
-const RO_FORM_TO_INF = {
-  // MERGE / PLECA (le tratăm ca „a merge” → 가다)
-  "plec":"a merge", "pleci":"a merge", "pleacă":"a merge", "plecam":"a merge", "plecați":"a merge", "pleaca":"a merge",
-  "merg":"a merge", "mergi":"a merge", "merge":"a merge", "mergem":"a merge", "mergeți":"a merge",
 
-  // VENI
-  "vin":"a veni", "vii":"a veni", "vine":"a veni", "venim":"a veni", "veniți":"a veni",
+  // SUBJECT
+  let subj = null;
+  if(/\beu\b/.test(t)) subj = "저";
+  else if(/\btu\b/.test(t)) subj = "너";
+  else if(/\bnoi\b/.test(t)) subj = "우리";
+  else if(/\bvoi\b/.test(t)) subj = "너희";
 
-  // MÂNCA / BEA (opțional, dar util)
-  "mănânc":"a mânca", "mananc":"a mânca", "mănânci":"a mânca", "mănâncă":"a mânca", "manc":"a mânca", "manci":"a mânca", "manca":"a mânca",
-  "beau":"a bea", "bei":"a bea", "bea":"a bea", "bem":"a bea", "beți":"a bea",
+  // TIME
+  const time =
+    findKoByRo("time", roSentence) ||
+    (/\bastăzi\b/.test(t) ? "오늘" : null) ||
+    (/\bmâine\b/.test(t) ? "내일" : null) ||
+    (/\bieri\b/.test(t) ? "어제" : null);
 
-  // CITI / SCRIE (opțional)
-  "citesc":"a citi", "citești":"a citi", "citește":"a citi", "citim":"a citi", "citiți":"a citi",
-  "scriu":"a scrie", "scrii":"a scrie", "scrie":"a scrie", "scriem":"a scrie", "scrieți":"a scrie"
-};
+  // PLACE / MOD / OBJECT
+  let place = findKoByRo("place", roSentence);
+  if(!place && /\bbanc(ă|a)\b/i.test(roSentence)) place = "은행";
+
+  const mod = findKoByRo("mod", roSentence);
+  const object = findKoByRo("object", roSentence);
+
+  // VERB (o singură dată!)
   let verb = findKoByRo("verb", roSentence);
-if(!verb){
-  const m = t.match(/\ba\s+([a-zăâîșț]+)/i);
-  if(m){
-    const inf = ("a " + m[1]).toLowerCase();
-    verb = REV.verb[inf] || null;
+
+  // 1) infinitiv "a ___"
+  if(!verb){
+    const m = t.match(/\ba\s+([a-zăâîșț]+)/i);
+    if(m){
+      const inf = ("a " + m[1]).toLowerCase();
+      verb = REV.verb[inf] || null;
+    }
   }
+
+  // 2) forme conjugate: plec/merg/citesc...
+  if(!verb){
+    for(const w of t.split(" ")){
+      const inf = RO_FORM_TO_INF[w];
+      if(inf && REV.verb[inf]){
+        verb = REV.verb[inf];
+        break;
+      }
+    }
+  }
+
+  const conj = detectConjFromRo(roSentence);
+
+  if(!subj) msg.push("• Nu am detectat clar subiectul (eu/tu/noi/voi).");
+  if(!verb) msg.push("• Nu am găsit verb în dicționar (încearcă și infinitiv: „a merge”, „a veni”).");
+
+  return {
+    state: {
+      subject: subj||"",
+      time: time||"",
+      place: place||"",
+      mod: mod||"",
+      object: object||"",
+      numeral:"",
+      counter:"",
+      verb: verb||"",
+      conjug: conj||"-아요/어요"
+    },
+    msg
+  };
 }
   // ✅ NEW: detectăm verbe românești conjugate (plec, merg, citesc etc.)
 if(!verb){
