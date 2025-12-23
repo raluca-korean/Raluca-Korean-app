@@ -1769,30 +1769,26 @@ const simpleParticles = ["은/는","이/가","을/를","에","에서"];
 // ✅ Distrageri (opțiuni greșite) – folosite ca “capcane”
 const particleChoices = ["은","는","이","가","을","를","에","에서"];
 function makeParticleExercise(){
-  const t = randItem(times);
   const subj = randItem(subjects);
-  const obj = randItem(objects);
-  const place = randItem(places);
+  const obj  = randItem(objects);
+  const verb = randItem(verbs);
 
-  const correct = randItem(simpleParticles);
+  // particula corectă pentru OBIECT (을/를)
+  const correct = pickObjectParticle(obj); // "을" sau "를"
 
-  const sentence =
-    `${t} ___ ${subj} ___ ${place} ___ ${obj} ___ 가요.`;
+  // propoziție cu UN SINGUR BLANK
+  const sentence = `${subj} ${obj} ___ ${presentPolite(verb)}.`;
 
-  const options = new Set();
-  options.add(correct);
+  // opțiuni (4), 1 corect + 3 capcane
+  const options = new Set([correct]);
   while(options.size < 4){
-    options.add(randItem(simpleParticles));
+    options.add(randItem(particleChoices)); // ["은","는","이","가","을","를","에","에서"]
   }
-  const optionsArr = Array.from(options).sort(() => Math.random()-0.5);
+  const optionsArr = Array.from(options).sort(()=>Math.random()-0.5);
 
-  currentExercise = {
-    type: "particle",
-    correct,
-    options: optionsArr
-  };
+  currentExercise = { type:"particle", correct, options: optionsArr };
 
-  exerciseQuestionEl.textContent = `Alege particula potrivită (simplu):  ${sentence}`;
+  exerciseQuestionEl.textContent = `Alege particula corectă:  ${sentence}`;
   renderExerciseOptions(optionsArr);
   exerciseFeedbackEl.textContent = "";
 }
