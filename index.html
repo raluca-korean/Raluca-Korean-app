@@ -1773,7 +1773,59 @@ function makeParticleExercise(){
   renderExerciseOptions(optionsArr);
   exerciseFeedbackEl.textContent = "";
 }
+function makeParticlePlusExercise(){
+  const t = randItem(times);
+  const subj = randItem(subjects);
+  const place = randItem(places);
+  const obj = randItem(objects);
+  const verb = randItem(verbs);
 
+  // particule corecte
+  const p1 = pickSubjectParticle(subj);   // (1) subiect
+  const p2 = pickTimeParticle(t);         // (2) timp (poate fi "")
+  const p3 = pickPlaceParticle(place);    // (3) loc
+  const p4 = pickObjectParticle(obj);     // (4) obiect
+
+  // Propoziție: TIME(2) SUBJECT(1) PLACE(3) OBJECT(4) + verb politicos simplu
+  const verbForm = presentPolite(verb);
+
+  // Dacă timpul nu are particulă, păstrăm blank-ul dar acceptăm “(gol)” ca răspuns corect
+  const sentence =
+    `${t} (2) ${subj} (1) ${place} (3) ${obj} (4) ${verbForm}.`;
+
+  // opțiuni pentru fiecare blank
+  function buildOptions(correct){
+    const options = new Set();
+    // includem corectul (sau "" dacă e cazul)
+    options.add(correct);
+
+    // dacă e blank de tip “poate fi gol”, oferim și opțiunea "(fără)"
+    if(correct === "") options.add("(fără)");
+
+    while(options.size < 4){
+      options.add(randItem(particleChoices));
+    }
+    return Array.from(options).sort(()=>Math.random()-0.5);
+  }
+
+  const opts1 = buildOptions(p1);
+  const opts2 = buildOptions(p2); // poate conține "(fără)"
+  const opts3 = buildOptions(p3);
+  const opts4 = buildOptions(p4);
+
+  currentExercise = {
+    type: "particlePlus",
+    correct: { p1, p2, p3, p4 },
+    sentence,
+    parts: { t, subj, place, obj, verb, verbForm },
+    options: { p1: opts1, p2: opts2, p3: opts3, p4: opts4 }
+  };
+
+  exerciseQuestionEl.textContent = `Completează particulele (TOATE trebuie corecte):  ${sentence}`;
+
+  renderParticlePlusOptions(currentExercise.options);
+  exerciseFeedbackEl.textContent = "";
+}
 // 3) Exercițiu: Alege CONJUGAREA corectă
 function makeConjugExercise(){
   const verb = randItem(verbs);
