@@ -702,12 +702,13 @@ const RO_FORM_TO_INF = {
   "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie","scriem":"a scrie","scrieți":"a scrie"
 };
 // foarte simplu: găsește subiect (eu/tu/noi/voi) + cuvinte pe care le știe glosarul
+
 function parseRoToState(roSentence){
   const msg = [];
   const t = normRo(roSentence);
 
   // SUBJECT
-  let subj = null;
+  let subj = "";
   if(/\beu\b/.test(t)) subj = "저";
   else if(/\btu\b/.test(t)) subj = "너";
   else if(/\bnoi\b/.test(t)) subj = "우리";
@@ -716,9 +717,9 @@ function parseRoToState(roSentence){
   // TIME
   const time =
     findKoByRo("time", roSentence) ||
-    (/\bastăzi\b/.test(t) ? "오늘" : null) ||
-    (/\bmâine\b/.test(t) ? "내일" : null) ||
-    (/\bieri\b/.test(t) ? "어제" : null);
+    (/\bastăzi\b/.test(t) ? "오늘" : "") ||
+    (/\bmâine\b/.test(t) ? "내일" : "") ||
+    (/\bieri\b/.test(t) ? "어제" : "");
 
   // PLACE / MOD / OBJECT
   let place = findKoByRo("place", roSentence);
@@ -727,19 +728,19 @@ function parseRoToState(roSentence){
   const mod = findKoByRo("mod", roSentence);
   const object = findKoByRo("object", roSentence);
 
-  // VERB (o singură dată!)
+  // VERB (1) din dicționar
   let verb = findKoByRo("verb", roSentence);
 
-  // 1) infinitiv "a ___"
+  // VERB (2) infinitiv "a ___"
   if(!verb){
     const m = t.match(/\ba\s+([a-zăâîșț]+)/i);
     if(m){
       const inf = ("a " + m[1]).toLowerCase();
-      verb = REV.verb[inf] || null;
+      verb = REV.verb[inf] || "";
     }
   }
 
-  // 2) forme conjugate: plec/merg/citesc...
+  // VERB (3) forme conjugate (merg, plec, citesc...)
   if(!verb){
     for(const w of t.split(" ")){
       const inf = RO_FORM_TO_INF[w];
@@ -757,87 +758,19 @@ function parseRoToState(roSentence){
 
   return {
     state: {
-      subject: subj||"",
-      time: time||"",
-      place: place||"",
-      mod: mod||"",
-      object: object||"",
+      subject: subj,
+      time,
+      place: place || "",
+      mod: mod || "",
+      object: object || "",
       numeral:"",
       counter:"",
-      verb: verb||"",
-      conjug: conj||"-아요/어요"
+      verb: verb || "",
+      conjug: conj || "-아요/어요"
     },
     msg
   };
 }
-  // ✅ NEW: detectăm verbe românești conjugate (plec, merg, citesc etc.)
-if(!verb){
-  const words = t.split(" ");
-  for(const w of words){
-    const inf = RO_FORM_TO_INF[w];
-    if(inf && REV.verb[inf]){
-      verb = REV.verb[inf];
-      break;
-    }
-  }
-}
-
-  
-  
-  // SUBJECT: mapăm “eu/tu/noi/voi” la ko
-  let subj = null;
-  if(/\beu\b/.test(t)) subj = "저";
-  else if(/\btu\b/.test(t)) subj = "너";
-  else if(/\bnoi\b/.test(t)) subj = "우리";
-  else if(/\bvoi\b/.test(t)) subj = "너희";
-
-  // TIME/PLACE/MOD/OBJECT din dicționar
-  const time = findKoByRo("time", roSentence) || (/\bastăzi\b/.test(t) ? "오늘" : null) || (/\bmâine\b/.test(t) ? "내일" : null) || (/\bieri\b/.test(t) ? "어제" : null);
-  let place = findKoByRo("place", roSentence);
-if(!place && /\bbanc(ă|a)\b/i.test(roSentence)) place = "은행";
-  const mod = findKoByRo("mod", roSentence);
-  const object = findKoByRo("object", roSentence);
-
-  // VERB: încercăm “a ___” din propoziție sau match din dicționar
-  let verb = findKoByRo("verb", roSentence);
-  if(!verb){
-    // dacă user scrie infinitiv românesc "a merge"
-    const m = t.match(/\ba\s+([a-zăâîșț]+)/i);
-    if(m){
-      const inf = ("a " + m[1]).toLowerCase();
-      verb = REV.verb[inf] || null;
-    }
-  }
-
-// ✅ NEW: dacă user scrie „vreau să plec”, luăm cuvântul după „vreau să”
-if(!verb){
-  const m2 = t.match(/\bvreau\s+s(a|ă)\s+([a-zăâîșț]+)/i);
-  if(m2){
-    const roVerbForm = m2[2].toLowerCase(); // ex: "plec"
-    // mapări rapide pt forme foarte frecvente (poți adăuga oricâte)
-    const RO_FORM_TO_INF = {
-      "plec":"a pleca",
-      "merg":"a merge",
-      "mergi":"a merge",
-      "vin":"a veni",
-      "vii":"a veni"
-    };
-    const inf = RO_FORM_TO_INF[roVerbForm];
-    if(inf) verb = REV.verb[inf] || null;
-  }
-}
-
-  const conj = detectConjFromRo(roSentence);
-
-  if(!subj) msg.push("• Nu am detectat clar subiectul (eu/tu/noi/voi).");
-  if(!verb) msg.push("• Nu am găsit verb în dicționar (scrie ca în glosar: „a merge”, „a veni” etc.).");
-
-  return {
-    state: { subject: subj||"", time: time||"", place: place||"", mod: mod||"", object: object||"", numeral:"", counter:"", verb: verb||"", conjug: conj||"-아요/어요" },
-    msg
-  };
-}
-
 function saveCustomData(){
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(customData));}catch(e){}
 }
