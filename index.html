@@ -1937,6 +1937,8 @@ function newExerciseQuestion(){
   }else{
     // fallback: verb
     makeVerbExercise();
+    } else if(type === "particlePlus"){
+  makeParticlePlusExercise();
   }
 }
 
@@ -1944,6 +1946,41 @@ function newExerciseQuestion(){
 function checkExerciseAnswer(){
   if(!currentExercise){
     exerciseFeedbackEl.textContent = "Mai întâi apasă „Întrebare nouă”.";
+    return;
+  }
+    if(currentExercise.type === "particlePlus"){
+    const getVal = (name) => {
+      const chosen = Array.from(exerciseOptionsEl.querySelectorAll(`input[name='${name}']`)).find(x=>x.checked);
+      return chosen ? chosen.value : null;
+    };
+
+    const a1 = getVal("pPlus1");
+    const a2 = getVal("pPlus2");
+    const a3 = getVal("pPlus3");
+    const a4 = getVal("pPlus4");
+
+    if(!a1 || !a2 || !a3 || !a4){
+      exerciseFeedbackEl.textContent = "Te rog alege un răspuns pentru (1)(2)(3)(4).";
+      return;
+    }
+
+    // “(fără)” = gol
+    const norm = (v) => (v === "(fără)" ? "" : v);
+
+    const ok1 = norm(a1) === currentExercise.correct.p1;
+    const ok2 = norm(a2) === currentExercise.correct.p2;
+    const ok3 = norm(a3) === currentExercise.correct.p3;
+    const ok4 = norm(a4) === currentExercise.correct.p4;
+
+    if(ok1 && ok2 && ok3 && ok4){
+      exerciseFeedbackEl.textContent = "✅ Corect! Toate particulele sunt bune.";
+    } else {
+      const c = currentExercise.correct;
+      const show = (x)=> x === "" ? "(fără)" : x;
+      exerciseFeedbackEl.textContent =
+        `❌ Nu e complet corect.\n` +
+        `Corect: (1) ${c.p1} / (2) ${show(c.p2)} / (3) ${c.p3} / (4) ${c.p4}`;
+    }
     return;
   }
   const chosen = Array.from(
