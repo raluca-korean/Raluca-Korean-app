@@ -687,18 +687,31 @@ function normRo(s){
 function detectConjFromRo(ro){
   const t = normRo(ro);
 
-  // 1) intenție / obligație / abilitate
-  if(/\bvreau\s+s(a|ă)\b/.test(t))        return "-고 싶어요";
-  if(/\btrebuie să\b/.test(t))           return "-아/어야 돼요";
-  if(/\bnu pot să\b/.test(t))            return "-(으)ㄹ 수 없어요";
-  if(/\bpot să\b/.test(t))               return "-(으)ㄹ 수 있어요";
+  // 1) INTENȚIE / OBLIGAȚIE / ABILITATE
+  if(/\bvreau\s+s(a|ă)\b/.test(t))        return "-고 싶어요";       // vreau să...
+  if(/\btrebuie să\b/.test(t))           return "-아/어야 돼요";    // trebuie să...
+  if(/\bnu pot să\b/.test(t))            return "-(으)ㄹ 수 없어요"; // nu pot să...
+  if(/\bpot să\b/.test(t))               return "-(으)ㄹ 수 있어요"; // pot să...
 
-  // 2) FUTUR (mâine, voi, o să)
+  // 2) FUTUR (mâine, voi, o să...)
   if(/\b(maine|mâine)\b/.test(t) ||
      /\bvoi\b/.test(t) ||
      /\bo să\b/.test(t)){
-    return "-(으)ㄹ 거예요";
+    return "-(으)ㄹ 거예요";  // viitor
   }
+
+  // 3) TRECUT (ieri, deja, tocmai, am mers / am mâncat)
+  if(/\b(ieri|deja|tocmai)\b/.test(t) ||
+     /\bam\b/.test(t)){     // "am mers, am mâncat..."
+    return "-았어요/었어요"; // trecut politicos
+  }
+
+  // 4) NEGATIV – variantă simplă (imperativ negativ)
+  if(/\bnu\b/.test(t))        return "-지 마세요";
+
+  // 5) FALLBACK: prezent politicos
+  return "-아요/어요";
+}
 
   // 3) TRECUT (ieri, deja, tocmai, am + verb)
   if(/\b(ieri|deja|tocmai)\b/.test(t) ||
