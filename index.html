@@ -687,13 +687,29 @@ function normRo(s){
 function detectConjFromRo(ro){
   const t = normRo(ro);
 
-  if(/\bvreau\s+s(a|ă)\b/.test(t)) return "-고 싶어요";
-  if(/\btrebuie să\b/.test(t)) return "-아/어야 돼요";
-  if(/\bnu pot să\b/.test(t)) return "-(으)ㄹ 수 없어요";
-  if(/\bpot să\b/.test(t)) return "-(으)ㄹ 수 있어요";
-  if(/\bieri\b/.test(t) || /\bdeja\b/.test(t) || /\btocmai\b/.test(t)) return "-았어요/었어요";
-  if(/\bnu\b/.test(t)) return "-지 마세요";
+  // 1) intenție / obligație / abilitate
+  if(/\bvreau\s+s(a|ă)\b/.test(t))        return "-고 싶어요";
+  if(/\btrebuie să\b/.test(t))           return "-아/어야 돼요";
+  if(/\bnu pot să\b/.test(t))            return "-(으)ㄹ 수 없어요";
+  if(/\bpot să\b/.test(t))               return "-(으)ㄹ 수 있어요";
 
+  // 2) FUTUR (mâine, voi, o să)
+  if(/\b(maine|mâine)\b/.test(t) ||
+     /\bvoi\b/.test(t) ||
+     /\bo să\b/.test(t)){
+    return "-(으)ㄹ 거예요";
+  }
+
+  // 3) TRECUT (ieri, deja, tocmai, am + verb)
+  if(/\b(ieri|deja|tocmai)\b/.test(t) ||
+     /\bam\b/.test(t)){       // "am mers, am mâncat..."
+    return "-았어요/었어요";
+  }
+
+  // 4) Negativ (fallback – îl păstrezi la final, dacă vrei strict imperativ negativ)
+  if(/\bnu\b/.test(t))        return "-지 마세요";
+
+  // 5) Altfel, prezent politicos
   return "-아요/어요";
 }
 
