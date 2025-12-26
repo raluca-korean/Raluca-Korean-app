@@ -733,53 +733,61 @@ function findKoByRo(cat, text){
   }
   return null;
 }
-const RO_FORM_TO_INF = {
+    // ==== FORME ROMÂNEȘTI → INFINITIV (pt. detectarea verbului) ====
 const RO_FORM_TO_INF = {
   // MERGE / PLECA -> tratăm ca "a merge" (=> 가다)
   "plec":"a merge","pleci":"a merge","pleacă":"a merge","pleaca":"a merge",
   "pleca":"a merge","plecam":"a merge","plecați":"a merge",
   "merg":"a merge","mergi":"a merge","merge":"a merge","mergem":"a merge","mergeți":"a merge",
-  ...
-};
 
   // VENI
   "vin":"a veni","vii":"a veni","vine":"a veni","venim":"a veni","veniți":"a veni",
 
-  // MÂNCA / BEA
-  "mănânc":"a mânca","mananc":"a mânca","mănânci":"a mânca","mănâncă":"a mânca","manc":"a mânca","manci":"a mânca","manca":"a mânca",
+  // MÂNCA
+  "mănânc":"a mânca","mananc":"a mânca",
+  "mănânci":"a mânca","mananci":"a mânca",
+  "mănâncă":"a mânca","mananca":"a mânca",
+
+  // BEA
   "beau":"a bea","bei":"a bea","bea":"a bea","bem":"a bea","beți":"a bea",
 
-  // CITI / SCRIE
-  "citesc":"a citi","citești":"a citi","citește":"a citi","citim":"a citi","citiți":"a citi",
-  "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie","scriem":"a scrie","scrieți":"a scrie"
-};
-// foarte simplu: găsește subiect (eu/tu/noi/voi) + cuvinte pe care le știe glosarul
+  // CITI
+  "citesc":"a citi","citești":"a citi","citesti":"a citi",
+  "citește":"a citi","citeste":"a citi",
+  "citim":"a citi","citiți":"a citi","cititi":"a citi",
 
+  // SCRIE
+  "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie",
+  "scriem":"a scrie","scrieți":"a scrie","scrieti":"a scrie"
+};
+
+// foarte simplu: găsește subiect (eu/tu/noi/voi) + cuvinte pe care le știe glosarul
 function parseRoToState(roSentence){
   const msg = [];
   const t = normRo(roSentence);
 
   // SUBJECT
   let subj = "";
-  if(/\beu\b/.test(t)) subj = "저";
+  if(/\beu\b/.test(t))      subj = "저";
   else if(/\btu\b/.test(t)) subj = "너";
-  else if(/\bnoi\b/.test(t)) subj = "우리";
-  else if(/\bvoi\b/.test(t)) subj = "너희";
+  else if(/\bnoi\b/.test(t))subj = "우리";
+  else if(/\bvoi\b/.test(t))subj = "너희";
 
   // TIME
   const time =
     findKoByRo("time", roSentence) ||
     (/\bastazi\b/.test(t) ? "오늘" : "") ||
-    (/\bmaine\b/.test(t) ? "내일" : "") ||
-    (/\bieri\b/.test(t) ? "어제" : "");
+    (/\bmaine\b/.test(t)  ? "내일" : "") ||
+    (/\bieri\b/.test(t)   ? "어제" : "");
 
-  // PLACE / MOD / OBJECT
+  // PLACE
   let place = findKoByRo("place", roSentence);
   if(!place && /\bbanc(ă|a)\b/i.test(roSentence)) place = "은행";
-    // piață -> 시장 (acceptă și cu, și fără diacritice)
-  if(!place && /\bpiat[ăa]\b/i.test(roSentence)) place = "시장";
+  // piață / piata → 시장
+  if(!place && /\bpiat[ăa]\b/i.test(roSentence))  place = "시장";
 
-  const mod = findKoByRo("mod", roSentence);
+  // MOD / OBJECT
+  const mod    = findKoByRo("mod", roSentence);
   const object = findKoByRo("object", roSentence);
 
   // VERB (1) din dicționar
@@ -803,23 +811,23 @@ function parseRoToState(roSentence){
         break;
       }
     }
-   // VERB (4) sinonime românești manuale (mișcare)
+  }
+
+  // VERB (4) sinonime manuale (pleca, sosi, ajunge)
   if(!verb){
-    // „pleca” (voi pleca) -> 가다
     if(/\bpleca\b/.test(t) ||
        /\bplec\b/.test(t) ||
        /\bpleci\b/.test(t) ||
-       /\bplecăm\b/.test(t) ||
+       /\bplecam\b/.test(t) ||
        /\bplecați\b/.test(t)) {
-      verb = "가다";
-    }
-    // „a sosi / a ajunge” -> 오다
-    else if(/\bsosi\b/.test(t) ||
-            /\bajunge\b/.test(t) ||
-            /\bajuns\b/.test(t)) {
-      verb = "오다";
+      verb = "가다";           // pleca → a merge
+    } else if(/\bsosi\b/.test(t) ||
+              /\bajunge\b/.test(t) ||
+              /\bajuns\b/.test(t)) {
+      verb = "오다";           // sosi / ajunge → a veni
     }
   }
+
   const conj = detectConjFromRo(roSentence);
 
   if(!subj) msg.push("• Nu am detectat clar subiectul (eu/tu/noi/voi).");
@@ -829,13 +837,13 @@ function parseRoToState(roSentence){
     state: {
       subject: subj,
       time,
-      place: place || "",
-      mod: mod || "",
+      place:  place  || "",
+      mod:    mod    || "",
       object: object || "",
       numeral:"",
       counter:"",
-      verb: verb || "",
-      conjug: conj || "-아요/어요"
+      verb:   verb   || "",
+      conjug: conj   || "-아요/어요"
     },
     msg
   };
