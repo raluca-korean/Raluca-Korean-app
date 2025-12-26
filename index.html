@@ -1072,11 +1072,20 @@ modeButtons.forEach(btn=>{
     render();
   });
 });
-    
-const roTranslateBtn = document.getElementById("roTranslateBtn");
+    const roTranslateBtn = document.getElementById("roTranslateBtn");
 if(roTranslateBtn){
   roTranslateBtn.addEventListener("click",()=>{
-    const txt = document.getElementById("roInput").value;
+    const txt = roInput.value;
+    LAST_RO_SENTENCE = txt;
+
+    // 1) parsez fraza română → SUBJ / TIME / PLACE / VERB / CONJUGARE
+    const parsed = parseRoToState(txt);
+
+    // 2) umplu Propoziția 1 cu ce a găsit parserul
+    Object.assign(stateP1, parsed.state);
+    render();   // re-desenăm tabelul + propoziția de jos
+
+    // 3) afișez sus rezultatul Ro→Ko + româna corectată
     const res = translateRoToKo(txt);
     document.getElementById("roToKoResult").textContent = res.ko;
     document.getElementById("roCorrected").textContent = res.roFixed;
