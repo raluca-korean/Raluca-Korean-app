@@ -2938,13 +2938,27 @@ speakBtn.addEventListener("click",()=>{
   if(!("speechSynthesis"in window)){alert("Browserul nu suportă audio.");return;}
   const text=previewKo.textContent;
   if(!text||text.includes("alege cuvinte"))return;
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang="ko-KR";
-  const vs=window.speechSynthesis.getVoices();
-  const koV=vs.find(v=>v.lang&&v.lang.toLowerCase().startsWith("ko"));
-  if(koV)u.voice=koV;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
+  const u = new SpeechSynthesisUtterance(text);
+u.lang = "ko-KR";
+
+const vs = window.speechSynthesis.getVoices();
+
+// 1️⃣ încearcă să găsești vocea „Jian”
+let koV = vs.find(v =>
+  v.name && v.name.toLowerCase().includes("jian")
+);
+
+// 2️⃣ dacă nu o găsește, folosește orice voce coreeană
+if (!koV) {
+  koV = vs.find(v => v.lang && v.lang.toLowerCase().startsWith("ko"));
+}
+
+if (koV) {
+  u.voice = koV;
+}
+
+window.speechSynthesis.cancel();
+window.speechSynthesis.speak(u);
 });
 const favorites=[];
 const favoritesListEl=document.getElementById("favoritesList");
