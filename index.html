@@ -2944,11 +2944,18 @@ randomBtn.addEventListener("click",()=>{
   if (!text || text.includes("alege cuvinte")) return;
 
   const u = new SpeechSynthesisUtterance(text);
-
-  // IMPORTANT: punem doar limba, NU mai alegem vocea manual
   u.lang = "ko-KR";
 
-  // lăsăm iPad-ul să folosească vocea coreeană implicită (Jian dacă e setată la sistem)
+  // alegem PRIMA voce coreeană disponibilă pentru Web Speech
+  const voices = window.speechSynthesis.getVoices();
+  const koVoices = voices.filter(v =>
+    v.lang && v.lang.toLowerCase().startsWith("ko")
+  );
+
+  if (koVoices.length > 0) {
+    u.voice = koVoices[0];   // din păcate, asta e vocea „veche”
+  }
+
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
 });
