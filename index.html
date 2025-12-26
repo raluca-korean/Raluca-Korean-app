@@ -791,7 +791,16 @@ function parseRoToState(roSentence){
       }
     }
   }
-
+  // VERB (4) sinonime românești manuale (a pleca = a merge = 가다)
+  if(!verb){
+    if(/\bpleca\b/.test(t) ||
+       /\bplec\b/.test(t) ||
+       /\bpleci\b/.test(t) ||
+       /\bplecam\b/.test(t) ||
+       /\bplecati\b/.test(t)) {
+      verb = "가다";
+    }
+  }
   const conj = detectConjFromRo(roSentence);
 
   if(!subj) msg.push("• Nu am detectat clar subiectul (eu/tu/noi/voi).");
@@ -1113,9 +1122,17 @@ function addTimeWithParticle(word){
   if(timeAdverbsNoParticle.has(word))return word;
   return word+"에";
 }
-function addPlaceWithParticle(word){
-  if(!word)return"";
-  return word+"에서";
+function addPlaceWithParticle(word, verbKo){
+  if(!word) return "";
+
+  // verbe de mișcare – merg la / vin la → 에
+  const motionVerbs = new Set(["가다","오다","나가다","들어가다","돌아가다","돌아오다"]);
+
+  if(verbKo && motionVerbs.has(verbKo)) {
+    return word + "에";
+  }
+  // altfel, locul acțiunii → 에서
+  return word + "에서";
 }
 function addObjectWithParticle(word){
   if(!word)return"";
