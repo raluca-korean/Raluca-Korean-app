@@ -2658,7 +2658,6 @@ function buildNaturalRomanian(state, activeMap){
   const use = (key) =>
     activeMap[key] !== false && isColumnVisible(key) && state[key];
 
-  // ia traducerea românească sau cuvântul original
   const getRo = (catKey, stateKey) => {
     const dict = translations[catKey] || {};
     const raw  = state[stateKey];
@@ -2668,12 +2667,12 @@ function buildNaturalRomanian(state, activeMap){
 
   const timeRo    = use("time")    ? getRo("time", "time")       : "";
   const subjRo    = use("subject") ? getRo("subject", "subject") : "";
-  const placeRo   = use("place")   ? getRo("place", "place")     : "";
+  const placeRaw  = use("place")   ? getRo("place", "place")     : "";
   const modRo     = use("mod")     ? getRo("mod", "mod")         : "";
   const objectRo  = use("object")  ? getRo("object", "object")   : "";
   const numeralRo = use("numeral") ? (state.numeral || "")       : "";
 
-  // obiectul = (număr) + substantiv
+  // obiect = număr + substantiv
   let objectPhrase = "";
   if (objectRo) {
     const objPieces = [];
@@ -2682,30 +2681,73 @@ function buildNaturalRomanian(state, activeMap){
     objectPhrase = objPieces.join(" ");
   }
 
-  // verb + conjugare (RO exact ca sens)
-const verbRaw = state.verb || "";
-const verbRoInf =
-  (translations.verb && translations.verb[verbRaw]) || verbRaw || "";
+  // locul: „acasă” rămâne, restul devin „la X”
+  let placePhrase = "";
+  if (placeRaw) {
+    if (placeRaw === "acasă") {
+      placePhrase = placeRaw;
+    } else if (/^(la |în |in )/i.test(placeRaw)) {
+      placePhrase = placeRaw;
+    } else {
+      placePhrase = "la " + placeRaw;
+    }
+  }
 
-const conjUsed =
-  (activeMap.conjug !== false && isColumnVisible("conjug")) ? (state.conjug || "") : "";
-  const verbPhrase = (activeMap.verb !== false && isColumnVisible("verb"))
-    ? buildRoVerbPhrase(verbRoInf, conjUsed, state.subject, state.verb)
-    : "";
+  // verb + timp (doar formă simplă, fără paranteze)
+  const verbRaw   = state.verb || "";
+  const verbRoInf =
+    (translations.verb && translations.verb[verbRaw]) || verbRaw || "";
+  const conjUsed =
+    (activeMap.conjug !== false && isColumnVisible("conjug"))
+      ? (state.conjug || "")
+      : "";
 
-  // Ordinea finală în română
+  let verbPhrase = "";
+  if (activeMap.verb !== false && isColumnVisible("verb")) {
+    const cType = conjugationType(conjUsed); // "present" / "past" / "future"
+    const person = roPersonFromSubjectKo(state.subject);
+    
+    // forme la trecut pentru cele mai folosite verbe
+    const RO_PAST = {
+      "a merge":   { "1sg":"am mers","2sg":"ai mers","3sg":"a mers","1pl":"am mers","2pl":"ați mers","3pl":"au mers" },
+      "a veni":    { "1sg":"am venit","2sg":"ai venit","3sg":"a venit","1pl":"am venit","2pl":"ați venit","3pl":"au venit" },
+      "a mânca":   { "1sg":"am mâncat","2sg":"ai mâncat","3sg":"a mâncat","1pl":"am mâncat","2pl":"ați mâncat","3pl":"au mâncat" },
+      "a bea":     { "1sg":"am băut","2sg":"ai băut","3sg":"a băut","1pl":"am băut","2pl":"ați băut","3pl":"au băut" },
+      "a citi":    { "1sg":"am citit","2sg":"ai citit","3sg":"a citit","1pl":"am citit","2pl":"ați citit","3pl":"au citit" },
+      "a scrie":   { "1sg":"am scris","2sg":"ai scris","3sg":"a scris","1pl":"am scris","2pl":"ați scris","3pl":"au scris" },
+      "a cumpăra": { "1sg":"am cumpărat","2sg":"ai cumpărat","3sg":"a cumpărat","1pl":"am cumpărat","2pl":"ați cumpărat","3pl":"au cumpărat" }
+    };
+
+    if (cType === "past") {
+      const inf = (verbRoInf || "").toLowerCase().trim();
+      const table = RO_PAST[inf];
+      if (table && table[person]) {
+        verbPhrase = table[person];     // ex: „am mers”
+      } else {
+        verbPhrase = "am " + stripInfinitive(verbRoInf || "");
+      }
+    } else if (cType === "future") {
+      const base = stripInfinitive(verbRoInf || "");
+      verbPhrase = "voi " + base;       // simplificat
+    } else {
+      // prezent – folosim logica existentă
+      verbPhrase = roAgreeVerb(verbRoInf, state.subject, state.verb);
+    }
+  }
+
+  // ordinea finală: Timp → Subiect → Verb → Mod → Loc → Obiect
   const parts = [];
   if (timeRo)       parts.push(timeRo);        // Astăzi
   if (subjRo)       parts.push(subjRo);        // eu (formal)
-  if (placeRo)      parts.push(placeRo);       // acasă
-  if (modRo)        parts.push(modRo);         // bine
-  if (objectPhrase) parts.push(objectPhrase);  // carte / 3 cărți
-  if (verbPhrase)   parts.push(verbPhrase);    // merg (prezent politicos)
+  if (verbPhrase)   parts.push(verbPhrase);    // am mers / merg
+  if (modRo)        parts.push(modRo);         // repede
+  if (placePhrase)  parts.push(placePhrase);   // la școală
+  if (objectPhrase) parts.push(objectPhrase);  // cartea etc.
 
   if (!parts.length) return "";
 
   let sentence = parts.join(" ");
-  sentence = sentence.replace(/\s+/g," ");     // spații duble
+  sentence = sentence.replace(/\s+/g," ");
   sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
   if (!/[.!?]$/.test(sentence)) sentence += ".";
   return sentence;
