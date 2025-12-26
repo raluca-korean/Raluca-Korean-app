@@ -2934,38 +2934,21 @@ randomBtn.addEventListener("click",()=>{
   });
   render();
 });
-speakBtn.addEventListener("click", () => {
+    speakBtn.addEventListener("click", () => {
   if (!("speechSynthesis" in window)) {
     alert("Browserul nu suportă audio.");
     return;
   }
 
-  const vs = window.speechSynthesis.getVoices();
-  if (!vs.length) {
-    alert("Încă nu am primit lista de voci.");
-    return;
-  }
-
-  // Arată toate vocile pe care le vede browserul
-  alert(
-    vs
-      .map(v => `${v.name}  (${v.lang})`)
-      .join("\n")
-  );
-
   const text = previewKo.textContent;
   if (!text || text.includes("alege cuvinte")) return;
 
   const u = new SpeechSynthesisUtterance(text);
+
+  // IMPORTANT: punem doar limba, NU mai alegem vocea manual
   u.lang = "ko-KR";
 
-  // încearcă un male coreean dacă există (de ex. 'Minsu')
-  let koV =
-    vs.find(v => v.lang && v.lang.toLowerCase().startsWith("ko") && /minsu|male/i.test(v.name || "")) ||
-    vs.find(v => v.lang && v.lang.toLowerCase().startsWith("ko"));
-
-  if (koV) u.voice = koV;
-
+  // lăsăm iPad-ul să folosească vocea coreeană implicită (Jian dacă e setată la sistem)
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
 });
