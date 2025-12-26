@@ -658,6 +658,23 @@ function loadCustomData(){
 const roInput = document.getElementById("roInput");
 
 // reverse map: română -> coreeană (din translations)
+function stripDiacritics(s){
+  return (s||"")
+    .replace(/ă/g,"a").replace(/â/g,"a").replace(/î/g,"i")
+    .replace(/ș/g,"s").replace(/ş/g,"s")
+    .replace(/ț/g,"t").replace(/ţ/g,"t");
+}
+
+function normRo(s){
+  return stripDiacritics(
+    (s||"")
+      .toLowerCase()
+      .replace(/[.,!?;]/g," ")
+  )
+  .replace(/\s+/g," ")
+  .trim();
+}
+
 function buildReverseMap(){
   const rev = {subject:{}, time:{}, place:{}, mod:{}, object:{}, counter:{}, verb:{}, conjug:{}};
 
@@ -665,8 +682,7 @@ function buildReverseMap(){
     if(!rev[cat]) return;
     Object.entries(map).forEach(([ko, ro])=>{
       if(!ro) return;
-      const key = ro.toLowerCase().trim();
-      // păstrăm prima asociere (nu suprascriem)
+      const key = normRo(ro);   // ← acum și traducerile sunt fără diacritice
       if(!rev[cat][key]) rev[cat][key] = ko;
     });
   });
@@ -674,14 +690,6 @@ function buildReverseMap(){
   return rev;
 }
 let REV = buildReverseMap();
-
-function normRo(s){
-  return (s||"")
-    .toLowerCase()
-    .replace(/[.,!?;]/g," ")
-    .replace(/\s+/g," ")
-    .trim();
-}
 
 // detectează conjugarea din română (foarte practic)
 function detectConjFromRo(ro){
@@ -725,9 +733,13 @@ function findKoByRo(cat, text){
   return null;
 }
 const RO_FORM_TO_INF = {
+const RO_FORM_TO_INF = {
   // MERGE / PLECA -> tratăm ca "a merge" (=> 가다)
-  "plec":"a merge","pleci":"a merge","pleacă":"a merge","pleaca":"a merge","plecam":"a merge","plecați":"a merge",
+  "plec":"a merge","pleci":"a merge","pleacă":"a merge","pleaca":"a merge",
+  "pleca":"a merge","plecam":"a merge","plecați":"a merge",
   "merg":"a merge","mergi":"a merge","merge":"a merge","mergem":"a merge","mergeți":"a merge",
+  ...
+};
 
   // VENI
   "vin":"a veni","vii":"a veni","vine":"a veni","venim":"a veni","veniți":"a veni",
@@ -756,8 +768,8 @@ function parseRoToState(roSentence){
   // TIME
   const time =
     findKoByRo("time", roSentence) ||
-    (/\bastăzi\b/.test(t) ? "오늘" : "") ||
-    (/\bmâine\b/.test(t) ? "내일" : "") ||
+    (/\bastazi\b/.test(t) ? "오늘" : "") ||
+    (/\bmaine\b/.test(t) ? "내일" : "") ||
     (/\bieri\b/.test(t) ? "어제" : "");
 
   // PLACE / MOD / OBJECT
