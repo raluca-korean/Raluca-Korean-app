@@ -2795,7 +2795,7 @@ function renderPanelList(col){
   const filter=(panelSearchInput.value||"").trim().toLowerCase();
   const words=col.data.filter(w=>{
     if(!w)return false;
-    if(!filter)return true;
+    if(!filter)return true; 
     return w.toLowerCase().startsWith(filter);
   });
   if(!words.length){
@@ -2934,31 +2934,40 @@ randomBtn.addEventListener("click",()=>{
   });
   render();
 });
-speakBtn.addEventListener("click",()=>{
-  if(!("speechSynthesis"in window)){alert("Browserul nu suportă audio.");return;}
-  const text=previewKo.textContent;
-  if(!text||text.includes("alege cuvinte"))return;
+speakBtn.addEventListener("click", () => {
+  if (!("speechSynthesis" in window)) {
+    alert("Browserul nu suportă audio.");
+    return;
+  }
+
+  const vs = window.speechSynthesis.getVoices();
+  if (!vs.length) {
+    alert("Încă nu am primit lista de voci.");
+    return;
+  }
+
+  // Arată toate vocile pe care le vede browserul
+  alert(
+    vs
+      .map(v => `${v.name}  (${v.lang})`)
+      .join("\n")
+  );
+
+  const text = previewKo.textContent;
+  if (!text || text.includes("alege cuvinte")) return;
+
   const u = new SpeechSynthesisUtterance(text);
-u.lang = "ko-KR";
+  u.lang = "ko-KR";
 
-const vs = window.speechSynthesis.getVoices();
+  // încearcă un male coreean dacă există (de ex. 'Minsu')
+  let koV =
+    vs.find(v => v.lang && v.lang.toLowerCase().startsWith("ko") && /minsu|male/i.test(v.name || "")) ||
+    vs.find(v => v.lang && v.lang.toLowerCase().startsWith("ko"));
 
-// 1️⃣ încearcă să găsești vocea „Jian”
-let koV = vs.find(v =>
-  v.name && v.name.toLowerCase().includes("jian")
-);
+  if (koV) u.voice = koV;
 
-// 2️⃣ dacă nu o găsește, folosește orice voce coreeană
-if (!koV) {
-  koV = vs.find(v => v.lang && v.lang.toLowerCase().startsWith("ko"));
-}
-
-if (koV) {
-  u.voice = koV;
-}
-
-window.speechSynthesis.cancel();
-window.speechSynthesis.speak(u);
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
 });
 const favorites=[];
 const favoritesListEl=document.getElementById("favoritesList");
