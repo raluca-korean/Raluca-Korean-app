@@ -675,16 +675,41 @@ function normRo(s){
   .replace(/\s+/g," ")
   .trim();
 }
-
 function buildReverseMap(){
-  const rev = {subject:{}, time:{}, place:{}, mod:{}, object:{}, counter:{}, verb:{}, conjug:{}};
+  const rev = {
+    subject:{}, time:{}, place:{}, mod:{},
+    object:{}, counter:{}, verb:{}, conjug:{}
+  };
 
   Object.entries(translations).forEach(([cat, map])=>{
     if(!rev[cat]) return;
+
     Object.entries(map).forEach(([ko, ro])=>{
       if(!ro) return;
-      const key = normRo(ro);   // ← acum și traducerile sunt fără diacritice
-      if(!rev[cat][key]) rev[cat][key] = ko;
+
+      // ex: "a cumpăra" → "a cumpara"
+      const norm = normRo(ro);
+
+      // cheia de bază (ce aveai și înainte)
+      if(!rev[cat][norm]) rev[cat][norm] = ko;
+
+      // 👇 în plus: suport pentru forme de tip "cumpăr", "să cumpăr"
+      if(norm.startsWith("a ")){
+        // "a cumpara" → "cumpara"
+        const base = norm.replace(/^a\s+/, ""); 
+        if(base){
+          // "cumpara" → "cumpar" (tăiem ultima vocală a infinitivului)
+          const stem = base.replace(/[aei]$/, ""); 
+          if(stem){
+            // "cumpar" → prinde "cumpăr legume"
+            if(!rev[cat][stem]) rev[cat][stem] = ko;
+
+            // "sa cumpar" → prinde "să cumpăr legume"
+            const saKey = "sa " + stem;
+            if(!rev[cat][saKey]) rev[cat][saKey] = ko;
+          }
+        }
+      }
     });
   });
 
@@ -2158,12 +2183,81 @@ function render(){
   nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
-function translateRoToKo(roText){
+ function translateRoToKo(roText){
   LAST_RO_SENTENCE = roText || "";
-  // 1. Parse româna → state logic ...
-  const parsed = parseRoToState(roText);
+  const original = (roText || "").trim();
+  if(!original){
+    return { ko:"", roFixed:"" };
+  }
 
-  // 2. Construim coreeana EXACT cu engine-ul tău existent
+  // 1️⃣ Încercăm mai întâi cazul FRAZĂ cu "să ... (și să ...)"
+  // ex: "Eu plec la piață să cumpăr legume și să coc alune"
+  const saMatch = original.match(/\s+s[ăa]\s+/i);
+
+  if(saMatch){
+    // Partea din față → propoziția 1 ("Eu plec la piață")
+    const mainPart = original.slice(0, saMatch.index).trim();
+    // Tot ce vine după primul "să" → propoziția de scop ("cumpăr legume și să coc alune")
+    const restPart = original.slice(saMatch.index + saMatch[0].length).trim();
+
+    if(mainPart && restPart){
+      // Parsez propoziția 1 cu parserul tău (subiect / timp / loc / verb)
+      const mainParsed = parseRoToState(mainPart);
+      const s = mainParsed.state || {};
+
+      // Împart după "și să ..." → maxim 2–3 verbe
+      const segs = restPart.split(/\s+și\s+s[ăa]\s+/i);
+
+      const subUnits = segs.map(seg=>{
+        const verbKo   = findKoByRo("verb", seg)   || "";
+        const objectKo = findKoByRo("object", seg) || "";
+        return { verb:verbKo, object:objectKo };
+      }).filter(u=>u.verb);   // păstrăm doar segmentele unde am găsit verb
+
+      // Dacă avem verb la P1 + cel puțin un verb de scop, construim fraza coreeană
+      if(s.verb && subUnits.length){
+        const parts = [];
+
+        // SUBIECT / TIMP / LOC / MOD – folosesc exact helperii aplicației
+        if(s.subject) parts.push(addSubjectWithParticle(s.subject));
+        if(s.time)    parts.push(addTimeWithParticle(s.time));
+        if(s.place)   parts.push(addPlaceWithParticle(s.place, s.verb));
+        if(s.mod)     parts.push(s.mod);
+
+        // Verbul de deplasare + 서  (ex: 가서 / 와서)
+        // folosesc stemPlusAeo ca să iasă 자연스럽게: 가다→가서, 오다→와서, 하다→해서
+        parts.push(stemPlusAeo(s.verb) + "서");
+
+        // Verbele de scop:
+        //  - toate, mai puțin ultimul → "-고"
+        //  - ultimul → prezent politicos
+        subUnits.forEach((u, idx)=>{
+          if(u.object) parts.push(addObjectWithParticle(u.object));
+          if(u.verb){
+            if(idx < subUnits.length-1){
+              // verb intermediar: "-고"
+              parts.push(getVerbStem(u.verb) + "고");
+            } else {
+              // ultimul verb: prezent politicos
+              parts.push(presentPolite(u.verb));
+            }
+          }
+        });
+
+        const koSentence = parts.join(" ");
+        const roFixed = original.replace(/\s+/g," ");
+
+        return {
+          ko: koSentence,
+          roFixed
+        };
+      }
+    }
+  }
+
+  // 2️⃣ Dacă nu e frază cu "să..." sau nu reușim, mergem pe logica veche (propoziție simplă)
+  const parsed = parseRoToState(original);
+
   const koResult = buildClauseSentence(
     parsed.state,
     {
@@ -2174,7 +2268,6 @@ function translateRoToKo(roText){
     null
   ).ko;
 
-  // 3. Construim româna CORECTĂ (verb acordat cu subiectul)
   const roFixed = buildNaturalRomanian(
     parsed.state,
     {
