@@ -5,210 +5,391 @@
   <title>Raluca Korean – Study App v2.0</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    /* =========================================================
-   THEME v3 – neutral, clean, fără mov enervant 🙂
-   (se pune LA FINALUL <style>, după orice alt override)
-========================================================= */
+    :root {
+      --bg: #f7f3ff;
+      --card-bg: #ffffff;
+      --accent: #c9b5ff;
+      --accent-strong: #9b7cff;
+      --text-main: #333333;
+      --text-soft: #666666;
+      --border: #e0d7ff;
+      --dimmed-bg: #f2eefc;
+      --overlay-bg: rgba(0, 0, 0, 0.2);
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(circle at top,#fdfbff,#f4f0ff);
+      color:var(--text-main);display:flex;flex-direction:column;min-height:100vh;
+    }
+    .app{
+      max-width:1000px;margin:0 auto;padding:10px 10px 60px;
+      display:flex;flex-direction:column;gap:10px;min-height:100vh;
+    }
+    header{text-align:center;padding:4px 8px 4px;}
+    header h1{font-size:18px;margin:2px 0;font-weight:700;color:var(--accent-strong);}
+    header p{margin:0;font-size:11px;color:var(--text-soft);}
 
-/* 🎨 Paletă neutră de bază (înlocuiește movul) */
-:root {
-  --bg: #f5f3ec;
-  --card-bg: #ffffff;
-  --accent: #7c9bb2;         /* albastru-gri cald, foarte soft */
-  --accent-strong: #4b687f;  /* accent mai închis */
-  --text-main: #2f3437;
-  --text-soft: #7f848a;
-  --border: #e1ddd4;
-  --dimmed-bg: #f0ede6;
+    .screen{display:none;flex-direction:column;gap:10px;flex:1;min-height:0;}
+    .screen.active{display:flex;}
+
+    .mode-panel{
+      background:var(--card-bg);border-radius:12px;border:1px solid var(--border);
+      padding:6px 8px;font-size:11px;display:flex;flex-direction:column;gap:4px;
+      box-shadow:0 4px 12px rgba(120,96,190,0.08);
+    }
+    .mode-row{
+      display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;
+    }
+    .mode-row label{font-size:11px;display:flex;align-items:center;gap:4px;}
+    .part-toggles{display:flex;flex-wrap:wrap;gap:6px;}
+    .chip{
+      display:inline-flex;align-items:center;gap:3px;
+      padding:3px 8px;border-radius:999px;background:#ede7ff;color:var(--accent-strong);
+      font-size:10px;cursor:pointer;
+    }
+    .chip input{margin:0;}
+    .section-label{font-size:11px;font-weight:600;color:var(--accent-strong);margin-top:2px;}
+
+    .small-mode-btn{
+      padding:3px 8px;
+      font-size:10px;
+    }
+    .small-mode-btn.active{
+      background:var(--accent-strong);
+      color:#fff;
+    }
+
+    .table-block{
+      background:var(--card-bg);border-radius:14px;padding:8px;
+      box-shadow:0 6px 16px rgba(120,96,190,0.12);border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;
+    }
+    .table-title{
+      font-size:11px;font-weight:600;color:var(--text-soft);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .table-horizontal{
+      display:flex;flex-direction:row;overflow-x:auto;padding-bottom:4px;gap:6px;
+    }
+    .col{
+      min-width:110px;max-width:140px;flex:0 0 auto;background:#faf8ff;border-radius:10px;
+      border:1px solid var(--border);display:flex;flex-direction:column;
+      padding:6px 6px 8px;transition:0.2s;cursor:pointer;
+      touch-action:manipulation;
+    }
+    .col-header{
+      font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;
+      color:var(--accent-strong);margin-bottom:4px;border-bottom:1px solid var(--border);
+      padding-bottom:3px;
+    }
+    .col-body-label{font-size:10px;color:var(--text-soft);margin-bottom:2px;}
+    .col-body-main{font-size:15px;font-weight:600;margin-bottom:2px;}
+    .col-body-extra{font-size:11px;color:var(--text-soft);}
+    .dimmed{
+      opacity:0.35;background-image:repeating-linear-gradient(
+        -45deg,var(--dimmed-bg),var(--dimmed-bg) 4px,#fdfbff 4px,#fdfbff 8px
+      );
+    }
+
+    .controls{
+      display:flex;justify-content:space-between;align-items:center;gap:8px;
+      padding-top:4px;border-top:1px dashed var(--border);
+    }
+    .btn-group{display:flex;gap:6px;}
+    button{
+      border-radius:999px;border:none;padding:6px 10px;font-size:12px;font-weight:600;
+      cursor:pointer;background:var(--accent);color:#fff;display:inline-flex;
+      align-items:center;gap:4px;box-shadow:0 2px 6px rgba(90,70,160,0.25);
+    }
+    button.secondary{background:#ede7ff;color:var(--accent-strong);box-shadow:none;}
+    button:disabled{opacity:0.4;box-shadow:none;cursor:default;}
+    .page-indicator{font-size:11px;color:var(--text-soft);}
+    .legend{font-size:10px;color:var(--text-soft);text-align:center;padding:2px 4px 0;}
+    .hidden{display:none !important;}
+
+    .preview-card{
+      margin-top:6px;padding:8px;border-radius:12px;
+      background:#f9f7ff;border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:4px;
+    }
+    .preview-title{
+      font-size:11px;font-weight:600;color:var(--accent-strong);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .preview-ko{
+      font-size:14px;font-weight:600;margin-top:2px;
+    }
+    .preview-ro{
+      font-size:12px;color:var(--text-soft);
+    }
+    .preview-natural{
+      font-size:11px;
+      color:#8e6cff;
+      margin-top:2px;
+    }
+    .preview-buttons{
+      display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;
+    }
+  
+  
+    .overlay{
+      position:fixed;inset:0;background:var(--overlay-bg);
+      display:flex;justify-content:center;align-items:flex-end;z-index:1000;
+    }
+    .panel{
+      width:100%;max-width:900px;background:var(--card-bg);
+      border-radius:18px 18px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,0.15);
+      padding:10px 12px 14px;animation:slideUp 0.18s ease-out;
+    }
+    @keyframes slideUp{
+      from{transform:translateY(40px);opacity:0;}
+      to{transform:translateY(0);opacity:1;}
+    }
+    .panel-header{
+      display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
+    }
+    .panel-title{font-size:13px;font-weight:600;color:var(--accent-strong);}
+    .panel-sub{font-size:11px;color:var(--text-soft);}
+    .panel-close{
+      background:transparent;color:var(--text-soft);box-shadow:none;
+      padding:4px 6px;font-size:14px;
+    }
+    .panel-input-row{display:flex;gap:6px;margin-bottom:6px;}
+    .panel-input-row input{
+      flex:1;border-radius:999px;border:1px solid var(--border);
+      padding:6px 10px;font-size:12px;
+    }
+    .panel-list{
+      max-height:260px;overflow-y:auto;border-radius:10px;
+      border:1px solid var(--border);background:#faf8ff;padding:4px;
+    }
+    .panel-item{
+      padding:4px 8px;border-radius:8px;display:flex;justify-content:space-between;
+      align-items:center;font-size:13px;cursor:pointer;
+    }
+    .panel-item:hover{background:#ede7ff;}
+    .panel-item-main{font-weight:600;}
+    .panel-item-extra{
+      display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+    }
+    .panel-item-tag{font-size:10px;color:var(--accent-strong);}
+
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;
+      background:#ffffffee;border-top:1px solid var(--border);
+      display:flex;justify-content:space-around;align-items:center;
+      padding:6px 0;backdrop-filter:blur(8px);z-index:500;
+    }
+    .nav-btn{
+      flex:1;text-align:center;border:none;background:transparent;
+      font-size:11px;color:var(--text-soft);padding:4px 0;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:2px;
+    }
+    .nav-btn span.icon{font-size:18px;}
+    .nav-btn.active{color:var(--accent-strong);font-weight:600;}
+    .nav-btn.active span.icon{transform:translateY(-1px);}
+    @media (max-width:600px){
+      header h1{font-size:16px;}
+      .col{min-width:95px;}
+    }
+
+    .card{
+      background:var(--card-bg);border-radius:14px;padding:10px;
+      box-shadow:0 4px 12px rgba(120,96,190,0.12);border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .card h2{
+      margin:0;font-size:14px;color:var(--accent-strong);
+    }
+    .small-label{font-size:11px;color:var(--text-soft);}
+    select{
+      border-radius:999px;border:1px solid var(--border);
+      padding:4px 10px;font-size:12px;background:#fff;
+    }
+    .exercise-question{
+      font-size:14px;font-weight:600;margin-top:4px;
+    }
+    .exercise-options{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+    .exercise-options label{
+      font-size:13px;display:flex;align-items:center;gap:6px;
+    }
+    .exercise-feedback{
+      font-size:12px;margin-top:4px;
+    }
+
+    .glossary-search{
+      display:flex;gap:6px;align-items:center;margin-top:4px;
+    }
+    .glossary-search input{
+      flex:1;border-radius:999px;border:1px solid var(--border);
+      padding:6px 10px;font-size:12px;
+    }
+    textarea{
+  width:100%;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#fff;
+  padding:10px 12px;
+  font-size:13px;
+  line-height:1.35;
+  color:var(--text-main);
+  outline:none;
+  resize:vertical;
+  min-height:72px;
+  box-shadow:0 2px 10px rgba(120,96,190,0.06) inset;
 }
 
-/* fundal general – hârtie caldă, nu lila */
-body{
-  background:
-    radial-gradient(circle at top,#faf7f0 0,#f3efe7 40%,#ece6db 100%);
+textarea::placeholder{
+  color:#9a93b8;
 }
 
-/* container app – puțin mai aerisit */
-.app{
-  max-width: 980px;
-  padding: 16px 14px 70px;
+textarea:focus{
+  border-color:var(--accent-strong);
+  box-shadow:0 0 0 3px rgba(155,124,255,0.18);
 }
+    .glossary-list{
+      margin-top:6px;max-height:260px;overflow-y:auto;padding-right:2px;
+    }
+    .glossary-item{
+      padding:6px 8px;border-radius:10px;border:1px solid var(--border);
+      background:#faf8ff;margin-bottom:4px;font-size:12px;
+      display:flex;justify-content:space-between;gap:8px;
+    }
+    .glossary-ko{font-weight:600;}
+    .glossary-ro{color:var(--text-soft);}
+    .glossary-cat{font-size:10px;color:var(--accent-strong);}
 
-/* header mai „calm” */
-header h1{
-  color: #4b687f;
-  letter-spacing: 0.04em;
-}
-header p{
-  color: var(--text-soft);
-}
-
-/* carduri principale */
-.card,
-.table-block,
-.preview-card{
-  background: linear-gradient(145deg,#ffffff,#f7f4ee);
+    .fav-list{
+      margin-top:4px;max-height:140px;overflow-y:auto;padding-right:2px;
+    }
+    .fav-item{
+      padding:4px 6px;border-radius:8px;border:1px solid var(--border);
+      background:#fdfbff;margin-bottom:4px;font-size:11px;
+    }
+    .fav-ko{font-weight:600;margin-bottom:2px;}
+    .fav-ro{color:var(--text-soft);}
+    /* CARD GENERAL – Română → Coreeană, Exerciții, Glosar */
+.card{
+  background: linear-gradient(145deg, #ffffff, #f5f0ff);
   border-radius: 18px;
-  border: 1px solid rgba(210,202,188,0.9);
-  box-shadow:
-    0 14px 26px rgba(164,151,130,0.18),
-    0 1px 0 rgba(255,255,255,0.95) inset;
+  padding: 12px 14px;
+  box-shadow: 0 10px 24px rgba(120,96,190,0.18);
+  border: 1px solid rgba(201,181,255,0.6);
 }
 
-/* titlurile cardurilor */
+/* Titlurile cardurilor */
 .card h2{
+  margin: 0 0 6px;
   font-size: 15px;
   font-weight: 700;
+  color: #7b5fff;
   letter-spacing: 0.03em;
-  color: #4b687f;
 }
 
-/* textarea – „notițe pe hârtie” */
+/* Textarea română */
 textarea#roInput{
-  background: #fbfaf7;
-  border: 1px solid #e0d9cc;
+  border-radius: 14px;
+  border: 1px solid #d7c9ff;
+  background: #fbf9ff;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
   box-shadow: 0 0 0 1px rgba(255,255,255,0.7);
 }
 
-/* buton „Tradu în coreeană” – gradient albastru-gri */
+/* Buton „Tradu în coreeană” */
 #roTranslateBtn{
-  background: linear-gradient(120deg,#8aa4ba,#57728d);
-  box-shadow: 0 6px 14px rgba(87,114,141,0.35);
+  margin-top: 6px;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(120deg, #b391ff, #8a6bff);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 14px rgba(125,99,210,0.35);
 }
 
-/* coloanele SUBJ/TIME/PLACE etc. */
+/* Rezultat KO + româna corectată */
+#roToKoResult{
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #3a295d;
+}
+
+#roCorrected{
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7b7496;
+}
+
+/* Coloanele SUBJ/TIME/PLACE etc. */
 .col{
-  background: radial-gradient(circle at top left,#fdfcf9,#f1ede5);
+  min-width: 110px;
+  max-width: 140px;
+  flex: 0 0 auto;
+  background: radial-gradient(circle at top left,#fdfbff,#f1ecff);
   border-radius: 14px;
-  border: 1px solid #d8cebf;
-  box-shadow:
-    0 10px 20px rgba(164,151,130,0.20),
-    0 1px 0 rgba(255,255,255,0.95) inset;
-  transform: translateY(0);
-}
-.col:hover,
-.col:active{
-  transform: translateY(-2px);
-  box-shadow:
-    0 16px 30px rgba(164,151,130,0.28),
-    0 1px 0 rgba(255,255,255,1) inset;
-  border-color: #bba982;
-}
-.col-header{
-  color: #8b7a60;
-}
-.col-body-main{
-  color: #3a3125;
+  border: 1px solid #ddd2ff;
+  padding: 7px 7px 9px;
+  box-shadow: 0 6px 16px rgba(118,95,205,0.16);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s;
 }
 
-/* chips pentru părți de propoziție – nuanță bej, nu mov */
-.chip{
-  background: #f5efe4;
-  border: 1px solid rgba(210,197,176,0.9);
-  color: #6a5740;
-}
-
-/* NAV bar de jos – alb simplu, accent albastru-gri */
-.bottom-nav{
-  background: rgba(255,255,255,0.96);
-  box-shadow: 0 -6px 18px rgba(125,115,100,0.12);
-}
-.nav-btn{
-  color: var(--text-soft);
-}
-.nav-btn.active{
-  color: #4b687f;
-}
-.nav-btn.active span.icon{
+/* Efect la tap / hover (desktop) */
+.col:active,
+.col:hover{
   transform: translateY(-1px);
+  box-shadow: 0 9px 20px rgba(118,95,205,0.24);
+  border-color: #b09bff;
 }
 
-/* butoane secundare */
-button.secondary{
-  background: #f3eee5;
-  color: #4b687f;
-  box-shadow: none;
+/* Headerul coloanei */
+.col-header{
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9a80ff;
+  margin-bottom: 3px;
+  border-bottom: 1px solid rgba(208,196,255,0.8);
+  padding-bottom: 2px;
 }
 
-/* text propoziție KO & RO */
+/* Cuvântul ales în coloană */
+.col-body-main{
+  font-size: 15px;
+  font-weight: 700;
+  color: #372449;
+}
+
+/* Hintul gri mic din coloană */
+.col-body-label{
+  font-size: 10px;
+  color: #8a849d;
+}
+
+/* Propoziția KO mare de jos */
 #previewKo{
-  color: #2b2532;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2f2948;
 }
+
+/* Traducere română */
 #previewRo{
-  color: #6f6a79;
+  font-size: 12px;
+  color: #746f91;
 }
 
-/* ========= CULORI PE SECȚIUNI – foarte discrete ========= */
-
-/* 🏗 Builder – bej cald (logica propozițiilor) */
-#screen-builder .card,
-#screen-builder .table-block,
-#screen-builder .preview-card{
-  border-color: rgba(210,197,176,0.95);
-  box-shadow:
-    0 16px 28px rgba(164,151,130,0.22),
-    0 1px 0 rgba(255,255,255,0.95) inset;
-}
-#screen-builder .card h2{
-  color: #6a5740;
+/* Badge „natural” / atenționare */
+#naturalHint{
+  font-size: 11px;
+  margin-top: 3px;
 }
 
-/* 📝 Exerciții – albastru foarte deschis (energie, dar soft) */
-#screen-exercises .card{
-  background: linear-gradient(145deg,#ffffff,#f3f6fb);
-  border-color: rgba(179,198,224,0.95);
-  box-shadow:
-    0 14px 26px rgba(138,167,203,0.22),
-    0 1px 0 rgba(255,255,255,0.96) inset;
-}
-#screen-exercises .card h2{
-  color: #476587;
-}
-#screen-exercises .small-label{
-  color: #657891;
-}
-
-/* 📚 Glosar – verde salvie foarte light (memorie / calm) */
-#screen-glossary .card{
-  background: linear-gradient(145deg,#ffffff,#f3fbf6);
-  border-color: rgba(178,210,188,0.95);
-  box-shadow:
-    0 14px 26px rgba(151,192,167,0.22),
-    0 1px 0 rgba(255,255,255,0.96) inset;
-}
-#screen-glossary .card h2{
-  color: #3f755d;
-}
-#screen-glossary .glossary-item{
-  border-radius: 12px;
-  background: #f8fbf7;
-}
-
-/* card „3 cuvinte/zi” – tot în zona verde calmă */
-#screen-glossary .card:nth-of-type(2){
-  background: linear-gradient(145deg,#ffffff,#eefaf3);
-}
-
-/* favorite */
-.fav-item{
-  background: #fdfbf8;
-}
-
-/* overlay panel – glassmorphism discret */
-.overlay{
-  background: rgba(16,12,4,0.22);
-}
-.panel{
-  background: rgba(255,255,255,0.97);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 -20px 40px rgba(37,28,12,0.35);
-}
-.panel-input-row input{
-  background: #fbf8f2;
-}
-.panel-item{
-  border-radius: 10px;
-}
     /* =========================================================
    THEME v4 – „app desenată” pentru Raluca
    – forme de fundal + iconițe pe coloane + carduri ilustrate
