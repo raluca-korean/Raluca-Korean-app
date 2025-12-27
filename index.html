@@ -2036,24 +2036,24 @@ function renderClauseRow(container,activeMap,state,clauseId){
     container.appendChild(colDiv);
   });
 }
-
 /* === CONSTRUIRE propoziție + traducere pe părți === */
-const labelsRo={
-  subject:"SUBJECT",
-  time:"TIME",
-  place:"PLACE",
-  mod:"MOD",
-  object:"OBJECT",
-  numeral:"NUMĂR",
-  counter:"COUNTER",
-  verb:"VERB"
+const labelsRo = {
+  subject: "SUBJECT",
+  time: "TIME",
+  place: "PLACE",
+  mod: "MOD",
+  object: "OBJECT",
+  numeral: "NUMĂR",
+  counter: "COUNTER",
+  verb: "VERB"
 };
+
 function buildClauseSentence(state, activeMap, conjOverride) {
   const koParts = [];
   const roSegs  = [];
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
 
-  // SUBJECT (cu particulă topic / subiect)
+  // SUBJECT
   const subj = state.subject;
   if (subj && use("subject")) {
     koParts.push(addSubjectWithParticle(subj));
@@ -2061,7 +2061,7 @@ function buildClauseSentence(state, activeMap, conjOverride) {
     roSegs.push(`${labelsRo.subject}: ${ro}`);
   }
 
-  // TIME (오늘 / 어제 / 내일 + eventual particula 에)
+  // TIME
   const t = state.time;
   if (t && use("time")) {
     koParts.push(addTimeWithParticle(t));
@@ -2069,11 +2069,11 @@ function buildClauseSentence(state, activeMap, conjOverride) {
     roSegs.push(`${labelsRo.time}: ${ro}`);
   }
 
-  // avem nevoie de verb & conjugare pentru loc (에 / 에서)
+  // avem nevoie de verb & conjugare pentru loc
   const v      = state.verb;
   const cjUsed = conjOverride || state.conjug;
 
-  // PLACE (집에 / 회사에서 etc.)
+  // PLACE
   const p = state.place;
   if (p && use("place")) {
     koParts.push(addPlaceWithParticle(p, v));
@@ -2081,7 +2081,7 @@ function buildClauseSentence(state, activeMap, conjOverride) {
     roSegs.push(`${labelsRo.place}: ${ro}`);
   }
 
-  // MOD (잘 / 천천히 / 빨리...)
+  // MOD
   const m = state.mod;
   if (m && use("mod")) {
     koParts.push(m);
@@ -2089,7 +2089,7 @@ function buildClauseSentence(state, activeMap, conjOverride) {
     roSegs.push(`${labelsRo.mod}: ${ro}`);
   }
 
-  // OBJECT (책을 / 커피를...) – cu particulă 을/를
+  // OBJECT
   const obj = state.object;
   if (obj && use("object")) {
     koParts.push(addObjectWithParticle(obj));
@@ -2097,7 +2097,7 @@ function buildClauseSentence(state, activeMap, conjOverride) {
     roSegs.push(`${labelsRo.object}: ${ro}`);
   }
 
-  // NUMERAL (3, 두, 세 etc. – momentan doar ce pui tu)
+  // NUMERAL
   const num = state.numeral;
   if (num && use("numeral")) {
     koParts.push(num);
@@ -2105,7 +2105,7 @@ function buildClauseSentence(state, activeMap, conjOverride) {
     roSegs.push(`${labelsRo.numeral}: ${ro}`);
   }
 
-  // COUNTER (개, 명, 권...)
+  // COUNTER
   const cnt = state.counter;
   if (cnt && use("counter")) {
     koParts.push(cnt);
@@ -2113,9 +2113,9 @@ function buildClauseSentence(state, activeMap, conjOverride) {
     roSegs.push(`${labelsRo.counter}: ${ro}`);
   }
 
-  // VERB + CONJUGARE (aici se face magia: 가다 + -고 있어요 → 가고 있어요)
+  // VERB + CONJUGARE
   if (v || cjUsed) {
-    const vp = buildVerbPhrase(v, cjUsed);
+    const vp    = buildVerbPhrase(v, cjUsed);
     if (vp) {
       koParts.push(vp);
       const roVerb = (translations.verb && translations.verb[v]) || v || "";
@@ -2132,8 +2132,10 @@ function buildClauseSentence(state, activeMap, conjOverride) {
     time:   t,
     conj:   cjUsed
   };
-// conjugări RO (minim dar util, pentru verbele din app)
-    // ==== CONJUGARE ROMÂNEASCĂ (simplă) ====
+}
+
+/* ==== CONJUGARE ROMÂNEASCĂ (simplă) ====
+   (folosită doar ca să facă propoziția românească să sune natural) */
 const RO_FORMS = {
   "a merge":   { "1sg":"merg","2sg":"mergi","3sg":"merge","1pl":"mergem","2pl":"mergeți","3pl":"merg" },
   "a veni":    { "1sg":"vin","2sg":"vii","3sg":"vine","1pl":"venim","2pl":"veniți","3pl":"vin" },
@@ -2178,26 +2180,16 @@ function roPersonFromSubjectKo(subjKo){
   return "3sg";
 }
 
-function roAgreeVerb(roVerbInf, subjKo, verbKo){
-  let inf = (roVerbInf || "").trim().toLowerCase();
+function roAgreeVerb(roVerbInf, subjKo){
+  const inf = (roVerbInf || "").trim().toLowerCase();
   const person = roPersonFromSubjectKo(subjKo);
-
-  // special: dacă în fraza originală apare "pleca" și verbul coreean e 가다,
-  // folosim "a pleca" ca infinitiv
-  if(verbKo === "가다" &&
-     LAST_RO_SENTENCE.toLowerCase().includes("pleca")){
-    inf = "a pleca"; // deocamdată nu îl conjugăm special, doar îl păstrăm la infinitiv
-  }
-
   const forms = RO_FORMS[inf];
   if(forms && forms[person]) return forms[person];
-
-  // fallback: scoatem "a " și folosim forma de dicționar
   return stripInfinitive(roVerbInf);
 }
 
-function buildRoVerbPhrase(roVerbInf, cj, subjKo, verbKo){
-  const v = roAgreeVerb(roVerbInf, subjKo, verbKo);
+function buildRoVerbPhrase(roVerbInf, cj, subjKo){
+  const v = roAgreeVerb(roVerbInf, subjKo);
   if(!v && !cj) return "";
   if(!cj) return v;
 
@@ -2208,12 +2200,11 @@ function buildRoVerbPhrase(roVerbInf, cj, subjKo, verbKo){
   return (v ? v + " " : "") + `(${cjExp})`;
 }
 
-/* Propoziție românească naturală – Ordine: Timp → Subiect → Loc → Mod → Obiect → Verb */
+/* Propoziție românească naturală – Time → Subject → Place → Mod → Object → Verb */
 function buildNaturalRomanian(state, activeMap){
   const use = (key) =>
     activeMap[key] !== false && isColumnVisible(key) && state[key];
 
-  // ia traducerea românească sau cuvântul original
   const getRo = (catKey, stateKey) => {
     const dict = translations[catKey] || {};
     const raw  = state[stateKey];
@@ -2228,79 +2219,83 @@ function buildNaturalRomanian(state, activeMap){
   const objectRo  = use("object")  ? getRo("object", "object")   : "";
   const numeralRo = use("numeral") ? (state.numeral || "")       : "";
 
-  // obiectul = (număr) + substantiv
   let objectPhrase = "";
   if (objectRo) {
-    const objPieces = [];
-    if (numeralRo) objPieces.push(numeralRo);
-    objPieces.push(objectRo);
-    objectPhrase = objPieces.join(" ");
+    const arr = [];
+    if (numeralRo) arr.push(numeralRo);
+    arr.push(objectRo);
+    objectPhrase = arr.join(" ");
   }
 
-  // verb + conjugare (RO exact ca sens)
-const verbRaw = state.verb || "";
-const verbRoInf =
-  (translations.verb && translations.verb[verbRaw]) || verbRaw || "";
+  const verbRaw   = state.verb || "";
+  const verbRoInf = (translations.verb && translations.verb[verbRaw]) || verbRaw || "";
+  const conjUsed  =
+    (activeMap.conjug !== false && isColumnVisible("conjug")) ? (state.conjug || "") : "";
+  const verbPhrase =
+    (activeMap.verb !== false && isColumnVisible("verb"))
+      ? buildRoVerbPhrase(verbRoInf, conjUsed, state.subject)
+      : "";
 
-const conjUsed =
-  (activeMap.conjug !== false && isColumnVisible("conjug")) ? (state.conjug || "") : "";
-  const verbPhrase = (activeMap.verb !== false && isColumnVisible("verb"))
-    ? buildRoVerbPhrase(verbRoInf, conjUsed, state.subject, state.verb)
-    : "";
-
-  // Ordinea finală în română
   const parts = [];
-  if (timeRo)       parts.push(timeRo);        // Astăzi
-  if (subjRo)       parts.push(subjRo);        // eu (formal)
-  if (placeRo)      parts.push(placeRo);       // acasă
-  if (modRo)        parts.push(modRo);         // bine
-  if (objectPhrase) parts.push(objectPhrase);  // carte / 3 cărți
-  if (verbPhrase)   parts.push(verbPhrase);    // merg (prezent politicos)
+  if (timeRo)       parts.push(timeRo);
+  if (subjRo)       parts.push(subjRo);
+  if (placeRo)      parts.push(placeRo);
+  if (modRo)        parts.push(modRo);
+  if (objectPhrase) parts.push(objectPhrase);
+  if (verbPhrase)   parts.push(verbPhrase);
 
   if (!parts.length) return "";
-
   let sentence = parts.join(" ");
-  sentence = sentence.replace(/\s+/g," ");     // spații duble
+  sentence = sentence.replace(/\s+/g," ");
   sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
   if (!/[.!?]$/.test(sentence)) sentence += ".";
   return sentence;
 }
+
+/* verificare naturalitate simplă */
 function analyzeNaturalnessP1(){
-  const t=stateP1.time;
-  const cj=stateP1.conjug;
-  if(!t||!cj)return{ok:true,msg:"",suggestion:null};
-  const tType=timePastWords.has(t)?"past":
-              timeFutureWords.has(t)?"future":"neutral";
-  const cType=conjugationType(cj);
-  if(tType==="past"&&cType==="future"){
-    const suggested="-았어요/었어요";
-    const sent=buildClauseSentence(stateP1,activeP1,suggested);
-    return{
+  const t  = stateP1.time;
+  const cj = stateP1.conjug;
+  if(!t || !cj) return { ok:true, msg:"", suggestion:null };
+
+  const tType =
+    timePastWords.has(t)   ? "past"   :
+    timeFutureWords.has(t) ? "future" :
+    "neutral";
+
+  const cType = conjugationType(cj);
+
+  if(tType==="past" && cType==="future"){
+    const suggested = "-았어요/었어요";
+    const sent = buildClauseSentence(stateP1, activeP1, suggested);
+    return {
       ok:false,
       msg:`„${t}” (trecut) cu final viitor „${cj}” nu se prea folosește. Exemplu mai natural:`,
       suggestion:sent.ko
     };
   }
-  if(tType==="future"&&cType==="past"){
-    const suggested="-(으)ㄹ 거예요";
-    const sent=buildClauseSentence(stateP1,activeP1,suggested);
-    return{
+
+  if(tType==="future" && cType==="past"){
+    const suggested = "-(으)ㄹ 거예요";
+    const sent = buildClauseSentence(stateP1, activeP1, suggested);
+    return {
       ok:false,
       msg:`„${t}” (viitor) cu final de trecut „${cj}” poate suna nenatural. Exemplu mai natural:`,
       suggestion:sent.ko
     };
   }
-  return{ok:true,msg:"",suggestion:null};
+
+  return { ok:true, msg:"", suggestion:null };
 }
 
-let showRo=true;
+let showRo = true;
 
 function updatePreview() {
-  // 1) Propoziția 1 (P1)
+  // P1
   const c1 = buildClauseSentence(stateP1, activeP1, null);
   let fullKo = c1.ko || "";
 
-  // 2) Propoziția 2 (P2) – doar dacă există conjuncție de legătură
+  // P2 – doar dacă avem conjuncție de legătură
   let c2 = null;
   if (
     enableP2.checked &&
@@ -2308,12 +2303,9 @@ function updatePreview() {
     isLinkingConj(stateP1.conjug)
   ) {
     c2 = buildClauseSentence(stateP2, activeP2, null);
-    if (c2.ko) {
-      fullKo += " " + c2.ko;  // ➜ AICI SE LIPESC P1 + P2
-    }
+    if (c2.ko) fullKo += " " + c2.ko;
   }
 
-  // 3) Dacă nu avem nimic de afișat
   if (!fullKo.trim()) {
     previewKo.textContent = "(alege cuvinte din tabel)";
     previewRo.textContent = "";
@@ -2321,19 +2313,14 @@ function updatePreview() {
     return;
   }
 
-  // Afișăm coreeana completă
   previewKo.textContent = fullKo;
 
-  // 4) TRADUCEREA ROMÂNEASCĂ NATURALĂ
   const ro1 = buildNaturalRomanian(stateP1, activeP1);
   const ro2 = c2 ? buildNaturalRomanian(stateP2, activeP2) : "";
   const fullRo = ro1 + (ro2 ? " " + ro2 : "");
 
-  previewRo.textContent = showRo
-    ? fullRo
-    : "··· traducere ascunsă ···";
+  previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
 
-  // 5) Naturalitate
   const nat = analyzeNaturalnessP1();
   if (nat.ok) {
     naturalHint.textContent =
