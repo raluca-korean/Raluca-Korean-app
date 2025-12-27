@@ -2049,11 +2049,23 @@ const labelsRo={
   verb:"VERB"
 };
 function buildClauseSentence(state,activeMap,conjOverride){
+  const labelsRo = {
+  subject: "SUBJECT",
+  time: "TIME",
+  place: "PLACE",
+  mod: "MOD",
+  object: "OBJECT",
+  numeral: "NUMĂR",
+  counter: "COUNTER",
+  verb: "VERB"
+};
+
+function buildClauseSentence(state, activeMap, conjOverride) {
   const koParts = [];
   const roSegs  = [];
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
 
-  // SUBJECT
+  // SUBJECT (cu particulă topic / subiect)
   const subj = state.subject;
   if (subj && use("subject")) {
     koParts.push(addSubjectWithParticle(subj));
@@ -2061,7 +2073,7 @@ function buildClauseSentence(state,activeMap,conjOverride){
     roSegs.push(`${labelsRo.subject}: ${ro}`);
   }
 
-  // TIME
+  // TIME (오늘 / 어제 / 내일 + eventual particula 에)
   const t = state.time;
   if (t && use("time")) {
     koParts.push(addTimeWithParticle(t));
@@ -2069,11 +2081,11 @@ function buildClauseSentence(state,activeMap,conjOverride){
     roSegs.push(`${labelsRo.time}: ${ro}`);
   }
 
-  // avem nevoie de verb & conjugare pentru loc
+  // avem nevoie de verb & conjugare pentru loc (에 / 에서)
   const v      = state.verb;
   const cjUsed = conjOverride || state.conjug;
 
-  // PLACE
+  // PLACE (집에 / 회사에서 etc.)
   const p = state.place;
   if (p && use("place")) {
     koParts.push(addPlaceWithParticle(p, v));
@@ -2081,7 +2093,7 @@ function buildClauseSentence(state,activeMap,conjOverride){
     roSegs.push(`${labelsRo.place}: ${ro}`);
   }
 
-  // MOD
+  // MOD (잘 / 천천히 / 빨리...)
   const m = state.mod;
   if (m && use("mod")) {
     koParts.push(m);
@@ -2089,7 +2101,7 @@ function buildClauseSentence(state,activeMap,conjOverride){
     roSegs.push(`${labelsRo.mod}: ${ro}`);
   }
 
-  // OBJECT
+  // OBJECT (책을 / 커피를...) – cu particulă 을/를
   const obj = state.object;
   if (obj && use("object")) {
     koParts.push(addObjectWithParticle(obj));
@@ -2097,7 +2109,7 @@ function buildClauseSentence(state,activeMap,conjOverride){
     roSegs.push(`${labelsRo.object}: ${ro}`);
   }
 
-  // NUMERAL
+  // NUMERAL (3, 두, 세 etc. – momentan doar ce pui tu)
   const num = state.numeral;
   if (num && use("numeral")) {
     koParts.push(num);
@@ -2105,7 +2117,7 @@ function buildClauseSentence(state,activeMap,conjOverride){
     roSegs.push(`${labelsRo.numeral}: ${ro}`);
   }
 
-  // COUNTER
+  // COUNTER (개, 명, 권...)
   const cnt = state.counter;
   if (cnt && use("counter")) {
     koParts.push(cnt);
@@ -2113,7 +2125,7 @@ function buildClauseSentence(state,activeMap,conjOverride){
     roSegs.push(`${labelsRo.counter}: ${ro}`);
   }
 
-  // VERB + CONJUGARE
+  // VERB + CONJUGARE (aici se face magia: 가다 + -고 있어요 → 가고 있어요)
   if (v || cjUsed) {
     const vp = buildVerbPhrase(v, cjUsed);
     if (vp) {
@@ -2132,8 +2144,6 @@ function buildClauseSentence(state,activeMap,conjOverride){
     time:   t,
     conj:   cjUsed
   };
-}
-
 // conjugări RO (minim dar util, pentru verbele din app)
     // ==== CONJUGARE ROMÂNEASCĂ (simplă) ====
 const RO_FORMS = {
