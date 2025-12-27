@@ -5,185 +5,1009 @@
   <title>Raluca Korean – Study App v2.0</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
- :root{
-  --bg: #f6f1e9;
-  --card: #ffffff;
-  --accent: #b88a5a;
-  --accent-strong: #8a6235;
-  --border: #e1d6c8;
-  --text: #2d2a26;
-  --text-soft: #6c655d;
+    :root {
+      --bg: #f7f3ff;
+      --card-bg: #ffffff;
+      --accent: #c9b5ff;
+      --accent-strong: #9b7cff;
+      --text-main: #333333;
+      --text-soft: #666666;
+      --border: #e0d7ff;
+      --dimmed-bg: #f2eefc;
+      --overlay-bg: rgba(0, 0, 0, 0.2);
+    }
+    header{text-align:center;padding:4px 8px 4px;}
+    header h1{font-size:18px;margin:2px 0;font-weight:700;color:var(--accent-strong);}
+    header p{margin:0;font-size:11px;color:var(--text-soft);}
+
+    .screen{display:none;flex-direction:column;gap:10px;flex:1;min-height:0;}
+    .screen.active{display:flex;}
+
+    .mode-panel{
+      background:var(--card-bg);border-radius:12px;border:1px solid var(--border);
+      padding:6px 8px;font-size:11px;display:flex;flex-direction:column;gap:4px;
+      box-shadow:0 4px 12px rgba(120,96,190,0.08);
+    }
+    .mode-row{
+      display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;
+    }
+    .mode-row label{font-size:11px;display:flex;align-items:center;gap:4px;}
+    .part-toggles{display:flex;flex-wrap:wrap;gap:6px;}
+    .chip{
+      display:inline-flex;align-items:center;gap:3px;
+      padding:3px 8px;border-radius:999px;background:#ede7ff;color:var(--accent-strong);
+      font-size:10px;cursor:pointer;
+    }
+    .chip input{margin:0;}
+    .section-label{font-size:11px;font-weight:600;color:var(--accent-strong);margin-top:2px;}
+
+    .small-mode-btn{
+      padding:3px 8px;
+      font-size:10px;
+    }
+    .small-mode-btn.active{
+      background:var(--accent-strong);
+      color:#fff;
+    }
+
+    .table-block{
+      background:var(--card-bg);border-radius:14px;padding:8px;
+      box-shadow:0 6px 16px rgba(120,96,190,0.12);border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;
+    }
+    .table-title{
+      font-size:11px;font-weight:600;color:var(--text-soft);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .table-horizontal{
+      display:flex;flex-direction:row;overflow-x:auto;padding-bottom:4px;gap:6px;
+    }
+    .col{
+      min-width:110px;max-width:140px;flex:0 0 auto;background:#faf8ff;border-radius:10px;
+      border:1px solid var(--border);display:flex;flex-direction:column;
+      padding:6px 6px 8px;transition:0.2s;cursor:pointer;
+      touch-action:manipulation;
+    }
+    .col-header{
+      font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;
+      color:var(--accent-strong);margin-bottom:4px;border-bottom:1px solid var(--border);
+      padding-bottom:3px;
+    }
+    .col-body-label{font-size:10px;color:var(--text-soft);margin-bottom:2px;}
+    .col-body-main{font-size:15px;font-weight:600;margin-bottom:2px;}
+    .col-body-extra{font-size:11px;color:var(--text-soft);}
+    .dimmed{
+      opacity:0.35;background-image:repeating-linear-gradient(
+        -45deg,var(--dimmed-bg),var(--dimmed-bg) 4px,#fdfbff 4px,#fdfbff 8px
+      );
+    }
+
+    .controls{
+      display:flex;justify-content:space-between;align-items:center;gap:8px;
+      padding-top:4px;border-top:1px dashed var(--border);
+    }
+    .btn-group{display:flex;gap:6px;}
+    button{
+      border-radius:999px;border:none;padding:6px 10px;font-size:12px;font-weight:600;
+      cursor:pointer;background:var(--accent);color:#fff;display:inline-flex;
+      align-items:center;gap:4px;box-shadow:0 2px 6px rgba(90,70,160,0.25);
+    }
+    button.secondary{background:#ede7ff;color:var(--accent-strong);box-shadow:none;}
+    button:disabled{opacity:0.4;box-shadow:none;cursor:default;}
+    .page-indicator{font-size:11px;color:var(--text-soft);}
+    .legend{font-size:10px;color:var(--text-soft);text-align:center;padding:2px 4px 0;}
+    .hidden{display:none !important;}
+
+    .preview-card{
+      margin-top:6px;padding:8px;border-radius:12px;
+      background:#f9f7ff;border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:4px;
+    }
+    .preview-title{
+      font-size:11px;font-weight:600;color:var(--accent-strong);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .preview-ko{
+      font-size:14px;font-weight:600;margin-top:2px;
+    }
+    .preview-ro{
+      font-size:12px;color:var(--text-soft);
+    }
+    .preview-natural{
+      font-size:11px;
+      color:#8e6cff;
+      margin-top:2px;
+    }
+    .preview-buttons{
+      display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;
+    }
+  
+  
+    .overlay{
+      position:fixed;inset:0;background:var(--overlay-bg);
+      display:flex;justify-content:center;align-items:flex-end;z-index:1000;
+    }
+    .panel{
+      width:100%;max-width:900px;background:var(--card-bg);
+      border-radius:18px 18px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,0.15);
+      padding:10px 12px 14px;animation:slideUp 0.18s ease-out;
+    }
+    @keyframes slideUp{
+      from{transform:translateY(40px);opacity:0;}
+      to{transform:translateY(0);opacity:1;}
+    }
+    .panel-header{
+      display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
+    }
+    .panel-title{font-size:13px;font-weight:600;color:var(--accent-strong);}
+    .panel-sub{font-size:11px;color:var(--text-soft);}
+    .panel-close{
+      background:transparent;color:var(--text-soft);box-shadow:none;
+      padding:4px 6px;font-size:14px;
+    }
+    .panel-input-row{display:flex;gap:6px;margin-bottom:6px;}
+    .panel-input-row input{
+      flex:1;border-radius:999px;border:1px solid var(--border);
+      padding:6px 10px;font-size:12px;
+    }
+    .panel-list{
+      max-height:260px;overflow-y:auto;border-radius:10px;
+      border:1px solid var(--border);background:#faf8ff;padding:4px;
+    }
+    .panel-item{
+      padding:4px 8px;border-radius:8px;display:flex;justify-content:space-between;
+      align-items:center;font-size:13px;cursor:pointer;
+    }
+    .panel-item:hover{background:#ede7ff;}
+    .panel-item-main{font-weight:600;}
+    .panel-item-extra{
+      display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+    }
+    .panel-item-tag{font-size:10px;color:var(--accent-strong);}
+
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;
+      background:#ffffffee;border-top:1px solid var(--border);
+      display:flex;justify-content:space-around;align-items:center;
+      padding:6px 0;backdrop-filter:blur(8px);z-index:500;
+    }
+    .nav-btn{
+      flex:1;text-align:center;border:none;background:transparent;
+      font-size:11px;color:var(--text-soft);padding:4px 0;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:2px;
+    }
+    .nav-btn span.icon{font-size:18px;}
+    .nav-btn.active{color:var(--accent-strong);font-weight:600;}
+    .nav-btn.active span.icon{transform:translateY(-1px);}
+    @media (max-width:600px){
+      header h1{font-size:16px;}
+      .col{min-width:95px;}
+    }
+
+    .card{
+      background:var(--card-bg);border-radius:14px;padding:10px;
+      box-shadow:0 4px 12px rgba(120,96,190,0.12);border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .card h2{
+      margin:0;font-size:14px;color:var(--accent-strong);
+    }
+    .small-label{font-size:11px;color:var(--text-soft);}
+    select{
+      border-radius:999px;border:1px solid var(--border);
+      padding:4px 10px;font-size:12px;background:#fff;
+    }
+    .exercise-question{
+      font-size:14px;font-weight:600;margin-top:4px;
+    }
+    .exercise-options{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+    .exercise-options label{
+      font-size:13px;display:flex;align-items:center;gap:6px;
+    }
+    .exercise-feedback{
+      font-size:12px;margin-top:4px;
+    }
+
+    .glossary-search{
+      display:flex;gap:6px;align-items:center;margin-top:4px;
+    }
+    .glossary-search input{
+      flex:1;border-radius:999px;border:1px solid var(--border);
+      padding:6px 10px;font-size:12px;
+    }
+    textarea{
+  width:100%;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#fff;
+  padding:10px 12px;
+  font-size:13px;
+  line-height:1.35;
+  color:var(--text-main);
+  outline:none;
+  resize:vertical;
+  min-height:72px;
+  box-shadow:0 2px 10px rgba(120,96,190,0.06) inset;
 }
 
-*{
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
+textarea::placeholder{
+  color:#9a93b8;
 }
 
+textarea:focus{
+  border-color:var(--accent-strong);
+  box-shadow:0 0 0 3px rgba(155,124,255,0.18);
+}
+    .glossary-list{
+      margin-top:6px;max-height:260px;overflow-y:auto;padding-right:2px;
+    }
+    .glossary-item{
+      padding:6px 8px;border-radius:10px;border:1px solid var(--border);
+      background:#faf8ff;margin-bottom:4px;font-size:12px;
+      display:flex;justify-content:space-between;gap:8px;
+    }
+    .glossary-ko{font-weight:600;}
+    .glossary-ro{color:var(--text-soft);}
+    .glossary-cat{font-size:10px;color:var(--accent-strong);}
+
+    .fav-list{
+      margin-top:4px;max-height:140px;overflow-y:auto;padding-right:2px;
+    }
+    .fav-item{
+      padding:4px 6px;border-radius:8px;border:1px solid var(--border);
+      background:#fdfbff;margin-bottom:4px;font-size:11px;
+    }
+    .fav-ko{font-weight:600;margin-bottom:2px;}
+    .fav-ro{color:var(--text-soft);}
+    /* CARD GENERAL – Română → Coreeană, Exerciții, Glosar */
+.card{
+  background: linear-gradient(145deg, #ffffff, #f5f0ff);
+  border-radius: 18px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 24px rgba(120,96,190,0.18);
+  border: 1px solid rgba(201,181,255,0.6);
+}
+
+/* Titlurile cardurilor */
+.card h2{
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #7b5fff;
+  letter-spacing: 0.03em;
+}
+
+/* Textarea română */
+textarea#roInput{
+  border-radius: 14px;
+  border: 1px solid #d7c9ff;
+  background: #fbf9ff;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.7);
+}
+
+/* Buton „Tradu în coreeană” */
+#roTranslateBtn{
+  margin-top: 6px;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(120deg, #b391ff, #8a6bff);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 14px rgba(125,99,210,0.35);
+}
+
+/* Rezultat KO + româna corectată */
+#roToKoResult{
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #3a295d;
+}
+
+#roCorrected{
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7b7496;
+}
+
+/* Coloanele SUBJ/TIME/PLACE etc. */
+.col{
+  min-width: 110px;
+  max-width: 140px;
+  flex: 0 0 auto;
+  background: radial-gradient(circle at top left,#fdfbff,#f1ecff);
+  border-radius: 14px;
+  border: 1px solid #ddd2ff;
+  padding: 7px 7px 9px;
+  box-shadow: 0 6px 16px rgba(118,95,205,0.16);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s;
+}
+
+/* Efect la tap / hover (desktop) */
+.col:active,
+.col:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 9px 20px rgba(118,95,205,0.24);
+  border-color: #b09bff;
+}
+
+/* Headerul coloanei */
+.col-header{
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9a80ff;
+  margin-bottom: 3px;
+  border-bottom: 1px solid rgba(208,196,255,0.8);
+  padding-bottom: 2px;
+}
+
+/* Cuvântul ales în coloană */
+.col-body-main{
+  font-size: 15px;
+  font-weight: 700;
+  color: #372449;
+}
+
+/* Hintul gri mic din coloană */
+.col-body-label{
+  font-size: 10px;
+  color: #8a849d;
+}
+
+/* Propoziția KO mare de jos */
+#previewKo{
+  font-size: 16px;
+  font-weight: 700;
+  color: #2f2948;
+}
+
+/* Traducere română */
+#previewRo{
+  font-size: 12px;
+  color: #746f91;
+}
+
+/* Badge „natural” / atenționare */
+#naturalHint{
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+    /* =========================================================
+   THEME v4 – „app desenată” pentru Raluca
+   – forme de fundal + iconițe pe coloane + carduri ilustrate
+   (se pune ULTIMUL în <style>)
+========================================================= */
+
+/* fundal cu „bule” moi */
+body{
+  background-color:#f4efe4;
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(255,255,255,0.9) 0, rgba(255,255,255,0) 45%),
+    radial-gradient(circle at 90% 0%, rgba(191,208,222,0.55) 0, rgba(191,208,222,0) 55%),
+    radial-gradient(circle at 0% 80%, rgba(198,189,171,0.55) 0, rgba(198,189,171,0) 45%),
+    radial-gradient(circle at 80% 100%, rgba(180,205,187,0.55) 0, rgba(180,205,187,0) 50%);
+}
+
+/* header cu „bandă” de app */
+header{
+  position:relative;
+  padding:10px 10px 14px;
+}
+header::before{
+  content:"";
+  position:absolute;
+  inset:0 8px auto;
+  height:60px;
+  border-radius:22px;
+  background:linear-gradient(120deg,#fdfbf7,#e4eaf3);
+  box-shadow:0 14px 30px rgba(120,111,90,0.18);
+  z-index:-1;
+}
+header h1{
+  font-size:17px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+}
+header p{
+  font-size:11px;
+}
+
+/* mic „badge” versiune */
+header p::after{
+  content:"v2.0";
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:6px;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:600;
+  background:rgba(75,104,127,0.09);
+  color:#4b687f;
+}
+
+/* carduri cu ornament în colț */
+.card,
+.table-block,
+.preview-card{
+  position:relative;
+  overflow:hidden;
+}
+.card::before,
+.table-block::before,
+.preview-card::before{
+  content:"";
+  position:absolute;
+  right:-32px;
+  top:-32px;
+  width:90px;
+  height:90px;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.9),rgba(178,193,209,0.15));
+  pointer-events:none;
+}
+.card::after,
+.table-block::after,
+.preview-card::after{
+  content:"";
+  position:absolute;
+  left:-26px;
+  bottom:-26px;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:radial-gradient(circle at 70% 70%,rgba(255,255,255,0.95),rgba(198,188,166,0.15));
+  pointer-events:none;
+}
+
+/* conținutul cardurilor să rămână deasupra ornamentelor */
+.card > *,
+.table-block > *,
+.preview-card > *{
+  position:relative;
+  z-index:1;
+}
+
+/* titluri card cu bară subțire dedesubt */
+.card h2{
+  position:relative;
+  padding-bottom:4px;
+}
+.card h2::after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:42px;
+  height:2px;
+  border-radius:999px;
+  background:linear-gradient(90deg,rgba(75,104,127,0.65),rgba(255,255,255,0));
+}
+
+/* chips – mai „tablete” */
+.chip{
+  position:relative;
+  padding:4px 10px 4px 8px;
+}
+.chip::before{
+  content:"";
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#c3b08f;
+}
+
+/* ========= ICONIȚE PE COLOANE (SUBJECT/TIME/PLACE etc.) ========= */
+
+.col-header{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+
+/* icon placeholder */
+.col-header::before{
+  content:"";
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:16px;
+  height:16px;
+  border-radius:6px;
+  background:rgba(255,255,255,0.8);
+  font-size:11px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* SUBJ 👤 */
+.col[data-key="subject"] .col-header::before{
+  content:"👤";
+}
+/* TIME ⏰ */
+.col[data-key="time"] .col-header::before{
+  content:"⏰";
+}
+/* PLACE 📍 */
+.col[data-key="place"] .col-header::before{
+  content:"📍";
+}
+/* MOD ✨ */
+.col[data-key="mod"] .col-header::before{
+  content:"✨";
+}
+/* OBJECT 🎯 */
+.col[data-key="object"] .col-header::before{
+  content:"🎯";
+}
+/* NUMERAL #️⃣ */
+.col[data-key="numeral"] .col-header::before{
+  content:"#️⃣";
+}
+/* COUNTER 🔢 */
+.col[data-key="counter"] .col-header::before{
+  content:"🔢";
+}
+/* VERB 🚀 */
+.col[data-key="verb"] .col-header::before{
+  content:"🚀";
+}
+/* CONJUGĂRI 🔗 */
+.col[data-key="conjug"] .col-header::before{
+  content:"🔗";
+}
+
+/* când coloana e „stinsă” (dimmed) – iconița devine gri */
+.col.dimmed .col-header::before{
+  filter:grayscale(0.9);
+  opacity:0.6;
+}
+
+/* ========= ACCENTE DIFERITE PE FIECARE ECRAN ========= */
+
+/* 🏗 Builder – bandă sus de secțiune */
+#screen-builder .mode-panel{
+  border-top:3px solid rgba(186,166,126,0.85);
+}
+#screen-builder .preview-title span:first-child::before{
+  content:"🏗 ";
+}
+
+/* 📝 Exerciții – bandă albastră */
+#screen-exercises .card{
+  border-top:3px solid rgba(118,147,183,0.95);
+}
+#screen-exercises h2::before{
+  content:"📝 ";
+}
+
+/* 📚 Glosar – bandă verde salvie */
+#screen-glossary > .card{
+  border-top:3px solid rgba(138,170,142,0.95);
+}
+#screen-glossary h2::before{
+  content:"📚 ";
+}
+
+/* lista de glosar – „fișe” */
+.glossary-item{
+  background:rgba(255,255,255,0.9);
+  box-shadow:0 6px 14px rgba(153,141,120,0.16);
+}
+
+/* card „3 cuvinte/zi” – mic timeline în lateral */
+#dailyWordsBox > div{
+  position:relative;
+}
+#dailyWordsBox > div::before{
+  content:"";
+  position:absolute;
+  left:-10px;
+  top:10px;
+  width:3px;
+  height:60%;
+  border-radius:999px;
+  background:linear-gradient(to bottom,#9db8a3,#f4efe4);
+}
+
+/* ========= NAV BAR – iconițe accentuate ========= */
+
+.bottom-nav{
+  border-top:1px solid rgba(205,195,176,0.8);
+}
+.nav-btn span.icon{
+  font-size:19px;
+}
+.nav-btn.active span.icon{
+  transform:translateY(-2px) scale(1.06);
+}
+
+/* ========= PREVIEW propoziție ========= */
+
+.preview-card{
+  margin-top:10px;
+}
+.preview-title span:first-child{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.preview-title span:first-child::before{
+  content:"🔊";
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  background:rgba(75,104,127,0.08);
+}
+
+/* hint naturalitate – „badge” */
+.preview-natural{
+  padding:4px 8px;
+  border-radius:999px;
+  display:inline-block;
+  background:rgba(185,207,192,0.35);
+}
+
+/* overlay panel – divider subtil sus */
+.panel-header{
+  border-bottom:1px solid rgba(222,214,200,0.9);
+  padding-bottom:6px;
+}
+    /* === THEME A – Korean Minimal Chic & Cozy === */
+
+:root{
+  --bg: #f6f1e8;
+  --card-bg: #fdfbf7;
+  --accent: #6f86a8;          /* albastru-cerneală */
+  --accent-strong: #4b607d;   /* albastru închis */
+  --accent-soft: #f1d3a0;     /* auriu cald */
+  --text-main: #2f343b;
+  --text-soft: #7a8088;
+  --border: #e3dacb;
+  --dimmed-bg: #f0e6d7;
+  --overlay-bg: rgba(40,32,24,0.25);
+}
+
+/* fundal general – crem cald, tip „cafea cu lapte” */
 body{
   margin:0;
   padding:0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top, #fff, #f3ebdf);
-  color:var(--text);
-  display:flex;
-  flex-direction:column;
-  min-height:100vh;
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at top,#fbf4e8 0,#f0ebe3 40%,#e9e2d7 100%);
+  color:var(--text-main);
 }
 
+/* containerul aplicației – ușor „card” pe mijloc */
 .app{
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 18px 14px 80px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
+  max-width:1040px;
+  margin:0 auto;
+  padding:18px 14px calc(70px + env(safe-area-inset-bottom));
 }
-
-/* HEADER */
-
+/* header – mai „brand” și mai premium */
 header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:6px 4px 10px;
+  padding:6px 10px 10px;
+  text-align:left;
 }
-
 header h1{
-  margin:0;
   font-size:18px;
   font-weight:700;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
   color:var(--accent-strong);
-}
-
-header p{
-  margin:0;
-  font-size:11px;
-  color:var(--text-soft);
-}
-
-/* CARD */
-
-.card{
-  background:#ffffff;
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:12px 14px;
   display:flex;
-  flex-direction:column;
-  gap:8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.04);
+  align-items:center;
+  gap:6px;
 }
-
-.card h2{
-  margin:0;
-  font-size:14px;
-  color:var(--accent-strong);
+header h1::before{
+  content:"✍️";
+  font-size:16px;
 }
-
-.small-label{
-  font-size:11px;
+header p{
+  margin:2px 0 0;
+  font-size:12px;
   color:var(--text-soft);
 }
 
-/* INPUT ZONE */
-
-textarea, input, select{
-  width:100%;
-  border-radius:12px;
-  border:1px solid var(--border);
-  font-size:13px;
-  padding:10px 12px;
-  background:#fff;
-  outline:none;
+/* carduri mari – efect de planner premium */
+.card,
+.table-block,
+.preview-card{
+  background:linear-gradient(145deg,#fdfbf7,#f4eee3);
+  border-radius:18px;
+  border:1px solid rgba(227,218,203,0.9);
+  box-shadow:0 14px 30px rgba(80,64,48,0.12);
 }
 
-textarea:focus,
-input:focus,
-select:focus{
-  border-color:var(--accent-strong);
-  box-shadow:0 0 4px rgba(150,110,70,.25);
+/* card standard (Română → Coreeană, Exerciții, Glosar) */
+.card{
+  padding:12px 14px;
+}
+.card h2{
+  font-size:15px;
+  color:var(--accent-strong);
+  letter-spacing:0.04em;
 }
 
-/* BUTTONS */
+/* bara de introducere propoziție */
+textarea#roInput{
+  background:#fbf8f1;
+  border:1px solid #e1d5c5;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.7);
+}
 
+/* buton mare „Tradu în coreeană” */
+#roTranslateBtn{
+  background:linear-gradient(115deg,#4b607d,#6f86a8);
+  box-shadow:0 8px 18px rgba(75,96,125,0.35);
+}
+
+/* bara albastră lungă (Tradu / Next etc.) */
 button{
   border-radius:999px;
-  border:1px solid var(--accent-strong);
-  background:linear-gradient(#ffffff, #f2e7d8);
-  padding:8px 14px;
-  font-size:13px;
+  border:none;
+  padding:7px 14px;
+  font-size:12px;
   font-weight:600;
+  cursor:pointer;
+  background:linear-gradient(120deg,#4b607d,#6f86a8);
+  color:#fff;
+  box-shadow:0 8px 18px rgba(75,96,125,0.32);
+}
+button.secondary{
+  background:#f3ebdd;
+  color:var(--accent-strong);
+  box-shadow:none;
+}
+button:disabled{
+  opacity:0.45;
+  box-shadow:none;
+}
+
+/* toggle-urile SUBJECT / TIME / ... – chip-uri mai elegante */
+.chip{
+  background:#f4ece0;
+  color:var(--accent-strong);
+  border-radius:999px;
+  padding:4px 10px;
+  box-shadow:0 4px 8px rgba(180,162,136,0.25);
+}
+.chip input{
+  accent-color:var(--accent-strong);
+}
+
+/* coloanele din tabel (SUBJECT / TIME / PLACE etc.) */
+.col{
+  background:radial-gradient(circle at top left,#fdfbf7,#f2ebde);
+  border-radius:16px;
+  border:1px solid #e2d7c8;
+  box-shadow:0 10px 22px rgba(95,78,58,0.16);
+  transform:translateY(0);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.col-header{
   color:var(--accent-strong);
 }
-
-button.primary{
-  background:linear-gradient(#ffffff, #f0e1cc);
-  border-color:var(--accent-strong);
-  color:#000;
+.col-body-main{
+  color:#2f343b;
+}
+.col-body-label{
+  color:#938777;
+}
+.col:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 28px rgba(95,78,58,0.24);
+  border-color:#d0c1aa;
 }
 
-/* BUILDER ROWS */
-
-.builder-row{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
+/* când coloana e dezactivată */
+.col.dimmed{
+  opacity:0.4;
+  background-image:none;
+  background:#f1e7d8;
 }
 
-.tag{
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:6px 10px;
-  font-size:12px;
-  background:#faf7f2;
+/* cardul de preview propoziție de jos */
+.preview-card{
+  margin-top:10px;
+  padding:10px 12px;
 }
-
-/* KOREAN OUTPUT */
-
+.preview-title span{
+  color:var(--accent-strong);
+}
 .preview-ko{
   font-size:16px;
   font-weight:700;
-  letter-spacing:0.2px;
+  color:#292f35;
 }
-
 .preview-ro{
   font-size:12px;
   color:var(--text-soft);
 }
-
-/* GLOSAR LIST */
-
-.glossary-item{
-  padding:8px 10px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:#ffffff;
-  display:flex;
-  justify-content:space-between;
-  gap:6px;
+.preview-natural{
+  color:#a97a2e; /* un auriu cald pentru mesajele de naturalitate */
 }
 
-/* BOTTOM NAV */
+/* legendă explicativă */
+.legend{
+  font-size:10px;
+  color:#8b8476;
+}
+
+/* navbar-ul de jos – bară de sticlă caldă */
+.bottom-nav{
+  background:rgba(248,242,233,0.96);
+  border-top:1px solid #e1d7c7;
+  backdrop-filter:blur(14px);
+}
+.nav-btn{
+  color:#8b8476;
+}
+.nav-btn.active{
+  color:var(--accent-strong);
+}
+.nav-btn span.icon{
+  font-size:18px;
+}
+
+/* panelul de overlay (lista de cuvinte) – ca un sertar de lemn deschis */
+.panel{
+  background:linear-gradient(145deg,#fdfbf7,#f2ebde);
+  border-radius:20px 20px 0 0;
+  border:1px solid #e1d7c7;
+}
+.panel-item{
+  border-radius:12px;
+}
+.panel-item:hover{
+  background:#f3ebdd;
+}
+    /* === HEADER BRAND + TABS DE CAIET === */
+
+/* header general */
+.rk-header{
+  padding:8px 10px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.rk-header-main{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.rk-header-main h1{
+  margin:0;
+  font-size:20px;
+  font-weight:700;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--accent-strong);
+}
+
+/* badge mic lângă titlu – arată ca o etichetă de agendă */
+.rk-badge{
+  font-size:11px;
+  font-weight:600;
+  padding:4px 9px;
+  border-radius:999px;
+  background:linear-gradient(120deg,#f1d3a0,#f6e3b9);
+  color:#514029;
+  border:1px solid rgba(210,175,112,0.7);
+  box-shadow:0 4px 10px rgba(185,145,84,0.25);
+}
+
+/* subtitlu */
+.rk-header #subtitle{
+  margin:0;
+  font-size:12px;
+  color:var(--text-soft);
+}
+
+/* ===== TAB-URI DE JOS – FILE DE CAIET ===== */
 
 .bottom-nav{
   position:fixed;
+  inset-inline:0;
   bottom:0;
-  left:0;
-  right:0;
-  background:#ffffff;
-  border-top:1px solid var(--border);
-  padding:10px 20px;
   display:flex;
   justify-content:space-around;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(248,242,233,0.96);
+  border-top:1px solid #e1d7c7;
+  backdrop-filter:blur(16px);
+}
+/* fiecare tab */
+.nav-btn{
+  position:relative;
+  flex:1;
+  max-width:150px;
+  border:none;
+  background:transparent;
+  padding:0;
+  cursor:pointer;
+  color:#8b8476;
+  font-size:11px;
 }
 
-.bottom-nav button{
-  border:none;
-  background:none;
+/* „filele” propriu-zise – fundal rotunjit */
+.nav-btn::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  top:-4px;
+  margin:0 4px;
+  border-radius:14px 14px 0 0;
+  background:rgba(255,252,246,0.65);
+  border:1px solid transparent;
+  border-bottom:none;
+  box-shadow:none;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
+  z-index:-1;
+}
+
+/* conținutul tabului (icon + text) */
+.nav-btn span.icon{
+  display:block;
+  font-size:17px;
+  margin-bottom:1px;
+}
+.nav-btn span:last-child{
+  position:relative;
+  z-index:1;
+}
+
+/* tab activ – pare ridicat de pe „caiet” */
+.nav-btn.active{
   color:var(--accent-strong);
   font-weight:600;
-}  </style>
+}
+.nav-btn.active::before{
+  background:#fdfbf7;
+  border-color:#ddcfb9;
+  box-shadow:0 -4px 10px rgba(90,72,52,0.18);
+  transform:translateY(-3px);
+}
+
+/* la hover pe desktop – tab ușor ridicat */
+@media (hover:hover){
+  .nav-btn:hover::before{
+    box-shadow:0 -3px 8px rgba(90,72,52,0.16);
+  }
+}
+    
+/* Adaugă în <style> */
+.legend{
+  display:none;
+}
+    /* tot în <style> */
+#naturalHint{
+  display:none;
+}
+  </style>
 </head>
 <body>
   <div class="app">
