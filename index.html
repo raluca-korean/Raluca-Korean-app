@@ -1887,31 +1887,57 @@ function setScreen(name){
 navButtons.forEach(btn=>btn.addEventListener("click",()=>setScreen(btn.dataset.target)));
 
 /* toggles P1 / P2 */
-function createToggleChips(){
+    function createToggleChips(){
   columns.forEach(col=>{
-    const chip1=document.createElement("label");
-    chip1.className="chip";
-    const cb1=document.createElement("input");
-    cb1.type="checkbox";cb1.checked=true;cb1.dataset.key=col.key;cb1.dataset.clause="p1";
-    chip1.appendChild(cb1);chip1.append(col.title);togglesP1.appendChild(chip1);
+    // --- Propoziția 1 ---
+    const chip1 = document.createElement("label");
+    chip1.className = "chip";
+    const cb1 = document.createElement("input");
+    cb1.type = "checkbox";
+    cb1.checked = true;
+    cb1.dataset.key = col.key;
+    cb1.dataset.clause = "p1";
+    chip1.appendChild(cb1);
+    chip1.append(col.title);
+    togglesP1.appendChild(chip1);
 
-    const chip2=document.createElement("label");
-    chip2.className="chip";
-    const cb2=document.createElement("input");
-    cb2.type="checkbox";cb2.checked=true;cb2.dataset.key=col.key;cb2.dataset.clause="p2";
-    chip2.appendChild(cb2);chip2.append(col.title);togglesP2.appendChild(chip2);
+    // --- Propoziția 2 ---
+    const chip2 = document.createElement("label");
+    chip2.className = "chip";
+    const cb2 = document.createElement("input");
+    cb2.type = "checkbox";
+    cb2.checked = true;
+    cb2.dataset.key = col.key;
+    cb2.dataset.clause = "p2";
+    chip2.appendChild(cb2);
+    chip2.append(col.title);
+    togglesP2.appendChild(chip2);
   });
-  const sync=(wrapper,map)=>{
-    wrapper.addEventListener("change",e=>{
-      const cb=e.target;if(cb.tagName!=="INPUT")return;
-      map[cb.dataset.key]=cb.checked;render();
+
+  const sync = (wrapper, map) => {
+    // stare inițială (toate ON, deci fără .chip-off)
+    wrapper.querySelectorAll("input[type='checkbox']").forEach(cb=>{
+      cb.parentElement.classList.toggle("chip-off", !cb.checked);
+    });
+
+    wrapper.addEventListener("change", e => {
+      const cb = e.target;
+      if (cb.tagName !== "INPUT") return;
+
+      const key = cb.dataset.key;
+      map[key] = cb.checked;
+
+      // vizual: chip-ul devine „stins” când este debifat
+      cb.parentElement.classList.toggle("chip-off", !cb.checked);
+
+      render();
     });
   };
-  sync(togglesP1,activeP1);
-  sync(togglesP2,activeP2);
+
+  sync(togglesP1, activeP1);
+  sync(togglesP2, activeP2);
 }
 createToggleChips();
-
 enableP2.addEventListener("change",()=>{
   const on=enableP2.checked;
   if(on){titleP2.classList.remove("hidden");tableP2.classList.remove("hidden");}
