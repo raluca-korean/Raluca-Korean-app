@@ -3310,8 +3310,102 @@ function makeConjugExercise(){
   renderExerciseOptions(optionsArr);
   exerciseFeedbackEl.textContent = "";
 }
+// ================== 4) Exercițiu: 🧩 Puzzle – ordonează propoziția ==================
 
-// RENDER opțiuni în UI
+function renderPuzzleUI(shuffledTokens){
+  exerciseOptionsEl.innerHTML = "";
+
+  const pool = document.createElement("div");
+  pool.id = "puzzlePool";
+  pool.style.display = "flex";
+  pool.style.flexWrap = "wrap";
+  pool.style.gap = "6px";
+  pool.style.marginBottom = "8px";
+
+  const answer = document.createElement("div");
+  answer.id = "puzzleAnswer";
+  answer.style.display = "flex";
+  answer.style.flexWrap = "wrap";
+  answer.style.gap = "6px";
+  answer.style.minHeight = "36px";
+  answer.style.padding = "6px";
+  answer.style.border = "1px dashed var(--border)";
+  answer.style.borderRadius = "12px";
+
+  shuffledTokens.forEach(tok => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "chip";
+    btn.textContent = tok;
+    btn.dataset.token = tok;
+    btn.style.cursor = "pointer";
+
+    btn.addEventListener("click", () => {
+      // dacă e jos, îl mutăm sus; dacă e sus, îl mutăm jos
+      if (btn.parentElement === pool) {
+        answer.appendChild(btn);
+      } else {
+        pool.appendChild(btn);
+      }
+    });
+
+    pool.appendChild(btn);
+  });
+
+  const hint = document.createElement("div");
+  hint.className = "small-label";
+  hint.textContent = "Tap pe un cuvânt ca să îl muți sus/jos și să formezi propoziția.";
+
+  exerciseOptionsEl.appendChild(pool);
+  exerciseOptionsEl.appendChild(answer);
+  exerciseOptionsEl.appendChild(hint);
+}
+
+function makePuzzleExercise(){
+  // construim propoziția din Propoziția 1 din Builder
+  const clause = buildClauseSentence(stateP1, activeP1, null);
+  const ko = (clause.ko || "").trim();
+
+  if (!ko) {
+    exerciseQuestionEl.textContent =
+      "Mai întâi creează o propoziție în Builder (de ex: SUBIECT + VERB), apoi revino aici și apasă „Întrebare nouă”.";
+    exerciseOptionsEl.innerHTML = "";
+    exerciseFeedbackEl.textContent = "";
+    currentExercise = null;
+    return;
+  }
+
+  const tokens = ko.split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) {
+    exerciseQuestionEl.textContent =
+      "Propoziția din Builder este prea scurtă pentru un puzzle. Adaugă măcar 3–4 cuvinte (SUBIECT / LOC / OBIECT / VERB).";
+    exerciseOptionsEl.innerHTML = "";
+    exerciseFeedbackEl.textContent = "";
+    currentExercise = null;
+    return;
+  }
+
+  // amestecăm cuvintele
+  const shuffled = tokens.slice().sort(() => Math.random() - 0.5);
+
+  // traducere românească naturală (o avem deja din Builder)
+  const roNat = buildNaturalRomanian(stateP1, activeP1);
+
+  currentExercise = {
+    type: "puzzle",
+    correctKo: ko,
+    correctTokens: tokens,
+    shuffled,
+    ro: roNat
+  };
+
+  exerciseQuestionEl.textContent =
+    "Ordinează cuvintele pentru a forma propoziția corectă (coreeană):";
+  renderPuzzleUI(shuffled);
+  exerciseFeedbackEl.textContent =
+    "Tip: în propozițiile simple, ordinea obișnuită este TIME → SUBJECT → PLACE → OBJECT → VERB.";
+}
+    // RENDER opțiuni în UI
 function renderExerciseOptions(optionsArr){
   exerciseOptionsEl.innerHTML = "";
   optionsArr.forEach((opt, idx)=>{
