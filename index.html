@@ -2346,31 +2346,36 @@ if(roTranslateBtn){
 }
 /* navigare ecrane */
 function setScreen(name){
-  const builderSection  = document.getElementById("builderSection");
-  const exercisesSection = document.getElementById("exercisesSection");
-  const glossarySection = document.getElementById("glossarySection");
-  const lessonsSection  = document.getElementById("lessonsSection");
+  const screens={
+  builder:document.getElementById("screen-builder"),
+  exercises:document.getElementById("screen-exercises"),
+  glossary:document.getElementById("screen-glossary"),
+  lessons:document.getElementById("screen-lessons")
+};
+const navButtons=document.querySelectorAll(".nav-btn");
+  function setScreen(name){
+  // ascund toate ecranele
+  Object.entries(screens).forEach(([key, el])=>{
+    if(!el) return;
+    el.classList.toggle("active", key === name);
+  });
 
-  // ➜ ascundem toate paginile
-  builderSection?.classList.add("hidden");
-  exercisesSection?.classList.add("hidden");
-  glossarySection?.classList.add("hidden");
-  lessonsSection?.classList.add("hidden");
-
-  // ➜ afișăm doar pagina cerută
-  if(name === "builder")   builderSection?.classList.remove("hidden");
-  if(name === "exercises") exercisesSection?.classList.remove("hidden");
-  if(name === "glossary")  glossarySection?.classList.remove("hidden");
-  if(name === "lessons")   lessonsSection?.classList.remove("hidden");
-}
-    const lessonsTab = document.getElementById("lessonsTab");
-if(lessonsTab){
-  lessonsTab.addEventListener("click", ()=>{
-    setScreen("lessons");
+  // marchează butonul activ în bara de jos
+  navButtons.forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.target === name);
   });
 }
+
+// click pe butoanele din nav
+navButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const target = btn.dataset.target;   // builder / exercises / lessons / glossary
+    setScreen(target);
+  });
+});
+ 
     
-    navButtons.forEach(btn=>btn.addEventListener("click",()=>setScreen(btn.dataset.target)));
+
 
 /* toggles P1 / P2 */
     function createToggleChips(){
