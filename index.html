@@ -3498,11 +3498,53 @@ function newExerciseQuestion(){
 }
     // Verificare răspuns
 function checkExerciseAnswer(){
-  if(!currentExercise){
+  if (!currentExercise) {
     exerciseFeedbackEl.textContent = "Mai întâi apasă „Întrebare nouă”.";
     return;
   }
-    if(currentExercise.type === "particlePlus"){
+
+  // 🧩 verificare pentru puzzle
+  if (currentExercise.type === "puzzle") {
+    const answerBox = exerciseOptionsEl.querySelector("#puzzleAnswer");
+
+    if (!answerBox) {
+      exerciseFeedbackEl.textContent = "A apărut o problemă cu puzzle-ul. Reîncearcă cu „Întrebare nouă”.";
+      return;
+    }
+
+    const chosenTokens = Array.from(answerBox.querySelectorAll("button"))
+      .map(btn => btn.dataset.token || btn.textContent.trim())
+      .filter(Boolean);
+
+    if (!chosenTokens.length) {
+      exerciseFeedbackEl.textContent =
+        "Mută cuvintele în zona de răspuns ca să formezi propoziția.";
+      return;
+    }
+
+    const userKo = chosenTokens.join(" ");
+    const normalize = (s) => (s || "").replace(/\s+/g, " ").trim();
+    const correct = normalize(currentExercise.correctKo);
+
+    if (normalize(userKo) === correct) {
+      let msg = "✅ Corect! Propoziția este:\n" + currentExercise.correctKo;
+      if (currentExercise.ro) {
+        msg += "\nTraducere naturală: " + currentExercise.ro;
+      }
+      exerciseFeedbackEl.textContent = msg;
+    } else {
+      let msg = "❌ Nu e încă ordinea corectă.\nPropoziția corectă ar fi:\n" +
+        currentExercise.correctKo;
+      if (currentExercise.ro) {
+        msg += "\nTraducere naturală: " + currentExercise.ro;
+      }
+      exerciseFeedbackEl.textContent = msg;
+    }
+    return;
+  }
+
+  // 🔹 restul rămâne identic (particlePlus + exercițiile cu radio-uri)
+  if(currentExercise.type === "particlePlus"){
     const getVal = (name) => {
       const chosen = Array.from(exerciseOptionsEl.querySelectorAll(`input[name='${name}']`)).find(x=>x.checked);
       return chosen ? chosen.value : null;
@@ -3518,7 +3560,6 @@ function checkExerciseAnswer(){
       return;
     }
 
-    // “(fără)” = gol
     const norm = (v) => (v === "(fără)" ? "" : v);
 
     const ok1 = norm(a1) === currentExercise.correct.p1;
@@ -3537,6 +3578,8 @@ function checkExerciseAnswer(){
     }
     return;
   }
+
+  // ⬇️ de aici în jos lași EXACT ce aveai (verificarea cu radio “exerciseOption”)
   const chosen = Array.from(
     exerciseOptionsEl.querySelectorAll("input[name='exerciseOption']")
   ).find(x=>x.checked);
@@ -3555,7 +3598,6 @@ function checkExerciseAnswer(){
     exerciseFeedbackEl.textContent = `❌ Greșit. Răspunsul corect era: ${correct}`;
   }
 }
-
 // Legăm butoanele
 if(nextQuestionBtn){
   nextQuestionBtn.addEventListener("click", newExerciseQuestion);
