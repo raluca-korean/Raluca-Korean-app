@@ -1424,8 +1424,7 @@ button:disabled{
             <option value="particle">Alege PARTICULA corectă (simplu)</option>
             <option value="particlePlus">Particule multiple (은/는, 이/가, 을/를, 에/에서)</option>
             <option value="conjug">Alege CONJUGAREA corectă</option>
-            <option value="puzzle">🧩 Puzzle – ordonează propoziția</option> 
-            <option value="puzzleP2">Puzzle – doar Propoziția 2 (fraza)</option>            
+            <option value="puzzle">🧩 Puzzle – ordonează propoziția</option>
   </select>
         </div>
 
@@ -3363,71 +3362,29 @@ function renderPuzzleUI(shuffledTokens){
 }
 
 function makePuzzleExercise(){
-  // 1️⃣ Construim P1
-  const c1 = buildClauseSentence(stateP1, activeP1, null);
-  let fullKo = (c1.ko || "").trim();
-  let fullRo = buildNaturalRomanian(stateP1, activeP1);
+  // construim propoziția din Propoziția 1 din Builder
+  const clause = buildClauseSentence(stateP1, activeP1, null);
+  const ko = (clause.ko || "").trim();
 
-  // 2️⃣ Dacă P2 este activă și conjugarea din P1 este de legătură (⭐),
-  //    lipim și Propoziția 2 în puzzle.
-  if (
-    enableP2 &&
-    enableP2.checked &&
-    stateP1.conjug &&
-    isLinkingConj(stateP1.conjug)
-  ) {
-    const c2  = buildClauseSentence(stateP2, activeP2, null);
-    const ro2 = buildNaturalRomanian(stateP2, activeP2);
-
-    if (c2.ko && c2.ko.trim()) {
-      if (fullKo) fullKo += " " + c2.ko.trim();
-      else fullKo = c2.ko.trim();
-
-      if (ro2 && ro2.trim()) {
-        if (fullRo) fullRo += " " + ro2.trim();
-        else fullRo = ro2.trim();
-      }
-    }
-  }
-
-  // 3️⃣ Verificăm că avem ceva de puzzle 😅
-  if (!fullKo) {
+  if (!ko) {
     exerciseQuestionEl.textContent =
-      "Mai întâi creează o propoziție în Builder (P1 sau P1+P2), apoi revino aici și apasă „Întrebare nouă”.";
+      "Mai întâi creează o propoziție în Builder (de ex: SUBIECT + VERB), apoi revino aici și apasă „Întrebare nouă”.";
     exerciseOptionsEl.innerHTML = "";
     exerciseFeedbackEl.textContent = "";
     currentExercise = null;
     return;
   }
 
-  const tokens = fullKo.split(/\s+/).filter(Boolean);
-  if (tokens.length < 3) {
+  const tokens = ko.split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) {
     exerciseQuestionEl.textContent =
-      "Propoziția este prea scurtă pentru un puzzle. Adaugă mai multe cuvinte în Builder (SUBIECT / TIMP / LOC / OBIECT / VERB / gramatică de legătură).";
+      "Propoziția din Builder este prea scurtă pentru un puzzle. Adaugă măcar 3–4 cuvinte (SUBIECT / LOC / OBIECT / VERB).";
     exerciseOptionsEl.innerHTML = "";
     exerciseFeedbackEl.textContent = "";
     currentExercise = null;
     return;
   }
 
-  // 4️⃣ Amestecăm cuvintele
-  const shuffled = tokens.slice().sort(() => Math.random() - 0.5);
-
-  currentExercise = {
-    type: "puzzle",
-    correctKo: fullKo,
-    correctTokens: tokens,
-    shuffled,
-    ro: fullRo
-  };
-
-  exerciseQuestionEl.textContent =
-    "Ordinează cuvintele pentru a forma propoziția corectă (coreeană):";
-  renderPuzzleUI(shuffled);
-  exerciseFeedbackEl.textContent =
-    "Tip: în propozițiile simple, ordinea obișnuită este TIME → SUBJECT → PLACE → OBJECT → VERB (iar la fraze, P1 apoi P2).";
-}
-  
   // amestecăm cuvintele
   const shuffled = tokens.slice().sort(() => Math.random() - 0.5);
 
@@ -3521,21 +3478,20 @@ function renderParticlePlusOptions(opts){
   exerciseOptionsEl.appendChild(makeBlock("(4) Particula obiectului", "pPlus4", opts.p4));
 }
 // Generator întrebare nouă
+
 function newExerciseQuestion(){
   const type = exerciseTypeEl ? exerciseTypeEl.value : "verb";
 
-  if(type === "verb"){
+  if (type === "verb") {
     makeVerbExercise();
-  } else if(type === "particle"){
+  } else if (type === "particle") {
     makeParticleExercise();
-  } else if(type === "particlePlus"){
+  } else if (type === "particlePlus") {
     makeParticlePlusExercise();
-  } else if(type === "conjug" || type === "conjugation"){
+  } else if (type === "conjug" || type === "conjugation") {
     makeConjugExercise();
-  } else if(type === "puzzle"){
-    makePuzzleExercise();      // P1 sau P1+P2
-  } else if(type === "puzzleP2"){
-    makePuzzleExerciseP2();    // 🔹 nou: doar Propoziția 2
+  } else if (type === "puzzle") {
+    makePuzzleExercise();
   } else {
     makeVerbExercise(); // fallback
   }
@@ -3663,8 +3619,6 @@ function updateExerciseTypeLabel(){
     exerciseTypeLabel.textContent = "4 poziții de particule (SUBJ/TIME/PLACE/OBJ)";
   } else if(v === "conjug"){
     exerciseTypeLabel.textContent = "Finale de verb (timp, intenție, interdicție)";
-  } else if(v === "puzzle"){
-    exerciseTypeLabel.textContent = "🧩 Puzzle – propoziție din Builder (ordonezi cuvintele)";
   }
   if(exerciseSubtag){
     exerciseSubtag.textContent = "— apasă „Întrebare nouă” pentru acest tip";
