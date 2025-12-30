@@ -2955,36 +2955,36 @@ function analyzeNaturalnessP1(){
 let showRo = true;
 
 function updatePreview() {
-  // P1
-  const c1 = buildClauseSentence(stateP1, activeP1, null);
-  let fullKo = c1.ko || "";
+// P1
+const c1 = buildClauseSentence(stateP1, activeP1, null);
+let fullKo = c1.ko || "";
 
-  // P2 – doar dacă avem conjuncție de legătură
-  let c2 = null;
-  if (
-    enableP2.checked &&
-    stateP1.conjug &&
-    isLinkingConj(stateP1.conjug)
-  ) {
-    c2 = buildClauseSentence(stateP2, activeP2, null);
-    if (c2.ko) fullKo += " " + c2.ko;
-  }
-
-  if (!fullKo.trim()) {
-    previewKo.textContent = "(alege cuvinte din tabel)";
-    const roInput = document.getElementById("roInput");
-if (roInput) {
-  roInput.value = roSentence;  // aici vezi româna propoziției din builder
+// P2 — doar dacă avem conjuncție de legătură
+let c2 = null;
+if (
+  enableP2.checked &&
+  stateP1.conjug &&
+  isLinkingConj(stateP1.conjug)
+) {
+  c2 = buildClauseSentence(stateP2, activeP2, null);
+  if (c2.ko) fullKo += " " + c2.ko;
 }
 
-// dacă mai vrei să nu strici nimic altundeva:
-if (previewRo) {
-  previewRo.textContent = roSentence;
-}
-    naturalHint.textContent = "";
-    return;
+// ✨ dacă nu avem propoziție coreeană completă
+if (!fullKo.trim()) {
+  previewKo.textContent = "(alege cuvinte din tabel)";
+  const roInput = document.getElementById("roInput");
+
+  previewRo.textContent = approxRo;
+  if (roInput && !roInput.matches(":focus")) {
+    roInput.value = approxRo;   // punem traducerea și în căsuța de română
   }
 
+  naturalHint.textContent = "";
+  return;                       // ieșim din funcție aici
+}
+
+// aici ajungem doar dacă avem propoziție KO completă
   previewKo.textContent = fullKo;
 
   const ro1 = buildNaturalRomanian(stateP1, activeP1);
