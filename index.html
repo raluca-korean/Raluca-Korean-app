@@ -3587,6 +3587,73 @@ function makePuzzleExercise(){
   exerciseFeedbackEl.textContent =
     "Tip: în propozițiile simple, ordinea obișnuită este TIME → SUBJECT → PLACE → OBJECT → VERB.";
 }
+  // lista de modele de propoziții – poți construi astea din tabel
+const puzzleModels = [
+  {
+    ko: "저는 오늘 집에서 잘 책을 읽어요",
+    ro: "Astăzi acasă citesc bine o carte.",
+    words: ["저는", "오늘", "집에서", "잘", "책을", "읽어요"]
+  },
+  // aici poți genera automat din tabel mai târziu
+];
+
+let currentPuzzle = null;
+let answerWords = [];
+
+const puzzleWordsEl = document.getElementById("puzzleWords");
+const puzzleAnswerEl = document.getElementById("puzzleAnswer");
+const puzzleFeedbackEl = document.getElementById("puzzleFeedback");
+const puzzleCoreanEl = document.querySelector(".puzzle-corean");
+const puzzleRomanaEl = document.querySelector(".puzzle-romana");
+
+function shuffle(arr) {
+  return arr
+    .map(v => ({ v, r: Math.random() }))
+    .sort((a, b) => a.r - b.r)
+    .map(x => x.v);
+}
+
+function newPuzzle() {
+  currentPuzzle = puzzleModels[Math.floor(Math.random() * puzzleModels.length)];
+  answerWords = [];
+
+  puzzleCoreanEl.textContent = "Propoziția coreeană (corectă) este ascunsă 😉";
+  puzzleRomanaEl.textContent = currentPuzzle.ro;
+  puzzleFeedbackEl.textContent = "";
+  puzzleAnswerEl.textContent = "";
+
+  puzzleWordsEl.innerHTML = "";
+  puzzleAnswerEl.innerHTML = "";
+
+  const shuffled = shuffle(currentPuzzle.words);
+
+  shuffled.forEach(word => {
+    const btn = document.createElement("button");
+    btn.className = "chip";
+    btn.textContent = word;
+    btn.addEventListener("click", () => {
+      answerWords.push(word);
+      puzzleAnswerEl.textContent = answerWords.join(" ");
+      btn.disabled = true;
+    });
+    puzzleWordsEl.appendChild(btn);
+  });
+}
+
+function checkPuzzle() {
+  if (!currentPuzzle) return;
+  const userSentence = answerWords.join(" ");
+  if (userSentence === currentPuzzle.ko) {
+    puzzleFeedbackEl.textContent = "✔️ Corect! Bravo!";
+  } else {
+    puzzleFeedbackEl.textContent =
+      "❌ Încă nu e corect. Propoziția ta: " + userSentence;
+  }
+}
+
+document.getElementById("puzzleNewBtn").addEventListener("click", newPuzzle);
+document.getElementById("puzzleCheckBtn").addEventListener("click", checkPuzzle);
+    
     // RENDER opțiuni în UI
 function renderExerciseOptions(optionsArr){
   exerciseOptionsEl.innerHTML = "";
