@@ -73,6 +73,32 @@
       color:var(--accent-strong);margin-bottom:4px;border-bottom:1px solid var(--border);
       padding-bottom:3px;
     }
+    .col-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 11px;
+}
+.col-toggle {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-strong, #4b6bff);
+  background: var(--accent-strong, #4b6bff);
+  padding: 4px; /* <- crește aria de touch */
+  box-sizing: content-box;
+}
+
+.col-toggle.off {
+  background: transparent;
+  opacity: 0.25;
+}
+
+.col.dimmed {
+  opacity: 0.45;
+}
+    
     .col-body-label{font-size:10px;color:var(--text-soft);margin-bottom:2px;}
     .col-body-main{font-size:15px;font-weight:600;margin-bottom:2px;}
     .col-body-extra{font-size:11px;color:var(--text-soft);}
@@ -1334,19 +1360,19 @@ button:disabled{
   <div class="preview-ko" id="roToKoResult"></div>
   <div class="preview-ro" id="roCorrected"></div>
 </div>
-        <div class="mode-row">
-          <span class="section-label">Propoziția 1 – ce părți folosește?</span>
-          <div class="part-toggles" id="togglesP1"></div>
-          
-        </div>
-        <div class="mode-row">
-          <label>
-            <input type="checkbox" id="enableP2" />
-            Activează Propoziția 2 (fraza)
-          </label>
-          <div class="part-toggles" id="togglesP2"></div>
-        </div>
-      </div>
+       <div class="mode-row" style="display:none;">
+  <span class="section-label">Propoziția 1 – ce părți folosește?</span>
+  <div class="part-toggles" id="togglesP1"></div>
+</div>
+
+<div class="mode-row">
+  <label>
+    <input type="checkbox" id="enableP2" />
+    Activează Propoziția 2 (fraza)
+  </label>
+  <!-- nu mai folosim acest container, îl ascundem -->
+  <div class="part-toggles" id="togglesP2" style="display:none;"></div>
+</div>
 
       <div class="table-block">
         <div class="table-title">
@@ -2506,11 +2532,16 @@ if(roTranslateBtn){
 
       // vizual: chip-ul devine „stins” când este debifat
       cb.parentElement.classList.toggle("chip-off", !cb.checked);
-
+resetBtn.addEventListener("click", ()=>{
+  columns.forEach(col=>{
+    activeP1[col.key] = true;
+    activeP2[col.key] = true;
+  });
       render();
     });
   };
 
+    
   sync(togglesP1, activeP1);
   sync(togglesP2, activeP2);
 }
@@ -2520,6 +2551,8 @@ enableP2.addEventListener("change",()=>{
   if(on){titleP2.classList.remove("hidden");tableP2.classList.remove("hidden");}
   else{titleP2.classList.add("hidden");tableP2.classList.add("hidden");}
   updatePreview();
+  const togglesP1 = document.getElementById("togglesP1");
+const togglesP2 = document.getElementById("togglesP2");
 });
 
 /* helper particule */
@@ -2581,38 +2614,64 @@ function pickPlaceParticle(word){
   return "에서";
 }
 /* desenare coloane */
-function renderClauseRow(container,activeMap,state,clauseId){
-  container.innerHTML="";
+function renderClauseRow(container, activeMap, state, clauseId){
+  container.innerHTML = "";
   columns.forEach(col=>{
-    if(!isColumnVisible(col.key))return;
-    const colDiv=document.createElement("div");
-    colDiv.className="col";
-    if(!activeMap[col.key])colDiv.classList.add("dimmed");
-    colDiv.dataset.key=col.key;
-    colDiv.dataset.clause=clauseId;
+    if(!isColumnVisible(col.key)) return;
 
-    const header=document.createElement("div");
-    header.className="col-header";
-    header.textContent=col.title+(col.ko?` (${col.ko})`:"");
+    const colDiv = document.createElement("div");
+    colDiv.className = "col";
+    if(!activeMap[col.key]) colDiv.classList.add("dimmed");
+    colDiv.dataset.key = col.key;
+    colDiv.dataset.clause = clauseId;
+
+    // --- HEADER cu bulinuță ---
+    const header = document.createElement("div");
+    header.className = "col-header";
+
+    // bulinuța de ON/OFF
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = "col-toggle";
+    if(activeMap[col.key] === false) dot.classList.add("off");
+    dot.title = "Activează / dezactivează această parte a propoziției";
+
+    dot.addEventListener("click", (e)=>{
+      e.stopPropagation(); // să nu declanșeze click-ul de schimbare a cuvântului
+      const current = activeMap[col.key] !== false;
+      activeMap[col.key] = !current;
+      render();
+    });
+
+    const titleSpan = document.createElement("span");
+    titleSpan.textContent = col.title + (col.ko ? ` (${col.ko})` : "");
+
+    header.appendChild(dot);
+    header.appendChild(titleSpan);
     colDiv.appendChild(header);
 
-    const label=document.createElement("div");
-    label.className="col-body-label";
-    label.textContent=col.hint||"";
+    // restul rămâne ca înainte
+    const label = document.createElement("div");
+    label.className = "col-body-label";
+    label.textContent = col.hint || "";
     colDiv.appendChild(label);
 
-    const main=document.createElement("div");
-    main.className="col-body-main";
-    main.textContent=state[col.key]||"";
+    const main = document.createElement("div");
+    main.className = "col-body-main";
+    main.textContent = state[col.key] || "";
     colDiv.appendChild(main);
 
-    const extra=document.createElement("div");
-    extra.className="col-body-extra";
-    if(col.key==="conjug"&&state[col.key]&&isLinkingConj(state[col.key]))extra.textContent="⭐ cere propoziția 2";
+    const extra = document.createElement("div");
+    extra.className = "col-body-extra";
+    if(col.key === "conjug" && state[col.key] && isLinkingConj(state[col.key])){
+      extra.textContent = "⭐ cere propoziția 2";
+    }
     colDiv.appendChild(extra);
+
     container.appendChild(colDiv);
   });
 }
+
 /* === CONSTRUIRE propoziție + traducere pe părți === */
 const labelsRo = {
   subject: "SUBJECT",
