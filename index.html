@@ -2712,29 +2712,69 @@ function renderClauseRow(container,activeMap,state,clauseId){
     colDiv.dataset.key=col.key;
     colDiv.dataset.clause=clauseId;
 
+    // --- HEADER: titlu + bifa în același loc ---
     const header=document.createElement("div");
     header.className="col-header";
-    header.textContent=col.title+(col.ko?` (${col.ko})`:"");
+
+    const headLabel=document.createElement("span");
+    headLabel.textContent=col.title+(col.ko?` (${col.ko})`:"");
+    header.appendChild(headLabel);
+
+    // bifa de ON/OFF pentru coloana respectivă
+    const chk=document.createElement("input");
+    chk.type="checkbox";
+    chk.className="col-toggle";
+    chk.checked = activeMap[col.key] !== false;
+    chk.addEventListener("change",()=>{
+      activeMap[col.key]=chk.checked;
+      render();
+    });
+    header.appendChild(chk);
+
     colDiv.appendChild(header);
 
+    // --- Subtitlu mic (întrebarea: Cine? Când? etc.) ---
     const label=document.createElement("div");
     label.className="col-body-label";
     label.textContent=col.hint||"";
     colDiv.appendChild(label);
 
+    // --- Conținut principal (저 / 오늘 / 집 / 잘 / 책 ... ) ---
     const main=document.createElement("div");
     main.className="col-body-main";
-    main.textContent=state[col.key]||"";
+
+    // la SUBJECT adăugăm și o față 👤
+    if(col.key==="subject" && state[col.key]){
+      const face=document.createElement("span");
+      face.className="subject-face";
+      face.textContent = subjectEmoji(state[col.key]);
+      main.appendChild(face);
+    }
+
+    main.appendChild(document.createTextNode(state[col.key]||""));
     colDiv.appendChild(main);
 
     const extra=document.createElement("div");
     extra.className="col-body-extra";
-    if(col.key==="conjug"&&state[col.key]&&isLinkingConj(state[col.key]))extra.textContent="⭐ cere propoziția 2";
+    if(col.key==="conjug" && state[col.key] && isLinkingConj(state[col.key])){
+      extra.textContent="⭐ cere propoziția 2";
+    }
     colDiv.appendChild(extra);
+
     container.appendChild(colDiv);
   });
 }
-/* === CONSTRUIRE propoziție + traducere pe părți === */
+    function subjectEmoji(ko){
+  switch(ko){
+    case "저":  return "🧑‍🎓"; // eu (formal)
+    case "나":  return "🙂";   // eu (informal)
+    case "너":  return "🫵";   // tu
+    case "우리":return "👥";   // noi
+    case "너희":return "👫";   // voi
+    default:    return "🙂";
+  }
+}
+    /* === CONSTRUIRE propoziție + traducere pe părți === */
 const labelsRo = {
   subject: "SUBJECT",
   time: "TIME",
@@ -4163,7 +4203,19 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // 2) Inițializările pentru „3 cuvinte/zi”
 });
-    
+.col-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.col-toggle{
+  margin-left:6px;
+}
+
+.subject-face{
+  margin-right:4px;
+}    
 </script>
 </body>
 </html> 
