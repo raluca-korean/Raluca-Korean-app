@@ -2576,39 +2576,76 @@ function pickPlaceParticle(word){
   return "에서";
 }
 /* desenare coloane */
-function renderClauseRow(container,activeMap,state,clauseId){
+function renderClauseRow(container, activeMap, state, clauseId){
   container.innerHTML="";
   columns.forEach(col=>{
     if(!isColumnVisible(col.key))return;
+
     const colDiv=document.createElement("div");
     colDiv.className="col";
-    if(!activeMap[col.key])colDiv.classList.add("dimmed");
     colDiv.dataset.key=col.key;
     colDiv.dataset.clause=clauseId;
 
+    // 🔹 HEADER: titlu + hint + bifă locală
     const header=document.createElement("div");
     header.className="col-header";
-    header.textContent=col.title+(col.ko?` (${col.ko})`:"");
-    colDiv.appendChild(header);
 
     const label=document.createElement("div");
-    label.className="col-body-label";
-    label.textContent=col.hint||"";
-    colDiv.appendChild(label);
+    label.className="col-label";
+    label.textContent=col.title;
+
+    const hint=document.createElement("div");
+    hint.className="col-hint";
+    hint.textContent=col.hint||"";
+
+    // ✅ Bifa care înlocuiește toggle-ul de sus
+    const toggleWrap=document.createElement("label");
+    toggleWrap.className="col-toggle";
+
+    const cb=document.createElement("input");
+    cb.type="checkbox";
+    cb.checked = activeMap[col.key] !== false;   // dacă e false => dezactivat
+
+    cb.addEventListener("change", ()=>{
+      activeMap[col.key] = cb.checked ? true : false;
+      render();   // re-desenăm tot builder-ul cu noua stare
+    });
+
+    const cbSpan=document.createElement("span");
+    cbSpan.className="col-toggle-label";
+    cbSpan.textContent = "ON";   // poți schimba în „folosesc”, „ON/OFF” etc.
+
+    toggleWrap.appendChild(cb);
+    toggleWrap.appendChild(cbSpan);
+
+    // punem toate în header
+    header.appendChild(label);
+    header.appendChild(hint);
+    header.appendChild(toggleWrap);
+
+    colDiv.appendChild(header);
+
+    // 🔹 restul funcției rămâne IDENTIC (body, main, extra etc)
+    const body=document.createElement("div");
+    body.className="col-body";
 
     const main=document.createElement("div");
     main.className="col-body-main";
     main.textContent=state[col.key]||"";
-    colDiv.appendChild(main);
+    body.appendChild(main);
 
     const extra=document.createElement("div");
     extra.className="col-body-extra";
-    if(col.key==="conjug"&&state[col.key]&&isLinkingConj(state[col.key]))extra.textContent="⭐ cere propoziția 2";
-    colDiv.appendChild(extra);
+    if(col.key==="conjug"&&state[col.key]&&isLinkingConj(state[col.key])){
+      extra.textContent="⭐ cere propoziția 2";
+    }
+    body.appendChild(extra);
+
+    colDiv.appendChild(body);
     container.appendChild(colDiv);
   });
 }
-/* === CONSTRUIRE propoziție + traducere pe părți === */
+    /* === CONSTRUIRE propoziție + traducere pe părți === */
 const labelsRo = {
   subject: "SUBJECT",
   time: "TIME",
