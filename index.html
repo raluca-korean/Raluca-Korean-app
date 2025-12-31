@@ -1290,19 +1290,8 @@ button:disabled{
   justify-content: space-between;
   gap: 4px;
 }
-.col-toggle {
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  cursor:pointer;
-}
 
-.col-toggle input {
-  width:16px;
-  height:16px;
-  accent-color:#6b8dff;
-}
-    /* Bifa din header */
+/* Bifa din header */
 .col-toggle{
   display: flex;
   align-items: center;
@@ -2616,70 +2605,40 @@ function pickPlaceParticle(word){
 }
 /* desenare coloane */
 function renderClauseRow(container, activeMap, state, clauseId){
-  container.innerHTML = "";
+  container.innerHTML="";
+  columns.forEach(col=>{
+    if(!isColumnVisible(col.key))return;
 
-  columns.forEach(col => {
-    // dacă este ascunsă global (ex: nu vrem să apară deloc)
-    if (!isColumnVisible(col.key)) return;
+    const colDiv=document.createElement("div");
+    colDiv.className="col";
+    colDiv.dataset.key=col.key;
+    colDiv.dataset.clause=clauseId;
 
-    // containerul unei coloane (SUBIECT / TIMP / LOC / etc.)
-    const colDiv = document.createElement("div");
-    colDiv.className = "col";
-    colDiv.dataset.key = col.key;
-    colDiv.dataset.clause = clauseId;
+    // 🔹 HEADER: titlu + hint + bifă locală
+    const header=document.createElement("div");
+    header.className="col-header";
 
-    // ===== HEAD (titlu + bifă) =====
-    const head = document.createElement("div");
-    head.className = "col-head";
+    const label=document.createElement("div");
+    label.className="col-label";
+    label.textContent=col.title;
 
-    // titlul (SUBIECT, TIME, PLACE...)
-    const title = document.createElement("div");
-    title.className = "col-title";
-    title.textContent = col.title;
-    head.appendChild(title);
+    const hint=document.createElement("div");
+    hint.className="col-hint";
+    hint.textContent=col.hint||"";
 
-    // 🔹 bifă simplă, FĂRĂ text "ON"
-    const toggleWrap = document.createElement("label");
-    toggleWrap.className = "col-toggle";
+    // ✅ Bifa care înlocuiește toggle-ul de sus
+   const toggleWrap=document.createElement("label");
+toggleWrap.className="col-toggle";
 
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = activeMap[col.key] !== false;  // dacă nu e false, o considerăm activă
+const cb=document.createElement("input");
+cb.type="checkbox";
+cb.checked = activeMap[col.key] !== false;
 
-    cb.addEventListener("change", () => {
-      // când debifezi → coloana devine inactivă
-      activeMap[col.key] = cb.checked ? true : false;
-      render();  // redesenează tot builderul cu coloana ascunsă/arătată
-    });
-
-    toggleWrap.appendChild(cb);
-    head.appendChild(toggleWrap);
-
-    colDiv.appendChild(head);
-
-    // ===== BODY (cuvântul ales + extra) =====
-    const main = document.createElement("div");
-    main.className = "col-body-main";
-    main.textContent = state[col.key] || "";
-    colDiv.appendChild(main);
-
-    const extra = document.createElement("div");
-    extra.className = "col-body-extra";
-    if (col.key === "conjug" && state[col.key] && isLinkingConj(state[col.key])) {
-      extra.textContent = "⭐ cere propoziția 2";
-    }
-    colDiv.appendChild(extra);
-
-    // atașăm coloana în tabel
-    container.appendChild(colDiv);
-  });
-}
-    activeMap[col.key] = cb.checked;
+cb.addEventListener("change", ()=>{
+  activeMap[col.key] = cb.checked ? true : false;
   render();
 });
 
-toggleWrap.appendChild(cb);
-    
 // 👉 lăsăm DOAR checkbox-ul
 toggleWrap.appendChild(cb);
     // punem toate în header
