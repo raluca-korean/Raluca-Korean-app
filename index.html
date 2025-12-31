@@ -3610,20 +3610,25 @@ const exerciseSubtag = document.getElementById("exerciseSubtag");
 function updateExerciseTypeLabel(){
   if(!exerciseTypeEl || !exerciseTypeLabel) return;
   const v = exerciseTypeEl.value;
-  if(v === "verb"){
+
+  if (v === "verb") {
     exerciseTypeLabel.textContent = "Verbele din builder (alegi forma corectă)";
-  } else if(v === "particle"){
+  } else if (v === "particle") {
     exerciseTypeLabel.textContent = "Particula corectă pentru o propoziție";
-  } else if(v === "particlePlus"){
+  } else if (v === "particlePlus") {
     exerciseTypeLabel.textContent = "4 poziții de particule (SUBJ/TIME/PLACE/OBJ)";
-  } else if(v === "conjug"){
+  } else if (v === "conjug" || v === "conjugation") {
     exerciseTypeLabel.textContent = "Finale de verb (timp, intenție, interdicție)";
+  } else if (v === "puzzle") {
+    exerciseTypeLabel.textContent = "Puzzle: ordonează propoziția din Builder";
+  } else {
+    exerciseTypeLabel.textContent = "Exercițiu TOPIK";
   }
-  if(exerciseSubtag){
+
+  if (exerciseSubtag){
     exerciseSubtag.textContent = "— apasă „Întrebare nouă” pentru acest tip";
   }
 }
-
 if(exerciseTypeEl){
   exerciseTypeEl.addEventListener("change", ()=>{
     updateExerciseTypeLabel();
@@ -4005,11 +4010,24 @@ function setupDailyUI(){
 
   renderDailyWords();
 }
-    loadRow(index);
+    /* ========= INITIALIZARE APLICAȚIE ========= */
+
+// Pornim cu primul rând din model în Builder
+loadRow(index);
 setScreen("builder");
 render();
+
+// Inițializăm modul „3 cuvinte/zi”
 setupDailyUI();
-// ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER ====
+
+// Glosar & favorite (dacă există elementele în HTML)
+renderGlossary && renderGlossary("");
+renderFavorites && renderFavorites();
+
+// Actualizăm eticheta pentru tipul curent de exercițiu
+updateExerciseTypeLabel();
+
+/* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER ==== */
 
 // folosește aceeași funcție de traducere ca la butonul mare "Tradu în coreeană"
 function runExampleInBuilder(roSentence) {
@@ -4029,12 +4047,12 @@ function addLessonExample(btnId, roSentence) {
   });
 }
 
-// 🔹 Inițializarea la încărcarea paginii
+// Conectăm lecțiile direct (scriptul este la finalul <body>, deci elementele există)
 addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
 addLessonExample("lesson2TryBtn", "Să vedem un film?");
 addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
 addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
-addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");    
-</script>
+addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
+  </script>
 </body>
 </html> 
