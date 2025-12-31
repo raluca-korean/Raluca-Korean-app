@@ -1946,18 +1946,21 @@ function loadCustomData(){
 }
     // ================= RO -> KO (parser simplu din dicționarul app-ului) =================
 const roInput = document.getElementById("roInput");
-document.addEventListener("DOMContentLoaded", () => {
-  const roInput = document.getElementById("roInput");
   const roTranslateBtn = document.getElementById("roTranslateBtn");
-  const previewKo = document.getElementById("previewKo");
+if (roTranslateBtn){
+  roTranslateBtn.addEventListener("click",()=>{
+    const txt = roInput.value;
+    LAST_RO_SENTENCE = txt;
 
-  if (roTranslateBtn && roInput && previewKo) {
-    roTranslateBtn.addEventListener("click", () => {
-      // deocamdată doar copiem româna sus, ca să testăm legătura
-      previewKo.textContent = roInput.value || "(scrie o propoziție mai jos)";
-    });
-  }
-});
+    const parsed = parseRoToState(txt);
+    Object.assign(stateP1, parsed.state);
+    render();
+
+    const res = translateRoToKo(txt);
+    document.getElementById("roToKoResult").textContent = res.ko;
+    document.getElementById("roCorrected").textContent = res.roFixed;
+  });
+}  
     // reverse map: română -> coreeană (din translations)
 function stripDiacritics(s){
   return (s||"")
