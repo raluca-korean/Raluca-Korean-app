@@ -73,6 +73,20 @@
       color:var(--accent-strong);margin-bottom:4px;border-bottom:1px solid var(--border);
       padding-bottom:3px;
     }
+    /* Header de coloană cu titlu + bifă ON/OFF */
+.col-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:4px;
+}
+
+.col-header input.col-toggle{
+  width:14px;
+  height:14px;
+  accent-color: var(--accent-strong);
+  flex-shrink:0;
+}
     .col-body-label{font-size:10px;color:var(--text-soft);margin-bottom:2px;}
     .col-body-main{font-size:15px;font-weight:600;margin-bottom:2px;}
     .col-body-extra{font-size:11px;color:var(--text-soft);}
@@ -2580,40 +2594,70 @@ function pickPlaceParticle(word){
   if(!word) return "에서";
   return "에서";
 }
-/* desenare coloane */
-function renderClauseRow(container,activeMap,state,clauseId){
-  container.innerHTML="";
-  columns.forEach(col=>{
-    if(!isColumnVisible(col.key))return;
-    const colDiv=document.createElement("div");
-    colDiv.className="col";
-    if(!activeMap[col.key])colDiv.classList.add("dimmed");
-    colDiv.dataset.key=col.key;
-    colDiv.dataset.clause=clauseId;
+/* desenare coloane – cu bifă ON/OFF în fiecare căsuță */
+function renderClauseRow(container, activeMap, state, clauseId){
+  container.innerHTML = "";
 
-    const header=document.createElement("div");
-    header.className="col-header";
-    header.textContent=col.title+(col.ko?` (${col.ko})`:"");
+  columns.forEach(col=>{
+    if (!isColumnVisible(col.key)) return;
+
+    const colDiv = document.createElement("div");
+    colDiv.className = "col";
+    colDiv.dataset.key = col.key;
+    colDiv.dataset.clause = clauseId;
+
+    // dacă partea este dezactivată în activeMap → coloana apare "stinsă"
+    if (activeMap[col.key] === false) {
+      colDiv.classList.add("dimmed");
+    }
+
+    // ==== HEADER: titlu + bifă mică ====
+    const header = document.createElement("div");
+    header.className = "col-header";
+
+    const titleSpan = document.createElement("span");
+    titleSpan.textContent = col.title + (col.ko ? ` (${col.ko})` : "");
+    header.appendChild(titleSpan);
+
+    // bifa care controlează activeMap[col.key]
+    const toggle = document.createElement("input");
+    toggle.type = "checkbox";
+    toggle.className = "col-toggle";
+    toggle.checked = activeMap[col.key] !== false;  // default ON
+
+    toggle.addEventListener("change", () => {
+      // actualizăm starea logică (folosită la construirea propoziției)
+      activeMap[col.key] = toggle.checked;
+      render();   // redesenează tabel + propoziție
+    });
+
+    header.appendChild(toggle);
     colDiv.appendChild(header);
 
-    const label=document.createElement("div");
-    label.className="col-body-label";
-    label.textContent=col.hint||"";
+    // ==== LABEL (hint: Cine? Când? Unde? etc.) ====
+    const label = document.createElement("div");
+    label.className = "col-body-label";
+    label.textContent = col.hint || "";
     colDiv.appendChild(label);
 
-    const main=document.createElement("div");
-    main.className="col-body-main";
-    main.textContent=state[col.key]||"";
+    // ==== CUVÂNTUL ALES ====
+    const main = document.createElement("div");
+    main.className = "col-body-main";
+    main.textContent = state[col.key] || "";
     colDiv.appendChild(main);
 
-    const extra=document.createElement("div");
-    extra.className="col-body-extra";
-    if(col.key==="conjug"&&state[col.key]&&isLinkingConj(state[col.key]))extra.textContent="⭐ cere propoziția 2";
+    // ==== EXTRA (⭐ cere propoziția 2 la conjugări de legătură) ====
+    const extra = document.createElement("div");
+    extra.className = "col-body-extra";
+    if (col.key === "conjug" && state[col.key] && isLinkingConj(state[col.key])) {
+      extra.textContent = "⭐ cere propoziția 2";
+    }
     colDiv.appendChild(extra);
+
     container.appendChild(colDiv);
   });
 }
-/* === CONSTRUIRE propoziție + traducere pe părți === */
+    /* === CONSTRUIRE propoziție + traducere pe părți === */
 const labelsRo = {
   subject: "SUBJECT",
   time: "TIME",
