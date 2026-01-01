@@ -1318,7 +1318,20 @@ button:disabled{
   <p id="subtitle">Builder propoziții + particule + audio + conjugări</p>
 </header>
 
+    <!-- SCREEN 1: BUILDER -->
+    <div class="screen active" id="screen-builder">
+
+      <!-- Stepper 3 pași -->
+      
 <div class="mode-panel">
+  <div class="mode-row">
+    <span class="section-label">Mod afișare</span>
+    <div>
+      <button class="secondary small-mode-btn" data-mode="simple">Simplu</button>
+      <button class="secondary small-mode-btn active" data-mode="topik">TOPIK</button>
+    </div>
+  </div>
+
   <div class="mode-row">
     <span class="section-label">Propoziția 1 – ce părți folosește?</span>
     <div class="part-toggles" id="togglesP1"></div>
@@ -1332,22 +1345,48 @@ button:disabled{
     <div class="part-toggles" id="togglesP2"></div>
   </div>
 </div>
+      <div class="table-block">
+        <div class="table-title">
+          <span>Propoziția 1</span>
+          <span class="page-indicator" id="pageInfo"></span>
+        </div>
+              <div class="table-block">
+        ...
+        <div class="preview-card">
+          ...
+        </div>
+      </div>
 
-<div class="table-block">
-  <div class="table-title">
-    <span>Propoziția 1</span>
-    <span class="page-indicator" id="pageInfo"></span>
-  </div>
+      <!-- Română → Coreeană mutat JOS în Builder -->
+      <div class="card">
+        <h2>Română → Coreeană</h2>
+        <textarea id="roInput" rows="3" placeholder="Scrie propoziția în română aici..."></textarea>
+        <button id="roTranslateBtn">
+          <span class="translate-icon">🇷🇴➡️🇰🇷</span>
+          Tradu în coreeană
+        </button>
+        <div class="preview-ko" id="roToKoResult"></div>
+        <div class="preview-ro" id="roCorrected"></div>
+      </div>
+        <div class="table-horizontal" id="tableP1"></div>
+<div class="table-title" id="titleP2">
+  <span>Propoziția 2 (continuare / frază)</span>
+</div>
+        <div class="table-horizontal hidden" id="tableP2"></div>
 
-  <div class="table-horizontal" id="tableP1"></div>
-
-  <div class="table-title hidden" id="titleP2">
-    <span>Propoziția 2 (continuare / frază)</span>
-  </div>
-  <div class="table-horizontal hidden" id="tableP2"></div>
-
-  <!-- AICI rămâne restul: butoanele Prev/Next, preview-card, etc. -->
-  
+        <div class="controls">
+          <div class="btn-group">
+            <button id="prevBtn">⬅ Prev (rând model)</button>
+            <button id="nextBtn">Next ➡</button>
+          </div>
+          <button class="secondary" id="resetBtn">Reset părți de propoziție</button>
+        </div>
+        <div class="legend">
+          ➤ Tap scurt pe coloană = treci la următorul cuvânt.  
+          ➤ Ține apăsat pe coloană = deschizi lista completă (cu traduceri + căutare).  
+          ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).  
+          ➤ Sistem de <b>conjugare reală</b>: verbul se unește cu finalul (ex: 가다 + -고 있어요 → 가고 있어요).
+        </div>
 
         <div class="preview-card">
           <div class="preview-title">
@@ -3017,34 +3056,22 @@ panelSearchInput.addEventListener("input",()=>{
   if(col)renderPanelList(col);
 });
 addWordBtn.addEventListener("click",()=>{
-  const txt = newWordInput.value.trim();
-  if(!txt) return;
-  const roTxt = (newWordTransInput.value || "").trim();
-  const col = columns.find(c => c.key === panelKey);
-  if(!col || !col.allowCustom) return;
+  const txt=newWordInput.value.trim();
+  if(!txt)return;
+  const roTxt=(newWordTransInput.value||"").trim();
+  const col=columns.find(c=>c.key===panelKey);
+  if(!col||!col.allowCustom)return;
 
-  if(!col.data.includes(txt)) col.data.push(txt);
-  if(!translations[panelKey]) translations[panelKey] = {};
-  if(roTxt) translations[panelKey][txt] = roTxt;
+  if(!col.data.includes(txt))col.data.push(txt);
+  if(!translations[panelKey])translations[panelKey]={};
+  if(roTxt)translations[panelKey][txt]=roTxt;
 
-  if(!customData[panelKey]) customData[panelKey] = [];
-  const exists = customData[panelKey].some(e => e.word === txt);
-  if(!exists) customData[panelKey].push({word:txt, ro:roTxt});
-  else customData[panelKey].forEach(e => { if(e.word === txt) e.ro = roTxt; });
+  if(!customData[panelKey])customData[panelKey]=[];
+  const exists=customData[panelKey].some(e=>e.word===txt);
+  if(!exists)customData[panelKey].push({word:txt,ro:roTxt});
+  else customData[panelKey].forEach(e=>{if(e.word===txt)e.ro=roTxt;});
   saveCustomData();
 
-  // 🔹 AICI e bucata pentru Propoziția 2 – asta e varianta corectă
-  if (panelKey === "conjug" && isLinkingConj(txt)) {
-    enableP2.checked = true;
-    enableP2.dispatchEvent(new Event("change"));
-  }
-
-  newWordInput.value = "";
-  newWordTransInput.value = "";
-  renderPanelList(col);
-  REV = buildReverseMap();
-});
-    
   newWordInput.value="";newWordTransInput.value="";
   renderPanelList(col);
   REV = buildReverseMap();
