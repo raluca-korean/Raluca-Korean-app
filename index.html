@@ -2599,82 +2599,81 @@ function pickPlaceParticle(word){
   return "에서";
 }
 /* desenare coloane */
+/* desenare coloane */
 function renderClauseRow(container, activeMap, state, clauseId){
-  // golim rândul
   container.innerHTML = "";
 
-  // pentru fiecare coloană definită (SUBJECT, TIME, PLACE, MOD, OBJECT, NUMERAL, COUNTER, VERB, CONJUG)
+  // wrapper-ul cu bifele ORIGINALE, ascunse sus
+  const chipsWrapper = clauseId === "p1" ? togglesP1 : togglesP2;
+
   columns.forEach(col => {
-    // dacă e ascunsă global, nu o desenăm deloc
+    // dacă e ascunsă global, nu o desenăm
     if (!isColumnVisible(col.key)) return;
 
-    // container pt coloana curentă
+    // căutăm bifa originală ascunsă, după data-key + data-clause
+    let originalCb = null;
+    if (chipsWrapper) {
+      originalCb = chipsWrapper.querySelector(
+        `input[type="checkbox"][data-key="${col.key}"][data-clause="${clauseId}"]`
+      );
+    }
+
+    // container coloană
     const colDiv = document.createElement("div");
     colDiv.className = "col";
     colDiv.dataset.key = col.key;
     colDiv.dataset.clause = clauseId;
 
-    // ===== HEAD (titlu + hint + bifă) =====
+    // ==== HEAD: titlu + bifa nouă ====
     const header = document.createElement("div");
     header.className = "col-head";
 
-    // titlu (SUBJECT, TIME, PLACE...)
     const label = document.createElement("div");
     label.className = "col-label";
     label.textContent = col.title;
     header.appendChild(label);
 
-    // hint mic (Cine? Când? Unde? etc.)
     const hint = document.createElement("div");
     hint.className = "col-hint";
     hint.textContent = col.hint || "";
     header.appendChild(hint);
 
-    // ---- BIFA din tabel (IMPORTANT) ----
+    // bifa din tabel – oglindă a bifei originale
     const toggle = document.createElement("input");
     toggle.type = "checkbox";
     toggle.className = "col-toggle";
 
-    // starea inițială: dacă nu e explicit false, o considerăm activă
-    toggle.checked = activeMap[col.key] !== false;
+    // starea inițială: dacă avem bifa originală, copiem starea ei;
+    // altfel, considerăm activ (true)
+    if (originalCb) {
+      toggle.checked = originalCb.checked;
+    } else {
+      toggle.checked = activeMap[col.key] !== false;
+    }
 
-    // când apeși bifa => actualizăm activeMap și rerender
     toggle.addEventListener("change", () => {
-  // 1️⃣ aflăm indexul coloanei (subject, time, place, etc.)
-  const idx = columns.findIndex(c => c.key === col.key);
+      // 1) actualizăm bifa originală (ascunsă)
+      if (originalCb) {
+        originalCb.checked = toggle.checked;
+        // declanșăm evenimentul "change" pe ea,
+        // ca să ruleze deja logica din sync(...)
+        originalCb.dispatchEvent(new Event("change", { bubbles: true }));
+      } else {
+        // fallback: dacă nu găsim bifa originală, măcar actualizăm activMap + render
+        activeMap[col.key] = toggle.checked ? true : false;
+        if (typeof render === "function") render();
+      }
+    });
 
-  // 2️⃣ stabilim pentru ce propoziție e: P1 sau P2
-  const togglesContainerId = clauseId === "p2" ? "togglesP2" : "togglesP1";
-
-  // 3️⃣ luăm TOATE bifele originale, ascunse, din bara "Mod afișare"
-  const originalToggles = document.querySelectorAll(
-    `#${togglesContainerId} input[type="checkbox"]`
-  );
-
-  const original = originalToggles[idx];
-
-  if (original) {
-    // 4️⃣ sincronizăm starea (bifat / debifat)
-    original.checked = toggle.checked;
-
-    // 5️⃣ declanșăm evenimentul "change" pe bifa ORIGINALĂ
-    //    ⇒ ea face toată magia: update la activeMap, rebuild propoziție etc.
-    original.dispatchEvent(new Event("change", { bubbles: true }));
-  } else {
-    console.warn("Nu am găsit bifa originală pentru", col.key, "la", togglesContainerId);
-  }
-});
-    
     header.appendChild(toggle);
     colDiv.appendChild(header);
 
-    // ===== BODY (cuvântul ales) =====
+    // ==== BODY: cuvânt + mesaj extra ====
     const main = document.createElement("div");
     main.className = "col-body-main";
     main.textContent = state[col.key] || "";
     colDiv.appendChild(main);
 
-    // ===== EXTRA (mesaj pt CONJUGĂRI) =====
     const extra = document.createElement("div");
     extra.className = "col-body-extra";
     if (col.key === "conjug" && state[col.key] && isLinkingConj(state[col.key])) {
@@ -2682,7 +2681,7 @@ function renderClauseRow(container, activeMap, state, clauseId){
     }
     colDiv.appendChild(extra);
 
-    // adăugăm coloana în rând
+    // atașăm coloana la tabel
     container.appendChild(colDiv);
   });
 }
