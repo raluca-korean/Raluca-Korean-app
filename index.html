@@ -2599,17 +2599,16 @@ function pickPlaceParticle(word){
   return "에서";
 }
 /* desenare coloane */
-/* desenare coloane */
 function renderClauseRow(container, activeMap, state, clauseId){
+  // golim rândul
   container.innerHTML = "";
 
-  // 🔹 aflăm dacă e Propoziția 1 sau 2 după ID-ul tabelului
-  const togglesId = (container.id === "tableP2") ? "togglesP2" : "togglesP1";
-
+  // pentru fiecare coloană definită (SUBJECT, TIME, PLACE, MOD, OBJECT, NUMERAL, COUNTER, VERB, CONJUG)
   columns.forEach(col => {
+    // dacă e ascunsă global, nu o desenăm deloc
     if (!isColumnVisible(col.key)) return;
 
-    // containerul unei coloane
+    // container pt coloana curentă
     const colDiv = document.createElement("div");
     colDiv.className = "col";
     colDiv.dataset.key = col.key;
@@ -2619,52 +2618,47 @@ function renderClauseRow(container, activeMap, state, clauseId){
     const header = document.createElement("div");
     header.className = "col-head";
 
+    // titlu (SUBJECT, TIME, PLACE...)
     const label = document.createElement("div");
     label.className = "col-label";
     label.textContent = col.title;
     header.appendChild(label);
 
+    // hint mic (Cine? Când? Unde? etc.)
     const hint = document.createElement("div");
     hint.className = "col-hint";
     hint.textContent = col.hint || "";
     header.appendChild(hint);
 
-    // 👉 bifa din tabel
+    // ---- BIFA din tabel (IMPORTANT) ----
     const toggle = document.createElement("input");
     toggle.type = "checkbox";
     toggle.className = "col-toggle";
 
-    // 🔗 bifa ORIGINALĂ (ascunsă) din bara "Mod afișare"
-    const originalSelector = `#${togglesId} input[data-key="${col.key}"]`;
-    const originalBox = document.querySelector(originalSelector);
+    // starea inițială: dacă nu e explicit false, o considerăm activă
+    toggle.checked = activeMap[col.key] !== false;
 
-    // stare inițială = starea bifelor originale
-    if (originalBox) {
-      toggle.checked = originalBox.checked;
-    } else {
-      // fallback, dacă nu găsim bifa originală
-      toggle.checked = activeMap[col.key] !== false;
-    }
-
-    // când apeși pe bifa din tabel, simulăm click pe cea ascunsă
+    // când apeși bifa => actualizăm activeMap și rerender
     toggle.addEventListener("change", () => {
-      const orig = document.querySelector(originalSelector);
-      if (orig) {
-        orig.checked = toggle.checked;
-        orig.dispatchEvent(new Event("change", { bubbles: true }));
+      // true = parte folosită în propoziție, false = scoasă
+      activeMap[col.key] = toggle.checked ? true : false;
+
+      // redesenăm tot builder-ul (funcția render() există deja în codul tău)
+      if (typeof render === "function") {
+        render();
       }
     });
 
     header.appendChild(toggle);
     colDiv.appendChild(header);
 
-    // ===== BODY (cuvânt ales) =====
+    // ===== BODY (cuvântul ales) =====
     const main = document.createElement("div");
     main.className = "col-body-main";
     main.textContent = state[col.key] || "";
     colDiv.appendChild(main);
 
-    // ===== EXTRA (⭐ cere propoziția 2) =====
+    // ===== EXTRA (mesaj pt CONJUGĂRI) =====
     const extra = document.createElement("div");
     extra.className = "col-body-extra";
     if (col.key === "conjug" && state[col.key] && isLinkingConj(state[col.key])) {
@@ -2672,6 +2666,7 @@ function renderClauseRow(container, activeMap, state, clauseId){
     }
     colDiv.appendChild(extra);
 
+    // adăugăm coloana în rând
     container.appendChild(colDiv);
   });
 }
