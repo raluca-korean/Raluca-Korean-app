@@ -2599,18 +2599,17 @@ function pickPlaceParticle(word){
   return "에서";
 }
 /* desenare coloane */
-/* desenare coloane */
 function renderClauseRow(container, activeMap, state, clauseId){
   container.innerHTML = "";
 
-  // wrapper-ul cu bifele ORIGINALE, ascunse sus
+  // wrapper-ul cu bifele ORIGINALE (cele ascunse sus)
   const chipsWrapper = clauseId === "p1" ? togglesP1 : togglesP2;
 
   columns.forEach(col => {
-    // dacă e ascunsă global, nu o desenăm
+    // dacă e ascunsă global, nu o desenăm deloc
     if (!isColumnVisible(col.key)) return;
 
-    // căutăm bifa originală ascunsă, după data-key + data-clause
+    // căutăm bifa originală, ascunsă, după data-key + data-clause
     let originalCb = null;
     if (chipsWrapper) {
       originalCb = chipsWrapper.querySelector(
@@ -2618,13 +2617,13 @@ function renderClauseRow(container, activeMap, state, clauseId){
       );
     }
 
-    // container coloană
+    // ==== container coloană ====
     const colDiv = document.createElement("div");
     colDiv.className = "col";
     colDiv.dataset.key = col.key;
     colDiv.dataset.clause = clauseId;
 
-    // ==== HEAD: titlu + bifa nouă ====
+    // ==== HEAD: titlu + bifa ====
     const header = document.createElement("div");
     header.className = "col-head";
 
@@ -2638,37 +2637,29 @@ function renderClauseRow(container, activeMap, state, clauseId){
     hint.textContent = col.hint || "";
     header.appendChild(hint);
 
-    // bifa din tabel – oglindă a bifei originale
+    // bifa vizuală din tabel, oglindă a celei originale
     const toggle = document.createElement("input");
     toggle.type = "checkbox";
     toggle.className = "col-toggle";
+    toggle.checked = originalCb ? originalCb.checked : true;
 
-    // starea inițială: dacă avem bifa originală, copiem starea ei;
-    // altfel, considerăm activ (true)
-    if (originalCb) {
+    // 🔑 cheia: nu umblăm direct la activeMap,
+    // doar dăm click pe bifa originală ascunsă
+    toggle.addEventListener("click", (e) => {
+      e.preventDefault();        // nu lăsăm browserul să schimbe singur starea
+      if (!originalCb) return;   // dacă nu găsim bifa originală, ieșim
+
+      // simulăm click pe checkbox-ul original
+      originalCb.click();        // aici se declanșează sync(...) + render()
+
+      // după ce logica veche a rulat, sincronizăm vizual starea
       toggle.checked = originalCb.checked;
-    } else {
-      toggle.checked = activeMap[col.key] !== false;
-    }
-
-    toggle.addEventListener("change", () => {
-      // 1) actualizăm bifa originală (ascunsă)
-      if (originalCb) {
-        originalCb.checked = toggle.checked;
-        // declanșăm evenimentul "change" pe ea,
-        // ca să ruleze deja logica din sync(...)
-        originalCb.dispatchEvent(new Event("change", { bubbles: true }));
-      } else {
-        // fallback: dacă nu găsim bifa originală, măcar actualizăm activMap + render
-        activeMap[col.key] = toggle.checked ? true : false;
-        if (typeof render === "function") render();
-      }
     });
 
     header.appendChild(toggle);
     colDiv.appendChild(header);
 
-    // ==== BODY: cuvânt + mesaj extra ====
+    // ==== BODY: cuvântul ales + mesaj extra ====
     const main = document.createElement("div");
     main.className = "col-body-main";
     main.textContent = state[col.key] || "";
@@ -2681,7 +2672,7 @@ function renderClauseRow(container, activeMap, state, clauseId){
     }
     colDiv.appendChild(extra);
 
-    // atașăm coloana la tabel
+    // atașăm coloana în tabel
     container.appendChild(colDiv);
   });
 }
