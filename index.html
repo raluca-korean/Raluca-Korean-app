@@ -1283,26 +1283,11 @@ button:disabled{
   margin-top:2px;
   color:var(--text-soft);
 }
-   .col-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.col-toggle {
-  width: 16px;
-  height: 16px;
-}
-    
     /* Ascunde rezultatul coreean + româna corectată din blocul Română → Coreeană */
 #roToKoResult,
 #roCorrected {
   display: none;
 }
-  /* Ascund complet bara "Mod afișare" (SUBJECT / TIME / PLACE...) */
-.mode-row {
-  display: none !important;
-}  
   </style>
 </head>
 <body>
@@ -1367,19 +1352,12 @@ button:disabled{
       </div>
         <div class="table-horizontal" id="tableP1"></div>
 
-<div class="table-title">
-  <span>Propoziția 2 (continuare / frază)</span>
+        <div class="table-title hidden" id="titleP2">
+          <span>Propoziția 2 (continuare / frază)</span>
+        </div>
+        <div class="table-horizontal hidden" id="tableP2"></div>
 
-  <label class="p2-inline-toggle">
-    <input type="checkbox" id="enableP2Inline">
-    Activează
-  </label>
-</div>
-
-<div class="table-horizontal" id="tableP2"></div>
-</div> <!-- închide card-ul -->
-      <!-- acesta rămâne: închide <div class="card"> -->
-      <div class="controls">
+        <div class="controls">
           <div class="btn-group">
             <button id="prevBtn">⬅ Prev (rând model)</button>
             <button id="nextBtn">Next ➡</button>
@@ -2599,83 +2577,39 @@ function pickPlaceParticle(word){
   return "에서";
 }
 /* desenare coloane */
-function renderClauseRow(container, activeMap, state, clauseId){
-  container.innerHTML = "";
+function renderClauseRow(container,activeMap,state,clauseId){
+  container.innerHTML="";
+  columns.forEach(col=>{
+    if(!isColumnVisible(col.key))return;
+    const colDiv=document.createElement("div");
+    colDiv.className="col";
+    if(!activeMap[col.key])colDiv.classList.add("dimmed");
+    colDiv.dataset.key=col.key;
+    colDiv.dataset.clause=clauseId;
 
-  columns.forEach(col => {
-    // dacă e ascunsă global, nu o desenăm deloc
-    if (!isColumnVisible(col.key)) return;
-
-    // ==== container coloană (SUBJECT / TIME / ...) ====
-    const colDiv = document.createElement("div");
-    colDiv.className = "col";
-    colDiv.dataset.key = col.key;
-    colDiv.dataset.clause = clauseId;
-
-    // ==== HEAD: titlu + bifa ====
-    const header = document.createElement("div");
-    header.className = "col-head";
-
-    const label = document.createElement("div");
-    label.className = "col-label";
-    label.textContent = col.title;
-    header.appendChild(label);
-
-    const hint = document.createElement("div");
-    hint.className = "col-hint";
-    hint.textContent = col.hint || "";
-    header.appendChild(hint);
-
-    // bifa vizuală din tabel
-    const toggle = document.createElement("input");
-    toggle.type = "checkbox";
-    toggle.className = "col-toggle";
-
-    // starea inițială vine direct din activeMap (care deja funcționează)
-    toggle.checked = activeMap[col.key] !== false;
-
-    // când apeși bifa din tabel
-    toggle.addEventListener("click", (e) => {
-      e.preventDefault();  // nu lăsăm browserul să schimbe singur starea
-
-      // alegem wrapper-ul corect (P1 / P2)
-      const wrapper = clauseId === "p1" ? togglesP1 : togglesP2;
-      if (!wrapper) return;
-
-      // căutăm bifa ORIGINALĂ ascunsă (din bara veche)
-      const orig = wrapper.querySelector(
-        `input[type="checkbox"][data-key="${col.key}"][data-clause="${clauseId}"]`
-      );
-      if (!orig) return;
-
-      // dăm click pe bifa originală → pornește logica veche:
-      // sync(...) actualizează activeP1/activeP2 + render() recalculează propoziția
-      orig.click();
-      // nu mai trebuie să setăm manual toggle.checked,
-      // pentru că se va recrea la următorul render() din activeMap
-    });
-
-    header.appendChild(toggle);
+    const header=document.createElement("div");
+    header.className="col-header";
+    header.textContent=col.title+(col.ko?` (${col.ko})`:"");
     colDiv.appendChild(header);
 
-    // ==== BODY: cuvântul ales + mesaj extra ====
-    const main = document.createElement("div");
-    main.className = "col-body-main";
-    main.textContent = state[col.key] || "";
+    const label=document.createElement("div");
+    label.className="col-body-label";
+    label.textContent=col.hint||"";
+    colDiv.appendChild(label);
+
+    const main=document.createElement("div");
+    main.className="col-body-main";
+    main.textContent=state[col.key]||"";
     colDiv.appendChild(main);
 
-    const extra = document.createElement("div");
-    extra.className = "col-body-extra";
-    if (col.key === "conjug" && state[col.key] && isLinkingConj(state[col.key])) {
-      extra.textContent = "⭐ cere propoziția 2";
-    }
+    const extra=document.createElement("div");
+    extra.className="col-body-extra";
+    if(col.key==="conjug"&&state[col.key]&&isLinkingConj(state[col.key]))extra.textContent="⭐ cere propoziția 2";
     colDiv.appendChild(extra);
-
-    // atașăm coloana în tabel
     container.appendChild(colDiv);
   });
 }
-    /* === CONSTRUIRE propoziție + traducere pe părți === */
+/* === CONSTRUIRE propoziție + traducere pe părți === */
 const labelsRo = {
   subject: "SUBJECT",
   time: "TIME",
@@ -4141,23 +4075,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
   previewCard.insertAdjacentElement("afterend", roBlock);
 });
-    
-document.addEventListener("DOMContentLoaded", () => {
-  const oldToggle = document.getElementById("enableP2");       // bifa originală, ascunsă în .mode-row
-  const newToggle = document.getElementById("enableP2Inline"); // bifa nouă din tabel
-
-  if (!oldToggle || !newToggle) return;
-
-  // sincronizare inițială (dacă în cod P2 e setată default on/off)
-  newToggle.checked = oldToggle.checked;
-
-  // când utilizatorul apasă bifa nouă:
-  newToggle.addEventListener("change", () => {
-    oldToggle.checked = newToggle.checked;
-    // declanșăm același eveniment ca și cum ai apăsa bifa veche
-    oldToggle.dispatchEvent(new Event("change", { bubbles: true }));
-  });
-});    
   </script>
 </body>
 </html> 
