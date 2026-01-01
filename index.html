@@ -2602,22 +2602,11 @@ function pickPlaceParticle(word){
 function renderClauseRow(container, activeMap, state, clauseId){
   container.innerHTML = "";
 
-  // wrapper-ul cu bifele ORIGINALE (cele ascunse sus)
-  const chipsWrapper = clauseId === "p1" ? togglesP1 : togglesP2;
-
   columns.forEach(col => {
     // dacă e ascunsă global, nu o desenăm deloc
     if (!isColumnVisible(col.key)) return;
 
-    // căutăm bifa originală, ascunsă, după data-key + data-clause
-    let originalCb = null;
-    if (chipsWrapper) {
-      originalCb = chipsWrapper.querySelector(
-        `input[type="checkbox"][data-key="${col.key}"][data-clause="${clauseId}"]`
-      );
-    }
-
-    // ==== container coloană ====
+    // ==== container coloană (SUBJECT / TIME / ...) ====
     const colDiv = document.createElement("div");
     colDiv.className = "col";
     colDiv.dataset.key = col.key;
@@ -2637,23 +2626,33 @@ function renderClauseRow(container, activeMap, state, clauseId){
     hint.textContent = col.hint || "";
     header.appendChild(hint);
 
-    // bifa vizuală din tabel, oglindă a celei originale
+    // bifa vizuală din tabel
     const toggle = document.createElement("input");
     toggle.type = "checkbox";
     toggle.className = "col-toggle";
-    toggle.checked = originalCb ? originalCb.checked : true;
 
-    // 🔑 cheia: nu umblăm direct la activeMap,
-    // doar dăm click pe bifa originală ascunsă
+    // starea inițială vine direct din activeMap (care deja funcționează)
+    toggle.checked = activeMap[col.key] !== false;
+
+    // când apeși bifa din tabel
     toggle.addEventListener("click", (e) => {
-      e.preventDefault();        // nu lăsăm browserul să schimbe singur starea
-      if (!originalCb) return;   // dacă nu găsim bifa originală, ieșim
+      e.preventDefault();  // nu lăsăm browserul să schimbe singur starea
 
-      // simulăm click pe checkbox-ul original
-      originalCb.click();        // aici se declanșează sync(...) + render()
+      // alegem wrapper-ul corect (P1 / P2)
+      const wrapper = clauseId === "p1" ? togglesP1 : togglesP2;
+      if (!wrapper) return;
 
-      // după ce logica veche a rulat, sincronizăm vizual starea
-      toggle.checked = originalCb.checked;
+      // căutăm bifa ORIGINALĂ ascunsă (din bara veche)
+      const orig = wrapper.querySelector(
+        `input[type="checkbox"][data-key="${col.key}"][data-clause="${clauseId}"]`
+      );
+      if (!orig) return;
+
+      // dăm click pe bifa originală → pornește logica veche:
+      // sync(...) actualizează activeP1/activeP2 + render() recalculează propoziția
+      orig.click();
+      // nu mai trebuie să setăm manual toggle.checked,
+      // pentru că se va recrea la următorul render() din activeMap
     });
 
     header.appendChild(toggle);
