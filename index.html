@@ -3056,22 +3056,34 @@ panelSearchInput.addEventListener("input",()=>{
   if(col)renderPanelList(col);
 });
 addWordBtn.addEventListener("click",()=>{
-  const txt=newWordInput.value.trim();
-  if(!txt)return;
-  const roTxt=(newWordTransInput.value||"").trim();
-  const col=columns.find(c=>c.key===panelKey);
-  if(!col||!col.allowCustom)return;
+  const txt = newWordInput.value.trim();
+  if(!txt) return;
+  const roTxt = (newWordTransInput.value || "").trim();
+  const col = columns.find(c => c.key === panelKey);
+  if(!col || !col.allowCustom) return;
 
-  if(!col.data.includes(txt))col.data.push(txt);
-  if(!translations[panelKey])translations[panelKey]={};
-  if(roTxt)translations[panelKey][txt]=roTxt;
+  if(!col.data.includes(txt)) col.data.push(txt);
+  if(!translations[panelKey]) translations[panelKey] = {};
+  if(roTxt) translations[panelKey][txt] = roTxt;
 
-  if(!customData[panelKey])customData[panelKey]=[];
-  const exists=customData[panelKey].some(e=>e.word===txt);
-  if(!exists)customData[panelKey].push({word:txt,ro:roTxt});
-  else customData[panelKey].forEach(e=>{if(e.word===txt)e.ro=roTxt;});
+  if(!customData[panelKey]) customData[panelKey] = [];
+  const exists = customData[panelKey].some(e => e.word === txt);
+  if(!exists) customData[panelKey].push({word:txt, ro:roTxt});
+  else customData[panelKey].forEach(e => { if(e.word === txt) e.ro = roTxt; });
   saveCustomData();
 
+  // 🔹 AICI e bucata pentru Propoziția 2 – asta e varianta corectă
+  if (panelKey === "conjug" && isLinkingConj(txt)) {
+    enableP2.checked = true;
+    enableP2.dispatchEvent(new Event("change"));
+  }
+
+  newWordInput.value = "";
+  newWordTransInput.value = "";
+  renderPanelList(col);
+  REV = buildReverseMap();
+});
+    
   newWordInput.value="";newWordTransInput.value="";
   renderPanelList(col);
   REV = buildReverseMap();
