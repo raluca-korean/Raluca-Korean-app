@@ -2640,15 +2640,31 @@ function renderClauseRow(container, activeMap, state, clauseId){
 
     // când apeși bifa => actualizăm activeMap și rerender
     toggle.addEventListener("change", () => {
-      // true = parte folosită în propoziție, false = scoasă
-      activeMap[col.key] = toggle.checked ? true : false;
+  // 1️⃣ aflăm indexul coloanei (subject, time, place, etc.)
+  const idx = columns.findIndex(c => c.key === col.key);
 
-      // redesenăm tot builder-ul (funcția render() există deja în codul tău)
-      if (typeof render === "function") {
-        render();
-      }
-    });
+  // 2️⃣ stabilim pentru ce propoziție e: P1 sau P2
+  const togglesContainerId = clauseId === "p2" ? "togglesP2" : "togglesP1";
 
+  // 3️⃣ luăm TOATE bifele originale, ascunse, din bara "Mod afișare"
+  const originalToggles = document.querySelectorAll(
+    `#${togglesContainerId} input[type="checkbox"]`
+  );
+
+  const original = originalToggles[idx];
+
+  if (original) {
+    // 4️⃣ sincronizăm starea (bifat / debifat)
+    original.checked = toggle.checked;
+
+    // 5️⃣ declanșăm evenimentul "change" pe bifa ORIGINALĂ
+    //    ⇒ ea face toată magia: update la activeMap, rebuild propoziție etc.
+    original.dispatchEvent(new Event("change", { bubbles: true }));
+  } else {
+    console.warn("Nu am găsit bifa originală pentru", col.key, "la", togglesContainerId);
+  }
+});
+    
     header.appendChild(toggle);
     colDiv.appendChild(header);
 
