@@ -4226,205 +4226,162 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
   previewCard.insertAdjacentElement("afterend", roBlock);
 });
-  // ================= EXERCIȚII TOPIK – logica de bază (B) =================
+   // ====== EXERCIȚII TOPIK – logica de bază (VERB) ======
+const exerciseTypeEl        = document.getElementById("exerciseType");
+const exerciseTypeLabelEl   = document.getElementById("exerciseTypeLabel");
+const exerciseQuestionEl    = document.getElementById("exerciseQuestion");
+const exerciseOptionsEl     = document.getElementById("exerciseOptions");
+const exerciseFeedbackEl    = document.getElementById("exerciseFeedback");
+const exerciseSubtagEl      = document.getElementById("exerciseSubtag");
+const nextQuestionBtn       = document.getElementById("nextQuestionBtn");
+const checkAnswerBtn        = document.getElementById("checkAnswerBtn");
 
-// elementele din HTML pentru ecranul de exerciții
-const exerciseTypeSelect   = document.getElementById("exerciseType");
-const exerciseTypeLabel    = document.getElementById("exerciseTypeLabel");
-const exerciseQuestionEl   = document.getElementById("exerciseQuestion");
-const exerciseOptionsEl    = document.getElementById("exerciseOptions");
-const exerciseSubtagEl     = document.getElementById("exerciseSubtag");
-const exerciseFeedbackEl   = document.getElementById("exerciseFeedback");
-const checkAnswerBtn       = document.getElementById("checkAnswerBtn");
-const nextQuestionBtn      = document.getElementById("nextQuestionBtn");
+let CURRENT_EXERCISE = null;
 
-// propoziția curentă din builder (coreeană)
-const previewKoEl          = document.getElementById("previewKo");
+function getCurrentSentenceFromBuilder() {
+  const el = document.getElementById("previewKo");
+  if (!el) return "";
+  const txt = (el.textContent || "").trim();
+  if (!txt || txt === "(alege cuvinte din tabel)") return "";
+  return txt;
+}
 
-let currentExercise = null; // { type, questionText, correct, options }
+function resetExerciseUI() {
+  if (!exerciseQuestionEl) return; // de siguranță
+  exerciseQuestionEl.classList.add("empty");
+  exerciseQuestionEl.textContent =
+    "Alege tipul de exercițiu și apasă „Întrebare nouă”.";
+  exerciseOptionsEl.innerHTML = "";
+  exerciseFeedbackEl.textContent = "";
+  if (exerciseSubtagEl) exerciseSubtagEl.textContent = "";
+  CURRENT_EXERCISE = null;
+}
 
-// mici utilitare
-function shuffleArray(arr){
-  for(let i = arr.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+function generateVerbExercise() {
+  const sentence = getCurrentSentenceFromBuilder();
+
+  if (!sentence) {
+    resetExerciseUI();
+    exerciseFeedbackEl.textContent =
+      "Mai întâi construiește o propoziție în Builder.";
+    return;
   }
-}
 
-function pickRandomFrom(list, exclude){
-  const pool = list.filter(x => x !== exclude);
-  if(pool.length === 0) return exclude;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-// extrage verbul din propoziție (ultimul care apare în lista "verbs")
-function findVerbInSentence(sentence){
-  if(!sentence) return null;
   const tokens = sentence.split(/\s+/);
-  let found = null;
-  tokens.forEach(tok => {
-    const clean = tok.replace(/[.,!?]/g,"");
-    if(verbs.includes(clean)){
-      found = clean;
-    }
-  });
-  return found;
-}
-
-// extrage o particulă de bază
-const BASIC_PARTICLES = ["은","는","이","가","을","를","에","에서"];
-
-function findParticleInSentence(sentence){
-  if(!sentence) return null;
-  const tokens = sentence.split(/\s+/);
-  const foundList = [];
-  tokens.forEach(tok => {
-    const clean = tok.replace(/[.,!?]/g,"");
-    BASIC_PARTICLES.forEach(p => {
-      if(clean.includes(p)){
-        foundList.push(p);
-      }
-    });
-  });
-  if(foundList.length === 0) return null;
-  return foundList[0]; // pentru început luăm prima găsită
-}
-
-// construiește exercițiul pentru VERB
-function buildVerbExercise(sentence){
-  const verb = findVerbInSentence(sentence);
-  if(!verb) return null;
-
-  const questionText = sentence.replace(verb, "____");
-  const options = [verb];
-  while(options.length < 4){
-    const cand = pickRandomFrom(verbs, verb);
-    if(!options.includes(cand)) options.push(cand);
+  if (tokens.length < 2) {
+    resetExerciseUI();
+    exerciseFeedbackEl.textContent =
+      "Propoziția e prea scurtă pentru exercițiul de verb.";
+    return;
   }
-  shuffleArray(options);
 
-  return {
-    type: "verb",
-    questionText,
-    correct: verb,
-    options
-  };
-}
+  const last   = tokens[tokens.length - 1];       // verbul final
+  const before = tokens.slice(0, -1).join(" ");   // restul propoziției
+  const displaySentence = before + " ____";
 
-// construiește exercițiul pentru PARTICULĂ simplă
-function buildParticleExercise(sentence){
-  const particle = findParticleInSentence(sentence);
-  if(!particle) return null;
+  // opțiuni: verbul corect + 3 verbe random
+  const optionsSet = new Set();
+  optionsSet.add(last);
 
-  const questionText = sentence.replace(particle, "____");
-
-  const options = [particle];
-  while(options.length < 4){
-    const cand = pickRandomFrom(BASIC_PARTICLES, particle);
-    if(!options.includes(cand)) options.push(cand);
+  while (optionsSet.size < 4) {
+    const randomVerb = verbs[Math.floor(Math.random() * verbs.length)];
+    optionsSet.add(randomVerb);
   }
-  shuffleArray(options);
 
-  return {
-    type: "particle",
-    questionText,
-    correct: particle,
-    options
-  };
-}
+  const options = Array.from(optionsSet).sort(() => Math.random() - 0.5);
 
-// generare întrebare nouă
-function generateExercise(){
+  exerciseQuestionEl.classList.remove("empty");
+  exerciseQuestionEl.textContent = displaySentence;
+  if (exerciseSubtagEl) {
+    exerciseSubtagEl.textContent =
+      "Alege verbul care lipsește la finalul propoziției.";
+  }
+  exerciseOptionsEl.innerHTML = "";
   exerciseFeedbackEl.textContent = "";
 
-  const sentence = (previewKoEl && previewKoEl.textContent || "").trim();
-  if(!sentence){
-    exerciseQuestionEl.classList.add("empty");
-    exerciseQuestionEl.textContent = "Mai întâi generează o propoziție în Builder (sus), apoi încearcă din nou.";
-    exerciseOptionsEl.innerHTML = "";
-    currentExercise = null;
-    return;
-  }
-
-  const type = exerciseTypeSelect.value;
-  let ex = null;
-
-  if(type === "verb"){
-    ex = buildVerbExercise(sentence);
-    exerciseSubtagEl.textContent = "Găsește verbul lipsă din propoziția din Builder.";
-    exerciseTypeLabel.textContent = "Alege VERBUL corect";
-  }else if(type === "particle"){
-    ex = buildParticleExercise(sentence);
-    exerciseSubtagEl.textContent = "Completează particula corectă (은/는, 이/가, 을/를, 에/에서).";
-    exerciseTypeLabel.textContent = "Alege PARTICULA corectă (simplu)";
-  }else{
-    // pentru celelalte tipuri încă nu avem implementare
-    exerciseQuestionEl.classList.add("empty");
-    exerciseQuestionEl.textContent = "Tipul acesta de exercițiu îl implementăm în următorul pas. Alege deocamdată VERB sau PARTICULĂ.";
-    exerciseOptionsEl.innerHTML = "";
-    currentExercise = null;
-    return;
-  }
-
-  if(!ex){
-    exerciseQuestionEl.classList.add("empty");
-    exerciseQuestionEl.textContent = "Din propoziția curentă nu am putut extrage verbul/particula. Încearcă cu o altă propoziție.";
-    exerciseOptionsEl.innerHTML = "";
-    currentExercise = null;
-    return;
-  }
-
-  currentExercise = ex;
-
-  // afișăm întrebarea + opțiunile
-  exerciseQuestionEl.classList.remove("empty");
-  exerciseQuestionEl.textContent = ex.questionText;
-
-  exerciseOptionsEl.innerHTML = "";
-  ex.options.forEach(opt => {
-    const id = "opt_" + Math.random().toString(36).slice(2);
+  options.forEach(opt => {
+    const id = "exOpt_" + Math.random().toString(36).slice(2, 8);
     const label = document.createElement("label");
     const input = document.createElement("input");
     input.type = "radio";
     input.name = "exerciseOption";
     input.value = opt;
-    input.id = id;
-    const span = document.createElement("span");
-    span.textContent = opt;
     label.appendChild(input);
-    label.appendChild(span);
+    label.appendChild(document.createTextNode(" " + opt));
     exerciseOptionsEl.appendChild(label);
   });
+
+  CURRENT_EXERCISE = {
+    type: "verb",
+    correct: last
+  };
 }
 
-// verifică răspunsul
-function checkExerciseAnswer(){
-  if(!currentExercise){
-    exerciseFeedbackEl.textContent = "Mai întâi apasă „Întrebare nouă”.";
+function generateExercise() {
+  if (!exerciseTypeEl) return;
+
+  const type = exerciseTypeEl.value;
+  exerciseFeedbackEl.textContent = "";
+
+  if (type === "verb") {
+    generateVerbExercise();
+  } else {
+    resetExerciseUI();
+    exerciseFeedbackEl.textContent =
+      "Deocamdată este activ doar exercițiul pentru VERB.";
+  }
+}
+
+function checkExerciseAnswer() {
+  if (!CURRENT_EXERCISE) {
+    exerciseFeedbackEl.textContent =
+      "Apasă mai întâi „Întrebare nouă”.";
     return;
   }
 
-  const selected = document.querySelector("input[name='exerciseOption']:checked");
-  if(!selected){
+  const checked = document.querySelector(
+    'input[name="exerciseOption"]:checked'
+  );
+  if (!checked) {
     exerciseFeedbackEl.textContent = "Alege mai întâi un răspuns.";
     return;
   }
 
-  const val = selected.value;
-  if(val === currentExercise.correct){
-    exerciseFeedbackEl.textContent = "✅ Corect! 🌟";
-  }else{
-    exerciseFeedbackEl.textContent = "❌ Nu e corect. Răspunsul corect era: " + currentExercise.correct;
+  const chosen = checked.value;
+  if (chosen === CURRENT_EXERCISE.correct) {
+    exerciseFeedbackEl.textContent =
+      "✅ Corect! Verbul din propoziție este „" +
+      CURRENT_EXERCISE.correct +
+      "”.";
+  } else {
+    exerciseFeedbackEl.textContent =
+      "❌ Nu e corect. Răspunsul corect este „" +
+      CURRENT_EXERCISE.correct +
+      "”.";
   }
 }
 
-// evenimente
-if(nextQuestionBtn){
+/* Evenimente pentru selector + butoane */
+if (exerciseTypeEl) {
+  exerciseTypeEl.addEventListener("change", () => {
+    const optionText =
+      exerciseTypeEl.options[exerciseTypeEl.selectedIndex].textContent;
+    if (exerciseTypeLabelEl) exerciseTypeLabelEl.textContent = optionText;
+    resetExerciseUI();
+  });
+}
+
+if (nextQuestionBtn) {
   nextQuestionBtn.addEventListener("click", generateExercise);
 }
-if(checkAnswerBtn){
+if (checkAnswerBtn) {
   checkAnswerBtn.addEventListener("click", checkExerciseAnswer);
-}  
+}
+
+/* Stare inițială pentru ecranul de Exerciții */
+if (exerciseQuestionEl) {
+  resetExerciseUI();
+} 
   </script>
 </body>
 </html> 
