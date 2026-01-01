@@ -1283,34 +1283,6 @@ button:disabled{
   margin-top:2px;
   color:var(--text-soft);
 }
-    /* Header-ul unei căsuțe (SUBJECT/TIME/PLACE...) */
-.col-header{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-}
-
-/* Bifa din header */
-.col-toggle{
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: #777;
-}
-.col-toggle input{
-  width: 16px;
-  height: 16px;
-  accent-color: #7a9cff; /* iPad friendly */
-}
-    .col-toggle input{
-  margin: 0;
-}
-
-.col-toggle-label{
-  line-height: 1;
-}
     /* Ascunde rezultatul coreean + româna corectată din blocul Română → Coreeană */
 #roToKoResult,
 #roCorrected {
@@ -2627,20 +2599,25 @@ function renderClauseRow(container, activeMap, state, clauseId){
     hint.textContent=col.hint||"";
 
     // ✅ Bifa care înlocuiește toggle-ul de sus
-   const toggleWrap=document.createElement("label");
-toggleWrap.className="col-toggle";
+    const toggleWrap=document.createElement("label");
+    toggleWrap.className="col-toggle";
 
-const cb=document.createElement("input");
-cb.type="checkbox";
-cb.checked = activeMap[col.key] !== false;
+    const cb=document.createElement("input");
+    cb.type="checkbox";
+    cb.checked = activeMap[col.key] !== false;   // dacă e false => dezactivat
 
-cb.addEventListener("change", ()=>{
-  activeMap[col.key] = cb.checked ? true : false;
-  render();
-});
+    cb.addEventListener("change", ()=>{
+      activeMap[col.key] = cb.checked ? true : false;
+      render();   // re-desenăm tot builder-ul cu noua stare
+    });
 
-// 👉 lăsăm DOAR checkbox-ul
-toggleWrap.appendChild(cb);
+    const cbSpan=document.createElement("span");
+    cbSpan.className="col-toggle-label";
+    cbSpan.textContent = "ON";   // poți schimba în „folosesc”, „ON/OFF” etc.
+
+    toggleWrap.appendChild(cb);
+    toggleWrap.appendChild(cbSpan);
+
     // punem toate în header
     header.appendChild(label);
     header.appendChild(hint);
