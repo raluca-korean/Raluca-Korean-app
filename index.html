@@ -3093,31 +3093,58 @@ function cycleColumnValue(clause,key){
 }
 let longPressTimer=null,pressTarget=null;
 function attachPressHandlers(tableEl){
-  tableEl.addEventListener("pointerdown",e=>{
-    const colDiv=e.target.closest(".col");if(!colDiv)return;
-    e.preventDefault();
-    pressTarget=colDiv;
-    longPressTimer=setTimeout(()=>{
-      if(pressTarget===colDiv){
-        openPanel(colDiv.dataset.clause||"p1",colDiv.dataset.key);
-        pressTarget=null;
-      }
-    },450);
-  });
-  tableEl.addEventListener("pointerup",e=>{
-    const colDiv=e.target.closest(".col");
-    if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;}
-    if(pressTarget&&colDiv===pressTarget){
-      cycleColumnValue(colDiv.dataset.clause||"p1",colDiv.dataset.key);
+  tableEl.addEventListener("pointerdown", e => {
+    const colDiv = e.target.closest(".col");
+    if (!colDiv) return;
+
+    // 👉 dacă am dat click pe checkbox-ul ON/OFF, nu blocăm nimic
+    if (e.target.matches("input.col-toggle")) {
+      // lăsăm browserul să bifeze și să trimită evenimentul "change"
+      return;
     }
-    pressTarget=null;
+
+    e.preventDefault();
+    pressTarget = colDiv;
+    longPressTimer = setTimeout(() => {
+      if (pressTarget === colDiv) {
+        openPanel(colDiv.dataset.clause || "p1", colDiv.dataset.key);
+        pressTarget = null;
+      }
+    }, 450);
   });
-  tableEl.addEventListener("pointerleave",()=>{
-    if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;}
-    pressTarget=null;
+
+  tableEl.addEventListener("pointerup", e => {
+    const colDiv = e.target.closest(".col");
+
+    // 👉 iarăși: dacă doar ai apăsat pe checkbox, nu facem ciclat / long-press
+    if (e.target.matches("input.col-toggle")) {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      pressTarget = null;
+      return;
+    }
+
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    if (pressTarget && colDiv === pressTarget) {
+      cycleColumnValue(colDiv.dataset.clause || "p1", colDiv.dataset.key);
+    }
+    pressTarget = null;
+  });
+
+  tableEl.addEventListener("pointerleave", () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    pressTarget = null;
   });
 }
-attachPressHandlers(tableP1);
+    attachPressHandlers(tableP1);
 attachPressHandlers(tableP2);
 
 /* random, audio, favorite – ca înainte */
