@@ -4209,6 +4209,31 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
   previewCard.insertAdjacentElement("afterend", roBlock);
 });
+    // ==== SYNC: Traducerea aproximativă (Builder) -> bloc "Română → Coreeană" ====
+(function () {
+  const previewRo = document.getElementById("previewRo");  // linia de română de sub Builder
+  const roInput   = document.getElementById("roInput");    // textarea din cardul "Română → Coreeană"
+
+  // dacă nu găsește elementele, nu face nimic (de siguranță)
+  if (!previewRo || !roInput) return;
+
+  function syncApproxToRoInput() {
+    const text = (previewRo.textContent || "").trim();
+    if (!text) return;          // dacă e gol, nu completăm nimic
+    roInput.value = text;       // punem traducerea aproximativă în textarea de jos
+  }
+
+  // urmărim orice schimbare în previewRo (de la Builder, Random propoziție etc.)
+  const observer = new MutationObserver(syncApproxToRoInput);
+  observer.observe(previewRo, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+
+  // sincronizare inițială (dacă există deja o propoziție în Builder)
+  syncApproxToRoInput();
+})();
   </script>
 </body>
 </html> 
