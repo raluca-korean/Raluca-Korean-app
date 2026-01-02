@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean– Study App v2.0</title>
+  <title>Raluca Korean – Study App v2.0</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -1358,30 +1358,6 @@ if (enableP2 && titleP2 && tableP2) {
   color: var(--accent-strong);
   font-weight: 600;
 }  
-    /* ===== Fine tuning "Mod afișare" sus ===== */
-
-#screen-builder .mode-panel{
-  padding: 4px 10px 6px;
-  gap: 3px;
-  background: rgba(253, 251, 247, 0.95);
-  box-shadow: 0 6px 14px rgba(96, 78, 56, 0.10);
-}
-
-#screen-builder .mode-row{
-  gap: 6px;
-}
-
-#screen-builder .part-toggles .chip{
-  font-size: 10px;
-  padding: 3px 7px;
-}
-        #roCorrected {
-  margin-top: 4px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: #fffbe6;    /* galben pal, doar ca să-l vezi */
-  font-size: 13px;
-}
   </style>
 </head>
 <body>
@@ -1487,8 +1463,8 @@ if (enableP2 && titleP2 && tableP2) {
         <div class="preview-ko" id="roToKoResult"></div>
         <div class="preview-ro" id="roCorrected"></div>
       </div>
-    </div>  
-    <!-- SCREEN 2: EXERCIȚII TOPIK -->
+    </div>    
+        <!-- SCREEN 2: EXERCIȚII TOPIK -->
     <div class="screen" id="screen-exercises">
       <div class="card ex-card">
         <div class="ex-header-row">
@@ -4233,148 +4209,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
   previewCard.insertAdjacentElement("afterend", roBlock);
 });
-    // === Sincronizează propoziția coreeană în toate locurile ===
-function setKoreanSentence(text) {
-  const clean = (text || "").trim();
-
-  const previewKoEl   = document.getElementById("previewKo");
-  const roToKoEl      = document.getElementById("roToKoResult");
-  const roCorrectedEl = document.getElementById("roCorrected");
-
-  if (previewKoEl)   previewKoEl.textContent   = clean;  // preview mare (builder)
-  if (roToKoEl)      roToKoEl.textContent      = clean;  // Română -> Coreeană
-  if (roCorrectedEl) roCorrectedEl.textContent = clean;  // varianta corectată
-}
-    /* ===== LOGICĂ INTELIGENTĂ P2 (auto ON/OFF + long-press) ===== */
-(function () {
-  const enableP2   = document.getElementById("enableP2");
-  const previewKo  = document.getElementById("previewKo");
-  const togglesP1  = document.getElementById("togglesP1");
-  const togglesP2  = document.getElementById("togglesP2");
-
-  if (!enableP2 || !previewKo) return;
-
-  // folosim checkbox-ul existent, ca să ruleze logica ta actuală
-  function setP2EnabledSmart(on) {
-    if (!enableP2) return;
-    if (enableP2.checked === on) return;
-    enableP2.checked = on;
-    enableP2.dispatchEvent(new Event("change"));
-  }
-
-  // tipuri de legături de frază
-  const LINKERS = [
-    "고 있어요",  // ex: 읽고 있어요
-    "고 나서",    // ex: 먹고 나서
-    "려고 해요",  // ex: 가려고 해요
-    "아서 ",      // ex: 먹아서 피곤해요
-    "어서 ",      // ex: 일어서 힘들어요
-    "면 ",        // ex: 가면
-    "는데 ",      // ex: 하는데
-    "고 "         // fallback general: ceva-고 ceva
-  ];
-
-  /* 1) Auto ON/OFF în funcție de propoziția din Builder */
-  const observer = new MutationObserver(() => {
-    const txt = (previewKo.textContent || "").trim();
-
-    // dacă nu e propoziție reală → stingem P2
-    if (!txt || txt === "(alege cuvinte din tabel)") {
-      setP2EnabledSmart(false);
-      return;
-    }
-
-    // activează P2 dacă găsim un linker SAU dacă propoziția se termină în „고”
-    const needP2 =
-      LINKERS.some(p => txt.includes(p)) ||
-      txt.endsWith("고");
-
-    setP2EnabledSmart(needP2);
-  });
-
-  // aici doar pornim observatorul (în afara callback-ului!)
-  observer.observe(previewKo, {
-    childList: true,
-    characterData: true,
-    subtree: true
-  });
-
-  /* 2) Long-press pe "CONJUGĂRI" → pornește P2 manual */
-  function setupLongPressOnConjugari(container) {
-    if (!container) return;
-
-    let target = null;
-    container.querySelectorAll("label, button, span, div").forEach(el => {
-      if (!target && el.textContent && el.textContent.includes("CONJUGĂRI")) {
-        target = el;
-      }
-    });
-    if (!target) return;
-
-    let timer = null;
-
-    const startPress = () => {
-      timer = setTimeout(() => {
-        setP2EnabledSmart(true);
-      }, 600);
-    };
-
-    const cancelPress = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-
-    ["mousedown", "touchstart"].forEach(ev =>
-      target.addEventListener(ev, startPress)
-    );
-    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(ev =>
-      target.addEventListener(ev, cancelPress)
-    );
-  }
-
-  setupLongPressOnConjugari(togglesP1);
-  setupLongPressOnConjugari(togglesP2);
-})();
-      /* ==== Mută traducerea română din preview sus → în blocul „Română → Coreeană” ==== */
-(function () {
-
-  const previewRo   = document.getElementById("previewRo");     // traducerea de sus
-  const roCorrected = document.getElementById("roCorrected");   // blocul de jos
-
-  if (!previewRo || !roCorrected) return;
-
-  function moveRoTranslation() {
-
-    const txt = (previewRo.textContent || "").trim();
-
-    // dacă nu avem text → curățăm jos
-    if (!txt) {
-      roCorrected.textContent = "";
-      return;
-    }
-
-    // mutăm textul în cardul Română → Coreeană
-    roCorrected.textContent = txt;
-
-    // ștergem traducerea din preview ca să nu fie dublură
-    previewRo.textContent = "";
-  }
-
-  // rulează de fiecare dată când propoziția se schimbă
-  const obs = new MutationObserver(moveRoTranslation);
-
-  obs.observe(previewRo, {
-    childList: true,
-    characterData: true,
-    subtree: true
-  });
-
-  // rulează și pentru propoziția deja afișată
-  moveRoTranslation();
-
-})();
   </script>
 </body>
 </html> 
