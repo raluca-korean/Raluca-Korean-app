@@ -4226,6 +4226,85 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
   previewCard.insertAdjacentElement("afterend", roBlock);
 });
+    /* ===== LOGICĂ INTELIGENTĂ P2 (auto ON/OFF + long-press) ===== */
+(function () {
+  const enableP2   = document.getElementById("enableP2");
+  const previewKo  = document.getElementById("previewKo");
+  const togglesP1  = document.getElementById("togglesP1");
+  const togglesP2  = document.getElementById("togglesP2");
+
+  if (!enableP2 || !previewKo) return;
+
+  // Folosim mereu checkbox-ul existent, ca să ruleze logica ta actuală
+  function setP2EnabledSmart(on) {
+    if (!enableP2) return;
+    if (enableP2.checked === on) return;      // deja în starea corectă
+    enableP2.checked = on;
+    enableP2.dispatchEvent(new Event("change")); // declanșăm tot ce ai deja pe change
+  }
+
+  /* 1) Auto ON/OFF în funcție de propoziția din Builder */
+  const observer = new MutationObserver(() => {
+    const txt = (previewKo.textContent || "").trim();
+
+    // Dacă nu e propoziție reală → stingem P2
+    if (!txt || txt === "(alege cuvinte din tabel)") {
+      setP2EnabledSmart(false);
+      return;
+    }
+
+    // Deocamdată: dacă propoziția conține "-고" (= legare de frază)
+    // poți adăuga și alte pattern-uri mai târziu
+    const needP2 = /\s고\s/.test(txt) || txt.endsWith("고") || txt.includes("고 있어요");
+    setP2EnabledSmart(needP2);
+  });
+
+  observer.observe(previewKo, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+
+  /* 2) Long-press pe "CONJUGĂRI" → pornește P2 */
+
+  function setupLongPressOnConjugari(container) {
+    if (!container) return;
+
+    // căutăm orice label/element care conține textul "CONJUGĂRI"
+    let target = null;
+    container.querySelectorAll("label, button, span, div").forEach(el => {
+      if (!target && el.textContent && el.textContent.includes("CONJUGĂRI")) {
+        target = el;
+      }
+    });
+    if (!target) return;
+
+    let timer = null;
+
+    const startPress = () => {
+      timer = setTimeout(() => {
+        setP2EnabledSmart(true); // pornește P2 după ~600ms apăsat
+      }, 600);
+    };
+
+    const cancelPress = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    ["mousedown", "touchstart"].forEach(ev =>
+      target.addEventListener(ev, startPress)
+    );
+    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach(ev =>
+      target.addEventListener(ev, cancelPress)
+    );
+  }
+
+  setupLongPressOnConjugari(togglesP1);
+  setupLongPressOnConjugari(togglesP2);
+})();
   </script>
 </body>
 </html> 
