@@ -1307,21 +1307,83 @@ button:disabled{
   display: none;
 }
     // === Bifa care activează / dezactivează Propoziția 2 ===
-const enableP2 = document.getElementById("enableP2");
-const titleP2  = document.getElementById("titleP2");
-const tableP2  = document.getElementById("tableP2");
+const enableP2   = document.getElementById("enableP2");
+const titleP2    = document.getElementById("titleP2");
+const tableP2    = document.getElementById("tableP2");
+const p2ModeRow  = document.getElementById("p2ModeRow");
+const p2ModeSelect = document.getElementById("p2Mode");
+
+function applyP2Mode(mode){
+  if (!tableP2) return;
+
+  // reset – scoatem toate marcajele din P2
+  const allCols = tableP2.querySelectorAll(".col");
+  allCols.forEach(col => {
+    col.classList.remove("p2-hidden","p2-dim");
+  });
+
+  // liste cu cheile coloanelor pe care le ascundem / "dim"-uim
+  let hideKeys = [];
+  let dimKeys  = [];
+
+  switch(mode){
+    case "simple":
+      // frază simplă: păstrăm SUBJ, MOD, OBJECT, VERB, CONJUG
+      hideKeys = ["time","place","numeral","counter"];
+      break;
+
+    case "continue":
+      // continuare P1: SUBJECT mai discret (subînțeles)
+      dimKeys = ["subject"];
+      break;
+
+    case "purpose":
+      // scop: merg la X să fac Y – PLACE e deja în P1
+      hideKeys = ["place","numeral","counter"];
+      break;
+
+    default:
+      // standard – nu ascundem nimic
+      break;
+  }
+
+  hideKeys.forEach(key => {
+    tableP2.querySelectorAll(`.col[data-key="${key}"]`)
+      .forEach(col => col.classList.add("p2-hidden"));
+  });
+
+  dimKeys.forEach(key => {
+    tableP2.querySelectorAll(`.col[data-key="${key}"]`)
+      .forEach(col => col.classList.add("p2-dim"));
+  });
+}
 
 if (enableP2 && titleP2 && tableP2) {
   const syncP2 = () => {
     const on = enableP2.checked;
     titleP2.classList.toggle("hidden", !on);
     tableP2.classList.toggle("hidden", !on);
+    if (p2ModeRow)  p2ModeRow.classList.toggle("hidden", !on);
+
+    // când tocmai am activat P2, reaplicăm modul curent
+    if (on && p2ModeSelect) {
+      applyP2Mode(p2ModeSelect.value);
+    }
   };
 
   enableP2.addEventListener("change", syncP2);
-  // setează starea inițială la încărcarea paginii
   syncP2();
 }
+
+// schimbarea modului P2 din select
+if (p2ModeSelect) {
+  p2ModeSelect.addEventListener("change", () => {
+    applyP2Mode(p2ModeSelect.value);
+  });
+
+  // aplicăm un mod implicit la încărcare (de ex. Fraza simplă)
+  applyP2Mode(p2ModeSelect.value);
+}    
     /* Ascund bara veche "Mod afișare / Propoziția 1–2" */
 #screen-builder > .mode-panel{
   display:none;
