@@ -4238,6 +4238,33 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
   previewCard.insertAdjacentElement("afterend", roBlock);
 });
+  // ==== SYNC: Builder ➜ blocul „Română → Coreeană” (compat iPad) ====
+(function(){
+  const previewKo = document.getElementById("previewKo");
+  const roToKo = document.getElementById("roToKoResult");
+  const randomBtn = document.getElementById("randomBtn");
+
+  if (!previewKo || !roToKo) return;
+
+  function syncBuilderToRoBlock(){
+    const text = (previewKo.textContent || "").trim();
+    if (!text) return;
+    roToKo.textContent = text;
+  }
+
+  // rulăm 1 dată la încărcarea paginii
+  syncBuilderToRoBlock();
+
+  // Safari / iPad nu vede MutationObserver → folosim acest fallback
+  previewKo.addEventListener("DOMSubtreeModified", syncBuilderToRoBlock);
+
+  // când dai Random propoziție — mai așteptăm puțin și apoi sync
+  if (randomBtn){
+    randomBtn.addEventListener("click", ()=>{
+      setTimeout(syncBuilderToRoBlock, 250);
+    });
+  }
+})();  
   </script>
 </body>
 </html> 
