@@ -488,11 +488,8 @@ textarea#roInput{
   font-size: 12px;
   color: #7b7496;
 }
-/* Ascund rândul "Traducere aproximativă (română – pe părți)" + butonul */
-#screen-builder .preview-card .preview-title:nth-of-type(2){
-  display: none;
-}
-    /* Coloanele SUBJ/TIME/PLACE etc. */
+
+/* Coloanele SUBJ/TIME/PLACE etc. */
 .col{
   min-width: 110px;
   max-width: 140px;
@@ -1460,6 +1457,12 @@ if (enableP2 && titleP2 && tableP2) {
           </div>
           <div class="preview-ko" id="previewKo">(alege cuvinte din tabel)</div>
 
+          <div class="preview-title">
+            <span>Traducere aproximativă (română – pe părți)</span>
+            <button id="toggleRoBtn" class="secondary" style="padding:3px 8px;font-size:10px;">
+              Ascunde traducerea
+            </button>
+          </div>
           <div class="preview-ro" id="previewRo"></div>
 
           <div class="preview-natural" id="naturalHint"></div>
@@ -4322,45 +4325,47 @@ document.addEventListener("DOMContentLoaded", () => {
   setupLongPressOnConjugari(togglesP1);
   setupLongPressOnConjugari(togglesP2);
 })();
-     /* ==== Mută traducerea română din preview sus → în blocul „Română → Coreeană” ==== */
+      /* ==== Mută traducerea română din preview sus → în blocul „Română → Coreeană” ==== */
 (function () {
-  // traducerea română de sus (în cardul de preview)
-  const previewRo   = document.getElementById("previewRo");
-  // locul unde vrem să apară traducerea (cardul „Română → Coreeană”)
-  const roCorrected = document.getElementById("roCorrected");
+const previewRo   = document.getElementById("previewRo");
+const roCorrected = document.getElementById("roCorrected");
 
-  // dacă nu găsim elementele, nu facem nimic (de siguranță)
-  if (!previewRo || !roCorrected) {
-    console.warn("⚠️ Nu găsesc previewRo sau roCorrected – sar peste mutare.");
-    return;
-  }
+// dacă nu există elementul din card → nu rulăm scriptul
+if (!previewRo || !roCorrected) {
+  console.warn("⚠️ roCorrected nu există încă — scriptul așteaptă.");
+  return;
+}
+  if (!previewRo || !roCorrected) return;
 
   function moveRoTranslation() {
+
     const txt = (previewRo.textContent || "").trim();
 
-    // dacă nu avem text sus → curățăm și jos
+    // dacă nu avem text → curățăm jos
     if (!txt) {
       roCorrected.textContent = "";
       return;
     }
 
-    // copiem traducerea jos, în cardul Română → Coreeană
+    // mutăm textul în cardul Română → Coreeană
     roCorrected.textContent = txt;
 
-    // ștergem traducerea din preview, ca să nu fie dublă
+    // ștergem traducerea din preview ca să nu fie dublură
     previewRo.textContent = "";
   }
 
-  // observăm orice schimbare în previewRo (când se generează propoziție nouă)
+  // rulează de fiecare dată când propoziția se schimbă
   const obs = new MutationObserver(moveRoTranslation);
+
   obs.observe(previewRo, {
     childList: true,
     characterData: true,
     subtree: true
   });
 
-  // rulăm și o dată la încărcare, pentru propoziția deja afișată (dacă există)
+  // rulează și pentru propoziția deja afișată
   moveRoTranslation();
+
 })();
   </script>
 </body>
