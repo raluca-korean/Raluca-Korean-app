@@ -4318,6 +4318,36 @@ document.addEventListener("DOMContentLoaded", () => {
   setupLongPressOnConjugari(togglesP1);
   setupLongPressOnConjugari(togglesP2);
 })();
+    /* ===== Mută traducerea română din preview sus → în blocul „Română → Coreeană” ===== */
+(function () {
+  const previewRo   = document.getElementById("previewRo");     // traducerea aproximativă de sus
+  const roCorrected = document.getElementById("roCorrected");   // caseta de jos (Română → Coreeană)
+
+  if (!previewRo || !roCorrected) return;
+
+  // urmărim orice schimbare de text în previewRo
+  const obs = new MutationObserver(() => {
+    const txt = (previewRo.textContent || "").trim();
+
+    // dacă e gol, golim și jos și ieșim
+    if (!txt) {
+      roCorrected.textContent = "";
+      return;
+    }
+
+    // copiem traducerea în blocul de jos
+    roCorrected.textContent = txt;
+
+    // ștergem textul din cardul de sus, ca să nu fie dublat
+    previewRo.textContent = "";
+  });
+
+  obs.observe(previewRo, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+})();
   </script>
 </body>
 </html> 
