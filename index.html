@@ -2445,6 +2445,35 @@ const screens={
   glossary:document.getElementById("screen-glossary"),
   lessons:document.getElementById("screen-lessons")
 };
+    // ==== SYNC: Builder -> blocul „Română → Coreeană” ====
+(function(){
+  const previewKo  = document.getElementById("previewKo");      // propoziția coreeană din Builder
+  const roToKo     = document.getElementById("roToKoResult");   // rezultatul din cardul „Română → Coreeană”
+  if (!previewKo || !roToKo) return;
+
+  // copiază propoziția coreeană din Builder în blocul de jos
+  function syncBuilderToRoBlock(){
+    const text = (previewKo.textContent || "").trim();
+    if (!text) return;
+    roToKo.textContent = text;
+  }
+
+  // urmărim orice schimbare în previewKo (de la Builder, Random propoziție etc.)
+  const observer = new MutationObserver(syncBuilderToRoBlock);
+  observer.observe(previewKo, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+
+  // de siguranță, când dai „Random propoziție”, mai chemăm o dată sync-ul
+  const randomBtn = document.getElementById("randomBtn");
+  if (randomBtn){
+    randomBtn.addEventListener("click", () => {
+      setTimeout(syncBuilderToRoBlock, 200);
+    });
+  }
+})();
     const navButtons=document.querySelectorAll(".nav-btn");
     /* navigare ecrane – varianta corectă */
 function setScreen(name){
