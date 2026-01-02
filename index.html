@@ -4235,53 +4235,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!enableP2 || !previewKo) return;
 
-  // Folosim mereu checkbox-ul existent, ca să ruleze logica ta actuală
+  // folosim checkbox-ul existent, ca să ruleze logica ta actuală
   function setP2EnabledSmart(on) {
     if (!enableP2) return;
-    if (enableP2.checked === on) return;      // deja în starea corectă
+    if (enableP2.checked === on) return;
     enableP2.checked = on;
-    enableP2.dispatchEvent(new Event("change")); // declanșăm tot ce ai deja pe change
+    enableP2.dispatchEvent(new Event("change"));
   }
+
+  // tipuri de legături de frază
+  const LINKERS = [
+    "고 있어요",  // ex: 읽고 있어요
+    "고 나서",    // ex: 먹고 나서
+    "려고 해요",  // ex: 가려고 해요
+    "아서 ",      // ex: 먹아서 피곤해요
+    "어서 ",      // ex: 일어서 힘들어요
+    "면 ",        // ex: 가면
+    "는데 ",      // ex: 하는데
+    "고 "         // fallback general: ceva-고 ceva
+  ];
 
   /* 1) Auto ON/OFF în funcție de propoziția din Builder */
   const observer = new MutationObserver(() => {
     const txt = (previewKo.textContent || "").trim();
 
-    // Dacă nu e propoziție reală → stingem P2
+    // dacă nu e propoziție reală → stingem P2
     if (!txt || txt === "(alege cuvinte din tabel)") {
       setP2EnabledSmart(false);
       return;
     }
-// Detectăm câteva tipuri de „legături de frază” în propoziția coreeană
-const LINKERS = [
-  "고 있어요",  // ex: 읽고 있어요
-  "고 나서",    // ex: 먹고 나서
-  "려고 해요",  // ex: 가려고 해요
-  "아서 ",      // ex: 먹아서 피곤해요
-  "어서 ",      // ex: 일어서 힘들어요
-  "면 ",        // ex: 가면
-  "는데 ",      // ex: 하는데
-  "고 "         // fallback general: ceva-고 ceva
-];
 
-// activează P2 dacă găsim un linker SAU dacă propoziția se termină în „고”
-const needP2 =
-  LINKERS.some(p => txt.includes(p)) ||
-  txt.endsWith("고");
+    // activează P2 dacă găsim un linker SAU dacă propoziția se termină în „고”
+    const needP2 =
+      LINKERS.some(p => txt.includes(p)) ||
+      txt.endsWith("고");
 
-setP2EnabledSmart(needP2);
-    observer.observe(previewKo, {
+    setP2EnabledSmart(needP2);
+  });
+
+  // aici doar pornim observatorul (în afara callback-ului!)
+  observer.observe(previewKo, {
     childList: true,
     characterData: true,
     subtree: true
   });
 
-  /* 2) Long-press pe "CONJUGĂRI" → pornește P2 */
-
+  /* 2) Long-press pe "CONJUGĂRI" → pornește P2 manual */
   function setupLongPressOnConjugari(container) {
     if (!container) return;
 
-    // căutăm orice label/element care conține textul "CONJUGĂRI"
     let target = null;
     container.querySelectorAll("label, button, span, div").forEach(el => {
       if (!target && el.textContent && el.textContent.includes("CONJUGĂRI")) {
@@ -4294,7 +4296,7 @@ setP2EnabledSmart(needP2);
 
     const startPress = () => {
       timer = setTimeout(() => {
-        setP2EnabledSmart(true); // pornește P2 după ~600ms apăsat
+        setP2EnabledSmart(true);
       }, 600);
     };
 
