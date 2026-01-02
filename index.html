@@ -4238,23 +4238,36 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
   previewCard.insertAdjacentElement("afterend", roBlock);
 });
-  // ==== SYNC SIMPLU: Builder ➜ blocul „Română → Coreeană” ====
+  // ==== SYNC: Română → Coreeană ➜ trimite propoziția în Builder ====
 (function(){
   const previewKo = document.getElementById("previewKo");      // propoziția din Builder
-  const roToKo    = document.getElementById("roToKoResult");   // rezultatul din cardul „Română → Coreeană”
+  const roToKo    = document.getElementById("roToKoResult");   // rezultat traducere coreeană
 
   if (!previewKo || !roToKo) return;
 
-  function syncBuilderToRoBlock(){
-    const text = (previewKo.textContent || "").trim();
-    roToKo.textContent = text;
+  function syncRoBlockToBuilder(){
+    const text = (roToKo.textContent || "").trim();
+    if (!text) return;
+
+    // trimitem propoziția în preview-ul Builderului
+    previewKo.textContent = text;
   }
 
-  // 1) la încărcarea paginii
-  syncBuilderToRoBlock();
+  // rulează la schimbarea rezultatului din blocul Română → Coreeană
+  const observer = new MutationObserver(syncRoBlockToBuilder);
+  observer.observe(roToKo, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
 
-  // 2) la fiecare 500 ms copiem din nou (sigur pentru iPad)
-  setInterval(syncBuilderToRoBlock, 500);
+  // extra — când apeși „Tradu în coreeană”, mai apelăm o dată sync
+  const translateBtn = document.getElementById("roTranslateBtn");
+  if (translateBtn){
+    translateBtn.addEventListener("click", () => {
+      setTimeout(syncRoBlockToBuilder, 200);
+    });
+  }
 })();
   </script>
 </body>
