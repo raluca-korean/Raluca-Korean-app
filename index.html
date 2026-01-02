@@ -4252,13 +4252,20 @@ document.addEventListener("DOMContentLoaded", () => {
       setP2EnabledSmart(false);
       return;
     }
+// Detectăm câteva tipuri de „legături de frază” în propoziția coreeană
+const LINKERS = [
+  "고 있어요",  // ex: 읽고 있어요
+  "고 나서",    // ex: 먹고 나서
+  "려고 해요",  // ex: 가려고 해요
+  "아서 ",      // ex: 먹아서 피곤해요
+  "어서 ",      // ex: 일어서 힘들어요
+  "면 ",        // ex: 가면
+  "는데 ",      // ex: 하는데
+  "고 "         // fallback general: ceva-고 ceva
+];
 
-    // Deocamdată: dacă propoziția conține "-고" (= legare de frază)
-    // poți adăuga și alte pattern-uri mai târziu
-    const needP2 = /\s고\s/.test(txt) || txt.endsWith("고") || txt.includes("고 있어요");
-    setP2EnabledSmart(needP2);
-  });
-
+const needP2 = LINKERS.some(p => txt.includes(p));
+setP2EnabledSmart(needP2);    
   observer.observe(previewKo, {
     childList: true,
     characterData: true,
