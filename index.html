@@ -2473,6 +2473,68 @@ const screens={
   glossary:document.getElementById("screen-glossary"),
   lessons:document.getElementById("screen-lessons")
 };
+    // ==== AUDIO COREEANĂ — propoziție completă (P1 + P2) ====
+(function(){
+  if (!speakBtn) return;
+
+  const previewKo = document.getElementById("previewKo");
+  const roToKo    = document.getElementById("roToKoResult");
+
+  let koVoice = null;
+
+  function pickKoreanVoice(){
+    const voices = window.speechSynthesis.getVoices();
+    koVoice = voices.find(v =>
+      v.lang && v.lang.toLowerCase().startsWith("ko")
+    ) || null;
+  }
+
+  if ("speechSynthesis" in window){
+    window.speechSynthesis.addEventListener("voiceschanged", pickKoreanVoice);
+    pickKoreanVoice();
+  }
+
+  function speakKorean(text){
+    const clean = (text || "").trim();
+    if (!clean) {
+      alert("Nu există încă text coreean de redat 🙂");
+      return;
+    }
+
+    const u = new SpeechSynthesisUtterance(clean);
+
+    if (koVoice){
+      u.voice = koVoice;
+      u.lang  = koVoice.lang;
+    } else {
+      u.lang = "ko-KR";
+    }
+
+    u.rate  = 0.9;   // puțin mai rar — mai natural
+    u.pitch = 1.0;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }
+
+  speakBtn.addEventListener("click", () => {
+
+    let text = "";
+
+    // 1️⃣ dacă există traducere Română → Coreeană
+    if (roToKo && roToKo.textContent.trim()){
+      text = roToKo.textContent;
+    }
+
+    // 2️⃣ altfel citim propoziția din Builder (include P2 dacă e activă)
+    else if (previewKo && previewKo.textContent.trim()){
+      text = previewKo.textContent;
+    }
+
+    speakKorean(text);
+  });
+
+})();
     const navButtons=document.querySelectorAll(".nav-btn");
     /* navigare ecrane – varianta corectă */
 function setScreen(name){
