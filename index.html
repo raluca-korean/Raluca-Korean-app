@@ -4158,58 +4158,126 @@ function buildRoVerbPhrase(roVerbInf, cj, subjKo){
 }
 
 /* Propoziție românească naturală – Time → Subject → Place → Mod → Object → Verb */
-function buildNaturalRomanian(state, activeMap){
-  const use = (key) =>
-    activeMap[key] !== false && isColumnVisible(key) && state[key];
+// ===============================
+//  Română "naturală" pentru zona
+//  „Română → Coreeană”
+//  (folosește state + ce coloane sunt active)
+// ===============================
+function buildNaturalRomanian(state, activeMap = {}) {
+  const parts = [];
 
-  const getRo = (catKey, stateKey) => {
-    const dict = translations[catKey] || {};
-    const raw  = state[stateKey];
-    if (!raw) return "";
-    return dict[raw] || raw;
-  };
+  const isOn = (key) => activeMap[key] !== false;
 
-  const timeRo    = use("time")    ? getRo("time", "time")       : "";
-  const subjRo    = use("subject") ? getRo("subject", "subject") : "";
-  const placeRo   = use("place")   ? getRo("place", "place")     : "";
-  const modRo     = use("mod")     ? getRo("mod", "mod")         : "";
-  const objectRo  = use("object")  ? getRo("object", "object")   : "";
-  const numeralRo = use("numeral") ? (state.numeral || "")       : "";
+  // ---------- SUBJECT ----------
+  let subjKo = state.subject || "";
+  let subjRo = subjKo && translations.subject && translations.subject[subjKo];
+  if (!subjRo && subjKo) subjRo = subjKo;
 
-  let objectPhrase = "";
-  if (objectRo) {
-    const arr = [];
-    if (numeralRo) arr.push(numeralRo);
-    arr.push(objectRo);
-    objectPhrase = arr.join(" ");
+  if (subjRo && isOn("subject")) {
+    parts.push(subjRo);
   }
 
-  const verbRaw   = state.verb || "";
-  const verbRoInf = (translations.verb && translations.verb[verbRaw]) || verbRaw || "";
-  const conjUsed  =
-    (activeMap.conjug !== false && isColumnVisible("conjug")) ? (state.conjug || "") : "";
-  const verbPhrase =
-    (activeMap.verb !== false && isColumnVisible("verb"))
-      ? buildRoVerbPhrase(verbRoInf, conjUsed, state.subject)
-      : "";
+  // ---------- TIME ----------
+  let timeKo = state.time || "";
+  let timeRo = timeKo && translations.time && translations.time[timeKo];
+  if (!timeRo && timeKo) timeRo = timeKo;
 
-  const parts = [];
-  if (timeRo)       parts.push(timeRo);
-  if (subjRo)       parts.push(subjRo);
-  if (placeRo)      parts.push(placeRo);
-  if (modRo)        parts.push(modRo);
-  if (objectPhrase) parts.push(objectPhrase);
-  if (verbPhrase)   parts.push(verbPhrase);
+  if (timeRo && isOn("time")) {
+    // de obicei în română punem timpul la început
+    parts.unshift(timeRo); // îl punem în față
+  }
 
-  if (!parts.length) return "";
-  let sentence = parts.join(" ");
-  sentence = sentence.replace(/\s+/g," ");
-  sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
-  if (!/[.!?]$/.test(sentence)) sentence += ".";
+  // ---------- PLACE ----------
+  let placeKo = state.place || "";
+  let placeRo = placeKo && translations.place && translations.place[placeKo];
+  if (!placeRo && placeKo) placeRo = placeKo;
+
+  if (placeRo && isOn("place")) {
+    parts.push(placeRo);
+  }
+
+  // ---------- MOD (cum?) ----------
+  let modKo = state.mod || "";
+  let modRo = modKo && translations.mod && translations.mod[modKo];
+  if (!modRo && modKo) modRo = modKo;
+
+  if (modRo && isOn("mod")) {
+    parts.push(modRo);
+  }
+
+  // ---------- OBJECT ----------
+  let objKo = state.object || "";
+  let objRo = objKo && translations.object && translations.object[objKo];
+  if (!objRo && objKo) objRo = objKo;
+
+  if (objRo && isOn("object")) {
+    // simplu: „carte”, „cafea”, etc.
+    parts.push(objRo);
+  }
+
+  // ---------- VERB + CONJUGARE ----------
+  const verbKo = state.verb || "";
+  const conjKo = state.conjug || "";
+
+  let finalVerb = "";
+
+  if (verbKo && isOn("verb")) {
+    // traducerea de bază: "a merge", "a mânca", etc.
+    let verbInfRo =
+      (translations.verb && translations.verb[verbKo]) || verbKo;
+
+    // determin persoana din subiect (pentru RO_FORMS)
+    let personKey = "3sg";
+    if (subjKo === "저" || subjKo === "나") personKey = "1sg";
+    else if (subjKo === "너") personKey = "2sg";
+    else if (subjKo === "우리") personKey = "1pl";
+    else if (subjKo === "너희") personKey = "2pl";
+
+    let conjTable = RO_FORMS[verbInfRo];
+    let verbRo = verbInfRo;
+
+    if (conjTable && conjTable[personKey]) {
+      verbRo = conjTable[personKey]; // ex. "merg", "mănânc", "citesc"
+    }
+
+    finalVerb = verbRo;
+
+    // Explicație de conjugare (prezent, trecut, viitor, „nu faceți…”, etc.)
+    let cjExp =
+      conjKo && translations.conjug && translations.conjug[conjKo];
+
+    if (cjExp) {
+      if (conjKo === "-고") {
+        // pentru -고 vrem doar „și”, fără paranteze
+        // ex: "merg și"
+        finalVerb += " " + cjExp;
+      } else {
+        // restul rămân cu explicația în paranteze
+        finalVerb += ` (${cjExp})`;
+      }
+    }
+  }
+
+  if (finalVerb) {
+    parts.push(finalVerb);
+  }
+
+  // ---------- ASAMBLARE FRAZĂ ----------
+  let sentence = parts.join(" ").replace(/\s+/g, " ").trim();
+
+  // prima literă mare
+  if (sentence.length > 0) {
+    sentence = sentence[0].toUpperCase() + sentence.slice(1);
+  }
+
+  // adăugăm punct la final dacă nu există
+  if (sentence && !/[.!?]$/.test(sentence)) {
+    sentence += ".";
+  }
+
   return sentence;
 }
-
-/* verificare naturalitate simplă */
+    /* verificare naturalitate simplă */
 function analyzeNaturalnessP1(){
   const t  = stateP1.time;
   const cj = stateP1.conjug;
