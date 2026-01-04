@@ -4060,24 +4060,29 @@ function buildClauseSentence(state, activeMap, conjOverride) {
   }
 
   // VERB + CONJUGARE
-  if (v || cjUsed) {
-    const vp    = buildVerbPhrase(v, cjUsed);
-    if (vp) {
-      koParts.push(vp);
-      const roVerb = (translations.verb && translations.verb[v]) || v || "";
-      const cjExp  = (translations.conjug && translations.conjug[cjUsed]) || "";
-let combined = roVerb || "";
-      if (cjExp) {
-  if (cjUsed === "-고") {
-    // doar „și” — fără paranteze
-    combined += ` ${cjExp}`;
-  } else {
-    // celelalte rămân cu explicația în paranteze
-    combined += ` (${cjExp})`;
+ // VERB + CONJUGARE
+if (v || cjUsed) {
+  const vp = buildVerbPhrase(v, cjUsed);
+  if (vp) {
+    koParts.push(vp);
+
+    const roVerb = (translations.verb && translations.verb[v]) || v || "";
+    const cjExp  = (translations.conjug && translations.conjug[cjUsed]) || "";
+    let combined = roVerb || "";
+
+    // ✅ dacă avem explicație pentru terminație
+    if (cjExp) {
+      if (cjUsed === "-고") {
+        // doar „și” – fără paranteze
+        combined += ` ${cjExp}`;
+      } else {
+        // celelalte rămân cu explicația în paranteze
+        combined += ` (${cjExp})`;
+      }
+    }
+    roSegs.push(`${labelsRo.verb}: ${combined}`);
   }
 }
-roSegs.push(`${labelsRo.verb}: ${combined}`);
-      
   return {
     ko:     koParts.join(" "),
     roText: roSegs.join(" / "),
