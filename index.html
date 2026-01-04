@@ -3300,6 +3300,23 @@ function detectConjFromRo(ro){
   // 6) FALLBACK: prezent politicos
   return "-아요/어요";
 }  
+   // --- Împarte propoziția română în două fraze după „și / iar / apoi” ---
+function splitRoIntoClauses(txt){
+  if (!txt) return null;
+
+  // căutăm primul „și / si / iar / apoi” (cu spații în jur)
+  const re = /\s+(și|si|iar|apoi)\s+/i;
+  const m  = txt.match(re);
+  if (!m) return null;
+
+  const first  = txt.slice(0, m.index).trim();
+  const second = txt.slice(m.index + m[0].length).trim();
+
+  // dacă nu avem ambele părți, nu facem split
+  if (!first || !second) return null;
+
+  return { first, second };
+} 
 // caută cel mai bun match RO în reverse map (match pe “include”, nu doar exact)
 function findKoByRo(cat, text){
   const t = normRo(text);
