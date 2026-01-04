@@ -3725,34 +3725,59 @@ modeButtons.forEach(btn=>{
     render();
   });
 });
-    const roTranslateBtn = document.getElementById("roTranslateBtn");
+ const roTranslateBtn = document.getElementById("roTranslateBtn");
 if (roTranslateBtn) {
   roTranslateBtn.addEventListener("click", () => {
-    const txt = roInput.value;
+    const txt = roInput.value || "";
     LAST_RO_SENTENCE = txt;
 
-    // 1) parsez fraza română
-    const parsed = parseRoToState(txt);
+    // 0) încerc să văd dacă am două fraze legate cu „și / iar / apoi”
+    const split = splitRoIntoClauses(txt);
 
-    // 2) umplu Propoziția 1
-    Object.assign(stateP1, parsed.state);
+    if (split) {
+      // 🔹 CAZ: două propoziții legate cu „și / iar / apoi”
 
-    // ⭐ dacă e o conjugare de legătură, activăm automat P2
-    if (isLinkingConj(stateP1.conjug)) {
+      // P1: prima parte + -고
+      const parsed1 = parseRoToState(split.first);
+      Object.assign(stateP1, parsed1.state);
+      stateP1.conjug   = "-고";     // forțăm -고 la P1
+      activeP1.conjug  = true;      // ne asigurăm că este ON
+
+      // P2: a doua parte, detectată normal
+      const parsed2 = parseRoToState(split.second);
+      Object.assign(stateP2, parsed2.state);
+
+      // activăm vizual Propoziția 2
       if (enableP2) {
         enableP2.checked = true;
-        if (tableP2) {
-          tableP2.classList.remove("hidden");
-        }
       }
+      if (tableP2) {
+        tableP2.classList.remove("hidden");
+      }
+
+      render();
+
+    } else {
+      // 🔹 CAZ: o singură propoziție (fără „și / iar / apoi” între acțiuni)
+
+      const parsed = parseRoToState(txt);
+      Object.assign(stateP1, parsed.state);
+
+      // dezactivăm Propoziția 2 în UI
+      if (enableP2) {
+        enableP2.checked = false;
+      }
+      if (tableP2) {
+        tableP2.classList.add("hidden");
+      }
+
+      render();
     }
 
-    render();   // redesenează tabel + propoziția de jos
-
-    // 3) afișez sus rezultat Ro→Ko + româna corectată
+    // 3) Ro → Ko + româna corectată (rămâne ca înainte)
     const res = translateRoToKo(txt);
     document.getElementById("roToKoResult").textContent = res.ko;
-    document.getElementById("roCorrected").textContent  = res.roFixed;
+    document.getElementById("roCorrected").textContent = res.roFixed;
   });
 }
     function createToggleChips(){
