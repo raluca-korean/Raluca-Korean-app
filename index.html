@@ -3226,32 +3226,62 @@ let REV = buildReverseMap();
 // detectează conjugarea din română (foarte practic)
 function detectConjFromRo(ro){
   const t = normRo(ro);
-// 1) INTENȚIE / OBLIGAȚIE / ABILITATE
-if(/\bvreau sa\b/.test(t))        return "-고 싶어요";       // vreau să...
-if(/\btrebuie sa\b/.test(t))      return "-아/어야 돼요";    // trebuie să...
-if(/\bnu pot sa\b/.test(t))       return "-(으)ㄹ 수 없어요"; // nu pot să...
-if(/\bpot sa\b/.test(t))          return "-(으)ㄹ 수 있어요"; // pot să...
+
+  // 0) CONECTORI care cer propoziția 2 (linking)
+  if (/\bdupa ce\b/.test(t)) {
+    // „După ce ajung acasă, beau cafea”
+    return "-고 나서";           // după ce...
+  }
+  if (/\binainte sa\b/.test(t)) {
+    // „Înainte să plec la muncă...”
+    return "-기 전에";           // înainte să...
+  }
+  if (/\bin timp ce\b/.test(t)) {
+    // „În timp ce învăț, beau cafea”
+    return "-(으)면서";          // în timp ce...
+  }
+  if (/\bpentru ca\b/.test(t) ||
+      /\bdeoarece\b/.test(t) ||
+      /\bfiindca\b/.test(t)) {
+    // „Pentru că plouă, stau acasă”
+    return "-기에";             // deoarece / pentru că...
+  }
+  if (/\bdesi\b/.test(t) ||
+      /\bchiar daca\b/.test(t)) {
+    // „Deși e obosită, studiază”
+    return "-(으)ㄴ/는데도";      // deși / chiar dacă...
+  }
+  if (/\bpe masura ce\b/.test(t) ||
+      /\bcu cat\b/.test(t)) {
+    // „Pe măsură ce învăț mai mult...”
+    return "-(으)ㄹ수록";        // cu cât... cu atât...
+  }
+
+  // 1) INTENȚIE / OBLIGAȚIE / ABILITATE
+  if(/\bvreau sa\b/.test(t))        return "-고 싶어요";       // vreau să...
+  if(/\btrebuie sa\b/.test(t))      return "-아/어야 돼요";    // trebuie să...
+  if(/\bnu pot sa\b/.test(t))       return "-(으)ㄹ 수 없어요";// nu pot să...
+  if(/\bpot sa\b/.test(t))          return "-(으)ㄹ 수 있어요";// pot să...
 
   // 2) FUTUR (mâine, voi, o să...)
   if(/\b(maine|mâine)\b/.test(t) ||
      /\bvoi\b/.test(t) ||
-     /\bo să\b/.test(t)){
-    return "-(으)ㄹ 거예요";  // viitor
+     /\bo sa\b/.test(t)) {
+    return "-(으)ㄹ 거예요";      // viitor
   }
 
   // 3) TRECUT (ieri, deja, tocmai, am mers / am mâncat)
   if(/\b(ieri|deja|tocmai)\b/.test(t) ||
-     /\bam\b/.test(t)){     // "am mers, am mâncat..."
-    return "-았어요/었어요"; // trecut politicos
+     /\bam\b/.test(t)){            // "am mers, am mâncat..."
+    return "-았어요/었어요";       // trecut politicos
   }
 
   // 4) NEGATIV – variantă simplă (imperativ negativ)
-  if(/\bnu\b/.test(t))        return "-지 마세요";
+  if(/\bnu\b/.test(t))             return "-지 마세요";
 
   // 5) FALLBACK: prezent politicos
   return "-아요/어요";
 }
-
 // caută cel mai bun match RO în reverse map (match pe “include”, nu doar exact)
 function findKoByRo(cat, text){
   const t = normRo(text);
