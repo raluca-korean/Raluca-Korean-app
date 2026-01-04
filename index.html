@@ -3686,6 +3686,198 @@ if (roInput) {
   applySlotsToBuilderP1(slots);
   rebuildPreviewFromBuilderP1(slots);
 } 
+    // ===============================
+//  Parser avansat Română → Builder P1
+//  (SUBJECT / TIME / PLACE / MOD / OBJECT / VERB)
+// ===============================
+
+// Normalizare text românesc (fără diacritice, litere mici)
+function normalizeRo(text) {
+  return (text || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")       // ș, ă, ț etc → s, a, t
+    .replace(/[!?.,;:]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Întoarce un obiect cu sloturile:
+ *  {
+ *    subject: "저",
+ *    time: "오늘",
+ *    place: "집",
+ *    mod: "잘",
+ *    object: "책",
+ *    verb: "가다"
+ *  }
+ */
+function parseRomanianToSlots(text) {
+  const n = normalizeRo(text);
+  const slots = {};
+
+  // ---------------- SUBJECT ----------------
+  if (/\beu\b/.test(n)) {
+    // dacă are cuvinte de politețe, îl trecem pe 저
+    if (/respectuos|formal|politicos/.test(n)) {
+      slots.subject = "저";   // eu (formal)
+    } else {
+      slots.subject = "나";   // eu (informal)
+    }
+  } else if (/\btu\b/.test(n)) {
+    slots.subject = "너";
+  } else if (/\bel\b/.test(n)) {
+    slots.subject = "그";
+  } else if (/\bea\b/.test(n)) {
+    slots.subject = "그녀";
+  }
+
+  // ---------------- TIME ----------------
+  if (/\bazi\b|\bastazi\b|\bin prezent\b|\bacum\b/.test(n)) {
+    slots.time = "오늘"; // azi
+  } else if (/\bmaine\b/.test(n)) {
+    slots.time = "내일";
+  } else if (/\bieri\b/.test(n)) {
+    slots.time = "어제";
+  }
+
+  // ---------------- PLACE ----------------
+  if (/acasa|la mine acasa/.test(n)) {
+    slots.place = "집";
+  } else if (/la scola|la scoala|la liceu|la universitate/.test(n)) {
+    slots.place = "학교";
+  } else if (/la banca/.test(n)) {
+    slots.place = "은행";
+  } else if (/la munca|la serviciu|la birou|la firma/.test(n)) {
+    slots.place = "회사";
+  }
+
+  // ---------------- MOD (cum?) ----------------
+  if (/\bbine\b/.test(n)) {
+    slots.mod = "잘";
+  } else if (/liniste|linistit|in liniste|incet/.test(n)) {
+    slots.mod = "조용히"; // în liniște / încet
+  } else if (/harnic|cu sarguinta|serios/.test(n)) {
+    slots.mod = "열심히";
+  }
+
+  // ---------------- OBJECT ----------------
+  if (/\bapa\b/.test(n)) {
+    slots.object = "물";
+  } else if (/cafea/.test(n)) {
+    slots.object = "커피";
+  } else if (/carte|carti/.test(n)) {
+    slots.object = "책";
+  }
+
+  // ---------------- VERB (foarte basic) ----------------
+  // (pentru fraza de jos; nu umblăm încă la conjugatorul tău mare)
+  if (/merg\b|ma duc\b|a merge\b/.test(n)) {
+    slots.verb = "가다";  // a merge
+  } else if (/vin\b|a veni\b/.test(n)) {
+    slots.verb = "오다";
+  } else if (/beau\b|bea\b|a bea\b/.test(n)) {
+    slots.verb = "마시다";
+  } else if (/citesc\b|a citi\b/.test(n)) {
+    slots.verb = "읽다";
+  } else if (/mananc\b|manca\b|a manca\b/.test(n)) {
+    slots.verb = "먹다";
+  }
+
+  return slots;
+}
+
+// ===============================
+//  Aplică sloturile în Builder P1
+//  (doar vizual – cardurile de sus)
+// ===============================
+function applySlotsToBuilderP1(slots) {
+  if (!slots) return;
+  const table = document.getElementById("tableP1");
+  if (!table) return;
+
+  // mapăm numele intern al slotului pe data-key din coloane
+  const map = {
+    subject: "subject",
+    time: "time",
+    place: "place",
+    mod: "mod",
+    object: "object",
+    numeral: "numeral",
+    counter: "counter"
+  };
+
+  Object.keys(map).forEach(slotKey => {
+    const koValue = slots[slotKey];
+    if (!koValue) return;
+
+    const dataKey = map[slotKey];
+    // căutăm coloana Propoziția 1 cu data-key="subject/time/...”
+    const col = table.querySelector(`.col[data-key="${dataKey}"] .col-body-main`);
+    if (col) {
+      col.textContent = koValue;
+    }
+  });
+}
+
+// ===============================
+//  Re-construiește propoziția KO
+//  din sloturile detectate (simplu)
+// ===============================
+function rebuildPreviewFromBuilderP1(slots) {
+  if (!slots) return;
+  const preview = document.getElementById("previewSentence");
+  if (!preview) return;
+
+  const parts = [];
+
+  // SUBJECT + topic marker
+  if (slots.subject) {
+    // foarte simplu: folosim 는 pentru toate
+    parts.push(slots.subject + "는");
+  }
+
+  // TIME
+  if (slots.time) {
+    parts.push(slots.time);
+  }
+
+  // PLACE
+  if (slots.place) {
+    // dacă avem verb de tip „merge/veni” → 에
+    if (slots.verb === "가다" || slots.verb === "오다") {
+      parts.push(slots.place + "에");
+    } else {
+      parts.push(slots.place + "에서");
+    }
+  }
+
+  // MOD
+  if (slots.mod) {
+    parts.push(slots.mod);
+  }
+
+  // OBJECT
+  if (slots.object) {
+    // tot simplu: folosim 를
+    parts.push(slots.object + "를");
+  }
+
+  // VERB (conjugat foarte basic la prezent politicos)
+  if (slots.verb) {
+    let verb = slots.verb;
+    // mega simplificare de conjugare
+    if (verb.endsWith("다")) verb = verb.slice(0, -1); // scoatem 다
+    // lăsăm ㅓ요/어요 generic
+    parts.push(verb + "어요");
+  }
+
+  const sentence = parts.join(" ").replace(/\s+/g, " ").trim();
+  if (sentence) {
+    preview.textContent = sentence;
+  }
+}
     function createToggleChips(){
   columns.forEach(col=>{
     // --- Propoziția 1 ---
