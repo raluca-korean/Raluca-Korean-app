@@ -5197,40 +5197,42 @@ function render(){
     null
   ).ko;
 
-  // 2️⃣ Construim propoziția românească naturală
-  let roFixed = buildNaturalRomanian(
-    parsed.state,
-    {
-      subject:true,
-      time:true,
-      place:true,
-      mod:true,
-      object:true,
-      numeral:false,
-      counter:false,
-      verb:true,
-      conjug:true
-    },
-    null
-  );
-
-  // 🔗 Dacă fraza provine din două propoziții legate,
+ // 🔗 Dacă fraza provine din două propoziții legate,
 // unificăm textul românesc (nu lăsăm „și.” urmat de propoziție nouă)
-if (parsed.state && parsed.state.conjug) {
+if (parsed.state && parsed.state.conjug && typeof roFixed === "string") {
+  // toate conjugațiile care cer propoziția 2
+  const linkingConj = [
+    "-고",         // și
+    "-고 나서",    // după ce...
+    "-기 전에",    // înainte să...
+    "-(으)면서",   // în timp ce...
+    "-(으)며",
+    "-(으)나",
+    "-(으)므로",
+    "-(으)ㄴ/는 만큼",
+    "-(으)ㄹ수록",
+    "-(으)ㄴ/는데도",
+    "-(으)ㄹ지라도",
+    "-(으)ㄴ/는 반면에",
+    "-도록 하다",
+    "-기에",
+    "-길래",
+    "-고 말다",
+    "-고자 하다"
+  ];
 
-  const linkingConj = ["-고","-아서","-어서","-니까","-지만"];
-
-  if (linkingConj.includes(parsed.state.conjug)) {
-
-    roFixed = roFixed
-      .replace(/și\)\.\s+/gi, "și ")
-      .replace(/\)\.\s+/g, " ")
-      .replace(/și ([A-ZĂÂÎȘȚ])/g, function(match, p1){
-        return "și " + p1.toLowerCase();
-      });
+  if (linkingConj.indexOf(parsed.state.conjug) !== -1) {
+    // simplu: „și. Cuvânt” => „și cuvânt”
+    roFixed = roFixed.replace(/și\.\s+([A-Z])/g, function(_, p1) {
+      return "și " + p1.toLowerCase();
+    });
   }
 }
-
+  return {
+  ko: koResult || "(nu am putut construi propoziția)",
+  roFixed: roFixed || "(nu am putut corecta româna)"
+};
+   
    // ================== 📅 3 CUVINTE/ZI (integrat în program) ==================
 const DAILY_KEY = "raluca_daily_words_v1";
 const DAILY_LEARNED_KEY = "raluca_daily_learned_days_v1";
