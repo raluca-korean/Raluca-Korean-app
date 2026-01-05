@@ -5160,35 +5160,39 @@ function render(){
 
   // 4) Dacă avem o conjugație care cere propoziția 2,
   // nu mai lăsăm "și. Cuvânt", ci lipim: "și cuvânt"
-  if (parsed.state && parsed.state.conjug && typeof roFixed === "string") {
-    // toate conjugațiile „linking” (cer propoziția 2)
-    const linkingConj = [
-      "-고",          // și
-      "-고 나서",     // după ce...
-      "-기 전에",     // înainte să...
-      "-(으)면서",    // în timp ce...
-      "-(으)며",
-      "-(으)므로",
-      "-(으)ㄴ/는 만큼",
-      "-(으)ㄴ 수록",
-      "-(으)ㄴ/는 데도",
-      "-을지라도",
-      "-(으)ㄴ/는 반면에",
-      "-도록 하다",
-      "-기에",
-      "-길래",
-      "-고 했다",
-      "-고자 하다",
-    ];
+ // 🔗 Dacă fraza provine din două propoziții legate,
+// unificăm textul românesc (nu lăsăm „și.” urmat de propoziție nouă)
+if (parsed.state && parsed.state.conjug && typeof roFixed === "string") {
 
-    if (linkingConj.indexOf(parsed.state.conjug) !== -1) {
-      // ex: „… merg și. Astăzi eu …” → „… merg și astăzi eu …”
-      roFixed = roFixed.replace(/și\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
-        return "și " + p1.toLowerCase();
-      });
-    }
+  // toate conjugațiile care cer propoziția 2
+  const linkingConj = [
+    "-고", "-고 나서", "-기 전에", "-(으)면서",
+    "-(으)며", "-(으)므로", "-(으)ㄴ 만큼",
+    "-(으)ㄹ수록", "-(으)ㄴ/는 데에도",
+    "-으ᄅ지라도", "-(으)ㄴ/는 반면에",
+    "-도록 하다", "-기에", "-길래",
+    "-고 말다", "-고자 하다"
+  ];
+
+  if (linkingConj.includes(parsed.state.conjug)) {
+
+    roFixed = roFixed
+
+      // scoatem „(și). ”
+      .replace(/\(și\)\.\s+/gi, "și ")
+
+      // scoatem „și). ”
+      .replace(/și\)\.\s+/gi, "și ")
+
+      // scoatem „). ”
+      .replace(/\)\.\s+/g, " ")
+
+      // literă mică după „și”
+      .replace(/și\s+([A-ZĂÂÎȘȚ])/g,
+        (_, p1) => "și " + p1.toLowerCase()
+      );
   }
-
+}
   // 5) Rezultatul final
   return {
     ko: koResult || "(nu am putut construi propoziția)",
