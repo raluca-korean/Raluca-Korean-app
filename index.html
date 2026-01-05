@@ -5112,150 +5112,90 @@ function render(){
   nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
- function translateRoToKo(roText){
+ function translateRoToKo(roText) {
+  // păstrăm ultima propoziție, cum era și înainte
   LAST_RO_SENTENCE = roText || "";
   const original = (roText || "").trim();
-  if(!original){
-    return { ko:"", roFixed:"" };
+
+  if (!original) {
+    return { ko: "", roFixed: "" };
   }
 
-  // 1️⃣ Încercăm mai întâi cazul FRAZĂ cu "să ... (și să ...)"
-  // ex: "Eu plec la piață să cumpăr legume și să coc alune"
-  const saMatch = original.match(/\s+s[ăa]\s+/i);
+  // 1) Parsăm propoziția românească
+  const parsed = parseRoToState(original);
 
-  if(saMatch){
-    // Partea din față → propoziția 1 ("Eu plec la piață")
-    const mainPart = original.slice(0, saMatch.index).trim();
-    // Tot ce vine după primul "să" → propoziția de scop ("cumpăr legume și să coc alune")
-    const restPart = original.slice(saMatch.index + saMatch[0].length).trim();
+  // 2) Construim propoziția coreeană din state-ul parserului
+  const koResult = buildClauseSentence(
+    parsed.state,
+    {
+      subject: true,
+      time: true,
+      place: true,
+      mod: true,
+      object: true,
+      numeral: false,
+      counter: false,
+      verb: true,
+      conjug: true,
+    },
+    null
+  ).ko;
 
-    if(mainPart && restPart){
-      // Parsez propoziția 1 cu parserul tău (subiect / timp / loc / verb)
-      const mainParsed = parseRoToState(mainPart);
-      const s = mainParsed.state || {};
+  // 3) Construim propoziția românească „corectată”
+  let roFixed = buildNaturalRomanian(
+    parsed.state,
+    {
+      subject: true,
+      time: true,
+      place: true,
+      mod: true,
+      object: true,
+      numeral: false,
+      counter: false,
+      verb: true,
+      conjug: true,
+    },
+    null
+  );
 
-      // Împart după "și să ..." → maxim 2–3 verbe
-      const segs = restPart.split(/\s+și\s+s[ăa]\s+/i);
+  // 4) Dacă avem o conjugație care cere propoziția 2,
+  // nu mai lăsăm "și. Cuvânt", ci lipim: "și cuvânt"
+  if (parsed.state && parsed.state.conjug && typeof roFixed === "string") {
+    // toate conjugațiile „linking” (cer propoziția 2)
+    const linkingConj = [
+      "-고",          // și
+      "-고 나서",     // după ce...
+      "-기 전에",     // înainte să...
+      "-(으)면서",    // în timp ce...
+      "-(으)며",
+      "-(으)므로",
+      "-(으)ㄴ/는 만큼",
+      "-(으)ㄴ 수록",
+      "-(으)ㄴ/는 데도",
+      "-을지라도",
+      "-(으)ㄴ/는 반면에",
+      "-도록 하다",
+      "-기에",
+      "-길래",
+      "-고 했다",
+      "-고자 하다",
+    ];
 
-      const subUnits = segs.map(seg=>{
-        const verbKo   = findKoByRo("verb", seg)   || "";
-        const objectKo = findKoByRo("object", seg) || "";
-        return { verb:verbKo, object:objectKo };
-      }).filter(u=>u.verb);   // păstrăm doar segmentele unde am găsit verb
-
-      // Dacă avem verb la P1 + cel puțin un verb de scop, construim fraza coreeană
-      if(s.verb && subUnits.length){
-        const parts = [];
-
-        // SUBIECT / TIMP / LOC / MOD – folosesc exact helperii aplicației
-        if(s.subject) parts.push(addSubjectWithParticle(s.subject));
-        if(s.time)    parts.push(addTimeWithParticle(s.time));
-        if(s.place)   parts.push(addPlaceWithParticle(s.place, s.verb));
-        if(s.mod)     parts.push(s.mod);
-
-        // Verbul de deplasare + 서  (ex: 가서 / 와서)
-        // folosesc stemPlusAeo ca să iasă 자연스럽게: 가다→가서, 오다→와서, 하다→해서
-        parts.push(stemPlusAeo(s.verb) + "서");
-
-        // Verbele de scop:
-        //  - toate, mai puțin ultimul → "-고"
-        //  - ultimul → prezent politicos
-        subUnits.forEach((u, idx)=>{
-          if(u.object) parts.push(addObjectWithParticle(u.object));
-          if(u.verb){
-            if(idx < subUnits.length-1){
-              // verb intermediar: "-고"
-              parts.push(getVerbStem(u.verb) + "고");
-            } else {
-              // ultimul verb: prezent politicos
-              parts.push(presentPolite(u.verb));
-            }
-          }
-        });
-
-        const koSentence = parts.join(" ");
-        const roFixed = original.replace(/\s+/g," ");
-
-        return {
-          ko: koSentence,
-          roFixed
-        };
-      }
+    if (linkingConj.indexOf(parsed.state.conjug) !== -1) {
+      // ex: „… merg și. Astăzi eu …” → „… merg și astăzi eu …”
+      roFixed = roFixed.replace(/și\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
+        return "și " + p1.toLowerCase();
+      });
     }
   }
-// ② Dacă nu e frază cu "să..." sau nu reușim, mergem pe logica veche (propoziție simplă)
-const parsed = parseRoToState(original);
 
-const koResult = buildClauseSentence(
-  parsed.state,
-  {
-    subject:true,
-    time:true,
-    place:true,
-    mod:true,
-    object:true,
-    numeral:false,
-    counter:false,
-    verb:true,
-    conjug:true
-  },
-  null
-).ko;
-
-// 2️⃣ Construim propoziția românească naturală
-let roFixed = buildNaturalRomanian(
-  parsed.state,
-  {
-    subject:true,
-    time:true,
-    place:true,
-    mod:true,
-    object:true,
-    numeral:false,
-    counter:false,
-    verb:true,
-    conjug:true
-  },
-  null
-);
-
-// 🔗 Dacă fraza provine din două propoziții legate,
-// unificăm textul românesc (nu lăsăm „și.” urmat de propoziție nouă)
-if (parsed.state && parsed.state.conjug && typeof roFixed === "string") {
-
-  // toate conjugațiile care cer propoziția 2 (linking)
-  const linkingConj = [
-    "-고",          // și
-    "-고 나서",     // după ce...
-    "-기 전에",     // înainte să...
-    "-(으)면서",    // în timp ce...
-    "-(으)며",
-    "-(으)므로",
-    "-(으)ㄴ/는 만큼",
-    "-(으)ㄴ 수록",
-    "-(으)ㄴ/는 데도",
-    "-을지라도",
-    "-(으)ㄴ/는 반면에",
-    "-도록 하다",
-    "-기에",
-    "-길래",
-    "-고 했다",
-    "-고자 하다"
-  ];
-
-  if (linkingConj.indexOf(parsed.state.conjug) !== -1) {
-    // ex: „și. Astăzi” → „și astăzi”
-    roFixed = roFixed.replace(/și\.\s+([A-ZĂÂÎȘȚ])/g, function(_, p1) {
-      return "și " + p1.toLowerCase();
-    });
-  }
+  // 5) Rezultatul final
+  return {
+    ko: koResult || "(nu am putut construi propoziția)",
+    roFixed: roFixed || original,
+  };
 }
-
-return {
-  ko: koResult || "(nu am putut construi propoziția)",
-  roFixed: roFixed || "(nu am putut corecta româna)"
-}; 
-   // ================== 📅 3 CUVINTE/ZI (integrat în program) ==================
+    // ================== 📅 3 CUVINTE/ZI (integrat în program) ==================
 const DAILY_KEY = "raluca_daily_words_v1";
 const DAILY_LEARNED_KEY = "raluca_daily_learned_days_v1";
 
