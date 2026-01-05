@@ -5214,22 +5214,23 @@ function render(){
     null
   );
 
-  if (parsed.state && parsed.state.conjug) {
+  // 🔗 Dacă fraza provine din două propoziții legate,
+// unificăm textul românesc (nu lăsăm „și.” urmat de propoziție nouă)
+if (parsed.state && parsed.state.conjug) {
+
   const linkingConj = ["-고","-아서","-어서","-니까","-지만"];
+
   if (linkingConj.includes(parsed.state.conjug)) {
+
     roFixed = roFixed
       .replace(/și\)\.\s+/gi, "și ")
       .replace(/\)\.\s+/g, " ")
-      .replace(/și ([A-ZĂÂÎȘȚ])/g,
-        (_, p1) => "și " + p1.toLowerCase()
-      );
+      .replace(/și ([A-ZĂÂÎȘȚ])/g, function(match, p1){
+        return "și " + p1.toLowerCase();
+      });
   }
 }
 
-return {
-  ko: koResult || "(nu am putut construi propoziția)",
-  roFixed: roFixed || "(nu am putut corecta româna)"
-};
    // ================== 📅 3 CUVINTE/ZI (integrat în program) ==================
 const DAILY_KEY = "raluca_daily_words_v1";
 const DAILY_LEARNED_KEY = "raluca_daily_learned_days_v1";
