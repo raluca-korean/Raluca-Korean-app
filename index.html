@@ -5251,7 +5251,128 @@ function render(){
     },
     null
   );
-// ======================================================
+   // Dispecer general: alege RO sau EN în funcție de INPUT_LANG
+function translateInputToKo(text) {
+  if (INPUT_LANG === "en") {
+    return translateEnToKo(text);
+  }
+  // default: pipeline-ul românesc actual
+  return translateRoToKo(text);
+}
+   // ===============================
+// EN → KO mini-pipeline separat
+// NU atinge logica pentru Română
+// ===============================
+
+// Mic dicționar pentru EN → token-uri coreene
+const EN_SUBJECT = {
+  "i": "저",         // putem schimba pe "나" mai târziu dacă vrei informal
+  "me": "저",
+  "we": "우리",
+  "you": "너",
+};
+
+const EN_TIME = {
+  "today": "오늘",
+  "yesterday": "어제",
+  "tomorrow": "내일"
+};
+
+const EN_PLACE = {
+  "home": "집",
+  "house": "집",
+  "school": "학교",
+  "cafe": "카페",
+  "coffee-shop": "카페"
+};
+
+const EN_MOD = {
+  "well": "잘",
+  "hard": "열심히",
+  "diligently": "열심히",
+  "very": "아주",
+};
+
+const EN_OBJECT = {
+  "book": "책",
+  "coffee": "커피",
+  "water": "물"
+};
+
+const EN_VERB = {
+  "go": "가다",
+  "come": "오다",
+  "read": "읽다",
+  "drink": "마시다",
+  "give": "주다"
+};
+
+function translateEnToKo(enText) {
+  const original = (enText || "").trim();
+  if (!original) {
+    return { ko: "", roFixed: "" };
+  }
+
+  // 1) curățăm textul englezesc
+  const clean = original
+    .toLowerCase()
+    .replace(/[.?!]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const words = clean.split(" ");
+
+  // 2) pregătim "state"-ul pentru builder
+  const state = {
+    subject: "",
+    time: "",
+    place: "",
+    mod: "",
+    object: "",
+    numeral: "",
+    counter: "",
+    verb: "",
+    conjug: "-아요/어요"   // prezent politicos, deocamdată
+  };
+
+  // 3) mapăm fiecare cuvânt la categoria lui, dacă există
+  words.forEach(w => {
+    if (EN_SUBJECT[w] && !state.subject) state.subject = EN_SUBJECT[w];
+    if (EN_TIME[w]    && !state.time)    state.time    = EN_TIME[w];
+    if (EN_PLACE[w]   && !state.place)   state.place   = EN_PLACE[w];
+    if (EN_MOD[w]     && !state.mod)     state.mod     = EN_MOD[w];
+    if (EN_OBJECT[w]  && !state.object)  state.object  = EN_OBJECT[w];
+    if (EN_VERB[w])                      state.verb    = EN_VERB[w];
+  });
+
+  // 4) fallback-uri ca să nu crape nimic
+  if (!state.subject) state.subject = "저";
+  if (!state.verb)    state.verb    = "가다";
+
+  // 5) lăsăm builder-ul tău să construiască propoziția coreeană
+  const koResult = buildClauseSentence(
+    state,
+    {
+      subject: true,
+      time: true,
+      place: true,
+      mod: true,
+      object: true,
+      numeral: false,
+      counter: false,
+      verb: true,
+      conjug: true
+    },
+    null
+  ).ko;
+
+  // 6) roFixed = aici e de fapt textul original EN, ca să nu stricăm structura
+  return {
+    ko: koResult,
+    roFixed: original
+  };
+}
+   // ======================================================
 //    ENGLISH → KOREAN  (pipeline separat, cap-coadă)
 // ======================================================
 
