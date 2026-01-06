@@ -4,746 +4,2982 @@
   <meta charset="UTF-8" />
   <title>Raluca Korean – Study App v2.0</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <style>
     :root {
-      --bg: #f6f1e8;
-      --card-bg: #fdfbf7;
-      --accent: #6f86a8;
-      --accent-strong: #4b607d;
-      --accent-soft: #f1d3a0;
-      --text-main: #2f343b;
-      --text-soft: #7a8088;
-      --border: #e3dacb;
-      --overlay-bg: rgba(40,32,24,0.25);
+      --bg: #f7f3ff;
+      --card-bg: #ffffff;
+      --accent: #c9b5ff;
+      --accent-strong: #9b7cff;
+      --text-main: #333333;
+      --text-soft: #666666;
+      --border: #e0d7ff;
+      --dimmed-bg: #f2eefc;
+      --overlay-bg: rgba(0, 0, 0, 0.2);
+    }
+    header{text-align:center;padding:4px 8px 4px;}
+    header h1{font-size:18px;margin:2px 0;font-weight:700;color:var(--accent-strong);}
+    header p{margin:0;font-size:11px;color:var(--text-soft);}
+
+    .screen{display:none;flex-direction:column;gap:10px;flex:1;min-height:0;}
+    .screen.active{display:flex;}
+
+    .mode-panel{
+      background:var(--card-bg);border-radius:12px;border:1px solid var(--border);
+      padding:6px 8px;font-size:11px;display:flex;flex-direction:column;gap:4px;
+      box-shadow:0 4px 12px rgba(120,96,190,0.08);
+    }
+    .mode-row{
+      display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;
+    }
+    .mode-row label{font-size:11px;display:flex;align-items:center;gap:4px;}
+    .part-toggles{display:flex;flex-wrap:wrap;gap:6px;}
+    .chip{
+      display:inline-flex;align-items:center;gap:3px;
+      padding:3px 8px;border-radius:999px;background:#ede7ff;color:var(--accent-strong);
+      font-size:10px;cursor:pointer;
+    }
+    .chip input{margin:0;}
+    .section-label{font-size:11px;font-weight:600;color:var(--accent-strong);margin-top:2px;}
+
+    .small-mode-btn{
+      padding:3px 8px;
+      font-size:10px;
+    }
+    .small-mode-btn.active{
+      background:var(--accent-strong);
+      color:#fff;
     }
 
-    * {
-      box-sizing: border-box;
+    .table-block{
+      background:var(--card-bg);border-radius:14px;padding:8px;
+      box-shadow:0 6px 16px rgba(120,96,190,0.12);border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;
+    }
+    .table-title{
+      font-size:11px;font-weight:600;color:var(--text-soft);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .table-horizontal{
+      display:flex;flex-direction:row;overflow-x:auto;padding-bottom:4px;gap:6px;
+    }
+    .col{
+      min-width:110px;max-width:140px;flex:0 0 auto;background:#faf8ff;border-radius:10px;
+      border:1px solid var(--border);display:flex;flex-direction:column;
+      padding:6px 6px 8px;transition:0.2s;cursor:pointer;
+      touch-action:manipulation;
+    }
+    .col-header{
+      font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;
+      color:var(--accent-strong);margin-bottom:4px;border-bottom:1px solid var(--border);
+      padding-bottom:3px;
+    }
+    /* Header de coloană cu titlu + bifă ON/OFF */
+.col-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:4px;
+}
+
+.col-header input.col-toggle{
+  width:14px;
+  height:14px;
+  accent-color: var(--accent-strong);
+  flex-shrink:0;
+}
+    .col-body-label{font-size:10px;color:var(--text-soft);margin-bottom:2px;}
+    .col-body-main{font-size:15px;font-weight:600;margin-bottom:2px;}
+    .col-body-extra{font-size:11px;color:var(--text-soft);}
+    .dimmed{
+      opacity:0.35;background-image:repeating-linear-gradient(
+        -45deg,var(--dimmed-bg),var(--dimmed-bg) 4px,#fdfbff 4px,#fdfbff 8px
+      );
     }
 
-    body {
-      margin: 0;
-      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      color: var(--text-main);
-      background:
-        radial-gradient(circle at top,#fbf4e8 0,#f0ebe3 40%,#e9e2d7 100%);
+    .controls{
+      display:flex;justify-content:space-between;align-items:center;gap:8px;
+      padding-top:4px;border-top:1px dashed var(--border);
+    }
+    .btn-group{display:flex;gap:6px;}
+    button{
+      border-radius:999px;border:none;padding:6px 10px;font-size:12px;font-weight:600;
+      cursor:pointer;background:var(--accent);color:#fff;display:inline-flex;
+      align-items:center;gap:4px;box-shadow:0 2px 6px rgba(90,70,160,0.25);
+    }
+    button.secondary{background:#ede7ff;color:var(--accent-strong);box-shadow:none;}
+    button:disabled{opacity:0.4;box-shadow:none;cursor:default;}
+    .page-indicator{font-size:11px;color:var(--text-soft);}
+    .legend{font-size:10px;color:var(--text-soft);text-align:center;padding:2px 4px 0;}
+    .hidden{display:none !important;}
+
+    .preview-card{
+      margin-top:6px;padding:8px;border-radius:12px;
+      background:#f9f7ff;border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:4px;
+    }
+    .preview-title{
+      font-size:11px;font-weight:600;color:var(--accent-strong);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .preview-ko{
+      font-size:14px;font-weight:600;margin-top:2px;
+    }
+    .preview-ro{
+      font-size:12px;color:var(--text-soft);
+    }
+    .preview-natural{
+      font-size:11px;
+      color:#8e6cff;
+      margin-top:2px;
+    }
+    .preview-buttons{
+      display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;
+    }
+  
+  
+    .overlay{
+      position:fixed;inset:0;background:var(--overlay-bg);
+      display:flex;justify-content:center;align-items:flex-end;z-index:1000;
+    }
+    .panel{
+      width:100%;max-width:900px;background:var(--card-bg);
+      border-radius:18px 18px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,0.15);
+      padding:10px 12px 14px;animation:slideUp 0.18s ease-out;
+    }
+    @keyframes slideUp{
+      from{transform:translateY(40px);opacity:0;}
+      to{transform:translateY(0);opacity:1;}
+    }
+    .panel-header{
+      display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
+    }
+    .panel-title{font-size:13px;font-weight:600;color:var(--accent-strong);}
+    .panel-sub{font-size:11px;color:var(--text-soft);}
+    .panel-close{
+      background:transparent;color:var(--text-soft);box-shadow:none;
+      padding:4px 6px;font-size:14px;
+    }
+    .panel-input-row{display:flex;gap:6px;margin-bottom:6px;}
+    .panel-input-row input{
+      flex:1;border-radius:999px;border:1px solid var(--border);
+      padding:6px 10px;font-size:12px;
+    }
+    .panel-list{
+      max-height:260px;overflow-y:auto;border-radius:10px;
+      border:1px solid var(--border);background:#faf8ff;padding:4px;
+    }
+    .panel-item{
+      padding:4px 8px;border-radius:8px;display:flex;justify-content:space-between;
+      align-items:center;font-size:13px;cursor:pointer;
+    }
+    .panel-item:hover{background:#ede7ff;}
+    .panel-item-main{font-weight:600;}
+    .panel-item-extra{
+      display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+    }
+    .panel-item-tag{font-size:10px;color:var(--accent-strong);}
+
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;
+      background:#ffffffee;border-top:1px solid var(--border);
+      display:flex;justify-content:space-around;align-items:center;
+      padding:6px 0;backdrop-filter:blur(8px);z-index:500;
+    }
+    .nav-btn{
+      flex:1;text-align:center;border:none;background:transparent;
+      font-size:11px;color:var(--text-soft);padding:4px 0;cursor:pointer;
+      display:flex;flex-direction:column;align-items:center;gap:2px;
+    }
+    .nav-btn span.icon{font-size:18px;}
+    .nav-btn.active{color:var(--accent-strong);font-weight:600;}
+    .nav-btn.active span.icon{transform:translateY(-1px);}
+    @media (max-width:600px){
+      header h1{font-size:16px;}
+      .col{min-width:95px;}
     }
 
-    .app {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 16px 12px calc(80px + env(safe-area-inset-bottom));
+    .card{
+      background:var(--card-bg);border-radius:14px;padding:10px;
+      box-shadow:0 4px 12px rgba(120,96,190,0.12);border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;
     }
-
-    /* HEADER */
-
-    .rk-header {
-      padding: 10px 14px 12px;
-      border-radius: 22px;
-      background: linear-gradient(120deg,#fdfbf7,#e4eaf3);
-      box-shadow: 0 14px 30px rgba(120,111,90,0.18);
-      margin-bottom: 10px;
+    .card h2{
+      margin:0;font-size:14px;color:var(--accent-strong);
     }
-
-    .rk-header-main {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+    .small-label{font-size:11px;color:var(--text-soft);}
+    select{
+      border-radius:999px;border:1px solid var(--border);
+      padding:4px 10px;font-size:12px;background:#fff;
     }
-
-    .rk-header-main h1 {
-      margin: 0;
-      font-size: 18px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--accent-strong);
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .lesson-header{
+  margin-bottom: 8px;
+}
+    .exercise-question{
+      font-size:14px;font-weight:600;margin-top:4px;
     }
-
-    .rk-header-main h1::before {
-      content: "✍️";
-      font-size: 16px;
+    .exercise-options{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+    .exercise-options label{
+      font-size:13px;display:flex;align-items:center;gap:6px;
     }
-
-    .rk-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: linear-gradient(120deg,#f1d3a0,#f6e3b9);
-      color: #514029;
-      border: 1px solid rgba(210,175,112,0.7);
-      box-shadow: 0 4px 10px rgba(185,145,84,0.25);
-      white-space: nowrap;
+    .exercise-feedback{
+      font-size:12px;margin-top:4px;
     }
+/* ===== EXERCIȚII TOPIK – stil "app" ===== */
 
-    #subtitle {
-      margin: 6px 0 0;
-      font-size: 12px;
-      color: var(--text-soft);
+#screen-exercises .card.ex-card{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:12px 14px 14px;
+}
+
+/* header de card */
+.ex-header-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:8px;
+}
+
+.ex-header-row h2{
+  margin:2px 0 0;
+  font-size:15px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:var(--accent-strong);
+}
+
+.ex-pill{
+  display:inline-flex;
+  align-items:center;
+  padding:2px 8px;
+  font-size:10px;
+  border-radius:999px;
+  background:rgba(111,134,168,0.12);
+  color:var(--accent-strong);
+  margin-bottom:2px;
+}
+
+.ex-mini-hint{
+  font-size:11px;
+  color:var(--text-soft);
+  text-align:right;
+}
+/* stare implicită — text discret */
+#screen-exercises .exercise-question.empty {
+  color: var(--text-soft);
+  font-weight: 400;
+}
+    /* linia cu select-ul */
+.ex-type-row{
+  margin-top:6px;
+  padding:8px 10px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.7);
+  border:1px solid rgba(227,218,203,0.9);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.ex-type-left{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.ex-type-chip{
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:999px;
+  background:rgba(241,211,160,0.22);
+  color:#6f5430;
+}
+
+/* card interior cu întrebarea */
+.ex-question-shell{
+  margin-top:6px;
+  padding:10px 12px 12px;
+  border-radius:16px;
+  background:linear-gradient(145deg,#fdfbf7,#f0ebe3);
+  border:1px solid rgba(227,218,203,0.9);
+  box-shadow:0 8px 18px rgba(80,64,48,0.12);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+/* tag-uri de sus */
+.ex-question-tag-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:6px;
+}
+
+.ex-question-tag{
+  font-size:11px;
+  font-weight:600;
+  padding:2px 8px;
+  border-radius:999px;
+  background:rgba(111,134,168,0.15);
+  color:var(--accent-strong);
+}
+
+.ex-question-subtag{
+  font-size:11px;
+  color:var(--text-soft);
+}
+
+/* text întrebare mai mare */
+#screen-exercises .exercise-question{
+  font-size:15px;
+  font-weight:600;
+  margin-top:4px;
+}
+
+/* opțiuni – arate ca niște carduri */
+#screen-exercises .exercise-options label{
+  padding:6px 8px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fbf8f1;
+  box-shadow:0 3px 8px rgba(90,72,52,0.06);
+}
+
+/* butoane aliniate jos */
+.ex-buttons{
+  margin-top:4px;
+  justify-content:flex-end;
+}
+
+/* feedback */
+#screen-exercises .exercise-feedback{
+  margin-top:2px;
+  font-size:12px;
+  min-height:18px;
+}
+
+/* legendă jos pentru Exerciții – reactivăm .legend aici */
+#screen-exercises .ex-legend{
+  display:block;
+  margin-top:8px;
+  padding:6px 8px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.02);
+  font-size:10px;
+  color:var(--text-soft);
+}
+    .glossary-search{
+      display:flex;gap:6px;align-items:center;margin-top:4px;
     }
-
-    main {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-height: 0;
+    .glossary-search input{
+      flex:1;border-radius:999px;border:1px solid var(--border);
+      padding:6px 10px;font-size:12px;
     }
+    textarea{
+  width:100%;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#fff;
+  padding:10px 12px;
+  font-size:13px;
+  line-height:1.35;
+  color:var(--text-main);
+  outline:none;
+  resize:vertical;
+  min-height:72px;
+  box-shadow:0 2px 10px rgba(120,96,190,0.06) inset;
+}
 
-    /* SCREENS */
+textarea::placeholder{
+  color:#9a93b8;
+}
 
-    .screen {
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      min-height: 0;
+textarea:focus{
+  border-color:var(--accent-strong);
+  box-shadow:0 0 0 3px rgba(155,124,255,0.18);
+}
+    .glossary-list{
+      margin-top:6px;max-height:260px;overflow-y:auto;padding-right:2px;
     }
-
-    .screen.active {
-      display: flex;
+    .glossary-item{
+      padding:6px 8px;border-radius:10px;border:1px solid var(--border);
+      background:#faf8ff;margin-bottom:4px;font-size:12px;
+      display:flex;justify-content:space-between;gap:8px;
     }
+    .glossary-ko{font-weight:600;}
+    .glossary-ro{color:var(--text-soft);}
+    .glossary-cat{font-size:10px;color:var(--accent-strong);}
 
-    /* CARDS */
+    .fav-list{
+      margin-top:4px;max-height:140px;overflow-y:auto;padding-right:2px;
+    }
+    .fav-item{
+      padding:4px 6px;border-radius:8px;border:1px solid var(--border);
+      background:#fdfbff;margin-bottom:4px;font-size:11px;
+    }
+    .fav-ko{font-weight:600;margin-bottom:2px;}
+    .fav-ro{color:var(--text-soft);}
+    /* CARD GENERAL – Română → Coreeană, Exerciții, Glosar */
+.card{
+  background: linear-gradient(145deg, #ffffff, #f5f0ff);
+  border-radius: 18px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 24px rgba(120,96,190,0.18);
+  border: 1px solid rgba(201,181,255,0.6);
+}
 
+/* Titlurile cardurilor */
+.card h2{
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #7b5fff;
+  letter-spacing: 0.03em;
+}
+
+/* Textarea română */
+textarea#roInput{
+  border-radius: 14px;
+  border: 1px solid #d7c9ff;
+  background: #fbf9ff;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.7);
+}
+
+/* Buton „Tradu în coreeană” */
+#roTranslateBtn{
+  margin-top: 6px;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(120deg, #b391ff, #8a6bff);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 14px rgba(125,99,210,0.35);
+}
+#roTranslateBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.translate-icon{
+  font-size:14px;
+  transform:translateY(0.5px);
+}
+    /* Rezultat KO + româna corectată */
+#roToKoResult{
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #3a295d;
+}
+
+#roCorrected{
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7b7496;
+}
+
+/* Coloanele SUBJ/TIME/PLACE etc. */
+.col{
+  min-width: 110px;
+  max-width: 140px;
+  flex: 0 0 auto;
+  background: radial-gradient(circle at top left,#fdfbff,#f1ecff);
+  border-radius: 14px;
+  border: 1px solid #ddd2ff;
+  padding: 7px 7px 9px;
+  box-shadow: 0 6px 16px rgba(118,95,205,0.16);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s;
+}
+
+/* Efect la tap / hover (desktop) */
+.col:active,
+.col:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 9px 20px rgba(118,95,205,0.24);
+  border-color: #b09bff;
+}
+
+/* Headerul coloanei */
+.col-header{
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9a80ff;
+  margin-bottom: 3px;
+  border-bottom: 1px solid rgba(208,196,255,0.8);
+  padding-bottom: 2px;
+}
+
+/* Cuvântul ales în coloană */
+.col-body-main{
+  font-size: 15px;
+  font-weight: 700;
+  color: #372449;
+}
+
+/* Hintul gri mic din coloană */
+.col-body-label{
+  font-size: 10px;
+  color: #8a849d;
+}
+
+/* Propoziția KO mare de jos */
+#previewKo{
+  font-size: 16px;
+  font-weight: 700;
+  color: #2f2948;
+}
+
+/* Traducere română */
+#previewRo{
+  font-size: 12px;
+  color: #746f91;
+}
+
+/* Badge „natural” / atenționare */
+#naturalHint{
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+    /* =========================================================
+   THEME v4 – „app desenată” pentru Raluca
+   – forme de fundal + iconițe pe coloane + carduri ilustrate
+   (se pune ULTIMUL în <style>)
+========================================================= */
+
+/* fundal cu „bule” moi */
+body{
+  background-color:#f4efe4;
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(255,255,255,0.9) 0, rgba(255,255,255,0) 45%),
+    radial-gradient(circle at 90% 0%, rgba(191,208,222,0.55) 0, rgba(191,208,222,0) 55%),
+    radial-gradient(circle at 0% 80%, rgba(198,189,171,0.55) 0, rgba(198,189,171,0) 45%),
+    radial-gradient(circle at 80% 100%, rgba(180,205,187,0.55) 0, rgba(180,205,187,0) 50%);
+}
+
+/* header cu „bandă” de app */
+header{
+  position:relative;
+  padding:10px 10px 14px;
+}
+header::before{
+  content:"";
+  position:absolute;
+  inset:0 8px auto;
+  height:60px;
+  border-radius:22px;
+  background:linear-gradient(120deg,#fdfbf7,#e4eaf3);
+  box-shadow:0 14px 30px rgba(120,111,90,0.18);
+  z-index:-1;
+}
+header h1{
+  font-size:17px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+}
+header p{
+  font-size:11px;
+}
+
+/* mic „badge” versiune */
+header p::after{
+  content:"v2.0";
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:6px;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:600;
+  background:rgba(75,104,127,0.09);
+  color:#4b687f;
+}
+
+/* carduri cu ornament în colț */
+.card,
+.table-block,
+.preview-card{
+  position:relative;
+  overflow:hidden;
+}
+.card::before,
+.table-block::before,
+.preview-card::before{
+  content:"";
+  position:absolute;
+  right:-32px;
+  top:-32px;
+  width:90px;
+  height:90px;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.9),rgba(178,193,209,0.15));
+  pointer-events:none;
+}
+.card::after,
+.table-block::after,
+.preview-card::after{
+  content:"";
+  position:absolute;
+  left:-26px;
+  bottom:-26px;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:radial-gradient(circle at 70% 70%,rgba(255,255,255,0.95),rgba(198,188,166,0.15));
+  pointer-events:none;
+}
+
+/* conținutul cardurilor să rămână deasupra ornamentelor */
+.card > *,
+.table-block > *,
+.preview-card > *{
+  position:relative;
+  z-index:1;
+}
+
+/* titluri card cu bară subțire dedesubt */
+.card h2{
+  position:relative;
+  padding-bottom:4px;
+}
+.card h2::after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:42px;
+  height:2px;
+  border-radius:999px;
+  background:linear-gradient(90deg,rgba(75,104,127,0.65),rgba(255,255,255,0));
+}
+
+/* chips – mai „tablete” */
+.chip{
+  position:relative;
+  padding:4px 10px 4px 8px;
+}
+.chip::before{
+  content:"";
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#c3b08f;
+}
+
+/* ========= ICONIȚE PE COLOANE (SUBJECT/TIME/PLACE etc.) ========= */
+
+.col-header{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+
+/* icon placeholder */
+.col-header::before{
+  content:"";
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:16px;
+  height:16px;
+  border-radius:6px;
+  background:rgba(255,255,255,0.8);
+  font-size:11px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* SUBJ 👤 */
+.col[data-key="subject"] .col-header::before{
+  content:"👤";
+}
+/* TIME ⏰ */
+.col[data-key="time"] .col-header::before{
+  content:"⏰";
+}
+/* PLACE 📍 */
+.col[data-key="place"] .col-header::before{
+  content:"📍";
+}
+/* MOD ✨ */
+.col[data-key="mod"] .col-header::before{
+  content:"✨";
+}
+/* OBJECT 🎯 */
+.col[data-key="object"] .col-header::before{
+  content:"🎯";
+}
+/* NUMERAL #️⃣ */
+.col[data-key="numeral"] .col-header::before{
+  content:"#️⃣";
+}
+/* COUNTER 🔢 */
+.col[data-key="counter"] .col-header::before{
+  content:"🔢";
+}
+/* VERB 🚀 */
+.col[data-key="verb"] .col-header::before{
+  content:"🚀";
+}
+/* CONJUGĂRI 🔗 */
+.col[data-key="conjug"] .col-header::before{
+  content:"🔗";
+}
+
+/* când coloana e „stinsă” (dimmed) – iconița devine gri */
+.col.dimmed .col-header::before{
+  filter:grayscale(0.9);
+  opacity:0.6;
+}
+
+/* ========= ACCENTE DIFERITE PE FIECARE ECRAN ========= */
+
+/* 🏗 Builder – bandă sus de secțiune */
+#screen-builder .mode-panel{
+  border-top:3px solid rgba(186,166,126,0.85);
+}
+#screen-builder .preview-title span:first-child::before{
+  content:"🏗 ";
+}
+
+/* 📝 Exerciții – bandă albastră */
+#screen-exercises .card{
+  border-top:3px solid rgba(118,147,183,0.95);
+}
+#screen-exercises h2::before{
+  content:"📝 ";
+}
+
+/* 📚 Glosar – bandă verde salvie */
+#screen-glossary > .card{
+  border-top:3px solid rgba(138,170,142,0.95);
+}
+#screen-glossary h2::before{
+  content:"📚 ";
+}
+
+/* lista de glosar – „fișe” */
+.glossary-item{
+  background:rgba(255,255,255,0.9);
+  box-shadow:0 6px 14px rgba(153,141,120,0.16);
+}
+
+/* card „3 cuvinte/zi” – mic timeline în lateral */
+#dailyWordsBox > div{
+  position:relative;
+}
+#dailyWordsBox > div::before{
+  content:"";
+  position:absolute;
+  left:-10px;
+  top:10px;
+  width:3px;
+  height:60%;
+  border-radius:999px;
+  background:linear-gradient(to bottom,#9db8a3,#f4efe4);
+}
+
+/* ========= NAV BAR – iconițe accentuate ========= */
+
+.bottom-nav{
+  border-top:1px solid rgba(205,195,176,0.8);
+}
+.nav-btn span.icon{
+  font-size:19px;
+}
+.nav-btn.active span.icon{
+  transform:translateY(-2px) scale(1.06);
+}
+
+/* ========= PREVIEW propoziție ========= */
+
+.preview-card{
+  margin-top:10px;
+}
+.preview-title span:first-child{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.preview-title span:first-child::before{
+  content:"🔊";
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  background:rgba(75,104,127,0.08);
+}
+
+/* hint naturalitate – „badge” */
+.preview-natural{
+  padding:4px 8px;
+  border-radius:999px;
+  display:inline-block;
+  background:rgba(185,207,192,0.35);
+}
+
+/* overlay panel – divider subtil sus */
+.panel-header{
+  border-bottom:1px solid rgba(222,214,200,0.9);
+  padding-bottom:6px;
+}
+    /* === THEME A – Korean Minimal Chic & Cozy === */
+
+:root{
+  --bg: #f6f1e8;
+  --card-bg: #fdfbf7;
+  --accent: #6f86a8;          /* albastru-cerneală */
+  --accent-strong: #4b607d;   /* albastru închis */
+  --accent-soft: #f1d3a0;     /* auriu cald */
+  --text-main: #2f343b;
+  --text-soft: #7a8088;
+  --border: #e3dacb;
+  --dimmed-bg: #f0e6d7;
+  --overlay-bg: rgba(40,32,24,0.25);
+}
+
+/* fundal general – crem cald, tip „cafea cu lapte” */
+body{
+  margin:0;
+  padding:0;
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at top,#fbf4e8 0,#f0ebe3 40%,#e9e2d7 100%);
+  color:var(--text-main);
+}
+
+/* containerul aplicației – ușor „card” pe mijloc */
+.app{
+  max-width:1040px;
+  margin:0 auto;
+  padding:18px 14px calc(70px + env(safe-area-inset-bottom));
+}
+/* header – mai „brand” și mai premium */
+header{
+  padding:6px 10px 10px;
+  text-align:left;
+}
+header h1{
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  color:var(--accent-strong);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+header h1::before{
+  content:"✍️";
+  font-size:16px;
+}
+header p{
+  margin:2px 0 0;
+  font-size:12px;
+  color:var(--text-soft);
+}
+
+/* carduri mari – efect de planner premium */
+.card,
+.table-block,
+.preview-card{
+  background:linear-gradient(145deg,#fdfbf7,#f4eee3);
+  border-radius:18px;
+  border:1px solid rgba(227,218,203,0.9);
+  box-shadow:0 14px 30px rgba(80,64,48,0.12);
+}
+
+/* card standard (Română → Coreeană, Exerciții, Glosar) */
+.card{
+  padding:12px 14px;
+}
+.card h2{
+  font-size:15px;
+  color:var(--accent-strong);
+  letter-spacing:0.04em;
+}
+
+/* bara de introducere propoziție */
+textarea#roInput{
+  background:#fbf8f1;
+  border:1px solid #e1d5c5;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.7);
+}
+
+/* buton mare „Tradu în coreeană” */
+#roTranslateBtn{
+  background:linear-gradient(115deg,#4b607d,#6f86a8);
+  box-shadow:0 8px 18px rgba(75,96,125,0.35);
+}
+
+/* bara albastră lungă (Tradu / Next etc.) */
+button{
+  border-radius:999px;
+  border:none;
+  padding:7px 14px;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  background:linear-gradient(120deg,#4b607d,#6f86a8);
+  color:#fff;
+  box-shadow:0 8px 18px rgba(75,96,125,0.32);
+}
+button.secondary{
+  background:#f3ebdd;
+  color:var(--accent-strong);
+  box-shadow:none;
+}
+button:disabled{
+  opacity:0.45;
+  box-shadow:none;
+}
+
+/* toggle-urile SUBJECT / TIME / ... – chip-uri mai elegante */
+.chip{
+  background:#f4ece0;
+  color:var(--accent-strong);
+  border-radius:999px;
+  padding:4px 10px;
+  box-shadow:0 4px 8px rgba(180,162,136,0.25);
+}
+.chip input{
+  accent-color:var(--accent-strong);
+}
+
+/* coloanele din tabel (SUBJECT / TIME / PLACE etc.) */
+.col{
+  background:radial-gradient(circle at top left,#fdfbf7,#f2ebde);
+  border-radius:16px;
+  border:1px solid #e2d7c8;
+  box-shadow:0 10px 22px rgba(95,78,58,0.16);
+  transform:translateY(0);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.col-header{
+  color:var(--accent-strong);
+}
+.col-body-main{
+  color:#2f343b;
+}
+.col-body-label{
+  color:#938777;
+}
+.col:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 28px rgba(95,78,58,0.24);
+  border-color:#d0c1aa;
+}
+
+/* când coloana e dezactivată */
+.col.dimmed{
+  opacity:0.4;
+  background-image:none;
+  background:#f1e7d8;
+}
+
+/* cardul de preview propoziție de jos */
+.preview-card{
+  margin-top:10px;
+  padding:10px 12px;
+}
+.preview-title span{
+  color:var(--accent-strong);
+}
+.preview-ko{
+  font-size:16px;
+  font-weight:700;
+  color:#292f35;
+}
+.preview-ro{
+  font-size:12px;
+  color:var(--text-soft);
+}
+.preview-natural{
+  color:#a97a2e; /* un auriu cald pentru mesajele de naturalitate */
+}
+
+/* legendă explicativă */
+.legend{
+  font-size:10px;
+  color:#8b8476;
+}
+
+/* navbar-ul de jos – bară de sticlă caldă */
+.bottom-nav{
+  background:rgba(248,242,233,0.96);
+  border-top:1px solid #e1d7c7;
+  backdrop-filter:blur(14px);
+}
+.nav-btn{
+  color:#8b8476;
+}
+.nav-btn.active{
+  color:var(--accent-strong);
+}
+.nav-btn span.icon{
+  font-size:18px;
+}
+
+/* panelul de overlay (lista de cuvinte) – ca un sertar de lemn deschis */
+.panel{
+  background:linear-gradient(145deg,#fdfbf7,#f2ebde);
+  border-radius:20px 20px 0 0;
+  border:1px solid #e1d7c7;
+}
+.panel-item{
+  border-radius:12px;
+}
+.panel-item:hover{
+  background:#f3ebdd;
+}
+    /* === Stepper 3 pași (Builder) === */
+
+.builder-steps{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin:4px 0 10px;
+  font-size:11px;
+  color:var(--text-soft);
+}
+
+.builder-step{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.7);
+  border:1px solid var(--border);
+  box-shadow:0 2px 6px rgba(80,64,48,0.10);
+}
+
+.builder-step-number{
+  width:16px;
+  height:16px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  font-weight:700;
+  background:var(--accent-strong);
+  color:#fff;
+}
+
+.builder-step-text{
+  white-space:nowrap;
+}
+
+/* pasul curent (1) evidențiat puțin mai mult */
+.builder-step.active{
+  background:#fff7e4;
+  border-color:var(--accent-soft);
+}
+    /* === HEADER BRAND + TABS DE CAIET === */
+
+/* header general */
+.rk-header{
+  padding:8px 10px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.rk-header-main{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.rk-header-main h1{
+  margin:0;
+  font-size:20px;
+  font-weight:700;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--accent-strong);
+}
+
+/* badge mic lângă titlu – arată ca o etichetă de agendă */
+.rk-badge{
+  font-size:11px;
+  font-weight:600;
+  padding:4px 9px;
+  border-radius:999px;
+  background:linear-gradient(120deg,#f1d3a0,#f6e3b9);
+  color:#514029;
+  border:1px solid rgba(210,175,112,0.7);
+  box-shadow:0 4px 10px rgba(185,145,84,0.25);
+}
+
+/* subtitlu */
+.rk-header #subtitle{
+  margin:0;
+  font-size:12px;
+  color:var(--text-soft);
+}
+
+/* ===== TAB-URI DE JOS – FILE DE CAIET ===== */
+
+.bottom-nav{
+  position:fixed;
+  inset-inline:0;
+  bottom:0;
+  display:flex;
+  justify-content:space-around;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(248,242,233,0.96);
+  border-top:1px solid #e1d7c7;
+  backdrop-filter:blur(16px);
+}
+/* fiecare tab */
+.nav-btn{
+  position:relative;
+  flex:1;
+  max-width:150px;
+  border:none;
+  background:transparent;
+  padding:0;
+  cursor:pointer;
+  color:#8b8476;
+  font-size:11px;
+}
+
+/* „filele” propriu-zise – fundal rotunjit */
+.nav-btn::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  top:-4px;
+  margin:0 4px;
+  border-radius:14px 14px 0 0;
+  background:rgba(255,252,246,0.65);
+  border:1px solid transparent;
+  border-bottom:none;
+  box-shadow:none;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
+  z-index:-1;
+}
+
+/* conținutul tabului (icon + text) */
+.nav-btn span.icon{
+  display:block;
+  font-size:17px;
+  margin-bottom:1px;
+}
+.nav-btn span:last-child{
+  position:relative;
+  z-index:1;
+}
+
+/* tab activ – pare ridicat de pe „caiet” */
+.nav-btn.active{
+  color:var(--accent-strong);
+  font-weight:600;
+}
+.nav-btn.active::before{
+  background:#fdfbf7;
+  border-color:#ddcfb9;
+  box-shadow:0 -4px 10px rgba(90,72,52,0.18);
+  transform:translateY(-3px);
+}
+
+/* la hover pe desktop – tab ușor ridicat */
+@media (hover:hover){
+  .nav-btn:hover::before{
+    box-shadow:0 -3px 8px rgba(90,72,52,0.16);
+  }
+}
+    
+/* Adaugă în <style> */
+.legend{
+  display:none;
+}
+    /* tot în <style> */
+#naturalHint{
+  display:none;
+}
+    /* Chip-uri oprite (SUBJECT/TIME/PLACE etc. nefolosite în propoziție) */
+#screen-builder .chip-off{
+  opacity: 0.45;
+  background: #eee2d1;
+  box-shadow: none;
+  filter: grayscale(0.1);
+}
+    /* ===== STEPPER pentru Builder (3 pași vizuali) ===== */
+
+.builder-steps{
+  display:flex;
+  gap:6px;
+  margin-bottom:8px;
+  padding:6px 6px 2px;
+  border-radius:14px;
+  background:rgba(255,252,246,0.9);
+  border:1px solid rgba(223,210,190,0.9);
+  box-shadow:0 6px 14px rgba(96,78,56,0.12);
+}
+
+.builder-step{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 6px;
+  border-radius:999px;
+  font-size:11px;
+  color:var(--text-soft);
+  opacity:0.9;
+}
+
+.builder-step-number{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:700;
+  background:#f3ebdd;
+  color:#70563a;
+}
+
+.builder-step-text{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* primul pas – accent ușor (pare „activ”) */
+.builder-step.active{
+  background:linear-gradient(120deg,#f6efe3,#f1e2cc);
+  color:var(--accent-strong);
+  font-weight:600;
+}
+
+.builder-step.active .builder-step-number{
+  background:var(--accent-strong);
+  color:#fff;
+}
+    #screen-exercises .exercise-question.empty {
+  color: var(--text-soft);
+  font-weight: 400;
+}
+    .example{
+  display:inline-block;
+  font-size:12px;
+  margin-top:2px;
+  color:var(--text-soft);
+}
+    /* Ascunde rezultatul coreean + româna corectată din blocul Română → Coreeană */
+#roToKoResult,
+#roCorrected {
+  display: none;
+}
+    // === Bifa care activează / dezactivează Propoziția 2 ===
+const enableP2 = document.getElementById("enableP2");
+const titleP2  = document.getElementById("titleP2");
+const tableP2  = document.getElementById("tableP2");
+
+if (enableP2 && titleP2 && tableP2) {
+  const syncP2 = () => {
+    const on = enableP2.checked;
+    titleP2.classList.toggle("hidden", !on);
+    tableP2.classList.toggle("hidden", !on);
+  };
+
+  enableP2.addEventListener("change", syncP2);
+  // setează starea inițială la încărcarea paginii
+  syncP2();
+}
+    /* Ascund bara veche "Mod afișare / Propoziția 1–2" */
+#screen-builder > .mode-panel{
+  display:none;
+}
+  /* ===== Fine tuning pentru Builder – Propoziția 2 ===== */
+
+/* rândul cu bifa P2, lipit de tabel, în dreapta */
+.builder-enable-p2{
+  margin-top: 4px;
+  padding-top: 4px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px dashed var(--border);
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+.builder-enable-p2 label{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* titlul "Propoziția 2 (continuare / frază)" – arată ca sub-titlu elegant */
+#titleP2{
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+#titleP2 span::before{
+  content: "↳ ";
+  color: var(--accent-strong);
+  font-weight: 600;
+}  
+   /* Ascund traducerea în română DOAR în preview-ul Builder */
+.preview-card #previewRoTitle,
+.preview-card #previewRo {
+  display: none;
+} 
+   /* Ascund doar textul titlului "Traducere aproximativă (română – pe părți)" */
+.preview-card #previewRoTitle > span {
+  display: none;
+} 
+  /* ===== TEMA PASTEL GLOBALĂ (v2.0) – Raluca Korean ===== */
+
+/* fundal general aplicație */
+body.pastel-theme {
+  background: radial-gradient(circle at top left, #ffe4ff 0%, #d7f0ff 40%, #f0e5ff 75%, #f3d4ff 100%);
+  font-weight: 500;
+}
+
+/* header sus */
+body.pastel-theme .rk-header {
+  background: linear-gradient(120deg, #6fb8ff, #a774ff, #ff7fd1);
+  color: #fff;
+  box-shadow: 0 18px 45px rgba(77, 93, 255, 0.4);
+  border-radius: 26px;
+}
+
+body.pastel-theme .rk-header-main h1 {
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+body.pastel-theme .rk-badge {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding-inline: 14px;
+  font-weight: 600;
+}
+
+/* card-urile mari (builder, exerciții, lecții, glosar) */
+body.pastel-theme .card,
+body.pastel-theme .table-block,
+body.pastel-theme .preview-card {
+  background: radial-gradient(circle at top left, #ffffff 5%, #f7f0ff 45%, #ffe9ff 85%);
+  border-radius: 26px;
+  box-shadow:
+    0 18px 40px rgba(70, 85, 155, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+  border: none;
+}
+
+/* zona Română → Coreeană */
+body.pastel-theme #roInput,
+body.pastel-theme textarea {
+  border-radius: 18px;
+  border: none;
+  box-shadow:
+    0 10px 25px rgba(120, 140, 200, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+  background: linear-gradient(145deg, #ffffff, #f7f4ff);
+}
+
+/* titluri mai groase peste tot */
+body.pastel-theme h1,
+body.pastel-theme h2,
+body.pastel-theme h3 {
+  font-weight: 800;
+}
+
+/* butoane „3D pill” generale */
+body.pastel-theme button,
+body.pastel-theme .bottom-nav .nav-btn {
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  padding-inline: 18px;
+  padding-block: 8px;
+  box-shadow:
+    0 10px 25px rgba(80, 90, 160, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  background: linear-gradient(135deg, #4b8bff, #a55dff);
+  color: #ffffff;
+  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, filter 0.1s ease-out;
+}
+
+/* butoane secundare (gri/galben/roz) – folosim clasa existentă .secondary */
+body.pastel-theme button.secondary {
+  background: linear-gradient(135deg, #ffaf6b, #ff72b4);
+}
+
+/* hover/active 3D */
+body.pastel-theme button:hover,
+body.pastel-theme .bottom-nav .nav-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 14px 32px rgba(60, 80, 160, 0.42),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+}
+
+body.pastel-theme button:active,
+body.pastel-theme .bottom-nav .nav-btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 6px 16px rgba(50, 70, 130, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+}
+
+/* bara de jos – nav */
+body.pastel-theme .bottom-nav {
+  background: linear-gradient(120deg, #f3e6ff, #ffe8fb);
+  box-shadow: 0 -10px 25px rgba(110, 120, 190, 0.25);
+  border-radius: 24px 24px 0 0;
+}
+
+body.pastel-theme .bottom-nav .nav-btn {
+  background: transparent;
+  box-shadow: none;
+  color: #5860b0;
+}
+
+/* buton activ din nav */
+body.pastel-theme .bottom-nav .nav-btn.active {
+  background: linear-gradient(135deg, #5f8cff, #be6dff);
+  color: #fff;
+  box-shadow:
+    0 8px 20px rgba(90, 90, 190, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+}
+
+/* mici iconițe rotunde (dacă folosești .icon / emoji în span) */
+body.pastel-theme .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 0%, #fff, rgba(255, 255, 255, 0));
+  box-shadow: 0 6px 15px rgba(70, 70, 140, 0.35);
+}  
+    /* ===== Carduri 3D pastel pentru Builder (SUBJECT / TIME / PLACE / MOD / OBJECT / NUMERAL / COUNTER / VERB...) ===== */
+
+body.pastel-theme #tableP1 > div {
+  position: relative;
+  border-radius: 22px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: radial-gradient(circle at top left, #ffffff 0%, #f3f3ff 55%, #ffe7ff 100%);
+  box-shadow:
+    0 12px 28px rgba(80, 90, 160, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+  overflow: hidden;
+}
+
+/* efect de highlight pe marginea de sus a fiecărui card */
+body.pastel-theme #tableP1 > div::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* textul din headerul cardului (SUBJECT, TIME, etc.) – îl îngroșăm */
+body.pastel-theme #tableP1 > div > *:first-child {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* mică margine între header și restul conținutului din card */
+body.pastel-theme #tableP1 > div > *:nth-child(2) {
+  margin-top: 4px;
+}
+
+/* nuanțe diferite pe fiecare card, ca în mockup (pe bază de poziție) */
+body.pastel-theme #tableP1 > div:nth-child(1) {
+  background: radial-gradient(circle at top left, #e0f0ff 0%, #b9d5ff 45%, #e3e6ff 100%);
+}
+
+body.pastel-theme #tableP1 > div:nth-child(2) {
+  background: radial-gradient(circle at top left, #ffe1ea 0%, #ffc0d7 45%, #ffeaf5 100%);
+}
+
+body.pastel-theme #tableP1 > div:nth-child(3) {
+  background: radial-gradient(circle at top left, #fff3d6 0%, #ffd68a 45%, #fff0d7 100%);
+}
+
+body.pastel-theme #tableP1 > div:nth-child(4) {
+  background: radial-gradient(circle at top left, #d9ffe6 0%, #b4f4cf 45%, #e3fff0 100%);
+}
+
+body.pastel-theme #tableP1 > div:nth-child(5) {
+  background: radial-gradient(circle at top left, #dde6ff 0%, #b5c5ff 45%, #e3e5ff 100%);
+}
+
+body.pastel-theme #tableP1 > div:nth-child(6),
+body.pastel-theme #tableP1 > div:nth-child(7),
+body.pastel-theme #tableP1 > div:nth-child(8) {
+  background: radial-gradient(circle at top left, #f4e1ff 0%, #e3c1ff 45%, #f8e7ff 100%);
+}
+    /* Culori pastel Propozitia 2 (randul de jos) */
+body.pastel-theme #tableP2 > div:nth-child(1) {
+  background: radial-gradient(circle at top left, #ffe8ef 0%, #ffc7d9 45%, #ffeef5 100%);
+}
+
+body.pastel-theme #tableP2 > div:nth-child(2) {
+  background: radial-gradient(circle at top left, #fff1da 0%, #ffe0a8 45%, #fff3dd 100%);
+}
+
+body.pastel-theme #tableP2 > div:nth-child(3) {
+  background: radial-gradient(circle at top left, #e9ffe4 0%, #bfffd3 45%, #efffea 100%);
+}
+
+body.pastel-theme #tableP2 > div:nth-child(4) {
+  background: radial-gradient(circle at top left, #e8f2ff 0%, #c8dcff 45%, #eef4ff 100%);
+}
+
+body.pastel-theme #tableP2 > div:nth-child(5) {
+  background: radial-gradient(circle at top left, #f3e7ff 0%, #dcc4ff 45%, #f6ecff 100%);
+}
+
+body.pastel-theme #tableP2 > div:nth-child(6) {
+  background: radial-gradient(circle at top left, #fff0f0 0%, #ffd6d6 45%, #fff4f4 100%);
+}
+
+body.pastel-theme #tableP2 > div:nth-child(7) {
+  background: radial-gradient(circle at top left, #f0fff6 0%, #ccffe6 45%, #f2fff8 100%);
+}
+
+body.pastel-theme #tableP2 > div:nth-child(8) {
+  background: radial-gradient(circle at top left, #f0f5ff 0%, #d6e3ff 45%, #f3f7ff 100%);
+}
+    /* ===== Butoane pastel 3D ===== */
+
+body.pastel-theme .preview-buttons button,
+body.pastel-theme #prevBtn,
+body.pastel-theme #nextBtn,
+body.pastel-theme #resetBtn,
+body.pastel-theme #toggleRoBtn {
+  border: none;
+  border-radius: 18px;
+  padding: 8px 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  box-shadow:
+    0 10px 22px rgba(80, 80, 140, 0.28),
+    0 0 0 1px rgba(255,255,255,.7) inset;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+/* efect apăsare */
+body.pastel-theme .preview-buttons button:active,
+body.pastel-theme #prevBtn:active,
+body.pastel-theme #nextBtn:active,
+body.pastel-theme #resetBtn:active,
+body.pastel-theme #toggleRoBtn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 4px 10px rgba(60, 60, 120, 0.25),
+    0 0 0 1px rgba(255,255,255,.6) inset;
+}
+    /* Random propoziție */
+body.pastel-theme #randomBtn {
+  background: linear-gradient(135deg, #7a6cff, #6cc9ff);
+}
+
+/* Audio coreeană */
+body.pastel-theme #speakBtn {
+  background: linear-gradient(135deg, #6cc9ff, #5be6c6);
+}
+
+/* Salvează propoziția */
+body.pastel-theme #favBtn {
+  background: linear-gradient(135deg, #ff9a6c, #ff5f8c);
+}
+
+/* Reset părți propoziție */
+body.pastel-theme #resetBtn {
+  background: linear-gradient(135deg, #ff6b6b, #ff9a6c);
+}
+
+/* Prev / Next */
+body.pastel-theme #prevBtn {
+  background: linear-gradient(135deg, #8aa4ff, #b1c2ff);
+}
+body.pastel-theme #nextBtn {
+  background: linear-gradient(135deg, #9f77ff, #c188ff);
+}
+
+/* Ascunde traducerea */
+body.pastel-theme #toggleRoBtn {
+  background: linear-gradient(135deg, #ffa3a3, #ffc2a9);
+}
+    /* ===== Card Română → Coreeană – glassmorphic ===== */
+
+body.pastel-theme #roInput,
+body.pastel-theme #roToKoResult,
+body.pastel-theme #roCorrected {
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(14px);
+  border-radius: 18px;
+  box-shadow:
+    0 12px 28px rgba(140, 130, 200, 0.25),
+    0 0 0 1px rgba(255,255,255,.6) inset;
+  font-weight: 600;
+}
+   /* Ascund DOAR textul titlului traducerii, păstrez butonul */
+body.pastel-theme .preview-card #previewRoTitle span {
+  display: none !important;
+} 
+   /* ===== Card Română → Coreeană – glassmorphism pastel ===== */
+
+#roCard {
+  margin-top: 16px;
+  padding: 16px 20px 20px;
+  border-radius: 22px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.75),
+    rgba(255, 255, 255, 0.45)
+  );
+  box-shadow:
+    0 18px 45px rgba(131, 112, 210, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  backdrop-filter: blur(18px);
+}
+
+#roCard h2 {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
+}
+
+/* textarea de română */
+#roCard textarea#roInput {
+  width: 100%;
+  border-radius: 18px;
+  border: none;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 20px rgba(135, 130, 200, 0.25);
+}
+
+/* butonul 'Tradu în coreeană' – capsulă pastel 3D */
+#roCard #roTranslateBtn {
+  margin-top: 10px;
+  border-radius: 999px;
+  border: none;
+  padding: 8px 16px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  background: linear-gradient(135deg, #6b8cff, #9b6bff);
+  box-shadow:
+    0 10px 24px rgba(108, 110, 210, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#roCard #roTranslateBtn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 5px 12px rgba(108, 110, 210, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+}
+
+/* rezultatul în coreeană + varianta corectată */
+#roCard #roToKoResult,
+#roCard #roCorrected {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(140, 135, 210, 0.25);
+} 
+  /* Ascund DOAR textul 'Traducere aproximativă (română – pe părți)' din Builder */
+.preview-card #previewRoTitle span {
+  display: none !important;
+} 
+   /* ===== Card Română → Coreeană – glassmorphism pastel ===== */
+#screen-builder .card {
+  margin-top: 16px;
+  padding: 16px 20px 20px;
+  border-radius: 22px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.5)
+  );
+  box-shadow:
+    0 18px 45px rgba(131, 112, 210, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  backdrop-filter: blur(18px);
+}
+
+/* titlul Română → Coreeană */
+#screen-builder .card h2 {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
+}
+/* TEXT MARE & BOLD — bloc Română → Coreeană */
+.translation-output,
+#roToKrOutput,
+.translation-box {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.9;
+  letter-spacing: 0.3px;
+}
+    /* textarea în care scrii româna */
+#screen-builder .card textarea#roInput {
+  width: 100%;
+  border-radius: 18px;
+  border: none;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 20px rgba(135, 130, 200, 0.25);
+}
+
+/* butonul 'Tradu în coreeană' – capsulă 3D */
+#screen-builder .card #roTranslateBtn {
+  margin-top: 10px;
+  border-radius: 999px;
+  border: none;
+  padding: 8px 16px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  background: linear-gradient(135deg, #6b8cff, #9b6bff);
+  box-shadow:
+    0 10px 24px rgba(108, 110, 210, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#screen-builder .card #roTranslateBtn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 5px 12px rgba(108, 110, 210, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+}
+
+/* rezultatul în coreeană + varianta corectată */
+#screen-builder .card #roToKoResult,
+#screen-builder .card #roCorrected {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(140, 135, 210, 0.25);
+} 
+    /* Carduri părți propoziție – stil capsule 3D */
+.table-block .table-title span,
+.mode-row span.section-label {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* Butoane select – bordură interioară + glow fin */
+.part-option {
+  font-weight: 700;
+  box-shadow:
+    0 10px 22px rgba(120, 120, 200, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  border-radius: 16px;
+  backdrop-filter: blur(6px);
+}
+    /* Butoane principale glossy gradient */
+.preview-buttons button,
+.btn-group button {
+  border-radius: 16px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border: none;
+  color: white;
+  padding: 8px 14px;
+
+  background: linear-gradient(135deg,
+    rgba(140, 170, 255, 1),
+    rgba(200, 130, 255, 1)
+  );
+
+  box-shadow:
+    0 14px 28px rgba(140, 120, 230, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.preview-buttons button:active,
+.btn-group button:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 6px 16px rgba(140, 120, 230, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+}
+    /* Ascund doar textul titlului traducerii aproximative din Builder */
+.preview-card .preview-title {
+  visibility: hidden;
+}
+
+/* Dar păstrez butonul "Ascunde traducerea" vizibil */
+.preview-card .preview-title button {
+  visibility: visible;
+}
+    /* ==== 1. FONTURI MAI GROASE PENTRU TITLURI + BUTOANE ==== */
+
+/* Titlul mare + subtitlul de sus */
+h1 {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+#subtitle {
+  font-weight: 500;
+}
+
+/* Titlurile de secțiune (ex: Română → Coreeană, Exerciții TOPIK etc.) */
+h2,
+.table-title span,
+.preview-title span {
+  font-weight: 700;
+}
+
+/* Text pe butoane (inclusiv butoane de jos: Builder / Exerciții / Lecții / Glosar) */
+button,
+.nav-btn span {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+    /* ==== 2. BUTOANE 3D + ANIMAȚIE ==== */
+
+/* bază pentru TOATE butoanele */
+button,
+.nav-btn {
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.12s ease-out,
+    filter 0.12s ease-out;
+  transform-origin: center;
+}
+
+/* efect „plutire” la hover (pe desktop / când atingi ușor) */
+button:hover,
+.nav-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+  filter: brightness(1.03);
+}
+
+/* mic „apăsat” la click */
+button:active,
+.nav-btn:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.24);
+  filter: brightness(0.98);
+}
+
+/* un pic de glow în plus pentru butoanele importante (random / audio / salvează etc.) */
+button.primary,
+button#randomBtn,
+button#speakBtn,
+button#favBtn {
+  box-shadow: 0 12px 28px rgba(255, 160, 220, 0.45);
+}
+
+/* tab-ul activ din bara de jos (Builder, Exerciții, Lecții, Glosar) mai „ridicat” */
+.bottom-nav .nav-btn.active {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(73, 46, 180, 0.45);
+}/* ==== 3. CARDURI GLOSSY PENTRU EXERCIȚII / LECȚII / GLOSAR ==== */
+
+#screen-exercises .card,
+#screen-lessons .card,
+#screen-glossary .card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 220, 255, 0.88));
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 18px 40px rgba(40, 0, 80, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  padding: 24px;
+}
+
+/* titlul lecțiilor / glosarului un pic mai „statement” */
+#screen-exercises h2,
+#screen-lessons h2,
+#screen-glossary h2 {
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+/* un mic gradient și pe header-ul de lecție, dacă există .lesson-header */
+#screen-lessons .lesson-header {
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: linear-gradient(120deg, rgba(153, 206, 255, 0.85), rgba(255, 188, 224, 0.9));
+  box-shadow: 0 10px 24px rgba(90, 70, 180, 0.35);
+}
+
+/* glosarul – lista principală să pară card, nu tabel simplu */
+#screen-glossary #glossaryList {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(220, 240, 255, 0.92));
+  box-shadow: 0 14px 28px rgba(60, 80, 140, 0.25);
+}  
+   /* Ascund DOAR textul „Traducere aproximativă (română – pe părți)” din Builder */
+#screen-builder .preview-card #previewRoTitle {
+  display: none !important;
+} 
+    #screen-builder .preview-card #previewRoTitle2 {
+  display: none !important;
+}
+    :root{
+  --glass-bg: linear-gradient(145deg,#ffffff80,#ffffff20);
+  --glass-border: 1px solid rgba(255,255,255,0.45);
+  --glass-shadow: 0 20px 40px rgba(0,0,0,0.08);
+
+  --grad-top: linear-gradient(120deg,#9fd6ff,#c6a7ff,#ff9acb);
+  --grad-bottom: linear-gradient(120deg,#b7e2ff,#e6c8ff,#ffd1e3);
+}
     .card,
-    .table-block,
-    .preview-card {
-      background: linear-gradient(145deg,#fdfbf7,#f4eee3);
-      border-radius: 18px;
-      border: 1px solid rgba(227,218,203,0.9);
-      box-shadow: 0 14px 30px rgba(80,64,48,0.12);
-      padding: 12px 14px;
+.preview-card,
+.gloss-card,
+.lesson-card,
+.exercise-card {
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  border-radius: 22px;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(14px);
+}.rk-header{
+  background: var(--grad-top);
+  color:#0b1b3c;
+  font-weight:700;
+  letter-spacing:.5px;
+}
+    body{
+  background: var(--grad-bottom);
+}
+    button,
+.btn {
+  border-radius: 14px;
+  border: none;
+  padding: 10px 16px;
+  font-weight: 700;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.12);
+  transform: translateY(0);
+  transition: .18s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+.btn-blue  { background: linear-gradient(120deg,#82b5ff,#5fa8ff); color:#fff; }
+.btn-green { background: linear-gradient(120deg,#8df2c8,#5ed6a8); color:#044; }
+.btn-pink  { background: linear-gradient(120deg,#ff9acb,#ff7fae); color:#fff; }
+.btn-orange{ background: linear-gradient(120deg,#ffb585,#ff8a46); color:#552200; }
+   #screen-builder .card,
+#screen-builder .preview-card {
+  border-radius: 24px;
+}
+    #screen-glossary .card {
+  border-radius: 24px;
+}
+  #screen-lessons .card {
+  border-radius: 24px;
+}
+  #screen-exercises .card {
+  border-radius: 24px;
+}
+   /* Iconițe + micro 3D pe butoanele principale din Builder */
+#screen-builder #randomBtn::before,
+#screen-builder #speakBtn::before,
+#screen-builder #favBtn::before {
+  display: inline-block;
+  margin-right: 6px;
+  transform: translateY(1px);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+/* Icon concrete */
+#screen-builder #randomBtn::before  { content: "🎲"; }
+#screen-builder #speakBtn::before   { content: "🔊"; }
+#screen-builder #favBtn::before     { content: "⭐"; }
+
+/* Micro 3D când treci cu mouse-ul / atingi */
+#screen-builder #randomBtn:hover::before,
+#screen-builder #speakBtn:hover::before,
+#screen-builder #favBtn:hover::before {
+  transform: translateY(-1px) scale(1.08);
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+}
+   /* Card-uri care „plutesc” ușor la hover */
+.card,
+.preview-card,
+#screen-exercises .card,
+#screen-lessons .card,
+#screen-glossary .card {
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
+}
+
+.card:hover,
+.preview-card:hover,
+#screen-exercises .card:hover,
+#screen-lessons .card:hover,
+#screen-glossary .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 45px rgba(0,0,0,0.14);
+}
+ /* Neon focus pentru câmpuri de text / select */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(255,255,255,0.9);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.9),
+    0 0 0 3px rgba(149, 120, 255, 0.7),
+    0 0 16px rgba(149, 120, 255, 0.7);
+  background-color: rgba(255,255,255,0.8);
+}.bottom-nav {
+  backdrop-filter: blur(18px);
+}
+
+/* pastilă iOS pentru nav */
+.bottom-nav .nav-btn {
+  border-radius: 999px;
+  padding: 8px 18px 6px;
+  font-weight: 600;
+  background: linear-gradient(120deg,#f4e4ff,#fdf3ff);
+  color: #4a3b73;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+  transform: translateY(0);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+/* buton selectat */
+.bottom-nav .nav-btn.active {
+  background: linear-gradient(120deg,#8fd3ff,#c798ff);
+  color: white;
+  box-shadow: 0 14px 32px rgba(123, 104, 238, 0.5);
+  transform: translateY(-2px);
+}
+   /* Header – gradient care se mișcă + glow subtil */
+.rk-header {
+  position: relative;
+  z-index: 2;
+  background-size: 220% 220%;          /* permite animarea gradientului existent */
+  animation: headerGradient 18s ease-in-out infinite;
+}
+
+/* Aura colorată moale în jurul header-ului */
+.rk-header::after {
+  content: "";
+  position: absolute;
+  inset: -18px -26px;                  /* cât de mare e “aura” în jur */
+  border-radius: 32px;
+  background: radial-gradient(circle at 0% 0%,  rgba(143,211,255,0.9), transparent 60%),
+              radial-gradient(circle at 100% 0%, rgba(255,174,238,0.9), transparent 60%),
+              radial-gradient(circle at 50% 100%, rgba(173,255,189,0.9), transparent 65%);
+  filter: blur(32px);
+  opacity: 0.24;
+  pointer-events: none;
+  z-index: -1;
+  animation: headerGlow 8s ease-in-out infinite;
+}
+
+/* anima mișcarea gradientului din header (folosește gradientul pe care îl ai deja) */
+@keyframes headerGradient {
+  0%   { background-position: 0% 40%; }
+  50%  { background-position: 100% 60%; }
+  100% { background-position: 0% 40%; }
+}
+
+/* anima “respirația” aurei */
+@keyframes headerGlow {
+  0%, 100% {
+    opacity: 0.18;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.32;
+    transform: translateY(3px);
+  }
+}
+    /* Containerul principal – îl facem “suport” pentru fundalul animat */
+.app {
+  position: relative;
+  z-index: 0;
+  overflow-x: hidden;
+}
+
+/* Stratul de fundal animat, foarte subtil (sub toată aplicația) */
+.app::before {
+  content: "";
+  position: fixed;      /* rămâne pe loc când derulezi */
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 0% 0%,     rgba(143,211,255,0.7), transparent 55%),
+    radial-gradient(circle at 100% 0%,   rgba(255,174,238,0.75), transparent 55%),
+    radial-gradient(circle at 0% 100%,   rgba(173,255,189,0.7), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(255,214,165,0.75), transparent 60%);
+  background-size: 160% 160%;
+  animation: appBgDrift 32s ease-in-out infinite alternate;
+}
+
+/* mișcare foarte lentă, “respirație” de culori */
+@keyframes appBgDrift {
+  0% {
+    background-position:
+      0%   0%,
+      100% 0%,
+      0%   100%,
+      100% 100%;
+  }
+  50% {
+    background-position:
+      12%  8%,
+      88%  2%,
+      6%   88%,
+      94%  96%;
+  }
+  100% {
+    background-position:
+      0%   10%,
+      100% 6%,
+      4%   100%,
+      96%  90%;
+  }
+}  /* Glow animat foarte subtil pe header */
+.rk-header {
+  position: relative;
+  overflow: visible;
+}
+
+.rk-header::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 260px;
+  height: 70px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 170, 255, 0.35),
+    rgba(120, 160, 255, 0.18),
+    rgba(255, 255, 255, 0)
+  );
+  filter: blur(22px);
+  animation: rkGlow 6s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes rkGlow {
+  0%   { opacity: 0.45; transform: translateX(-50%) translateY(6px) scale(1.0);}
+  100% { opacity: 0.85; transform: translateX(-50%) translateY(2px) scale(1.08);}
+}
+  /* ════════════════ */
+/* 🌈 Gradient animat lent pe fundal */
+/* ════════════════ */
+
+body.pastel-theme {
+  background: linear-gradient(
+    120deg,
+    #dff3ff,
+    #ffe9ff,
+    #f4fffc,
+    #e8f0ff
+  );
+  background-size: 380% 380%;
+  animation: bgFlow 28s ease-in-out infinite;
+}
+
+@keyframes bgFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+
+/* ════════════════ */
+/* ✨ Glow animat foarte subtil sub header */
+/* ════════════════ */
+
+.rk-header {
+  position: relative;
+  overflow: visible;
+}
+
+.rk-header::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 260px;
+  height: 70px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 170, 255, 0.35),
+    rgba(120, 160, 255, 0.18),
+    rgba(255, 255, 255, 0)
+  );
+  filter: blur(22px);
+  animation: rkGlow 6s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes rkGlow {
+  0% {
+    opacity: 0.45;
+    transform: translateX(-50%) translateY(6px) scale(1.0);
+  }
+  100% {
+    opacity: 0.85;
+    transform: translateX(-50%) translateY(2px) scale(1.08);
+  }
+}
+ /* TEXT MARE & BOLD — preview propoziție coreeană */
+.preview-sentence,
+#koreanPreview,
+.preview-output {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.9;
+  letter-spacing: 0.3px;
+}
+    body.pastel-theme .bottom-nav:last-of-type {
+  display: flex !important;
+}
+
+/* Scoate plăcuța albă din spatele tab-urilor */
+.bottom-nav .nav-btn::before {
+  content: none !important;
+}
+  /* ============================================================
+   PARSER RO → BUILDER (V2, mai complet)
+   ============================================================ */
+
+/* 1. Normalizare text română:
+   - litere mici
+   - diacritice uniformizate
+   - scoatem semnele de punctuație
+*/
+function normalizeRo(text) {
+  if (!text) return "";
+  let t = text.toLowerCase();
+
+  // uniformizăm diacritice / variante
+  t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
+  t = t.replace(/Ã¢/g, "â").replace(/Ã®/g, "î");
+
+  // scoatem unele semne de punctuație
+  t = t.replace(/[.,!?;:]/g, " ");
+
+  // spații multiple → un singur spațiu
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
+}
+
+/* 2. Reguli pentru fiecare slot
+   - fiecare regulă are un regex și un value (cuvântul coreean)
+   - ORDINEA contează: primele reguli sunt mai „prioritare”
+*/
+
+const RO_RULES = {
+  subject: [
+    // eu (formal) – 저
+    { re: /\beu\s*\(formal\)|eu\s*-\s*formal\b/, value: "저" },
+    // eu (informal) – 나
+    { re: /\beu\s*\(informal\)|eu\s*-\s*informal\b/, value: "나" },
+    // dacă apare simplu „eu” → default 저 (poți schimba)
+    { re: /\beu\b/, value: "저" },
+    // tu
+    { re: /\btu\b/, value: "너" }
+  ],
+
+  time: [
+    { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
+    { re: /\bmâine\b/, value: "내일" },
+    { re: /\bieri\b/, value: "어제" },
+    { re: /\bacum\b/, value: "지금" }
+  ],
+
+  place: [
+    { re: /\bacas[ăa]\b/, value: "집" },
+    { re: /la\s+școal[ăa]|la\s+scoala|școal[ăa]\b|scoala\b/, value: "학교" },
+    { re: /la\s+firm[ăa]|la\s+serviciu|la\s+companie|firm[ăa]\b|serviciu\b|companie\b/, value: "회사" },
+    { re: /la\s+banc[ăa]|banc[ăa]\b/, value: "은행" },
+    { re: /cafenea|cafene[al]/, value: "카페" }
+  ],
+
+  mod: [
+    { re: /\bbine\b|frumos\b|ok\b/, value: "잘" },
+    { re: /în\s+liniște|in\s+liniste|liniște|liniste/, value: "조용히" },
+    { re: /cu\s+sârguint[ăa]|cu\s+sarguinta|harnic|cu\s+mult\s+efort/, value: "열심히" },
+    { re: /încet|incet/, value: "천천히" },
+    { re: /repede|rapid/, value: "빨리" }
+  ],
+
+  object: [
+    { re: /cafea/, value: "커피" },
+    { re: /\bap[ăa]\b|ap[ăa]\s+mineral[ăa]?/, value: "물" },
+    { re: /carte|c[ăa]rțile|c[ăa]rti\b/, value: "책" },
+    { re: /m[ăa]ncare|pr[ăa]nzul|cina|mic\s+dejun/, value: "음식" },
+    { re: /ceai\b/, value: "차" }
+  ],
+
+  // opțional: număr pentru obiect (doar 1–3, ca exemplu)
+  numeral: [
+    { re: /\bo\s+carte\b|\bună\s+carte\b|\b(o|un)\s+caf(ea|ea)\b/, value: "한" },
+    { re: /\bdou[ăa]\s+carți|dou[ăa]\s+cafele/, value: "두" },
+    { re: /\btrei\s+carți|trei\s+cafele/, value: "세" }
+  ],
+
+  // opțional: alegem classifier în funcție de obiect
+  counter: [
+    { re: /carte|c[ăa]rti\b/, value: "권" },  // pentru cărți
+    { re: /cafea|ap[ăa]\b|ceai\b|m[ăa]ncare/, value: "개" } // general
+  ],
+
+  // verb foarte simplu – doar pentru propoziția mare
+  verb: [
+    { re: /merg\b|a merge|să merg|sa merg/, value: "가요" },
+    { re: /vin\b|a veni|să vin|sa vin/, value: "와요" },
+    { re: /beau\b|a bea|să beau|sa beau/, value: "마셔요" },
+    { re: /m[ăa]n[âa]nc\b|m[ăa]nânc|mananc|a m[ăa]nca/, value: "먹어요" },
+    { re: /citesc|a citi|să citesc|sa citesc/, value: "읽어요" },
+    { re: /lucrez|a lucra/, value: "일해요" }
+  ]
+};
+
+/* 3. Helper: ia primul value al regulii care se potrivește */
+function matchSlot(rules, text) {
+  if (!rules) return null;
+  for (const rule of rules) {
+    if (rule.re.test(text)) return rule.value;
+  }
+  return null;
+}
+
+/* 4. Funcția principală: text RO → sloturi Builder */
+function parseRomanianToSlots(text) {
+  const t = normalizeRo(text);
+
+  const slots = {
+    subject: matchSlot(RO_RULES.subject, t),
+    time:    matchSlot(RO_RULES.time, t),
+    place:   matchSlot(RO_RULES.place, t),
+    mod:     matchSlot(RO_RULES.mod, t),
+    object:  matchSlot(RO_RULES.object, t),
+    numeral: matchSlot(RO_RULES.numeral, t),
+    counter: matchSlot(RO_RULES.counter, t),
+    verb:    matchSlot(RO_RULES.verb, t)
+  };
+
+  return slots;
+}
+
+/* 5. Aplică sloturile în Propoziția 1 (tabelul de sus) */
+function applySlotsToBuilderP1(slots) {
+  const table = document.getElementById("tableP1");
+  if (!table || !slots) return;
+
+  const setCol = (key, value) => {
+    if (!value) return;
+    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    if (col) {
+      col.textContent = value;
     }
+  };
 
-    .card h2 {
-      margin: 0 0 6px;
-      font-size: 15px;
-      color: var(--accent-strong);
-      letter-spacing: 0.04em;
-    }
+  setCol("subject", slots.subject);
+  setCol("time",    slots.time);
+  setCol("place",   slots.place);
+  setCol("mod",     slots.mod);
+  setCol("object",  slots.object);
+  setCol("numeral", slots.numeral);
+  setCol("counter", slots.counter);
+  // verbul îl folosim doar la reconstrucția propoziției, nu umplem coloană (deocamdată)
+}
 
-    .small-label {
-      font-size: 11px;
-      color: var(--text-soft);
-    }
+/* 6. Reconstruiește propoziția coreeană mare din sloturi */
+function rebuildPreviewFromBuilderP1(slotsFromParser) {
+  const table = document.getElementById("tableP1");
+  if (!table) return;
 
-    textarea {
-      width: 100%;
-      border-radius: 14px;
-      border: 1px solid #e1d5c5;
-      background: #fbf8f1;
-      padding: 10px 12px;
-      font-size: 13px;
-      line-height: 1.4;
-      resize: vertical;
-      min-height: 70px;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.7);
-    }
+  const pick = (key) => {
+    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    return col ? col.textContent.trim() : "";
+  };
 
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent-strong);
-      box-shadow: 0 0 0 3px rgba(75,96,125,0.25);
-      background: #fffdf7;
-    }
+  const subject = pick("subject") || "저";
+  const time    = pick("time");
+  const place   = pick("place");
+  const mod     = pick("mod");
+  const numeral = pick("numeral");
+  const counter = pick("counter");
+  const object  = pick("object");
 
-    /* BUTTONS */
+  // dacă avem numeral+counter+object → „책 한 권” etc.
+  let objectChunk = "";
+  if (object && numeral && counter) {
+    objectChunk = object + " " + numeral + " " + counter;
+  } else if (object) {
+    objectChunk = object;
+  }
 
-    button {
-      border-radius: 999px;
-      border: none;
-      padding: 7px 14px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      background: linear-gradient(115deg,#4b607d,#6f86a8);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(75,96,125,0.32);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: transform 0.12s ease-out,
-                  box-shadow 0.12s ease-out,
-                  filter 0.12s ease-out;
-    }
+  // verb: dacă parserul a găsit ceva, îl folosim, altfel 가요
+  const verb =
+    (slotsFromParser && slotsFromParser.verb) ||
+    "가요";
 
-    button.secondary {
-      background: #f3ebdd;
-      color: var(--accent-strong);
-      box-shadow: none;
-    }
+  const pieces = [subject, time, place, mod, objectChunk, verb].filter(Boolean);
+  const sentence = pieces.join(" ");
 
-    button:disabled {
-      opacity: 0.45;
-      box-shadow: none;
-      cursor: default;
-    }
+  const out =
+    document.getElementById("previewSentence") ||
+    document.getElementById("previewKo") ||
+    document.querySelector(".preview-sentence");
 
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 22px rgba(0,0,0,0.18);
-      filter: brightness(1.03);
-    }
-
-    button:active {
-      transform: translateY(1px) scale(0.98);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.24);
-      filter: brightness(0.98);
-    }
-
-    /* BUILDER – STEP */
-
-    .builder-steps {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-      padding: 6px;
-      border-radius: 14px;
-      background: rgba(255,252,246,0.9);
-      border: 1px solid rgba(223,210,190,0.9);
-      box-shadow: 0 6px 14px rgba(96,78,56,0.12);
-      font-size: 11px;
-    }
-
-    .builder-step {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 6px;
-      border-radius: 999px;
-      color: var(--text-soft);
-    }
-
-    .builder-step-number {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #f3ebdd;
-      color: #70563a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .builder-step-text {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .builder-step.active {
-      background: linear-gradient(120deg,#f6efe3,#f1e2cc);
-      color: var(--accent-strong);
-      font-weight: 600;
-    }
-
-    .builder-step.active .builder-step-number {
-      background: var(--accent-strong);
-      color: #fff;
-    }
-
-    /* BUILDER – TABLE */
-
-    .table-block {
-      padding: 10px;
-    }
-
-    .table-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-soft);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .table-horizontal {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-    }
-
-    .col {
-      min-width: 110px;
-      max-width: 140px;
-      flex: 0 0 auto;
-      background: radial-gradient(circle at top left,#fdfbf7,#f2ebde);
-      border-radius: 16px;
-      border: 1px solid #e2d7c8;
-      box-shadow: 0 10px 22px rgba(95,78,58,0.16);
-      padding: 7px 7px 9px;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    }
-
-    .col:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(95,78,58,0.24);
-      border-color: #d0c1aa;
-    }
-
-    .col.dimmed {
-      opacity: 0.4;
-      background: #f1e7d8;
-    }
-
-    .col-header {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--accent-strong);
-      margin-bottom: 3px;
-      border-bottom: 1px solid rgba(208,196,255,0.4);
-      padding-bottom: 2px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .col-header::before {
-      content: "";
-      width: 16px;
-      height: 16px;
-      border-radius: 6px;
-      background: rgba(255,255,255,0.8);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
-
-    .col[data-key="subject"] .col-header::before { content: "👤"; }
-    .col[data-key="time"]    .col-header::before { content: "⏰"; }
-    .col[data-key="place"]   .col-header::before { content: "📍"; }
-    .col[data-key="mod"]     .col-header::before { content: "✨"; }
-    .col[data-key="object"]  .col-header::before { content: "🎯"; }
-    .col[data-key="numeral"] .col-header::before { content: "#️⃣"; }
-    .col[data-key="counter"] .col-header::before { content: "🔢"; }
-    .col[data-key="verb"]    .col-header::before { content: "🚀"; }
-
-    .col-body-label {
-      font-size: 10px;
-      color: #938777;
-      margin-bottom: 2px;
-    }
-
-    .col-body-main {
-      font-size: 15px;
-      font-weight: 700;
-      color: #2f343b;
-      min-height: 18px;
-    }
-
-    .builder-enable-p2 {
-      margin-top: 6px;
-      padding-top: 4px;
-      border-top: 1px dashed var(--border);
-      display: flex;
-      justify-content: flex-end;
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    .builder-enable-p2 label {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    #titleP2 {
-      margin-top: 4px;
-      font-size: 11px;
-      color: var(--text-soft);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    #titleP2 span::before {
-      content: "↳ ";
-      color: var(--accent-strong);
-      font-weight: 600;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* PREVIEW */
-
-    .preview-card {
-      padding: 10px 12px;
-    }
-
-    .preview-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent-strong);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .preview-ko {
-      font-size: 16px;
-      font-weight: 700;
-      color: #292f35;
-      margin: 6px 0 2px;
-    }
-
-    .preview-ro {
-      font-size: 12px;
-      color: var(--text-soft);
-      margin: 0;
-    }
-
-    .preview-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .preview-sentence {
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1.5;
-      letter-spacing: 0.2px;
-    }
-
-    /* NAVBAR */
-
-    .bottom-nav {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: 8px 10px calc(6px + env(safe-area-inset-bottom));
-      background: rgba(248,242,233,0.96);
-      border-top: 1px solid #e1d7c7;
-      backdrop-filter: blur(14px);
-      display: flex;
-      justify-content: space-around;
-      gap: 6px;
-      z-index: 100;
-    }
-
-    .nav-btn {
-      flex: 1;
-      max-width: 160px;
-      border: none;
-      background: transparent;
-      padding: 4px 0;
-      cursor: pointer;
-      font-size: 11px;
-      color: #8b8476;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .nav-btn span.icon {
-      font-size: 18px;
-    }
-
-    .nav-btn.active {
-      color: var(--accent-strong);
-      font-weight: 600;
-    }
-
-    .nav-btn.active span.icon {
-      transform: translateY(-1px);
-    }
-
-    /* OTHER SCREENS BASIC */
-
-    .ex-card p,
-    .lesson-card p,
-    .gloss-card p {
-      margin: 0;
-      font-size: 13px;
-      color: var(--text-soft);
-    }
-
-    .glossary-list {
-      margin-top: 6px;
-      max-height: 260px;
-      overflow-y: auto;
-    }
-
-    .glossary-item {
-      padding: 6px 8px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: #faf8ff;
-      margin-bottom: 4px;
-      font-size: 12px;
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .glossary-ko { font-weight: 600; }
-    .glossary-ro { color: var(--text-soft); }
-
-    @media (max-width: 600px) {
-      .rk-header-main h1 { font-size: 16px; }
-      .col { min-width: 95px; }
-    }
-  </style>
+  if (out) {
+    out.textContent = sentence;
+  }
+}  
+   // === Limbă de intrare (Română / English) din switch-ul de sus ===
+function getInputLang() {
+  const el = document.querySelector('input[name="inputLang"]:checked');
+  // fallback: dacă nu găsim nimic, presupunem Română
+  return el ? el.value : "ro";
+} 
+</style>
+<body class="pastel-theme">
 </head>
-<body>
+<body class="pastel-theme">
   <div class="app">
-    <!-- HEADER -->
     <header class="rk-header">
-      <div class="rk-header-main">
-        <h1>Raluca Korean</h1>
-        <span class="rk-badge">Study App v2.0</span>
-      </div>
-      <p id="subtitle">Română → coreeană / builder / exerciții TOPIK / glosar personal</p>
-    </header>
+  <div class="rk-header-main">
+    <h1>Raluca Korean</h1>
+    <span class="rk-badge">Study App v2.0</span>
+  </div>
+  <p id="subtitle">Builder propoziții + particule + audio + conjugări</p>
+</header>
+    <!-- SCREEN 1: BUILDER -->
+    <div class="screen active" id="screen-builder">
 
-    <main>
-      <!-- SCREEN: BUILDER -->
-      <section id="screen-builder" class="screen active">
-        <div class="builder-steps">
-          <div class="builder-step active">
-            <span class="builder-step-number">1</span>
-            <span class="builder-step-text">Scriu propoziția în română</span>
-          </div>
-          <div class="builder-step">
-            <span class="builder-step-number">2</span>
-            <span class="builder-step-text">Se completează sloturile (SUBJ / TIME / ...)</span>
-          </div>
-          <div class="builder-step">
-            <span class="builder-step-number">3</span>
-            <span class="builder-step-text">Văd propoziția coreeană & audio</span>
+      <!-- Panel sus: mod afișare + ce părți folosește -->
+      <div class="mode-panel">
+        <div class="mode-row">
+          <span class="section-label">Mod afișare</span>
+          <div>
+            <button class="secondary small-mode-btn" data-mode="simple">Simplu</button>
+            <button class="secondary small-mode-btn active" data-mode="topik">TOPIK</button>
           </div>
         </div>
 
-        <!-- Română → Builder -->
-        <div class="card" id="roCard">
-          <h2>Română → Coreeană (builder)</h2>
-          <p class="small-label">Scrie propoziția în română. Eu analizez și îți umplu automat sloturile de mai jos.</p>
-          <textarea id="roInput" placeholder="Ex: Astăzi merg la cafenea și beau o cafea."></textarea>
-          <button id="roTranslateBtn">
-            <span class="translate-icon">✨</span>
-            Completează automat builder-ul
-          </button>
+        <div class="mode-row">
+          <span class="section-label">Propoziția 1 – ce părți folosește?</span>
+          <div class="part-toggles" id="togglesP1"></div>
+        </div>
+  <div class="mode-row">
+    <span class="section-label">Propoziția 2 – ce părți folosește?</span>
+    <div class="part-toggles" id="togglesP2"></div>
+  </div>
+</div> <!-- închidem blocul .mode-panel (bara de sus) -->
+
+<div class="table-block">
+  
+        <div class="table-title">
+          <span>Propoziția 1</span>
+          <span class="page-indicator" id="pageInfo"></span>
         </div>
 
-        <!-- Tabla Propoziția 1 + Propoziția 2 -->
-        <div class="table-block">
-          <div class="table-title">
-            <span>Propoziția 1</span>
-            <span class="small-label">SUBJECT / TIME / PLACE / MOD / OBJECT / NUMERAL / COUNTER / VERB</span>
+        <div class="table-horizontal" id="tableP1"></div>
+<!-- Bifa care activează / dezactivează Propoziția 2 -->
+<div class="mode-row builder-enable-p2">
+  <label>
+    <input type="checkbox" id="enableP2" />
+    Activează Propoziția 2 (fraza)
+  </label>
+</div>
+        <div class="table-title hidden" id="titleP2">
+          <span>Propoziția 2 (continuare / frază)</span>
+        </div>
+        <div class="table-horizontal hidden" id="tableP2"></div>
+
+        <div class="controls">
+          <div class="btn-group">
+            <button id="prevBtn">⬅ Prev (rând model)</button>
+            <button id="nextBtn">Next ➡</button>
           </div>
-
-          <div class="table-horizontal" id="tableP1">
-            <div class="col" data-key="subject">
-              <div class="col-header">SUBJECT</div>
-              <div class="col-body-label">cine?</div>
-              <div class="col-body-main"></div>
-            </div>
-
-            <div class="col" data-key="time">
-              <div class="col-header">TIME</div>
-              <div class="col-body-label">când?</div>
-              <div class="col-body-main"></div>
-            </div>
-
-            <div class="col" data-key="place">
-              <div class="col-header">PLACE</div>
-              <div class="col-body-label">unde?</div>
-              <div class="col-body-main"></div>
-            </div>
-
-            <div class="col" data-key="mod">
-              <div class="col-header">MOD</div>
-              <div class="col-body-label">cum?</div>
-              <div class="col-body-main"></div>
-            </div>
-
-            <div class="col" data-key="object">
-              <div class="col-header">OBJECT</div>
-              <div class="col-body-label">ce?</div>
-              <div class="col-body-main"></div>
-            </div>
-
-            <div class="col" data-key="numeral">
-              <div class="col-header">NUMERAL</div>
-              <div class="col-body-label">câte?</div>
-              <div class="col-body-main"></div>
-            </div>
-
-            <div class="col" data-key="counter">
-              <div class="col-header">COUNTER</div>
-              <div class="col-body-label">clasificator</div>
-              <div class="col-body-main"></div>
-            </div>
-
-            <div class="col" data-key="verb">
-              <div class="col-header">VERB</div>
-              <div class="col-body-label">acțiunea</div>
-              <div class="col-body-main"></div>
-            </div>
-          </div>
-
-          <div class="builder-enable-p2">
-            <label>
-              <input type="checkbox" id="enableP2" />
-              Activează Propoziția 2 (fraza continuare)
-            </label>
-          </div>
-
-          <div id="titleP2" class="hidden">
-            <span>Propoziția 2 (continuare / frază)</span>
-          </div>
-
-          <div class="table-horizontal hidden" id="tableP2">
-            <div class="col" data-key="subject">
-              <div class="col-header">SUBJECT</div>
-              <div class="col-body-label">cine?</div>
-              <div class="col-body-main"></div>
-            </div>
-            <div class="col" data-key="time">
-              <div class="col-header">TIME</div>
-              <div class="col-body-label">când?</div>
-              <div class="col-body-main"></div>
-            </div>
-            <div class="col" data-key="place">
-              <div class="col-header">PLACE</div>
-              <div class="col-body-label">unde?</div>
-              <div class="col-body-main"></div>
-            </div>
-            <div class="col" data-key="mod">
-              <div class="col-header">MOD</div>
-              <div class="col-body-label">cum?</div>
-              <div class="col-body-main"></div>
-            </div>
-            <div class="col" data-key="object">
-              <div class="col-header">OBJECT</div>
-              <div class="col-body-label">ce?</div>
-              <div class="col-body-main"></div>
-            </div>
-            <div class="col" data-key="numeral">
-              <div class="col-header">NUMERAL</div>
-              <div class="col-body-label">câte?</div>
-              <div class="col-body-main"></div>
-            </div>
-            <div class="col" data-key="counter">
-              <div class="col-header">COUNTER</div>
-              <div class="col-body-label">clasificator</div>
-              <div class="col-body-main"></div>
-            </div>
-            <div class="col" data-key="verb">
-              <div class="col-header">VERB</div>
-              <div class="col-body-label">acțiunea</div>
-              <div class="col-body-main"></div>
-            </div>
-          </div>
+          <button class="secondary" id="resetBtn">Reset părți de propoziție</button>
         </div>
 
-        <!-- PREVIEW PROPOZIȚIE -->
+        <div class="legend">
+          ➤ Tap scurt pe coloană = treci la următorul cuvânt.  
+          ➤ Ține apăsat pe coloană = deschizi lista completă (cu traduceri + căutare).  
+          ➤ ⭐ la CONJUGĂRI = gramatică de legătură (cere propoziția 2).  
+          ➤ Sistem de <b>conjugare reală</b>: verbul se unește cu finalul (ex: 가다 + -고 있어요 → 가고 있어요).
+        </div>
 
         <div class="preview-card">
           <div class="preview-title">
-            <span>Propoziție coreeană (preview builder)</span>
-            <button id="toggleRoBtn" class="secondary">Ascunde traducerea RO</button>
+            <span>Propoziția / fraza (coreeană, cu particule & verb conjugat)</span>
           </div>
-          <p id="previewSentence" class="preview-ko preview-sentence"></p>
-          <p id="previewRoTitle" class="preview-ro">
-            <span>Traducere aproximativă (română – pe părți):</span>
-          </p>
-          <p id="previewRo" class="preview-ro"></p>
+          <div class="preview-ko" id="previewKo">(alege cuvinte din tabel)</div>
+
+          <div class="preview-title">
+            <span>Traducere aproximativă (română – pe părți)</span>
+            <button id="toggleRoBtn" class="secondary" style="padding:3px 8px;font-size:10px;">
+              Ascunde traducerea
+            </button>
+          </div>
+          <div class="preview-ro" id="previewRo"></div>
+
+          <div class="preview-natural" id="naturalHint"></div>
 
           <div class="preview-buttons">
-            <button id="randomBtn" class="secondary">🎲 Random din bancă</button>
+            <button id="randomBtn">🎲 Random propoziție</button>
             <button id="speakBtn">🔊 Audio coreeană</button>
             <button id="favBtn" class="secondary">⭐ Salvează propoziția</button>
-            <button id="resetBtn" class="secondary">♻️ Reset builder</button>
           </div>
         </div>
-      </section>
+      </div><!-- /table-block -->
 
-      <!-- SCREEN: EXERCISES -->
-
-      <section id="screen-exercises" class="screen">
-        <div class="card ex-card">
-          <h2>Exerciții TOPIK (placeholder)</h2>
-          <p>Partea de exerciții o poți completa tu cu itemii tăi. Eu ți-am lăsat structura de bază.</p>
-          <div style="margin-top:8px;">
-            <p class="small-label">Exemplu de întrebare:</p>
-            <p><strong>[Q1]</strong> Alege verbul corect pentru completarea propoziției.</p>
+      <!-- Română → Coreeană mutat JOS în Builder -->
+      <div class="card">
+        <h2>Română → Coreeană</h2>
+        <textarea id="roInput" rows="3"
+                  placeholder="Scrie propoziția în română aici..."></textarea>
+        <button id="roTranslateBtn">
+          <span class="translate-icon">🇷🇴➡️🇰🇷</span>
+          Tradu în coreeană
+        </button>
+        <div class="preview-ko" id="roToKoResult"></div>
+        <div class="preview-ro" id="roCorrected"></div>
+      </div>
+    </div>    
+        <!-- SCREEN 2: EXERCIȚII TOPIK -->
+    <div class="screen" id="screen-exercises">
+      <div class="card ex-card">
+        <div class="ex-header-row">
+          <div>
+            <div class="ex-pill">TOPIK trainer</div>
+            <h2>Exerciții TOPIK – propoziții</h2>
+          </div>
+          <div class="ex-mini-hint">
+            Antrenează: verbe · particule · conjugări
           </div>
         </div>
-      </section>
 
-      <!-- SCREEN: LESSONS -->
-
-      <section id="screen-lessons" class="screen">
-        <div class="card lesson-card">
-          <h2>Lecții & explicații (placeholder)</h2>
-          <p>În acest card poți pune lecțiile tale: explicații de gramatică, exemple, notițe.</p>
+        <div class="ex-type-row">
+          <div class="ex-type-left">
+            <span class="small-label">Tip exercițiu</span>
+            <span class="ex-type-chip" id="exerciseTypeLabel">
+              propoziții random din builder
+            </span>
+          </div>
+          <select id="exerciseType">
+            <option value="verb">Alege VERBUL corect</option>
+            <option value="particle">Alege PARTICULA corectă (simplu)</option>
+            <option value="particlePlus">Particule multiple (은/는, 이/가, 을/를, 에/에서)</option>
+            <option value="conjug">Alege CONJUGAREA corectă</option>
+            <option value="puzzle">🧩 Puzzle – ordonează propoziția</option>
+          </select>
         </div>
-      </section>
 
-      <!-- SCREEN: GLOSSARY -->
+        <div class="ex-question-shell">
+          <div class="ex-question-tag-row">
+            <span class="ex-question-tag">Întrebare curentă</span>
+            <span class="ex-question-subtag" id="exerciseSubtag"> </span>
+          </div>
 
-      <section id="screen-glossary" class="screen">
-        <div class="card gloss-card">
-          <h2>Glosar personal</h2>
-          <p class="small-label">Cuvinte salvate, verbe, expresii – pentru repetat rapid.</p>
+          <div class="exercise-question empty" id="exerciseQuestion">
+            Alege tipul de exercițiu și apasă „Întrebare nouă”.
+          </div>
 
-          <div class="glossary-list" id="glossaryList">
-            <div class="glossary-item">
-              <div>
-                <div class="glossary-ko">안녕하세요</div>
-                <div class="glossary-ro">bună ziua</div>
-              </div>
-              <div class="glossary-cat">salut</div>
-            </div>
-            <div class="glossary-item">
-              <div>
-                <div class="glossary-ko">커피</div>
-                <div class="glossary-ro">cafea</div>
-              </div>
-              <div class="glossary-cat">substantiv</div>
-            </div>
+          <div class="exercise-options" id="exerciseOptions"></div>
+
+          <div class="btn-group ex-buttons">
+            <button id="checkAnswerBtn">Verifică răspunsul</button>
+            <button class="secondary" id="nextQuestionBtn">Întrebare nouă</button>
+          </div>
+
+          <div class="exercise-feedback" id="exerciseFeedback"></div>
+        </div>
+      </div>
+
+      <div class="legend ex-legend">
+        ➤ Poți schimba tipul de exercițiu din box-ul de sus.<br />
+        ➤ La „Particule multiple”, toate spațiile (1)(2)(3)(4) trebuie corecte ca să fie ✅.
+      </div>
+    </div>
+
+    <!-- SCREEN 3: LECȚII DE GRAMATICĂ -->
+    <div class="screen" id="screen-lessons">
+      <div class="card">
+        <div class="lesson-header">
+          <h2>📘 Lecția 1 — (으)려고 해요</h2>
+          <div class="small-label">
+            Intenție / plan apropiat – „am de gând să…, mă pregătesc să…”
           </div>
         </div>
-      </section>
-    </main>
-  </div>
 
-  <!-- NAVBAR -->
+        <div style="margin-top:8px;font-size:13px;line-height:1.5;">
+          <b>◆ Ce înseamnă:</b><br />
+          – Exprimă o acțiune pe care <b>ai de gând</b> să o faci în curând.<br />
+          – În română: „am de gând să…”, „mă pregătesc să…”.
+        </div>
+
+        <div style="margin-top:10px;font-size:13px;line-height:1.6;">
+          <b>◆ Cum se formează:</b><br />
+
+          <ul style="padding-left:18px;margin:4px 0;">
+            <li>Verbe care se termină în <b>consoană</b> → <b>으려고 해요</b><br />
+              <span class="example">
+                읽다 → 읽으려고 해요 (am de gând să citesc)<br />
+                먹다 → 먹으려고 해요 (am de gând să mănânc)
+              </span>
+            </li>
+          </ul>
+
+          <ul style="padding-left:18px;margin:4px 0;">
+            <li>Verbe care se termină în <b>vocală</b> → <b>려고 해요</b><br />
+              <span class="example">
+                가다 → 가려고 해요 (am de gând să merg)<br />
+                보내다 → 보내려고 해요 (am de gând să trimit)
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div style="margin-top:10px;font-size:13px;line-height:1.6;">
+          <b>🔹 Exemple simple:</b><br />
+          <b>1)</b> 저는 오늘 책을 읽으려고 해요.<br />
+          &nbsp;&nbsp;→ Azi am de gând să citesc o carte.<br /><br />
+
+          <b>2)</b> 내일 친구를 만나려고 해요.<br />
+          &nbsp;&nbsp;→ Mâine am de gând să mă întâlnesc cu prietenul.<br /><br />
+
+          <b>3)</b> 집에서 쉬려고 해요.<br />
+          &nbsp;&nbsp;→ Am de gând să mă odihnesc acasă.<br /><br />
+
+          <b>4)</b> 한국어를 더 열심히 공부하려고 해요.<br />
+          &nbsp;&nbsp;→ Am de gând să studiez coreeana mai serios.
+        </div>
+
+        <div style="margin-top:10px;">
+          <button id="lesson1TryBtn">✍️ Încearcă lecția în Builder</button>
+        </div>
+
+        <div class="small-label" style="margin-top:6px;">
+          Apasă pe buton și îți pun automat o propoziție în Builder, ca să vezi cum
+          funcționează -(으)려고 해요 pe structura ta.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="lesson-header">
+          <h2>📘 Lecția 2 — -(으)ㄹ까요?</h2>
+          <div class="small-label">
+            Propuneri, invitații și întrebări despre opinia altcuiva.
+          </div>
+        </div>
+
+        <div style="margin-top:8px;font-size:13px;line-height:1.5;">
+          <b>◆ Ce înseamnă:</b><br />
+          – Se folosește când vrei să întrebi părerea cuiva sau să faci o propunere.<br />
+          – În română: „să …?”, „ce-ar fi să …?”, „oare să …?”.
+        </div>
+
+        <div style="margin-top:10px;font-size:13px;line-height:1.5;">
+          <b>◆ Cum se formează:</b><br />
+
+          <ul style="padding-left:18px;margin:4px 0;">
+            <li>Verbe care se termină în <b>consoană</b> → <b>을까요?</b><br />
+              <span class="example">
+                먹다 → 먹을까요? (să mâncăm?)<br />
+                읽다 → 읽을까요? (să citim?)
+              </span>
+            </li>
+          </ul>
+
+          <ul style="padding-left:18px;margin:4px 0;">
+            <li>Verbe care se termină în <b>vocală</b> sau <b>ㄹ</b> → <b>ㄹ까요?</b><br />
+              <span class="example">
+                가다 → 갈까요? (să mergem?)<br />
+                하다 → 할까요? (să facem?)
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div style="margin-top:10px;font-size:13px;line-height:1.6%;">
+          <b>🔹 Exemple simple:</b><br />
+
+          <b>1)</b> 영화 볼까요?<br />
+          &nbsp;&nbsp;→ Să vedem un film?<br /><br />
+
+          <b>2)</b> 내일 만날까요?<br />
+          &nbsp;&nbsp;→ Ne vedem mâine?<br /><br />
+
+          <b>3)</b> 뭐 먹을까요?<br />
+          &nbsp;&nbsp;→ Ce să mâncăm?<br /><br />
+
+          <b>4)</b> 지금 출발할까요?<br />
+          &nbsp;&nbsp;→ Să plecăm acum?
+        </div>
+
+        <div style="margin-top:10px;">
+          <button id="lesson2TryBtn">✍️ Încearcă lecția 2 în Builder</button>
+        </div>
+
+        <div class="small-label" style="margin-top:6px;">
+          Apasă pe buton și îți pun automat o propoziție în Builder cu -(으)ㄹ까요?,
+          ca să exersezi propunerile și invitațiile.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="lesson-header">
+          <h2>📘 Lecția 3 — Fraze cu „să ... și să ...”</h2>
+          <div class="small-label">
+            Două acțiuni legate: „Merg la X să fac Y (și să fac Z)”.
+          </div>
+        </div>
+
+        <div style="margin-top:8px;font-size:13px;line-height:1.5;">
+          <b>◆ Ideea principală:</b><br />
+          – Prima parte: verb de deplasare (가다 / 오다) + loc.<br />
+          – A doua parte: una sau mai multe acțiuni de scop, legate cu <b>-고</b>,
+            ultima în prezent politicos.
+        </div>
+
+        <div style="margin-top:10px;font-size:13px;line-height:1.6%;">
+          <b>🔹 Exemplu:</b><br />
+          오늘 시장에 가서 채소를 사고 견과류를 먹어요.<br />
+          &nbsp;&nbsp;→ Azi merg la piață să cumpăr legume și să mănânc nuci.
+        </div>
+
+        <div style="margin-top:10px;">
+          <button id="lesson3TryBtn">✍️ Încearcă lecția 3 în Builder</button>
+        </div>
+
+        <div class="small-label" style="margin-top:6px;">
+          Apasă pe buton și îți pun automat în Builder propoziția<br />
+          „Astăzi merg la cafenea să învăț coreeană.” ca să vezi fraza completă în coreeană.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="lesson-header">
+          <h2>📘 Lecția 4 — Rutine zilnice</h2>
+          <div class="small-label">
+            Folosim prezentul politicos pentru obiceiuri: „în fiecare dimineață fac X”.
+          </div>
+        </div>
+
+        <div style="margin-top:8px;font-size:13px;line-height:1.5;">
+          <b>◆ Ideea principală:</b><br />
+          – Adverb de frecvență (항상, 자주, 매일, 아침마다...) + acțiunea la prezent
+            politicos (-아요/어요).<br />
+          – În română: „De obicei..., În fiecare dimineață..., Mereu...”.
+        </div>
+
+        <div style="margin-top:10px;font-size:13px;line-height:1.6%;">
+          <b>🔹 Exemplu:</b><br />
+          아침마다 커피를 마시고 한국어를 공부해요.<br />
+          &nbsp;&nbsp;→ În fiecare dimineață beau cafea și studiez coreeană.
+        </div>
+
+        <div style="margin-top:10px;">
+          <button id="lesson4TryBtn">✍️ Încearcă lecția 4 în Builder</button>
+        </div>
+
+        <div class="small-label" style="margin-top:6px;">
+          Apasă pe buton și trimit propoziția<br />
+          „În fiecare dimineață beau cafea și studiez coreeană.” direct în Builder.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="lesson-header">
+          <h2>📘 Lecția 5 — Stare & oboseală (adjective + verbe)</h2>
+          <div class="small-label">
+            Combinații de tip „lucrez mult și sunt obosită”.
+          </div>
+        </div>
+
+        <div style="margin-top:8px;font-size:13px;line-height:1.5;">
+          <b>◆ Ideea principală:</b><br />
+          – Verbul de acțiune + <b>많이</b> / <b>열심히</b> etc.<br />
+          – Apoi verb/adjectiv de stare: 피곤하다 (a fi obosit), 힘들다, 바쁘다 etc.
+        </div>
+
+        <div style="margin-top:10px;font-size:13px;line-height:1.6%;">
+          <b>🔹 Exemplu:</b><br />
+          요즘 일을 많이 해서 아주 피곤해요.<br />
+          &nbsp;&nbsp;→ În ultima vreme lucrez mult și sunt foarte obosită.
+        </div>
+
+        <div style="margin-top:10px;">
+          <button id="lesson5TryBtn">✍️ Încearcă lecția 5 în Builder</button>
+        </div>
+
+        <div class="small-label" style="margin-top:6px;">
+          Apasă pe buton și trimit propoziția<br />
+          „Lucrez mult și sunt foarte obosită.” în Builder pentru conversie automată.
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 4: GLOSAR + FAVORITE -->
+    <div class="screen" id="screen-glossary">
+      <div class="card">
+        <h2>📚 Glosar coreean–român</h2>
+
+        <!-- 📅 3 cuvinte/zi -->
+        <div class="card" style="margin-top:8px;">
+          <h2>📅 3 cuvinte/zi</h2>
+
+          <div class="small-label" id="dailyDateLabel">Azi</div>
+
+          <div id="dailyWordsBox"
+               style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
+
+          <div class="btn-group" style="margin-top:8px;">
+            <button class="secondary" id="dailyPrevBtn">⬅ Ieri</button>
+            <button class="secondary" id="dailyNextBtn">Mâine ➡</button>
+            <button id="dailyMarkBtn">✅ Am învățat azi</button>
+          </div>
+
+          <div class="small-label" id="dailyProgress" style="margin-top:6px;"></div>
+        </div>
+
+        <div class="small-label">Propoziții favorite:</div>
+        <div id="favoritesList" class="fav-list"></div>
+
+        <div class="small-label" style="margin-top:6px;">
+          Caută în glosar (coreeană sau română):
+        </div>
+        <div class="glossary-search">
+          <input type="text" id="glossarySearch"
+                 placeholder="ex: 가다 sau a merge" />
+        </div>
+        <div class="glossary-list" id="glossaryList"></div>
+      </div>
+    </div>
+    
+  <!-- bottom nav -->
   <nav class="bottom-nav">
-    <button class="nav-btn active" data-screen="builder">
-      <span class="icon">🧱</span>
+    <button class="nav-btn active" data-target="builder">
+      <span class="icon">🏗</span>
       <span>Builder</span>
     </button>
-    <button class="nav-btn" data-screen="exercises">
+    <button class="nav-btn" data-target="exercises">
       <span class="icon">📝</span>
       <span>Exerciții</span>
     </button>
-    <button class="nav-btn" data-screen="lessons">
-      <span class="icon">📒</span>
+    <button class="nav-btn" data-target="lessons">
+      <span class="icon">📗</span>
       <span>Lecții</span>
     </button>
-    <button class="nav-btn" data-screen="glossary">
+    <button class="nav-btn" data-target="glossary">
       <span class="icon">📚</span>
       <span>Glosar</span>
     </button>
   </nav>
+  <!-- overlay panel -->
+  <div class="overlay hidden" id="overlay">
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title" id="panelTitle"></div>
+          <div class="panel-sub" id="panelSub"></div>
+        </div>
+        <button class="panel-close" id="closePanelBtn">✕</button>
+      </div>
+
+      <!-- Căutare în lista de cuvinte -->
+      <div class="panel-input-row">
+        <input type="text" id="panelSearchInput" placeholder="Caută în listă (primele litere)..." />
+      </div>
+
+      <!-- Cuvânt nou + traducere -->
+      <div class="panel-input-row">
+        <input type="text" id="newWordInput" placeholder="Cuvânt nou (coreeană sau număr)..." />
+      </div>
+      <div class="panel-input-row">
+        <input type="text" id="newWordTransInput" placeholder="Traducere în română (ex: unu, azi) – opțional" />
+        <button id="addWordBtn" class="secondary">+ Add</button>
+      </div>
+
+      <div class="panel-list" id="panelList"></div>
+    </div>
+  </div>
+
   <script>
     let LAST_RO_SENTENCE = "";
 /* === LISTE DE CUVINTE (de bază) === */
@@ -3441,3 +5677,4 @@ document.addEventListener("DOMContentLoaded", () => {
   </script>
 </body>
 </html> 
+
