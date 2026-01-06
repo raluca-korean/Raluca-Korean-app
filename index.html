@@ -4329,44 +4329,56 @@ function updatePreview() {
   } else {
     naturalHint.textContent = `⚠ ${nat.msg} 「${nat.suggestion}」`;
   }
-}// =======================
-// 🔀 Switch limbă RO / EN
-// =======================
+}
+// ====================
+// 🔁 Switch limbă input RO / EN (blocul de jos Română → Coreeană)
+// ====================
 let INPUT_LANG = "ro";
 
+// Actualizează titlul, placeholderul și butonul pentru limba curentă
+function applyLangUI() {
+  const title    = document.getElementById('roKoTitle');
+  const textarea = document.getElementById('roInput');
+  const btn      = document.getElementById('roTranslateBtn');
+
+  // dacă nu găsim elementele, nu facem nimic (nu blocăm aplicația)
+  if (!title || !textarea || !btn) return;
+
+  if (INPUT_LANG === "ro") {
+    title.textContent = "Română → Coreeană";
+    textarea.placeholder = "Scrie propoziția în română aici...";
+    btn.innerHTML =
+      '<span class="translate-icon">🇷🇴➡️🇰🇷</span>Tradu în coreeană';
+  } else {
+    title.textContent = "English → Korean";
+    textarea.placeholder = "Write the sentence in English here...";
+    btn.innerHTML =
+      '<span class="translate-icon">🇬🇧➡️🇰🇷</span>Translate to Korean';
+  }
+}
+
+// Pornește switch-ul de limbă
 function initLangSwitch() {
   const radios = document.querySelectorAll('input[name="inputLang"]');
-  const title = document.getElementById('roKoTitle');
-  const textarea = document.getElementById('roInput');
-  const btn = document.getElementById('roTranslateBtn');
-
-  function applyLangUI() {
-    if (INPUT_LANG === "ro") {
-      if (title) title.textContent = "Română → Coreeană";
-      if (textarea) textarea.placeholder = "Scrie propoziția în română aici...";
-      if (btn) {
-        btn.innerHTML =
-          '<span class="translate-icon">🇷🇴➡️🇰🇷</span>Tradu în coreeană';
-      }
-    } else {
-      if (title) title.textContent = "English → Korean";
-      if (textarea) textarea.placeholder = "Write the sentence in English here...";
-      if (btn) {
-        btn.innerHTML =
-          '<span class="translate-icon">🇬🇧➡️🇰🇷</span>Translate to Korean';
-      }
-    }
+  if (!radios.length) {
+    // dacă, din orice motiv, nu există radio-urile, măcar setăm UI-ul implicit
+    applyLangUI();
+    return;
   }
 
-  if (radios.length) {
-    radios.forEach(r => {
-      r.addEventListener('change', e => {
-        INPUT_LANG = e.target.value;
-        applyLangUI();
-      });
+  radios.forEach(r => {
+    r.addEventListener('change', (e) => {
+      INPUT_LANG = e.target.value || "ro";
+      applyLangUI();
     });
-  }    
-    function loadRow(i){
+  });
+
+  // stilul implicit la pornire
+  applyLangUI();
+}
+
+// Apelăm inițializarea **după ce se încarcă pagina**
+window.addEventListener('load', initLangSwitch);    function loadRow(i){
   columns.forEach(col=>{
     stateP1[col.key]=col.data[i]||"";
   });
