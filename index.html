@@ -3735,8 +3735,73 @@ const builderStepTargets = [
   document.getElementById("togglesP1"),      // Pas 2: chip-urile SUBJECT/TIME...
   document.querySelector(".preview-card")    // Pas 3: propoziția de jos
 ];
+// ===========================
+// Input language switch RO / EN
+// ===========================
 
-function activateBuilderStep(index){
+let INPUT_LANG = "ro";
+
+// schimbă titlul / placeholder / butonul în funcție de limbă
+function applyLangUI() {
+  const title = document.getElementById('roKoTitle');
+  const textarea = document.getElementById('roInput');
+  const btn = document.getElementById('roTranslateBtn');
+
+  // dacă nu găsim elementele -> nu facem nimic (nu blocăm aplicația)
+  if (!title || !textarea || !btn) return;
+
+  if (INPUT_LANG === "ro") {
+    title.textContent = "Română → Coreeană";
+    textarea.placeholder = "Scrie propoziția în română aici...";
+    btn.innerHTML =
+      '<span class="translate-icon">🇷🇴➡️🇰🇷</span>Tradu în coreeană';
+  } else {
+    title.textContent = "English → Korean";
+    textarea.placeholder = "Write the sentence in English here...";
+    btn.innerHTML =
+      '<span class="translate-icon">🇬🇧➡️🇰🇷</span>Translate to Korean';
+  }
+}
+
+// pornește switch-ul de limbă
+function initLangSwitch() {
+  const radios = document.querySelectorAll('input[name="inputLang"]');
+
+  // dacă nu există radio-uri → măcar aplicăm UI-ul implicit
+  if (!radios.length) {
+    applyLangUI();
+    return;
+  }
+
+  radios.forEach(r => {
+    r.addEventListener("change", e => {
+      INPUT_LANG = e.target.value || "ro";
+      applyLangUI();
+    });
+  });
+
+  // stil implicit la pornire
+  applyLangUI();
+}
+   document.addEventListener("DOMContentLoaded", () => {
+
+  // pornește switch RO / EN
+  initLangSwitch();
+
+  // pornește Builder-ul (ca înainte)
+  loadRow(index);
+  render();
+
+  // pornește lecțiile
+  initLessons?.();
+
+  // pornește exercițiile
+  initExercises?.();
+
+  // pornește glosarul
+  initGlossary?.();
+});
+    activateBuilderStep(index){
   builderSteps.forEach((step,i)=>{
     step.classList.toggle("active", i===index);
   });
