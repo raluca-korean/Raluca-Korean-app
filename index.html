@@ -2610,35 +2610,18 @@ function getInputLang() {
 
       <!-- Română → Coreeană mutat JOS în Builder -->
       <div class="card">
-
-  <!-- 🔁 Switch limbă input -->
-  <div id="lang-switch" style="margin-bottom:8px;">
-    <label style="margin-right:10px;">
-      <input type="radio" name="inputLang" value="ro" checked>
-      Română
-    </label>
-    <label>
-      <input type="radio" name="inputLang" value="en">
-      English
-    </label>
-  </div>
-
-  <!-- Titlu dinamic (RO / EN) -->
-  <h2 id="roKoTitle">Română → Coreeană</h2>
-
-  <!-- Textarea rămâne aceeași -->
-  <textarea id="roInput" rows="3"
-    placeholder="Scrie propoziția în română aici..."></textarea>
-
-  <!-- Buton de traducere (text dinamic) -->
-  <button id="roTranslateBtn">
-    <span class="translate-icon">🇷🇴➡️🇰🇷</span>Tradu în coreeană
-  </button>
-
-  <div class="preview-ko" id="roToKoResult"></div>
-  <div class="preview-ro" id="roCorrected"></div>
-</div>
-      <!-- SCREEN 2: EXERCIȚII TOPIK -->
+        <h2>Română → Coreeană</h2>
+        <textarea id="roInput" rows="3"
+                  placeholder="Scrie propoziția în română aici..."></textarea>
+        <button id="roTranslateBtn">
+          <span class="translate-icon">🇷🇴➡️🇰🇷</span>
+          Tradu în coreeană
+        </button>
+        <div class="preview-ko" id="roToKoResult"></div>
+        <div class="preview-ro" id="roCorrected"></div>
+      </div>
+    </div>    
+        <!-- SCREEN 2: EXERCIȚII TOPIK -->
     <div class="screen" id="screen-exercises">
       <div class="card ex-card">
         <div class="ex-header-row">
@@ -3725,92 +3708,35 @@ navButtons.forEach(btn=>{
     const target = btn.dataset.target;   // builder / exercises / lessons / glossary
     setScreen(target);
   });
-});// ===== STEPPER pentru Builder (click pe pași) =====
+});
+    // ====== STEPPER pentru Builder (click pe pași) ======
 const builderSteps = document.querySelectorAll(".builder-step");
 
 // zonele la care facem scroll pentru fiecare pas
 const builderStepTargets = [
-  document.getElementById("roInput"),      // Pas 1: textarea Română/English
-  document.getElementById("togglesP1"),    // Pas 2: chip-urile SUBJECT/TIME...
-  document.querySelector(".preview-card")  // Pas 3: propoziția de jos
+  document.getElementById("roInput"),        // Pas 1: textarea Română
+  document.getElementById("togglesP1"),      // Pas 2: chip-urile SUBJECT/TIME...
+  document.querySelector(".preview-card")    // Pas 3: propoziția de jos
 ];
 
-// ================================
-// Input language switch RO / EN (blocul Română ↔ English)
-let INPUT_LANG = "ro";
-
-// actualizează titlul, placeholder-ul și butonul pentru limba curentă
-function applyLangUI() {
-  const title = document.getElementById("roKoTitle");
-  const textarea = document.getElementById("roInput");
-  const btn = document.getElementById("roTranslateBtn");
-
-  // dacă nu găsim elementele → nu facem nimic (nu blocăm aplicația)
-  if (!title || !textarea || !btn) return;
-
-  if (INPUT_LANG === "ro") {
-    title.textContent = "Română → Coreeană";
-    textarea.placeholder = "Scrie propoziția în română aici...";
-    btn.innerHTML =
-      '<span class="translate-icon">🇷🇴➡️🇰🇷</span>Tradu în coreeană';
-  } else {
-    title.textContent = "English → Korean";
-    textarea.placeholder = "Write the sentence in English here...";
-    btn.innerHTML =
-      '<span class="translate-icon">🇬🇧➡️🇰🇷</span>Translate to Korean';
-  }
-}
-
-// pornește switch-ul de limbă pentru butoanele Română / English
-function initLangSwitch() {
-  const radios = document.querySelectorAll('input[name="inputLang"]');
-
-  // dacă nu există radio-uri → măcar aplicăm UI-ul implicit
-  if (!radios.length) {
-    applyLangUI();
-    return;
-  }
-
-  radios.forEach(r => {
-    r.addEventListener("change", e => {
-      INPUT_LANG = e.target.value || "ro";
-      applyLangUI();
-    });
-  });
-
-  // stil implicit la pornire
-  applyLangUI();
-}
-
-// ===== logica pentru pașii Builder-ului =====
-let index = 0;
-
-function activateBuilderStep(i) {
-  index = i;
-  builderSteps.forEach((step, k) => {
-    step.classList.toggle("active", k === index);
+function activateBuilderStep(index){
+  builderSteps.forEach((step,i)=>{
+    step.classList.toggle("active", i===index);
   });
 
   const target = builderStepTargets[index];
-  if (target) {
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (index === 0 && roInput) {
+  if(target){
+    target.scrollIntoView({behavior:"smooth", block:"center"});
+    if(index === 0 && roInput){
       roInput.focus();
     }
   }
 }
 
-// click pe bulinele din Builder
-builderSteps.forEach((step, i) => {
-  step.addEventListener("click", () => {
+builderSteps.forEach((step,i)=>{
+  step.addEventListener("click", ()=>{
     activateBuilderStep(i);
   });
-});
-
-// pornim switch-ul de limbă și setăm primul pas din Builder
-document.addEventListener("DOMContentLoaded", () => {
-  initLangSwitch();
-  activateBuilderStep(index);
 });
 /* mod simplu / TOPIK */
 let currentMode="topik";
