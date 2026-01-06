@@ -5183,7 +5183,162 @@ function render(){
     },
     null
   );
+// ======================================================
+//    ENGLISH → KOREAN  (pipeline separat, cap-coadă)
+// ======================================================
 
+// Dicționare simple pentru cuvinte frecvente.
+// Poți extinde foarte ușor aceste liste.
+const EN_SUBJECTS = [
+  { re: /\bI\b/i, ko: "저", label: "I (formal)" },
+  { re: /\byou\b/i, ko: "당신", label: "you" },
+  { re: /\bhe\b/i, ko: "그", label: "he" },
+  { re: /\bshe\b/i, ko: "그녀", label: "she" },
+  { re: /\bwe\b/i, ko: "우리", label: "we" },
+  { re: /\bthey\b/i, ko: "그들", label: "they" }
+];
+
+const EN_TIMES = [
+  { re: /\btoday\b/i, ko: "오늘" },
+  { re: /\byesterday\b/i, ko: "어제" },
+  { re: /\btomorrow\b/i, ko: "내일" },
+  { re: /\bnow\b/i, ko: "지금" },
+  { re: /\bthis morning\b/i, ko: "오늘 아침" },
+  { re: /\btonight\b/i, ko: "오늘 밤" }
+];
+
+const EN_PLACES = [
+  { re: /\bhome\b/i, ko: "집에" },
+  { re: /\bschool\b/i, ko: "학교에" },
+  { re: /\bthe school\b/i, ko: "학교에" },
+  { re: /\bto school\b/i, ko: "학교에" },
+  { re: /\bcafe\b/i, ko: "카페에" },
+  { re: /\bwork\b/i, ko: "회사에" },
+  { re: /\boffice\b/i, ko: "사무실에" }
+];
+
+const EN_OBJECTS = [
+  { re: /\bcoffee\b/i, ko: "커피를" },
+  { re: /\btea\b/i, ko: "차를" },
+  { re: /\bbook\b/i, ko: "책을" },
+  { re: /\bbooks\b/i, ko: "책을" },
+  { re: /\bKorean\b/i, ko: "한국어를" },
+  { re: /\bKorean language\b/i, ko: "한국어를" },
+  { re: /\bhomework\b/i, ko: "숙제를" }
+];
+
+// Verbe de bază – aici decizi forma finală (prezent politicos)
+const EN_VERBS = [
+  { re: /\bgo\b/i, ko: "가요" },
+  { re: /\bcome\b/i, ko: "와요" },
+  { re: /\bdrink\b/i, ko: "마셔요" },
+  { re: /\beat\b/i, ko: "먹어요" },
+  { re: /\bstudy\b/i, ko: "공부해요" },
+  { re: /\bread\b/i, ko: "읽어요" },
+  { re: /\bmeet\b/i, ko: "만나요" },
+  { re: /\bwork\b/i, ko: "일해요" },
+  { re: /\bsleep\b/i, ko: "자요" }
+];
+
+// Un mic helper: găsește primul match într-o listă
+function findEnMatch(list, text) {
+  for (const item of list) {
+    if (item.re.test(text)) {
+      return item;
+    }
+  }
+  return null;
+}
+
+function capitalizeSentence(str) {
+  const s = (str || "").trim();
+  if (!s) return "";
+  const first = s.charAt(0).toUpperCase();
+  const rest = s.slice(1);
+  const withDot = /[.!?]$/.test(rest) ? rest : rest + ".";
+  return first + withDot;
+}
+
+// *** Motorul principal EN → KO ***
+function translateEnToKo(enText) {
+  const original = (enText || "").trim();
+  if (!original) {
+    return { ko: "", roFixed: "" };
+  }
+
+  const text = original.toLowerCase();
+
+  // 1) Subject
+  const subj = findEnMatch(EN_SUBJECTS, text);
+  const koSubj = subj ? subj.ko : ""; // poți pune "저" default dacă vrei
+
+  // 2) Time
+  const time = findEnMatch(EN_TIMES, text);
+  const koTime = time ? time.ko : "";
+
+  // 3) Place
+  const place = findEnMatch(EN_PLACES, text);
+  const koPlace = place ? place.ko : "";
+
+  // 4) Object
+  const obj = findEnMatch(EN_OBJECTS, text);
+  const koObj = obj ? obj.ko : "";
+
+  // 5) Verb
+  const verb = findEnMatch(EN_VERBS, text);
+  const koVerb = verb ? verb.ko : "";
+
+  // 6) Conector „and” simplu: dacă apare "and read", "and drink" etc,
+  // facem "가고 읽어요", "가고 마셔요" etc.
+  let koSentence = "";
+
+  // Mai întâi încercăm să vedem dacă există "and <verb>"
+  const andMatch = text.match(/\band\s+([a-z]+)/i);
+  if (andMatch) {
+    const secondVerbWord = andMatch[1];
+    const secondVerb = findEnMatch(
+      EN_VERBS,
+      secondVerbWord
+    );
+
+    if (verb && secondVerb) {
+      // compunem: SUBJECT TIME PLACE OBJECT1 VERB-고 OBJECT2 VERB2
+      // ca schemă simplă
+      const firstPart = [
+        koSubj,
+        koTime,
+        koPlace,
+        koObj
+      ].filter(Boolean).join(" ");
+
+      const firstVerb = verb.ko.replace(/요$/, "고"); // 가요 → 가고
+      const secondVerbKo = secondVerb.ko;
+
+      koSentence = [firstPart, firstVerb, secondVerbKo]
+        .filter(Boolean)
+        .join(" ");
+    }
+  }
+
+  // Dacă nu avem structură cu "and", facem propoziție simplă
+  if (!koSentence) {
+    koSentence = [
+      koSubj,
+      koTime,
+      koPlace,
+      koObj,
+      koVerb
+    ].filter(Boolean).join(" ");
+  }
+
+  // EN corectat / reformulat (deocamdată doar cu literă mare + punct)
+  const enFixed = capitalizeSentence(original);
+
+  return {
+    ko: koSentence || "(could not build Korean sentence)",
+    roFixed: enFixed
+  };
+}
    // === Progrămel separat: repară „și. Cuvânt” → „și cuvânt” ===
 function smartJoinRomanian(text) {
   if (!text || typeof text !== "string") return text;
