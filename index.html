@@ -3170,7 +3170,27 @@ function loadCustomData(){
 }
     // ================= RO -> KO (parser simplu din dicționarul app-ului) =================
 const roInput = document.getElementById("roInput");
- 
+ // === Wrapper general pentru traducere ===
+function translateInputToKo() {
+  const text = (roInput.value || "").trim();
+  const lang = getInputLang();
+
+  let result;
+  if (!text) {
+    result = { ko: "", roFixed: "" };
+  } else if (lang === "en") {
+    // NOUL PIPELINE: EN → KO
+    result = translateEnToKo(text);
+  } else {
+    // PIPELINE VECHI: RO → KO
+    result = translateRoToKo(text);
+  }
+
+  // aici folosești exact aceleași elemente pe care le foloseai până acum
+  // pentru a afișa rezultatul
+  document.getElementById("koOutput").textContent = result.ko || "";
+  document.getElementById("roCorrected").textContent = result.roFixed || "";
+}
     // reverse map: română -> coreeană (din translations)
 function stripDiacritics(s){
   return (s||"")
