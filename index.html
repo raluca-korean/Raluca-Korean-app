@@ -5158,38 +5158,36 @@ function render(){
     null
   );
 
-   // 4) Dacă avem o conjugatie care cere propoziția 2,
-  // nu mai lăsăm „și. Cuvânt”, ci lipim: „și cuvânt”
-  if (parsed.state && parsed.state.conjug && typeof roFixed === "string") {
-    // toate conjugațiile „linking” (cer propoziția 2)
-    const linkingConj = [
-      "-고",        // și
-      "-고 나서",   // după ce...
-      "-기 전에",   // înainte să...
-      "-(으)면서",  // în timp ce...
-      "-(으)며",
-      "-(으)므로",
-      "-(으)ㄴ 만큼",
-      "-도록 하다",
-      "-기에",
-      "-길래",
-      "-고 했다",
-      "-고자 하다"
-    ];
+   // === Progrămel separat: repară „și. Cuvânt” → „și cuvânt” ===
+function smartJoinRomanian(text) {
+  if (!text || typeof text !== "string") return text;
 
-    if (linkingConj.indexOf(parsed.state.conjug) !== -1) {
-      roFixed = roFixed
-        // 1) „, și. Cuvânt” → „, și cuvânt”
-        .replace(/,\s*și\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
-          return ", și " + p1.toLowerCase();
-        })
-        // 2) simplu „și. Cuvânt” → „și cuvânt”
-        .replace(/și\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
-          return "și " + p1.toLowerCase();
-        });
-    }
-  }
-  // 5) Rezultatul final
+  return text
+    // 1) cazurile cu paranteze: „(și). Cuvânt”
+    .replace(/\(\s*și\s*\)\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+    .replace(/\(\s*si\s*\)\.\s+([A-ZA-Z])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+
+    // 2) cazul „și). Cuvânt”
+    .replace(/și\)\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+    .replace(/si\)\.\s+([A-ZA-Z])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+
+    // 3) cazul simplu „și. Cuvânt”
+    .replace(/și\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+    .replace(/si\.\s+([A-ZA-Z])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    });
+}
+   // 5) Rezultatul final
   return {
     ko: koResult || "(nu am putut construi propoziția)",
     roFixed: roFixed || original,
