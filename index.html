@@ -809,30 +809,71 @@ function rebuildFinalSentence() {
 */
 function rebuildPreviewFromBuilderP1(slotsFromParser) {
   const table1 = document.getElementById("tableP1");
-  if (table1 && slotsFromParser && slotsFromParser.verb) {
-    const verbCell = table1.querySelector('.col[data-key="verb"] .col-body-main');
-    if (verbCell && !verbCell.textContent.trim()) {
-      verbCell.textContent = slotsFromParser.verb;
+  const table2 = document.getElementById("tableP2");
+  const out    = document.getElementById("previewSentence");
+  const enableP2 = document.getElementById("enableP2");
+
+  if (!table1 || !out) return;
+
+  // helper: ia textul dintr-o coloană (SUBJECT, TIME, etc.)
+  const pick = (table, key) => {
+    const cell = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    return cell ? cell.textContent.trim() : "";
+  };
+
+  /* ===== P1 – propoziția principală ===== */
+  const subject1 = pick(table1, "subject") || "저";
+  const time1    = pick(table1, "time");
+  const place1   = pick(table1, "place");
+  const mod1     = pick(table1, "mod");
+  const object1  = pick(table1, "object");
+  const numeral1 = pick(table1, "numeral");
+  const counter1 = pick(table1, "counter");
+
+  // verb P1: din tabel sau din parser, apoi fallback la 가요
+  let verb1 = pick(table1, "verb");
+  if (!verb1 && slotsFromParser && slotsFromParser.verb) {
+    verb1 = slotsFromParser.verb;
+  }
+  if (!verb1) verb1 = "가요";
+
+  let objectChunk1 = "";
+  if (object1 && numeral1 && counter1) {
+    objectChunk1 = object1 + " " + numeral1 + " " + counter1;
+  } else if (object1) {
+    objectChunk1 = object1;
+  }
+
+  const pieces1 = [subject1, time1, place1, mod1, objectChunk1, verb1].filter(Boolean);
+  let finalSentence = pieces1.join(" ");
+
+  /* ===== P2 – propoziția secundară (opțională) ===== */
+  if (enableP2 && enableP2.checked && table2) {
+    const subject2 = pick(table2, "subject");
+    const time2    = pick(table2, "time");
+    const place2   = pick(table2, "place");
+    const mod2     = pick(table2, "mod");
+    const object2  = pick(table2, "object");
+    const numeral2 = pick(table2, "numeral");
+    const counter2 = pick(table2, "counter");
+    const verb2    = pick(table2, "verb");
+
+    let objectChunk2 = "";
+    if (object2 && numeral2 && counter2) {
+      objectChunk2 = object2 + " " + numeral2 + " " + counter2;
+    } else if (object2) {
+      objectChunk2 = object2;
+    }
+
+    const pieces2 = [subject2, time2, place2, mod2, objectChunk2, verb2].filter(Boolean);
+
+    // dacă chiar avem ceva în P2, o adăugăm după "그리고"
+    if (pieces2.length > 0) {
+      finalSentence = finalSentence + " 그리고 " + pieces2.join(" ");
     }
   }
-  rebuildFinalSentence();
-}
 
-/* Recalculăm propoziția finală când editezi manual sloturile P1 / P2 */
-["tableP1", "tableP2"].forEach((id) => {
-  const table = document.getElementById(id);
-  if (!table) return;
-  table.addEventListener("input", (e) => {
-    if (e.target.classList.contains("col-body-main")) {
-      rebuildFinalSentence();
-    }
-  });
-});
-
-/* Recalculăm și când bifezi / debifezi „Activează Propoziția 2” */
-const enableP2Box = document.getElementById("enableP2");
-if (enableP2Box) {
-  enableP2Box.addEventListener("change", rebuildFinalSentence);
+  out.textContent = finalSentence;
 }
 </script>
 </body>
