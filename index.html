@@ -601,7 +601,91 @@
         { re: /lucrez|a lucra/, value: "일해요" },
       ],
     };
+  // ================================
+  // Reguli EN → sloturi
+  // ================================
+  const EN_RULES = {
+    subject: [
+      { re: /\bi\s*\(formal\)\b/, value: "저" },
+      { re: /\bi\b/, value: "저" },
+      { re: /\byou\b/, value: "너" },
+    ],
+    time: [
+      { re: /\btoday\b/, value: "오늘" },
+      { re: /\btomorrow\b/, value: "내일" },
+      { re: /\byesterday\b/, value: "어제" },
+      { re: /\bnow\b/, value: "지금" },
+    ],
+    place: [
+      { re: /\bhome\b|at home/, value: "집" },
+      { re: /\bmarket\b|\bmarketplace\b/, value: "시장" },
+      { re: /\bschool\b|at school/, value: "학교" },
+      { re: /\boffice\b|company|work\b/, value: "회사" },
+      { re: /\bcafe\b|coffee shop/, value: "카페" },
+      { re: /\bshop\b|store|supermarket/, value: "가게" },
+    ],
+    mod: [
+      { re: /\bwell\b|nicely\b|ok\b/, value: "잘" },
+      { re: /\bslowly\b/, value: "천천히" },
+      { re: /\bquickly\b|\bfast\b/, value: "빨리" },
+      { re: /\bquietly\b/, value: "조용히" },
+      { re: /\bhard\b|a lot\b|diligently\b/, value: "열심히" },
+    ],
+    object: [
+      { re: /\bcoffee\b/, value: "커피" },
+      { re: /\bwater\b/, value: "물" },
+      { re: /\bbook\b|books\b/, value: "책" },
+      { re: /\bfood\b|lunch\b|dinner\b|breakfast\b/, value: "음식" },
+      { re: /\btea\b/, value: "차" },
+    ],
+    numeral: [
+      { re: /\ba\s+book\b|\bone\s+book\b|\ba\s+coffee\b|\bone\s+coffee\b/, value: "한" },
+      { re: /\btwo\s+books\b|\btwo\s+coffees\b/, value: "두" },
+      { re: /\bthree\s+books\b|\bthree\s+coffees\b/, value: "세" },
+    ],
+    counter: [
+      { re: /book|books/, value: "권" },
+      { re: /coffee|coffees|water|tea|food/, value: "개" },
+    ],
+    verb: [
+      { re: /\bgo\b|\bam going\b|\bgo to\b/, value: "가요" },
+      { re: /\bcome\b|\bam coming\b/, value: "와요" },
+      { re: /\bdrink\b|\bam drinking\b/, value: "마셔요" },
+      { re: /\beat\b|\bam eating\b/, value: "먹어요" },
+      { re: /\bread\b|\bam reading\b/, value: "읽어요" },
+      { re: /\bwork\b|\bam working\b/, value: "일해요" },
+    ],
+  };
 
+  function parseEnglishToSlots(text) {
+    const t = normalizeRo(text); // normalizeRo merge și pentru EN (lowercase + spații)
+    if (!t) return {};
+    return {
+      subject: matchSlot(EN_RULES.subject, t),
+      time: matchSlot(EN_RULES.time, t),
+      place: matchSlot(EN_RULES.place, t),
+      mod: matchSlot(EN_RULES.mod, t),
+      object: matchSlot(EN_RULES.object, t),
+      numeral: matchSlot(EN_RULES.numeral, t),
+      counter: matchSlot(EN_RULES.counter, t),
+      verb: matchSlot(EN_RULES.verb, t),
+    };
+  }
+
+  // Split EN: "I go to the market and read a book"
+  function splitSentenceEn(raw) {
+    const t = (raw || "").replace(/\s+/g, " ").trim();
+    const re = /^(.*?)(?:\s+(and then|and|then|so)\s+)(.+)$/i;
+    const m = t.match(re);
+    if (m) {
+      return {
+        p1: m[1].trim(),
+        conj: (m[2] || "").toLowerCase(),
+        p2: m[3].trim(),
+      };
+    }
+    return { p1: t, conj: "", p2: "" };
+  }
     function matchSlot(rules, textNorm) {
       if (!rules) return "";
       for (const rule of rules) {
