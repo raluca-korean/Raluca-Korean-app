@@ -498,7 +498,7 @@
       </div>
     </section>
   </div>
-<script>
+  <script>
 (function () {
   // ================================
   // 0. Helper: normalizează româna
@@ -536,6 +536,7 @@
 
   // ===========================================
   // 2. Reguli simple RO → sloturi (subject/time...)
+  //    (verb la INFINITIV)
   // ===========================================
   const RO_RULES = {
     subject: [
@@ -585,12 +586,12 @@
       { re: /cafea|ap[ăa]\b|ceai\b|m[ăa]ncare/, value: "개" },
     ],
     verb: [
-      { re: /merg\b|a merge|să merg|sa merg/, value: "가요" },
-      { re: /vin\b|a veni|să vin|sa vin/, value: "와요" },
-      { re: /beau\b|a bea|să beau|sa beau/, value: "마셔요" },
-      { re: /m[âă]n[âa]nc\b|m[âă]nânc|mananc|a m[âă]nca/, value: "먹어요" },
-      { re: /citesc|a citi|să citesc|sa citesc/, value: "읽어요" },
-      { re: /lucrez|a lucra/, value: "일해요" },
+      { re: /merg\b|a merge|să merg|sa merg/, value: "가다" },
+      { re: /vin\b|a veni|să vin|sa vin/, value: "오다" },
+      { re: /beau\b|a bea|să beau|sa beau/, value: "마시다" },
+      { re: /m[âă]n[âa]nc\b|m[âă]nânc|mananc|a m[âă]nca/, value: "먹다" },
+      { re: /citesc|a citi|să citesc|sa citesc/, value: "읽다" },
+      { re: /lucrez|a lucra/, value: "일하다" },
     ],
   };
 
@@ -618,7 +619,52 @@
   }
 
   // ===========================================
-  // 3. Scriem sloturile în tabele (P1 / P2)
+  // 2.1. Dicţionar → forma cu 요 (câteva verbe uzuale)
+  // ===========================================
+  const YO_FORMS = {
+    "가다": "가요",
+    "오다": "와요",
+    "마시다": "마셔요",
+    "먹다": "먹어요",
+    "읽다": "읽어요",
+    "일하다": "일해요",
+  };
+
+  function toYoForm(dictForm) {
+    const v = (dictForm || "").trim();
+    return YO_FORMS[v] || v;
+  }
+
+  // ===========================================
+  // 2.2. Lipim verb + terminaţie (-고, -아서, -어서)
+  // ===========================================
+  function joinVerbAndEnding(verb, ending) {
+    verb = (verb || "").trim();
+    ending = (ending || "").trim();
+    if (!verb && !ending) {
+      return { verbJoined: "", connectorWord: "", usedSticky: false };
+    }
+
+    // terminaţie care se lipeşte: începe cu "-"
+    if (ending && ending[0] === "-") {
+      const stem = verb.endsWith("다") ? verb.slice(0, -1) : verb;
+      return {
+        verbJoined: stem + ending.slice(1), // ex: 가다 + -고 → 가고
+        connectorWord: "",
+        usedSticky: true,
+      };
+    }
+
+    // 그리고, 그래서... rămân ca şi cuvânt separat
+    return {
+      verbJoined: verb,
+      connectorWord: ending,
+      usedSticky: false,
+    };
+  }
+
+  // ===========================================
+  // 3. Scriem / citim sloturile în tabele
   // ===========================================
   function applySlotsToTable(tableId, slots) {
     if (!slots) return;
@@ -658,10 +704,8 @@
       object: readFromTable("tableP1", "object"),
       numeral: readFromTable("tableP1", "numeral"),
       counter: readFromTable("tableP1", "counter"),
-      verb: readFromTable("tableP1", "verb") || "가요",
     };
 
-    // obiect 1 (책 한 권 etc.)
     let obj1 = "";
     if (s1.object && s1.numeral && s1.counter) {
       obj1 = s1.object + " " + s1.numeral + " " + s1.counter;
@@ -669,48 +713,20 @@
       obj1 = s1.object;
     }
 
-    // ===========================
-    // VERB + CONECTOR P1
-    // ===========================
-    let verbP1 = s1.verb; // ex: 가요, 읽어요...
-    let conjRaw = readFromTable("tableP1", "conjug"); // <-- cheia corectă
-    let conjClean = (conjRaw || "").trim();
-    if (conjClean) {
-      // scoatem ~ și - ca să rămână doar forma de bază
-      conjClean = conjClean.replace(/[~\-]/g, "").trim();
-    }
+    const rawVerb1 = readFromTable("tableP1", "verb") || "가다";
+    const ending1 = readFromTable("tableP1", "conjug");
+    const join1 = joinVerbAndEnding(rawVerb1, ending1);
+    const verb1Final = join1.usedSticky
+      ? join1.verbJoined                // ex: 가고, 먹어서...
+      : toYoForm(join1.verbJoined || rawVerb1); // ex: 가다 → 가요
 
-    let midWord = ""; // 그리고 / 그래서 între propoziții
-
-    const ATTACHED_ENDINGS = ["고", "아서", "어서"];
-
-    if (conjClean && ATTACHED_ENDINGS.includes(conjClean)) {
-      // atașăm terminația la verb:
-      // 가요 -> 가 + 고, 읽어요 -> 읽 + 고, 먹어요 -> 먹 + 어서 etc. (simplificat)
-      let base = verbP1;
-
-      if (base.endsWith("어요") || base.endsWith("아요")) {
-        base = base.slice(0, base.length - 2);
-      } else if (base.endsWith("요")) {
-        base = base.slice(0, base.length - 1);
-      }
-
-      verbP1 = base + conjClean; // ex: 가고, 읽고, 먹어서...
-      midWord = "";              // nu mai avem cuvânt separat
-    } else if (conjClean === "그리고" || conjClean === "그래서") {
-      // conector de sine stătător
-      midWord = conjClean;       // verbul rămâne 가요 / 읽어요 etc.
-    } else {
-      // niciun conector valid -> verb normal, fără P2
-      midWord = "";
-    }
-
-    const p1Pieces = [s1.subject, s1.time, s1.place, s1.mod, obj1, verbP1].filter(Boolean);
+    const p1Pieces = [s1.subject, s1.time, s1.place, s1.mod, obj1, verb1Final].filter(Boolean);
     const p1Sentence = p1Pieces.join(" ");
 
-    // --- P2 (doar dacă checkbox-ul e ON) ---
     let finalSentence = p1Sentence;
+    let connectorWord = join1.connectorWord || ""; // 그리고, 그래서...
 
+    // --- P2 (doar dacă checkbox-ul e ON) ---
     if (useP2) {
       const hasAnyP2Slot =
         readFromTable("tableP2", "subject") ||
@@ -741,15 +757,20 @@
           obj2 = s2.object;
         }
 
-        const p2Pieces = [s2.subject, s2.time, s2.place, s2.mod, obj2, s2.verb].filter(Boolean);
+        const verb2Final = toYoForm(s2.verb || "");
+        const p2Pieces = [s2.subject, s2.time, s2.place, s2.mod, obj2, verb2Final].filter(Boolean);
         const p2Sentence = p2Pieces.join(" ");
 
         if (p2Sentence) {
-          if (midWord) {
-            // ex: 저 오늘 시장 가요 -고 책 한 권 읽어요
-            finalSentence = p1Sentence + " " + midWord + " " + p2Sentence;
+          // dacă nu avem nici 그리고, nici terminație lipită → default 그리고
+          if (!connectorWord && !join1.usedSticky) {
+            connectorWord = "그리고";
+          }
+
+          if (connectorWord) {
+            finalSentence = p1Sentence + " " + connectorWord + " " + p2Sentence;
           } else {
-            // ex: 저 오늘 시장 가고 책 한 권 읽어요
+            // cazul cu -고 / -아서 / -어서: verb1 deja are terminaţia lipită
             finalSentence = p1Sentence + " " + p2Sentence;
           }
         }
@@ -786,8 +807,8 @@
     );
     if (conjCell) {
       if (parts.conj) {
-        // „și / si / iar / apoi” => default: -고
-        conjCell.textContent = "-고";
+        // toate "și / si / iar / apoi" devin 자동 그리고 (poți edita manual)
+        conjCell.textContent = "그리고";
       } else {
         conjCell.textContent = "";
       }
@@ -831,7 +852,7 @@
   }
 
   // ===========================================
-  // 7. Init: prindem butoanele + bifa P2
+  // 7. Init: butoane + bifa P2
   // ===========================================
   window.addEventListener("DOMContentLoaded", function () {
     const autoFillBtn = document.getElementById("autoFillBtn");
@@ -855,6 +876,5 @@
   });
 })();
 </script>
- 
 </body>
 </html>
