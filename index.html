@@ -493,282 +493,323 @@
     </section>
   </div>
 <script>
-// =======================================================
-// 1. Normalizare text română
-// =======================================================
-function normalizeRo(text) {
-  if (!text) return "";
-  let t = text.toLowerCase();
-
-  // diacritice
-  t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
-  t = t.replace(/Ã¢/g, "â").replace(/Ã®/g, "î");
-
-  // scoatem semne de punctuație
-  t = t.replace(/[.,!?;:]/g, " ");
-
-  // spații multiple → un singur spațiu
-  t = t.replace(/\s+/g, " ").trim();
-  return t;
-}
-
-// =======================================================
-// 2. Reguli simple RO → sloturi (SUBJECT / TIME / PLACE etc.)
-// =======================================================
-const RO_RULES = {
-  subject: [
-    { re: /\beu\s*\(formal\)|eu\s*-\s*formal\b/, value: "저" },
-    { re: /\beu\s*\(informal\)|eu\s*-\s*informal\b/, value: "나" },
-    { re: /\beu\b/, value: "저" },
-    { re: /\btu\b/, value: "너" }
-  ],
-  time: [
-    { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
-    { re: /\bmâine\b/, value: "내일" },
-    { re: /\bieri\b/, value: "어제" },
-    { re: /\bacum\b/, value: "지금" }
-  ],
-  place: [
-    { re: /\bacas[ăa]\b/, value: "집" },
-    { re: /la\s+școal[ăa]|la\s+scoala|școal[ăa]\b|scoala\b/, value: "학교" },
-    { re: /la\s+firm[ăa]|la\s+serviciu|la\s+companie|firm[ăa]\b|serviciu\b|companie\b/, value: "회사" },
-    { re: /la\s+pia[țt]ă|pia[țt]ă\b/, value: "시장" },
-    { re: /cafenea|cafene[al]/, value: "카페" }
-  ],
-  mod: [
-    { re: /\bbine\b|frumos\b|ok\b/, value: "잘" },
-    { re: /în\s+liniște|in\s+liniste|liniște|liniste/, value: "조용히" },
-    { re: /cu\s+sârguint[ăa]|cu\s+sarguinta|harnic|cu\s+mult\s+efort/, value: "열심히" },
-    { re: /încet|incet/, value: "천천히" },
-    { re: /repede|rapid/, value: "빨리" }
-  ],
-  object: [
-    { re: /cafea/, value: "커피" },
-    { re: /\bap[ăa]\b|ap[ăa]\s+mineral[ăa]?/, value: "물" },
-    { re: /carte|c[ăa]rțile|c[ăa]rti\b/, value: "책" },
-    { re: /m[ăa]ncare|pr[ăa]nzul|cina|mic\s+dejun/, value: "음식" },
-    { re: /ceai\b/, value: "차" }
-  ],
-  numeral: [
-    { re: /\bo\s+carte\b|\bun[ăa]?\s+carte\b|\b(o|un)\s+caf(ea)?\b/, value: "한" },
-    { re: /\bdou[ăa]\s+carți|dou[ăa]\s+cafele/, value: "두" },
-    { re: /\btrei\s+carți|trei\s+cafele/, value: "세" }
-  ],
-  counter: [
-    { re: /carte|c[ăa]rti\b/, value: "권" },
-    { re: /cafea|ap[ăa]\b|ceai\b|m[ăa]ncare/, value: "개" }
-  ],
-  verb: [
-    { re: /merg\b|a merge|să merg|sa merg/, value: "가요" },
-    { re: /vin\b|a veni|să vin|sa vin/, value: "와요" },
-    { re: /beau\b|a bea|să beau|sa beau/, value: "마셔요" },
-    { re: /m[ăa]n[âa]nc\b|m[ăa]nânc|mananc|a m[ăa]nca/, value: "먹어요" },
-    { re: /citesc|a citi|să citesc|sa citesc/, value: "읽어요" },
-    { re: /lucrez|a lucra/, value: "일해요" }
-  ]
-};
-
-function matchSlot(rules, text) {
-  if (!rules) return null;
-  for (const rule of rules) {
-    if (rule.re.test(text)) return rule.value;
+(function () {
+  // ================================
+  // 0. Helper: normalizează româna
+  // ================================
+  function normalizeRo(text) {
+    if (!text) return "";
+    let t = text.toLowerCase();
+    t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
+    t = t.replace(/[.,!?;:]/g, " ");
+    t = t.replace(/\s+/g, " ").trim();
+    return t;
   }
-  return null;
-}
 
-// text română → sloturi pentru builder
-function parseRomanianToSlots(text) {
-  const t = normalizeRo(text);
-  return {
-    subject: matchSlot(RO_RULES.subject, t),
-    time:    matchSlot(RO_RULES.time, t),
-    place:   matchSlot(RO_RULES.place, t),
-    mod:     matchSlot(RO_RULES.mod, t),
-    object:  matchSlot(RO_RULES.object, t),
-    numeral: matchSlot(RO_RULES.numeral, t),
-    counter: matchSlot(RO_RULES.counter, t),
-    verb:    matchSlot(RO_RULES.verb, t)
+  // ===========================================
+  // 1. Split propoziția în P1 + CONJ + P2
+  //    ex: "Eu merg la piață și citesc o carte"
+  // ===========================================
+  function splitSentence(raw) {
+    const t = (raw || "").replace(/\s+/g, " ").trim();
+
+    // căutăm: [ceva] (și|si|iar|apoi) [ceva]
+    const re = /^(.*?)(?:\s+(și|si|iar|apoi)\s+)(.+)$/i;
+    const m = t.match(re);
+
+    if (m) {
+      return {
+        p1: m[1].trim(),
+        conj: (m[2] || "").toLowerCase(),
+        p2: m[3].trim(),
+      };
+    }
+    // fără „și” => doar P1, fără P2
+    return { p1: t, conj: "", p2: "" };
+  }
+
+  // ===========================================
+  // 2. Reguli simple RO → sloturi (subject/time...)
+  // ===========================================
+  const RO_RULES = {
+    subject: [
+      { re: /\beu\s*\(formal\)|eu\s*-\s*formal\b/, value: "저" },
+      { re: /\beu\s*\(informal\)|eu\s*-\s*informal\b/, value: "나" },
+      { re: /\beu\b/, value: "저" },
+      { re: /\btu\b/, value: "너" },
+    ],
+    time: [
+      { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
+      { re: /\bmâine\b/, value: "내일" },
+      { re: /\bieri\b/, value: "어제" },
+      { re: /\bacum\b/, value: "지금" },
+    ],
+    place: [
+      { re: /\bacas[ăa]\b/, value: "집" },
+      { re: /pia[tț]ă|market\b/, value: "시장" },
+      { re: /la\s+școal[ăa]|la\s+scoala|școal[ăa]\b|scoala\b/, value: "학교" },
+      {
+        re: /la\s+firm[ăa]|la\s+serviciu|la\s+companie|firm[ăa]\b|serviciu\b|companie\b/,
+        value: "회사",
+      },
+      { re: /cafenea|cafene[al]/, value: "카페" },
+      { re: /magazin|supermarket/, value: "가게" },
+    ],
+    mod: [
+      { re: /\bbine\b|frumos\b|ok\b/, value: "잘" },
+      { re: /în\s+liniște|in\s+liniste|liniște|liniste/, value: "조용히" },
+      { re: /cu\s+sârguint[ăa]|cu\s+sarguinta|harnic|cu\s+mult\s+efort/, value: "열심히" },
+      { re: /încet|incet/, value: "천천히" },
+      { re: /repede|rapid/, value: "빨리" },
+    ],
+    object: [
+      { re: /cafea/, value: "커피" },
+      { re: /\bap[ăa]\b|ap[ăa]\s+mineral[ăa]?/, value: "물" },
+      { re: /carte|c[ăa]rțile|c[ăa]rti\b/, value: "책" },
+      { re: /m[ăa]ncare|pr[ăa]nzul|cina|mic\s+dejun/, value: "음식" },
+      { re: /ceai\b/, value: "차" },
+    ],
+    numeral: [
+      { re: /\bo\s+carte\b|\bo\s+cafea\b/, value: "한" },
+      { re: /\bdou[ăa]\s+carți|\bdou[ăa]\s+cafele/, value: "두" },
+      { re: /\btrei\s+carți|\btrei\s+cafele/, value: "세" },
+    ],
+    counter: [
+      { re: /carte|c[ăa]rti\b/, value: "권" },
+      { re: /cafea|ap[ăa]\b|ceai\b|m[ăa]ncare/, value: "개" },
+    ],
+    verb: [
+      { re: /merg\b|a merge|să merg|sa merg/, value: "가요" },
+      { re: /vin\b|a veni|să vin|sa vin/, value: "와요" },
+      { re: /beau\b|a bea|să beau|sa beau/, value: "마셔요" },
+      { re: /m[âă]n[âa]nc\b|m[âă]nânc|mananc|a m[âă]nca/, value: "먹어요" },
+      { re: /citesc|a citi|să citesc|sa citesc/, value: "읽어요" },
+      { re: /lucrez|a lucra/, value: "일해요" },
+    ],
   };
-}
 
-// =======================================================
-// 3. Funcții helper pentru tabelele P1 / P2
-// =======================================================
+  function matchSlot(rules, textNorm) {
+    if (!rules) return "";
+    for (const rule of rules) {
+      if (rule.re.test(textNorm)) return rule.value;
+    }
+    return "";
+  }
 
-// Pune sloturile în tabelul P1
-function applySlotsToBuilderP1(slots) {
-  const table = document.getElementById("tableP1");
-  if (!table || !slots) return;
+  function parseRomanianToSlots(text) {
+    const t = normalizeRo(text);
+    if (!t) return {};
+    return {
+      subject: matchSlot(RO_RULES.subject, t),
+      time: matchSlot(RO_RULES.time, t),
+      place: matchSlot(RO_RULES.place, t),
+      mod: matchSlot(RO_RULES.mod, t),
+      object: matchSlot(RO_RULES.object, t),
+      numeral: matchSlot(RO_RULES.numeral, t),
+      counter: matchSlot(RO_RULES.counter, t),
+      verb: matchSlot(RO_RULES.verb, t),
+    };
+  }
 
-  const setCol = (key, value) => {
-    if (!value) return;
-    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
-    if (col) col.textContent = value;
-  };
+  // ===========================================
+  // 3. Scriem sloturile în tabele (P1 / P2)
+  // ===========================================
+  function applySlotsToTable(tableId, slots) {
+    if (!slots) return;
+    const table = document.getElementById(tableId);
+    if (!table) return;
 
-  setCol("subject", slots.subject);
-  setCol("time",    slots.time);
-  setCol("place",   slots.place);
-  setCol("mod",     slots.mod);
-  setCol("object",  slots.object);
-  setCol("numeral", slots.numeral);
-  setCol("counter", slots.counter);
-  setCol("verb",    slots.verb);
-}
+    ["subject", "time", "place", "mod", "object", "numeral", "counter", "verb"].forEach(
+      (key) => {
+        const value = slots[key];
+        if (!value) return;
+        const cell = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+        if (cell) cell.textContent = value;
+      }
+    );
+  }
 
-// Construiește o propoziție KO dintr-un tabel (P1 sau P2)
-function makeClauseFromTable(tableId) {
-  const table = document.getElementById(tableId);
-  if (!table) return "";
-
-  const pick = (key) => {
-    const cell = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+  function readFromTable(tableId, key) {
+    const cell = document.querySelector(
+      "#" + tableId + ' .col[data-key="' + key + '"] .col-body-main'
+    );
     return cell ? cell.textContent.trim() : "";
-  };
-
-  const subject = pick("subject");
-  const time    = pick("time");
-  const place   = pick("place");
-  const mod     = pick("mod");
-  const object  = pick("object");
-  const numeral = pick("numeral");
-  const counter = pick("counter");
-  const verb    = pick("verb");
-
-  let objectChunk = "";
-  if (object && numeral && counter) objectChunk = object + " " + numeral + " " + counter;
-  else if (object) objectChunk = object;
-
-  const pieces = [subject, time, place, mod, objectChunk, verb].filter(Boolean);
-  return pieces.join(" ");
-}
-
-// =======================================================
-// 4. Propoziția finală în coreeană (P1 + CONJ + P2)
-// =======================================================
-function rebuildFinalPreview() {
-  const p1 = makeClauseFromTable("tableP1");
-  const enableP2 = document.getElementById("enableP2");
-  const p2On = enableP2 ? enableP2.checked : false;
-  const p2 = p2On ? makeClauseFromTable("tableP2") : "";
-
-  // conector din căsuța "CONJ / ENDING" din P1
-  const conjCell = document.querySelector(
-    '#tableP1 .col[data-key="conj"] .col-body-main'
-  );
-  let conj = conjCell ? conjCell.textContent.trim() : "";
-
-  // dacă există P2 dar nu ai scris nimic la conector → default "그리고"
-  if (p2 && !conj) conj = "그리고";
-
-  let sentence = "";
-  if (p1 && p2 && conj) sentence = [p1, conj, p2].join(" ");
-  else if (p1 && p2)    sentence = [p1, p2].join(" ");
-  else sentence = p1;
-
-  const out = document.getElementById("previewSentence");
-  if (out) out.textContent = sentence || "";
-}
-
-// =======================================================
-// 5. Split propoziție românească în P1 / P2 după „și”
-// =======================================================
-function splitRomanianSentence(text) {
-  if (!text) return { p1: "", p2: "" };
-  const norm = normalizeRo(text); // pentru detectarea lui " si "
-  const idx = norm.indexOf(" si ");
-  if (idx === -1) {
-    return { p1: text.trim(), p2: "" };
-  }
-  const p1 = text.slice(0, idx).trim();
-  const p2 = text.slice(idx + 4).trim(); // lungimea lui " si "
-  return { p1, p2 };
-}
-
-// =======================================================
-// 6. Wiring: butoane, checkbox P2, inputuri contenteditable
-// =======================================================
-document.addEventListener("DOMContentLoaded", () => {
-  const roInput     = document.getElementById("roInput");
-  const autoFillBtn = document.getElementById("autoFillBtn");
-  const clearBtn    = document.getElementById("clearBtn");
-  const enableP2    = document.getElementById("enableP2");
-  const titleP2     = document.getElementById("titleP2");
-  const tableP2     = document.getElementById("tableP2");
-
-  // --- afișare / ascundere Propoziția 2
-  function syncP2Visibility() {
-    const on = enableP2 && enableP2.checked;
-    if (titleP2) titleP2.style.display = on ? "" : "none";
-    if (tableP2) tableP2.style.display = on ? "flex" : "none";
-  }
-  if (enableP2) {
-    enableP2.addEventListener("change", () => {
-      syncP2Visibility();
-      rebuildFinalPreview();
-    });
-    syncP2Visibility();
   }
 
-  // --- buton "Completează automat builder-ul"
-  if (autoFillBtn && roInput) {
-    autoFillBtn.addEventListener("click", () => {
-      const full = roInput.value.trim();
-      if (!full) return;
+  // ===========================================
+  // 4. Construim propoziția finală KO (P1 + CONJ + P2)
+  // ===========================================
+  function rebuildPreview() {
+    const enableP2 = document.getElementById("enableP2");
+    const useP2 = !!(enableP2 && enableP2.checked);
 
-      const parts = splitRomanianSentence(full);
-      const slotsP1 = parseRomanianToSlots(parts.p1);
+    // --- P1 ---
+    const s1 = {
+      subject: readFromTable("tableP1", "subject") || "저",
+      time: readFromTable("tableP1", "time"),
+      place: readFromTable("tableP1", "place"),
+      mod: readFromTable("tableP1", "mod"),
+      object: readFromTable("tableP1", "object"),
+      numeral: readFromTable("tableP1", "numeral"),
+      counter: readFromTable("tableP1", "counter"),
+      verb: readFromTable("tableP1", "verb") || "가요",
+    };
 
-      // Umple P1
-      applySlotsToBuilderP1(slotsP1);
+    let obj1 = "";
+    if (s1.object && s1.numeral && s1.counter) {
+      obj1 = s1.object + " " + s1.numeral + " " + s1.counter;
+    } else if (s1.object) {
+      obj1 = s1.object;
+    }
 
-      // Dacă avem P2 în română, punem default conector "그리고"
-      if (parts.p2) {
-        if (enableP2) enableP2.checked = true;
-        syncP2Visibility();
-        const conjCell = document.querySelector(
-          '#tableP1 .col[data-key="conj"] .col-body-main'
-        );
-        if (conjCell && !conjCell.textContent.trim()) {
-          conjCell.textContent = "그리고";
+    const p1Pieces = [s1.subject, s1.time, s1.place, s1.mod, obj1, s1.verb].filter(Boolean);
+    const p1Sentence = p1Pieces.join(" ");
+
+    // --- CONECTOR ---
+    const conjText = readFromTable("tableP1", "conj");
+    const conj = conjText || "";
+
+    // --- P2 (doar dacă checkbox-ul e ON) ---
+    let finalSentence = p1Sentence;
+
+    if (useP2) {
+      const hasAnyP2Slot =
+        readFromTable("tableP2", "subject") ||
+        readFromTable("tableP2", "time") ||
+        readFromTable("tableP2", "place") ||
+        readFromTable("tableP2", "mod") ||
+        readFromTable("tableP2", "object") ||
+        readFromTable("tableP2", "numeral") ||
+        readFromTable("tableP2", "counter") ||
+        readFromTable("tableP2", "verb");
+
+      if (hasAnyP2Slot) {
+        const s2 = {
+          subject: readFromTable("tableP2", "subject"),
+          time: readFromTable("tableP2", "time"),
+          place: readFromTable("tableP2", "place"),
+          mod: readFromTable("tableP2", "mod"),
+          object: readFromTable("tableP2", "object"),
+          numeral: readFromTable("tableP2", "numeral"),
+          counter: readFromTable("tableP2", "counter"),
+          verb: readFromTable("tableP2", "verb"),
+        };
+
+        let obj2 = "";
+        if (s2.object && s2.numeral && s2.counter) {
+          obj2 = s2.object + " " + s2.numeral + " " + s2.counter;
+        } else if (s2.object) {
+          obj2 = s2.object;
+        }
+
+        const p2Pieces = [s2.subject, s2.time, s2.place, s2.mod, obj2, s2.verb].filter(Boolean);
+        const p2Sentence = p2Pieces.join(" ");
+
+        if (p2Sentence) {
+          const mid = conj || "그리고";
+          finalSentence = p1Sentence + " " + mid + " " + p2Sentence;
         }
       }
+    }
 
-      rebuildFinalPreview();
-    });
+    const out = document.getElementById("previewSentence");
+    if (out) out.textContent = (finalSentence || "").trim();
   }
 
-  // --- buton "Curăță tot"
-  if (clearBtn && roInput) {
-    clearBtn.addEventListener("click", () => {
-      roInput.value = "";
+  // ===========================================
+  // 5. Auto-fill din textarea română
+  // ===========================================
+  function autoFillFromRomanian() {
+    const input = document.getElementById("roInput");
+    if (!input) return;
+    const text = input.value || "";
 
-      // goliți toate căsuțele din P1 + P2 + conector
-      document
-        .querySelectorAll("#tableP1 .col-body-main, #tableP2 .col-body-main")
-        .forEach(el => { el.textContent = ""; });
+    const parts = splitSentence(text); // {p1, conj, p2}
 
-      if (enableP2) enableP2.checked = false;
-      syncP2Visibility();
+    // P1
+    const slots1 = parseRomanianToSlots(parts.p1);
+    applySlotsToTable("tableP1", slots1);
 
-      const out = document.getElementById("previewSentence");
-      if (out) out.textContent = "";
-    });
+    // P2
+    const slots2 = parts.p2 ? parseRomanianToSlots(parts.p2) : null;
+    if (slots2) {
+      applySlotsToTable("tableP2", slots2);
+    }
+
+    // CONJ / ENDING în căsuța lui (P1, data-key="conj")
+    const conjCell = document.querySelector(
+      '#tableP1 .col[data-key="conj"] .col-body-main'
+    );
+    if (conjCell) {
+      if (parts.conj) {
+        // acum toate "și / si / iar / apoi" devin 그리고
+        conjCell.textContent = "그리고";
+      } else {
+        conjCell.textContent = "";
+      }
+    }
+
+    // dacă am P2, bifa Propoziția 2 ON
+    const enableP2 = document.getElementById("enableP2");
+    const p2Block = document.getElementById("p2Block");
+    if (enableP2) {
+      enableP2.checked = !!parts.p2;
+      if (p2Block) {
+        p2Block.style.display = enableP2.checked ? "" : "none";
+      }
+    }
+
+    rebuildPreview();
   }
 
-  // --- când editezi manual o căsuță, se reface fraza
-  document
-    .querySelectorAll("#tableP1 .col-body-main, #tableP2 .col-body-main")
-    .forEach(el => {
-      el.addEventListener("input", () => {
-        rebuildFinalPreview();
+  // ===========================================
+  // 6. Clear all
+  // ===========================================
+  function clearAll() {
+    const input = document.getElementById("roInput");
+    if (input) input.value = "";
+
+    ["tableP1", "tableP2"].forEach((id) => {
+      const table = document.getElementById(id);
+      if (!table) return;
+      table.querySelectorAll(".col-body-main").forEach((el) => {
+        el.textContent = "";
       });
     });
 
-  // facem un preview inițial gol
-  rebuildFinalPreview();
-});
-  
+    const conjCell = document.querySelector(
+      '#tableP1 .col[data-key="conj"] .col-body-main'
+    );
+    if (conjCell) conjCell.textContent = "";
+
+    const out = document.getElementById("previewSentence");
+    if (out) out.textContent = "저 가요";
+  }
+
+  // ===========================================
+  // 7. Init: prindem butoanele + bifa P2
+  // ===========================================
+  window.addEventListener("DOMContentLoaded", function () {
+    const autoFillBtn = document.getElementById("autoFillBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const enableP2 = document.getElementById("enableP2");
+    const p2Block = document.getElementById("p2Block");
+
+    if (autoFillBtn) autoFillBtn.addEventListener("click", autoFillFromRomanian);
+    if (clearBtn) clearBtn.addEventListener("click", clearAll);
+
+    if (enableP2 && p2Block) {
+      const sync = () => {
+        p2Block.style.display = enableP2.checked ? "" : "none";
+        rebuildPreview();
+      };
+      enableP2.addEventListener("change", sync);
+      sync();
+    }
+
+    rebuildPreview();
+  });
+})();
 </script>
 </body>
 </html>
