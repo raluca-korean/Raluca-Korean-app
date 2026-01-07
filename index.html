@@ -492,7 +492,7 @@
       </div>
     </section>
   </div>
-<script>
+      <script>
 (function () {
   // ================================
   // 0. Helper: normalizează româna
@@ -508,12 +508,11 @@
 
   // ===========================================
   // 1. Split propoziția în P1 + CONJ + P2
-  //    ex: "Eu merg la piață și citesc o carte"
   // ===========================================
   function splitSentence(raw) {
     const t = (raw || "").replace(/\s+/g, " ").trim();
 
-    // căutăm: [ceva] (și|si|iar|apoi) [ceva]
+    // "ceva" (și|si|iar|apoi) "ceva"
     const re = /^(.*?)(?:\s+(și|si|iar|apoi)\s+)(.+)$/i;
     const m = t.match(re);
 
@@ -524,12 +523,12 @@
         p2: m[3].trim(),
       };
     }
-    // fără „și” => doar P1, fără P2
     return { p1: t, conj: "", p2: "" };
   }
 
   // ===========================================
   // 2. Reguli simple RO → sloturi (subject/time...)
+  //    VERB = INFINITIV (가다, 읽다...)
   // ===========================================
   const RO_RULES = {
     subject: [
@@ -578,13 +577,14 @@
       { re: /carte|c[ăa]rti\b/, value: "권" },
       { re: /cafea|ap[ăa]\b|ceai\b|m[ăa]ncare/, value: "개" },
     ],
+    // VERB = INFINITIV
     verb: [
-      { re: /merg\b|a merge|să merg|sa merg/, value: "가요" },
-      { re: /vin\b|a veni|să vin|sa vin/, value: "와요" },
-      { re: /beau\b|a bea|să beau|sa beau/, value: "마셔요" },
-      { re: /m[âă]n[âa]nc\b|m[âă]nânc|mananc|a m[âă]nca/, value: "먹어요" },
-      { re: /citesc|a citi|să citesc|sa citesc/, value: "읽어요" },
-      { re: /lucrez|a lucra/, value: "일해요" },
+      { re: /merg\b|a merge|să merg|sa merg/, value: "가다" },
+      { re: /vin\b|a veni|să vin|sa vin/, value: "오다" },
+      { re: /beau\b|a bea|să beau|sa beau/, value: "마시다" },
+      { re: /m[âă]n[âa]nc\b|m[âă]nânc|mananc|a m[âă]nca/, value: "먹다" },
+      { re: /citesc|a citi|să citesc|sa citesc/, value: "읽다" },
+      { re: /lucrez|a lucra/, value: "일하다" },
     ],
   };
 
@@ -609,6 +609,20 @@
       counter: matchSlot(RO_RULES.counter, t),
       verb: matchSlot(RO_RULES.verb, t),
     };
+  }
+
+  // polite din infinitiv (pentru P2, ultima propoziție)
+  const POLITE_FOR_VERB = {
+    "가다": "가요",
+    "오다": "와요",
+    "마시다": "마셔요",
+    "먹다": "먹어요",
+    "읽다": "읽어요",
+    "일하다": "일해요",
+  };
+
+  function toPolite(inf) {
+    return POLITE_FOR_VERB[inf] || inf;
   }
 
   // ===========================================
@@ -637,77 +651,90 @@
   }
 
   // ===========================================
-  // 4. Construim propoziția finală KO (P1 + CONJ + P2)
+  // 4. Construim propoziția finală KO
+  //    P1: verb + CONJ/ENDING (legate)
+  //    P2: verb la forma finală (polite)
   // ===========================================
+  function buildClauseFromTable(tableId, options) {
+    const o = options || {};
+    const subject = readFromTable(tableId, "subject") || (o.defaultSubject || "");
+    const time = readFromTable(tableId, "time");
+    const place = readFromTable(tableId, "place");
+    const mod = readFromTable(tableId, "mod");
+    const object = readFromTable(tableId, "object");
+    const numeral = readFromTable(tableId, "numeral");
+    const counter = readFromTable(tableId, "counter");
+    let verb = readFromTable(tableId, "verb") || (o.defaultVerb || "");
+
+    let objChunk = "";
+    if (object && numeral && counter) {
+      objChunk = object + " " + numeral + " " + counter;
+    } else if (object) {
+      objChunk = object;
+    }
+
+    // dacă avem "ending atașat" (~고, ~아서...)
+    let ending = "";
+    if (o.useConjColumn) {
+      ending = readFromTable("tableP1", "conj");
+    }
+
+    let middleWord = "";      // 그리고, 그래서...
+    let verbChunk = verb;
+
+    if (o.useConjColumn && ending) {
+      if (ending.startsWith("~")) {
+        // ex: verb = 읽다, ending = "~고"  =>  읽고
+        const suffix = ending.replace(/^~/, "");
+        const stem = verb.endsWith("다") ? verb.slice(0, -1) : verb;
+        verbChunk = stem + suffix;
+      } else {
+        // ending e cuvânt separat: 그리고, 그래서...
+        // verb rămâne la infinitiv sau îl facem politicos:
+        verbChunk = toPolite(verb || o.defaultVerb || "");
+        middleWord = ending;
+      }
+    } else if (o.makePolite) {
+      verbChunk = toPolite(verb || o.defaultVerb || "");
+    }
+
+    const pieces = [subject, time, place, mod, objChunk, verbChunk].filter(Boolean);
+    return { text: pieces.join(" "), middleWord };
+  }
+
   function rebuildPreview() {
     const enableP2 = document.getElementById("enableP2");
     const useP2 = !!(enableP2 && enableP2.checked);
 
-    // --- P1 ---
-    const s1 = {
-      subject: readFromTable("tableP1", "subject") || "저",
-      time: readFromTable("tableP1", "time"),
-      place: readFromTable("tableP1", "place"),
-      mod: readFromTable("tableP1", "mod"),
-      object: readFromTable("tableP1", "object"),
-      numeral: readFromTable("tableP1", "numeral"),
-      counter: readFromTable("tableP1", "counter"),
-      verb: readFromTable("tableP1", "verb") || "가요",
-    };
+    // P1 (cu ending/conector în căsuța lui)
+    const clause1 = buildClauseFromTable("tableP1", {
+      defaultSubject: "저",
+      defaultVerb: "가다",
+      useConjColumn: true,
+      makePolite: false, // verbul P1 poate fi doar cu ending (~고 etc.)
+    });
 
-    let obj1 = "";
-    if (s1.object && s1.numeral && s1.counter) {
-      obj1 = s1.object + " " + s1.numeral + " " + s1.counter;
-    } else if (s1.object) {
-      obj1 = s1.object;
-    }
-
-    const p1Pieces = [s1.subject, s1.time, s1.place, s1.mod, obj1, s1.verb].filter(Boolean);
-    const p1Sentence = p1Pieces.join(" ");
-
-    // --- CONECTOR ---
-    const conjText = readFromTable("tableP1", "conj");
-    const conj = conjText || "";
-
-    // --- P2 (doar dacă checkbox-ul e ON) ---
-    let finalSentence = p1Sentence;
+    let finalSentence = clause1.text || "";
 
     if (useP2) {
-      const hasAnyP2Slot =
-        readFromTable("tableP2", "subject") ||
-        readFromTable("tableP2", "time") ||
-        readFromTable("tableP2", "place") ||
-        readFromTable("tableP2", "mod") ||
-        readFromTable("tableP2", "object") ||
-        readFromTable("tableP2", "numeral") ||
-        readFromTable("tableP2", "counter") ||
-        readFromTable("tableP2", "verb");
+      // P2 = clauza finală, verb politicos
+      const clause2 = buildClauseFromTable("tableP2", {
+        makePolite: true,
+        defaultVerb: "가다",
+      });
 
-      if (hasAnyP2Slot) {
-        const s2 = {
-          subject: readFromTable("tableP2", "subject"),
-          time: readFromTable("tableP2", "time"),
-          place: readFromTable("tableP2", "place"),
-          mod: readFromTable("tableP2", "mod"),
-          object: readFromTable("tableP2", "object"),
-          numeral: readFromTable("tableP2", "numeral"),
-          counter: readFromTable("tableP2", "counter"),
-          verb: readFromTable("tableP2", "verb"),
-        };
-
-        let obj2 = "";
-        if (s2.object && s2.numeral && s2.counter) {
-          obj2 = s2.object + " " + s2.numeral + " " + s2.counter;
-        } else if (s2.object) {
-          obj2 = s2.object;
-        }
-
-        const p2Pieces = [s2.subject, s2.time, s2.place, s2.mod, obj2, s2.verb].filter(Boolean);
-        const p2Sentence = p2Pieces.join(" ");
-
-        if (p2Sentence) {
-          const mid = conj || "그리고";
-          finalSentence = p1Sentence + " " + mid + " " + p2Sentence;
+      if (clause2.text) {
+        if (clause1.middleWord) {
+          // avem conector-cuvânt (그리고, 그래서)
+          finalSentence =
+            (clause1.text ? clause1.text + " " : "") +
+            clause1.middleWord +
+            " " +
+            clause2.text;
+        } else {
+          // ending atașat (~고, ~아서...) → doar spațiu + clauza 2
+          finalSentence =
+            (clause1.text ? clause1.text + " " : "") + clause2.text;
         }
       }
     }
@@ -742,14 +769,14 @@
     );
     if (conjCell) {
       if (parts.conj) {
-        // acum toate "și / si / iar / apoi" devin 그리고
-        conjCell.textContent = "그리고";
+        // momentan toate "și / si / iar / apoi" → ~고 (leagă 2 acțiuni)
+        conjCell.textContent = "~고";
       } else {
         conjCell.textContent = "";
       }
     }
 
-    // dacă am P2, bifa Propoziția 2 ON
+    // dacă avem P2, bifa Propoziția 2 ON
     const enableP2 = document.getElementById("enableP2");
     const p2Block = document.getElementById("p2Block");
     if (enableP2) {
@@ -777,17 +804,12 @@
       });
     });
 
-    const conjCell = document.querySelector(
-      '#tableP1 .col[data-key="conj"] .col-body-main'
-    );
-    if (conjCell) conjCell.textContent = "";
-
     const out = document.getElementById("previewSentence");
     if (out) out.textContent = "저 가요";
   }
 
   // ===========================================
-  // 7. Init: prindem butoanele + bifa P2
+  // 7. Init: butoane + bifa P2
   // ===========================================
   window.addEventListener("DOMContentLoaded", function () {
     const autoFillBtn = document.getElementById("autoFillBtn");
