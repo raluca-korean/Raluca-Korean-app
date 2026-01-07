@@ -522,26 +522,29 @@
       t = t.replace(/\s+/g, " ").trim();
       return t;
     }
+ // ===========================================
+// 1. Split propoziția în P1 + CONJ + P2
+//    funcționează și pentru "și" și pentru "and"
+// ===========================================
+function splitSentence(raw, lang) {
+  const t = (raw || "").replace(/\s+/g, " ").trim();
+  if (!t) return { p1: "", conj: "", p2: "" };
 
-    // ===========================================
-    // Split propoziția în P1 + CONJ + P2
-    // ex: "Eu merg la piață și citesc o carte"
-    // ===========================================
-    function splitSentence(raw) {
-      const t = (raw || "").replace(/\s+/g, " ").trim();
-      const re = /^(.*?)(?:\s+(și|si|iar|apoi)\s+)(.+)$/i;
-      const m = t.match(re);
+  // acceptă și, si, iar, apoi, AND indiferent de ce limbă e selectată
+  const re = /^(.*?)(\s+(și|si|iar|apoi|and)\s+)(.+)$/i;
+  const m = t.match(re);
 
-      if (m) {
-        return {
-          p1: m[1].trim(),
-          conj: (m[2] || "").toLowerCase(),
-          p2: m[3].trim(),
-        };
-      }
-      return { p1: t, conj: "", p2: "" };
-    }
+  if (m) {
+    return {
+      p1: m[1].trim(),
+      conj: (m[3] || "").toLowerCase(),
+      p2: m[4].trim(),
+    };
+  }
 
+  // fără conector -> doar P1
+  return { p1: t, conj: "", p2: "" };
+}
     // ===========================================
     // Reguli simple RO → sloturi
     // ===========================================
