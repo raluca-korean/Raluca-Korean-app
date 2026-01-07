@@ -850,7 +850,55 @@
       if (slots2) {
         applySlotsToTable("tableP2", slots2);
       }
+  // 5b. Auto-fill din textarea ENG → KO
+  function autoFillFromEnglish() {
+    const input = document.getElementById("roInput");
+    if (!input) return;
+    const text = input.value || "";
 
+    const parts = splitSentenceEn(text); // {p1, conj, p2}
+
+    // P1
+    const slots1 = parseEnglishToSlots(parts.p1);
+    applySlotsToTable("tableP1", slots1);
+
+    // P2
+    const slots2 = parts.p2 ? parseEnglishToSlots(parts.p2) : null;
+    if (slots2) {
+      applySlotsToTable("tableP2", slots2);
+    }
+
+    // CONJ / ENDING în căsuța lui (P1, data-key="conj")
+    const conjCell = document.querySelector(
+      '#tableP1 .col[data-key="conj"] .col-body-main'
+    );
+    if (conjCell) {
+      let value = "";
+      if (parts.conj) {
+        // la fel ca la RO:
+        // dacă avem verb și în P1 și în P2 → ~고
+        if (slots1.verb && slots2 && slots2.verb) {
+          value = "~고";
+        } else {
+          // altfel, conector normal (그리고 la început de propoziție)
+          value = "그리고";
+        }
+      }
+      conjCell.textContent = value;
+    }
+
+    // dacă am P2, bifa Propoziția 2 ON / OFF
+    const enableP2 = document.getElementById("enableP2");
+    const p2Block = document.getElementById("p2Block");
+    if (enableP2) {
+      enableP2.checked = !!parts.p2;
+      if (p2Block) {
+        p2Block.style.display = enableP2.checked ? "" : "none";
+      }
+    }
+
+    rebuildPreview();
+  }
       // CONJ / ENDING în căsuța lui (P1, data-key="conj")
       const conjCell = document.querySelector(
         '#tableP1 .col[data-key="conj"] .col-body-main'
@@ -916,9 +964,20 @@
       const clearBtn = document.getElementById("clearBtn");
       const enableP2 = document.getElementById("enableP2");
       const p2Block = document.getElementById("p2Block");
+      if (autoFillBtn) {
+        autoFillBtn.addEventListener("click", function () {
+          const langSelect = document.getElementById("langSelect");
+          const lang = langSelect ? langSelect.value : "ro";
 
-      if (autoFillBtn) autoFillBtn.addEventListener("click", autoFillFromRomanian);
-      if (clearBtn) clearBtn.addEventListener("click", clearAll);
+          if (lang === "en") {
+            autoFillFromEnglish();
+          } else {
+            // comportamentul vechi pentru română rămâne IDENTIC
+            autoFillFromRomanian();
+          }
+        });
+      }
+      
 
       if (enableP2 && p2Block) {
         const sync = () => {
