@@ -750,6 +750,90 @@ document.addEventListener("DOMContentLoaded", () => {
   // preview inițial gol
   rebuildPreviewFull();
 });
+  /* ============================================================
+   P1 + P2 → propoziția finală (cu 그리고)
+   ============================================================ */
+
+/* Citește o propoziție dintr-un tabel (P1 sau P2) */
+function getSentenceFromTable(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return "";
+
+  const pick = (key) => {
+    const el = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    return el ? el.textContent.trim() : "";
+  };
+
+  const subject = pick("subject");
+  const time    = pick("time");
+  const place   = pick("place");
+  const mod     = pick("mod");
+  const object  = pick("object");
+  const numeral = pick("numeral");
+  const counter = pick("counter");
+  const verb    = pick("verb");
+
+  let objectChunk = "";
+  if (object && numeral && counter) {
+    objectChunk = object + " " + numeral + " " + counter;
+  } else if (object) {
+    objectChunk = object;
+  }
+
+  const parts = [subject, time, place, mod, objectChunk, verb].filter(Boolean);
+  return parts.join(" ");
+}
+
+/* Construiește propoziția finală: P1 (+ 그리고 + P2 dacă e activă) */
+function rebuildFinalSentence() {
+  const p1 = getSentenceFromTable("tableP1");
+
+  const enableP2 = document.getElementById("enableP2");
+  let finalSentence = p1;
+
+  if (enableP2 && enableP2.checked) {
+    const p2 = getSentenceFromTable("tableP2");
+    if (p2) {
+      finalSentence = p1 ? (p1 + " 그리고 " + p2) : p2;
+    }
+  }
+
+  const out = document.getElementById("previewSentence");
+  if (out) {
+    out.textContent = finalSentence || "여기에 문장이 나와요 :)";
+  }
+}
+
+/* Suprascriem vechea funcție – acum doar pune verbul în P1 (dacă există)
+   și apoi refacem propoziția finală folosind rebuildFinalSentence().
+*/
+function rebuildPreviewFromBuilderP1(slotsFromParser) {
+  const table1 = document.getElementById("tableP1");
+  if (table1 && slotsFromParser && slotsFromParser.verb) {
+    const verbCell = table1.querySelector('.col[data-key="verb"] .col-body-main');
+    if (verbCell && !verbCell.textContent.trim()) {
+      verbCell.textContent = slotsFromParser.verb;
+    }
+  }
+  rebuildFinalSentence();
+}
+
+/* Recalculăm propoziția finală când editezi manual sloturile P1 / P2 */
+["tableP1", "tableP2"].forEach((id) => {
+  const table = document.getElementById(id);
+  if (!table) return;
+  table.addEventListener("input", (e) => {
+    if (e.target.classList.contains("col-body-main")) {
+      rebuildFinalSentence();
+    }
+  });
+});
+
+/* Recalculăm și când bifezi / debifezi „Activează Propoziția 2” */
+const enableP2Box = document.getElementById("enableP2");
+if (enableP2Box) {
+  enableP2Box.addEventListener("change", rebuildFinalSentence);
+}
 </script>
 </body>
 </html>
