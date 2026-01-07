@@ -380,6 +380,13 @@
           <div class="col-body-label">가요, 마셔요…</div>
           <div class="col-body-main" contenteditable="true">가요</div>
         </div>
+              <!-- CONJ / ENDING (P1) -->
+      <div class="col" data-key="conjug">
+        <div class="col-header">CONJ / ENDING</div>
+        <div class="col-body-label">conector, terminație...</div>
+        <div class="col-body-main" contenteditable="true">그리고</div>
+        <div class="col-body-extra example">ex: 그리고, 그래서, ~고, ~아서...</div>
+      </div>
       </div>
 <!-- ===================================================== -->
 <!-- PROPOZIȚIA 2 – CONTINUARE                            -->
@@ -466,8 +473,14 @@
       <div class="col-body-main"></div>
       <div class="col-body-extra example">ex: 읽어요, 먹어요...</div>
     </div>
+          <!-- CONJ / ENDING (P2 – dacă vrei să continui mai departe) -->
+      <div class="col" data-key="conjug">
+        <div class="col-header">CONJ / ENDING</div>
+        <div class="col-body-label">conector, terminație...</div>
+        <div class="col-body-main" contenteditable="true"></div>
+        <div class="col-body-extra example">ex: 그리고, 그래서, ~고...</div>
+      </div>
   </div>
-</div>
     <!-- PREVIEW FINAL – FRAZĂ LUNGĂ -->
     <section class="preview-card">
       <div class="preview-title">
@@ -808,15 +821,16 @@ function rebuildFinalSentence() {
    și apoi refacem propoziția finală folosind rebuildFinalSentence().
 */
 function rebuildPreviewFromBuilderP1(slotsFromParser) {
-  const table1 = document.getElementById("tableP1");
-  const table2 = document.getElementById("tableP2");
-  const out    = document.getElementById("previewSentence");
+  const table1   = document.getElementById("tableP1");
+  const table2   = document.getElementById("tableP2");
+  const out      = document.getElementById("previewSentence");
   const enableP2 = document.getElementById("enableP2");
 
   if (!table1 || !out) return;
 
-  // helper: ia textul dintr-o coloană (SUBJECT, TIME, etc.)
+  // helper: ia textul dintr-o coloană (SUBJECT / TIME / PLACE / etc.)
   const pick = (table, key) => {
+    if (!table) return "";
     const cell = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
     return cell ? cell.textContent.trim() : "";
   };
@@ -829,14 +843,16 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
   const object1  = pick(table1, "object");
   const numeral1 = pick(table1, "numeral");
   const counter1 = pick(table1, "counter");
+  let   verb1    = pick(table1, "verb");
+  let   conj1    = pick(table1, "conjug");   // 🔗 noua căsuță
 
-  // verb P1: din tabel sau din parser, apoi fallback la 가요
-  let verb1 = pick(table1, "verb");
+  // dacă nu există verb în tabel, luăm din parser
   if (!verb1 && slotsFromParser && slotsFromParser.verb) {
     verb1 = slotsFromParser.verb;
   }
   if (!verb1) verb1 = "가요";
 
+  // obiect + numeral + counter
   let objectChunk1 = "";
   if (object1 && numeral1 && counter1) {
     objectChunk1 = object1 + " " + numeral1 + " " + counter1;
@@ -847,7 +863,7 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
   const pieces1 = [subject1, time1, place1, mod1, objectChunk1, verb1].filter(Boolean);
   let finalSentence = pieces1.join(" ");
 
-  /* ===== P2 – propoziția secundară (opțională) ===== */
+  /* ===== P2 – propoziția secundară, legată cu CONJ / ENDING ===== */
   if (enableP2 && enableP2.checked && table2) {
     const subject2 = pick(table2, "subject");
     const time2    = pick(table2, "time");
@@ -867,9 +883,11 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
 
     const pieces2 = [subject2, time2, place2, mod2, objectChunk2, verb2].filter(Boolean);
 
-    // dacă chiar avem ceva în P2, o adăugăm după "그리고"
     if (pieces2.length > 0) {
-      finalSentence = finalSentence + " 그리고 " + pieces2.join(" ");
+      // dacă nu ai completat tu nimic în CONJ, punem default "그리고"
+      if (!conj1) conj1 = "그리고";
+
+      finalSentence = finalSentence + " " + conj1 + " " + pieces2.join(" ");
     }
   }
 
