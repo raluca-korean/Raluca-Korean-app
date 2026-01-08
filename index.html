@@ -530,25 +530,24 @@
   //    funcționează pentru "și / si / iar / apoi / and"
   // ===========================================
   function splitSentence(raw) {
-    const t = (raw || "").replace(/\s+/g, " ").trim();
-    if (!t) return { p1: "", conj: "", p2: "" };
+  const t = (raw || "").trim();
+  if (!t) return { p1: "", conj: "", p2: "" };
 
-    // prinde: [ceva] (și|si|iar|apoi|and) [ceva]
-    const re = /^(.*?)(\s+(și|si|iar|apoi|and)\s+)(.+)$/i;
-    const m = t.match(re);
+  // prinde: "..., și ..." / " ... si ..." / " ... and ..."
+  // inclusiv dacă ai virgulă înainte sau spații aiurea
+  const re = /^(.*?)(?:\s*[,\.;]?\s+\b(și|si|iar|apoi|and)\b\s+)(.+)$/i;
+  const m = t.match(re);
 
-    if (m) {
-      return {
-        p1: m[1].trim(),
-        conj: (m[3] || "").toLowerCase(), // "și", "and" etc.
-        p2: m[4].trim(),
-      };
-    }
-
-    // fără conector -> doar P1
-    return { p1: t, conj: "", p2: "" };
+  if (m) {
+    return {
+      p1: (m[1] || "").trim(),
+      conj: (m[2] || "").toLowerCase(),
+      p2: (m[3] || "").trim(),
+    };
   }
-
+  return { p1: t, conj: "", p2: "" };
+}
+  
   // ===========================================
   // 2. Reguli simple RO → sloturi
   // ===========================================
