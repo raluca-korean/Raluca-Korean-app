@@ -795,31 +795,113 @@
       hasAny: pieces.length > 0 || !!connectorWord,
     };
   }
+function isStandaloneConnector(x) {
+  const t = (x || "").trim();
+  return ["그리고","그래서","하지만","또","또는","그래도","그러면"].includes(t);
+}
 
-  // ===========================================
-  // 6. Construim propoziția finală KO
-  // ===========================================
-  function rebuildPreview() {
-    const enableP2 = document.getElementById("enableP2");
-    const useP2 = !!(enableP2 && enableP2.checked);
+function normalizeEnding(x) {
+  let t = (x || "").trim();
+  // scoate simboluri comune: "-고", "~고"
+  t = t.replace(/^[-~]/, "").trim();
+  return t;
+}
 
-    // P1 cu posibil ending
-    const c1 = buildClause("tableP1", true);
-    let finalSentence = c1.clause || "저 가요";
+function verbStemFromInfinitive(v) {
+  const t = (v || "").trim();
+  if (!t) return "";
+  // dacă e infinitiv coreean, de obicei se termină în "다"
+  if (t.endsWith("다")) return t.slice(0, -1);
+  // dacă e deja conjugat (ex: 가요), îl lăsăm ca atare
+  return t;
+}
 
-    if (useP2) {
-      const c2 = buildClause("tableP2", false);
+function attachEndingToVerb(verb, ending) {
+  const e = normalizeEnding(ending);
+  if (!e) return verb;
 
-      if (c2.hasAny) {
-        const middle = c1.connectorWord || ""; // "-고" deja lipit, aici rămân 그리고, 그래서 etc.
-        const parts = [c1.clause, middle, c2.clause].filter(Boolean);
-        finalSentence = parts.join(" ");
-      }
-    }
+  // conectori separați NU se lipesc de verb
+  if (isStandaloneConnector(e)) return verb;
 
-    const out = document.getElementById("previewSentence");
-    if (out) out.textContent = (finalSentence || "").trim();
+  // lipim doar dacă verbul e infinitiv (se termină în 다)
+  const v = (verb || "").trim();
+  if (!v) return "";
+
+  if (v.endsWith("다")) {
+    // stem fără "다"
+    const stem = v.slice(0, -1);
+
+    // mic hack util pentru 하다 + 어서/아서 => 해서 (ca să nu iasă 하어서)
+    if (v === "하다" && (e === "어서" || e === "아서")) return "해서";
+    if (v === "하다" && e === "고") return "하고";
+
+    return stem + e; // ex: 가 + 고 = 가고 ; 읽 + 고 = 읽고 ; 가 + 어서 = 가어서 (user alege corect 어서/아서)
   }
+
+  // dacă verbul NU e infinitiv, nu încercăm să lipim (altfel stricăm)
+  return v;
+}
+
+function buildClause(tableId) {
+  const s = {
+    subject: readFromTable(tableId, "subject") || "",
+    time: readFromTable(tableId, "time") || "",
+    place: readFromTable(tableId, "place") || "",
+    mod: readFromTable(tableId, "mod") || "",
+    object: readFromTable(tableId, "object") || "",
+    numeral: readFromTable(tableId, "numeral") || "",
+    counter: readFromTable(tableId, "counter") || "",
+    verb: readFromTable(tableId, "verb") || "",
+    conj: readFromTable(tableId, "conj") || "" // CHEIA CORECTĂ
+  };
+
+  let obj = "";
+  if (s.object && s.numeral && s.counter) obj = s.object + " " + s.numeral + " " + s.counter;
+  else if (s.object) obj = s.object;
+
+  // dacă în aceeași propoziție vrei și "ending" lipit de verb (ex: -아요/-어요), îl pui tot în conj
+  const verbOut = attachEndingToVerb(s.verb, s.conj);
+
+  const pieces = [s.subject, s.time, s.place, s.mod, obj, verbOut].filter(Boolean);
+  return pieces.join(" ").trim();
+}
+
+function rebuildPreview() {
+  const enableP2 = document.getElementById("enableP2");
+  const useP2 = !!(enableP2 && enableP2.checked);
+
+  // P1 clause
+  const p1 = buildClause("tableP1") || "저 가요";
+
+  // verificăm dacă P2 are ceva
+  const hasAnyP2 =
+    readFromTable("tableP2", "subject") ||
+    readFromTable("tableP2", "time") ||
+    readFromTable("tableP2", "place") ||
+    readFromTable("tableP2", "mod") ||
+    readFromTable("tableP2", "object") ||
+    readFromTable("tableP2", "numeral") ||
+    readFromTable("tableP2", "counter") ||
+    readFromTable("tableP2", "verb") ||
+    readFromTable("tableP2", "conj");
+
+  let finalSentence = p1;
+
+  if (useP2 && hasAnyP2) {
+    const p2 = buildClause("tableP2");
+
+    // conectorul ÎNTRE propoziții: îl luăm din P1.conj DOAR dacă e conector separat (그리고/그래서 etc)
+    const p1Conj = normalizeEnding(readFromTable("tableP1", "conj"));
+    const mid = isStandaloneConnector(p1Conj) ? p1Conj : "";
+
+    // Dacă user vrea conector separat, îl punem aici.
+    // Dacă user folosește -고 / -아서/-어서, ele sunt deja lipite de verb în P1 (deci mid rămâne gol).
+    finalSentence = (p1 + (mid ? " " + mid : "") + (p2 ? " " + p2 : "")).trim();
+  }
+
+  const out = document.getElementById("previewSentence");
+  if (out) out.textContent = finalSentence;
+}
 
   // ===========================================
   // 7. Auto-fill din textarea (RO sau EN)
