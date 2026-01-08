@@ -735,56 +735,7 @@
     return cell ? cell.textContent.trim() : "";
   }
 
-  // construiește o clauză KO dintr-un tabel
 
-
-    let obj = "";
-    if (s.object && s.numeral && s.counter) {
-      obj = s.object + " " + s.numeral + " " + s.counter;
-    } else if (s.object) {
-      obj = s.object;
-    }
-
-    let verbText = s.verb;
-    let connectorWord = "";
-
-    if (includeEnding) {
-      const ending = readFromTable(tableId, "conjug"); // CONJ / ENDING
-      if (ending) {
-        const e = ending.trim();
-
-        // dacă arată ca terminație de verb (~고, -고, 고, ~아서, ~어서 etc.)
-        if (/^[-~]?(고|아서|어서)$/.test(e)) {
-          const core = e.replace(/^[-~]/, ""); // "고" etc
-
-          if (verbText) {
-            // scoatem 다 sau 요 dacă există
-            if (/다$/.test(verbText)) {
-              verbText = verbText.replace(/다$/, "") + core;
-            } else if (/요$/.test(verbText)) {
-              verbText = verbText.replace(/요$/, "") + core;
-            } else {
-              verbText = verbText + core;
-            }
-          } else {
-            connectorWord = core;
-          }
-        } else {
-          // altceva (de ex. "그리고", "그래서") – rămâne ca și cuvânt între P1 și P2
-          connectorWord = e;
-        }
-      }
-    }
-
-    const pieces = [s.subject, s.time, s.place, s.mod, obj, verbText].filter(Boolean);
-    const clause = pieces.join(" ");
-
-    return {
-      clause,
-      connectorWord,
-      hasAny: pieces.length > 0 || !!connectorWord,
-    };
-  }
 function isStandaloneConnector(x) {
   const t = (x || "").trim();
   return ["그리고","그래서","하지만","또","또는","그래도","그러면"].includes(t);
