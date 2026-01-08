@@ -782,8 +782,7 @@ function attachEndingToVerb(verb, ending) {
   // dacă verbul NU e infinitiv, nu încercăm să lipim (altfel stricăm)
   return v;
 }
-
-function buildClause(tableId) {
+ function buildClause(tableId) {
   const s = {
     subject: readFromTable(tableId, "subject") || "",
     time: readFromTable(tableId, "time") || "",
@@ -793,19 +792,34 @@ function buildClause(tableId) {
     numeral: readFromTable(tableId, "numeral") || "",
     counter: readFromTable(tableId, "counter") || "",
     verb: readFromTable(tableId, "verb") || "",
-   conj: readFromTable(tableId, "conjug") || ""
+    conj: readFromTable(tableId, "conjug") || ""   // 👈 CHEIA TA
   };
 
   let obj = "";
-  if (s.object && s.numeral && s.counter) obj = s.object + " " + s.numeral + " " + s.counter;
-  else if (s.object) obj = s.object;
+  if (s.object && s.numeral && s.counter) {
+    obj = s.object + " " + s.numeral + " " + s.counter;
+  } else if (s.object) {
+    obj = s.object;
+  }
 
-  // dacă în aceeași propoziție vrei și "ending" lipit de verb (ex: -아요/-어요), îl pui tot în conj
-  const verbOut = attachEndingToVerb(s.verb, s.conj);
+  let verbOut = s.verb;
 
-  const pieces = [s.subject, s.time, s.place, s.mod, obj, verbOut].filter(Boolean);
-  return pieces.join(" ").trim();
-}
+  // 🔥 AICI SE FACE MAGIA
+  if (s.conj) {
+    const ending = s.conj.replace(/^[-~]/, "").trim(); // "-고" → "고"
+
+    if (ending === "고" && verbOut.endsWith("다")) {
+      verbOut = verbOut.slice(0, -1) + "고"; // 가다 → 가고
+    }
+
+    if ((ending === "아서" || ending === "어서") && verbOut === "하다") {
+      verbOut = "해서";
+    }
+  }
+
+  const parts = [s.subject, s.time, s.place, s.mod, obj, verbOut].filter(Boolean);
+  return parts.join(" ");
+} 
 
 function rebuildPreview() {
   const enableP2 = document.getElementById("enableP2");
