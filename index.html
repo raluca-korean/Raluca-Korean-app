@@ -357,642 +357,202 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       <div id="previewInfo" class="preview-ro"></div>
     </section>
   </div>
+<script>
+(function(){
 
-  <script>
-  (function () {
+/* ======================
+   A. Normalizare
+====================== */
+function normalizeText(t){
+  return (t||"")
+    .toLowerCase()
+    .replace(/[.,!?;:]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
 
-    // =========================
-    // A) Normalizare text
-    // =========================
-    function normalizeText(text) {
-      if (!text) return "";
-      let t = text.toLowerCase();
-      t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
-      t = t.replace(/[.,!?;:]/g, " ");
-      t = t.replace(/\s+/g, " ").trim();
-      return t;
-    }
-
-    // =========================
-    // B) Conectori RO/EN -> KO
-    // (IMPORTANT: aici avem ending-uri vs conectori separați)
-    // =========================
-    const CONNECTOR_MAP = [
-      // RO (mai lungi primele)
-      { keys: ["atunci când", "cand", "când"], type: "ending", ko: "-(으)ㄹ 때" },
-      { keys: ["deși", "desi", "although", "even though"], type: "ending", ko: "-지만" }, // simplificat
-      { keys: ["pentru că", "pentru ca", "fiindcă", "fiindca", "because"], type: "ending", ko: "-어서" },
-      { keys: ["ca să", "ca sa", "pentru a", "in order to", "to"], type: "ending", ko: "-(으)려고" },
-      { keys: ["dacă", "daca", "if"], type: "ending", ko: "-(으)면" },
-      { keys: ["dar", "but"], type: "ending", ko: "-지만" },
-      { keys: ["și", "si", "and"], type: "ending", ko: "-고" },
-
-      // conectori separați (dacă user vrea să-i scrie manual în celulă)
-      // (nu îi punem automat din text, ca să nu stricăm sensul)
-    ];
-
-    function findConnectorToken(textNorm) {
-      // returnează match-ul cel mai lung posibil
-      for (const item of CONNECTOR_MAP) {
-        for (const k of item.keys) {
-          // conector ca "word boundary" aproximativ
-          // ex: " și " / " and "
-          const re = new RegExp("(^|\\s)" + escapeRegExp(k) + "(\\s|$)", "i");
-          const m = textNorm.match(re);
-          if (m) return { token: k, ...item };
-        }
-      }
-      return null;
-    }
-
-    function escapeRegExp(s) {
-      return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    }
-
-    // Split pe MULTIPLE conectori: produce array de clauze + conectori între ele
-    function splitIntoChain(raw, lang) {
-      const original = (raw || "").replace(/\s+/g, " ").trim();
-      const t = normalizeText(original);
-      if (!t) return { clauses: [], links: [] };
-
-      // Construim o regex care prinde ORICE conector relevant.
-      // Important: ordonăm cheile descrescător ca lungime, ca să prindă "atunci când" înainte de "când".
-      const allKeys = CONNECTOR_MAP.flatMap(x => x.keys);
-      const uniq = Array.from(new Set(allKeys));
-      uniq.sort((a,b) => b.length - a.length);
-
-      const alternation = uniq.map(escapeRegExp).join("|");
-      const re = new RegExp("\\s(" + alternation + ")\\s", "ig");
-
-      // Split păstrând delimiter-ul
-      const parts = [];
-      let lastIndex = 0;
-      let m;
-      while ((m = re.exec(t)) !== null) {
-        const before = t.slice(lastIndex, m.index).trim();
-        const token  = (m[1] || "").trim();
-        if (before) parts.push({ kind: "clause", text: before });
-        parts.push({ kind: "conn", text: token });
-        lastIndex = m.index + m[0].length;
-      }
-      const tail = t.slice(lastIndex).trim();
-      if (tail) parts.push({ kind: "clause", text: tail });
-
-      // Acum transformăm în chain: clauses[] și links[] (link[i] este conector între clause[i] și clause[i+1])
-      const clauses = [];
-      const links = [];
-      for (let i=0; i<parts.length; i++) {
-        if (parts[i].kind === "clause") clauses.push(parts[i].text);
-        if (parts[i].kind === "conn")   links.push(parts[i].text);
-      }
-
-      // Dacă avem conectori dar clauze lipsă (edge case), curățăm
-      while (links.length >= clauses.length) links.pop();
-
-      // Mapăm fiecare link la KO recomandat
-      const linkObjs = links.map(tok => {
-        const mapped = CONNECTOR_MAP.find(x => x.keys.includes(tok));
-        if (!mapped) return { raw: tok, type: "ending", ko: "-고" };
-        return { raw: tok, type: mapped.type, ko: mapped.ko };
-      });
-
-      return { clauses, links: linkObjs };
-    }
-
-    // =========================
-    // C) Reguli minime RO/EN -> sloturi
-    // (extensibile)
-    // =========================
-    const RO_RULES = {
-      subject: [
-        { re: /\beu\b/, value: "저" },
-        { re: /\btu\b/, value: "너" },
-        { re: /\bnoi\b/, value: "우리" },
-      ],
-      time: [
-        { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
-        { re: /\bmâine\b/, value: "내일" },
-        { re: /\bieri\b/, value: "어제" },
-        { re: /\bacum\b/, value: "지금" },
-      ],
-      place: [
-        { re: /\bacas[ăa]\b/, value: "집" },
-        { re: /pia[tț]ă/, value: "시장" },
-        { re: /școal[ăa]|scoala/, value: "학교" },
-        { re: /firm[ăa]|serviciu|companie/, value: "회사" },
-        { re: /cafenea/, value: "카페" },
-      ],
-      mod: [
-        { re: /\bbine\b|ok\b/, value: "잘" },
-        { re: /încet|incet/, value: "천천히" },
-        { re: /repede|rapid/, value: "빨리" },
-        { re: /mult/, value: "많이" },
-      ],
-      object: [
-        { re: /cafea/, value: "커피" },
-        { re: /\bap[ăa]\b/, value: "물" },
-        { re: /carte|c[ăa]rț/, value: "책" },
-        { re: /m[ăa]ncare|pr[ăa]n|cina|mic\s+dejun/, value: "음식" },
-        { re: /ceai/, value: "차" },
-      ],
-      numeral: [
-        { re: /\bo\s+(carte|cafea)\b/, value: "한" },
-        { re: /\bdou[ăa]\s+/, value: "두" },
-        { re: /\btrei\s+/, value: "세" },
-      ],
-      counter: [
-        { re: /carte|c[ăa]rț/, value: "권" },
-        { re: /cafea|ap[ăa]\b|ceai|m[ăa]ncare/, value: "개" },
-      ],
-      verb: [
-        { re: /merg|a\s+merge|sa\s+merg|să\s+merg/, value: "가다" },
-        { re: /vin|a\s+veni|sa\s+vin|să\s+vin/, value: "오다" },
-        { re: /beau|a\s+bea|sa\s+beau|să\s+beau/, value: "마시다" },
-        { re: /m[âă]n[âa]nc|mananc|a\s+m[âă]nca/, value: "먹다" },
-        { re: /citesc|a\s+citi|sa\s+citesc|să\s+citesc/, value: "읽다" },
-        { re: /lucrez|a\s+lucra/, value: "일하다" },
-      ],
-    };
-
-    const EN_RULES = {
-      subject: [
-        { re: /\bi\b/, value: "저" },
-        { re: /\byou\b/, value: "너" },
-        { re: /\bwe\b/, value: "우리" },
-      ],
-      time: [
-        { re: /\btoday\b/, value: "오늘" },
-        { re: /\btomorrow\b/, value: "내일" },
-        { re: /\byesterday\b/, value: "어제" },
-        { re: /\bnow\b/, value: "지금" },
-      ],
-      place: [
-        { re: /\bhome\b|house\b/, value: "집" },
-        { re: /\bmarket\b|mart\b|grocery\b/, value: "시장" },
-        { re: /\bschool\b/, value: "학교" },
-        { re: /\bwork\b|company\b|office\b/, value: "회사" },
-        { re: /\bcafe\b|coffee\s+shop\b/, value: "카페" },
-      ],
-      mod: [
-        { re: /\bwell\b|okay\b/, value: "잘" },
-        { re: /\bslowly\b/, value: "천천히" },
-        { re: /\bfast\b|quickly\b/, value: "빨리" },
-        { re: /\ba lot\b|\bmuch\b/, value: "많이" },
-      ],
-      object: [
-        { re: /\bcoffee\b/, value: "커피" },
-        { re: /\bwater\b/, value: "물" },
-        { re: /\bbook\b|books\b/, value: "책" },
-        { re: /\bfood\b|meal\b|lunch\b|dinner\b|breakfast\b/, value: "음식" },
-        { re: /\btea\b/, value: "차" },
-      ],
-      numeral: [
-        { re: /\ba\s+(book|coffee)\b|\bone\s+/, value: "한" },
-        { re: /\btwo\s+/, value: "두" },
-        { re: /\bthree\s+/, value: "세" },
-      ],
-      counter: [
-        { re: /\bbook\b|books\b/, value: "권" },
-        { re: /\bcoffee\b|water\b|tea\b|food\b|meal\b/, value: "개" },
-      ],
-      verb: [
-        { re: /\bgo\b|\bgoing\b/, value: "가다" },
-        { re: /\bcome\b|\bcoming\b/, value: "오다" },
-        { re: /\bdrink\b|\bdrinking\b/, value: "마시다" },
-        { re: /\beat\b|\beating\b/, value: "먹다" },
-        { re: /\bread\b|\breading\b/, value: "읽다" },
-        { re: /\bwork\b|\bworking\b/, value: "일하다" },
-      ],
-    };
-
-    function matchSlot(rules, textNorm) {
-      if (!rules) return "";
-      for (const rule of rules) {
-        if (rule.re.test(textNorm)) return rule.value;
-      }
-      return "";
-    }
-
-    function parseToSlots(text, lang) {
-      const t = normalizeText(text);
-      const RULES = (lang === "en") ? EN_RULES : RO_RULES;
-      if (!t) return {};
-
-      return {
-        subject: matchSlot(RULES.subject, t),
-        time:    matchSlot(RULES.time, t),
-        place:   matchSlot(RULES.place, t),
-        mod:     matchSlot(RULES.mod, t),
-        object:  matchSlot(RULES.object, t),
-        numeral: matchSlot(RULES.numeral, t),
-        counter: matchSlot(RULES.counter, t),
-        verb:    matchSlot(RULES.verb, t),
-      };
-    }
-
-    // =========================
-    // D) UI: generare clauze dinamice
-    // =========================
-    const host = document.getElementById("clausesHost");
-
-    function clauseBlockHTML(idx) {
-      const label = (idx === 0) ? "Propoziția 1" : ("Propoziția " + (idx + 1));
-      const id = "tableP" + (idx + 1);
-
-      return `
-        <section class="table-block" data-clause-index="${idx}">
-          <div class="table-title">
-            <span>${label}</span>
-            <span style="font-size:11px;color:var(--text-soft);">VERB în infinitiv • CONJ = ending sau conector</span>
-          </div>
-
-          <div id="${id}" class="table-horizontal">
-            ${colHTML("subject","SUBJECT","eu/tu/noi…", true)}
-            ${colHTML("time","TIME","azi/today…", true)}
-            ${colHTML("place","PLACE","cafenea/cafe…", true)}
-            ${colHTML("mod","MOD","bine/slowly…", true)}
-            ${colHTML("object","OBJECT","cafea/coffee…", true)}
-            ${colHTML("numeral","NUMERAL","una/two…", true)}
-            ${colHTML("counter","COUNTER","개/권…", true)}
-            ${colHTML("verb","VERB","가다, 읽다…", true)}
-            ${colHTML("conj","CONJ / ENDING","-고, -지만, -어서, 그리고…", true, "ex: -고, -지만, -어서, -(으)면, -(으)ㄹ 때, -(으)려고, 그리고")}
-          </div>
-        </section>
-      `;
-    }
-
-    function colHTML(key, title, hint, editable, example) {
-      return `
-        <div class="col" data-key="${key}">
-          <div class="col-header">${title}</div>
-          <div class="col-body-label">${hint}</div>
-          <div class="col-body-main" ${editable ? 'contenteditable="true"' : ""}></div>
-          ${example ? `<div class="col-body-extra example">${example}</div>` : ""}
-        </div>
-      `;
-    }
-
-    function ensureClauseCount(n) {
-      const current = host.querySelectorAll("[data-clause-index]").length;
-      if (current === n) return;
-
-      // dacă trebuie mai multe: adăugăm
-      if (current < n) {
-        for (let i=current; i<n; i++) {
-          host.insertAdjacentHTML("beforeend", clauseBlockHTML(i));
-        }
-      } else {
-        // dacă trebuie mai puține: ștergem surplus
-        for (let i=current-1; i>=n; i--) {
-          const el = host.querySelector('[data-clause-index="' + i + '"]');
-          if (el) el.remove();
-        }
-      }
-    }
-
-    // =========================
-    // E) Citire / scriere celule
-    // =========================
-    function applySlotsToClause(idx, slots) {
-      const tableId = "tableP" + (idx + 1);
-      const table = document.getElementById(tableId);
-      if (!table || !slots) return;
-
-      const keys = ["subject","time","place","mod","object","numeral","counter","verb"];
-      for (const k of keys) {
-        if (!slots[k]) continue;
-        const cell = table.querySelector('.col[data-key="' + k + '"] .col-body-main');
-        if (cell) cell.textContent = slots[k];
-      }
-    }
-
-    function setConjForClause(idx, conjValue) {
-      const tableId = "tableP" + (idx + 1);
-      const table = document.getElementById(tableId);
-      if (!table) return;
-      const cell = table.querySelector('.col[data-key="conj"] .col-body-main');
-      if (cell) cell.textContent = conjValue || "";
-    }
-
-    function readCell(tableId, key) {
-      const cell = document.querySelector("#" + tableId + ' .col[data-key="' + key + '"] .col-body-main');
-      return cell ? cell.textContent.trim() : "";
-    }
-
-    // =========================
-    // F) Logic: lipire ending la verb
-    // =========================
-    function normalizeEnding(x) {
-      let t = (x || "").trim();
-      // acceptăm "-고", "~고", "고" etc.
-      t = t.replace(/^[-~]/, "").trim();
-      return t;
-    }
-
-    function isStandaloneConnector(x) {
-      const t = (x || "").trim();
-      // aici sunt cuvinte care rămân SEPARATE (nu se lipesc de verb)
-      return ["그리고","그래서","하지만","또","또는","그래도","그러면"].includes(t);
-    }
-
-    function attachEndingToVerb(verbInf, endingRaw) {
-      const v = (verbInf || "").trim();
-      if (!v) return "";
-      const e = normalizeEnding(endingRaw);
-      if (!e) return v;
-
-      // conector separat => NU lipim
-      if (isStandaloneConnector(e)) return v;
-
-      // endings tipice pe care le lipim
-      // - 고 / -지만 / -아서 / -어서 / -(으)면 / -(으)ㄹ 때 / -(으)려고
-      // IMPORTANT: verbul trebuie să fie infinitiv cu 다 ca să lipim corect
-      if (!v.endsWith("다")) return v;
-
-      // stem fără "다"
-      const stem = v.slice(0, -1);
-
-      // mici excepții utile
-      if (v === "하다" && (e === "아서" || e === "어서")) return "해서";
-      if (v === "하다" && e === "고") return "하고";
-      if (v === "하다" && e === "(으)면") return "하면";
-      if (v === "하다" && e === "(으)려고") return "하려고";
-      if (v === "하다" && e === "(으)ㄹ 때") return "할 때";
-
-      // endings cu paranteze: -(으)면, -(으)ㄹ 때, -(으)려고
-      if (e === "(으)면") return stem + "면";
-      if (e === "(으)ㄹ 때") return stem + "ㄹ 때";
-      if (e === "(으)려고") return stem + "려고";
-
-      // ending simplu
-      return stem + e;
-    }
-
-    // construiește o clauză KO dintr-un tabel
-    function buildClauseFromTable(idx) {
-      const tableId = "tableP" + (idx + 1);
-
-      const subject = readCell(tableId, "subject");
-      const time    = readCell(tableId, "time");
-      const place   = readCell(tableId, "place");
-      const mod     = readCell(tableId, "mod");
-      const object  = readCell(tableId, "object");
-      const numeral = readCell(tableId, "numeral");
-      const counter = readCell(tableId, "counter");
-      const verbInf = readCell(tableId, "verb");
-      const conjRaw = readCell(tableId, "conj");
-
-      let obj = "";
-      if (object && numeral && counter) obj = object + " " + numeral + " " + counter;
-      else if (object) obj = object;
-
-      const verbOut = attachEndingToVerb(verbInf, conjRaw);
-
-      // dacă conj este conector separat (그리고 etc.) îl returnăm separat ca "mid"
-      const conjNorm = normalizeEnding(conjRaw);
-      const mid = isStandaloneConnector(conjNorm) ? conjNorm : "";
-
-      const pieces = [subject, time, place, mod, obj, verbOut].filter(Boolean);
-      const clause = pieces.join(" ").trim();
-
-      return { clause, mid, hasAny: clause.length > 0 || mid.length > 0 };
-    }
-
-    function rebuildPreview() {
-      const blocks = host.querySelectorAll("[data-clause-index]");
-      const n = blocks.length;
-
-      const chunks = [];
-      for (let i=0; i<n; i++) {
-        const c = buildClauseFromTable(i);
-        if (!c.hasAny) continue;
-
-        chunks.push(c.clause);
-
-        // mid între i și i+1 (doar dacă e conector separat)
-        if (c.mid && i < n-1) chunks.push(c.mid);
-      }
-
-      const out = document.getElementById("previewSentence");
-      const info = document.getElementById("previewInfo");
-
-      const sentence = (chunks.join(" ").replace(/\s+/g," ").trim()) || "저 가요";
-      out.textContent = sentence;
-
-      info.textContent =
-        "Notă: Ending-urile (ex: -고, -지만, -어서, -(으)면, -(으)ㄹ 때, -(으)려고) se lipesc de verb doar dacă verbul este infinitiv (…다). " +
-        "Conectorii separați (ex: 그리고/그래서/하지만) rămân ca și cuvinte între clauze.";
-    }
-
-    // =========================
-    // G) Auto-fill din input (RO/EN) + multi split
-    // =========================
-    function autoFillFromInput() {
-      const input = document.getElementById("inputText");
-      const lang = (document.getElementById("langSelect") || {}).value || "ro";
-      const raw = (input && input.value) ? input.value : "";
-      const chain = splitIntoChain(raw, lang); // {clauses[], links[]}
-      const clauses = chain.clauses;
-      const links = chain.links; // link[i] între clauses[i] și clauses[i+1]
-
-      if (!clauses.length) {
-        ensureClauseCount(1);
-        rebuildPreview();
-        return;
-      }
-
-      // avem N clauze -> N blocuri
-      ensureClauseCount(clauses.length);
-
-      // umple sloturi
-      for (let i=0; i<clauses.length; i++) {
-        const slots = parseToSlots(clauses[i], lang);
-        applySlotsToClause(i, slots);
-      }
-
-      // conectorii se pun în celula CONJ a clauzei anterioare (i)
-      // ex: "merg și citesc" -> la P1.conj = "-고"
-      for (let i=0; i<links.length; i++) {
-        const l = links[i]; // {raw, type, ko}
-        setConjForClause(i, l.ko); // ending recomandat
-      }
-
-      // ultima clauză: dacă are conj vechi dinainte, îl lăsăm cum e; dar pentru auto-fill îl golim ca să nu fie confuz
-      setConjForClause(clauses.length - 1, "");
-
-      rebuildPreview();
-    }
-// ================================
-// CONFIG: ai pana la 4 clauze
-// ================================
-const TABLE_IDS = ["tableP1", "tableP2", "tableP3", "tableP4"];
-
-// ce consideram conectori in input (RO + EN)
-// (ordinea conteaza: expresiile mai lungi primele)
+/* ======================
+   B. CONECTORI – UNIC
+====================== */
 const CONNECTORS = [
-  { re: /\b(atunci\s+când|atunci\s+cand)\b/gi, type: "when" },
-  { re: /\b(pentru\s+că|pentru\s+ca)\b/gi, type: "because" },
-  { re: /\b(ca\s+să|ca\s+sa)\b/gi, type: "in_order_to" },
-  { re: /\b(deși|desi)\b/gi, type: "although" },
-  { re: /\b(dacă|daca)\b/gi, type: "if" },
-  { re: /\b(când|cand|when)\b/gi, type: "when" },
-  { re: /\b(dar|but)\b/gi, type: "but" },
-  { re: /\b(și|si|and)\b/gi, type: "and" },
-  { re: /\b(iar|apoi|then)\b/gi, type: "and" }, // simplificat
+  { keys:["atunci când","când","when"], end:"-(으)ㄹ 때" },
+  { keys:["pentru că","pentru ca","because"], end:"-어서" },
+  { keys:["ca să","ca sa","in order to","to"], end:"-(으)려고" },
+  { keys:["dacă","daca","if"], end:"-(으)면" },
+  { keys:["dar","but"], end:"-지만" },
+  { keys:["și","si","and"], end:"-고" }
 ];
 
-// mapare conector -> ending coreean (defaulturi simple)
-function connectorToEnding(type) {
-  switch (type) {
-    case "and": return "-고";
-    case "but": return "-지만";
-    case "because": return "-어서";     // (mai tarziu faci -아서/-어서 inteligent)
-    case "if": return "-(으)면";
-    case "when": return "-(으)ㄹ 때";
-    case "in_order_to": return "-(으)려고";
-    case "although": return "-지만";    // simplificat (mai tarziu rafinezi)
-    default: return "-고";
-  }
-}
+/* ======================
+   C. SPLIT MULTI – UNIC
+====================== */
+function splitSentence(raw){
+  const text = normalizeText(raw);
+  if(!text) return { clauses:[], ends:[] };
 
-// ================================
-// Split multi: produce clauze + conectorii dintre ele
-// Ex: "A and B and C" => clauses:[A,B,C], conns:[and,and]
-// ================================
-function splitMultiSentence(raw) {
-  const text = (raw || "").replace(/\s+/g, " ").trim();
-  if (!text) return { clauses: [""], conns: [] };
+  let clauses=[text];
+  let ends=[];
 
-  // gasim toate potrivirile cu index, ca sa split-uim stabil
-  const hits = [];
-  for (const c of CONNECTORS) {
-    let m;
-    while ((m = c.re.exec(text)) !== null) {
-      hits.push({ index: m.index, len: m[0].length, type: c.type });
-      // evita bucle infinite la regex global
-      if (m.index === c.re.lastIndex) c.re.lastIndex++;
-    }
-    c.re.lastIndex = 0; // reset
-  }
-
-  // sortam si eliminam suprapuneri (pastram match-ul cel mai lung / primul)
-  hits.sort((a, b) => a.index - b.index || b.len - a.len);
-  const filtered = [];
-  let lastEnd = -1;
-  for (const h of hits) {
-    if (h.index >= lastEnd) {
-      filtered.push(h);
-      lastEnd = h.index + h.len;
-    }
-  }
-
-  if (filtered.length === 0) return { clauses: [text], conns: [] };
-
-  const clauses = [];
-  const conns = [];
-
-  let start = 0;
-  for (const h of filtered) {
-    const left = text.slice(start, h.index).trim();
-    if (left) clauses.push(left);
-
-    conns.push(h.type);
-    start = h.index + h.len;
-  }
-
-  const tail = text.slice(start).trim();
-  if (tail) clauses.push(tail);
-
-  // daca avem mai multi conectori decat clauze-1 (din cauza spatiilor/punctuatiei), normalizam
-  while (conns.length > Math.max(0, clauses.length - 1)) conns.pop();
-
-  return { clauses, conns };
-}
-
-// ================================
-// Clear strict (ca sa nu ramana "잘" etc.)
-// ================================
-function clearTable(tableId) {
-  const table = document.getElementById(tableId);
-  if (!table) return;
-  table.querySelectorAll(".col-body-main").forEach(el => (el.textContent = ""));
-}
-
-// seteaza text in celula data-key
-function setCell(tableId, key, value) {
-  const table = document.getElementById(tableId);
-  if (!table) return;
-  const cell = table.querySelector(`.col[data-key="${key}"] .col-body-main`);
-  if (cell) cell.textContent = value || "";
-}
-
-// citeste text din celula data-key
-function readCell(tableId, key) {
-  const table = document.getElementById(tableId);
-  if (!table) return "";
-  const cell = table.querySelector(`.col[data-key="${key}"] .col-body-main`);
-  return cell ? cell.textContent.trim() : "";
-}
-
-// "are continut" (folosit ca sa nu lipim -고 daca urmatoarea clauza e goala)
-function tableHasAny(tableId) {
-  const keys = ["subject","time","place","mod","object","numeral","counter","verb","conj"];
-  return keys.some(k => !!readCell(tableId, k));
-}
-    // =========================
-    // H) Clear
-    // =========================
-    function clearAll() {
-      const input = document.getElementById("inputText");
-      if (input) input.value = "";
-
-      ensureClauseCount(1);
-      const tableId = "tableP1";
-      const table = document.getElementById(tableId);
-      if (table) {
-        table.querySelectorAll(".col-body-main").forEach(el => el.textContent = "");
-      }
-      // un default minim
-      const v = document.querySelector('#tableP1 .col[data-key="verb"] .col-body-main');
-      const s = document.querySelector('#tableP1 .col[data-key="subject"] .col-body-main');
-      if (s) s.textContent = "저";
-      if (v) v.textContent = "가다";
-
-      rebuildPreview();
-    }
-
-    // =========================
-    // I) Init + live preview la editare
-    // =========================
-    function wireLivePreview() {
-      document.addEventListener("input", function(e){
-        const target = e.target;
-        if (!target) return;
-        // dacă editezi orice celulă din builder, actualizăm preview
-        if (target.classList && target.classList.contains("col-body-main")) {
-          rebuildPreview();
+  CONNECTORS.forEach(c=>{
+    const nextClauses=[];
+    clauses.forEach(cl=>{
+      let found=false;
+      c.keys.forEach(k=>{
+        const r=new RegExp(`\\s${k}\\s`);
+        if(r.test(cl)){
+          const p=cl.split(r);
+          nextClauses.push(p[0], p[1]);
+          ends.push(c.end);
+          found=true;
         }
       });
-    }
+      if(!found) nextClauses.push(cl);
+    });
+    clauses=nextClauses;
+  });
 
-    function init() {
-      ensureClauseCount(1);
+  return {
+    clauses: clauses.filter(Boolean),
+    ends
+  };
+}
 
-      // default inițial
-      const s = document.querySelector('#tableP1 .col[data-key="subject"] .col-body-main');
-      const v = document.querySelector('#tableP1 .col[data-key="verb"] .col-body-main');
-      if (s) s.textContent = "저";
-      if (v) v.textContent = "가다";
+/* ======================
+   D. RO / EN RULES
+====================== */
+const RO_RULES={
+  subject:[{re:/\beu\b/,v:"저"}],
+  time:[{re:/astăzi|azi/,v:"오늘"}],
+  place:[{re:/cafenea/,v:"카페"}],
+  object:[{re:/cafea/,v:"커피"}],
+  numeral:[{re:/o\s+/,v:"한"}],
+  counter:[{re:/cafea/,v:"잔"}],
+  verb:[
+    {re:/merg/,v:"가다"},
+    {re:/citesc/,v:"읽다"},
+    {re:/beau/,v:"마시다"}
+  ]
+};
 
-      document.getElementById("autoFillBtn").addEventListener("click", autoFillFromInput);
-      document.getElementById("clearBtn").addEventListener("click", clearAll);
+const EN_RULES={
+  subject:[{re:/\bi\b/,v:"저"}],
+  time:[{re:/today/,v:"오늘"}],
+  place:[{re:/cafe/,v:"카페"}],
+  object:[{re:/coffee/,v:"커피"}],
+  numeral:[{re:/a\s+/,v:"한"}],
+  counter:[{re:/coffee/,v:"잔"}],
+  verb:[
+    {re:/go/,v:"가다"},
+    {re:/read/,v:"읽다"},
+    {re:/drink/,v:"마시다"}
+  ]
+};
 
-      wireLivePreview();
-      rebuildPreview();
-    }
+function parseClause(t,lang){
+  const R = lang==="en"?EN_RULES:RO_RULES;
+  const o={};
+  Object.keys(R).forEach(k=>{
+    const m=R[k].find(r=>r.re.test(t));
+    if(m) o[k]=m.v;
+  });
+  return o;
+}
 
-    window.addEventListener("DOMContentLoaded", init);
-  })();
-  </script>
+/* ======================
+   E. ENDING → VERB
+====================== */
+function attachEnding(verb,end){
+  if(!verb || !end) return verb;
+  if(!verb.endsWith("다")) return verb;
+  const stem=verb.slice(0,-1);
+  if(end==="-(으)면") return stem+"면";
+  if(end==="-(으)려고") return stem+"려고";
+  if(end==="-(으)ㄹ 때") return stem+"ㄹ 때";
+  return stem+end.replace("-","");
+}
+
+/* ======================
+   F. UI HELPERS
+====================== */
+function setCell(id,key,val){
+  const el=document.querySelector(`#${id} .col[data-key="${key}"] .col-body-main`);
+  if(el) el.textContent=val||"";
+}
+
+function getCell(id,key){
+  const el=document.querySelector(`#${id} .col[data-key="${key}"] .col-body-main`);
+  return el?el.textContent.trim():"";
+}
+
+/* ======================
+   G. AUTOFILL – UNIC
+====================== */
+function autoFill(){
+  const txt=document.getElementById("inputText").value;
+  const lang=document.getElementById("langSelect").value;
+
+  const res=splitSentence(txt);
+  const n=res.clauses.length;
+
+  const host=document.getElementById("clausesHost");
+  host.innerHTML="";
+
+  for(let i=0;i<n;i++){
+    host.insertAdjacentHTML("beforeend", clauseHTML(i));
+    const slots=parseClause(res.clauses[i],lang);
+    Object.keys(slots).forEach(k=>{
+      setCell(`tableP${i+1}`,k,slots[k]);
+    });
+    if(res.ends[i]) setCell(`tableP${i+1}`,"conj",res.ends[i]);
+  }
+
+  rebuild();
+}
+
+/* ======================
+   H. BUILD PREVIEW
+====================== */
+function rebuild(){
+  const blocks=document.querySelectorAll("[id^='tableP']");
+  const out=[];
+  blocks.forEach((b,i)=>{
+    const v=getCell(b.id,"verb");
+    const e=getCell(b.id,"conj");
+    const s=[
+      getCell(b.id,"subject"),
+      getCell(b.id,"time"),
+      getCell(b.id,"place"),
+      getCell(b.id,"object"),
+      attachEnding(v,e)
+    ].filter(Boolean).join(" ");
+    out.push(s);
+  });
+  document.getElementById("previewSentence").textContent=out.join(" ");
+}
+
+/* ======================
+   I. TEMPLATE CLAUSE
+====================== */
+function clauseHTML(i){
+  return `
+  <section class="table-block">
+    <div id="tableP${i+1}" class="table-horizontal">
+      ${["subject","time","place","object","verb","conj"]
+        .map(k=>`<div class="col" data-key="${k}">
+          <div class="col-header">${k}</div>
+          <div class="col-body-main" contenteditable></div>
+        </div>`).join("")}
+    </div>
+  </section>`;
+}
+
+/* ======================
+   INIT
+====================== */
+document.getElementById("autoFillBtn").onclick=autoFill;
+document.addEventListener("input",rebuild);
+
+})();
+</script>
 </body>
 </html>
