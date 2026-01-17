@@ -179,6 +179,11 @@
     }
     .g-item .ko{font-weight:900;color:#2f343b;}
     .g-item .meta{color:var(--text-soft);margin-top:2px;}
+
+    @media (max-width:600px){
+      .rk-header-main h1{font-size:17px;}
+      .col{min-width:95px;}
+    }
   </style>
 </head>
 
@@ -352,8 +357,7 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
     }
 
     // =========================
-    // 3) RO/EN -> SLOT RULES (curate)
-    //    NOTĂ: PLACE = bază ("카페"), particula se decide la build (에/에서)
+    // 3) RO/EN -> SLOT RULES
     // =========================
     const RO_RULES = {
       subject: [
@@ -389,7 +393,7 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
         { re: /\b(mâncare|mancare|prânz|pranz|cină|cina|mic\s+dejun)\b/i, value: "음식" },
       ],
       numeral: [
-        { re: /\b(o)\s+\w+/i, value: "한" },      // o carte, o cafea
+        { re: /\b(o)\s+\w+/i, value: "한" },
         { re: /\b(una|un)\b/i, value: "한" },
         { re: /\b(două|doua)\b/i, value: "두" },
         { re: /\b(trei)\b/i, value: "세" },
@@ -472,73 +476,88 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
         { re: /\b(watch|watching)\b/i, value: "보다" },
         { re: /\b(buy|buying)\b/i, value: "사다" },
       ],
-};
+    };
 
-// =====================================================
-// 4) GRAMMAR MAP (din pozele tale) – RO & EN -> KO
-// IMPORTANT: NU toate sunt pentru split.
-// Le folosim ca "bibliotecă" pentru hint-uri / sugestii / extinderi.
-// =====================================================
-const GRAMMAR_MAP = [
-  // Cause / sequence / contrast / or
-  { ro: ["pentru că", "fiindcă"], en: ["because"], ko: "-아/어서", note: "cauză" },
-  { ro: ["și apoi", "și", "acțiuni consecutive"], en: ["and then", "and"], ko: "-고", note: "succesiune" },
-  { ro: ["din cauză că"], en: ["because of", "since"], ko: "-기 때문에", note: "cauză (mai formal/explicit)" },
-  { ro: ["însă", "dar", "în schimb"], en: ["but", "however"], ko: "-지만 / -(으)ㄴ데 / -는데", note: "contrast" },
-  { ro: ["sau (între verbe)"], en: ["or (between verbs)"], ko: "-거나", note: "sau" },
+    // =========================
+    // 4) GRAMMAR MAP (bibliotecă)
+    // =========================
+    const GRAMMAR_MAP = [
+      { ro: ["Prezent (formal)"], en: ["Present (formal)"], ko: "아/어/해요; ㅂ니다/습니다/(습니까?)", note: "prezent" },
+      { ro: ["Trecut (formal)"], en: ["Past (formal)"], ko: "았/었/했어요; ㅂ니다/습니다", note: "trecut" },
+      { ro: ["Viitor (formal)"], en: ["Future (formal)"], ko: "(으)ㄹ 거예요; (으)ㄹ 것입니다", note: "viitor" },
 
-  // Intenție / timp / condiție / adverbizare
-  { ro: ["cu intenția de a", "ca să"], en: ["in order to", "to"], ko: "-(으)려고", note: "intenție" },
-  { ro: ["în timp ce"], en: ["while"], ko: "-(으)면서", note: "în timp ce" },
-  { ro: ["dacă"], en: ["if"], ko: "-(으)면", note: "condiție" },
-  { ro: ["adverbizarea verbelor"], en: ["adverb (verb ->)"], ko: "-게", note: "adverbizare" },
+      { ro: ["Cauză"], en: ["Because"], ko: "-아/어서", note: "cauză" },
+      { ro: ["Și apoi / acțiuni consecutive"], en: ["And then / consecutive actions"], ko: "-고", note: "succesiune" },
+      { ro: ["Cauză (mai explicit)"], en: ["Because (explicit)"], ko: "-(으)니까 / -기 때문에", note: "cauză" },
 
-  // Întrebări / sugestii / invitații / imperative
-  { ro: ["nu-i așa?"], en: ["isn't it?", "right?"], ko: "-(이)지요?", note: "confirmare" },
-  { ro: ["ce-ar fi să...?"], en: ["shall we...?", "how about...?"], ko: "-(으)ㄹ까요?", note: "propunere" },
-  { ro: ["vrei să...?"], en: ["do you want to...?"], ko: "-(으)ㄹ래요?", note: "întrebare (familiar polite)" },
-  { ro: ["haideți să"], en: ["let's"], ko: "-(으)ㅂ시다", note: "invitație" },
-  { ro: ["imperativ politicos"], en: ["please (polite)"], ko: "-(으)세요", note: "imperativ polite" },
-  { ro: ["imperativ onorific"], en: ["please (formal/honorific)"], ko: "-(으)십시오", note: "imperativ formal" },
-  { ro: ["voi + voință"], en: ["I will (promise)"], ko: "-(으)ㄹ게요", note: "promisiune" },
+      { ro: ["Însă / dar"], en: ["But / however"], ko: "-지만 / -(으)ㄴ데 / -는데", note: "contrast" },
+      { ro: ["Sau (între verbe)"], en: ["Or (between verbs)"], ko: "-거나", note: "sau" },
 
-  // Reacții / stări / dorințe
-  { ro: ["realizarea unei informații noi"], en: ["realize/learn something new"], ko: "군요", note: "surpriză/realizare" },
-  { ro: ["mirare", "admirație"], en: ["wow", "admiration"], ko: "-네요", note: "mirare" },
-  { ro: ["prezent continuu"], en: ["present continuous"], ko: "-고 있다", note: "acțiune în desfășurare" },
-  { ro: ["a vrea să"], en: ["want to"], ko: "-고 싶다", note: "dorință" },
+      { ro: ["Intenția de a / ca să"], en: ["In order to"], ko: "-(으)려고", note: "intenție" },
+      { ro: ["În timp ce"], en: ["While"], ko: "-(으)면서", note: "în timp ce" },
+      { ro: ["Dacă"], en: ["If"], ko: "-(으)면", note: "condiție" },
+      { ro: ["Când"], en: ["When"], ko: "-(으)ㄹ 때", note: "timp" },
+      { ro: ["Înainte să"], en: ["Before"], ko: "-기 전에", note: "timp" },
+      { ro: ["După ce"], en: ["After"], ko: "-(으)ㄴ 후에", note: "timp" },
 
-  // Interdicție / presupunere / timp
-  { ro: ["interdicție"], en: ["don't"], ko: "-지 말다", note: "nu face" },
-  { ro: ["se pare că", "cred că"], en: ["I think", "it seems"], ko: "-(으)ㄴ/는/을 것 같다", note: "presupunere" },
-  { ro: ["după ce"], en: ["after"], ko: "-(으)ㄴ 후에", note: "după" },
-  { ro: ["când"], en: ["when"], ko: "-(으)ㄹ 때", note: "când" },
-  { ro: ["înainte să"], en: ["before"], ko: "-기 전에", note: "înainte" },
-  { ro: ["(a trecut timp) de când"], en: ["it has been (time) since"], ko: "-(으)ㄴ 지", note: "timp scurs" },
+      { ro: ["Interdicție"], en: ["Don't"], ko: "-지 말다", note: "interdicție" },
+      { ro: ["Se pare că / cred că"], en: ["I think / it seems"], ko: "-(으)ㄴ/는/을 것 같다", note: "presupunere" },
 
-  // Plan / posibilitate / permisiune / obligație / încercare / pentru altcineva
-  { ro: ["a plănui să"], en: ["plan to"], ko: "-(으)려고 하다", note: "plan" },
-  { ro: ["a putea să"], en: ["can"], ko: "-(으)ㄹ 수 있다", note: "posibilitate" },
-  { ro: ["a nu putea să"], en: ["cannot"], ko: "-(으)ㄹ 수 없다", note: "imposibilitate" },
-  { ro: ["e în regulă să"], en: ["it's okay to", "may"], ko: "-아/어도 되다", note: "permisiune" },
-  { ro: ["a trebui să"], en: ["must", "have to"], ko: "-아/어야 되다/하다", note: "obligație" },
-  { ro: ["a încerca să"], en: ["try to"], ko: "-아/어 보다", note: "încercare" },
-  { ro: ["(acțiune) pentru altcineva"], en: ["do for someone"], ko: "-아/어 주다", note: "pentru cineva" },
-  { ro: ["a decide să"], en: ["decide to"], ko: "-기로 하다", note: "decizie" },
+      { ro: ["Vrei să...?"], en: ["Do you want to...?"], ko: "-(으)ㄹ래요?", note: "întrebare" },
+      { ro: ["Ce-ar fi să...?"], en: ["Shall we...?"], ko: "-(으)ㄹ까요?", note: "propunere" },
+      { ro: ["Haideți să"], en: ["Let's"], ko: "-(으)ㅂ시다", note: "invitație" },
+      { ro: ["Imperativ politicos"], en: ["Please (polite)"], ko: "-(으)세요", note: "imperativ" },
 
-  // Recomandări / dorințe / experiență / teamă / intenție vagă / ajunge să
-  { ro: ["ar fi bine să"], en: ["it would be good to"], ko: "-는 게 좋겠다 / -는 것이 좋다", note: "recomandare" },
-  { ro: ["aș dori să"], en: ["I wish"], ko: "-았/었/였으면 좋겠다", note: "dorință" },
-  { ro: ["a avea experiență de a"], en: ["have experience of"], ko: "-(으)ㄴ 적이 있다", note: "experiență" },
-  { ro: ["a nu avea experiență de a"], en: ["have no experience of"], ko: "-(으)ㄴ 적이 없다", note: "fără experiență" },
-  { ro: ["îmi e teamă că"], en: ["I'm afraid that"], ko: "-(으)ㄹ까 봐", note: "teamă" },
-  { ro: ["mă gândesc să"], en: ["I'm thinking of"], ko: "-(으)ㄹ까 하다", note: "intenție" },
-  { ro: ["ajunge să"], en: ["end up", "come to"], ko: "-게 되다", note: "ajunge să" },
-];
-    
+      { ro: ["Prezent continuu"], en: ["Present continuous"], ko: "-고 있다", note: "continu" },
+      { ro: ["A vrea să"], en: ["Want to"], ko: "-고 싶다", note: "dorință" },
 
+      { ro: ["A putea să"], en: ["Can"], ko: "-(으)ㄹ 수 있다", note: "posibilitate" },
+      { ro: ["A nu putea să"], en: ["Cannot"], ko: "-(으)ㄹ 수 없다", note: "imposibilitate" },
+
+      { ro: ["E în regulă să"], en: ["It's okay to / may"], ko: "-아/어도 되다", note: "permisiune" },
+      { ro: ["A trebui să"], en: ["Must / have to"], ko: "-아/어야 되다/하다", note: "obligație" },
+      { ro: ["A încerca să"], en: ["Try to"], ko: "-아/어 보다", note: "încercare" },
+      { ro: ["Pentru altcineva"], en: ["Do for someone"], ko: "-아/어 주다", note: "beneficiar" },
+
+      { ro: ["A decide să"], en: ["Decide to"], ko: "-기로 하다", note: "decizie" },
+      { ro: ["A plănui să"], en: ["Plan to"], ko: "-(으)려고 하다", note: "plan" },
+
+      { ro: ["Experiență"], en: ["Experience"], ko: "-(으)ㄴ 적이 있다", note: "experiență" },
+      { ro: ["Fără experiență"], en: ["No experience"], ko: "-(으)ㄴ 적이 없다", note: "experiență" },
+
+      { ro: ["Îmi e teamă că"], en: ["I'm afraid that"], ko: "-(으)ㄹ까 봐", note: "teamă" },
+      { ro: ["Mă gândesc să"], en: ["I'm thinking of"], ko: "-(으)ㄹ까 하다", note: "intenție" },
+      { ro: ["Ajunge să"], en: ["End up"], ko: "-게 되다", note: "rezultat" },
+    ];
+
+    function renderGrammarLibrary() {
+      const grid = document.getElementById("grammarsGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+
+      GRAMMAR_MAP.forEach(item => {
+        const ro = (item.ro || []).join(", ");
+        const en = (item.en || []).join(", ");
+        const ko = item.ko || "";
+        const note = item.note || "";
+
+        const div = document.createElement("div");
+        div.className = "g-item";
+        div.innerHTML = `
+          <div class="ko">${ko}</div>
+          <div class="meta">${ro}${ro && en ? " • " : ""}${en}${note ? " • " + note : ""}</div>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    // =========================
+    // 5) Parse slots
+    // =========================
     function matchSlot(rules, textNorm) {
-      for (const r of rules) if (r.re.test(textNorm)) return r.value;
+      for (const r of rules) {
+        if (r.re.test(textNorm)) return r.value;
+      }
       return "";
     }
 
@@ -559,7 +578,7 @@ const GRAMMAR_MAP = [
     }
 
     // =========================
-    // 4) UI: clauze dinamice
+    // 6) UI: clauze dinamice
     // =========================
     const host = document.getElementById("clausesHost");
 
@@ -631,7 +650,7 @@ const GRAMMAR_MAP = [
     }
 
     // =========================
-    // 5) Endings lipite + particule PLACE (에/에서)
+    // 7) Endings lipite + PLACE particle (에/에서)
     // =========================
     function normalizeEnding(raw) {
       let t = (raw || "").trim();
@@ -649,16 +668,21 @@ const GRAMMAR_MAP = [
       if (!v) return "";
       const e = normalizeEnding(endingRaw);
       if (!e) return v;
+
+      // conector separat (cuvânt între clauze)
       if (isStandaloneConnector(e)) return v;
+
+      // doar verb infinitiv (…다)
       if (!v.endsWith("다")) return v;
 
-      if (v === "하다" && (e === "아서" || e === "어서")) return "해서";
+      // handle "하다" special
+      if (v === "하다" && (e === "아서" || e === "어서" || e === "아/어서")) return "해서";
       if (v === "하다" && e === "고") return "하고";
       if (v === "하다" && e === "(으)면") return "하면";
       if (v === "하다" && e === "(으)려고") return "하려고";
       if (v === "하다" && e === "(으)ㄹ 때") return "할 때";
 
-      const stem = v.slice(0, -1);
+      const stem = v.slice(0, -1); // remove 다
       const last = lastHangulChar(stem);
       const batchim = hasBatchim(last);
 
@@ -666,6 +690,10 @@ const GRAMMAR_MAP = [
       if (e === "(으)ㄹ 때") return stem + (batchim ? "을 때" : "ㄹ 때");
       if (e === "(으)려고")  return stem + (batchim ? "으려고" : "려고");
 
+      // accept "-아서/-어서" if user types them explicitly
+      if (e === "아서" || e === "어서") return stem + e;
+
+      // fallback: lipire brută (stem + ending)
       return stem + e;
     }
 
@@ -673,12 +701,14 @@ const GRAMMAR_MAP = [
       const p = (placeBase || "").trim();
       if (!p) return "";
       const v = (verbInf || "").trim();
+      // destination with go/come
       if (v === "가다" || v === "오다") return p + "에";
+      // default: location of action
       return p + "에서";
     }
 
     // =========================
-    // 6) Polite form (preview only, last clause only)
+    // 8) Polite form (preview only, last clause only)
     // =========================
     function politePresentFromInfinitive(verbInf) {
       const v = (verbInf || "").trim();
@@ -691,7 +721,7 @@ const GRAMMAR_MAP = [
       };
       if (specials[v]) return specials[v];
 
-      const stem = v.slice(0, -1);
+      const stem = v.slice(0, -1); // remove 다
       const last = stem[stem.length - 1];
 
       if (last === "하") return stem.slice(0, -1) + "해요";
@@ -707,7 +737,7 @@ const GRAMMAR_MAP = [
     }
 
     // =========================
-    // 7) Build & preview
+    // 9) Build & preview
     // =========================
     function buildClause(idx, isLastClause, politeLastEnabled) {
       const tableId = getTableId(idx);
@@ -722,14 +752,18 @@ const GRAMMAR_MAP = [
       const verbInf = readCell(tableId, "verb");
       const conjRaw = readCell(tableId, "conj");
 
+      // object + numeral/counter
       let obj = "";
       if (object && numeral && counter) obj = object + " " + numeral + " " + counter;
       else if (object) obj = object;
 
+      // place particle decided here
       const place = choosePlaceParticle(placeB, verbInf);
 
+      // attach ending to verb
       let verbOut = attachEndingToVerb(verbInf, conjRaw);
 
+      // polite only if last clause and no ending in conj
       if (politeLastEnabled && isLastClause) {
         const conjNorm = normalizeEnding(conjRaw);
         if (!conjNorm && verbInf) verbOut = politePresentFromInfinitive(verbInf);
@@ -752,7 +786,6 @@ const GRAMMAR_MAP = [
       const chunks = [];
       for (let i=0; i<n; i++) {
         const c = buildClause(i, i === n-1, polite);
-        // FIX: nu mai sari aiurea pe hasAny; ia doar clauzele non-empty
         if (!c.clause) continue;
         chunks.push(c.clause);
         if (c.mid && i < n-1) chunks.push(c.mid);
@@ -765,30 +798,40 @@ const GRAMMAR_MAP = [
       out.textContent = sentence || "저 가요";
 
       info.textContent =
-        "PLACE: 가다/오다 → 에, rest → 에서. Endings (-고/-지만/-어서/-(으)면/-(으)ㄹ 때/-(으)려고) se lipesc doar la verb infinitiv (…다). " +
+        "PLACE: 가다/오다 → 에, rest → 에서. " +
+        "Endings (-고/-지만/-아서/-어서/-(으)면/-(으)ㄹ 때/-(으)려고) se lipesc doar la verb infinitiv (…다). " +
         "Politețe: schimbă doar ultimul verb în preview (tabelul rămâne infinitiv).";
     }
 
     // =========================
-    // 8) Auto-fill
+    // 10) Auto-fill
     // =========================
-    function applySlotsToClause(idx, slots) {
+    function applySlotsToClause(idx, slots, onlyEmpty) {
       const tableId = getTableId(idx);
       if (!slots) return;
-      if (slots.subject) setCell(tableId, "subject", slots.subject);
-      if (slots.time)    setCell(tableId, "time", slots.time);
-      if (slots.place)   setCell(tableId, "place", slots.place);
-      if (slots.mod)     setCell(tableId, "mod", slots.mod);
-      if (slots.object)  setCell(tableId, "object", slots.object);
-      if (slots.numeral) setCell(tableId, "numeral", slots.numeral);
-      if (slots.counter) setCell(tableId, "counter", slots.counter);
-      if (slots.verb)    setCell(tableId, "verb", slots.verb);
+
+      function maybeSet(key, val) {
+        if (!val) return;
+        if (!onlyEmpty) { setCell(tableId, key, val); return; }
+        const cur = readCell(tableId, key);
+        if (!cur) setCell(tableId, key, val);
+      }
+
+      maybeSet("subject", slots.subject);
+      maybeSet("time", slots.time);
+      maybeSet("place", slots.place);
+      maybeSet("mod", slots.mod);
+      maybeSet("object", slots.object);
+      maybeSet("numeral", slots.numeral);
+      maybeSet("counter", slots.counter);
+      maybeSet("verb", slots.verb);
     }
 
     function autoFillFromInput() {
       const input = document.getElementById("inputText");
       const lang = (document.getElementById("langSelect") || {}).value || "ro";
       const raw = (input && input.value) ? input.value : "";
+      const onlyEmpty = !!document.getElementById("fillOnlyEmpty")?.checked;
 
       const chain = splitIntoChain(raw);
       const clauses = chain.clauses;
@@ -808,19 +851,26 @@ const GRAMMAR_MAP = [
 
       for (let i=0; i<clauses.length; i++) {
         const slots = parseToSlots(clauses[i], lang);
-        applySlotsToClause(i, slots);
+        applySlotsToClause(i, slots, onlyEmpty);
       }
 
+      // conj in clauza i = link[i] (ending lipit de verbul clauzei i)
       for (let i=0; i<links.length; i++) {
-        setCell(getTableId(i), "conj", links[i].ko);
+        if (!onlyEmpty || !readCell(getTableId(i), "conj")) {
+          setCell(getTableId(i), "conj", links[i].ko);
+        }
       }
 
-      setCell(getTableId(clauses.length - 1), "conj", "");
+      // ultima clauză: conj gol (dacă nu vrei să o forțeze)
+      if (!onlyEmpty || !readCell(getTableId(clauses.length - 1), "conj")) {
+        setCell(getTableId(clauses.length - 1), "conj", "");
+      }
+
       rebuildPreview();
     }
 
     // =========================
-    // 9) Clear
+    // 11) Clear
     // =========================
     function clearAll() {
       const input = document.getElementById("inputText");
@@ -839,27 +889,23 @@ const GRAMMAR_MAP = [
     }
 
     // =========================
-    // 10) Init + live preview
+    // 12) Live preview
     // =========================
     function wireLivePreview() {
-  document.addEventListener("input", function (e) {
-    const target = e.target;
-    if (target && target.classList && target.classList.contains("col-body-main")) {
-      rebuildPreview();
-    }
-  });
-
-  const polite = document.getElementById("politeToggle");
-  if (polite) polite.addEventListener("change", rebuildPreview);
-}
-    
+      document.addEventListener("input", function (e) {
+        const target = e.target;
+        if (target && target.classList && target.classList.contains("col-body-main")) {
+          rebuildPreview();
+        }
       });
 
-      // FIX: ID corect
       const polite = document.getElementById("politeToggle");
       if (polite) polite.addEventListener("change", rebuildPreview);
     }
 
+    // =========================
+    // 13) Init
+    // =========================
     function init() {
       ensureClauseCount(1);
       setCell("tableP1", "subject", "저");
@@ -872,6 +918,7 @@ const GRAMMAR_MAP = [
       if (autoFillBtn) autoFillBtn.addEventListener("click", autoFillFromInput);
       if (clearBtn) clearBtn.addEventListener("click", clearAll);
 
+      renderGrammarLibrary();
       wireLivePreview();
       rebuildPreview();
     }
