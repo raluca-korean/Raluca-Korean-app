@@ -246,177 +246,259 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
     // =========================
     // 2) Conectori (RO/EN) -> ending KO
     // =========================
-    const CONNECTORS = [
-      { keys: ["atunci când", "atunci cand", "when"], type: "when", ko: "-(으)ㄹ 때" },
-      { keys: ["pentru că", "pentru ca", "fiindcă", "fiindca", "because"], type: "because", ko: "-어서" },
-      { keys: ["ca să", "ca sa", "in order to"], type: "in_order_to", ko: "-(으)려고" },
-      { keys: ["deși", "desi", "although", "even though"], type: "although", ko: "-지만" },
-      { keys: ["dacă", "daca", "if"], type: "if", ko: "-(으)면" },
-      { keys: ["dar", "but"], type: "but", ko: "-지만" },
-      { keys: ["și", "si", "and"], type: "and", ko: "-고" },
-      { keys: ["apoi", "then"], type: "and", ko: "-고" },
-    ];
+   // =====================================================
+// 2) CONNECTORS (doar pentru SPLIT între clauze)
+//    IMPORTANT: aici punem DOAR conectori care leagă clauze
+// =====================================================
+const CONNECTORS = [
+  // cele mai lungi primele
+  { keys: ["atunci când", "atunci cand", "when"], type: "when", ko: "-(으)ㄹ 때" },
+  { keys: ["în timp ce", "in timp ce", "while"], type: "while", ko: "-(으)면서" },
+  { keys: ["după ce", "dupa ce", "after"], type: "after", ko: "-(으)ㄴ 후에" },
+  { keys: ["înainte să", "inainte sa", "before"], type: "before", ko: "-기 전에" },
 
-    function buildConnectorRegex() {
-      const all = CONNECTORS.flatMap(c => c.keys);
-      const uniq = Array.from(new Set(all));
-      uniq.sort((a,b) => b.length - a.length);
-      const alt = uniq.map(escapeRegExp).join("|");
-      return new RegExp("\\s(" + alt + ")\\s", "ig");
-    }
+  { keys: ["din cauză că", "din cauza ca", "because of", "because"], type: "because", ko: "-어서" }, // default simplu
+  { keys: ["pentru că", "pentru ca", "fiindcă", "fiindca"], type: "because", ko: "-어서" },
 
-    function mapConnectorToken(token) {
-      const t = (token || "").toLowerCase();
-      for (const c of CONNECTORS) {
-        if (c.keys.some(k => k.toLowerCase() === t)) return { raw: token, type: c.type, ko: c.ko };
-      }
-      return { raw: token, type: "and", ko: "-고" };
-    }
+  { keys: ["deși", "desi", "although", "even though"], type: "although", ko: "-지만" },
+  { keys: ["dacă", "daca", "if"], type: "if", ko: "-(으)면" },
 
-    function splitIntoChain(raw) {
-      const original = (raw || "").replace(/\s+/g, " ").trim();
-      const t = normalizeText(original);
-      if (!t) return { clauses: [], links: [] };
+  { keys: ["dar", "but"], type: "but", ko: "-지만" },
+  { keys: ["și", "si", "and"], type: "and", ko: "-고" },
 
-      const re = buildConnectorRegex();
-      const parts = [];
-      let lastIndex = 0;
-      let m;
+  // opțional (doar split, tot ca "și")
+  { keys: ["iar", "apoi", "then"], type: "and", ko: "-고" },
+];
 
-      while ((m = re.exec(t)) !== null) {
-        const before = t.slice(lastIndex, m.index).trim();
-        const token  = (m[1] || "").trim();
-        if (before) parts.push({ kind: "clause", text: before });
-        parts.push({ kind: "conn", text: token });
-        lastIndex = m.index + m[0].length;
-      }
-      const tail = t.slice(lastIndex).trim();
-      if (tail) parts.push({ kind: "clause", text: tail });
+function buildConnectorRegex() {
+  const all = CONNECTORS.flatMap(c => c.keys);
+  const uniq = Array.from(new Set(all));
+  uniq.sort((a,b) => b.length - a.length);
+  const alt = uniq.map(escapeRegExp).join("|");
+  return new RegExp("\\s(" + alt + ")\\s", "ig");
+}
 
-      const clauses = [];
-      const links = [];
-      for (const p of parts) {
-        if (p.kind === "clause") clauses.push(p.text);
-        if (p.kind === "conn") links.push(mapConnectorToken(p.text));
-      }
-      while (links.length >= clauses.length) links.pop();
-      return { clauses, links };
-    }
+function mapConnectorToken(token) {
+  const t = (token || "").toLowerCase();
+  for (const c of CONNECTORS) {
+    if (c.keys.some(k => k.toLowerCase() === t)) return { raw: token, type: c.type, ko: c.ko };
+  }
+  return { raw: token, type: "and", ko: "-고" };
+}
 
-    // =========================
-    // 3) RO/EN -> slot rules (fixe)
-    // =========================
-    const RO_RULES = {
-      subject: [
-        { re: /\beu\b/, value: "저" },
-        { re: /\btu\b/, value: "너" },
-        { re: /\bnoi\b/, value: "우리" },
-      ],
-      time: [
-        { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
-        { re: /\bmâine\b/, value: "내일" },
-        { re: /\bieri\b/, value: "어제" },
-        { re: /\bacum\b/, value: "지금" },
-      ],
-      place: [
-        { re: /\bcafenea\b|cafe\b/, value: "카페" },
-        { re: /\bpia[tț]ă\b/, value: "시장" },
-        { re: /\bmagazin\b|supermarket\b/, value: "가게" },
-        { re: /\bacas[ăa]\b/, value: "집" },
-        { re: /\bșcoal[ăa]\b|\bscoala\b/, value: "학교" },
-        { re: /\bserviciu\b|\bfirm[ăa]\b|\bcompanie\b/, value: "회사" },
-      ],
-      mod: [
-        { re: /\bbine\b|\bok\b/, value: "잘" },
-        { re: /\bîncet\b|\bincet\b/, value: "천천히" },
-        { re: /\brepede\b|\brapid\b/, value: "빨리" },
-        { re: /\bmult\b/, value: "많이" },
-      ],
-      object: [
-        { re: /\bcarte\b|c[ăa]rț/i, value: "책" },
-        { re: /\bcafea\b/, value: "커피" },
-        { re: /\bap[ăa]\b/, value: "물" },
-        { re: /\bceai\b/, value: "차" },
-        { re: /\bm[ăa]ncare\b|\bpr[ăa]nz\b|\bcin[ăa]\b|\bmic\s+dejun\b/i, value: "음식" },
-      ],
-      numeral: [
-        { re: /\bo\s+\w+|\buna\b|\bun\b/, value: "한" },
-        { re: /\bdou[ăa]\b/, value: "두" },
-        { re: /\btrei\b/, value: "세" },
-      ],
-      counter: [
-        { re: /carte|c[ăa]rț/i, value: "권" },
-        { re: /cafea|ap[ăa]|ceai|m[ăa]ncare/i, value: "개" },
-      ],
-      verb: [
-        { re: /\bmerg\b|a\s+merge|să\s+merg|sa\s+merg/i, value: "가다" },
-        { re: /\bvin\b|a\s+veni|să\s+vin|sa\s+vin/i, value: "오다" },
-        { re: /\bcitesc\b|a\s+citi|să\s+citesc|sa\s+citesc/i, value: "읽다" },
-        { re: /\bbeau\b|a\s+bea|să\s+beau|sa\s+beau/i, value: "마시다" },
-        { re: /\bm[âă]n[âa]nc\b|mananc|a\s+m[âă]nca/i, value: "먹다" },
-        { re: /\blucrez\b|a\s+lucra/i, value: "일하다" },
-        { re: /\bînvăț\b|invata|a\s+învăța|a\s+invata/i, value: "공부하다" },
-        { re: /\bdorm\b|a\s+dormi/i, value: "자다" },
-      ],
-    };
+function splitIntoChain(raw) {
+  const original = (raw || "").replace(/\s+/g, " ").trim();
+  const t = normalizeText(original);
+  if (!t) return { clauses: [], links: [] };
 
-    const EN_RULES = {
-      subject: [
-        { re: /\bi\b/, value: "저" },
-        { re: /\byou\b/, value: "너" },
-        { re: /\bwe\b/, value: "우리" },
-      ],
-      time: [
-        { re: /\btoday\b/, value: "오늘" },
-        { re: /\btomorrow\b/, value: "내일" },
-        { re: /\byesterday\b/, value: "어제" },
-        { re: /\bnow\b/, value: "지금" },
-      ],
-      place: [
-        { re: /\bcafe\b|coffee\s+shop\b/, value: "카페" },
-        { re: /\bmarket\b|mart\b|grocery\b/, value: "시장" },
-        { re: /\bstore\b|shop\b/, value: "가게" },
-        { re: /\bhome\b|house\b/, value: "집" },
-        { re: /\bschool\b/, value: "학교" },
-        { re: /\bwork\b|company\b|office\b/, value: "회사" },
-      ],
-      mod: [
-        { re: /\bwell\b|okay\b/, value: "잘" },
-        { re: /\bslowly\b/, value: "천천히" },
-        { re: /\bfast\b|\bquickly\b/, value: "빨리" },
-        { re: /\ba lot\b|\bmuch\b/, value: "많이" },
-      ],
-      object: [
-        { re: /\bbook\b|books\b/, value: "책" },
-        { re: /\bcoffee\b/, value: "커피" },
-        { re: /\bwater\b/, value: "물" },
-        { re: /\btea\b/, value: "차" },
-        { re: /\bfood\b|meal\b|lunch\b|dinner\b|breakfast\b/, value: "음식" },
-      ],
-      numeral: [
-        { re: /\bone\b|\ba\b|\ban\b/, value: "한" },
-        { re: /\btwo\b/, value: "두" },
-        { re: /\bthree\b/, value: "세" },
-      ],
-      counter: [
-        { re: /\bbook\b|books\b/, value: "권" },
-        { re: /\bcoffee\b|water\b|tea\b|food\b|meal\b/, value: "개" },
-      ],
-      verb: [
-        { re: /\bgo\b|\bgoing\b/, value: "가다" },
-        { re: /\bcome\b|\bcoming\b/, value: "오다" },
-        { re: /\bread\b|\breading\b/, value: "읽다" },
-        { re: /\bdrink\b|\bdrinking\b/, value: "마시다" },
-        { re: /\beat\b|\beating\b/, value: "먹다" },
-        { re: /\bwork\b|\bworking\b/, value: "일하다" },
-        { re: /\bstudy\b|\blearn\b|\blearning\b/, value: "공부하다" },
-        { re: /\bsleep\b|\bsleeping\b/, value: "자다" },
-        { re: /\bwrite\b|\bwriting\b/, value: "쓰다" },
-        { re: /\bspeak\b|\bspeaking\b/, value: "말하다" },
-        { re: /\bwatch\b|\bwatching\b/, value: "보다" },
-        { re: /\bbuy\b|\bbuying\b/, value: "사다" },
-      ],
-    };
+  const re = buildConnectorRegex();
+  const parts = [];
+  let lastIndex = 0;
+  let m;
+
+  while ((m = re.exec(t)) !== null) {
+    const before = t.slice(lastIndex, m.index).trim();
+    const token  = (m[1] || "").trim();
+    if (before) parts.push({ kind: "clause", text: before });
+    parts.push({ kind: "conn", text: token });
+    lastIndex = m.index + m[0].length;
+  }
+  const tail = t.slice(lastIndex).trim();
+  if (tail) parts.push({ kind: "clause", text: tail });
+
+  const clauses = [];
+  const links = [];
+  for (const p of parts) {
+    if (p.kind === "clause") clauses.push(p.text);
+    if (p.kind === "conn") links.push(mapConnectorToken(p.text));
+  }
+  while (links.length >= clauses.length) links.pop();
+
+  return { clauses, links };
+}
+
+// =====================================================
+// 3) RO/EN -> SLOT RULES (fixe, curate)
+// NOTE: PLACE = baza ("카페"), particula se decide la build (에/에서)
+// =====================================================
+const RO_RULES = {
+  subject: [
+    { re: /\beu\b/, value: "저" },
+    { re: /\btu\b/, value: "너" },
+    { re: /\bnoi\b/, value: "우리" },
+  ],
+  time: [
+    { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
+    { re: /\bmâine\b/, value: "내일" },
+    { re: /\bieri\b/, value: "어제" },
+    { re: /\bacum\b/, value: "지금" },
+  ],
+  place: [
+    { re: /\bcafenea\b|\bcafe\b/, value: "카페" },
+    { re: /\bacas[ăa]\b/, value: "집" },
+    { re: /\bșcoal[ăa]\b|\bscoala\b/, value: "학교" },
+    { re: /\bserviciu\b|\bfirm[ăa]\b|\bcompanie\b/, value: "회사" },
+    { re: /\bmagazin\b|supermarket\b/, value: "가게" },
+    { re: /\bpia[tț]ă\b/, value: "시장" },
+  ],
+  mod: [
+    { re: /\bbine\b|\bok\b/, value: "잘" },
+    { re: /\bîncet\b|\bincet\b/, value: "천천히" },
+    { re: /\brepede\b|\brapid\b/, value: "빨리" },
+    { re: /\bmult\b/, value: "많이" },
+  ],
+  object: [
+    { re: /\bcarte\b|c[ăa]rț/i, value: "책" },
+    { re: /\bcafea\b/, value: "커피" },
+    { re: /\bap[ăa]\b/, value: "물" },
+    { re: /\bceai\b/, value: "차" },
+    { re: /\bm[ăa]ncare\b|\bpr[ăa]nz\b|\bcin[ăa]\b|\bmic\s+dejun\b/i, value: "음식" },
+  ],
+  numeral: [
+    { re: /\bo\b|\buna\b|\bun\b/, value: "한" },
+    { re: /\bdou[ăa]\b/, value: "두" },
+    { re: /\btrei\b/, value: "세" },
+  ],
+  counter: [
+    { re: /carte|c[ăa]rț/i, value: "권" },
+    { re: /cafea|ap[ăa]|ceai|m[ăa]ncare/i, value: "개" },
+  ],
+  verb: [
+    { re: /\bmerg\b|a\s+merge|să\s+merg|sa\s+merg/i, value: "가다" },
+    { re: /\bvin\b|a\s+veni|să\s+vin|sa\s+vin/i, value: "오다" },
+    { re: /\bcitesc\b|a\s+citi|să\s+citesc|sa\s+citesc/i, value: "읽다" },
+    { re: /\bbeau\b|a\s+bea|să\s+beau|sa\s+beau/i, value: "마시다" },
+    { re: /\bm[âă]n[âa]nc\b|mananc|a\s+m[âă]nca/i, value: "먹다" },
+    { re: /\blucrez\b|a\s+lucra/i, value: "일하다" },
+    { re: /\bînvăț\b|invata|a\s+învăța|a\s+invata/i, value: "공부하다" },
+    { re: /\bdorm\b|a\s+dormi/i, value: "자다" },
+    { re: /\bscriu\b|a\s+scrie/i, value: "쓰다" },
+    { re: /\bvorbesc\b|a\s+vorbi/i, value: "말하다" },
+    { re: /\bcumpăr\b|cumpar|a\s+cumpăra|a\s+cumpara/i, value: "사다" },
+    { re: /\bmă\s+uit\b|ma\s+uit|a\s+se\s+uita/i, value: "보다" },
+  ],
+};
+
+const EN_RULES = {
+  subject: [
+    { re: /\bi\b/, value: "저" },
+    { re: /\byou\b/, value: "너" },
+    { re: /\bwe\b/, value: "우리" },
+  ],
+  time: [
+    { re: /\btoday\b/, value: "오늘" },
+    { re: /\btomorrow\b/, value: "내일" },
+    { re: /\byesterday\b/, value: "어제" },
+    { re: /\bnow\b/, value: "지금" },
+  ],
+  place: [
+    { re: /\bcafe\b|coffee\s+shop\b/, value: "카페" },
+    { re: /\bhome\b|house\b/, value: "집" },
+    { re: /\bschool\b/, value: "학교" },
+    { re: /\bwork\b|company\b|office\b/, value: "회사" },
+    { re: /\bstore\b|shop\b|supermarket\b/, value: "가게" },
+    { re: /\bmarket\b|mart\b|grocery\b/, value: "시장" },
+  ],
+  mod: [
+    { re: /\bwell\b|okay\b/, value: "잘" },
+    { re: /\bslowly\b/, value: "천천히" },
+    { re: /\bfast\b|\bquickly\b/, value: "빨리" },
+    { re: /\ba lot\b|\bmuch\b/, value: "많이" },
+  ],
+  object: [
+    { re: /\bbook\b|books\b/, value: "책" },
+    { re: /\bcoffee\b/, value: "커피" },
+    { re: /\bwater\b/, value: "물" },
+    { re: /\btea\b/, value: "차" },
+    { re: /\bfood\b|meal\b|lunch\b|dinner\b|breakfast\b/, value: "음식" },
+  ],
+  numeral: [
+    { re: /\bone\b|\ba\b|\ban\b/, value: "한" },
+    { re: /\btwo\b/, value: "두" },
+    { re: /\bthree\b/, value: "세" },
+  ],
+  counter: [
+    { re: /\bbook\b|books\b/, value: "권" },
+    { re: /\bcoffee\b|water\b|tea\b|food\b|meal\b/, value: "개" },
+  ],
+  verb: [
+    { re: /\bgo\b|\bgoing\b/, value: "가다" },
+    { re: /\bcome\b|\bcoming\b/, value: "오다" },
+    { re: /\bread\b|\breading\b/, value: "읽다" },
+    { re: /\bdrink\b|\bdrinking\b/, value: "마시다" },
+    { re: /\beat\b|\beating\b/, value: "먹다" },
+    { re: /\bwork\b|\bworking\b/, value: "일하다" },
+    { re: /\bstudy\b|\blearn\b|\blearning\b/, value: "공부하다" },
+    { re: /\bsleep\b|\bsleeping\b/, value: "자다" },
+    { re: /\bwrite\b|\bwriting\b/, value: "쓰다" },
+    { re: /\bspeak\b|\bspeaking\b/, value: "말하다" },
+    { re: /\bwatch\b|\bwatching\b/, value: "보다" },
+    { re: /\bbuy\b|\bbuying\b/, value: "사다" },
+  ],
+};
+
+// =====================================================
+// 4) GRAMMAR MAP (din pozele tale) – RO & EN -> KO
+// IMPORTANT: NU toate sunt pentru split.
+// Le folosim ca "bibliotecă" pentru hint-uri / sugestii / extinderi.
+// =====================================================
+const GRAMMAR_MAP = [
+  // Cause / sequence / contrast / or
+  { ro: ["pentru că", "fiindcă"], en: ["because"], ko: "-아/어서", note: "cauză" },
+  { ro: ["și apoi", "și", "acțiuni consecutive"], en: ["and then", "and"], ko: "-고", note: "succesiune" },
+  { ro: ["din cauză că"], en: ["because of", "since"], ko: "-기 때문에", note: "cauză (mai formal/explicit)" },
+  { ro: ["însă", "dar", "în schimb"], en: ["but", "however"], ko: "-지만 / -(으)ㄴ데 / -는데", note: "contrast" },
+  { ro: ["sau (între verbe)"], en: ["or (between verbs)"], ko: "-거나", note: "sau" },
+
+  // Intenție / timp / condiție / adverbizare
+  { ro: ["cu intenția de a", "ca să"], en: ["in order to", "to"], ko: "-(으)려고", note: "intenție" },
+  { ro: ["în timp ce"], en: ["while"], ko: "-(으)면서", note: "în timp ce" },
+  { ro: ["dacă"], en: ["if"], ko: "-(으)면", note: "condiție" },
+  { ro: ["adverbizarea verbelor"], en: ["adverb (verb ->)"], ko: "-게", note: "adverbizare" },
+
+  // Întrebări / sugestii / invitații / imperative
+  { ro: ["nu-i așa?"], en: ["isn't it?", "right?"], ko: "-(이)지요?", note: "confirmare" },
+  { ro: ["ce-ar fi să...?"], en: ["shall we...?", "how about...?"], ko: "-(으)ㄹ까요?", note: "propunere" },
+  { ro: ["vrei să...?"], en: ["do you want to...?"], ko: "-(으)ㄹ래요?", note: "întrebare (familiar polite)" },
+  { ro: ["haideți să"], en: ["let's"], ko: "-(으)ㅂ시다", note: "invitație" },
+  { ro: ["imperativ politicos"], en: ["please (polite)"], ko: "-(으)세요", note: "imperativ polite" },
+  { ro: ["imperativ onorific"], en: ["please (formal/honorific)"], ko: "-(으)십시오", note: "imperativ formal" },
+  { ro: ["voi + voință"], en: ["I will (promise)"], ko: "-(으)ㄹ게요", note: "promisiune" },
+
+  // Reacții / stări / dorințe
+  { ro: ["realizarea unei informații noi"], en: ["realize/learn something new"], ko: "군요", note: "surpriză/realizare" },
+  { ro: ["mirare", "admirație"], en: ["wow", "admiration"], ko: "-네요", note: "mirare" },
+  { ro: ["prezent continuu"], en: ["present continuous"], ko: "-고 있다", note: "acțiune în desfășurare" },
+  { ro: ["a vrea să"], en: ["want to"], ko: "-고 싶다", note: "dorință" },
+
+  // Interdicție / presupunere / timp
+  { ro: ["interdicție"], en: ["don't"], ko: "-지 말다", note: "nu face" },
+  { ro: ["se pare că", "cred că"], en: ["I think", "it seems"], ko: "-(으)ㄴ/는/을 것 같다", note: "presupunere" },
+  { ro: ["după ce"], en: ["after"], ko: "-(으)ㄴ 후에", note: "după" },
+  { ro: ["când"], en: ["when"], ko: "-(으)ㄹ 때", note: "când" },
+  { ro: ["înainte să"], en: ["before"], ko: "-기 전에", note: "înainte" },
+  { ro: ["(a trecut timp) de când"], en: ["it has been (time) since"], ko: "-(으)ㄴ 지", note: "timp scurs" },
+
+  // Plan / posibilitate / permisiune / obligație / încercare / pentru altcineva
+  { ro: ["a plănui să"], en: ["plan to"], ko: "-(으)려고 하다", note: "plan" },
+  { ro: ["a putea să"], en: ["can"], ko: "-(으)ㄹ 수 있다", note: "posibilitate" },
+  { ro: ["a nu putea să"], en: ["cannot"], ko: "-(으)ㄹ 수 없다", note: "imposibilitate" },
+  { ro: ["e în regulă să"], en: ["it's okay to", "may"], ko: "-아/어도 되다", note: "permisiune" },
+  { ro: ["a trebui să"], en: ["must", "have to"], ko: "-아/어야 되다/하다", note: "obligație" },
+  { ro: ["a încerca să"], en: ["try to"], ko: "-아/어 보다", note: "încercare" },
+  { ro: ["(acțiune) pentru altcineva"], en: ["do for someone"], ko: "-아/어 주다", note: "pentru cineva" },
+  { ro: ["a decide să"], en: ["decide to"], ko: "-기로 하다", note: "decizie" },
+
+  // Recomandări / dorințe / experiență / teamă / intenție vagă / ajunge să
+  { ro: ["ar fi bine să"], en: ["it would be good to"], ko: "-는 게 좋겠다 / -는 것이 좋다", note: "recomandare" },
+  { ro: ["aș dori să"], en: ["I wish"], ko: "-았/었/였으면 좋겠다", note: "dorință" },
+  { ro: ["a avea experiență de a"], en: ["have experience of"], ko: "-(으)ㄴ 적이 있다", note: "experiență" },
+  { ro: ["a nu avea experiență de a"], en: ["have no experience of"], ko: "-(으)ㄴ 적이 없다", note: "fără experiență" },
+  { ro: ["îmi e teamă că"], en: ["I'm afraid that"], ko: "-(으)ㄹ까 봐", note: "teamă" },
+  { ro: ["mă gândesc să"], en: ["I'm thinking of"], ko: "-(으)ㄹ까 하다", note: "intenție" },
+  { ro: ["ajunge să"], en: ["end up", "come to"], ko: "-게 되다", note: "ajunge să" },
+];
+    
 
     function matchSlot(rules, textNorm) {
       for (const r of rules) if (r.re.test(textNorm)) return r.value;
