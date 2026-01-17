@@ -251,7 +251,10 @@
       font-size:10px;
       color:#b09b83;
     }
-
+<label style="display:flex;gap:8px;align-items:center;font-size:12px;color:#4b607d;">
+  <input type="checkbox" id="politeToggle" />
+  Preview politicos (ultima clauză în -아요/어요)
+</label>
     .preview-card{
       margin-top:14px;
       padding:12px 14px;
@@ -1039,7 +1042,64 @@ function tableHasAny(tableId) {
       wireLivePreview();
       rebuildPreview();
     }
+function hangulCode(ch){ return ch.charCodeAt(0); }
+function isHangulSyllable(ch){
+  const c = hangulCode(ch);
+  return c >= 0xAC00 && c <= 0xD7A3;
+}
+function lastHangulSyllable(str){
+  for (let i=str.length-1;i>=0;i--){
+    const ch = str[i];
+    if (isHangulSyllable(ch)) return ch;
+  }
+  return null;
+}
+function hasFinalConsonant(syll){
+  const code = hangulCode(syll) - 0xAC00;
+  const jong = code % 28;
+  return jong !== 0;
+}
+function vowelIndex(syll){
+  const code = hangulCode(syll) - 0xAC00;
+  const jung = Math.floor((code % (28*21)) / 28);
+  return jung; // 0..20
+}
 
+// reguli minimaliste, fara pretentia ca acopera TOT, dar suficient pt builder basic
+function toPoliteAyoEoyo(verbInf) {
+  const v = (verbInf || "").trim();
+  if (!v) return "";
+
+  // accepta doar infinitiv (...다)
+  if (!v.endsWith("다")) return v;
+
+  // exceptii de baza
+  if (v === "하다") return "해요";
+  if (v === "되다") return "돼요";
+
+  const stem = v.slice(0, -1); // scoatem doar "다"
+  const last = lastHangulSyllable(stem);
+  if (!last) return stem + "요";
+
+  const jong = hasFinalConsonant(last);
+  const jung = vowelIndex(last);
+
+  // jung indices: 0 ㅏ, 2 ㅑ, 8 ㅗ, 12 ㅛ etc.
+  // simplificare: daca ultima vocala e ㅏ/ㅗ -> 아요, altfel -> 어요
+  const useA = (jung === 0 || jung === 2 || jung === 8 || jung === 12); // ㅏ,ㅑ,ㅗ,ㅛ
+
+  // caz special: stem se termina in ㅏ/ㅗ => contractie (가 + 아요 = 가요, 오 + 아요 = 와요)
+  // detectam last vowel ㅏ sau ㅗ
+  const endsWithAorO = (jung === 0 || jung === 8);
+
+  if (!jong && endsWithAorO) {
+    // in practica: 가다->가요, 오다->와요 (asta ar necesita ㅗ->ㅘ; facem hack pt. 오다)
+    if (v === "오다") return "와요";
+    return stem + "요";
+  }
+
+  return stem + (useA ? "아요" : "어요");
+}
     window.addEventListener("DOMContentLoaded", init);
   })();
   </script>
