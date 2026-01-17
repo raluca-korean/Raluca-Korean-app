@@ -206,7 +206,7 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
           </label>
         </span>
       </div>
-      <div id="previewSentence" class="preview-sentence">저 가요</div>
+      <div id="previewSentence" class="preview-sentence"></div>
       <div id="previewInfo" class="preview-ro"></div>
     </section>
   </div>
@@ -232,7 +232,6 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
     function hasBatchim(koreanSyllable) {
       if (!koreanSyllable) return false;
       const code = koreanSyllable.charCodeAt(koreanSyllable.length - 1);
-      // Hangul Syllables: AC00–D7A3
       if (code < 0xAC00 || code > 0xD7A3) return false;
       const jong = (code - 0xAC00) % 28;
       return jong !== 0;
@@ -246,7 +245,6 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
 
     // =========================
     // 2) Conectori (RO/EN) -> ending KO
-    //    IMPORTANT: ordinea = mai lungi primele
     // =========================
     const CONNECTORS = [
       { keys: ["atunci când", "atunci cand", "when"], type: "when", ko: "-(으)ㄹ 때" },
@@ -256,7 +254,6 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       { keys: ["dacă", "daca", "if"], type: "if", ko: "-(으)면" },
       { keys: ["dar", "but"], type: "but", ko: "-지만" },
       { keys: ["și", "si", "and"], type: "and", ko: "-고" },
-      // opțional (nu endings, doar pentru split ca să nu lipești aiurea)
       { keys: ["apoi", "then"], type: "and", ko: "-고" },
     ];
 
@@ -276,7 +273,6 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       return { raw: token, type: "and", ko: "-고" };
     }
 
-    // Split multi: "A and B and C" -> clauses [A,B,C], links [{ko:"-고"},{ko:"-고"}]
     function splitIntoChain(raw) {
       const original = (raw || "").replace(/\s+/g, " ").trim();
       const t = normalizeText(original);
@@ -304,13 +300,11 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
         if (p.kind === "conn") links.push(mapConnectorToken(p.text));
       }
       while (links.length >= clauses.length) links.pop();
-
       return { clauses, links };
     }
 
     // =========================
-    // 3) RO/EN -> slot rules (fixe, curate)
-    //    NOTĂ: place = bază ("카페") iar particula (에/에서) se decide la build, după verb
+    // 3) RO/EN -> slot rules (fixe)
     // =========================
     const RO_RULES = {
       subject: [
@@ -339,7 +333,7 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
         { re: /\bmult\b/, value: "많이" },
       ],
       object: [
-        { re: /\bo\s+carte\b|\bcarte\b|c[ăa]rț/i, value: "책" },
+        { re: /\bcarte\b|c[ăa]rț/i, value: "책" },
         { re: /\bcafea\b/, value: "커피" },
         { re: /\bap[ăa]\b/, value: "물" },
         { re: /\bceai\b/, value: "차" },
@@ -425,9 +419,7 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
     };
 
     function matchSlot(rules, textNorm) {
-      for (const r of rules) {
-        if (r.re.test(textNorm)) return r.value;
-      }
+      for (const r of rules) if (r.re.test(textNorm)) return r.value;
       return "";
     }
 
@@ -435,7 +427,6 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       const t = normalizeText(text);
       const RULES = (lang === "en") ? EN_RULES : RO_RULES;
       if (!t) return {};
-
       return {
         subject: matchSlot(RULES.subject, t),
         time:    matchSlot(RULES.time, t),
@@ -525,7 +516,7 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
     // =========================
     function normalizeEnding(raw) {
       let t = (raw || "").trim();
-      t = t.replace(/^[-~]/, "").trim(); // "-고" "~고" -> "고"
+      t = t.replace(/^[-~]/, "").trim();
       return t;
     }
 
@@ -542,46 +533,38 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       if (isStandaloneConnector(e)) return v;
       if (!v.endsWith("다")) return v;
 
-      // 하다 special
       if (v === "하다" && (e === "아서" || e === "어서")) return "해서";
       if (v === "하다" && e === "고") return "하고";
       if (v === "하다" && e === "(으)면") return "하면";
       if (v === "하다" && e === "(으)려고") return "하려고";
       if (v === "하다" && e === "(으)ㄹ 때") return "할 때";
 
-      const stem = v.slice(0, -1); // remove '다'
-
-      // (으) variants: decide by batchim of last syllable of stem
+      const stem = v.slice(0, -1);
       const last = lastHangulChar(stem);
       const batchim = hasBatchim(last);
 
-      if (e === "(으)면")   return stem + (batchim ? "으면" : "면");
+      if (e === "(으)면")    return stem + (batchim ? "으면" : "면");
       if (e === "(으)ㄹ 때") return stem + (batchim ? "을 때" : "ㄹ 때");
-      if (e === "(으)려고") return stem + (batchim ? "으려고" : "려고");
+      if (e === "(으)려고")  return stem + (batchim ? "으려고" : "려고");
 
-      // simple endings
-      return stem + e; // ex: 고 / 지만 / 아서 / 어서
+      return stem + e;
     }
 
     function choosePlaceParticle(placeBase, verbInf) {
       const p = (placeBase || "").trim();
       if (!p) return "";
       const v = (verbInf || "").trim();
-      // destination verbs
       if (v === "가다" || v === "오다") return p + "에";
-      // default location of action
       return p + "에서";
     }
 
     // =========================
     // 6) Polite form (preview only, last clause only)
-    //    simplu & sigur: 하다/공부하다/일하다 etc. + basic -아요/어요
     // =========================
     function politePresentFromInfinitive(verbInf) {
       const v = (verbInf || "").trim();
       if (!v || !v.endsWith("다")) return v;
 
-      // common irregular-ish safe mappings
       const specials = {
         "하다": "해요",
         "공부하다": "공부해요",
@@ -589,29 +572,23 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       };
       if (specials[v]) return specials[v];
 
-      // stem
-      const stem = v.slice(0, -1); // remove '다'
-      // 아주 simplificat (nu încercăm toate neregulatele acum)
-      // reguli:
-      // - dacă stem se termină în ㅏ/ㅗ -> 아요, altfel -> 어요
-      // - dacă stem se termină cu "하" -> 해요 (deja acoperit mai sus pentru 하다; dar păstrăm și aici)
+      const stem = v.slice(0, -1);
       const last = stem[stem.length - 1];
+
       if (last === "하") return stem.slice(0, -1) + "해요";
 
-      // detect last vowel (rough heuristic by syllable decomposition)
       const code = last.charCodeAt(0);
       if (code < 0xAC00 || code > 0xD7A3) return stem + "어요";
 
       const sIndex = code - 0xAC00;
-      const jung = Math.floor((sIndex % (21 * 28)) / 28); // 0..20
-      // vowels indices: 0=ㅏ, 8=ㅗ are the "아" group, also 2=ㅑ, 9=ㅛ can be treated as 아 group
-      const aGroup = [0,2,8,9];
+      const jung = Math.floor((sIndex % (21 * 28)) / 28);
+      const aGroup = [0,2,8,9]; // ㅏ,ㅑ,ㅗ,ㅛ -> 아요
       const ending = aGroup.includes(jung) ? "아요" : "어요";
       return stem + ending;
     }
 
     // =========================
-    // 7) Build clause & preview
+    // 7) Build & preview
     // =========================
     function buildClause(idx, isLastClause, politeLastEnabled) {
       const tableId = getTableId(idx);
@@ -626,32 +603,26 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       const verbInf = readCell(tableId, "verb");
       const conjRaw = readCell(tableId, "conj");
 
-      // object phrase
       let obj = "";
       if (object && numeral && counter) obj = object + " " + numeral + " " + counter;
       else if (object) obj = object;
 
-      // place + particle (depends on verb)
       const place = choosePlaceParticle(placeB, verbInf);
 
-      // verb with ending if present (but last clause usually has no conj)
       let verbOut = attachEndingToVerb(verbInf, conjRaw);
 
-      // polite only on last clause, and only if its verbOut is still infinitive (…다)
       if (politeLastEnabled && isLastClause) {
-        // if user left an ending on last clause, we do not override it (avoid breaking)
         const conjNorm = normalizeEnding(conjRaw);
         if (!conjNorm && verbInf) verbOut = politePresentFromInfinitive(verbInf);
       }
 
-      // standalone connector in conj => inserted as a separate word (rare, manual)
       const conjNorm = normalizeEnding(conjRaw);
       const mid = isStandaloneConnector(conjNorm) ? conjNorm : "";
 
       const parts = [subject, time, place, mod, obj, verbOut].filter(Boolean);
       const clause = parts.join(" ").trim();
 
-      return { clause, mid, hasAny: clause.length > 0 || mid.length > 0 };
+      return { clause, mid };
     }
 
     function rebuildPreview() {
@@ -662,6 +633,7 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       const chunks = [];
       for (let i=0; i<n; i++) {
         const c = buildClause(i, i === n-1, polite);
+        // FIX: nu mai sari aiurea pe hasAny; ia doar clauzele non-empty
         if (!c.clause) continue;
         chunks.push(c.clause);
         if (c.mid && i < n-1) chunks.push(c.mid);
@@ -670,13 +642,12 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       const out = document.getElementById("previewSentence");
       const info = document.getElementById("previewInfo");
 
-      const sentence = (chunks.join(" ").replace(/\s+/g," ").trim()) || "저 가요";
-      out.textContent = sentence;
+      const sentence = chunks.join(" ").replace(/\s+/g," ").trim();
+      out.textContent = sentence || "저 가요";
 
       info.textContent =
-        "Corecții cheie: PLACE devine 자동: 가다/오다 → 에, rest → 에서. " +
-        "Ending-urile (-고/-지만/-어서/-(으)면/-(으)ㄹ 때/-(으)려고) se lipesc doar dacă verbul din tabel este infinitiv (…다). " +
-        "„Politețe” schimbă doar ultimul verb în preview (tabelul rămâne infinitiv).";
+        "PLACE: 가다/오다 → 에, rest → 에서. Endings (-고/-지만/-어서/-(으)면/-(으)ㄹ 때/-(으)려고) se lipesc doar la verb infinitiv (…다). " +
+        "Politețe: schimbă doar ultimul verb în preview (tabelul rămâne infinitiv).";
     }
 
     // =========================
@@ -709,26 +680,23 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
         clearClause(getTableId(0));
         setCell(getTableId(0), "subject", "저");
         setCell(getTableId(0), "verb", "가다");
+        setCell(getTableId(0), "conj", "");
         rebuildPreview();
         return;
       }
 
       ensureClauseCount(clauses.length);
 
-      // fill each clause
       for (let i=0; i<clauses.length; i++) {
         const slots = parseToSlots(clauses[i], lang);
         applySlotsToClause(i, slots);
       }
 
-      // set conj (ending) on previous clause
       for (let i=0; i<links.length; i++) {
-        setCell(getTableId(i), "conj", links[i].ko); // "-고" etc
+        setCell(getTableId(i), "conj", links[i].ko);
       }
 
-      // last clause conj cleared to avoid accidental chaining
       setCell(getTableId(clauses.length - 1), "conj", "");
-
       rebuildPreview();
     }
 
@@ -744,6 +712,7 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       setCell(getTableId(0), "subject", "저");
       setCell(getTableId(0), "verb", "가다");
       setCell(getTableId(0), "conj", "");
+
       const polite = document.getElementById("politeToggle");
       if (polite) polite.checked = false;
 
@@ -753,40 +722,37 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
     // =========================
     // 10) Init + live preview
     // =========================
-  function wireLivePreview() {
-    document.addEventListener("input", function (e) {
-      const target = e.target;
-      if (target && target.classList && target.classList.contains("col-body-main")) {
-        rebuildPreview();
-      }
-    });
+    function wireLivePreview() {
+      document.addEventListener("input", function (e) {
+        const target = e.target;
+        if (target && target.classList && target.classList.contains("col-body-main")) {
+          rebuildPreview();
+        }
+      });
 
-    const polite = document.getElementById("politeToggle");
-    if (polite) {
-      polite.addEventListener("change", rebuildPreview);
+      // FIX: ID corect
+      const polite = document.getElementById("politeToggle");
+      if (polite) polite.addEventListener("change", rebuildPreview);
     }
-  }
 
-  // ============================================================
-  // 13) Init
-  // ============================================================
-  function init() {
-    ensureClauseCount(1);
-    setCell("tableP1", "subject", "저");
-    setCell("tableP1", "verb", "가다");
+    function init() {
+      ensureClauseCount(1);
+      setCell("tableP1", "subject", "저");
+      setCell("tableP1", "verb", "가다");
+      setCell("tableP1", "conj", "");
 
-    const autoFillBtn = document.getElementById("autoFillBtn");
-    const clearBtn = document.getElementById("clearBtn");
+      const autoFillBtn = document.getElementById("autoFillBtn");
+      const clearBtn = document.getElementById("clearBtn");
 
-    if (autoFillBtn) autoFillBtn.addEventListener("click", autoFillFromInput);
-    if (clearBtn) clearBtn.addEventListener("click", clearAll);
+      if (autoFillBtn) autoFillBtn.addEventListener("click", autoFillFromInput);
+      if (clearBtn) clearBtn.addEventListener("click", clearAll);
 
-    wireLivePreview();
-    rebuildPreview();
-  }
+      wireLivePreview();
+      rebuildPreview();
+    }
 
-  window.addEventListener("DOMContentLoaded", init);
-})();
-</script>
+    window.addEventListener("DOMContentLoaded", init);
+  })();
+  </script>
 </body>
 </html>
