@@ -464,55 +464,85 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
     // (extensibile)
     // =========================
     const RO_RULES = {
-      subject: [
-        { re: /\beu\b/, value: "저" },
-        { re: /\btu\b/, value: "너" },
-        { re: /\bnoi\b/, value: "우리" },
-      ],
-      time: [
-        { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
-        { re: /\bmâine\b/, value: "내일" },
-        { re: /\bieri\b/, value: "어제" },
-        { re: /\bacum\b/, value: "지금" },
-      ],
-      place: [
-        { re: /\bacas[ăa]\b/, value: "집" },
-        { re: /pia[tț]ă/, value: "시장" },
-        { re: /școal[ăa]|scoala/, value: "학교" },
-        { re: /firm[ăa]|serviciu|companie/, value: "회사" },
-        { re: /cafenea/, value: "카페" },
-      ],
-      mod: [
-        { re: /\bbine\b|ok\b/, value: "잘" },
-        { re: /încet|incet/, value: "천천히" },
-        { re: /repede|rapid/, value: "빨리" },
-        { re: /mult/, value: "많이" },
-      ],
-      object: [
-        { re: /cafea/, value: "커피" },
-        { re: /\bap[ăa]\b/, value: "물" },
-        { re: /carte|c[ăa]rț/, value: "책" },
-        { re: /m[ăa]ncare|pr[ăa]n|cina|mic\s+dejun/, value: "음식" },
-        { re: /ceai/, value: "차" },
-      ],
-      numeral: [
-        { re: /\bo\s+(carte|cafea)\b/, value: "한" },
-        { re: /\bdou[ăa]\s+/, value: "두" },
-        { re: /\btrei\s+/, value: "세" },
-      ],
-      counter: [
-        { re: /carte|c[ăa]rț/, value: "권" },
-        { re: /cafea|ap[ăa]\b|ceai|m[ăa]ncare/, value: "개" },
-      ],
-      verb: [
-        { re: /merg|a\s+merge|sa\s+merg|să\s+merg/, value: "가다" },
-        { re: /vin|a\s+veni|sa\s+vin|să\s+vin/, value: "오다" },
-        { re: /beau|a\s+bea|sa\s+beau|să\s+beau/, value: "마시다" },
-        { re: /m[âă]n[âa]nc|mananc|a\s+m[âă]nca/, value: "먹다" },
-        { re: /citesc|a\s+citi|sa\s+citesc|să\s+citesc/, value: "읽다" },
-        { re: /lucrez|a\s+lucra/, value: "일하다" },
-      ],
-    };
+  subject: [
+    { re: /\beu\s*\(formal\)|eu\s*-\s*formal\b/i, value: "저" },
+    { re: /\beu\s*\(informal\)|eu\s*-\s*informal\b/i, value: "나" },
+    { re: /\beu\b/i, value: "저" },
+    { re: /\btu\b/i, value: "너" },
+    { re: /\bel\b|\bea\b/i, value: "그/그녀" }, // simplificat
+    { re: /\bnoi\b/i, value: "우리" },
+  ],
+
+  time: [
+    { re: reWords(["azi","astăzi"]), value: "오늘" },
+    { re: reWords(["mâine"]), value: "내일" },
+    { re: reWords(["ieri"]), value: "어제" },
+    { re: reWords(["acum"]), value: "지금" },
+    { re: reWords(["dimineața","dimineata"]), value: "아침에" },
+    { re: reWords(["seara"]), value: "저녁에" },
+    { re: reWords(["noaptea"]), value: "밤에" },
+  ],
+
+  place: [
+    { re: reWords(["acasă","acasa"]), value: "집" },
+    { re: reWords(["piață","piata","market"]), value: "시장" },
+    { re: reWords(["cafenea","cafea"]), value: "카페" },
+    { re: reWords(["magazin","supermarket","shop"]), value: "가게" },
+    { re: /la\s+școal[ăa]|la\s+scoala|școal[ăa]\b|scoala\b/i, value: "학교" },
+    { re: /la\s+serviciu|la\s+firm[ăa]|birou|companie/i, value: "회사" },
+    { re: reWords(["spital"]), value: "병원" },
+    { re: reWords(["parc"]), value: "공원" },
+    { re: reWords(["restaurant"]), value: "식당" },
+  ],
+
+  mod: [
+    { re: reWords(["bine","frumos","ok"]), value: "잘" },
+    { re: /în\s+liniște|in\s+liniste|liniște|liniste/i, value: "조용히" },
+    { re: /cu\s+sârguință|cu\s+sarguinta|harnic|cu\s+mult\s+efort/i, value: "열심히" },
+    { re: reWords(["încet","incet"]), value: "천천히" },
+    { re: reWords(["repede","rapid"]), value: "빨리" },
+  ],
+
+  object: [
+    { re: reWords(["cafea"]), value: "커피" },
+    { re: reWords(["apă","apa","apă minerală","apa minerala"]), value: "물" },
+    { re: reWords(["ceai"]), value: "차" },
+    { re: reWords(["carte","cărți","carti"]), value: "책" },
+    { re: reWords(["mâncare","mancare","prânz","pranz","cină","cina","mic dejun"]), value: "음식" },
+    { re: reWords(["telefon"]), value: "핸드폰" },
+    { re: reWords(["film"]), value: "영화" },
+    { re: reWords(["muzică","muzica"]), value: "음악" },
+  ],
+
+  numeral: [
+    { re: /\bo\s+(carte|cafea|ap[ăa]|ceai)\b/i, value: "한" },
+    { re: /\bdou[ăa]\s+(carți|carti|cafele)\b/i, value: "두" },
+    { re: /\btrei\s+(carți|carti|cafele)\b/i, value: "세" },
+  ],
+
+  counter: [
+    { re: reWords(["carte","cărți","carti"]), value: "권" },
+    { re: reWords(["cafea","apă","apa","ceai","mâncare","mancare","telefon","film"]), value: "개" },
+  ],
+
+  verb: [
+    { re: /merg\b|a\s+merge|să\s+merg|sa\s+merg/i, value: "가다" },
+    { re: /vin\b|a\s+veni|să\s+vin|sa\s+vin/i, value: "오다" },
+    { re: /beau\b|a\s+bea|să\s+beau|sa\s+beau/i, value: "마시다" },
+    { re: /m[âă]n[âa]nc\b|mananc|a\s+m[âă]nca/i, value: "먹다" },
+    { re: /citesc|a\s+citi|să\s+citesc|sa\s+citesc/i, value: "읽다" },
+    { re: /lucrez|a\s+lucra/i, value: "일하다" },
+
+    // EXTINS:
+    { re: /studiez|învăț|invat|a\s+învăța|a\s+invata/i, value: "공부하다" },
+    { re: /văd|vad|mă\s+uit|ma\s+uit|privesc|a\s+vedea/i, value: "보다" },
+    { re: /scriu|a\s+scrie/i, value: "쓰다" },
+    { re: /cumpăr|cumpar|a\s+cumpăra|a\s+cumpara/i, value: "사다" },
+    { re: /fac|a\s+face/i, value: "하다" },
+    { re: /dorm|a\s+dormi/i, value: "자다" },
+    { re: /vorbesc|a\s+vorbi/i, value: "말하다" },
+  ],
+};
 
     const EN_RULES = {
       subject: [
