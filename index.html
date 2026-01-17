@@ -822,7 +822,123 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
 
       rebuildPreview();
     }
+// ================================
+// CONFIG: ai pana la 4 clauze
+// ================================
+const TABLE_IDS = ["tableP1", "tableP2", "tableP3", "tableP4"];
 
+// ce consideram conectori in input (RO + EN)
+// (ordinea conteaza: expresiile mai lungi primele)
+const CONNECTORS = [
+  { re: /\b(atunci\s+când|atunci\s+cand)\b/gi, type: "when" },
+  { re: /\b(pentru\s+că|pentru\s+ca)\b/gi, type: "because" },
+  { re: /\b(ca\s+să|ca\s+sa)\b/gi, type: "in_order_to" },
+  { re: /\b(deși|desi)\b/gi, type: "although" },
+  { re: /\b(dacă|daca)\b/gi, type: "if" },
+  { re: /\b(când|cand|when)\b/gi, type: "when" },
+  { re: /\b(dar|but)\b/gi, type: "but" },
+  { re: /\b(și|si|and)\b/gi, type: "and" },
+  { re: /\b(iar|apoi|then)\b/gi, type: "and" }, // simplificat
+];
+
+// mapare conector -> ending coreean (defaulturi simple)
+function connectorToEnding(type) {
+  switch (type) {
+    case "and": return "-고";
+    case "but": return "-지만";
+    case "because": return "-어서";     // (mai tarziu faci -아서/-어서 inteligent)
+    case "if": return "-(으)면";
+    case "when": return "-(으)ㄹ 때";
+    case "in_order_to": return "-(으)려고";
+    case "although": return "-지만";    // simplificat (mai tarziu rafinezi)
+    default: return "-고";
+  }
+}
+
+// ================================
+// Split multi: produce clauze + conectorii dintre ele
+// Ex: "A and B and C" => clauses:[A,B,C], conns:[and,and]
+// ================================
+function splitMultiSentence(raw) {
+  const text = (raw || "").replace(/\s+/g, " ").trim();
+  if (!text) return { clauses: [""], conns: [] };
+
+  // gasim toate potrivirile cu index, ca sa split-uim stabil
+  const hits = [];
+  for (const c of CONNECTORS) {
+    let m;
+    while ((m = c.re.exec(text)) !== null) {
+      hits.push({ index: m.index, len: m[0].length, type: c.type });
+      // evita bucle infinite la regex global
+      if (m.index === c.re.lastIndex) c.re.lastIndex++;
+    }
+    c.re.lastIndex = 0; // reset
+  }
+
+  // sortam si eliminam suprapuneri (pastram match-ul cel mai lung / primul)
+  hits.sort((a, b) => a.index - b.index || b.len - a.len);
+  const filtered = [];
+  let lastEnd = -1;
+  for (const h of hits) {
+    if (h.index >= lastEnd) {
+      filtered.push(h);
+      lastEnd = h.index + h.len;
+    }
+  }
+
+  if (filtered.length === 0) return { clauses: [text], conns: [] };
+
+  const clauses = [];
+  const conns = [];
+
+  let start = 0;
+  for (const h of filtered) {
+    const left = text.slice(start, h.index).trim();
+    if (left) clauses.push(left);
+
+    conns.push(h.type);
+    start = h.index + h.len;
+  }
+
+  const tail = text.slice(start).trim();
+  if (tail) clauses.push(tail);
+
+  // daca avem mai multi conectori decat clauze-1 (din cauza spatiilor/punctuatiei), normalizam
+  while (conns.length > Math.max(0, clauses.length - 1)) conns.pop();
+
+  return { clauses, conns };
+}
+
+// ================================
+// Clear strict (ca sa nu ramana "잘" etc.)
+// ================================
+function clearTable(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  table.querySelectorAll(".col-body-main").forEach(el => (el.textContent = ""));
+}
+
+// seteaza text in celula data-key
+function setCell(tableId, key, value) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  const cell = table.querySelector(`.col[data-key="${key}"] .col-body-main`);
+  if (cell) cell.textContent = value || "";
+}
+
+// citeste text din celula data-key
+function readCell(tableId, key) {
+  const table = document.getElementById(tableId);
+  if (!table) return "";
+  const cell = table.querySelector(`.col[data-key="${key}"] .col-body-main`);
+  return cell ? cell.textContent.trim() : "";
+}
+
+// "are continut" (folosit ca sa nu lipim -고 daca urmatoarea clauza e goala)
+function tableHasAny(tableId) {
+  const keys = ["subject","time","place","mod","object","numeral","counter","verb","conj"];
+  return keys.some(k => !!readCell(tableId, k));
+}
     // =========================
     // H) Clear
     // =========================
