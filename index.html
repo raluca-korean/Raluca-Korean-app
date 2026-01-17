@@ -830,7 +830,66 @@ window.addEventListener("DOMContentLoaded", () => {
         "Notă: Ending-urile (ex: -고, -지만, -어서, -(으)면, -(으)ㄹ 때, -(으)려고) se lipesc de verb doar dacă verbul este infinitiv (…다). " +
         "Conectorii separați (ex: 그리고/그래서/하지만) rămân ca și cuvinte între clauze.";
     }
+function buildClausePreview(tableId, makePoliteLast) {
+  // copie din buildClauseFromTable, dar cu optional politete pe verb
+  const s = {
+    subject: readCell(tableId, "subject"),
+    time: readCell(tableId, "time"),
+    place: readCell(tableId, "place"),
+    mod: readCell(tableId, "mod"),
+    object: readCell(tableId, "object"),
+    numeral: readCell(tableId, "numeral"),
+    counter: readCell(tableId, "counter"),
+    verb: readCell(tableId, "verb"),
+    conj: readCell(tableId, "conj"),
+  };
 
+  let obj = "";
+  if (s.object && s.numeral && s.counter) obj = `${s.object} ${s.numeral} ${s.counter}`;
+  else if (s.object) obj = s.object;
+
+  // 1) lipim ending-urile de verb (ex: -고, -지만 etc.)
+  let verbOut = attachEndingToVerb(s.verb, s.conj);
+
+  // 2) daca vrem politete pe ultima clauza: ignoram conj si transformam verbul infinitiv in -아요/어요
+  // IMPORTANT: politete are sens pe ultima clauza, deci ea NU trebuie sa aiba ending (-고 etc.).
+  if (makePoliteLast) {
+    verbOut = toPoliteAyoEoyo(s.verb); // folosim infinitivul din tabel
+  }
+
+  const parts = [s.subject, s.time, s.place, s.mod, obj, verbOut].filter(Boolean);
+  return parts.join(" ").trim();
+}
+
+function rebuildPreview() {
+  const used = TABLE_IDS.filter(id => tableHasAny(id));
+  const out = document.getElementById("previewSentence");
+  if (!out) return;
+
+  if (used.length === 0) {
+    out.textContent = "저 가요";
+    return;
+  }
+
+  // toggle
+  const t = document.getElementById("politeToggle");
+  const politeOn = !!(t && t.checked);
+
+  // daca politeOn, ultima clauza o facem polite si ne asiguram ca nu ramane ending pe ea
+  const lastId = used[used.length - 1];
+  if (politeOn) setCell(lastId, "conj", ""); // preview-only policy: ultima clauza nu are ending
+
+  const sentence = used.map((id, idx) => {
+    const isLast = idx === used.length - 1;
+    return buildClausePreview(id, politeOn && isLast);
+  }).filter(Boolean).join(" ").trim();
+
+  out.textContent = sentence || "저 가요";
+}
+    window.addEventListener("DOMContentLoaded", () => {
+  const t = document.getElementById("politeToggle");
+  if (t) t.addEventListener("change", rebuildPreview);
+});
     // =========================
     // G) Auto-fill din input (RO/EN) + multi split
     // =========================
