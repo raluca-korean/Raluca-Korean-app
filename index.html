@@ -3972,8 +3972,12 @@ function splitRoIntoTwoClauses(text) {
 
   return { p1, p2 };
 }
+ document.addEventListener("DOMContentLoaded", () => {
   const roTranslateBtn = document.getElementById("roTranslateBtn");
-if (roTranslateBtn) {
+  const roInput = document.getElementById("roInput");
+
+  if (!roTranslateBtn || !roInput) return;
+
   roTranslateBtn.addEventListener("click", () => {
     const txt = roInput.value || "";
     LAST_RO_SENTENCE = txt;
@@ -3989,74 +3993,27 @@ if (roTranslateBtn) {
       const parsed2 = parseRoToState(split.second);
       Object.assign(stateP2, parsed2.state);
 
+      const enableP2 = document.getElementById("enableP2");
       if (enableP2) enableP2.checked = true;
-      if (tableP2) tableP2.classList.remove("hidden");
-
-      render();
     } else {
       const parsed = parseRoToState(txt);
       Object.assign(stateP1, parsed.state);
 
+      const enableP2 = document.getElementById("enableP2");
       if (enableP2) enableP2.checked = false;
-      if (tableP2) tableP2.classList.add("hidden");
-
-      render();
     }
 
+    render();
+
+    // rezultatul RO→KO (cardul de jos)
     const res = translateRoToKo(txt);
-    document.getElementById("roToKoResult").textContent = res.ko;
-    document.getElementById("roCorrected").textContent = res.roFixed;
+    const roToKoResult = document.getElementById("roToKoResult");
+    const roCorrected  = document.getElementById("roCorrected");
+    if (roToKoResult) roToKoResult.textContent = res.ko;
+    if (roCorrected)  roCorrected.textContent  = res.roFixed;
   });
-}  
-    // 0) încerc să văd dacă am două fraze legate cu „și / iar / apoi”
-    const split = splitRoIntoClauses(txt);
-
-    if (split) {
-      // 🔹 CAZ: două propoziții legate cu „și / iar / apoi”
-
-      // P1: prima parte + -고
-      const parsed1 = parseRoToState(split.first);
-      Object.assign(stateP1, parsed1.state);
-      stateP1.conjug   = "-고";     // forțăm -고 la P1
-      activeP1.conjug  = true;      // ne asigurăm că este ON
-
-      // P2: a doua parte, detectată normal
-      const parsed2 = parseRoToState(split.second);
-      Object.assign(stateP2, parsed2.state);
-
-      // activăm vizual Propoziția 2
-      if (enableP2) {
-        enableP2.checked = true;
-      }
-      if (tableP2) {
-        tableP2.classList.remove("hidden");
-      }
-
-      render();
-
-    } else {
-      // 🔹 CAZ: o singură propoziție (fără „și / iar / apoi” între acțiuni)
-
-      const parsed = parseRoToState(txt);
-      Object.assign(stateP1, parsed.state);
-
-      // dezactivăm Propoziția 2 în UI
-      if (enableP2) {
-        enableP2.checked = false;
-      }
-      if (tableP2) {
-        tableP2.classList.add("hidden");
-      }
-
-      render();
-    }
-
-    // 3) Ro → Ko + româna corectată (rămâne ca înainte)
-    const res = translateRoToKo(txt);
-    document.getElementById("roToKoResult").textContent = res.ko;
-    document.getElementById("roCorrected").textContent = res.roFixed;
-  });
-}
+});
+   
     function createToggleChips(){
   columns.forEach(col=>{
     // --- Propoziția 1 ---
