@@ -3701,8 +3701,82 @@ function buildVerbPhrase(dictVerb,cj){
   // fallback – verb + final, fără spațiu și fără „-”
 return getVerbStem(dictVerb)+cj.replace(/^-/, "");
 }
+const EN_RULES = {
+  subject: [
+    { re: /\bi\b/, value: "저" },
+    { re: /\byou\b/, value: "너" },
+    { re: /\bwe\b/, value: "우리" },
+    { re: /\bthey\b/, value: "그들" }
+  ],
+  time: [
+    { re: /\btoday\b/, value: "오늘" },
+    { re: /\btomorrow\b/, value: "내일" },
+    { re: /\byesterday\b/, value: "어제" },
+    { re: /\bnow\b/, value: "지금" },
+    { re: /\bevery morning\b|\beach morning\b/, value: "아침마다" }
+  ],
+  place: [
+    { re: /\bat home\b|\bhome\b/, value: "집" },
+    { re: /\bat school\b|\bschool\b/, value: "학교" },
+    { re: /\bat work\b|\bwork\b|\bcompany\b/, value: "회사" },
+    { re: /\bbank\b/, value: "은행" },
+    { re: /\bcafe\b|\bcoffee shop\b/, value: "카페" }
+  ],
+  mod: [
+    { re: /\bwell\b|\bnicely\b/, value: "잘" },
+    { re: /\bquietly\b/, value: "조용히" },
+    { re: /\bhard\b|\bhardly\b|\bdiligently\b/, value: "열심히" },
+    { re: /\bslowly\b/, value: "천천히" },
+    { re: /\bquickly\b|\bfast\b/, value: "빨리" }
+  ],
+  object: [
+    { re: /\bcoffee\b/, value: "커피" },
+    { re: /\bwater\b/, value: "물" },
+    { re: /\bbook\b|\bbooks\b/, value: "책" },
+    { re: /\bfood\b|\blunch\b|\bdinner\b|\bbreakfast\b/, value: "음식" },
+    { re: /\btea\b/, value: "차" },
+    { re: /\bkorean\b/, value: "한국어" }
+  ],
+  verb: [
+    { re: /\bgo\b/, value: "가요" },
+    { re: /\bcome\b/, value: "와요" },
+    { re: /\bdrink\b/, value: "마셔요" },
+    { re: /\beat\b/, value: "먹어요" },
+    { re: /\bread\b/, value: "읽어요" },
+    { re: /\bwork\b/, value: "일해요" },
+    { re: /\bstudy\b|\blearn\b/, value: "공부해요" },
+    { re: /\bwatch\b/, value: "봐요" },
+    { re: /\bbuy\b/, value: "사요" },
+    { re: /\bsleep\b/, value: "자요" },
+    { re: /\bwrite\b/, value: "써요" },
+    { re: /\bspeak\b/, value: "말해요" }
+  ]
+};
 
-/* === RESTUL APP-ULUI (builder, preview etc.) === */
+function normalizeEn(text){
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .replace(/[.,!?;:]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseEnglishToSlots(text){
+  const t = normalizeEn(text);
+
+  return {
+    subject: matchSlot(EN_RULES.subject, t),
+    time:    matchSlot(EN_RULES.time, t),
+    place:   matchSlot(EN_RULES.place, t),
+    mod:     matchSlot(EN_RULES.mod, t),
+    object:  matchSlot(EN_RULES.object, t),
+    numeral: null,
+    counter: null,
+    verb:    matchSlot(EN_RULES.verb, t)
+  };
+}
+    /* === RESTUL APP-ULUI (builder, preview etc.) === */
 
 const glossaryEntries=[];
 const columns=[
