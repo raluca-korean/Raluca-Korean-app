@@ -5495,6 +5495,112 @@ function render(){
   nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
+   // 1) Funcție lipsă (ca să nu-ți pice updatePreview dacă e apelată)
+function isLinkingConj(conj) {
+  if (!conj) return false;
+  const LINK = [
+    "-고","-지만","-(으)면","-아서","-어서","-기 때문에",
+    "-(으)ㄹ 때","-(으)면서","-기 전에","-(으)ㄴ 후에","-(으)려고","-려고"
+  ];
+  return LINK.includes(conj);
+}
+
+// 2) Split RO în max 2 clauze + conjugare pentru P1
+const RO_CONNECTORS = [
+  { keys: ["și","si","iar","apoi"], conjug: "-고" },
+  { keys: ["dar"], conjug: "-지만" },
+  { keys: ["dacă","daca"], conjug: "-(으)면" },
+  { keys: ["pentru că","pentru ca","fiindcă","fiindca"], conjug: "-어서" },
+  { keys: ["când","cand","atunci când","atunci cand"], conjug: "-(으)ㄹ 때" },
+];
+
+function normalizeRoSimple(text){
+  if (!text) return "";
+  let t = text.toLowerCase();
+  t = t.replace(/ş/g,"ș").replace(/ţ/g,"ț");
+  t = t.replace(/[.,!?;:]/g," ");
+  t = t.replace(/\s+/g," ").trim();
+  return t;
+}
+function escapeRegExp(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
+
+function splitMax2Ro(raw){
+  const t = normalizeRoSimple(raw);
+  if (!t) return null;
+
+  const all = RO_CONNECTORS.flatMap(c=>c.keys);
+  const uniq = Array.from(new Set(all)).sort((a,b)=>b.length-a.length);
+  const re = new RegExp("\\s(" + uniq.map(escapeRegExp).join("|") + ")\\s", "i");
+
+  const m = re.exec(t);
+  if (!m) return null;
+
+  const left = t.slice(0, m.index).trim();
+  const token = (m[1]||"").trim().toLowerCase();
+  const right = t.slice(m.index + m[0].length).trim();
+  if (!left || !right) return null;
+
+  let conjug = "-고";
+  for (const c of RO_CONNECTORS){
+    if (c.keys.some(k => k.toLowerCase() === token)) { conjug = c.conjug; break; }
+  }
+  return { left, right, conjug };
+}
+
+// 3) Umple stateP1/stateP2 + render
+function fillBuilderFromRO(raw){
+  if (!raw || !raw.trim()) return;
+
+  const split = splitMax2Ro(raw);
+
+  // P1
+  const p1Text = split ? split.left : raw;
+  const s1 = parseRomanianToSlots(p1Text);  // funcția ta existentă
+  if (s1.subject)  stateP1.subject  = s1.subject;
+  if (s1.time)     stateP1.time     = s1.time;
+  if (s1.place)    stateP1.place    = s1.place;
+  if (s1.mod)      stateP1.mod      = s1.mod;
+  if (s1.object)   stateP1.object   = s1.object;
+  if (s1.numeral)  stateP1.numeral  = s1.numeral;
+  if (s1.counter)  stateP1.counter  = s1.counter;
+  if (s1.verb)     stateP1.verb     = s1.verb;
+
+  // conjug pentru P1 (doar dacă split)
+  stateP1.conjug = split ? split.conjug : (stateP1.conjug || "");
+
+  // P2
+  if (split) {
+    enableP2.checked = true;
+
+    const s2 = parseRomanianToSlots(split.right);
+    if (s2.subject)  stateP2.subject  = s2.subject;
+    if (s2.time)     stateP2.time     = s2.time;
+    if (s2.place)    stateP2.place    = s2.place;
+    if (s2.mod)      stateP2.mod      = s2.mod;
+    if (s2.object)   stateP2.object   = s2.object;
+    if (s2.numeral)  stateP2.numeral  = s2.numeral;
+    if (s2.counter)  stateP2.counter  = s2.counter;
+    if (s2.verb)     stateP2.verb     = s2.verb;
+
+    stateP2.conjug = ""; // ultima clauză
+  } else {
+    enableP2.checked = false;
+    stateP2.subject = stateP2.time = stateP2.place = stateP2.mod = "";
+    stateP2.object = stateP2.numeral = stateP2.counter = stateP2.verb = "";
+    stateP2.conjug = "";
+  }
+
+  render(); // esențial
+}
+
+// 4) Leagă de butonul tău existent
+const roTranslateBtn = document.getElementById("roTranslateBtn");
+const roInput = document.getElementById("roInput");
+if (roTranslateBtn && roInput) {
+  roTranslateBtn.addEventListener("click", () => {
+    fillBuilderFromRO(roInput.value || "");
+  });
+} 
  function translateRoToKo(roText) {
   // păstrăm ultima propoziție, cum era și înainte
   LAST_RO_SENTENCE = roText || "";
