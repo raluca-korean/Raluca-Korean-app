@@ -5601,6 +5601,62 @@ if (roTranslateBtn && roInput) {
     fillBuilderFromRO(roInput.value || "");
   });
 } 
+    function colHTML_BunTabel(key, title, label, value, example) {
+  const safeVal = (value ?? "");
+  return `
+    <div class="col" data-key="${key}">
+      <div class="col-header">${title}</div>
+      <div class="col-body-label">${label}</div>
+      <div class="col-body-main" contenteditable="true">${safeVal}</div>
+      ${example ? `<div class="col-body-extra example">${example}</div>` : ""}
+    </div>
+  `;
+}
+
+function renderBunTabelInto(containerEl, stateObj, activeObj, columns) {
+  if (!containerEl) return;
+
+  // columns = lista de chei în ordinea ta (ex: ["subject","time","place",...])
+  // title/label/example pot fi mapate aici:
+  const META = {
+    subject: { title:"SUBJECT", label:"eu/tu…", example:"ex: 저, 나, 너" },
+    time:    { title:"TIME",    label:"azi/today…", example:"ex: 오늘, 내일" },
+    place:   { title:"PLACE",   label:"loc (bază)", example:"ex: 카페, 집, 학교" },
+    mod:     { title:"MOD",     label:"bine/slowly…", example:"ex: 잘, 천천히" },
+    object:  { title:"OBJECT",  label:"obiect", example:"ex: 책, 커피" },
+    numeral: { title:"NUMERAL", label:"un/doi…", example:"ex: 한, 두" },
+    counter: { title:"COUNTER", label:"권/개…", example:"ex: 권, 개" },
+    verb:    { title:"VERB",    label:"infinitiv …다", example:"ex: 가다, 읽다" },
+    conjug:  { title:"CONJ",    label:"-고/-지만…", example:"ex: -고, -지만, -어서" },
+  };
+
+  let html = "";
+  for (const key of columns) {
+    const m = META[key] || { title: key.toUpperCase(), label:"", example:"" };
+    // valoarea pe care o arăți în tabel vine din stateObj[key]
+    const val = (stateObj && (key in stateObj)) ? stateObj[key] : "";
+    html += colHTML_BunTabel(key, m.title, m.label, val, m.example);
+  }
+
+  containerEl.innerHTML = html;
+
+  // IMPORTANT: păstrăm compatibilitatea cu sistemul tău existent:
+  // când user editează text, îl scriem în state și chemăm updatePreview()/render minimal.
+  containerEl.querySelectorAll(".col").forEach(col => {
+    const key = col.getAttribute("data-key");
+    const main = col.querySelector(".col-body-main");
+    if (!key || !main) return;
+
+    main.addEventListener("input", () => {
+      if (stateObj && (key in stateObj)) {
+        stateObj[key] = main.textContent.trim();
+      }
+      // dacă ai funcția ta de refresh:
+      if (typeof updatePreview === "function") updatePreview();
+    });
+  });
+}
+    
  function translateRoToKo(roText) {
   // păstrăm ultima propoziție, cum era și înainte
   LAST_RO_SENTENCE = roText || "";
