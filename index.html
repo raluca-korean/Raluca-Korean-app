@@ -2516,6 +2516,198 @@ function getInputLang() {
   // fallback: dacă nu găsim nimic, presupunem Română
   return el ? el.value : "ro";
 } 
+   (function () {
+  "use strict";
+
+  // -----------------------------
+  // 1) Conectori RO -> ending KO
+  // -----------------------------
+  const RO_CONNECTORS = [
+    { keys: ["atunci când", "atunci cand", "când", "cand"], ko: "-(으)ㄹ 때" },
+    { keys: ["în timp ce", "in timp ce"], ko: "-(으)면서" },
+    { keys: ["după ce", "dupa ce"], ko: "-(으)ㄴ 후에" },
+    { keys: ["înainte să", "inainte sa"], ko: "-기 전에" },
+
+    { keys: ["din cauză că", "din cauza ca"], ko: "-기 때문에" },
+    { keys: ["pentru că", "pentru ca", "fiindcă", "fiindca"], ko: "-어서" },
+
+    { keys: ["deși", "desi"], ko: "-지만" },
+    { keys: ["dacă", "daca"], ko: "-(으)면" },
+
+    { keys: ["dar"], ko: "-지만" },
+    { keys: ["și", "si"], ko: "-고" },
+    { keys: ["iar", "apoi"], ko: "-고" },
+  ];
+
+  function escapeRegExp(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+  function normalizeRoSimple(text) {
+    if (!text) return "";
+    let t = text.toLowerCase();
+    t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
+    t = t.replace(/[.,!?;:]/g, " ");
+    t = t.replace(/\s+/g, " ").trim();
+    return t;
+  }
+
+  function buildConnectorRegex() {
+    const all = RO_CONNECTORS.flatMap(c => c.keys);
+    const uniq = Array.from(new Set(all)).sort((a,b) => b.length - a.length);
+    const alt = uniq.map(escapeRegExp).join("|");
+    return new RegExp("\\s(" + alt + ")\\s", "i");
+  }
+
+  function connectorToKo(token) {
+    const t = (token || "").toLowerCase();
+    for (const c of RO_CONNECTORS) {
+      if (c.keys.some(k => k.toLowerCase() === t)) return c.ko;
+    }
+    return "-고";
+  }
+
+  // split în MAXIM 2 clauze (pentru Builder P1/P2)
+  function splitMax2Ro(raw) {
+    const t = normalizeRoSimple(raw);
+    if (!t) return null;
+
+    const re = buildConnectorRegex();
+    const m = re.exec(t);
+    if (!m) return null;
+
+    const left = t.slice(0, m.index).trim();
+    const token = (m[1] || "").trim();
+    const right = t.slice(m.index + m[0].length).trim();
+
+    if (!left || !right) return null;
+    return { left, right, conj: connectorToKo(token) };
+  }
+
+  // -----------------------------
+  // 2) Helpers: set/read col din tabel
+  // -----------------------------
+  function setCol(tableEl, key, value, onlyIfEmpty) {
+    if (!tableEl || !value) return;
+    const el = tableEl.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    if (!el) return;
+    if (onlyIfEmpty && el.textContent.trim()) return;
+    el.textContent = value;
+  }
+
+  function clearConj(tableEl) {
+    if (!tableEl) return;
+    const el = tableEl.querySelector('.col[data-key="conj"] .col-body-main');
+    if (el) el.textContent = "";
+  }
+
+  // -----------------------------
+  // 3) Refresh preview (fără să-ți stric logica existentă)
+  // -----------------------------
+  function tryRefreshPreview() {
+    const candidates = [
+      "rebuildPreview",
+      "updatePreview",
+      "renderPreview",
+      "rebuildSentence",
+      "rebuildAll",
+      "buildPreview",
+      "refreshPreview",
+    ];
+    for (const name of candidates) {
+      if (typeof window[name] === "function") {
+        window[name]();
+        return;
+      }
+    }
+    // fallback: unele app-uri ascultă input/change
+    document.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  // -----------------------------
+  // 4) MAIN: la click pe roTranslateBtn -> umple Builder
+  // -----------------------------
+  function onRoTranslateToBuilder() {
+    const roInput = document.getElementById("roInput");
+    const tableP1 = document.getElementById("tableP1");
+    const tableP2 = document.getElementById("tableP2");
+    const enableP2 = document.getElementById("enableP2");
+    const titleP2  = document.getElementById("titleP2");
+
+    if (!roInput || !tableP1) return;
+
+    const raw = roInput.value || "";
+    const onlyEmpty = false; // aici eu recomand să suprascrie, fiind buton explicit
+    const split = splitMax2Ro(raw);
+
+    // 1) P1 slots
+    const slots1 = parseRomanianToSlots(raw);
+    setCol(tableP1, "subject", slots1.subject, onlyEmpty);
+    setCol(tableP1, "time",    slots1.time, onlyEmpty);
+    setCol(tableP1, "place",   slots1.place, onlyEmpty);
+    setCol(tableP1, "mod",     slots1.mod, onlyEmpty);
+    setCol(tableP1, "object",  slots1.object, onlyEmpty);
+    setCol(tableP1, "numeral", slots1.numeral, onlyEmpty);
+    setCol(tableP1, "counter", slots1.counter, onlyEmpty);
+    setCol(tableP1, "verb",    slots1.verb, onlyEmpty);
+
+    clearConj(tableP1);
+
+    // 2) Dacă avem split, facem P2 + conj pe P1
+    if (split && tableP2 && enableP2) {
+      // activează P2
+      enableP2.checked = true;
+      tableP2.classList.remove("hidden");
+      if (titleP2) titleP2.classList.remove("hidden");
+
+      // slots P1 trebuie din left, nu din tot raw
+      const sLeft = parseRomanianToSlots(split.left);
+      setCol(tableP1, "subject", sLeft.subject, false);
+      setCol(tableP1, "time",    sLeft.time, false);
+      setCol(tableP1, "place",   sLeft.place, false);
+      setCol(tableP1, "mod",     sLeft.mod, false);
+      setCol(tableP1, "object",  sLeft.object, false);
+      setCol(tableP1, "numeral", sLeft.numeral, false);
+      setCol(tableP1, "counter", sLeft.counter, false);
+      setCol(tableP1, "verb",    sLeft.verb, false);
+
+      // conj pe P1
+      setCol(tableP1, "conj", split.conj, false);
+
+      // slots P2 din right
+      const sRight = parseRomanianToSlots(split.right);
+      setCol(tableP2, "subject", sRight.subject, false);
+      setCol(tableP2, "time",    sRight.time, false);
+      setCol(tableP2, "place",   sRight.place, false);
+      setCol(tableP2, "mod",     sRight.mod, false);
+      setCol(tableP2, "object",  sRight.object, false);
+      setCol(tableP2, "numeral", sRight.numeral, false);
+      setCol(tableP2, "counter", sRight.counter, false);
+      setCol(tableP2, "verb",    sRight.verb, false);
+
+      // P2 conj gol (ultima clauză)
+      clearConj(tableP2);
+
+    } else {
+      // fără split: dezactivează P2 ca să rămână curat
+      if (enableP2) enableP2.checked = false;
+      if (tableP2) tableP2.classList.add("hidden");
+      if (titleP2) titleP2.classList.add("hidden");
+    }
+
+    tryRefreshPreview();
+  }
+
+  function wire() {
+    const btn = document.getElementById("roTranslateBtn");
+    if (!btn) return;
+
+    // IMPORTANT: dacă deja ai un addEventListener pe acest buton,
+    // nu îl ștergem; adăugăm încă unul (safe).
+    btn.addEventListener("click", onRoTranslateToBuilder);
+  }
+
+  window.addEventListener("DOMContentLoaded", wire);
+})();
+                           
    /* ===== Multi-clause Builder: grid gramatici ===== */
 .grammars-grid{
   margin-top:10px;
