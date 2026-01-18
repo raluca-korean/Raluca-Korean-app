@@ -2494,8 +2494,10 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
   }
 }  
    // === Limbă de intrare (Română / English) din switch-ul de sus ===
-    function getInputLang() {
-  return document.getElementById("langSelect")?.value || "ro";
+function getInputLang() {
+  const el = document.querySelector('input[name="inputLang"]:checked');
+  // fallback: dacă nu găsim nimic, presupunem Română
+  return el ? el.value : "ro";
 }
        <section class="card" id="roCard">
       <h2>Română / English → Coreeană (auto-fill)</h2>
@@ -2661,41 +2663,20 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
   <div id="previewSentence" class="preview-sentence"></div>
   <div id="previewInfo" class="preview-ro"></div>
 </section>
-   
-   <div class="card" id="roCard">
-  <h2>Română / English → Coreeană</h2>
-
-  <div style="margin-bottom:6px;font-size:11px;color:var(--text-soft);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-    <span>Limba propoziției:</span>
-
-    <select id="langSelect"
-            style="padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;">
-      <option value="ro" selected>Română</option>
-      <option value="en">English</option>
-    </select>
-
-    <label style="display:flex;align-items:center;gap:6px;margin-left:auto;font-weight:800;">
-      <input type="checkbox" id="fillOnlyEmpty" checked />
-      Completează doar câmpurile goale
-    </label>
-  </div>
-
-  <textarea id="roInput" rows="3"
-            placeholder="Scrie propoziția în română / engleză aici..."></textarea>
-
-  <div class="btn-group" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-    <button id="roTranslateBtn">
-      <span class="translate-icon">🇷🇴➡️🇰🇷</span>
-      Tradu în coreeană
-    </button>
-
-    <button id="autoFillBtn" class="secondary">🧩 Completează în Builder (P1)</button>
-    <button id="clearBtn" class="secondary">🧽 Curăță text</button>
-  </div>
-
-  <div class="preview-ko" id="roToKoResult"></div>
-  <div class="preview-ro" id="roCorrected"></div>
-</div> 
+      <!-- Română → Coreeană mutat JOS în Builder -->
+      <div class="card">
+        <h2>Română → Coreeană</h2>
+        <textarea id="roInput" rows="3"
+                  placeholder="Scrie propoziția în română aici..."></textarea>
+        <button id="roTranslateBtn">
+          <span class="translate-icon">🇷🇴➡️🇰🇷</span>
+          Tradu în coreeană
+        </button>
+        <div class="preview-ko" id="roToKoResult"></div>
+        <div class="preview-ro" id="roCorrected"></div>
+      </div>
+    </div>   
+    
         <!-- SCREEN 2: EXERCIȚII TOPIK -->
     <div class="screen" id="screen-exercises">
       <div class="card ex-card">
@@ -3263,8 +3244,8 @@ function translateInputToKo() {
 
   // aici folosești exact aceleași elemente pe care le foloseai până acum
   // pentru a afișa rezultatul
- document.getElementById("roToKoResult").textContent = result.ko || "";
-document.getElementById("roCorrected").textContent = result.roFixed || "";
+  document.getElementById("koOutput").textContent = result.ko || "";
+  document.getElementById("roCorrected").textContent = result.roFixed || "";
 }
     // reverse map: română -> coreeană (din translations)
 function stripDiacritics(s){
@@ -3701,142 +3682,8 @@ function buildVerbPhrase(dictVerb,cj){
   // fallback – verb + final, fără spațiu și fără „-”
 return getVerbStem(dictVerb)+cj.replace(/^-/, "");
 }
-const EN_RULES = {
-  subject: [
-    { re: /\bi\b/, value: "저" },
-    { re: /\byou\b/, value: "너" },
-    { re: /\bwe\b/, value: "우리" },
-    { re: /\bthey\b/, value: "그들" }
-  ],
-  time: [
-    { re: /\btoday\b/, value: "오늘" },
-    { re: /\btomorrow\b/, value: "내일" },
-    { re: /\byesterday\b/, value: "어제" },
-    { re: /\bnow\b/, value: "지금" },
-    { re: /\bevery morning\b|\beach morning\b/, value: "아침마다" }
-  ],
-  place: [
-    { re: /\bat home\b|\bhome\b/, value: "집" },
-    { re: /\bat school\b|\bschool\b/, value: "학교" },
-    { re: /\bat work\b|\bwork\b|\bcompany\b/, value: "회사" },
-    { re: /\bbank\b/, value: "은행" },
-    { re: /\bcafe\b|\bcoffee shop\b/, value: "카페" }
-  ],
-  mod: [
-    { re: /\bwell\b|\bnicely\b/, value: "잘" },
-    { re: /\bquietly\b/, value: "조용히" },
-    { re: /\bhard\b|\bhardly\b|\bdiligently\b/, value: "열심히" },
-    { re: /\bslowly\b/, value: "천천히" },
-    { re: /\bquickly\b|\bfast\b/, value: "빨리" }
-  ],
-  object: [
-    { re: /\bcoffee\b/, value: "커피" },
-    { re: /\bwater\b/, value: "물" },
-    { re: /\bbook\b|\bbooks\b/, value: "책" },
-    { re: /\bfood\b|\blunch\b|\bdinner\b|\bbreakfast\b/, value: "음식" },
-    { re: /\btea\b/, value: "차" },
-    { re: /\bkorean\b/, value: "한국어" }
-  ],
-  verb: [
-    { re: /\bgo\b/, value: "가요" },
-    { re: /\bcome\b/, value: "와요" },
-    { re: /\bdrink\b/, value: "마셔요" },
-    { re: /\beat\b/, value: "먹어요" },
-    { re: /\bread\b/, value: "읽어요" },
-    { re: /\bwork\b/, value: "일해요" },
-    { re: /\bstudy\b|\blearn\b/, value: "공부해요" },
-    { re: /\bwatch\b/, value: "봐요" },
-    { re: /\bbuy\b/, value: "사요" },
-    { re: /\bsleep\b/, value: "자요" },
-    { re: /\bwrite\b/, value: "써요" },
-    { re: /\bspeak\b/, value: "말해요" }
-  ]
-};
 
-function normalizeEn(text){
-  if (!text) return "";
-  return text
-    .toLowerCase()
-    .replace(/[.,!?;:]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function parseEnglishToSlots(text){
-  const t = normalizeEn(text);
-
-  return {
-    subject: matchSlot(EN_RULES.subject, t),
-    time:    matchSlot(EN_RULES.time, t),
-    place:   matchSlot(EN_RULES.place, t),
-    mod:     matchSlot(EN_RULES.mod, t),
-    object:  matchSlot(EN_RULES.object, t),
-    numeral: null,
-    counter: null,
-    verb:    matchSlot(EN_RULES.verb, t)
-  };
-}
-    function applySlotsToBuilderP1(slots, onlyEmpty) {
-  const table = document.getElementById("tableP1");
-  if (!table || !slots) return;
-
-  const setCol = (key, value) => {
-    if (!value) return;
-
-    const el = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
-    if (!el) return;
-
-    const current = (el.textContent || "").trim();
-
-    // considerăm "gol" dacă e chiar gol sau e un placeholder generic
-    const isEmpty =
-      !current ||
-      current === "-" ||
-      current === "(alege)" ||
-      current === "(alege cuvinte din tabel)";
-
-    if (onlyEmpty && !isEmpty) return;
-
-    el.textContent = value;
-  };
-
-  setCol("subject", slots.subject);
-  setCol("time",    slots.time);
-  setCol("place",   slots.place);
-  setCol("mod",     slots.mod);
-  setCol("object",  slots.object);
-  setCol("numeral", slots.numeral);
-  setCol("counter", slots.counter);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const autoFillBtn = document.getElementById("autoFillBtn");
-  const clearBtn    = document.getElementById("clearBtn");
-  const roInput     = document.getElementById("roInput");
-  const fillOnlyEmpty = document.getElementById("fillOnlyEmpty");
-
-  if (autoFillBtn && roInput) {
-    autoFillBtn.addEventListener("click", () => {
-      const text = roInput.value || "";
-      const lang = getInputLang();
-      const onlyEmpty = !!fillOnlyEmpty?.checked;
-
-      const slots = (lang === "en")
-        ? parseEnglishToSlots(text)
-        : parseRomanianToSlots(text);
-
-      applySlotsToBuilderP1(slots, onlyEmpty);
-      rebuildPreviewFromBuilderP1(slots);
-    });
-  }
-
-  if (clearBtn && roInput) {
-    clearBtn.addEventListener("click", () => {
-      roInput.value = "";
-    });
-  }
-});
-    /* === RESTUL APP-ULUI (builder, preview etc.) === */
+/* === RESTUL APP-ULUI (builder, preview etc.) === */
 
 const glossaryEntries=[];
 const columns=[
@@ -3972,48 +3819,62 @@ function splitRoIntoTwoClauses(text) {
 
   return { p1, p2 };
 }
- document.addEventListener("DOMContentLoaded", () => {
-  const roTranslateBtn = document.getElementById("roTranslateBtn");
-  const roInput = document.getElementById("roInput");
-
-  if (!roTranslateBtn || !roInput) return;
-
+    
+ const roTranslateBtn = document.getElementById("roTranslateBtn");
+if (roTranslateBtn) {
   roTranslateBtn.addEventListener("click", () => {
-    const txt = roInput.value || "";
+    translateBtn.addEventListener("click", translateInputToKo);    const txt = roInput.value || "";
     LAST_RO_SENTENCE = txt;
 
+    // 0) încerc să văd dacă am două fraze legate cu „și / iar / apoi”
     const split = splitRoIntoClauses(txt);
 
     if (split) {
+      // 🔹 CAZ: două propoziții legate cu „și / iar / apoi”
+
+      // P1: prima parte + -고
       const parsed1 = parseRoToState(split.first);
       Object.assign(stateP1, parsed1.state);
-      stateP1.conjug = "-고";
-      activeP1.conjug = true;
+      stateP1.conjug   = "-고";     // forțăm -고 la P1
+      activeP1.conjug  = true;      // ne asigurăm că este ON
 
+      // P2: a doua parte, detectată normal
       const parsed2 = parseRoToState(split.second);
       Object.assign(stateP2, parsed2.state);
 
-      const enableP2 = document.getElementById("enableP2");
-      if (enableP2) enableP2.checked = true;
+      // activăm vizual Propoziția 2
+      if (enableP2) {
+        enableP2.checked = true;
+      }
+      if (tableP2) {
+        tableP2.classList.remove("hidden");
+      }
+
+      render();
+
     } else {
+      // 🔹 CAZ: o singură propoziție (fără „și / iar / apoi” între acțiuni)
+
       const parsed = parseRoToState(txt);
       Object.assign(stateP1, parsed.state);
 
-      const enableP2 = document.getElementById("enableP2");
-      if (enableP2) enableP2.checked = false;
+      // dezactivăm Propoziția 2 în UI
+      if (enableP2) {
+        enableP2.checked = false;
+      }
+      if (tableP2) {
+        tableP2.classList.add("hidden");
+      }
+
+      render();
     }
 
-    render();
-
-    // rezultatul RO→KO (cardul de jos)
+    // 3) Ro → Ko + româna corectată (rămâne ca înainte)
     const res = translateRoToKo(txt);
-    const roToKoResult = document.getElementById("roToKoResult");
-    const roCorrected  = document.getElementById("roCorrected");
-    if (roToKoResult) roToKoResult.textContent = res.ko;
-    if (roCorrected)  roCorrected.textContent  = res.roFixed;
+    document.getElementById("roToKoResult").textContent = res.ko;
+    document.getElementById("roCorrected").textContent = res.roFixed;
   });
-});
-   
+}
     function createToggleChips(){
   columns.forEach(col=>{
     // --- Propoziția 1 ---
@@ -5333,7 +5194,52 @@ function render(){
   nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
-    // ======================================================
+ function translateRoToKo(roText) {
+  // păstrăm ultima propoziție, cum era și înainte
+  LAST_RO_SENTENCE = roText || "";
+  const original = (roText || "").trim();
+
+  if (!original) {
+    return { ko: "", roFixed: "" };
+  }
+
+  // 1) Parsăm propoziția românească
+  const parsed = parseRoToState(original);
+
+  // 2) Construim propoziția coreeană din state-ul parserului
+  const koResult = buildClauseSentence(
+    parsed.state,
+    {
+      subject: true,
+      time: true,
+      place: true,
+      mod: true,
+      object: true,
+      numeral: false,
+      counter: false,
+      verb: true,
+      conjug: true,
+    },
+    null
+  ).ko;
+
+  // 3) Construim propoziția românească „corectată”
+  let roFixed = buildNaturalRomanian(
+    parsed.state,
+    {
+      subject: true,
+      time: true,
+      place: true,
+      mod: true,
+      object: true,
+      numeral: false,
+      counter: false,
+      verb: true,
+      conjug: true,
+    },
+    null
+  );
+// ======================================================
 //    ENGLISH → KOREAN  (pipeline separat, cap-coadă)
 // ======================================================
 
@@ -5389,28 +5295,6 @@ const EN_VERBS = [
   { re: /\bwork\b/i, ko: "일해요" },
   { re: /\bsleep\b/i, ko: "자요" }
 ];
-    
-    function translateRoToKo(roText) {
-  LAST_RO_SENTENCE = roText || "";
-  const original = (roText || "").trim();
-  if (!original) return { ko: "", roFixed: "" };
-
-  const parsed = parseRoToState(original);
-
-  const koResult = buildClauseSentence(parsed.state, {
-    subject:true,time:true,place:true,mod:true,object:true,
-    numeral:false,counter:false,verb:true,conjug:true,
-  }, null).ko;
-
-  const roFixed = buildNaturalRomanian(parsed.state, {
-    subject:true,time:true,place:true,mod:true,object:true,
-    numeral:false,counter:false,verb:true,conjug:true,
-  });
-
-  return { ko: koResult || "(nu am putut construi propoziția)", roFixed: roFixed || original };
-}
-   
-    
 
 // Un mic helper: găsește primul match într-o listă
 function findEnMatch(list, text) {
