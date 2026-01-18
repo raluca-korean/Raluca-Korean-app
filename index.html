@@ -3776,6 +3776,66 @@ function parseEnglishToSlots(text){
     verb:    matchSlot(EN_RULES.verb, t)
   };
 }
+    function applySlotsToBuilderP1(slots, onlyEmpty) {
+  const table = document.getElementById("tableP1");
+  if (!table || !slots) return;
+
+  const setCol = (key, value) => {
+    if (!value) return;
+
+    const el = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    if (!el) return;
+
+    const current = (el.textContent || "").trim();
+
+    // considerăm "gol" dacă e chiar gol sau e un placeholder generic
+    const isEmpty =
+      !current ||
+      current === "-" ||
+      current === "(alege)" ||
+      current === "(alege cuvinte din tabel)";
+
+    if (onlyEmpty && !isEmpty) return;
+
+    el.textContent = value;
+  };
+
+  setCol("subject", slots.subject);
+  setCol("time",    slots.time);
+  setCol("place",   slots.place);
+  setCol("mod",     slots.mod);
+  setCol("object",  slots.object);
+  setCol("numeral", slots.numeral);
+  setCol("counter", slots.counter);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const autoFillBtn = document.getElementById("autoFillBtn");
+  const clearBtn    = document.getElementById("clearBtn");
+  const roInput     = document.getElementById("roInput");
+  const fillOnlyEmpty = document.getElementById("fillOnlyEmpty");
+
+  if (autoFillBtn && roInput) {
+    autoFillBtn.addEventListener("click", () => {
+      const text = roInput.value || "";
+      const lang = getInputLang();
+      const onlyEmpty = !!fillOnlyEmpty?.checked;
+
+      const slots = (lang === "en")
+        ? parseEnglishToSlots(text)
+        : parseRomanianToSlots(text);
+
+      applySlotsToBuilderP1(slots, onlyEmpty);
+      rebuildPreviewFromBuilderP1(slots);
+    });
+  }
+
+  if (clearBtn && roInput) {
+    clearBtn.addEventListener("click", () => {
+      roInput.value = "";
+    });
+  }
+});
     /* === RESTUL APP-ULUI (builder, preview etc.) === */
 
 const glossaryEntries=[];
