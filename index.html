@@ -3972,13 +3972,42 @@ function splitRoIntoTwoClauses(text) {
 
   return { p1, p2 };
 }
-    
- const roTranslateBtn = document.getElementById("roTranslateBtn");
+  const roTranslateBtn = document.getElementById("roTranslateBtn");
 if (roTranslateBtn) {
   roTranslateBtn.addEventListener("click", () => {
-    translateBtn.addEventListener("click", translateInputToKo);    const txt = roInput.value || "";
+    const txt = roInput.value || "";
     LAST_RO_SENTENCE = txt;
 
+    const split = splitRoIntoClauses(txt);
+
+    if (split) {
+      const parsed1 = parseRoToState(split.first);
+      Object.assign(stateP1, parsed1.state);
+      stateP1.conjug = "-고";
+      activeP1.conjug = true;
+
+      const parsed2 = parseRoToState(split.second);
+      Object.assign(stateP2, parsed2.state);
+
+      if (enableP2) enableP2.checked = true;
+      if (tableP2) tableP2.classList.remove("hidden");
+
+      render();
+    } else {
+      const parsed = parseRoToState(txt);
+      Object.assign(stateP1, parsed.state);
+
+      if (enableP2) enableP2.checked = false;
+      if (tableP2) tableP2.classList.add("hidden");
+
+      render();
+    }
+
+    const res = translateRoToKo(txt);
+    document.getElementById("roToKoResult").textContent = res.ko;
+    document.getElementById("roCorrected").textContent = res.roFixed;
+  });
+}  
     // 0) încerc să văd dacă am două fraze legate cu „și / iar / apoi”
     const split = splitRoIntoClauses(txt);
 
