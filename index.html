@@ -2655,7 +2655,24 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
           </div>
         </div>
       </div><!-- /table-block -->
-<h3 class="section-title">Builder (clauze)</h3>
+      <!-- ... ai aici table-block și previewKo/previewRo exact cum le ai ... -->
+
+</div><!-- /table-block -->
+
+<!-- Română → Coreeană (simplu, stabil) -->
+<div class="card" id="roCard">
+  <h2>Română → Coreeană</h2>
+  <textarea id="roInput" rows="3" placeholder="Scrie propoziția în română aici..."></textarea>
+
+  <button id="roTranslateBtn">
+    <span class="translate-icon">🇷🇴➡️🇰🇷</span>
+    Tradu în coreeană
+  </button>
+
+  <div class="preview-ko" id="roToKoResult"></div>
+  <div class="preview-ro" id="roCorrected"></div>
+</div>
+    <h3 class="section-title">Builder (clauze)</h3>
 <div id="clausesHost"></div>
 
 <section class="preview-card">
@@ -5653,86 +5670,80 @@ function runExampleInBuilder(roSentence) {
   roTranslateBtn.click();
   setScreen("builder");
 }
-
-// atașează un exemplu la un buton de lecție
-function addLessonExample(btnId, roSentence) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.addEventListener("click", () => {
-    runExampleInBuilder(roSentence);
-  });
-}
-
-// Conectăm lecțiile direct (scriptul este la finalul <body>, deci elementele există)
-addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
-addLessonExample("lesson2TryBtn", "Să vedem un film?");
-addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
-addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
-addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
-    
-  // ===== MUTĂ BLOCUL „ROMÂNĂ → COREEANĂ” ÎN JOSUL BUILDER-ULUI =====
+    // ==========================
+//  A) Enable/Disable P2 UI
+// ==========================
 document.addEventListener("DOMContentLoaded", () => {
-  // 1) Butonul "Tradu în coreeană"
-  const roBtn = document.getElementById("roTranslateBtn");
-  // 2) Textul cu propoziția coreeană (preview)
-  const previewKo = document.getElementById("previewKo");
-
-  if (!roBtn || !previewKo) {
-    return; // dacă nu găsește elementele, nu face nimic
-  }
-
-  // cardul/blocul în care stă butonul de traducere
-  const roBlock = roBtn.closest(".card") || roBtn.parentElement;
-  // cardul cu propoziția coreeană
-  const previewCard = previewKo.closest(".card") || previewKo.parentElement;
-
-  if (!roBlock || !previewCard || !previewCard.parentElement) {
-    return;
-  }
-
-  // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
-  previewCard.insertAdjacentElement("afterend", roBlock);
-});
-    // ==== SYNC: Traducerea aproximativă (Builder) -> bloc "Română → Coreeană" ====
-(function () {
-  const previewRo = document.getElementById("previewRo");  // linia de română de sub Builder
-  const roInput   = document.getElementById("roInput");    // textarea din cardul "Română → Coreeană"
-
-  // dacă nu găsește elementele, nu face nimic (de siguranță)
-  if (!previewRo || !roInput) return;
-
-  function syncApproxToRoInput() {
-    const text = (previewRo.textContent || "").trim();
-    if (!text) return;          // dacă e gol, nu completăm nimic
-    roInput.value = text;       // punem traducerea aproximativă în textarea de jos
-  }
-
-  // urmărim orice schimbare în previewRo (de la Builder, Random propoziție etc.)
-  const observer = new MutationObserver(syncApproxToRoInput);
-  observer.observe(previewRo, {
-    childList: true,
-    characterData: true,
-    subtree: true
-  });
-
-  // sincronizare inițială (dacă există deja o propoziție în Builder)
-  syncApproxToRoInput();
-})();
-   (() => {
   const enableP2 = document.getElementById("enableP2");
   const titleP2  = document.getElementById("titleP2");
   const tableP2  = document.getElementById("tableP2");
 
+  // dacă nu există P2 în HTML, ieșim
   if (!enableP2 || !titleP2 || !tableP2) return;
 
   const syncP2 = () => {
-    const on = enableP2.checked;
+    const on = !!enableP2.checked;
     titleP2.classList.toggle("hidden", !on);
     tableP2.classList.toggle("hidden", !on);
   };
 
   enableP2.addEventListener("change", syncP2);
-  syncP2();
+  syncP2(); // stare inițială
+});
+
+
+// ==========================
+//  B) Lecții -> exemplu în Builder
+//  (presupune că ai deja runExampleInBuilder(roSentence))
+// ==========================
+function addLessonExample(btnId, roSentence) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    // dacă funcția ta există în proiect, o folosim
+    if (typeof runExampleInBuilder === "function") {
+      runExampleInBuilder(roSentence);
+    } else if (typeof window.runExampleInBuilder === "function") {
+      window.runExampleInBuilder(roSentence);
+    } else {
+      // fallback: doar pune textul în roInput, ca să nu se „blocheze”
+      const roInput = document.getElementById("roInput");
+      if (roInput) roInput.value = roSentence;
+      // opțional: scroll la builder
+      const builder = document.getElementById("screen-builder");
+      if (builder) builder.scrollIntoView({ behavior: "smooth" });
+    }
+  });
+}
+
+// conectare lecții
+addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
+addLessonExample("lesson2TryBtn", "Să vedem un film?");
+addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
+addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
+addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
+
+
+// ==========================
+//  C) (Opțional) Sync previewRo -> roInput
+//  (NU afectează builderul; doar copiază traducerea aproximativă)
+// ==========================
+(function () {
+  const previewRo = document.getElementById("previewRo");
+  const roInput   = document.getElementById("roInput");
+  if (!previewRo || !roInput) return;
+
+  const syncApproxToRoInput = () => {
+    const text = (previewRo.textContent || "").trim();
+    if (!text) return;
+    roInput.value = text;
+  };
+
+  const observer = new MutationObserver(syncApproxToRoInput);
+  observer.observe(previewRo, { childList: true, characterData: true, subtree: true });
+
+  // sync inițial
+  syncApproxToRoInput();
 })();
   </script>
 </body>
