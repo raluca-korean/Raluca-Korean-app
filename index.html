@@ -2494,20 +2494,34 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
   }
 }  
    // === Limbă de intrare (Română / English) din switch-ul de sus ===
-
+function getInputLang() {
+  const el = document.querySelector('input[name="inputLang"]:checked');
+  // fallback: dacă nu găsim nimic, presupunem Română
+  return el ? el.value : "ro";
+}
        <section class="card" id="roCard">
       <h2>Română / English → Coreeană (auto-fill)</h2>
 
       <div style="margin-bottom:6px;font-size:11px;color:var(--text-soft);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <span>Limba propoziției:</span>
-      
+        <select id="langSelect" style="padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;">
+          <option value="ro" selected>Română</option>
+          <option value="en">English</option>
+        </select>
         <label style="display:flex;align-items:center;gap:6px;margin-left:auto;font-weight:800;">
           <input type="checkbox" id="fillOnlyEmpty" checked />
           Completează doar câmpurile goale
         </label>
       </div>
 
-     
+      <textarea id="inputText" placeholder="Ex: Astăzi merg la cafenea și citesc o carte și beau o cafea.
+Today I go to the cafe and read a book and drink a coffee."></textarea>
+
+      <div class="btn-row">
+        <button id="autoFillBtn">Completează automat builder-ul</button>
+        <button id="clearBtn" class="secondary">Curăță tot</button>
+      </div>
+
       <div class="hint">
         Reguli (default) pentru split între clauze:
         <br>• <b>și / and</b> → <code class="k">-고</code>
@@ -2517,6 +2531,11 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
         <br>• <b>când / when</b> → <code class="k">-(으)ㄹ 때</code>
         <br>• <b>ca să / in order to</b> → <code class="k">-(으)려고</code>
       </div>
+
+      <details class="grammars" id="grammarsBox">
+        <summary>Bibliotecă de gramatici (RO + EN → KO) – din fișa ta</summary>
+        <div class="grammars-grid" id="grammarsGrid"></div>
+      </details>
     </section>
 <!-- ===== RO/EN → KO (auto-fill) + Builder (clauze) + Preview final ===== -->
 
@@ -2525,14 +2544,24 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
 
   <div style="margin-bottom:6px;font-size:11px;color:var(--text-soft);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
     <span>Limba propoziției:</span>
-  
+    <select id="langSelect" style="padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;">
+      <option value="ro" selected>Română</option>
+      <option value="en">English</option>
+    </select>
     <label style="display:flex;align-items:center;gap:6px;margin-left:auto;font-weight:800;">
       <input type="checkbox" id="fillOnlyEmpty" checked />
       Completează doar câmpurile goale
     </label>
   </div>
 
- 
+  <textarea id="inputText" placeholder="Ex: Astăzi merg la cafenea și citesc o carte și beau o cafea.
+Today I go to the cafe and read a book and drink a coffee."></textarea>
+
+  <div class="btn-row">
+    <button id="autoFillBtn">Completează automat builder-ul</button>
+    <button id="clearBtn" class="secondary">Curăță tot</button>
+  </div>
+
   <div class="hint">
     Reguli (default) pentru split între clauze:
     <br>• <b>și / and</b> → <code class="k">-고</code>
@@ -2542,6 +2571,11 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
     <br>• <b>când / when</b> → <code class="k">-(으)ㄹ 때</code>
     <br>• <b>ca să / in order to</b> → <code class="k">-(으)려고</code>
   </div>
+
+  <details class="grammars" id="grammarsBox">
+    <summary>Bibliotecă de gramatici (RO + EN → KO) – din fișa ta</summary>
+    <div class="grammars-grid" id="grammarsGrid"></div>
+  </details>
 </section>
 
 <h3 class="section-title">Builder (clauze)</h3>
@@ -2701,6 +2735,7 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
 
 </div>
 <!-- ================= END SCREEN 1 ================= -->
+    
     
         <!-- SCREEN 2: EXERCIȚII TOPIK -->
     <div class="screen" id="screen-exercises">
@@ -3250,8 +3285,28 @@ function loadCustomData(){
   }catch(e){}
 }
     // ================= RO -> KO (parser simplu din dicționarul app-ului) =================
+const roInput = document.getElementById("roInput");
+ // === Wrapper general pentru traducere ===
+function translateInputToKo() {
+  const text = (roInput.value || "").trim();
+  const lang = getInputLang();
 
+  let result;
+  if (!text) {
+    result = { ko: "", roFixed: "" };
+  } else if (lang === "en") {
+    // NOUL PIPELINE: EN → KO
+    result = translateEnToKo(text);
+  } else {
+    // PIPELINE VECHI: RO → KO
+    result = translateRoToKo(text);
+  }
 
+  // aici folosești exact aceleași elemente pe care le foloseai până acum
+  // pentru a afișa rezultatul
+  document.getElementById("koOutput").textContent = result.ko || "";
+  document.getElementById("roCorrected").textContent = result.roFixed || "";
+}
     // reverse map: română -> coreeană (din translations)
 function stripDiacritics(s){
   return (s||"")
@@ -5670,80 +5725,86 @@ function runExampleInBuilder(roSentence) {
   roTranslateBtn.click();
   setScreen("builder");
 }
-    // ==========================
-//  A) Enable/Disable P2 UI
-// =========================
-document.addEventListener("DOMContentLoaded", () => {
-  const enableP2 = document.getElementById("enableP2");
-  const titleP2  = document.getElementById("titleP2");
-  const tableP2  = document.getElementById("tableP2");
 
-  // dacă nu există P2 în HTML, ieșim
-  if (!enableP2 || !titleP2 || !tableP2) return;
-
-  const syncP2 = () => {
-    const on = !!enableP2.checked;
-    titleP2.classList.toggle("hidden", !on);
-    tableP2.classList.toggle("hidden", !on);
-  };
-
-  enableP2.addEventListener("change", syncP2);
-  syncP2(); // stare inițială
-});
-
-
-// ==========================
-//  B) Lecții -> exemplu în Builder
-//  (presupune că ai deja runExampleInBuilder(roSentence))
-// ==========================
+// atașează un exemplu la un buton de lecție
 function addLessonExample(btnId, roSentence) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
   btn.addEventListener("click", () => {
-    // dacă funcția ta există în proiect, o folosim
-    if (typeof runExampleInBuilder === "function") {
-      runExampleInBuilder(roSentence);
-    } else if (typeof window.runExampleInBuilder === "function") {
-      window.runExampleInBuilder(roSentence);
-    } else {
-      // fallback: doar pune textul în roInput, ca să nu se „blocheze”
-      const roInput = document.getElementById("roInput");
-      if (roInput) roInput.value = roSentence;
-      // opțional: scroll la builder
-      const builder = document.getElementById("screen-builder");
-      if (builder) builder.scrollIntoView({ behavior: "smooth" });
-    }
+    runExampleInBuilder(roSentence);
   });
 }
 
-// conectare lecții
+// Conectăm lecțiile direct (scriptul este la finalul <body>, deci elementele există)
 addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
 addLessonExample("lesson2TryBtn", "Să vedem un film?");
 addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
 addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
 addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
+    
+  // ===== MUTĂ BLOCUL „ROMÂNĂ → COREEANĂ” ÎN JOSUL BUILDER-ULUI =====
+document.addEventListener("DOMContentLoaded", () => {
+  // 1) Butonul "Tradu în coreeană"
+  const roBtn = document.getElementById("roTranslateBtn");
+  // 2) Textul cu propoziția coreeană (preview)
+  const previewKo = document.getElementById("previewKo");
 
+  if (!roBtn || !previewKo) {
+    return; // dacă nu găsește elementele, nu face nimic
+  }
 
-// ==========================
-//  C) (Opțional) Sync previewRo -> roInput
-//  (NU afectează builderul; doar copiază traducerea aproximativă)
-// ==========================
+  // cardul/blocul în care stă butonul de traducere
+  const roBlock = roBtn.closest(".card") || roBtn.parentElement;
+  // cardul cu propoziția coreeană
+  const previewCard = previewKo.closest(".card") || previewKo.parentElement;
+
+  if (!roBlock || !previewCard || !previewCard.parentElement) {
+    return;
+  }
+
+  // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
+  previewCard.insertAdjacentElement("afterend", roBlock);
+});
+    // ==== SYNC: Traducerea aproximativă (Builder) -> bloc "Română → Coreeană" ====
 (function () {
-  const previewRo = document.getElementById("previewRo");
-  const roInput   = document.getElementById("roInput");
+  const previewRo = document.getElementById("previewRo");  // linia de română de sub Builder
+  const roInput   = document.getElementById("roInput");    // textarea din cardul "Română → Coreeană"
+
+  // dacă nu găsește elementele, nu face nimic (de siguranță)
   if (!previewRo || !roInput) return;
 
-  const syncApproxToRoInput = () => {
+  function syncApproxToRoInput() {
     const text = (previewRo.textContent || "").trim();
-    if (!text) return;
-    roInput.value = text;
+    if (!text) return;          // dacă e gol, nu completăm nimic
+    roInput.value = text;       // punem traducerea aproximativă în textarea de jos
+  }
+
+  // urmărim orice schimbare în previewRo (de la Builder, Random propoziție etc.)
+  const observer = new MutationObserver(syncApproxToRoInput);
+  observer.observe(previewRo, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+
+  // sincronizare inițială (dacă există deja o propoziție în Builder)
+  syncApproxToRoInput();
+})();
+   (() => {
+  const enableP2 = document.getElementById("enableP2");
+  const titleP2  = document.getElementById("titleP2");
+  const tableP2  = document.getElementById("tableP2");
+
+  if (!enableP2 || !titleP2 || !tableP2) return;
+
+  const syncP2 = () => {
+    const on = enableP2.checked;
+    titleP2.classList.toggle("hidden", !on);
+    tableP2.classList.toggle("hidden", !on);
   };
 
-  const observer = new MutationObserver(syncApproxToRoInput);
-  observer.observe(previewRo, { childList: true, characterData: true, subtree: true });
-
-  // sync inițial
-  syncApproxToRoInput();
+  enableP2.addEventListener("change", syncP2);
+  syncP2();
 })();
   </script>
 </body>
