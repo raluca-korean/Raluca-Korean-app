@@ -3774,8 +3774,152 @@ function conjugationType(cj){
   if(conjFutureLike.has(cj))return"future";
   return"present";
 }
+(function () {
+  "use strict";
 
-/* === VERB + CONJUGARE → expresie finală coreeană === */
+  // =========================
+  // 1) Split RO în max 2 clauze + mapare conector -> conjug
+  // =========================
+  const RO_CONNECTORS = [
+    { keys: ["atunci când", "atunci cand", "când", "cand"], conjug: "-(으)ㄹ 때" },
+    { keys: ["în timp ce", "in timp ce"], conjug: "-(으)면서" },
+    { keys: ["după ce", "dupa ce"], conjug: "-(으)ㄴ 후에" },
+    { keys: ["înainte să", "inainte sa"], conjug: "-기 전에" },
+
+    { keys: ["din cauză că", "din cauza ca"], conjug: "-기 때문에" },
+    { keys: ["pentru că", "pentru ca", "fiindcă", "fiindca"], conjug: "-아서/어서" }, // sau "-어서" dacă vrei simplu
+
+    { keys: ["deși", "desi"], conjug: "-지만" },
+    { keys: ["dacă", "daca"], conjug: "-(으)면" },
+
+    { keys: ["dar"], conjug: "-지만" },
+    { keys: ["și", "si", "iar", "apoi"], conjug: "-고" },
+  ];
+
+  function normalizeRoSimple(text) {
+    if (!text) return "";
+    let t = text.toLowerCase();
+    t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
+    t = t.replace(/[.,!?;:]/g, " ");
+    t = t.replace(/\s+/g, " ").trim();
+    return t;
+  }
+
+  function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function buildConnectorRegex() {
+    const all = RO_CONNECTORS.flatMap(c => c.keys);
+    const uniq = Array.from(new Set(all)).sort((a, b) => b.length - a.length);
+    const alt = uniq.map(escapeRegExp).join("|");
+    return new RegExp("\\s(" + alt + ")\\s", "i");
+  }
+
+  function connectorToConjug(token) {
+    const t = (token || "").toLowerCase();
+    for (const c of RO_CONNECTORS) {
+      if (c.keys.some(k => k.toLowerCase() === t)) return c.conjug;
+    }
+    return "-고";
+  }
+
+  // split în MAXIM 2 (pentru P1/P2)
+  function splitMax2Ro(raw) {
+    const t = normalizeRoSimple(raw);
+    if (!t) return null;
+    const re = buildConnectorRegex();
+    const m = re.exec(t);
+    if (!m) return null;
+
+    const left = t.slice(0, m.index).trim();
+    const token = (m[1] || "").trim();
+    const right = t.slice(m.index + m[0].length).trim();
+
+    if (!left || !right) return null;
+    return { left, right, conjug: connectorToConjug(token) };
+  }
+
+  // =========================
+  // 2) Helper: aplică slots în state (doar chei care există)
+  // =========================
+  function applySlotsToState(stateObj, slots) {
+    if (!stateObj || !slots) return;
+
+    // cheile tale din state sunt (aproape sigur) cele din columns: subject, time, place, mod, object, numeral, counter, verb, conjug
+    const keys = ["subject", "time", "place", "mod", "object", "numeral", "counter", "verb"];
+    keys.forEach(k => {
+      if (typeof slots[k] !== "undefined" && slots[k] !== null && slots[k] !== "") {
+        if (k in stateObj) stateObj[k] = slots[k];
+      }
+    });
+  }
+
+  function clearStateP2IfExists() {
+    if (!window.stateP2) return;
+    // curățăm doar cheile de bază ca să nu lași resturi
+    ["subject", "time", "place", "mod", "object", "numeral", "counter", "verb", "conjug"].forEach(k => {
+      if (k in window.stateP2) window.stateP2[k] = "";
+    });
+  }
+
+  // =========================
+  // 3) MAIN: RO input -> P1/P2 + conjug + enableP2 + render()
+  // =========================
+  function fillBuilderFromRomanian(raw) {
+    if (!raw || !raw.trim()) return;
+    if (!window.stateP1) return;
+
+    const split = splitMax2Ro(raw);
+
+    // 1) P1 din clauza 1 (sau din tot textul dacă nu split)
+    const p1Text = split ? split.left : raw;
+    const slots1 = parseRomanianToSlots(p1Text); // funcția ta existentă
+    applySlotsToState(window.stateP1, slots1);
+
+    // 2) conjug în P1 (doar dacă split)
+    if ("conjug" in window.stateP1) {
+      window.stateP1.conjug = split ? split.conjug : (window.stateP1.conjug || "");
+    }
+
+    // 3) P2
+    if (split && window.stateP2 && window.enableP2) {
+      const slots2 = parseRomanianToSlots(split.right);
+      applySlotsToState(window.stateP2, slots2);
+
+      // ultima propoziție: de regulă fără conjug
+      if ("conjug" in window.stateP2) window.stateP2.conjug = "";
+
+      // activează P2 DOAR dacă e conj “linking” după regulile tale
+      // (altfel îți poate intra în conflict cu isLinkingConj)
+      window.enableP2.checked = true;
+
+    } else {
+      // fără split: închidem P2 și curățăm
+      if (window.enableP2) window.enableP2.checked = false;
+      clearStateP2IfExists();
+    }
+
+    // 4) Re-render UI + preview
+    if (typeof window.render === "function") window.render();
+    else if (typeof window.updatePreview === "function") window.updatePreview();
+  }
+
+  // =========================
+  // 4) Wire pe butonul tău existent: roTranslateBtn
+  // =========================
+  document.addEventListener("DOMContentLoaded", () => {
+    const roBtn = document.getElementById("roTranslateBtn");
+    const roInput = document.getElementById("roInput");
+    if (!roBtn || !roInput) return;
+
+    // Adăugăm listener fără să stricăm ce ai deja pe buton.
+    roBtn.addEventListener("click", () => {
+      fillBuilderFromRomanian(roInput.value || "");
+    });
+  });
+})();
+    /* === VERB + CONJUGARE → expresie finală coreeană === */
 function buildVerbPhrase(dictVerb,cj){
   if(!dictVerb&&!cj)return"";
   if(!dictVerb)return cj||"";
