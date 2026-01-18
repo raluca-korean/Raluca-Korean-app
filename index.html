@@ -5764,6 +5764,412 @@ document.addEventListener("DOMContentLoaded", () => {
   // sincronizare inițială (dacă există deja o propoziție în Builder)
   syncApproxToRoInput();
 })();
+    (function () {
+  "use strict";
+
+  function initBuilderBunTabel() {
+    // Rulează doar dacă există Builder-ul cu tableP1
+    const tableP1 = document.getElementById("tableP1");
+    if (!tableP1) return;
+
+    const tableP2 = document.getElementById("tableP2");
+    const enableP2 = document.getElementById("enableP2");
+
+    const inputText = document.getElementById("inputText");
+    const langSelect = document.getElementById("langSelect");
+    const fillOnlyEmpty = document.getElementById("fillOnlyEmpty");
+    const autoFillBtn = document.getElementById("autoFillBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    const previewSentence = document.getElementById("previewSentence");
+    const previewInfo = document.getElementById("previewInfo");
+    const politeToggle = document.getElementById("politeToggle");
+
+    // ----------------------
+    // Utils
+    // ----------------------
+    function normalizeText(text) {
+      if (!text) return "";
+      let t = text.toLowerCase();
+      t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
+      t = t.replace(/[.,!?;:]/g, " ");
+      t = t.replace(/\s+/g, " ").trim();
+      return t;
+    }
+
+    function escapeRegExp(s) {
+      return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function hasBatchim(koreanSyllable) {
+      if (!koreanSyllable) return false;
+      const code = koreanSyllable.charCodeAt(koreanSyllable.length - 1);
+      if (code < 0xAC00 || code > 0xD7A3) return false;
+      const jong = (code - 0xAC00) % 28;
+      return jong !== 0;
+    }
+
+    function lastHangulChar(str) {
+      const s = (str || "").trim();
+      return s ? s[s.length - 1] : "";
+    }
+
+    function normalizeEnding(raw) {
+      let t = (raw || "").trim();
+      t = t.replace(/^[-~]/, "").trim();
+      return t;
+    }
+
+    function isStandaloneConnector(x) {
+      const t = (x || "").trim();
+      return ["그리고","그래서","하지만","또","또는","그래도","그러면"].includes(t);
+    }
+
+    // ----------------------
+    // Split connectors (max 2 clauze pt Builder P1/P2)
+    // ----------------------
+    const CONNECTORS = [
+      { keys: ["atunci când", "atunci cand", "when"], ko: "-(으)ㄹ 때" },
+      { keys: ["în timp ce", "in timp ce", "while"], ko: "-(으)면서" },
+      { keys: ["după ce", "dupa ce", "after"], ko: "-(으)ㄴ 후에" },
+      { keys: ["înainte să", "inainte sa", "before"], ko: "-기 전에" },
+      { keys: ["din cauză că", "din cauza ca", "because of", "since"], ko: "-기 때문에" },
+      { keys: ["pentru că", "pentru ca", "fiindcă", "fiindca", "because"], ko: "-어서" },
+      { keys: ["deși", "desi", "although", "even though"], ko: "-지만" },
+      { keys: ["dacă", "daca", "if"], ko: "-(으)면" },
+      { keys: ["dar", "but"], ko: "-지만" },
+      { keys: ["și", "si", "and"], ko: "-고" },
+      { keys: ["iar", "apoi", "then"], ko: "-고" },
+    ];
+
+    function buildConnectorRegex() {
+      const all = CONNECTORS.flatMap(c => c.keys);
+      const uniq = Array.from(new Set(all));
+      uniq.sort((a,b) => b.length - a.length);
+      const alt = uniq.map(escapeRegExp).join("|");
+      return new RegExp("\\s(" + alt + ")\\s", "ig");
+    }
+
+    function connectorToKo(token) {
+      const t = (token || "").toLowerCase();
+      for (const c of CONNECTORS) {
+        if (c.keys.some(k => k.toLowerCase() === t)) return c.ko;
+      }
+      return "-고";
+    }
+
+    function splitMax2(raw) {
+      const t = normalizeText(raw);
+      if (!t) return null;
+
+      const re = buildConnectorRegex();
+      const m = re.exec(t);
+      if (!m) return null;
+
+      const left = t.slice(0, m.index).trim();
+      const token = (m[1] || "").trim();
+      const right = t.slice(m.index + m[0].length).trim();
+
+      if (!left || !right) return null;
+      return { left, right, conj: connectorToKo(token) };
+    }
+
+    // ----------------------
+    // RO/EN slot rules (ca în codul tău)
+    // ----------------------
+    const RO_RULES = {
+      subject: [{ re: /\b(eu)\b/i, value: "저" },{ re: /\b(tu)\b/i, value: "너" },{ re: /\b(noi)\b/i, value: "우리" }],
+      time: [{ re: /\b(azi|astăzi)\b/i, value: "오늘" },{ re: /\b(mâine)\b/i, value: "내일" },{ re: /\b(ieri)\b/i, value: "어제" },{ re: /\b(acum)\b/i, value: "지금" }],
+      place: [{ re: /\b(cafenea|cafe)\b/i, value: "카페" },{ re: /\b(acasă|acasa)\b/i, value: "집" },{ re: /\b(școală|scoala)\b/i, value: "학교" },{ re: /\b(serviciu|firmă|firma|companie)\b/i, value: "회사" }],
+      mod: [{ re: /\b(bine|ok)\b/i, value: "잘" },{ re: /\b(încet|incet)\b/i, value: "천천히" },{ re: /\b(repe(de)?|rapid)\b/i, value: "빨리" }],
+      object: [{ re: /\b(carte|cărți|carti)\b/i, value: "책" },{ re: /\b(cafea)\b/i, value: "커피" },{ re: /\b(apă|apa)\b/i, value: "물" },{ re: /\b(ceai)\b/i, value: "차" }],
+      numeral: [{ re: /\b(una|un)\b/i, value: "한" },{ re: /\b(două|doua)\b/i, value: "두" },{ re: /\b(trei)\b/i, value: "세" }],
+      counter: [{ re: /\b(carte|cărți|carti)\b/i, value: "권" },{ re: /\b(cafea|apă|apa|ceai)\b/i, value: "개" }],
+      verb: [{ re: /\b(merg)\b|a\s+merge|să\s+merg|sa\s+merg/i, value: "가다" },{ re: /\b(citesc)\b|a\s+citi|să\s+citesc|sa\s+citesc/i, value: "읽다" },{ re: /\b(beau)\b|a\s+bea|să\s+beau|sa\s+beau/i, value: "마시다" },{ re: /\b(mănânc|mananc)\b|a\s+mânca|a\s+manca/i, value: "먹다" }],
+    };
+
+    const EN_RULES = {
+      subject: [{ re: /\b(i)\b/i, value: "저" },{ re: /\b(you)\b/i, value: "너" },{ re: /\b(we)\b/i, value: "우리" }],
+      time: [{ re: /\b(today)\b/i, value: "오늘" },{ re: /\b(tomorrow)\b/i, value: "내일" },{ re: /\b(yesterday)\b/i, value: "어제" },{ re: /\b(now)\b/i, value: "지금" }],
+      place: [{ re: /\b(cafe|coffee\s+shop)\b/i, value: "카페" },{ re: /\b(home|house)\b/i, value: "집" },{ re: /\b(school)\b/i, value: "학교" },{ re: /\b(work|company|office)\b/i, value: "회사" }],
+      mod: [{ re: /\b(well|okay)\b/i, value: "잘" },{ re: /\b(slowly)\b/i, value: "천천히" },{ re: /\b(fast|quickly)\b/i, value: "빨리" }],
+      object: [{ re: /\b(book|books)\b/i, value: "책" },{ re: /\b(coffee)\b/i, value: "커피" },{ re: /\b(water)\b/i, value: "물" },{ re: /\b(tea)\b/i, value: "차" }],
+      numeral: [{ re: /\b(one)\b/i, value: "한" },{ re: /\b(two)\b/i, value: "두" },{ re: /\b(three)\b/i, value: "세" }],
+      counter: [{ re: /\b(book|books)\b/i, value: "권" },{ re: /\b(coffee|water|tea)\b/i, value: "개" }],
+      verb: [{ re: /\b(go|going)\b/i, value: "가다" },{ re: /\b(read|reading)\b/i, value: "읽다" },{ re: /\b(drink|drinking)\b/i, value: "마시다" },{ re: /\b(eat|eating)\b/i, value: "먹다" }],
+    };
+
+    function matchSlot(rules, textNorm) {
+      for (const r of rules) if (r.re.test(textNorm)) return r.value;
+      return "";
+    }
+
+    function parseToSlots(text, lang) {
+      const t = normalizeText(text);
+      const RULES = (lang === "en") ? EN_RULES : RO_RULES;
+      if (!t) return {};
+      return {
+        subject: matchSlot(RULES.subject, t),
+        time: matchSlot(RULES.time, t),
+        place: matchSlot(RULES.place, t),
+        mod: matchSlot(RULES.mod, t),
+        object: matchSlot(RULES.object, t),
+        numeral: matchSlot(RULES.numeral, t),
+        counter: matchSlot(RULES.counter, t),
+        verb: matchSlot(RULES.verb, t),
+      };
+    }
+
+    // ----------------------
+    // Table helpers
+    // ----------------------
+    function cell(table, key) {
+      return table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    }
+
+    function read(table, key) {
+      const el = cell(table, key);
+      return el ? el.textContent.trim() : "";
+    }
+
+    function set(table, key, value, onlyEmpty) {
+      const el = cell(table, key);
+      if (!el) return;
+      if (onlyEmpty && el.textContent.trim()) return;
+      el.textContent = value || "";
+    }
+
+    function clearTable(table) {
+      if (!table) return;
+      table.querySelectorAll(".col-body-main").forEach(el => (el.textContent = ""));
+    }
+
+    // ----------------------
+    // Build clause -> sentence chunk
+    // ----------------------
+    function choosePlaceParticle(placeBase, verbInf) {
+      const p = (placeBase || "").trim();
+      if (!p) return "";
+      const v = (verbInf || "").trim();
+      if (v === "가다" || v === "오다") return p + "에";
+      return p + "에서";
+    }
+
+    function attachEndingToVerb(verbInf, endingRaw) {
+      const v = (verbInf || "").trim();
+      if (!v) return "";
+      const e = normalizeEnding(endingRaw);
+      if (!e) return v;
+
+      if (isStandaloneConnector(e)) return v;
+      if (!v.endsWith("다")) return v;
+
+      if (v === "하다" && (e === "아서" || e === "어서" || e === "아/어서")) return "해서";
+      if (v === "하다" && e === "고") return "하고";
+      if (v === "하다" && e === "(으)면") return "하면";
+      if (v === "하다" && e === "(으)려고") return "하려고";
+      if (v === "하다" && e === "(으)ㄹ 때") return "할 때";
+
+      const stem = v.slice(0, -1);
+      const last = lastHangulChar(stem);
+      const batchim = hasBatchim(last);
+
+      if (e === "(으)면") return stem + (batchim ? "으면" : "면");
+      if (e === "(으)ㄹ 때") return stem + (batchim ? "을 때" : "ㄹ 때");
+      if (e === "(으)려고") return stem + (batchim ? "으려고" : "려고");
+
+      if (e === "아서" || e === "어서") return stem + e;
+
+      return stem + e;
+    }
+
+    function politePresentFromInfinitive(verbInf) {
+      const v = (verbInf || "").trim();
+      if (!v || !v.endsWith("다")) return v;
+
+      const specials = { "하다":"해요", "공부하다":"공부해요", "일하다":"일해요" };
+      if (specials[v]) return specials[v];
+
+      const stem = v.slice(0, -1);
+      const last = stem[stem.length - 1];
+      if (last === "하") return stem.slice(0, -1) + "해요";
+
+      const code = last.charCodeAt(0);
+      if (code < 0xAC00 || code > 0xD7A3) return stem + "어요";
+
+      const sIndex = code - 0xAC00;
+      const jung = Math.floor((sIndex % (21 * 28)) / 28);
+      const aGroup = [0,2,8,9];
+      const ending = aGroup.includes(jung) ? "아요" : "어요";
+      return stem + ending;
+    }
+
+    function buildFromTable(table, isLastClause) {
+      const subject = read(table, "subject");
+      const time = read(table, "time");
+      const placeBase = read(table, "place");
+      const mod = read(table, "mod");
+      const object = read(table, "object");
+      const numeral = read(table, "numeral");
+      const counter = read(table, "counter");
+      const verbInf = read(table, "verb");
+      const conjRaw = read(table, "conj");
+
+      let obj = "";
+      if (object && numeral && counter) obj = object + " " + numeral + " " + counter;
+      else if (object) obj = object;
+
+      const place = choosePlaceParticle(placeBase, verbInf);
+
+      let verbOut = attachEndingToVerb(verbInf, conjRaw);
+
+      const polite = !!politeToggle?.checked;
+      const conjNorm = normalizeEnding(conjRaw);
+      if (polite && isLastClause && !conjNorm && verbInf) {
+        verbOut = politePresentFromInfinitive(verbInf);
+      }
+
+      const parts = [subject, time, place, mod, obj, verbOut].filter(Boolean);
+      return parts.join(" ").trim();
+    }
+
+    function rebuildPreview() {
+      if (!previewSentence) return;
+
+      const p1IsLast = !(enableP2 && enableP2.checked);
+      const s1 = buildFromTable(tableP1, p1IsLast);
+
+      let out = s1;
+
+      if (enableP2 && enableP2.checked && tableP2) {
+        const s2 = buildFromTable(tableP2, true);
+        out = [s1, s2].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+      }
+
+      previewSentence.textContent = out || "저 가요";
+      if (previewInfo) {
+        previewInfo.textContent =
+          "PLACE: 가다/오다 → 에, rest → 에서. CONJ se lipește la verb infinitiv (…다). Politețe doar pe ultima propoziție.";
+      }
+    }
+
+    // ----------------------
+    // Auto-fill P1/P2 from inputText
+    // ----------------------
+    function fillFromText() {
+      const raw = inputText ? inputText.value : "";
+      const lang = langSelect ? langSelect.value : "ro";
+      const onlyEmpty = !!fillOnlyEmpty?.checked;
+
+      const split = splitMax2(raw);
+
+      // dacă nu split, completăm doar P1
+      if (!split) {
+        const slots1 = parseToSlots(raw, lang);
+        set(tableP1, "subject", slots1.subject, onlyEmpty);
+        set(tableP1, "time", slots1.time, onlyEmpty);
+        set(tableP1, "place", slots1.place, onlyEmpty);
+        set(tableP1, "mod", slots1.mod, onlyEmpty);
+        set(tableP1, "object", slots1.object, onlyEmpty);
+        set(tableP1, "numeral", slots1.numeral, onlyEmpty);
+        set(tableP1, "counter", slots1.counter, onlyEmpty);
+        set(tableP1, "verb", slots1.verb, onlyEmpty);
+
+        // P2 OFF
+        if (enableP2) enableP2.checked = false;
+        if (tableP2) tableP2.classList.add("hidden");
+
+        // conj gol pe P1
+        if (!onlyEmpty || !read(tableP1, "conj")) set(tableP1, "conj", "", false);
+
+        rebuildPreview();
+        return;
+      }
+
+      // split în 2: P1 + P2
+      const slots1 = parseToSlots(split.left, lang);
+      const slots2 = parseToSlots(split.right, lang);
+
+      // P1
+      set(tableP1, "subject", slots1.subject, onlyEmpty);
+      set(tableP1, "time", slots1.time, onlyEmpty);
+      set(tableP1, "place", slots1.place, onlyEmpty);
+      set(tableP1, "mod", slots1.mod, onlyEmpty);
+      set(tableP1, "object", slots1.object, onlyEmpty);
+      set(tableP1, "numeral", slots1.numeral, onlyEmpty);
+      set(tableP1, "counter", slots1.counter, onlyEmpty);
+      set(tableP1, "verb", slots1.verb, onlyEmpty);
+
+      // conj pe P1 = conectorul split
+      if (!onlyEmpty || !read(tableP1, "conj")) set(tableP1, "conj", split.conj, false);
+
+      // P2
+      if (enableP2) enableP2.checked = true;
+      if (tableP2) tableP2.classList.remove("hidden");
+
+      set(tableP2, "subject", slots2.subject, onlyEmpty);
+      set(tableP2, "time", slots2.time, onlyEmpty);
+      set(tableP2, "place", slots2.place, onlyEmpty);
+      set(tableP2, "mod", slots2.mod, onlyEmpty);
+      set(tableP2, "object", slots2.object, onlyEmpty);
+      set(tableP2, "numeral", slots2.numeral, onlyEmpty);
+      set(tableP2, "counter", slots2.counter, onlyEmpty);
+      set(tableP2, "verb", slots2.verb, onlyEmpty);
+
+      // conj gol pe P2
+      if (!onlyEmpty || !read(tableP2, "conj")) set(tableP2, "conj", "", false);
+
+      rebuildPreview();
+    }
+
+    function clearAll() {
+      if (inputText) inputText.value = "";
+      clearTable(tableP1);
+      if (tableP2) clearTable(tableP2);
+
+      if (enableP2) enableP2.checked = false;
+      if (tableP2) tableP2.classList.add("hidden");
+      if (politeToggle) politeToggle.checked = false;
+
+      // defaults
+      set(tableP1, "subject", "저", false);
+      set(tableP1, "verb", "가다", false);
+
+      rebuildPreview();
+    }
+
+    // ----------------------
+    // Events
+    // ----------------------
+    if (autoFillBtn) autoFillBtn.addEventListener("click", fillFromText);
+    if (clearBtn) clearBtn.addEventListener("click", clearAll);
+
+    if (enableP2 && tableP2) {
+      enableP2.addEventListener("change", () => {
+        if (enableP2.checked) tableP2.classList.remove("hidden");
+        else tableP2.classList.add("hidden");
+        rebuildPreview();
+      });
+      // init state
+      tableP2.classList.toggle("hidden", !enableP2.checked);
+    }
+
+    // live preview on edits
+    document.addEventListener("input", (e) => {
+      const t = e.target;
+      if (t && t.classList && t.classList.contains("col-body-main")) rebuildPreview();
+    });
+    if (politeToggle) politeToggle.addEventListener("change", rebuildPreview);
+
+    // defaults if empty
+    if (!read(tableP1, "subject")) set(tableP1, "subject", "저", false);
+    if (!read(tableP1, "verb")) set(tableP1, "verb", "가다", false);
+
+    rebuildPreview();
+  }
+
+  window.addEventListener("DOMContentLoaded", initBuilderBunTabel);
+})();
   </script>
 </body>
 </html> 
