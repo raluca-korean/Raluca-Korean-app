@@ -3009,30 +3009,34 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
         <div class="glossary-list" id="glossaryList"></div>
       </div>
     </div>
-    
-  <!-- bottom nav -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" data-target="builder">
-      <span class="icon">🏗</span>
-      <span>Builder</span>
-    </button>
-    <button class="nav-btn" data-target="exercises">
-      <span class="icon">📝</span>
-      <span>Exerciții</span>
-    </button>
-    <button class="nav-btn" data-target="lessons">
-      <span class="icon">📗</span>
-      <span>Lecții</span>
-    </button>
-    <button class="nav-btn" data-target="glossary">
-      <span class="icon">📚</span>
-      <span>Glosar</span>
-    </button>
- <button class="nav-btn" data-target="screen-clauses">
-  <span class="icon">🧩</span>
-  <span>Clauze</span>
-</button>
-  </nav>
+ <!-- bottom nav -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-target="builder">
+    <span class="icon">🏗</span>
+    <span>Builder</span>
+  </button>
+
+  <button class="nav-btn" data-target="exercises">
+    <span class="icon">📝</span>
+    <span>Exerciții</span>
+  </button>
+
+  <button class="nav-btn" data-target="lessons">
+    <span class="icon">📗</span>
+    <span>Lecții</span>
+  </button>
+
+  <button class="nav-btn" data-target="glossary">
+    <span class="icon">📚</span>
+    <span>Glosar</span>
+  </button>
+
+  <button class="nav-btn" data-target="clauses">
+    <span class="icon">🧩</span>
+    <span>Clauze</span>
+  </button>
+</nav>   
+
   <!-- overlay panel -->
   <div class="overlay hidden" id="overlay">
     <div class="panel">
@@ -6390,6 +6394,56 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.addEventListener("DOMContentLoaded", init);
+})();
+    (function () {
+  "use strict";
+
+  function setActiveScreen(targetKey) {
+    const screenId = "screen-" + targetKey;
+
+    // 1) activează / dezactivează ecranele
+    document.querySelectorAll(".screen").forEach((el) => {
+      el.classList.toggle("active", el.id === screenId);
+    });
+
+    // 2) activează / dezactivează butoanele din bottom-nav
+    document.querySelectorAll(".bottom-nav .nav-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.target === targetKey);
+    });
+  }
+
+  function initBottomNav() {
+    const nav = document.querySelector(".bottom-nav");
+    if (!nav) return;
+
+    nav.addEventListener("click", (e) => {
+      const btn = e.target.closest(".nav-btn");
+      if (!btn) return;
+
+      const targetKey = btn.dataset.target;
+      if (!targetKey) return;
+
+      // dacă ecranul nu există, nu facem nimic (siguranță)
+      const screenId = "screen-" + targetKey;
+      if (!document.getElementById(screenId)) return;
+
+      setActiveScreen(targetKey);
+    });
+
+    // inițializare: dacă există un buton .active, îl respectăm
+    const initialBtn =
+      nav.querySelector('.nav-btn.active') ||
+      nav.querySelector('.nav-btn[data-target="builder"]');
+
+    if (initialBtn) {
+      const key = initialBtn.dataset.target;
+      if (key && document.getElementById("screen-" + key)) {
+        setActiveScreen(key);
+      }
+    }
+  }
+
+  window.addEventListener("DOMContentLoaded", initBottomNav);
 })();
   </script>
 </body>
