@@ -5376,52 +5376,7 @@ function render(){
   nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
- function translateRoToKo(roText) {
-  // păstrăm ultima propoziție, cum era și înainte
-  LAST_RO_SENTENCE = roText || "";
-  const original = (roText || "").trim();
-
-  if (!original) {
-    return { ko: "", roFixed: "" };
-  }
-
-  // 1) Parsăm propoziția românească
-  const parsed = parseRoToState(original);
-
-  // 2) Construim propoziția coreeană din state-ul parserului
-  const koResult = buildClauseSentence(
-    parsed.state,
-    {
-      subject: true,
-      time: true,
-      place: true,
-      mod: true,
-      object: true,
-      numeral: false,
-      counter: false,
-      verb: true,
-      conjug: true,
-    },
-    null
-  ).ko;
-
-  // 3) Construim propoziția românească „corectată”
-  let roFixed = buildNaturalRomanian(
-    parsed.state,
-    {
-      subject: true,
-      time: true,
-      place: true,
-      mod: true,
-      object: true,
-      numeral: false,
-      counter: false,
-      verb: true,
-      conjug: true,
-    },
-    null
-  );
-// ======================================================
+    // ======================================================
 //    ENGLISH → KOREAN  (pipeline separat, cap-coadă)
 // ======================================================
 
@@ -5477,6 +5432,28 @@ const EN_VERBS = [
   { re: /\bwork\b/i, ko: "일해요" },
   { re: /\bsleep\b/i, ko: "자요" }
 ];
+    
+    function translateRoToKo(roText) {
+  LAST_RO_SENTENCE = roText || "";
+  const original = (roText || "").trim();
+  if (!original) return { ko: "", roFixed: "" };
+
+  const parsed = parseRoToState(original);
+
+  const koResult = buildClauseSentence(parsed.state, {
+    subject:true,time:true,place:true,mod:true,object:true,
+    numeral:false,counter:false,verb:true,conjug:true,
+  }, null).ko;
+
+  const roFixed = buildNaturalRomanian(parsed.state, {
+    subject:true,time:true,place:true,mod:true,object:true,
+    numeral:false,counter:false,verb:true,conjug:true,
+  });
+
+  return { ko: koResult || "(nu am putut construi propoziția)", roFixed: roFixed || original };
+}
+   
+    
 
 // Un mic helper: găsește primul match într-o listă
 function findEnMatch(list, text) {
