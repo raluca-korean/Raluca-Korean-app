@@ -5571,43 +5571,72 @@ function setupDailyUI(){
 
   renderDailyWords();
 }
-    /* ========= INITIALIZARE APLICAȚIE ========= */
+ /* ========= INITIALIZARE APLICAȚIE (SAFE) ========= */
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    // NU forța Builder ca ecran implicit (altfel riști să încurci navigarea)
+    // if (typeof setScreen === "function") setScreen("builder");
 
-// Pornim cu primul rând din model în Builder
-loadRow(index);
-setScreen("builder");
-render();
+    // Builder init (doar dacă există în versiunea curentă)
+    if (typeof loadRow === "function" && typeof index !== "undefined") {
+      loadRow(index);
+    }
+    if (typeof render === "function") {
+      render();
+    }
 
-// Inițializăm modul „3 cuvinte/zi”
-setupDailyUI();
+    // Modul „3 cuvinte/zi”
+    if (typeof setupDailyUI === "function") {
+      setupDailyUI();
+    }
 
-// Glosar & favorite (dacă există elementele în HTML)
-renderGlossary && renderGlossary("");
-renderFavorites && renderFavorites();
+    // Glosar & favorite (SAFE: nu referim identificatori inexistenți)
+    if (typeof renderGlossary === "function") {
+      renderGlossary("");
+    }
+    if (typeof renderFavorites === "function") {
+      renderFavorites();
+    }
 
-// Actualizăm eticheta pentru tipul curent de exercițiu
-updateExerciseTypeLabel();
+    // Exerciții label
+    if (typeof updateExerciseTypeLabel === "function") {
+      updateExerciseTypeLabel();
+    }
 
-/* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER ==== */
+  } catch (e) {
+    console.error("INIT SAFE error:", e);
+  }
+});
+    /* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER ==== */
 
 // folosește aceeași funcție de traducere ca la butonul mare "Tradu în coreeană"
+/* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER (SAFE) ==== */
 function runExampleInBuilder(roSentence) {
-  if (!roTranslateBtn) return;
-  roInput.value = roSentence;
-  // declanșăm fluxul normal: parser + Builder + rezultat
-  roTranslateBtn.click();
-  setScreen("builder");
+  try {
+    const roTranslateBtn =
+  document.getElementById("roTranslateBtn") ||
+  document.getElementById("roTranslateBtn"); // (las așa dacă ai un alt id; dacă nu, poți șterge a doua)
+const roInput = document.getElementById("roInput");
+    if (!roTranslateBtn || !roInput) return;
+
+    roInput.value = roSentence;
+    roTranslateBtn.click();
+
+    if (typeof setScreen === "function") {
+      setScreen("builder");
+    }
+  } catch (e) {
+    console.error("runExampleInBuilder error:", e);
+  }
 }
 
-// atașează un exemplu la un buton de lecție
 function addLessonExample(btnId, roSentence) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
+
   btn.addEventListener("click", () => {
     runExampleInBuilder(roSentence);
   });
-}
-
 // Conectăm lecțiile direct (scriptul este la finalul <body>, deci elementele există)
 addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
 addLessonExample("lesson2TryBtn", "Să vedem un film?");
