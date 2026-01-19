@@ -2982,11 +2982,6 @@ function getInputLang() {
   </div>
 
   <script>
-    // ===== DOM refs (SAFE) =====
-const tableP1El = document.getElementById("tableP1") || document.getElementById("clausesHost");
-const tableP2El = document.getElementById("tableP2");
-const enableP2El = document.getElementById("enableP2");
-const titleP2El  = document.getElementById("titleP2");
     let LAST_RO_SENTENCE = "";
 /* === LISTE DE CUVINTE (de bază) === */
 const subjects = [
@@ -3194,12 +3189,9 @@ function translateInputToKo() {
 
   // aici folosești exact aceleași elemente pe care le foloseai până acum
   // pentru a afișa rezultatul
-  const outKo = document.getElementById("roToKoResult");
-const outRo = document.getElementById("roCorrected");
-
-if (outKo) outKo.textContent = result.ko || "";
-if (outRo) outRo.textContent = result.roFixed || "";
-
+  document.getElementById("koOutput").textContent = result.ko || "";
+  document.getElementById("roCorrected").textContent = result.roFixed || "";
+}
     // reverse map: română -> coreeană (din translations)
 function stripDiacritics(s){
   return (s||"")
@@ -3772,43 +3764,60 @@ function splitRoIntoTwoClauses(text) {
 
   return { p1, p2 };
 }
-  const roTranslateBtn = document.getElementById("roTranslateBtn");
-
+    
+ const roTranslateBtn = document.getElementById("roTranslateBtn");
 if (roTranslateBtn) {
   roTranslateBtn.addEventListener("click", () => {
-    const txt = (roInput.value || "").trim();
+    translateBtn.addEventListener("click", translateInputToKo);    const txt = roInput.value || "";
     LAST_RO_SENTENCE = txt;
 
-    // Split P1/P2 dacă există "și/iar/apoi"
+    // 0) încerc să văd dacă am două fraze legate cu „și / iar / apoi”
     const split = splitRoIntoClauses(txt);
 
     if (split) {
+      // 🔹 CAZ: două propoziții legate cu „și / iar / apoi”
+
+      // P1: prima parte + -고
       const parsed1 = parseRoToState(split.first);
       Object.assign(stateP1, parsed1.state);
-      stateP1.conjug = "-고";
-      activeP1.conjug = true;
+      stateP1.conjug   = "-고";     // forțăm -고 la P1
+      activeP1.conjug  = true;      // ne asigurăm că este ON
 
+      // P2: a doua parte, detectată normal
       const parsed2 = parseRoToState(split.second);
       Object.assign(stateP2, parsed2.state);
 
-      if (enableP2) enableP2.checked = true;
-      if (tableP2) tableP2.classList.remove("hidden");
+      // activăm vizual Propoziția 2
+      if (enableP2) {
+        enableP2.checked = true;
+      }
+      if (tableP2) {
+        tableP2.classList.remove("hidden");
+      }
+
+      render();
+
     } else {
+      // 🔹 CAZ: o singură propoziție (fără „și / iar / apoi” între acțiuni)
+
       const parsed = parseRoToState(txt);
       Object.assign(stateP1, parsed.state);
 
-      if (enableP2) enableP2.checked = false;
-      if (tableP2) tableP2.classList.add("hidden");
+      // dezactivăm Propoziția 2 în UI
+      if (enableP2) {
+        enableP2.checked = false;
+      }
+      if (tableP2) {
+        tableP2.classList.add("hidden");
+      }
+
+      render();
     }
 
-    render();
-
-    // Afișează rezultatul în blocul corect din HTML (ai id="roToKoResult")
+    // 3) Ro → Ko + româna corectată (rămâne ca înainte)
     const res = translateRoToKo(txt);
-    const outKo = document.getElementById("roToKoResult");
-    const outRo = document.getElementById("roCorrected");
-    if (outKo) outKo.textContent = res.ko || "";
-    if (outRo) outRo.textContent = res.roFixed || "";
+    document.getElementById("roToKoResult").textContent = res.ko;
+    document.getElementById("roCorrected").textContent = res.roFixed;
   });
 }
     function createToggleChips(){
@@ -4487,8 +4496,9 @@ function attachPressHandlers(tableEl){
     pressTarget = null;
   });
 }
-if (tableP1El) attachPressHandlers(tableP1El);
-if (tableP2El) attachPressHandlers(tableP2El);
+    attachPressHandlers(tableP1);
+attachPressHandlers(tableP2);
+
 /* random, audio, favorite – ca înainte */
 randomBtn.addEventListener("click",()=>{
   columns.forEach(col=>{
@@ -5122,19 +5132,14 @@ if(glossarySearch)glossarySearch.addEventListener("input",()=>renderGlossary(glo
 
 /* inițializare */
 function render(){
-  if (tableP1El) renderClauseRow(tableP1El, activeP1, stateP1, "p1");
-
-  if (enableP2 && enableP2.checked && tableP2El) {
-    renderClauseRow(tableP2El, activeP2, stateP2, "p2");
-  }
-
-  if (pageInfoEl) pageInfoEl.textContent = `Rând model: ${index+1} / ${maxLen}`;
-  if (prevBtn) prevBtn.disabled = index === 0;
-  if (nextBtn) nextBtn.disabled = index === maxLen - 1;
-
+  renderClauseRow(tableP1,activeP1,stateP1,"p1");
+  if(enableP2.checked)renderClauseRow(tableP2,activeP2,stateP2,"p2");
+  pageInfoEl.textContent=`Rând model: ${index+1} / ${maxLen}`;
+  prevBtn.disabled=index===0;
+  nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
-    function translateRoToKo(roText) {
+ function translateRoToKo(roText) {
   // păstrăm ultima propoziție, cum era și înainte
   LAST_RO_SENTENCE = roText || "";
   const original = (roText || "").trim();
@@ -5670,20 +5675,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // sincronizare inițială (dacă există deja o propoziție în Builder)
   syncApproxToRoInput();
 })();
-    // ===== MUTĂ CARDUL "Română → Coreeană" SUB PREVIEW (SAFE) =====
-document.addEventListener("DOMContentLoaded", () => {
-  const roBtn = document.getElementById("roTranslateBtn");
-  const previewKo = document.getElementById("previewKo");
-
-  if (!roBtn || !previewKo) return;
-
-  const roCard = roBtn.closest(".card");
-  const previewCard = previewKo.closest(".preview-card");
-
-  if (!roCard || !previewCard) return;
-
-  previewCard.insertAdjacentElement("afterend", roCard);
-});
   </script>
 </body>
 </html> 
