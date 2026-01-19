@@ -5607,44 +5607,39 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("INIT SAFE error:", e);
   }
 });
-    /* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER ==== */
-
-// folosește aceeași funcție de traducere ca la butonul mare "Tradu în coreeană"
-/* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER (SAFE) ==== */
-function runExampleInBuilder(roSentence) {
+    /* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER (SAFE, MINIM) ==== */
+(function () {
   try {
-    const roTranslateBtn =
-  document.getElementById("roTranslateBtn") ||
-const roInput = document.getElementById("roInput");
-    if (!roTranslateBtn || !roInput) return;
+    function runExampleInBuilder(roSentence) {
+      const roTranslateBtn = document.getElementById("roTranslateBtn");
+      const roInput = document.getElementById("roInput");
+      if (!roTranslateBtn || !roInput) return;
 
-    roInput.value = roSentence;
-    roTranslateBtn.click();
+      roInput.value = roSentence;
+      roTranslateBtn.click();
 
-    if (typeof setScreen === "function") {
-      setScreen("builder");
+      if (typeof setScreen === "function") setScreen("builder");
     }
+
+    function addLessonExample(btnId, roSentence) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.addEventListener("click", () => runExampleInBuilder(roSentence));
+    }
+
+    // le legăm după ce DOM-ul e gata (sigur pentru GitHub Pages)
+    document.addEventListener("DOMContentLoaded", () => {
+      addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
+      addLessonExample("lesson2TryBtn", "Să vedem un film?");
+      addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
+      addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
+      addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
+    });
   } catch (e) {
-    console.error("runExampleInBuilder error:", e);
+    console.error("Lessons SAFE error:", e);
   }
-}
-
-function addLessonExample(btnId, roSentence) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-
-  btn.addEventListener("click", () => {
-    runExampleInBuilder(roSentence);
-  });
-}
-// Conectăm lecțiile direct (scriptul este la finalul <body>, deci elementele există)
-addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
-addLessonExample("lesson2TryBtn", "Să vedem un film?");
-addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
-addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
-addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
-    
-  // ===== MUTĂ BLOCUL „ROMÂNĂ → COREEANĂ” ÎN JOSUL BUILDER-ULUI =====
+})();
+    // ===== MUTĂ BLOCUL „ROMÂNĂ → COREEANĂ” ÎN JOSUL BUILDER-ULUI =====
 document.addEventListener("DOMContentLoaded", () => {
   // 1) Butonul "Tradu în coreeană"
   const roBtn = document.getElementById("roTranslateBtn");
