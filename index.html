@@ -1,3 +1,4 @@
+Bun aplicație 
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -2496,7 +2497,27 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
   const verb =
     (slotsFromParser && slotsFromParser.verb) ||
     "가요";
+
+  const pieces = [subject, time, place, mod, objectChunk, verb].filter(Boolean);
+  const sentence = pieces.join(" ");
+
+  const out =
+    document.getElementById("previewSentence") ||
+    document.getElementById("previewKo") ||
+    document.querySelector(".preview-sentence");
+
+  if (out) {
+    out.textContent = sentence;
+  }
+}  
+   // === Limbă de intrare (Română / English) din switch-ul de sus ===
+function getInputLang() {
+  const el = document.querySelector('input[name="inputLang"]:checked');
+  // fallback: dacă nu găsim nimic, presupunem Română
+  return el ? el.value : "ro";
+} 
 </style>
+<body class="pastel-theme">
 </head>
 <body class="pastel-theme">
   <div class="app">
@@ -2537,8 +2558,19 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
           <span class="page-indicator" id="pageInfo"></span>
         </div>
 
-      <h3 class="section-title">Builder (clauze)</h3>
-<div id="clausesHost"></div>
+        <div class="table-horizontal" id="tableP1"></div>
+<!-- Bifa care activează / dezactivează Propoziția 2 -->
+<div class="mode-row builder-enable-p2">
+  <label>
+    <input type="checkbox" id="enableP2" />
+    Activează Propoziția 2 (fraza)
+  </label>
+</div>
+        <div class="table-title hidden" id="titleP2">
+          <span>Propoziția 2 (continuare / frază)</span>
+        </div>
+        <div class="table-horizontal hidden" id="tableP2"></div>
+
         <div class="controls">
           <div class="btn-group">
             <button id="prevBtn">⬅ Prev (rând model)</button>
@@ -2951,33 +2983,6 @@ function rebuildPreviewFromBuilderP1(slotsFromParser) {
   </div>
 
   <script>
-    // ===== DEBUG OVERLAY (TEMP) =====
-(function () {
-  const box = document.createElement("div");
-  box.id = "debugBox";
-  box.style.cssText =
-    "position:fixed;left:10px;right:10px;bottom:90px;max-height:35vh;overflow:auto;" +
-    "background:#1b1b1b;color:#fff;padding:10px;border-radius:12px;z-index:999999;" +
-    "font:12px/1.4 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial;display:none;";
-  document.addEventListener("DOMContentLoaded", () => document.body.appendChild(box));
-
-  function show(msg) {
-    box.style.display = "block";
-    const p = document.createElement("div");
-    p.style.borderTop = "1px solid rgba(255,255,255,.15)";
-    p.style.paddingTop = "6px";
-    p.textContent = msg;
-    box.prepend(p);
-  }
-
-  window.addEventListener("error", (e) => {
-    show("JS ERROR: " + (e.message || "unknown") + " @ " + (e.filename || "") + ":" + (e.lineno || ""));
-  });
-
-  window.addEventListener("unhandledrejection", (e) => {
-    show("PROMISE ERROR: " + (e.reason && (e.reason.message || e.reason)));
-  });
-})();
     let LAST_RO_SENTENCE = "";
 /* === LISTE DE CUVINTE (de bază) === */
 const subjects = [
@@ -3024,25 +3029,8 @@ const conjugations = [
   "-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도","-(으)ㄴ/는 반면에","-도록 하다",
   "-게 되다","-아/어지다","-기 마련이다","-기에","-길래","-고 말다","-고자 하다","-(으)ㄹ 뿐이다"
 ];
-const pieces = [subject, time, place, mod, objectChunk, verb].filter(Boolean);
-const sentence = pieces.join(" ");
 
-const out =
-  document.getElementById("previewSentence") ||
-  document.getElementById("previewKo") ||
-  document.querySelector(".preview-sentence");
-
-if (out) {
-  out.textContent = sentence;
-}
-}
-   
-// === Limbă de intrare (Română / English) din switch-ul de sus ===
-function getInputLang() {
-  const el = document.querySelector('input[name="inputLang"]:checked');
-  return el ? el.value : "ro";
-}
-    /* === TRADUCERI (coreeană → română) === */
+/* === TRADUCERI (coreeană → română) === */
 const translations = {
   subject:{ "저":"eu (formal)","나":"eu (informal)","너":"tu","우리":"noi","너희":"voi",
     "사람":"persoană","학생":"student/ă","선생님":"profesor","직원":"angajat",
@@ -5596,75 +5584,51 @@ function setupDailyUI(){
 
   renderDailyWords();
 }
- /* ========= INITIALIZARE APLICAȚIE (SAFE) ========= */
-document.addEventListener("DOMContentLoaded", () => {
-  try {
-    // NU forța Builder ca ecran implicit (altfel riști să încurci navigarea)
-    // if (typeof setScreen === "function") setScreen("builder");
+    /* ========= INITIALIZARE APLICAȚIE ========= */
 
-    // Builder init (doar dacă există în versiunea curentă)
-    if (typeof loadRow === "function" && typeof index !== "undefined") {
-      loadRow(index);
-    }
-    if (typeof render === "function") {
-      render();
-    }
+// Pornim cu primul rând din model în Builder
+loadRow(index);
+setScreen("builder");
+render();
 
-    // Modul „3 cuvinte/zi”
-    if (typeof setupDailyUI === "function") {
-      setupDailyUI();
-    }
+// Inițializăm modul „3 cuvinte/zi”
+setupDailyUI();
 
-    // Glosar & favorite (SAFE: nu referim identificatori inexistenți)
-    if (typeof renderGlossary === "function") {
-      renderGlossary("");
-    }
-    if (typeof renderFavorites === "function") {
-      renderFavorites();
-    }
+// Glosar & favorite (dacă există elementele în HTML)
+renderGlossary && renderGlossary("");
+renderFavorites && renderFavorites();
 
-    // Exerciții label
-    if (typeof updateExerciseTypeLabel === "function") {
-      updateExerciseTypeLabel();
-    }
+// Actualizăm eticheta pentru tipul curent de exercițiu
+updateExerciseTypeLabel();
 
-  } catch (e) {
-    console.error("INIT SAFE error:", e);
-  }
-});
-    /* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER (SAFE, MINIM) ==== */
-(function () {
-  try {
-    function runExampleInBuilder(roSentence) {
-      const roTranslateBtn = document.getElementById("roTranslateBtn");
-      const roInput = document.getElementById("roInput");
-      if (!roTranslateBtn || !roInput) return;
+/* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER ==== */
 
-      roInput.value = roSentence;
-      roTranslateBtn.click();
+// folosește aceeași funcție de traducere ca la butonul mare "Tradu în coreeană"
+function runExampleInBuilder(roSentence) {
+  if (!roTranslateBtn) return;
+  roInput.value = roSentence;
+  // declanșăm fluxul normal: parser + Builder + rezultat
+  roTranslateBtn.click();
+  setScreen("builder");
+}
 
-      if (typeof setScreen === "function") setScreen("builder");
-    }
+// atașează un exemplu la un buton de lecție
+function addLessonExample(btnId, roSentence) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    runExampleInBuilder(roSentence);
+  });
+}
 
-    function addLessonExample(btnId, roSentence) {
-      const btn = document.getElementById(btnId);
-      if (!btn) return;
-      btn.addEventListener("click", () => runExampleInBuilder(roSentence));
-    }
-
-    // le legăm după ce DOM-ul e gata (sigur pentru GitHub Pages)
-    document.addEventListener("DOMContentLoaded", () => {
-      addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
-      addLessonExample("lesson2TryBtn", "Să vedem un film?");
-      addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
-      addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
-      addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
-    });
-  } catch (e) {
-    console.error("Lessons SAFE error:", e);
-  }
-})();
-    // ===== MUTĂ BLOCUL „ROMÂNĂ → COREEANĂ” ÎN JOSUL BUILDER-ULUI =====
+// Conectăm lecțiile direct (scriptul este la finalul <body>, deci elementele există)
+addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
+addLessonExample("lesson2TryBtn", "Să vedem un film?");
+addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
+addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
+addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
+    
+  // ===== MUTĂ BLOCUL „ROMÂNĂ → COREEANĂ” ÎN JOSUL BUILDER-ULUI =====
 document.addEventListener("DOMContentLoaded", () => {
   // 1) Butonul "Tradu în coreeană"
   const roBtn = document.getElementById("roTranslateBtn");
@@ -5712,39 +5676,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // sincronizare inițială (dacă există deja o propoziție în Builder)
   syncApproxToRoInput();
 })();
-// ===== SAFE ROUTER (repara tab-urile) =====
-(function () {
-  try {
-    const screens = Array.from(document.querySelectorAll(".screen"));
-    const navBtns = Array.from(document.querySelectorAll(".bottom-nav .nav-btn"));
-
-    if (!screens.length || !navBtns.length) return;
-
-    function show(target) {
-      screens.forEach(s => s.classList.remove("active"));
-      navBtns.forEach(b => b.classList.remove("active"));
-
-      const scr = document.getElementById("screen-" + target);
-      if (scr) scr.classList.add("active");
-
-      const btn = navBtns.find(b => b.dataset && b.dataset.target === target);
-      if (btn) btn.classList.add("active");
-    }
-
-    navBtns.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const target = btn.dataset.target;
-        if (target) show(target);
-      });
-    });
-
-    // dacă nu e nimic activ, pornește pe builder
-    const hasActive = screens.some(s => s.classList.contains("active"));
-    if (!hasActive) show("builder");
-  } catch (e) {
-    console.error("SAFE ROUTER error:", e);
-  }
-})();  
-</script>
+  </script>
 </body>
 </html> 
+
+
+
+Bun
