@@ -5712,7 +5712,39 @@ document.addEventListener("DOMContentLoaded", () => {
   // sincronizare inițială (dacă există deja o propoziție în Builder)
   syncApproxToRoInput();
 })();
-  
+// ===== SAFE ROUTER (repara tab-urile) =====
+(function () {
+  try {
+    const screens = Array.from(document.querySelectorAll(".screen"));
+    const navBtns = Array.from(document.querySelectorAll(".bottom-nav .nav-btn"));
+
+    if (!screens.length || !navBtns.length) return;
+
+    function show(target) {
+      screens.forEach(s => s.classList.remove("active"));
+      navBtns.forEach(b => b.classList.remove("active"));
+
+      const scr = document.getElementById("screen-" + target);
+      if (scr) scr.classList.add("active");
+
+      const btn = navBtns.find(b => b.dataset && b.dataset.target === target);
+      if (btn) btn.classList.add("active");
+    }
+
+    navBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.dataset.target;
+        if (target) show(target);
+      });
+    });
+
+    // dacă nu e nimic activ, pornește pe builder
+    const hasActive = screens.some(s => s.classList.contains("active"));
+    if (!hasActive) show("builder");
+  } catch (e) {
+    console.error("SAFE ROUTER error:", e);
+  }
+})();  
 </script>
 </body>
 </html> 
