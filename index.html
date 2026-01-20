@@ -5899,7 +5899,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // unde afișezi tu propoziția mare (din pozele tale: previewSentence sau previewKo etc.)
     const out =
-      document.getElementById("previewSentence") ||
+      document.
+      getElementById("previewSentence") ||
       document.getElementById("previewKo") ||
       document.querySelector(".preview-sentence");
 
@@ -5921,5 +5922,135 @@ document.addEventListener("DOMContentLoaded", () => {
   rebuildFinalSentenceFromActiveClauses();
 }); 
   </script>
+    <!-- =========================
+     FIX COMPLET: dubluri Builder (MODEL vs EDITABIL)
+     - Repară ID-uri duplicate
+     - Face rândul MODEL read-only
+     - Reface click-urile pe tabelul editabil
+========================= -->
+<style>
+  /* Dacă blocul MODEL este marcat (renumit de script), îl facem doar afișare */
+  #screen-builder .builder-model,
+  #screen-builder [data-builder-model="1"] {
+    pointer-events: none !important; /* nu mai primește click-uri */
+    user-select: none !important;
+    opacity: 0.92;
+  }
+
+  /* Opțional: să arate ușor diferit (doar vizual) */
+  #screen-builder .builder-model {
+    filter: saturate(0.98);
+  }
+</style>
+
+<script>
+(function builderDuplicateFix(){
+  "use strict";
+
+  // Rulează când DOM-ul este disponibil
+  const run = () => {
+    const builderRoot =
+      document.getElementById("screen-builder") ||
+      document.querySelector("#screen-builder") ||
+      document;
+
+    // Dacă nu există deloc, ieșim
+    if (!builderRoot) return;
+
+    /**
+     * Dacă ai două elemente cu același ID, browserul:
+     * - returnează primul la getElementById
+     * - dar click-urile / logica se încurcă între instanțe
+     *
+     * Strategia:
+     * - găsim toate elementele pentru ID-urile critice
+     * - dacă sunt 2+, primul devine "MODEL" (renumit) și non-interactiv
+     * - al doilea rămâne ID-ul original (EDITABIL)
+     */
+    const CRITICAL_IDS = [
+      "tableP1",
+      "tableP2",
+      "titleP2",
+      "enableP2",
+      "previewKo",
+      "previewSentence",
+      "previewRo",
+      "previewRoTitle",
+      "previewRoTitle2"
+    ];
+
+    // renumește "model element" într-un ID nou sigur
+    const renameAsModel = (el, oldId) => {
+      if (!el || !oldId) return;
+      const newId = oldId + "_MODEL";
+      el.id = newId;
+      el.classList.add("builder-model");
+      el.setAttribute("data-builder-model", "1");
+      return newId;
+    };
+
+    // 1) Fix ID-uri duplicate
+    CRITICAL_IDS.forEach((id) => {
+      // CSS.escape pentru ID-uri sigure (în caz de caractere speciale)
+      const sel = "#" + (window.CSS && CSS.escape ? CSS.escape(id) : id);
+      const all = builderRoot.querySelectorAll(sel);
+
+      // Dacă există dubluri, primul devine MODEL, restul rămâne (al doilea e cel editabil)
+      if (all && all.length >= 2) {
+        renameAsModel(all[0], id);
+        // all[1] păstrează ID-ul original => devine "adevăratul" target pentru logică
+      }
+    });
+
+    // 2) Fix special: dacă există două "Propoziția 1" ca blocuri mari (tabele)
+    //    și ID-urile nu sunt dublate (rar), tot putem marca primul tabel ca MODEL.
+    //    (nu stricăm nimic dacă nu există)
+    const p1Tables = builderRoot.querySelectorAll('[id="tableP1"], #tableP1_MODEL');
+    if (p1Tables && p1Tables.length >= 1) {
+      // dacă avem și MODEL și EDITABIL deja, OK
+      // dacă nu avem MODEL dar există sus un "model row" construit diferit, nu intervenim
+    }
+
+    // 3) Protecție pentru bifa Propoziția 2: dacă a fost duplicată, acum rămâne una singură activă.
+    //    Uneori bifa "MODEL" (renumită) rămâne bifată vizual sus — nu contează, e read-only.
+    //    Important e ca enableP2 (editabil) să fie cel folosit de logică.
+
+    // 4) (Re)Atașează logică pentru enableP2 pe elementul EDITABIL (dacă există).
+    //    Nu presupunem că ai această logică deja în alt loc: o refacem sigur, fără să dublăm handler-ele.
+    const enableP2 = document.getElementById("enableP2");
+    const titleP2  = document.getElementById("titleP2");
+    const tableP2  = document.getElementById("tableP2");
+
+    if (enableP2 && titleP2 && tableP2) {
+      // Curățare handler vechi: clonăm elementul ca să ștergem listeners (metodă robustă).
+      // Atenție: păstrăm state checked.
+      const checked = enableP2.checked;
+      const clone = enableP2.cloneNode(true);
+      clone.checked = checked;
+      enableP2.parentNode.replaceChild(clone, enableP2);
+
+      const syncP2 = () => {
+        const on = clone.checked;
+        titleP2.classList.toggle("hidden", !on);
+        tableP2.classList.toggle("hidden", !on);
+      };
+      clone.addEventListener("change", syncP2);
+      syncP2();
+    }
+
+    // 5) Important: după renumire, orice cod care folosește getElementById("tableP1")
+    //    va găsi doar tabelul editabil => click-urile revin.
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
+  }
+})();
+</script>
+<!-- =========================
+     /FIX COMPLET
+========================= -->
 </body>
 </html> 
