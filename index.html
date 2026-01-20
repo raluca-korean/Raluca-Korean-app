@@ -5661,6 +5661,219 @@ function getInputLang() {
   // fallback: dacă nu găsim nimic, presupunem Română
   return el ? el.value : "ro";
 } 
+   /* ============================================================
+   BUILDER: MULTI-CLAUSE DINAMIC (P1, P2, P3…)
+   - Nu atinge Exerciții/Lecții/Glosar
+   - Doar Builder UI + cum se construiește propoziția finală
+   ============================================================ */
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Elemente existente (P1, P2 din varianta ta actuală)
+  const tableP1 = document.getElementById("tableP1");
+  const tableP2 = document.getElementById("tableP2");
+  const titleP1 = document.getElementById("titleP1");
+  const titleP2 = document.getElementById("titleP2");
+  const enableP2 = document.getElementById("enableP2");
+
+  // Elemente noi (din HTML-ul adăugat)
+  const clausesHost = document.getElementById("clausesHost");
+  const clauseTemplate = document.getElementById("clauseTemplate");
+  const addClauseBtn = document.getElementById("addClauseBtn");
+  const removeClauseBtn = document.getElementById("removeClauseBtn");
+
+  // Dacă nu există, ieșim fără să stricăm restul aplicației
+  if (!clausesHost || !clauseTemplate || !tableP1) return;
+
+  // ====== Config: câte propoziții maxime ======
+  const MAX_CLAUSES = 8;
+
+  // ====== 1) Funcție: face o propoziție (card) cu tabel clonat ======
+  function createClauseCard(index, baseTableEl) {
+    // index: 1,2,3...
+    const node = clauseTemplate.content.cloneNode(true);
+
+    const card = node.querySelector(".card");
+    const titleEl = node.querySelector(".clauseTitle");
+    const enableEl = node.querySelector(".clauseEnable");
+    const bodyEl = node.querySelector(".clauseBody");
+    const wrapEl = node.querySelector(".clauseTableWrap");
+
+    titleEl.textContent = `Propoziția ${index}`;
+
+    // clonăm tabelul de bază (P1 sau P2)
+    const tableClone = baseTableEl.cloneNode(true);
+
+    // foarte important: fiecare tabel clonat trebuie să aibă id unic
+    tableClone.id = `tableP${index}`;
+
+    // Dacă în interior ai elemente cu id-uri (rar în tabele), le eliminăm id-ul ca să nu dubleze
+    tableClone.querySelectorAll("[id]").forEach(el => {
+      // păstrăm doar id-ul tabelului mare; restul le golim ca să nu fie duplicate
+      if (el !== tableClone) el.removeAttribute("id");
+    });
+
+    wrapEl.appendChild(tableClone);
+
+    // On/Off pentru propoziția asta
+    enableEl.addEventListener("change", () => {
+      const on = enableEl.checked;
+      bodyEl.style.display = on ? "" : "none";
+      rebuildFinalSentenceFromActiveClauses(); // recalculează propoziția mare
+    });
+
+    // ținem index pe card
+    card.dataset.clauseIndex = String(index);
+
+    return card;
+  }
+
+  // ====== 2) Inițializare: mutăm P1 și P2 în sistemul dinamic ======
+  // Curățăm hostul
+  clausesHost.innerHTML = "";
+
+  // Propoziția 1: folosim tableP1 ca „model”
+  const clause1 = createClauseCard(1, tableP1);
+  clausesHost.appendChild(clause1);
+
+  // Scoatem vechile title/table din UI (ca să nu apară dublu)
+  if (titleP1) titleP1.style.display = "none";
+  if (tableP1) tableP1.style.display = "none";
+
+  // Propoziția 2: dacă există tableP2, o folosim ca „model” (altfel clonăm tot din P1)
+  const baseForP2 = tableP2 || tableP1;
+  const clause2 = createClauseCard(2, baseForP2);
+  clausesHost.appendChild(clause2);
+
+  // ascundem vechile title/table P2 (dacă există)
+  if (titleP2) titleP2.style.display = "none";
+  if (tableP2) tableP2.style.display = "none";
+
+  // dacă tu ai bifa veche enableP2, o legăm de Propoziția 2 (ca să păstrezi UI-ul existent)
+  if (enableP2) {
+    const enableEl2 = clause2.querySelector(".clauseEnable");
+    enableEl2.checked = !!enableP2.checked;
+
+    // când schimbi bifa veche, schimbăm și bifa din card
+    enableP2.addEventListener("change", () => {
+      enableEl2.checked = enableP2.checked;
+      enableEl2.dispatchEvent(new Event("change"));
+    });
+
+    // când schimbi bifa din card, actualizăm și bifa veche
+    enableEl2.addEventListener("change", () => {
+      enableP2.checked = enableEl2.checked;
+    });
+
+    // aplicăm inițial
+    enableEl2.dispatchEvent(new Event("change"));
+  }
+
+  // ====== 3) Add / Remove propoziții ======
+  function getCurrentClauseCount() {
+    return clausesHost.querySelectorAll(".card[data-clause-index]").length;
+  }
+
+  function addClause() {
+    const n = getCurrentClauseCount();
+    if (n >= MAX_CLAUSES) return;
+
+    // întotdeauna clonăm din „modelul” propoziției 1 (stabil)
+    const base = document.getElementById("tableP1") || baseForP2 || tableP1;
+
+    // dar tableP1 original e ascuns; noi avem deja clonă în primul card:
+    const firstCardTable = clausesHost.querySelector('.card[data-clause-index="1"] #tableP1');
+    const baseTable = firstCardTable || base;
+
+    const newIndex = n + 1;
+    const newCard = createClauseCard(newIndex, baseTable);
+    clausesHost.appendChild(newCard);
+
+    rebuildFinalSentenceFromActiveClauses();
+  }
+
+  function removeLastClause() {
+    const n = getCurrentClauseCount();
+    if (n <= 2) return; // păstrăm minim 2 (ca în varianta ta)
+    const last = clausesHost.querySelector(`.card[data-clause-index="${n}"]`);
+    if (last) last.remove();
+    rebuildFinalSentenceFromActiveClauses();
+  }
+
+  if (addClauseBtn) addClauseBtn.addEventListener("click", addClause);
+  if (removeClauseBtn) removeClauseBtn.addEventListener("click", removeLastClause);
+
+  // ====== 4) Construim propoziția finală din toate propozițiile active ======
+  // IMPORTANT: aici nu facem „magie”, doar lipim propozițiile una după alta.
+  // Tu ai deja funcție care reconstruiește propoziția pentru P1.
+  // Noi o extindem: pentru fiecare propoziție activă, luăm cuvintele din tabel și facem o propoziție.
+  function buildSentenceFromTable(tableEl) {
+    if (!tableEl) return "";
+
+    // Citește valorile exact ca la tine (subject/time/place/mod/object/numeral/counter)
+    const pick = (key) => {
+      const col = tableEl.querySelector('.col[data-key="' + key + '"] .col-body-main');
+      return col ? col.textContent.trim() : "";
+    };
+
+    const subject = pick("subject") || "저";
+    const time    = pick("time");
+    const place   = pick("place");
+    const mod     = pick("mod");
+    const numeral = pick("numeral");
+    const counter = pick("counter");
+    const object  = pick("object");
+
+    let objectChunk = "";
+    if (object && numeral && counter) objectChunk = object + " " + numeral + " " + counter;
+    else if (object) objectChunk = object;
+
+    // Verb: dacă ai coloană de verb în tabel, o ia. Dacă nu, păstrăm fallback "가요".
+    // (nu-ți stricăm designul actual)
+    const verb = pick("verb") || "가요";
+
+    const parts = [subject, time, place, mod, objectChunk, verb].filter(Boolean);
+    return parts.join(" ").trim();
+  }
+
+  function rebuildFinalSentenceFromActiveClauses() {
+    const cards = Array.from(clausesHost.querySelectorAll(".card[data-clause-index]"));
+
+    const sentences = [];
+
+    for (const card of cards) {
+      const enableEl = card.querySelector(".clauseEnable");
+      const on = enableEl ? enableEl.checked : true;
+      if (!on) continue;
+
+      const idx = card.dataset.clauseIndex;
+      const table = card.querySelector(`#tableP${idx}`);
+      const s = buildSentenceFromTable(table);
+      if (s) sentences.push(s);
+    }
+
+    // unde afișezi tu propoziția mare (din pozele tale: previewSentence sau previewKo etc.)
+    const out =
+      document.getElementById("previewSentence") ||
+      document.getElementById("previewKo") ||
+      document.querySelector(".preview-sentence");
+
+    if (out) out.textContent = sentences.join(" ");
+  }
+
+  // Facem funcția globală, ca să o poți chema din alte butoane dacă ai nevoie
+  window.rebuildFinalSentenceFromActiveClauses = rebuildFinalSentenceFromActiveClauses;
+
+  // ====== 5) Hook: când se schimbă ceva în tabele, reconstruim propoziția ======
+  // (fără să îți stricăm codul existent)
+  clausesHost.addEventListener("click", (e) => {
+    // dacă utilizatorul apasă pe ceva în Builder (alege cuvinte), refacem propoziția
+    // (este un fallback simplu, merge ok fără să cunoaștem exact evenimentele tale interne)
+    setTimeout(rebuildFinalSentenceFromActiveClauses, 0);
+  });
+
+  // Inițial
+  rebuildFinalSentenceFromActiveClauses();
+}); 
   </script>
 </body>
 </html> 
