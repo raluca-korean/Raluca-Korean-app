@@ -2305,202 +2305,7 @@ body.pastel-theme {
 .bottom-nav .nav-btn::before {
   content: none !important;
 }
-  /* ============================================================
-   PARSER RO → BUILDER (V2, mai complet)
-   ============================================================ */
-
-/* 1. Normalizare text română:
-   - litere mici
-   - diacritice uniformizate
-   - scoatem semnele de punctuație
-*/
-function normalizeRo(text) {
-  if (!text) return "";
-  let t = text.toLowerCase();
-
-  // uniformizăm diacritice / variante
-  t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
-  t = t.replace(/Ã¢/g, "â").replace(/Ã®/g, "î");
-
-  // scoatem unele semne de punctuație
-  t = t.replace(/[.,!?;:]/g, " ");
-
-  // spații multiple → un singur spațiu
-  t = t.replace(/\s+/g, " ").trim();
-  return t;
-}
-
-/* 2. Reguli pentru fiecare slot
-   - fiecare regulă are un regex și un value (cuvântul coreean)
-   - ORDINEA contează: primele reguli sunt mai „prioritare”
-*/
-
-const RO_RULES = {
-  subject: [
-    // eu (formal) – 저
-    { re: /\beu\s*\(formal\)|eu\s*-\s*formal\b/, value: "저" },
-    // eu (informal) – 나
-    { re: /\beu\s*\(informal\)|eu\s*-\s*informal\b/, value: "나" },
-    // dacă apare simplu „eu” → default 저 (poți schimba)
-    { re: /\beu\b/, value: "저" },
-    // tu
-    { re: /\btu\b/, value: "너" }
-  ],
-
-  time: [
-    { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
-    { re: /\bmâine\b/, value: "내일" },
-    { re: /\bieri\b/, value: "어제" },
-    { re: /\bacum\b/, value: "지금" }
-  ],
-
-  place: [
-    { re: /\bacas[ăa]\b/, value: "집" },
-    { re: /la\s+școal[ăa]|la\s+scoala|școal[ăa]\b|scoala\b/, value: "학교" },
-    { re: /la\s+firm[ăa]|la\s+serviciu|la\s+companie|firm[ăa]\b|serviciu\b|companie\b/, value: "회사" },
-    { re: /la\s+banc[ăa]|banc[ăa]\b/, value: "은행" },
-    { re: /cafenea|cafene[al]/, value: "카페" }
-  ],
-
-  mod: [
-    { re: /\bbine\b|frumos\b|ok\b/, value: "잘" },
-    { re: /în\s+liniște|in\s+liniste|liniște|liniste/, value: "조용히" },
-    { re: /cu\s+sârguint[ăa]|cu\s+sarguinta|harnic|cu\s+mult\s+efort/, value: "열심히" },
-    { re: /încet|incet/, value: "천천히" },
-    { re: /repede|rapid/, value: "빨리" }
-  ],
-
-  object: [
-    { re: /cafea/, value: "커피" },
-    { re: /\bap[ăa]\b|ap[ăa]\s+mineral[ăa]?/, value: "물" },
-    { re: /carte|c[ăa]rțile|c[ăa]rti\b/, value: "책" },
-    { re: /m[ăa]ncare|pr[ăa]nzul|cina|mic\s+dejun/, value: "음식" },
-    { re: /ceai\b/, value: "차" }
-  ],
-
-  // opțional: număr pentru obiect (doar 1–3, ca exemplu)
-  numeral: [
-    { re: /\bo\s+carte\b|\bună\s+carte\b|\b(o|un)\s+caf(ea|ea)\b/, value: "한" },
-    { re: /\bdou[ăa]\s+carți|dou[ăa]\s+cafele/, value: "두" },
-    { re: /\btrei\s+carți|trei\s+cafele/, value: "세" }
-  ],
-
-  // opțional: alegem classifier în funcție de obiect
-  counter: [
-    { re: /carte|c[ăa]rti\b/, value: "권" },  // pentru cărți
-    { re: /cafea|ap[ăa]\b|ceai\b|m[ăa]ncare/, value: "개" } // general
-  ],
-
-  // verb foarte simplu – doar pentru propoziția mare
-  verb: [
-    { re: /merg\b|a merge|să merg|sa merg/, value: "가요" },
-    { re: /vin\b|a veni|să vin|sa vin/, value: "와요" },
-    { re: /beau\b|a bea|să beau|sa beau/, value: "마셔요" },
-    { re: /m[ăa]n[âa]nc\b|m[ăa]nânc|mananc|a m[ăa]nca/, value: "먹어요" },
-    { re: /citesc|a citi|să citesc|sa citesc/, value: "읽어요" },
-    { re: /lucrez|a lucra/, value: "일해요" }
-  ]
-};
-
-/* 3. Helper: ia primul value al regulii care se potrivește */
-function matchSlot(rules, text) {
-  if (!rules) return null;
-  for (const rule of rules) {
-    if (rule.re.test(text)) return rule.value;
-  }
-  return null;
-}
-
-/* 4. Funcția principală: text RO → sloturi Builder */
-function parseRomanianToSlots(text) {
-  const t = normalizeRo(text);
-
-  const slots = {
-    subject: matchSlot(RO_RULES.subject, t),
-    time:    matchSlot(RO_RULES.time, t),
-    place:   matchSlot(RO_RULES.place, t),
-    mod:     matchSlot(RO_RULES.mod, t),
-    object:  matchSlot(RO_RULES.object, t),
-    numeral: matchSlot(RO_RULES.numeral, t),
-    counter: matchSlot(RO_RULES.counter, t),
-    verb:    matchSlot(RO_RULES.verb, t)
-  };
-
-  return slots;
-}
-
-/* 5. Aplică sloturile în Propoziția 1 (tabelul de sus) */
-function applySlotsToBuilderP1(slots) {
-  const table = document.getElementById("tableP1");
-  if (!table || !slots) return;
-
-  const setCol = (key, value) => {
-    if (!value) return;
-    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
-    if (col) {
-      col.textContent = value;
-    }
-  };
-
-  setCol("subject", slots.subject);
-  setCol("time",    slots.time);
-  setCol("place",   slots.place);
-  setCol("mod",     slots.mod);
-  setCol("object",  slots.object);
-  setCol("numeral", slots.numeral);
-  setCol("counter", slots.counter);
-  // verbul îl folosim doar la reconstrucția propoziției, nu umplem coloană (deocamdată)
-}
-
-/* 6. Reconstruiește propoziția coreeană mare din sloturi */
-function rebuildPreviewFromBuilderP1(slotsFromParser) {
-  const table = document.getElementById("tableP1");
-  if (!table) return;
-
-  const pick = (key) => {
-    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
-    return col ? col.textContent.trim() : "";
-  };
-
-  const subject = pick("subject") || "저";
-  const time    = pick("time");
-  const place   = pick("place");
-  const mod     = pick("mod");
-  const numeral = pick("numeral");
-  const counter = pick("counter");
-  const object  = pick("object");
-
-  // dacă avem numeral+counter+object → „책 한 권” etc.
-  let objectChunk = "";
-  if (object && numeral && counter) {
-    objectChunk = object + " " + numeral + " " + counter;
-  } else if (object) {
-    objectChunk = object;
-  }
-
-  // verb: dacă parserul a găsit ceva, îl folosim, altfel 가요
-  const verb =
-    (slotsFromParser && slotsFromParser.verb) ||
-    "가요";
-
-  const pieces = [subject, time, place, mod, objectChunk, verb].filter(Boolean);
-  const sentence = pieces.join(" ");
-
-  const out =
-    document.getElementById("previewSentence") ||
-    document.getElementById("previewKo") ||
-    document.querySelector(".preview-sentence");
-
-  if (out) {
-    out.textContent = sentence;
-  }
-}  
-   // === Limbă de intrare (Română / English) din switch-ul de sus ===
-function getInputLang() {
-  const el = document.querySelector('input[name="inputLang"]:checked');
-  // fallback: dacă nu găsim nimic, presupunem Română
-  return el ? el.value : "ro";
-} 
+ 
 </style>
 </head>
 <body class="pastel-theme">
@@ -5675,6 +5480,202 @@ if (enableP2 && titleP2 && tableP2) {
   enableP2.addEventListener("change", syncP2);
   syncP2();
 }
+     /* ============================================================
+   PARSER RO → BUILDER (V2, mai complet)
+   ============================================================ */
+
+/* 1. Normalizare text română:
+   - litere mici
+   - diacritice uniformizate
+   - scoatem semnele de punctuație
+*/
+function normalizeRo(text) {
+  if (!text) return "";
+  let t = text.toLowerCase();
+
+  // uniformizăm diacritice / variante
+  t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
+  t = t.replace(/Ã¢/g, "â").replace(/Ã®/g, "î");
+
+  // scoatem unele semne de punctuație
+  t = t.replace(/[.,!?;:]/g, " ");
+
+  // spații multiple → un singur spațiu
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
+}
+
+/* 2. Reguli pentru fiecare slot
+   - fiecare regulă are un regex și un value (cuvântul coreean)
+   - ORDINEA contează: primele reguli sunt mai „prioritare”
+*/
+
+const RO_RULES = {
+  subject: [
+    // eu (formal) – 저
+    { re: /\beu\s*\(formal\)|eu\s*-\s*formal\b/, value: "저" },
+    // eu (informal) – 나
+    { re: /\beu\s*\(informal\)|eu\s*-\s*informal\b/, value: "나" },
+    // dacă apare simplu „eu” → default 저 (poți schimba)
+    { re: /\beu\b/, value: "저" },
+    // tu
+    { re: /\btu\b/, value: "너" }
+  ],
+
+  time: [
+    { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
+    { re: /\bmâine\b/, value: "내일" },
+    { re: /\bieri\b/, value: "어제" },
+    { re: /\bacum\b/, value: "지금" }
+  ],
+
+  place: [
+    { re: /\bacas[ăa]\b/, value: "집" },
+    { re: /la\s+școal[ăa]|la\s+scoala|școal[ăa]\b|scoala\b/, value: "학교" },
+    { re: /la\s+firm[ăa]|la\s+serviciu|la\s+companie|firm[ăa]\b|serviciu\b|companie\b/, value: "회사" },
+    { re: /la\s+banc[ăa]|banc[ăa]\b/, value: "은행" },
+    { re: /cafenea|cafene[al]/, value: "카페" }
+  ],
+
+  mod: [
+    { re: /\bbine\b|frumos\b|ok\b/, value: "잘" },
+    { re: /în\s+liniște|in\s+liniste|liniște|liniste/, value: "조용히" },
+    { re: /cu\s+sârguint[ăa]|cu\s+sarguinta|harnic|cu\s+mult\s+efort/, value: "열심히" },
+    { re: /încet|incet/, value: "천천히" },
+    { re: /repede|rapid/, value: "빨리" }
+  ],
+
+  object: [
+    { re: /cafea/, value: "커피" },
+    { re: /\bap[ăa]\b|ap[ăa]\s+mineral[ăa]?/, value: "물" },
+    { re: /carte|c[ăa]rțile|c[ăa]rti\b/, value: "책" },
+    { re: /m[ăa]ncare|pr[ăa]nzul|cina|mic\s+dejun/, value: "음식" },
+    { re: /ceai\b/, value: "차" }
+  ],
+
+  // opțional: număr pentru obiect (doar 1–3, ca exemplu)
+  numeral: [
+    { re: /\bo\s+carte\b|\bună\s+carte\b|\b(o|un)\s+caf(ea|ea)\b/, value: "한" },
+    { re: /\bdou[ăa]\s+carți|dou[ăa]\s+cafele/, value: "두" },
+    { re: /\btrei\s+carți|trei\s+cafele/, value: "세" }
+  ],
+
+  // opțional: alegem classifier în funcție de obiect
+  counter: [
+    { re: /carte|c[ăa]rti\b/, value: "권" },  // pentru cărți
+    { re: /cafea|ap[ăa]\b|ceai\b|m[ăa]ncare/, value: "개" } // general
+  ],
+
+  // verb foarte simplu – doar pentru propoziția mare
+  verb: [
+    { re: /merg\b|a merge|să merg|sa merg/, value: "가요" },
+    { re: /vin\b|a veni|să vin|sa vin/, value: "와요" },
+    { re: /beau\b|a bea|să beau|sa beau/, value: "마셔요" },
+    { re: /m[ăa]n[âa]nc\b|m[ăa]nânc|mananc|a m[ăa]nca/, value: "먹어요" },
+    { re: /citesc|a citi|să citesc|sa citesc/, value: "읽어요" },
+    { re: /lucrez|a lucra/, value: "일해요" }
+  ]
+};
+
+/* 3. Helper: ia primul value al regulii care se potrivește */
+function matchSlot(rules, text) {
+  if (!rules) return null;
+  for (const rule of rules) {
+    if (rule.re.test(text)) return rule.value;
+  }
+  return null;
+}
+
+/* 4. Funcția principală: text RO → sloturi Builder */
+function parseRomanianToSlots(text) {
+  const t = normalizeRo(text);
+
+  const slots = {
+    subject: matchSlot(RO_RULES.subject, t),
+    time:    matchSlot(RO_RULES.time, t),
+    place:   matchSlot(RO_RULES.place, t),
+    mod:     matchSlot(RO_RULES.mod, t),
+    object:  matchSlot(RO_RULES.object, t),
+    numeral: matchSlot(RO_RULES.numeral, t),
+    counter: matchSlot(RO_RULES.counter, t),
+    verb:    matchSlot(RO_RULES.verb, t)
+  };
+
+  return slots;
+}
+
+/* 5. Aplică sloturile în Propoziția 1 (tabelul de sus) */
+function applySlotsToBuilderP1(slots) {
+  const table = document.getElementById("tableP1");
+  if (!table || !slots) return;
+
+  const setCol = (key, value) => {
+    if (!value) return;
+    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    if (col) {
+      col.textContent = value;
+    }
+  };
+
+  setCol("subject", slots.subject);
+  setCol("time",    slots.time);
+  setCol("place",   slots.place);
+  setCol("mod",     slots.mod);
+  setCol("object",  slots.object);
+  setCol("numeral", slots.numeral);
+  setCol("counter", slots.counter);
+  // verbul îl folosim doar la reconstrucția propoziției, nu umplem coloană (deocamdată)
+}
+
+/* 6. Reconstruiește propoziția coreeană mare din sloturi */
+function rebuildPreviewFromBuilderP1(slotsFromParser) {
+  const table = document.getElementById("tableP1");
+  if (!table) return;
+
+  const pick = (key) => {
+    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    return col ? col.textContent.trim() : "";
+  };
+
+  const subject = pick("subject") || "저";
+  const time    = pick("time");
+  const place   = pick("place");
+  const mod     = pick("mod");
+  const numeral = pick("numeral");
+  const counter = pick("counter");
+  const object  = pick("object");
+
+  // dacă avem numeral+counter+object → „책 한 권” etc.
+  let objectChunk = "";
+  if (object && numeral && counter) {
+    objectChunk = object + " " + numeral + " " + counter;
+  } else if (object) {
+    objectChunk = object;
+  }
+
+  // verb: dacă parserul a găsit ceva, îl folosim, altfel 가요
+  const verb =
+    (slotsFromParser && slotsFromParser.verb) ||
+    "가요";
+
+  const pieces = [subject, time, place, mod, objectChunk, verb].filter(Boolean);
+  const sentence = pieces.join(" ");
+
+  const out =
+    document.getElementById("previewSentence") ||
+    document.getElementById("previewKo") ||
+    document.querySelector(".preview-sentence");
+
+  if (out) {
+    out.textContent = sentence;
+  }
+}  
+   // === Limbă de intrare (Română / English) din switch-ul de sus ===
+function getInputLang() {
+  const el = document.querySelector('input[name="inputLang"]:checked');
+  // fallback: dacă nu găsim nimic, presupunem Română
+  return el ? el.value : "ro";
+} 
   </script>
 </body>
 </html> 
