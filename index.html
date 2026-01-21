@@ -2943,191 +2943,31 @@ function loadCustomData(){
     });
   }catch(e){}
 }
- // ================= RO / EN -> KO (wrapper unic) =================
+    // ================= RO -> KO (parser simplu din dicționarul app-ului) =================
 const roInput = document.getElementById("roInput");
-
-function getInputLang() {
-  const el = document.querySelector('input[name="inputLang"]:checked');
-  return el ? el.value : "ro";
-}
-
+ // === Wrapper general pentru traducere ===
 function translateInputToKo() {
-  const text = (roInput?.value || "").trim();
+  const text = (roInput.value || "").trim();
   const lang = getInputLang();
 
   let result;
   if (!text) {
     result = { ko: "", roFixed: "" };
   } else if (lang === "en") {
+    // NOUL PIPELINE: EN → KO
     result = translateEnToKo(text);
   } else {
+    // PIPELINE VECHI: RO → KO
     result = translateRoToKo(text);
   }
 
-  const koOut = document.getElementById("koOutput") || document.getElementById("roToKoResult");
-  if (koOut) koOut.textContent = result.ko || "";
-
-  const roFixedEl = document.getElementById("roCorrected");
-  if (roFixedEl) roFixedEl.textContent = result.roFixed || "";
+  // aici folosești exact aceleași elemente pe care le foloseai până acum
+  // pentru a afișa rezultatul
+  document.getElementById("koOutput").textContent = result.ko || "";
+  document.getElementById("roCorrected").textContent = result.roFixed || "";
 }
-
-// butonul „Tradu în coreeană”
-const roTranslateBtn = document.getElementById("roTranslateBtn");
-if (roTranslateBtn) {
-  roTranslateBtn.addEventListener("click", () => {
-    const txt = roInput?.value || "";
-    LAST_RO_SENTENCE = txt;
-
-    // 1) două propoziții legate prin „și/iar/apoi” (doar dacă există split valid)
-    const split = splitRoIntoClauses(txt);
-
-    if (split) {
-      const parsed1 = parseRoToState(split.first);
-      Object.assign(stateP1, parsed1.state);
-      stateP1.conjug = "-고";
-      activeP1.conjug = true;
-
-      const parsed2 = parseRoToState(split.second);
-      Object.assign(stateP2, parsed2.state);
-
-      if (enableP2) enableP2.checked = true;
-      if (tableP2) tableP2.classList.remove("hidden");
-
-      render();
-    } else {
-      const parsed = parseRoToState(txt);
-      Object.assign(stateP1, parsed.state);
-
-      if (enableP2) enableP2.checked = false;
-      if (tableP2) tableP2.classList.add("hidden");
-
-      render();
-    }
-
-    // 2) Rulează traducerea (RO/EN) și umple output-urile
-    translateInputToKo();
-  });
-}
-
-// ================= RO -> KO (folosește parser + builder) =================
-function translateRoToKo(roText) {
-  LAST_RO_SENTENCE = roText || "";
-  const original = (roText || "").trim();
-  if (!original) return { ko: "", roFixed: "" };
-
-  const parsed = parseRoToState(original);
-
-  const koResult = buildClauseSentence(
-    parsed.state,
-    { subject:true, time:true, place:true, mod:true, object:true, numeral:false, counter:false, verb:true, conjug:true },
-    null
-  ).ko;
-
-  const roFixed = buildNaturalRomanian(
-    parsed.state,
-    { subject:true, time:true, place:true, mod:true, object:true, numeral:false, counter:false, verb:true, conjug:true }
-  );
-
-  return {
-    ko: koResult || "(nu am putut construi propoziția)",
-    roFixed: roFixed || original
-  };
-}
-
-// ======================================================
-// ENGLISH → KOREAN (pipeline separat, top-level)
-// ======================================================
-const EN_SUBJECTS = [
-  { re: /\bi\b/i, ko: "저" },
-  { re: /\byou\b/i, ko: "당신" },
-  { re: /\bhe\b/i, ko: "그" },
-  { re: /\bshe\b/i, ko: "그녀" },
-  { re: /\bwe\b/i, ko: "우리" },
-  { re: /\bthey\b/i, ko: "그들" }
-];
-
-const EN_TIMES = [
-  { re: /\btoday\b/i, ko: "오늘" },
-  { re: /\byesterday\b/i, ko: "어제" },
-  { re: /\btomorrow\b/i, ko: "내일" },
-  { re: /\bnow\b/i, ko: "지금" },
-  { re: /\bthis morning\b/i, ko: "오늘 아침" },
-  { re: /\btonight\b/i, ko: "오늘 밤" }
-];
-
-const EN_PLACES = [
-  { re: /\bhome\b/i, ko: "집에" },
-  { re: /\bschool\b/i, ko: "학교에" },
-  { re: /\bcafe\b/i, ko: "카페에" },
-  { re: /\bwork\b/i, ko: "회사에" },
-  { re: /\boffice\b/i, ko: "사무실에" }
-];
-
-const EN_OBJECTS = [
-  { re: /\bcoffee\b/i, ko: "커피를" },
-  { re: /\btea\b/i, ko: "차를" },
-  { re: /\bbook(s)?\b/i, ko: "책을" },
-  { re: /\bkorean language\b/i, ko: "한국어를" },
-  { re: /\bkorean\b/i, ko: "한국어를" },
-  { re: /\bhomework\b/i, ko: "숙제를" }
-];
-
-const EN_VERBS = [
-  { re: /\bgo\b/i, ko: "가요" },
-  { re: /\bcome\b/i, ko: "와요" },
-  { re: /\bdrink\b/i, ko: "마셔요" },
-  { re: /\beat\b/i, ko: "먹어요" },
-  { re: /\bstudy\b/i, ko: "공부해요" },
-  { re: /\bread\b/i, ko: "읽어요" },
-  { re: /\bmeet\b/i, ko: "만나요" },
-  { re: /\bwork\b/i, ko: "일해요" },
-  { re: /\bsleep\b/i, ko: "자요" }
-];
-
-function findEnMatch(list, text) {
-  for (const item of list) if (item.re.test(text)) return item;
-  return null;
-}
-
-function capitalizeSentence(str) {
-  const s = (str || "").trim();
-  if (!s) return "";
-  const first = s.charAt(0).toUpperCase();
-  const rest = s.slice(1);
-  return first + (/[.!?]$/.test(rest) ? rest : rest + ".");
-}
-
-function translateEnToKo(enText) {
-  const original = (enText || "").trim();
-  if (!original) return { ko: "", roFixed: "" };
-
-  const text = original.toLowerCase();
-
-  const subj  = findEnMatch(EN_SUBJECTS, text);
-  const time  = findEnMatch(EN_TIMES, text);
-  const place = findEnMatch(EN_PLACES, text);
-  const obj   = findEnMatch(EN_OBJECTS, text);
-  const verb  = findEnMatch(EN_VERBS, text);
-
-  // suport simplu pentru "and <verb>"
-  let koSentence = "";
-  const andMatch = text.match(/\band\s+([a-z]+)/i);
-  if (andMatch) {
-    const secondVerb = findEnMatch(EN_VERBS, andMatch[1]);
-    if (verb && secondVerb) {
-      const firstPart = [subj?.ko, time?.ko, place?.ko, obj?.ko].filter(Boolean).join(" ");
-      const firstVerb = verb.ko.replace(/요$/, "고");
-      koSentence = [firstPart, firstVerb, secondVerb.ko].filter(Boolean).join(" ");
-    }
-  }
-
-  if (!koSentence) {
-    koSentence = [subj?.ko, time?.ko, place?.ko, obj?.ko, verb?.ko].filter(Boolean).join(" ");
-  }
-
-  return { ko: koSentence || "(could not build Korean sentence)", roFixed: capitalizeSentence(original) };
-}
-    function stripDiacritics(s){
+    // reverse map: română -> coreeană (din translations)
+function stripDiacritics(s){
   return (s||"")
     .replace(/ă/g,"a").replace(/â/g,"a").replace(/î/g,"i")
     .replace(/ș/g,"s").replace(/ş/g,"s")
