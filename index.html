@@ -1,10 +1,9 @@
-
 <!doctype html>
 <html lang="ro">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Construiește & Extinde Propoziții</title>
+  <title>Builder Universal — Construiește & Extinde Propoziții</title>
   <style>
     :root{
       --bg:#0f172a;
@@ -23,10 +22,38 @@
       background: radial-gradient(1200px 800px at 20% 10%, #1e2a6b 0%, var(--bg) 60%);
       color:var(--text);
     }
+
+    /* TOP NAV (safe, independent) */
+    .topnav{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+      padding:12px 16px; border-bottom:1px solid var(--line);
+      background: rgba(15,23,42,.82);
+      position: sticky; top:0; backdrop-filter: blur(8px); z-index:20;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .brand strong{ font-size:14px; letter-spacing:.2px; }
+    .brand span{ font-size:12px; color:#c7d2fe; }
+    .navlinks{ display:flex; gap:8px; flex-wrap:wrap; }
+    .navlinks a{
+      text-decoration:none;
+      color: var(--text);
+      border:1px solid var(--line);
+      background: rgba(11,18,38,.55);
+      padding:8px 10px;
+      border-radius:12px;
+      font-size:13px;
+    }
+    .navlinks a:hover{ background: rgba(165,180,252,.10); }
+    .navlinks a.active{
+      border-color: rgba(251,191,36,.55);
+      background: rgba(251,191,36,.10);
+    }
+
     header{
-      padding:20px 16px; border-bottom:1px solid var(--line);
-      background: rgba(15,23,42,.75);
-      position: sticky; top:0; backdrop-filter: blur(8px); z-index:10;
+      padding:14px 16px; border-bottom:1px solid var(--line);
+      background: rgba(15,23,42,.45);
     }
     header h1{ margin:0; font-size:18px; letter-spacing:.2px; }
     header p{ margin:6px 0 0; color:#c7d2fe; font-size:13px; }
@@ -46,7 +73,7 @@
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .row > *{ flex: 0 0 auto; }
 
-    select, button, input{
+    select, button, input, label{
       background: rgba(11,18,38,.8);
       color: var(--text);
       border:1px solid var(--line);
@@ -114,9 +141,38 @@
     .rightTools{ display:flex; gap:8px; flex-wrap:wrap; }
     .mini{ padding:8px 10px; border-radius:10px; font-size:13px; }
     .copyOk{ color:#bbf7d0; }
+
+    /* LocalStorage toggle */
+    .toggle{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
+      background: rgba(11,18,38,.55);
+      font-size:12px;
+      color:#c7d2fe;
+    }
+    .toggle input{ width:16px; height:16px; padding:0; }
   </style>
 </head>
 <body>
+
+  <!-- SAFE NAV: only links. Adjust href to your real pages. -->
+  <nav class="topnav">
+    <div class="brand">
+      <strong>Raluca Korean — App</strong>
+      <span>Builder universal (pagină paralelă, fără a atinge restul aplicației)</span>
+    </div>
+    <div class="navlinks">
+      <!-- Ajustează aceste href-uri la fișierele tale reale -->
+      <a href="index.html">Home</a>
+      <a class="active" href="builder-universal.html">Builder</a>
+      <a href="exercises.html">Exercises</a>
+      <a href="lessons.html">Lessons</a>
+      <a href="glossary.html">Glossary</a>
+    </div>
+  </nav>
+
   <header>
     <h1>Construiește & Extinde propoziții</h1>
     <p>Pornești de la propoziții scurte și le extinzi: ADD • MODIFY • CHANGE • COMBINE</p>
@@ -133,7 +189,7 @@
           <button class="ghost mini" id="resetBtn">Reset</button>
           <span class="pill">Nivel: <strong id="levelLabel">A1</strong></span>
         </div>
-        <p class="help">Setul îți oferă propoziții de bază + opțiuni de extindere. Poți adăuga seturi noi foarte ușor în variabila <code>SETS</code>.</p>
+        <p class="help">Setul îți oferă propoziții de bază + opțiuni de extindere. Poți adăuga seturi noi în variabila <code>SETS</code>.</p>
 
         <div class="divider"></div>
 
@@ -208,9 +264,16 @@
 
         <div class="divider"></div>
 
-        <h2>Istoric (session)</h2>
-        <div class="cards" id="history"></div>
-        <p class="help">Istoricul este doar în sesiune (până închizi pagina). Dacă vrei persistare, îți leg la LocalStorage fără să ating restul aplicației.</p>
+        <div class="row" style="justify-content:space-between;">
+          <h2 style="margin:0;">Istoric</h2>
+          <label class="toggle" title="Dacă e ON, istoricul rămâne și după refresh (LocalStorage).">
+            <input type="checkbox" id="persistToggle" />
+            Persistă (LocalStorage)
+          </label>
+        </div>
+
+        <div class="cards" id="history" style="margin-top:10px;"></div>
+        <p class="help">Dacă Persistă este OFF, istoricul este doar în sesiune (până închizi pagina).</p>
       </aside>
 
     </div>
@@ -374,9 +437,26 @@
     let appliedTags = [];
     let history = [];
 
+    const LS_KEY = "rk_builder_universal_history_v1";
+    const LS_PERSIST_KEY = "rk_builder_universal_persist_v1";
+
     const el = (id) => document.getElementById(id);
 
     function init(){
+      // Persist toggle state
+      const persisted = localStorage.getItem(LS_PERSIST_KEY);
+      el("persistToggle").checked = persisted === "1";
+      el("persistToggle").addEventListener("change", ()=>{
+        localStorage.setItem(LS_PERSIST_KEY, el("persistToggle").checked ? "1" : "0");
+        if(el("persistToggle").checked){
+          loadHistoryFromStorage();
+        }else{
+          // keep current session history; just stop saving/loading
+          localStorage.removeItem(LS_KEY);
+        }
+        renderHistory();
+      });
+
       // set dropdown
       const s = el("setSelect");
       s.innerHTML = "";
@@ -410,17 +490,25 @@
 
       el("saveBtn").addEventListener("click", ()=>saveToHistory());
 
+      // Load history if persist ON
+      if(el("persistToggle").checked){
+        loadHistoryFromStorage();
+      }
+
       resetAll();
       renderAll();
     }
 
     function resetAll(){
-      // start from suggested final by default (or first base sentence)
       const sug = currentSet.suggestedChain;
       currentKo = sug?.finalKo || (currentSet.base[0]?.ko ?? "—");
       currentRo = sug?.finalRo || (currentSet.base[0]?.ro ?? "—");
       appliedTags = [{kind:"BASE", label:"Preset (final sugerat)"}];
-      history = [];
+
+      // If persist ON: keep whatever was loaded. If OFF: reset session.
+      if(!el("persistToggle").checked){
+        history = [];
+      }
       renderHistory();
     }
 
@@ -445,7 +533,6 @@
         wrap.appendChild(c);
       });
 
-      // quick action: load suggested chain
       const sug = currentSet.suggestedChain;
       if(sug?.steps?.length){
         const c = document.createElement("div");
@@ -469,7 +556,6 @@
     }
 
     function renderSelects(){
-      // ADD
       const addSel = el("addSelect");
       addSel.innerHTML = "";
       if(!currentSet.add?.length){
@@ -478,7 +564,6 @@
         currentSet.add.forEach((a,i)=> addSel.appendChild(new Option(a.label, String(i))) );
       }
 
-      // MODIFY
       const modSel = el("modifySelect");
       modSel.innerHTML = "";
       if(!currentSet.modify?.length){
@@ -487,7 +572,6 @@
         currentSet.modify.forEach((m,i)=> modSel.appendChild(new Option(m.label, String(i))) );
       }
 
-      // CHANGE
       const chSel = el("changeSelect");
       chSel.innerHTML = "";
       if(!currentSet.change?.length){
@@ -496,7 +580,6 @@
         currentSet.change.forEach((c,i)=> chSel.appendChild(new Option(c.label, String(i))) );
       }
 
-      // COMBINE
       const combSel = el("combineSelect");
       combSel.innerHTML = "";
       if(!currentSet.combine?.length){
@@ -530,7 +613,7 @@
       if(!history.length){
         const empty = document.createElement("div");
         empty.className = "card";
-        empty.innerHTML = `<div class="romanian">Nu ai nimic salvat în sesiunea aceasta.</div>`;
+        empty.innerHTML = `<div class="romanian">Nu ai nimic salvat.</div>`;
         h.appendChild(empty);
         return;
       }
@@ -559,9 +642,8 @@
       const idx = parseInt(el("addSelect").value, 10);
       const rule = currentSet.add?.[idx];
       if(!rule) return;
-
-      const res = applyRule(rule);
-      if(res){
+      const ok = applyRule(rule);
+      if(ok){
         appliedTags.push({kind:"ADD", label: rule.label});
         renderPreview();
       }
@@ -571,9 +653,8 @@
       const idx = parseInt(el("modifySelect").value, 10);
       const rule = currentSet.modify?.[idx];
       if(!rule) return;
-
-      const res = applyRule(rule);
-      if(res){
+      const ok = applyRule(rule);
+      if(ok){
         appliedTags.push({kind:"MODIFY", label: rule.label});
         renderPreview();
       }
@@ -583,17 +664,14 @@
       const idx = parseInt(el("changeSelect").value, 10);
       const rule = currentSet.change?.[idx];
       if(!rule) return;
-
-      const res = applyRule(rule);
-      if(res){
+      const ok = applyRule(rule);
+      if(ok){
         appliedTags.push({kind:"CHANGE", label: rule.label});
         renderPreview();
       }
     }
 
     function applyCombine(){
-      // Pentru universal: pentru fiecare set, COMBINE generează propoziția finală sugerată.
-      // (Dacă vrei combinare “din sloturi”, îți leg ulterior la builderul tău existent.)
       const idx = parseInt(el("combineSelect").value, 10);
       const rule = currentSet.combine?.[idx];
       if(!rule) return;
@@ -607,39 +685,30 @@
         return;
       }
 
-      // fallback simplu: combină primele două propoziții base cu pattern
       const A = (currentSet.base[0]?.ko ?? "").replace(/\.$/,"");
       const B = (currentSet.base[1]?.ko ?? "").replace(/\.$/,"");
-      currentKo = rule.pattern
-        .replace("{A}", A)
-        .replace("{B}", B) + ".";
+      currentKo = rule.pattern.replace("{A}", A).replace("{B}", B) + ".";
       currentRo = rule.ro;
       appliedTags.push({kind:"COMBINE", label: rule.label});
       renderPreview();
     }
 
     function undoTag(kind){
-      // “Undo” pe ultimul tag de acel tip => revenim la preset și reaplicăm restul fără acel tag
       const idx = [...appliedTags].reverse().findIndex(t=>t.kind===kind);
       if(idx === -1) return;
-
       const realIndex = appliedTags.length - 1 - idx;
       appliedTags.splice(realIndex, 1);
 
-      // Rebuild simplu: revenim la final sugerat și păstrăm doar tag-urile rămase (fără recalcul avansat).
-      // Dacă vrei undo perfect (replay reguli), îți introduc stack de transformări.
       const sug = currentSet.suggestedChain;
       currentKo = sug?.finalKo || (currentSet.base[0]?.ko ?? "—");
       currentRo = sug?.finalRo || (currentSet.base[0]?.ro ?? "—");
 
-      // păstrăm doar un marker
       appliedTags = appliedTags.length ? appliedTags : [{kind:"BASE", label:"Preset (final sugerat)"}];
       renderPreview();
     }
 
     function applyRule(rule){
       if(rule.type === "infoOnly"){
-        // doar informație – nu schimbă propoziția
         currentRo = (currentRo || "") + ` (Notă: ${rule.note})`;
         return true;
       }
@@ -663,20 +732,17 @@
       }
 
       if(rule.type === "prefixObject" || rule.type === "prefixAdverb" || rule.type === "prefixTime"){
-        // for these we replace target sentence if present, else set directly
         if(currentKo.includes(rule.target)){
           currentKo = currentKo.replace(rule.target, rule.out);
           if(rule.ro) currentRo = rule.ro;
           return true;
         }
-        // fallback: if target not found, set sentence directly
         currentKo = rule.out;
         if(rule.ro) currentRo = rule.ro;
         return true;
       }
 
       if(rule.type === "insertBeforeVerb"){
-        // crude: insert before the verb token if present
         if(currentKo.includes(rule.verb)){
           currentKo = currentKo.replace(rule.verb, rule.insert + rule.verb);
           if(rule.roHint) currentRo = addHint(currentRo, rule.roHint);
@@ -686,7 +752,6 @@
       }
 
       if(rule.type === "insertAfterSubject"){
-        // insert after subject token occurrence
         const token = rule.subject;
         const i = currentKo.indexOf(token);
         if(i !== -1){
@@ -703,7 +768,6 @@
     }
 
     function addHint(ro, hint){
-      // păstrează RO curent, adaugă o paranteză scurtă dacă nu există deja
       if(!ro) return ro;
       if(ro.includes(hint)) return ro;
       return ro + ` (hint: ${hint})`;
@@ -724,7 +788,33 @@
     function saveToHistory(){
       if(!currentKo) return;
       history.push({ ko: currentKo, ro: currentRo, setTitle: currentSet.title });
+      if(el("persistToggle").checked){
+        saveHistoryToStorage();
+      }
       renderHistory();
+    }
+
+    function saveHistoryToStorage(){
+      try{
+        localStorage.setItem(LS_KEY, JSON.stringify(history));
+      }catch(e){
+        // ignore if storage fails
+      }
+    }
+
+    function loadHistoryFromStorage(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) { history = []; return; }
+        const parsed = JSON.parse(raw);
+        if(Array.isArray(parsed)){
+          history = parsed
+            .filter(x=>x && typeof x.ko==="string")
+            .slice(-200); // limit safety
+        }
+      }catch(e){
+        history = [];
+      }
     }
 
     function escapeHtml(str){
