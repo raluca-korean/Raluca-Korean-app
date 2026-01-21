@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Builder Universal — Construiește & Extinde Propoziții</title>
+  <title>Builder Universal — Interactiv</title>
   <style>
     :root{
       --bg:#0f172a;
@@ -22,17 +22,13 @@
       background: radial-gradient(1200px 800px at 20% 10%, #1e2a6b 0%, var(--bg) 60%);
       color:var(--text);
     }
-
-    /* TOP NAV (safe, independent) */
     .topnav{
       display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
       padding:12px 16px; border-bottom:1px solid var(--line);
       background: rgba(15,23,42,.82);
       position: sticky; top:0; backdrop-filter: blur(8px); z-index:20;
     }
-    .brand{
-      display:flex; flex-direction:column; gap:2px;
-    }
+    .brand{ display:flex; flex-direction:column; gap:2px; }
     .brand strong{ font-size:14px; letter-spacing:.2px; }
     .brand span{ font-size:12px; color:#c7d2fe; }
     .navlinks{ display:flex; gap:8px; flex-wrap:wrap; }
@@ -58,9 +54,9 @@
     header h1{ margin:0; font-size:18px; letter-spacing:.2px; }
     header p{ margin:6px 0 0; color:#c7d2fe; font-size:13px; }
 
-    .wrap{ max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:14px; }
+    .wrap{ max-width:1200px; margin:0 auto; padding:16px; display:grid; gap:14px; }
     .grid{ display:grid; gap:14px; grid-template-columns: 1.05fr .95fr; }
-    @media (max-width: 940px){ .grid{ grid-template-columns:1fr; } }
+    @media (max-width: 980px){ .grid{ grid-template-columns:1fr; } }
 
     .panel{
       background: rgba(17,28,58,.68);
@@ -70,10 +66,11 @@
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
     }
     .panel h2{ margin:0 0 10px; font-size:15px; color:#e0e7ff; }
+
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .row > *{ flex: 0 0 auto; }
 
-    select, button, input, label{
+    select, button, input, textarea{
       background: rgba(11,18,38,.8);
       color: var(--text);
       border:1px solid var(--line);
@@ -82,11 +79,15 @@
       font-size:14px;
       outline:none;
     }
+    textarea{ width:100%; min-height:72px; resize:vertical; }
     select{ min-width: 220px; }
     button{ cursor:pointer; }
     button.primary{ border-color: rgba(251,191,36,.45); }
     button.primary:hover{ background: rgba(251,191,36,.12); }
     button.ghost:hover{ background: rgba(165,180,252,.10); }
+    button.danger{ border-color: rgba(239,68,68,.35); }
+    button.danger:hover{ background: rgba(239,68,68,.10); }
+
     .pill{
       display:inline-flex; gap:8px; align-items:center;
       border:1px solid var(--line);
@@ -105,15 +106,13 @@
       border-radius:14px;
       padding:12px;
     }
-    .korean{
-      font-size:20px; line-height:1.25; letter-spacing:.2px;
-    }
-    .romanian{
-      margin-top:6px; font-size:13px; color:#c7d2fe;
-    }
-    .meta{
-      margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;
-    }
+    .card.clickable{ cursor:pointer; }
+    .card.clickable:hover{ background: rgba(165,180,252,.08); }
+
+    .korean{ font-size:20px; line-height:1.25; letter-spacing:.2px; }
+    .romanian{ margin-top:6px; font-size:13px; color:#c7d2fe; }
+
+    .meta{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
     .tag{
       font-size:12px; padding:4px 8px; border-radius:999px;
       border:1px solid var(--line);
@@ -123,48 +122,51 @@
     .tag.ok{ border-color: rgba(34,197,94,.35); color:#bbf7d0; }
     .tag.warn{ border-color: rgba(249,115,22,.35); color:#fed7aa; }
     .tag.bad{ border-color: rgba(239,68,68,.35); color:#fecaca; }
+    .tag.active{ border-color: rgba(251,191,36,.55); color:#fde68a; }
 
     .big{
       border:1px dashed rgba(251,191,36,.55);
       background: rgba(251,191,36,.08);
     }
     .big .korean{ font-size:22px; }
-    .split{
-      display:grid; gap:10px; grid-template-columns:1fr;
-    }
-    .help{
-      font-size:12px; color:#c7d2fe; margin:8px 0 0;
-    }
-    .divider{ height:1px; background: var(--line); margin:12px 0; }
 
+    .divider{ height:1px; background: var(--line); margin:12px 0; }
+    .help{ font-size:12px; color:#c7d2fe; margin:8px 0 0; }
     .small{ font-size:12px; color:#c7d2fe; }
-    .rightTools{ display:flex; gap:8px; flex-wrap:wrap; }
+
+    /* Workspace list */
+    .step{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:start;
+    }
+    .stepControls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
     .mini{ padding:8px 10px; border-radius:10px; font-size:13px; }
     .copyOk{ color:#bbf7d0; }
 
-    /* LocalStorage toggle */
-    .toggle{
-      display:inline-flex; align-items:center; gap:8px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:6px 10px;
-      background: rgba(11,18,38,.55);
-      font-size:12px;
-      color:#c7d2fe;
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
     }
-    .toggle input{ width:16px; height:16px; padding:0; }
+    @media (max-width: 980px){ .twoCol{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
 
-  <!-- SAFE NAV: only links. Adjust href to your real pages. -->
   <nav class="topnav">
     <div class="brand">
-      <strong>Raluca Korean — App</strong>
-      <span>Builder universal (pagină paralelă, fără a atinge restul aplicației)</span>
+      <strong>Builder Universal — Interactiv</strong>
+      <span>Workspace + Combine din pași + Undo real</span>
     </div>
     <div class="navlinks">
-      <!-- Ajustează aceste href-uri la fișierele tale reale -->
+      <!-- Ajustează href-urile la paginile tale reale -->
       <a href="index.html">Home</a>
       <a class="active" href="builder-universal.html">Builder</a>
       <a href="exercises.html">Exercises</a>
@@ -175,77 +177,103 @@
 
   <header>
     <h1>Construiește & Extinde propoziții</h1>
-    <p>Pornești de la propoziții scurte și le extinzi: ADD • MODIFY • CHANGE • COMBINE</p>
+    <p>Click pe propoziții → intră în Workspace → aplică ADD/MODIFY/CHANGE pe pasul activ → COMBINE</p>
   </header>
 
   <div class="wrap">
     <div class="grid">
 
-      <!-- LEFT: Builder -->
+      <!-- LEFT -->
       <section class="panel">
-        <h2>1) Alege un set (universal)</h2>
+        <h2>1) Set</h2>
         <div class="row">
           <select id="setSelect"></select>
           <button class="ghost mini" id="resetBtn">Reset</button>
+          <button class="ghost mini" id="randomBtn">Random</button>
           <span class="pill">Nivel: <strong id="levelLabel">A1</strong></span>
         </div>
-        <p class="help">Setul îți oferă propoziții de bază + opțiuni de extindere. Poți adăuga seturi noi în variabila <code>SETS</code>.</p>
+        <p class="help">
+          Click pe o propoziție din “Bază” ca să o adaugi în Workspace.
+          Selectează un pas din Workspace ca să devină “activ”.
+        </p>
 
         <div class="divider"></div>
 
-        <h2>2) Propoziții de bază</h2>
-        <div class="cards" id="baseCards"></div>
+        <div class="twoCol">
+          <div>
+            <h2>2) Propoziții de bază (click = adaugă)</h2>
+            <div class="cards" id="baseCards"></div>
+          </div>
+
+          <div>
+            <h2>3) Workspace (pași)</h2>
+            <div class="cards" id="workspace"></div>
+
+            <div class="divider"></div>
+
+            <h2>4) Editare pas activ</h2>
+            <div class="card">
+              <div class="meta" style="margin-top:0;">
+                <span class="tag active" id="activeStepLabel">Pas activ: —</span>
+                <button class="ghost mini" id="undoBtn">Undo</button>
+              </div>
+              <div class="divider"></div>
+
+              <div class="row">
+                <span class="pill"><strong>ADD</strong></span>
+                <select id="addSelect"></select>
+                <button class="primary mini" id="applyAdd">Aplică</button>
+              </div>
+              <p class="help">Se aplică pe pasul activ (nu pe tot finalul).</p>
+
+              <div class="divider"></div>
+
+              <div class="row">
+                <span class="pill"><strong>MODIFY</strong></span>
+                <select id="modifySelect"></select>
+                <button class="primary mini" id="applyModify">Aplică</button>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="row">
+                <span class="pill"><strong>CHANGE</strong></span>
+                <select id="changeSelect"></select>
+                <button class="primary mini" id="applyChange">Aplică</button>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="row">
+                <span class="pill"><strong>Edit manual</strong></span>
+                <button class="ghost mini" id="applyManual">Aplică textul</button>
+              </div>
+              <textarea id="manualKo" placeholder="KO pentru pasul activ…"></textarea>
+              <textarea id="manualRo" placeholder="RO pentru pasul activ…"></textarea>
+              <p class="help">Folosește asta dacă vrei să corectezi fin propoziția.</p>
+            </div>
+          </div>
+        </div>
 
         <div class="divider"></div>
 
-        <h2>3) Extinde pas cu pas</h2>
-        <div class="split">
-
-          <div class="card">
-            <div class="row">
-              <span class="pill"><strong>ADD</strong> (adaugă)</span>
-              <select id="addSelect"></select>
-              <button class="primary mini" id="applyAdd">Aplică</button>
-              <button class="ghost mini" id="undoAdd">Undo</button>
-            </div>
-            <p class="help">Ex: 몸에, 물에, 너무, 벌써, 깜짝, 새벽 5시에…</p>
+        <h2>5) COMBINE (din Workspace)</h2>
+        <div class="card">
+          <div class="row">
+            <span class="pill"><strong>Conector</strong></span>
+            <select id="combineSelect"></select>
+            <button class="primary mini" id="buildBtn">Construiește finalul</button>
           </div>
-
-          <div class="card">
-            <div class="row">
-              <span class="pill"><strong>MODIFY</strong> (modifică)</span>
-              <select id="modifySelect"></select>
-              <button class="primary mini" id="applyModify">Aplică</button>
-              <button class="ghost mini" id="undoModify">Undo</button>
-            </div>
-            <p class="help">Ex: 물 → 따뜻한 물, 마스카라 → 오래된 마스카라…</p>
-          </div>
-
-          <div class="card">
-            <div class="row">
-              <span class="pill"><strong>CHANGE</strong> (schimbă forma)</span>
-              <select id="changeSelect"></select>
-              <button class="primary mini" id="applyChange">Aplică</button>
-              <button class="ghost mini" id="undoChange">Undo</button>
-            </div>
-            <p class="help">Ex: afirmativ→negativ, descriptiv→devenire(어지다/어지다), imperativ(으)세요…</p>
-          </div>
-
-          <div class="card">
-            <div class="row">
-              <span class="pill"><strong>COMBINE</strong> (unește propoziții)</span>
-              <select id="combineSelect"></select>
-              <button class="primary mini" id="applyCombine">Generează</button>
-            </div>
-            <p class="help">Conectori: -고, -아/어/여서, -(으)니까, -는데, -더니, -기 전에</p>
-          </div>
-
+          <p class="help">
+            Construiește propoziția finală din toți pașii, în ordinea din Workspace.
+            (E “smart join” simplu; dacă vrei conjugare automată corectă, o adăugăm ulterior.)
+          </p>
         </div>
       </section>
 
-      <!-- RIGHT: Preview -->
+      <!-- RIGHT -->
       <aside class="panel">
-        <h2>Preview (rezultatul curent)</h2>
+        <h2>Preview (final + pași)</h2>
 
         <div class="card big">
           <div class="korean" id="previewKo">—</div>
@@ -254,26 +282,19 @@
         </div>
 
         <div class="row" style="margin-top:10px;">
-          <div class="rightTools">
-            <button class="ghost mini" id="copyKo">Copiază KO</button>
-            <button class="ghost mini" id="copyRo">Copiază RO</button>
-            <button class="ghost mini" id="saveBtn">Salvează</button>
-          </div>
+          <button class="ghost mini" id="copyKo">Copiază KO</button>
+          <button class="ghost mini" id="copyRo">Copiază RO</button>
           <span class="small" id="copyStatus"></span>
         </div>
 
         <div class="divider"></div>
 
-        <div class="row" style="justify-content:space-between;">
-          <h2 style="margin:0;">Istoric</h2>
-          <label class="toggle" title="Dacă e ON, istoricul rămâne și după refresh (LocalStorage).">
-            <input type="checkbox" id="persistToggle" />
-            Persistă (LocalStorage)
-          </label>
+        <h2>Istoric (session)</h2>
+        <div class="cards" id="history"></div>
+        <div class="row" style="margin-top:10px;">
+          <button class="ghost mini" id="saveBtn">Salvează finalul</button>
+          <button class="danger mini" id="clearHistoryBtn">Șterge istoric</button>
         </div>
-
-        <div class="cards" id="history" style="margin-top:10px;"></div>
-        <p class="help">Dacă Persistă este OFF, istoricul este doar în sesiune (până închizi pagina).</p>
       </aside>
 
     </div>
@@ -281,7 +302,7 @@
 
   <script>
     /***********************
-     *  DATA (universal)
+     * DATA
      ***********************/
     const SETS = [
       {
@@ -304,26 +325,13 @@
           { label:"놀랐어요 → 깜짝 놀랐어요", type:"replaceSentence", from:"놀랐어요.", to:"깜짝 놀랐어요.", roHint:"foarte surprins(ă)" }
         ],
         change: [
-          { label:"Afirmativ → Negativ (exemplu generic)", type:"infoOnly", note:"Pentru acest set, nu avem propoziție cu 있다/없다. Vezi setul «Mascara & timp»." },
-          { label:"Descriere → rezultat (어두워요 → 어두워졌어요 tip)", type:"infoOnly", note:"Acest set e pe acțiuni. Vezi setul «Cortine & lumină»." }
+          { label:"(Info) Negativ / rezultat", type:"infoOnly", note:"În acest set nu există exemple cu 있다/없다 sau 어지다. Folosește alt set pentru CHANGE real." }
         ],
         combine: [
-          { label:"-고 (și)", id:"and", pattern:"{A} 그리고 {B}", ro:"A și B" },
-          { label:"-아/어/여서 (cauză→rezultat)", id:"so", pattern:"{A} 그래서 {B}", ro:"Pentru că A, (așa că) B" },
-          { label:"-(으)니까 (motiv)", id:"because", pattern:"{A}니까 {B}", ro:"Deoarece A, B" },
-          { label:"-는데 (contrast/context)", id:"but", pattern:"{A}는데 {B}", ro:"A, dar B / A, iar B" },
-          { label:"-더니 (după ce... s-a întâmplat)", id:"then", pattern:"{A}더니 {B}", ro:"După ce A, s-a întâmplat B" }
-        ],
-        suggestedChain: {
-          steps: [
-            "몸에 비누칠했어요.",
-            "따뜻한 물을 틀었어요.",
-            "물이 차가웠어요.",
-            "깜짝 놀랐어요."
-          ],
-          finalKo: "몸에 비누칠하고 따뜻한 물을 틀었는데, 물이 차가워서 깜짝 놀랐어요.",
-          finalRo: "M-am săpunit și am dat drumul la apă caldă, dar apa era rece, așa că am fost foarte surprins(ă)."
-        }
+          { label:"-고 (și)", id:"go", joinKo:"고", joinRo:"și" },
+          { label:"-아/어/여서 (cauză)", id:"so", joinKo:"아서/어서", joinRo:"așa că" },
+          { label:"-는데 (context/contrast)", id:"neunde", joinKo:"는데", joinRo:"dar/iar" }
+        ]
       },
 
       {
@@ -336,7 +344,7 @@
           { id:"m3", ko:"번졌어요.", ro:"S-a întins (s-a șters)."}
         ],
         add: [
-          { label:"오래된 (veche) + 마스카라", type:"replace", find:"마스카라를", repl:"오래된 마스카라를", roHint:"mascara veche" },
+          { label:"오래된 + 마스카라", type:"replace", find:"마스카라를", repl:"오래된 마스카라를", roHint:"mascara veche" },
           { label:"대충 (în grabă)", type:"insertBeforeVerb", verb:"발랐어요.", insert:"대충 ", roHint:"în grabă" },
           { label:"다 (complet)", type:"prefixAdverb", target:"번졌어요.", out:"다 번졌어요.", ro:"S-a întins complet." }
         ],
@@ -344,21 +352,13 @@
           { label:"마스카라 → 오래된 마스카라", type:"replace", find:"마스카라를", repl:"오래된 마스카라를", roHint:"mascara veche" }
         ],
         change: [
-          { label:"시간이 있었어요 → 시간이 없었어요 (negativ)", type:"replaceSentence", from:"시간이 있었어요.", to:"시간이 없었어요.", roHint:"nu am avut timp" }
+          { label:"시간이 있었어요 → 시간이 없었어요", type:"replaceSentence", from:"시간이 있었어요.", to:"시간이 없었어요.", roHint:"nu am avut timp" }
         ],
         combine: [
-          { label:"-아/어/여서 (cauză→rezultat)", id:"so", pattern:"{A}서 {B}", ro:"Pentru că A, B" },
-          { label:"-더니 (acțiune → rezultat observat)", id:"then", pattern:"{A}더니 {B}", ro:"Am făcut A și apoi B" }
-        ],
-        suggestedChain: {
-          steps: [
-            "시간이 없었어요.",
-            "오래된 마스카라를 대충 발랐어요.",
-            "다 번졌어요."
-          ],
-          finalKo: "시간이 없어서 오래된 마스카라를 대충 발랐더니 다 번졌어요.",
-          finalRo: "Nu am avut timp, așa că am aplicat în grabă mascara veche și s-a întins complet."
-        }
+          { label:"-고 (și)", id:"go", joinKo:"고", joinRo:"și" },
+          { label:"-아/어/여서 (cauză)", id:"so", joinKo:"아서/어서", joinRo:"așa că" },
+          { label:"-더니 (apoi)", id:"deoni", joinKo:"더니", joinRo:"și apoi" }
+        ]
       },
 
       {
@@ -375,24 +375,17 @@
           { label:"너무 (prea)", type:"insertAfterSubject", subject:"안경이", insert:" 너무", roHint:"prea" }
         ],
         modify: [
-          { label:"Imperativ: 쓰세요", type:"replaceSentence", from:"써요.", to:"쓰세요.", roHint:"Pune-i." },
-          { label:"Imperativ: 닦으세요", type:"replaceSentence", from:"닦아요.", to:"닦으세요.", roHint:"Șterge-i." }
+          { label:"써요 → 쓰세요 (imperativ)", type:"replaceSentence", from:"써요.", to:"쓰세요.", roHint:"pune-i" },
+          { label:"닦아요 → 닦으세요 (imperativ)", type:"replaceSentence", from:"닦아요.", to:"닦으세요.", roHint:"șterge-i" }
         ],
         change: [
-          { label:"Combină cu -기 전에 (înainte de)", type:"infoOnly", note:"Generează: 쓰기 전에 닦으세요." }
+          { label:"(Info) -기 전에", type:"infoOnly", note:"Poți crea manual: 쓰기 전에 닦으세요." }
         ],
         combine: [
-          { label:"-기 전에 (înainte de)", id:"before", pattern:"{A}기 전에 {B}", ro:"Înainte de A, B" },
-          { label:"-(으)니까 (motiv)", id:"because", pattern:"{A}니까 {B}", ro:"Pentru că A, B" }
-        ],
-        suggestedChain: {
-          steps: [
-            "제 안경이 너무 더러워요.",
-            "쓰기 전에 닦으세요."
-          ],
-          finalKo: "제 안경이 너무 더러우니까 쓰기 전에 닦으세요.",
-          finalRo: "Pentru că ochelarii mei sunt prea murdari, șterge-i înainte să îi pui."
-        }
+          { label:"-고 (și)", id:"go", joinKo:"고", joinRo:"și" },
+          { label:"-(으)니까 (motiv)", id:"nikka", joinKo:"니까", joinRo:"pentru că" },
+          { label:"-기 전에 (înainte)", id:"gijeone", joinKo:"기 전에", joinRo:"înainte să" }
+        ]
       },
 
       {
@@ -406,156 +399,246 @@
         ],
         add: [
           { label:"시끄러운 (zgomotoasă)", type:"replace", find:"알람이", repl:"시끄러운 알람이", roHint:"alarmă zgomotoasă" },
-          { label:"새벽 5시에 (la 5 dimineața)", type:"prefixTime", target:"알람이 울렸어요.", out:"새벽 5시에 알람이 울렸어요.", ro:"La 5 dimineața a sunat alarma." },
-          { label:"너무 일찍 (prea devreme)", type:"replaceSentence", from:"일어났어요.", to:"너무 일찍 일어났어요.", roHint:"m-am trezit prea devreme" },
-          { label:"벌써 (deja)", type:"replaceSentence", from:"졸려요.", to:"벌써 졸려요.", roHint:"îmi e deja somn" }
+          { label:"새벽 5시에", type:"prefixTime", target:"알람이 울렸어요.", out:"새벽 5시에 알람이 울렸어요.", ro:"La 5 dimineața a sunat alarma." },
+          { label:"너무 일찍", type:"replaceSentence", from:"일어났어요.", to:"너무 일찍 일어났어요.", roHint:"prea devreme" },
+          { label:"벌써", type:"replaceSentence", from:"졸려요.", to:"벌써 졸려요.", roHint:"deja" }
         ],
         modify: [],
         change: [],
         combine: [
-          { label:"-아/어/여서 (cauză→rezultat)", id:"so", pattern:"{A}서 {B}", ro:"Așa că" },
-          { label:"-더니 (și acum)", id:"then", pattern:"{A}더니 {B}", ro:"După ce A, acum B" }
-        ],
-        suggestedChain: {
-          steps: [
-            "새벽 5시에 시끄러운 알람이 울렸어요.",
-            "너무 일찍 일어났어요.",
-            "벌써 졸려요."
-          ],
-          finalKo: "새벽 5시에 시끄러운 알람이 울려서 너무 일찍 일어났더니 벌써 졸려요.",
-          finalRo: "La 5 dimineața a sunat o alarmă zgomotoasă, m-am trezit prea devreme și deja îmi e somn."
-        }
+          { label:"-고 (și)", id:"go", joinKo:"고", joinRo:"și" },
+          { label:"-아/어/여서 (cauză)", id:"so", joinKo:"아서/어서", joinRo:"așa că" },
+          { label:"-더니 (apoi)", id:"deoni", joinKo:"더니", joinRo:"și acum" }
+        ]
       }
     ];
 
     /***********************
-     *  STATE
+     * STATE
      ***********************/
     let currentSet = SETS[0];
-    let currentKo = "";
-    let currentRo = "";
-    let appliedTags = [];
+    let workspace = [];      // [{ko, ro, tags:[{kind,label}]}]
+    let activeIndex = -1;
+
+    let finalKo = "";
+    let finalRo = "";
     let history = [];
 
-    const LS_KEY = "rk_builder_universal_history_v1";
-    const LS_PERSIST_KEY = "rk_builder_universal_persist_v1";
+    // Undo stack for workspace edits
+    let undoStack = []; // each entry: deep copy of {workspace, activeIndex}
 
     const el = (id) => document.getElementById(id);
 
-    function init(){
-      // Persist toggle state
-      const persisted = localStorage.getItem(LS_PERSIST_KEY);
-      el("persistToggle").checked = persisted === "1";
-      el("persistToggle").addEventListener("change", ()=>{
-        localStorage.setItem(LS_PERSIST_KEY, el("persistToggle").checked ? "1" : "0");
-        if(el("persistToggle").checked){
-          loadHistoryFromStorage();
-        }else{
-          // keep current session history; just stop saving/loading
-          localStorage.removeItem(LS_KEY);
-        }
-        renderHistory();
-      });
+    function deepCopy(obj){
+      return JSON.parse(JSON.stringify(obj));
+    }
+    function pushUndo(){
+      undoStack.push(deepCopy({workspace, activeIndex}));
+      if(undoStack.length > 60) undoStack.shift();
+    }
+    function undo(){
+      const last = undoStack.pop();
+      if(!last) return;
+      workspace = last.workspace;
+      activeIndex = last.activeIndex;
+      syncManualEditors();
+      renderAll();
+    }
 
+    function init(){
       // set dropdown
       const s = el("setSelect");
       s.innerHTML = "";
       SETS.forEach(set=>{
         const opt = document.createElement("option");
         opt.value = set.id;
-        opt.textContent = `${set.title}`;
+        opt.textContent = set.title;
         s.appendChild(opt);
       });
       s.value = currentSet.id;
+
       s.addEventListener("change", ()=>{
         const picked = SETS.find(x=>x.id===s.value);
-        if(picked){ currentSet = picked; resetAll(); renderAll(); }
+        if(picked){
+          currentSet = picked;
+          resetAll();
+        }
       });
 
-      el("resetBtn").addEventListener("click", ()=>{ resetAll(); renderAll(); });
+      el("resetBtn").addEventListener("click", ()=>resetAll());
+      el("randomBtn").addEventListener("click", ()=>{
+        currentSet = SETS[Math.floor(Math.random()*SETS.length)];
+        el("setSelect").value = currentSet.id;
+        resetAll(true);
+      });
 
-      el("applyAdd").addEventListener("click", ()=>applyAdd());
-      el("undoAdd").addEventListener("click", ()=>undoTag("ADD"));
+      el("applyAdd").addEventListener("click", ()=>applyRuleToActive("add"));
+      el("applyModify").addEventListener("click", ()=>applyRuleToActive("modify"));
+      el("applyChange").addEventListener("click", ()=>applyRuleToActive("change"));
 
-      el("applyModify").addEventListener("click", ()=>applyModify());
-      el("undoModify").addEventListener("click", ()=>undoTag("MODIFY"));
+      el("applyManual").addEventListener("click", ()=>{
+        if(activeIndex < 0 || !workspace[activeIndex]) return;
+        pushUndo();
+        workspace[activeIndex].ko = (el("manualKo").value || "").trim();
+        workspace[activeIndex].ro = (el("manualRo").value || "").trim();
+        workspace[activeIndex].tags.push({kind:"MANUAL", label:"Edit manual"});
+        renderAll();
+      });
 
-      el("applyChange").addEventListener("click", ()=>applyChange());
-      el("undoChange").addEventListener("click", ()=>undoTag("CHANGE"));
+      el("undoBtn").addEventListener("click", ()=>undo());
 
-      el("applyCombine").addEventListener("click", ()=>applyCombine());
+      el("buildBtn").addEventListener("click", ()=>buildFinalFromWorkspace());
 
-      el("copyKo").addEventListener("click", ()=>copyText(currentKo, "KO copiat."));
-      el("copyRo").addEventListener("click", ()=>copyText(currentRo, "RO copiat."));
+      el("copyKo").addEventListener("click", ()=>copyText(finalKo, "KO copiat."));
+      el("copyRo").addEventListener("click", ()=>copyText(finalRo, "RO copiat."));
 
       el("saveBtn").addEventListener("click", ()=>saveToHistory());
-
-      // Load history if persist ON
-      if(el("persistToggle").checked){
-        loadHistoryFromStorage();
-      }
+      el("clearHistoryBtn").addEventListener("click", ()=>{
+        history = [];
+        renderHistory();
+      });
 
       resetAll();
-      renderAll();
     }
 
-    function resetAll(){
-      const sug = currentSet.suggestedChain;
-      currentKo = sug?.finalKo || (currentSet.base[0]?.ko ?? "—");
-      currentRo = sug?.finalRo || (currentSet.base[0]?.ro ?? "—");
-      appliedTags = [{kind:"BASE", label:"Preset (final sugerat)"}];
+    function resetAll(random = false){
+      undoStack = [];
+      workspace = [];
+      activeIndex = -1;
 
-      // If persist ON: keep whatever was loaded. If OFF: reset session.
-      if(!el("persistToggle").checked){
-        history = [];
-      }
-      renderHistory();
+      // preset: pune toate propozițiile base în workspace (mai “interactiv” decât un final preset)
+      currentSet.base.forEach(b=>{
+        workspace.push({ ko:b.ko, ro:b.ro, tags:[{kind:"BASE", label:"Base"}] });
+      });
+
+      // active on first
+      activeIndex = workspace.length ? 0 : -1;
+      renderAll();
+      syncManualEditors();
+
+      // auto-build
+      buildFinalFromWorkspace(true);
     }
 
     function renderAll(){
       el("levelLabel").textContent = currentSet.level || "A1";
       renderBase();
+      renderWorkspace();
       renderSelects();
+      renderActiveLabel();
       renderPreview();
+      renderHistory();
     }
 
     function renderBase(){
       const wrap = el("baseCards");
       wrap.innerHTML = "";
-      currentSet.base.forEach(b=>{
+      currentSet.base.forEach((b)=>{
         const c = document.createElement("div");
-        c.className = "card";
+        c.className = "card clickable";
         c.innerHTML = `
           <div class="korean">${escapeHtml(b.ko)}</div>
           <div class="romanian">${escapeHtml(b.ro)}</div>
-          <div class="meta"><span class="tag">BASE</span></div>
+          <div class="meta"><span class="tag">Click → Adaugă</span></div>
         `;
+        c.addEventListener("click", ()=>{
+          pushUndo();
+          workspace.push({ ko:b.ko, ro:b.ro, tags:[{kind:"BASE", label:"Adăugat din bază"}] });
+          activeIndex = workspace.length - 1;
+          syncManualEditors();
+          renderAll();
+        });
         wrap.appendChild(c);
       });
 
-      const sug = currentSet.suggestedChain;
-      if(sug?.steps?.length){
+      const hint = document.createElement("div");
+      hint.className = "card";
+      hint.innerHTML = `
+        <div class="romanian">
+          Tip: poți construi o propoziție lungă adăugând pași extra (click pe bază de mai multe ori),
+          apoi reordonezi și combini.
+        </div>
+      `;
+      wrap.appendChild(hint);
+    }
+
+    function renderWorkspace(){
+      const wrap = el("workspace");
+      wrap.innerHTML = "";
+
+      if(!workspace.length){
+        const empty = document.createElement("div");
+        empty.className = "card";
+        empty.innerHTML = `<div class="romanian">Workspace gol. Click pe o propoziție din “Bază”.</div>`;
+        wrap.appendChild(empty);
+        return;
+      }
+
+      workspace.forEach((st, idx)=>{
         const c = document.createElement("div");
-        c.className = "card";
+        c.className = "card step";
+        const activeTag = (idx === activeIndex) ? `<span class="tag active">ACTIV</span>` : "";
         c.innerHTML = `
-          <div class="korean">Preset recomandat (ca în carte)</div>
-          <div class="romanian">Apasă ca să încarci propoziția finală + fluxul sugerat.</div>
-          <div class="meta">
-            <span class="tag ok">RECOMANDAT</span>
-            <button class="ghost mini" id="loadSuggested">Încarcă presetul</button>
+          <div>
+            <div class="korean">${escapeHtml(st.ko)}</div>
+            <div class="romanian">${escapeHtml(st.ro)}</div>
+            <div class="meta">
+              ${activeTag}
+              <span class="tag">#${idx+1}</span>
+              ${st.tags.slice(-2).map(t=>`<span class="tag">${escapeHtml(t.kind)}</span>`).join("")}
+            </div>
+          </div>
+
+          <div class="stepControls">
+            <button class="ghost mini" data-act="select">Select</button>
+            <button class="ghost mini" data-act="up">↑</button>
+            <button class="ghost mini" data-act="down">↓</button>
+            <button class="danger mini" data-act="del">Șterge</button>
           </div>
         `;
-        wrap.prepend(c);
-        c.querySelector("#loadSuggested").addEventListener("click", ()=>{
-          currentKo = sug.finalKo;
-          currentRo = sug.finalRo;
-          appliedTags = [{kind:"BASE", label:"Preset (final sugerat)"}];
-          renderPreview();
+
+        c.querySelector('[data-act="select"]').addEventListener("click", ()=>{
+          activeIndex = idx;
+          syncManualEditors();
+          renderAll();
         });
-      }
+
+        c.querySelector('[data-act="up"]').addEventListener("click", ()=>{
+          if(idx === 0) return;
+          pushUndo();
+          const tmp = workspace[idx-1];
+          workspace[idx-1] = workspace[idx];
+          workspace[idx] = tmp;
+          activeIndex = idx-1;
+          syncManualEditors();
+          renderAll();
+        });
+
+        c.querySelector('[data-act="down"]').addEventListener("click", ()=>{
+          if(idx >= workspace.length-1) return;
+          pushUndo();
+          const tmp = workspace[idx+1];
+          workspace[idx+1] = workspace[idx];
+          workspace[idx] = tmp;
+          activeIndex = idx+1;
+          syncManualEditors();
+          renderAll();
+        });
+
+        c.querySelector('[data-act="del"]').addEventListener("click", ()=>{
+          pushUndo();
+          workspace.splice(idx,1);
+          if(activeIndex >= workspace.length) activeIndex = workspace.length-1;
+          syncManualEditors();
+          renderAll();
+        });
+
+        wrap.appendChild(c);
+      });
     }
 
     function renderSelects(){
+      // ADD
       const addSel = el("addSelect");
       addSel.innerHTML = "";
       if(!currentSet.add?.length){
@@ -564,6 +647,7 @@
         currentSet.add.forEach((a,i)=> addSel.appendChild(new Option(a.label, String(i))) );
       }
 
+      // MODIFY
       const modSel = el("modifySelect");
       modSel.innerHTML = "";
       if(!currentSet.modify?.length){
@@ -572,6 +656,7 @@
         currentSet.modify.forEach((m,i)=> modSel.appendChild(new Option(m.label, String(i))) );
       }
 
+      // CHANGE
       const chSel = el("changeSelect");
       chSel.innerHTML = "";
       if(!currentSet.change?.length){
@@ -580,6 +665,7 @@
         currentSet.change.forEach((c,i)=> chSel.appendChild(new Option(c.label, String(i))) );
       }
 
+      // COMBINE
       const combSel = el("combineSelect");
       combSel.innerHTML = "";
       if(!currentSet.combine?.length){
@@ -589,22 +675,24 @@
       }
     }
 
+    function renderActiveLabel(){
+      el("activeStepLabel").textContent = (activeIndex >= 0)
+        ? `Pas activ: #${activeIndex+1}`
+        : "Pas activ: —";
+    }
+
     function renderPreview(){
-      el("previewKo").textContent = currentKo || "—";
-      el("previewRo").textContent = currentRo || "—";
+      el("previewKo").textContent = finalKo || "—";
+      el("previewRo").textContent = finalRo || "—";
 
       const meta = el("previewMeta");
       meta.innerHTML = "";
-      appliedTags.forEach(t=>{
-        const span = document.createElement("span");
-        span.className = "tag " + (
-          t.kind === "ADD" ? "ok" :
-          t.kind === "MODIFY" ? "warn" :
-          t.kind === "CHANGE" ? "bad" : ""
-        );
-        span.textContent = `${t.kind}: ${t.label}`;
-        meta.appendChild(span);
-      });
+      if(!workspace.length){
+        meta.appendChild(tagSpan("WORKSPACE gol", ""));
+        return;
+      }
+      meta.appendChild(tagSpan(`Pași: ${workspace.length}`, "ok"));
+      meta.appendChild(tagSpan(`Set: ${currentSet.title}`, ""));
     }
 
     function renderHistory(){
@@ -613,7 +701,7 @@
       if(!history.length){
         const empty = document.createElement("div");
         empty.className = "card";
-        empty.innerHTML = `<div class="romanian">Nu ai nimic salvat.</div>`;
+        empty.innerHTML = `<div class="romanian">Nu ai nimic salvat în sesiunea aceasta.</div>`;
         h.appendChild(empty);
         return;
       }
@@ -629,148 +717,183 @@
           </div>
         `;
         c.querySelector("button").addEventListener("click", ()=>{
-          currentKo = item.ko;
-          currentRo = item.ro;
-          appliedTags = [{kind:"BASE", label:"Reîncărcat din istoric"}];
+          // reîncarcă doar finalul în preview
+          finalKo = item.ko;
+          finalRo = item.ro;
           renderPreview();
         });
         h.appendChild(c);
       });
     }
 
-    function applyAdd(){
-      const idx = parseInt(el("addSelect").value, 10);
-      const rule = currentSet.add?.[idx];
-      if(!rule) return;
-      const ok = applyRule(rule);
-      if(ok){
-        appliedTags.push({kind:"ADD", label: rule.label});
-        renderPreview();
+    function syncManualEditors(){
+      if(activeIndex < 0 || !workspace[activeIndex]){
+        el("manualKo").value = "";
+        el("manualRo").value = "";
+        return;
       }
+      el("manualKo").value = workspace[activeIndex].ko || "";
+      el("manualRo").value = workspace[activeIndex].ro || "";
     }
 
-    function applyModify(){
-      const idx = parseInt(el("modifySelect").value, 10);
-      const rule = currentSet.modify?.[idx];
-      if(!rule) return;
-      const ok = applyRule(rule);
-      if(ok){
-        appliedTags.push({kind:"MODIFY", label: rule.label});
-        renderPreview();
-      }
-    }
+    function applyRuleToActive(listName){
+      if(activeIndex < 0 || !workspace[activeIndex]) return;
 
-    function applyChange(){
-      const idx = parseInt(el("changeSelect").value, 10);
-      const rule = currentSet.change?.[idx];
-      if(!rule) return;
-      const ok = applyRule(rule);
-      if(ok){
-        appliedTags.push({kind:"CHANGE", label: rule.label});
-        renderPreview();
-      }
-    }
+      const selId = (listName === "add") ? "addSelect"
+                  : (listName === "modify") ? "modifySelect"
+                  : "changeSelect";
 
-    function applyCombine(){
-      const idx = parseInt(el("combineSelect").value, 10);
-      const rule = currentSet.combine?.[idx];
+      const idx = parseInt(el(selId).value, 10);
+      const rule = currentSet[listName]?.[idx];
       if(!rule) return;
 
-      const sug = currentSet.suggestedChain;
-      if(sug?.finalKo && sug?.finalRo){
-        currentKo = sug.finalKo;
-        currentRo = sug.finalRo;
-        appliedTags.push({kind:"COMBINE", label: rule.label});
-        renderPreview();
+      pushUndo();
+
+      const st = workspace[activeIndex];
+      const res = applyRuleToSentence(rule, st.ko, st.ro);
+      if(!res.ok){
+        // dacă nu se potrivește regula, nu stricăm nimic
+        undoStack.pop(); // anulăm pushUndo
         return;
       }
 
-      const A = (currentSet.base[0]?.ko ?? "").replace(/\.$/,"");
-      const B = (currentSet.base[1]?.ko ?? "").replace(/\.$/,"");
-      currentKo = rule.pattern.replace("{A}", A).replace("{B}", B) + ".";
-      currentRo = rule.ro;
-      appliedTags.push({kind:"COMBINE", label: rule.label});
-      renderPreview();
+      st.ko = res.ko;
+      st.ro = res.ro;
+      st.tags.push({kind: listName.toUpperCase(), label: rule.label});
+
+      // sync editor fields
+      syncManualEditors();
+      renderAll();
     }
 
-    function undoTag(kind){
-      const idx = [...appliedTags].reverse().findIndex(t=>t.kind===kind);
-      if(idx === -1) return;
-      const realIndex = appliedTags.length - 1 - idx;
-      appliedTags.splice(realIndex, 1);
+    function applyRuleToSentence(rule, ko, ro){
+      let newKo = ko || "";
+      let newRo = ro || "";
 
-      const sug = currentSet.suggestedChain;
-      currentKo = sug?.finalKo || (currentSet.base[0]?.ko ?? "—");
-      currentRo = sug?.finalRo || (currentSet.base[0]?.ro ?? "—");
-
-      appliedTags = appliedTags.length ? appliedTags : [{kind:"BASE", label:"Preset (final sugerat)"}];
-      renderPreview();
-    }
-
-    function applyRule(rule){
       if(rule.type === "infoOnly"){
-        currentRo = (currentRo || "") + ` (Notă: ${rule.note})`;
-        return true;
+        newRo = (newRo || "") + ` (Notă: ${rule.note})`;
+        return {ok:true, ko:newKo, ro:newRo};
       }
 
       if(rule.type === "replace"){
-        if(currentKo.includes(rule.find)){
-          currentKo = currentKo.replace(rule.find, rule.repl);
-          if(rule.roHint) currentRo = addHint(currentRo, rule.roHint);
-          return true;
+        if(newKo.includes(rule.find)){
+          newKo = newKo.replace(rule.find, rule.repl);
+          if(rule.roHint) newRo = addHint(newRo, rule.roHint);
+          return {ok:true, ko:newKo, ro:newRo};
         }
-        return false;
+        return {ok:false, ko, ro};
       }
 
       if(rule.type === "replaceSentence"){
-        if(currentKo.includes(rule.from)){
-          currentKo = currentKo.replace(rule.from, rule.to);
-          if(rule.roHint) currentRo = addHint(currentRo, rule.roHint);
-          return true;
+        if(newKo.includes(rule.from)){
+          newKo = newKo.replace(rule.from, rule.to);
+          if(rule.roHint) newRo = addHint(newRo, rule.roHint);
+          return {ok:true, ko:newKo, ro:newRo};
         }
-        return false;
+        return {ok:false, ko, ro};
       }
 
       if(rule.type === "prefixObject" || rule.type === "prefixAdverb" || rule.type === "prefixTime"){
-        if(currentKo.includes(rule.target)){
-          currentKo = currentKo.replace(rule.target, rule.out);
-          if(rule.ro) currentRo = rule.ro;
-          return true;
+        if(newKo.includes(rule.target)){
+          newKo = newKo.replace(rule.target, rule.out);
+          if(rule.ro) newRo = rule.ro;
+          return {ok:true, ko:newKo, ro:newRo};
         }
-        currentKo = rule.out;
-        if(rule.ro) currentRo = rule.ro;
-        return true;
+        // fallback: set direct (dar doar dacă are sens)
+        newKo = rule.out;
+        if(rule.ro) newRo = rule.ro;
+        return {ok:true, ko:newKo, ro:newRo};
       }
 
       if(rule.type === "insertBeforeVerb"){
-        if(currentKo.includes(rule.verb)){
-          currentKo = currentKo.replace(rule.verb, rule.insert + rule.verb);
-          if(rule.roHint) currentRo = addHint(currentRo, rule.roHint);
-          return true;
+        if(newKo.includes(rule.verb)){
+          newKo = newKo.replace(rule.verb, rule.insert + rule.verb);
+          if(rule.roHint) newRo = addHint(newRo, rule.roHint);
+          return {ok:true, ko:newKo, ro:newRo};
         }
-        return false;
+        return {ok:false, ko, ro};
       }
 
       if(rule.type === "insertAfterSubject"){
         const token = rule.subject;
-        const i = currentKo.indexOf(token);
+        const i = newKo.indexOf(token);
         if(i !== -1){
-          const before = currentKo.slice(0, i + token.length);
-          const after  = currentKo.slice(i + token.length);
-          currentKo = before + rule.insert + after;
-          if(rule.roHint) currentRo = addHint(currentRo, rule.roHint);
-          return true;
+          const before = newKo.slice(0, i + token.length);
+          const after  = newKo.slice(i + token.length);
+          newKo = before + rule.insert + after;
+          if(rule.roHint) newRo = addHint(newRo, rule.roHint);
+          return {ok:true, ko:newKo, ro:newRo};
         }
-        return false;
+        return {ok:false, ko, ro};
       }
 
-      return false;
+      return {ok:false, ko, ro};
+    }
+
+    function buildFinalFromWorkspace(silent=false){
+      if(!workspace.length){
+        finalKo = "—";
+        finalRo = "—";
+        renderPreview();
+        return;
+      }
+
+      const idx = parseInt(el("combineSelect").value, 10);
+      const rule = currentSet.combine?.[idx] || currentSet.combine?.[0];
+
+      // Simplu: concatenăm propozițiile, cu un join “vizibil”.
+      // KO: scoatem punctele intermediare și inserăm conectorul ca text (nu conjugăm automat).
+      // RO: folosim joinRo.
+      const joinKo = rule?.joinKo || "고";
+      const joinRo = rule?.joinRo || "și";
+
+      const koParts = workspace.map(x => (x.ko || "").trim().replace(/\s+/g," ").replace(/\.$/,""));
+      const roParts = workspace.map(x => (x.ro || "").trim().replace(/\s+/g," ").replace(/\.$/,""));
+
+      if(koParts.length === 1){
+        finalKo = koParts[0] + ".";
+        finalRo = roParts[0] + ".";
+      }else{
+        // KO join
+        // Exemplu: A + " " + joinKo + " " + B + ", " + C...
+        // În practică, utilizatorul poate edita manual pașii pentru naturalețe.
+        let ko = koParts[0];
+        for(let i=1;i<koParts.length;i++){
+          ko = `${ko} ${joinKo} ${koParts[i]}`;
+        }
+        finalKo = ko + ".";
+
+        // RO join
+        let ro = roParts[0];
+        for(let i=1;i<roParts.length;i++){
+          ro = `${ro} ${joinRo} ${roParts[i]}`;
+        }
+        finalRo = ro + ".";
+      }
+
+      renderPreview();
+      if(!silent){
+        // opțional: mic feedback
+      }
+    }
+
+    function saveToHistory(){
+      if(!finalKo || finalKo === "—") return;
+      history.push({ ko: finalKo, ro: finalRo, setTitle: currentSet.title });
+      renderHistory();
     }
 
     function addHint(ro, hint){
       if(!ro) return ro;
       if(ro.includes(hint)) return ro;
       return ro + ` (hint: ${hint})`;
+    }
+
+    function tagSpan(text, kind){
+      const span = document.createElement("span");
+      span.className = "tag " + (kind || "");
+      span.textContent = text;
+      return span;
     }
 
     async function copyText(txt, okMsg){
@@ -782,38 +905,6 @@
       }catch(e){
         el("copyStatus").textContent = "Nu pot copia (browser restrictions).";
         el("copyStatus").className = "small";
-      }
-    }
-
-    function saveToHistory(){
-      if(!currentKo) return;
-      history.push({ ko: currentKo, ro: currentRo, setTitle: currentSet.title });
-      if(el("persistToggle").checked){
-        saveHistoryToStorage();
-      }
-      renderHistory();
-    }
-
-    function saveHistoryToStorage(){
-      try{
-        localStorage.setItem(LS_KEY, JSON.stringify(history));
-      }catch(e){
-        // ignore if storage fails
-      }
-    }
-
-    function loadHistoryFromStorage(){
-      try{
-        const raw = localStorage.getItem(LS_KEY);
-        if(!raw) { history = []; return; }
-        const parsed = JSON.parse(raw);
-        if(Array.isArray(parsed)){
-          history = parsed
-            .filter(x=>x && typeof x.ko==="string")
-            .slice(-200); // limit safety
-        }
-      }catch(e){
-        history = [];
       }
     }
 
