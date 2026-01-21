@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Builder Universal — Interactiv</title>
+  <title>Builder Universal — Interactiv (Motor general)</title>
   <style>
     :root{
       --bg:#0f172a;
@@ -80,7 +80,7 @@
       outline:none;
     }
     textarea{ width:100%; min-height:72px; resize:vertical; }
-    select{ min-width: 220px; }
+    select{ min-width: 240px; }
     button{ cursor:pointer; }
     button.primary{ border-color: rgba(251,191,36,.45); }
     button.primary:hover{ background: rgba(251,191,36,.12); }
@@ -134,7 +134,6 @@
     .help{ font-size:12px; color:#c7d2fe; margin:8px 0 0; }
     .small{ font-size:12px; color:#c7d2fe; }
 
-    /* Workspace list */
     .step{
       display:grid;
       grid-template-columns: 1fr auto;
@@ -163,7 +162,7 @@
   <nav class="topnav">
     <div class="brand">
       <strong>Builder Universal — Interactiv</strong>
-      <span>Workspace + Combine din pași + Undo real</span>
+      <span>Motor general de combinare (conectori + transformări KO)</span>
     </div>
     <div class="navlinks">
       <!-- Ajustează href-urile la paginile tale reale -->
@@ -177,7 +176,7 @@
 
   <header>
     <h1>Construiește & Extinde propoziții</h1>
-    <p>Click pe propoziții → intră în Workspace → aplică ADD/MODIFY/CHANGE pe pasul activ → COMBINE</p>
+    <p>Click pe propoziții → Workspace → aplică reguli pe pasul activ → COMBINE cu motor general</p>
   </header>
 
   <div class="wrap">
@@ -250,14 +249,14 @@
               </div>
               <textarea id="manualKo" placeholder="KO pentru pasul activ…"></textarea>
               <textarea id="manualRo" placeholder="RO pentru pasul activ…"></textarea>
-              <p class="help">Folosește asta dacă vrei să corectezi fin propoziția.</p>
+              <p class="help">Dacă motorul nu nimerește perfect, editezi fin aici.</p>
             </div>
           </div>
         </div>
 
         <div class="divider"></div>
 
-        <h2>5) COMBINE (din Workspace)</h2>
+        <h2>5) COMBINE (motor general)</h2>
         <div class="card">
           <div class="row">
             <span class="pill"><strong>Conector</strong></span>
@@ -265,15 +264,15 @@
             <button class="primary mini" id="buildBtn">Construiește finalul</button>
           </div>
           <p class="help">
-            Construiește propoziția finală din toți pașii, în ordinea din Workspace.
-            (E “smart join” simplu; dacă vrei conjugare automată corectă, o adăugăm ulterior.)
+            Motorul convertește fiecare pas (KO) într-o formă conectivă (ex. -고 / -아서/어서 / -(으)니까 / -는데 / -더니 / -기 전에),
+            apoi construiește propoziția finală.
           </p>
         </div>
       </section>
 
       <!-- RIGHT -->
       <aside class="panel">
-        <h2>Preview (final + pași)</h2>
+        <h2>Preview (final + meta)</h2>
 
         <div class="card big">
           <div class="korean" id="previewKo">—</div>
@@ -328,9 +327,12 @@
           { label:"(Info) Negativ / rezultat", type:"infoOnly", note:"În acest set nu există exemple cu 있다/없다 sau 어지다. Folosește alt set pentru CHANGE real." }
         ],
         combine: [
-          { label:"-고 (și)", id:"go", joinKo:"고", joinRo:"și" },
-          { label:"-아/어/여서 (cauză)", id:"so", joinKo:"아서/어서", joinRo:"așa că" },
-          { label:"-는데 (context/contrast)", id:"neunde", joinKo:"는데", joinRo:"dar/iar" }
+          { label:"-고 (și)", id:"go", roJoin:"și" },
+          { label:"-아/어/여서 (cauză→rezultat)", id:"so", roJoin:"așa că" },
+          { label:"-(으)니까 (motiv)", id:"nikka", roJoin:"pentru că" },
+          { label:"-는데 (context/contrast)", id:"neunde", roJoin:"dar" },
+          { label:"-더니 (după ce...)", id:"deoni", roJoin:"și apoi" },
+          { label:"-기 전에 (înainte de)", id:"before", roJoin:"înainte să" }
         ]
       },
 
@@ -355,9 +357,12 @@
           { label:"시간이 있었어요 → 시간이 없었어요", type:"replaceSentence", from:"시간이 있었어요.", to:"시간이 없었어요.", roHint:"nu am avut timp" }
         ],
         combine: [
-          { label:"-고 (și)", id:"go", joinKo:"고", joinRo:"și" },
-          { label:"-아/어/여서 (cauză)", id:"so", joinKo:"아서/어서", joinRo:"așa că" },
-          { label:"-더니 (apoi)", id:"deoni", joinKo:"더니", joinRo:"și apoi" }
+          { label:"-고 (și)", id:"go", roJoin:"și" },
+          { label:"-아/어/여서 (cauză→rezultat)", id:"so", roJoin:"așa că" },
+          { label:"-(으)니까 (motiv)", id:"nikka", roJoin:"pentru că" },
+          { label:"-는데 (context/contrast)", id:"neunde", roJoin:"dar" },
+          { label:"-더니 (după ce...)", id:"deoni", roJoin:"și apoi" },
+          { label:"-기 전에 (înainte de)", id:"before", roJoin:"înainte să" }
         ]
       },
 
@@ -382,9 +387,12 @@
           { label:"(Info) -기 전에", type:"infoOnly", note:"Poți crea manual: 쓰기 전에 닦으세요." }
         ],
         combine: [
-          { label:"-고 (și)", id:"go", joinKo:"고", joinRo:"și" },
-          { label:"-(으)니까 (motiv)", id:"nikka", joinKo:"니까", joinRo:"pentru că" },
-          { label:"-기 전에 (înainte)", id:"gijeone", joinKo:"기 전에", joinRo:"înainte să" }
+          { label:"-고 (și)", id:"go", roJoin:"și" },
+          { label:"-아/어/여서 (cauză→rezultat)", id:"so", roJoin:"așa că" },
+          { label:"-(으)니까 (motiv)", id:"nikka", roJoin:"pentru că" },
+          { label:"-는데 (context/contrast)", id:"neunde", roJoin:"dar" },
+          { label:"-더니 (după ce...)", id:"deoni", roJoin:"și apoi" },
+          { label:"-기 전에 (înainte de)", id:"before", roJoin:"înainte să" }
         ]
       },
 
@@ -406,9 +414,12 @@
         modify: [],
         change: [],
         combine: [
-          { label:"-고 (și)", id:"go", joinKo:"고", joinRo:"și" },
-          { label:"-아/어/여서 (cauză)", id:"so", joinKo:"아서/어서", joinRo:"așa că" },
-          { label:"-더니 (apoi)", id:"deoni", joinKo:"더니", joinRo:"și acum" }
+          { label:"-고 (și)", id:"go", roJoin:"și" },
+          { label:"-아/어/여서 (cauză→rezultat)", id:"so", roJoin:"așa că" },
+          { label:"-(으)니까 (motiv)", id:"nikka", roJoin:"pentru că" },
+          { label:"-는데 (context/contrast)", id:"neunde", roJoin:"dar" },
+          { label:"-더니 (după ce...)", id:"deoni", roJoin:"și apoi" },
+          { label:"-기 전에 (înainte de)", id:"before", roJoin:"înainte să" }
         ]
       }
     ];
@@ -424,14 +435,11 @@
     let finalRo = "";
     let history = [];
 
-    // Undo stack for workspace edits
-    let undoStack = []; // each entry: deep copy of {workspace, activeIndex}
+    let undoStack = []; // deep copies of {workspace, activeIndex}
 
     const el = (id) => document.getElementById(id);
 
-    function deepCopy(obj){
-      return JSON.parse(JSON.stringify(obj));
-    }
+    function deepCopy(obj){ return JSON.parse(JSON.stringify(obj)); }
     function pushUndo(){
       undoStack.push(deepCopy({workspace, activeIndex}));
       if(undoStack.length > 60) undoStack.shift();
@@ -446,7 +454,6 @@
     }
 
     function init(){
-      // set dropdown
       const s = el("setSelect");
       s.innerHTML = "";
       SETS.forEach(set=>{
@@ -459,10 +466,7 @@
 
       s.addEventListener("change", ()=>{
         const picked = SETS.find(x=>x.id===s.value);
-        if(picked){
-          currentSet = picked;
-          resetAll();
-        }
+        if(picked){ currentSet = picked; resetAll(); }
       });
 
       el("resetBtn").addEventListener("click", ()=>resetAll());
@@ -493,30 +497,27 @@
       el("copyRo").addEventListener("click", ()=>copyText(finalRo, "RO copiat."));
 
       el("saveBtn").addEventListener("click", ()=>saveToHistory());
-      el("clearHistoryBtn").addEventListener("click", ()=>{
-        history = [];
-        renderHistory();
-      });
+      el("clearHistoryBtn").addEventListener("click", ()=>{ history = []; renderHistory(); });
 
       resetAll();
     }
 
-    function resetAll(random = false){
+    function resetAll(){
       undoStack = [];
       workspace = [];
       activeIndex = -1;
 
-      // preset: pune toate propozițiile base în workspace (mai “interactiv” decât un final preset)
+      // preset: base sentences into workspace
       currentSet.base.forEach(b=>{
         workspace.push({ ko:b.ko, ro:b.ro, tags:[{kind:"BASE", label:"Base"}] });
       });
 
-      // active on first
       activeIndex = workspace.length ? 0 : -1;
+
       renderAll();
       syncManualEditors();
 
-      // auto-build
+      // auto build
       buildFinalFromWorkspace(true);
     }
 
@@ -553,12 +554,7 @@
 
       const hint = document.createElement("div");
       hint.className = "card";
-      hint.innerHTML = `
-        <div class="romanian">
-          Tip: poți construi o propoziție lungă adăugând pași extra (click pe bază de mai multe ori),
-          apoi reordonezi și combini.
-        </div>
-      `;
+      hint.innerHTML = `<div class="romanian">Tip: adaugă pași extra, reordonează, apoi COMBINE.</div>`;
       wrap.appendChild(hint);
     }
 
@@ -588,7 +584,6 @@
               ${st.tags.slice(-2).map(t=>`<span class="tag">${escapeHtml(t.kind)}</span>`).join("")}
             </div>
           </div>
-
           <div class="stepControls">
             <button class="ghost mini" data-act="select">Select</button>
             <button class="ghost mini" data-act="up">↑</button>
@@ -638,41 +633,20 @@
     }
 
     function renderSelects(){
-      // ADD
-      const addSel = el("addSelect");
-      addSel.innerHTML = "";
-      if(!currentSet.add?.length){
-        addSel.appendChild(new Option("— nu există —", ""));
-      } else {
-        currentSet.add.forEach((a,i)=> addSel.appendChild(new Option(a.label, String(i))) );
-      }
+      fillSelect("addSelect", currentSet.add);
+      fillSelect("modifySelect", currentSet.modify);
+      fillSelect("changeSelect", currentSet.change);
+      fillSelect("combineSelect", currentSet.combine);
+    }
 
-      // MODIFY
-      const modSel = el("modifySelect");
-      modSel.innerHTML = "";
-      if(!currentSet.modify?.length){
-        modSel.appendChild(new Option("— nu există —", ""));
-      } else {
-        currentSet.modify.forEach((m,i)=> modSel.appendChild(new Option(m.label, String(i))) );
+    function fillSelect(id, arr){
+      const sel = el(id);
+      sel.innerHTML = "";
+      if(!arr?.length){
+        sel.appendChild(new Option("— nu există —", ""));
+        return;
       }
-
-      // CHANGE
-      const chSel = el("changeSelect");
-      chSel.innerHTML = "";
-      if(!currentSet.change?.length){
-        chSel.appendChild(new Option("— nu există —", ""));
-      } else {
-        currentSet.change.forEach((c,i)=> chSel.appendChild(new Option(c.label, String(i))) );
-      }
-
-      // COMBINE
-      const combSel = el("combineSelect");
-      combSel.innerHTML = "";
-      if(!currentSet.combine?.length){
-        combSel.appendChild(new Option("— nu există —", ""));
-      } else {
-        currentSet.combine.forEach((c,i)=> combSel.appendChild(new Option(c.label, String(i))) );
-      }
+      arr.forEach((x,i)=> sel.appendChild(new Option(x.label, String(i))));
     }
 
     function renderActiveLabel(){
@@ -687,10 +661,6 @@
 
       const meta = el("previewMeta");
       meta.innerHTML = "";
-      if(!workspace.length){
-        meta.appendChild(tagSpan("WORKSPACE gol", ""));
-        return;
-      }
       meta.appendChild(tagSpan(`Pași: ${workspace.length}`, "ok"));
       meta.appendChild(tagSpan(`Set: ${currentSet.title}`, ""));
     }
@@ -717,7 +687,6 @@
           </div>
         `;
         c.querySelector("button").addEventListener("click", ()=>{
-          // reîncarcă doar finalul în preview
           finalKo = item.ko;
           finalRo = item.ro;
           renderPreview();
@@ -748,12 +717,12 @@
       if(!rule) return;
 
       pushUndo();
-
       const st = workspace[activeIndex];
+
       const res = applyRuleToSentence(rule, st.ko, st.ro);
       if(!res.ok){
-        // dacă nu se potrivește regula, nu stricăm nimic
-        undoStack.pop(); // anulăm pushUndo
+        // anulăm undo dacă nu s-a aplicat
+        undoStack.pop();
         return;
       }
 
@@ -761,7 +730,6 @@
       st.ro = res.ro;
       st.tags.push({kind: listName.toUpperCase(), label: rule.label});
 
-      // sync editor fields
       syncManualEditors();
       renderAll();
     }
@@ -799,7 +767,6 @@
           if(rule.ro) newRo = rule.ro;
           return {ok:true, ko:newKo, ro:newRo};
         }
-        // fallback: set direct (dar doar dacă are sens)
         newKo = rule.out;
         if(rule.ro) newRo = rule.ro;
         return {ok:true, ko:newKo, ro:newRo};
@@ -830,6 +797,190 @@
       return {ok:false, ko, ro};
     }
 
+    /***********************
+     *  MOTOR GENERAL: KO → conectiv
+     *  Heuristici A1–A2, extensibile
+     ***********************/
+    function normalizeKoSentence(s){
+      return (s || "").trim().replace(/\s+/g," ");
+    }
+    function stripFinalPunct(s){
+      return (s || "").replace(/[.?!]$/,"").trim();
+    }
+
+    // Returnează {stem, tenseHint} din propoziție, dacă e posibil.
+    // Heuristic: caută terminații polite uzuale.
+    function splitPoliteEnding(koNoPunct){
+      // Ordinea contează (mai specific întâi)
+      const patterns = [
+        { end:"했어요", stem:"했", type:"past" },
+        { end:"했어", stem:"했", type:"past" },
+        { end:"했어요", stem:"했", type:"past" },
+        { end:"했어요", stem:"했", type:"past" },
+
+        { end:"었어요", stem:"었", type:"past" },
+        { end:"았어요", stem:"았", type:"past" },
+        { end:"였어요", stem:"였", type:"past" },
+
+        { end:"해요", stem:"해", type:"pres" },
+        { end:"해", stem:"해", type:"pres" },
+
+        { end:"어요", stem:"어", type:"pres" },
+        { end:"아요", stem:"아", type:"pres" },
+        { end:"여요", stem:"여", type:"pres" },
+
+        { end:"이에요", stem:"이", type:"cop" },
+        { end:"예요", stem:"", type:"cop" }
+      ];
+
+      for(const p of patterns){
+        if(koNoPunct.endsWith(p.end)){
+          const base = koNoPunct.slice(0, koNoPunct.length - p.end.length);
+          return { base, end:p.end, type:p.type };
+        }
+      }
+      return { base: koNoPunct, end:"", type:"unknown" };
+    }
+
+    // Convertește o propoziție (KO) în clauză conectivă pentru un anumit conector.
+    // connectorId: go | so | nikka | neunde | deoni | before
+    function toConnective(koSentence, connectorId){
+      const s = normalizeKoSentence(koSentence);
+      const noPunct = stripFinalPunct(s);
+      const { base, end, type } = splitPoliteEnding(noPunct);
+
+      // fallback: dacă nu găsim ending, doar adăugăm conectorul “ca text”
+      const rawFallback = (suffix) => `${noPunct}${suffix}`;
+
+      // Ajutor: pentru multe cazuri, putem folosi “base + ending transform”
+      const endsWith = (x) => noPunct.endsWith(x);
+
+      // 1) -고
+      if(connectorId === "go"){
+        // Dacă era imperativ (쓰세요/닦으세요) nu e în patterns; îl tratăm separat:
+        if(endsWith("세요")){
+          // ex: 닦으세요 -> 닦고 (heuristic)
+          const b = noPunct.slice(0, -2); // scoate "요"
+          return `${b}고`;
+        }
+        if(end){
+          // ex: 틀었어요 -> 틀었 + 고
+          return `${base}${end.replace(/요$/,"")}고`.replace(/고고$/,"고");
+        }
+        return rawFallback("고");
+      }
+
+      // 2) -아서/어서/여서 (so)
+      if(connectorId === "so"){
+        // 하다-family: 해요/했어요 -> 해서
+        if(endsWith("해요")) return `${noPunct.slice(0,-2)}서`;    // 해요 -> 해서
+        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}서`; // 했어요 -> 해서 (ok pentru A2)
+        if(endsWith("여요")) return `${noPunct.slice(0,-2)}서`;   // 여요 -> 여서
+
+        // Past: ...았어요/었어요/였어요 -> ...아서/어서/여서
+        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}아서`;
+        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}어서`;
+        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}여서`;
+
+        // Present: ...아요/어요 -> ...아서/어서
+        if(endsWith("아요")) return `${noPunct.slice(0,-2)}아서`;
+        if(endsWith("어요")) return `${noPunct.slice(0,-2)}어서`;
+
+        // Copula: 예요/이에요 -> (이)어서 (simplu)
+        if(endsWith("이에요")) return `${noPunct.slice(0,-3)}이어서`;
+        if(endsWith("예요")) return `${noPunct.slice(0,-2)}여서`;
+
+        // Imperativ:
+        if(endsWith("세요")) return rawFallback("서");
+
+        return rawFallback("서");
+      }
+
+      // 3) -(으)니까
+      if(connectorId === "nikka"){
+        if(endsWith("해요")) return `${noPunct.slice(0,-2)}니까`;     // 해요 -> 하니까? (heuristic simplu: 해니까/하니까)
+        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}으니까`; // 했어요 -> 했으니까
+
+        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}으니까`; // 봤어요 -> 봤으니까 (ok)
+        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}으니까`;
+        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}으니까`;
+
+        if(endsWith("아요")) return `${noPunct.slice(0,-2)}니까`;     // 가요 -> 가니까 (ok-ish)
+        if(endsWith("어요")) return `${noPunct.slice(0,-2)}니까`;     // 먹어요 -> 먹으니까? (heuristic: 먹니까; acceptabil A2 ca aproximare)
+        if(endsWith("여요")) return `${noPunct.slice(0,-2)}니까`;
+
+        if(endsWith("이에요")) return `${noPunct.slice(0,-3)}이니까`;
+        if(endsWith("예요")) return `${noPunct.slice(0,-2)}니까`;
+
+        if(endsWith("세요")) return rawFallback("니까");
+
+        return rawFallback("니까");
+      }
+
+      // 4) -는데
+      if(connectorId === "neunde"){
+        if(endsWith("해요")) return `${noPunct.slice(0,-2)}는데`;      // 해요 -> 하는데/해는데 (heuristic: 해는데)
+        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}는데`;   // 했어요 -> 했는데
+
+        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}는데`;
+        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}는데`;
+        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}는데`;
+
+        if(endsWith("아요")) return `${noPunct.slice(0,-2)}는데`;
+        if(endsWith("어요")) return `${noPunct.slice(0,-2)}는데`;
+        if(endsWith("여요")) return `${noPunct.slice(0,-2)}는데`;
+
+        if(endsWith("이에요")) return `${noPunct.slice(0,-3)}인데`;
+        if(endsWith("예요")) return `${noPunct.slice(0,-2)}인데`;
+
+        if(endsWith("세요")) return rawFallback("는데");
+
+        return rawFallback("는데");
+      }
+
+      // 5) -더니 (deoni)
+      if(connectorId === "deoni"){
+        // ideal: acțiune înainte → rezultat observat după
+        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}더니`;
+        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}더니`;
+        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}더니`;
+        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}더니`;
+
+        // dacă e prezent, încă îl acceptăm: ...더니
+        if(endsWith("해요")) return `${noPunct.slice(0,-2)}더니`;
+        if(endsWith("아요")) return `${noPunct.slice(0,-2)}더니`;
+        if(endsWith("어요")) return `${noPunct.slice(0,-2)}더니`;
+
+        return rawFallback("더니");
+      }
+
+      // 6) -기 전에 (before)
+      if(connectorId === "before"){
+        // Heuristic: scoate polite ending și adaugă "기 전에"
+        // 해요 -> 하기 전에 (preferabil), dar aici simplificăm:
+        if(endsWith("해요")) return `${noPunct.slice(0,-2)}기 전에`.replace(/해기 전에$/,"하기 전에");
+        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}기 전에`.replace(/했기 전에$/,"하기 전에");
+
+        if(endsWith("아요")) return `${noPunct.slice(0,-2)}기 전에`;
+        if(endsWith("어요")) return `${noPunct.slice(0,-2)}기 전에`;
+        if(endsWith("여요")) return `${noPunct.slice(0,-2)}기 전에`;
+
+        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}기 전에`;
+        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}기 전에`;
+        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}기 전에`;
+
+        if(endsWith("세요")) return `${noPunct.slice(0,-2)}기 전에`; // 쓰세요 -> 쓰기 전에 (ok-ish)
+
+        return `${noPunct}기 전에`;
+      }
+
+      // default
+      return noPunct;
+    }
+
+    // Construiește finalul:
+    // - transformă toate propozițiile, mai puțin ultima, în conective
+    // - ultima rămâne propoziție încheiată (cu punct)
     function buildFinalFromWorkspace(silent=false){
       if(!workspace.length){
         finalKo = "—";
@@ -839,41 +990,51 @@
       }
 
       const idx = parseInt(el("combineSelect").value, 10);
-      const rule = currentSet.combine?.[idx] || currentSet.combine?.[0];
+      const combRule = currentSet.combine?.[idx] || currentSet.combine?.[0] || { id:"go", roJoin:"și" };
+      const connectorId = combRule.id;
 
-      // Simplu: concatenăm propozițiile, cu un join “vizibil”.
-      // KO: scoatem punctele intermediare și inserăm conectorul ca text (nu conjugăm automat).
-      // RO: folosim joinRo.
-      const joinKo = rule?.joinKo || "고";
-      const joinRo = rule?.joinRo || "și";
+      const koParts = workspace.map(x => normalizeKoSentence(x.ko));
+      const roParts = workspace.map(x => (x.ro || "").trim().replace(/\s+/g," "));
 
-      const koParts = workspace.map(x => (x.ko || "").trim().replace(/\s+/g," ").replace(/\.$/,""));
-      const roParts = workspace.map(x => (x.ro || "").trim().replace(/\s+/g," ").replace(/\.$/,""));
+      // KO: conective pentru toate în afară de ultima
+      const koClauses = [];
+      for(let i=0;i<koParts.length;i++){
+        const isLast = (i === koParts.length - 1);
+        const s = normalizeKoSentence(koParts[i]);
+        if(!s) continue;
 
-      if(koParts.length === 1){
-        finalKo = koParts[0] + ".";
-        finalRo = roParts[0] + ".";
+        if(isLast){
+          // final sentence: ensure punctuation
+          let last = s.trim();
+          if(!/[.?!]$/.test(last)) last += ".";
+          koClauses.push(last);
+        }else{
+          koClauses.push(toConnective(s, connectorId));
+        }
+      }
+
+      // Adăugăm virgule/spații minim:
+      // ex: A서 B고 C는데 D.
+      // Punem spațiu între clauze.
+      finalKo = koClauses.join(" ").replace(/\s+/g," ").trim();
+
+      // RO: simplu, dar lizibil. Pentru A1–A2 e ok.
+      // Toate, mai puțin ultima, se termină fără punct; le legăm cu roJoin.
+      const roJoin = combRule.roJoin || "și";
+      const cleanRo = roParts.map(s => (s || "").replace(/[.?!]$/,"").trim()).filter(Boolean);
+      if(cleanRo.length === 1){
+        finalRo = cleanRo[0] + ".";
       }else{
-        // KO join
-        // Exemplu: A + " " + joinKo + " " + B + ", " + C...
-        // În practică, utilizatorul poate edita manual pașii pentru naturalețe.
-        let ko = koParts[0];
-        for(let i=1;i<koParts.length;i++){
-          ko = `${ko} ${joinKo} ${koParts[i]}`;
+        let ro = cleanRo[0];
+        for(let i=1;i<cleanRo.length;i++){
+          ro = `${ro} ${roJoin} ${cleanRo[i]}`;
         }
-        finalKo = ko + ".";
-
-        // RO join
-        let ro = roParts[0];
-        for(let i=1;i<roParts.length;i++){
-          ro = `${ro} ${joinRo} ${roParts[i]}`;
-        }
-        finalRo = ro + ".";
+        finalRo = ro.trim() + ".";
       }
 
       renderPreview();
       if(!silent){
-        // opțional: mic feedback
+        // opțional: feedback mic
       }
     }
 
