@@ -6225,6 +6225,52 @@ document.addEventListener("DOMContentLoaded", () => {
     run();
   }
 })();
+  /* ===================== BUILDER REBUILD - FIX DUPLICATE IDS & P2 ===================== */
+(function () {
+  // Live (mijloc)
+  const enableP2 = document.getElementById("enableP2");
+  const titleP2  = document.getElementById("titleP2");
+  const tableP2  = document.getElementById("tableP2");
+
+  // Model (sus)
+  const enableP2Model = document.getElementById("enableP2Model");
+  const titleP2Model  = document.getElementById("titleP2Model");
+  const tableP2Model  = document.getElementById("tableP2Model");
+
+  // Protecție: dacă lipsește ceva, ieșim fără să stricăm app-ul
+  if (!enableP2 || !titleP2 || !tableP2) return;
+
+  function syncP2Live() {
+    const on = !!enableP2.checked;
+    titleP2.classList.toggle("hidden", !on);
+    tableP2.classList.toggle("hidden", !on);
+
+    // dacă există bifa de “Activă” pentru P2 (mijloc), o sincronizăm cu vizibilitatea
+    const activeP2 = document.getElementById("activeP2");
+    if (activeP2) activeP2.checked = on;
+
+    // dacă ai funcția render() în proiect, o chemăm ca să refacă UI-ul corect
+    if (typeof render === "function") render();
+  }
+
+  // MODEL: doar afișare, dar îl ținem sincronizat cu bifa LIVE
+  function syncP2ModelFromLive() {
+    if (!enableP2Model || !titleP2Model || !tableP2Model) return;
+    enableP2Model.checked = !!enableP2.checked;
+    titleP2Model.classList.toggle("hidden", !enableP2.checked);
+    tableP2Model.classList.toggle("hidden", !enableP2.checked);
+  }
+
+  // evenimente
+  enableP2.addEventListener("change", () => {
+    syncP2Live();
+    syncP2ModelFromLive();
+  });
+
+  // inițializare
+  syncP2Live();
+  syncP2ModelFromLive();
+})();
 </script>
 <!-- =========================
      /FIX COMPLET
