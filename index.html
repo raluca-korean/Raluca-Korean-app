@@ -2377,6 +2377,15 @@ body.pastel-theme {
   padding:12px;
   outline:none;
 }    
+    /* ===== BUILDER: model row e doar afișare, nu interactiv ===== */
+#screen-builder .is-display-only {
+  pointer-events: none;   /* oprește click-uri */
+  opacity: 0.92;
+  filter: saturate(0.95);
+}
+
+/* Toggle hidden */
+.hidden { display: none !important; }
   </style>
 </head>
 <body class="pastel-theme">
@@ -2496,116 +2505,231 @@ body.pastel-theme {
           </div>
         </div>
       </div><!-- /table-block -->
-<!-- ===================== BUILDER SCREEN (REBUILD) ===================== -->
-<div id="screen-builder" class="screen">
+      <!-- ===================== SCREEN: BUILDER (CLEAN) ===================== -->
+<section id="screen-builder" class="screen">
 
-  <!-- ====== MODEL / PREVIEW (SUS) — doar afișare, fără click ====== -->
-  <div id="builderModelRow" class="card builder-model-row">
-    <div class="builder-top-header">
-      <div class="builder-top-title">
-        <div class="small-label">Propoziția 1 (model)</div>
+  <!-- ====== HEADER / MODEL ROW (DISPLAY ONLY) ====== -->
+  <div class="builder-top">
+    <div class="builder-top-head">
+      <div class="builder-top-left">
+        <div class="builder-title">Propoziția 1</div>
       </div>
 
       <div class="builder-top-right">
-        <div class="small-label">Rând model: <span id="modelRowIndexLabel">1</span>/<span id="modelRowTotalLabel">60</span></div>
+        <div class="model-row-label">Rând model: <span id="modelRowIndexLabel">1</span>/60</div>
       </div>
     </div>
 
-    <!-- TABEL MODEL P1 -->
-    <div id="tableP1Model" class="builder-table">
-      <!-- IMPORTANT: aici nu ai voie să ai ID-uri duplicate cu tabelul din mijloc -->
-      <!-- păstrăm doar structura vizuală; conținutul se umple din JS-ul tău existent (render) -->
+    <!-- RÂND MODEL (doar preview, fără click) -->
+    <div id="modelRowWrap" class="builder-model-row is-display-only">
+      <div id="tableModel" class="builder-table" data-table="model">
+        <!-- AICI rămâne același layout de coloane ca P1, DAR FĂRĂ ID-uri duplicate -->
+        <div class="col" data-key="subject">
+          <div class="col-header">SUBJECT (주어)</div>
+          <div class="col-body">
+            <div class="small-label">Cine?</div>
+            <div class="col-body-main" data-cell="subject"></div>
+          </div>
+        </div>
+
+        <div class="col" data-key="time">
+          <div class="col-header">TIME (시간)</div>
+          <div class="col-body">
+            <div class="small-label">Când?</div>
+            <div class="col-body-main" data-cell="time"></div>
+          </div>
+        </div>
+
+        <div class="col" data-key="place">
+          <div class="col-header">PLACE (장소)</div>
+          <div class="col-body">
+            <div class="small-label">Unde?</div>
+            <div class="col-body-main" data-cell="place"></div>
+          </div>
+        </div>
+
+        <div class="col" data-key="mod">
+          <div class="col-header">MOD (방법)</div>
+          <div class="col-body">
+            <div class="small-label">Cum?</div>
+            <div class="col-body-main" data-cell="mod"></div>
+          </div>
+        </div>
+
+        <div class="col" data-key="object">
+          <div class="col-header">OBJECT (목적어)</div>
+          <div class="col-body">
+            <div class="small-label">Ce?</div>
+            <div class="col-body-main" data-cell="object"></div>
+          </div>
+        </div>
+
+        <div class="col" data-key="numeral">
+          <div class="col-header">NUMERAL</div>
+          <div class="col-body">
+            <div class="small-label">Număr</div>
+            <div class="col-body-main" data-cell="numeral"></div>
+          </div>
+        </div>
+
+        <div class="col" data-key="counter">
+          <div class="col-header">COUNTER</div>
+          <div class="col-body">
+            <div class="small-label">Clasificator</div>
+            <div class="col-body-main" data-cell="counter"></div>
+          </div>
+        </div>
+
+        <div class="col" data-key="verb">
+          <div class="col-header">VERB</div>
+          <div class="col-body">
+            <div class="small-label">Verbul</div>
+            <div class="col-body-main" data-cell="verb"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="builder-top-controls">
-      <button id="modelPrevBtn" class="btn">⬅ Prev (rând model)</button>
-      <button id="modelNextBtn" class="btn">Next ➡</button>
+    <!-- CONTROLS -->
+    <div class="builder-controls">
+      <button id="modelPrevBtn" type="button" class="btn">◀ Prev (rând model)</button>
+      <button id="modelNextBtn" type="button" class="btn">Next ▶</button>
 
-      <div class="builder-top-spacer"></div>
-
-      <label class="chip">
-        <input type="checkbox" id="enableP2Model" />
-        Activează Propoziția 2 (fraza) — model
+      <label class="toggle">
+        <input id="enableP2" type="checkbox" />
+        <span>Activează Propoziția 2 (fraza)</span>
       </label>
-    </div>
 
-    <div id="titleP2Model" class="builder-subtitle hidden">Propoziția 2 (model)</div>
-    <div id="tableP2Model" class="builder-table hidden"></div>
+      <button id="resetPartsBtn" type="button" class="btn btn-warn">Reset părți de propoziție</button>
+      <button id="addSentenceBtn" type="button" class="btn btn-primary">+ Propoziție</button>
+      <button id="removeSentenceBtn" type="button" class="btn btn-danger">− Șterge ultima</button>
+    </div>
   </div>
 
-  <!-- ====== CONTROALE BUILDER (Mijloc) ====== -->
-  <div class="card builder-controls">
-    <div class="builder-controls-row">
-      <label class="chip">
-        <input type="checkbox" id="enableP2" />
-        Activează Propoziția 2 (fraza)
+  <!-- ====== BUILDER P1 (INTERACTIVE) ====== -->
+  <div class="builder-block">
+    <div class="builder-block-head">
+      <h3>Propoziția 1</h3>
+      <label class="toggle">
+        <input id="p1Active" type="checkbox" checked />
+        <span>Activă</span>
       </label>
+    </div>
 
-      <div class="builder-controls-right">
-        <button id="resetPartsBtn" class="btn btn-warn">Reset părți de propoziție</button>
-        <button id="addSentenceBtn" class="btn btn-primary">+ Propoziție</button>
-        <button id="removeSentenceBtn" class="btn btn-secondary">− Șterge ultima</button>
+    <div id="tableP1" class="builder-table" data-table="p1">
+      <div class="col" data-key="subject">
+        <div class="col-header">SUBJECT (주어)</div>
+        <div class="col-body">
+          <div class="small-label">Cine?</div>
+          <div class="col-body-main" data-cell="subject"></div>
+        </div>
+      </div>
+
+      <div class="col" data-key="time">
+        <div class="col-header">TIME (시간)</div>
+        <div class="col-body">
+          <div class="small-label">Când?</div>
+          <div class="col-body-main" data-cell="time"></div>
+        </div>
+      </div>
+
+      <div class="col" data-key="place">
+        <div class="col-header">PLACE (장소)</div>
+        <div class="col-body">
+          <div class="small-label">Unde?</div>
+          <div class="col-body-main" data-cell="place"></div>
+        </div>
+      </div>
+
+      <div class="col" data-key="mod">
+        <div class="col-header">MOD (방법)</div>
+        <div class="col-body">
+          <div class="small-label">Cum?</div>
+          <div class="col-body-main" data-cell="mod"></div>
+        </div>
+      </div>
+
+      <div class="col" data-key="object">
+        <div class="col-header">OBJECT (목적어)</div>
+        <div class="col-body">
+          <div class="small-label">Ce?</div>
+          <div class="col-body-main" data-cell="object"></div>
+        </div>
+      </div>
+
+      <div class="col" data-key="numeral">
+        <div class="col-header">NUMERAL</div>
+        <div class="col-body">
+          <div class="small-label">Număr</div>
+          <div class="col-body-main" data-cell="numeral"></div>
+        </div>
+      </div>
+
+      <div class="col" data-key="counter">
+        <div class="col-header">COUNTER</div>
+        <div class="col-body">
+          <div class="small-label">Clasificator</div>
+          <div class="col-body-main" data-cell="counter"></div>
+        </div>
+      </div>
+
+      <div class="col" data-key="verb">
+        <div class="col-header">VERB</div>
+        <div class="col-body">
+          <div class="small-label">Verbul</div>
+          <div class="col-body-main" data-cell="verb"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ====== BUILDER ACTIV (Mijloc) — AICI se dau click-urile ====== -->
-  <div class="card builder-main">
-    <div class="builder-section-header">
-      <h3 class="section-title">Propoziția 1</h3>
-      <label class="chip">
-        <input type="checkbox" id="activeP1" checked />
-        Activă
+  <!-- ====== BUILDER P2 (TOGGLE) ====== -->
+  <div id="p2Wrap" class="builder-block hidden">
+    <div class="builder-block-head">
+      <h3>Propoziția 2</h3>
+      <label class="toggle">
+        <input id="p2Active" type="checkbox" checked />
+        <span>Activă</span>
       </label>
     </div>
 
-    <div id="tableP1" class="builder-table">
-      <!-- tabelul activ real -->
-    </div>
-
-    <div class="builder-section-header" style="margin-top:14px;">
-      <h3 id="titleP2" class="section-title hidden">Propoziția 2</h3>
-      <label class="chip">
-        <input type="checkbox" id="activeP2" />
-        Activă
-      </label>
-    </div>
-
-    <div id="tableP2" class="builder-table hidden">
-      <!-- tabelul 2 activ real -->
+    <div id="tableP2" class="builder-table" data-table="p2">
+      <!-- (păstrează aceeași structură ca P1; dacă ai deja P2 complet în vechiul cod, îl poți lipi aici,
+           important e să NU dubleze ID-uri și să fie doar UN tableP2) -->
+      <div class="col" data-key="subject"><div class="col-header">SUBJECT (주어)</div><div class="col-body"><div class="small-label">Cine?</div><div class="col-body-main" data-cell="subject"></div></div></div>
+      <div class="col" data-key="time"><div class="col-header">TIME (시간)</div><div class="col-body"><div class="small-label">Când?</div><div class="col-body-main" data-cell="time"></div></div></div>
+      <div class="col" data-key="place"><div class="col-header">PLACE (장소)</div><div class="col-body"><div class="small-label">Unde?</div><div class="col-body-main" data-cell="place"></div></div></div>
+      <div class="col" data-key="mod"><div class="col-header">MOD (방법)</div><div class="col-body"><div class="small-label">Cum?</div><div class="col-body-main" data-cell="mod"></div></div></div>
+      <div class="col" data-key="object"><div class="col-header">OBJECT (목적어)</div><div class="col-body"><div class="small-label">Ce?</div><div class="col-body-main" data-cell="object"></div></div></div>
+      <div class="col" data-key="numeral"><div class="col-header">NUMERAL</div><div class="col-body"><div class="small-label">Număr</div><div class="col-body-main" data-cell="numeral"></div></div></div>
+      <div class="col" data-key="counter"><div class="col-header">COUNTER</div><div class="col-body"><div class="small-label">Clasificator</div><div class="col-body-main" data-cell="counter"></div></div></div>
+      <div class="col" data-key="verb"><div class="col-header">VERB</div><div class="col-body"><div class="small-label">Verbul</div><div class="col-body-main" data-cell="verb"></div></div></div>
     </div>
   </div>
 
-  <!-- ====== PREVIEW (rezultat) ====== -->
-  <div class="card preview-card">
+  <!-- ====== PREVIEW + ACTIONS ====== -->
+  <div class="builder-preview card">
     <div id="previewKo" class="preview-sentence"></div>
+    <div id="previewRo" class="preview-ro small-label"></div>
 
-    <div class="preview-actions">
-      <button id="randomBtn" class="btn">🎲🎲 Random propoziție</button>
-      <button id="audioBtn" class="btn">🎤🎤 Audio coreeană</button>
-      <button id="saveSentenceBtn" class="btn btn-primary">⭐ ⭐ Salvează propoziția</button>
+    <div class="builder-actions">
+      <button id="randomSentenceBtn" type="button" class="btn">🎲 Random propoziție</button>
+      <button id="audioKoBtn" type="button" class="btn">🔊 Audio coreeană</button>
+      <button id="saveSentenceBtn" type="button" class="btn btn-primary">⭐ Salvează propoziția</button>
 
-      <div class="preview-actions-right">
-        <button id="toggleTranslationBtn" class="btn btn-ghost">Ascunde traducerea</button>
-      </div>
+      <button id="toggleTranslationBtn" type="button" class="btn btn-ghost">Ascunde traducerea</button>
     </div>
-
-    <div id="previewRo" class="preview-translation"></div>
   </div>
 
-  <!-- ====== ROMÂNĂ → COREEANĂ (jos) ====== -->
-  <div class="card ro2ko-card">
-    <h3 class="section-title">Română → Coreeană</h3>
-
-    <textarea id="roInput" rows="3" class="input" placeholder="Scrie propoziția în română..."></textarea>
-
-    <button id="roTranslateBtn" class="btn btn-primary" style="width:100%;margin-top:10px;">
-      🇷🇴 ➜ 🇰🇷  Tradu în coreeană
-    </button>
+  <!-- ====== ROMÂNĂ → COREEANĂ (SINGLE, ONLY ONCE) ====== -->
+  <div class="card">
+    <h3>Română → Coreeană</h3>
+    <textarea id="roInput" rows="3" placeholder="Scrie propoziția în română aici..."></textarea>
+    <button id="roTranslateBtn" type="button" class="btn btn-primary">🇷🇴➡️🇰🇷 Tradu în coreeană</button>
   </div>
 
-</div>
-<!-- =================== /BUILDER SCREEN (REBUILD) =================== -->
+</section>
+<!-- ===================== /SCREEN: BUILDER (CLEAN) ===================== -->
       <!-- Română → Coreeană mutat JOS în Builder -->
       <div class="card">
         <h2>Română → Coreeană</h2>
