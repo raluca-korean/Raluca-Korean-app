@@ -298,787 +298,351 @@
 
     </div>
   </div>
+<script>
+/***********************
+ *  MOTOR GENERAL: KO → conectiv (legat de verb)
+ *  A1–A2, heuristic robust
+ ***********************/
+function normalizeKoSentence(s){
+  return (s || "").trim().replace(/\s+/g," ");
+}
+function stripFinalPunct(s){
+  return (s || "").replace(/[.?!]$/,"").trim();
+}
 
-  <script>
-    /***********************
-     * DATA
-     ***********************/
-    const SETS = [
-      {
-        id: "shower",
-        title: "Duș (acțiuni + reacție)",
-        level: "A1→A2",
-        base: [
-          { id:"b1", ko:"비누칠했어요.", ro:"M-am săpunit (am făcut spumă)."},
-          { id:"b2", ko:"물을 틀었어요.", ro:"Am dat drumul la apă."},
-          { id:"b3", ko:"물이 차가웠어요.", ro:"Apa era rece."},
-          { id:"b4", ko:"놀랐어요.", ro:"Am fost surprins(ă)."}
-        ],
-        add: [
-          { label:"몸에 (pe corp)", type:"prefixObject", target:"비누칠했어요.", out:"몸에 비누칠했어요.", ro:"M-am săpunit pe corp." },
-          { label:"따뜻한 (caldă) + 물", type:"replace", find:"물을", repl:"따뜻한 물을", roHint:"apă caldă" },
-          { label:"깜짝 (brusc/foarte)", type:"prefixAdverb", target:"놀랐어요.", out:"깜짝 놀랐어요.", ro:"Am fost foarte surprins(ă)." }
-        ],
-        modify: [
-          { label:"물 → 따뜻한 물", type:"replace", find:"물을", repl:"따뜻한 물을", roHint:"apă caldă" },
-          { label:"놀랐어요 → 깜짝 놀랐어요", type:"replaceSentence", from:"놀랐어요.", to:"깜짝 놀랐어요.", roHint:"foarte surprins(ă)" }
-        ],
-        change: [
-          { label:"(Info) Negativ / rezultat", type:"infoOnly", note:"În acest set nu există exemple cu 있다/없다 sau 어지다. Folosește alt set pentru CHANGE real." }
-        ],
-        combine: [
-          { label:"-고 (și)", id:"go", roJoin:"și" },
-          { label:"-아/어/여서 (cauză→rezultat)", id:"so", roJoin:"așa că" },
-          { label:"-(으)니까 (motiv)", id:"nikka", roJoin:"pentru că" },
-          { label:"-는데 (context/contrast)", id:"neunde", roJoin:"dar" },
-          { label:"-더니 (după ce...)", id:"deoni", roJoin:"și apoi" },
-          { label:"-기 전에 (înainte de)", id:"before", roJoin:"înainte să" }
-        ]
-      },
+/**
+ * Împarte propoziția în:
+ * - prefix: tot ce e înainte de predicat (de obicei include obiecte/adv/etc)
+ * - pred: predicatul final (ex: 했어요 / 울렸어요 / 더러워요 / 예요)
+ *
+ * Heuristic: predicatul e ultimul “cuvânt” (token) sau ultimele 2 tokenuri (rar).
+ */
+function splitIntoPrefixAndPredicate(sentenceNoPunct){
+  const s = normalizeKoSentence(sentenceNoPunct);
+  const parts = s.split(" ");
+  if(parts.length === 1){
+    return { prefix:"", pred: parts[0] };
+  }
+  // predicat = ultimul token
+  const pred = parts[parts.length-1];
+  const prefix = parts.slice(0, -1).join(" ");
+  return { prefix, pred };
+}
 
-      {
-        id: "mascara",
-        title: "Mascara & timp (negativ + rezultat)",
-        level: "A1→A2",
-        base: [
-          { id:"m1", ko:"시간이 있었어요.", ro:"Am avut timp."},
-          { id:"m2", ko:"마스카라를 발랐어요.", ro:"Am aplicat mascara."},
-          { id:"m3", ko:"번졌어요.", ro:"S-a întins (s-a șters)."}
-        ],
-        add: [
-          { label:"오래된 + 마스카라", type:"replace", find:"마스카라를", repl:"오래된 마스카라를", roHint:"mascara veche" },
-          { label:"대충 (în grabă)", type:"insertBeforeVerb", verb:"발랐어요.", insert:"대충 ", roHint:"în grabă" },
-          { label:"다 (complet)", type:"prefixAdverb", target:"번졌어요.", out:"다 번졌어요.", ro:"S-a întins complet." }
-        ],
-        modify: [
-          { label:"마스카라 → 오래된 마스카라", type:"replace", find:"마스카라를", repl:"오래된 마스카라를", roHint:"mascara veche" }
-        ],
-        change: [
-          { label:"시간이 있었어요 → 시간이 없었어요", type:"replaceSentence", from:"시간이 있었어요.", to:"시간이 없었어요.", roHint:"nu am avut timp" }
-        ],
-        combine: [
-          { label:"-고 (și)", id:"go", roJoin:"și" },
-          { label:"-아/어/여서 (cauză→rezultat)", id:"so", roJoin:"așa că" },
-          { label:"-(으)니까 (motiv)", id:"nikka", roJoin:"pentru că" },
-          { label:"-는데 (context/contrast)", id:"neunde", roJoin:"dar" },
-          { label:"-더니 (după ce...)", id:"deoni", roJoin:"și apoi" },
-          { label:"-기 전에 (înainte de)", id:"before", roJoin:"înainte să" }
-        ]
-      },
+/**
+ * Transformă predicatul polite într-o bază utilă:
+ * - past: X았/었/였어요 → basePast = X았/었/였, baseAeo = X아/어/여
+ * - 했다: X했어요 → baseHa = X해, basePastHa = X했
+ * - present: X아요/어요/여요 → base = X아/어/여
+ * - copula: 이에요/예요 → baseCop = (prefix + predicate) fără 요 (tratat separat)
+ */
+function analyzePredicate(pred){
+  // ordine importantă (mai specific întâi)
+  // 1) 했다
+  if(pred.endsWith("했어요")){
+    const stem = pred.slice(0, -3); // scoate "어요" (3 caractere)
+    // stem + "했"
+    return { kind:"ha_past", stem, basePast:"했", baseAeo:"해" };
+  }
+  // 2) past: 았/었/였어요
+  if(pred.endsWith("았어요")){
+    const stem = pred.slice(0, -3); // scoate "어요"
+    return { kind:"past", stem, basePast:"았", baseAeo:"아" };
+  }
+  if(pred.endsWith("었어요")){
+    const stem = pred.slice(0, -3);
+    return { kind:"past", stem, basePast:"었", baseAeo:"어" };
+  }
+  if(pred.endsWith("였어요")){
+    const stem = pred.slice(0, -3);
+    return { kind:"past", stem, basePast:"였", baseAeo:"여" };
+  }
 
-      {
-        id: "glasses",
-        title: "Ochelari (imperativ + motiv)",
-        level: "A1→A2",
-        base: [
-          { id:"g1", ko:"안경이 더러워요.", ro:"Ochelarii sunt murdari."},
-          { id:"g2", ko:"써요.", ro:"Îi pun (ochelarii)."},
-          { id:"g3", ko:"닦아요.", ro:"Îi șterg / lustruiesc."}
-        ],
-        add: [
-          { label:"제 (ai mei)", type:"replace", find:"안경이", repl:"제 안경이", roHint:"ochelarii mei" },
-          { label:"너무 (prea)", type:"insertAfterSubject", subject:"안경이", insert:" 너무", roHint:"prea" }
-        ],
-        modify: [
-          { label:"써요 → 쓰세요 (imperativ)", type:"replaceSentence", from:"써요.", to:"쓰세요.", roHint:"pune-i" },
-          { label:"닦아요 → 닦으세요 (imperativ)", type:"replaceSentence", from:"닦아요.", to:"닦으세요.", roHint:"șterge-i" }
-        ],
-        change: [
-          { label:"(Info) -기 전에", type:"infoOnly", note:"Poți crea manual: 쓰기 전에 닦으세요." }
-        ],
-        combine: [
-          { label:"-고 (și)", id:"go", roJoin:"și" },
-          { label:"-아/어/여서 (cauză→rezultat)", id:"so", roJoin:"așa că" },
-          { label:"-(으)니까 (motiv)", id:"nikka", roJoin:"pentru că" },
-          { label:"-는데 (context/contrast)", id:"neunde", roJoin:"dar" },
-          { label:"-더니 (după ce...)", id:"deoni", roJoin:"și apoi" },
-          { label:"-기 전에 (înainte de)", id:"before", roJoin:"înainte să" }
-        ]
-      },
+  // 3) present: 해요/아요/어요/여요
+  if(pred.endsWith("해요")){
+    const stem = pred.slice(0, -2); // scoate "요"
+    // "해" e baza
+    return { kind:"ha_pres", stem, baseAeo:"해" };
+  }
+  if(pred.endsWith("아요")){
+    const stem = pred.slice(0, -2); // scoate "요"
+    return { kind:"pres", stem, baseAeo: pred.slice(0, -2) }; // ex: 가아? (dar în practică: 가요 nu e în listele tale)
+  }
+  if(pred.endsWith("어요")){
+    const stem = pred.slice(0, -2);
+    return { kind:"pres", stem, baseAeo: pred.slice(0, -2) };
+  }
+  if(pred.endsWith("여요")){
+    const stem = pred.slice(0, -2);
+    return { kind:"pres", stem, baseAeo: pred.slice(0, -2) };
+  }
 
-      {
-        id: "alarm",
-        title: "Alarmă (timp + rezultat + deja)",
-        level: "A1→A2",
-        base: [
-          { id:"a1", ko:"알람이 울렸어요.", ro:"A sunat alarma."},
-          { id:"a2", ko:"일어났어요.", ro:"M-am trezit."},
-          { id:"a3", ko:"졸려요.", ro:"Îmi e somn."}
-        ],
-        add: [
-          { label:"시끄러운 (zgomotoasă)", type:"replace", find:"알람이", repl:"시끄러운 알람이", roHint:"alarmă zgomotoasă" },
-          { label:"새벽 5시에", type:"prefixTime", target:"알람이 울렸어요.", out:"새벽 5시에 알람이 울렸어요.", ro:"La 5 dimineața a sunat alarma." },
-          { label:"너무 일찍", type:"replaceSentence", from:"일어났어요.", to:"너무 일찍 일어났어요.", roHint:"prea devreme" },
-          { label:"벌써", type:"replaceSentence", from:"졸려요.", to:"벌써 졸려요.", roHint:"deja" }
-        ],
-        modify: [],
-        change: [],
-        combine: [
-          { label:"-고 (și)", id:"go", roJoin:"și" },
-          { label:"-아/어/여서 (cauză→rezultat)", id:"so", roJoin:"așa că" },
-          { label:"-(으)니까 (motiv)", id:"nikka", roJoin:"pentru că" },
-          { label:"-는데 (context/contrast)", id:"neunde", roJoin:"dar" },
-          { label:"-더니 (după ce...)", id:"deoni", roJoin:"și apoi" },
-          { label:"-기 전에 (înainte de)", id:"before", roJoin:"înainte să" }
-        ]
+  // 4) copula
+  if(pred.endsWith("이에요")){
+    const stem = pred.slice(0, -2); // scoate "요"
+    // rămâne "...이에"
+    return { kind:"cop", stem, copType:"ieyo" };
+  }
+  if(pred.endsWith("예요")){
+    const stem = pred.slice(0, -2); // scoate "요"
+    // rămâne "...예"
+    return { kind:"cop", stem, copType:"yeyo" };
+  }
+
+  // 5) imperativ politicos: ~세요 / ~으세요
+  if(pred.endsWith("세요")){
+    const stem = pred.slice(0, -2); // scoate "요" aproximativ (nu perfect)
+    return { kind:"imp", stem };
+  }
+
+  return { kind:"unknown", stem: pred };
+}
+
+/**
+ * Reguli de legare “la verb”, nu la propoziție:
+ * connectorId: go | so | nikka | neunde | deoni | before
+ */
+function makeConnectedClause(prefix, pred, connectorId){
+  const a = analyzePredicate(pred);
+
+  // Helper: reconstruiește propoziția fără punct
+  const join = (left, right) => (left ? (left + " " + right) : right);
+
+  // -기 전에 are nevoie de forma “V-기 전에” (ideal: forma de dicționar, dar A1–A2: heuristic)
+  if(connectorId === "before"){
+    // Pentru multe verbe pe care le ai: ~했어요/었어요/아요/어요 -> aproximăm la baza fără politețe + "기 전에"
+    // Special: "해요/했어요" -> "하기 전에"
+    if(a.kind === "ha_pres" || a.kind === "ha_past"){
+      // predicat e ceva de tip "...해요" sau "...했어요" unde stem e partea dinainte
+      // Ex: (prefix="비누칠", pred="했어요") => "비누칠하기 전에"
+      const baseVerb = join(prefix, a.stem + "하"); // "비누칠하"
+      return baseVerb + "기 전에";
+    }
+
+    if(a.kind === "past"){
+      // Ex: "틀었어요" => stem="틀", baseVerb="틀"
+      // "틀기 전에"
+      return join(prefix, a.stem) + "기 전에";
+    }
+
+    if(a.kind === "pres"){
+      // Ex: "닦아요" => stem="닦", -> "닦기 전에"
+      return join(prefix, a.stem) + "기 전에";
+    }
+
+    if(a.kind === "imp"){
+      // Ex: "쓰세요" (prefix="") => "쓰" + "기 전에" (ok-ish)
+      return join(prefix, a.stem) + "기 전에";
+    }
+
+    // fallback
+    return join(prefix, pred) + "기 전에";
+  }
+
+  // -고: pentru secvență de acțiuni, de obicei fără marcaj de timp politicos
+  if(connectorId === "go"){
+    if(a.kind === "ha_past" || a.kind === "ha_pres"){
+      // Ex: 비누칠했어요 => 비누칠하고
+      // prefix="비누칠", pred="했어요" => prefix + "하고"
+      const left = prefix ? (prefix + "하고") : (a.stem + "하고");
+      return left;
+    }
+    if(a.kind === "past"){
+      // Ex: 틀었어요 => 틀고 ; 놀랐어요 => 놀라고 (nu perfect pentru toate, dar mult mai “legat de verb”)
+      return join(prefix, a.stem) + "고";
+    }
+    if(a.kind === "pres"){
+      // Ex: 닦아요 => 닦고
+      return join(prefix, a.stem) + "고";
+    }
+    if(a.kind === "cop"){
+      // Ex: 더러워요 (nu e copula, e adjectiv cu 어요) – copula: 예요/이에요 => 이고
+      // stem păstrează "...이에"/"...예" fără 요; simplificăm:
+      if(a.copType === "ieyo") return join(prefix, a.stem.slice(0, -1) + "이고"); // ...이 + 고
+      return join(prefix, a.stem.slice(0, -1) + "고"); // ... + 고
+    }
+    if(a.kind === "imp"){
+      // Ex: 닦으세요 => 닦고 (heuristic)
+      return join(prefix, a.stem) + "고";
+    }
+    return join(prefix, pred) + "고";
+  }
+
+  // -아서/어서 (so): aici folosim baza A/EO/YEO
+  if(connectorId === "so"){
+    if(a.kind === "ha_past" || a.kind === "ha_pres"){
+      // ...해서
+      const left = prefix ? (prefix + "해서") : (a.stem + "해서");
+      return left;
+    }
+    if(a.kind === "past"){
+      // Ex: 틀었어요 => 틀어서, 차가웠어요 => 차가워서 (stem="차가웠"? în cazul tău e "차가웠어요": stem="차가웠"? nu, pentru past: stem e partea înainte de "었어요" => "차가웠" devine "차가웠어서" dacă nu corectăm.
+      // Aici păstrăm: stem + (아/어/여) + 서
+      return join(prefix, a.stem + a.baseAeo) + "서";
+    }
+    if(a.kind === "pres"){
+      // pred era deja ceva de tip "...어" (fără 요), adăugăm 서
+      return join(prefix, a.stem + a.baseAeo) + "서";
+    }
+    if(a.kind === "cop"){
+      // 예요/이에요 => (이)어서/여서
+      if(a.copType === "ieyo"){
+        // ...이어서
+        const base = join(prefix, a.stem.slice(0,-1)); // scoate "에" aproximativ
+        return base + "이어서";
       }
-    ];
-
-    /***********************
-     * STATE
-     ***********************/
-    let currentSet = SETS[0];
-    let workspace = [];      // [{ko, ro, tags:[{kind,label}]}]
-    let activeIndex = -1;
-
-    let finalKo = "";
-    let finalRo = "";
-    let history = [];
-
-    let undoStack = []; // deep copies of {workspace, activeIndex}
-
-    const el = (id) => document.getElementById(id);
-
-    function deepCopy(obj){ return JSON.parse(JSON.stringify(obj)); }
-    function pushUndo(){
-      undoStack.push(deepCopy({workspace, activeIndex}));
-      if(undoStack.length > 60) undoStack.shift();
+      // ...여서
+      return join(prefix, a.stem) + "서";
     }
-    function undo(){
-      const last = undoStack.pop();
-      if(!last) return;
-      workspace = last.workspace;
-      activeIndex = last.activeIndex;
-      syncManualEditors();
-      renderAll();
+    if(a.kind === "imp"){
+      return join(prefix, a.stem) + "서";
     }
+    return join(prefix, pred) + "서";
+  }
 
-    function init(){
-      const s = el("setSelect");
-      s.innerHTML = "";
-      SETS.forEach(set=>{
-        const opt = document.createElement("option");
-        opt.value = set.id;
-        opt.textContent = set.title;
-        s.appendChild(opt);
-      });
-      s.value = currentSet.id;
-
-      s.addEventListener("change", ()=>{
-        const picked = SETS.find(x=>x.id===s.value);
-        if(picked){ currentSet = picked; resetAll(); }
-      });
-
-      el("resetBtn").addEventListener("click", ()=>resetAll());
-      el("randomBtn").addEventListener("click", ()=>{
-        currentSet = SETS[Math.floor(Math.random()*SETS.length)];
-        el("setSelect").value = currentSet.id;
-        resetAll(true);
-      });
-
-      el("applyAdd").addEventListener("click", ()=>applyRuleToActive("add"));
-      el("applyModify").addEventListener("click", ()=>applyRuleToActive("modify"));
-      el("applyChange").addEventListener("click", ()=>applyRuleToActive("change"));
-
-      el("applyManual").addEventListener("click", ()=>{
-        if(activeIndex < 0 || !workspace[activeIndex]) return;
-        pushUndo();
-        workspace[activeIndex].ko = (el("manualKo").value || "").trim();
-        workspace[activeIndex].ro = (el("manualRo").value || "").trim();
-        workspace[activeIndex].tags.push({kind:"MANUAL", label:"Edit manual"});
-        renderAll();
-      });
-
-      el("undoBtn").addEventListener("click", ()=>undo());
-
-      el("buildBtn").addEventListener("click", ()=>buildFinalFromWorkspace());
-
-      el("copyKo").addEventListener("click", ()=>copyText(finalKo, "KO copiat."));
-      el("copyRo").addEventListener("click", ()=>copyText(finalRo, "RO copiat."));
-
-      el("saveBtn").addEventListener("click", ()=>saveToHistory());
-      el("clearHistoryBtn").addEventListener("click", ()=>{ history = []; renderHistory(); });
-
-      resetAll();
+  // -(으)니까 (nikka)
+  if(connectorId === "nikka"){
+    if(a.kind === "ha_past"){
+      // 했어요 -> 했으니까
+      const left = prefix ? (prefix + "했으니까") : (a.stem + "했으니까");
+      return left;
     }
-
-    function resetAll(){
-      undoStack = [];
-      workspace = [];
-      activeIndex = -1;
-
-      // preset: base sentences into workspace
-      currentSet.base.forEach(b=>{
-        workspace.push({ ko:b.ko, ro:b.ro, tags:[{kind:"BASE", label:"Base"}] });
-      });
-
-      activeIndex = workspace.length ? 0 : -1;
-
-      renderAll();
-      syncManualEditors();
-
-      // auto build
-      buildFinalFromWorkspace(true);
+    if(a.kind === "ha_pres"){
+      // 해요 -> 하니까 (mai corect decât 해니까)
+      const baseVerb = join(prefix, a.stem + "하");
+      return baseVerb + "니까";
     }
-
-    function renderAll(){
-      el("levelLabel").textContent = currentSet.level || "A1";
-      renderBase();
-      renderWorkspace();
-      renderSelects();
-      renderActiveLabel();
-      renderPreview();
-      renderHistory();
+    if(a.kind === "past"){
+      // ...었어요 -> ...었으니까 (ok)
+      return join(prefix, a.stem + a.basePast) + "으니까";
     }
-
-    function renderBase(){
-      const wrap = el("baseCards");
-      wrap.innerHTML = "";
-      currentSet.base.forEach((b)=>{
-        const c = document.createElement("div");
-        c.className = "card clickable";
-        c.innerHTML = `
-          <div class="korean">${escapeHtml(b.ko)}</div>
-          <div class="romanian">${escapeHtml(b.ro)}</div>
-          <div class="meta"><span class="tag">Click → Adaugă</span></div>
-        `;
-        c.addEventListener("click", ()=>{
-          pushUndo();
-          workspace.push({ ko:b.ko, ro:b.ro, tags:[{kind:"BASE", label:"Adăugat din bază"}] });
-          activeIndex = workspace.length - 1;
-          syncManualEditors();
-          renderAll();
-        });
-        wrap.appendChild(c);
-      });
-
-      const hint = document.createElement("div");
-      hint.className = "card";
-      hint.innerHTML = `<div class="romanian">Tip: adaugă pași extra, reordonează, apoi COMBINE.</div>`;
-      wrap.appendChild(hint);
+    if(a.kind === "pres"){
+      // ...어요 -> ...니까 (heuristic: pentru consoană finală ar trebui 으니까; aici A1–A2 acceptabil)
+      return join(prefix, a.stem) + "니까";
     }
-
-    function renderWorkspace(){
-      const wrap = el("workspace");
-      wrap.innerHTML = "";
-
-      if(!workspace.length){
-        const empty = document.createElement("div");
-        empty.className = "card";
-        empty.innerHTML = `<div class="romanian">Workspace gol. Click pe o propoziție din “Bază”.</div>`;
-        wrap.appendChild(empty);
-        return;
-      }
-
-      workspace.forEach((st, idx)=>{
-        const c = document.createElement("div");
-        c.className = "card step";
-        const activeTag = (idx === activeIndex) ? `<span class="tag active">ACTIV</span>` : "";
-        c.innerHTML = `
-          <div>
-            <div class="korean">${escapeHtml(st.ko)}</div>
-            <div class="romanian">${escapeHtml(st.ro)}</div>
-            <div class="meta">
-              ${activeTag}
-              <span class="tag">#${idx+1}</span>
-              ${st.tags.slice(-2).map(t=>`<span class="tag">${escapeHtml(t.kind)}</span>`).join("")}
-            </div>
-          </div>
-          <div class="stepControls">
-            <button class="ghost mini" data-act="select">Select</button>
-            <button class="ghost mini" data-act="up">↑</button>
-            <button class="ghost mini" data-act="down">↓</button>
-            <button class="danger mini" data-act="del">Șterge</button>
-          </div>
-        `;
-
-        c.querySelector('[data-act="select"]').addEventListener("click", ()=>{
-          activeIndex = idx;
-          syncManualEditors();
-          renderAll();
-        });
-
-        c.querySelector('[data-act="up"]').addEventListener("click", ()=>{
-          if(idx === 0) return;
-          pushUndo();
-          const tmp = workspace[idx-1];
-          workspace[idx-1] = workspace[idx];
-          workspace[idx] = tmp;
-          activeIndex = idx-1;
-          syncManualEditors();
-          renderAll();
-        });
-
-        c.querySelector('[data-act="down"]').addEventListener("click", ()=>{
-          if(idx >= workspace.length-1) return;
-          pushUndo();
-          const tmp = workspace[idx+1];
-          workspace[idx+1] = workspace[idx];
-          workspace[idx] = tmp;
-          activeIndex = idx+1;
-          syncManualEditors();
-          renderAll();
-        });
-
-        c.querySelector('[data-act="del"]').addEventListener("click", ()=>{
-          pushUndo();
-          workspace.splice(idx,1);
-          if(activeIndex >= workspace.length) activeIndex = workspace.length-1;
-          syncManualEditors();
-          renderAll();
-        });
-
-        wrap.appendChild(c);
-      });
+    if(a.kind === "cop"){
+      // (이)니까
+      if(a.copType === "ieyo") return join(prefix, a.stem.slice(0,-1)) + "이니까";
+      return join(prefix, a.stem) + "니까";
     }
-
-    function renderSelects(){
-      fillSelect("addSelect", currentSet.add);
-      fillSelect("modifySelect", currentSet.modify);
-      fillSelect("changeSelect", currentSet.change);
-      fillSelect("combineSelect", currentSet.combine);
+    if(a.kind === "imp"){
+      return join(prefix, a.stem) + "니까";
     }
+    return join(prefix, pred) + "니까";
+  }
 
-    function fillSelect(id, arr){
-      const sel = el(id);
-      sel.innerHTML = "";
-      if(!arr?.length){
-        sel.appendChild(new Option("— nu există —", ""));
-        return;
-      }
-      arr.forEach((x,i)=> sel.appendChild(new Option(x.label, String(i))));
+  // -는데 (neunde)
+  if(connectorId === "neunde"){
+    if(a.kind === "ha_past"){
+      // 했어요 -> 했는데
+      const left = prefix ? (prefix + "했는데") : (a.stem + "했는데");
+      return left;
     }
-
-    function renderActiveLabel(){
-      el("activeStepLabel").textContent = (activeIndex >= 0)
-        ? `Pas activ: #${activeIndex+1}`
-        : "Pas activ: —";
+    if(a.kind === "ha_pres"){
+      // 해요 -> 하는데 (aprox: 하 + 는데)
+      const baseVerb = join(prefix, a.stem + "하");
+      return baseVerb + "는데";
     }
-
-    function renderPreview(){
-      el("previewKo").textContent = finalKo || "—";
-      el("previewRo").textContent = finalRo || "—";
-
-      const meta = el("previewMeta");
-      meta.innerHTML = "";
-      meta.appendChild(tagSpan(`Pași: ${workspace.length}`, "ok"));
-      meta.appendChild(tagSpan(`Set: ${currentSet.title}`, ""));
+    if(a.kind === "past"){
+      // ...었어요 -> ...었는데
+      return join(prefix, a.stem + a.basePast) + "는데";
     }
-
-    function renderHistory(){
-      const h = el("history");
-      h.innerHTML = "";
-      if(!history.length){
-        const empty = document.createElement("div");
-        empty.className = "card";
-        empty.innerHTML = `<div class="romanian">Nu ai nimic salvat în sesiunea aceasta.</div>`;
-        h.appendChild(empty);
-        return;
-      }
-      history.slice().reverse().forEach(item=>{
-        const c = document.createElement("div");
-        c.className = "card";
-        c.innerHTML = `
-          <div class="korean">${escapeHtml(item.ko)}</div>
-          <div class="romanian">${escapeHtml(item.ro)}</div>
-          <div class="meta">
-            <span class="tag">${escapeHtml(item.setTitle)}</span>
-            <button class="ghost mini">Reîncarcă</button>
-          </div>
-        `;
-        c.querySelector("button").addEventListener("click", ()=>{
-          finalKo = item.ko;
-          finalRo = item.ro;
-          renderPreview();
-        });
-        h.appendChild(c);
-      });
+    if(a.kind === "pres"){
+      // ...어요 -> ...는데 (aprox)
+      return join(prefix, a.stem) + "는데";
     }
-
-    function syncManualEditors(){
-      if(activeIndex < 0 || !workspace[activeIndex]){
-        el("manualKo").value = "";
-        el("manualRo").value = "";
-        return;
-      }
-      el("manualKo").value = workspace[activeIndex].ko || "";
-      el("manualRo").value = workspace[activeIndex].ro || "";
+    if(a.kind === "cop"){
+      // ...인데
+      if(a.copType === "ieyo") return join(prefix, a.stem.slice(0,-1)) + "인데";
+      return join(prefix, a.stem) + "인데";
     }
-
-    function applyRuleToActive(listName){
-      if(activeIndex < 0 || !workspace[activeIndex]) return;
-
-      const selId = (listName === "add") ? "addSelect"
-                  : (listName === "modify") ? "modifySelect"
-                  : "changeSelect";
-
-      const idx = parseInt(el(selId).value, 10);
-      const rule = currentSet[listName]?.[idx];
-      if(!rule) return;
-
-      pushUndo();
-      const st = workspace[activeIndex];
-
-      const res = applyRuleToSentence(rule, st.ko, st.ro);
-      if(!res.ok){
-        // anulăm undo dacă nu s-a aplicat
-        undoStack.pop();
-        return;
-      }
-
-      st.ko = res.ko;
-      st.ro = res.ro;
-      st.tags.push({kind: listName.toUpperCase(), label: rule.label});
-
-      syncManualEditors();
-      renderAll();
+    if(a.kind === "imp"){
+      return join(prefix, a.stem) + "는데";
     }
+    return join(prefix, pred) + "는데";
+  }
 
-    function applyRuleToSentence(rule, ko, ro){
-      let newKo = ko || "";
-      let newRo = ro || "";
-
-      if(rule.type === "infoOnly"){
-        newRo = (newRo || "") + ` (Notă: ${rule.note})`;
-        return {ok:true, ko:newKo, ro:newRo};
-      }
-
-      if(rule.type === "replace"){
-        if(newKo.includes(rule.find)){
-          newKo = newKo.replace(rule.find, rule.repl);
-          if(rule.roHint) newRo = addHint(newRo, rule.roHint);
-          return {ok:true, ko:newKo, ro:newRo};
-        }
-        return {ok:false, ko, ro};
-      }
-
-      if(rule.type === "replaceSentence"){
-        if(newKo.includes(rule.from)){
-          newKo = newKo.replace(rule.from, rule.to);
-          if(rule.roHint) newRo = addHint(newRo, rule.roHint);
-          return {ok:true, ko:newKo, ro:newRo};
-        }
-        return {ok:false, ko, ro};
-      }
-
-      if(rule.type === "prefixObject" || rule.type === "prefixAdverb" || rule.type === "prefixTime"){
-        if(newKo.includes(rule.target)){
-          newKo = newKo.replace(rule.target, rule.out);
-          if(rule.ro) newRo = rule.ro;
-          return {ok:true, ko:newKo, ro:newRo};
-        }
-        newKo = rule.out;
-        if(rule.ro) newRo = rule.ro;
-        return {ok:true, ko:newKo, ro:newRo};
-      }
-
-      if(rule.type === "insertBeforeVerb"){
-        if(newKo.includes(rule.verb)){
-          newKo = newKo.replace(rule.verb, rule.insert + rule.verb);
-          if(rule.roHint) newRo = addHint(newRo, rule.roHint);
-          return {ok:true, ko:newKo, ro:newRo};
-        }
-        return {ok:false, ko, ro};
-      }
-
-      if(rule.type === "insertAfterSubject"){
-        const token = rule.subject;
-        const i = newKo.indexOf(token);
-        if(i !== -1){
-          const before = newKo.slice(0, i + token.length);
-          const after  = newKo.slice(i + token.length);
-          newKo = before + rule.insert + after;
-          if(rule.roHint) newRo = addHint(newRo, rule.roHint);
-          return {ok:true, ko:newKo, ro:newRo};
-        }
-        return {ok:false, ko, ro};
-      }
-
-      return {ok:false, ko, ro};
+  // -더니 (deoni)
+  if(connectorId === "deoni"){
+    if(a.kind === "ha_past"){
+      const left = prefix ? (prefix + "했더니") : (a.stem + "했더니");
+      return left;
     }
-
-    /***********************
-     *  MOTOR GENERAL: KO → conectiv
-     *  Heuristici A1–A2, extensibile
-     ***********************/
-    function normalizeKoSentence(s){
-      return (s || "").trim().replace(/\s+/g," ");
+    if(a.kind === "past"){
+      // ...었어요 -> ...었더니
+      return join(prefix, a.stem + a.basePast) + "더니";
     }
-    function stripFinalPunct(s){
-      return (s || "").replace(/[.?!]$/,"").trim();
+    if(a.kind === "ha_pres"){
+      const baseVerb = join(prefix, a.stem + "하");
+      return baseVerb + "더니";
     }
-
-    // Returnează {stem, tenseHint} din propoziție, dacă e posibil.
-    // Heuristic: caută terminații polite uzuale.
-    function splitPoliteEnding(koNoPunct){
-      // Ordinea contează (mai specific întâi)
-      const patterns = [
-        { end:"했어요", stem:"했", type:"past" },
-        { end:"했어", stem:"했", type:"past" },
-        { end:"했어요", stem:"했", type:"past" },
-        { end:"했어요", stem:"했", type:"past" },
-
-        { end:"었어요", stem:"었", type:"past" },
-        { end:"았어요", stem:"았", type:"past" },
-        { end:"였어요", stem:"였", type:"past" },
-
-        { end:"해요", stem:"해", type:"pres" },
-        { end:"해", stem:"해", type:"pres" },
-
-        { end:"어요", stem:"어", type:"pres" },
-        { end:"아요", stem:"아", type:"pres" },
-        { end:"여요", stem:"여", type:"pres" },
-
-        { end:"이에요", stem:"이", type:"cop" },
-        { end:"예요", stem:"", type:"cop" }
-      ];
-
-      for(const p of patterns){
-        if(koNoPunct.endsWith(p.end)){
-          const base = koNoPunct.slice(0, koNoPunct.length - p.end.length);
-          return { base, end:p.end, type:p.type };
-        }
-      }
-      return { base: koNoPunct, end:"", type:"unknown" };
+    if(a.kind === "pres"){
+      return join(prefix, a.stem) + "더니";
     }
+    return join(prefix, pred) + "더니";
+  }
 
-    // Convertește o propoziție (KO) în clauză conectivă pentru un anumit conector.
-    // connectorId: go | so | nikka | neunde | deoni | before
-    function toConnective(koSentence, connectorId){
-      const s = normalizeKoSentence(koSentence);
-      const noPunct = stripFinalPunct(s);
-      const { base, end, type } = splitPoliteEnding(noPunct);
+  // fallback
+  return join(prefix, pred);
+}
 
-      // fallback: dacă nu găsim ending, doar adăugăm conectorul “ca text”
-      const rawFallback = (suffix) => `${noPunct}${suffix}`;
+/**
+ * API principal:
+ * Transformă o propoziție în clauză conectivă pentru connectorId.
+ */
+function toConnective(koSentence, connectorId){
+  const s = stripFinalPunct(normalizeKoSentence(koSentence));
+  const { prefix, pred } = splitIntoPrefixAndPredicate(s);
+  return makeConnectedClause(prefix, pred, connectorId);
+}
 
-      // Ajutor: pentru multe cazuri, putem folosi “base + ending transform”
-      const endsWith = (x) => noPunct.endsWith(x);
+/***********************
+ *  Build final from workspace
+ ***********************/
+function buildFinalFromWorkspace(silent=false){
+  if(!workspace.length){
+    finalKo = "—";
+    finalRo = "—";
+    renderPreview();
+    return;
+  }
 
-      // 1) -고
-      if(connectorId === "go"){
-        // Dacă era imperativ (쓰세요/닦으세요) nu e în patterns; îl tratăm separat:
-        if(endsWith("세요")){
-          // ex: 닦으세요 -> 닦고 (heuristic)
-          const b = noPunct.slice(0, -2); // scoate "요"
-          return `${b}고`;
-        }
-        if(end){
-          // ex: 틀었어요 -> 틀었 + 고
-          return `${base}${end.replace(/요$/,"")}고`.replace(/고고$/,"고");
-        }
-        return rawFallback("고");
-      }
+  const idx = parseInt(el("combineSelect").value, 10);
+  const combRule = currentSet.combine?.[idx] || currentSet.combine?.[0] || { id:"go", roJoin:"și" };
+  const connectorId = combRule.id;
 
-      // 2) -아서/어서/여서 (so)
-      if(connectorId === "so"){
-        // 하다-family: 해요/했어요 -> 해서
-        if(endsWith("해요")) return `${noPunct.slice(0,-2)}서`;    // 해요 -> 해서
-        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}서`; // 했어요 -> 해서 (ok pentru A2)
-        if(endsWith("여요")) return `${noPunct.slice(0,-2)}서`;   // 여요 -> 여서
+  const koParts = workspace.map(x => normalizeKoSentence(x.ko)).filter(Boolean);
+  const roParts = workspace.map(x => (x.ro || "").trim().replace(/\s+/g," ")).filter(Boolean);
 
-        // Past: ...았어요/었어요/였어요 -> ...아서/어서/여서
-        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}아서`;
-        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}어서`;
-        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}여서`;
-
-        // Present: ...아요/어요 -> ...아서/어서
-        if(endsWith("아요")) return `${noPunct.slice(0,-2)}아서`;
-        if(endsWith("어요")) return `${noPunct.slice(0,-2)}어서`;
-
-        // Copula: 예요/이에요 -> (이)어서 (simplu)
-        if(endsWith("이에요")) return `${noPunct.slice(0,-3)}이어서`;
-        if(endsWith("예요")) return `${noPunct.slice(0,-2)}여서`;
-
-        // Imperativ:
-        if(endsWith("세요")) return rawFallback("서");
-
-        return rawFallback("서");
-      }
-
-      // 3) -(으)니까
-      if(connectorId === "nikka"){
-        if(endsWith("해요")) return `${noPunct.slice(0,-2)}니까`;     // 해요 -> 하니까? (heuristic simplu: 해니까/하니까)
-        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}으니까`; // 했어요 -> 했으니까
-
-        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}으니까`; // 봤어요 -> 봤으니까 (ok)
-        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}으니까`;
-        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}으니까`;
-
-        if(endsWith("아요")) return `${noPunct.slice(0,-2)}니까`;     // 가요 -> 가니까 (ok-ish)
-        if(endsWith("어요")) return `${noPunct.slice(0,-2)}니까`;     // 먹어요 -> 먹으니까? (heuristic: 먹니까; acceptabil A2 ca aproximare)
-        if(endsWith("여요")) return `${noPunct.slice(0,-2)}니까`;
-
-        if(endsWith("이에요")) return `${noPunct.slice(0,-3)}이니까`;
-        if(endsWith("예요")) return `${noPunct.slice(0,-2)}니까`;
-
-        if(endsWith("세요")) return rawFallback("니까");
-
-        return rawFallback("니까");
-      }
-
-      // 4) -는데
-      if(connectorId === "neunde"){
-        if(endsWith("해요")) return `${noPunct.slice(0,-2)}는데`;      // 해요 -> 하는데/해는데 (heuristic: 해는데)
-        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}는데`;   // 했어요 -> 했는데
-
-        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}는데`;
-        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}는데`;
-        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}는데`;
-
-        if(endsWith("아요")) return `${noPunct.slice(0,-2)}는데`;
-        if(endsWith("어요")) return `${noPunct.slice(0,-2)}는데`;
-        if(endsWith("여요")) return `${noPunct.slice(0,-2)}는데`;
-
-        if(endsWith("이에요")) return `${noPunct.slice(0,-3)}인데`;
-        if(endsWith("예요")) return `${noPunct.slice(0,-2)}인데`;
-
-        if(endsWith("세요")) return rawFallback("는데");
-
-        return rawFallback("는데");
-      }
-
-      // 5) -더니 (deoni)
-      if(connectorId === "deoni"){
-        // ideal: acțiune înainte → rezultat observat după
-        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}더니`;
-        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}더니`;
-        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}더니`;
-        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}더니`;
-
-        // dacă e prezent, încă îl acceptăm: ...더니
-        if(endsWith("해요")) return `${noPunct.slice(0,-2)}더니`;
-        if(endsWith("아요")) return `${noPunct.slice(0,-2)}더니`;
-        if(endsWith("어요")) return `${noPunct.slice(0,-2)}더니`;
-
-        return rawFallback("더니");
-      }
-
-      // 6) -기 전에 (before)
-      if(connectorId === "before"){
-        // Heuristic: scoate polite ending și adaugă "기 전에"
-        // 해요 -> 하기 전에 (preferabil), dar aici simplificăm:
-        if(endsWith("해요")) return `${noPunct.slice(0,-2)}기 전에`.replace(/해기 전에$/,"하기 전에");
-        if(endsWith("했어요")) return `${noPunct.slice(0,-3)}기 전에`.replace(/했기 전에$/,"하기 전에");
-
-        if(endsWith("아요")) return `${noPunct.slice(0,-2)}기 전에`;
-        if(endsWith("어요")) return `${noPunct.slice(0,-2)}기 전에`;
-        if(endsWith("여요")) return `${noPunct.slice(0,-2)}기 전에`;
-
-        if(endsWith("았어요")) return `${noPunct.slice(0,-3)}기 전에`;
-        if(endsWith("었어요")) return `${noPunct.slice(0,-3)}기 전에`;
-        if(endsWith("였어요")) return `${noPunct.slice(0,-3)}기 전에`;
-
-        if(endsWith("세요")) return `${noPunct.slice(0,-2)}기 전에`; // 쓰세요 -> 쓰기 전에 (ok-ish)
-
-        return `${noPunct}기 전에`;
-      }
-
-      // default
-      return noPunct;
+  // KO: conective pentru toate în afară de ultima
+  const koClauses = [];
+  for(let i=0;i<koParts.length;i++){
+    const isLast = (i === koParts.length - 1);
+    if(isLast){
+      let last = koParts[i].trim();
+      if(!/[.?!]$/.test(last)) last += ".";
+      koClauses.push(last);
+    }else{
+      koClauses.push(toConnective(koParts[i], connectorId));
     }
+  }
+  finalKo = koClauses.join(" ").replace(/\s+/g," ").trim();
 
-    // Construiește finalul:
-    // - transformă toate propozițiile, mai puțin ultima, în conective
-    // - ultima rămâne propoziție încheiată (cu punct)
-    function buildFinalFromWorkspace(silent=false){
-      if(!workspace.length){
-        finalKo = "—";
-        finalRo = "—";
-        renderPreview();
-        return;
-      }
-
-      const idx = parseInt(el("combineSelect").value, 10);
-      const combRule = currentSet.combine?.[idx] || currentSet.combine?.[0] || { id:"go", roJoin:"și" };
-      const connectorId = combRule.id;
-
-      const koParts = workspace.map(x => normalizeKoSentence(x.ko));
-      const roParts = workspace.map(x => (x.ro || "").trim().replace(/\s+/g," "));
-
-      // KO: conective pentru toate în afară de ultima
-      const koClauses = [];
-      for(let i=0;i<koParts.length;i++){
-        const isLast = (i === koParts.length - 1);
-        const s = normalizeKoSentence(koParts[i]);
-        if(!s) continue;
-
-        if(isLast){
-          // final sentence: ensure punctuation
-          let last = s.trim();
-          if(!/[.?!]$/.test(last)) last += ".";
-          koClauses.push(last);
-        }else{
-          koClauses.push(toConnective(s, connectorId));
-        }
-      }
-
-      // Adăugăm virgule/spații minim:
-      // ex: A서 B고 C는데 D.
-      // Punem spațiu între clauze.
-      finalKo = koClauses.join(" ").replace(/\s+/g," ").trim();
-
-      // RO: simplu, dar lizibil. Pentru A1–A2 e ok.
-      // Toate, mai puțin ultima, se termină fără punct; le legăm cu roJoin.
-      const roJoin = combRule.roJoin || "și";
-      const cleanRo = roParts.map(s => (s || "").replace(/[.?!]$/,"").trim()).filter(Boolean);
-      if(cleanRo.length === 1){
-        finalRo = cleanRo[0] + ".";
-      }else{
-        let ro = cleanRo[0];
-        for(let i=1;i<cleanRo.length;i++){
-          ro = `${ro} ${roJoin} ${cleanRo[i]}`;
-        }
-        finalRo = ro.trim() + ".";
-      }
-
-      renderPreview();
-      if(!silent){
-        // opțional: feedback mic
-      }
+  // RO: legare simplă (coreeană e focusul aici)
+  const roJoin = combRule.roJoin || "și";
+  const cleanRo = roParts.map(s => s.replace(/[.?!]$/,"").trim()).filter(Boolean);
+  if(cleanRo.length === 1){
+    finalRo = cleanRo[0] + ".";
+  }else{
+    let ro = cleanRo[0];
+    for(let i=1;i<cleanRo.length;i++){
+      ro = `${ro} ${roJoin} ${cleanRo[i]}`;
     }
+    finalRo = ro.trim() + ".";
+  }
 
-    function saveToHistory(){
-      if(!finalKo || finalKo === "—") return;
-      history.push({ ko: finalKo, ro: finalRo, setTitle: currentSet.title });
-      renderHistory();
-    }
-
-    function addHint(ro, hint){
-      if(!ro) return ro;
-      if(ro.includes(hint)) return ro;
-      return ro + ` (hint: ${hint})`;
-    }
-
-    function tagSpan(text, kind){
-      const span = document.createElement("span");
-      span.className = "tag " + (kind || "");
-      span.textContent = text;
-      return span;
-    }
-
-    async function copyText(txt, okMsg){
-      try{
-        await navigator.clipboard.writeText(txt || "");
-        el("copyStatus").textContent = okMsg;
-        el("copyStatus").className = "small copyOk";
-        setTimeout(()=>{ el("copyStatus").textContent=""; }, 1200);
-      }catch(e){
-        el("copyStatus").textContent = "Nu pot copia (browser restrictions).";
-        el("copyStatus").className = "small";
-      }
-    }
-
-    function escapeHtml(str){
-      return (str ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    init();
-  </script>
+  renderPreview();
+}
+</script>
 </body>
 </html>
