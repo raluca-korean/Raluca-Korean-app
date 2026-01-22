@@ -399,8 +399,43 @@ function buildDictFromLesson(){
   });
 }
 buildDictFromLesson();
+const STORAGE_KEY = "roko_dict_v1";
 
-/***********************
+function serializeDict(){
+  return JSON.stringify({
+    pairs: Array.from(DICT.ko2ro.entries()).map(([kKo, ro]) => ({ kKo, ro }))
+  });
+}
+
+function loadDictFromStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const obj = JSON.parse(raw);
+    if(!obj?.pairs?.length) return;
+
+    obj.pairs.forEach(p => {
+      if(p?.kKo && p?.ro){
+        DICT.ko2ro.set(p.kKo, p.ro);
+        // reconstruim ro2ko inversând prin "addPair" ca să normalizeze cheile
+        const koGuess = p.kKo; // kKo este deja normalizat
+        // nu avem exact KO original, dar e suficient pentru lookup KO->RO.
+        // pentru RO->KO vom păstra din lecție + ce adaugi cu addPair (mai jos).
+      }
+    });
+  }catch(e){
+    // ignore
+  }
+}
+
+function saveDictToStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY, serializeDict());
+  }catch(e){
+    // ignore
+  }
+}
+  /***********************
  * STATE + AUTO-FILL CONTROL
  ***********************/
 const state = {
