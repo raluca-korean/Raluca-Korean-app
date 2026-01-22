@@ -320,23 +320,79 @@ function addHint(ro, hint){
   if(ro.includes(hint)) return ro;
   return ro + ` (hint: ${hint})`;
 }
-
 function applyRule(rule, ko, ro){
   let newKo = ko, newRo = ro;
 
+  const norm = (s) => (s || "").trim().replace(/\s+/g," ");
+
+  // 1) Prefix (setează direct propoziția extinsă)
   if(rule.type === "prefix"){
     newKo = rule.outKo;
     newRo = rule.outRo ?? ro;
-    return { ok:true, ko:newKo, ro:newRo };
+    return { ok:true, ko:norm(newKo), ro:newRo };
   }
 
+  // 2) Replace (MODIFY clasic)
   if(rule.type === "replace"){
     if(newKo.includes(rule.find)){
       newKo = newKo.replace(rule.find, rule.repl);
       if(rule.roHint) newRo = addHint(newRo, rule.roHint);
-      return { ok:true, ko:newKo, ro:newRo };
+      return { ok:true, ko:norm(newKo), ro:newRo };
     }
     return { ok:false, ko, ro };
+  }
+
+  // 3) INSERT după subiect (ex: "눈이" + " 너무" => "눈이 너무 ...")
+  if(rule.type === "insertAfterSubject"){
+    const s = norm(newKo);
+    const idx = s.indexOf(rule.subject);
+    if(idx === -1) return { ok:false, ko, ro };
+
+    const before = s.slice(0, idx + rule.subject.length);
+    const after  = s.slice(idx + rule.subject.length);
+    newKo = norm(before + (rule.insert || "") + after);
+
+    if(rule.roHint) newRo = addHint(newRo, rule.roHint);
+    return { ok:true, ko:newKo, ro:newRo };
+  }
+
+  // 4) INSERT înainte de predicat (ultimul token) (ex: "준비해요." -> "빨리 준비해요.")
+  if(rule.type === "insertBeforePredicate"){
+    const s = norm(newKo);
+    const punct = /[.?!]$/.test(s) ? s.slice(-1) : "";
+    const core = punct ? s.slice(0,-1) : s;
+    const parts = core.split(" ");
+    if(parts.length < 1) return { ok:false, ko, ro };
+
+    const pred = parts[parts.length-1];
+    const prefix = parts.slice(0,-1).join(" ");
+    const insert = (rule.insert || "").trim();
+
+    if(!insert) return { ok:false, ko, ro };
+
+    newKo = norm((prefix ? prefix + " " : "") + insert + " " + pred) + punct;
+
+    if(rule.roHint) newRo = addHint(newRo, rule.roHint);
+    return { ok:true, ko:newKo, ro:newRo };
+  }
+
+  // 5) INSERT înainte de un token exact (ex: înainte de "나갈" adaugi "다시")
+  if(rule.type === "insertBeforeToken"){
+    const s = norm(newKo);
+    const token = rule.token;
+    const i = s.indexOf(token);
+    if(i === -1) return { ok:false, ko, ro };
+
+    const insert = (rule.insert || "").trim();
+    if(!insert) return { ok:false, ko, ro };
+
+    // evită dublarea dacă există deja
+    if(s.includes(insert + " " + token)) return { ok:false, ko, ro };
+
+    newKo = norm(s.slice(0, i) + insert + " " + s.slice(i));
+
+    if(rule.roHint) newRo = addHint(newRo, rule.roHint);
+    return { ok:true, ko:newKo, ro:newRo };
   }
 
   return { ok:false, ko, ro };
