@@ -173,7 +173,7 @@
 <body>
   <div class="wrap">
     <h1>Extension Practice</h1>
-    <div class="sub">Scrii 3 propoziții → alegi ADD / MODIFY / CHANGE → COMBINE în 2 pași → fraza finală</div>
+    <div class="sub">Scrii 3 propoziții → se completează RO↔KO (din dicționarul lecției) → ADD/MODIFY/CHANGE → COMBINE</div>
 
     <div class="grid3">
       <!-- CARD 1 -->
@@ -184,11 +184,11 @@
         <div class="editBox">
           <div class="field">
             <label>KO</label>
-            <input id="inKo0" type="text" placeholder="Scrie propoziția în coreeană (ex: 비누칠했어요.)" />
+            <input id="inKo0" type="text" placeholder="Scrie KO (ex: 비누칠했어요.)" />
           </div>
           <div class="field" style="margin-bottom:0;">
             <label>RO</label>
-            <input id="inRo0" type="text" placeholder="Scrie traducerea în română (ex: M-am săpunit.)" />
+            <input id="inRo0" type="text" placeholder="Scrie RO (ex: M-am săpunit.)" />
           </div>
           <div class="controls" style="margin-top:10px;">
             <button class="ghost" id="setBase0">Setează ca bază</button>
@@ -218,11 +218,11 @@
         <div class="editBox">
           <div class="field">
             <label>KO</label>
-            <input id="inKo1" type="text" placeholder="Scrie propoziția în coreeană" />
+            <input id="inKo1" type="text" placeholder="Scrie KO" />
           </div>
           <div class="field" style="margin-bottom:0;">
             <label>RO</label>
-            <input id="inRo1" type="text" placeholder="Scrie traducerea în română" />
+            <input id="inRo1" type="text" placeholder="Scrie RO" />
           </div>
           <div class="controls" style="margin-top:10px;">
             <button class="ghost" id="setBase1">Setează ca bază</button>
@@ -252,11 +252,11 @@
         <div class="editBox">
           <div class="field">
             <label>KO</label>
-            <input id="inKo2" type="text" placeholder="Scrie propoziția în coreeană" />
+            <input id="inKo2" type="text" placeholder="Scrie KO" />
           </div>
           <div class="field" style="margin-bottom:0;">
             <label>RO</label>
-            <input id="inRo2" type="text" placeholder="Scrie traducerea în română" />
+            <input id="inRo2" type="text" placeholder="Scrie RO" />
           </div>
           <div class="controls" style="margin-top:10px;">
             <button class="ghost" id="setBase2">Setează ca bază</button>
@@ -279,7 +279,6 @@
       </section>
     </div>
 
-    <!-- COMBINE STEP 1 -->
     <div class="combineBlock">
       <div class="combineTitle">COMBINE 1 (Propoziția 1 + Propoziția 2)</div>
       <div class="centerRow">
@@ -293,7 +292,6 @@
       </div>
     </div>
 
-    <!-- COMBINE STEP 2 -->
     <div class="combineBlock">
       <div class="combineTitle">COMBINE 2 (Rezultatul de sus + Propoziția 3)</div>
       <div class="centerRow">
@@ -317,14 +315,13 @@
 
 <script>
 /***********************
- * TEMPLATE reutilizabil:
- * - regulile rămân (ADD/MODIFY/CHANGE)
- * - propozițiile le scrii tu și le setezi ca bază
+ * LECȚIE + REGULI (exemplu)
+ * IMPORTANT: Dicționarul RO↔KO se construiește automat din aceste propoziții.
  ***********************/
 const LESSON = {
   cards: [
     {
-      base: { ko:"", ro:"" }, // nu mai pre-populăm obligatoriu
+      base: { ko:"비누칠했어요.", ro:"M-am săpunit." },
       add: [
         { label:"ADD 몸에", type:"prefix", outKo:"몸에 비누칠했어요.", outRo:"M-am săpunit pe corp." }
       ],
@@ -332,7 +329,7 @@ const LESSON = {
       change: []
     },
     {
-      base: { ko:"", ro:"" },
+      base: { ko:"물을 틀었어요.", ro:"Am dat drumul la apă." },
       add: [],
       modify: [
         { label:"MODIFY 따뜻한", type:"replace", find:"물을", repl:"따뜻한 물을", roHint:"apă caldă" }
@@ -340,7 +337,7 @@ const LESSON = {
       change: []
     },
     {
-      base: { ko:"", ro:"" },
+      base: { ko:"놀랐어요.", ro:"Am fost surprins(ă)." },
       add: [
         { label:"ADD 깜짝", type:"prefix", outKo:"깜짝 놀랐어요.", outRo:"Am fost foarte surprins(ă)." }
       ],
@@ -350,11 +347,9 @@ const LESSON = {
   ]
 };
 
-// Conectori disponibili
 const CONNECTORS_1 = [
   { id:"go", label:"-고 (și)", roJoin:"și" }
 ];
-
 const CONNECTORS_2 = [
   { id:"so", label:"-아/어/여서 (cauză → rezultat)", roJoin:"așa că" },
   { id:"nikka", label:"-(으)니까 (motiv)", roJoin:"pentru că" },
@@ -365,24 +360,64 @@ const CONNECTORS_2 = [
 ];
 
 /***********************
- * STATE
+ * UTIL
+ ***********************/
+const el = (id) => document.getElementById(id);
+const norm = (s) => (s||"").trim().replace(/\s+/g," ");
+const stripPunct = (s) => (s||"").trim().replace(/[.?!]$/,"");
+const keyNorm = (s) => stripPunct(norm(s)).toLowerCase(); // pt RO; KO rămâne ok și cu lowerCase
+
+/***********************
+ * DICȚIONAR RO↔KO (offline)
+ * - se construiește din base + outKo/outRo din reguli
+ ***********************/
+const DICT = {
+  ro2ko: new Map(),
+  ko2ro: new Map()
+};
+
+function addPair(ko, ro){
+  const kKo = keyNorm(ko);
+  const kRo = keyNorm(ro);
+  if(kKo && ro) DICT.ko2ro.set(kKo, ro);
+  if(kRo && ko) DICT.ro2ko.set(kRo, ko);
+}
+
+function buildDictFromLesson(){
+  DICT.ro2ko.clear(); DICT.ko2ro.clear();
+  LESSON.cards.forEach(c=>{
+    if(c.base?.ko && c.base?.ro) addPair(c.base.ko, c.base.ro);
+    (c.add||[]).forEach(r=>{
+      if(r.outKo && r.outRo) addPair(r.outKo, r.outRo);
+    });
+    (c.modify||[]).forEach(r=>{
+      // modify nu are ro complet => nu adăugăm perechi sigure aici
+    });
+    (c.change||[]).forEach(r=>{
+      if(r.outKo && r.outRo) addPair(r.outKo, r.outRo);
+    });
+  });
+}
+buildDictFromLesson();
+
+/***********************
+ * STATE + AUTO-FILL CONTROL
  ***********************/
 const state = {
-  cards: LESSON.cards.map(() => ({
-    baseKo: "",
-    baseRo: "",
-    ko: "",
-    ro: "",
-    tag: "—"
+  cards: LESSON.cards.map(c => ({
+    baseKo: c.base.ko || "",
+    baseRo: c.base.ro || "",
+    ko: c.base.ko || "",
+    ro: c.base.ro || "",
+    tag: "BASE",
+    lastAuto: null // "ko" sau "ro" (ca să nu rescriem agresiv)
   })),
   combined12: { ko:"", ro:"" },
   final: { ko:"", ro:"" }
 };
 
-const el = (id) => document.getElementById(id);
-
 /***********************
- * RULES
+ * RULES (ADD/MODIFY/CHANGE)
  ***********************/
 function addHint(ro, hint){
   if(!ro) return ro;
@@ -396,14 +431,14 @@ function applyRule(rule, ko, ro){
   if(rule.type === "prefix"){
     newKo = rule.outKo;
     newRo = rule.outRo ?? ro;
-    return { ok:true, ko:newKo, ro:newRo };
+    return { ok:true, ko:norm(newKo), ro:newRo };
   }
 
   if(rule.type === "replace"){
     if(newKo.includes(rule.find)){
       newKo = newKo.replace(rule.find, rule.repl);
       if(rule.roHint) newRo = addHint(newRo, rule.roHint);
-      return { ok:true, ko:newKo, ro:newRo };
+      return { ok:true, ko:norm(newKo), ro:newRo };
     }
     return { ok:false, ko, ro };
   }
@@ -412,23 +447,20 @@ function applyRule(rule, ko, ro){
 }
 
 /***********************
- * CONNECTOR ENGINE
+ * CONNECTOR ENGINE (legat de verb)
  ***********************/
-function normalizeKoSentence(s){ return (s||"").trim().replace(/\s+/g," "); }
+function normalizeKoSentence(s){ return norm(s); }
 function stripFinalPunct(s){ return normalizeKoSentence(s).replace(/[.?!]$/,"").trim(); }
 function ensurePeriod(ko){
   const t = normalizeKoSentence(ko);
   return /[.?!]$/.test(t) ? t : (t + ".");
 }
-function stripPunct(s){ return (s||"").trim().replace(/[.?!]$/,""); }
-
 function splitIntoPrefixAndPredicate(sentenceNoPunct){
   const s = normalizeKoSentence(sentenceNoPunct);
   const parts = s.split(" ");
   if(parts.length === 1) return { prefix:"", pred: parts[0] };
   return { prefix: parts.slice(0,-1).join(" "), pred: parts[parts.length-1] };
 }
-
 function analyzePredicate(pred){
   if(pred.endsWith("했어요")) return { kind:"ha_past", stem: pred.slice(0,-3) };
   if(pred.endsWith("았어요")) return { kind:"past", stem: pred.slice(0,-3), aeo:"아", past:"았" };
@@ -446,7 +478,6 @@ function analyzePredicate(pred){
 
   return { kind:"unknown", stem: pred };
 }
-
 function joinPrefix(prefix, tail){ return prefix ? (prefix + " " + tail) : tail; }
 
 function toConnective(sentence, connectorId){
@@ -526,18 +557,17 @@ function toConnective(sentence, connectorId){
 }
 
 /***********************
- * UI
+ * UI HELPERS
  ***********************/
 function fillModeSelect(i){
   const mode = el("mode"+i);
   mode.innerHTML = "";
-  const opts = [
+  [
     { v:"none", t:"NONE" },
     { v:"add", t:"ADD" },
     { v:"modify", t:"MODIFY" },
     { v:"change", t:"CHANGE" }
-  ];
-  opts.forEach(o => mode.appendChild(new Option(o.t, o.v)));
+  ].forEach(o => mode.appendChild(new Option(o.t, o.v)));
   mode.value = "none";
 }
 
@@ -564,9 +594,8 @@ function fillOptionSelect(i){
 }
 
 function renderCard(i){
-  el("baseKo"+i).textContent = state.cards[i].baseKo || "— (scrie și apasă «Setează ca bază»)";
+  el("baseKo"+i).textContent = state.cards[i].baseKo || "—";
   el("baseRo"+i).textContent = state.cards[i].baseRo || "—";
-
   el("outKo"+i).textContent = state.cards[i].ko || "—";
   el("outRo"+i).textContent = state.cards[i].ro || "—";
 
@@ -590,6 +619,62 @@ function fillConnectorSelects(){
   c2.value = "0";
 }
 
+/***********************
+ * AUTO-TRANSLATE (offline, din dicționar)
+ * - dacă găsește pereche, completează automat cealaltă limbă
+ * - nu rescrie agresiv: rescrie doar dacă celălalt câmp e gol sau a fost autocompletat ultima dată
+ ***********************/
+function maybeAutofillFromKo(i){
+  const ko = norm(el("inKo"+i).value);
+  const k = keyNorm(ko);
+  if(!k) return;
+
+  const foundRo = DICT.ko2ro.get(k);
+  if(!foundRo) return;
+
+  const roEl = el("inRo"+i);
+  const roNow = (roEl.value||"").trim();
+
+  if(!roNow || state.cards[i].lastAuto === "ro"){
+    roEl.value = foundRo;
+    state.cards[i].lastAuto = "ro";
+  }
+
+  // update live preview outputs
+  state.cards[i].ko = ko;
+  state.cards[i].ro = roEl.value.trim();
+  state.cards[i].tag = "LIVE";
+  renderCard(i);
+  combine12(); combineFinal();
+}
+
+function maybeAutofillFromRo(i){
+  const ro = (el("inRo"+i).value||"").trim();
+  const k = keyNorm(ro);
+  if(!k) return;
+
+  const foundKo = DICT.ro2ko.get(k);
+  if(!foundKo) return;
+
+  const koEl = el("inKo"+i);
+  const koNow = norm(koEl.value);
+
+  if(!koNow || state.cards[i].lastAuto === "ko"){
+    koEl.value = foundKo;
+    state.cards[i].lastAuto = "ko";
+  }
+
+  // update live preview outputs
+  state.cards[i].ko = norm(koEl.value);
+  state.cards[i].ro = ro;
+  state.cards[i].tag = "LIVE";
+  renderCard(i);
+  combine12(); combineFinal();
+}
+
+/***********************
+ * COMBINE
+ ***********************/
 function combine12(){
   const rule = CONNECTORS_1[parseInt(el("c1").value,10)];
   const A = state.cards[0].ko;
@@ -603,7 +688,7 @@ function combine12(){
   }
 
   const Aconn = toConnective(A, rule.id);
-  state.combined12.ko = normalizeKoSentence(Aconn + " " + stripFinalPunct(B) + ".");
+  state.combined12.ko = norm(Aconn + " " + stripFinalPunct(B) + ".");
   state.combined12.ro = `${stripPunct(state.cards[0].ro)} ${rule.roJoin} ${stripPunct(state.cards[1].ro)}.`;
 
   el("outKo12").textContent = state.combined12.ko;
@@ -623,7 +708,7 @@ function combineFinal(){
   }
 
   const Xconn = toConnective(X, rule.id);
-  state.final.ko = ensurePeriod(normalizeKoSentence(Xconn + " " + stripFinalPunct(C)));
+  state.final.ko = ensurePeriod(norm(Xconn + " " + stripFinalPunct(C)));
   state.final.ro = `${stripPunct(state.combined12.ro)} ${rule.roJoin} ${stripPunct(state.cards[2].ro)}.`;
 
   el("finalKo").textContent = state.final.ko;
@@ -635,26 +720,34 @@ function combineFinal(){
  ***********************/
 function init(){
   for(let i=0;i<3;i++){
+    // preset base în input (ca să vezi funcția imediat)
+    el("inKo"+i).value = state.cards[i].baseKo || "";
+    el("inRo"+i).value = state.cards[i].baseRo || "";
+
     fillModeSelect(i);
     fillOptionSelect(i);
+    renderCard(i);
 
-    // buton "Setează ca bază"
+    // LIVE autofill, ambele sensuri
+    el("inKo"+i).addEventListener("input", ()=> maybeAutofillFromKo(i));
+    el("inRo"+i).addEventListener("input", ()=> maybeAutofillFromRo(i));
+
     el("setBase"+i).addEventListener("click", ()=>{
-      const ko = normalizeKoSentence(el("inKo"+i).value);
-      const ro = (el("inRo"+i).value || "").trim();
+      const ko = norm(el("inKo"+i).value);
+      const ro = (el("inRo"+i).value||"").trim();
 
-      // acceptăm și fără punct; dacă vrei, poți să scrii fără.
       state.cards[i].baseKo = ko;
       state.cards[i].baseRo = ro;
-
-      // setăm și ca output curent
       state.cards[i].ko = ko;
       state.cards[i].ro = ro;
       state.cards[i].tag = "BASE";
+      state.cards[i].lastAuto = null;
+
+      // adăugăm și în dicționar (ca să se știe pe viitor)
+      if(ko && ro) addPair(ko, ro);
 
       renderCard(i);
-      combine12();
-      combineFinal();
+      combine12(); combineFinal();
     });
 
     el("mode"+i).addEventListener("change", ()=> fillOptionSelect(i));
@@ -664,22 +757,6 @@ function init(){
       const optIdx = parseInt(el("opt"+i).value,10);
       const card = LESSON.cards[i];
 
-      if(!state.cards[i].ko){
-        // dacă n-ai setat nimic, încearcă să ia direct din input (mai prietenos)
-        const koTry = normalizeKoSentence(el("inKo"+i).value);
-        const roTry = (el("inRo"+i).value || "").trim();
-        if(koTry){
-          state.cards[i].ko = koTry;
-          state.cards[i].ro = roTry;
-          if(!state.cards[i].baseKo){
-            state.cards[i].baseKo = koTry;
-            state.cards[i].baseRo = roTry;
-          }
-        } else {
-          return;
-        }
-      }
-
       const list = (modeVal==="add") ? card.add
                 : (modeVal==="modify") ? card.modify
                 : (modeVal==="change") ? card.change
@@ -687,50 +764,54 @@ function init(){
 
       if(!list || !list[optIdx]) return;
 
+      // luăm propoziția curentă din input (ca să fie mereu “ce ai scris tu”)
+      const currentKo = norm(el("inKo"+i).value);
+      const currentRo = (el("inRo"+i).value||"").trim();
+      if(!currentKo) return;
+
       const rule = list[optIdx];
-      const res = applyRule(rule, state.cards[i].ko, state.cards[i].ro);
+      const res = applyRule(rule, currentKo, currentRo);
       if(!res.ok) return;
+
+      // setăm rezultatul în input + state
+      el("inKo"+i).value = res.ko;
+      el("inRo"+i).value = res.ro;
 
       state.cards[i].ko = res.ko;
       state.cards[i].ro = res.ro;
       state.cards[i].tag = modeVal.toUpperCase();
+      state.cards[i].lastAuto = null;
+
+      // adăugăm perechea rezultată în dicționar dacă e completă
+      if(res.ko && res.ro) addPair(res.ko, res.ro);
 
       renderCard(i);
-      combine12();
-      combineFinal();
+      combine12(); combineFinal();
     });
 
     el("reset"+i).addEventListener("click", ()=>{
+      el("inKo"+i).value = state.cards[i].baseKo || "";
+      el("inRo"+i).value = state.cards[i].baseRo || "";
+
       state.cards[i].ko = state.cards[i].baseKo || "";
       state.cards[i].ro = state.cards[i].baseRo || "";
       state.cards[i].tag = state.cards[i].baseKo ? "BASE" : "—";
-      renderCard(i);
-      combine12();
-      combineFinal();
-    });
+      state.cards[i].lastAuto = null;
 
-    renderCard(i);
+      renderCard(i);
+      combine12(); combineFinal();
+    });
   }
 
   fillConnectorSelects();
 
-  el("gen12").addEventListener("click", ()=>{
-    combine12();
-    combineFinal();
-  });
+  el("gen12").addEventListener("click", ()=>{ combine12(); combineFinal(); });
+  el("genFinal").addEventListener("click", ()=>{ combine12(); combineFinal(); });
 
-  el("genFinal").addEventListener("click", ()=>{
-    combine12();
-    combineFinal();
-  });
-
-  // copy
   el("copyKo").addEventListener("click", ()=> copyText(state.final.ko, "KO copiat."));
   el("copyRo").addEventListener("click", ()=> copyText(state.final.ro, "RO copiat."));
 
-  // inițial
-  combine12();
-  combineFinal();
+  combine12(); combineFinal();
 }
 
 async function copyText(txt, okMsg){
