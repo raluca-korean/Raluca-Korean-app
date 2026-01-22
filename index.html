@@ -1,675 +1,101 @@
 <!doctype html>
 <html lang="ro">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Builder Universal — Interactiv (Motor general)</title>
-  <style>
-    :root{
-  --bg: #f8eef3;          /* fundal general – roz foarte pal */
-  --panel: #ffffff;      /* panouri albe, curate */
-  --card: #fff7fb;       /* carduri roz foarte subtil */
-  --text: #3b2f36;       /* text brun-roz (mai cald decât gri) */
-  --muted: #9b6f84;      /* text secundar */
-  --accent: #e79ab5;     /* accent roz elegant (butoane active) */
-  --line: #f0d7e2;       /* linii / separatori */
-  --ok: #7fb7a6;         /* verde mentă soft */
-  --warn: #f1b27a;       /* piersică */
-  --bad: #e07a7a;        /* roșu rozat */
+<meta charset="utf-8">
+<title>Extension Practice</title>
+<style>
+body{
+  background:#f8eef3;
+  font-family: system-ui, sans-serif;
+  color:#3b2f36;
 }
-    body{
-  background:
-    radial-gradient(900px 600px at 15% 10%, #fde7f0 0%, transparent 60%),
-    radial-gradient(800px 500px at 85% 20%, #fbe1ec 0%, transparent 60%),
-    var(--bg);
+.page{
+  max-width:900px;
+  margin:40px auto;
 }
-    .topnav{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      padding:12px 16px; border-bottom:1px solid var(--line);
-      background: rgba(15,23,42,.82);
-      position: sticky; top:0; backdrop-filter: blur(8px); z-index:20;
-    }
-    .brand{ display:flex; flex-direction:column; gap:2px; }
-    .brand strong{ font-size:14px; letter-spacing:.2px; }
-    .brand span{ font-size:12px; color:#c7d2fe; }
-    .navlinks{ display:flex; gap:8px; flex-wrap:wrap; }
-    .navlinks a{
-      text-decoration:none;
-      color: var(--text);
-      border:1px solid var(--line);
-      background: rgba(11,18,38,.55);
-      padding:8px 10px;
-      border-radius:12px;
-      font-size:13px;
-    }
-    .navlinks a:hover{ background: rgba(165,180,252,.10); }
-    .navlinks a.active{
-      border-color: rgba(251,191,36,.55);
-      background: rgba(251,191,36,.10);
-    }
-
-    header{
-      padding:14px 16px; border-bottom:1px solid var(--line);
-      background: rgba(15,23,42,.45);
-    }
-    header h1{ margin:0; font-size:18px; letter-spacing:.2px; }
-    header p{ margin:6px 0 0; color:#c7d2fe; font-size:13px; }
-
-    .wrap{ max-width:1200px; margin:0 auto; padding:16px; display:grid; gap:14px; }
-    .grid{ display:grid; gap:14px; grid-template-columns: 1.05fr .95fr; }
-    @media (max-width: 980px){ .grid{ grid-template-columns:1fr; } }
-
-    .panel{
-      background: rgba(17,28,58,.68);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-    }
-    .panel h2{ margin:0 0 10px; font-size:15px; color:#e0e7ff; }
-
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .row > *{ flex: 0 0 auto; }
-
-    select, button, input, textarea{
-      background: rgba(11,18,38,.8);
-      color: var(--text);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:14px;
-      outline:none;
-    }
-    textarea{ width:100%; min-height:72px; resize:vertical; }
-    select{ min-width: 240px; }
-    button{ cursor:pointer; }
-    button.primary{ border-color: rgba(251,191,36,.45); }
-    button.primary:hover{ background: rgba(251,191,36,.12); }
-    button.ghost:hover{ background: rgba(165,180,252,.10); }
-    button.danger{ border-color: rgba(239,68,68,.35); }
-    button.danger:hover{ background: rgba(239,68,68,.10); }
-
-    .pill{
-      display:inline-flex; gap:8px; align-items:center;
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:6px 10px;
-      background: rgba(11,18,38,.6);
-      font-size:12px;
-      color:#c7d2fe;
-    }
-    .pill strong{ color: var(--accent); font-weight:700; }
-
-    .cards{ display:grid; gap:10px; }
-    .card{
-      background: rgba(11,18,38,.75);
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:12px;
-    }
-    .card.clickable{ cursor:pointer; }
-    .card.clickable:hover{ background: rgba(165,180,252,.08); }
-
-    .korean{ font-size:20px; line-height:1.25; letter-spacing:.2px; }
-    .romanian{ margin-top:6px; font-size:13px; color:#c7d2fe; }
-
-    .meta{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .tag{
-      font-size:12px; padding:4px 8px; border-radius:999px;
-      border:1px solid var(--line);
-      color:#e0e7ff;
-      background: rgba(35,48,85,.35);
-    }
-    .tag.ok{ border-color: rgba(34,197,94,.35); color:#bbf7d0; }
-    .tag.warn{ border-color: rgba(249,115,22,.35); color:#fed7aa; }
-    .tag.bad{ border-color: rgba(239,68,68,.35); color:#fecaca; }
-    .tag.active{ border-color: rgba(251,191,36,.55); color:#fde68a; }
-
-    .big{
-      border:1px dashed rgba(251,191,36,.55);
-      background: rgba(251,191,36,.08);
-    }
-    .big .korean{ font-size:22px; }
-
-    .divider{ height:1px; background: var(--line); margin:12px 0; }
-    .help{ font-size:12px; color:#c7d2fe; margin:8px 0 0; }
-    .small{ font-size:12px; color:#c7d2fe; }
-
-    .step{
-      display:grid;
-      grid-template-columns: 1fr auto;
-      gap:10px;
-      align-items:start;
-    }
-    .stepControls{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .mini{ padding:8px 10px; border-radius:10px; font-size:13px; }
-    .copyOk{ color:#bbf7d0; }
-
-    .twoCol{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
-    @media (max-width: 980px){ .twoCol{ grid-template-columns:1fr; } }
-    button.primary:hover{
-  background: rgba(231,154,181,.18);
+.row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
 }
-button.ghost:hover{
-  background: rgba(231,154,181,.12);
+.card{
+  background:#fff;
+  border:1px dashed #e7b9cc;
+  border-radius:16px;
+  padding:18px;
+  text-align:center;
 }
-    .tag.active{
-  border-color: rgba(231,154,181,.6);
-  color: #b84d79;
-  background: rgba(231,154,181,.12);
+.ko{
+  font-size:20px;
 }
-  </style>
+.ro{
+  font-size:13px;
+  color:#9b6f84;
+  margin-top:6px;
+}
+.step{
+  margin:14px 0;
+  font-size:12px;
+  color:#b56586;
+}
+.center{
+  text-align:center;
+  margin:30px 0;
+}
+.final{
+  background:#fff7fb;
+  border:2px solid #e79ab5;
+}
+</style>
 </head>
 <body>
 
-  <nav class="topnav">
-    <div class="brand">
-      <strong>Builder Universal — Interactiv</strong>
-      <span>Motor general de combinare (conectori + transformări KO)</span>
+<div class="page">
+
+  <h2>Extension Practice</h2>
+
+  <!-- PROPOZIȚII SIMPLE -->
+  <div class="row">
+    <div class="card">
+      <div class="ko">비누칠했어요.</div>
+      <div class="ro">M-am săpunit.</div>
+      <div class="step">ADD 몸에</div>
+      <div class="ko">몸에 비누칠했어요.</div>
     </div>
-    <div class="navlinks">
-      <!-- Ajustează href-urile la paginile tale reale -->
-      <a href="index.html">Home</a>
-      <a class="active" href="builder-universal.html">Builder</a>
-      <a href="exercises.html">Exercises</a>
-      <a href="lessons.html">Lessons</a>
-      <a href="glossary.html">Glossary</a>
+
+    <div class="card">
+      <div class="ko">물을 틀었어요.</div>
+      <div class="ro">Am dat drumul la apă.</div>
+      <div class="step">MODIFY 따뜻한</div>
+      <div class="ko">따뜻한 물을 틀었어요.</div>
     </div>
-  </nav>
 
-  <header>
-    <h1>Construiește & Extinde propoziții</h1>
-    <p>Click pe propoziții → Workspace → aplică reguli pe pasul activ → COMBINE cu motor general</p>
-  </header>
-
-  <div class="wrap">
-    <div class="grid">
-
-      <!-- LEFT -->
-      <section class="panel">
-        <h2>1) Set</h2>
-        <div class="row">
-          <select id="setSelect"></select>
-          <button class="ghost mini" id="resetBtn">Reset</button>
-          <button class="ghost mini" id="randomBtn">Random</button>
-          <span class="pill">Nivel: <strong id="levelLabel">A1</strong></span>
-        </div>
-        <p class="help">
-          Click pe o propoziție din “Bază” ca să o adaugi în Workspace.
-          Selectează un pas din Workspace ca să devină “activ”.
-        </p>
-
-        <div class="divider"></div>
-
-        <div class="twoCol">
-          <div>
-            <h2>2) Propoziții de bază (click = adaugă)</h2>
-            <div class="cards" id="baseCards"></div>
-          </div>
-
-          <div>
-            <h2>3) Workspace (pași)</h2>
-            <div class="cards" id="workspace"></div>
-
-            <div class="divider"></div>
-
-            <h2>4) Editare pas activ</h2>
-            <div class="card">
-              <div class="meta" style="margin-top:0;">
-                <span class="tag active" id="activeStepLabel">Pas activ: —</span>
-                <button class="ghost mini" id="undoBtn">Undo</button>
-              </div>
-              <div class="divider"></div>
-
-              <div class="row">
-                <span class="pill"><strong>ADD</strong></span>
-                <select id="addSelect"></select>
-                <button class="primary mini" id="applyAdd">Aplică</button>
-              </div>
-              <p class="help">Se aplică pe pasul activ (nu pe tot finalul).</p>
-
-              <div class="divider"></div>
-
-              <div class="row">
-                <span class="pill"><strong>MODIFY</strong></span>
-                <select id="modifySelect"></select>
-                <button class="primary mini" id="applyModify">Aplică</button>
-              </div>
-
-              <div class="divider"></div>
-
-              <div class="row">
-                <span class="pill"><strong>CHANGE</strong></span>
-                <select id="changeSelect"></select>
-                <button class="primary mini" id="applyChange">Aplică</button>
-              </div>
-
-              <div class="divider"></div>
-
-              <div class="row">
-                <span class="pill"><strong>Edit manual</strong></span>
-                <button class="ghost mini" id="applyManual">Aplică textul</button>
-              </div>
-              <textarea id="manualKo" placeholder="KO pentru pasul activ…"></textarea>
-              <textarea id="manualRo" placeholder="RO pentru pasul activ…"></textarea>
-              <p class="help">Dacă motorul nu nimerește perfect, editezi fin aici.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <h2>5) COMBINE (motor general)</h2>
-        <div class="card">
-          <div class="row">
-            <span class="pill"><strong>Conector</strong></span>
-            <select id="combineSelect"></select>
-            <button class="primary mini" id="buildBtn">Construiește finalul</button>
-          </div>
-          <p class="help">
-            Motorul convertește fiecare pas (KO) într-o formă conectivă (ex. -고 / -아서/어서 / -(으)니까 / -는데 / -더니 / -기 전에),
-            apoi construiește propoziția finală.
-          </p>
-        </div>
-      </section>
-
-      <!-- RIGHT -->
-      <aside class="panel">
-        <h2>Preview (final + meta)</h2>
-
-        <div class="card big">
-          <div class="korean" id="previewKo">—</div>
-          <div class="romanian" id="previewRo">—</div>
-          <div class="meta" id="previewMeta"></div>
-        </div>
-
-        <div class="row" style="margin-top:10px;">
-          <button class="ghost mini" id="copyKo">Copiază KO</button>
-          <button class="ghost mini" id="copyRo">Copiază RO</button>
-          <span class="small" id="copyStatus"></span>
-        </div>
-
-        <div class="divider"></div>
-
-        <h2>Istoric (session)</h2>
-        <div class="cards" id="history"></div>
-        <div class="row" style="margin-top:10px;">
-          <button class="ghost mini" id="saveBtn">Salvează finalul</button>
-          <button class="danger mini" id="clearHistoryBtn">Șterge istoric</button>
-        </div>
-      </aside>
-
+    <div class="card">
+      <div class="ko">놀랐어요.</div>
+      <div class="ro">Am fost surprins(ă).</div>
+      <div class="step">ADD 깜짝</div>
+      <div class="ko">깜짝 놀랐어요.</div>
     </div>
   </div>
-<script>
-/***********************
- *  MOTOR GENERAL: KO → conectiv (legat de verb)
- *  A1–A2, heuristic robust
- ***********************/
-function normalizeKoSentence(s){
-  return (s || "").trim().replace(/\s+/g," ");
-}
-function stripFinalPunct(s){
-  return (s || "").replace(/[.?!]$/,"").trim();
-}
 
-/**
- * Împarte propoziția în:
- * - prefix: tot ce e înainte de predicat (de obicei include obiecte/adv/etc)
- * - pred: predicatul final (ex: 했어요 / 울렸어요 / 더러워요 / 예요)
- *
- * Heuristic: predicatul e ultimul “cuvânt” (token) sau ultimele 2 tokenuri (rar).
- */
-function splitIntoPrefixAndPredicate(sentenceNoPunct){
-  const s = normalizeKoSentence(sentenceNoPunct);
-  const parts = s.split(" ");
-  if(parts.length === 1){
-    return { prefix:"", pred: parts[0] };
-  }
-  // predicat = ultimul token
-  const pred = parts[parts.length-1];
-  const prefix = parts.slice(0, -1).join(" ");
-  return { prefix, pred };
-}
+  <!-- COMBINARE -->
+  <div class="center step">COMBINE (-고)</div>
 
-/**
- * Transformă predicatul polite într-o bază utilă:
- * - past: X았/었/였어요 → basePast = X았/었/였, baseAeo = X아/어/여
- * - 했다: X했어요 → baseHa = X해, basePastHa = X했
- * - present: X아요/어요/여요 → base = X아/어/여
- * - copula: 이에요/예요 → baseCop = (prefix + predicate) fără 요 (tratat separat)
- */
-function analyzePredicate(pred){
-  // ordine importantă (mai specific întâi)
-  // 1) 했다
-  if(pred.endsWith("했어요")){
-    const stem = pred.slice(0, -3); // scoate "어요" (3 caractere)
-    // stem + "했"
-    return { kind:"ha_past", stem, basePast:"했", baseAeo:"해" };
-  }
-  // 2) past: 았/었/였어요
-  if(pred.endsWith("았어요")){
-    const stem = pred.slice(0, -3); // scoate "어요"
-    return { kind:"past", stem, basePast:"았", baseAeo:"아" };
-  }
-  if(pred.endsWith("었어요")){
-    const stem = pred.slice(0, -3);
-    return { kind:"past", stem, basePast:"었", baseAeo:"어" };
-  }
-  if(pred.endsWith("였어요")){
-    const stem = pred.slice(0, -3);
-    return { kind:"past", stem, basePast:"였", baseAeo:"여" };
-  }
+  <div class="card">
+    <div class="ko">몸에 비누칠하고 따뜻한 물을 틀었어요.</div>
+  </div>
 
-  // 3) present: 해요/아요/어요/여요
-  if(pred.endsWith("해요")){
-    const stem = pred.slice(0, -2); // scoate "요"
-    // "해" e baza
-    return { kind:"ha_pres", stem, baseAeo:"해" };
-  }
-  if(pred.endsWith("아요")){
-    const stem = pred.slice(0, -2); // scoate "요"
-    return { kind:"pres", stem, baseAeo: pred.slice(0, -2) }; // ex: 가아? (dar în practică: 가요 nu e în listele tale)
-  }
-  if(pred.endsWith("어요")){
-    const stem = pred.slice(0, -2);
-    return { kind:"pres", stem, baseAeo: pred.slice(0, -2) };
-  }
-  if(pred.endsWith("여요")){
-    const stem = pred.slice(0, -2);
-    return { kind:"pres", stem, baseAeo: pred.slice(0, -2) };
-  }
+  <div class="center step">COMBINE (-아/어/여서)</div>
 
-  // 4) copula
-  if(pred.endsWith("이에요")){
-    const stem = pred.slice(0, -2); // scoate "요"
-    // rămâne "...이에"
-    return { kind:"cop", stem, copType:"ieyo" };
-  }
-  if(pred.endsWith("예요")){
-    const stem = pred.slice(0, -2); // scoate "요"
-    // rămâne "...예"
-    return { kind:"cop", stem, copType:"yeyo" };
-  }
+  <div class="card final">
+    <div class="ko">
+      몸에 비누칠하고 따뜻한 물을 틀었는데, 물이 차가워서 깜짝 놀랐어요.
+    </div>
+    <div class="ro">
+      M-am săpunit și am dat drumul la apă caldă, dar era rece, așa că am fost foarte surprins(ă).
+    </div>
+  </div>
 
-  // 5) imperativ politicos: ~세요 / ~으세요
-  if(pred.endsWith("세요")){
-    const stem = pred.slice(0, -2); // scoate "요" aproximativ (nu perfect)
-    return { kind:"imp", stem };
-  }
-
-  return { kind:"unknown", stem: pred };
-}
-
-/**
- * Reguli de legare “la verb”, nu la propoziție:
- * connectorId: go | so | nikka | neunde | deoni | before
- */
-function makeConnectedClause(prefix, pred, connectorId){
-  const a = analyzePredicate(pred);
-
-  // Helper: reconstruiește propoziția fără punct
-  const join = (left, right) => (left ? (left + " " + right) : right);
-
-  // -기 전에 are nevoie de forma “V-기 전에” (ideal: forma de dicționar, dar A1–A2: heuristic)
-  if(connectorId === "before"){
-    // Pentru multe verbe pe care le ai: ~했어요/었어요/아요/어요 -> aproximăm la baza fără politețe + "기 전에"
-    // Special: "해요/했어요" -> "하기 전에"
-    if(a.kind === "ha_pres" || a.kind === "ha_past"){
-      // predicat e ceva de tip "...해요" sau "...했어요" unde stem e partea dinainte
-      // Ex: (prefix="비누칠", pred="했어요") => "비누칠하기 전에"
-      const baseVerb = join(prefix, a.stem + "하"); // "비누칠하"
-      return baseVerb + "기 전에";
-    }
-
-    if(a.kind === "past"){
-      // Ex: "틀었어요" => stem="틀", baseVerb="틀"
-      // "틀기 전에"
-      return join(prefix, a.stem) + "기 전에";
-    }
-
-    if(a.kind === "pres"){
-      // Ex: "닦아요" => stem="닦", -> "닦기 전에"
-      return join(prefix, a.stem) + "기 전에";
-    }
-
-    if(a.kind === "imp"){
-      // Ex: "쓰세요" (prefix="") => "쓰" + "기 전에" (ok-ish)
-      return join(prefix, a.stem) + "기 전에";
-    }
-
-    // fallback
-    return join(prefix, pred) + "기 전에";
-  }
-
-  // -고: pentru secvență de acțiuni, de obicei fără marcaj de timp politicos
-  if(connectorId === "go"){
-    if(a.kind === "ha_past" || a.kind === "ha_pres"){
-      // Ex: 비누칠했어요 => 비누칠하고
-      // prefix="비누칠", pred="했어요" => prefix + "하고"
-      const left = prefix ? (prefix + "하고") : (a.stem + "하고");
-      return left;
-    }
-    if(a.kind === "past"){
-      // Ex: 틀었어요 => 틀고 ; 놀랐어요 => 놀라고 (nu perfect pentru toate, dar mult mai “legat de verb”)
-      return join(prefix, a.stem) + "고";
-    }
-    if(a.kind === "pres"){
-      // Ex: 닦아요 => 닦고
-      return join(prefix, a.stem) + "고";
-    }
-    if(a.kind === "cop"){
-      // Ex: 더러워요 (nu e copula, e adjectiv cu 어요) – copula: 예요/이에요 => 이고
-      // stem păstrează "...이에"/"...예" fără 요; simplificăm:
-      if(a.copType === "ieyo") return join(prefix, a.stem.slice(0, -1) + "이고"); // ...이 + 고
-      return join(prefix, a.stem.slice(0, -1) + "고"); // ... + 고
-    }
-    if(a.kind === "imp"){
-      // Ex: 닦으세요 => 닦고 (heuristic)
-      return join(prefix, a.stem) + "고";
-    }
-    return join(prefix, pred) + "고";
-  }
-
-  // -아서/어서 (so): aici folosim baza A/EO/YEO
-  if(connectorId === "so"){
-    if(a.kind === "ha_past" || a.kind === "ha_pres"){
-      // ...해서
-      const left = prefix ? (prefix + "해서") : (a.stem + "해서");
-      return left;
-    }
-    if(a.kind === "past"){
-      // Ex: 틀었어요 => 틀어서, 차가웠어요 => 차가워서 (stem="차가웠"? în cazul tău e "차가웠어요": stem="차가웠"? nu, pentru past: stem e partea înainte de "었어요" => "차가웠" devine "차가웠어서" dacă nu corectăm.
-      // Aici păstrăm: stem + (아/어/여) + 서
-      return join(prefix, a.stem + a.baseAeo) + "서";
-    }
-    if(a.kind === "pres"){
-      // pred era deja ceva de tip "...어" (fără 요), adăugăm 서
-      return join(prefix, a.stem + a.baseAeo) + "서";
-    }
-    if(a.kind === "cop"){
-      // 예요/이에요 => (이)어서/여서
-      if(a.copType === "ieyo"){
-        // ...이어서
-        const base = join(prefix, a.stem.slice(0,-1)); // scoate "에" aproximativ
-        return base + "이어서";
-      }
-      // ...여서
-      return join(prefix, a.stem) + "서";
-    }
-    if(a.kind === "imp"){
-      return join(prefix, a.stem) + "서";
-    }
-    return join(prefix, pred) + "서";
-  }
-
-  // -(으)니까 (nikka)
-  if(connectorId === "nikka"){
-    if(a.kind === "ha_past"){
-      // 했어요 -> 했으니까
-      const left = prefix ? (prefix + "했으니까") : (a.stem + "했으니까");
-      return left;
-    }
-    if(a.kind === "ha_pres"){
-      // 해요 -> 하니까 (mai corect decât 해니까)
-      const baseVerb = join(prefix, a.stem + "하");
-      return baseVerb + "니까";
-    }
-    if(a.kind === "past"){
-      // ...었어요 -> ...었으니까 (ok)
-      return join(prefix, a.stem + a.basePast) + "으니까";
-    }
-    if(a.kind === "pres"){
-      // ...어요 -> ...니까 (heuristic: pentru consoană finală ar trebui 으니까; aici A1–A2 acceptabil)
-      return join(prefix, a.stem) + "니까";
-    }
-    if(a.kind === "cop"){
-      // (이)니까
-      if(a.copType === "ieyo") return join(prefix, a.stem.slice(0,-1)) + "이니까";
-      return join(prefix, a.stem) + "니까";
-    }
-    if(a.kind === "imp"){
-      return join(prefix, a.stem) + "니까";
-    }
-    return join(prefix, pred) + "니까";
-  }
-
-  // -는데 (neunde)
-  if(connectorId === "neunde"){
-    if(a.kind === "ha_past"){
-      // 했어요 -> 했는데
-      const left = prefix ? (prefix + "했는데") : (a.stem + "했는데");
-      return left;
-    }
-    if(a.kind === "ha_pres"){
-      // 해요 -> 하는데 (aprox: 하 + 는데)
-      const baseVerb = join(prefix, a.stem + "하");
-      return baseVerb + "는데";
-    }
-    if(a.kind === "past"){
-      // ...었어요 -> ...었는데
-      return join(prefix, a.stem + a.basePast) + "는데";
-    }
-    if(a.kind === "pres"){
-      // ...어요 -> ...는데 (aprox)
-      return join(prefix, a.stem) + "는데";
-    }
-    if(a.kind === "cop"){
-      // ...인데
-      if(a.copType === "ieyo") return join(prefix, a.stem.slice(0,-1)) + "인데";
-      return join(prefix, a.stem) + "인데";
-    }
-    if(a.kind === "imp"){
-      return join(prefix, a.stem) + "는데";
-    }
-    return join(prefix, pred) + "는데";
-  }
-
-  // -더니 (deoni)
-  if(connectorId === "deoni"){
-    if(a.kind === "ha_past"){
-      const left = prefix ? (prefix + "했더니") : (a.stem + "했더니");
-      return left;
-    }
-    if(a.kind === "past"){
-      // ...었어요 -> ...었더니
-      return join(prefix, a.stem + a.basePast) + "더니";
-    }
-    if(a.kind === "ha_pres"){
-      const baseVerb = join(prefix, a.stem + "하");
-      return baseVerb + "더니";
-    }
-    if(a.kind === "pres"){
-      return join(prefix, a.stem) + "더니";
-    }
-    return join(prefix, pred) + "더니";
-  }
-
-  // fallback
-  return join(prefix, pred);
-}
-
-/**
- * API principal:
- * Transformă o propoziție în clauză conectivă pentru connectorId.
- */
-function toConnective(koSentence, connectorId){
-  const s = stripFinalPunct(normalizeKoSentence(koSentence));
-  const { prefix, pred } = splitIntoPrefixAndPredicate(s);
-  return makeConnectedClause(prefix, pred, connectorId);
-}
-
-/***********************
- *  Build final from workspace
- ***********************/
-function buildFinalFromWorkspace(silent=false){
-  if(!workspace.length){
-    finalKo = "—";
-    finalRo = "—";
-    renderPreview();
-    return;
-  }
-
-  const idx = parseInt(el("combineSelect").value, 10);
-  const combRule = currentSet.combine?.[idx] || currentSet.combine?.[0] || { id:"go", roJoin:"și" };
-  const connectorId = combRule.id;
-
-  const koParts = workspace.map(x => normalizeKoSentence(x.ko)).filter(Boolean);
-  const roParts = workspace.map(x => (x.ro || "").trim().replace(/\s+/g," ")).filter(Boolean);
-
-  // KO: conective pentru toate în afară de ultima
-  const koClauses = [];
-  for(let i=0;i<koParts.length;i++){
-    const isLast = (i === koParts.length - 1);
-    if(isLast){
-      let last = koParts[i].trim();
-      if(!/[.?!]$/.test(last)) last += ".";
-      koClauses.push(last);
-    }else{
-      koClauses.push(toConnective(koParts[i], connectorId));
-    }
-  }
-  finalKo = koClauses.join(" ").replace(/\s+/g," ").trim();
-
-  // RO: legare simplă (coreeană e focusul aici)
-  const roJoin = combRule.roJoin || "și";
-  const cleanRo = roParts.map(s => s.replace(/[.?!]$/,"").trim()).filter(Boolean);
-  if(cleanRo.length === 1){
-    finalRo = cleanRo[0] + ".";
-  }else{
-    let ro = cleanRo[0];
-    for(let i=1;i<cleanRo.length;i++){
-      ro = `${ro} ${roJoin} ${cleanRo[i]}`;
-    }
-    finalRo = ro.trim() + ".";
-  }
-
-  renderPreview();
-}
-  function setDefaultConnector(connectorId){
-  const sel = el("combineSelect");
-  if(!sel) return;
-
-  const opts = Array.from(sel.options);
-  const idx = opts.findIndex(o => {
-    // opțiunile sunt create din currentSet.combine (label), dar id-ul e în currentSet.combine
-    // Așa că refacem index-ul direct din set:
-    const i = parseInt(o.value, 10);
-    const rule = currentSet.combine?.[i];
-    return rule?.id === connectorId;
-  });
-
-  if(idx >= 0) sel.value = String(idx);
-}
-</script>
+</div>
 </body>
 </html>
