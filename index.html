@@ -443,8 +443,292 @@ function buildDictFromLesson(){
 }
 buildDictFromLesson();
 const STORAGE_KEY = "roko_dict_v1";
+/****************************************************
+ * DICTIONARY MANAGER (LocalStorage) — robust
+ ****************************************************/
+const STORAGE_KEY = "roko_pairs_v1";
 
-function serializeDict(){
+// 1) Păstrăm perechile în format "raw", ca să le putem edita frumos
+let USER_PAIRS = []; // doar ce salvezi tu
+let LESSON_PAIRS = []; // din lecție (readonly)
+
+// Normalize keys (ca să potrivim tolerant)
+const koKey = (s) => stripPunct(norm(s));                 // KO: fără punct final, fără spații multiple
+const roKey = (s) => keyNorm(s);                          // RO: deja lower + fără punct (din codul tău)
+
+function buildLessonPairs(){
+  const pairs = [];
+  // din base + din reguli care au outKo/outRo
+  LESSON.cards.forEach(c=>{
+    if(c.base?.ko && c.base?.ro) pairs.push({ ko:c.base.ko, ro:c.base.ro, source:"lesson" });
+    (c.add||[]).forEach(r=>{
+      if(r.outKo && r.outRo) pairs.push({ ko:r.outKo, ro:r.outRo, source:"lesson" });
+    });
+    (c.change||[]).forEach(r=>{
+      if(r.outKo && r.outRo) pairs.push({ ko:r.outKo, ro:r.outRo, source:"lesson" });
+    });
+  });
+  return dedupePairs(pairs);
+}
+
+function loadUserPairs(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return [];
+    return dedupePairs(arr
+      .filter(x => x && typeof x.ko === "string" && typeof x.ro === "string")
+      .map(x => ({ ko:x.ko, ro:x.ro, source:"user" })));
+  }catch{
+    return [];
+  }
+}
+
+function saveUserPairs(){
+  try{
+    const clean = USER_PAIRS.map(p => ({ ko:p.ko, ro:p.ro }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
+  }catch{
+    // ignore
+  }
+}
+
+function dedupePairs(pairs){
+  const seen = new Set();
+  const out = [];
+  for(const p of pairs){
+    const k = koKey(p.ko) + "||" + roKey(p.ro);
+    if(!koKey(p.ko) || !roKey(p.ro)) continue;
+    if(seen.has(k)) continue;
+    seen.add(k);
+    out.push(p);
+  }
+  return out;
+}
+
+// 2) Rebuild DICT maps din LESSON + USER
+function rebuildDictMaps(){
+  DICT.ro2ko.clear();
+  DICT.ko2ro.clear();
+
+  const all = [...LESSON_PAIRS, ...USER_PAIRS];
+
+  // prioritate: user peste lesson dacă există aceeași cheie KO sau RO
+  // (simplu: parcurgem lesson apoi user)
+  for(const p of all){
+    const kKo = koKey(p.ko);
+    const kRo = roKey(p.ro);
+    if(kKo) DICT.ko2ro.set(kKo, p.ro);
+    if(kRo) DICT.ro2ko.set(kRo, p.ko);
+  }
+}
+
+// 3) Integrare cu fluxul tău: când adaugi o pereche, o bagi în USER și refaci map-urile
+function addUserPair(ko, ro){
+  const pair = { ko:norm(ko), ro: (ro||"").trim(), source:"user" };
+  if(!koKey(pair.ko) || !roKey(pair.ro)) return false;
+
+  USER_PAIRS.push(pair);
+  USER_PAIRS = dedupePairs(USER_PAIRS);
+  saveUserPairs();
+  rebuildDictMaps();
+  return true;
+}
+
+// 4) UI render
+function renderDictTable(){
+  const tbody = el("dictTable");
+  if(!tbody) return;
+
+  const q = (el("dictSearch")?.value || "").trim().toLowerCase();
+  const all = [...LESSON_PAIRS, ...USER_PAIRS];
+
+  const filtered = !q ? all : all.filter(p =>
+    p.ko.toLowerCase().includes(q) || p.ro.toLowerCase().includes(q)
+  );
+
+  tbody.innerHTML = "";
+
+  if(!filtered.length){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="3" style="padding:10px; color:var(--muted); font-size:13px;">Nu există rezultate.</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+
+  filtered.forEach((p, idx) => {
+    const tr = document.createElement("tr");
+    tr.style.borderBottom = "1px solid var(--line)";
+
+    const isUser = p.source === "user";
+    const badge = isUser ? "SALVAT" : "LECȚIE";
+
+    tr.innerHTML = `
+      <td style="padding:8px;">
+        <div style="font-size:14px;">${escapeHtml(p.ko)}</div>
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">${badge}</div>
+      </td>
+      <td style="padding:8px;">
+        <div style="font-size:14px;">${escapeHtml(p.ro)}</div>
+      </td>
+      <td style="padding:8px;">
+        ${isUser ? `
+          <button class="ghost" data-act="edit" data-i="${idx}" style="margin-right:6px;">Edit</button>
+          <button class="ghost" data-act="del" data-i="${idx}">Șterge</button>
+        ` : `
+          <span style="color:var(--muted); font-size:12px;">Readonly</span>
+        `}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  // Delegate actions (edit/delete doar pentru USER)
+  tbody.querySelectorAll("button[data-act]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const act = btn.getAttribute("data-act");
+      const indexInCombined = parseInt(btn.getAttribute("data-i"),10);
+
+      // Mapare: în render am concatenat lesson + user, dar idx e în "filtered"
+      // Ca să edităm corect USER, găsim obiectul exact și îl căutăm în USER_PAIRS
+      const q = (el("dictSearch")?.value || "").trim().toLowerCase();
+      const all = [...LESSON_PAIRS, ...USER_PAIRS];
+      const filtered = !q ? all : all.filter(p =>
+        p.ko.toLowerCase().includes(q) || p.ro.toLowerCase().includes(q)
+      );
+
+      const picked = filtered[indexInCombined];
+      if(!picked || picked.source !== "user") return;
+
+      const userIndex = USER_PAIRS.findIndex(x => x.ko === picked.ko && x.ro === picked.ro);
+      if(userIndex === -1) return;
+
+      if(act === "del"){
+        USER_PAIRS.splice(userIndex,1);
+        USER_PAIRS = dedupePairs(USER_PAIRS);
+        saveUserPairs();
+        rebuildDictMaps();
+        renderDictTable();
+      }
+
+      if(act === "edit"){
+        // prompt light (fără UI complicat)
+        const newKo = prompt("Editează KO:", USER_PAIRS[userIndex].ko);
+        if(newKo === null) return;
+        const newRo = prompt("Editează RO:", USER_PAIRS[userIndex].ro);
+        if(newRo === null) return;
+
+        const ko = norm(newKo);
+        const ro = (newRo||"").trim();
+        if(!koKey(ko) || !roKey(ro)) return;
+
+        USER_PAIRS[userIndex] = { ko, ro, source:"user" };
+        USER_PAIRS = dedupePairs(USER_PAIRS);
+        saveUserPairs();
+        rebuildDictMaps();
+        renderDictTable();
+      }
+    });
+  });
+}
+
+function dictExportToTextarea(){
+  const allUser = USER_PAIRS.map(p => ({ ko:p.ko, ro:p.ro }));
+  el("dictJson").value = JSON.stringify(allUser, null, 2);
+}
+
+function dictExportDownload(){
+  const allUser = USER_PAIRS.map(p => ({ ko:p.ko, ro:p.ro }));
+  const blob = new Blob([JSON.stringify(allUser, null, 2)], { type:"application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "ro-ko-dictionary.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function dictImportFromTextarea(){
+  try{
+    const raw = el("dictJson").value;
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return;
+
+    const incoming = arr
+      .filter(x => x && typeof x.ko === "string" && typeof x.ro === "string")
+      .map(x => ({ ko:norm(x.ko), ro:(x.ro||"").trim(), source:"user" }));
+
+    // merge cu ce ai deja
+    USER_PAIRS = dedupePairs([...USER_PAIRS, ...incoming]);
+    saveUserPairs();
+    rebuildDictMaps();
+    renderDictTable();
+  }catch{
+    // ignore
+  }
+}
+
+// Hook UI
+function initDictManager(){
+  // build pairs
+  LESSON_PAIRS = buildLessonPairs();
+  USER_PAIRS = loadUserPairs();
+
+  // build DICT maps
+  rebuildDictMaps();
+
+  // wire UI
+  el("dictSearch")?.addEventListener("input", ()=> renderDictTable());
+  el("dictRefresh")?.addEventListener("click", ()=> { rebuildDictMaps(); renderDictTable(); });
+
+  el("dictAdd")?.addEventListener("click", ()=>{
+    const ko = el("newKo").value;
+    const ro = el("newRo").value;
+    if(addUserPair(ko, ro)){
+      el("newKo").value = "";
+      el("newRo").value = "";
+      renderDictTable();
+    }
+  });
+
+  el("dictClearUser")?.addEventListener("click", ()=>{
+    USER_PAIRS = [];
+    saveUserPairs();
+    rebuildDictMaps();
+    renderDictTable();
+  });
+
+  el("dictExportCopy")?.addEventListener("click", async ()=>{
+    dictExportToTextarea();
+    try{
+      await navigator.clipboard.writeText(el("dictJson").value || "");
+      el("status").textContent = "JSON copiat.";
+      setTimeout(()=> el("status").textContent="", 1200);
+    }catch{
+      el("status").textContent = "Nu pot copia JSON.";
+    }
+  });
+
+  el("dictExportDownload")?.addEventListener("click", ()=> {
+    dictExportToTextarea();
+    dictExportDownload();
+  });
+
+  el("dictImportBtn")?.addEventListener("click", ()=> {
+    dictImportFromTextarea();
+    el("status").textContent = "Import efectuat (dacă JSON era valid).";
+    setTimeout(()=> el("status").textContent="", 1200);
+  });
+
+  // initial fill
+  dictExportToTextarea();
+  renderDictTable();
+}
+    function serializeDict(){
   return JSON.stringify({
     pairs: Array.from(DICT.ko2ro.entries()).map(([kKo, ro]) => ({ kKo, ro }))
   });
