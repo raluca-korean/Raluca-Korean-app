@@ -1,101 +1,648 @@
 <!doctype html>
 <html lang="ro">
 <head>
-<meta charset="utf-8">
-<title>Extension Practice</title>
-<style>
-body{
-  background:#f8eef3;
-  font-family: system-ui, sans-serif;
-  color:#3b2f36;
-}
-.page{
-  max-width:900px;
-  margin:40px auto;
-}
-.row{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:20px;
-}
-.card{
-  background:#fff;
-  border:1px dashed #e7b9cc;
-  border-radius:16px;
-  padding:18px;
-  text-align:center;
-}
-.ko{
-  font-size:20px;
-}
-.ro{
-  font-size:13px;
-  color:#9b6f84;
-  margin-top:6px;
-}
-.step{
-  margin:14px 0;
-  font-size:12px;
-  color:#b56586;
-}
-.center{
-  text-align:center;
-  margin:30px 0;
-}
-.final{
-  background:#fff7fb;
-  border:2px solid #e79ab5;
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Extension Practice — 3 propoziții → 1 frază</title>
+  <style>
+    :root{
+      --bg:#f8eef3;
+      --panel:#ffffff;
+      --card:#fff7fb;
+      --text:#3b2f36;
+      --muted:#8f6b7b;
+      --accent:#e79ab5;
+      --line:#f0d7e2;
+      --dash:#e7b9cc;
+    }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap{ max-width: 1100px; margin: 0 auto; padding: 26px 16px 40px; }
+    h1{ margin:0 0 16px; font-size: 26px; letter-spacing:.2px; }
+    .sub{ color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+
+    .grid3{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    @media (max-width: 980px){ .grid3{ grid-template-columns:1fr; } }
+
+    .card{
+      background: var(--panel);
+      border: 1px dashed var(--dash);
+      border-radius: 18px;
+      padding: 18px 16px 14px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.05);
+    }
+    .ko{ font-size: 22px; line-height: 1.25; text-align:center; }
+    .ro{ font-size: 13px; color: var(--muted); text-align:center; margin-top: 6px; }
+
+    .controls{
+      margin-top: 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+    }
+    select, button{
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline:none;
+    }
+    select{ min-width: 210px; }
+    button{
+      cursor:pointer;
+      border-color: rgba(231,154,181,.65);
+      background: rgba(231,154,181,.10);
+    }
+    button:hover{ background: rgba(231,154,181,.16); }
+    button.ghost{
+      border-color: var(--line);
+      background: #fff;
+    }
+    button.ghost:hover{ background: rgba(231,154,181,.10); }
+
+    .labelRow{
+      margin-top: 10px;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--card);
+    }
+    .pill strong{ color: var(--accent); }
+
+    .expanded{
+      margin-top: 14px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 12px;
+    }
+    .expanded .ko{ font-size: 22px; font-weight: 600; }
+    .expanded .ro{ margin-top: 6px; }
+
+    .combineBlock{
+      margin-top: 22px;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    .combineTitle{
+      text-align:center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .centerRow{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom: 12px;
+    }
+    .resultBox{
+      background: var(--card);
+      border: 2px solid rgba(231,154,181,.55);
+      border-radius: 18px;
+      padding: 16px 14px;
+      text-align:center;
+    }
+    .resultBox see{ font-size:12px; color: var(--muted); }
+
+    .copyRow{
+      margin-top: 10px;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .status{ font-size:12px; color: var(--muted); }
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <h1>Extension Practice</h1>
+    <div class="sub">3 propoziții simple → alegi ADD / MODIFY / CHANGE → COMBINE în 2 pași → fraza finală</div>
 
-<div class="page">
+    <div class="grid3">
+      <!-- CARD 1 -->
+      <section class="card" data-card="0">
+        <div class="ko" id="baseKo0">—</div>
+        <div class="ro" id="baseRo0">—</div>
 
-  <h2>Extension Practice</h2>
+        <div class="controls">
+          <select id="mode0"></select>
+          <select id="opt0"></select>
+          <button id="apply0">Aplică</button>
+          <button class="ghost" id="reset0">Reset</button>
+        </div>
 
-  <!-- PROPOZIȚII SIMPLE -->
-  <div class="row">
-    <div class="card">
-      <div class="ko">비누칠했어요.</div>
-      <div class="ro">M-am săpunit.</div>
-      <div class="step">ADD 몸에</div>
-      <div class="ko">몸에 비누칠했어요.</div>
+        <div class="labelRow" id="tagRow0"></div>
+
+        <div class="expanded">
+          <div class="ko" id="outKo0">—</div>
+          <div class="ro" id="outRo0">—</div>
+        </div>
+      </section>
+
+      <!-- CARD 2 -->
+      <section class="card" data-card="1">
+        <div class="ko" id="baseKo1">—</div>
+        <div class="ro" id="baseRo1">—</div>
+
+        <div class="controls">
+          <select id="mode1"></select>
+          <select id="opt1"></select>
+          <button id="apply1">Aplică</button>
+          <button class="ghost" id="reset1">Reset</button>
+        </div>
+
+        <div class="labelRow" id="tagRow1"></div>
+
+        <div class="expanded">
+          <div class="ko" id="outKo1">—</div>
+          <div class="ro" id="outRo1">—</div>
+        </div>
+      </section>
+
+      <!-- CARD 3 -->
+      <section class="card" data-card="2">
+        <div class="ko" id="baseKo2">—</div>
+        <div class="ro" id="baseRo2">—</div>
+
+        <div class="controls">
+          <select id="mode2"></select>
+          <select id="opt2"></select>
+          <button id="apply2">Aplică</button>
+          <button class="ghost" id="reset2">Reset</button>
+        </div>
+
+        <div class="labelRow" id="tagRow2"></div>
+
+        <div class="expanded">
+          <div class="ko" id="outKo2">—</div>
+          <div class="ro" id="outRo2">—</div>
+        </div>
+      </section>
     </div>
 
-    <div class="card">
-      <div class="ko">물을 틀었어요.</div>
-      <div class="ro">Am dat drumul la apă.</div>
-      <div class="step">MODIFY 따뜻한</div>
-      <div class="ko">따뜻한 물을 틀었어요.</div>
+    <!-- COMBINE STEP 1 -->
+    <div class="combineBlock">
+      <div class="combineTitle">COMBINE 1 (Propoziția 1 + Propoziția 2)</div>
+      <div class="centerRow">
+        <span class="pill"><strong>Conector</strong></span>
+        <select id="c1"></select>
+        <button id="gen12">Generează</button>
+      </div>
+      <div class="resultBox">
+        <div class="ko" id="outKo12">—</div>
+        <div class="ro" id="outRo12">—</div>
+      </div>
     </div>
 
-    <div class="card">
-      <div class="ko">놀랐어요.</div>
-      <div class="ro">Am fost surprins(ă).</div>
-      <div class="step">ADD 깜짝</div>
-      <div class="ko">깜짝 놀랐어요.</div>
+    <!-- COMBINE STEP 2 -->
+    <div class="combineBlock">
+      <div class="combineTitle">COMBINE 2 (Rezultatul de sus + Propoziția 3)</div>
+      <div class="centerRow">
+        <span class="pill"><strong>Conector</strong></span>
+        <select id="c2"></select>
+        <button id="genFinal">Generează</button>
+      </div>
+
+      <div class="resultBox">
+        <div class="ko" id="finalKo">—</div>
+        <div class="ro" id="finalRo">—</div>
+      </div>
+
+      <div class="copyRow">
+        <button class="ghost" id="copyKo">Copiază KO</button>
+        <button class="ghost" id="copyRo">Copiază RO</button>
+        <span class="status" id="status"></span>
+      </div>
     </div>
   </div>
 
-  <!-- COMBINARE -->
-  <div class="center step">COMBINE (-고)</div>
+<script>
+/***********************
+ * DATA (exemplu: Duș)
+ * Poți schimba ușor propozițiile și opțiunile.
+ ***********************/
+const LESSON = {
+  cards: [
+    {
+      base: { ko:"비누칠했어요.", ro:"M-am săpunit." },
+      add: [
+        { label:"ADD 몸에", type:"prefix", outKo:"몸에 비누칠했어요.", outRo:"M-am săpunit pe corp." }
+      ],
+      modify: [
+        // pentru card 1: exemplu generic (poți lăsa gol dacă nu vrei)
+      ],
+      change: []
+    },
+    {
+      base: { ko:"물을 틀었어요.", ro:"Am dat drumul la apă." },
+      add: [],
+      modify: [
+        { label:"MODIFY 따뜻한", type:"replace", find:"물을", repl:"따뜻한 물을", roHint:"apă caldă" }
+      ],
+      change: []
+    },
+    {
+      base: { ko:"놀랐어요.", ro:"Am fost surprins(ă)." },
+      add: [
+        { label:"ADD 깜짝", type:"prefix", outKo:"깜짝 놀랐어요.", outRo:"Am fost foarte surprins(ă)." }
+      ],
+      modify: [],
+      change: []
+    }
+  ]
+};
 
-  <div class="card">
-    <div class="ko">몸에 비누칠하고 따뜻한 물을 틀었어요.</div>
-  </div>
+// Conectori disponibili
+const CONNECTORS_1 = [
+  { id:"go", label:"-고 (și)", roJoin:"și" }
+];
 
-  <div class="center step">COMBINE (-아/어/여서)</div>
+const CONNECTORS_2 = [
+  { id:"so", label:"-아/어/여서 (cauză → rezultat)", roJoin:"așa că" },
+  { id:"nikka", label:"-(으)니까 (motiv)", roJoin:"pentru că" },
+  { id:"neunde", label:"-(으)ㄴ데 / -는데 (contrast/context)", roJoin:"dar" },
+  { id:"deoni", label:"-더니 (după ce...)", roJoin:"și apoi" },
+  { id:"before", label:"-기 전에 (înainte de)", roJoin:"înainte să" },
+  { id:"ryeomyeon", label:"-(으)려면 (dacă vreau să...)", roJoin:"dacă vreau să" }
+];
 
-  <div class="card final">
-    <div class="ko">
-      몸에 비누칠하고 따뜻한 물을 틀었는데, 물이 차가워서 깜짝 놀랐어요.
-    </div>
-    <div class="ro">
-      M-am săpunit și am dat drumul la apă caldă, dar era rece, așa că am fost foarte surprins(ă).
-    </div>
-  </div>
+/***********************
+ * STATE
+ ***********************/
+const state = {
+  // pentru fiecare card: output curent + tag
+  cards: LESSON.cards.map(c => ({
+    ko: c.base.ko,
+    ro: c.base.ro,
+    tag: "BASE"
+  })),
+  combined12: { ko:"", ro:"" },
+  final: { ko:"", ro:"" }
+};
 
-</div>
+const el = (id) => document.getElementById(id);
+
+/***********************
+ * RULES (ADD/MODIFY/CHANGE)
+ ***********************/
+function addHint(ro, hint){
+  if(!ro) return ro;
+  if(ro.includes(hint)) return ro;
+  return ro + ` (hint: ${hint})`;
+}
+
+function applyRule(rule, ko, ro){
+  let newKo = ko, newRo = ro;
+
+  if(rule.type === "prefix"){
+    newKo = rule.outKo;
+    newRo = rule.outRo ?? ro;
+    return { ok:true, ko:newKo, ro:newRo };
+  }
+
+  if(rule.type === "replace"){
+    if(newKo.includes(rule.find)){
+      newKo = newKo.replace(rule.find, rule.repl);
+      if(rule.roHint) newRo = addHint(newRo, rule.roHint);
+      return { ok:true, ko:newKo, ro:newRo };
+    }
+    return { ok:false, ko, ro };
+  }
+
+  return { ok:false, ko, ro };
+}
+
+/***********************
+ * CONNECTOR ENGINE (legat de verb)
+ * suport: -고 / -아서/어서 / -(으)니까 / -는데 / -더니 / -기 전에 / -(으)려면
+ ***********************/
+function normalizeKoSentence(s){ return (s||"").trim().replace(/\s+/g," "); }
+function stripFinalPunct(s){ return normalizeKoSentence(s).replace(/[.?!]$/,"").trim(); }
+
+function splitIntoPrefixAndPredicate(sentenceNoPunct){
+  const s = normalizeKoSentence(sentenceNoPunct);
+  const parts = s.split(" ");
+  if(parts.length === 1) return { prefix:"", pred: parts[0] };
+  return { prefix: parts.slice(0,-1).join(" "), pred: parts[parts.length-1] };
+}
+
+function analyzePredicate(pred){
+  if(pred.endsWith("했어요")) return { kind:"ha_past", stem: pred.slice(0,-3) };
+  if(pred.endsWith("았어요")) return { kind:"past", stem: pred.slice(0,-3), aeo:"아", past:"았" };
+  if(pred.endsWith("었어요")) return { kind:"past", stem: pred.slice(0,-3), aeo:"어", past:"었" };
+  if(pred.endsWith("였어요")) return { kind:"past", stem: pred.slice(0,-3), aeo:"여", past:"였" };
+
+  if(pred.endsWith("해요")) return { kind:"ha_pres", stem: pred.slice(0,-2) };
+  if(pred.endsWith("아요")) return { kind:"pres", stem: pred.slice(0,-2) };
+  if(pred.endsWith("어요")) return { kind:"pres", stem: pred.slice(0,-2) };
+  if(pred.endsWith("여요")) return { kind:"pres", stem: pred.slice(0,-2) };
+
+  if(pred.endsWith("이에요")) return { kind:"cop", stem: pred.slice(0,-2), cop:"이에" };
+  if(pred.endsWith("예요")) return { kind:"cop", stem: pred.slice(0,-2), cop:"예" };
+
+  if(pred.endsWith("세요")) return { kind:"imp", stem: pred.slice(0,-2) };
+
+  return { kind:"unknown", stem: pred };
+}
+
+function joinPrefix(prefix, tail){
+  return prefix ? (prefix + " " + tail) : tail;
+}
+
+function toConnective(sentence, connectorId){
+  const s = stripFinalPunct(sentence);
+  const { prefix, pred } = splitIntoPrefixAndPredicate(s);
+  const a = analyzePredicate(pred);
+
+  // 1) -고
+  if(connectorId === "go"){
+    if(a.kind === "ha_past" || a.kind === "ha_pres"){
+      // 비누칠했어요 -> 비누칠하고
+      return prefix ? (prefix + "하고") : (a.stem + "하고");
+    }
+    if(a.kind === "past" || a.kind === "pres" || a.kind === "imp"){
+      // 틀었어요 -> 틀고 / 닦아요 -> 닦고
+      return joinPrefix(prefix, a.stem) + "고";
+    }
+    return joinPrefix(prefix, pred) + "고";
+  }
+
+  // 2) -아/어/여서
+  if(connectorId === "so"){
+    if(a.kind === "ha_past" || a.kind === "ha_pres"){
+      return prefix ? (prefix + "해서") : (a.stem + "해서");
+    }
+    if(a.kind === "past"){
+      return joinPrefix(prefix, a.stem + a.aeo) + "서";
+    }
+    if(a.kind === "pres"){
+      // stem deja fără 요; adăugăm 서 (heuristic)
+      return joinPrefix(prefix, a.stem) + "서";
+    }
+    return joinPrefix(prefix, pred) + "서";
+  }
+
+  // 3) -(으)니까
+  if(connectorId === "nikka"){
+    if(a.kind === "ha_past") return prefix ? (prefix + "했으니까") : (a.stem + "했으니까");
+    if(a.kind === "ha_pres") return joinPrefix(prefix, a.stem + "하") + "니까";
+    if(a.kind === "past") return joinPrefix(prefix, a.stem + a.past) + "으니까";
+    if(a.kind === "pres") return joinPrefix(prefix, a.stem) + "니까";
+    return joinPrefix(prefix, pred) + "니까";
+  }
+
+  // 4) -는데
+  if(connectorId === "neunde"){
+    if(a.kind === "ha_past") return prefix ? (prefix + "했는데") : (a.stem + "했는데");
+    if(a.kind === "ha_pres") return joinPrefix(prefix, a.stem + "하") + "는데";
+    if(a.kind === "past") return joinPrefix(prefix, a.stem + a.past) + "는데";
+    if(a.kind === "pres") return joinPrefix(prefix, a.stem) + "는데";
+    return joinPrefix(prefix, pred) + "는데";
+  }
+
+  // 5) -더니
+  if(connectorId === "deoni"){
+    if(a.kind === "ha_past") return prefix ? (prefix + "했더니") : (a.stem + "했더니");
+    if(a.kind === "past") return joinPrefix(prefix, a.stem + a.past) + "더니";
+    if(a.kind === "pres") return joinPrefix(prefix, a.stem) + "더니";
+    return joinPrefix(prefix, pred) + "더니";
+  }
+
+  // 6) -기 전에
+  if(connectorId === "before"){
+    // simplu A1–A2: scoatem polite ending și punem "기 전에"
+    if(a.kind === "ha_past" || a.kind === "ha_pres"){
+      const baseVerb = joinPrefix(prefix, a.stem + "하");
+      return baseVerb + "기 전에";
+    }
+    if(a.kind === "past" || a.kind === "pres" || a.kind === "imp"){
+      return joinPrefix(prefix, a.stem) + "기 전에";
+    }
+    return joinPrefix(prefix, pred) + "기 전에";
+  }
+
+  // 7) -(으)려면 (dacă vreau să...)
+  if(connectorId === "ryeomyeon"){
+    // A1–A2 heuristic: V( stem ) + 려면
+    // pentru 하다: 하려면
+    if(a.kind === "ha_past" || a.kind === "ha_pres"){
+      const baseVerb = joinPrefix(prefix, a.stem + "하");
+      return baseVerb + "려면";
+    }
+    if(a.kind === "past" || a.kind === "pres" || a.kind === "imp"){
+      return joinPrefix(prefix, a.stem) + "려면";
+    }
+    return joinPrefix(prefix, pred) + "려면";
+  }
+
+  return s;
+}
+
+function ensurePeriod(ko){
+  const t = normalizeKoSentence(ko);
+  return /[.?!]$/.test(t) ? t : (t + ".");
+}
+
+/***********************
+ * UI RENDER
+ ***********************/
+function fillModeSelect(i){
+  const mode = el("mode"+i);
+  mode.innerHTML = "";
+  const opts = [
+    { v:"none", t:"NONE" },
+    { v:"add", t:"ADD" },
+    { v:"modify", t:"MODIFY" },
+    { v:"change", t:"CHANGE" }
+  ];
+  opts.forEach(o => mode.appendChild(new Option(o.t, o.v)));
+  mode.value = "none";
+}
+
+function fillOptionSelect(i){
+  const modeVal = el("mode"+i).value;
+  const optSel = el("opt"+i);
+  optSel.innerHTML = "";
+
+  const card = LESSON.cards[i];
+  const list = (modeVal==="add") ? card.add
+            : (modeVal==="modify") ? card.modify
+            : (modeVal==="change") ? card.change
+            : [];
+
+  if(!list.length){
+    optSel.appendChild(new Option("— nimic disponibil —", ""));
+    optSel.disabled = true;
+    el("apply"+i).disabled = true;
+  }else{
+    list.forEach((r,idx)=> optSel.appendChild(new Option(r.label, String(idx))));
+    optSel.disabled = false;
+    el("apply"+i).disabled = false;
+  }
+}
+
+function renderCard(i){
+  el("baseKo"+i).textContent = LESSON.cards[i].base.ko;
+  el("baseRo"+i).textContent = LESSON.cards[i].base.ro;
+  el("outKo"+i).textContent = state.cards[i].ko;
+  el("outRo"+i).textContent = state.cards[i].ro;
+
+  const tagRow = el("tagRow"+i);
+  tagRow.innerHTML = "";
+  const pill = document.createElement("span");
+  pill.className = "pill";
+  pill.innerHTML = `Status: <strong>${state.cards[i].tag}</strong>`;
+  tagRow.appendChild(pill);
+}
+
+function fillConnectorSelects(){
+  const c1 = el("c1");
+  c1.innerHTML = "";
+  CONNECTORS_1.forEach((c,idx)=> c1.appendChild(new Option(c.label, String(idx))));
+  c1.value = "0"; // default -고
+
+  const c2 = el("c2");
+  c2.innerHTML = "";
+  CONNECTORS_2.forEach((c,idx)=> c2.appendChild(new Option(c.label, String(idx))));
+  c2.value = "0";
+}
+
+function combine12(){
+  const rule = CONNECTORS_1[parseInt(el("c1").value,10)];
+  const A = state.cards[0].ko;
+  const B = state.cards[1].ko;
+
+  const Aconn = toConnective(A, rule.id);
+  state.combined12.ko = normalizeKoSentence(Aconn + " " + stripFinalPunct(B) + "."); // B ca final temporar
+  state.combined12.ro = `${stripPunct(state.cards[0].ro)} ${rule.roJoin} ${stripPunct(state.cards[1].ro)}.`;
+
+  el("outKo12").textContent = state.combined12.ko;
+  el("outRo12").textContent = state.combined12.ro;
+}
+
+function combineFinal(){
+  const rule = CONNECTORS_2[parseInt(el("c2").value,10)];
+  const X = state.combined12.ko || (stripFinalPunct(state.cards[0].ko) + " " + stripFinalPunct(state.cards[1].ko) + ".");
+  const C = state.cards[2].ko;
+
+  const Xconn = toConnective(X, rule.id);
+  state.final.ko = ensurePeriod(normalizeKoSentence(Xconn + " " + stripFinalPunct(C)));
+
+  state.final.ro = `${stripPunct(state.combined12.ro || (stripPunct(state.cards[0].ro) + " și " + stripPunct(state.cards[1].ro) + "."))} ${rule.roJoin} ${stripPunct(state.cards[2].ro)}.`;
+
+  el("finalKo").textContent = state.final.ko;
+  el("finalRo").textContent = state.final.ro;
+}
+
+function stripPunct(s){ return (s||"").trim().replace(/[.?!]$/,""); }
+
+/***********************
+ * EVENTS
+ ***********************/
+function init(){
+  // init cards
+  for(let i=0;i<3;i++){
+    fillModeSelect(i);
+    fillOptionSelect(i);
+    renderCard(i);
+
+    el("mode"+i).addEventListener("change", ()=> fillOptionSelect(i));
+
+    el("apply"+i).addEventListener("click", ()=>{
+      const modeVal = el("mode"+i).value;
+      const optIdx = parseInt(el("opt"+i).value,10);
+      const card = LESSON.cards[i];
+
+      const list = (modeVal==="add") ? card.add
+                : (modeVal==="modify") ? card.modify
+                : (modeVal==="change") ? card.change
+                : null;
+
+      if(!list || !list[optIdx]) return;
+
+      const rule = list[optIdx];
+      const res = applyRule(rule, state.cards[i].ko, state.cards[i].ro);
+      if(!res.ok) return;
+
+      state.cards[i].ko = res.ko;
+      state.cards[i].ro = res.ro;
+      state.cards[i].tag = modeVal.toUpperCase();
+
+      renderCard(i);
+    });
+
+    el("reset"+i).addEventListener("click", ()=>{
+      state.cards[i].ko = LESSON.cards[i].base.ko;
+      state.cards[i].ro = LESSON.cards[i].base.ro;
+      state.cards[i].tag = "BASE";
+      renderCard(i);
+    });
+  }
+
+  // connectors
+  fillConnectorSelects();
+
+  el("gen12").addEventListener("click", ()=>{
+    combine12();
+    // după ce generezi 12, e logic să regenerezi și finalul dacă există
+    if(state.final.ko) combineFinal();
+  });
+
+  el("genFinal").addEventListener("click", ()=>{
+    if(!state.combined12.ko) combine12();
+    combineFinal();
+  });
+
+  // initial generate
+  combine12();
+  combineFinal();
+
+  // copy
+  el("copyKo").addEventListener("click", ()=> copyText(state.final.ko, "KO copiat."));
+  el("copyRo").addEventListener("click", ()=> copyText(state.final.ro, "RO copiat."));
+}
+
+async function copyText(txt, okMsg){
+  try{
+    await navigator.clipboard.writeText(txt || "");
+    el("status").textContent = okMsg;
+    setTimeout(()=> el("status").textContent="", 1200);
+  }catch{
+    el("status").textContent = "Nu pot copia (browser restrictions).";
+  }
+}
+
+init();
+</script>
 </body>
 </html>
