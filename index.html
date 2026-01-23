@@ -3731,7 +3731,149 @@ const screens={
 };
     const navButtons=document.querySelectorAll(".nav-btn");
     /* navigare ecrane – varianta corectă */
+  /* ===============================
+   Build & Extend (MVP în Builder)
+   =============================== */
+
+const beFreeBtn = document.getElementById("beFreeBtn");
+const beGuidedBtn = document.getElementById("beGuidedBtn");
+const beControls = document.getElementById("beControls");
+const beSetSelect = document.getElementById("beSetSelect");
+const bePrevStep = document.getElementById("bePrevStep");
+const beNextStep = document.getElementById("beNextStep");
+const beStepInfo = document.getElementById("beStepInfo");
+const beStepLabel = document.getElementById("beStepLabel");
+
+let BE_ENABLED = false;
+let BE_SET_KEY = "";
+let BE_STEP_INDEX = 0;
+
+/**
+ * Seturi MVP: folosesc cheile existente din columns:
+ * subject, time, place, mod, object, numeral, counter, verb, conjug
+ * și scriu direct în stateP1 / activeP1 => tabelul principal se actualizează normal.
+ */
+const BE_SETS = [
+  {
+    key: "salda",
+    label: "살다 — a locui",
+    steps: [
+      { label: "1 BUILD",    patch: { subject:"저", verb:"살다", conjug:"-아요/어요" } },
+      { label: "2 ADD",      patch: { place:"집" } },
+      { label: "3 MODIFY",   patch: { time:"요즘" } },
+      { label: "4 COMBINE",  patch: { mod:"혼자" } },
+      { label: "5 CHANGE",   patch: { conjug:"-지 않아요" } }
+    ]
+  },
+  {
+    key: "gada",
+    label: "가다 — a merge",
+    steps: [
+      { label: "1 BUILD",    patch: { subject:"저", verb:"가다", conjug:"-아요/어요" } },
+      { label: "2 ADD",      patch: { place:"학교" } },
+      { label: "3 MODIFY",   patch: { time:"내일" } },
+      { label: "4 COMBINE",  patch: { mod:"같이" } },
+      { label: "5 CHANGE",   patch: { conjug:"-지 않아요" } }
+    ]
+  }
+];
+
+function beFillSetOptions(){
+  if(!beSetSelect) return;
+  beSetSelect.innerHTML = "";
+  BE_SETS.forEach(s=>{
+    const opt=document.createElement("option");
+    opt.value=s.key;
+    opt.textContent=s.label;
+    beSetSelect.appendChild(opt);
+  });
+  BE_SET_KEY = BE_SETS[0]?.key || "";
+}
+
+function beGetSet(){
+  return BE_SETS.find(s=>s.key===BE_SET_KEY) || BE_SETS[0];
+}
+
+function beApplyStep(){
+  const set = beGetSet();
+  if(!set) return;
+
+  const step = set.steps[BE_STEP_INDEX] || set.steps[0];
+  if(!step) return;
+
+  // scriem direct în stateP1 + activăm cheile folosite
+  Object.entries(step.patch || {}).forEach(([k,v])=>{
+    if(typeof stateP1 !== "undefined") stateP1[k]=v;
+    if(typeof activeP1 !== "undefined") activeP1[k]=true;
+  });
+
+  // dacă folosești mod simplu/topik: nu schimbăm, doar re-render
+  if(beStepLabel) beStepLabel.textContent = `${set.label} · ${step.label} (${BE_STEP_INDEX+1}/${set.steps.length})`;
+
+  // marchează UI de read-only
+  const builderScreen = document.getElementById("screen-builder");
+  if(builderScreen){
+    builderScreen.classList.toggle("be-readonly", BE_ENABLED);
+  }
+
+  // re-render tabel + preview prin mecanismul existent
+  if(typeof render === "function") render();
+}
+
+function beSetEnabled(enabled){
+  BE_ENABLED = !!enabled;
+
+  if(beFreeBtn) beFreeBtn.classList.toggle("active", !BE_ENABLED);
+  if(beGuidedBtn) beGuidedBtn.classList.toggle("active", BE_ENABLED);
+
+  if(beControls) beControls.classList.toggle("hidden", !BE_ENABLED);
+  if(beStepInfo) beStepInfo.classList.toggle("hidden", !BE_ENABLED);
+
+  // reset la pasul 1 când intri pe Guided
+  if(BE_ENABLED){
+    BE_STEP_INDEX = 0;
+    beApplyStep();
+  } else {
+    // iese din guided: nu forțăm reset, doar lăsăm utilizatorul în free build
+    const builderScreen = document.getElementById("screen-builder");
+    if(builderScreen) builderScreen.classList.remove("be-readonly");
+  }
+}
+
+// navigare pași
+function bePrev(){
+  const set = beGetSet();
+  if(!set) return;
+  BE_STEP_INDEX = Math.max(0, BE_STEP_INDEX - 1);
+  beApplyStep();
+}
+function beNext(){
+  const set = beGetSet();
+  if(!set) return;
+  BE_STEP_INDEX = Math.min(set.steps.length - 1, BE_STEP_INDEX + 1);
+  beApplyStep();
+}
+
+if(beFreeBtn) beFreeBtn.addEventListener("click", ()=>beSetEnabled(false));
+if(beGuidedBtn) beGuidedBtn.addEventListener("click", ()=>beSetEnabled(true));
+if(bePrevStep) bePrevStep.addEventListener("click", bePrev);
+if(beNextStep) beNextStep.addEventListener("click", beNext);
+
+if(beSetSelect){
+  beSetSelect.addEventListener("change", ()=>{
+    BE_SET_KEY = beSetSelect.value;
+    BE_STEP_INDEX = 0;
+    beApplyStep();
+  });
+}
+
+// init
+beFillSetOptions();
+if(beSetSelect) beSetSelect.value = BE_SET_KEY;
+beSetEnabled(false);
+    
 function setScreen(name){
+  
   // ascund toate ecranele
   Object.entries(screens).forEach(([key, el])=>{
     if(!el) return;
