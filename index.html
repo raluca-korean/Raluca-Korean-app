@@ -3,983 +3,599 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sentence Builder — Build & Extend Korean Sentences</title>
+  <title>Sentence Builder (Clean) — A/B/C → 1 frază</title>
   <style>
     :root{
-      --bg:#0b1020;
-      --panel:#0f1730;
-      --card:#121c38;
-      --card2:#0f1833;
-      --text:#eaf0ff;
-      --muted:#a8b3d6;
-      --muted2:#7f8ab4;
-      --line:#22305a;
-      --chip:#1a2750;
-      --chip2:#162243;
-      --ok:#23c483;
-      --warn:#ffcc66;
-      --bad:#ff5c7a;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 16px;
-      --radius2: 12px;
+      /* Light theme, TTMIK-like */
+      --bg:#f6f7fb;
+      --paper:#ffffff;
+      --ink:#121826;
+      --muted:#5b647a;
+      --line:#d8deea;
+      --chip:#f0f3fb;
+      --chipActive:#e6f7ef;
+      --accent:#1a7f5a;
+      --danger:#c43b4f;
+      --shadow: 0 10px 24px rgba(18,24,38,.08);
+      --r:16px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
       margin:0;
       font-family:var(--sans);
-      color:var(--text);
-      background:
-        radial-gradient(1200px 800px at 10% 10%, rgba(35,196,131,.12), transparent 55%),
-        radial-gradient(900px 700px at 90% 10%, rgba(255,92,122,.10), transparent 55%),
-        radial-gradient(800px 600px at 50% 100%, rgba(120,160,255,.10), transparent 60%),
-        var(--bg);
+      background:var(--bg);
+      color:var(--ink);
     }
-
-    .wrap{max-width:1100px;margin:0 auto;padding:22px 16px 40px}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px 14px 40px}
     .top{
-      display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;
-      margin-bottom:16px;
+      display:flex;gap:12px;align-items:stretch;justify-content:space-between;flex-wrap:wrap;
+      margin-bottom:12px;
     }
-    .brand{
-      display:flex;flex-direction:column;gap:6px;
-      padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(18,28,56,.9), rgba(15,23,48,.9));
+    .card{
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-radius:var(--r);
       box-shadow:var(--shadow);
-      min-width:min(640px,100%);
     }
-    .brand h1{
-      margin:0;
-      font-size:18px;
-      letter-spacing:.2px;
-    }
-    .brand .sub{
-      margin:0;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.35;
-    }
-    .controls{
-      display:flex;flex-direction:column;gap:10px;
-      padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(18,28,56,.85), rgba(15,23,48,.85));
-      box-shadow:var(--shadow);
-      min-width:260px;
-    }
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .label{
-      font-size:12px;color:var(--muted);
-      display:flex;align-items:center;gap:8px;
-    }
-    select, button, input[type="text"]{
+    .hero{flex:1;min-width:min(680px,100%);padding:14px 16px}
+    .hero h1{margin:0;font-size:18px}
+    .hero p{margin:6px 0 0 0;color:var(--muted);font-size:13px;line-height:1.35}
+    .ctrl{min-width:280px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    label{font-size:12px;color:var(--muted)}
+    select,input,button{
       font:inherit;
-      color:var(--text);
-      background:var(--panel);
       border:1px solid var(--line);
       border-radius:12px;
       padding:10px 12px;
+      background:#fff;
+      color:var(--ink);
       outline:none;
-      transition:.15s ease;
     }
-    select{padding-right:34px}
-    button{
-      cursor:pointer;
-      background:linear-gradient(180deg, rgba(26,39,80,.95), rgba(15,23,48,.95));
-    }
-    button:hover{transform:translateY(-1px);border-color:#30437a}
-    button:active{transform:translateY(0px)}
-    button.primary{
-      border-color:rgba(35,196,131,.55);
-      background:linear-gradient(180deg, rgba(35,196,131,.18), rgba(26,39,80,.95));
-    }
-    button.danger{
-      border-color:rgba(255,92,122,.55);
-      background:linear-gradient(180deg, rgba(255,92,122,.12), rgba(26,39,80,.95));
-    }
-    button.ghost{
-      background:transparent;
-    }
-    .tiny{font-size:12px;padding:8px 10px;border-radius:10px}
+    button{cursor:pointer;background:var(--chip)}
+    button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    button.danger{background:#fff;border-color:rgba(196,59,79,.35);color:var(--danger)}
+    button:active{transform:translateY(1px)}
 
-    .layout{
+    .grid{
       display:grid;
-      grid-template-columns: 1.4fr .8fr;
-      gap:14px;
+      grid-template-columns: 1.2fr .8fr;
+      gap:12px;
       align-items:start;
     }
-    @media (max-width: 960px){
-      .layout{grid-template-columns:1fr}
-      .brand{min-width:100%}
-    }
+    @media (max-width: 960px){ .grid{grid-template-columns:1fr} }
 
-    .panel{
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(18,28,56,.8), rgba(15,23,48,.8));
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .panel h2{
-      margin:0;
-      padding:14px 16px;
+    .section{padding:14px 16px}
+    .section h2{
+      margin:0 0 10px 0;
       font-size:13px;
-      letter-spacing:.6px;
+      letter-spacing:.4px;
       text-transform:uppercase;
-      border-bottom:1px solid var(--line);
       color:var(--muted);
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
     }
-    .panel .body{padding:14px 16px}
-    .muted{color:var(--muted)}
-    .hint{font-size:12px;color:var(--muted2);line-height:1.45}
 
-    /* Timeline */
-    .timeline{
-      position:relative;
-      padding-left:22px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
+    .abc{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
     }
-    .timeline:before{
-      content:"";
-      position:absolute;
-      left:10px; top:4px; bottom:4px;
-      width:2px;
-      background:linear-gradient(180deg, rgba(120,160,255,.22), rgba(35,196,131,.22));
-      border-radius:2px;
-    }
-    .step{
-      position:relative;
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(18,28,56,.92), rgba(15,23,48,.92));
-      box-shadow: 0 8px 22px rgba(0,0,0,.28);
-      overflow:hidden;
-    }
-    .dot{
-      position:absolute;
-      left:-22px; top:14px;
-      width:14px;height:14px;border-radius:50%;
-      background:rgba(120,160,255,.35);
-      border:1px solid rgba(120,160,255,.55);
-      box-shadow:0 0 0 5px rgba(120,160,255,.09);
-    }
-    .stepHeader{
-      padding:12px 14px;
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      border-bottom:1px solid var(--line);
-      background:rgba(0,0,0,.08);
-    }
-    .stepHeader .title{
-      display:flex;flex-direction:column;gap:2px;
-    }
-    .stepHeader .title b{font-size:13px;letter-spacing:.3px}
-    .stepHeader .title span{font-size:12px;color:var(--muted)}
-    .stepBody{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
-    .sentence{
+    .box{
       border:1px solid var(--line);
       border-radius:14px;
       padding:12px 12px;
-      background:linear-gradient(180deg, rgba(15,24,51,.95), rgba(18,28,56,.85));
+      background:#fff;
+    }
+    .tag{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .tag b{
+      color:var(--ink);
+      background:var(--chip);
+      border:1px solid var(--line);
+      padding:3px 8px;
+      border-radius:999px;
+      font-size:12px;
     }
     .ko{
-      font-size:20px;
-      letter-spacing:.2px;
-      line-height:1.25;
       margin:0;
+      font-size:20px;
+      line-height:1.25;
     }
-    .tr{
+    .ro{
       margin:6px 0 0 0;
       color:var(--muted);
       font-size:13px;
       line-height:1.35;
     }
-    .actions{
-      display:flex;gap:8px;flex-wrap:wrap;align-items:center;
-    }
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .mini{font-size:12px;padding:8px 10px;border-radius:10px}
 
-    /* Chips */
     .chips{display:flex;flex-wrap:wrap;gap:8px}
     .chip{
+      display:inline-flex;gap:8px;align-items:center;
+      background:var(--chip);
       border:1px solid var(--line);
       border-radius:999px;
       padding:8px 10px;
       font-size:12px;
-      background:linear-gradient(180deg, rgba(26,39,80,.75), rgba(15,23,48,.75));
       cursor:pointer;
       user-select:none;
-      display:flex;gap:8px;align-items:center;
-      transition:.14s ease;
     }
-    .chip:hover{transform:translateY(-1px);border-color:#30437a}
-    .chip.active{
-      border-color:rgba(35,196,131,.55);
-      box-shadow:0 0 0 4px rgba(35,196,131,.10);
-    }
-    .chip small{color:var(--muted2);font-size:11px}
-    .chip .tag{
-      font-family:var(--mono);
-      font-size:11px;
-      color:#cfe0ff;
-      padding:2px 7px;
-      border-radius:999px;
-      background:rgba(120,160,255,.16);
-      border:1px solid rgba(120,160,255,.22);
-    }
+    .chip.active{background:var(--chipActive);border-color:rgba(26,127,90,.35)}
+    .chip .k{font-family:var(--mono);font-size:11px;color:var(--muted)}
+    .hint{font-size:12px;color:var(--muted);line-height:1.4}
 
-    /* Builder side */
-    .stack{display:flex;flex-direction:column;gap:12px}
-    .block{
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(18,28,56,.72), rgba(15,23,48,.72));
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .block .bh{
-      padding:12px 14px;
-      border-bottom:1px solid var(--line);
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      background:rgba(0,0,0,.06);
-    }
-    .block .bh b{font-size:13px}
-    .block .bb{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
-    .kv{display:grid;grid-template-columns: 1fr auto;gap:10px;align-items:center}
-    .mono{font-family:var(--mono)}
-    .pill{
-      font-size:11px;color:var(--muted);
-      padding:4px 8px;border:1px solid var(--line);
-      border-radius:999px;background:rgba(0,0,0,.12)
-    }
-    .out{
-      border:1px dashed rgba(120,160,255,.35);
+    .final{
+      border:1px solid rgba(26,127,90,.25);
+      background:#f3fbf7;
       border-radius:14px;
-      padding:12px;
-      background:rgba(0,0,0,.12);
+      padding:12px 12px;
     }
-    .out .ko{font-size:18px}
-    .out .tr{font-size:12px}
-    .sep{height:1px;background:var(--line);margin:6px 0}
-    .kbd{
-      font-family:var(--mono);
-      font-size:11px;
-      padding:2px 6px;
-      border-radius:8px;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.14);
-      color:var(--muted);
-    }
-    .toast{
-      position:fixed;
-      bottom:16px;left:50%;
-      transform:translateX(-50%);
-      background:rgba(18,28,56,.95);
-      border:1px solid var(--line);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      box-shadow:var(--shadow);
-      font-size:13px;
-      opacity:0;pointer-events:none;
-      transition:.18s ease;
-      max-width:min(740px, calc(100% - 30px));
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+    .final .ko{font-size:19px}
+    .final .ro{color:#365448}
+    .line{height:1px;background:var(--line);margin:10px 0}
   </style>
 </head>
 <body>
   <div class="wrap">
+
     <div class="top">
-      <div class="brand">
-        <h1>Sentence Builder — Build & Extend Korean Sentences</h1>
-        <p class="sub">
-          Modul static, extensibil, „premium”: pornești de la propoziții simple și le construiești în lanț (ADD / MODIFY / COMBINE).
-          Traduce RO↔KO (și EN), are audio, copy, reset, export JSON. Gata de lipit în aplicația ta mare.
+      <div class="card hero">
+        <h1>Sentence Builder (Clean) — 3 propoziții → 1 frază</h1>
+        <p>
+          Aici vezi clar cele 3 propoziții (A/B/C). Apoi le combini cu conectori (-(으)려고 / -(으)ㄴ데 / -아/어/여서).
+          Modul static, gata de lipit în aplicația mare.
         </p>
       </div>
 
-      <div class="controls">
+      <div class="card ctrl">
         <div class="row">
-          <span class="label">Scenariu</span>
-          <select id="scenarioSelect"></select>
+          <label>Scenariu</label>
+          <select id="scenario"></select>
         </div>
         <div class="row">
-          <span class="label">Limbă traducere</span>
-          <select id="langSelect">
+          <label>Traducere</label>
+          <select id="lang">
             <option value="ro">RO</option>
             <option value="en">EN</option>
           </select>
         </div>
         <div class="row">
-          <button class="primary" id="btnRebuild">Rebuild</button>
-          <button class="ghost" id="btnAuto">Auto-build</button>
-          <button class="danger" id="btnReset">Reset</button>
+          <button class="primary" id="rebuild">Rebuild</button>
+          <button id="auto">Auto (TTMIK)</button>
+          <button class="danger" id="reset">Reset</button>
         </div>
         <div class="hint">
-          Tips: click pe chips ca să activezi/dezactivezi. <span class="kbd">Rebuild</span> actualizează timeline-ul final.
+          „Auto” îți pune combinația clasică: A-(으)ㄴ데 B-아/어/여서 C + „정말”.
         </div>
       </div>
     </div>
 
-    <div class="layout">
-      <!-- LEFT: Timeline -->
-      <div class="panel">
-        <h2>
-          Flow (timeline)
-          <span class="pill" id="statusPill">ready</span>
-        </h2>
-        <div class="body">
-          <div class="timeline" id="timeline"></div>
+    <div class="grid">
+      <!-- LEFT: A/B/C + combine -->
+      <div class="card section">
+        <h2>1) Cele 3 propoziții</h2>
+
+        <div class="abc">
+          <div class="box" id="boxA"></div>
+          <div class="box" id="boxB"></div>
+          <div class="box" id="boxC"></div>
+        </div>
+
+        <div class="line"></div>
+
+        <h2>2) Extinderi (ADD / MODIFY)</h2>
+        <div class="hint">ADD = adaugi elemente (ex: „정말”). MODIFY = schimbi (ex: „물” → „뜨거운 물”).</div>
+
+        <div class="line"></div>
+        <div class="hint"><b>ADD</b></div>
+        <div class="chips" id="adds"></div>
+
+        <div class="line"></div>
+        <div class="hint"><b>MODIFY</b> (alegi doar una)</div>
+        <div class="chips" id="mods"></div>
+
+        <div class="line"></div>
+
+        <h2>3) Combine</h2>
+        <div class="row">
+          <label>A → B</label>
+          <select id="c1"></select>
+        </div>
+        <div class="row">
+          <label>(A+B) → C</label>
+          <select id="c2"></select>
+        </div>
+
+        <div class="line"></div>
+
+        <h2>Rezultatul final</h2>
+        <div class="final" id="final"></div>
+
+        <div class="actions">
+          <button class="mini primary" id="speakFinal">🔊 Audio</button>
+          <button class="mini" id="copyFinal">Copy</button>
         </div>
       </div>
-<div class="block">
-  <div class="bh">
-    <b>Translator RO ↔ KO (offline)</b>
-    <span class="pill">dictionary</span>
-  </div>
-  <div class="bb">
-    <div class="hint">Scrii într-o parte, apare automat în cealaltă (doar din dicționarul tău).</div>
 
-    <div class="row" style="width:100%">
-      <input id="roInput" type="text" placeholder="Scrie în română…" style="width:100%" />
-    </div>
-    <div class="row" style="width:100%">
-      <input id="koInput" type="text" placeholder="한국어로 쓰세요…" style="width:100%" />
-    </div>
-
-    <div class="row">
-      <button class="tiny" id="btnAddPhrase">Adaugă ca PHRASE</button>
-      <button class="tiny" id="btnClearInputs">Clear</button>
-    </div>
-
-    <div class="hint mono" id="trStatus"></div>
-  </div>
-</div>
-      <!-- RIGHT: Builder -->
-      <div class="stack">
-        <div class="block">
-          <div class="bh">
-            <b>1) BASE</b>
-            <span class="pill">seed</span>
-          </div>
-          <div class="bb">
-            <div class="out" id="baseOut"></div>
-            <div class="actions">
-              <button class="tiny" id="btnSpeakBase">🔊 Audio</button>
-              <button class="tiny" id="btnCopyBase">Copy</button>
-            </div>
-          </div>
+      <!-- RIGHT: quick editor (clar: aici editezi A/B/C și dicționarul) -->
+      <div class="card section">
+        <h2>Editor rapid (unde modifici / adaugi)</h2>
+        <div class="hint">
+          Dacă vrei alte propoziții, adaugi un scenariu nou în <span style="font-family:var(--mono)">SCENARIOS</span>.
+          Aici e totul: A/B/C + traduceri + add/modify + conectori.
         </div>
 
-        <div class="block">
-          <div class="bh">
-            <b>2) EXTEND</b>
-            <span class="pill">ADD / MODIFY</span>
-          </div>
-          <div class="bb">
-            <div class="hint">ADD = adaugi un element (loc/adverb/extra). MODIFY = schimbi o proprietate (ex: „물” → „뜨거운 물”).</div>
+        <div class="line"></div>
 
-            <div class="sep"></div>
-            <div class="kv">
-              <div class="muted">ADD (chips)</div>
-              <span class="pill" id="countAdd">0 selected</span>
-            </div>
-            <div class="chips" id="addChips"></div>
+        <div class="hint"><b>Unde sunt A/B/C în cod?</b></div>
+        <pre style="margin:8px 0 0 0;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:auto;font-family:var(--mono);font-size:12px;line-height:1.35;">
+base: {
+  A: { ko:"...", ro:"...", en:"..." },
+  B: { ko:"...", ro:"...", en:"..." },
+  C: { ko:"...", ro:"...", en:"..." }
+}
+        </pre>
 
-            <div class="sep"></div>
-            <div class="kv">
-              <div class="muted">MODIFY (choose one)</div>
-              <span class="pill" id="countMod">none</span>
-            </div>
-            <div class="chips" id="modChips"></div>
-          </div>
+        <div class="line"></div>
+
+        <h2>Translator RO ↔ KO (offline)</h2>
+        <div class="hint">
+          Scrii într-o parte, apare automat în cealaltă. Funcționează doar pentru ce ai în dicționarul tău (PHRASES/WORDS).
         </div>
 
-        <div class="block">
-          <div class="bh">
-            <b>3) COMBINE</b>
-            <span class="pill">clause builder</span>
-          </div>
-          <div class="bb">
-            <div class="hint">
-              Alegi conectorii dintre propoziții. Aplicația ta mare poate extinde lista fără să schimbi logica.
-            </div>
-
-            <div class="row">
-              <span class="label">Connector 1 (A → B)</span>
-              <select id="c1"></select>
-            </div>
-            <div class="row">
-              <span class="label">Connector 2 (B → C)</span>
-              <select id="c2"></select>
-            </div>
-
-            <div class="sep"></div>
-            <div class="out" id="finalOut"></div>
-            <div class="actions">
-              <button class="tiny primary" id="btnSpeakFinal">🔊 Audio</button>
-              <button class="tiny" id="btnCopyFinal">Copy</button>
-              <button class="tiny" id="btnExport">Export JSON</button>
-            </div>
-          </div>
+        <div class="row" style="width:100%">
+          <input id="roIn" type="text" placeholder="Scrie în română…" style="width:100%" />
         </div>
-
-        <div class="block">
-          <div class="bh">
-            <b>Integrare în aplicația mare</b>
-            <span class="pill">safe</span>
-          </div>
-          <div class="bb">
-            <div class="hint">
-              Recomandat: păstrezi fișierul ca modul separat. În aplicația mare îl încarci ca pagină nouă sau îl incluzi într-un container.
-              Nu atinge paginile existente care funcționează.
-            </div>
-            <div class="hint mono">
-              - Variante: /modules/sentence-builder.html<br/>
-              - Link: &lt;a href="modules/sentence-builder.html"&gt;Sentence Builder&lt;/a&gt;<br/>
-              - Sau iframe: &lt;iframe src="modules/sentence-builder.html"&gt;&lt;/iframe&gt;
-            </div>
-          </div>
+        <div class="row" style="width:100%">
+          <input id="koIn" type="text" placeholder="한국어로 쓰세요…" style="width:100%" />
         </div>
+        <div class="row">
+          <button class="mini" id="addPhrase">Adaugă ca PHRASE</button>
+          <button class="mini danger" id="clearTr">Clear</button>
+        </div>
+        <div class="hint" id="trStatus"></div>
       </div>
     </div>
 
-    <div class="toast" id="toast"></div>
   </div>
 
   <script>
-    /* =========================================================
-       Sentence Builder — Static, extensible, "premium"
-       ========================================================= */
-
-    // 1) SCENARIOS (inspirat din pozele tale) — extensibil
-    // A: intenție / acțiune
-    // B: eveniment / rezultat
-    // C: reacție / emoție
+    /* =========================
+       1) AICI sunt cele 3 propoziții (A/B/C) + restul scenariului
+       ========================= */
     const SCENARIOS = [
       {
-        id: "ch13_tooth",
-        name: "Cap. 13 — Dinți / apă fierbinte / surprins",
-        base: {
-          A: { ko: "양치하려고 컵에 물을 받았어요.", ro: "Am umplut un pahar cu apă ca să mă spăl pe dinți.", en: "I filled a cup with water to brush my teeth." },
-          B: { ko: "물이 나왔어요.", ro: "A ieșit apă.", en: "Water came out." },
-          C: { ko: "놀랐어요.", ro: "Am fost surprins(ă).", en: "I was surprised." }
+        id:"ttmik_ch13",
+        name:"Cap. 13 — dinți / apă fierbinte / surprins",
+        base:{
+          A:{ ko:"양치하려고 컵에 물을 받았어요.", ro:"Am umplut un pahar cu apă ca să mă spăl pe dinți.", en:"I filled a cup with water to brush my teeth." },
+          B:{ ko:"물이 나왔어요.", ro:"A ieșit apă.", en:"Water came out." },
+          C:{ ko:"놀랐어요.", ro:"Am fost surprins(ă).", en:"I was surprised." }
         },
-        add: [
-          { id:"add_place_cup", tag:"+LOC", ko:"컵에", ro:"în cană/pahar", en:"in a cup" },
-          { id:"add_adv_really", tag:"+ADV", ko:"정말", ro:"chiar / foarte", en:"really" },
-          { id:"add_adv_suddenly", tag:"+ADV", ko:"갑자기", ro:"dintr-odată", en:"suddenly" },
-          { id:"add_reason_because", tag:"+INFO", ko:"그래서", ro:"de aceea", en:"so" }
+        add:[
+          {id:"add_really", ko:"정말", ro:"foarte / chiar", en:"really"},
+          {id:"add_suddenly", ko:"갑자기", ro:"dintr-odată", en:"suddenly"},
+          {id:"add_so", ko:"그래서", ro:"de aceea", en:"so"}
         ],
-        modify: [
-          // MOD pentru B: "water" -> "hot water"
-          { id:"mod_hot_water", tag:"MOD", target:"B", koReplace: { from:"물", to:"뜨거운 물" }, ro:"(modifică: apă → apă fierbinte)", en:"(modify: water → hot water)" },
-          // MOD pentru C: "surprised" -> "really surprised"
-          { id:"mod_really_surprised", tag:"MOD", target:"C", koWrap: { prefix:"정말 ", suffix:"" }, ro:"(modifică: surprins → foarte surprins)", en:"(modify: surprised → really surprised)" }
+        modify:[
+          {id:"mod_hotwater", label:"물 → 뜨거운 물", target:"B", type:"replace", from:"물", to:"뜨거운 물",
+           ro:"(apă → apă fierbinte)", en:"(water → hot water)"},
+          {id:"mod_very_surprised", label:"놀랐어요 → 정말 놀랐어요", target:"C", type:"prefix", prefix:"정말 ",
+           ro:"(surprins → foarte surprins)", en:"(surprised → really surprised)"}
         ],
-        connectors: [
-          { id:"c_intent", label:"-(으)려고 (intenție)", apply:(A,B)=> A.replace("요.","") + " " + B },
-          { id:"c_but", label:"-(으)ㄴ데 (dar/însă)", apply:(A,B)=> A.replace("요.","") + "는데, " + B },
-          { id:"c_reason", label:"-아/어/여서 (cauză)", apply:(A,B)=> A.replace("요.","") + "서 " + B },
-          { id:"c_then", label:"그리고 (și apoi)", apply:(A,B)=> A + " 그리고 " + B },
+        connectors:[
+          {id:"c_intent", label:"-(으)려고 (intenție)", apply:(a,b)=> a.replace("요.","") + " " + b},
+          {id:"c_but", label:"-(으)ㄴ데 (dar/însă)", apply:(a,b)=> a.replace("요.","") + "는데, " + b},
+          {id:"c_reason", label:"-아/어/여서 (cauză)", apply:(a,b)=> a.replace("요.","") + "서 " + b},
+          {id:"c_and", label:"그리고 (și)", apply:(a,b)=> a + " 그리고 " + b}
         ],
-        defaults: { c1:"c_but", c2:"c_reason" }
+        defaults:{ c1:"c_but", c2:"c_reason", autoAdds:["add_really"], autoMod:"mod_hotwater" }
       }
     ];
 
-    // 2) UI refs
-    const $ = (s)=>document.querySelector(s);
-    const timeline = $("#timeline");
-    const scenarioSelect = $("#scenarioSelect");
-    const langSelect = $("#langSelect");
-    const addChips = $("#addChips");
-    const modChips = $("#modChips");
-    const baseOut = $("#baseOut");
-    const finalOut = $("#finalOut");
-    const c1 = $("#c1");
-    const c2 = $("#c2");
-    const statusPill = $("#statusPill");
-    const toast = $("#toast");
-
-    const btnRebuild = $("#btnRebuild");
-    const btnReset = $("#btnReset");
-    const btnAuto = $("#btnAuto");
-    const btnSpeakBase = $("#btnSpeakBase");
-    const btnCopyBase = $("#btnCopyBase");
-    const btnSpeakFinal = $("#btnSpeakFinal");
-    const btnCopyFinal = $("#btnCopyFinal");
-    const btnExport = $("#btnExport");
-
-    const countAdd = $("#countAdd");
-    const countMod = $("#countMod");
-
-    // 3) state
-    const state = {
-      scenarioId: SCENARIOS[0].id,
-      lang: "ro",
-      selectedAdd: new Set(),
-      selectedMod: null, // only one at a time (premium clarity)
-      c1: null,
-      c2: null
+    /* =========================
+       2) Dicționar offline pentru auto RO↔KO (opțional)
+       ========================= */
+    const PHRASES = {
+      ro2ko:{
+        "Am fost surprins(ă).":"놀랐어요.",
+        "Am fost foarte surprins(ă).":"정말 놀랐어요.",
+        "A ieșit apă fierbinte.":"뜨거운 물이 나왔어요."
+      },
+      ko2ro:{
+        "놀랐어요.":"Am fost surprins(ă).",
+        "정말 놀랐어요.":"Am fost foarte surprins(ă).",
+        "뜨거운 물이 나왔어요.":"A ieșit apă fierbinte."
+      }
     };
 
-    function showToast(msg){
-      toast.textContent = msg;
-      toast.classList.add("show");
-      setTimeout(()=>toast.classList.remove("show"), 1400);
-    }
+    const WORDS = {
+      ro2ko:{ "apă":"물","fierbinte":"뜨거운","de aceea":"그래서","dintr-odată":"갑자기","foarte":"정말" },
+      ko2ro:{ "물":"apă","뜨거운":"fierbinte","그래서":"de aceea","갑자기":"dintr-odată","정말":"foarte" }
+    };
 
-    // 4) helpers
-    function esc(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    /* =========================
+       UI + State
+       ========================= */
+    const $ = (s)=>document.querySelector(s);
+    const scenarioSel = $("#scenario");
+    const langSel = $("#lang");
+    const boxA = $("#boxA"), boxB = $("#boxB"), boxC = $("#boxC");
+    const addsEl = $("#adds"), modsEl = $("#mods");
+    const c1El = $("#c1"), c2El = $("#c2");
+    const finalEl = $("#final");
 
-    function getScenario(){
-      return SCENARIOS.find(x=>x.id===state.scenarioId) || SCENARIOS[0];
-    }
+    const state = {
+      scenarioId: SCENARIOS[0].id,
+      lang:"ro",
+      adds:new Set(),
+      mod:null,
+      c1:null,
+      c2:null
+    };
 
-    function trText(obj){
-      return state.lang === "ro" ? obj.ro : obj.en;
-    }
+    function scenario(){ return SCENARIOS.find(s=>s.id===state.scenarioId) || SCENARIOS[0]; }
+    function tr(obj){ return state.lang==="ro" ? obj.ro : obj.en; }
+    function esc(s){ return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
 
-    // Apply MODIFY rules to base clauses
-    function applyModifyToClause(koText, mod){
-      if(!mod) return koText;
-      let out = koText;
-
-      if(mod.koReplace){
-        // replace only first occurrence for safety
-        const {from,to} = mod.koReplace;
-        out = out.replace(from, to);
-      }
-      if(mod.koWrap){
-        out = (mod.koWrap.prefix || "") + out + (mod.koWrap.suffix || "");
-      }
-      return out;
-    }
-
-    // Apply ADD chips (lightweight, safe): we either prefix certain tokens
-    // For this demo:
-    // - "컵에" should be present in A already; if user adds it, we ensure it exists.
-    // - "정말" can prefix C, or also before 놀랐어요.
-    // - "갑자기" can prefix B
-    // - "그래서" can prefix final C clause or between B->C (we'll use it as prefix for C if connector isn't causal)
-    function applyAdds(clauses, addIds){
-      let A = clauses.A;
-      let B = clauses.B;
-      let C = clauses.C;
-
-      const has = (id)=> addIds.has(id);
-
-      if(has("add_place_cup")){
-        // ensure "컵에" exists in A near the object (simple heuristic)
-        if(!A.includes("컵에")){
-          // insert after "양치하려고"
-          A = A.replace("양치하려고 ", "양치하려고 컵에 ");
-        }
-      }
-
-      if(has("add_adv_suddenly")){
-        if(!B.trim().startsWith("갑자기")){
-          B = "갑자기 " + B;
-        }
-      }
-
-      if(has("add_adv_really")){
-        // if no MOD already adds "정말" to C, add it
-        if(!C.trim().startsWith("정말")){
-          C = "정말 " + C;
-        }
-      }
-
-      if(has("add_reason_because")){
-        // "그래서" makes sense at start of C
-        if(!C.trim().startsWith("그래서")){
-          C = "그래서 " + C;
-        }
-      }
-
-      return {A,B,C};
-    }
-
-    // Combine clauses with connectors
-    function combineTwo(text1, text2, connector){
-      return connector.apply(text1, text2);
-    }
-
-    // 5) render
     function renderScenarioOptions(){
-      scenarioSelect.innerHTML = SCENARIOS.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("");
-      scenarioSelect.value = state.scenarioId;
+      scenarioSel.innerHTML = SCENARIOS.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("");
+      scenarioSel.value = state.scenarioId;
     }
 
     function renderConnectors(){
-      const s = getScenario();
+      const s = scenario();
       const opts = s.connectors.map(c=>`<option value="${esc(c.id)}">${esc(c.label)}</option>`).join("");
-      c1.innerHTML = opts;
-      c2.innerHTML = opts;
+      c1El.innerHTML = opts;
+      c2El.innerHTML = opts;
 
       state.c1 = state.c1 || s.defaults.c1;
       state.c2 = state.c2 || s.defaults.c2;
-      c1.value = state.c1;
-      c2.value = state.c2;
+      c1El.value = state.c1;
+      c2El.value = state.c2;
     }
 
-    function renderChips(){
-      const s = getScenario();
+    function renderAddsMods(){
+      const s = scenario();
 
-      addChips.innerHTML = s.add.map(item=>{
-        const active = state.selectedAdd.has(item.id) ? "active" : "";
-        return `
-          <div class="chip ${active}" data-add="${esc(item.id)}">
-            <span class="tag">${esc(item.tag)}</span>
-            <span>${esc(item.ko)}</span>
-            <small>${esc(state.lang==="ro"?item.ro:item.en)}</small>
-          </div>
-        `;
+      addsEl.innerHTML = s.add.map(a=>{
+        const active = state.adds.has(a.id) ? "active" : "";
+        const sub = state.lang==="ro" ? a.ro : a.en;
+        return `<div class="chip ${active}" data-add="${esc(a.id)}"><span>${esc(a.ko)}</span><span class="k">${esc(sub)}</span></div>`;
       }).join("");
 
-      modChips.innerHTML = s.modify.map(item=>{
-        const active = state.selectedMod === item.id ? "active" : "";
-        return `
-          <div class="chip ${active}" data-mod="${esc(item.id)}">
-            <span class="tag">${esc(item.tag)}</span>
-            <span>${esc(item.id==="mod_hot_water" ? "물 → 뜨거운 물" : "놀랐어요 → 정말 놀랐어요")}</span>
-            <small>${esc(state.lang==="ro"?item.ro:item.en)}</small>
-          </div>
-        `;
+      modsEl.innerHTML = s.modify.map(m=>{
+        const active = state.mod===m.id ? "active" : "";
+        const sub = state.lang==="ro" ? m.ro : m.en;
+        return `<div class="chip ${active}" data-mod="${esc(m.id)}"><span>${esc(m.label)}</span><span class="k">${esc(sub)}</span></div>`;
       }).join("");
-
-      countAdd.textContent = `${state.selectedAdd.size} selected`;
-      countMod.textContent = state.selectedMod ? "1 selected" : "none";
     }
 
-    function renderOutputsAndTimeline(){
-      const s = getScenario();
-      statusPill.textContent = "building…";
+    function applyMod(ko, mod){
+      if(!mod) return ko;
+      if(mod.type==="replace") return ko.replace(mod.from, mod.to);
+      if(mod.type==="prefix") return (mod.prefix||"") + ko;
+      return ko;
+    }
 
-      // Base clauses
+    function applyAddsToClauses(A,B,C){
+      // reguli simple și clare (poți schimba ușor)
+      if(state.adds.has("add_suddenly") && !B.startsWith("갑자기")) B = "갑자기 " + B;
+      if(state.adds.has("add_really") && !C.startsWith("정말") && state.mod!=="mod_very_surprised") C = "정말 " + C;
+      if(state.adds.has("add_so") && !C.startsWith("그래서")) C = "그래서 " + C;
+      return {A,B,C};
+    }
+
+    function combine(a,b,conn){ return conn.apply(a,b); }
+
+    function renderABCandFinal(){
+      const s = scenario();
+
+      // Base A/B/C
       let A = s.base.A.ko;
       let B = s.base.B.ko;
       let C = s.base.C.ko;
 
-      // MOD (one choice)
-      const mod = s.modify.find(m=>m.id===state.selectedMod) || null;
+      // Apply MODIFY (targeted)
+      const mod = s.modify.find(x=>x.id===state.mod) || null;
       if(mod){
-        if(mod.target === "A") A = applyModifyToClause(A, mod);
-        if(mod.target === "B") B = applyModifyToClause(B, mod);
-        if(mod.target === "C") C = applyModifyToClause(C, mod);
+        if(mod.target==="A") A = applyMod(A, mod);
+        if(mod.target==="B") B = applyMod(B, mod);
+        if(mod.target==="C") C = applyMod(C, mod);
       }
 
-      // ADD chips
-      ({A,B,C} = applyAdds({A,B,C}, state.selectedAdd));
+      // Apply ADD chips
+      ({A,B,C} = applyAddsToClauses(A,B,C));
 
-      // Connectors
+      // Render boxes A/B/C clearly
+      boxA.innerHTML = `
+        <div class="tag"><b>A</b> Propoziția 1 (intenție/acțiune)</div>
+        <p class="ko">${esc(A)}</p>
+        <p class="ro">${esc(tr(s.base.A))}</p>
+      `;
+      boxB.innerHTML = `
+        <div class="tag"><b>B</b> Propoziția 2 (ce s-a întâmplat)</div>
+        <p class="ko">${esc(B)}</p>
+        <p class="ro">${esc(tr(s.base.B))}</p>
+      `;
+      boxC.innerHTML = `
+        <div class="tag"><b>C</b> Propoziția 3 (reacție/emoție)</div>
+        <p class="ko">${esc(C)}</p>
+        <p class="ro">${esc(tr(s.base.C))}</p>
+      `;
+
+      // Final combine
       const conn1 = s.connectors.find(c=>c.id===state.c1) || s.connectors[0];
       const conn2 = s.connectors.find(c=>c.id===state.c2) || s.connectors[0];
 
-      // Final combined: (A -> B) -> C
-      const AB = combineTwo(A, B, conn1);
-      const ABC = combineTwo(AB, C, conn2);
+      const AB = combine(A,B,conn1);
+      const ABC = combine(AB,C,conn2);
 
-      // BASE OUT (show A only as seed, like TTMIK)
-      baseOut.innerHTML = `
-        <div class="sentence">
-          <p class="ko">${esc(s.base.A.ko)}</p>
-          <p class="tr">${esc(trText(s.base.A))}</p>
-        </div>
+      finalEl.innerHTML = `
+        <p class="ko">${esc(ABC)}</p>
+        <p class="ro">${esc(tr(s.base.A))}  +  ${esc(tr(s.base.B))}  +  ${esc(tr(s.base.C))}</p>
       `;
-
-      // FINAL OUT
-      finalOut.innerHTML = `
-        <div class="sentence">
-          <p class="ko">${esc(ABC)}</p>
-          <p class="tr">${esc(buildTranslationPreview(s, A, B, C, conn1, conn2))}</p>
-        </div>
-      `;
-
-      // TIMELINE (premium flow)
-      timeline.innerHTML = "";
-
-      // Step 1: Base
-      addStep({
-        title:"BASE (Seed)",
-        subtitle:"Propoziție de pornire",
-        ko:s.base.A.ko,
-        tr:trText(s.base.A),
-        buttons:[
-          {label:"🔊 Audio", onClick:()=>speakKo(s.base.A.ko)},
-          {label:"Copy", onClick:()=>copyText(s.base.A.ko)}
-        ]
-      });
-
-      // Step 2: Conjugation / Components view (like TTMIK table, but condensed)
-      addStep({
-        title:"COMPONENTS",
-        subtitle:"A / B / C (building blocks)",
-        ko: `${A}\n${B}\n${C}`,
-        tr: `${buildClauseTr(s, "A")}\n${buildClauseTr(s, "B")}\n${buildClauseTr(s, "C")}`,
-        buttons:[
-          {label:"Copy blocks", onClick:()=>copyText(`${A}\n${B}\n${C}`)}
-        ]
-      });
-
-      // Step 3: Combine 1
-      addStep({
-        title:"COMBINE 1",
-        subtitle:`A → B using ${conn1.label}`,
-        ko: AB,
-        tr: buildTranslationPreview(s, A, B, null, conn1, null),
-        buttons:[
-          {label:"🔊 Audio", onClick:()=>speakKo(AB)},
-          {label:"Copy", onClick:()=>copyText(AB)}
-        ]
-      });
-
-      // Step 4: Combine 2 (Final)
-      addStep({
-        title:"COMBINE 2 (Final)",
-        subtitle:`(A→B) → C using ${conn2.label}`,
-        ko: ABC,
-        tr: buildTranslationPreview(s, A, B, C, conn1, conn2),
-        buttons:[
-          {label:"🔊 Audio", onClick:()=>speakKo(ABC)},
-          {label:"Copy", onClick:()=>copyText(ABC)}
-        ]
-      });
-
-      statusPill.textContent = "ready";
     }
 
-    function addStep({title, subtitle, ko, tr, buttons=[]}){
-      const step = document.createElement("div");
-      step.className = "step";
-      step.innerHTML = `
-        <div class="dot"></div>
-        <div class="stepHeader">
-          <div class="title">
-            <b>${esc(title)}</b>
-            <span>${esc(subtitle)}</span>
-          </div>
-          <div class="actions"></div>
-        </div>
-        <div class="stepBody">
-          <div class="sentence">
-            <p class="ko">${esc(ko).replace(/\n/g,"<br/>")}</p>
-            <p class="tr">${esc(tr).replace(/\n/g,"<br/>")}</p>
-          </div>
-        </div>
-      `;
-      const act = step.querySelector(".actions");
-      buttons.forEach(b=>{
-        const btn = document.createElement("button");
-        btn.className = "tiny";
-        btn.textContent = b.label;
-        btn.addEventListener("click", b.onClick);
-        act.appendChild(btn);
-      });
-      timeline.appendChild(step);
-    }
-
-    function buildClauseTr(s, key){
-      // Use original base translations; builder is for Korean logic primarily.
-      // For preview: use base translations as reference.
-      return trText(s.base[key]);
-    }
-
-    function buildTranslationPreview(s, A, B, C, conn1, conn2){
-      // High-quality approach: not perfect MT; gives a clean “meaning preview”.
-      // We use base translations, then reflect connectors semantically.
-      const tA = trText(s.base.A);
-      const tB = trText(s.base.B);
-      const tC = C ? trText(s.base.C) : "";
-
-      const label = (conn)=> conn ? conn.label : "";
-
-      if(!C && conn1){
-        return `${tA}  [${label(conn1)}]  ${tB}`;
-      }
-      if(C && conn1 && conn2){
-        return `${tA}  [${label(conn1)}]  ${tB}  [${label(conn2)}]  ${tC}`;
-      }
-      // fallback
-      return [tA,tB,tC].filter(Boolean).join(" / ");
-    }
-
-    // 6) interactions
-    function bindChipEvents(){
-      addChips.addEventListener("click", (e)=>{
-        const chip = e.target.closest(".chip[data-add]");
-        if(!chip) return;
-        const id = chip.getAttribute("data-add");
-        if(state.selectedAdd.has(id)) state.selectedAdd.delete(id);
-        else state.selectedAdd.add(id);
-        renderChips();
-        renderOutputsAndTimeline();
-      });
-
-      modChips.addEventListener("click", (e)=>{
-        const chip = e.target.closest(".chip[data-mod]");
-        if(!chip) return;
-        const id = chip.getAttribute("data-mod");
-        state.selectedMod = (state.selectedMod === id) ? null : id;
-        renderChips();
-        renderOutputsAndTimeline();
-      });
-    }
-
-    scenarioSelect.addEventListener("change", ()=>{
-      state.scenarioId = scenarioSelect.value;
-      // reset state for scenario
-      state.selectedAdd.clear();
-      state.selectedMod = null;
-      const s = getScenario();
-      state.c1 = s.defaults.c1;
-      state.c2 = s.defaults.c2;
-      renderConnectors();
-      renderChips();
-      renderOutputsAndTimeline();
-      showToast("Scenario changed.");
-    });
-
-    langSelect.addEventListener("change", ()=>{
-      state.lang = langSelect.value;
-      renderChips();
-      renderOutputsAndTimeline();
-      showToast("Language updated.");
-    });
-
-    c1.addEventListener("change", ()=>{
-      state.c1 = c1.value;
-      renderOutputsAndTimeline();
-    });
-    c2.addEventListener("change", ()=>{
-      state.c2 = c2.value;
-      renderOutputsAndTimeline();
-    });
-
-    btnReset.addEventListener("click", ()=>{
-      state.selectedAdd.clear();
-      state.selectedMod = null;
-      const s = getScenario();
-      state.c1 = s.defaults.c1;
-      state.c2 = s.defaults.c2;
-      renderConnectors();
-      renderChips();
-      renderOutputsAndTimeline();
-      showToast("Reset done.");
-    });
-
-    btnRebuild.addEventListener("click", ()=>{
-      renderOutputsAndTimeline();
-      showToast("Rebuilt.");
-    });
-
-    btnAuto.addEventListener("click", ()=>{
-      // “wow” demo: choose best TTMIK-like chain
-      state.selectedAdd.add("add_place_cup");
-      state.selectedMod = "mod_hot_water";
-      state.selectedAdd.add("add_adv_really");
-      state.c1 = "c_but";
-      state.c2 = "c_reason";
-      renderConnectors();
-      renderChips();
-      renderOutputsAndTimeline();
-      showToast("Auto-build applied.");
-    });
-
-    btnSpeakBase.addEventListener("click", ()=>{
-      const s = getScenario();
-      speakKo(s.base.A.ko);
-    });
-
-    btnCopyBase.addEventListener("click", ()=>{
-      const s = getScenario();
-      copyText(s.base.A.ko);
-    });
-
-    btnSpeakFinal.addEventListener("click", ()=>{
-      const ko = finalOut.querySelector(".ko")?.textContent || "";
-      speakKo(ko);
-    });
-
-    btnCopyFinal.addEventListener("click", ()=>{
-      const ko = finalOut.querySelector(".ko")?.textContent || "";
-      copyText(ko);
-    });
-
-    btnExport.addEventListener("click", ()=>{
-      const s = getScenario();
-      const koFinal = finalOut.querySelector(".ko")?.textContent || "";
-      const payload = {
-        module: "sentence-builder",
-        scenario: { id: s.id, name: s.name },
-        lang: state.lang,
-        selectedAdd: [...state.selectedAdd],
-        selectedMod: state.selectedMod,
-        connectors: { c1: state.c1, c2: state.c2 },
-        output: { ko: koFinal }
-      };
-      copyText(JSON.stringify(payload, null, 2));
-      showToast("Export JSON copied to clipboard.");
-    });
-
-    // 7) utilities: copy + speech
-    async function copyText(txt){
-      try{
-        await navigator.clipboard.writeText(txt);
-        showToast("Copied.");
-      }catch{
-        // fallback
-        const ta = document.createElement("textarea");
-        ta.value = txt;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        ta.remove();
-        showToast("Copied (fallback).");
-      }
-    }
-
-    function speakKo(text){
-      if(!("speechSynthesis" in window)){
-        showToast("Speech not supported in this browser.");
-        return;
-      }
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "ko-KR";
-
-      // attempt to pick a Korean voice if available
-      const voices = window.speechSynthesis.getVoices?.() || [];
-      const koVoice = voices.find(v => (v.lang||"").toLowerCase().startsWith("ko"));
-      if(koVoice) u.voice = koVoice;
-
-      u.rate = 1.0;
-      u.pitch = 1.0;
-      u.volume = 1.0;
-
-      window.speechSynthesis.speak(u);
-    }
-
-    // 8) init
     function init(){
       renderScenarioOptions();
       renderConnectors();
-      renderChips();
-      bindChipEvents();
-      renderOutputsAndTimeline();
+      renderAddsMods();
+      renderABCandFinal();
+    }
 
-      // iOS/Safari sometimes needs voices loaded after a user gesture; still ok.
-      if("speechSynthesis" in window){
-        window.speechSynthesis.onvoiceschanged = ()=>{};
+    scenarioSel.addEventListener("change", ()=>{
+      state.scenarioId = scenarioSel.value;
+      state.adds.clear();
+      state.mod = null;
+      state.c1 = null;
+      state.c2 = null;
+      renderConnectors();
+      renderAddsMods();
+      renderABCandFinal();
+    });
+
+    langSel.addEventListener("change", ()=>{
+      state.lang = langSel.value;
+      renderAddsMods();
+      renderABCandFinal();
+    });
+
+    addsEl.addEventListener("click", (e)=>{
+      const chip = e.target.closest("[data-add]");
+      if(!chip) return;
+      const id = chip.getAttribute("data-add");
+      if(state.adds.has(id)) state.adds.delete(id); else state.adds.add(id);
+      renderAddsMods();
+      renderABCandFinal();
+    });
+
+    modsEl.addEventListener("click", (e)=>{
+      const chip = e.target.closest("[data-mod]");
+      if(!chip) return;
+      const id = chip.getAttribute("data-mod");
+      state.mod = (state.mod===id) ? null : id;
+      renderAddsMods();
+      renderABCandFinal();
+    });
+
+    c1El.addEventListener("change", ()=>{ state.c1 = c1El.value; renderABCandFinal(); });
+    c2El.addEventListener("change", ()=>{ state.c2 = c2El.value; renderABCandFinal(); });
+
+    $("#reset").addEventListener("click", ()=>{
+      const s = scenario();
+      state.adds.clear();
+      state.mod = null;
+      state.c1 = s.defaults.c1;
+      state.c2 = s.defaults.c2;
+      renderConnectors();
+      renderAddsMods();
+      renderABCandFinal();
+    });
+
+    $("#auto").addEventListener("click", ()=>{
+      const s = scenario();
+      state.adds.clear();
+      (s.defaults.autoAdds||[]).forEach(x=>state.adds.add(x));
+      state.mod = s.defaults.autoMod || null;
+      state.c1 = s.defaults.c1;
+      state.c2 = s.defaults.c2;
+      renderConnectors();
+      renderAddsMods();
+      renderABCandFinal();
+    });
+
+    $("#rebuild").addEventListener("click", ()=>renderABCandFinal());
+
+    // Copy + Audio
+    async function copyText(t){
+      try{ await navigator.clipboard.writeText(t); }
+      catch{
+        const ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta);
+        ta.select(); document.execCommand("copy"); ta.remove();
       }
     }
+    function speakKo(text){
+      if(!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ko-KR";
+      window.speechSynthesis.speak(u);
+    }
+
+    $("#copyFinal").addEventListener("click", ()=>{
+      const t = finalEl.querySelector(".ko")?.textContent || "";
+      copyText(t);
+    });
+    $("#speakFinal").addEventListener("click", ()=>{
+      const t = finalEl.querySelector(".ko")?.textContent || "";
+      speakKo(t);
+    });
+
+    /* =========================
+       Translator RO ↔ KO (offline) clar
+       ========================= */
+    const roIn = $("#roIn"), koIn = $("#koIn"), trStatus=$("#trStatus");
+    let lock=false;
+
+    function norm(s){ return s.trim().replace(/\s+/g," ").replace(/ +([.,!?;:])/g,"$1"); }
+
+    function ro2ko(ro){
+      const key = norm(ro);
+      if(PHRASES.ro2ko[key]) return {ok:true,out:PHRASES.ro2ko[key],mode:"PHRASE"};
+      const tokens = key.toLowerCase().replace(/[.,!?;:]/g,"").split(" ").filter(Boolean);
+      let miss=[];
+      const out = tokens.map(t=>{ const x=WORDS.ro2ko[t]; if(!x) miss.push(t); return x||t; }).join(" ");
+      return miss.length ? {ok:false,out,mode:"WORDS",missing:miss} : {ok:true,out,mode:"WORDS"};
+    }
+    function ko2ro(ko){
+      const key = norm(ko);
+      if(PHRASES.ko2ro[key]) return {ok:true,out:PHRASES.ko2ro[key],mode:"PHRASE"};
+      const tokens = key.replace(/[.,!?;:]/g,"").split(" ").filter(Boolean);
+      let miss=[];
+      const out = tokens.map(t=>{ const x=WORDS.ko2ro[t]; if(!x) miss.push(t); return x||t; }).join(" ");
+      return miss.length ? {ok:false,out,mode:"WORDS",missing:miss} : {ok:true,out,mode:"WORDS"};
+    }
+    function setStatus(r){
+      if(!r){ trStatus.textContent=""; return; }
+      trStatus.textContent = r.ok ? `OK (${r.mode})` : `Nu există complet în dicționar (${r.mode}). Lipsesc: ${r.missing.join(", ")}`;
+    }
+
+    roIn.addEventListener("input", ()=>{
+      if(lock) return; lock=true;
+      const v=roIn.value;
+      if(!v.trim()){ koIn.value=""; setStatus(null); lock=false; return; }
+      const r=ro2ko(v); koIn.value=r.out; setStatus(r);
+      lock=false;
+    });
+    koIn.addEventListener("input", ()=>{
+      if(lock) return; lock=true;
+      const v=koIn.value;
+      if(!v.trim()){ roIn.value=""; setStatus(null); lock=false; return; }
+      const r=ko2ro(v); roIn.value=r.out; setStatus(r);
+      lock=false;
+    });
+
+    $("#addPhrase").addEventListener("click", ()=>{
+      const ro = norm(roIn.value);
+      const ko = norm(koIn.value);
+      if(!ro || !ko){ setStatus({ok:false,mode:"ADD",missing:["RO sau KO gol"]}); return; }
+      PHRASES.ro2ko[ro]=ko;
+      PHRASES.ko2ro[ko]=ro;
+      setStatus({ok:true,mode:"PHRASE_ADDED"});
+    });
+    $("#clearTr").addEventListener("click", ()=>{
+      roIn.value=""; koIn.value=""; setStatus(null);
+    });
+
     init();
   </script>
 </body>
