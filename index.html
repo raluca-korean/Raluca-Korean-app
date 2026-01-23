@@ -1,515 +1,60 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Worksheet Builder — 3 propoziții (A/B/C)</title>
-  <style>
-    :root{
-      --bg:#f5f6fa;
-      --paper:#ffffff;
-      --ink:#121826;
-      --muted:#5c667e;
-      --line:#dde2ef;
-      --accent:#2c7a6b;
-      --accentSoft:#e9f6f2;
-      --chip:#f2f4fb;
-      --shadow:0 10px 24px rgba(18,24,38,.08);
-      --r:16px;
-      --r2:12px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink)}
-    .wrap{max-width:1200px;margin:0 auto;padding:18px 14px 40px}
-    .top{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch;margin-bottom:12px}
-    .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
-    .hero{flex:1;min-width:min(720px,100%);padding:14px 16px}
-    .hero h1{margin:0;font-size:18px}
-    .hero p{margin:6px 0 0 0;color:var(--muted);font-size:13px;line-height:1.45}
-    .ctrl{min-width:320px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    label{font-size:12px;color:var(--muted)}
-    input,select,button,textarea{
-      font:inherit;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;color:var(--ink);outline:none
-    }
-    textarea{min-height:80px;resize:vertical}
-    button{cursor:pointer;background:var(--chip)}
-    button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-    button.ghost{background:#fff}
-    button:active{transform:translateY(1px)}
-    .grid{display:grid;grid-template-columns: 1fr 1fr;gap:12px;align-items:start}
-    @media(max-width: 980px){.grid{grid-template-columns:1fr}}
-
-    .section{padding:14px 16px}
-    .section h2{margin:0 0 10px 0;font-size:12px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)}
-    .line{height:1px;background:var(--line);margin:12px 0}
-
-    /* A/B/C editor */
-    .abc{display:grid;grid-template-columns:1fr;gap:10px}
-    .box{border:1px solid var(--line);border-radius:var(--r2);padding:12px;background:#fff}
-    .tag{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-    .tag b{background:var(--accent);color:#fff;border-radius:999px;padding:4px 10px;font-size:12px}
-    .tag span{color:var(--muted);font-size:12px}
-    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .hint{color:var(--muted);font-size:12px;line-height:1.45}
-    .status{font-size:12px;color:var(--muted)}
-    .mono{font-family:var(--mono)}
-
-    /* Worksheet */
-    .sheet{
-      border:1px solid var(--line);
-      border-radius:var(--r);
-      background:#fff;
-      overflow:hidden;
-    }
-    .sheetHeader{
-      padding:12px 14px;
-      background:linear-gradient(180deg, var(--accentSoft), #fff);
-      border-bottom:1px solid var(--line);
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-    }
-    .sheetHeader b{font-size:14px}
-    .pill{font-size:11px;color:var(--muted);border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 8px}
-    .sheetBody{padding:12px 14px;display:grid;grid-template-columns:1fr;gap:10px}
-    .block{
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 10px;
-      background:#fff;
-    }
-    .blockTitle{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
-    .ko{font-size:18px;margin:0;line-height:1.3}
-    .tr{font-size:13px;color:var(--muted);margin:6px 0 0 0;line-height:1.4}
-
-    .steps{display:grid;grid-template-columns:1fr;gap:8px}
-    .stepRow{display:flex;gap:10px;align-items:flex-start}
-    .stepNum{width:26px;height:26px;border-radius:10px;background:var(--accentSoft);border:1px solid rgba(44,122,107,.25);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700}
-    .stepContent{flex:1}
-    .blank{display:inline-block;min-width:90px;border-bottom:2px solid rgba(18,24,38,.25);padding:0 6px 2px 6px;font-family:var(--mono)}
-
-    .review{
-      background:var(--accentSoft);
-      border:1px solid rgba(44,122,107,.25);
-    }
-    .review input{background:#fff}
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Build & Extend – 살다</title>
+<style>
+  body { font-family: system-ui, -apple-system; background:#f5f5f5; margin:0; }
+  .app { max-width:420px; margin:auto; background:#fff; min-height:100vh; padding:20px; box-sizing:border-box; }
+  .header { display:flex; justify-content:space-between; align-items:center; font-weight:600; }
+  .step { margin-top:20px; font-size:14px; color:#666; }
+  .ko { font-size:28px; margin:20px 0 8px; }
+  .ro { font-size:16px; color:#555; }
+  .nav { display:flex; justify-content:space-between; margin-top:30px; }
+  button { padding:12px 18px; font-size:16px; }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div class="card hero">
-        <h1>Worksheet Builder — exact “foi” A/B/C ca în pozele tale</h1>
-        <p>
-          Scrii 3 propoziții (A/B/C) în RO sau KO. Modulul completează automat cealaltă limbă din dicționarul tău (offline),
-          apoi generează o foaie tip TTMIK: Grammar / Build steps / Review. Export/import JSON pentru lipire în aplicația mare.
-        </p>
-      </div>
-      <div class="card ctrl">
-        <div class="row">
-          <label>Mod editare</label>
-          <select id="editMode">
-            <option value="ro">Scriu în RO → apare KO</option>
-            <option value="ko">Scriu în KO → apare RO</option>
-          </select>
-        </div>
-        <div class="row">
-          <button class="primary" id="btnGenerate">Generează foaia</button>
-          <button class="ghost" id="btnReset">Reset</button>
-        </div>
-        <div class="row">
-          <button id="btnExport">Export JSON</button>
-          <button id="btnImport">Import JSON</button>
-        </div>
-        <div class="status" id="globalStatus"></div>
-      </div>
-    </div>
 
-    <div class="grid">
-      <!-- LEFT: A/B/C editor -->
-      <div class="card section">
-        <h2>1) Cele 3 propoziții (A / B / C) — aici scrii</h2>
-        <div class="hint">
-          Important: traducerea automată este offline, deci funcționează corect dacă fraza există în <span class="mono">PHRASES</span>
-          (recomandat). Altfel îți spune clar că lipsește din dicționar.
-        </div>
-
-        <div class="line"></div>
-
-        <div class="abc" id="abcEditor"></div>
-
-        <div class="line"></div>
-
-        <h2>2) Dicționar offline (unde adaugi traduceri)</h2>
-        <div class="hint">
-          Pentru calitate „de curs”, adaugi propoziții complete în <span class="mono">PHRASES</span>.
-          Dacă vrei, poți adăuga și cuvinte în <span class="mono">WORDS</span>, dar aceea este doar plasă de siguranță.
-        </div>
-        <div class="block" style="margin-top:10px">
-          <div class="blockTitle">Quick add PHRASE (RO ↔ KO)</div>
-          <div class="two">
-            <div>
-              <label>RO</label>
-              <input id="phraseRO" type="text" placeholder="Ex: Am fost surprinsă." style="width:100%">
-            </div>
-            <div>
-              <label>KO</label>
-              <input id="phraseKO" type="text" placeholder="Ex: 놀랐어요." style="width:100%">
-            </div>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <button id="btnAddPhrase">Adaugă în dicționar (în memorie)</button>
-            <span class="status" id="phraseStatus"></span>
-          </div>
-          <div class="hint">
-            Notă: „în memorie” = se aplică imediat în pagină. Ca să fie permanent, copiezi perechea în obiectul <span class="mono">PHRASES</span> din cod.
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT: Worksheet output -->
-      <div class="card section">
-        <h2>Foaia generată (worksheet) — exact pentru lipit în aplicație</h2>
-
-        <div class="sheet" id="sheet">
-          <div class="sheetHeader">
-            <b id="sheetTitle">Worksheet</b>
-            <span class="pill" id="sheetPill">ready</span>
-          </div>
-          <div class="sheetBody" id="sheetBody">
-            <div class="hint">Completează A/B/C în stânga și apasă „Generează foaia”.</div>
-          </div>
-        </div>
-
-        <div class="line"></div>
-
-        <div class="block review">
-          <div class="blockTitle">Review (fill-in)</div>
-          <div class="hint">Generat din propozițiile tale (blank pe conector). Poți schimba conectorii în cod după ce confirmi designul.</div>
-          <div style="margin-top:8px" class="ko" id="reviewQ"></div>
-          <div class="row" style="margin-top:10px">
-            <input id="reviewIn" type="text" placeholder="Completează blank-ul…" style="flex:1;min-width:220px">
-            <button id="btnCheck">Check</button>
-          </div>
-          <div class="status" id="reviewRes"></div>
-        </div>
-
-      </div>
-    </div>
+<div class="app">
+  <div class="header">
+    <div>Build & Extend · 살다</div>
+    <div>⭐</div>
   </div>
 
-  <script>
-    /* =========================================================
-       DICȚIONAR OFFLINE (editezi aici permanent)
-       ========================================================= */
-    const PHRASES = {
-      ro2ko: {
-        "Am umplut un pahar cu apă ca să mă spăl pe dinți.": "양치하려고 컵에 물을 받았어요.",
-        "A ieșit apă fierbinte.": "뜨거운 물이 나왔어요.",
-        "Am fost surprins(ă).": "놀랐어요.",
-        "Am fost foarte surprins(ă).": "정말 놀랐어요."
-      },
-      ko2ro: {
-        "양치하려고 컵에 물을 받았어요.": "Am umplut un pahar cu apă ca să mă spăl pe dinți.",
-        "뜨거운 물이 나왔어요.": "A ieșit apă fierbinte.",
-        "놀랐어요.": "Am fost surprins(ă).",
-        "정말 놀랐어요.": "Am fost foarte surprins(ă)."
-      }
-    };
+  <div class="step" id="stepTitle"></div>
 
-    // Plasă de siguranță (calitate mai mică)
-    const WORDS = {
-      ro2ko: { "apă":"물", "fierbinte":"뜨거운", "pahar":"컵", "surprins":"놀랐어요", "foarte":"정말" },
-      ko2ro: { "물":"apă", "뜨거운":"fierbinte", "컵":"pahar", "놀랐어요":"surprins(ă)", "정말":"foarte" }
-    };
+  <div class="ko" id="ko"></div>
+  <div class="ro" id="ro"></div>
 
-    /* =========================================================
-       STATE — A/B/C (astea sunt „cele 3 propoziții”)
-       ========================================================= */
-    const state = {
-      title: "Capitol / Lecție",
-      A: { ro:"Am umplut un pahar cu apă ca să mă spăl pe dinți.", ko:"양치하려고 컵에 물을 받았어요." },
-      B: { ro:"A ieșit apă fierbinte.", ko:"뜨거운 물이 나왔어요." },
-      C: { ro:"Am fost surprins(ă).", ko:"놀랐어요." },
-      // conectori (poți schimba după ce confirmi designul)
-      c1: "는데", // A__ , B
-      c2: "서"   // (A+B)__ C
-    };
+  <div class="nav">
+    <button onclick="prev()">Înapoi</button>
+    <button onclick="next()">Înainte</button>
+  </div>
+</div>
 
-    /* =========================================================
-       Helpers
-       ========================================================= */
-    const $ = (s)=>document.querySelector(s);
-    function esc(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));}
-    function norm(s){return (s||"").trim().replace(/\s+/g," ").replace(/ +([.,!?;:])/g,"$1");}
+<script>
+const steps = [
+  { title:"Pas 1 / 5 · BUILD", ko:"저 살아요", ro:"Locuiesc." },
+  { title:"Pas 2 / 5 · ADD", ko:"저는 서울에 살아요", ro:"Locuiesc în Seul." },
+  { title:"Pas 3 / 5 · MODIFY", ko:"저는 서울에 살았어요", ro:"Am locuit în Seul." },
+  { title:"Pas 4 / 5 · COMBINE", ko:"저는 작년에 서울에 살았어요", ro:"Anul trecut am locuit în Seul." },
+  { title:"Pas 5 / 5 · CHANGE", ko:"저는 작년에 서울에 안 살았어요", ro:"Anul trecut nu am locuit în Seul." }
+];
 
-    function phraseROtoKO(ro){
-      const key = norm(ro);
-      if(PHRASES.ro2ko[key]) return {ok:true,out:PHRASES.ro2ko[key],mode:"PHRASE"};
-      // fallback word-by-word
-      const tokens = key.toLowerCase().replace(/[.,!?;:]/g,"").split(" ").filter(Boolean);
-      let miss=[];
-      const out = tokens.map(t=>{const x=WORDS.ro2ko[t]; if(!x) miss.push(t); return x||t;}).join(" ");
-      return miss.length ? {ok:false,out,mode:"WORDS",missing:miss} : {ok:true,out,mode:"WORDS"};
-    }
+let i = 0;
+function render(){
+  document.getElementById("stepTitle").innerText = steps[i].title;
+  document.getElementById("ko").innerText = steps[i].ko;
+  document.getElementById("ro").innerText = steps[i].ro;
+}
+function next(){ if(i < steps.length-1){ i++; render(); } }
+function prev(){ if(i > 0){ i--; render(); } }
 
-    function phraseKOtoRO(ko){
-      const key = norm(ko);
-      if(PHRASES.ko2ro[key]) return {ok:true,out:PHRASES.ko2ro[key],mode:"PHRASE"};
-      const tokens = key.replace(/[.,!?;:]/g,"").split(" ").filter(Boolean);
-      let miss=[];
-      const out = tokens.map(t=>{const x=WORDS.ko2ro[t]; if(!x) miss.push(t); return x||t;}).join(" ");
-      return miss.length ? {ok:false,out,mode:"WORDS",missing:miss} : {ok:true,out,mode:"WORDS"};
-    }
+render();
+</script>
 
-    /* =========================================================
-       Render editor A/B/C
-       ========================================================= */
-    const abcEditor = $("#abcEditor");
-    const editMode = $("#editMode");
-    const globalStatus = $("#globalStatus");
-
-    let lock=false;
-
-    function abcRow(key, labelText){
-      const roVal = state[key].ro || "";
-      const koVal = state[key].ko || "";
-      return `
-        <div class="box" data-key="${esc(key)}">
-          <div class="tag"><b>${esc(labelText)}</b><span>${key==="A"?"Propoziția 1 (setup)":
-                                                       key==="B"?"Propoziția 2 (event)":"Propoziția 3 (reaction)"}</span></div>
-          <div class="two">
-            <div>
-              <label>RO</label>
-              <textarea class="ro" data-field="ro" placeholder="Scrie în română...">${esc(roVal)}</textarea>
-            </div>
-            <div>
-              <label>KO</label>
-              <textarea class="ko" data-field="ko" placeholder="한국어로...">${esc(koVal)}</textarea>
-            </div>
-          </div>
-          <div class="status" data-status></div>
-        </div>
-      `;
-    }
-
-    function renderEditor(){
-      abcEditor.innerHTML = [
-        abcRow("A","A"),
-        abcRow("B","B"),
-        abcRow("C","C")
-      ].join("");
-      globalStatus.textContent = "";
-    }
-
-    abcEditor.addEventListener("input",(e)=>{
-      const box = e.target.closest(".box");
-      if(!box) return;
-      if(lock) return;
-
-      const key = box.getAttribute("data-key");
-      const field = e.target.getAttribute("data-field");
-      const mode = editMode.value;
-
-      const statusEl = box.querySelector("[data-status]");
-
-      lock=true;
-
-      if(mode==="ro" && field==="ro"){
-        state[key].ro = e.target.value;
-        const res = phraseROtoKO(state[key].ro);
-        state[key].ko = res.out;
-        box.querySelector('textarea[data-field="ko"]').value = state[key].ko;
-        statusEl.textContent = res.ok ? `OK (${res.mode})` : `Lipsește în dicționar (fallback ${res.mode}). Lipsesc: ${(res.missing||[]).join(", ")}`;
-      }
-
-      if(mode==="ko" && field==="ko"){
-        state[key].ko = e.target.value;
-        const res = phraseKOtoRO(state[key].ko);
-        state[key].ro = res.out;
-        box.querySelector('textarea[data-field="ro"]').value = state[key].ro;
-        statusEl.textContent = res.ok ? `OK (${res.mode})` : `Lipsește în dicționar (fallback ${res.mode}). Lipsesc: ${(res.missing||[]).join(", ")}`;
-      }
-
-      // Dacă utilizatorul editează „cealaltă” limbă decât modul selectat, doar salvăm.
-      if(mode==="ro" && field==="ko"){ state[key].ko = e.target.value; statusEl.textContent=""; }
-      if(mode==="ko" && field==="ro"){ state[key].ro = e.target.value; statusEl.textContent=""; }
-
-      lock=false;
-    });
-
-    /* =========================================================
-       Worksheet generation (stil “foi”)
-       ========================================================= */
-    const sheetBody = $("#sheetBody");
-    const sheetTitle = $("#sheetTitle");
-    const sheetPill = $("#sheetPill");
-
-    function buildFinal(){
-      // minimal, TTMIK-like: A + "는데," + B + "서" + C
-      // (tu poți schimba conectorii după)
-      const A = norm(state.A.ko);
-      const B = norm(state.B.ko);
-      const C = norm(state.C.ko);
-      const c1 = state.c1; // "는데"
-      const c2 = state.c2; // "서"
-
-      const AB = A.replace("요.","") + c1 + ", " + B;
-      const ABC = AB.replace("요.","") + c2 + " " + C;
-      return {A,B,C,AB,ABC};
-    }
-
-    function makeBlock(title, ko, tr){
-      return `
-        <div class="block">
-          <div class="blockTitle">${esc(title)}</div>
-          <p class="ko">${esc(ko)}</p>
-          <p class="tr">${esc(tr)}</p>
-        </div>
-      `;
-    }
-
-    function generateSheet(){
-      const f = buildFinal();
-      sheetTitle.textContent = state.title || "Worksheet";
-      sheetPill.textContent = "generated";
-
-      // “Grammar box” — aici îl fac generic (după ce confirmi formatul, îl fac exact cum vrei)
-      const grammar = `
-        <div class="block">
-          <div class="blockTitle">Grammar focus</div>
-          <div class="hint">
-            Conectori folosiți în foaia asta:
-            <span class="pill">${esc(state.c1)}</span> și <span class="pill">${esc(state.c2)}</span>.
-            (După ce confirmi designul, îți pun listă completă ca în foile tale.)
-          </div>
-        </div>
-      `;
-
-      const steps = `
-        <div class="block">
-          <div class="blockTitle">Build steps</div>
-          <div class="steps">
-            <div class="stepRow">
-              <div class="stepNum">1</div>
-              <div class="stepContent">
-                <div class="hint">Start (A)</div>
-                <div class="ko">${esc(f.A)}</div>
-              </div>
-            </div>
-            <div class="stepRow">
-              <div class="stepNum">2</div>
-              <div class="stepContent">
-                <div class="hint">Add connector + B</div>
-                <div class="ko">${esc(f.AB)}</div>
-              </div>
-            </div>
-            <div class="stepRow">
-              <div class="stepNum">3</div>
-              <div class="stepContent">
-                <div class="hint">Add connector + C (FINAL)</div>
-                <div class="ko">${esc(f.ABC)}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const final = `
-        <div class="block review">
-          <div class="blockTitle">Final sentence</div>
-          <p class="ko">${esc(f.ABC)}</p>
-          <p class="tr">${esc(state.A.ro)} + ${esc(state.B.ro)} + ${esc(state.C.ro)}</p>
-        </div>
-      `;
-
-      sheetBody.innerHTML =
-        grammar +
-        makeBlock("A (setup)", f.A, state.A.ro) +
-        makeBlock("B (event)", f.B, state.B.ro) +
-        makeBlock("C (reaction)", f.C, state.C.ro) +
-        steps +
-        final;
-
-      // Review question
-      const q = `${norm(state.A.ko).replace("요.","")}__ , ${norm(state.B.ko)}`;
-      $("#reviewQ").innerHTML = esc(q).replace("__", `<span class="blank"></span>`);
-      $("#reviewRes").textContent = "";
-      $("#reviewIn").value = "";
-    }
-
-    $("#btnGenerate").addEventListener("click", ()=>{
-      generateSheet();
-      globalStatus.textContent = "Foaia a fost generată.";
-    });
-
-    $("#btnReset").addEventListener("click", ()=>{
-      state.title="Capitol / Lecție";
-      renderEditor();
-      sheetBody.innerHTML = `<div class="hint">Completează A/B/C în stânga și apasă „Generează foaia”.</div>`;
-      sheetPill.textContent="ready";
-      $("#reviewQ").textContent="";
-      $("#reviewRes").textContent="";
-      $("#reviewIn").value="";
-      globalStatus.textContent="";
-    });
-
-    $("#btnCheck").addEventListener("click", ()=>{
-      const user = norm($("#reviewIn").value);
-      const correct = state.c1; // blank-ul este c1 (ex: "는데")
-      $("#reviewRes").textContent = (user === correct) ? "Corect." : `Greșit. Corect: ${correct}`;
-    });
-
-    /* =========================================================
-       Export / Import JSON (pentru lipire în aplicația mare)
-       ========================================================= */
-    async function copyText(t){
-      try{ await navigator.clipboard.writeText(t); }
-      catch{
-        const ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta);
-        ta.select(); document.execCommand("copy"); ta.remove();
-      }
-    }
-
-    $("#btnExport").addEventListener("click", async ()=>{
-      const payload = JSON.stringify(state, null, 2);
-      await copyText(payload);
-      globalStatus.textContent = "Export JSON copiat în clipboard.";
-    });
-
-    $("#btnImport").addEventListener("click", ()=>{
-      const raw = prompt("Paste JSON aici:");
-      if(!raw) return;
-      try{
-        const obj = JSON.parse(raw);
-        if(!obj.A || !obj.B || !obj.C) throw new Error("Lipsește A/B/C.");
-        state.title = obj.title || state.title;
-        state.A = obj.A; state.B = obj.B; state.C = obj.C;
-        state.c1 = obj.c1 || state.c1;
-        state.c2 = obj.c2 || state.c2;
-        renderEditor();
-        globalStatus.textContent = "Import OK. Acum apasă „Generează foaia”.";
-      }catch(err){
-        globalStatus.textContent = "Import eșuat: " + err.message;
-      }
-    });
-
-    /* =========================================================
-       Quick add phrase (dicționar în memorie)
-       ========================================================= */
-    $("#btnAddPhrase").addEventListener("click", ()=>{
-      const ro = norm($("#phraseRO").value);
-      const ko = norm($("#phraseKO").value);
-      const st = $("#phraseStatus");
-      if(!ro || !ko){ st.textContent="Completează RO și KO."; return; }
-      PHRASES.ro2ko[ro]=ko;
-      PHRASES.ko2ro[ko]=ro;
-      st.textContent="Adăugat. Pentru permanent, copiază în PHRASES din cod.";
-    });
-
-    /* Init */
-    renderEditor();
-  </script>
 </body>
 </html>
