@@ -3,24 +3,29 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sentence Builder (Clean) — A/B/C → 1 frază</title>
+  <title>Sentence Builder — Premium</title>
   <style>
     :root{
-      /* Light theme, TTMIK-like */
+      /* Premium light theme (clean, TTMIK-ish) */
       --bg:#f6f7fb;
       --paper:#ffffff;
-      --ink:#121826;
+      --ink:#101526;
       --muted:#5b647a;
-      --line:#d8deea;
-      --chip:#f0f3fb;
-      --chipActive:#e6f7ef;
-      --accent:#1a7f5a;
-      --danger:#c43b4f;
-      --shadow: 0 10px 24px rgba(18,24,38,.08);
-      --r:16px;
+      --line:#dfe4f0;
+
+      --green:#1f7a5a;
+      --greenSoft:#eaf6f1;
+      --blueSoft:#eef4ff;
+      --chip:#f3f5fb;
+
+      --shadow:0 10px 26px rgba(18,24,38,.08);
+      --r:18px;
+      --r2:14px;
+
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
+
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -28,8 +33,9 @@
       background:var(--bg);
       color:var(--ink);
     }
-    .wrap{max-width:1100px;margin:0 auto;padding:20px 14px 40px}
-    .top{
+    .wrap{max-width:1200px;margin:0 auto;padding:20px 14px 46px}
+
+    .header{
       display:flex;gap:12px;align-items:stretch;justify-content:space-between;flex-wrap:wrap;
       margin-bottom:12px;
     }
@@ -39,10 +45,11 @@
       border-radius:var(--r);
       box-shadow:var(--shadow);
     }
-    .hero{flex:1;min-width:min(680px,100%);padding:14px 16px}
-    .hero h1{margin:0;font-size:18px}
-    .hero p{margin:6px 0 0 0;color:var(--muted);font-size:13px;line-height:1.35}
-    .ctrl{min-width:280px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+    .hero{flex:1;min-width:min(720px,100%);padding:16px 18px}
+    .hero h1{margin:0;font-size:18px;letter-spacing:.2px}
+    .hero p{margin:6px 0 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+
+    .ctrl{min-width:320px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     label{font-size:12px;color:var(--muted)}
     select,input,button{
@@ -54,104 +61,166 @@
       color:var(--ink);
       outline:none;
     }
-    button{cursor:pointer;background:var(--chip)}
-    button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-    button.danger{background:#fff;border-color:rgba(196,59,79,.35);color:var(--danger)}
+    select{min-width:240px}
+    button{
+      cursor:pointer;
+      background:var(--chip);
+    }
+    button.primary{
+      background:var(--green);
+      border-color:var(--green);
+      color:#fff;
+    }
+    button.ghost{background:#fff}
     button:active{transform:translateY(1px)}
 
     .grid{
       display:grid;
-      grid-template-columns: 1.2fr .8fr;
+      grid-template-columns: 1.05fr 1fr;
       gap:12px;
       align-items:start;
     }
-    @media (max-width: 960px){ .grid{grid-template-columns:1fr} }
+    @media(max-width: 980px){
+      .grid{grid-template-columns:1fr}
+      select{min-width:100%}
+    }
 
-    .section{padding:14px 16px}
+    .section{padding:16px 18px}
     .section h2{
       margin:0 0 10px 0;
-      font-size:13px;
-      letter-spacing:.4px;
+      font-size:12px;
+      letter-spacing:.6px;
       text-transform:uppercase;
       color:var(--muted);
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
     }
 
-    .abc{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-    }
+    /* A/B/C cards */
+    .abc{display:grid;grid-template-columns:1fr;gap:10px}
     .box{
       border:1px solid var(--line);
-      border-radius:14px;
+      border-radius:var(--r2);
       padding:12px 12px;
       background:#fff;
     }
     .tag{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:6px;
+      display:flex;align-items:center;gap:8px;
+      font-size:12px;color:var(--muted);
+      margin-bottom:8px;
     }
     .tag b{
-      color:var(--ink);
-      background:var(--chip);
-      border:1px solid var(--line);
-      padding:3px 8px;
-      border-radius:999px;
       font-size:12px;
+      color:#fff;
+      background:var(--green);
+      border-radius:999px;
+      padding:4px 10px;
+      letter-spacing:.2px;
     }
-    .ko{
-      margin:0;
-      font-size:20px;
-      line-height:1.25;
-    }
-    .ro{
-      margin:6px 0 0 0;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.35;
-    }
-    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .ko{margin:0;font-size:20px;line-height:1.25}
+    .tr{margin:7px 0 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+
+    .miniActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
     .mini{font-size:12px;padding:8px 10px;border-radius:10px}
+
+    .line{height:1px;background:var(--line);margin:12px 0}
+
+    /* Flow */
+    .flow{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .step{
+      border:1px solid var(--line);
+      border-radius:var(--r2);
+      background:linear-gradient(180deg, #fff, #fff);
+      overflow:hidden;
+    }
+    .sh{
+      padding:10px 12px;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.02);
+    }
+    .sh .left{
+      display:flex;flex-direction:column;gap:2px
+    }
+    .sh .left b{font-size:12px;letter-spacing:.3px}
+    .sh .left span{font-size:12px;color:var(--muted)}
+    .sb{padding:12px 12px}
 
     .chips{display:flex;flex-wrap:wrap;gap:8px}
     .chip{
-      display:inline-flex;gap:8px;align-items:center;
-      background:var(--chip);
       border:1px solid var(--line);
+      background:var(--chip);
       border-radius:999px;
       padding:8px 10px;
       font-size:12px;
       cursor:pointer;
       user-select:none;
+      display:inline-flex;gap:8px;align-items:center;
     }
-    .chip.active{background:var(--chipActive);border-color:rgba(26,127,90,.35)}
+    .chip.active{
+      background:var(--greenSoft);
+      border-color:rgba(31,122,90,.35);
+    }
     .chip .k{font-family:var(--mono);font-size:11px;color:var(--muted)}
-    .hint{font-size:12px;color:var(--muted);line-height:1.4}
+    .hint{font-size:12px;color:var(--muted);line-height:1.45}
 
     .final{
-      border:1px solid rgba(26,127,90,.25);
-      background:#f3fbf7;
-      border-radius:14px;
+      border:1px solid rgba(31,122,90,.30);
+      background:var(--greenSoft);
+      border-radius:var(--r2);
       padding:12px 12px;
     }
     .final .ko{font-size:19px}
-    .final .ro{color:#365448}
-    .line{height:1px;background:var(--line);margin:10px 0}
+    .final .tr{color:#355b4f}
+
+    /* Review (fill-in) */
+    .review{
+      border:1px solid var(--line);
+      border-radius:var(--r2);
+      background:var(--blueSoft);
+      padding:12px 12px;
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .blank{
+      display:inline-block;
+      min-width:80px;
+      border-bottom:2px solid rgba(16,21,38,.25);
+      padding:0 6px 2px 6px;
+      font-family:var(--mono);
+    }
+    .ok{color:var(--green);font-weight:600}
+    .bad{color:#c43b4f;font-weight:600}
+
+    /* Translator */
+    .translator{
+      border:1px solid var(--line);
+      border-radius:var(--r2);
+      padding:12px 12px;
+      background:#fff;
+    }
+    .status{font-size:12px;color:var(--muted);margin-top:8px}
+
+    /* Tiny pill */
+    .pill{
+      font-size:11px;color:var(--muted);
+      border:1px solid var(--line);
+      padding:4px 8px;border-radius:999px;
+      background:#fff;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
 
-    <div class="top">
+    <div class="header">
       <div class="card hero">
-        <h1>Sentence Builder (Clean) — 3 propoziții → 1 frază</h1>
+        <h1>Sentence Builder — Premium (A / B / C → 1 frază)</h1>
         <p>
-          Aici vezi clar cele 3 propoziții (A/B/C). Apoi le combini cu conectori (-(으)려고 / -(으)ㄴ데 / -아/어/여서).
-          Modul static, gata de lipit în aplicația mare.
+          Totul e clar: vezi A, B, C separat; alegi ADD/MODIFY; apoi COMBINE în 2 pași; ai FINAL + Review (fill-in) + RO↔KO offline.
+          Static, gratis, gata de lipit în aplicația mare.
         </p>
       </div>
 
@@ -168,20 +237,20 @@
           </select>
         </div>
         <div class="row">
-          <button class="primary" id="rebuild">Rebuild</button>
-          <button id="auto">Auto (TTMIK)</button>
-          <button class="danger" id="reset">Reset</button>
+          <button class="primary" id="auto">Auto (TTMIK)</button>
+          <button class="ghost" id="reset">Reset</button>
         </div>
         <div class="hint">
-          „Auto” îți pune combinația clasică: A-(으)ㄴ데 B-아/어/여서 C + „정말”.
+          Auto aplică: <span class="pill">정말</span> + <span class="pill">물→뜨거운 물</span> + conectori clasici.
         </div>
       </div>
     </div>
 
     <div class="grid">
-      <!-- LEFT: A/B/C + combine -->
+
+      <!-- LEFT: A/B/C -->
       <div class="card section">
-        <h2>1) Cele 3 propoziții</h2>
+        <h2>Cele 3 propoziții <span class="pill">A / B / C</span></h2>
 
         <div class="abc">
           <div class="box" id="boxA"></div>
@@ -191,86 +260,123 @@
 
         <div class="line"></div>
 
-        <h2>2) Extinderi (ADD / MODIFY)</h2>
-        <div class="hint">ADD = adaugi elemente (ex: „정말”). MODIFY = schimbi (ex: „물” → „뜨거운 물”).</div>
-
-        <div class="line"></div>
-        <div class="hint"><b>ADD</b></div>
-        <div class="chips" id="adds"></div>
-
-        <div class="line"></div>
-        <div class="hint"><b>MODIFY</b> (alegi doar una)</div>
-        <div class="chips" id="mods"></div>
-
-        <div class="line"></div>
-
-        <h2>3) Combine</h2>
-        <div class="row">
-          <label>A → B</label>
-          <select id="c1"></select>
-        </div>
-        <div class="row">
-          <label>(A+B) → C</label>
-          <select id="c2"></select>
-        </div>
-
-        <div class="line"></div>
-
-        <h2>Rezultatul final</h2>
+        <h2>Rezultatul final <span class="pill">FINAL</span></h2>
         <div class="final" id="final"></div>
 
-        <div class="actions">
+        <div class="miniActions">
           <button class="mini primary" id="speakFinal">🔊 Audio</button>
           <button class="mini" id="copyFinal">Copy</button>
         </div>
+
+        <div class="line"></div>
+
+        <h2>Review (fill-in) <span class="pill">Practice</span></h2>
+        <div class="review">
+          <div class="hint" id="reviewHint"></div>
+          <div id="reviewQ" class="ko" style="font-size:16px;line-height:1.5"></div>
+          <div class="row" style="width:100%">
+            <input id="reviewInput" type="text" placeholder="Completează blank-ul…" style="width:100%" />
+          </div>
+          <div class="row">
+            <button class="mini" id="checkReview">Check</button>
+            <button class="mini" id="showAnswer">Show answer</button>
+            <span id="reviewResult" class="status"></span>
+          </div>
+        </div>
       </div>
 
-      <!-- RIGHT: quick editor (clar: aici editezi A/B/C și dicționarul) -->
+      <!-- RIGHT: Flow + Translator -->
       <div class="card section">
-        <h2>Editor rapid (unde modifici / adaugi)</h2>
-        <div class="hint">
-          Dacă vrei alte propoziții, adaugi un scenariu nou în <span style="font-family:var(--mono)">SCENARIOS</span>.
-          Aici e totul: A/B/C + traduceri + add/modify + conectori.
+        <h2>Flow (ADD → MODIFY → COMBINE) <span class="pill">logică vizibilă</span></h2>
+
+        <div class="flow">
+
+          <div class="step">
+            <div class="sh">
+              <div class="left">
+                <b>1) ADD</b>
+                <span>Adaugi adverb / marker (ex: 정말, 갑자기, 그래서)</span>
+              </div>
+              <span class="pill" id="addCount">0 selected</span>
+            </div>
+            <div class="sb">
+              <div class="chips" id="adds"></div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sh">
+              <div class="left">
+                <b>2) MODIFY</b>
+                <span>Alegi o modificare (ex: 물 → 뜨거운 물)</span>
+              </div>
+              <span class="pill" id="modStatus">none</span>
+            </div>
+            <div class="sb">
+              <div class="chips" id="mods"></div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sh">
+              <div class="left">
+                <b>3) COMBINE</b>
+                <span>Legi propozițiile în 2 pași (A→B, apoi (A+B)→C)</span>
+              </div>
+              <span class="pill">connectors</span>
+            </div>
+            <div class="sb">
+              <div class="row">
+                <label>A → B</label>
+                <select id="c1"></select>
+              </div>
+              <div class="row">
+                <label>(A+B) → C</label>
+                <select id="c2"></select>
+              </div>
+              <div class="hint" style="margin-top:8px">
+                Recomandare clasică: <span class="pill">-(으)ㄴ데</span> apoi <span class="pill">-아/어/여서</span>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <div class="line"></div>
 
-        <div class="hint"><b>Unde sunt A/B/C în cod?</b></div>
-        <pre style="margin:8px 0 0 0;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:auto;font-family:var(--mono);font-size:12px;line-height:1.35;">
-base: {
-  A: { ko:"...", ro:"...", en:"..." },
-  B: { ko:"...", ro:"...", en:"..." },
-  C: { ko:"...", ro:"...", en:"..." }
-}
-        </pre>
+        <h2>Translator RO ↔ KO (offline) <span class="pill">auto</span></h2>
+        <div class="translator">
+          <div class="hint">Scrii într-o parte, apare automat în cealaltă. Funcționează pentru ce ai în dicționarul tău (PHRASES/WORDS).</div>
+          <div class="line"></div>
+          <div class="row" style="width:100%">
+            <input id="roIn" type="text" placeholder="Scrie în română…" style="width:100%" />
+          </div>
+          <div class="row" style="width:100%">
+            <input id="koIn" type="text" placeholder="한국어로 쓰세요…" style="width:100%" />
+          </div>
+          <div class="row">
+            <button class="mini" id="addPhrase">Adaugă ca PHRASE</button>
+            <button class="mini ghost" id="clearTr">Clear</button>
+          </div>
+          <div class="status" id="trStatus"></div>
+        </div>
 
         <div class="line"></div>
 
-        <h2>Translator RO ↔ KO (offline)</h2>
+        <h2>Unde editezi conținutul <span class="pill">în cod</span></h2>
         <div class="hint">
-          Scrii într-o parte, apare automat în cealaltă. Funcționează doar pentru ce ai în dicționarul tău (PHRASES/WORDS).
+          Adaugi scenarii noi în <b>SCENARIOS</b>. A/B/C sunt în <span style="font-family:var(--mono)">base.A / base.B / base.C</span>.
+          Dicționarul offline e în <b>PHRASES</b> și <b>WORDS</b>.
         </div>
-
-        <div class="row" style="width:100%">
-          <input id="roIn" type="text" placeholder="Scrie în română…" style="width:100%" />
-        </div>
-        <div class="row" style="width:100%">
-          <input id="koIn" type="text" placeholder="한국어로 쓰세요…" style="width:100%" />
-        </div>
-        <div class="row">
-          <button class="mini" id="addPhrase">Adaugă ca PHRASE</button>
-          <button class="mini danger" id="clearTr">Clear</button>
-        </div>
-        <div class="hint" id="trStatus"></div>
       </div>
-    </div>
 
+    </div>
   </div>
 
   <script>
-    /* =========================
-       1) AICI sunt cele 3 propoziții (A/B/C) + restul scenariului
-       ========================= */
+    /* =========================================================
+       1) Conținut: A/B/C + add/modify/connectors
+       ========================================================= */
     const SCENARIOS = [
       {
         id:"ttmik_ch13",
@@ -286,52 +392,68 @@ base: {
           {id:"add_so", ko:"그래서", ro:"de aceea", en:"so"}
         ],
         modify:[
-          {id:"mod_hotwater", label:"물 → 뜨거운 물", target:"B", type:"replace", from:"물", to:"뜨거운 물",
-           ro:"(apă → apă fierbinte)", en:"(water → hot water)"},
-          {id:"mod_very_surprised", label:"놀랐어요 → 정말 놀랐어요", target:"C", type:"prefix", prefix:"정말 ",
-           ro:"(surprins → foarte surprins)", en:"(surprised → really surprised)"}
+          {id:"mod_hotwater", label:"물 → 뜨거운 물", target:"B", type:"replace", from:"물", to:"뜨거운 물"},
+          {id:"mod_very_surprised", label:"놀랐어요 → 정말 놀랐어요", target:"C", type:"prefix", prefix:"정말 "}
         ],
         connectors:[
-          {id:"c_intent", label:"-(으)려고 (intenție)", apply:(a,b)=> a.replace("요.","") + " " + b},
           {id:"c_but", label:"-(으)ㄴ데 (dar/însă)", apply:(a,b)=> a.replace("요.","") + "는데, " + b},
           {id:"c_reason", label:"-아/어/여서 (cauză)", apply:(a,b)=> a.replace("요.","") + "서 " + b},
+          {id:"c_intent", label:"-(으)려고 (intenție)", apply:(a,b)=> a.replace("요.","") + " " + b},
           {id:"c_and", label:"그리고 (și)", apply:(a,b)=> a + " 그리고 " + b}
         ],
-        defaults:{ c1:"c_but", c2:"c_reason", autoAdds:["add_really"], autoMod:"mod_hotwater" }
+        defaults:{ c1:"c_but", c2:"c_reason", autoAdds:["add_really"], autoMod:"mod_hotwater" },
+        review:{
+          hintRO:"Completează cu conectorul corect (ca în TTMIK).",
+          q:"양치하려고 컵에 물을 받았__ , 뜨거운 물이 나왔어요.",
+          answer:"는데"
+        }
       }
     ];
 
-    /* =========================
-       2) Dicționar offline pentru auto RO↔KO (opțional)
-       ========================= */
+    /* =========================================================
+       2) Dicționar offline pentru RO↔KO (editezi aici)
+       ========================================================= */
     const PHRASES = {
       ro2ko:{
         "Am fost surprins(ă).":"놀랐어요.",
         "Am fost foarte surprins(ă).":"정말 놀랐어요.",
-        "A ieșit apă fierbinte.":"뜨거운 물이 나왔어요."
+        "A ieșit apă fierbinte.":"뜨거운 물이 나왔어요.",
+        "Am umplut un pahar cu apă.":"컵에 물을 받았어요.",
+        "Am umplut un pahar cu apă ca să mă spăl pe dinți.":"양치하려고 컵에 물을 받았어요."
       },
       ko2ro:{
         "놀랐어요.":"Am fost surprins(ă).",
         "정말 놀랐어요.":"Am fost foarte surprins(ă).",
-        "뜨거운 물이 나왔어요.":"A ieșit apă fierbinte."
+        "뜨거운 물이 나왔어요.":"A ieșit apă fierbinte.",
+        "컵에 물을 받았어요.":"Am umplut un pahar cu apă.",
+        "양치하려고 컵에 물을 받았어요.":"Am umplut un pahar cu apă ca să mă spăl pe dinți."
       }
     };
 
     const WORDS = {
-      ro2ko:{ "apă":"물","fierbinte":"뜨거운","de aceea":"그래서","dintr-odată":"갑자기","foarte":"정말" },
+      ro2ko:{ "apă":"물","fierbinte":"뜨거운","de":"의","aceea":"그래서","dintr-odată":"갑자기","foarte":"정말" },
       ko2ro:{ "물":"apă","뜨거운":"fierbinte","그래서":"de aceea","갑자기":"dintr-odată","정말":"foarte" }
     };
 
-    /* =========================
-       UI + State
-       ========================= */
+    /* =========================================================
+       3) UI + State
+       ========================================================= */
     const $ = (s)=>document.querySelector(s);
     const scenarioSel = $("#scenario");
     const langSel = $("#lang");
+
     const boxA = $("#boxA"), boxB = $("#boxB"), boxC = $("#boxC");
     const addsEl = $("#adds"), modsEl = $("#mods");
     const c1El = $("#c1"), c2El = $("#c2");
     const finalEl = $("#final");
+
+    const addCountEl = $("#addCount");
+    const modStatusEl = $("#modStatus");
+
+    const reviewHint = $("#reviewHint");
+    const reviewQ = $("#reviewQ");
+    const reviewInput = $("#reviewInput");
+    const reviewResult = $("#reviewResult");
 
     const state = {
       scenarioId: SCENARIOS[0].id,
@@ -374,9 +496,11 @@ base: {
 
       modsEl.innerHTML = s.modify.map(m=>{
         const active = state.mod===m.id ? "active" : "";
-        const sub = state.lang==="ro" ? m.ro : m.en;
-        return `<div class="chip ${active}" data-mod="${esc(m.id)}"><span>${esc(m.label)}</span><span class="k">${esc(sub)}</span></div>`;
+        return `<div class="chip ${active}" data-mod="${esc(m.id)}"><span>${esc(m.label)}</span><span class="k">MODIFY</span></div>`;
       }).join("");
+
+      addCountEl.textContent = `${state.adds.size} selected`;
+      modStatusEl.textContent = state.mod ? "1 selected" : "none";
     }
 
     function applyMod(ko, mod){
@@ -387,7 +511,6 @@ base: {
     }
 
     function applyAddsToClauses(A,B,C){
-      // reguli simple și clare (poți schimba ușor)
       if(state.adds.has("add_suddenly") && !B.startsWith("갑자기")) B = "갑자기 " + B;
       if(state.adds.has("add_really") && !C.startsWith("정말") && state.mod!=="mod_very_surprised") C = "정말 " + C;
       if(state.adds.has("add_so") && !C.startsWith("그래서")) C = "그래서 " + C;
@@ -399,12 +522,10 @@ base: {
     function renderABCandFinal(){
       const s = scenario();
 
-      // Base A/B/C
       let A = s.base.A.ko;
       let B = s.base.B.ko;
       let C = s.base.C.ko;
 
-      // Apply MODIFY (targeted)
       const mod = s.modify.find(x=>x.id===state.mod) || null;
       if(mod){
         if(mod.target==="A") A = applyMod(A, mod);
@@ -412,27 +533,36 @@ base: {
         if(mod.target==="C") C = applyMod(C, mod);
       }
 
-      // Apply ADD chips
       ({A,B,C} = applyAddsToClauses(A,B,C));
 
-      // Render boxes A/B/C clearly
       boxA.innerHTML = `
         <div class="tag"><b>A</b> Propoziția 1 (intenție/acțiune)</div>
         <p class="ko">${esc(A)}</p>
-        <p class="ro">${esc(tr(s.base.A))}</p>
+        <p class="tr">${esc(tr(s.base.A))}</p>
+        <div class="miniActions">
+          <button class="mini" data-speak="${esc(A)}">🔊 Audio</button>
+          <button class="mini" data-copy="${esc(A)}">Copy</button>
+        </div>
       `;
       boxB.innerHTML = `
-        <div class="tag"><b>B</b> Propoziția 2 (ce s-a întâmplat)</div>
+        <div class="tag"><b>B</b> Propoziția 2 (eveniment)</div>
         <p class="ko">${esc(B)}</p>
-        <p class="ro">${esc(tr(s.base.B))}</p>
+        <p class="tr">${esc(tr(s.base.B))}</p>
+        <div class="miniActions">
+          <button class="mini" data-speak="${esc(B)}">🔊 Audio</button>
+          <button class="mini" data-copy="${esc(B)}">Copy</button>
+        </div>
       `;
       boxC.innerHTML = `
-        <div class="tag"><b>C</b> Propoziția 3 (reacție/emoție)</div>
+        <div class="tag"><b>C</b> Propoziția 3 (reacție)</div>
         <p class="ko">${esc(C)}</p>
-        <p class="ro">${esc(tr(s.base.C))}</p>
+        <p class="tr">${esc(tr(s.base.C))}</p>
+        <div class="miniActions">
+          <button class="mini" data-speak="${esc(C)}">🔊 Audio</button>
+          <button class="mini" data-copy="${esc(C)}">Copy</button>
+        </div>
       `;
 
-      // Final combine
       const conn1 = s.connectors.find(c=>c.id===state.c1) || s.connectors[0];
       const conn2 = s.connectors.find(c=>c.id===state.c2) || s.connectors[0];
 
@@ -441,8 +571,14 @@ base: {
 
       finalEl.innerHTML = `
         <p class="ko">${esc(ABC)}</p>
-        <p class="ro">${esc(tr(s.base.A))}  +  ${esc(tr(s.base.B))}  +  ${esc(tr(s.base.C))}</p>
+        <p class="tr">${esc(tr(s.base.A))} + ${esc(tr(s.base.B))} + ${esc(tr(s.base.C))}</p>
       `;
+
+      // Review
+      reviewHint.textContent = (state.lang==="ro") ? s.review.hintRO : "Fill in the correct connector (TTMIK style).";
+      reviewQ.innerHTML = esc(s.review.q).replace("__", `<span class="blank" id="blank"></span>`);
+      reviewResult.textContent = "";
+      reviewInput.value = "";
     }
 
     function init(){
@@ -513,9 +649,9 @@ base: {
       renderABCandFinal();
     });
 
-    $("#rebuild").addEventListener("click", ()=>renderABCandFinal());
-
-    // Copy + Audio
+    /* =========================================================
+       Copy + Audio (delegation)
+       ========================================================= */
     async function copyText(t){
       try{ await navigator.clipboard.writeText(t); }
       catch{
@@ -531,6 +667,13 @@ base: {
       window.speechSynthesis.speak(u);
     }
 
+    document.addEventListener("click", (e)=>{
+      const bSpeak = e.target.closest("[data-speak]");
+      if(bSpeak){ speakKo(bSpeak.getAttribute("data-speak")); return; }
+      const bCopy = e.target.closest("[data-copy]");
+      if(bCopy){ copyText(bCopy.getAttribute("data-copy")); return; }
+    });
+
     $("#copyFinal").addEventListener("click", ()=>{
       const t = finalEl.querySelector(".ko")?.textContent || "";
       copyText(t);
@@ -540,10 +683,36 @@ base: {
       speakKo(t);
     });
 
-    /* =========================
-       Translator RO ↔ KO (offline) clar
-       ========================= */
-    const roIn = $("#roIn"), koIn = $("#koIn"), trStatus=$("#trStatus");
+    /* =========================================================
+       Review logic
+       ========================================================= */
+    $("#checkReview").addEventListener("click", ()=>{
+      const s = scenario();
+      const ans = (s.review.answer || "").trim();
+      const user = (reviewInput.value || "").trim();
+      if(!user){
+        reviewResult.innerHTML = `Completează blank-ul.`;
+        return;
+      }
+      reviewResult.innerHTML = (user === ans)
+        ? `<span class="ok">Corect.</span>`
+        : `<span class="bad">Greșit.</span> Corect: <b>${esc(ans)}</b>`;
+      const blank = document.getElementById("blank");
+      if(blank) blank.textContent = user;
+    });
+
+    $("#showAnswer").addEventListener("click", ()=>{
+      const s = scenario();
+      const ans = (s.review.answer || "").trim();
+      const blank = document.getElementById("blank");
+      if(blank) blank.textContent = ans;
+      reviewResult.innerHTML = `Răspuns: <b>${esc(ans)}</b>`;
+    });
+
+    /* =========================================================
+       Translator RO↔KO offline (auto)
+       ========================================================= */
+    const roIn = $("#roIn"), koIn = $("#koIn"), trStatus = $("#trStatus");
     let lock=false;
 
     function norm(s){ return s.trim().replace(/\s+/g," ").replace(/ +([.,!?;:])/g,"$1"); }
@@ -556,6 +725,7 @@ base: {
       const out = tokens.map(t=>{ const x=WORDS.ro2ko[t]; if(!x) miss.push(t); return x||t; }).join(" ");
       return miss.length ? {ok:false,out,mode:"WORDS",missing:miss} : {ok:true,out,mode:"WORDS"};
     }
+
     function ko2ro(ko){
       const key = norm(ko);
       if(PHRASES.ko2ro[key]) return {ok:true,out:PHRASES.ko2ro[key],mode:"PHRASE"};
@@ -564,9 +734,12 @@ base: {
       const out = tokens.map(t=>{ const x=WORDS.ko2ro[t]; if(!x) miss.push(t); return x||t; }).join(" ");
       return miss.length ? {ok:false,out,mode:"WORDS",missing:miss} : {ok:true,out,mode:"WORDS"};
     }
+
     function setStatus(r){
       if(!r){ trStatus.textContent=""; return; }
-      trStatus.textContent = r.ok ? `OK (${r.mode})` : `Nu există complet în dicționar (${r.mode}). Lipsesc: ${r.missing.join(", ")}`;
+      trStatus.textContent = r.ok
+        ? `OK (${r.mode})`
+        : `Nu există complet în dicționar (${r.mode}). Lipsesc: ${r.missing.join(", ")}`;
     }
 
     roIn.addEventListener("input", ()=>{
@@ -576,6 +749,7 @@ base: {
       const r=ro2ko(v); koIn.value=r.out; setStatus(r);
       lock=false;
     });
+
     koIn.addEventListener("input", ()=>{
       if(lock) return; lock=true;
       const v=koIn.value;
@@ -587,13 +761,14 @@ base: {
     $("#addPhrase").addEventListener("click", ()=>{
       const ro = norm(roIn.value);
       const ko = norm(koIn.value);
-      if(!ro || !ko){ setStatus({ok:false,mode:"ADD",missing:["RO sau KO gol"]}); return; }
+      if(!ro || !ko){ trStatus.textContent = "Completează și RO și KO înainte să adaugi."; return; }
       PHRASES.ro2ko[ro]=ko;
       PHRASES.ko2ro[ko]=ro;
-      setStatus({ok:true,mode:"PHRASE_ADDED"});
+      trStatus.textContent = "PHRASE adăugat (în memorie). Pentru permanent: copiezi în PHRASES din cod.";
     });
+
     $("#clearTr").addEventListener("click", ()=>{
-      roIn.value=""; koIn.value=""; setStatus(null);
+      roIn.value=""; koIn.value=""; trStatus.textContent="";
     });
 
     init();
