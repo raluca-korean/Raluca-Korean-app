@@ -3798,36 +3798,32 @@ function beApplyStep(){
   const set = beGetSet();
   if(!set) return;
 
-  // 1) Determină cheile reale ale tabelului (din columns dacă există)
-  const keys = (typeof columns !== "undefined" && Array.isArray(columns))
-    ? columns.map(c => c.key).filter(Boolean)
-    : ["subject","time","place","mod","object","numeral","counter","verb","conjug"];
+  // cheile vin direct din columns (exact structura ta)
+  const keys = columns.map(c => c.key).filter(Boolean);
 
-  // 2) Reset “curat” (ca să funcționeze corect și Prev)
-  //    - NU atingem alte propoziții / alte state-uri
+  // reset curat (NECESAR pentru butonul ⬅ Înapoi)
   keys.forEach(k=>{
-    if(typeof stateP1 !== "undefined") stateP1[k] = "";
-    if(typeof activeP1 !== "undefined") activeP1[k] = false;
+    stateP1[k] = "";
+    activeP1[k] = false;
   });
 
-  // 3) Aplică incremental patch-urile de la pas 0 până la pasul curent
+  // aplicare incrementală până la pasul curent
   for(let i = 0; i <= BE_STEP_INDEX; i++){
     const step = set.steps[i];
     if(!step || !step.patch) continue;
 
     Object.entries(step.patch).forEach(([k,v])=>{
-      if(typeof stateP1 !== "undefined") stateP1[k] = v;
-      if(typeof activeP1 !== "undefined") activeP1[k] = true;
+      if(!keys.includes(k)) return;   // protecție: ignoră chei greșite
+      stateP1[k] = v;
+      activeP1[k] = true;
     });
   }
 
-  // 4) Update label
   const stepLabel = set.steps[BE_STEP_INDEX]?.label || `Pas ${BE_STEP_INDEX+1}`;
   if(beStepLabel) {
     beStepLabel.textContent = `${set.label} · ${stepLabel} (${BE_STEP_INDEX+1}/${set.steps.length})`;
   }
 
-  // 5) Re-render prin mecanismul existent
   if(typeof render === "function") render();
 }
     function beSetEnabled(enabled){
