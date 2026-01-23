@@ -3798,28 +3798,39 @@ function beApplyStep(){
   const set = beGetSet();
   if(!set) return;
 
-  const step = set.steps[BE_STEP_INDEX] || set.steps[0];
-  if(!step) return;
+  // 1) Determină cheile reale ale tabelului (din columns dacă există)
+  const keys = (typeof columns !== "undefined" && Array.isArray(columns))
+    ? columns.map(c => c.key).filter(Boolean)
+    : ["subject","time","place","mod","object","numeral","counter","verb","conjug"];
 
-  // scriem direct în stateP1 + activăm cheile folosite
-  Object.entries(step.patch || {}).forEach(([k,v])=>{
-    if(typeof stateP1 !== "undefined") stateP1[k]=v;
-    if(typeof activeP1 !== "undefined") activeP1[k]=true;
+  // 2) Reset “curat” (ca să funcționeze corect și Prev)
+  //    - NU atingem alte propoziții / alte state-uri
+  keys.forEach(k=>{
+    if(typeof stateP1 !== "undefined") stateP1[k] = "";
+    if(typeof activeP1 !== "undefined") activeP1[k] = false;
   });
 
-  // dacă folosești mod simplu/topik: nu schimbăm, doar re-render
-  if(beStepLabel) beStepLabel.textContent = `${set.label} · ${step.label} (${BE_STEP_INDEX+1}/${set.steps.length})`;
+  // 3) Aplică incremental patch-urile de la pas 0 până la pasul curent
+  for(let i = 0; i <= BE_STEP_INDEX; i++){
+    const step = set.steps[i];
+    if(!step || !step.patch) continue;
 
-  // marchează UI de read-only
-  const builderScreen = document.getElementById("screen-builder");
-  if(builderScreen){
-    builderScreen.classList.toggle("be-readonly", BE_ENABLED);
+    Object.entries(step.patch).forEach(([k,v])=>{
+      if(typeof stateP1 !== "undefined") stateP1[k] = v;
+      if(typeof activeP1 !== "undefined") activeP1[k] = true;
+    });
   }
 
-  // re-render tabel + preview prin mecanismul existent
+  // 4) Update label
+  const stepLabel = set.steps[BE_STEP_INDEX]?.label || `Pas ${BE_STEP_INDEX+1}`;
+  if(beStepLabel) {
+    beStepLabel.textContent = `${set.label} · ${stepLabel} (${BE_STEP_INDEX+1}/${set.steps.length})`;
+  }
+
+  // 5) Re-render prin mecanismul existent
   if(typeof render === "function") render();
 }
-function beSetEnabled(enabled){
+    function beSetEnabled(enabled){
   BE_ENABLED = !!enabled;
 
   if(beFreeBtn) beFreeBtn.classList.toggle("active", !BE_ENABLED);
