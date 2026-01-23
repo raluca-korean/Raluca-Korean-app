@@ -3,1348 +3,962 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Extension Practice — 3 propoziții → 1 frază (Static)</title>
+  <title>Sentence Builder — Build & Extend Korean Sentences</title>
   <style>
     :root{
-      --bg:#faeff6;
-      --panel:#ffffff;
-      --card:#fff7fb;
-      --text:#3b2f36;
-      --muted:#8f6b7b;
-      --accent:#e79ab5;
-      --accent2:#f2c6d6;
-      --line:#f0d7e2;
-      --dash:#e7b9cc;
-      --ok:#2f8f6a;
-      --warn:#b9771f;
-      --bad:#b43b46;
+      --bg:#0b1020;
+      --panel:#0f1730;
+      --card:#121c38;
+      --card2:#0f1833;
+      --text:#eaf0ff;
+      --muted:#a8b3d6;
+      --muted2:#7f8ab4;
+      --line:#22305a;
+      --chip:#1a2750;
+      --chip2:#162243;
+      --ok:#23c483;
+      --warn:#ffcc66;
+      --bad:#ff5c7a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --radius2: 12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    *{ box-sizing:border-box; }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-    .wrap{ max-width: 1200px; margin: 0 auto; padding: 22px 14px 40px; }
-    h1{ margin:0 0 8px; font-size: 24px; letter-spacing:.2px; }
-    .sub{ color: var(--muted); font-size: 13px; margin-bottom: 14px; }
-
-    .topRow{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      margin-bottom: 12px;
-    }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: var(--card);
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .pill strong{ color: var(--accent); }
-
-    .grid3{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-    @media (max-width: 980px){ .grid3{ grid-template-columns:1fr; } }
-
-    .card{
-      background: var(--panel);
-      border: 1px dashed var(--dash);
-      border-radius: 18px;
-      padding: 14px 12px 12px;
-      box-shadow: 0 10px 18px rgba(0,0,0,.05);
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 10% 10%, rgba(35,196,131,.12), transparent 55%),
+        radial-gradient(900px 700px at 90% 10%, rgba(255,92,122,.10), transparent 55%),
+        radial-gradient(800px 600px at 50% 100%, rgba(120,160,255,.10), transparent 60%),
+        var(--bg);
     }
 
-    .titleRow{
-      display:flex; justify-content:space-between; align-items:center; gap:10px;
-      margin-bottom: 10px;
+    .wrap{max-width:1100px;margin:0 auto;padding:22px 16px 40px}
+    .top{
+      display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;
+      margin-bottom:16px;
     }
-    .cardTitle{
-      font-weight: 700;
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing:.3px;
-      text-transform: uppercase;
+    .brand{
+      display:flex;flex-direction:column;gap:6px;
+      padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(18,28,56,.9), rgba(15,23,48,.9));
+      box-shadow:var(--shadow);
+      min-width:min(640px,100%);
     }
-
-    .miniTag{
-      font-size: 12px;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: var(--card);
-      color: var(--muted);
+    .brand h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
     }
-    .miniTag.ok{ border-color: rgba(47,143,106,.25); color: var(--ok); }
-    .miniTag.warn{ border-color: rgba(185,119,31,.25); color: var(--warn); }
-    .miniTag.bad{ border-color: rgba(180,59,70,.25); color: var(--bad); }
-
-    .ioBox{
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      display:grid;
-      gap:10px;
+    .brand .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
     }
-    .fieldLabel{
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      display:flex; align-items:center; justify-content:space-between; gap:8px;
+    .controls{
+      display:flex;flex-direction:column;gap:10px;
+      padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(18,28,56,.85), rgba(15,23,48,.85));
+      box-shadow:var(--shadow);
+      min-width:260px;
     }
-    .hint{
-      font-size: 11px;
-      color: var(--muted);
-      opacity: .9;
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .label{
+      font-size:12px;color:var(--muted);
+      display:flex;align-items:center;gap:8px;
     }
-    input, select, textarea, button{
-      font-family: inherit;
-      font-size: 14px;
+    select, button, input[type="text"]{
+      font:inherit;
+      color:var(--text);
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
       outline:none;
+      transition:.15s ease;
     }
-    input, select, textarea{
-      width:100%;
-      background: #fff;
-      border: 1px solid var(--line);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-    textarea{
-      min-height: 90px;
-      resize: vertical;
-    }
-
-    .btnRow{
-      display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:center;
-      margin-top: 10px;
-    }
+    select{padding-right:34px}
     button{
       cursor:pointer;
-      border-radius: 12px;
-      padding: 10px 12px;
-      border: 1px solid rgba(231,154,181,.65);
-      background: rgba(231,154,181,.12);
-      color: var(--text);
+      background:linear-gradient(180deg, rgba(26,39,80,.95), rgba(15,23,48,.95));
     }
-    button:hover{ background: rgba(231,154,181,.18); }
+    button:hover{transform:translateY(-1px);border-color:#30437a}
+    button:active{transform:translateY(0px)}
+    button.primary{
+      border-color:rgba(35,196,131,.55);
+      background:linear-gradient(180deg, rgba(35,196,131,.18), rgba(26,39,80,.95));
+    }
+    button.danger{
+      border-color:rgba(255,92,122,.55);
+      background:linear-gradient(180deg, rgba(255,92,122,.12), rgba(26,39,80,.95));
+    }
     button.ghost{
-      border-color: var(--line);
-      background: #fff;
+      background:transparent;
     }
-    button.ghost:hover{ background: rgba(231,154,181,.10); }
+    .tiny{font-size:12px;padding:8px 10px;border-radius:10px}
 
-    .controls{
-      margin-top: 10px;
+    .layout{
       display:grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 8px;
-      align-items:center;
+      grid-template-columns: 1.4fr .8fr;
+      gap:14px;
+      align-items:start;
     }
-    @media (max-width: 980px){
-      .controls{ grid-template-columns:1fr; }
+    @media (max-width: 960px){
+      .layout{grid-template-columns:1fr}
+      .brand{min-width:100%}
     }
 
-    .outBox{
-      margin-top: 10px;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      text-align:center;
+    .panel{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(18,28,56,.8), rgba(15,23,48,.8));
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
-    .koOut{ font-size: 20px; font-weight: 700; line-height: 1.25; }
-    .roOut{ font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .panel h2{
+      margin:0;
+      padding:14px 16px;
+      font-size:13px;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+      border-bottom:1px solid var(--line);
+      color:var(--muted);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .panel .body{padding:14px 16px}
+    .muted{color:var(--muted)}
+    .hint{font-size:12px;color:var(--muted2);line-height:1.45}
 
-    .combineBlock{
-      margin-top: 14px;
-      padding: 14px 12px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-    }
-    .combineTitle{
-      text-align:center;
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 10px;
-      font-weight: 700;
-      letter-spacing:.2px;
-    }
-    .centerRow{
+    /* Timeline */
+    .timeline{
+      position:relative;
+      padding-left:22px;
       display:flex;
-      justify-content:center;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-bottom: 10px;
+      flex-direction:column;
+      gap:12px;
     }
-    .resultBox{
-      background: var(--card);
-      border: 2px solid rgba(231,154,181,.55);
-      border-radius: 18px;
-      padding: 14px 12px;
-      text-align:center;
+    .timeline:before{
+      content:"";
+      position:absolute;
+      left:10px; top:4px; bottom:4px;
+      width:2px;
+      background:linear-gradient(180deg, rgba(120,160,255,.22), rgba(35,196,131,.22));
+      border-radius:2px;
     }
-
-    .copyRow{
-      margin-top: 10px;
-      display:flex;
-      justify-content:center;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
+    .step{
+      position:relative;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(18,28,56,.92), rgba(15,23,48,.92));
+      box-shadow: 0 8px 22px rgba(0,0,0,.28);
+      overflow:hidden;
     }
-    .status{ font-size:12px; color: var(--muted); }
-
-    details{
-      margin-top: 14px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 10px 12px;
+    .dot{
+      position:absolute;
+      left:-22px; top:14px;
+      width:14px;height:14px;border-radius:50%;
+      background:rgba(120,160,255,.35);
+      border:1px solid rgba(120,160,255,.55);
+      box-shadow:0 0 0 5px rgba(120,160,255,.09);
     }
-    summary{
-      cursor:pointer;
-      color: var(--muted);
-      font-weight: 700;
-      padding: 6px 4px;
+    .stepHeader{
+      padding:12px 14px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.08);
     }
-    .mgrGrid{
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 12px;
-      margin-top: 10px;
+    .stepHeader .title{
+      display:flex;flex-direction:column;gap:2px;
     }
-    @media (max-width: 980px){ .mgrGrid{ grid-template-columns:1fr; } }
-
-    .mgrPanel{
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
+    .stepHeader .title b{font-size:13px;letter-spacing:.3px}
+    .stepHeader .title span{font-size:12px;color:var(--muted)}
+    .stepBody{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+    .sentence{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 12px;
+      background:linear-gradient(180deg, rgba(15,24,51,.95), rgba(18,28,56,.85));
     }
-    .mgrTitle{
-      font-weight: 800;
-      color: var(--muted);
-      margin: 0 0 10px;
-      font-size: 13px;
-    }
-    table{
-      width:100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    th, td{
-      border-bottom: 1px solid var(--line);
-      padding: 8px 6px;
-      vertical-align: top;
-    }
-    th{
-      text-align:left;
-      color: var(--muted);
-      font-weight: 800;
-      font-size: 12px;
+    .ko{
+      font-size:20px;
       letter-spacing:.2px;
+      line-height:1.25;
+      margin:0;
     }
-    .smallRow{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .muted{ color: var(--muted); font-size: 12px; }
-    .danger{
-      border-color: rgba(180,59,70,.35) !important;
-      background: rgba(180,59,70,.08) !important;
+    .tr{
+      margin:6px 0 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
     }
-    .ok{
-      border-color: rgba(47,143,106,.35) !important;
-      background: rgba(47,143,106,.08) !important;
+    .actions{
+      display:flex;gap:8px;flex-wrap:wrap;align-items:center;
     }
 
-    /* iOS-friendly error box (ascuns by default) */
-    #errBox{
-      display:none;
-      position:fixed; left:10px; right:10px; bottom:10px;
-      max-height:40vh; overflow:auto; z-index:99999;
-      background:#fff;
-      border:2px solid var(--accent);
-      padding:10px;
-      border-radius:12px;
+    /* Chips */
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
       font-size:12px;
-      white-space:pre-wrap;
-      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      background:linear-gradient(180deg, rgba(26,39,80,.75), rgba(15,23,48,.75));
+      cursor:pointer;
+      user-select:none;
+      display:flex;gap:8px;align-items:center;
+      transition:.14s ease;
     }
+    .chip:hover{transform:translateY(-1px);border-color:#30437a}
+    .chip.active{
+      border-color:rgba(35,196,131,.55);
+      box-shadow:0 0 0 4px rgba(35,196,131,.10);
+    }
+    .chip small{color:var(--muted2);font-size:11px}
+    .chip .tag{
+      font-family:var(--mono);
+      font-size:11px;
+      color:#cfe0ff;
+      padding:2px 7px;
+      border-radius:999px;
+      background:rgba(120,160,255,.16);
+      border:1px solid rgba(120,160,255,.22);
+    }
+
+    /* Builder side */
+    .stack{display:flex;flex-direction:column;gap:12px}
+    .block{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(18,28,56,.72), rgba(15,23,48,.72));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .block .bh{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background:rgba(0,0,0,.06);
+    }
+    .block .bh b{font-size:13px}
+    .block .bb{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+    .kv{display:grid;grid-template-columns: 1fr auto;gap:10px;align-items:center}
+    .mono{font-family:var(--mono)}
+    .pill{
+      font-size:11px;color:var(--muted);
+      padding:4px 8px;border:1px solid var(--line);
+      border-radius:999px;background:rgba(0,0,0,.12)
+    }
+    .out{
+      border:1px dashed rgba(120,160,255,.35);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(0,0,0,.12);
+    }
+    .out .ko{font-size:18px}
+    .out .tr{font-size:12px}
+    .sep{height:1px;background:var(--line);margin:6px 0}
+    .kbd{
+      font-family:var(--mono);
+      font-size:11px;
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.14);
+      color:var(--muted);
+    }
+    .toast{
+      position:fixed;
+      bottom:16px;left:50%;
+      transform:translateX(-50%);
+      background:rgba(18,28,56,.95);
+      border:1px solid var(--line);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      font-size:13px;
+      opacity:0;pointer-events:none;
+      transition:.18s ease;
+      max-width:min(740px, calc(100% - 30px));
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="topRow">
-      <div>
-        <h1>Extension Practice</h1>
-        <div class="sub">
-          Scrii 3 propoziții (KO sau RO) → se completează automat din dicționar (offline) → aplici ADD/MODIFY/CHANGE → COMBINE în 2 pași → fraza finală.
-        </div>
+    <div class="top">
+      <div class="brand">
+        <h1>Sentence Builder — Build & Extend Korean Sentences</h1>
+        <p class="sub">
+          Modul static, extensibil, „premium”: pornești de la propoziții simple și le construiești în lanț (ADD / MODIFY / COMBINE).
+          Traduce RO↔KO (și EN), are audio, copy, reset, export JSON. Gata de lipit în aplicația ta mare.
+        </p>
       </div>
-      <span class="pill">
-        Mod: <strong>Static (GitHub Pages)</strong> • Dicționar: <strong>LocalStorage</strong>
-      </span>
-    </div>
 
-    <div class="grid3">
-      <!-- CARD 1 -->
-      <section class="card" data-card="0">
-        <div class="titleRow">
-          <div class="cardTitle">Propoziția 1</div>
-          <span class="miniTag" id="tag0">BASE</span>
+      <div class="controls">
+        <div class="row">
+          <span class="label">Scenariu</span>
+          <select id="scenarioSelect"></select>
         </div>
-
-        <div class="ioBox">
-          <div>
-            <div class="fieldLabel">
-              <span>KO</span>
-              <span class="hint">Scrie KO sau lasă gol; RO poate completa KO.</span>
-            </div>
-            <input id="inKo0" placeholder="Scrie KO (ex: 비누칠했어요.)" />
-          </div>
-
-          <div>
-            <div class="fieldLabel">
-              <span>RO</span>
-              <span class="hint">Scrie RO; dacă există în dicționar, KO se completează.</span>
-            </div>
-            <input id="inRo0" placeholder="Scrie RO (ex: M-am săpunit.)" />
-          </div>
-
-          <div class="btnRow">
-            <button id="setBase0" class="ok">Setează ca bază</button>
-            <button id="reset0" class="ghost">Reset</button>
-          </div>
+        <div class="row">
+          <span class="label">Limbă traducere</span>
+          <select id="langSelect">
+            <option value="ro">RO</option>
+            <option value="en">EN</option>
+          </select>
         </div>
-
-        <div class="controls">
-          <select id="mode0"></select>
-          <select id="opt0"></select>
-          <button id="apply0">Aplică</button>
+        <div class="row">
+          <button class="primary" id="btnRebuild">Rebuild</button>
+          <button class="ghost" id="btnAuto">Auto-build</button>
+          <button class="danger" id="btnReset">Reset</button>
         </div>
-
-        <div class="outBox">
-          <div class="koOut" id="outKo0">—</div>
-          <div class="roOut" id="outRo0">—</div>
+        <div class="hint">
+          Tips: click pe chips ca să activezi/dezactivezi. <span class="kbd">Rebuild</span> actualizează timeline-ul final.
         </div>
-      </section>
-
-      <!-- CARD 2 -->
-      <section class="card" data-card="1">
-        <div class="titleRow">
-          <div class="cardTitle">Propoziția 2</div>
-          <span class="miniTag" id="tag1">BASE</span>
-        </div>
-
-        <div class="ioBox">
-          <div>
-            <div class="fieldLabel">
-              <span>KO</span>
-              <span class="hint">Scrie KO sau lasă gol.</span>
-            </div>
-            <input id="inKo1" placeholder="Scrie KO" />
-          </div>
-
-          <div>
-            <div class="fieldLabel">
-              <span>RO</span>
-              <span class="hint">Scrie RO; KO se completează dacă se găsește.</span>
-            </div>
-            <input id="inRo1" placeholder="Scrie RO" />
-          </div>
-
-          <div class="btnRow">
-            <button id="setBase1" class="ok">Setează ca bază</button>
-            <button id="reset1" class="ghost">Reset</button>
-          </div>
-        </div>
-
-        <div class="controls">
-          <select id="mode1"></select>
-          <select id="opt1"></select>
-          <button id="apply1">Aplică</button>
-        </div>
-
-        <div class="outBox">
-          <div class="koOut" id="outKo1">—</div>
-          <div class="roOut" id="outRo1">—</div>
-        </div>
-      </section>
-
-      <!-- CARD 3 -->
-      <section class="card" data-card="2">
-        <div class="titleRow">
-          <div class="cardTitle">Propoziția 3</div>
-          <span class="miniTag" id="tag2">BASE</span>
-        </div>
-
-        <div class="ioBox">
-          <div>
-            <div class="fieldLabel">
-              <span>KO</span>
-              <span class="hint">Scrie KO sau lasă gol.</span>
-            </div>
-            <input id="inKo2" placeholder="Scrie KO" />
-          </div>
-
-          <div>
-            <div class="fieldLabel">
-              <span>RO</span>
-              <span class="hint">Scrie RO; KO se completează dacă se găsește.</span>
-            </div>
-            <input id="inRo2" placeholder="Scrie RO" />
-          </div>
-
-          <div class="btnRow">
-            <button id="setBase2" class="ok">Setează ca bază</button>
-            <button id="reset2" class="ghost">Reset</button>
-          </div>
-        </div>
-
-        <div class="controls">
-          <select id="mode2"></select>
-          <select id="opt2"></select>
-          <button id="apply2">Aplică</button>
-        </div>
-
-        <div class="outBox">
-          <div class="koOut" id="outKo2">—</div>
-          <div class="roOut" id="outRo2">—</div>
-        </div>
-      </section>
-    </div>
-
-    <!-- COMBINE 1 -->
-    <div class="combineBlock">
-      <div class="combineTitle">COMBINE 1 (Propoziția 1 + Propoziția 2)</div>
-      <div class="centerRow">
-        <span class="pill"><strong>Conector</strong></span>
-        <select id="c1"></select>
-        <button id="gen12">Generează</button>
-      </div>
-      <div class="resultBox">
-        <div class="koOut" id="outKo12">—</div>
-        <div class="roOut" id="outRo12">—</div>
       </div>
     </div>
 
-    <!-- COMBINE 2 -->
-    <div class="combineBlock">
-      <div class="combineTitle">COMBINE 2 (Rezultatul de sus + Propoziția 3)</div>
-      <div class="centerRow">
-        <span class="pill"><strong>Conector</strong></span>
-        <select id="c2"></select>
-        <button id="genFinal">Generează</button>
-      </div>
-      <div class="resultBox">
-        <div class="koOut" id="finalKo">—</div>
-        <div class="roOut" id="finalRo">—</div>
+    <div class="layout">
+      <!-- LEFT: Timeline -->
+      <div class="panel">
+        <h2>
+          Flow (timeline)
+          <span class="pill" id="statusPill">ready</span>
+        </h2>
+        <div class="body">
+          <div class="timeline" id="timeline"></div>
+        </div>
       </div>
 
-      <div class="copyRow">
-        <button class="ghost" id="copyKo">Copiază KO</button>
-        <button class="ghost" id="copyRo">Copiază RO</button>
-        <span class="status" id="status"></span>
+      <!-- RIGHT: Builder -->
+      <div class="stack">
+        <div class="block">
+          <div class="bh">
+            <b>1) BASE</b>
+            <span class="pill">seed</span>
+          </div>
+          <div class="bb">
+            <div class="out" id="baseOut"></div>
+            <div class="actions">
+              <button class="tiny" id="btnSpeakBase">🔊 Audio</button>
+              <button class="tiny" id="btnCopyBase">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="bh">
+            <b>2) EXTEND</b>
+            <span class="pill">ADD / MODIFY</span>
+          </div>
+          <div class="bb">
+            <div class="hint">ADD = adaugi un element (loc/adverb/extra). MODIFY = schimbi o proprietate (ex: „물” → „뜨거운 물”).</div>
+
+            <div class="sep"></div>
+            <div class="kv">
+              <div class="muted">ADD (chips)</div>
+              <span class="pill" id="countAdd">0 selected</span>
+            </div>
+            <div class="chips" id="addChips"></div>
+
+            <div class="sep"></div>
+            <div class="kv">
+              <div class="muted">MODIFY (choose one)</div>
+              <span class="pill" id="countMod">none</span>
+            </div>
+            <div class="chips" id="modChips"></div>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="bh">
+            <b>3) COMBINE</b>
+            <span class="pill">clause builder</span>
+          </div>
+          <div class="bb">
+            <div class="hint">
+              Alegi conectorii dintre propoziții. Aplicația ta mare poate extinde lista fără să schimbi logica.
+            </div>
+
+            <div class="row">
+              <span class="label">Connector 1 (A → B)</span>
+              <select id="c1"></select>
+            </div>
+            <div class="row">
+              <span class="label">Connector 2 (B → C)</span>
+              <select id="c2"></select>
+            </div>
+
+            <div class="sep"></div>
+            <div class="out" id="finalOut"></div>
+            <div class="actions">
+              <button class="tiny primary" id="btnSpeakFinal">🔊 Audio</button>
+              <button class="tiny" id="btnCopyFinal">Copy</button>
+              <button class="tiny" id="btnExport">Export JSON</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="bh">
+            <b>Integrare în aplicația mare</b>
+            <span class="pill">safe</span>
+          </div>
+          <div class="bb">
+            <div class="hint">
+              Recomandat: păstrezi fișierul ca modul separat. În aplicația mare îl încarci ca pagină nouă sau îl incluzi într-un container.
+              Nu atinge paginile existente care funcționează.
+            </div>
+            <div class="hint mono">
+              - Variante: /modules/sentence-builder.html<br/>
+              - Link: &lt;a href="modules/sentence-builder.html"&gt;Sentence Builder&lt;/a&gt;<br/>
+              - Sau iframe: &lt;iframe src="modules/sentence-builder.html"&gt;&lt;/iframe&gt;
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- DICT MANAGER (optional UI; safe) -->
-    <details id="dictManager">
-      <summary>Dicționar (Manager) — adaugă / caută / export / import (offline)</summary>
-
-      <div class="mgrGrid">
-        <div class="mgrPanel">
-          <div class="mgrTitle">Caută / Listează</div>
-          <div class="smallRow" style="margin-bottom:10px;">
-            <input id="dictSearch" placeholder="Caută (RO sau KO)" />
-            <button id="dictRefresh" class="ghost">Refresh</button>
-          </div>
-
-          <div class="muted" style="margin-bottom:8px;">
-            Sursa: <strong>Lecție</strong> + <strong>Adăugările tale</strong> (LocalStorage).
-          </div>
-
-          <div style="overflow:auto; max-height: 360px;">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:45%;">KO</th>
-                  <th style="width:45%;">RO</th>
-                  <th style="width:10%;">Tip</th>
-                </tr>
-              </thead>
-              <tbody id="dictTable"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="mgrPanel">
-          <div class="mgrTitle">Adaugă / Export / Import</div>
-
-          <div class="smallRow">
-            <input id="newKo" placeholder="KO (ex: 깜짝 놀랐어요.)" />
-            <input id="newRo" placeholder="RO (ex: Am fost foarte surprins(ă).)" />
-          </div>
-          <div class="smallRow" style="margin-top:10px;">
-            <button id="dictAdd" class="ok">Adaugă în dicționar</button>
-            <button id="dictClearUser" class="danger">Șterge adăugările mele</button>
-          </div>
-
-          <hr style="border:none;border-top:1px solid var(--line); margin:12px 0;" />
-
-          <div class="smallRow" style="margin-bottom:8px;">
-            <button id="dictExportCopy" class="ghost">Copiază JSON</button>
-            <button id="dictExportShow" class="ghost">Afișează JSON</button>
-            <button id="dictImport" class="ok">Import JSON</button>
-          </div>
-
-          <textarea id="dictJson" placeholder="Aici apare JSON la export / lipești JSON la import"></textarea>
-
-          <div class="muted" style="margin-top:10px;">
-            Sugestie: păstrează un backup JSON în Notes.
-          </div>
-        </div>
-      </div>
-    </details>
+    <div class="toast" id="toast"></div>
   </div>
 
-  <pre id="errBox"></pre>
+  <script>
+    /* =========================================================
+       Sentence Builder — Static, extensible, "premium"
+       ========================================================= */
 
-<script>
-/* =========================================================
-   0) iOS-friendly error viewer (activ doar dacă apare eroare)
-   ========================================================= */
-window.addEventListener("error", (e) => {
-  const msg = (e?.error?.stack || e?.message || "Eroare necunoscută").toString();
-  const box = document.getElementById("errBox");
-  if(box){
-    box.style.display = "block";
-    box.textContent = msg;
-  }
-});
+    // 1) SCENARIOS (inspirat din pozele tale) — extensibil
+    // A: intenție / acțiune
+    // B: eveniment / rezultat
+    // C: reacție / emoție
+    const SCENARIOS = [
+      {
+        id: "ch13_tooth",
+        name: "Cap. 13 — Dinți / apă fierbinte / surprins",
+        base: {
+          A: { ko: "양치하려고 컵에 물을 받았어요.", ro: "Am umplut un pahar cu apă ca să mă spăl pe dinți.", en: "I filled a cup with water to brush my teeth." },
+          B: { ko: "물이 나왔어요.", ro: "A ieșit apă.", en: "Water came out." },
+          C: { ko: "놀랐어요.", ro: "Am fost surprins(ă).", en: "I was surprised." }
+        },
+        add: [
+          { id:"add_place_cup", tag:"+LOC", ko:"컵에", ro:"în cană/pahar", en:"in a cup" },
+          { id:"add_adv_really", tag:"+ADV", ko:"정말", ro:"chiar / foarte", en:"really" },
+          { id:"add_adv_suddenly", tag:"+ADV", ko:"갑자기", ro:"dintr-odată", en:"suddenly" },
+          { id:"add_reason_because", tag:"+INFO", ko:"그래서", ro:"de aceea", en:"so" }
+        ],
+        modify: [
+          // MOD pentru B: "water" -> "hot water"
+          { id:"mod_hot_water", tag:"MOD", target:"B", koReplace: { from:"물", to:"뜨거운 물" }, ro:"(modifică: apă → apă fierbinte)", en:"(modify: water → hot water)" },
+          // MOD pentru C: "surprised" -> "really surprised"
+          { id:"mod_really_surprised", tag:"MOD", target:"C", koWrap: { prefix:"정말 ", suffix:"" }, ro:"(modifică: surprins → foarte surprins)", en:"(modify: surprised → really surprised)" }
+        ],
+        connectors: [
+          { id:"c_intent", label:"-(으)려고 (intenție)", apply:(A,B)=> A.replace("요.","") + " " + B },
+          { id:"c_but", label:"-(으)ㄴ데 (dar/însă)", apply:(A,B)=> A.replace("요.","") + "는데, " + B },
+          { id:"c_reason", label:"-아/어/여서 (cauză)", apply:(A,B)=> A.replace("요.","") + "서 " + B },
+          { id:"c_then", label:"그리고 (și apoi)", apply:(A,B)=> A + " 그리고 " + B },
+        ],
+        defaults: { c1:"c_but", c2:"c_reason" }
+      }
+    ];
 
-/* =========================================================
-   1) CONFIG: lecția (reguli) + dicționar lecție (offline)
-   ========================================================= */
+    // 2) UI refs
+    const $ = (s)=>document.querySelector(s);
+    const timeline = $("#timeline");
+    const scenarioSelect = $("#scenarioSelect");
+    const langSelect = $("#langSelect");
+    const addChips = $("#addChips");
+    const modChips = $("#modChips");
+    const baseOut = $("#baseOut");
+    const finalOut = $("#finalOut");
+    const c1 = $("#c1");
+    const c2 = $("#c2");
+    const statusPill = $("#statusPill");
+    const toast = $("#toast");
 
-const LESSON = {
-  cards: [
-    {
-      // EXEMPLE (le poți schimba oricând)
-      base: { ko:"비누칠했어요.", ro:"M-am săpunit." },
-      add: [
-        { label:"ADD 몸에", type:"prefix_set", outKo:"몸에 비누칠했어요.", outRo:"M-am săpunit pe corp." },
-        { label:"ADD 정말 (intens)", type:"adverb_before_pred", adverb:"정말", roHint:"(foarte)" }
-      ],
-      modify: [
-        { label:"MODIFY 비누칠→샴푸", type:"replace", find:"비누칠", repl:"샴푸", roHint:"(șampon)" }
-      ],
-      change: [
-        { label:"CHANGE Negativ (안 ...)", type:"negate_simple", roHint:"(negativ)" }
-      ]
-    },
-    {
-      base: { ko:"물을 틀었어요.", ro:"Am dat drumul la apă." },
-      add: [
-        { label:"ADD 빨리", type:"adverb_before_pred", adverb:"빨리", roHint:"(repede)" }
-      ],
-      modify: [
-        { label:"MODIFY 따뜻한", type:"replace", find:"물을", repl:"따뜻한 물을", roHint:"apă caldă" }
-      ],
-      change: [
-        { label:"CHANGE -아/어야 해요 (trebuie)", type:"must_do", roHint:"(trebuie)" }
-      ]
-    },
-    {
-      base: { ko:"놀랐어요.", ro:"Am fost surprins(ă)." },
-      add: [
-        { label:"ADD 깜짝", type:"prefix_set", outKo:"깜짝 놀랐어요.", outRo:"Am fost foarte surprins(ă)." },
-        { label:"ADD 너무", type:"adverb_before_pred", adverb:"너무", roHint:"(prea/foarte)" }
-      ],
-      modify: [],
-      change: [
-        { label:"CHANGE Întrebare (?)", type:"to_question", roHint:"(întrebare)" }
-      ]
+    const btnRebuild = $("#btnRebuild");
+    const btnReset = $("#btnReset");
+    const btnAuto = $("#btnAuto");
+    const btnSpeakBase = $("#btnSpeakBase");
+    const btnCopyBase = $("#btnCopyBase");
+    const btnSpeakFinal = $("#btnSpeakFinal");
+    const btnCopyFinal = $("#btnCopyFinal");
+    const btnExport = $("#btnExport");
+
+    const countAdd = $("#countAdd");
+    const countMod = $("#countMod");
+
+    // 3) state
+    const state = {
+      scenarioId: SCENARIOS[0].id,
+      lang: "ro",
+      selectedAdd: new Set(),
+      selectedMod: null, // only one at a time (premium clarity)
+      c1: null,
+      c2: null
+    };
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(()=>toast.classList.remove("show"), 1400);
     }
-  ]
-};
 
-// Conectori
-const CONNECTORS_1 = [
-  { id:"go", label:"-고 (și)", roJoin:"și" }
-];
-const CONNECTORS_2 = [
-  { id:"so", label:"-아/어/여서 (cauză → rezultat)", roJoin:"așa că" },
-  { id:"nikka", label:"-(으)니까 (motiv)", roJoin:"pentru că" },
-  { id:"neunde", label:"-(으)ㄴ데 / -는데 (contrast/context)", roJoin:"dar" },
-  { id:"deoni", label:"-더니 (după ce...)", roJoin:"și apoi" },
-  { id:"before", label:"-기 전에 (înainte de)", roJoin:"înainte să" },
-  { id:"ryeomyeon", label:"-(으)려면 (dacă vreau să...)", roJoin:"dacă vreau să" }
-];
+    // 4) helpers
+    function esc(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-// Dicționar lecție (exemplu minimal; îl extinzi)
-function buildLessonPairs(){
-  const pairs = [];
-  for(const c of LESSON.cards){
-    // base
-    if(c.base?.ko && c.base?.ro) pairs.push({ko:c.base.ko, ro:c.base.ro, type:"lesson"});
-    // prefix_set rules often have full RO/KO
-    for(const r of (c.add||[])){
-      if(r.type === "prefix_set" && r.outKo && r.outRo){
-        pairs.push({ko:r.outKo, ro:r.outRo, type:"lesson"});
+    function getScenario(){
+      return SCENARIOS.find(x=>x.id===state.scenarioId) || SCENARIOS[0];
+    }
+
+    function trText(obj){
+      return state.lang === "ro" ? obj.ro : obj.en;
+    }
+
+    // Apply MODIFY rules to base clauses
+    function applyModifyToClause(koText, mod){
+      if(!mod) return koText;
+      let out = koText;
+
+      if(mod.koReplace){
+        // replace only first occurrence for safety
+        const {from,to} = mod.koReplace;
+        out = out.replace(from, to);
+      }
+      if(mod.koWrap){
+        out = (mod.koWrap.prefix || "") + out + (mod.koWrap.suffix || "");
+      }
+      return out;
+    }
+
+    // Apply ADD chips (lightweight, safe): we either prefix certain tokens
+    // For this demo:
+    // - "컵에" should be present in A already; if user adds it, we ensure it exists.
+    // - "정말" can prefix C, or also before 놀랐어요.
+    // - "갑자기" can prefix B
+    // - "그래서" can prefix final C clause or between B->C (we'll use it as prefix for C if connector isn't causal)
+    function applyAdds(clauses, addIds){
+      let A = clauses.A;
+      let B = clauses.B;
+      let C = clauses.C;
+
+      const has = (id)=> addIds.has(id);
+
+      if(has("add_place_cup")){
+        // ensure "컵에" exists in A near the object (simple heuristic)
+        if(!A.includes("컵에")){
+          // insert after "양치하려고"
+          A = A.replace("양치하려고 ", "양치하려고 컵에 ");
+        }
+      }
+
+      if(has("add_adv_suddenly")){
+        if(!B.trim().startsWith("갑자기")){
+          B = "갑자기 " + B;
+        }
+      }
+
+      if(has("add_adv_really")){
+        // if no MOD already adds "정말" to C, add it
+        if(!C.trim().startsWith("정말")){
+          C = "정말 " + C;
+        }
+      }
+
+      if(has("add_reason_because")){
+        // "그래서" makes sense at start of C
+        if(!C.trim().startsWith("그래서")){
+          C = "그래서 " + C;
+        }
+      }
+
+      return {A,B,C};
+    }
+
+    // Combine clauses with connectors
+    function combineTwo(text1, text2, connector){
+      return connector.apply(text1, text2);
+    }
+
+    // 5) render
+    function renderScenarioOptions(){
+      scenarioSelect.innerHTML = SCENARIOS.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("");
+      scenarioSelect.value = state.scenarioId;
+    }
+
+    function renderConnectors(){
+      const s = getScenario();
+      const opts = s.connectors.map(c=>`<option value="${esc(c.id)}">${esc(c.label)}</option>`).join("");
+      c1.innerHTML = opts;
+      c2.innerHTML = opts;
+
+      state.c1 = state.c1 || s.defaults.c1;
+      state.c2 = state.c2 || s.defaults.c2;
+      c1.value = state.c1;
+      c2.value = state.c2;
+    }
+
+    function renderChips(){
+      const s = getScenario();
+
+      addChips.innerHTML = s.add.map(item=>{
+        const active = state.selectedAdd.has(item.id) ? "active" : "";
+        return `
+          <div class="chip ${active}" data-add="${esc(item.id)}">
+            <span class="tag">${esc(item.tag)}</span>
+            <span>${esc(item.ko)}</span>
+            <small>${esc(state.lang==="ro"?item.ro:item.en)}</small>
+          </div>
+        `;
+      }).join("");
+
+      modChips.innerHTML = s.modify.map(item=>{
+        const active = state.selectedMod === item.id ? "active" : "";
+        return `
+          <div class="chip ${active}" data-mod="${esc(item.id)}">
+            <span class="tag">${esc(item.tag)}</span>
+            <span>${esc(item.id==="mod_hot_water" ? "물 → 뜨거운 물" : "놀랐어요 → 정말 놀랐어요")}</span>
+            <small>${esc(state.lang==="ro"?item.ro:item.en)}</small>
+          </div>
+        `;
+      }).join("");
+
+      countAdd.textContent = `${state.selectedAdd.size} selected`;
+      countMod.textContent = state.selectedMod ? "1 selected" : "none";
+    }
+
+    function renderOutputsAndTimeline(){
+      const s = getScenario();
+      statusPill.textContent = "building…";
+
+      // Base clauses
+      let A = s.base.A.ko;
+      let B = s.base.B.ko;
+      let C = s.base.C.ko;
+
+      // MOD (one choice)
+      const mod = s.modify.find(m=>m.id===state.selectedMod) || null;
+      if(mod){
+        if(mod.target === "A") A = applyModifyToClause(A, mod);
+        if(mod.target === "B") B = applyModifyToClause(B, mod);
+        if(mod.target === "C") C = applyModifyToClause(C, mod);
+      }
+
+      // ADD chips
+      ({A,B,C} = applyAdds({A,B,C}, state.selectedAdd));
+
+      // Connectors
+      const conn1 = s.connectors.find(c=>c.id===state.c1) || s.connectors[0];
+      const conn2 = s.connectors.find(c=>c.id===state.c2) || s.connectors[0];
+
+      // Final combined: (A -> B) -> C
+      const AB = combineTwo(A, B, conn1);
+      const ABC = combineTwo(AB, C, conn2);
+
+      // BASE OUT (show A only as seed, like TTMIK)
+      baseOut.innerHTML = `
+        <div class="sentence">
+          <p class="ko">${esc(s.base.A.ko)}</p>
+          <p class="tr">${esc(trText(s.base.A))}</p>
+        </div>
+      `;
+
+      // FINAL OUT
+      finalOut.innerHTML = `
+        <div class="sentence">
+          <p class="ko">${esc(ABC)}</p>
+          <p class="tr">${esc(buildTranslationPreview(s, A, B, C, conn1, conn2))}</p>
+        </div>
+      `;
+
+      // TIMELINE (premium flow)
+      timeline.innerHTML = "";
+
+      // Step 1: Base
+      addStep({
+        title:"BASE (Seed)",
+        subtitle:"Propoziție de pornire",
+        ko:s.base.A.ko,
+        tr:trText(s.base.A),
+        buttons:[
+          {label:"🔊 Audio", onClick:()=>speakKo(s.base.A.ko)},
+          {label:"Copy", onClick:()=>copyText(s.base.A.ko)}
+        ]
+      });
+
+      // Step 2: Conjugation / Components view (like TTMIK table, but condensed)
+      addStep({
+        title:"COMPONENTS",
+        subtitle:"A / B / C (building blocks)",
+        ko: `${A}\n${B}\n${C}`,
+        tr: `${buildClauseTr(s, "A")}\n${buildClauseTr(s, "B")}\n${buildClauseTr(s, "C")}`,
+        buttons:[
+          {label:"Copy blocks", onClick:()=>copyText(`${A}\n${B}\n${C}`)}
+        ]
+      });
+
+      // Step 3: Combine 1
+      addStep({
+        title:"COMBINE 1",
+        subtitle:`A → B using ${conn1.label}`,
+        ko: AB,
+        tr: buildTranslationPreview(s, A, B, null, conn1, null),
+        buttons:[
+          {label:"🔊 Audio", onClick:()=>speakKo(AB)},
+          {label:"Copy", onClick:()=>copyText(AB)}
+        ]
+      });
+
+      // Step 4: Combine 2 (Final)
+      addStep({
+        title:"COMBINE 2 (Final)",
+        subtitle:`(A→B) → C using ${conn2.label}`,
+        ko: ABC,
+        tr: buildTranslationPreview(s, A, B, C, conn1, conn2),
+        buttons:[
+          {label:"🔊 Audio", onClick:()=>speakKo(ABC)},
+          {label:"Copy", onClick:()=>copyText(ABC)}
+        ]
+      });
+
+      statusPill.textContent = "ready";
+    }
+
+    function addStep({title, subtitle, ko, tr, buttons=[]}){
+      const step = document.createElement("div");
+      step.className = "step";
+      step.innerHTML = `
+        <div class="dot"></div>
+        <div class="stepHeader">
+          <div class="title">
+            <b>${esc(title)}</b>
+            <span>${esc(subtitle)}</span>
+          </div>
+          <div class="actions"></div>
+        </div>
+        <div class="stepBody">
+          <div class="sentence">
+            <p class="ko">${esc(ko).replace(/\n/g,"<br/>")}</p>
+            <p class="tr">${esc(tr).replace(/\n/g,"<br/>")}</p>
+          </div>
+        </div>
+      `;
+      const act = step.querySelector(".actions");
+      buttons.forEach(b=>{
+        const btn = document.createElement("button");
+        btn.className = "tiny";
+        btn.textContent = b.label;
+        btn.addEventListener("click", b.onClick);
+        act.appendChild(btn);
+      });
+      timeline.appendChild(step);
+    }
+
+    function buildClauseTr(s, key){
+      // Use original base translations; builder is for Korean logic primarily.
+      // For preview: use base translations as reference.
+      return trText(s.base[key]);
+    }
+
+    function buildTranslationPreview(s, A, B, C, conn1, conn2){
+      // High-quality approach: not perfect MT; gives a clean “meaning preview”.
+      // We use base translations, then reflect connectors semantically.
+      const tA = trText(s.base.A);
+      const tB = trText(s.base.B);
+      const tC = C ? trText(s.base.C) : "";
+
+      const label = (conn)=> conn ? conn.label : "";
+
+      if(!C && conn1){
+        return `${tA}  [${label(conn1)}]  ${tB}`;
+      }
+      if(C && conn1 && conn2){
+        return `${tA}  [${label(conn1)}]  ${tB}  [${label(conn2)}]  ${tC}`;
+      }
+      // fallback
+      return [tA,tB,tC].filter(Boolean).join(" / ");
+    }
+
+    // 6) interactions
+    function bindChipEvents(){
+      addChips.addEventListener("click", (e)=>{
+        const chip = e.target.closest(".chip[data-add]");
+        if(!chip) return;
+        const id = chip.getAttribute("data-add");
+        if(state.selectedAdd.has(id)) state.selectedAdd.delete(id);
+        else state.selectedAdd.add(id);
+        renderChips();
+        renderOutputsAndTimeline();
+      });
+
+      modChips.addEventListener("click", (e)=>{
+        const chip = e.target.closest(".chip[data-mod]");
+        if(!chip) return;
+        const id = chip.getAttribute("data-mod");
+        state.selectedMod = (state.selectedMod === id) ? null : id;
+        renderChips();
+        renderOutputsAndTimeline();
+      });
+    }
+
+    scenarioSelect.addEventListener("change", ()=>{
+      state.scenarioId = scenarioSelect.value;
+      // reset state for scenario
+      state.selectedAdd.clear();
+      state.selectedMod = null;
+      const s = getScenario();
+      state.c1 = s.defaults.c1;
+      state.c2 = s.defaults.c2;
+      renderConnectors();
+      renderChips();
+      renderOutputsAndTimeline();
+      showToast("Scenario changed.");
+    });
+
+    langSelect.addEventListener("change", ()=>{
+      state.lang = langSelect.value;
+      renderChips();
+      renderOutputsAndTimeline();
+      showToast("Language updated.");
+    });
+
+    c1.addEventListener("change", ()=>{
+      state.c1 = c1.value;
+      renderOutputsAndTimeline();
+    });
+    c2.addEventListener("change", ()=>{
+      state.c2 = c2.value;
+      renderOutputsAndTimeline();
+    });
+
+    btnReset.addEventListener("click", ()=>{
+      state.selectedAdd.clear();
+      state.selectedMod = null;
+      const s = getScenario();
+      state.c1 = s.defaults.c1;
+      state.c2 = s.defaults.c2;
+      renderConnectors();
+      renderChips();
+      renderOutputsAndTimeline();
+      showToast("Reset done.");
+    });
+
+    btnRebuild.addEventListener("click", ()=>{
+      renderOutputsAndTimeline();
+      showToast("Rebuilt.");
+    });
+
+    btnAuto.addEventListener("click", ()=>{
+      // “wow” demo: choose best TTMIK-like chain
+      state.selectedAdd.add("add_place_cup");
+      state.selectedMod = "mod_hot_water";
+      state.selectedAdd.add("add_adv_really");
+      state.c1 = "c_but";
+      state.c2 = "c_reason";
+      renderConnectors();
+      renderChips();
+      renderOutputsAndTimeline();
+      showToast("Auto-build applied.");
+    });
+
+    btnSpeakBase.addEventListener("click", ()=>{
+      const s = getScenario();
+      speakKo(s.base.A.ko);
+    });
+
+    btnCopyBase.addEventListener("click", ()=>{
+      const s = getScenario();
+      copyText(s.base.A.ko);
+    });
+
+    btnSpeakFinal.addEventListener("click", ()=>{
+      const ko = finalOut.querySelector(".ko")?.textContent || "";
+      speakKo(ko);
+    });
+
+    btnCopyFinal.addEventListener("click", ()=>{
+      const ko = finalOut.querySelector(".ko")?.textContent || "";
+      copyText(ko);
+    });
+
+    btnExport.addEventListener("click", ()=>{
+      const s = getScenario();
+      const koFinal = finalOut.querySelector(".ko")?.textContent || "";
+      const payload = {
+        module: "sentence-builder",
+        scenario: { id: s.id, name: s.name },
+        lang: state.lang,
+        selectedAdd: [...state.selectedAdd],
+        selectedMod: state.selectedMod,
+        connectors: { c1: state.c1, c2: state.c2 },
+        output: { ko: koFinal }
+      };
+      copyText(JSON.stringify(payload, null, 2));
+      showToast("Export JSON copied to clipboard.");
+    });
+
+    // 7) utilities: copy + speech
+    async function copyText(txt){
+      try{
+        await navigator.clipboard.writeText(txt);
+        showToast("Copied.");
+      }catch{
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = txt;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        showToast("Copied (fallback).");
       }
     }
-  }
-  // câteva utile
-  pairs.push({ko:"깜짝 놀랐어요.", ro:"Am fost foarte surprins(ă).", type:"lesson"});
-  pairs.push({ko:"따뜻한 물을 틀었어요.", ro:"Am dat drumul la apă caldă.", type:"lesson"});
-  pairs.push({ko:"물", ro:"apă", type:"lesson"});
-  return uniqPairs(pairs);
-}
 
-/* =========================================================
-   2) STORAGE: user pairs
-   ========================================================= */
-const LS_KEY_USER_PAIRS = "rk_user_pairs_v1";
+    function speakKo(text){
+      if(!("speechSynthesis" in window)){
+        showToast("Speech not supported in this browser.");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ko-KR";
 
-function loadUserPairs(){
-  try{
-    const raw = localStorage.getItem(LS_KEY_USER_PAIRS);
-    if(!raw) return [];
-    const arr = JSON.parse(raw);
-    if(!Array.isArray(arr)) return [];
-    return arr
-      .filter(x => x && typeof x.ko==="string" && typeof x.ro==="string")
-      .map(x => ({ ko: x.ko.trim(), ro: x.ro.trim(), type:"user" }))
-      .filter(x => x.ko && x.ro);
-  }catch{
-    return [];
-  }
-}
+      // attempt to pick a Korean voice if available
+      const voices = window.speechSynthesis.getVoices?.() || [];
+      const koVoice = voices.find(v => (v.lang||"").toLowerCase().startsWith("ko"));
+      if(koVoice) u.voice = koVoice;
 
-function saveUserPairs(pairs){
-  const clean = uniqPairs(pairs).map(x => ({ko:x.ko, ro:x.ro}));
-  localStorage.setItem(LS_KEY_USER_PAIRS, JSON.stringify(clean, null, 2));
-}
+      u.rate = 1.0;
+      u.pitch = 1.0;
+      u.volume = 1.0;
 
-/* =========================================================
-   3) DICT CORE: maps + lookup
-   ========================================================= */
-let LESSON_PAIRS = [];
-let USER_PAIRS = [];
-let ALL_PAIRS = [];
-let MAP_RO_TO_KO = new Map();
-let MAP_KO_TO_RO = new Map();
-
-function norm(s){
-  return (s||"").toString().trim().replace(/\s+/g," ");
-}
-function normKey(s){
-  return norm(s).toLowerCase();
-}
-function uniqPairs(pairs){
-  const seen = new Set();
-  const out = [];
-  for(const p of pairs){
-    const ko = norm(p.ko);
-    const ro = norm(p.ro);
-    if(!ko || !ro) continue;
-    const key = ko + "|||"+ ro;
-    if(seen.has(key)) continue;
-    seen.add(key);
-    out.push({ko, ro, type:p.type || "lesson"});
-  }
-  return out;
-}
-function rebuildDictMaps(){
-  ALL_PAIRS = uniqPairs([...LESSON_PAIRS, ...USER_PAIRS]);
-  MAP_RO_TO_KO = new Map();
-  MAP_KO_TO_RO = new Map();
-
-  // Exact match maps
-  for(const p of ALL_PAIRS){
-    const roK = normKey(p.ro);
-    const koK = normKey(p.ko);
-    if(!MAP_RO_TO_KO.has(roK)) MAP_RO_TO_KO.set(roK, p.ko);
-    if(!MAP_KO_TO_RO.has(koK)) MAP_KO_TO_RO.set(koK, p.ro);
-  }
-}
-function lookupKoFromRo(ro){
-  return MAP_RO_TO_KO.get(normKey(ro)) || "";
-}
-function lookupRoFromKo(ko){
-  return MAP_KO_TO_RO.get(normKey(ko)) || "";
-}
-function addUserPair(ko, ro){
-  ko = norm(ko);
-  ro = norm(ro);
-  if(!ko || !ro) return false;
-  // prevent duplicates across all
-  const exists = ALL_PAIRS.some(p => normKey(p.ko)===normKey(ko) && normKey(p.ro)===normKey(ro));
-  if(exists) return true;
-  USER_PAIRS.push({ko, ro, type:"user"});
-  USER_PAIRS = uniqPairs(USER_PAIRS);
-  saveUserPairs(USER_PAIRS);
-  rebuildDictMaps();
-  return true;
-}
-
-/* =========================================================
-   4) SENTENCE ENGINE: rules + connective (legat de verb)
-   ========================================================= */
-function normalizeKoSentence(s){ return norm(s); }
-function stripFinalPunct(s){ return normalizeKoSentence(s).replace(/[.?!]$/,"").trim(); }
-function ensurePeriod(ko){
-  const t = normalizeKoSentence(ko);
-  return /[.?!]$/.test(t) ? t : (t + ".");
-}
-function stripPunct(s){ return norm(s).replace(/[.?!]$/,""); }
-
-function splitIntoPrefixAndPredicate(sentenceNoPunct){
-  const s = normalizeKoSentence(sentenceNoPunct);
-  const parts = s.split(" ");
-  if(parts.length === 1) return { prefix:"", pred: parts[0] };
-  return { prefix: parts.slice(0,-1).join(" "), pred: parts[parts.length-1] };
-}
-function analyzePredicate(pred){
-  // very A1/A2 heuristics; safe fallbacks
-  if(pred.endsWith("했어요")) return { kind:"ha_past", stem: pred.slice(0,-3) };     // 했어요
-  if(pred.endsWith("해요")) return { kind:"ha_pres", stem: pred.slice(0,-2) };      // 해요
-
-  if(pred.endsWith("았어요")) return { kind:"past", stem: pred.slice(0,-3), aeo:"아", past:"았" };
-  if(pred.endsWith("었어요")) return { kind:"past", stem: pred.slice(0,-3), aeo:"어", past:"었" };
-  if(pred.endsWith("였어요")) return { kind:"past", stem: pred.slice(0,-3), aeo:"여", past:"였" };
-
-  if(pred.endsWith("아요")) return { kind:"pres", stem: pred.slice(0,-2) };
-  if(pred.endsWith("어요")) return { kind:"pres", stem: pred.slice(0,-2) };
-  if(pred.endsWith("여요")) return { kind:"pres", stem: pred.slice(0,-2) };
-
-  if(pred.endsWith("이에요")) return { kind:"cop", stem: pred.slice(0,-2), cop:"이에" };
-  if(pred.endsWith("예요")) return { kind:"cop", stem: pred.slice(0,-2), cop:"예" };
-
-  if(pred.endsWith("세요")) return { kind:"imp", stem: pred.slice(0,-2) };
-
-  return { kind:"unknown", stem: pred };
-}
-function joinPrefix(prefix, tail){
-  return prefix ? (prefix + " " + tail) : tail;
-}
-
-function toConnective(sentence, connectorId){
-  const s = stripFinalPunct(sentence);
-  const { prefix, pred } = splitIntoPrefixAndPredicate(s);
-  const a = analyzePredicate(pred);
-
-  // -고
-  if(connectorId === "go"){
-    if(a.kind === "ha_past" || a.kind === "ha_pres"){
-      // 비누칠했어요 -> 비누칠하고 (prefix can exist)
-      return prefix ? (prefix + " " + a.stem + "하고").trim() : (a.stem + "하고");
+      window.speechSynthesis.speak(u);
     }
-    if(a.kind === "past" || a.kind === "pres" || a.kind === "imp"){
-      return joinPrefix(prefix, a.stem) + "고";
+
+    // 8) init
+    function init(){
+      renderScenarioOptions();
+      renderConnectors();
+      renderChips();
+      bindChipEvents();
+      renderOutputsAndTimeline();
+
+      // iOS/Safari sometimes needs voices loaded after a user gesture; still ok.
+      if("speechSynthesis" in window){
+        window.speechSynthesis.onvoiceschanged = ()=>{};
+      }
     }
-    if(a.kind === "cop"){
-      // 예요/이에요 -> 고 is awkward; fallback "...이고"
-      return joinPrefix(prefix, a.stem) + "이고";
-    }
-    return joinPrefix(prefix, pred) + "고";
-  }
-
-  // -아/어/여서
-  if(connectorId === "so"){
-    if(a.kind === "ha_past" || a.kind === "ha_pres"){
-      return prefix ? (prefix + " " + a.stem + "해서").trim() : (a.stem + "해서");
-    }
-    if(a.kind === "past"){
-      return joinPrefix(prefix, a.stem + a.aeo) + "서";
-    }
-    if(a.kind === "pres"){
-      return joinPrefix(prefix, a.stem) + "서";
-    }
-    if(a.kind === "cop"){
-      return joinPrefix(prefix, a.stem) + "여서";
-    }
-    return joinPrefix(prefix, pred) + "서";
-  }
-
-  // -(으)니까
-  if(connectorId === "nikka"){
-    if(a.kind === "ha_past") return prefix ? (prefix + " " + a.stem + "했으니까").trim() : (a.stem + "했으니까");
-    if(a.kind === "ha_pres") return joinPrefix(prefix, a.stem + "하") + "니까";
-    if(a.kind === "past") return joinPrefix(prefix, a.stem + a.past) + "으니까";
-    if(a.kind === "pres") return joinPrefix(prefix, a.stem) + "니까";
-    if(a.kind === "cop") return joinPrefix(prefix, a.stem) + "니까";
-    return joinPrefix(prefix, pred) + "니까";
-  }
-
-  // -는데
-  if(connectorId === "neunde"){
-    if(a.kind === "ha_past") return prefix ? (prefix + " " + a.stem + "했는데").trim() : (a.stem + "했는데");
-    if(a.kind === "ha_pres") return joinPrefix(prefix, a.stem + "하") + "는데";
-    if(a.kind === "past") return joinPrefix(prefix, a.stem + a.past) + "는데";
-    if(a.kind === "pres") return joinPrefix(prefix, a.stem) + "는데";
-    if(a.kind === "cop") return joinPrefix(prefix, a.stem) + "인데";
-    return joinPrefix(prefix, pred) + "는데";
-  }
-
-  // -더니
-  if(connectorId === "deoni"){
-    if(a.kind === "ha_past") return prefix ? (prefix + " " + a.stem + "했더니").trim() : (a.stem + "했더니");
-    if(a.kind === "past") return joinPrefix(prefix, a.stem + a.past) + "더니";
-    if(a.kind === "pres") return joinPrefix(prefix, a.stem) + "더니";
-    return joinPrefix(prefix, pred) + "더니";
-  }
-
-  // -기 전에
-  if(connectorId === "before"){
-    if(a.kind === "ha_past" || a.kind === "ha_pres"){
-      const baseVerb = joinPrefix(prefix, a.stem + "하");
-      return baseVerb + "기 전에";
-    }
-    if(a.kind === "past" || a.kind === "pres" || a.kind === "imp"){
-      return joinPrefix(prefix, a.stem) + "기 전에";
-    }
-    return joinPrefix(prefix, pred) + "기 전에";
-  }
-
-  // -(으)려면
-  if(connectorId === "ryeomyeon"){
-    if(a.kind === "ha_past" || a.kind === "ha_pres"){
-      const baseVerb = joinPrefix(prefix, a.stem + "하");
-      return baseVerb + "려면";
-    }
-    if(a.kind === "past" || a.kind === "pres" || a.kind === "imp"){
-      return joinPrefix(prefix, a.stem) + "려면";
-    }
-    return joinPrefix(prefix, pred) + "려면";
-  }
-
-  return s;
-}
-
-// Rule application
-function addHint(ro, hint){
-  ro = norm(ro);
-  if(!ro) return ro;
-  if(!hint) return ro;
-  if(ro.includes(hint)) return ro;
-  return ro + " " + hint;
-}
-function applyRule(rule, ko, ro){
-  ko = norm(ko);
-  ro = norm(ro);
-  if(!rule) return { ok:false, ko, ro };
-
-  if(rule.type === "prefix_set"){
-    return { ok:true, ko: norm(rule.outKo), ro: norm(rule.outRo || ro) };
-  }
-
-  if(rule.type === "replace"){
-    if(ko.includes(rule.find)){
-      const newKo = ko.replace(rule.find, rule.repl);
-      return { ok:true, ko: newKo, ro: addHint(ro, rule.roHint) };
-    }
-    return { ok:false, ko, ro };
-  }
-
-  if(rule.type === "adverb_before_pred"){
-    // insert adverb before predicate (last token), keep prefix
-    const s = stripFinalPunct(ko);
-    const { prefix, pred } = splitIntoPrefixAndPredicate(s);
-    const newPred = (rule.adverb ? (rule.adverb + " " + pred) : pred);
-    const newKo = ensurePeriod(joinPrefix(prefix, newPred));
-    return { ok:true, ko:newKo, ro:addHint(ro, rule.roHint) };
-  }
-
-  if(rule.type === "negate_simple"){
-    // naive: place "안" before predicate (last token)
-    const s = stripFinalPunct(ko);
-    const { prefix, pred } = splitIntoPrefixAndPredicate(s);
-    const newPred = "안 " + pred;
-    const newKo = ensurePeriod(joinPrefix(prefix, newPred));
-    return { ok:true, ko:newKo, ro:addHint(ro, rule.roHint) };
-  }
-
-  if(rule.type === "must_do"){
-    // naive: predicate -> 해야 해요 (A1/A2 heuristic)
-    // Example: 물을 틀었어요. -> 물을 틀어야 해요.
-    const s = stripFinalPunct(ko);
-    const { prefix, pred } = splitIntoPrefixAndPredicate(s);
-    const a = analyzePredicate(pred);
-    let base = a.stem;
-    // if "ha" type: stem + "하"
-    if(a.kind === "ha_past" || a.kind === "ha_pres") base = a.stem + "하";
-    const newKo = ensurePeriod(joinPrefix(prefix, base + "어야 해요"));
-    return { ok:true, ko:newKo, ro:addHint(ro, rule.roHint) };
-  }
-
-  if(rule.type === "to_question"){
-    const s = stripFinalPunct(ko);
-    const q = s + "?";
-    return { ok:true, ko:q, ro:addHint(ro, rule.roHint) };
-  }
-
-  return { ok:false, ko, ro };
-}
-
-/* =========================================================
-   5) STATE
-   ========================================================= */
-const state = {
-  cards: [0,1,2].map(i => ({
-    baseKo: norm(LESSON.cards[i].base.ko),
-    baseRo: norm(LESSON.cards[i].base.ro),
-    ko: norm(LESSON.cards[i].base.ko),
-    ro: norm(LESSON.cards[i].base.ro),
-    tag: "BASE",
-    lastAutoFrom: null // "RO" or "KO"
-  })),
-  combined12: { ko:"", ro:"" },
-  final: { ko:"", ro:"" }
-};
-
-const $ = (id) => document.getElementById(id);
-
-/* =========================================================
-   6) UI: fill selects + render
-   ========================================================= */
-function setTag(i, kind){
-  state.cards[i].tag = kind;
-  const el = $("tag"+i);
-  if(!el) return;
-  el.className = "miniTag " + (
-    kind==="ADD" ? "ok" :
-    kind==="MODIFY" ? "warn" :
-    kind==="CHANGE" ? "bad" : ""
-  );
-  el.textContent = kind;
-}
-
-function fillModeSelect(i){
-  const mode = $("mode"+i);
-  mode.innerHTML = "";
-  const opts = [
-    { v:"none", t:"NONE" },
-    { v:"add", t:"ADD" },
-    { v:"modify", t:"MODIFY" },
-    { v:"change", t:"CHANGE" }
-  ];
-  for(const o of opts) mode.appendChild(new Option(o.t, o.v));
-  mode.value = "none";
-}
-
-function fillOptionSelect(i){
-  const modeVal = $("mode"+i).value;
-  const optSel = $("opt"+i);
-  optSel.innerHTML = "";
-
-  const card = LESSON.cards[i];
-  const list = (modeVal==="add") ? (card.add||[])
-            : (modeVal==="modify") ? (card.modify||[])
-            : (modeVal==="change") ? (card.change||[])
-            : [];
-
-  if(!list.length){
-    optSel.appendChild(new Option("— nimic disponibil —", ""));
-    optSel.disabled = true;
-    $("apply"+i).disabled = true;
-  }else{
-    list.forEach((r,idx)=> optSel.appendChild(new Option(r.label, String(idx))));
-    optSel.disabled = false;
-    $("apply"+i).disabled = false;
-  }
-}
-
-function renderCard(i){
-  $("outKo"+i).textContent = state.cards[i].ko || "—";
-  $("outRo"+i).textContent = state.cards[i].ro || "—";
-  $("inKo"+i).value = state.cards[i].baseKo || "";
-  $("inRo"+i).value = state.cards[i].baseRo || "";
-  setTag(i, state.cards[i].tag || "BASE");
-}
-
-function fillConnectorSelects(){
-  const c1 = $("c1");
-  c1.innerHTML = "";
-  CONNECTORS_1.forEach((c,idx)=> c1.appendChild(new Option(c.label, String(idx))));
-  c1.value = "0";
-
-  const c2 = $("c2");
-  c2.innerHTML = "";
-  CONNECTORS_2.forEach((c,idx)=> c2.appendChild(new Option(c.label, String(idx))));
-  c2.value = "0";
-}
-
-/* =========================================================
-   7) COMBINE
-   ========================================================= */
-function combine12(){
-  const rule = CONNECTORS_1[parseInt($("c1").value,10)];
-  const A = state.cards[0].ko;
-  const B = state.cards[1].ko;
-  const Aconn = toConnective(A, rule.id);
-  state.combined12.ko = normalizeKoSentence(Aconn + " " + stripFinalPunct(B) + ".");
-  state.combined12.ro = stripPunct(state.cards[0].ro) + " " + rule.roJoin + " " + stripPunct(state.cards[1].ro) + ".";
-  $("outKo12").textContent = state.combined12.ko || "—";
-  $("outRo12").textContent = state.combined12.ro || "—";
-}
-
-function combineFinal(){
-  const rule = CONNECTORS_2[parseInt($("c2").value,10)];
-  const X = state.combined12.ko || (stripFinalPunct(state.cards[0].ko) + " " + stripFinalPunct(state.cards[1].ko) + ".");
-  const C = state.cards[2].ko;
-  const Xconn = toConnective(X, rule.id);
-  state.final.ko = ensurePeriod(normalizeKoSentence(Xconn + " " + stripFinalPunct(C)));
-
-  const ro12 = state.combined12.ro || (stripPunct(state.cards[0].ro) + " și " + stripPunct(state.cards[1].ro) + ".");
-  state.final.ro = stripPunct(ro12) + " " + rule.roJoin + " " + stripPunct(state.cards[2].ro) + ".";
-
-  $("finalKo").textContent = state.final.ko || "—";
-  $("finalRo").textContent = state.final.ro || "—";
-}
-
-/* =========================================================
-   8) LIVE AUTOFILL (RO<->KO) din dicționar, fără API
-   ========================================================= */
-function setBaseFromInputs(i){
-  const ko = norm($("inKo"+i).value);
-  const ro = norm($("inRo"+i).value);
-
-  state.cards[i].baseKo = ko;
-  state.cards[i].baseRo = ro;
-
-  // set current to base
-  state.cards[i].ko = ko || "";
-  state.cards[i].ro = ro || "";
-  setTag(i, "BASE");
-
-  // dacă e pair complet, îl adăugăm în USER (ca să îl poți refolosi)
-  if(ko && ro) addUserPair(ko, ro);
-
-  renderOutputsOnly(i);
-  regenerateAll();
-}
-
-function resetCard(i){
-  state.cards[i].baseKo = norm(LESSON.cards[i].base.ko);
-  state.cards[i].baseRo = norm(LESSON.cards[i].base.ro);
-  state.cards[i].ko = state.cards[i].baseKo;
-  state.cards[i].ro = state.cards[i].baseRo;
-  state.cards[i].lastAutoFrom = null;
-  setTag(i, "BASE");
-  renderCard(i);
-  regenerateAll();
-}
-
-function renderOutputsOnly(i){
-  $("outKo"+i).textContent = state.cards[i].ko || "—";
-  $("outRo"+i).textContent = state.cards[i].ro || "—";
-  setTag(i, state.cards[i].tag || "BASE");
-}
-
-function maybeAutofillFromRo(i){
-  const ro = norm($("inRo"+i).value);
-  const koField = $("inKo"+i);
-  const currentKo = norm(koField.value);
-
-  if(!ro) return;
-
-  // dacă KO e gol sau ultimul KO a fost autocompletat din RO, putem suprascrie
-  const allowOverwrite = (!currentKo) || (state.cards[i].lastAutoFrom === "RO");
-  if(!allowOverwrite) return;
-
-  const foundKo = lookupKoFromRo(ro);
-  if(foundKo){
-    koField.value = foundKo;
-    state.cards[i].lastAutoFrom = "RO";
-  }
-}
-
-function maybeAutofillFromKo(i){
-  const ko = norm($("inKo"+i).value);
-  const roField = $("inRo"+i);
-  const currentRo = norm(roField.value);
-
-  if(!ko) return;
-
-  const allowOverwrite = (!currentRo) || (state.cards[i].lastAutoFrom === "KO");
-  if(!allowOverwrite) return;
-
-  const foundRo = lookupRoFromKo(ko);
-  if(foundRo){
-    roField.value = foundRo;
-    state.cards[i].lastAutoFrom = "KO";
-  }
-}
-
-// small debounce per card
-const debounceTimers = [null,null,null];
-function debounce(i, fn){
-  if(debounceTimers[i]) clearTimeout(debounceTimers[i]);
-  debounceTimers[i] = setTimeout(fn, 120);
-}
-
-/* =========================================================
-   9) APPLY RULES
-   ========================================================= */
-function applySelectedRule(i){
-  const modeVal = $("mode"+i).value;
-  const optIdx = parseInt($("opt"+i).value,10);
-  const card = LESSON.cards[i];
-
-  const list = (modeVal==="add") ? (card.add||[])
-            : (modeVal==="modify") ? (card.modify||[])
-            : (modeVal==="change") ? (card.change||[])
-            : null;
-
-  if(!list || !list[optIdx]) return;
-
-  const res = applyRule(list[optIdx], state.cards[i].ko, state.cards[i].ro);
-  if(!res.ok) return;
-
-  state.cards[i].ko = res.ko;
-  state.cards[i].ro = res.ro;
-  setTag(i, modeVal.toUpperCase());
-  renderOutputsOnly(i);
-  regenerateAll();
-}
-
-/* =========================================================
-   10) COPY
-   ========================================================= */
-async function copyText(txt, okMsg){
-  try{
-    await navigator.clipboard.writeText(txt || "");
-    $("status").textContent = okMsg;
-    setTimeout(()=> $("status").textContent="", 1200);
-  }catch{
-    $("status").textContent = "Nu pot copia (browser restrictions).";
-  }
-}
-
-/* =========================================================
-   11) DICT MANAGER UI (optional; guarded)
-   ========================================================= */
-function renderDictTable(){
-  const tbody = $("dictTable");
-  if(!tbody) return;
-
-  const q = norm($("dictSearch")?.value || "");
-  const qk = normKey(q);
-
-  const rows = [];
-  for(const p of ALL_PAIRS){
-    if(!q){
-      rows.push(p);
-      continue;
-    }
-    const hit = normKey(p.ko).includes(qk) || normKey(p.ro).includes(qk);
-    if(hit) rows.push(p);
-  }
-
-  tbody.innerHTML = "";
-  for(const p of rows.slice(0, 250)){
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(p.ko)}</td>
-      <td>${escapeHtml(p.ro)}</td>
-      <td>${escapeHtml(p.type)}</td>
-    `;
-    tbody.appendChild(tr);
-  }
-
-  if(rows.length > 250){
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="3" class="muted">Afișez primele 250 rezultate (filtrează mai mult).</td>`;
-    tbody.appendChild(tr);
-  }
-}
-function dictExportToTextarea(){
-  const ta = $("dictJson");
-  if(!ta) return;
-  // export user pairs only (clean)
-  const out = uniqPairs(USER_PAIRS).map(x => ({ko:x.ko, ro:x.ro}));
-  ta.value = JSON.stringify(out, null, 2);
-}
-function dictImportFromTextarea(){
-  const ta = $("dictJson");
-  if(!ta) return;
-  let arr;
-  try{
-    arr = JSON.parse(ta.value || "[]");
-  }catch{
-    alert("JSON invalid.");
-    return;
-  }
-  if(!Array.isArray(arr)){
-    alert("JSON trebuie să fie o listă (array).");
-    return;
-  }
-  const incoming = arr
-    .filter(x => x && typeof x.ko==="string" && typeof x.ro==="string")
-    .map(x => ({ko:norm(x.ko), ro:norm(x.ro), type:"user"}))
-    .filter(x => x.ko && x.ro);
-
-  USER_PAIRS = uniqPairs([...USER_PAIRS, ...incoming]).map(x => ({ko:x.ko, ro:x.ro, type:"user"}));
-  saveUserPairs(USER_PAIRS);
-  rebuildDictMaps();
-  renderDictTable();
-  alert("Import OK.");
-}
-function escapeHtml(str){
-  return (str ?? "")
-    .toString()
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function initDictManager(){
-  // GUARD: dacă UI-ul managerului nu e în pagină, ieșim
-  if (!$("dictTable") || !$("dictJson")) return;
-
-  // wire UI
-  $("dictSearch").addEventListener("input", ()=> renderDictTable());
-  $("dictRefresh").addEventListener("click", ()=>{
-    rebuildDictMaps();
-    renderDictTable();
-  });
-
-  $("dictAdd").addEventListener("click", ()=>{
-    const ko = norm($("newKo").value);
-    const ro = norm($("newRo").value);
-    if(!ko || !ro){
-      alert("Completează KO și RO.");
-      return;
-    }
-    addUserPair(ko, ro);
-    $("newKo").value = "";
-    $("newRo").value = "";
-    renderDictTable();
-    alert("Adăugat.");
-  });
-
-  $("dictClearUser").addEventListener("click", ()=>{
-    if(!confirm("Ștergi toate adăugările tale din dicționar?")) return;
-    USER_PAIRS = [];
-    saveUserPairs(USER_PAIRS);
-    rebuildDictMaps();
-    renderDictTable();
-    alert("Șters.");
-  });
-
-  $("dictExportCopy").addEventListener("click", async ()=>{
-    dictExportToTextarea();
-    try{
-      await navigator.clipboard.writeText($("dictJson").value || "");
-      alert("JSON copiat.");
-    }catch{
-      alert("Nu pot copia (browser restrictions).");
-    }
-  });
-
-  $("dictExportShow").addEventListener("click", ()=>{
-    dictExportToTextarea();
-    $("dictJson").focus();
-  });
-
-  $("dictImport").addEventListener("click", ()=>{
-    dictImportFromTextarea();
-  });
-
-  renderDictTable();
-}
-
-/* =========================================================
-   12) INIT APP
-   ========================================================= */
-function regenerateAll(){
-  combine12();
-  combineFinal();
-}
-
-function init(){
-  // init cards
-  for(let i=0;i<3;i++){
-    // base inputs preset
-    $("inKo"+i).value = state.cards[i].baseKo || "";
-    $("inRo"+i).value = state.cards[i].baseRo || "";
-
-    // fill selects
-    fillModeSelect(i);
-    fillOptionSelect(i);
-
-    // initial output = base
-    state.cards[i].ko = state.cards[i].baseKo;
-    state.cards[i].ro = state.cards[i].baseRo;
-    setTag(i, "BASE");
-    renderOutputsOnly(i);
-
-    // events: mode changes
-    $("mode"+i).addEventListener("change", ()=> fillOptionSelect(i));
-
-    // apply rule
-    $("apply"+i).addEventListener("click", ()=> applySelectedRule(i));
-
-    // set base
-    $("setBase"+i).addEventListener("click", ()=> setBaseFromInputs(i));
-
-    // reset
-    $("reset"+i).addEventListener("click", ()=> resetCard(i));
-
-    // live autofill both ways (debounced)
-    $("inRo"+i).addEventListener("input", ()=>{
-      debounce(i, ()=>{
-        maybeAutofillFromRo(i);
-      });
-    });
-    $("inKo"+i).addEventListener("input", ()=>{
-      debounce(i, ()=>{
-        maybeAutofillFromKo(i);
-      });
-    });
-  }
-
-  // connectors
-  fillConnectorSelects();
-  $("gen12").addEventListener("click", ()=>{ combine12(); combineFinal(); });
-  $("genFinal").addEventListener("click", ()=>{ if(!state.combined12.ko) combine12(); combineFinal(); });
-
-  // copy
-  $("copyKo").addEventListener("click", ()=> copyText(state.final.ko, "KO copiat."));
-  $("copyRo").addEventListener("click", ()=> copyText(state.final.ro, "RO copiat."));
-
-  // initial combine
-  regenerateAll();
-}
-
-/* =========================================================
-   13) BOOT (SAFE) — unica pornire
-   ========================================================= */
-function boot(){
-  // build dict
-  LESSON_PAIRS = buildLessonPairs();
-  USER_PAIRS = loadUserPairs();
-  rebuildDictMaps();
-
-  // init dict manager only if exists (it exists here, but safe anyway)
-  if (document.getElementById("dictManager")) initDictManager();
-
-  // init app
-  init();
-}
-
-document.addEventListener("DOMContentLoaded", boot);
-</script>
+    init();
+  </script>
 </body>
 </html>
