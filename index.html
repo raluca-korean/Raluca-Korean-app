@@ -3798,15 +3798,16 @@ function beApplyStep(){
   const set = beGetSet();
   if(!set) return;
 
+  // cheile vin direct din columns (exact structura ta)
   const keys = columns.map(c => c.key).filter(Boolean);
 
-  // Reset curat: toate coloanele inactive + fără valori
+  // reset curat (NECESAR pentru butonul ⬅ Înapoi)
   keys.forEach(k=>{
     stateP1[k] = "";
     activeP1[k] = false;
   });
 
-  // Aplicare incrementală: 0..BE_STEP_INDEX
+  // aplicare incrementală până la pasul curent
   for(let i = 0; i <= BE_STEP_INDEX; i++){
     const step = set.steps[i];
     if(!step || !step.patch) continue;
@@ -3828,8 +3829,8 @@ function beApplyStep(){
     function beSetEnabled(enabled){
   BE_ENABLED = !!enabled;
 
- if(beFreeBtn) beFreeBtn.classList.toggle("active", !BE_ENABLED);
-if(beGuidedBtn) beGuidedBtn.classList.toggle("active", BE_ENABLED);
+  if(beFreeBtn) beFreeBtn.classList.toggle("active", !BE_ENABLED);
+  if(beGuidedBtn) beGuidedBtn.classList.toggle("active", BE_ENABLED);
 
   if(beControls) beControls.classList.toggle("hidden", !BE_ENABLED);
   if(beStepInfo) beStepInfo.classList.toggle("hidden", !BE_ENABLED);
@@ -4134,8 +4135,8 @@ function pickPlaceParticle(word){
   if(!word) return "에서";
   return "에서";
 }
-/* desenare coloane – cu bifă ON/OFF în fie
-function renderClauseRow(container, activeMap, stat
+/* desenare coloane – cu bifă ON/OFF în fiecare căsuță */
+function renderClauseRow(container, activeMap, state, clauseId){
   container.innerHTML = "";
 
   columns.forEach(col=>{
@@ -4305,13 +4306,8 @@ if (v || cjUsed) {
     conj:   cjUsed
   };
 }
-function roPolarityFromConjug(conjug) {
-  const c = (conjug || "").replace(/\s+/g, " ").trim();
-  if (c.includes("지 않")) return { neg: true, tense: "present" };      // -지 않아요 / -지 않아요?
-  if (c.includes("지 않았")) return { neg: true, tense: "past" };      // -지 않았어요
-  return { neg: false, tense: "unknown" };
-}
-    /* ==== CONJUGARE ROMÂNEASCĂ (simplă) ====
+
+/* ==== CONJUGARE ROMÂNEASCĂ (simplă) ====
    (folosită doar ca să facă propoziția românească să sune natural) */
 const RO_FORMS = {
   "a merge":   { "1sg":"merg","2sg":"mergi","3sg":"merge","1pl":"mergem","2pl":"mergeți","3pl":"merg" },
@@ -5332,12 +5328,6 @@ function render(){
   nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
-    function roPolarityFromConjug(conjug) {
-  const c = (conjug || "").replace(/\s+/g, " ").trim();
-  if (c.includes("지 않")) return { neg: true, tense: "present" };      // -지 않아요 / -지 않아요?
-  if (c.includes("지 않았")) return { neg: true, tense: "past" };      // -지 않았어요
-  return { neg: false, tense: "unknown" };
-}    
  function translateRoToKo(roText) {
   // păstrăm ultima propoziție, cum era și înainte
   LAST_RO_SENTENCE = roText || "";
