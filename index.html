@@ -1250,6 +1250,80 @@ button:disabled{
 #naturalHint{
   display:none;
 }
+    /* ====== STREAK / DAILY GOAL WIDGET ====== */
+#rkStreakWidget{
+  position: fixed;
+  right: 14px;
+  top: 14px;
+  z-index: 9999;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+  border-radius: 14px;
+  padding: 10px 12px;
+  min-width: 190px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+#rkStreakWidget .rk-title{
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#rkStreakWidget .rk-row{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+#rkStreakWidget .rk-big{
+  font-weight: 800;
+}
+
+#rkStreakWidget .rk-progress{
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.08);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+#rkStreakWidget .rk-bar{
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.55);
+}
+
+#rkStreakWidget .rk-actions{
+  display:flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#rkStreakWidget button{
+  flex: 1;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.9);
+  padding: 6px 8px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#rkStreakWidget button:active{
+  transform: translateY(1px);
+}
     /* Chip-uri oprite (SUBJECT/TIME/PLACE etc. nefolosite în propoziție) */
 #screen-builder .chip-off{
   opacity: 0.45;
@@ -5914,7 +5988,178 @@ document.addEventListener("DOMContentLoaded", () => {
   // sincronizare inițială (dacă există deja o propoziție în Builder)
   syncApproxToRoInput();
 })();
-  
+  /* ====== STREAK / DAILY GOAL (localStorage, safe hooks) ====== */
+(function rkStreakInit(){
+  const LS_KEY = "rk_streak_v1";
+  const DEFAULT_GOAL = 20;
+
+  const todayKey = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  };
+
+  const load = () => {
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(e){
+      return null;
+    }
+  };
+
+  const save = (data) => {
+    try{
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+    }catch(e){}
+  };
+
+  const getData = () => {
+    const t = todayKey();
+    const cur = load();
+    if(!cur){
+      const fresh = {
+        lastDay: t,
+        streak: 0,
+        todayCount: 0,
+        goal: DEFAULT_GOAL
+      };
+      save(fresh);
+      return fresh;
+    }
+
+    // dacă s-a schimbat ziua, reset todayCount și actualizează streak
+    if(cur.lastDay !== t){
+      const last = new Date(cur.lastDay);
+      const now = new Date(t);
+      const diffDays = Math.round((now - last) / 86400000);
+
+      // streak crește doar dacă ieri ai avut activitate
+      if(diffDays === 1 && (cur.todayCount || 0) > 0){
+        cur.streak = (cur.streak || 0) + 1;
+      }else if(diffDays >= 1){
+        // dacă ai lipsit o zi (sau mai multe), streak se resetează
+        cur.streak = 0;
+      }
+
+      cur.lastDay = t;
+      cur.todayCount = 0;
+      save(cur);
+    }
+
+    if(typeof cur.goal !== "number" || cur.goal < 1) cur.goal = DEFAULT_GOAL;
+    if(typeof cur.streak !== "number" || cur.streak < 0) cur.streak = 0;
+    if(typeof cur.todayCount !== "number" || cur.todayCount < 0) cur.todayCount = 0;
+
+    return cur;
+  };
+
+  // UI
+  const mount = () => {
+    if(document.getElementById("rkStreakWidget")) return;
+
+    const box = document.createElement("div");
+    box.id = "rkStreakWidget";
+    box.innerHTML = `
+      <div class="rk-title">
+        <span>Daily Korean</span>
+        <span class="rk-big" id="rkStreakVal">0</span>
+      </div>
+
+      <div class="rk-row">
+        <span>Azi</span>
+        <span class="rk-big" id="rkTodayVal">0</span>
+      </div>
+
+      <div class="rk-row">
+        <span>Goal</span>
+        <span class="rk-big" id="rkGoalVal">20</span>
+      </div>
+
+      <div class="rk-progress">
+        <div class="rk-bar" id="rkGoalBar"></div>
+      </div>
+
+      <div class="rk-actions">
+        <button type="button" id="rkGoalPlus">+ Goal</button>
+        <button type="button" id="rkResetToday">Reset</button>
+      </div>
+    `;
+    document.body.appendChild(box);
+
+    const btnPlus = document.getElementById("rkGoalPlus");
+    const btnReset = document.getElementById("rkResetToday");
+
+    if(btnPlus){
+      btnPlus.addEventListener("click", ()=>{
+        const d = getData();
+        d.goal = Math.min(200, (d.goal || DEFAULT_GOAL) + 5);
+        save(d);
+        renderUI();
+      });
+    }
+
+    if(btnReset){
+      btnReset.addEventListener("click", ()=>{
+        const d = getData();
+        d.todayCount = 0;
+        save(d);
+        renderUI();
+      });
+    }
+  };
+
+  const renderUI = () => {
+    const d = getData();
+
+    const streakEl = document.getElementById("rkStreakVal");
+    const todayEl  = document.getElementById("rkTodayVal");
+    const goalEl   = document.getElementById("rkGoalVal");
+    const barEl    = document.getElementById("rkGoalBar");
+
+    if(streakEl) streakEl.textContent = `${d.streak || 0}🔥`;
+    if(todayEl)  todayEl.textContent = `${d.todayCount || 0}`;
+    if(goalEl)   goalEl.textContent = `${d.goal || DEFAULT_GOAL}`;
+
+    const pct = Math.max(0, Math.min(100, ((d.todayCount || 0) / (d.goal || DEFAULT_GOAL)) * 100));
+    if(barEl) barEl.style.width = `${pct}%`;
+  };
+
+  const bump = (n=1) => {
+    const d = getData();
+    d.todayCount = (d.todayCount || 0) + n;
+    save(d);
+    renderUI();
+  };
+
+  // Mount UI + initial render
+  mount();
+  renderUI();
+
+  // SAFE HOOKS: nu presupunem existența unor elemente; dacă nu există, nu se întâmplă nimic.
+  // 1) roTranslateBtn există în versiunea ta și are click handler (RO->KO)  [oai_citation:3‡11.pdf](sediment://file_00000000d4b0720a87dd0f28386d66da)
+  const roBtn = document.getElementById("roTranslateBtn");
+  if(roBtn){
+    roBtn.addEventListener("click", ()=> bump(1), { capture:true });
+  }
+
+  // 2) translateBtn (butonul principal de Builder) – dacă există în pagina ta, îl contorizăm
+  const mainTranslateBtn = document.getElementById("translateBtn");
+  if(mainTranslateBtn){
+    mainTranslateBtn.addEventListener("click", ()=> bump(1), { capture:true });
+  }
+
+  // 3) Random propoziție – dacă există, contorizăm ca practică
+  const randomBtn = document.getElementById("randomBtn");
+  if(randomBtn){
+    randomBtn.addEventListener("click", ()=> bump(1), { capture:true });
+  }
+
+})();
+    
   </script>
 </body>
 </html> 
