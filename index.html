@@ -6281,24 +6281,20 @@ renderFavorites && renderFavorites();
 updateExerciseTypeLabel();
 
 /* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER ==== */
-
-// folosește aceeași funcție de traducere ca la butonul mare "Tradu în coreeană"
 function runExampleInBuilder(roSentence) {
-  if (!roTranslateBtn) return;
-  roInput.value = roSentence;
-  // declanșăm fluxul normal: parser + Builder + rezultat
-  roTranslateBtn.click();
+  // intrăm pe Builder întâi
   setScreen("builder");
-}
 
-// atașează un exemplu la un buton de lecție
-function addLessonExample(btnId, roSentence) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.addEventListener("click", () => {
-    runExampleInBuilder(roSentence);
+  // așteptăm 1 frame ca să existe elementele din Builder
+  requestAnimationFrame(() => {
+    const roInputEl = document.getElementById("roInput");
+    const roBtnEl = document.getElementById("roTranslateBtn");
+
+    if (roInputEl) roInputEl.value = roSentence || "";
+    if (roBtnEl) roBtnEl.click();
   });
 }
+
 
 // Conectăm lecțiile direct (scriptul este la finalul <body>, deci elementele există)
 addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
@@ -6306,7 +6302,27 @@ addLessonExample("lesson2TryBtn", "Să vedem un film?");
 addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
 addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
 addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
-    
+  document.addEventListener("DOMContentLoaded", () => {
+  const builderScreen = document.getElementById("screen-builder");
+  if (!builderScreen) return;
+
+  // șterge cardul "Română → Coreeană" (cel vechi) prin butonul lui
+  const roBtn = document.getElementById("roTranslateBtn");
+  if (roBtn) {
+    const card = roBtn.closest(".card") || roBtn.closest("section") || roBtn.parentElement;
+    if (card) card.remove();
+  }
+
+  // șterge cardul "Coreeană (din tabel)" după titlul exact
+  const nodes = Array.from(builderScreen.querySelectorAll("h1,h2,h3,h4,div,span,p"));
+  for (const n of nodes) {
+    if ((n.textContent || "").trim() === "Coreeană (din tabel)") {
+      const card = n.closest(".card") || n.closest("section") || n.parentElement;
+      if (card) card.remove();
+      break;
+    }
+  }
+});  
   </script>
 </body>
 </html> 
