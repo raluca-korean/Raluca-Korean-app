@@ -5378,447 +5378,6 @@ function render(){
   nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
-  /* =========================================================
-   BUILDER DINAMIC P1…Pn + Live Sync tabel → RO/EN input
-   + RO/EN input → Auto-fill tabel + KO confirmare
-   ========================================================= */
-
-/* ==== 1) DOM ==== */
-const clausesContainer = document.getElementById("clausesContainer");
-const koFromTableEl = document.getElementById("koFromTable");
-
-const roInput = document.getElementById("roInput");
-const roAutofillBtn = document.getElementById("roAutofillBtn");
-const roClearBtn = document.getElementById("roClearBtn");
-const koConfirmFromInputEl = document.getElementById("koConfirmFromInput");
-
-/* ==== 2) Stare dinamică ==== */
-let clauses = []; // [{ state:{}, active:{} }, ...]
-let __LIVE_SYNC_LOCK = false; // ca să evităm loop (tabel -> input -> tabel)
-
-/* helper: clauză goală (SUBJECT poate fi subînțeles => gol + inactive) */
-function makeEmptyClause(){
-  const state = {};
-  const active = {};
-  columns.forEach(col=>{
-    state[col.key] = "";
-    active[col.key] = false;
-  });
-  return { state, active };
-}
-
-function resetToOneClause(){
-  clauses = [ makeEmptyClause() ];
-}
-
-/* ==== 3) UI: generare tabele P1…Pn ==== */
-function ensureClauseCard(idx){
-  // card wrapper
-  const card = document.createElement("div");
-  card.className = "clause-card";
-  card.dataset.idx = String(idx);
-
-  const title = document.createElement("div");
-  title.className = "clause-title";
-  title.textContent = `Propoziția ${idx + 1}`;
-  card.appendChild(title);
-
-  // table host
-  const tableHost = document.createElement("div");
-  tableHost.className = "clause-table-host";
-  tableHost.id = `clauseTable_${idx}`;
-  card.appendChild(tableHost);
-
-  return card;
-}
-
-/**
- * IMPORTANT:
- * Ai deja în proiect funcția renderClauseRow(tableEl, active, state, prefix)
- * care construiește tabelul viu pe baza columns + index.
- * Noi doar îi dăm state/active pentru clauza curentă.
- */
-function renderClausesUI(){
-  if(!clausesContainer) return;
-  clausesContainer.innerHTML = "";
-
-  clauses.forEach((cl, idx)=>{
-    const card = ensureClauseCard(idx);
-    clausesContainer.appendChild(card);
-
-    const host = card.querySelector(`#clauseTable_${idx}`);
-    // Creez un element "table" / container pe care îl folosește renderClauseRow
-    const tableEl = document.createElement("div");
-    tableEl.className = "table-horizontal";
-    host.appendChild(tableEl);
-
-    // prefix unic (ca să nu se calce ID-urile interne)
-    const prefix = `c${idx}`;
-
-    // randează tabelul clauzei
-    if (typeof renderClauseRow === "function") {
-      renderClauseRow(tableEl, cl.active, cl.state, prefix);
-    } else {
-      // fallback minimal (dacă lipsește funcția)
-      tableEl.textContent = "Eroare: renderClauseRow() nu există în proiect.";
-    }
-
-    // BLOCARE interacțiuni în guided modes? (nu folosim acum)
-    // aici rămâne Free Build 100%
-  });
-}
-
-/* ==== 4) KO din tabel + RO din tabel ==== */
-/**
- * AICI folosim generatorul tău existent, dacă există.
- * În proiectul tău ai deja funcții care construiesc KO/RO din state/active.
- * Ca să nu stric baseline-ul, folosim “dacă există”.
- *
- * Te rog: dacă în proiect ai funcții cu alte nume, le mapăm ușor după.
- */
-
-// încearcă să obții KO/RO pentru o clauză
-function getKoFromClause(state, active){
-  // 1) dacă ai funcția ta:
-  if (typeof buildKoSentence === "function") return buildKoSentence(state, active);
-  // 2) fallback: lipim sloturile active (nu ideal, dar nu crapă)
-  const parts = [];
-  columns.forEach(c=>{
-    if(active[c.key] && state[c.key]) parts.push(state[c.key]);
-  });
-  return parts.join(" ").trim();
-}
-
-function getRoFromClause(state, active){
-  // 1) dacă ai funcția ta:
-  if (typeof buildRoSentence === "function") return buildRoSentence(state, active);
-
-  // 2) fallback română simplă (fără “eu” dacă subiectul e subînțeles – regula ta A)
-  //    + negativ dacă conjug conține "지 않"
-  const pol = roPolarityFromConjug ? roPolarityFromConjug(state.conjug) : { neg:false };
-  const segs = [];
-
-  // time
-  if(active.time && state.time) segs.push(state.time);
-  // subject (doar dacă e activ)
-  if(active.subject && state.subject) segs.push(state.subject);
-
-  // verb (simplu)
-  let v = (active.verb && state.verb) ? state.verb : "";
-  if(pol.neg && v) v = "nu " + v;
-  if(v) segs.push(v);
-
-  // place/object if any
-  if(active.place && state.place) segs.push(state.place);
-  if(active.object && state.object) segs.push(state.object);
-
-  return segs.join(" ").trim();
-}
-
-/**
- * Conectori: ending-ul este în clauza anterioară, în state.conjug
- * Noi derivăm textul RO al conectorului din ending.
- */
-function roConnectorFromEnding(ending){
-  const e = (ending || "").trim();
-  if (!e) return "";
-  if (e.includes("-고")) return "și";
-  if (e.includes("-지만")) return "dar";
-  if (e.includes("어서") || e.includes("아서")) return "pentru că";
-  if (e.includes("면")) return "dacă";
-  if (e.includes("때")) return "când";
-  if (e.includes("려고")) return "ca să";
-  return ""; // dacă e conjugare “finală”, nu e conector
-}
-
-/**
- * KO final: concatenăm KO pe clauze.
- * RO final: concatenăm clauze cu conectorul derivat din ending-ul clauzei anterioare.
- */
-function buildKoFromTableAll(){
-  const out = [];
-  clauses.forEach((cl)=>{
-    const ko = getKoFromClause(cl.state, cl.active);
-    if(ko) out.push(ko);
-  });
-  return out.join(" ").replace(/\s+/g," ").trim();
-}
-
-function buildRoFromTableAll(){
-  const out = [];
-  clauses.forEach((cl, idx)=>{
-    const ro = getRoFromClause(cl.state, cl.active);
-    if(!ro) return;
-
-    out.push(ro);
-
-    // conector după această clauză (din ending-ul ei)
-    const conn = roConnectorFromEnding(cl.state.conjug);
-    if(conn) out.push(conn);
-  });
-  // curățare: dacă ultimul e conector, îl scoatem
-  if(out.length && ["și","dar","pentru că","dacă","când","ca să"].includes(out[out.length-1])){
-    out.pop();
-  }
-  return out.join(" ").replace(/\s+/g," ").trim();
-}
-
-/* LIVE SYNC: tabel -> RO/EN input (regula ta A) */
-function syncRoInputFromTable(){
-  if(!roInput) return;
-  if(__LIVE_SYNC_LOCK) return;
-  __LIVE_SYNC_LOCK = true;
-
-  roInput.value = buildRoFromTableAll();
-
-  __LIVE_SYNC_LOCK = false;
-}
-
-/* ==== 5) Split RO/EN în multe clauze ==== */
-/**
- * Return: [{ text:"...", connector:"și|dar|pentru că|dacă|când|ca să|and|but|because|if|when|in order to" }, ...]
- * connector = conectorul care leagă clauza curentă de următoarea (ending pe clauza curentă)
- */
-function splitRoEnIntoManyClauses(input){
-  const s = (input || "").trim();
-  if(!s) return [];
-
-  // normalizări
-  const norm = s
-    .replace(/\s+/g," ")
-    .replace(/\,/g," , ")
-    .replace(/\s+/g," ")
-    .trim();
-
-  // listă conectori (RO+EN)
-  const connectors = [
-    { rx: /\b(pentru ca|pentru că|fiindca|fiindcă|because)\b/i, key:"because" },
-    { rx: /\b(ca sa|ca să|in order to|inorder to)\b/i, key:"inorder" },
-    { rx: /\b(daca|dacă|if)\b/i, key:"if" },
-    { rx: /\b(cand|când|when)\b/i, key:"when" },
-    { rx: /\b(dar|but)\b/i, key:"but" },
-    { rx: /\b(si|și|and)\b/i, key:"and" }
-  ];
-
-  // scan stânga→dreapta: tăiem la primul conector găsit, repetăm
-  let rest = norm;
-  const parts = [];
-
-  while(rest.length){
-    let found = null;
-    let foundIdx = -1;
-    let foundLen = 0;
-
-    for(const c of connectors){
-      const m = rest.match(c.rx);
-      if(m && typeof m.index === "number"){
-        if(foundIdx === -1 || m.index < foundIdx){
-          found = c;
-          foundIdx = m.index;
-          foundLen = m[0].length;
-        }
-      }
-    }
-
-    if(!found){
-      parts.push({ text: rest.trim().replace(/\s+,/g,",").replace(/,\s+/g,", "), connector: null });
-      break;
-    }
-
-    const left = rest.slice(0, foundIdx).trim();
-    const right = rest.slice(foundIdx + foundLen).trim();
-
-    if(left) parts.push({ text: left.replace(/\s+,/g,",").replace(/,\s+/g,", "), connector: found.key });
-    rest = right;
-  }
-
-  return parts;
-}
-
-/* map conector -> ending KO (se pune pe clauza curentă, la conjug) */
-function endingFromConnectorKey(key){
-  switch(key){
-    case "and": return "-고";
-    case "but": return "-지만";
-    case "because": return "-아서/어서";     // în MVP alegem ulterior corect -아서 vs -어서
-    case "if": return "-(으)면";
-    case "when": return "-(으)ㄹ 때";
-    case "inorder": return "-(으)려고";
-    default: return "";
-  }
-}
-
-/* ==== 6) Parser RO/EN clauză -> sloturi (MVP sigur) ==== */
-/**
- * IMPORTANT:
- * În MVP sigur, nu “inventăm” subiect.
- * Detectăm doar explicit. Restul lăsăm gol dacă nu recunoaștem.
- * Tu ai allowCustom:true, dar nu îl forțăm acum.
- */
-function parseClauseToSlots(text){
-  const t = (text || "").trim();
-  if(!t) return { patch:{}, active:{} };
-
-  const patch = {};
-  const act = {};
-
-  const low = t.toLowerCase();
-
-  // SUBJECT explicit (simplu RO/EN)
-  const subjMap = [
-    { rx: /\b(eu)\b/i, val:"저" },
-    { rx: /\b(tu)\b/i, val:"너" },
-    { rx: /\b(noi)\b/i, val:"우리" },
-    { rx: /\b(voi)\b/i, val:"너희" },
-    { rx: /\b(el)\b/i, val:"그" },
-    { rx: /\b(ea)\b/i, val:"그녀" },
-    { rx: /\b(i)\b/i, val:"저" },
-    { rx: /\b(you)\b/i, val:"너" },
-    { rx: /\b(we)\b/i, val:"우리" },
-    { rx: /\b(they)\b/i, val:"그들" },
-    { rx: /\b(he)\b/i, val:"그" },
-    { rx: /\b(she)\b/i, val:"그녀" }
-  ];
-  for(const s of subjMap){
-    if(s.rx.test(t)){
-      patch.subject = s.val; act.subject = true;
-      break;
-    }
-  }
-
-  // TIME (exemple MVP)
-  const timeMap = [
-    { rx: /\b(azi|astăzi|today)\b/i, val:"오늘" },
-    { rx: /\b(mâine|maine|tomorrow)\b/i, val:"내일" },
-    { rx: /\b(ieri|yesterday)\b/i, val:"어제" },
-    { rx: /\b(acum|now)\b/i, val:"지금" }
-  ];
-  for(const tm of timeMap){
-    if(tm.rx.test(t)){
-      patch.time = tm.val; act.time = true;
-      break;
-    }
-  }
-
-  // NEGATIV: “nu” (RO) / “not” (EN) => conjug negativ (MVP: -지 않아요)
-  const neg = /\bnu\b/i.test(t) || /\bnot\b/i.test(low) || /\bdon't\b/i.test(low) || /\bdoesn't\b/i.test(low);
-  if(neg){
-    patch.conjug = "-지 않아요";
-    act.conjug = true;
-  }
-
-  // VERB (MVP: set mic — îl extinzi cu lista ta)
-  const verbMap = [
-    { rx: /\b(merg|a merge|go|going)\b/i, ko:"가다" },
-    { rx: /\b(vin|a veni|come)\b/i, ko:"오다" },
-    { rx: /\b(mănânc|mananc|a mânca|eat)\b/i, ko:"먹다" },
-    { rx: /\b(beau|a bea|drink)\b/i, ko:"마시다" },
-    { rx: /\b(văd|vad|a vedea|see|watch)\b/i, ko:"보다" },
-    { rx: /\b(cumpăr|cumpar|a cumpăra|buy)\b/i, ko:"사다" },
-    { rx: /\b(locuiesc|a locui|live)\b/i, ko:"살다" },
-    { rx: /\b(studiez|a studia|study)\b/i, ko:"공부하다" }
-  ];
-  for(const v of verbMap){
-    if(v.rx.test(t)){
-      patch.verb = v.ko; act.verb = true;
-      // dacă nu e negativ, punem o conjugare default (MVP)
-      if(!neg){
-        patch.conjug = patch.conjug || "-아요/어요";
-        act.conjug = true;
-      }
-      break;
-    }
-  }
-
-  // PLACE (MVP: foarte simplu)
-  const placeMap = [
-    { rx: /\b(acasa|acasă|home)\b/i, val:"집" },
-    { rx: /\b(scoala|școală|school)\b/i, val:"학교" },
-    { rx: /\b(munca|serviciu|work)\b/i, val:"회사" }
-  ];
-  for(const p of placeMap){
-    if(p.rx.test(t)){
-      patch.place = p.val; act.place = true;
-      break;
-    }
-  }
-
-  return { patch, active: act };
-}
-
-/* aplică patch într-o clauză */
-function applyPatchToClause(cl, patch, active){
-  Object.entries(patch).forEach(([k,v])=>{
-    cl.state[k] = v;
-  });
-  Object.entries(active).forEach(([k,val])=>{
-    cl.active[k] = !!val;
-  });
-}
-
-/* ==== 7) RO/EN input -> tabel (P1…Pn) + KO confirmare ==== */
-function autofillTableFromRoInput(){
-  if(!roInput) return;
-  const input = roInput.value || "";
-  const parts = splitRoEnIntoManyClauses(input);
-
-  if(parts.length === 0){
-    resetToOneClause();
-    renderAll();
-    if(koConfirmFromInputEl) koConfirmFromInputEl.textContent = "";
-    return;
-  }
-
-  // construim exact N clauze
-  clauses = parts.map(()=>makeEmptyClause());
-
-  parts.forEach((p, idx)=>{
-    const { patch, active } = parseClauseToSlots(p.text);
-    applyPatchToClause(clauses[idx], patch, active);
-
-    // ending de conector pe clauza curentă (leagă către următoarea)
-    const ending = endingFromConnectorKey(p.connector);
-    if(ending){
-      clauses[idx].state.conjug = ending;
-      clauses[idx].active.conjug = true;
-    }
-  });
-
-  renderAll();
-
-  // confirmare KO din input (jos)
-  if(koConfirmFromInputEl){
-    koConfirmFromInputEl.textContent = buildKoFromTableAll();
-  }
-}
-
-/* ==== 8) Render complet (UI + KO mid + LIVE SYNC RO input) ==== */
-function renderAll(){
-  renderClausesUI();
-
-  // KO din tabel (mijloc)
-  if(koFromTableEl){
-    koFromTableEl.textContent = buildKoFromTableAll();
-  }
-
-  // LIVE SYNC: tabel -> RO input (jos)
-  syncRoInputFromTable();
-}
-
-/* ==== 9) INIT ==== */
-resetToOneClause();
-renderAll();
-
-if(roAutofillBtn) roAutofillBtn.addEventListener("click", autofillTableFromRoInput);
-
-if(roClearBtn) roClearBtn.addEventListener("click", ()=>{
-  // curățăm inputul + reset la o clauză
-  if(roInput) roInput.value = "";
-  if(koConfirmFromInputEl) koConfirmFromInputEl.textContent = "";
-  resetToOneClause();
-  renderAll();
-});
-    
  function translateRoToKo(roText) {
   // păstrăm ultima propoziție, cum era și înainte
   LAST_RO_SENTENCE = roText || "";
@@ -6281,20 +5840,24 @@ renderFavorites && renderFavorites();
 updateExerciseTypeLabel();
 
 /* ==== BUTOANE LECȚII → TRIMIT EXEMPLE ÎN BUILDER ==== */
+
+// folosește aceeași funcție de traducere ca la butonul mare "Tradu în coreeană"
 function runExampleInBuilder(roSentence) {
-  // intrăm pe Builder întâi
+  if (!roTranslateBtn) return;
+  roInput.value = roSentence;
+  // declanșăm fluxul normal: parser + Builder + rezultat
+  roTranslateBtn.click();
   setScreen("builder");
-
-  // așteptăm 1 frame ca să existe elementele din Builder
-  requestAnimationFrame(() => {
-    const roInputEl = document.getElementById("roInput");
-    const roBtnEl = document.getElementById("roTranslateBtn");
-
-    if (roInputEl) roInputEl.value = roSentence || "";
-    if (roBtnEl) roBtnEl.click();
-  });
 }
 
+// atașează un exemplu la un buton de lecție
+function addLessonExample(btnId, roSentence) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    runExampleInBuilder(roSentence);
+  });
+}
 
 // Conectăm lecțiile direct (scriptul este la finalul <body>, deci elementele există)
 addLessonExample("lesson1TryBtn", "Azi am de gând să citesc o carte.");
@@ -6302,18 +5865,67 @@ addLessonExample("lesson2TryBtn", "Să vedem un film?");
 addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
 addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
 addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
-  document.addEventListener("DOMContentLoaded", () => {
+    
+  // ===== MUTĂ BLOCUL „ROMÂNĂ → COREEANĂ” ÎN JOSUL BUILDER-ULUI =====
+document.addEventListener("DOMContentLoaded", () => {
+  // 1) Butonul "Tradu în coreeană"
+  const roBtn = document.getElementById("roTranslateBtn");
+  // 2) Textul cu propoziția coreeană (preview)
+  const previewKo = document.getElementById("previewKo");
+
+  if (!roBtn || !previewKo) {
+    return; // dacă nu găsește elementele, nu face nimic
+  }
+
+  // cardul/blocul în care stă butonul de traducere
+  const roBlock = roBtn.closest(".card") || roBtn.parentElement;
+  // cardul cu propoziția coreeană
+  const previewCard = previewKo.closest(".card") || previewKo.parentElement;
+
+  if (!roBlock || !previewCard || !previewCard.parentElement) {
+    return;
+  }
+
+  // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
+  previewCard.insertAdjacentElement("afterend", roBlock);
+});
+    // ==== SYNC: Traducerea aproximativă (Builder) -> bloc "Română → Coreeană" ====
+(function () {
+  const previewRo = document.getElementById("previewRo");  // linia de română de sub Builder
+  const roInput   = document.getElementById("roInput");    // textarea din cardul "Română → Coreeană"
+
+  // dacă nu găsește elementele, nu face nimic (de siguranță)
+  if (!previewRo || !roInput) return;
+
+  function syncApproxToRoInput() {
+    const text = (previewRo.textContent || "").trim();
+    if (!text) return;          // dacă e gol, nu completăm nimic
+    roInput.value = text;       // punem traducerea aproximativă în textarea de jos
+  }
+
+  // urmărim orice schimbare în previewRo (de la Builder, Random propoziție etc.)
+  const observer = new MutationObserver(syncApproxToRoInput);
+  observer.observe(previewRo, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+
+  // sincronizare inițială (dacă există deja o propoziție în Builder)
+  syncApproxToRoInput();
+})();
+    document.addEventListener("DOMContentLoaded", () => {
   const builderScreen = document.getElementById("screen-builder");
   if (!builderScreen) return;
 
-  // șterge cardul "Română → Coreeană" (cel vechi) prin butonul lui
+  // Șterge cardul "Română → Coreeană" prin butonul lui
   const roBtn = document.getElementById("roTranslateBtn");
   if (roBtn) {
     const card = roBtn.closest(".card") || roBtn.closest("section") || roBtn.parentElement;
     if (card) card.remove();
   }
 
-  // șterge cardul "Coreeană (din tabel)" după titlul exact
+  // Șterge cardul "Coreeană (din tabel)" după titlul exact
   const nodes = Array.from(builderScreen.querySelectorAll("h1,h2,h3,h4,div,span,p"));
   for (const n of nodes) {
     if ((n.textContent || "").trim() === "Coreeană (din tabel)") {
@@ -6322,7 +5934,7 @@ addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
       break;
     }
   }
-});  
+});
   </script>
 </body>
 </html> 
