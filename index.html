@@ -2536,6 +2536,31 @@ function getInputLang() {
   // fallback: dacă nu găsim nimic, presupunem Română
   return el ? el.value : "ro";
 } 
+    const conj = stateP1.conjug;           // sau stateP2, după caz
+const { neg } = roPolarityFromConjug(conj);
+
+// exemplu: verbRo e “merg”, subjectRo e “eu (formal)”, timeRo e “mâine”
+let ro = "";
+
+// TIME
+if (activeP1.time && stateP1.time) ro += `${roTime(stateP1.time)} `;
+
+// SUBJECT
+if (activeP1.subject && stateP1.subject) ro += `${roSubject(stateP1.subject)} `;
+
+// NEG
+if (neg) ro += "nu ";
+
+// VERB (ro)
+ro += roVerb(stateP1.verb);            // aici ai deja mapping-ul tău verb->ro
+
+// IMPORTANT: NU mai adăuga `(${conj})` când e negativ
+// dacă vrei, păstrezi conjugarea doar pentru non-negativ, ca notă:
+if (!neg && activeP1.conjug && stateP1.conjug) {
+  ro += ` (${stateP1.conjug})`;
+}
+
+ro = ro.trim();
   </style>
 </head>
 <body class="pastel-theme">
@@ -4305,7 +4330,12 @@ if (v || cjUsed) {
     conj:   cjUsed
   };
 }
-
+function roPolarityFromConjug(conjug) {
+  const c = (conjug || "").replace(/\s+/g, " ").trim();
+  if (c.includes("지 않")) return { neg: true, tense: "present" };      // -지 않아요 / -지 않아요?
+  if (c.includes("지 않았")) return { neg: true, tense: "past" };      // -지 않았어요
+  return { neg: false, tense: "unknown" };
+}
     /* ==== CONJUGARE ROMÂNEASCĂ (simplă) ====
    (folosită doar ca să facă propoziția românească să sune natural) */
 const RO_FORMS = {
@@ -5327,13 +5357,13 @@ function render(){
   nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
-   function roPolarityFromConjug(conjug) {
+    function roPolarityFromConjug(conjug) {
   const c = (conjug || "").replace(/\s+/g, " ").trim();
-  if (c.includes("지 않았")) return { neg: true, tense: "past" };     // -지 않았어요
-  if (c.includes("지 않"))   return { neg: true, tense: "present" };  // -지 않아요 / -지 않아요?
+  if (c.includes("지 않")) return { neg: true, tense: "present" };      // -지 않아요 / -지 않아요?
+  if (c.includes("지 않았")) return { neg: true, tense: "past" };      // -지 않았어요
   return { neg: false, tense: "unknown" };
-}
-    function translateRoToKo(roText) {
+}    
+ function translateRoToKo(roText) {
   // păstrăm ultima propoziție, cum era și înainte
   LAST_RO_SENTENCE = roText || "";
   const original = (roText || "").trim();
