@@ -6098,36 +6098,46 @@ document.addEventListener("DOMContentLoaded", () => {
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
   }
+function handleTranslate() {
+  if (!roInput) return;
 
-  function handleTranslate(){
-    const lang = (langSelect.value || "ro").toLowerCase();
-    const sentences = splitSentences(roInput.value);
+  const raw = (roInput.value || "").trim();
+  if (!raw) return;
 
-    if (!sentences.length) {
-      koOut.textContent = "";
-      roCorrected.textContent = "";
-      clausesHost.innerHTML = "";
-      if (previewSentence) previewSentence.textContent = "";
-      if (previewInfo) previewInfo.textContent = "";
-      return;
-    }
-
-    const onlyEmpty = !!(fillOnlyEmpty && fillOnlyEmpty.checked);
-
-    // dacă “doar goale”, nu suprascriem output dacă deja are ceva
-    if (onlyEmpty) {
-      const hasKo = (koOut.textContent || "").trim().length > 0;
-      const hasCorr = (roCorrected.textContent || "").trim().length > 0;
-      if (hasKo || hasCorr) return;
-    }
-
-    const items = sentences.map(src => {
-      const r = translateOneToKo(src, lang);
-      return { src, ko: r.ko || "", corrected: r.corrected || "" };
-    });
-
-    renderResults(items);
+  // 🔐 PROTECȚIE
+  if (!clausesHost || !previewSentence || !previewInfo) {
+    console.warn("RO/EN elements not present on this screen");
+    return;
   }
+
+  const lines = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  clausesHost.innerHTML = "";
+
+  const lang = getInputLang();
+
+  lines.forEach((line, idx) => {
+    const result = (lang === "en")
+      ? translateEnToKo(line)
+      : translateRoToKo(line);
+
+    const card = document.createElement("div");
+    card.className = "clause-card";
+    card.innerHTML = `
+      <div class="small-label">Propoziția ${idx + 1}</div>
+      <div><b>Input:</b> ${escapeHtml(line)}</div>
+      <div style="margin-top:6px;"><b>KO:</b> ${escapeHtml(result.ko || "")}</div>
+    `;
+    clausesHost.appendChild(card);
+  });
+
+  const last = lines[lines.length - 1];
+  const lastKo = lang === "en"
+    ? translateEnToKo(last).ko
+    : translateRoToKo(last).ko;
+
+  previewSentence.textContent = lastKo || "";
+  previewInfo.textContent = `Total propoziții: ${lines.length}`;
+} 
 
   function handleClear(){
     roInput.value = "";
