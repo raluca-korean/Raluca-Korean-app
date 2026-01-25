@@ -6193,8 +6193,24 @@ function mountScreen(name) {
   if (name === "lessons") ScreenModules.lessons = initLessons(screenEl);
   if (name === "glossary") ScreenModules.glossary = initGlossary(screenEl);
 }
+function initBuilder(screenEl) {
+  // aici inițializezi restul builderului (dacă există deja, îl lași)
+  const roEnCard = screenEl.querySelector("#roEnCard");
+  let roEnModule = null;
 
-function unmountScreen(name) {
+  // RO/EN există doar dacă e în DOM (în builder)
+  if (roEnCard) {
+    roEnModule = initRoEnCard(roEnCard);
+  }
+
+  return {
+    destroy() {
+      if (roEnModule) roEnModule.destroy();
+      // dacă ai și alte sub-module în builder, le distrugi aici
+    }
+  };
+}
+    function unmountScreen(name) {
   const mod = ScreenModules[name];
   if (mod && typeof mod.destroy === "function") mod.destroy();
   ScreenModules[name] = null;
