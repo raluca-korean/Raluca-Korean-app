@@ -5986,7 +5986,166 @@ document.addEventListener("DOMContentLoaded", () => {
   // sincronizare inițială (dacă există deja o propoziție în Builder)
   syncApproxToRoInput();
 })();
-     </script>
+    /* =========================
+   RO/EN CARD – SAFE INIT
+   - nu blochează paginile
+   - suport multi-propoziții
+   - EN nu mai “anulează tot”
+========================= */
+(function initRoEnCardSafe(){
+  const card = document.getElementById("roEnCard");
+  if (!card) return;
+
+  // prevenim dublarea listenerelor
+  if (card.dataset.bound === "1") return;
+  card.dataset.bound = "1";
+
+  const roInput = document.getElementById("roInput");
+  const roTranslateBtn = document.getElementById("roTranslateBtn");
+  const roClearBtn = document.getElementById("roClearBtn");
+  const langSelect = document.getElementById("langSelect");
+  const fillOnlyEmpty = document.getElementById("fillOnlyEmpty");
+
+  const koOut = document.getElementById("roToKoResult");
+  const roCorrected = document.getElementById("roCorrected");
+  const clausesHost = document.getElementById("clausesHost");
+
+  const politeToggle = document.getElementById("politeToggle");
+  const previewSentence = document.getElementById("previewSentence");
+  const previewInfo = document.getElementById("previewInfo");
+
+  // dacă lipsesc elemente, ieșim fără să stricăm restul aplicației
+  if (!roInput || !roTranslateBtn || !roClearBtn || !langSelect || !koOut || !roCorrected || !clausesHost) return;
+
+  // helper: split în propoziții (acceptă rânduri + punct/?!)
+  function splitSentences(raw){
+    const t = (raw || "").trim();
+    if (!t) return [];
+    // 1) dacă utilizatorul a pus rânduri, respectăm rândurile
+    const lines = t.split(/\n+/).map(s => s.trim()).filter(Boolean);
+    if (lines.length > 1) return lines;
+
+    // 2) altfel, spargem după . ? !
+    const parts = t
+      .replace(/\s+/g, " ")
+      .split(/(?<=[\.\?\!])\s+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    return parts.length ? parts : [t];
+  }
+
+  // helper: traduce o propoziție în KO folosind funcțiile deja existente în app
+  function translateOneToKo(text, lang){
+    // dacă nu există funcțiile, nu crapă
+    const hasRo = (typeof translateRoToKo === "function");
+    const hasEn = (typeof translateEnToKo === "function");
+
+    if (!text.trim()) return { ko: "", corrected: "" };
+
+    if (lang === "en" && hasEn) {
+      const ko = translateEnToKo(text) || "";
+      // la EN nu ai “text corectat” ca la RO; îl lăsăm ca input-ul (nu golim)
+      return { ko, corrected: text };
+    }
+
+    if (lang !== "en" && hasRo) {
+      const res = translateRoToKo(text);
+      // translateRoToKo la tine întoarce de obicei { ko, roFixed }
+      if (res && typeof res === "object") return { ko: res.ko || "", corrected: res.roFixed || text };
+      return { ko: "", corrected: text };
+    }
+
+    // fallback dacă lipsesc funcțiile
+    return { ko: "", corrected: text };
+  }
+
+  function renderResults(items){
+    // items: [{src, ko, corrected}]
+    const koJoined = items.map(x => x.ko).filter(Boolean).join("\n");
+    const correctedJoined = items.map(x => x.corrected).filter(Boolean).join("\n");
+
+    koOut.textContent = koJoined;
+    roCorrected.textContent = correctedJoined;
+
+    // listă vizuală pe propoziții
+    clausesHost.innerHTML = "";
+    items.forEach((x, idx) => {
+      const row = document.createElement("div");
+      row.className = "card";
+      row.style.marginTop = "10px";
+      row.innerHTML = `
+        <div class="small-label">Propoziția ${idx+1}</div>
+        <div style="margin-top:6px; font-size:14px;"><b>Input:</b> ${escapeHtml(x.src)}</div>
+        <div style="margin-top:6px; font-size:14px;"><b>KO:</b> ${escapeHtml(x.ko)}</div>
+      `;
+      clausesHost.appendChild(row);
+    });
+
+    // preview: ultima propoziție KO
+    const lastKo = items.length ? (items[items.length-1].ko || "") : "";
+    if (previewSentence) previewSentence.textContent = lastKo;
+    if (previewInfo) previewInfo.textContent = items.length ? `Total propoziții: ${items.length}` : "";
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function handleTranslate(){
+    const lang = (langSelect.value || "ro").toLowerCase();
+    const sentences = splitSentences(roInput.value);
+
+    if (!sentences.length) {
+      koOut.textContent = "";
+      roCorrected.textContent = "";
+      clausesHost.innerHTML = "";
+      if (previewSentence) previewSentence.textContent = "";
+      if (previewInfo) previewInfo.textContent = "";
+      return;
+    }
+
+    const onlyEmpty = !!(fillOnlyEmpty && fillOnlyEmpty.checked);
+
+    // dacă “doar goale”, nu suprascriem output dacă deja are ceva
+    if (onlyEmpty) {
+      const hasKo = (koOut.textContent || "").trim().length > 0;
+      const hasCorr = (roCorrected.textContent || "").trim().length > 0;
+      if (hasKo || hasCorr) return;
+    }
+
+    const items = sentences.map(src => {
+      const r = translateOneToKo(src, lang);
+      return { src, ko: r.ko || "", corrected: r.corrected || "" };
+    });
+
+    renderResults(items);
+  }
+
+  function handleClear(){
+    roInput.value = "";
+    koOut.textContent = "";
+    roCorrected.textContent = "";
+    clausesHost.innerHTML = "";
+    if (previewSentence) previewSentence.textContent = "";
+    if (previewInfo) previewInfo.textContent = "";
+  }
+
+  roTranslateBtn.addEventListener("click", handleTranslate);
+  roClearBtn.addEventListener("click", handleClear);
+
+  // opțional: Enter+Ctrl traduce
+  roInput.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") handleTranslate();
+  });
+
+})();
+  </script>
       <script>
 document.addEventListener("DOMContentLoaded", () => {
   const screens = {
