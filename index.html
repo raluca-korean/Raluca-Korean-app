@@ -6157,6 +6157,56 @@ function handleTranslate() {
   });
 
 })();
+    const ScreenModules = {
+  builder: null,
+  exercises: null,
+  lessons: null,
+  glossary: null,
+};
+
+let currentScreen = "builder";
+
+function showScreen(name) {
+  // hide all
+  document.querySelectorAll(".screen").forEach(s => (s.style.display = "none"));
+  const el = document.getElementById(`screen-${name}`);
+  if (!el) return;
+
+  // unmount old
+  unmountScreen(currentScreen);
+
+  // show new
+  el.style.display = "";
+  currentScreen = name;
+
+  // mount new
+  mountScreen(name);
+}
+
+function mountScreen(name) {
+  const screenEl = document.getElementById(`screen-${name}`);
+  if (!screenEl) return;
+
+  // initialize module once per screen enter
+  if (name === "builder") ScreenModules.builder = initBuilder(screenEl);
+  if (name === "exercises") ScreenModules.exercises = initExercises(screenEl);
+  if (name === "lessons") ScreenModules.lessons = initLessons(screenEl);
+  if (name === "glossary") ScreenModules.glossary = initGlossary(screenEl);
+}
+
+function unmountScreen(name) {
+  const mod = ScreenModules[name];
+  if (mod && typeof mod.destroy === "function") mod.destroy();
+  ScreenModules[name] = null;
+}
+
+// nav buttons
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const t = btn.dataset.target;
+    if (t) showScreen(t);
+  });
+});
   </script>
 </body>
 </html> 
