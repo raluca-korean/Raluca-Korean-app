@@ -5803,33 +5803,35 @@ addLessonExample("lesson2TryBtn", "Să vedem un film?");
 addLessonExample("lesson3TryBtn", "Astăzi merg la cafenea să învăț coreeană.");
 addLessonExample("lesson4TryBtn", "În fiecare dimineață beau cafea și studiez coreeană.");
 addLessonExample("lesson5TryBtn", "Lucrez mult și sunt foarte obosită.");
-    
-    // ==== SYNC: Traducerea aproximativă (Builder) -> bloc "Română → Coreeană" ====
+  // ==== SYNC civilizat: RO din tabel (previewRo) -> roInput (doar dacă nu ai început să scrii altceva) ====
 (function () {
-  const previewRo = document.getElementById("previewRo");  // linia de română de sub Builder
-  const roInput   = document.getElementById("roInput");    // textarea din cardul "Română → Coreeană"
-
-  // dacă nu găsește elementele, nu face nimic (de siguranță)
+  const previewRo = document.getElementById("previewRo");
+  const roInput   = document.getElementById("roInput");
   if (!previewRo || !roInput) return;
+
+  let __lastAuto = "";
 
   function syncApproxToRoInput() {
     const text = (previewRo.textContent || "").trim();
-    if (!text) return;          // dacă e gol, nu completăm nimic
-    roInput.value = text;       // punem traducerea aproximativă în textarea de jos
+    if (!text) return;
+
+    const cur = (roInput.value || "").trim();
+
+    // completăm doar dacă:
+    // - e gol (user n-a scris)
+    // - sau încă e exact ultima valoare auto (deci nu ai editat manual)
+    if (cur === "" || roInput.value === __lastAuto) {
+      roInput.value = text;
+      __lastAuto = roInput.value;
+    }
   }
 
-  // urmărim orice schimbare în previewRo (de la Builder, Random propoziție etc.)
   const observer = new MutationObserver(syncApproxToRoInput);
-  observer.observe(previewRo, {
-    childList: true,
-    characterData: true,
-    subtree: true
-  });
+  observer.observe(previewRo, { childList: true, characterData: true, subtree: true });
 
-  // sincronizare inițială (dacă există deja o propoziție în Builder)
   syncApproxToRoInput();
 })();
-  
+    
   </script>
 </body>
 </html> 
