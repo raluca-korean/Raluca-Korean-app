@@ -6223,6 +6223,76 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
     if (t) showScreen(t);
   });
 });
+    function initRoEnCard(root) {
+  const langSelect = root.querySelector("#langSelect");
+  const fillOnlyEmpty = root.querySelector("#fillOnlyEmpty");
+
+  const roInput = root.querySelector("#roInput");
+  const roTranslateBtn = root.querySelector("#roTranslateBtn");
+  const roClearBtn = root.querySelector("#roClearBtn");
+
+  const clausesHost = root.querySelector("#clausesHost");
+  const previewSentence = root.querySelector("#previewSentence");
+  const previewInfo = root.querySelector("#previewInfo");
+  const politeToggle = root.querySelector("#politeToggle");
+
+  // dacă lipsește ceva critic, nu inițializăm (și nu stricăm restul)
+  if (!roInput || !roTranslateBtn || !roClearBtn || !clausesHost || !previewSentence || !previewInfo) {
+    console.warn("RO/EN card incomplete - missing elements");
+    return { destroy(){} };
+  }
+
+  function getInputLang() {
+    return (langSelect && langSelect.value) ? langSelect.value : "ro";
+  }
+
+  function handleTranslate() {
+    const raw = (roInput.value || "").trim();
+    const lines = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
+
+    clausesHost.innerHTML = "";
+
+    const lang = getInputLang();
+
+    lines.forEach((line, idx) => {
+      const result = (lang === "en") ? translateEnToKo(line) : translateRoToKo(line);
+
+      const card = document.createElement("div");
+      card.className = "clause-card";
+      card.innerHTML = `
+        <div class="small-label">Propoziția ${idx + 1}</div>
+        <div><b>Input:</b> ${escapeHtml(line)}</div>
+        <div style="margin-top:6px;"><b>KO:</b> ${escapeHtml(result.ko || "")}</div>
+      `;
+      clausesHost.appendChild(card);
+    });
+
+    const last = lines[lines.length - 1] || "";
+    const lastKo = last
+      ? ((lang === "en") ? translateEnToKo(last).ko : translateRoToKo(last).ko)
+      : "";
+
+    previewSentence.textContent = lastKo || "";
+    previewInfo.textContent = `Total propoziții: ${lines.length}`;
+  }
+
+  function handleClear() {
+    roInput.value = "";
+    clausesHost.innerHTML = "";
+    previewSentence.textContent = "";
+    previewInfo.textContent = "";
+  }
+
+  roTranslateBtn.addEventListener("click", handleTranslate);
+  roClearBtn.addEventListener("click", handleClear);
+
+  return {
+    destroy() {
+      roTranslateBtn.removeEventListener("click", handleTranslate);
+      roClearBtn.removeEventListener("click", handleClear);
+    }
+  };
+}
   </script>
 </body>
 </html> 
