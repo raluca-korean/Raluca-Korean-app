@@ -1765,5 +1765,226 @@ enableP2?.addEventListener("change", ()=>{
 /* attach press handlers (după ce există table) */
 attachPressHandlers(tableP1);
 attachPressHandlers(tableP2);
-</script>
+/* ===========================
+   Mode: Simplu / TOPIK
+   =========================== */
+
+let currentMode = "topik";
+const simpleColumnsSet = { subject:true, time:true, object:true, verb:true, conjug:true };
+
+function isColumnVisible(key){
+  if(currentMode==="topik") return true;
+  return !!simpleColumnsSet[key];
+}
+
+modeButtons?.forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    currentMode = btn.dataset.mode || "topik";
+    modeButtons.forEach(b=>b.classList.toggle("active", b===btn));
+    render();
+  });
+});
+
+/* ===========================
+   Navigare ecrane (bottom nav)
+   =========================== */
+
+function setScreen(name){
+  Object.entries(screens || {}).forEach(([key, el])=>{
+    if(!el) return;
+    el.classList.toggle("active", key===name);
+    el.style.display = (key===name) ? "block" : "none";
+  });
+
+  navButtons?.forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.target===name);
+  });
+}
+
+navButtons?.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    setScreen(btn.dataset.target);
+  });
+});
+
+/* ===========================
+   RO/EN input → completează builder
+   =========================== */
+
+function splitRoIntoClauses(txt){
+  if(!txt) return null;
+  const re = /\s+(și|si|iar|apoi)\s+/i;
+  const m  = txt.match(re);
+  if(!m) return null;
+
+  const first  = txt.slice(0, m.index).trim();
+  const second = txt.slice(m.index + m[0].length).trim();
+  if(!first || !second) return null;
+
+  return { first, second };
+}
+
+/* detect lang: RO vs EN (simplu) */
+function getInputLang(){
+  const t = (roInput?.value || "").trim();
+  // dacă are multe cuvinte tipic englezești -> en
+  if(/\b(i|you|we|they|he|she|today|tomorrow|yesterday|now|and)\b/i.test(t)) return "en";
+  return "ro";
+}
+
+function translateInputToKo(){
+  const text = (roInput?.value || "").trim();
+  const lang = getInputLang();
+
+  let result = { ko:"", roFixed:"" };
+  if(!text){
+    result = { ko:"", roFixed:"" };
+  }else if(lang==="en"){
+    result = (typeof translateEnToKo==="function") ? translateEnToKo(text) : { ko:"", roFixed:text };
+  }else{
+    result = (typeof translateRoToKo==="function") ? translateRoToKo(text) : { ko:"", roFixed:text };
+  }
+
+  const roCorrectedEl = document.getElementById("roCorrected");
+  if(roCorrectedEl) roCorrectedEl.textContent = result.roFixed || "";
+  return result;
+}
+
+roTranslateBtn?.addEventListener("click", ()=>{
+  const txt = roInput?.value || "";
+  LAST_RO_SENTENCE = txt;
+
+  const split = splitRoIntoClauses(txt);
+
+  if(split){
+    // P1 (forțăm -고)
+    const parsed1 = parseRoToState(split.first);
+    Object.assign(stateP1, parsed1.state);
+    stateP1.conjug = "-고";
+    activeP1.conjug = true;
+
+    // P2
+    const parsed2 = parseRoToState(split.second);
+    Object.assign(stateP2, parsed2.state);
+
+    // activează P2
+    if(enableP2){
+      enableP2.checked = true;
+      enableP2.dispatchEvent(new Event("change"));
+    }
+
+    render();
+  }else{
+    const parsed = parseRoToState(txt);
+    Object.assign(stateP1, parsed.state);
+
+    if(enableP2){
+      enableP2.checked = false;
+      enableP2.dispatchEvent(new Event("change"));
+    }
+
+    render();
+  }
+
+  // KO rezultat (confirmare)
+  const res = translateInputToKo();
+  const koEl = document.getElementById("roToKoResult");
+  if(koEl) koEl.textContent = res.ko || "";
+});
+
+/* buton curăță */
+document.getElementById("roClearBtn")?.addEventListener("click", ()=>{
+  if(roInput) roInput.value="";
+  document.getElementById("roToKoResult").textContent="";
+  document.getElementById("roCorrected").textContent="";
+});
+
+/* ===========================
+   Random / Audio / Favorite
+   =========================== */
+
+randomBtn?.addEventListener("click", ()=>{
+  columns.forEach(col=>{
+    if(activeP1[col.key]===false) return;
+    if(!isColumnVisible(col.key)) return;
+
+    const arr = (col.data || []).filter(x=>x!=="" && x!=null);
+    if(!arr.length) return;
+    stateP1[col.key] = arr[Math.floor(Math.random()*arr.length)];
+  });
+  render();
+});
+
+speakBtn?.addEventListener("click", ()=>{
+  if(!("speechSynthesis" in window)){
+    alert("Browserul nu suportă audio.");
+    return;
+  }
+  const text = (previewKo?.textContent || "").trim();
+  if(!text || text.includes("alege cuvinte")) return;
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ko-KR";
+
+  const voices = window.speechSynthesis.getVoices();
+  const koVoices = voices.filter(v => (v.lang || "").toLowerCase().startsWith("ko"));
+  if(koVoices.length) u.voice = koVoices[0];
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+});
+
+/* favorites */
+const favorites = [];
+function renderFavorites(){
+  if(!favoritesListEl) return;
+  favoritesListEl.innerHTML = "";
+
+  if(!favorites.length){
+    const div=document.createElement("div");
+    div.className="small-label";
+    div.textContent="Nu ai salvat încă nicio propoziție.";
+    favoritesListEl.appendChild(div);
+    return;
+  }
+
+  favorites.forEach(f=>{
+    const item=document.createElement("div");
+    item.className="fav-item";
+
+    const ko=document.createElement("div");
+    ko.className="fav-ko";
+    ko.textContent=f.ko;
+
+    const ro=document.createElement("div");
+    ro.className="fav-ro";
+    ro.textContent=f.ro;
+
+    item.appendChild(ko);
+    item.appendChild(ro);
+    favoritesListEl.appendChild(item);
+  });
+}
+
+favBtn?.addEventListener("click", ()=>{
+  const ko = (previewKo?.textContent || "").trim();
+  let ro = (previewRo?.textContent || "").trim();
+
+  if(!ko || ko.includes("alege cuvinte")) return;
+  if(ro.startsWith("···")) ro="";
+
+  const exists = favorites.some(f=>f.ko===ko && f.ro===ro);
+  if(!exists) favorites.push({ ko, ro });
+
+  renderFavorites();
+
+  if(favBtn){
+    favBtn.textContent="⭐ Salvat!";
+    setTimeout(()=>{ favBtn.textContent="⭐ Salvează propoziția"; }, 800);
+  }
+});
+
+/* chips init */
+createToggleChips();
+  </script>
 <script src="app.ui.js"></script>
