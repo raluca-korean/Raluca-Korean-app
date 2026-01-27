@@ -2740,54 +2740,24 @@ function getInputLang() {
       <!-- SUS: tabelul dinamic -->
 <div id="clausesContainer"></div>
 <!-- JOS: RO/EN input + confirmare KO din input -->
-<section class="card" id="roEnCard">
+<div class="card" id="roEnCard">
   <div class="card-title">Română / English</div>
 
-  <div class="row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
-    <select id="langSelect" class="input" style="min-width:160px;">
-      <option value="ro">Română</option>
-      <option value="en">English</option>
-    </select>
+  <textarea id="roInput" rows="3" placeholder="Scrie aici (RO/EN) – poți scrie mai multe propoziții."></textarea>
 
-    <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
-      <input id="fillOnlyEmpty" type="checkbox" />
-      Completează doar câmpurile goale
-    </label>
-
-    <button id="roTranslateBtn" class="btn primary" type="button">Completează tabelul</button>
-    <button id="roClearBtn" class="btn" type="button">Curăță</button>
+  <div class="row">
+    <button id="roTranslateBtn" type="button">Completează tabelul</button>
+    <button id="roClearBtn" type="button">Curăță</button>
   </div>
 
-  <textarea id="roInput" class="input"
-    style="width:100%; min-height:90px; margin-top:10px;"
-    placeholder="Scrie aici (RO/EN) – poți scrie mai multe propoziții. Scrie pe rânduri sau cu punct.
-Ex:
-Azi merg la cafenea și studiez coreeană.
-Today I go to the cafe and study Korean."></textarea>
+  <div class="small-label">KO generat (confirmare)</div>
+  <div id="roToKoResult" class="big-ko"></div>
 
-  <div style="margin-top:10px;">
-    <div class="small-label">KO generat (confirmare)</div>
-    <div id="roToKoResult" style="padding:10px; border-radius:12px; background:rgba(255,255,255,.75);"></div>
-
-    <div class="small-label" style="margin-top:8px;">Text corectat</div>
-    <div id="roCorrected" style="padding:10px; border-radius:12px; background:rgba(255,255,255,.75);"></div>
-  </div>
-
-  <div id="clausesHost" style="margin-top:14px;"></div>
-
-  <div class="card" style="margin-top:14px;">
-    <div class="card-title">Coreeană (preview)</div>
-
-    <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
-      <input id="politeToggle" type="checkbox" />
-      Ultimul verb în politicos (preview)
-    </label>
-
-    <div id="previewSentence" class="big-preview" style="margin-top:10px;"></div>
-    <div id="previewInfo" class="small-label" style="margin-top:8px;"></div>
-  </div>
-</section>
-    <!-- SCREEN 2: EXERCIȚII TOPIK -->
+  <div class="small-label" style="margin-top:8px;">Text corectat</div>
+  <div id="roCorrected" class="big-ko"></div>
+</div>    
+   </div> 
+        <!-- SCREEN 2: EXERCIȚII TOPIK -->
     <div class="screen" id="screen-exercises" style="display:none;">
       <div class="card ex-card">
         <div class="ex-header-row">
@@ -5963,336 +5933,55 @@ document.addEventListener("DOMContentLoaded", () => {
 });
     // ==== SYNC: Traducerea aproximativă (Builder) -> bloc "Română → Coreeană" ====
 (function () {
-  const previewRo = document.getElementById("previewRo");
-  const roInput = document.getElementById("roInput");
-  const fillOnlyEmpty = document.getElementById("fillOnlyEmpty");
+  const previewRo = document.getElementById("previewRo");  // linia de română de sub Builder
+  const roInput   = document.getElementById("roInput");    // textarea din cardul "Română → Coreeană"
 
+  // dacă nu găsește elementele, nu face nimic (de siguranță)
   if (!previewRo || !roInput) return;
 
-  function syncPreviewRoToInput() {
+  function syncApproxToRoInput() {
     const text = (previewRo.textContent || "").trim();
-    if (!text) return;
-
-    // nu suprascrie dacă userul scrie acum în textarea
-    if (document.activeElement === roInput) return;
-
-    // respectă "Completează doar câmpurile goale"
-    if (fillOnlyEmpty && fillOnlyEmpty.checked && roInput.value.trim()) return;
-
-    roInput.value = text;
+    if (!text) return;          // dacă e gol, nu completăm nimic
+    roInput.value = text;       // punem traducerea aproximativă în textarea de jos
   }
 
-  const observer = new MutationObserver(syncPreviewRoToInput);
-  observer.observe(previewRo, { childList: true, characterData: true, subtree: true });
-
-  // rulează o dată la start
-  syncPreviewRoToInput();
-})();
-    /* =========================
-   RO/EN CARD – SAFE INIT
-   - nu blochează paginile
-   - suport multi-propoziții
-   - EN nu mai “anulează tot”
-========================= */
-(function initRoEnCardSafe(){
-  const card = document.getElementById("roEnCard");
-  if (!card) return;
-
-  // prevenim dublarea listenerelor
-  if (card.dataset.bound === "1") return;
-  card.dataset.bound = "1";
-
-  const roInput = document.getElementById("roInput");
-  const roTranslateBtn = document.getElementById("roTranslateBtn");
-  const roClearBtn = document.getElementById("roClearBtn");
-  const langSelect = document.getElementById("langSelect");
-  const fillOnlyEmpty = document.getElementById("fillOnlyEmpty");
-
-  const koOut = document.getElementById("roToKoResult");
-  const roCorrected = document.getElementById("roCorrected");
-  const clausesHost = document.getElementById("clausesHost");
-
-  const politeToggle = document.getElementById("politeToggle");
-  const previewSentence = document.getElementById("previewSentence");
-  const previewInfo = document.getElementById("previewInfo");
-
-  // dacă lipsesc elemente, ieșim fără să stricăm restul aplicației
-  if (!roInput || !roTranslateBtn || !roClearBtn || !langSelect || !koOut || !roCorrected || !clausesHost) return;
-
-  // helper: split în propoziții (acceptă rânduri + punct/?!)
-  function splitSentences(raw){
-    const t = (raw || "").trim();
-    if (!t) return [];
-    // 1) dacă utilizatorul a pus rânduri, respectăm rândurile
-    const lines = t.split(/\n+/).map(s => s.trim()).filter(Boolean);
-    if (lines.length > 1) return lines;
-
-    // 2) altfel, spargem după . ? !
-    const parts = t
-      .replace(/\s+/g, " ")
-      .split(/(?<=[\.\?\!])\s+/)
-      .map(s => s.trim())
-      .filter(Boolean);
-
-    return parts.length ? parts : [t];
-  }
-
-  // helper: traduce o propoziție în KO folosind funcțiile deja existente în app
-  function translateOneToKo(text, lang){
-    // dacă nu există funcțiile, nu crapă
-    const hasRo = (typeof translateRoToKo === "function");
-    const hasEn = (typeof translateEnToKo === "function");
-
-    if (!text.trim()) return { ko: "", corrected: "" };
-
-    if (lang === "en" && hasEn) {
-      const ko = translateEnToKo(text) || "";
-      // la EN nu ai “text corectat” ca la RO; îl lăsăm ca input-ul (nu golim)
-      return { ko, corrected: text };
-    }
-
-    if (lang !== "en" && hasRo) {
-      const res = translateRoToKo(text);
-      // translateRoToKo la tine întoarce de obicei { ko, roFixed }
-      if (res && typeof res === "object") return { ko: res.ko || "", corrected: res.roFixed || text };
-      return { ko: "", corrected: text };
-    }
-
-    // fallback dacă lipsesc funcțiile
-    return { ko: "", corrected: text };
-  }
-
-  function renderResults(items){
-    // items: [{src, ko, corrected}]
-    const koJoined = items.map(x => x.ko).filter(Boolean).join("\n");
-    const correctedJoined = items.map(x => x.corrected).filter(Boolean).join("\n");
-
-    koOut.textContent = koJoined;
-    roCorrected.textContent = correctedJoined;
-
-    // listă vizuală pe propoziții
-    clausesHost.innerHTML = "";
-    items.forEach((x, idx) => {
-      const row = document.createElement("div");
-      row.className = "card";
-      row.style.marginTop = "10px";
-      row.innerHTML = `
-        <div class="small-label">Propoziția ${idx+1}</div>
-        <div style="margin-top:6px; font-size:14px;"><b>Input:</b> ${escapeHtml(x.src)}</div>
-        <div style="margin-top:6px; font-size:14px;"><b>KO:</b> ${escapeHtml(x.ko)}</div>
-      `;
-      clausesHost.appendChild(row);
-    });
-
-    // preview: ultima propoziție KO
-    const lastKo = items.length ? (items[items.length-1].ko || "") : "";
-    if (previewSentence) previewSentence.textContent = lastKo;
-    if (previewInfo) previewInfo.textContent = items.length ? `Total propoziții: ${items.length}` : "";
-  }
-
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-function handleTranslate() {
-  if (!roInput) return;
-
-  const raw = (roInput.value || "").trim();
-  if (!raw) return;
-
-  // 🔐 PROTECȚIE
-  if (!clausesHost || !previewSentence || !previewInfo) {
-    console.warn("RO/EN elements not present on this screen");
-    return;
-  }
-
-  const lines = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
-  clausesHost.innerHTML = "";
-
-  const lang = getInputLang();
-
-  lines.forEach((line, idx) => {
-    const result = (lang === "en")
-      ? translateEnToKo(line)
-      : translateRoToKo(line);
-
-    const card = document.createElement("div");
-    card.className = "clause-card";
-    card.innerHTML = `
-      <div class="small-label">Propoziția ${idx + 1}</div>
-      <div><b>Input:</b> ${escapeHtml(line)}</div>
-      <div style="margin-top:6px;"><b>KO:</b> ${escapeHtml(result.ko || "")}</div>
-    `;
-    clausesHost.appendChild(card);
+  // urmărim orice schimbare în previewRo (de la Builder, Random propoziție etc.)
+  const observer = new MutationObserver(syncApproxToRoInput);
+  observer.observe(previewRo, {
+    childList: true,
+    characterData: true,
+    subtree: true
   });
 
-  const last = lines[lines.length - 1];
-  const lastKo = lang === "en"
-    ? translateEnToKo(last).ko
-    : translateRoToKo(last).ko;
-
-  previewSentence.textContent = lastKo || "";
-  previewInfo.textContent = `Total propoziții: ${lines.length}`;
-} 
-
-  function handleClear(){
-    roInput.value = "";
-    koOut.textContent = "";
-    roCorrected.textContent = "";
-    clausesHost.innerHTML = "";
-    if (previewSentence) previewSentence.textContent = "";
-    if (previewInfo) previewInfo.textContent = "";
-  }
-
-  roTranslateBtn.addEventListener("click", handleTranslate);
-  roClearBtn.addEventListener("click", handleClear);
-
-  // opțional: Enter+Ctrl traduce
-  roInput.addEventListener("keydown", (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") handleTranslate();
-  });
-
+  // sincronizare inițială (dacă există deja o propoziție în Builder)
+  syncApproxToRoInput();
 })();
-    const ScreenModules = {
-  builder: null,
-  exercises: null,
-  lessons: null,
-  glossary: null,
-};
-
-let currentScreen = "builder";
-
-function showScreen(name) {
-  // hide all
-  document.querySelectorAll(".screen").forEach(s => (s.style.display = "none"));
-  const el = document.getElementById(`screen-${name}`);
-  if (!el) return;
-
-  // unmount old
-  unmountScreen(currentScreen);
-
-  // show new
-  el.style.display = "";
-  currentScreen = name;
-
-  // mount new
-  mountScreen(name);
-}
-
-function mountScreen(name) {
-  const screenEl = document.getElementById(`screen-${name}`);
-  if (!screenEl) return;
-
-  // initialize module once per screen enter
-  if (name === "builder") ScreenModules.builder = initBuilder(screenEl);
-  if (name === "exercises") ScreenModules.exercises = initExercises(screenEl);
-  if (name === "lessons") ScreenModules.lessons = initLessons(screenEl);
-  if (name === "glossary") ScreenModules.glossary = initGlossary(screenEl);
-}
-function initBuilder(screenEl) {
-  // aici inițializezi restul builderului (dacă există deja, îl lași)
-  const roEnCard = screenEl.querySelector("#roEnCard");
-  let roEnModule = null;
-
-  // RO/EN există doar dacă e în DOM (în builder)
-  if (roEnCard) {
-    roEnModule = initRoEnCard(roEnCard);
-  }
-
-  return {
-    destroy() {
-      if (roEnModule) roEnModule.destroy();
-      // dacă ai și alte sub-module în builder, le distrugi aici
-    }
+     </script>
+      <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const screens = {
+    builder: document.getElementById("screen-builder"),
+    exercises: document.getElementById("screen-exercises"),
+    lessons: document.getElementById("screen-lessons"),
+    glossary: document.getElementById("screen-glossary"),
   };
-}
-    function unmountScreen(name) {
-  const mod = ScreenModules[name];
-  if (mod && typeof mod.destroy === "function") mod.destroy();
-  ScreenModules[name] = null;
-}
 
-// nav buttons
-document.querySelectorAll(".nav-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const t = btn.dataset.target;
-    if (t) showScreen(t);
+  const navButtons = Array.from(document.querySelectorAll(".nav-btn"));
+
+  function setScreen(name) {
+    Object.values(screens).forEach(el => { if (el) el.style.display = "none"; });
+    if (screens[name]) screens[name].style.display = "block";
+
+    navButtons.forEach(btn => btn.classList.toggle("active", btn.dataset.target === name));
+  }
+
+  navButtons.forEach(btn => {
+    btn.addEventListener("click", () => setScreen(btn.dataset.target));
   });
+
+  setScreen("builder");
 });
-    function initRoEnCard(root) {
-  const langSelect = root.querySelector("#langSelect");
-  const fillOnlyEmpty = root.querySelector("#fillOnlyEmpty");
-
-  const roInput = root.querySelector("#roInput");
-  const roTranslateBtn = root.querySelector("#roTranslateBtn");
-  const roClearBtn = root.querySelector("#roClearBtn");
-
-  const clausesHost = root.querySelector("#clausesHost");
-  const previewSentence = root.querySelector("#previewSentence");
-  const previewInfo = root.querySelector("#previewInfo");
-  const politeToggle = root.querySelector("#politeToggle");
-
-  // dacă lipsește ceva critic, nu inițializăm (și nu stricăm restul)
-  if (!roInput || !roTranslateBtn || !roClearBtn || !clausesHost || !previewSentence || !previewInfo) {
-    console.warn("RO/EN card incomplete - missing elements");
-    return { destroy(){} };
-  }
-
-  function getInputLang() {
-    return (langSelect && langSelect.value) ? langSelect.value : "ro";
-  }
-
-  function handleTranslate() {
-    const raw = (roInput.value || "").trim();
-    const lines = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
-
-    clausesHost.innerHTML = "";
-
-    const lang = getInputLang();
-
-    lines.forEach((line, idx) => {
-      const result = (lang === "en") ? translateEnToKo(line) : translateRoToKo(line);
-
-      const card = document.createElement("div");
-      card.className = "clause-card";
-      card.innerHTML = `
-        <div class="small-label">Propoziția ${idx + 1}</div>
-        <div><b>Input:</b> ${escapeHtml(line)}</div>
-        <div style="margin-top:6px;"><b>KO:</b> ${escapeHtml(result.ko || "")}</div>
-      `;
-      clausesHost.appendChild(card);
-    });
-
-    const last = lines[lines.length - 1] || "";
-    const lastKo = last
-      ? ((lang === "en") ? translateEnToKo(last).ko : translateRoToKo(last).ko)
-      : "";
-
-    previewSentence.textContent = lastKo || "";
-    previewInfo.textContent = `Total propoziții: ${lines.length}`;
-  }
-
-  function handleClear() {
-    roInput.value = "";
-    clausesHost.innerHTML = "";
-    previewSentence.textContent = "";
-    previewInfo.textContent = "";
-  }
-
-  roTranslateBtn.addEventListener("click", handleTranslate);
-  roClearBtn.addEventListener("click", handleClear);
-
-  return {
-    destroy() {
-      roTranslateBtn.removeEventListener("click", handleTranslate);
-      roClearBtn.removeEventListener("click", handleClear);
-    }
-  };
-}
-  </script>
+</script>
+   
 </body>
 </html> 
