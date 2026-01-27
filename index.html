@@ -1063,6 +1063,707 @@ textarea{
 .be-readonly .col{
   outline: 2px dashed rgba(124,92,255,.22);
 }
-<script src="app.data.js"></script>
-<script src="app.core.js"></script>
+<script src=/* =========================================================
+   Raluca Korean — Study App v2.0
+   app.data.js  (DATA + translations + custom words storage)
+   ========================================================= */
+
+window.RK = window.RK || {};
+RK.LAST_RO_SENTENCE = "";
+
+/* === LISTE DE CUVINTE (de bază) === */
+RK.subjects = [
+  "저","나","너","우리","너희","사람","학생","선생님","직원","전문가","지원자","관리자",
+  "부모님","아이","어른","시민","고객","의사","간호사","연구자","관계자","대표","회장",
+  "사용자","참가자","운전자","주민","환자"
+];
+
+RK.times = [
+  "오늘","어제","내일","지금","방금","조금 후에","곧","최근에","요즘","마침내","결국",
+  "이전에","이후에","당시에","한동안","계속","가끔","항상","자주","점점","차츰","일찍","늦게"
+];
+
+RK.places = [
+  "집","학교","회사","식당","카페","도서관","병원","시장","백화점","공항","기차역",
+  "버스정류장","연구소","기관","지역사회","환경","대기업","회의실","법원","경찰서",
+  "해변","산","공원","은행"
+];
+
+RK.mods = [
+  "잘","열심히","조용히","천천히","빨리","정말","아주","너무","많이","조금","갑자기","미리",
+  "벌써","아까","방금","금방","곧","항상","자주","가끔","드물게","상당히","꽤","도대체","절대로",
+  "적극적으로","충분히","특히","오히려","점점","차츰","계속"
+];
+
+RK.objects = [
+  "책","커피","물","음식","영화","가방","전화","옷","자료","데이터","계획","조건","상황","문제",
+  "해결책","요약","보고서","문서","컴퓨터","노트북","편지","선물","의견","정보","관계","결과",
+  "원인","방법","제품","서비스","정책","문화","채소","견과류"
+];
+
+RK.numerals = new Array(60).fill("");
+
+RK.counters = [
+  "개","명","권","장","대","병","잔","마리","번","살","송이","줄","점","건","회","가지","쪽"
+];
+
+RK.verbs = [
+  "가다","오다","먹다","마시다","보다","읽다","쓰다","배우다","사다","주다","받다","일하다",
+  "공부하다","요리하다","청소하다","준비하다","도와주다","사용하다","필요하다","좋아하다",
+  "싫어하다","기다리다","쉬다","만나다","걷다","달리다","앉다","서다","결정하다","제안하다",
+  "전달하다","유지하다","발생하다","증가하다","감소하다","인정하다","분석하다","관찰하다",
+  "해결하다","연구하다","협력하다","요청하다","충족하다","비교하다","설명하다","예상하다"
+];
+
+RK.conjugations = [
+  "-아요/어요","-았어요/었어요","-고 있어요","-고 싶어요","-(으)세요","-(으)ㄹ 거예요",
+  "-고","-지 마세요","-아/어 주세요","-아/어야 돼요","-(으)ㄹ 수 있어요","-(으)ㄹ 수 없어요",
+  "-더라고요","-네요","-군요","-고 나서","-기 전에","-(으)면서","-(으)며",
+  "-(으)ㄹ지도 몰라요","-(으)ㄹ게요","-(으)ㄹ래요?","-(으)ㄹ까요?","-는 게 어때요?",
+  "-는 중이에요","-아/어도 돼요","-(으)면 안 돼요","-(으)나","-(으)므로","-(으)ㄴ/는 만큼",
+  "-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도","-(으)ㄴ/는 반면에","-도록 하다",
+  "-게 되다","-아/어지다","-기 마련이다","-기에","-길래","-고 말다","-고자 하다","-(으)ㄹ 뿐이다"
+];
+
+/* === TRADUCERI (coreeană → română) === */
+RK.translations = {
+  subject:{ "저":"eu (formal)","나":"eu (informal)","너":"tu","우리":"noi","너희":"voi",
+    "사람":"persoană","학생":"student/ă","선생님":"profesor","직원":"angajat",
+    "부모님":"părinți","아이":"copil","어른":"adult","고객":"client","의사":"medic",
+    "간호사":"asistentă","연구자":"cercetător","대표":"reprezentant","환자":"pacient"
+  },
+  time:{ "오늘":"astăzi","어제":"ieri","내일":"mâine","지금":"acum","방금":"tocmai acum",
+    "조금 후에":"puțin mai târziu","곧":"în curând","최근에":"recent","요즘":"în ultima vreme",
+    "마침내":"în cele din urmă","결국":"până la urmă","이전에":"înainte","이후에":"după",
+    "당시에":"atunci","한동안":"o perioadă","계속":"continuă","가끔":"din când în când",
+    "항상":"întotdeauna","자주":"des","점점":"din ce în ce","차츰":"treptat",
+    "일찍":"devreme","늦게":"târziu"
+  },
+  place:{ "집":"acasă","학교":"școală","회사":"firmă / companie","식당":"restaurant","카페":"cafenea",
+    "도서관":"bibliotecă","병원":"spital","시장":"piață","백화점":"magazin universal",
+    "공항":"aeroport","기차역":"gară","버스정류장":"stație de autobuz","연구소":"laborator",
+    "기관":"instituție","지역사회":"comunitate","환경":"mediu","대기업":"corporație mare",
+    "회의실":"sală de ședințe","법원":"instanță","경찰서":"secție de poliție",
+    "해변":"plajă","산":"munte","공원":"parc","은행":"bancă"
+  },
+  mod:{ "잘":"bine","열심히":"cu sârguință","조용히":"în liniște","천천히":"încet",
+    "빨리":"repede","정말":"cu adevărat","아주":"foarte","너무":"prea / foarte",
+    "많이":"mult","조금":"puțin","갑자기":"brusc","미리":"în avans","벌써":"deja",
+    "아까":"mai devreme","방금":"chiar acum","금방":"imediat","곧":"în curând",
+    "항상":"mereu","자주":"des","가끔":"din când în când","드물게":"rar",
+    "상당히":"destul de","꽤":"binișor","도대체":"(deloc / în întrebări)",
+    "절대로":"niciodată (interdicție)","적극적으로":"activ","충분히":"suficient",
+    "특히":"în special","오히려":"mai degrabă","점점":"din ce în ce","차츰":"treptat",
+    "계속":"în mod continuu"
+  },
+  object:{ 
+    "책":"carte","커피":"cafea","물":"apă","음식":"mâncare","영화":"film",
+    "가방":"geantă","전화":"telefon","옷":"haine","자료":"materiale","데이터":"date",
+    "계획":"plan","조건":"condiție","상황":"situație","문제":"problemă",
+    "해결책":"soluție","요약":"rezumat","보고서":"raport","문서":"document",
+    "컴퓨터":"calculator","노트북":"laptop","편지":"scrisoare","선물":"cadou",
+    "의견":"opinie","정보":"informație","관계":"relație","결과":"rezultat",
+    "원인":"cauză","방법":"metodă","제품":"produs","서비스":"serviciu",
+    "정책":"politică","문화":"cultură","채소":"legume","견과류":"alune / nuci"
+  },
+  numeral:{},
+  counter:{ "개":"bucată","명":"persoană","권":"volum (carte)","장":"foaie / pagină",
+    "대":"aparat / vehicul","병":"sticlă","잔":"cană / pahar",
+    "마리":"animal","번":"dată","살":"ani (vârstă)","송이":"buchet / ciorchine",
+    "줄":"rând / șir","점":"punct","건":"caz","회":"dată (ocazie)",
+    "가지":"fel / tip","쪽":"pagină / direcție"
+  },
+  verb:{
+    "가다":"a merge","오다":"a veni","먹다":"a mânca","마시다":"a bea","보다":"a vedea / a se uita",
+    "읽다":"a citi","쓰다":"a scrie","배우다":"a învăța","사다":"a cumpăra","주다":"a da",
+    "받다":"a primi","일하다":"a lucra","공부하다":"a studia","요리하다":"a găti",
+    "청소하다":"a face curat","준비하다":"a pregăti","도와주다":"a ajuta",
+    "사용하다":"a folosi","필요하다":"a fi necesar","좋아하다":"a plăcea",
+    "싫어하다":"a nu plăcea / a urî","기다리다":"a aștepta","쉬다":"a se odihni",
+    "만나다":"a se întâlni","걷다":"a merge pe jos","달리다":"a alerga",
+    "앉다":"a se așeza","서다":"a sta în picioare","결정하다":"a decide",
+    "제안하다":"a propune","전달하다":"a transmite","유지하다":"a menține",
+    "발생하다":"a se produce","증가하다":"a crește","감소하다":"a scădea",
+    "인정하다":"a recunoaște","분석하다":"a analiza","관찰하다":"a observa",
+    "해결하다":"a rezolva","연구하다":"a cerceta","협력하다":"a colabora",
+    "요청하다":"a solicita","충족하다":"a satisface","비교하다":"a compara",
+    "설명하다":"a explica","예상하다":"a anticipa"
+  },
+  conjug:{
+    "-아요/어요":"prezent politicos",
+    "-았어요/었어요":"trecut politicos",
+    "-고 있어요":"acțiune în desfășurare",
+    "-고 싶어요":"vreau să...",
+    "-고":"și",
+    "-(으)세요":"imperativ / onorific",
+    "-(으)ㄹ 거예요":"viitor",
+    "-지 마세요":"nu faceți..., vă rog",
+    "-아/어 주세요":"vă rog să...",
+    "-아/어야 돼요":"trebuie să...",
+    "-(으)ㄹ 수 있어요":"pot să...",
+    "-(으)ㄹ 수 없어요":"nu pot să...",
+    "-더라고요":"am observat că...",
+    "-네요":"exclamativ (observație surprinsă)",
+    "-군요":"exclamativ (constatare)",
+    "-고 나서":"după ce...",
+    "-기 전에":"înainte să...",
+    "-(으)면서":"în timp ce...",
+    "-(으)며":"și (în timp ce)",
+    "-(으)ㄹ지도 몰라요":"s-ar putea să...",
+    "-(으)ㄹ게요":"voi face (pentru tine)",
+    "-(으)ㄹ래요?":"ai chef să...? / vreau să...",
+    "-(으)ㄹ까요?":"să facem...?",
+    "-는 게 어때요?":"ce-ar fi să...?",
+    "-는 중이에요":"sunt în mijlocul acțiunii",
+    "-아/어도 돼요":"poți să..., e în regulă",
+    "-(으)면 안 돼요":"nu ai voie să...",
+    "-도록 하다":"să faci în așa fel încât să...",
+    "-게 되다":"ajungi să...",
+    "-아/어지다":"a deveni...",
+    "-기에":"pentru că..., fiindcă",
+    "-길래":"pentru că (am văzut / simțit eu)",
+    "-고 말다":"în cele din urmă ajunge să...",
+    "-고자 하다":"a intenționa să...",
+    "-(으)ㄹ 뿐이다":"doar..., nimic altceva"
+  }
+};
+
+/* === SALVARE CUVINTE NOI === */
+RK.STORAGE_KEY = "ralucaKoreanCustomWords_v2";
+RK.customData = {
+  subject:[], time:[], place:[], mod:[], object:[],
+  numeral:[], counter:[], verb:[], conjug:[]
+};
+
+RK.saveCustomData = function saveCustomData(){
+  try { localStorage.setItem(RK.STORAGE_KEY, JSON.stringify(RK.customData)); } catch(e){}
+};
+
+RK.loadCustomData = function loadCustomData(){
+  try{
+    const raw = localStorage.getItem(RK.STORAGE_KEY);
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+
+    Object.keys(RK.customData).forEach(k=>{
+      if(Array.isArray(saved[k])) RK.customData[k] = saved[k];
+    });
+
+    const addTo = (key, refArr) => {
+      RK.customData[key].forEach(entry=>{
+        if(!entry || !entry.word) return;
+        const w = entry.word;
+        const ro = entry.ro || "";
+
+        if(refArr && !refArr.includes(w)) refArr.push(w);
+
+        if(!RK.translations[key]) RK.translations[key] = {};
+        if(ro) RK.translations[key][w] = ro;
+      });
+    };
+
+    addTo("subject", RK.subjects);
+    addTo("time", RK.times);
+    addTo("place", RK.places);
+    addTo("mod", RK.mods);
+    addTo("object", RK.objects);
+    addTo("numeral", RK.numerals);
+    addTo("counter", RK.counters);
+    addTo("verb", RK.verbs);
+    addTo("conjug", RK.conjugations);
+
+  } catch(e){}
+};
+
+RK.loadCustomData();
+
+/* Reverse map RO->KO construit din translations (se reconstruiește când adaugi cuvinte) */
+RK.stripDiacritics = function stripDiacritics(s){
+  return (s||"")
+    .replace(/ă/g,"a").replace(/â/g,"a").replace(/î/g,"i")
+    .replace(/ș/g,"s").replace(/ş/g,"s")
+    .replace(/ț/g,"t").replace(/ţ/g,"t");
+};
+
+RK.normRo = function normRo(s){
+  return RK.stripDiacritics(
+    (s||"")
+      .toLowerCase()
+      .replace(/[.,!?;]/g," ")
+  ).replace(/\s+/g," ").trim();
+};
+
+RK.buildReverseMap = function buildReverseMap(){
+  const rev = { subject:{}, time:{}, place:{}, mod:{}, object:{}, counter:{}, verb:{}, conjug:{} };
+
+  Object.entries(RK.translations).forEach(([cat, map])=>{
+    if(!rev[cat]) return;
+    Object.entries(map).forEach(([ko, ro])=>{
+      if(!ro) return;
+      const norm = RK.normRo(ro);
+      if(!rev[cat][norm]) rev[cat][norm] = ko;
+
+      // suport pt „a cumpara” -> „cumpar”, „sa cumpar”
+      if(norm.startsWith("a ")){
+        const base = norm.replace(/^a\s+/, "");
+        if(base){
+          const stem = base.replace(/[aei]$/, "");
+          if(stem){
+            if(!rev[cat][stem]) rev[cat][stem] = ko;
+            const saKey = "sa " + stem;
+            if(!rev[cat][saKey]) rev[cat][saKey] = ko;
+          }
+        }
+      }
+    });
+  });
+
+  return rev;
+};
+
+RK.REV = RK.buildReverseMap();
+
+
+</script>
+<script src=/* ===========================
+   UI: Overlay panel + tabel
+   =========================== */
+
+let panelClause = "p1";
+let panelKey = "subject";
+
+function renderPanelList(col){
+  if(!panelList) return;
+  panelList.innerHTML = "";
+
+  const key = col.key;
+  const map = translations[key] || {};
+  const filter = (panelSearchInput?.value || "").trim().toLowerCase();
+
+  const words = (col.data || []).filter(w=>{
+    if(!w) return false;
+    if(!filter) return true;
+    return String(w).toLowerCase().startsWith(filter);
+  });
+
+  if(!words.length){
+    const empty=document.createElement("div");
+    empty.className="panel-item";
+    empty.textContent="Nu există cuvinte pentru filtrul introdus.";
+    panelList.appendChild(empty);
+    return;
+  }
+
+  words.forEach(word=>{
+    const item=document.createElement("div");
+    item.className="panel-item";
+
+    const main=document.createElement("div");
+    main.className="panel-item-main";
+    main.textContent=word;
+    item.appendChild(main);
+
+    const extra=document.createElement("div");
+    extra.className="panel-item-extra";
+
+    const ro = map[word];
+    if(ro){
+      const tag=document.createElement("div");
+      tag.className="panel-item-tag";
+      tag.textContent=ro;
+      extra.appendChild(tag);
+    }
+
+    if(key==="conjug" && typeof isLinkingConj==="function" && isLinkingConj(word)){
+      const star=document.createElement("div");
+      star.className="panel-item-tag";
+      star.textContent="⭐ P2";
+      extra.appendChild(star);
+    }
+
+    item.appendChild(extra);
+
+    item.addEventListener("click",()=>{
+      const target = (panelClause==="p1") ? stateP1 : stateP2;
+      target[key]=word;
+
+      if(key==="conjug" && typeof isLinkingConj==="function" && isLinkingConj(word)){
+        if(enableP2){
+          enableP2.checked=true;
+          enableP2.dispatchEvent(new Event("change"));
+        }
+      }
+
+      overlay?.classList.add("hidden");
+      render();
+    });
+
+    panelList.appendChild(item);
+  });
+}
+
+function openPanel(clause, key){
+  panelClause = clause || "p1";
+  panelKey = key || "subject";
+
+  const col = columns.find(c=>c.key===panelKey);
+  if(!col) return;
+
+  if(panelTitle) panelTitle.textContent = (panelClause==="p1" ? "Propoziția 1 – " : "Propoziția 2 – ") + col.title;
+  if(panelSub) panelSub.textContent = col.hint || "";
+
+  if(panelSearchInput) panelSearchInput.value="";
+  if(newWordInput) newWordInput.value="";
+  if(newWordTransInput) newWordTransInput.value="";
+
+  renderPanelList(col);
+  overlay?.classList.remove("hidden");
+  panelSearchInput?.focus();
+}
+
+closePanelBtn?.addEventListener("click",()=>overlay?.classList.add("hidden"));
+overlay?.addEventListener("click",e=>{ if(e.target===overlay) overlay.classList.add("hidden"); });
+
+panelSearchInput?.addEventListener("input",()=>{
+  const col = columns.find(c=>c.key===panelKey);
+  if(col) renderPanelList(col);
+});
+
+addWordBtn?.addEventListener("click",()=>{
+  const txt = (newWordInput?.value || "").trim();
+  if(!txt) return;
+  const roTxt = (newWordTransInput?.value || "").trim();
+
+  const col = columns.find(c=>c.key===panelKey);
+  if(!col || !col.allowCustom) return;
+
+  if(!col.data.includes(txt)) col.data.push(txt);
+
+  if(!translations[panelKey]) translations[panelKey] = {};
+  if(roTxt) translations[panelKey][txt] = roTxt;
+
+  // persist în customData (dacă există în 1/3)
+  if(typeof customData === "object"){
+    if(!customData[panelKey]) customData[panelKey] = [];
+    const exists = customData[panelKey].some(e=>e?.word===txt);
+    if(!exists) customData[panelKey].push({ word: txt, ro: roTxt });
+    else customData[panelKey].forEach(e=>{ if(e.word===txt) e.ro=roTxt; });
+  }
+
+  if(typeof saveCustomData==="function") saveCustomData();
+
+  if(newWordInput) newWordInput.value="";
+  if(newWordTransInput) newWordTransInput.value="";
+
+  renderPanelList(col);
+
+  // rebuild reverse map (dacă există)
+  if(typeof buildReverseMap==="function"){
+    REV = buildReverseMap();
+  }
+});
+
+/* ===========================
+   Tap / Long-press pe coloane
+   =========================== */
+
+function cycleColumnValue(clause,key){
+  const col = columns.find(c=>c.key===key);
+  if(!col) return;
+
+  const arr = col.data || [];
+  const state = (clause==="p2") ? stateP2 : stateP1;
+
+  const cur = state[key];
+  let idx = arr.indexOf(cur);
+  if(idx===-1) idx=0;
+  const nextIdx = (idx+1) % arr.length;
+  state[key] = arr[nextIdx] || "";
+
+  render();
+}
+
+let longPressTimer=null, pressTarget=null;
+
+function attachPressHandlers(tableEl){
+  if(!tableEl) return;
+
+  tableEl.addEventListener("pointerdown", e => {
+    const colDiv = e.target.closest(".col");
+    if(!colDiv) return;
+
+    // dacă ai apăsat pe checkbox-ul din header (col-toggle), nu blocăm
+    if(e.target.matches("input.col-toggle")) return;
+
+    e.preventDefault();
+    pressTarget = colDiv;
+
+    longPressTimer = setTimeout(()=>{
+      if(pressTarget===colDiv){
+        openPanel(colDiv.dataset.clause || "p1", colDiv.dataset.key);
+        pressTarget=null;
+      }
+    }, 450);
+  });
+
+  tableEl.addEventListener("pointerup", e => {
+    const colDiv = e.target.closest(".col");
+
+    if(e.target.matches("input.col-toggle")){
+      if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; }
+      pressTarget=null;
+      return;
+    }
+
+    if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; }
+    if(pressTarget && colDiv===pressTarget){
+      cycleColumnValue(colDiv.dataset.clause || "p1", colDiv.dataset.key);
+    }
+    pressTarget=null;
+  });
+
+  tableEl.addEventListener("pointerleave", ()=>{
+    if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; }
+    pressTarget=null;
+  });
+}
+
+/* ===========================
+   Chips ON/OFF (sus, pe părți)
+   =========================== */
+
+function createToggleChips(){
+  if(!togglesP1 || !togglesP2) return;
+
+  togglesP1.innerHTML="";
+  togglesP2.innerHTML="";
+
+  columns.forEach(col=>{
+    // P1
+    const chip1=document.createElement("label");
+    chip1.className="chip";
+    const cb1=document.createElement("input");
+    cb1.type="checkbox";
+    cb1.checked=true;
+    cb1.dataset.key=col.key;
+    cb1.dataset.clause="p1";
+    chip1.appendChild(cb1);
+    chip1.append(col.title);
+    togglesP1.appendChild(chip1);
+
+    // P2
+    const chip2=document.createElement("label");
+    chip2.className="chip";
+    const cb2=document.createElement("input");
+    cb2.type="checkbox";
+    cb2.checked=true;
+    cb2.dataset.key=col.key;
+    cb2.dataset.clause="p2";
+    chip2.appendChild(cb2);
+    chip2.append(col.title);
+    togglesP2.appendChild(chip2);
+  });
+
+  const sync=(wrapper,map)=>{
+    wrapper.querySelectorAll("input[type='checkbox']").forEach(cb=>{
+      cb.parentElement.classList.toggle("chip-off", !cb.checked);
+    });
+
+    wrapper.addEventListener("change", e=>{
+      const cb=e.target;
+      if(cb.tagName!=="INPUT") return;
+      const key=cb.dataset.key;
+      map[key]=cb.checked;
+      cb.parentElement.classList.toggle("chip-off", !cb.checked);
+      render();
+    });
+  };
+
+  sync(togglesP1, activeP1);
+  sync(togglesP2, activeP2);
+}
+
+/* ===========================
+   Render coloane (tabel)
+   =========================== */
+
+function renderClauseRow(container, activeMap, state, clauseId){
+  if(!container) return;
+  container.innerHTML = "";
+
+  columns.forEach(col=>{
+    if(typeof isColumnVisible==="function" && !isColumnVisible(col.key)) return;
+
+    const colDiv = document.createElement("div");
+    colDiv.className = "col";
+    colDiv.dataset.key = col.key;
+    colDiv.dataset.clause = clauseId;
+
+    if(activeMap[col.key] === false){
+      colDiv.classList.add("dimmed");
+    }
+
+    const header = document.createElement("div");
+    header.className = "col-header";
+
+    const titleSpan=document.createElement("span");
+    titleSpan.textContent = col.title + (col.ko ? ` (${col.ko})` : "");
+    header.appendChild(titleSpan);
+
+    const toggle=document.createElement("input");
+    toggle.type="checkbox";
+    toggle.className="col-toggle";
+    toggle.checked = activeMap[col.key] !== false;
+
+    toggle.addEventListener("change", ()=>{
+      activeMap[col.key] = toggle.checked;
+      render();
+    });
+
+    header.appendChild(toggle);
+    colDiv.appendChild(header);
+
+    const label=document.createElement("div");
+    label.className="col-body-label";
+    label.textContent = col.hint || "";
+    colDiv.appendChild(label);
+
+    const main=document.createElement("div");
+    main.className="col-body-main";
+    main.textContent = state[col.key] || "";
+    colDiv.appendChild(main);
+
+    const extra=document.createElement("div");
+    extra.className="col-body-extra";
+    if(col.key==="conjug" && state[col.key] && typeof isLinkingConj==="function" && isLinkingConj(state[col.key])){
+      extra.textContent="⭐ cere propoziția 2";
+    }
+    colDiv.appendChild(extra);
+
+    container.appendChild(colDiv);
+  });
+}
+
+/* ===========================
+   Preview + render principal
+   =========================== */
+
+let showRo = true;
+
+function updatePreview(){
+  if(!previewKo || !previewRo || !naturalHint) return;
+
+  const c1 = (typeof buildClauseSentence==="function")
+    ? buildClauseSentence(stateP1, activeP1, null)
+    : { ko:"", roText:"", conj:"" };
+
+  let fullKo = (c1.ko || "").trim();
+
+  let c2 = null;
+  const wantP2 = !!(enableP2?.checked);
+  const conjIsLink = !!(stateP1?.conjug && typeof isLinkingConj==="function" && isLinkingConj(stateP1.conjug));
+
+  if(wantP2 && conjIsLink){
+    c2 = buildClauseSentence(stateP2, activeP2, null);
+    if(c2?.ko) fullKo = (fullKo + " " + c2.ko).trim();
+  }
+
+  if(!fullKo){
+    previewKo.textContent="(alege cuvinte din tabel)";
+    previewRo.textContent="";
+    naturalHint.textContent="";
+    return;
+  }
+
+  previewKo.textContent = fullKo;
+
+  const ro1 = (typeof buildNaturalRomanian==="function") ? buildNaturalRomanian(stateP1, activeP1) : "";
+  const ro2 = c2 ? ((typeof buildNaturalRomanian==="function") ? buildNaturalRomanian(stateP2, activeP2) : "") : "";
+  const fullRo = (ro1 + (ro2 ? " " + ro2 : "")).trim();
+
+  previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
+
+  if(typeof analyzeNaturalnessP1==="function"){
+    const nat = analyzeNaturalnessP1();
+    if(nat?.ok){
+      naturalHint.textContent="✅ Propoziție naturală (după regulile simple din aplicație).";
+    }else{
+      naturalHint.textContent = `⚠ ${nat.msg} 「${nat.suggestion}」`;
+    }
+  }else{
+    naturalHint.textContent="";
+  }
+}
+
+function loadRow(i){
+  columns.forEach(col=>{
+    stateP1[col.key] = col.data[i] || "";
+  });
+}
+
+function render(){
+  renderClauseRow(tableP1, activeP1, stateP1, "p1");
+
+  if(enableP2?.checked){
+    tableP2?.classList.remove("hidden");
+    titleP2?.classList.remove("hidden");
+    renderClauseRow(tableP2, activeP2, stateP2, "p2");
+  }else{
+    tableP2?.classList.add("hidden");
+    titleP2?.classList.add("hidden");
+  }
+
+  if(pageInfoEl){
+    pageInfoEl.textContent = `Rând model: ${index+1} / ${maxLen}`;
+  }
+  if(prevBtn) prevBtn.disabled = index===0;
+  if(nextBtn) nextBtn.disabled = index===maxLen-1;
+
+  updatePreview();
+}
+
+/* bind controls */
+prevBtn?.addEventListener("click",()=>{
+  if(index>0){ index--; loadRow(index); render(); }
+});
+nextBtn?.addEventListener("click",()=>{
+  if(index<maxLen-1){ index++; loadRow(index); render(); }
+});
+
+resetBtn?.addEventListener("click",()=>{
+  togglesP1?.querySelectorAll("input").forEach(cb=>{
+    cb.checked=true;
+    activeP1[cb.dataset.key]=true;
+    cb.parentElement.classList.remove("chip-off");
+  });
+  togglesP2?.querySelectorAll("input").forEach(cb=>{
+    cb.checked=true;
+    activeP2[cb.dataset.key]=true;
+    cb.parentElement.classList.remove("chip-off");
+  });
+  render();
+});
+
+toggleRoBtn?.addEventListener("click",()=>{
+  showRo = !showRo;
+  toggleRoBtn.textContent = showRo ? "Ascunde traducerea" : "Arată traducerea";
+  updatePreview();
+});
+
+enableP2?.addEventListener("change", ()=>{
+  const on = enableP2.checked;
+  if(on){
+    tableP2?.classList.remove("hidden");
+    titleP2?.classList.remove("hidden");
+  }else{
+    tableP2?.classList.add("hidden");
+    titleP2?.classList.add("hidden");
+  }
+  updatePreview();
+});
+
+/* attach press handlers (după ce există table) */
+attachPressHandlers(tableP1);
+attachPressHandlers(tableP2);
+</script>
 <script src="app.ui.js"></script>
