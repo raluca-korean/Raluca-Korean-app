@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Raluca Korean — Exercises</title>
+<title>Raluca Korean – Exercises</title>
 
 <style>
 *{box-sizing:border-box}
@@ -13,7 +13,7 @@ body{
   background:#f7f3ff;
   color:#1b1630;
 }
-.app{max-width:900px;margin:0 auto;padding:16px}
+.app{max-width:900px;margin:auto;padding:16px}
 .card{
   background:#fff;
   border-radius:18px;
@@ -21,52 +21,70 @@ body{
   box-shadow:0 12px 30px rgba(0,0,0,.1);
   margin-bottom:16px;
 }
-h1{margin:0;font-size:22px}
+h1{margin:0;font-size:20px}
+.sub{font-size:13px;color:#666;margin-bottom:12px}
+
 select{
   width:100%;
-  padding:12px;
+  padding:10px;
   border-radius:12px;
-  border:1px solid #ccc;
   font-size:15px;
 }
-.question{font-size:22px;font-weight:800;margin-bottom:6px}
-.sub{font-size:13px;color:#666;margin-bottom:12px}
-.answers{display:grid;gap:10px}
+
+.question{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+.answers{
+  display:grid;
+  gap:10px;
+}
 .answer{
   padding:12px;
   border-radius:14px;
   border:2px solid #ddd;
   cursor:pointer;
   font-weight:700;
+  transition:.15s;
 }
-.answer.selected{background:#e8ddff;border-color:#9b7cff}
-.answer.correct{background:#d1fae5;border-color:#10b981}
-.answer.wrong{background:#fee2e2;border-color:#ef4444}
-.controls{display:flex;gap:10px;margin-top:12px}
+.answer.selected{
+  border-color:#8b5cf6;
+  background:#efe9ff;
+}
+.answer.correct{
+  background:#d1fae5;
+  border-color:#10b981;
+}
+.answer.wrong{
+  background:#fee2e2;
+  border-color:#ef4444;
+}
+.controls{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+}
 button{
   padding:10px 14px;
   border-radius:999px;
   border:none;
-  background:#8b5cf6;
-  color:#fff;
-  font-weight:800;
   cursor:pointer;
+  font-weight:800;
 }
-button.secondary{background:#ddd;color:#000}
-.hidden{display:none}
-.wordbank,.sentence{
-  border:1px dashed #ccc;
-  padding:10px;
-  border-radius:12px;
-  min-height:50px;
+.primary{background:#8b5cf6;color:#fff}
+.secondary{background:#eee}
+.feedback{min-height:24px;font-weight:700;margin-top:8px}
+.puzzle-bank,.puzzle-line{
   display:flex;
   gap:8px;
   flex-wrap:wrap;
+  margin:10px 0;
 }
 .chip{
   padding:8px 12px;
   border-radius:999px;
-  background:#eee;
+  border:1px solid #ccc;
   cursor:pointer;
   font-weight:700;
 }
@@ -78,169 +96,176 @@ button.secondary{background:#ddd;color:#000}
 
 <div class="card">
   <h1>Exerciții TOPIK</h1>
-  <select id="type">
+  <div class="sub">Alege tipul de exercițiu</div>
+  <select id="typeSelect">
     <option value="quiz">KO → RO</option>
-    <option value="particle">Particule</option>
-    <option value="particle4">Particule multiple</option>
-    <option value="conjug">Conjugări</option>
+    <option value="particles">Particule</option>
     <option value="puzzle">Puzzle</option>
   </select>
 </div>
 
 <div class="card">
-  <div id="question" class="question"></div>
-  <div id="sub" class="sub"></div>
-
-  <div id="answers" class="answers"></div>
-
-  <div id="puzzleArea" class="hidden">
-    <div class="sub">Cuvinte</div>
-    <div id="bank" class="wordbank"></div>
-    <div class="sub">Propoziția ta</div>
-    <div id="line" class="sentence"></div>
-  </div>
-
-  <div class="controls">
-    <button id="check">Verifică</button>
-    <button class="secondary" id="next">Next</button>
-  </div>
-
-  <div id="feedback" class="sub"></div>
+  <div id="exercise"></div>
 </div>
 
 </div>
 
 <script>
-/* ===== BĂNCI DATE (DEMO – POȚI EXTINDE) ===== */
-
+/* ================= DATA ================= */
 const QUIZ = [
   {ko:"저는 학교에 가요.", ro:"Eu merg la școală."},
-  {ko:"커피를 마셔요.", ro:"Beau cafea."}
+  {ko:"오늘 커피를 마셔요.", ro:"Azi beau cafea."},
+  {ko:"내일 서울에 가요.", ro:"Mâine merg la Seul."}
 ];
 
-const PARTICLE = [
-  {q:"저__ 학생이에요.", opts:["은","는","이","가"], a:"는"},
-  {q:"학교__ 가요.", opts:["에","에서","을"], a:"에"}
+const PARTICLES = [
+  {text:"저__ 학생이에요.", choices:["은","는","이","가"], answer:"는"},
+  {text:"학교__ 가요.", choices:["에","에서","을","를"], answer:"에"}
 ];
 
-const PARTICLE4 = [
-  {
-    q:"저__ 학교__ 친구__ 만나요.",
-    opts:["은","는","에","에서","을","를","와","과"],
-    a:["는","에","를"]
-  }
+const PUZZLES = [
+  {words:["저는","학교에","가요"], answer:"저는 학교에 가요"}
 ];
 
-const CONJUG = [
-  {q:"가다 → ?", opts:["가요","가세요","가고"], a:"가요"}
-];
+/* ================= CORE ================= */
+const box = document.getElementById("exercise");
+const select = document.getElementById("typeSelect");
 
-const PUZZLE = [
-  {w:["저는","학교에","가요"], a:"저는 학교에 가요"}
-];
+let selected=null;
 
-/* ===== STATE ===== */
-  let currentPuzzle = null;
-  let idx=0, selected=null, built=[];
+select.onchange = render;
+render();
 
-/* ===== ELEMENTE ===== */
-const type=document.getElementById("type");
-const qEl=document.getElementById("question");
-const sub=document.getElementById("sub");
-const ans=document.getElementById("answers");
-const fb=document.getElementById("feedback");
-const puzzle=document.getElementById("puzzleArea");
-const bank=document.getElementById("bank");
-const line=document.getElementById("line");
-
-/* ===== RENDER ===== */
 function render(){
-  ans.innerHTML="";
-  fb.textContent="";
-  puzzle.classList.add("hidden");
+  if(select.value==="quiz") renderQuiz();
+  if(select.value==="particles") renderParticles();
+  if(select.value==="puzzle") renderPuzzle();
+}
+
+/* ================= QUIZ ================= */
+function renderQuiz(){
+  const q = QUIZ[Math.floor(Math.random()*QUIZ.length)];
+  const opts = shuffle([q.ro,"Greșit 1","Greșit 2","Greșit 3"]);
   selected=null;
-  built=[];
 
-  if(type.value==="quiz"){
-    const q=QUIZ[idx%QUIZ.length];
-    qEl.textContent=q.ko;
-    sub.textContent="Alege traducerea corectă";
-    shuffle([q.ro,...QUIZ.map(x=>x.ro)]).slice(0,4).forEach(o=>btn(o,q.ro));
-  }
+  box.innerHTML=`
+    <div class="question">${q.ko}</div>
+    <div class="answers">
+      ${opts.map(o=>`<div class="answer">${o}</div>`).join("")}
+    </div>
+    <div class="feedback"></div>
+    <div class="controls">
+      <button class="primary" id="check">Verifică</button>
+      <button class="secondary" id="next">Next</button>
+    </div>
+  `;
 
-  if(type.value==="particle"){
-    const q=PARTICLE[idx%PARTICLE.length];
-    qEl.textContent=q.q;
-    sub.textContent="Alege particula";
-    q.opts.forEach(o=>btn(o,q.a));
-  }
+  const answers=[...box.querySelectorAll(".answer")];
+  answers.forEach(a=>a.onclick=()=>{
+    answers.forEach(x=>x.classList.remove("selected"));
+    a.classList.add("selected");
+    selected=a.textContent;
+  });
 
-  if(type.value==="particle4"){
-    const q=PARTICLE4[idx%PARTICLE4.length];
-    qEl.textContent=q.q;
-    sub.textContent="Alege toate particulele corecte";
-    q.opts.forEach(o=>btn(o,q.a));
-  }
+  box.querySelector("#check").onclick=()=>{
+    if(!selected) return;
+    answers.forEach(a=>{
+      if(a.textContent===q.ro) a.classList.add("correct");
+      else if(a.textContent===selected) a.classList.add("wrong");
+    });
+  };
+  box.querySelector("#next").onclick=renderQuiz;
+}
 
-  if(type.value==="conjug"){
-    const q=CONJUG[idx%CONJUG.length];
-    qEl.textContent=q.q;
-    sub.textContent="Alege conjugarea";
-    q.opts.forEach(o=>btn(o,q.a));
-  }
+/* ================= PARTICLES ================= */
+function renderParticles(){
+  const q = PARTICLES[Math.floor(Math.random()*PARTICLES.length)];
+  selected=null;
 
-  if(type.value==="puzzle"){
-    const p=PUZZLE[idx%PUZZLE.length];
-    qEl.textContent="Aranjează propoziția";
-    sub.textContent="";
-    puzzle.classList.remove("hidden");
-    shuffle(p.w).forEach(w=>{
+  box.innerHTML=`
+    <div class="question">${q.text}</div>
+    <div class="answers">
+      ${q.choices.map(c=>`<div class="answer">${c}</div>`).join("")}
+    </div>
+    <div class="feedback"></div>
+    <div class="controls">
+      <button class="primary" id="check">Verifică</button>
+      <button class="secondary" id="next">Next</button>
+    </div>
+  `;
+
+  const answers=[...box.querySelectorAll(".answer")];
+  answers.forEach(a=>a.onclick=()=>{
+    answers.forEach(x=>x.classList.remove("selected"));
+    a.classList.add("selected");
+    selected=a.textContent;
+  });
+
+  box.querySelector("#check").onclick=()=>{
+    if(!selected) return;
+    answers.forEach(a=>{
+      if(a.textContent===q.answer) a.classList.add("correct");
+      else if(a.textContent===selected) a.classList.add("wrong");
+    });
+  };
+  box.querySelector("#next").onclick=renderParticles;
+}
+
+/* ================= PUZZLE ================= */
+function renderPuzzle(){
+  const p = PUZZLES[0];
+  let built=[];
+
+  box.innerHTML=`
+    <div class="question">Aranjează propoziția</div>
+    <div class="puzzle-bank"></div>
+    <div class="puzzle-line"></div>
+    <div class="feedback"></div>
+    <div class="controls">
+      <button class="primary" id="check">Verifică</button>
+      <button class="secondary" id="reset">Reset</button>
+    </div>
+  `;
+
+  const bank=box.querySelector(".puzzle-bank");
+  const line=box.querySelector(".puzzle-line");
+  const feedback=box.querySelector(".feedback");
+
+  function draw(){
+    bank.innerHTML="";
+    line.innerHTML="";
+    p.words.forEach(w=>{
+      if(!built.includes(w)){
+        const c=document.createElement("div");
+        c.className="chip";
+        c.textContent=w;
+        c.onclick=()=>{built.push(w);draw();}
+        bank.appendChild(c);
+      }
+    });
+    built.forEach((w,i)=>{
       const c=document.createElement("div");
       c.className="chip";
       c.textContent=w;
-      c.onclick=()=>{built.push(w);drawPuzzle()};
-      bank.appendChild(c);
+      c.onclick=()=>{built.splice(i,1);draw();}
+      line.appendChild(c);
     });
   }
-}
+  draw();
 
-function btn(text,correct){
-  const b=document.createElement("div");
-  b.className="answer";
-  b.textContent=text;
-  b.onclick=()=>{
-    selected=text;
-    document.querySelectorAll(".answer").forEach(x=>x.classList.remove("selected"));
-    b.classList.add("selected");
-    if(Array.isArray(correct)){
-      if(correct.includes(text)) b.classList.add("correct");
-    }
+  box.querySelector("#check").onclick=()=>{
+    feedback.textContent =
+      built.join(" ")===p.answer ? "✅ Corect" : "❌ Greșit";
   };
-  ans.appendChild(b);
+  box.querySelector("#reset").onclick=()=>{
+    built=[];feedback.textContent="";draw();
+  };
 }
 
-function drawPuzzle(){
-  line.innerHTML="";
-  built.forEach((w,i)=>{
-    const c=document.createElement("div");
-    c.className="chip";
-    c.textContent=w;
-    c.onclick=()=>{built.splice(i,1);drawPuzzle()};
-    line.appendChild(c);
-  });
+/* ================= UTIL ================= */
+function shuffle(a){
+  return a.sort(()=>Math.random()-0.5);
 }
-
-document.getElementById("check").onclick=()=>{
-  fb.textContent="✔ verificat";
-};
-document.getElementById("next").onclick=()=>{
-  idx++; bank.innerHTML=""; render();
-};
-type.onchange=()=>{idx=0;bank.innerHTML="";render()};
-
-function shuffle(a){return a.sort(()=>Math.random()-.5)}
-
-render();
 </script>
 </body>
 </html>
