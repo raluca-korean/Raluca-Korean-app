@@ -724,4 +724,147 @@
       pzBankEl.innerHTML = "";
       currentPuzzle.words.forEach(w=>{
         if(built.includes(w)) return;
-       
+             pzBankEl.innerHTML = "";
+      currentPuzzle.words.forEach(w=>{
+        if(built.includes(w)) return;
+
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = w;
+        chip.addEventListener("click", ()=>{
+          built.push(w);
+          renderPuzzle();
+        });
+        pzBankEl.appendChild(chip);
+      });
+
+      // line: show built words (click to remove)
+      pzLineEl.innerHTML = "";
+      built.forEach((w, idx)=>{
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = w;
+        chip.addEventListener("click", ()=>{
+          built.splice(idx, 1);
+          renderPuzzle();
+        });
+        pzLineEl.appendChild(chip);
+      });
+
+      // if empty line, show a small hint
+      if(built.length === 0){
+        const ghost = document.createElement("span");
+        ghost.style.color = "rgba(27,22,48,0.55)";
+        ghost.style.fontWeight = "800";
+        ghost.style.fontSize = "13px";
+        ghost.textContent = "Tap pe cuvinte din Word bank ↑";
+        pzLineEl.appendChild(ghost);
+      }
+    }
+
+    $("#pzClearBtn").addEventListener("click", ()=>{
+      built = [];
+      pzMsgEl.textContent = "—";
+      renderPuzzle();
+    });
+
+    $("#pzNewBtn").addEventListener("click", ()=>{
+      st.puzzle.idx += 1;
+      saveState(st);
+      newPuzzle();
+      updateSummary();
+    });
+
+    $("#pzCheckBtn").addEventListener("click", ()=>{
+      if(!currentPuzzle) return;
+
+      const sentence = built.join(" ").trim();
+      if(!sentence){
+        pzMsgEl.textContent = "Construiește întâi propoziția.";
+        return;
+      }
+
+      const ok = sentence === currentPuzzle.answer;
+      if(ok){
+        st.puzzle.correct += 1;
+        pzMsgEl.textContent = `✅ Corect. RO: ${currentPuzzle.ro}`;
+      } else {
+        pzMsgEl.textContent = `❌ Greșit. Corect: "${currentPuzzle.answer}" · RO: ${currentPuzzle.ro}`;
+      }
+
+      saveState(st);
+      updateSummary();
+      renderPuzzle();
+    });
+
+    // =========================
+    // RESET (ALL)
+    // =========================
+    $("#resetAllBtn").addEventListener("click", ()=>{
+      const yes = confirm("Reset total? (scoruri + întrebări adăugate)");
+      if(!yes) return;
+
+      localStorage.removeItem(LS_EX);
+
+      // reset in-memory too (reîncarcă starea)
+      const fresh = {
+        quiz: { correct:0, total:0, idx:0, custom:[] },
+        particles: { correct:0, idx:0 },
+        puzzle: { correct:0, idx:0 },
+      };
+
+      st.quiz = fresh.quiz;
+      st.particles = fresh.particles;
+      st.puzzle = fresh.puzzle;
+
+      saveState(st);
+
+      // reset UI
+      $("#quizMsg").textContent = "Reset complet făcut.";
+      $("#pMsg").textContent = "—";
+      $("#pzMsg").textContent = "—";
+
+      renderQuiz();
+      renderParticles();
+      newPuzzle();
+      updateSummary();
+    });
+
+    // =========================
+    // AUDIO (KO) - simplu
+    // =========================
+    function speakKorean(text){
+      try{
+        if(!("speechSynthesis" in window)){
+          quizMsgEl.textContent = "Audio nu e disponibil pe acest browser.";
+          return;
+        }
+        const u = new SpeechSynthesisUtterance(text);
+        // încearcă o voce coreeană dacă există
+        const voices = speechSynthesis.getVoices?.() || [];
+        const koVoice = voices.find(v => (v.lang || "").toLowerCase().startsWith("ko"));
+        if(koVoice) u.voice = koVoice;
+        u.lang = koVoice?.lang || "ko-KR";
+        u.rate = 0.95;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      } catch (e){
+        quizMsgEl.textContent = "Audio a eșuat.";
+      }
+    }
+
+    // Unele browsere încarcă vocile mai târziu
+    if("speechSynthesis" in window){
+      window.speechSynthesis.onvoiceschanged = () => {};
+    }
+
+    // =========================
+    // INIT
+    // =========================
+    updateSummary();
+    renderQuiz();
+    renderParticles();
+    newPuzzle();
+  </script>
+</body>
+</html>
