@@ -102,129 +102,154 @@ button{
 </div>
 
 </div>
-
 <script>
-/* ===== DATE ===== */
 const DATA = {
-  koRo:[
+  "ko-ro":[
     {q:"저는 학생이에요.",a:"Eu sunt student."},
     {q:"커피를 마셔요.",a:"Beau cafea."}
   ],
-  roKo:[
-    {q:"Eu merg la școală.",a:"저는 학교에 가요."},
-    {q:"Azi studiez.",a:"오늘 공부해요."}
+  "ro-ko":[
+    {q:"Eu merg la școală.",a:"저는 학교에 가요."}
   ],
-  particle:[
+  "particle":[
     {q:"저__ 학생이에요.",opts:["은","는","이","가"],a:"는"}
   ],
-  particlePlus:[
+  "particlePlus":[
     {q:"저__ 학교__ 가요.",opts:["은","는","에","에서"],a:["는","에"]}
   ],
-  conjug:[
-    {q:"먹다 → prezent politicos",opts:["먹어요","먹어요?","먹습니다"],a:"먹어요"}
+  "conjug":[
+    {q:"먹다 → prezent",opts:["먹어요","먹습니다","먹을게요"],a:"먹어요"}
   ],
-  puzzle:[
+  "puzzle":[
     {w:["저는","학교에","가요"],a:"저는 학교에 가요"}
   ]
 };
 
-let type="ko-ro",i=0,selected=null,built=[];
+let type = "ko-ro";
+let index = 0;
+let selected = null;
+let built = [];
 
-const q=document.getElementById("question"),
-h=document.getElementById("helper"),
-a=document.getElementById("answers"),
-f=document.getElementById("feedback"),
-bank=document.getElementById("bank"),
-line=document.getElementById("line"),
-pUI=document.getElementById("puzzleUI");
+const q = document.getElementById("question");
+const h = document.getElementById("helper");
+const a = document.getElementById("answers");
+const f = document.getElementById("feedback");
+const bank = document.getElementById("bank");
+const line = document.getElementById("line");
+const pUI = document.getElementById("puzzleUI");
 
-function clear(){
-  a.innerHTML="";f.textContent="";
-  selected=null;built=[];
+/* RESET TOTAL */
+function resetUI(){
+  a.innerHTML="";
+  f.textContent="";
+  selected=null;
+  built=[];
   pUI.style.display="none";
+  bank.innerHTML="";
+  line.innerHTML="";
 }
 
+/* RENDER GENERAL */
 function render(){
-  clear();
-  const d=DATA[type][i%DATA[type].length];
+  resetUI();
+  const d = DATA[type][index % DATA[type].length];
 
-  if(type==="ko-ro"||type==="ro-ko"){
-    q.textContent=d.q;
-    h.textContent="Alege varianta corectă";
-    const opts=[d.a,"GREȘIT 1","GREȘIT 2"].sort(()=>Math.random()-.5);
-    opts.forEach(o=>{
-      const el=document.createElement("div");
+  /* QUIZ */
+  if(type==="ko-ro" || type==="ro-ko" || type==="conjug"){
+    q.textContent = d.q;
+    h.textContent = "Alege varianta corectă";
+
+    const options = d.opts ? d.opts : [d.a,"Greșit","Alt greșit"];
+    options.sort(()=>Math.random()-0.5);
+
+    options.forEach(opt=>{
+      const el = document.createElement("div");
       el.className="answer";
-      el.textContent=o;
-      el.onclick=()=>select(el,o===d.a);
+      el.textContent=opt;
+      el.onclick=()=>{
+        if(selected) return;
+        selected=true;
+        el.classList.add(opt===d.a?"correct":"wrong");
+        f.textContent = opt===d.a ? "✅ Corect" : "❌ Greșit";
+      };
       a.appendChild(el);
     });
   }
 
-  if(type==="particle"||type==="conjug"){
+  /* PARTICULE */
+  if(type==="particle"){
     q.textContent=d.q;
-    h.textContent="Alege corect";
+    h.textContent="Alege particula corectă";
     d.opts.forEach(o=>{
       const el=document.createElement("div");
       el.className="answer";
       el.textContent=o;
-      el.onclick=()=>select(el,o===d.a);
+      el.onclick=()=>{
+        if(selected)return;
+        selected=true;
+        el.classList.add(o===d.a?"correct":"wrong");
+        f.textContent=o===d.a?"✅ Corect":"❌ Greșit";
+      };
       a.appendChild(el);
     });
   }
 
+  /* PARTICULE MULTIPLE */
   if(type==="particlePlus"){
     q.textContent=d.q;
-    h.textContent="Alege toate corect";
+    h.textContent="Alege TOATE corecte";
     d.opts.forEach(o=>{
       const el=document.createElement("div");
       el.className="answer";
-      el.onclick=()=>toggle(el,o,d.a);
       el.textContent=o;
+      el.onclick=()=>el.classList.toggle("selected");
       a.appendChild(el);
     });
   }
 
+  /* PUZZLE */
   if(type==="puzzle"){
     q.textContent="Ordonează propoziția";
+    h.textContent="";
     pUI.style.display="block";
+
     d.w.forEach(w=>{
       const c=document.createElement("div");
-      c.className="chip";c.textContent=w;
-      c.onclick=()=>{built.push(w);drawPuzzle(d)};
+      c.className="chip";
+      c.textContent=w;
+      c.onclick=()=>{
+        built.push(w);
+        redrawPuzzle(d);
+      };
       bank.appendChild(c);
     });
   }
 }
 
-function select(el,ok){
-  if(selected)return;
-  selected=true;
-  el.classList.add(ok?"correct":"wrong");
-  f.textContent=ok?"✅ Corect":"❌ Greșit";
-}
-
-function toggle(el,val,ans){
-  el.classList.toggle("selected");
-}
-
-function drawPuzzle(d){
-  bank.innerHTML="";line.innerHTML="";
+function redrawPuzzle(d){
+  line.innerHTML="";
   built.forEach(w=>{
     const c=document.createElement("div");
-    c.className="chip";c.textContent=w;
+    c.className="chip";
+    c.textContent=w;
     line.appendChild(c);
   });
 }
 
+/* EVENTS */
 document.getElementById("type").onchange=e=>{
-  type=e.target.value;i=0;render();
+  type=e.target.value;
+  index=0;
+  render();
 };
-document.getElementById("next").onclick=()=>{i++;render();};
+document.getElementById("next").onclick=()=>{
+  index++;
+  render();
+};
 document.getElementById("check").onclick=()=>{
   if(type==="puzzle"){
-    const d=DATA.puzzle[i%DATA.puzzle.length];
-    f.textContent=built.join(" ")===d.a?"✅ Corect":"❌ Greșit";
+    const d=DATA.puzzle[index % DATA.puzzle.length];
+    f.textContent = built.join(" ")===d.a ? "✅ Corect" : "❌ Greșit";
   }
 };
 
