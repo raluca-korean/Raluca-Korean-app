@@ -198,6 +198,52 @@ const PARTICLES_BANK = [
     explain: "Subiect → 책 + 이"
   }
 ];
+if (type === "particle") {
+  if (!PARTICLES_BANK.length) {
+    setEmptyQuestion("Nu există exerciții cu particule.");
+    return;
+  }
+
+  if (state.particles.idx >= PARTICLES_BANK.length) {
+    state.particles.idx = 0;
+  }
+
+  const q = PARTICLES_BANK[state.particles.idx];
+  let selected = null;
+
+  exerciseSubtagEl.textContent =
+    `Întrebarea ${state.particles.idx + 1} / ${PARTICLES_BANK.length}`;
+
+  exerciseQuestionEl.innerHTML = `<b>${q.text}</b>`;
+  exerciseOptionsEl.innerHTML = "";
+  exerciseFeedbackEl.textContent = "";
+
+  q.choices.forEach(choice => {
+    const btn = document.createElement("div");
+    btn.className = "answer";
+    btn.textContent = choice;
+
+    btn.addEventListener("click", () => {
+      document
+        .querySelectorAll(".answer")
+        .forEach(a => a.classList.remove("selected"));
+
+      btn.classList.add("selected");
+      selected = choice;
+    });
+
+    exerciseOptionsEl.appendChild(btn);
+  });
+
+  current = {
+    type: "particle",
+    check: () => selected === q.answer,
+    answer: q.answer,
+    explain: q.explain
+  };
+
+  return;
+}  
   function loadQuestion(){
   selectedAnswer = null;
   fEl.textContent = "";
