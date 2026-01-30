@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ro">
 <head>
@@ -6,45 +7,58 @@
 <title>Raluca Korean — Exercises</title>
 
 <style>
+*{box-sizing:border-box}
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto;
   background:#f7f3ff;
   color:#1b1630;
 }
-.app{max-width:900px;margin:auto;padding:16px}
+.app{max-width:900px;margin:0 auto;padding:16px}
 .card{
   background:#fff;
   border-radius:18px;
   padding:18px;
-  margin-bottom:16px;
   box-shadow:0 12px 30px rgba(0,0,0,.1);
+  margin-bottom:16px;
 }
-h1{margin:0;font-size:22px}
-select,button{
-  padding:10px 14px;
+h1{margin:0;font-size:20px}
+.sub{font-size:13px;color:#666;margin-top:4px}
+select{
+  width:100%;
+  padding:10px;
   border-radius:12px;
   border:1px solid #ccc;
-  font-weight:700;
+  font-size:15px;
 }
-.answers{display:grid;gap:10px;margin-top:12px}
+.question{font-size:22px;font-weight:800;margin-bottom:6px}
+.helper{font-size:13px;color:#666;margin-bottom:14px}
+.answers{display:grid;gap:10px;margin-bottom:14px}
 .answer{
-  padding:12px;
-  border-radius:14px;
-  border:2px solid #ddd;
-  cursor:pointer;
+  padding:12px;border-radius:14px;border:2px solid #ddd;
+  background:#fafafa;font-weight:700;cursor:pointer;
 }
+.answer.selected{background:#e8ddff;border-color:#9b7cff}
 .answer.correct{background:#d1fae5;border-color:#10b981}
 .answer.wrong{background:#fee2e2;border-color:#ef4444}
-.answer.selected{background:#e8ddff;border-color:#8b5cf6}
-.controls{margin-top:12px;display:flex;gap:10px}
-.hidden{display:none}
-.chips{display:flex;gap:8px;flex-wrap:wrap}
+.feedback{min-height:24px;font-weight:700}
+.controls{display:flex;gap:10px;margin-top:10px}
+button{
+  padding:10px 14px;border-radius:999px;
+  border:1px solid #ccc;background:#fff;font-weight:800;cursor:pointer;
+}
+.primary{background:#8b5cf6;color:#fff;border:none}
+
+/* PUZZLE */
+.puzzle-bank,.puzzle-line{
+  border:2px dashed #ddd;border-radius:14px;
+  padding:10px;min-height:52px;
+  display:flex;gap:8px;flex-wrap:wrap;
+}
 .chip{
-  padding:8px 12px;
-  border-radius:999px;
-  background:#eee;
-  cursor:pointer;
+  padding:8px 12px;border-radius:999px;
+  background:#f0f0ff;border:1px solid #aaa;
+  font-weight:800;cursor:pointer;
 }
 </style>
 </head>
@@ -54,11 +68,11 @@ select,button{
 
 <div class="card">
   <h1>Exerciții TOPIK</h1>
-  <p>Quiz · Particule · Conjugări · Puzzle</p>
+  <div class="sub">Quiz · Particule · Conjugări · Puzzle</div>
 </div>
 
 <div class="card">
-  <label>Tip exercițiu</label><br>
+  <label><b>Tip exercițiu</b></label>
   <select id="type">
     <option value="ko-ro">KO → RO</option>
     <option value="ro-ko">RO → KO</option>
@@ -70,46 +84,27 @@ select,button{
 </div>
 
 <div class="card">
-  <div id="question"></div>
-  <div id="answers" class="answers"></div>
+  <div class="question" id="question"></div>
+  <div class="helper" id="helper"></div>
 
-  <div id="puzzleUI" class="hidden">
-    <h4>Cuvinte</h4>
-    <div id="bank" class="chips"></div>
-    <h4>Propoziția ta</h4>
-    <div id="line" class="chips"></div>
+  <div class="answers" id="answers"></div>
+
+  <div id="puzzleUI" style="display:none">
+    <div class="puzzle-bank" id="bank"></div>
+    <div class="puzzle-line" id="line"></div>
   </div>
 
-  <div id="feedback"></div>
+  <div class="feedback" id="feedback"></div>
 
   <div class="controls">
-    <button id="check">Verifică</button>
+    <button class="primary" id="check">Verifică</button>
     <button id="next">Următorul</button>
   </div>
 </div>
 
 </div>
-
-<!-- ===== DATE ===== -->
-<script src="data/data_ko_ro.js"></script>
-<script src="data/data_ro_ko.js"></script>
-<script src="data/data_particles.js"></script>
-<script src="data/data_particlePlus.js"></script>
-<script src="data/data_conjug.js"></script>
-<script src="data/data_puzzle.js"></script>
-
-<!-- ===== LOGICĂ (LOCKED) ===== -->
-<script src="exercises_logic.js"></script>
-
 <script>
-  /* ================= DATA ================= */
-function initKoRo(){ /* cod KO→RO */ }
-function initRoKo(){ /* cod RO→KO */ }
-function initParticle(){ /* particule simple */ }
-function initParticlePlus(){ /* multiple */ }
-function initConjug(){ /* conjugări */ }
-function initPuzzle(){ /* puzzle */ }
-  const DATA = {
+    const DATA = {
  "ko-ro":[
   {q:"저는 학생이에요.",a:"Eu sunt student."},
   {q:"저는 회사원이에요.",a:"Eu sunt angajat."},
@@ -881,161 +876,135 @@ function initPuzzle(){ /* puzzle */ }
   { w:["결과를","바탕으로","계획을","수정했어요"], a:"결과를 바탕으로 계획을 수정했어요" },
   { w:["문제의","원인을","분석했어요"], a:"문제의 원인을 분석했어요" }
   ]
-    };
-
-/* ================= STATE ================= */
-
 let type = "ko-ro";
 let index = 0;
-let selected = [];
+let selected = null;
 let built = [];
 
-/* ================= ELEMENTE ================= */
-
-const typeEl = document.getElementById("type");
-const qEl = document.getElementById("question");
-const hEl = document.getElementById("helper");
-const aEl = document.getElementById("answers");
-const fEl = document.getElementById("feedback");
-const bankEl = document.getElementById("bank");
-const lineEl = document.getElementById("line");
+const q = document.getElementById("question");
+const h = document.getElementById("helper");
+const a = document.getElementById("answers");
+const f = document.getElementById("feedback");
+const bank = document.getElementById("bank");
+const line = document.getElementById("line");
 const pUI = document.getElementById("puzzleUI");
-const checkBtn = document.getElementById("check");
-const nextBtn = document.getElementById("next");
 
-/* ================= LOGIC ================= */
-
-function reset(){
-  aEl.innerHTML="";
-  fEl.textContent="";
-  selected=[];
+/* RESET TOTAL */
+function resetUI(){
+  a.innerHTML="";
+  f.textContent="";
+  selected=null;
   built=[];
   pUI.style.display="none";
-  bankEl.innerHTML="";
-  lineEl.innerHTML="";
+  bank.innerHTML="";
+  line.innerHTML="";
 }
 
+/* RENDER GENERAL */
 function render(){
-  reset();
-  const d = DATA[type][ index % DATA[type].length ];
+  resetUI();
+  const d = DATA[type][index % DATA[type].length];
 
-  if(type==="ko-ro"||type==="ro-ko"||type==="conjug"){
-    qEl.textContent=d.q;
-    hEl.textContent="Alege varianta corectă";
-    const opts = d.opts ? d.opts : [d.a,"Greșit","Alt greșit"];
-    opts.sort(()=>Math.random()-0.5);
-    opts.forEach(o=>{
-      const el=document.createElement("div");
+  /* QUIZ */
+  if(type==="ko-ro" || type==="ro-ko" || type==="conjug"){
+    q.textContent = d.q;
+    h.textContent = "Alege varianta corectă";
+
+    const options = d.opts ? d.opts : [d.a,"Greșit","Alt greșit"];
+    options.sort(()=>Math.random()-0.5);
+
+    options.forEach(opt=>{
+      const el = document.createElement("div");
       el.className="answer";
-      el.textContent=o;
+      el.textContent=opt;
       el.onclick=()=>{
-        if(selected.length) return;
-        selected=[o];
-        el.classList.add(o===d.a?"correct":"wrong");
-        fEl.textContent=o===d.a?"✅ Corect":"❌ Greșit";
+        if(selected) return;
+        selected=true;
+        el.classList.add(opt===d.a?"correct":"wrong");
+        f.textContent = opt===d.a ? "✅ Corect" : "❌ Greșit";
       };
-      aEl.appendChild(el);
+      a.appendChild(el);
     });
   }
 
+  /* PARTICULE */
   if(type==="particle"){
-    qEl.textContent=d.q;
-    hEl.textContent="Alege particula corectă";
+    q.textContent=d.q;
+    h.textContent="Alege particula corectă";
     d.opts.forEach(o=>{
       const el=document.createElement("div");
       el.className="answer";
       el.textContent=o;
       el.onclick=()=>{
-        if(selected.length) return;
-        selected=[o];
+        if(selected)return;
+        selected=true;
         el.classList.add(o===d.a?"correct":"wrong");
-        fEl.textContent=o===d.a?"✅ Corect":"❌ Greșit";
+        f.textContent=o===d.a?"✅ Corect":"❌ Greșit";
       };
-      aEl.appendChild(el);
+      a.appendChild(el);
     });
   }
 
+  /* PARTICULE MULTIPLE */
   if(type==="particlePlus"){
-    qEl.textContent=d.q;
-    hEl.textContent="Alege TOATE corecte";
+    q.textContent=d.q;
+    h.textContent="Alege TOATE corecte";
     d.opts.forEach(o=>{
       const el=document.createElement("div");
       el.className="answer";
       el.textContent=o;
       el.onclick=()=>el.classList.toggle("selected");
-      aEl.appendChild(el);
+      a.appendChild(el);
     });
   }
 
+  /* PUZZLE */
   if(type==="puzzle"){
-    qEl.textContent="Ordonează propoziția";
-    hEl.textContent="";
+    q.textContent="Ordonează propoziția";
+    h.textContent="";
     pUI.style.display="block";
+
     d.w.forEach(w=>{
       const c=document.createElement("div");
       c.className="chip";
       c.textContent=w;
       c.onclick=()=>{
         built.push(w);
-        redrawPuzzle();
+        redrawPuzzle(d);
       };
-      bankEl.appendChild(c);
+      bank.appendChild(c);
     });
   }
 }
 
-function redrawPuzzle(){
-  lineEl.innerHTML="";
+function redrawPuzzle(d){
+  line.innerHTML="";
   built.forEach(w=>{
     const c=document.createElement("div");
     c.className="chip";
     c.textContent=w;
-    lineEl.appendChild(c);
+    line.appendChild(c);
   });
 }
-const boxes = document.querySelectorAll(".exercise-box");
-const selector = document.getElementById("type");
 
-function showExercise(type){
-  boxes.forEach(b => b.classList.remove("active"));
-  const box = document.getElementById("ex-" + type);
-  if(box) box.classList.add("active");
-}
-
-selector.addEventListener("change", e=>{
-  showExercise(e.target.value);
-});
-
-// la pornire
-showExercise(selector.value);
-  /* ================= EVENTS ================= */
-
-typeEl.onchange = e=>{
-  type = e.target.value;
-  index = 0;
+/* EVENTS */
+document.getElementById("type").onchange=e=>{
+  type=e.target.value;
+  index=0;
   render();
 };
-
-checkBtn.onclick = ()=>{
-  const d = DATA[type][ index % DATA[type].length ];
-  if(type==="particlePlus"){
-    const picked=[...aEl.querySelectorAll(".selected")].map(x=>x.textContent);
-    fEl.textContent =
-      JSON.stringify(picked.sort())===JSON.stringify(d.a.sort())
-      ?"✅ Corect":"❌ Greșit";
-  }
-  if(type==="puzzle"){
-    fEl.textContent = built.join(" ")===d.a ? "✅ Corect":"❌ Greșit";
-  }
-};
-
-nextBtn.onclick = ()=>{
+document.getElementById("next").onclick=()=>{
   index++;
   render();
 };
+document.getElementById("check").onclick=()=>{
+  if(type==="puzzle"){
+    const d=DATA.puzzle[index % DATA.puzzle.length];
+    f.textContent = built.join(" ")===d.a ? "✅ Corect" : "❌ Greșit";
+  }
+};
 
 render();
- 
 </script>
 </body>
 </html>
