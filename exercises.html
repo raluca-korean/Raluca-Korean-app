@@ -67,51 +67,16 @@ select{
   gap:10px;
   margin-bottom:16px;
 }
+
 .answer{
-  padding:12px;
-  border-radius:14px;
-  border:2px solid #ddd;
-  background:#fafafa;
-  font-weight:700;
-  cursor:pointer;
-}
-.answer.correct{
-  background:#d1fae5;
-  border-color:#10b981;
-}
-.answer.wrong{
-  background:#fee2e2;
-  border-color:#ef4444;
-}
-.feedback{
-  min-height:28px;
-  font-weight:700;
-  margin-bottom:12px;
-}
-.controls{
-  display:flex;
-  gap:10px;
-}
-button{
-  padding:10px 14px;
-  border-radius:999px;
-  border:1px solid #ccc;
-  background:#fff;
-  font-weight:800;
-  cursor:pointer;
-}
-.primary{
-  background:#8b5cf6;
-  color:#fff;
-  border:none;
-}
-  .answer {
   padding: 10px 14px;
   border-radius: 14px;
   border: 1px solid #ddd;
   background: #fff;
   cursor: pointer;
   transition: 0.15s ease;
+  font-weight:800;
+  text-align:left;
 }
 
 /* 🔵 SELECTAT */
@@ -132,6 +97,35 @@ button{
   background: #ffd6d6;
   border-color: #e53935;
 }
+
+.answer:disabled{
+  opacity:.95;
+  cursor:default;
+}
+
+.feedback{
+  min-height:28px;
+  font-weight:800;
+  margin-bottom:12px;
+  white-space:pre-line;
+}
+.controls{
+  display:flex;
+  gap:10px;
+}
+button{
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid #ccc;
+  background:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+.primary{
+  background:#8b5cf6;
+  color:#fff;
+  border:none;
+}
 </style>
 </head>
 
@@ -140,7 +134,7 @@ button{
 
   <div class="header">
     <h1>Exerciții TOPIK</h1>
-    <p>Tip 1 · Coreeană → Română</p>
+    <p id="subheader">Tip 1 · Coreeană → Română</p>
   </div>
 
   <div class="exercise-type">
@@ -151,7 +145,7 @@ button{
   </div>
 
   <div class="exercise-card">
-    <div class="question" id="question"></div>
+    <div class="question" id="question">—</div>
     <div class="sub">Alege traducerea corectă</div>
 
     <div class="answers" id="answers"></div>
@@ -165,59 +159,52 @@ button{
   </div>
 
 </div>
+
 <script>
 /* ===========================
-   EXERCIȚII: Router anti-blocaj
-   - nu contează cum ți-ai numit funcțiile
-   - dacă un tip nu e implementat, NU blochează pagina
+   TIP 1: KO → RO QUIZ
+   - compatibil 1:1 cu HTML-ul tău (question/answers/feedback/checkBtn/nextBtn)
+   - folosește window.TOPIK4_QUIZ_500 dacă există
    =========================== */
 
 (function(){
-  // Elemente UI (trebuie să existe în HTML)
-  const exerciseTypeEl     = document.getElementById("exerciseType");
-  const exerciseTypeLabelEl= document.getElementById("exerciseTypeLabel");
-  const exerciseSubtagEl   = document.getElementById("exerciseSubtag");
-  const exerciseQuestionEl = document.getElementById("exerciseQuestion");
-  const exerciseOptionsEl  = document.getElementById("exerciseOptions");
-  const exerciseFeedbackEl = document.getElementById("exerciseFeedback");
-  const nextQuestionBtn    = document.getElementById("nextQuestionBtn");
-  const checkAnswerBtn     = document.getElementById("checkAnswerBtn");
+  const questionEl = document.getElementById("question");
+  const answersEl  = document.getElementById("answers");
+  const feedbackEl = document.getElementById("feedback");
+  const checkBtn   = document.getElementById("checkBtn");
+  const nextBtn    = document.getElementById("nextBtn");
+  const subheader  = document.getElementById("subheader");
 
-  if(!exerciseTypeEl || !exerciseQuestionEl || !exerciseOptionsEl){
-    // dacă lipsește UI, ieșim fără să stricăm restul paginii
-    return;
+  // Fallback minimal dacă nu există banca globală
+  const FALLBACK = [
+    { ko:"저는 학교에 가요.", ro:"Eu merg la școală." },
+    { ko:"오늘 커피를 마셔요.", ro:"Azi beau cafea." },
+    { ko:"지금 한국어를 공부해요.", ro:"Acum studiez coreeană." },
+    { ko:"내일 서울에 가요.", ro:"Mâine merg în Seoul." }
+  ];
+
+  const BANK = Array.isArray(window.TOPIK4_QUIZ_500) && window.TOPIK4_QUIZ_500.length
+    ? window.TOPIK4_QUIZ_500
+    : FALLBACK;
+
+  const LS_KEY = "rk_ex_tip1_state_v1";
+  const state = loadState();
+
+  let current = null;          // {q, correct, opts}
+  let selectedIndex = -1;
+  let locked = false;
+
+  function safeParse(json, fallback){ try { return JSON.parse(json); } catch { return fallback; } }
+  function loadState(){
+    const base = { idx:0, correct:0, total:0 };
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return base;
+    return Object.assign(base, safeParse(raw, base));
+  }
+  function saveState(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
   }
 
-  // Bănci (dacă există în pagină)
-  const QUIZ_BANK      = Array.isArray(window.TOPIK4_QUIZ_500) ? window.TOPIK4_QUIZ_500 : [];
-  const PARTICLES_BANK = Array.isArray(window.TOPIK4_PARTICLES_500) ? window.TOPIK4_PARTICLES_500 : [];
-
-  // Puzzle din quiz (fallback)
-  const PUZZLE_BANK = QUIZ_BANK.map(q=>{
-    const clean = String(q.ko||"").trim().replace(/[.?!]/g,"");
-    const words = clean.split(/\s+/).filter(Boolean);
-    return { words, answer: clean, ro: q.ro || "" };
-  }).filter(p => p.words.length >= 2);
-
-  // State simplu (anti-blocaj)
-  const state = window.__RK_EX_STATE__ || {
-    quiz:{idx:0,correct:0,total:0},
-    particles:{idx:0,correct:0,total:0},
-    puzzle:{idx:0,correct:0,total:0},
-    lastType: exerciseTypeEl.value || "verb"
-  };
-  window.__RK_EX_STATE__ = state;
-
-  let current = null;
-
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
   function shuffle(arr){
     const a = arr.slice();
     for(let i=a.length-1;i>0;i--){
@@ -227,256 +214,100 @@ button{
     return a;
   }
 
-  function setTypeLabel(type){
-    const map = {
-      verb: "Alege traducerea corectă (KO → RO)",
-      particle: "Alege particula corectă (1 spațiu)",
-      particlePlus: "Particule multiple (4 spații)",
-      conjug: "Alege conjugarea corectă",
-      puzzle: "Puzzle — ordonează propoziția"
-    };
-    if(exerciseTypeLabelEl) exerciseTypeLabelEl.textContent = map[type] || "—";
-  }
-
-  function setEmpty(msg){
-    exerciseQuestionEl.classList.add("empty");
-    exerciseQuestionEl.textContent = msg;
-    exerciseOptionsEl.innerHTML = "";
-    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
-    if(exerciseSubtagEl) exerciseSubtagEl.textContent = "";
-    current = null;
-  }
-
-  // ===== Implementate ACUM: verb / particle / puzzle =====
-  function renderVerb(){
-    setTypeLabel("verb");
-    if(!QUIZ_BANK.length) return setEmpty("Nu există întrebări în banca QUIZ.");
-    if(state.quiz.idx >= QUIZ_BANK.length) state.quiz.idx = 0;
-
-    const q = QUIZ_BANK[state.quiz.idx];
-    const correct = q.ro;
-
-    const wrong = shuffle(QUIZ_BANK.filter(x=>x.ro!==correct)).slice(0,3).map(x=>x.ro);
-    const opts = shuffle([correct, ...wrong]);
-
-    exerciseQuestionEl.classList.remove("empty");
-    exerciseQuestionEl.innerHTML = `<b>${escapeHtml(q.ko)}</b>`;
-    exerciseOptionsEl.innerHTML = "";
-    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
-
-    if(exerciseSubtagEl){
-      exerciseSubtagEl.textContent = `Întrebarea ${state.quiz.idx+1} / ${QUIZ_BANK.length} · Scor ${state.quiz.correct}/${state.quiz.total}`;
-    }
-
-    opts.forEach(opt=>{
-      const btn = document.createElement("button");
-      btn.type="button";
-      btn.className="ex-option";
-      btn.textContent = opt;
-
-      btn.addEventListener("click", ()=>{
-        exerciseOptionsEl.querySelectorAll("button").forEach(b=>b.disabled=true);
-
-        const ok = opt === correct;
-        state.quiz.total += 1;
-        if(ok) state.quiz.correct += 1;
-
-        btn.classList.add(ok ? "good" : "bad");
-        if(exerciseFeedbackEl){
-          exerciseFeedbackEl.textContent = ok ? "✅ Corect." : `❌ Greșit. Corect: ${correct}`;
-        }
-        if(exerciseSubtagEl){
-          exerciseSubtagEl.textContent = `Întrebarea ${state.quiz.idx+1} / ${QUIZ_BANK.length} · Scor ${state.quiz.correct}/${state.quiz.total}`;
-        }
-      });
-
-      exerciseOptionsEl.appendChild(btn);
-    });
-
-    current = { type:"verb" };
-  }
-
-  function renderParticle(){
-    setTypeLabel("particle");
-    if(!PARTICLES_BANK.length) return setEmpty("Nu există întrebări în banca PARTICULE.");
-    if(state.particles.idx >= PARTICLES_BANK.length) state.particles.idx = 0;
-
-    const q = PARTICLES_BANK[state.particles.idx];
-
-    exerciseQuestionEl.classList.remove("empty");
-    exerciseQuestionEl.innerHTML = `<b>${escapeHtml(q.text)}</b>`;
-    exerciseOptionsEl.innerHTML = "";
-    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
-
-    if(exerciseSubtagEl){
-      exerciseSubtagEl.textContent = `Întrebarea ${state.particles.idx+1} / ${PARTICLES_BANK.length} · Corecte ${state.particles.correct}`;
-    }
-
-    q.choices.forEach(ch=>{
-      const btn = document.createElement("button");
-      btn.type="button";
-      btn.className="ex-option";
-      btn.textContent = ch;
-
-      btn.addEventListener("click", ()=>{
-        exerciseOptionsEl.querySelectorAll("button").forEach(b=>b.disabled=true);
-
-        const ok = ch === q.answer;
-        state.particles.total += 1;
-        if(ok) state.particles.correct += 1;
-
-        btn.classList.add(ok ? "good" : "bad");
-        if(exerciseFeedbackEl){
-          exerciseFeedbackEl.textContent = ok ? `✅ Corect. (${q.explain})` : `❌ Greșit. Corect: ${q.answer} — ${q.explain}`;
-        }
-        if(exerciseSubtagEl){
-          exerciseSubtagEl.textContent = `Întrebarea ${state.particles.idx+1} / ${PARTICLES_BANK.length} · Corecte ${state.particles.correct}`;
-        }
-      });
-
-      exerciseOptionsEl.appendChild(btn);
-    });
-
-    current = { type:"particle" };
-  }
-
-  function renderPuzzle(){
-    setTypeLabel("puzzle");
-    if(!PUZZLE_BANK.length) return setEmpty("Nu există puzzle-uri în bancă.");
-    if(state.puzzle.idx >= PUZZLE_BANK.length) state.puzzle.idx = 0;
-
-    const pz = PUZZLE_BANK[state.puzzle.idx];
-    let built = [];
-
-    exerciseQuestionEl.classList.remove("empty");
-    exerciseQuestionEl.innerHTML = `<b>Aranjează cuvintele:</b>`;
-    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
-
-    if(exerciseSubtagEl){
-      exerciseSubtagEl.textContent = `Puzzle ${state.puzzle.idx+1} / ${PUZZLE_BANK.length} · Corecte ${state.puzzle.correct}`;
-    }
-
-    // UI puzzle
-    exerciseOptionsEl.innerHTML = `
-      <div class="ex-puzzle">
-        <div class="ex-pz-row">
-          <div class="ex-pz-title">Cuvinte</div>
-          <div id="pzBank" class="ex-pz-bank"></div>
-        </div>
-        <div class="ex-pz-row" style="margin-top:10px;">
-          <div class="ex-pz-title">Propoziția ta</div>
-          <div id="pzLine" class="ex-pz-line"></div>
-        </div>
-        <div class="ex-pz-actions" style="margin-top:10px;">
-          <button type="button" class="secondary" id="pzClear">Curăță</button>
-        </div>
-      </div>
-    `;
-
-    const bankEl  = document.getElementById("pzBank");
-    const lineEl  = document.getElementById("pzLine");
-    const clearBtn= document.getElementById("pzClear");
-
-    function render(){
-      bankEl.innerHTML = "";
-      lineEl.innerHTML = "";
-
-      const remaining = pz.words.filter(w => !built.includes(w));
-      shuffle(remaining).forEach(w=>{
-        const chip = document.createElement("button");
-        chip.type="button";
-        chip.className="ex-chip";
-        chip.textContent = w;
-        chip.addEventListener("click", ()=>{
-          built.push(w);
-          render();
-        });
-        bankEl.appendChild(chip);
-      });
-
-      built.forEach((w, idx)=>{
-        const chip = document.createElement("button");
-        chip.type="button";
-        chip.className="ex-chip active";
-        chip.textContent = w;
-        chip.addEventListener("click", ()=>{
-          built.splice(idx,1);
-          render();
-        });
-        lineEl.appendChild(chip);
-      });
-    }
-
-    clearBtn.addEventListener("click", ()=>{
-      built = [];
-      if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
-      render();
-    });
-
-    render();
-
-    current = {
-      type:"puzzle",
-      check: ()=> built.join(" ").trim() === pz.answer.trim(),
-      answer: pz.answer,
-      ro: pz.ro
-    };
-  }
-
-  // ===== Router (aici NU se mai blochează) =====
-  function renderByType(type){
-    state.lastType = type;
-
-    // IMPORTANT: tipuri neimplementate încă NU blochează pagina
-    if(type === "particlePlus") return setEmpty("particlePlus nu e implementat încă (nu blochează pagina).");
-    if(type === "conjug")       return setEmpty("conjug nu e implementat încă (nu blochează pagina).");
-
-    if(type === "verb")     return renderVerb();
-    if(type === "particle") return renderParticle();
-    if(type === "puzzle")   return renderPuzzle();
-
-    return setEmpty("Selectează un tip valid.");
-  }
-
-  function nextQuestion(){
-    const type = exerciseTypeEl.value || "verb";
-    if(type==="verb")     state.quiz.idx += 1;
-    if(type==="particle") state.particles.idx += 1;
-    if(type==="puzzle")   state.puzzle.idx += 1;
-
-    renderByType(type);
-  }
-
-  function checkAnswer(){
-    const type = exerciseTypeEl.value || "verb";
-    if(type==="puzzle" && current && current.type==="puzzle"){
-      const ok = current.check();
-      state.puzzle.total += 1;
-      if(ok) state.puzzle.correct += 1;
-
-      if(exerciseFeedbackEl){
-        exerciseFeedbackEl.textContent = ok
-          ? `✅ Corect! (${current.ro})`
-          : `❌ Nu încă. Corect: ${current.answer}\nRO: ${current.ro}`;
-      }
-      if(exerciseSubtagEl){
-        exerciseSubtagEl.textContent = `Puzzle ${state.puzzle.idx+1} / ${PUZZLE_BANK.length} · Corecte ${state.puzzle.correct}`;
-      }
+  function render(){
+    if(!BANK.length){
+      questionEl.textContent = "Nu există întrebări.";
+      answersEl.innerHTML = "";
+      feedbackEl.textContent = "";
       return;
     }
 
-    // la celelalte, răspunsul se verifică la tap (și nu avem ce "check" aici)
-    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "Alege o opțiune (tap).";
+    if(state.idx >= BANK.length) state.idx = 0;
+
+    const q = BANK[state.idx];
+    const correct = q.ro;
+
+    // 3 greșite
+    const wrong = shuffle(BANK.filter(x => x.ro !== correct)).slice(0,3).map(x=>x.ro);
+    const opts = shuffle([correct, ...wrong]);
+
+    current = { q, correct, opts };
+    selectedIndex = -1;
+    locked = false;
+
+    questionEl.textContent = q.ko;
+    feedbackEl.textContent = "";
+    answersEl.innerHTML = "";
+
+    subheader.textContent = `Tip 1 · KO→RO · Întrebarea ${state.idx+1}/${BANK.length} · Scor ${state.correct}/${state.total}`;
+
+    opts.forEach((text, idx)=>{
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "answer";
+      b.textContent = text;
+
+      b.addEventListener("click", ()=>{
+        if(locked) return;
+
+        // selectare vizibilă
+        selectedIndex = idx;
+        answersEl.querySelectorAll(".answer").forEach(x=>x.classList.remove("selected"));
+        b.classList.add("selected");
+      });
+
+      answersEl.appendChild(b);
+    });
   }
 
-  // Wire UI
-  exerciseTypeEl.addEventListener("change", ()=> renderByType(exerciseTypeEl.value));
-  if(nextQuestionBtn) nextQuestionBtn.addEventListener("click", nextQuestion);
-  if(checkAnswerBtn)  checkAnswerBtn.addEventListener("click", checkAnswer);
+  function lockAndMark(){
+    locked = true;
+    answersEl.querySelectorAll(".answer").forEach(x=>x.disabled = true);
 
-  // Start
-  exerciseTypeEl.value = state.lastType || exerciseTypeEl.value || "verb";
-  renderByType(exerciseTypeEl.value);
+    const btns = Array.from(answersEl.querySelectorAll(".answer"));
+    const chosen = (selectedIndex >= 0) ? current.opts[selectedIndex] : null;
+
+    // marchează corectul mereu
+    btns.forEach((b, i)=>{
+      if(current.opts[i] === current.correct){
+        b.classList.add("correct");
+      }
+    });
+
+    if(chosen === null){
+      feedbackEl.textContent = "Alege un răspuns înainte să verifici.";
+      locked = false;
+      answersEl.querySelectorAll(".answer").forEach(x=>x.disabled = false);
+      return;
+    }
+
+    const ok = chosen === current.correct;
+    state.total += 1;
+    if(ok){
+      state.correct += 1;
+      feedbackEl.textContent = "✅ Corect.";
+    }else{
+      // marchează alesul greșit
+      btns[selectedIndex].classList.add("wrong");
+      feedbackEl.textContent = `❌ Greșit.\nCorect: ${current.correct}`;
+    }
+
+    saveState();
+    subheader.textContent = `Tip 1 · KO→RO · Întrebarea ${state.idx+1}/${BANK.length} · Scor ${state.correct}/${state.total}`;
+  }
+
+  checkBtn.addEventListener("click", ()=>{
+    if(!current) return;
+    lockAndMark();
+  });
+
+  nextBtn.addEventListener("click", ()=>{
+    state.idx += 1;
+    saveState();
+    render();
+  });
+
+  render();
 })();
 </script>
 </body>
