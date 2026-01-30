@@ -166,176 +166,318 @@ button{
 
 </div>
 <script>
-  function setTypeLabel(type){
-  const map = {
-    verb: "Alege traducerea corectă (KO → RO)",
-    particle: "Alege particula corectă (1 spațiu)",
-    particlePlus: "Particule multiple (4 spații)",
-    conjug: "Alege conjugarea corectă",
-    puzzle: "Puzzle — ordonează propoziția"
-  };
-  exerciseTypeLabelEl.textContent = map[type] || "—";
-}
-  const QUIZ = [
-  { ko:"저는 학교에 가요.", ro:"Eu merg la școală." },
-  { ko:"커피를 마셔요.", ro:"Beau cafea." },
-  { ko:"집에서 일해요.", ro:"Lucrez de acasă." },
-  { ko:"책을 읽어요.", ro:"Citesc o carte." },
-  { ko:"친구를 만나요.", ro:"Întâlnesc un prieten." }
-];
+/* ===========================
+   EXERCIȚII: Router anti-blocaj
+   - nu contează cum ți-ai numit funcțiile
+   - dacă un tip nu e implementat, NU blochează pagina
+   =========================== */
 
-let current = null;
-let selectedAnswer = null;
+(function(){
+  // Elemente UI (trebuie să existe în HTML)
+  const exerciseTypeEl     = document.getElementById("exerciseType");
+  const exerciseTypeLabelEl= document.getElementById("exerciseTypeLabel");
+  const exerciseSubtagEl   = document.getElementById("exerciseSubtag");
+  const exerciseQuestionEl = document.getElementById("exerciseQuestion");
+  const exerciseOptionsEl  = document.getElementById("exerciseOptions");
+  const exerciseFeedbackEl = document.getElementById("exerciseFeedback");
+  const nextQuestionBtn    = document.getElementById("nextQuestionBtn");
+  const checkAnswerBtn     = document.getElementById("checkAnswerBtn");
 
-const qEl = document.getElementById("question");
-const aEl = document.getElementById("answers");
-const fEl = document.getElementById("feedback");
-
-function shuffle(arr){
-  return [...arr].sort(()=>Math.random()-0.5);
-}
-const PARTICLES_BANK = [
-  {
-    text: "저___ 학생이에요.",
-    choices: ["은", "는", "이", "가"],
-    answer: "는",
-    explain: "Topic → 저 + 는"
-  },
-  {
-    text: "책___ 있어요.",
-    choices: ["이", "가", "을", "를"],
-    answer: "이",
-    explain: "Subiect → 책 + 이"
-  }
-];
-if (type === "particle") {
-  if (!PARTICLES_BANK.length) {
-    setEmptyQuestion("Nu există exerciții cu particule.");
+  if(!exerciseTypeEl || !exerciseQuestionEl || !exerciseOptionsEl){
+    // dacă lipsește UI, ieșim fără să stricăm restul paginii
     return;
   }
 
-  if (state.particles.idx >= PARTICLES_BANK.length) {
-    state.particles.idx = 0;
+  // Bănci (dacă există în pagină)
+  const QUIZ_BANK      = Array.isArray(window.TOPIK4_QUIZ_500) ? window.TOPIK4_QUIZ_500 : [];
+  const PARTICLES_BANK = Array.isArray(window.TOPIK4_PARTICLES_500) ? window.TOPIK4_PARTICLES_500 : [];
+
+  // Puzzle din quiz (fallback)
+  const PUZZLE_BANK = QUIZ_BANK.map(q=>{
+    const clean = String(q.ko||"").trim().replace(/[.?!]/g,"");
+    const words = clean.split(/\s+/).filter(Boolean);
+    return { words, answer: clean, ro: q.ro || "" };
+  }).filter(p => p.words.length >= 2);
+
+  // State simplu (anti-blocaj)
+  const state = window.__RK_EX_STATE__ || {
+    quiz:{idx:0,correct:0,total:0},
+    particles:{idx:0,correct:0,total:0},
+    puzzle:{idx:0,correct:0,total:0},
+    lastType: exerciseTypeEl.value || "verb"
+  };
+  window.__RK_EX_STATE__ = state;
+
+  let current = null;
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
   }
 
-  const q = PARTICLES_BANK[state.particles.idx];
-  let selected = null;
+  function setTypeLabel(type){
+    const map = {
+      verb: "Alege traducerea corectă (KO → RO)",
+      particle: "Alege particula corectă (1 spațiu)",
+      particlePlus: "Particule multiple (4 spații)",
+      conjug: "Alege conjugarea corectă",
+      puzzle: "Puzzle — ordonează propoziția"
+    };
+    if(exerciseTypeLabelEl) exerciseTypeLabelEl.textContent = map[type] || "—";
+  }
 
-  exerciseSubtagEl.textContent =
-    `Întrebarea ${state.particles.idx + 1} / ${PARTICLES_BANK.length}`;
+  function setEmpty(msg){
+    exerciseQuestionEl.classList.add("empty");
+    exerciseQuestionEl.textContent = msg;
+    exerciseOptionsEl.innerHTML = "";
+    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
+    if(exerciseSubtagEl) exerciseSubtagEl.textContent = "";
+    current = null;
+  }
 
-  exerciseQuestionEl.innerHTML = `<b>${q.text}</b>`;
-  exerciseOptionsEl.innerHTML = "";
-  exerciseFeedbackEl.textContent = "";
+  // ===== Implementate ACUM: verb / particle / puzzle =====
+  function renderVerb(){
+    setTypeLabel("verb");
+    if(!QUIZ_BANK.length) return setEmpty("Nu există întrebări în banca QUIZ.");
+    if(state.quiz.idx >= QUIZ_BANK.length) state.quiz.idx = 0;
 
-  q.choices.forEach(choice => {
-    const btn = document.createElement("div");
-    btn.className = "answer";
-    btn.textContent = choice;
+    const q = QUIZ_BANK[state.quiz.idx];
+    const correct = q.ro;
 
-    btn.addEventListener("click", () => {
-      document
-        .querySelectorAll(".answer")
-        .forEach(a => a.classList.remove("selected"));
+    const wrong = shuffle(QUIZ_BANK.filter(x=>x.ro!==correct)).slice(0,3).map(x=>x.ro);
+    const opts = shuffle([correct, ...wrong]);
 
-      btn.classList.add("selected");
-      selected = choice;
+    exerciseQuestionEl.classList.remove("empty");
+    exerciseQuestionEl.innerHTML = `<b>${escapeHtml(q.ko)}</b>`;
+    exerciseOptionsEl.innerHTML = "";
+    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
+
+    if(exerciseSubtagEl){
+      exerciseSubtagEl.textContent = `Întrebarea ${state.quiz.idx+1} / ${QUIZ_BANK.length} · Scor ${state.quiz.correct}/${state.quiz.total}`;
+    }
+
+    opts.forEach(opt=>{
+      const btn = document.createElement("button");
+      btn.type="button";
+      btn.className="ex-option";
+      btn.textContent = opt;
+
+      btn.addEventListener("click", ()=>{
+        exerciseOptionsEl.querySelectorAll("button").forEach(b=>b.disabled=true);
+
+        const ok = opt === correct;
+        state.quiz.total += 1;
+        if(ok) state.quiz.correct += 1;
+
+        btn.classList.add(ok ? "good" : "bad");
+        if(exerciseFeedbackEl){
+          exerciseFeedbackEl.textContent = ok ? "✅ Corect." : `❌ Greșit. Corect: ${correct}`;
+        }
+        if(exerciseSubtagEl){
+          exerciseSubtagEl.textContent = `Întrebarea ${state.quiz.idx+1} / ${QUIZ_BANK.length} · Scor ${state.quiz.correct}/${state.quiz.total}`;
+        }
+      });
+
+      exerciseOptionsEl.appendChild(btn);
     });
 
-    exerciseOptionsEl.appendChild(btn);
-  });
+    current = { type:"verb" };
+  }
 
-  current = {
-    type: "particle",
-    check: () => selected === q.answer,
-    answer: q.answer,
-    explain: q.explain
-  };
+  function renderParticle(){
+    setTypeLabel("particle");
+    if(!PARTICLES_BANK.length) return setEmpty("Nu există întrebări în banca PARTICULE.");
+    if(state.particles.idx >= PARTICLES_BANK.length) state.particles.idx = 0;
 
-  return;
-}  
-  function checkAnswer() {
-  if (!current) return;
+    const q = PARTICLES_BANK[state.particles.idx];
 
-  if (current.type === "particle") {
-    if (!document.querySelector(".answer.selected")) {
-      exerciseFeedbackEl.textContent = "Alege o variantă.";
+    exerciseQuestionEl.classList.remove("empty");
+    exerciseQuestionEl.innerHTML = `<b>${escapeHtml(q.text)}</b>`;
+    exerciseOptionsEl.innerHTML = "";
+    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
+
+    if(exerciseSubtagEl){
+      exerciseSubtagEl.textContent = `Întrebarea ${state.particles.idx+1} / ${PARTICLES_BANK.length} · Corecte ${state.particles.correct}`;
+    }
+
+    q.choices.forEach(ch=>{
+      const btn = document.createElement("button");
+      btn.type="button";
+      btn.className="ex-option";
+      btn.textContent = ch;
+
+      btn.addEventListener("click", ()=>{
+        exerciseOptionsEl.querySelectorAll("button").forEach(b=>b.disabled=true);
+
+        const ok = ch === q.answer;
+        state.particles.total += 1;
+        if(ok) state.particles.correct += 1;
+
+        btn.classList.add(ok ? "good" : "bad");
+        if(exerciseFeedbackEl){
+          exerciseFeedbackEl.textContent = ok ? `✅ Corect. (${q.explain})` : `❌ Greșit. Corect: ${q.answer} — ${q.explain}`;
+        }
+        if(exerciseSubtagEl){
+          exerciseSubtagEl.textContent = `Întrebarea ${state.particles.idx+1} / ${PARTICLES_BANK.length} · Corecte ${state.particles.correct}`;
+        }
+      });
+
+      exerciseOptionsEl.appendChild(btn);
+    });
+
+    current = { type:"particle" };
+  }
+
+  function renderPuzzle(){
+    setTypeLabel("puzzle");
+    if(!PUZZLE_BANK.length) return setEmpty("Nu există puzzle-uri în bancă.");
+    if(state.puzzle.idx >= PUZZLE_BANK.length) state.puzzle.idx = 0;
+
+    const pz = PUZZLE_BANK[state.puzzle.idx];
+    let built = [];
+
+    exerciseQuestionEl.classList.remove("empty");
+    exerciseQuestionEl.innerHTML = `<b>Aranjează cuvintele:</b>`;
+    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
+
+    if(exerciseSubtagEl){
+      exerciseSubtagEl.textContent = `Puzzle ${state.puzzle.idx+1} / ${PUZZLE_BANK.length} · Corecte ${state.puzzle.correct}`;
+    }
+
+    // UI puzzle
+    exerciseOptionsEl.innerHTML = `
+      <div class="ex-puzzle">
+        <div class="ex-pz-row">
+          <div class="ex-pz-title">Cuvinte</div>
+          <div id="pzBank" class="ex-pz-bank"></div>
+        </div>
+        <div class="ex-pz-row" style="margin-top:10px;">
+          <div class="ex-pz-title">Propoziția ta</div>
+          <div id="pzLine" class="ex-pz-line"></div>
+        </div>
+        <div class="ex-pz-actions" style="margin-top:10px;">
+          <button type="button" class="secondary" id="pzClear">Curăță</button>
+        </div>
+      </div>
+    `;
+
+    const bankEl  = document.getElementById("pzBank");
+    const lineEl  = document.getElementById("pzLine");
+    const clearBtn= document.getElementById("pzClear");
+
+    function render(){
+      bankEl.innerHTML = "";
+      lineEl.innerHTML = "";
+
+      const remaining = pz.words.filter(w => !built.includes(w));
+      shuffle(remaining).forEach(w=>{
+        const chip = document.createElement("button");
+        chip.type="button";
+        chip.className="ex-chip";
+        chip.textContent = w;
+        chip.addEventListener("click", ()=>{
+          built.push(w);
+          render();
+        });
+        bankEl.appendChild(chip);
+      });
+
+      built.forEach((w, idx)=>{
+        const chip = document.createElement("button");
+        chip.type="button";
+        chip.className="ex-chip active";
+        chip.textContent = w;
+        chip.addEventListener("click", ()=>{
+          built.splice(idx,1);
+          render();
+        });
+        lineEl.appendChild(chip);
+      });
+    }
+
+    clearBtn.addEventListener("click", ()=>{
+      built = [];
+      if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "";
+      render();
+    });
+
+    render();
+
+    current = {
+      type:"puzzle",
+      check: ()=> built.join(" ").trim() === pz.answer.trim(),
+      answer: pz.answer,
+      ro: pz.ro
+    };
+  }
+
+  // ===== Router (aici NU se mai blochează) =====
+  function renderByType(type){
+    state.lastType = type;
+
+    // IMPORTANT: tipuri neimplementate încă NU blochează pagina
+    if(type === "particlePlus") return setEmpty("particlePlus nu e implementat încă (nu blochează pagina).");
+    if(type === "conjug")       return setEmpty("conjug nu e implementat încă (nu blochează pagina).");
+
+    if(type === "verb")     return renderVerb();
+    if(type === "particle") return renderParticle();
+    if(type === "puzzle")   return renderPuzzle();
+
+    return setEmpty("Selectează un tip valid.");
+  }
+
+  function nextQuestion(){
+    const type = exerciseTypeEl.value || "verb";
+    if(type==="verb")     state.quiz.idx += 1;
+    if(type==="particle") state.particles.idx += 1;
+    if(type==="puzzle")   state.puzzle.idx += 1;
+
+    renderByType(type);
+  }
+
+  function checkAnswer(){
+    const type = exerciseTypeEl.value || "verb";
+    if(type==="puzzle" && current && current.type==="puzzle"){
+      const ok = current.check();
+      state.puzzle.total += 1;
+      if(ok) state.puzzle.correct += 1;
+
+      if(exerciseFeedbackEl){
+        exerciseFeedbackEl.textContent = ok
+          ? `✅ Corect! (${current.ro})`
+          : `❌ Nu încă. Corect: ${current.answer}\nRO: ${current.ro}`;
+      }
+      if(exerciseSubtagEl){
+        exerciseSubtagEl.textContent = `Puzzle ${state.puzzle.idx+1} / ${PUZZLE_BANK.length} · Corecte ${state.puzzle.correct}`;
+      }
       return;
     }
 
-    const ok = current.check();
-
-    document.querySelectorAll(".answer").forEach(a => {
-      if (a.textContent === current.answer) {
-        a.classList.add("correct");
-      }
-      if (a.classList.contains("selected") && !ok) {
-        a.classList.add("wrong");
-      }
-    });
-
-    exerciseFeedbackEl.textContent = ok
-      ? `✅ Corect. ${current.explain}`
-      : `❌ Greșit. Corect: ${current.answer} — ${current.explain}`;
-
-    state.particles.total++;
-    if (ok) state.particles.correct++;
-    saveState();
-  }
-}
-  function loadQuestion(){
-  selectedAnswer = null;
-  fEl.textContent = "";
-  aEl.innerHTML = "";
-
-  current = QUIZ[Math.floor(Math.random()*QUIZ.length)];
-  qEl.textContent = current.ko;
-
-  const wrong = shuffle(
-    QUIZ.filter(q=>q.ro!==current.ro).map(q=>q.ro)
-  ).slice(0,3);
-
-  const options = shuffle([current.ro, ...wrong]);
-
-  options.forEach(text=>{
-    const div = document.createElement("div");
-    div.className = "answer";
-    div.textContent = text;
-
-    div.addEventListener("click", ()=>{
-      document.querySelectorAll(".answer").forEach(a=>{
-        a.classList.remove("selected");
-      });
-      div.classList.add("selected");
-      selectedAnswer = text;
-    });
-
-    aEl.appendChild(div);
-  });
-}
-
-document.getElementById("checkBtn").onclick = ()=>{
-  if(!selectedAnswer){
-    fEl.textContent = "Alege un răspuns.";
-    return;
+    // la celelalte, răspunsul se verifică la tap (și nu avem ce "check" aici)
+    if(exerciseFeedbackEl) exerciseFeedbackEl.textContent = "Alege o opțiune (tap).";
   }
 
-  document.querySelectorAll(".answer").forEach(a=>{
-    a.onclick = null;
-    if(a.textContent === current.ro){
-      a.classList.add("correct");
-    } else if(a.textContent === selectedAnswer){
-      a.classList.add("wrong");
-    }
-  });
+  // Wire UI
+  exerciseTypeEl.addEventListener("change", ()=> renderByType(exerciseTypeEl.value));
+  if(nextQuestionBtn) nextQuestionBtn.addEventListener("click", nextQuestion);
+  if(checkAnswerBtn)  checkAnswerBtn.addEventListener("click", checkAnswer);
 
-  fEl.textContent =
-    selectedAnswer === current.ro ? "✅ Corect" : "❌ Greșit";
-};
-
-document.getElementById("nextBtn").onclick = loadQuestion;
-
-loadQuestion();
+  // Start
+  exerciseTypeEl.value = state.lastType || exerciseTypeEl.value || "verb";
+  renderByType(exerciseTypeEl.value);
+})();
 </script>
 </body>
 </html>
