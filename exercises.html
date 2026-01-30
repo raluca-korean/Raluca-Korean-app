@@ -1,1469 +1,2873 @@
+ Highlight Syntax 
+  
+
+exercises.html (81 KB) 
+ Download HTML  Save to Drive 
+
 <!doctype html>
 <html lang="ro">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Raluca Korean — Exercises</title>
-
-  <!-- Dacă ai style.css global, îl poți lăsa. Nu strică. -->
   <link rel="stylesheet" href="style.css" />
-
   <style>
-    /* =========================================================
-       Raluca Korean — Exercises (single-file, stabil)
-       - Quiz TOPIK (KO→RO), Particule, Puzzle
-       - Fără framework
-       - Salvează progres local (telefon)
-       ========================================================= */
+  
+    :root {  
+      --bg: #f7f3ff;  
+      --card-bg: #ffffff;  
+      --accent: #c9b5ff;  
+      --accent-strong: #9b7cff;  
+      --text-main: #333333;  
+      --text-soft: #666666;  
+      --border: #e0d7ff;  
+      --dimmed-bg: #f2eefc;  
+      --overlay-bg: rgba(0, 0, 0, 0.2);  
+    }  
+    header{text-align:center;padding:4px 8px 4px;}  
+    header h1{font-size:18px;margin:2px 0;font-weight:700;color:var(--accent-strong);}  
+    header p{margin:0;font-size:11px;color:var(--text-soft);}  
+  
+    .screen{display:none;flex-direction:column;gap:10px;flex:1;min-height:0;}  
+    .screen.active{display:flex;}  
+  
+    .mode-panel{  
+      background:var(--card-bg);border-radius:12px;border:1px solid var(--border);  
+      padding:6px 8px;font-size:11px;display:flex;flex-direction:column;gap:4px;  
+      box-shadow:0 4px 12px rgba(120,96,190,0.08);  
+    }  
+    .mode-row{  
+      display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;  
+    }  
+    .mode-row label{font-size:11px;display:flex;align-items:center;gap:4px;}  
+    .part-toggles{display:flex;flex-wrap:wrap;gap:6px;}  
+    .chip{  
+      display:inline-flex;align-items:center;gap:3px;  
+      padding:3px 8px;border-radius:999px;background:#ede7ff;color:var(--accent-strong);  
+      font-size:10px;cursor:pointer;  
+    }  
+    .chip input{margin:0;}  
+    .section-label{font-size:11px;font-weight:600;color:var(--accent-strong);margin-top:2px;}  
+  
+    .small-mode-btn{  
+      padding:3px 8px;  
+      font-size:10px;  
+    }  
+    .small-mode-btn.active{  
+      background:var(--accent-strong);  
+      color:#fff;  
+    }  
+  
+    .table-block{  
+      background:var(--card-bg);border-radius:14px;padding:8px;  
+      box-shadow:0 6px 16px rgba(120,96,190,0.12);border:1px solid var(--border);  
+      display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;  
+    }  
+    .table-title{  
+      font-size:11px;font-weight:600;color:var(--text-soft);  
+      display:flex;justify-content:space-between;align-items:center;  
+    }  
+    .table-horizontal{  
+      display:flex;flex-direction:row;overflow-x:auto;padding-bottom:4px;gap:6px;  
+    }  
+    .col{  
+      min-width:110px;max-width:140px;flex:0 0 auto;background:#faf8ff;border-radius:10px;  
+      border:1px solid var(--border);display:flex;flex-direction:column;  
+      padding:6px 6px 8px;transition:0.2s;cursor:pointer;  
+      touch-action:manipulation;  
+    }  
+    .col-header{  
+      font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;  
+      color:var(--accent-strong);margin-bottom:4px;border-bottom:1px solid var(--border);  
+      padding-bottom:3px;  
+    }  
+    /* Header de coloană cu titlu + bifă ON/OFF */  
+.col-header{  
+  display:flex;  
+  align-items:center;  
+  justify-content:space-between;  
+  gap:4px;  
+}  
+  
+.col-header input.col-toggle{  
+  width:14px;  
+  height:14px;  
+  accent-color: var(--accent-strong);  
+  flex-shrink:0;  
+}  
+    .col-body-label{font-size:10px;color:var(--text-soft);margin-bottom:2px;}  
+    .col-body-main{font-size:15px;font-weight:600;margin-bottom:2px;}  
+    .col-body-extra{font-size:11px;color:var(--text-soft);}  
+    .dimmed{  
+      opacity:0.35;background-image:repeating-linear-gradient(  
+        -45deg,var(--dimmed-bg),var(--dimmed-bg) 4px,#fdfbff 4px,#fdfbff 8px  
+      );  
+    }  
+  
+    .controls{  
+      display:flex;justify-content:space-between;align-items:center;gap:8px;  
+      padding-top:4px;border-top:1px dashed var(--border);  
+    }  
+    .btn-group{display:flex;gap:6px;}  
+    button{  
+      border-radius:999px;border:none;padding:6px 10px;font-size:12px;font-weight:600;  
+      cursor:pointer;background:var(--accent);color:#fff;display:inline-flex;  
+      align-items:center;gap:4px;box-shadow:0 2px 6px rgba(90,70,160,0.25);  
+    }  
+    button.secondary{background:#ede7ff;color:var(--accent-strong);box-shadow:none;}  
+    button:disabled{opacity:0.4;box-shadow:none;cursor:default;}  
+    .page-indicator{font-size:11px;color:var(--text-soft);}  
+    .legend{font-size:10px;color:var(--text-soft);text-align:center;padding:2px 4px 0;}  
+    .hidden{display:none !important;}  
+  
+    .preview-card{  
+      margin-top:6px;padding:8px;border-radius:12px;  
+      background:#f9f7ff;border:1px solid var(--border);  
+      display:flex;flex-direction:column;gap:4px;  
+    }  
+    .preview-title{  
+      font-size:11px;font-weight:600;color:var(--accent-strong);  
+      display:flex;justify-content:space-between;align-items:center;  
+    }  
+    .preview-ko{  
+      font-size:14px;font-weight:600;margin-top:2px;  
+    }  
+    .preview-ro{  
+      font-size:12px;color:var(--text-soft);  
+    }  
+    .preview-natural{  
+      font-size:11px;  
+      color:#8e6cff;  
+      margin-top:2px;  
+    }  
+    .preview-buttons{  
+      display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;  
+    }  
+    
+    
+    .overlay{  
+      position:fixed;inset:0;background:var(--overlay-bg);  
+      display:flex;justify-content:center;align-items:flex-end;z-index:1000;  
+    }  
+    .panel{  
+      width:100%;max-width:900px;background:var(--card-bg);  
+      border-radius:18px 18px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,0.15);  
+      padding:10px 12px 14px;animation:slideUp 0.18s ease-out;  
+    }  
+    @keyframes slideUp{  
+      from{transform:translateY(40px);opacity:0;}  
+      to{transform:translateY(0);opacity:1;}  
+    }  
+    .panel-header{  
+      display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;  
+    }  
+    .panel-title{font-size:13px;font-weight:600;color:var(--accent-strong);}  
+    .panel-sub{font-size:11px;color:var(--text-soft);}  
+    .panel-close{  
+      background:transparent;color:var(--text-soft);box-shadow:none;  
+      padding:4px 6px;font-size:14px;  
+    }  
+    .panel-input-row{display:flex;gap:6px;margin-bottom:6px;}  
+    .panel-input-row input{  
+      flex:1;border-radius:999px;border:1px solid var(--border);  
+      padding:6px 10px;font-size:12px;  
+    }  
+    .panel-list{  
+      max-height:260px;overflow-y:auto;border-radius:10px;  
+      border:1px solid var(--border);background:#faf8ff;padding:4px;  
+    }  
+    .panel-item{  
+      padding:4px 8px;border-radius:8px;display:flex;justify-content:space-between;  
+      align-items:center;font-size:13px;cursor:pointer;  
+    }  
+    .panel-item:hover{background:#ede7ff;}  
+    .panel-item-main{font-weight:600;}  
+    .panel-item-extra{  
+      display:flex;flex-direction:column;align-items:flex-end;gap:2px;  
+    }  
+    .panel-item-tag{font-size:10px;color:var(--accent-strong);}  
+  
+    .bottom-nav{  
+      position:fixed;bottom:0;left:0;right:0;  
+      background:#ffffffee;border-top:1px solid var(--border);  
+      display:flex;justify-content:space-around;align-items:center;  
+      padding:6px 0;backdrop-filter:blur(8px);z-index:500;  
+    }  
+    .nav-btn{  
+      flex:1;text-align:center;border:none;background:transparent;  
+      font-size:11px;color:var(--text-soft);padding:4px 0;cursor:pointer;  
+      display:flex;flex-direction:column;align-items:center;gap:2px;  
+    }  
+    .nav-btn span.icon{font-size:18px;}  
+    .nav-btn.active{color:var(--accent-strong);font-weight:600;}  
+    .nav-btn.active span.icon{transform:translateY(-1px);}  
+    @media (max-width:600px){  
+      header h1{font-size:16px;}  
+      .col{min-width:95px;}  
+    }  
+  
+    .card{  
+      background:var(--card-bg);border-radius:14px;padding:10px;  
+      box-shadow:0 4px 12px rgba(120,96,190,0.12);border:1px solid var(--border);  
+      display:flex;flex-direction:column;gap:6px;  
+    }  
+    .card h2{  
+      margin:0;font-size:14px;color:var(--accent-strong);  
+    }  
+    .small-label{font-size:11px;color:var(--text-soft);}  
+    select{  
+      border-radius:999px;border:1px solid var(--border);  
+      padding:4px 10px;font-size:12px;background:#fff;  
+    }  
+    .lesson-header{  
+  margin-bottom: 8px;  
+}  
+    .exercise-question{  
+      font-size:14px;font-weight:600;margin-top:4px;  
+    }  
+    .exercise-options{display:flex;flex-direction:column;gap:4px;margin-top:2px;}  
+    .exercise-options label{  
+      font-size:13px;display:flex;align-items:center;gap:6px;  
+    }  
+    .exercise-feedback{  
+      font-size:12px;margin-top:4px;  
+    }  
+/* ===== EXERCIȚII TOPIK – stil "app" ===== */  
+  
+#screen-exercises .card.ex-card{  
+  display:flex;  
+  flex-direction:column;  
+  gap:10px;  
+  padding:12px 14px 14px;  
+}  
+  
+/* header de card */  
+.ex-header-row{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:flex-start;  
+  gap:8px;  
+}  
+  
+.ex-header-row h2{  
+  margin:2px 0 0;  
+  font-size:15px;  
+  letter-spacing:0.04em;  
+  text-transform:uppercase;  
+  color:var(--accent-strong);  
+}  
+  
+.ex-pill{  
+  display:inline-flex;  
+  align-items:center;  
+  padding:2px 8px;  
+  font-size:10px;  
+  border-radius:999px;  
+  background:rgba(111,134,168,0.12);  
+  color:var(--accent-strong);  
+  margin-bottom:2px;  
+}  
+  
+.ex-mini-hint{  
+  font-size:11px;  
+  color:var(--text-soft);  
+  text-align:right;  
+}  
+/* stare implicită — text discret */  
+#screen-exercises .exercise-question.empty {  
+  color: var(--text-soft);  
+  font-weight: 400;  
+}  
+    /* linia cu select-ul */  
+.ex-type-row{  
+  margin-top:6px;  
+  padding:8px 10px;  
+  border-radius:12px;  
+  background:rgba(255,255,255,0.7);  
+  border:1px solid rgba(227,218,203,0.9);  
+  display:flex;  
+  align-items:center;  
+  justify-content:space-between;  
+  gap:8px;  
+  flex-wrap:wrap;  
+}  
+  
+.ex-type-left{  
+  display:flex;  
+  flex-direction:column;  
+  gap:2px;  
+}  
+  
+.ex-type-chip{  
+  font-size:11px;  
+  padding:2px 8px;  
+  border-radius:999px;  
+  background:rgba(241,211,160,0.22);  
+  color:#6f5430;  
+}  
+  
+/* card interior cu întrebarea */  
+.ex-question-shell{  
+  margin-top:6px;  
+  padding:10px 12px 12px;  
+  border-radius:16px;  
+  background:linear-gradient(145deg,#fdfbf7,#f0ebe3);  
+  border:1px solid rgba(227,218,203,0.9);  
+  box-shadow:0 8px 18px rgba(80,64,48,0.12);  
+  display:flex;  
+  flex-direction:column;  
+  gap:6px;  
+}  
+  
+/* tag-uri de sus */  
+.ex-question-tag-row{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  gap:6px;  
+}  
+  
+.ex-question-tag{  
+  font-size:11px;  
+  font-weight:600;  
+  padding:2px 8px;  
+  border-radius:999px;  
+  background:rgba(111,134,168,0.15);  
+  color:var(--accent-strong);  
+}  
+  
+.ex-question-subtag{  
+  font-size:11px;  
+  color:var(--text-soft);  
+}  
+  
+/* text întrebare mai mare */  
+#screen-exercises .exercise-question{  
+  font-size:15px;  
+  font-weight:600;  
+  margin-top:4px;  
+}  
+  
+/* opțiuni – arate ca niște carduri */  
+#screen-exercises .exercise-options label{  
+  padding:6px 8px;  
+  border-radius:12px;  
+  border:1px solid var(--border);  
+  background:#fbf8f1;  
+  box-shadow:0 3px 8px rgba(90,72,52,0.06);  
+}  
+  
+/* butoane aliniate jos */  
+.ex-buttons{  
+  margin-top:4px;  
+  justify-content:flex-end;  
+}  
+  
+/* feedback */  
+#screen-exercises .exercise-feedback{  
+  margin-top:2px;  
+  font-size:12px;  
+  min-height:18px;  
+}  
+  
+/* legendă jos pentru Exerciții – reactivăm .legend aici */  
+#screen-exercises .ex-legend{  
+  display:block;  
+  margin-top:8px;  
+  padding:6px 8px;  
+  border-radius:10px;  
+  background:rgba(0,0,0,0.02);  
+  font-size:10px;  
+  color:var(--text-soft);  
+}  
+    .glossary-search{  
+      display:flex;gap:6px;align-items:center;margin-top:4px;  
+    }  
+    .glossary-search input{  
+      flex:1;border-radius:999px;border:1px solid var(--border);  
+      padding:6px 10px;font-size:12px;  
+    }  
+    textarea{  
+  width:100%;  
+  border-radius:14px;  
+  border:1px solid var(--border);  
+  background:#fff;  
+  padding:10px 12px;  
+  font-size:13px;  
+  line-height:1.35;  
+  color:var(--text-main);  
+  outline:none;  
+  resize:vertical;  
+  min-height:72px;  
+  box-shadow:0 2px 10px rgba(120,96,190,0.06) inset;  
+}  
+  
+textarea::placeholder{  
+  color:#9a93b8;  
+}  
+  
+textarea:focus{  
+  border-color:var(--accent-strong);  
+  box-shadow:0 0 0 3px rgba(155,124,255,0.18);  
+}  
+    .glossary-list{  
+      margin-top:6px;max-height:260px;overflow-y:auto;padding-right:2px;  
+    }  
+    .glossary-item{  
+      padding:6px 8px;border-radius:10px;border:1px solid var(--border);  
+      background:#faf8ff;margin-bottom:4px;font-size:12px;  
+      display:flex;justify-content:space-between;gap:8px;  
+    }  
+    .glossary-ko{font-weight:600;}  
+    .glossary-ro{color:var(--text-soft);}  
+    .glossary-cat{font-size:10px;color:var(--accent-strong);}  
+  
+    .fav-list{  
+      margin-top:4px;max-height:140px;overflow-y:auto;padding-right:2px;  
+    }  
+    .fav-item{  
+      padding:4px 6px;border-radius:8px;border:1px solid var(--border);  
+      background:#fdfbff;margin-bottom:4px;font-size:11px;  
+    }  
+    .fav-ko{font-weight:600;margin-bottom:2px;}  
+    .fav-ro{color:var(--text-soft);}  
+    /* CARD GENERAL – Română → Coreeană, Exerciții, Glosar */  
+.card{  
+  background: linear-gradient(145deg, #ffffff, #f5f0ff);  
+  border-radius: 18px;  
+  padding: 12px 14px;  
+  box-shadow: 0 10px 24px rgba(120,96,190,0.18);  
+  border: 1px solid rgba(201,181,255,0.6);  
+}  
+  
+/* Titlurile cardurilor */  
+.card h2{  
+  margin: 0 0 6px;  
+  font-size: 15px;  
+  font-weight: 700;  
+  color: #7b5fff;  
+  letter-spacing: 0.03em;  
+}  
+  
+/* Textarea română */  
+textarea#roInput{  
+  border-radius: 14px;  
+  border: 1px solid #d7c9ff;  
+  background: #fbf9ff;  
+  padding: 10px 12px;  
+  font-size: 13px;  
+  line-height: 1.45;  
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.7);  
+}  
+  
+/* Buton „Tradu în coreeană” */  
+#roTranslateBtn{  
+  margin-top: 6px;  
+  border-radius: 999px;  
+  padding: 7px 14px;  
+  font-size: 12px;  
+  font-weight: 600;  
+  background: linear-gradient(120deg, #b391ff, #8a6bff);  
+  color: #fff;  
+  border: none;  
+  box-shadow: 0 6px 14px rgba(125,99,210,0.35);  
+}  
+#roTranslateBtn{  
+  display:inline-flex;  
+  align-items:center;  
+  justify-content:center;  
+  gap:6px;  
+}  
+  
+.translate-icon{  
+  font-size:14px;  
+  transform:translateY(0.5px);  
+}  
+    /* Rezultat KO + româna corectată */  
+#roToKoResult{  
+  margin-top: 8px;  
+  font-size: 15px;  
+  font-weight: 700;  
+  color: #3a295d;  
+}  
+  
+#roCorrected{  
+  margin-top: 2px;  
+  font-size: 12px;  
+  color: #7b7496;  
+}  
+  
+/* Coloanele SUBJ/TIME/PLACE etc. */  
+.col{  
+  min-width: 110px;  
+  max-width: 140px;  
+  flex: 0 0 auto;  
+  background: radial-gradient(circle at top left,#fdfbff,#f1ecff);  
+  border-radius: 14px;  
+  border: 1px solid #ddd2ff;  
+  padding: 7px 7px 9px;  
+  box-shadow: 0 6px 16px rgba(118,95,205,0.16);  
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s;  
+}  
+  
+/* Efect la tap / hover (desktop) */  
+.col:active,  
+.col:hover{  
+  transform: translateY(-1px);  
+  box-shadow: 0 9px 20px rgba(118,95,205,0.24);  
+  border-color: #b09bff;  
+}  
+  
+/* Headerul coloanei */  
+.col-header{  
+  font-size: 10px;  
+  font-weight: 700;  
+  text-transform: uppercase;  
+  letter-spacing: 0.08em;  
+  color: #9a80ff;  
+  margin-bottom: 3px;  
+  border-bottom: 1px solid rgba(208,196,255,0.8);  
+  padding-bottom: 2px;  
+}  
+  
+/* Cuvântul ales în coloană */  
+.col-body-main{  
+  font-size: 15px;  
+  font-weight: 700;  
+  color: #372449;  
+}  
+  
+/* Hintul gri mic din coloană */  
+.col-body-label{  
+  font-size: 10px;  
+  color: #8a849d;  
+}  
+  
+/* Propoziția KO mare de jos */  
+#previewKo{  
+  font-size: 16px;  
+  font-weight: 700;  
+  color: #2f2948;  
+}  
+  
+/* Traducere română */  
+#previewRo{  
+  font-size: 12px;  
+  color: #746f91;  
+}  
+  
+/* Badge „natural” / atenționare */  
+#naturalHint{  
+  font-size: 11px;  
+  margin-top: 3px;  
+}  
+  
+    /* =========================================================  
+   THEME v4 – „app desenată” pentru Raluca  
+   – forme de fundal + iconițe pe coloane + carduri ilustrate  
+   (se pune ULTIMUL în <style>)  
+========================================================= */  
+  
+/* fundal cu „bule” moi */  
+body{  
+  background-color:#f4efe4;  
+  background-image:  
+    radial-gradient(circle at 10% 0%, rgba(255,255,255,0.9) 0, rgba(255,255,255,0) 45%),  
+    radial-gradient(circle at 90% 0%, rgba(191,208,222,0.55) 0, rgba(191,208,222,0) 55%),  
+    radial-gradient(circle at 0% 80%, rgba(198,189,171,0.55) 0, rgba(198,189,171,0) 45%),  
+    radial-gradient(circle at 80% 100%, rgba(180,205,187,0.55) 0, rgba(180,205,187,0) 50%);  
+}  
+  
+/* header cu „bandă” de app */  
+header{  
+  position:relative;  
+  padding:10px 10px 14px;  
+}  
+header::before{  
+  content:"";  
+  position:absolute;  
+  inset:0 8px auto;  
+  height:60px;  
+  border-radius:22px;  
+  background:linear-gradient(120deg,#fdfbf7,#e4eaf3);  
+  box-shadow:0 14px 30px rgba(120,111,90,0.18);  
+  z-index:-1;  
+}  
+header h1{  
+  font-size:17px;  
+  letter-spacing:0.12em;  
+  text-transform:uppercase;  
+}  
+header p{  
+  font-size:11px;  
+}  
+  
+/* mic „badge” versiune */  
+header p::after{  
+  content:"v2.0";  
+  display:inline-flex;  
+  align-items:center;  
+  justify-content:center;  
+  margin-left:6px;  
+  padding:2px 8px;  
+  border-radius:999px;  
+  font-size:9px;  
+  font-weight:600;  
+  background:rgba(75,104,127,0.09);  
+  color:#4b687f;  
+}  
+  
+/* carduri cu ornament în colț */  
+.card,  
+.table-block,  
+.preview-card{  
+  position:relative;  
+  overflow:hidden;  
+}  
+.card::before,  
+.table-block::before,  
+.preview-card::before{  
+  content:"";  
+  position:absolute;  
+  right:-32px;  
+  top:-32px;  
+  width:90px;  
+  height:90px;  
+  border-radius:50%;  
+  background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.9),rgba(178,193,209,0.15));  
+  pointer-events:none;  
+}  
+.card::after,  
+.table-block::after,  
+.preview-card::after{  
+  content:"";  
+  position:absolute;  
+  left:-26px;  
+  bottom:-26px;  
+  width:70px;  
+  height:70px;  
+  border-radius:50%;  
+  background:radial-gradient(circle at 70% 70%,rgba(255,255,255,0.95),rgba(198,188,166,0.15));  
+  pointer-events:none;  
+}  
+  
+/* conținutul cardurilor să rămână deasupra ornamentelor */  
+.card > *,  
+.table-block > *,  
+.preview-card > *{  
+  position:relative;  
+  z-index:1;  
+}  
+  
+/* titluri card cu bară subțire dedesubt */  
+.card h2{  
+  position:relative;  
+  padding-bottom:4px;  
+}  
+.card h2::after{  
+  content:"";  
+  position:absolute;  
+  left:0;  
+  bottom:0;  
+  width:42px;  
+  height:2px;  
+  border-radius:999px;  
+  background:linear-gradient(90deg,rgba(75,104,127,0.65),rgba(255,255,255,0));  
+}  
+  
+/* chips – mai „tablete” */  
+.chip{  
+  position:relative;  
+  padding:4px 10px 4px 8px;  
+}  
+.chip::before{  
+  content:"";  
+  width:6px;  
+  height:6px;  
+  border-radius:50%;  
+  background:#c3b08f;  
+}  
+  
+/* ========= ICONIȚE PE COLOANE (SUBJECT/TIME/PLACE etc.) ========= */  
+  
+.col-header{  
+  display:flex;  
+  align-items:center;  
+  gap:4px;  
+}  
+  
+/* icon placeholder */  
+.col-header::before{  
+  content:"";  
+  display:inline-flex;  
+  align-items:center;  
+  justify-content:center;  
+  width:16px;  
+  height:16px;  
+  border-radius:6px;  
+  background:rgba(255,255,255,0.8);  
+  font-size:11px;  
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);  
+}  
+  
+/* SUBJ 👤 */  
+.col[data-key="subject"] .col-header::before{  
+  content:"👤";  
+}  
+/* TIME ⏰ */  
+.col[data-key="time"] .col-header::before{  
+  content:"⏰";  
+}  
+/* PLACE 📍 */  
+.col[data-key="place"] .col-header::before{  
+  content:"📍";  
+}  
+/* MOD ✨ */  
+.col[data-key="mod"] .col-header::before{  
+  content:"✨";  
+}  
+/* OBJECT 🎯 */  
+.col[data-key="object"] .col-header::before{  
+  content:"🎯";  
+}  
+/* NUMERAL #️⃣ */  
+.col[data-key="numeral"] .col-header::before{  
+  content:"#️⃣";  
+}  
+/* COUNTER 🔢 */  
+.col[data-key="counter"] .col-header::before{  
+  content:"🔢";  
+}  
+/* VERB 🚀 */  
+.col[data-key="verb"] .col-header::before{  
+  content:"🚀";  
+}  
+/* CONJUGĂRI 🔗 */  
+.col[data-key="conjug"] .col-header::before{  
+  content:"🔗";  
+}  
+  
+/* când coloana e „stinsă” (dimmed) – iconița devine gri */  
+.col.dimmed .col-header::before{  
+  filter:grayscale(0.9);  
+  opacity:0.6;  
+}  
+  
+/* ========= ACCENTE DIFERITE PE FIECARE ECRAN ========= */  
+  
+/* 🏗 Builder – bandă sus de secțiune */  
+#screen-builder .mode-panel{  
+  border-top:3px solid rgba(186,166,126,0.85);  
+}  
+#screen-builder .preview-title span:first-child::before{  
+  content:"🏗 ";  
+}  
+  
+/* 📝 Exerciții – bandă albastră */  
+#screen-exercises .card{  
+  border-top:3px solid rgba(118,147,183,0.95);  
+}  
+#screen-exercises h2::before{  
+  content:"📝 ";  
+}  
+  
+/* 📚 Glosar – bandă verde salvie */  
+#screen-glossary > .card{  
+  border-top:3px solid rgba(138,170,142,0.95);  
+}  
+#screen-glossary h2::before{  
+  content:"📚 ";  
+}  
+  
+/* lista de glosar – „fișe” */  
+.glossary-item{  
+  background:rgba(255,255,255,0.9);  
+  box-shadow:0 6px 14px rgba(153,141,120,0.16);  
+}  
+  
+/* card „3 cuvinte/zi” – mic timeline în lateral */  
+#dailyWordsBox > div{  
+  position:relative;  
+}  
+#dailyWordsBox > div::before{  
+  content:"";  
+  position:absolute;  
+  left:-10px;  
+  top:10px;  
+  width:3px;  
+  height:60%;  
+  border-radius:999px;  
+  background:linear-gradient(to bottom,#9db8a3,#f4efe4);  
+}  
+  
+/* ========= NAV BAR – iconițe accentuate ========= */  
+  
+.bottom-nav{  
+  border-top:1px solid rgba(205,195,176,0.8);  
+}  
+.nav-btn span.icon{  
+  font-size:19px;  
+}  
+.nav-btn.active span.icon{  
+  transform:translateY(-2px) scale(1.06);  
+}  
+  
+/* ========= PREVIEW propoziție ========= */  
+  
+.preview-card{  
+  margin-top:10px;  
+}  
+.preview-title span:first-child{  
+  display:flex;  
+  align-items:center;  
+  gap:6px;  
+}  
+.preview-title span:first-child::before{  
+  content:"🔊";  
+  width:18px;  
+  height:18px;  
+  border-radius:50%;  
+  display:inline-flex;  
+  align-items:center;  
+  justify-content:center;  
+  font-size:11px;  
+  background:rgba(75,104,127,0.08);  
+}  
+  
+/* hint naturalitate – „badge” */  
+.preview-natural{  
+  padding:4px 8px;  
+  border-radius:999px;  
+  display:inline-block;  
+  background:rgba(185,207,192,0.35);  
+}  
+  
+/* overlay panel – divider subtil sus */  
+.panel-header{  
+  border-bottom:1px solid rgba(222,214,200,0.9);  
+  padding-bottom:6px;  
+}  
+    /* === THEME A – Korean Minimal Chic & Cozy === */  
+  
+:root{  
+  --bg: #f6f1e8;  
+  --card-bg: #fdfbf7;  
+  --accent: #6f86a8;          /* albastru-cerneală */  
+  --accent-strong: #4b607d;   /* albastru închis */  
+  --accent-soft: #f1d3a0;     /* auriu cald */  
+  --text-main: #2f343b;  
+  --text-soft: #7a8088;  
+  --border: #e3dacb;  
+  --dimmed-bg: #f0e6d7;  
+  --overlay-bg: rgba(40,32,24,0.25);  
+}  
+  
+/* fundal general – crem cald, tip „cafea cu lapte” */  
+body{  
+  margin:0;  
+  padding:0;  
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;  
+  background:  
+    radial-gradient(circle at top,#fbf4e8 0,#f0ebe3 40%,#e9e2d7 100%);  
+  color:var(--text-main);  
+}  
+  
+/* containerul aplicației – ușor „card” pe mijloc */  
+.app{  
+  max-width:1040px;  
+  margin:0 auto;  
+  padding:18px 14px calc(70px + env(safe-area-inset-bottom));  
+}  
+/* header – mai „brand” și mai premium */  
+header{  
+  padding:6px 10px 10px;  
+  text-align:left;  
+}  
+header h1{  
+  font-size:18px;  
+  font-weight:700;  
+  letter-spacing:0.03em;  
+  text-transform:uppercase;  
+  color:var(--accent-strong);  
+  display:flex;  
+  align-items:center;  
+  gap:6px;  
+}  
+header h1::before{  
+  content:"✍️";  
+  font-size:16px;  
+}  
+header p{  
+  margin:2px 0 0;  
+  font-size:12px;  
+  color:var(--text-soft);  
+}  
+  
+/* carduri mari – efect de planner premium */  
+.card,  
+.table-block,  
+.preview-card{  
+  background:linear-gradient(145deg,#fdfbf7,#f4eee3);  
+  border-radius:18px;  
+  border:1px solid rgba(227,218,203,0.9);  
+  box-shadow:0 14px 30px rgba(80,64,48,0.12);  
+}  
+  
+/* card standard (Română → Coreeană, Exerciții, Glosar) */  
+.card{  
+  padding:12px 14px;  
+}  
+.card h2{  
+  font-size:15px;  
+  color:var(--accent-strong);  
+  letter-spacing:0.04em;  
+}  
+  
+/* bara de introducere propoziție */  
+textarea#roInput{  
+  background:#fbf8f1;  
+  border:1px solid #e1d5c5;  
+  box-shadow:0 0 0 1px rgba(255,255,255,0.7);  
+}  
+  
+/* buton mare „Tradu în coreeană” */  
+#roTranslateBtn{  
+  background:linear-gradient(115deg,#4b607d,#6f86a8);  
+  box-shadow:0 8px 18px rgba(75,96,125,0.35);  
+}  
+  
+/* bara albastră lungă (Tradu / Next etc.) */  
+button{  
+  border-radius:999px;  
+  border:none;  
+  padding:7px 14px;  
+  font-size:12px;  
+  font-weight:600;  
+  cursor:pointer;  
+  background:linear-gradient(120deg,#4b607d,#6f86a8);  
+  color:#fff;  
+  box-shadow:0 8px 18px rgba(75,96,125,0.32);  
+}  
+button.secondary{  
+  background:#f3ebdd;  
+  color:var(--accent-strong);  
+  box-shadow:none;  
+}  
+button:disabled{  
+  opacity:0.45;  
+  box-shadow:none;  
+}  
+  
+/* toggle-urile SUBJECT / TIME / ... – chip-uri mai elegante */  
+.chip{  
+  background:#f4ece0;  
+  color:var(--accent-strong);  
+  border-radius:999px;  
+  padding:4px 10px;  
+  box-shadow:0 4px 8px rgba(180,162,136,0.25);  
+}  
+.chip input{  
+  accent-color:var(--accent-strong);  
+}  
+  
+/* coloanele din tabel (SUBJECT / TIME / PLACE etc.) */  
+.col{  
+  background:radial-gradient(circle at top left,#fdfbf7,#f2ebde);  
+  border-radius:16px;  
+  border:1px solid #e2d7c8;  
+  box-shadow:0 10px 22px rgba(95,78,58,0.16);  
+  transform:translateY(0);  
+  transition:  
+    transform 0.15s ease,  
+    box-shadow 0.15s ease,  
+    border-color 0.15s ease,  
+    background 0.15s ease;  
+}  
+.col-header{  
+  color:var(--accent-strong);  
+}  
+.col-body-main{  
+  color:#2f343b;  
+}  
+.col-body-label{  
+  color:#938777;  
+}  
+.col:hover{  
+  transform:translateY(-1px);  
+  box-shadow:0 14px 28px rgba(95,78,58,0.24);  
+  border-color:#d0c1aa;  
+}  
+  
+/* când coloana e dezactivată */  
+.col.dimmed{  
+  opacity:0.4;  
+  background-image:none;  
+  background:#f1e7d8;  
+}  
+  
+/* cardul de preview propoziție de jos */  
+.preview-card{  
+  margin-top:10px;  
+  padding:10px 12px;  
+}  
+.preview-title span{  
+  color:var(--accent-strong);  
+}  
+.preview-ko{  
+  font-size:16px;  
+  font-weight:700;  
+  color:#292f35;  
+}  
+.preview-ro{  
+  font-size:12px;  
+  color:var(--text-soft);  
+}  
+.preview-natural{  
+  color:#a97a2e; /* un auriu cald pentru mesajele de naturalitate */  
+}  
+  
+/* legendă explicativă */  
+.legend{  
+  font-size:10px;  
+  color:#8b8476;  
+}  
+  
+/* navbar-ul de jos – bară de sticlă caldă */  
+.bottom-nav{  
+  background:rgba(248,242,233,0.96);  
+  border-top:1px solid #e1d7c7;  
+  backdrop-filter:blur(14px);  
+}  
+.nav-btn{  
+  color:#8b8476;  
+}  
+.nav-btn.active{  
+  color:var(--accent-strong);  
+}  
+.nav-btn span.icon{  
+  font-size:18px;  
+}  
+  
+/* panelul de overlay (lista de cuvinte) – ca un sertar de lemn deschis */  
+.panel{  
+  background:linear-gradient(145deg,#fdfbf7,#f2ebde);  
+  border-radius:20px 20px 0 0;  
+  border:1px solid #e1d7c7;  
+}  
+.panel-item{  
+  border-radius:12px;  
+}  
+.panel-item:hover{  
+  background:#f3ebdd;  
+}  
+    /* === Stepper 3 pași (Builder) === */  
+  
+.builder-steps{  
+  display:flex;  
+  flex-wrap:wrap;  
+  gap:6px;  
+  margin:4px 0 10px;  
+  font-size:11px;  
+  color:var(--text-soft);  
+}  
+  
+.builder-step{  
+  display:flex;  
+  align-items:center;  
+  gap:6px;  
+  padding:4px 8px;  
+  border-radius:999px;  
+  background:rgba(255,255,255,0.7);  
+  border:1px solid var(--border);  
+  box-shadow:0 2px 6px rgba(80,64,48,0.10);  
+}  
+  
+.builder-step-number{  
+  width:16px;  
+  height:16px;  
+  border-radius:999px;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  font-size:10px;  
+  font-weight:700;  
+  background:var(--accent-strong);  
+  color:#fff;  
+}  
+  
+.builder-step-text{  
+  white-space:nowrap;  
+}  
+  
+/* pasul curent (1) evidențiat puțin mai mult */  
+.builder-step.active{  
+  background:#fff7e4;  
+  border-color:var(--accent-soft);  
+}  
+    /* === HEADER BRAND + TABS DE CAIET === */  
+  
+/* header general */  
+.rk-header{  
+  padding:8px 10px 12px;  
+  display:flex;  
+  flex-direction:column;  
+  gap:4px;  
+}  
+  
+.rk-header-main{  
+  display:flex;  
+  align-items:center;  
+  justify-content:space-between;  
+  gap:10px;  
+}  
+  
+.rk-header-main h1{  
+  margin:0;  
+  font-size:20px;  
+  font-weight:700;  
+  letter-spacing:0.06em;  
+  text-transform:uppercase;  
+  color:var(--accent-strong);  
+}  
+  
+/* badge mic lângă titlu – arată ca o etichetă de agendă */  
+.rk-badge{  
+  font-size:11px;  
+  font-weight:600;  
+  padding:4px 9px;  
+  border-radius:999px;  
+  background:linear-gradient(120deg,#f1d3a0,#f6e3b9);  
+  color:#514029;  
+  border:1px solid rgba(210,175,112,0.7);  
+  box-shadow:0 4px 10px rgba(185,145,84,0.25);  
+}  
+  
+/* subtitlu */  
+.rk-header #subtitle{  
+  margin:0;  
+  font-size:12px;  
+  color:var(--text-soft);  
+}  
+  
+/* ===== TAB-URI DE JOS – FILE DE CAIET ===== */  
+  
+.bottom-nav{  
+  position:fixed;  
+  inset-inline:0;  
+  bottom:0;  
+  display:flex;  
+  justify-content:space-around;  
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));  
+  background:rgba(248,242,233,0.96);  
+  border-top:1px solid #e1d7c7;  
+  backdrop-filter:blur(16px);  
+}  
+/* fiecare tab */  
+.nav-btn{  
+  position:relative;  
+  flex:1;  
+  max-width:150px;  
+  border:none;  
+  background:transparent;  
+  padding:0;  
+  cursor:pointer;  
+  color:#8b8476;  
+  font-size:11px;  
+}  
+  
+/* „filele” propriu-zise – fundal rotunjit */  
+.nav-btn::before{  
+  content:"";  
+  position:absolute;  
+  inset:0;  
+  top:-4px;  
+  margin:0 4px;  
+  border-radius:14px 14px 0 0;  
+  background:rgba(255,252,246,0.65);  
+  border:1px solid transparent;  
+  border-bottom:none;  
+  box-shadow:none;  
+  transition:  
+    transform 0.16s ease,  
+    box-shadow 0.16s ease,  
+    border-color 0.16s ease,  
+    background 0.16s ease;  
+  z-index:-1;  
+}  
+  
+/* conținutul tabului (icon + text) */  
+.nav-btn span.icon{  
+  display:block;  
+  font-size:17px;  
+  margin-bottom:1px;  
+}  
+.nav-btn span:last-child{  
+  position:relative;  
+  z-index:1;  
+}  
+  
+/* tab activ – pare ridicat de pe „caiet” */  
+.nav-btn.active{  
+  color:var(--accent-strong);  
+  font-weight:600;  
+}  
+.nav-btn.active::before{  
+  background:#fdfbf7;  
+  border-color:#ddcfb9;  
+  box-shadow:0 -4px 10px rgba(90,72,52,0.18);  
+  transform:translateY(-3px);  
+}  
+  
+/* la hover pe desktop – tab ușor ridicat */  
+@media (hover:hover){  
+  .nav-btn:hover::before{  
+    box-shadow:0 -3px 8px rgba(90,72,52,0.16);  
+  }  
+}  
+      
+/* Adaugă în <style> */  
+.legend{  
+  display:none;  
+}  
+    /* tot în <style> */  
+#naturalHint{  
+  display:none;  
+}  
+    /* Chip-uri oprite (SUBJECT/TIME/PLACE etc. nefolosite în propoziție) */  
+#screen-builder .chip-off{  
+  opacity: 0.45;  
+  background: #eee2d1;  
+  box-shadow: none;  
+  filter: grayscale(0.1);  
+}  
+    /* ===== STEPPER pentru Builder (3 pași vizuali) ===== */  
+  
+.builder-steps{  
+  display:flex;  
+  gap:6px;  
+  margin-bottom:8px;  
+  padding:6px 6px 2px;  
+  border-radius:14px;  
+  background:rgba(255,252,246,0.9);  
+  border:1px solid rgba(223,210,190,0.9);  
+  box-shadow:0 6px 14px rgba(96,78,56,0.12);  
+}  
+  
+.builder-step{  
+  flex:1;  
+  display:flex;  
+  align-items:center;  
+  gap:6px;  
+  padding:4px 6px;  
+  border-radius:999px;  
+  font-size:11px;  
+  color:var(--text-soft);  
+  opacity:0.9;  
+}  
+  
+.builder-step-number{  
+  width:18px;  
+  height:18px;  
+  border-radius:50%;  
+  display:inline-flex;  
+  align-items:center;  
+  justify-content:center;  
+  font-size:11px;  
+  font-weight:700;  
+  background:#f3ebdd;  
+  color:#70563a;  
+}  
+  
+.builder-step-text{  
+  white-space:nowrap;  
+  overflow:hidden;  
+  text-overflow:ellipsis;  
+}  
+  
+/* primul pas – accent ușor (pare „activ”) */  
+.builder-step.active{  
+  background:linear-gradient(120deg,#f6efe3,#f1e2cc);  
+  color:var(--accent-strong);  
+  font-weight:600;  
+}  
+  
+.builder-step.active .builder-step-number{  
+  background:var(--accent-strong);  
+  color:#fff;  
+}  
+    #screen-exercises .exercise-question.empty {  
+  color: var(--text-soft);  
+  font-weight: 400;  
+}  
+    .example{  
+  display:inline-block;  
+  font-size:12px;  
+  margin-top:2px;  
+  color:var(--text-soft);  
+}  
+    /* Ascunde rezultatul coreean + româna corectată din blocul Română → Coreeană */  
+#roToKoResult,  
+#roCorrected {  
+  display: none;  
+}  
+    // === Bifa care activează / dezactivează Propoziția 2 ===  
+const enableP2 = document.getElementById("enableP2");  
+const titleP2  = document.getElementById("titleP2");  
+const tableP2  = document.getElementById("tableP2");  
+  
+if (enableP2 && titleP2 && tableP2) {  
+  const syncP2 = () => {  
+    const on = enableP2.checked;  
+    titleP2.classList.toggle("hidden", !on);  
+    tableP2.classList.toggle("hidden", !on);  
+  };  
+  
+  enableP2.addEventListener("change", syncP2);  
+  // setează starea inițială la încărcarea paginii  
+  syncP2();  
+}  
+    /* Ascund bara veche "Mod afișare / Propoziția 1–2" */  
+#screen-builder > .mode-panel{  
+  display:none;  
+}  
+  /* ===== Fine tuning pentru Builder – Propoziția 2 ===== */  
+  
+/* rândul cu bifa P2, lipit de tabel, în dreapta */  
+.builder-enable-p2{  
+  margin-top: 4px;  
+  padding-top: 4px;  
+  display: flex;  
+  justify-content: flex-end;  
+  border-top: 1px dashed var(--border);  
+  font-size: 11px;  
+  color: var(--text-soft);  
+}  
+  
+.builder-enable-p2 label{  
+  display: flex;  
+  align-items: center;  
+  gap: 4px;  
+}  
+  
+/* titlul "Propoziția 2 (continuare / frază)" – arată ca sub-titlu elegant */  
+#titleP2{  
+  margin-top: 6px;  
+  padding-top: 4px;  
+  border-top: 1px dashed var(--border);  
+  display: flex;  
+  justify-content: space-between;  
+  align-items: center;  
+  font-size: 11px;  
+  color: var(--text-soft);  
+}  
+  
+#titleP2 span::before{  
+  content: "**↳** ";  
+  color: var(--accent-strong);  
+  font-weight: 600;  
+}    
+   /* Ascund traducerea în română DOAR în preview-ul Builder */  
+.preview-card #previewRoTitle,  
+.preview-card #previewRo {  
+  display: none;  
+}   
+   /* Ascund doar textul titlului "Traducere aproximativă (română – pe părți)" */  
+.preview-card #previewRoTitle > span {  
+  display: none;  
+}   
+  /* ===== TEMA PASTEL GLOBALĂ (v2.0) – Raluca Korean ===== */  
+  
+/* fundal general aplicație */  
+body.pastel-theme {  
+  background: radial-gradient(circle at top left, #ffe4ff 0%, #d7f0ff 40%, #f0e5ff 75%, #f3d4ff 100%);  
+  font-weight: 500;  
+}  
+  
+/* header sus */  
+body.pastel-theme .rk-header {  
+  background: linear-gradient(120deg, #6fb8ff, #a774ff, #ff7fd1);  
+  color: #fff;  
+  box-shadow: 0 18px 45px rgba(77, 93, 255, 0.4);  
+  border-radius: 26px;  
+}  
+  
+body.pastel-theme .rk-header-main h1 {  
+  font-weight: 900;  
+  letter-spacing: 0.06em;  
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);  
+}  
+  
+body.pastel-theme .rk-badge {  
+  background: rgba(255, 255, 255, 0.18);  
+  border-radius: 999px;  
+  padding-inline: 14px;  
+  font-weight: 600;  
+}  
+  
+/* card-urile mari (builder, exerciții, lecții, glosar) */  
+body.pastel-theme .card,  
+body.pastel-theme .table-block,  
+body.pastel-theme .preview-card {  
+  background: radial-gradient(circle at top left, #ffffff 5%, #f7f0ff 45%, #ffe9ff 85%);  
+  border-radius: 26px;  
+  box-shadow:  
+    0 18px 40px rgba(70, 85, 155, 0.22),  
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;  
+  border: none;  
+}  
+  
+/* zona Română → Coreeană */  
+body.pastel-theme #roInput,  
+body.pastel-theme textarea {  
+  border-radius: 18px;  
+  border: none;  
+  box-shadow:  
+    0 10px 25px rgba(120, 140, 200, 0.18),  
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;  
+  background: linear-gradient(145deg, #ffffff, #f7f4ff);  
+}  
+  
+/* titluri mai groase peste tot */  
+body.pastel-theme h1,  
+body.pastel-theme h2,  
+body.pastel-theme h3 {  
+  font-weight: 800;  
+}  
+  
+/* butoane „3D pill” generale */  
+body.pastel-theme button,  
+body.pastel-theme .bottom-nav .nav-btn {  
+  border-radius: 999px;  
+  border: none;  
+  font-weight: 600;  
+  padding-inline: 18px;  
+  padding-block: 8px;  
+  box-shadow:  
+    0 10px 25px rgba(80, 90, 160, 0.35),  
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;  
+  background: linear-gradient(135deg, #4b8bff, #a55dff);  
+  color: #ffffff;  
+  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, filter 0.1s ease-out;  
+}  
+  
+/* butoane secundare (gri/galben/roz) – folosim clasa existentă .secondary */  
+body.pastel-theme button.secondary {  
+  background: linear-gradient(135deg, #ffaf6b, #ff72b4);  
+}  
+  
+/* hover/active 3D */  
+body.pastel-theme button:hover,  
+body.pastel-theme .bottom-nav .nav-btn:hover {  
+  transform: translateY(-1px);  
+  filter: brightness(1.05);  
+  box-shadow:  
+    0 14px 32px rgba(60, 80, 160, 0.42),  
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;  
+}  
+  
+body.pastel-theme button:active,  
+body.pastel-theme .bottom-nav .nav-btn:active {  
+  transform: translateY(1px);  
+  box-shadow:  
+    0 6px 16px rgba(50, 70, 130, 0.5),  
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;  
+}  
+  
+/* bara de jos – nav */  
+body.pastel-theme .bottom-nav {  
+  background: linear-gradient(120deg, #f3e6ff, #ffe8fb);  
+  box-shadow: 0 -10px 25px rgba(110, 120, 190, 0.25);  
+  border-radius: 24px 24px 0 0;  
+}  
+  
+body.pastel-theme .bottom-nav .nav-btn {  
+  background: transparent;  
+  box-shadow: none;  
+  color: #5860b0;  
+}  
+  
+/* buton activ din nav */  
+body.pastel-theme .bottom-nav .nav-btn.active {  
+  background: linear-gradient(135deg, #5f8cff, #be6dff);  
+  color: #fff;  
+  box-shadow:  
+    0 8px 20px rgba(90, 90, 190, 0.45),  
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;  
+}  
+  
+/* mici iconițe rotunde (dacă folosești .icon / emoji în span) */  
+body.pastel-theme .icon {  
+  display: inline-flex;  
+  align-items: center;  
+  justify-content: center;  
+  width: 22px;  
+  height: 22px;  
+  border-radius: 999px;  
+  background: radial-gradient(circle at 30% 0%, #fff, rgba(255, 255, 255, 0));  
+  box-shadow: 0 6px 15px rgba(70, 70, 140, 0.35);  
+}    
+    /* ===== Carduri 3D pastel pentru Builder (SUBJECT / TIME / PLACE / MOD / OBJECT / NUMERAL / COUNTER / VERB...) ===== */  
+  
+body.pastel-theme #tableP1 > div {  
+  position: relative;  
+  border-radius: 22px;  
+  padding: 10px 12px;  
+  margin-bottom: 6px;  
+  background: radial-gradient(circle at top left, #ffffff 0%, #f3f3ff 55%, #ffe7ff 100%);  
+  box-shadow:  
+    0 12px 28px rgba(80, 90, 160, 0.35),  
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;  
+  overflow: hidden;  
+}  
+  
+/* efect de highlight pe marginea de sus a fiecărui card */  
+body.pastel-theme #tableP1 > div::before {  
+  content: "";  
+  position: absolute;  
+  inset: 0;  
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));  
+  opacity: 0.8;  
+  pointer-events: none;  
+}  
+  
+/* textul din headerul cardului (SUBJECT, TIME, etc.) – îl îngroșăm */  
+body.pastel-theme #tableP1 > div > *:first-child {  
+  font-weight: 800;  
+  letter-spacing: 0.02em;  
+}  
+  
+/* mică margine între header și restul conținutului din card */  
+body.pastel-theme #tableP1 > div > *:nth-child(2) {  
+  margin-top: 4px;  
+}  
+  
+/* nuanțe diferite pe fiecare card, ca în mockup (pe bază de poziție) */  
+body.pastel-theme #tableP1 > div:nth-child(1) {  
+  background: radial-gradient(circle at top left, #e0f0ff 0%, #b9d5ff 45%, #e3e6ff 100%);  
+}  
+  
+body.pastel-theme #tableP1 > div:nth-child(2) {  
+  background: radial-gradient(circle at top left, #ffe1ea 0%, #ffc0d7 45%, #ffeaf5 100%);  
+}  
+  
+body.pastel-theme #tableP1 > div:nth-child(3) {  
+  background: radial-gradient(circle at top left, #fff3d6 0%, #ffd68a 45%, #fff0d7 100%);  
+}  
+  
+body.pastel-theme #tableP1 > div:nth-child(4) {  
+  background: radial-gradient(circle at top left, #d9ffe6 0%, #b4f4cf 45%, #e3fff0 100%);  
+}  
+  
+body.pastel-theme #tableP1 > div:nth-child(5) {  
+  background: radial-gradient(circle at top left, #dde6ff 0%, #b5c5ff 45%, #e3e5ff 100%);  
+}  
+  
+body.pastel-theme #tableP1 > div:nth-child(6),  
+body.pastel-theme #tableP1 > div:nth-child(7),  
+body.pastel-theme #tableP1 > div:nth-child(8) {  
+  background: radial-gradient(circle at top left, #f4e1ff 0%, #e3c1ff 45%, #f8e7ff 100%);  
+}  
+    /* Culori pastel Propozitia 2 (randul de jos) */  
+body.pastel-theme #tableP2 > div:nth-child(1) {  
+  background: radial-gradient(circle at top left, #ffe8ef 0%, #ffc7d9 45%, #ffeef5 100%);  
+}  
+  
+body.pastel-theme #tableP2 > div:nth-child(2) {  
+  background: radial-gradient(circle at top left, #fff1da 0%, #ffe0a8 45%, #fff3dd 100%);  
+}  
+  
+body.pastel-theme #tableP2 > div:nth-child(3) {  
+  background: radial-gradient(circle at top left, #e9ffe4 0%, #bfffd3 45%, #efffea 100%);  
+}  
+  
+body.pastel-theme #tableP2 > div:nth-child(4) {  
+  background: radial-gradient(circle at top left, #e8f2ff 0%, #c8dcff 45%, #eef4ff 100%);  
+}  
+  
+body.pastel-theme #tableP2 > div:nth-child(5) {  
+  background: radial-gradient(circle at top left, #f3e7ff 0%, #dcc4ff 45%, #f6ecff 100%);  
+}  
+  
+body.pastel-theme #tableP2 > div:nth-child(6) {  
+  background: radial-gradient(circle at top left, #fff0f0 0%, #ffd6d6 45%, #fff4f4 100%);  
+}  
+  
+body.pastel-theme #tableP2 > div:nth-child(7) {  
+  background: radial-gradient(circle at top left, #f0fff6 0%, #ccffe6 45%, #f2fff8 100%);  
+}  
+  
+body.pastel-theme #tableP2 > div:nth-child(8) {  
+  background: radial-gradient(circle at top left, #f0f5ff 0%, #d6e3ff 45%, #f3f7ff 100%);  
+}  
+    /* ===== Butoane pastel 3D ===== */  
+  
+body.pastel-theme .preview-buttons button,  
+body.pastel-theme #prevBtn,  
+body.pastel-theme #nextBtn,  
+body.pastel-theme #resetBtn,  
+body.pastel-theme #toggleRoBtn {  
+  border: none;  
+  border-radius: 18px;  
+  padding: 8px 14px;  
+  font-weight: 700;  
+  letter-spacing: 0.02em;  
+  color: #ffffff;  
+  box-shadow:  
+    0 10px 22px rgba(80, 80, 140, 0.28),  
+    0 0 0 1px rgba(255,255,255,.7) inset;  
+  transition: transform .15s ease, box-shadow .15s ease;  
+}  
+  
+/* efect apăsare */  
+body.pastel-theme .preview-buttons button:active,  
+body.pastel-theme #prevBtn:active,  
+body.pastel-theme #nextBtn:active,  
+body.pastel-theme #resetBtn:active,  
+body.pastel-theme #toggleRoBtn:active {  
+  transform: translateY(2px);  
+  box-shadow:  
+    0 4px 10px rgba(60, 60, 120, 0.25),  
+    0 0 0 1px rgba(255,255,255,.6) inset;  
+}  
+    /* Random propoziție */  
+body.pastel-theme #randomBtn {  
+  background: linear-gradient(135deg, #7a6cff, #6cc9ff);  
+}  
+  
+/* Audio coreeană */  
+body.pastel-theme #speakBtn {  
+  background: linear-gradient(135deg, #6cc9ff, #5be6c6);  
+}  
+  
+/* Salvează propoziția */  
+body.pastel-theme #favBtn {  
+  background: linear-gradient(135deg, #ff9a6c, #ff5f8c);  
+}  
+  
+/* Reset părți propoziție */  
+body.pastel-theme #resetBtn {  
+  background: linear-gradient(135deg, #ff6b6b, #ff9a6c);  
+}  
+  
+/* Prev / Next */  
+body.pastel-theme #prevBtn {  
+  background: linear-gradient(135deg, #8aa4ff, #b1c2ff);  
+}  
+body.pastel-theme #nextBtn {  
+  background: linear-gradient(135deg, #9f77ff, #c188ff);  
+}  
+  
+/* Ascunde traducerea */  
+body.pastel-theme #toggleRoBtn {  
+  background: linear-gradient(135deg, #ffa3a3, #ffc2a9);  
+}  
+    /* ===== Card Română → Coreeană – glassmorphic ===== */  
+  
+body.pastel-theme #roInput,  
+body.pastel-theme #roToKoResult,  
+body.pastel-theme #roCorrected {  
+  background: rgba(255,255,255,0.6);  
+  backdrop-filter: blur(14px);  
+  border-radius: 18px;  
+  box-shadow:  
+    0 12px 28px rgba(140, 130, 200, 0.25),  
+    0 0 0 1px rgba(255,255,255,.6) inset;  
+  font-weight: 600;  
+}  
+   /* Ascund DOAR textul titlului traducerii, păstrez butonul */  
+body.pastel-theme .preview-card #previewRoTitle span {  
+  display: none !important;  
+}   
+   /* ===== Card Română → Coreeană – glassmorphism pastel ===== */  
+  
+#roCard {  
+  margin-top: 16px;  
+  padding: 16px 20px 20px;  
+  border-radius: 22px;  
+  background: linear-gradient(  
+    135deg,  
+    rgba(255, 255, 255, 0.75),  
+    rgba(255, 255, 255, 0.45)  
+  );  
+  box-shadow:  
+    0 18px 45px rgba(131, 112, 210, 0.35),  
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;  
+  backdrop-filter: blur(18px);  
+}  
+  
+#roCard h2 {  
+  font-size: 16px;  
+  font-weight: 800;  
+  letter-spacing: 0.03em;  
+  margin-bottom: 10px;  
+}  
+  
+/* textarea de română */  
+#roCard textarea#roInput {  
+  width: 100%;  
+  border-radius: 18px;  
+  border: none;  
+  padding: 10px 14px;  
+  font-size: 14px;  
+  font-weight: 600;  
+  background: rgba(255, 255, 255, 0.9);  
+  box-shadow: 0 8px 20px rgba(135, 130, 200, 0.25);  
+}  
+  
+/* butonul 'Tradu în coreeană' – capsulă pastel 3D */  
+#roCard #roTranslateBtn {  
+  margin-top: 10px;  
+  border-radius: 999px;  
+  border: none;  
+  padding: 8px 16px;  
+  font-weight: 700;  
+  color: #ffffff;  
+  cursor: pointer;  
+  background: linear-gradient(135deg, #6b8cff, #9b6bff);  
+  box-shadow:  
+    0 10px 24px rgba(108, 110, 210, 0.4),  
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;  
+  transition: transform 0.15s ease, box-shadow 0.15s ease;  
+}  
+  
+#roCard #roTranslateBtn:active {  
+  transform: translateY(2px);  
+  box-shadow:  
+    0 5px 12px rgba(108, 110, 210, 0.4),  
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;  
+}  
+  
+/* rezultatul în coreeană + varianta corectată */  
+#roCard #roToKoResult,  
+#roCard #roCorrected {  
+  margin-top: 10px;  
+  padding: 8px 12px;  
+  border-radius: 14px;  
+  background: rgba(255, 255, 255, 0.9);  
+  font-weight: 600;  
+  box-shadow: 0 6px 16px rgba(140, 135, 210, 0.25);  
+}   
+  /* Ascund DOAR textul 'Traducere aproximativă (română – pe părți)' din Builder */  
+.preview-card #previewRoTitle span {  
+  display: none !important;  
+}   
+   /* ===== Card Română → Coreeană – glassmorphism pastel ===== */  
+#screen-builder .card {  
+  margin-top: 16px;  
+  padding: 16px 20px 20px;  
+  border-radius: 22px;  
+  background: linear-gradient(  
+    135deg,  
+    rgba(255, 255, 255, 0.8),  
+    rgba(255, 255, 255, 0.5)  
+  );  
+  box-shadow:  
+    0 18px 45px rgba(131, 112, 210, 0.35),  
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;  
+  backdrop-filter: blur(18px);  
+}  
+  
+/* titlul Română → Coreeană */  
+#screen-builder .card h2 {  
+  font-size: 16px;  
+  font-weight: 800;  
+  letter-spacing: 0.03em;  
+  margin-bottom: 10px;  
+}  
+/* TEXT MARE & BOLD — bloc Română → Coreeană */  
+.translation-output,  
+#roToKrOutput,  
+.translation-box {  
+  font-size: 26px;  
+  font-weight: 800;  
+  line-height: 1.9;  
+  letter-spacing: 0.3px;  
+}  
+    /* textarea în care scrii româna */  
+#screen-builder .card textarea#roInput {  
+  width: 100%;  
+  border-radius: 18px;  
+  border: none;  
+  padding: 10px 14px;  
+  font-size: 14px;  
+  font-weight: 600;  
+  background: rgba(255, 255, 255, 0.95);  
+  box-shadow: 0 8px 20px rgba(135, 130, 200, 0.25);  
+}  
+  
+/* butonul 'Tradu în coreeană' – capsulă 3D */  
+#screen-builder .card #roTranslateBtn {  
+  margin-top: 10px;  
+  border-radius: 999px;  
+  border: none;  
+  padding: 8px 16px;  
+  font-weight: 700;  
+  color: #ffffff;  
+  cursor: pointer;  
+  background: linear-gradient(135deg, #6b8cff, #9b6bff);  
+  box-shadow:  
+    0 10px 24px rgba(108, 110, 210, 0.4),  
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;  
+  transition: transform 0.15s ease, box-shadow 0.15s ease;  
+}  
+  
+#screen-builder .card #roTranslateBtn:active {  
+  transform: translateY(2px);  
+  box-shadow:  
+    0 5px 12px rgba(108, 110, 210, 0.4),  
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;  
+}  
+  
+/* rezultatul în coreeană + varianta corectată */  
+#screen-builder .card #roToKoResult,  
+#screen-builder .card #roCorrected {  
+  margin-top: 10px;  
+  padding: 8px 12px;  
+  border-radius: 14px;  
+  background: rgba(255, 255, 255, 0.95);  
+  font-weight: 600;  
+  box-shadow: 0 6px 16px rgba(140, 135, 210, 0.25);  
+}   
+    /* Carduri părți propoziție – stil capsule 3D */  
+.table-block .table-title span,  
+.mode-row span.section-label {  
+  font-weight: 800;  
+  letter-spacing: 0.02em;  
+}  
+  
+/* Butoane select – bordură interioară + glow fin */  
+.part-option {  
+  font-weight: 700;  
+  box-shadow:  
+    0 10px 22px rgba(120, 120, 200, 0.25),  
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;  
+  border-radius: 16px;  
+  backdrop-filter: blur(6px);  
+}  
+    /* Butoane principale glossy gradient */  
+.preview-buttons button,  
+.btn-group button {  
+  border-radius: 16px;  
+  font-weight: 800;  
+  letter-spacing: 0.02em;  
+  border: none;  
+  color: white;  
+  padding: 8px 14px;  
+  
+  background: linear-gradient(135deg,  
+    rgba(140, 170, 255, 1),  
+    rgba(200, 130, 255, 1)  
+  );  
+  
+  box-shadow:  
+    0 14px 28px rgba(140, 120, 230, 0.45),  
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;  
+  
+  transition: transform .15s ease, box-shadow .15s ease;  
+}  
+  
+.preview-buttons button:active,  
+.btn-group button:active {  
+  transform: translateY(2px);  
+  box-shadow:  
+    0 6px 16px rgba(140, 120, 230, 0.45),  
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;  
+}  
+    /* Ascund doar textul titlului traducerii aproximative din Builder */  
+.preview-card .preview-title {  
+  visibility: hidden;  
+}  
+  
+/* Dar păstrez butonul "Ascunde traducerea" vizibil */  
+.preview-card .preview-title button {  
+  visibility: visible;  
+}  
+    /* ==== 1. FONTURI MAI GROASE PENTRU TITLURI + BUTOANE ==== */  
+  
+/* Titlul mare + subtitlul de sus */  
+h1 {  
+  font-weight: 800;  
+  letter-spacing: 0.04em;  
+}  
+  
+#subtitle {  
+  font-weight: 500;  
+}  
+  
+/* Titlurile de secțiune (ex: Română → Coreeană, Exerciții TOPIK etc.) */  
+h2,  
+.table-title span,  
+.preview-title span {  
+  font-weight: 700;  
+}  
+  
+/* Text pe butoane (inclusiv butoane de jos: Builder / Exerciții / Lecții / Glosar) */  
+button,  
+.nav-btn span {  
+  font-weight: 600;  
+  letter-spacing: 0.02em;  
+}  
+    /* ==== 2. BUTOANE 3D + ANIMAȚIE ==== */  
+  
+/* bază pentru TOATE butoanele */  
+button,  
+.nav-btn {  
+  transition:  
+    transform 0.12s ease-out,  
+    box-shadow 0.12s ease-out,  
+    filter 0.12s ease-out;  
+  transform-origin: center;  
+}  
+  
+/* efect „plutire” la hover (pe desktop / când atingi ușor) */  
+button:hover,  
+.nav-btn:hover {  
+  transform: translateY(-1px);  
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);  
+  filter: brightness(1.03);  
+}  
+  
+/* mic „apăsat” la click */  
+button:active,  
+.nav-btn:active {  
+  transform: translateY(1px) scale(0.98);  
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.24);  
+  filter: brightness(0.98);  
+}  
+  
+/* un pic de glow în plus pentru butoanele importante (random / audio / salvează etc.) */  
+button.primary,  
+button#randomBtn,  
+button#speakBtn,  
+button#favBtn {  
+  box-shadow: 0 12px 28px rgba(255, 160, 220, 0.45);  
+}  
+  
+/* tab-ul activ din bara de jos (Builder, Exerciții, Lecții, Glosar) mai „ridicat” */  
+.bottom-nav .nav-btn.active {  
+  transform: translateY(-2px);  
+  box-shadow: 0 14px 32px rgba(73, 46, 180, 0.45);  
+}/* ==== 3. CARDURI GLOSSY PENTRU EXERCIȚII / LECȚII / GLOSAR ==== */  
+  
+#screen-exercises .card,  
+#screen-lessons .card,  
+#screen-glossary .card {  
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 220, 255, 0.88));  
+  border-radius: 26px;  
+  border: 1px solid rgba(255, 255, 255, 0.7);  
+  box-shadow:  
+    0 18px 40px rgba(40, 0, 80, 0.25),  
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;  
+  padding: 24px;  
+}  
+  
+/* titlul lecțiilor / glosarului un pic mai „statement” */  
+#screen-exercises h2,  
+#screen-lessons h2,  
+#screen-glossary h2 {  
+  font-weight: 800;  
+  letter-spacing: 0.03em;  
+}  
+  
+/* un mic gradient și pe header-ul de lecție, dacă există .lesson-header */  
+#screen-lessons .lesson-header {  
+  padding: 14px 18px;  
+  border-radius: 18px;  
+  background: linear-gradient(120deg, rgba(153, 206, 255, 0.85), rgba(255, 188, 224, 0.9));  
+  box-shadow: 0 10px 24px rgba(90, 70, 180, 0.35);  
+}  
+  
+/* glosarul – lista principală să pară card, nu tabel simplu */  
+#screen-glossary #glossaryList {  
+  margin-top: 12px;  
+  padding: 14px 16px;  
+  border-radius: 20px;  
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(220, 240, 255, 0.92));  
+  box-shadow: 0 14px 28px rgba(60, 80, 140, 0.25);  
+}    
+   /* Ascund DOAR textul „Traducere aproximativă (română – pe părți)” din Builder */  
+#screen-builder .preview-card #previewRoTitle {  
+  display: none !important;  
+}   
+    #screen-builder .preview-card #previewRoTitle2 {  
+  display: none !important;  
+}  
+    :root{  
+  --glass-bg: linear-gradient(145deg,#ffffff80,#ffffff20);  
+  --glass-border: 1px solid rgba(255,255,255,0.45);  
+  --glass-shadow: 0 20px 40px rgba(0,0,0,0.08);  
+  
+  --grad-top: linear-gradient(120deg,#9fd6ff,#c6a7ff,#ff9acb);  
+  --grad-bottom: linear-gradient(120deg,#b7e2ff,#e6c8ff,#ffd1e3);  
+}  
+    .card,  
+.preview-card,  
+.gloss-card,  
+.lesson-card,  
+.exercise-card {  
+  background: var(--glass-bg);  
+  border: var(--glass-border);  
+  border-radius: 22px;  
+  box-shadow: var(--glass-shadow);  
+  backdrop-filter: blur(14px);  
+}.rk-header{  
+  background: var(--grad-top);  
+  color:#0b1b3c;  
+  font-weight:700;  
+  letter-spacing:.5px;  
+}  
+    body{  
+  background: var(--grad-bottom);  
+}  
+    button,  
+.btn {  
+  border-radius: 14px;  
+  border: none;  
+  padding: 10px 16px;  
+  font-weight: 700;  
+  backdrop-filter: blur(6px);  
+  box-shadow: 0 8px 18px rgba(0,0,0,.12);  
+  transform: translateY(0);  
+  transition: .18s ease;  
+}  
+  
+button:hover {  
+  transform: translateY(-2px);  
+}  
+  
+.btn-blue  { background: linear-gradient(120deg,#82b5ff,#5fa8ff); color:#fff; }  
+.btn-green { background: linear-gradient(120deg,#8df2c8,#5ed6a8); color:#044; }  
+.btn-pink  { background: linear-gradient(120deg,#ff9acb,#ff7fae); color:#fff; }  
+.btn-orange{ background: linear-gradient(120deg,#ffb585,#ff8a46); color:#552200; }  
+   #screen-builder .card,  
+#screen-builder .preview-card {  
+  border-radius: 24px;  
+}  
+    #screen-glossary .card {  
+  border-radius: 24px;  
+}  
+  #screen-lessons .card {  
+  border-radius: 24px;  
+}  
+  #screen-exercises .card {  
+  border-radius: 24px;  
+}  
+   /* Iconițe + micro 3D pe butoanele principale din Builder */  
+#screen-builder #randomBtn::before,  
+#screen-builder #speakBtn::before,  
+#screen-builder #favBtn::before {  
+  display: inline-block;  
+  margin-right: 6px;  
+  transform: translateY(1px);  
+  transition: transform 0.15s ease, filter 0.15s ease;  
+}  
+  
+/* Icon concrete */  
+#screen-builder #randomBtn::before  { content: "🎲"; }  
+#screen-builder #speakBtn::before   { content: "🔊"; }  
+#screen-builder #favBtn::before     { content: "⭐"; }  
+  
+/* Micro 3D când treci cu mouse-ul / atingi */  
+#screen-builder #randomBtn:hover::before,  
+#screen-builder #speakBtn:hover::before,  
+#screen-builder #favBtn:hover::before {  
+  transform: translateY(-1px) scale(1.08);  
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));  
+}  
+   /* Card-uri care „plutesc” ușor la hover */  
+.card,  
+.preview-card,  
+#screen-exercises .card,  
+#screen-lessons .card,  
+#screen-glossary .card {  
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;  
+}  
+  
+.card:hover,  
+.preview-card:hover,  
+#screen-exercises .card:hover,  
+#screen-lessons .card:hover,  
+#screen-glossary .card:hover {  
+  transform: translateY(-3px);  
+  box-shadow: 0 22px 45px rgba(0,0,0,0.14);  
+}  
+ /* Neon focus pentru câmpuri de text / select */  
+input:focus,  
+textarea:focus,  
+select:focus {  
+  outline: none;  
+  border-color: rgba(255,255,255,0.9);  
+  box-shadow:  
+    0 0 0 1px rgba(255,255,255,0.9),  
+    0 0 0 3px rgba(149, 120, 255, 0.7),  
+    0 0 16px rgba(149, 120, 255, 0.7);  
+  background-color: rgba(255,255,255,0.8);  
+}.bottom-nav {  
+  backdrop-filter: blur(18px);  
+}  
+  
+/* pastilă iOS pentru nav */  
+.bottom-nav .nav-btn {  
+  border-radius: 999px;  
+  padding: 8px 18px 6px;  
+  font-weight: 600;  
+  background: linear-gradient(120deg,#f4e4ff,#fdf3ff);  
+  color: #4a3b73;  
+  box-shadow: 0 8px 20px rgba(0,0,0,0.10);  
+  transform: translateY(0);  
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;  
+}  
+  
+/* buton selectat */  
+.bottom-nav .nav-btn.active {  
+  background: linear-gradient(120deg,#8fd3ff,#c798ff);  
+  color: white;  
+  box-shadow: 0 14px 32px rgba(123, 104, 238, 0.5);  
+  transform: translateY(-2px);  
+}  
+   /* Header – gradient care se mișcă + glow subtil */  
+.rk-header {  
+  position: relative;  
+  z-index: 2;  
+  background-size: 220% 220%;          /* permite animarea gradientului existent */  
+  animation: headerGradient 18s ease-in-out infinite;  
+}  
+  
+/* Aura colorată moale în jurul header-ului */  
+.rk-header::after {  
+  content: "";  
+  position: absolute;  
+  inset: -18px -26px;                  /* cât de mare e “aura” în jur */  
+  border-radius: 32px;  
+  background: radial-gradient(circle at 0% 0%,  rgba(143,211,255,0.9), transparent 60%),  
+              radial-gradient(circle at 100% 0%, rgba(255,174,238,0.9), transparent 60%),  
+              radial-gradient(circle at 50% 100%, rgba(173,255,189,0.9), transparent 65%);  
+  filter: blur(32px);  
+  opacity: 0.24;  
+  pointer-events: none;  
+  z-index: -1;  
+  animation: headerGlow 8s ease-in-out infinite;  
+}  
+  
+/* anima mișcarea gradientului din header (folosește gradientul pe care îl ai deja) */  
+@keyframes headerGradient {  
+  0%   { background-position: 0% 40%; }  
+  50%  { background-position: 100% 60%; }  
+  100% { background-position: 0% 40%; }  
+}  
+  
+/* anima “respirația” aurei */  
+@keyframes headerGlow {  
+  0%, 100% {  
+    opacity: 0.18;  
+    transform: translateY(0);  
+  }  
+  50% {  
+    opacity: 0.32;  
+    transform: translateY(3px);  
+  }  
+}  
+    /* Containerul principal – îl facem “suport” pentru fundalul animat */  
+.app {  
+  position: relative;  
+  z-index: 0;  
+  overflow-x: hidden;  
+}  
+  
+/* Stratul de fundal animat, foarte subtil (sub toată aplicația) */  
+.app::before {  
+  content: "";  
+  position: fixed;      /* rămâne pe loc când derulezi */  
+  inset: 0;  
+  z-index: -1;  
+  pointer-events: none;  
+  
+  background:  
+    radial-gradient(circle at 0% 0%,     rgba(143,211,255,0.7), transparent 55%),  
+    radial-gradient(circle at 100% 0%,   rgba(255,174,238,0.75), transparent 55%),  
+    radial-gradient(circle at 0% 100%,   rgba(173,255,189,0.7), transparent 55%),  
+    radial-gradient(circle at 100% 100%, rgba(255,214,165,0.75), transparent 60%);  
+  background-size: 160% 160%;  
+  animation: appBgDrift 32s ease-in-out infinite alternate;  
+}  
+  
+/* mișcare foarte lentă, “respirație” de culori */  
+@keyframes appBgDrift {  
+  0% {  
+    background-position:  
+      0%   0%,  
+      100% 0%,  
+      0%   100%,  
+      100% 100%;  
+  }  
+  50% {  
+    background-position:  
+      12%  8%,  
+      88%  2%,  
+      6%   88%,  
+      94%  96%;  
+  }  
+  100% {  
+    background-position:  
+      0%   10%,  
+      100% 6%,  
+      4%   100%,  
+      96%  90%;  
+  }  
+}  /* Glow animat foarte subtil pe header */  
+.rk-header {  
+  position: relative;  
+  overflow: visible;  
+}  
+  
+.rk-header::after {  
+  content: "";  
+  position: absolute;  
+  left: 50%;  
+  top: 100%;  
+  width: 260px;  
+  height: 70px;  
+  transform: translateX(-50%);  
+  border-radius: 50%;  
+  background: radial-gradient(  
+    circle,  
+    rgba(255, 170, 255, 0.35),  
+    rgba(120, 160, 255, 0.18),  
+    rgba(255, 255, 255, 0)  
+  );  
+  filter: blur(22px);  
+  animation: rkGlow 6s ease-in-out infinite alternate;  
+  pointer-events: none;  
+  z-index: -1;  
+}  
+  
+@keyframes rkGlow {  
+  0%   { opacity: 0.45; transform: translateX(-50%) translateY(6px) scale(1.0);}  
+  100% { opacity: 0.85; transform: translateX(-50%) translateY(2px) scale(1.08);}  
+}  
+  /* **════════════════** */  
+/* 🌈 Gradient animat lent pe fundal */  
+/* **════════════════** */  
+  
+body.pastel-theme {  
+  background: linear-gradient(  
+    120deg,  
+    #dff3ff,  
+    #ffe9ff,  
+    #f4fffc,  
+    #e8f0ff  
+  );  
+  background-size: 380% 380%;  
+  animation: bgFlow 28s ease-in-out infinite;  
+}  
+  
+@keyframes bgFlow {  
+  0%   { background-position: 0% 50%; }  
+  50%  { background-position: 100% 50%; }  
+  100% { background-position: 0% 50%; }  
+}  
+  
+  
+  
+/* **════════════════** */  
+/* ✨ Glow animat foarte subtil sub header */  
+/* **════════════════** */  
+  
+.rk-header {  
+  position: relative;  
+  overflow: visible;  
+}  
+  
+.rk-header::after {  
+  content: "";  
+  position: absolute;  
+  left: 50%;  
+  top: 100%;  
+  width: 260px;  
+  height: 70px;  
+  transform: translateX(-50%);  
+  border-radius: 50%;  
+  background: radial-gradient(  
+    circle,  
+    rgba(255, 170, 255, 0.35),  
+    rgba(120, 160, 255, 0.18),  
+    rgba(255, 255, 255, 0)  
+  );  
+  filter: blur(22px);  
+  animation: rkGlow 6s ease-in-out infinite alternate;  
+  pointer-events: none;  
+  z-index: -1;  
+}  
+  
+@keyframes rkGlow {  
+  0% {  
+    opacity: 0.45;  
+    transform: translateX(-50%) translateY(6px) scale(1.0);  
+  }  
+  100% {  
+    opacity: 0.85;  
+    transform: translateX(-50%) translateY(2px) scale(1.08);  
+  }  
+}  
+ /* TEXT MARE & BOLD — preview propoziție coreeană */  
+.preview-sentence,  
+#koreanPreview,  
+.preview-output {  
+  font-size: 26px;  
+  font-weight: 800;  
+  line-height: 1.9;  
+  letter-spacing: 0.3px;  
+}  
+    body.pastel-theme .bottom-nav:last-of-type {  
+  display: flex !important;  
+}  
+  
+/* Scoate plăcuța albă din spatele tab-urilor */  
+.bottom-nav .nav-btn::before {  
+  content: none !important;  
+}  
+  /* ============================================================  
+   PARSER RO → BUILDER (V2, mai complet)  
+   ============================================================ */  
+  
+/* 1. Normalizare text română:  
+   - litere mici  
+   - diacritice uniformizate  
+   - scoatem semnele de punctuație  
+*/  
+function normalizeRo(text) {  
+  if (!text) return "";  
+  let t = text.toLowerCase();  
+  
+  // uniformizăm diacritice / variante  
+  t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");  
+  t = t.replace(/Ã¢/g, "â").replace(/Ã®/g, "î");  
+  
+  // scoatem unele semne de punctuație  
+  t = t.replace(/[.,!?;:]/g, " ");  
+  
+  // spații multiple → un singur spațiu  
+  t = t.replace(/\s+/g, " ").trim();  
+  return t;  
+}  
+  
+/* 2. Reguli pentru fiecare slot  
+   - fiecare regulă are un regex și un value (cuvântul coreean)  
+   - ORDINEA contează: primele reguli sunt mai „prioritare”  
+*/  
+  
+const RO_RULES = {  
+  subject: [  
+    // eu (formal) – **저**  
+    { re: /\beu\s*\(formal\)|eu\s*-\s*formal\b/, value: "**저**" },  
+    // eu (informal) – **나**  
+    { re: /\beu\s*\(informal\)|eu\s*-\s*informal\b/, value: "**나**" },  
+    // dacă apare simplu „eu” → default **저** (poți schimba)  
+    { re: /\beu\b/, value: "**저**" },  
+    // tu  
+    { re: /\btu\b/, value: "**너**" }  
+  ],  
+  
+  time: [  
+    { re: /\bazi\b|\bastăzi\b/, value: "**오늘**" },  
+    { re: /\bmâine\b/, value: "**내일**" },  
+    { re: /\bieri\b/, value: "**어제**" },  
+    { re: /\bacum\b/, value: "**지금**" }  
+  ],  
+  
+  place: [  
+    { re: /\bacas[ăa]\b/, value: "**집**" },  
+    { re: /la\s+școal[ăa]|la\s+scoala|școal[ăa]\b|scoala\b/, value: "**학교**" },  
+    { re: /la\s+firm[ăa]|la\s+serviciu|la\s+companie|firm[ăa]\b|serviciu\b|companie\b/, value: "**회사**" },  
+    { re: /la\s+banc[ăa]|banc[ăa]\b/, value: "**은행**" },  
+    { re: /cafenea|cafene[al]/, value: "**카페**" }  
+  ],  
+  
+  mod: [  
+    { re: /\bbine\b|frumos\b|ok\b/, value: "**잘**" },  
+    { re: /în\s+liniște|in\s+liniste|liniște|liniste/, value: "**조용히**" },  
+    { re: /cu\s+sârguint[ăa]|cu\s+sarguinta|harnic|cu\s+mult\s+efort/, value: "**열심히**" },  
+    { re: /încet|incet/, value: "**천천히**" },  
+    { re: /repede|rapid/, value: "**빨리**" }  
+  ],  
+  
+  object: [  
+    { re: /cafea/, value: "**커피**" },  
+    { re: /\bap[ăa]\b|ap[ăa]\s+mineral[ăa]?/, value: "**물**" },  
+    { re: /carte|c[ăa]rțile|c[ăa]rti\b/, value: "**책**" },  
+    { re: /m[ăa]ncare|pr[ăa]nzul|cina|mic\s+dejun/, value: "**음식**" },  
+    { re: /ceai\b/, value: "**차**" }  
+  ],  
+  
+  // opțional: număr pentru obiect (doar 1–3, ca exemplu)  
+  numeral: [  
+    { re: /\bo\s+carte\b|\bună\s+carte\b|\b(o|un)\s+caf(ea|ea)\b/, value: "**한**" },  
+    { re: /\bdou[ăa]\s+carți|dou[ăa]\s+cafele/, value: "**두**" },  
+    { re: /\btrei\s+carți|trei\s+cafele/, value: "**세**" }  
+  ],  
+  
+  // opțional: alegem classifier în funcție de obiect  
+  counter: [  
+    { re: /carte|c[ăa]rti\b/, value: "**권**" },  // pentru cărți  
+    { re: /cafea|ap[ăa]\b|ceai\b|m[ăa]ncare/, value: "**개**" } // general  
+  ],  
+  
+  // verb foarte simplu – doar pentru propoziția mare  
+  verb: [  
+    { re: /merg\b|a merge|să merg|sa merg/, value: "**가요**" },  
+    { re: /vin\b|a veni|să vin|sa vin/, value: "**와요**" },  
+    { re: /beau\b|a bea|să beau|sa beau/, value: "**마셔요**" },  
+    { re: /m[ăa]n[âa]nc\b|m[ăa]nânc|mananc|a m[ăa]nca/, value: "**먹어요**" },  
+    { re: /citesc|a citi|să citesc|sa citesc/, value: "**읽어요**" },  
+    { re: /lucrez|a lucra/, value: "**일해요**" }  
+  ]  
+};  
+  
+/* 3. Helper: ia primul value al regulii care se potrivește */  
+function matchSlot(rules, text) {  
+  if (!rules) return null;  
+  for (const rule of rules) {  
+    if (rule.re.test(text)) return rule.value;  
+  }  
+  return null;  
+}  
+  
+/* 4. Funcția principală: text RO → sloturi Builder */  
+function parseRomanianToSlots(text) {  
+  const t = normalizeRo(text);  
+  
+  const slots = {  
+    subject: matchSlot(RO_RULES.subject, t),  
+    time:    matchSlot(RO_RULES.time, t),  
+    place:   matchSlot(RO_RULES.place, t),  
+    mod:     matchSlot(RO_RULES.mod, t),  
+    object:  matchSlot(RO_RULES.object, t),  
+    numeral: matchSlot(RO_RULES.numeral, t),  
+    counter: matchSlot(RO_RULES.counter, t),  
+    verb:    matchSlot(RO_RULES.verb, t)  
+  };  
+  
+  return slots;  
+}  
+  
+/* 5. Aplică sloturile în Propoziția 1 (tabelul de sus) */  
+function applySlotsToBuilderP1(slots) {  
+  const table = document.getElementById("tableP1");  
+  if (!table || !slots) return;  
+  
+  const setCol = (key, value) => {  
+    if (!value) return;  
+    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');  
+    if (col) {  
+      col.textContent = value;  
+    }  
+  };  
+  
+  setCol("subject", slots.subject);  
+  setCol("time",    slots.time);  
+  setCol("place",   slots.place);  
+  setCol("mod",     slots.mod);  
+  setCol("object",  slots.object);  
+  setCol("numeral", slots.numeral);  
+  setCol("counter", slots.counter);  
+  // verbul îl folosim doar la reconstrucția propoziției, nu umplem coloană (deocamdată)  
+}  
+  
+/* 6. Reconstruiește propoziția coreeană mare din sloturi */  
+function rebuildPreviewFromBuilderP1(slotsFromParser) {  
+  const table = document.getElementById("tableP1");  
+  if (!table) return;  
+  
+  const pick = (key) => {  
+    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');  
+    return col ? col.textContent.trim() : "";  
+  };  
+  
+  const subject = pick("subject") || "**저**";  
+  const time    = pick("time");  
+  const place   = pick("place");  
+  const mod     = pick("mod");  
+  const numeral = pick("numeral");  
+  const counter = pick("counter");  
+  const object  = pick("object");  
+  
+  // dacă avem numeral+counter+object → „**책** **한** **권**” etc.  
+  let objectChunk = "";  
+  if (object && numeral && counter) {  
+    objectChunk = object + " " + numeral + " " + counter;  
+  } else if (object) {  
+    objectChunk = object;  
+  }  
+  
+  // verb: dacă parserul a găsit ceva, îl folosim, altfel **가요**  
+  const verb =  
+    (slotsFromParser && slotsFromParser.verb) ||  
+    "**가요**";  
+  
+  const pieces = [subject, time, place, mod, objectChunk, verb].filter(Boolean);  
+  const sentence = pieces.join(" ");  
+  
+  const out =  
+    document.getElementById("previewSentence") ||  
+    document.getElementById("previewKo") ||  
+    document.querySelector(".preview-sentence");  
+  
+  if (out) {  
+    out.textContent = sentence;  
+  }  
+}    
+   // === Limbă de intrare (Română / English) din switch-ul de sus ===  
+function getInputLang() {  
+  const el = document.querySelector('input[name="inputLang"]:checked');  
+  // fallback: dacă nu găsim nimic, presupunem Română  
+  return el ? el.value : "ro";  
+}   
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      line-height:1.35;
-      -webkit-text-size-adjust:100%;
-    }
-
-    :root{
-      --bg0:#fbf7ff;
-      --ink:#1b1630;
-      --muted:#5f5a77;
-      --accent:#8b5cf6;
-      --accent2:#22c55e;
-      --card:rgba(255,255,255,0.78);
-      --card-strong:rgba(255,255,255,0.92);
-      --border:rgba(27,22,48,0.12);
-      --shadow:0 18px 40px rgba(27,22,48,0.12);
-      --radius-lg:22px;
-      --radius-md:16px;
-      --maxw:1040px;
-    }
-
-    body.pastel-theme{
-      color:var(--ink);
-      background:
-        radial-gradient(900px 500px at 12% 18%, rgba(139,92,246,0.18), transparent 55%),
-        radial-gradient(900px 520px at 88% 22%, rgba(34,197,94,0.14), transparent 55%),
-        radial-gradient(900px 520px at 45% 88%, rgba(6,182,212,0.12), transparent 55%),
-        linear-gradient(180deg, var(--bg0), #f7f3ff);
-    }
-
-    .shell{
-      max-width:var(--maxw);
-      margin:0 auto;
-      padding:18px 14px 26px;
-      min-height:100%;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
-    .topbar{
-      border:1px solid var(--border);
-      background:var(--card);
-      border-radius:var(--radius-lg);
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(10px);
-      padding:14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-
-    .brand{
-      display:flex; align-items:center; gap:10px; min-width:0;
-    }
-    .mark{
-      width:44px; height:44px;
-      border-radius:14px;
-      display:grid; place-items:center;
-      font-weight:900; color:#fff;
-      background: linear-gradient(135deg, rgba(139,92,246,1), rgba(6,182,212,0.95));
-      box-shadow:0 10px 24px rgba(139,92,246,0.25);
-      flex:0 0 auto;
-    }
-    .titleWrap{ min-width:0; }
-    .title{
-      margin:0;
-      font-size:18px;
-      font-weight:900;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .subtitle{
-      margin-top:2px;
-      font-size:12px;
-      color:var(--muted);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .topActions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-      align-items:center;
-    }
-
-    .btn{
-      appearance:none;
-      border:1px solid rgba(27,22,48,0.14);
-      background:rgba(255,255,255,0.9);
-      color:rgba(27,22,48,0.9);
-      border-radius:999px;
-      padding:9px 12px;
-      font-weight:900;
-      font-size:13px;
-      cursor:pointer;
-      box-shadow:0 10px 22px rgba(27,22,48,0.10);
-      transition:transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
-      user-select:none;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-    }
-    .btn:hover{ transform:translateY(-1px); border-color:rgba(139,92,246,0.35); }
-    .btn:active{ transform:translateY(0px); box-shadow:0 8px 18px rgba(27,22,48,0.10); }
-
-    .btn.primary{ background:rgba(139,92,246,0.14); border-color:rgba(139,92,246,0.26); }
-    .btn.green{ background:rgba(34,197,94,0.14); border-color:rgba(34,197,94,0.26); }
-    .btn.ghost{ background:transparent; box-shadow:none; }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:12px;
-    }
-    @media (min-width: 960px){
-      .grid{ grid-template-columns: 1.2fr 0.8fr; }
-    }
-
-    .card{
-      border:1px solid var(--border);
-      background:var(--card-strong);
-      border-radius:var(--radius-lg);
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(10px);
-      padding:14px;
-    }
-
-    .cardTitle{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:10px;
-    }
-    .cardTitle h2{
-      margin:0;
-      font-size:16px;
-      font-weight:900;
-    }
-    .hint{ font-size:12px; color:var(--muted); }
-
-    .tabs{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .tab{
-      border:1px solid rgba(27,22,48,0.12);
-      background:rgba(255,255,255,0.85);
-      border-radius:999px;
-      padding:8px 10px;
-      font-size:13px;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-    }
-    .tab.active{
-      background:rgba(139,92,246,0.16);
-      border-color:rgba(139,92,246,0.28);
-    }
-
-    .panel{ display:none; }
-    .panel.show{ display:block; }
-
-    .divider{
-      height:1px;
-      background:rgba(27,22,48,0.10);
-      margin:10px 0;
-    }
-
-    .qBox{
-      border:1px solid rgba(27,22,48,0.12);
-      background:rgba(255,255,255,0.9);
-      border-radius:var(--radius-md);
-      padding:12px;
-    }
-
-    .qKo{
-      font-size:20px;
-      font-weight:900;
-      margin:0 0 6px;
-      letter-spacing:.2px;
-    }
-    .qSub{
-      margin:0 0 10px;
-      font-size:12px;
-      color:rgba(27,22,48,0.65);
-      font-weight:800;
-    }
-
-    .choices{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:8px;
-    }
-    @media (min-width: 720px){
-      .choices{ grid-template-columns: 1fr 1fr; }
-    }
-
-    .choice{
-      border:1px solid rgba(27,22,48,0.14);
-      background:rgba(255,255,255,0.95);
-      border-radius:14px;
-      padding:10px 10px;
-      cursor:pointer;
-      font-weight:900;
-      text-align:left;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      user-select:none;
-    }
-    .choice:hover{ border-color:rgba(139,92,246,0.35); }
-    .choice.good{ border-color:rgba(34,197,94,0.45); background:rgba(34,197,94,0.10); }
-    .choice.bad{ border-color:rgba(239,68,68,0.35); background:rgba(239,68,68,0.08); }
-
-    .mini{
-      font-size:12px;
-      color:rgba(27,22,48,0.65);
-      font-weight:800;
-    }
-
-    .statLine{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
-      margin-top:10px;
-    }
-
-    .pillInfo{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      font-size:12px;
-      color:rgba(27,22,48,0.7);
-      background:rgba(34,197,94,0.12);
-      border:1px solid rgba(34,197,94,0.22);
-      padding:7px 10px;
-      border-radius:999px;
-      font-weight:900;
-    }
-
-    .row{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    .inp{
-      flex: 1 1 240px;
-      border:1px solid rgba(27,22,48,0.14);
-      background:rgba(255,255,255,0.96);
-      border-radius:12px;
-      padding:10px 10px;
-      font-size:14px;
-      outline:none;
-    }
-
-    /* Puzzle */
-    .wordBank, .sentenceLine{
-      border:1px solid rgba(27,22,48,0.12);
-      background:rgba(255,255,255,0.9);
-      border-radius:var(--radius-md);
-      padding:10px;
-      min-height:56px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      align-items:center;
-    }
-
-    .chip{
-      border:1px solid rgba(27,22,48,0.14);
-      background:rgba(255,255,255,0.95);
-      border-radius:999px;
-      padding:8px 10px;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-    }
-    .chip:hover{ border-color:rgba(139,92,246,0.35); }
-
-    .resultBox{
-      margin-top:10px;
-      border:1px dashed rgba(27,22,48,0.18);
-      background:rgba(255,255,255,0.65);
-      border-radius:var(--radius-md);
-      padding:10px;
-      font-size:13px;
-      color:rgba(27,22,48,0.75);
-      min-height:44px;
-    }
   </style>
 </head>
-
 <body class="pastel-theme">
-  <div class="shell">
-    <!-- TOPBAR -->
-    <div class="topbar">
-      <div class="brand">
-        <div class="mark">RK</div>
-        <div class="titleWrap">
-          <div class="title">Raluca Korean — Exercises</div>
-          <div class="subtitle">Quiz TOPIK · Particule · Puzzle (stabil)</div>
-        </div>
-      </div>
-      <div class="topActions">
-        <a class="btn ghost" href="index.html">⬅ Înapoi</a>
-        <button class="btn" id="resetAllBtn" type="button">🧽 Reset</button>
-      </div>
-    </div>
+  <div class="app">
+<header class="rk-header">  
+  <div class="rk-header-main">  
+    <h1>Raluca Korean</h1>  
+    <span class="rk-badge">Study App v2.0</span>  
+  </div>  
+  <p id="subtitle">Exerciții TOPIK — Quiz + Particule + Puzzle</p>  
+</header>
 
-    <div class="grid">
-      <!-- LEFT: CONTENT -->
-      <div class="card">
-        <div class="cardTitle">
-          <h2>Exerciții</h2>
-          <span class="pillInfo" id="globalStat">—</span>
-        </div>
+<div class="screen active" id="screen-exercises">  
+      <div class="card ex-card">  
+        <div class="ex-header-row">  
+          <div>  
+            <div class="ex-pill">TOPIK trainer</div>  
+            <h2>Exerciții TOPIK – propoziții</h2>  
+          </div>  
+          <div class="ex-mini-hint">  
+            Antrenează: verbe · particule · conjugări  
+          </div>  
+        </div>  
+  
+        <div class="ex-type-row">  
+          <div class="ex-type-left">  
+            <span class="small-label">Tip exercițiu</span>  
+            <span class="ex-type-chip" id="exerciseTypeLabel">  
+              propoziții random din builder  
+            </span>  
+          </div>  
+          <select id="exerciseType">  
+            <option value="verb">Alege VERBUL corect</option>  
+            <option value="particle">Alege PARTICULA corectă (simplu)</option>  
+            <option value="particlePlus">Particule multiple (**은**/**는**, **이**/**가**, **을**/**를**, **에**/**에서**)</option>  
+            <option value="conjug">Alege CONJUGAREA corectă</option>  
+            <option value="puzzle">🧩 Puzzle – ordonează propoziția</option>  
+          </select>  
+        </div>  
+  
+        <div class="ex-question-shell">  
+          <div class="ex-question-tag-row">  
+            <span class="ex-question-tag">Întrebare curentă</span>  
+            <span class="ex-question-subtag" id="exerciseSubtag"> </span>  
+          </div>  
+  
+          <div class="exercise-question empty" id="exerciseQuestion">  
+            Alege tipul de exercițiu și apasă „Întrebare nouă”.  
+          </div>  
+  
+          <div class="exercise-options" id="exerciseOptions"></div>  
+  
+          <div class="btn-group ex-buttons">  
+            <button id="checkAnswerBtn">Verifică răspunsul</button>  
+            <button class="secondary" id="nextQuestionBtn">Întrebare nouă</button>  
+          </div>  
+  
+          <div class="exercise-feedback" id="exerciseFeedback"></div>  
+        </div>  
+      </div>  
+  
+      <div class="legend ex-legend">  
+        ➤ Poți schimba tipul de exercițiu din box-ul de sus.<br />  
+        ➤ La „Particule multiple”, toate spațiile (1)(2)(3)(4) trebuie corecte ca să fie ✅.  
+      </div>  
+    </div>  
+  
+    <!-- SCREEN 3: LECȚII DE GRAMATICĂ -->  
+    
 
-        <div class="tabs">
-          <button class="tab active" data-tab="quiz">TOPIK Quiz</button>
-          <button class="tab" data-tab="particles">Particule</button>
-          <button class="tab" data-tab="puzzle">Puzzle</button>
-        </div>
-
-        <!-- QUIZ -->
-        <section class="panel show" id="panel-quiz">
-          <div class="qBox">
-            <p class="qKo" id="quizKo">—</p>
-            <p class="qSub" id="quizSub">Alege traducerea corectă (RO).</p>
-
-            <div class="choices" id="quizChoices"></div>
-
-            <div class="statLine">
-              <div class="row">
-                <button class="btn primary" id="quizNextBtn" type="button">➡ Next</button>
-                <button class="btn" id="quizSpeakBtn" type="button">🔊 Audio KO</button>
-              </div>
-              <div class="mini" id="quizScore">Scor: 0 / 0</div>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="row">
-            <input class="inp" id="quizAddKo" type="text" placeholder="Adaugă întrebare KO (ex: 저는 학교에 가요.)" />
-            <input class="inp" id="quizAddRo" type="text" placeholder="Traducere RO (ex: Eu merg la școală.)" />
-            <button class="btn green" id="quizAddBtn" type="button">+ Add</button>
-          </div>
-
-          <div class="resultBox" id="quizMsg">Tip: poți adăuga propriile întrebări. Se salvează pe telefon.</div>
-        </section>
-
-        <!-- PARTICLES -->
-        <section class="panel" id="panel-particles">
-          <div class="qBox">
-            <p class="qKo" id="pKo">—</p>
-            <p class="qSub">Alege particula corectă.</p>
-            <div class="choices" id="pChoices"></div>
-
-            <div class="statLine">
-              <div class="row">
-                <button class="btn primary" id="pNextBtn" type="button">➡ Next</button>
-              </div>
-              <div class="mini" id="pScore">Corecte: 0</div>
-            </div>
-          </div>
-
-          <div class="resultBox" id="pMsg">—</div>
-        </section>
-
-        <!-- PUZZLE -->
-        <section class="panel" id="panel-puzzle">
-          <div class="qBox">
-            <p class="qKo" id="pzTitle">Puzzle: aranjează propoziția</p>
-            <p class="qSub">Tap pe cuvinte ca să construiești propoziția. Tap din propoziție ca să o scoți.</p>
-
-            <div class="mini">Word bank</div>
-            <div class="wordBank" id="pzBank"></div>
-
-            <div class="mini" style="margin-top:10px;">Propoziția ta</div>
-            <div class="sentenceLine" id="pzLine"></div>
-
-            <div class="statLine">
-              <div class="row">
-                <button class="btn primary" id="pzCheckBtn" type="button">✅ Check</button>
-                <button class="btn" id="pzNewBtn" type="button">🎲 New</button>
-                <button class="btn" id="pzClearBtn" type="button">🧽 Clear</button>
-              </div>
-              <div class="mini" id="pzScore">Corecte: 0</div>
-            </div>
-          </div>
-
-          <div class="resultBox" id="pzMsg">—</div>
-        </section>
-      </div>
-
-      <!-- RIGHT: SUMMARY -->
-      <div class="card">
-        <div class="cardTitle">
-          <h2>Rezumat</h2>
-          <span class="hint">salvat pe telefon</span>
-        </div>
-
-        <div class="resultBox" id="summaryBox">—</div>
-
-        <div class="divider"></div>
-
-        <div class="cardTitle" style="margin-bottom:6px;">
-          <h2>Ultimele întrebări adăugate</h2>
-          <span class="hint">custom</span>
-        </div>
-        <div class="resultBox" id="customList">—</div>
-      </div>
-    </div>
+<nav class="bottom-nav">  
+    <button class="nav-btn active" data-target="builder">  
+      <span class="icon">🏗</span>  
+      <span>Builder</span>  
+    </button>  
+    <button class="nav-btn" data-target="exercises">  
+      <span class="icon">📝</span>  
+      <span>Exerciții</span>  
+    </button>  
+    <button class="nav-btn" data-target="lessons">  
+      <span class="icon">📗</span>  
+      <span>Lecții</span>  
+    </button>  
+    <button class="nav-btn" data-target="glossary">  
+      <span class="icon">📚</span>  
+      <span>Glosar</span>  
+    </button>  
+  </nav>
   </div>
 
+  <script src="topik4_quiz_particles_500.js"></script>
+
   <script>
-    // =========================================================
-    // Raluca Korean — Exercises (single-file)
-    // =========================================================
-
-    const LS_EX = "rk_exercises_v1";
-
-    const BASE_QUIZ = [
-      { ko:"저는 학교에 가요.", ro:"Eu merg la școală." },
-      { ko:"오늘 커피를 마셔요.", ro:"Azi beau cafea." },
-      { ko:"내일 서울에 가요.", ro:"Mâine merg în Seoul." },
-      { ko:"지금 한국어를 공부해요.", ro:"Acum studiez coreeană." },
-      { ko:"저녁에 집에 와요.", ro:"Seara vin acasă." }
-    ];
-
-    const PARTICLES = [
-      // format: { text:"저__ 학생__.", choices:["은","는","이","가"], answer:"는", explain:"Topic marker (저는)"}
-      { text:"저__ 학생이에요.", choices:["은","는","이","가"], answer:"는", explain:"저 + topic = 저는" },
-      { text:"친구__ 와요.", choices:["은","는","이","가"], answer:"가", explain:"Subiect (cine vine) = 친구가" },
-      { text:"커피__ 마셔요.", choices:["을","를","에","에서"], answer:"를", explain:"Obiect = 커피를" },
-      { text:"학교__ 가요.", choices:["에","에서","을","를"], answer:"에", explain:"Destinație = 학교에" },
-      { text:"학교__ 공부해요.", choices:["에","에서","은","는"], answer:"에서", explain:"Loc acțiune = 학교에서" }
-    ];
-
-    const PUZZLES = [
-      { words:["저는","학교에","가요"], answer:"저는 학교에 가요" , ro:"Eu merg la școală." },
-      { words:["오늘","커피를","마셔요"], answer:"오늘 커피를 마셔요", ro:"Azi beau cafea." },
-      { words:["지금","한국어를","공부해요"], answer:"지금 한국어를 공부해요", ro:"Acum studiez coreeană." },
-      { words:["내일","서울에","가요"], answer:"내일 서울에 가요", ro:"Mâine merg în Seoul." }
-    ];
-
-    const $ = (s, r=document)=>r.querySelector(s);
-    const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
-
-    function safeParse(json, fallback){
-      try{ return JSON.parse(json); } catch{ return fallback; }
-    }
-
-    function loadState(){
-      const raw = localStorage.getItem(LS_EX);
-      const base = {
-        quiz: { correct:0, total:0, idx:0, custom:[] },
-        particles: { correct:0, idx:0 },
-        puzzle: { correct:0, idx:0 },
-      };
-      if(!raw) return base;
-      const st = safeParse(raw, base);
-      if(!st.quiz) st.quiz = base.quiz;
-      if(!Array.isArray(st.quiz.custom)) st.quiz.custom = [];
-      if(!st.particles) st.particles = base.particles;
-      if(!st.puzzle) st.puzzle = base.puzzle;
-      return st;
-    }
-
-    function saveState(st){
-      localStorage.setItem(LS_EX, JSON.stringify(st));
-    }
-
-    function escapeHtml(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    const st = loadState();
-
-    // Tabs
-    $$(".tab").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        $$(".tab").forEach(x=>x.classList.remove("active"));
-        btn.classList.add("active");
-
-        const key = btn.getAttribute("data-tab");
-        $$(".panel").forEach(p=>p.classList.remove("show"));
-        $("#panel-"+key).classList.add("show");
+  (function(){
+    const map = { builder:'builder.html', exercises:'exercises.html', lessons:'lessons.html', glossary:'glossary.html' };
+    document.querySelectorAll('.nav-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const t = btn.dataset.target;
+        if(map[t]) window.location.href = map[t];
       });
     });
+  })();
 
-    // Global UI
-    const globalStatEl = $("#globalStat");
-    const summaryBoxEl = $("#summaryBox");
-    const customListEl = $("#customList");
+  const EX_LS_KEY = "rk_exercises_state_v3_topik4";
+  const QUIZ_BANK = Array.isArray(window.TOPIK4_QUIZ_500) ? window.TOPIK4_QUIZ_500 : [];
+  const PARTICLES_BANK = Array.isArray(window.TOPIK4_PARTICLES_500) ? window.TOPIK4_PARTICLES_500 : [];
+  const PUZZLE_BANK = QUIZ_BANK.slice(0, 500).map(q => {
+    const clean = String(q.ko||"").trim().replace(/[.?!]/g,"");
+    const words = clean.split(/\s+/).filter(Boolean);
+    return { words, answer: clean, ro: q.ro || "" };
+  }).filter(p => p.words.length >= 2);
 
-    function allQuiz(){
-      return [...st.quiz.custom, ...BASE_QUIZ];
+  const exerciseTypeEl = document.getElementById("exerciseType");
+  const exerciseTypeLabelEl = document.getElementById("exerciseTypeLabel");
+  const exerciseSubtagEl = document.getElementById("exerciseSubtag");
+  const exerciseQuestionEl = document.getElementById("exerciseQuestion");
+  const exerciseOptionsEl = document.getElementById("exerciseOptions");
+  const exerciseFeedbackEl = document.getElementById("exerciseFeedback");
+  const checkAnswerBtn = document.getElementById("checkAnswerBtn");
+  const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+
+  function safeParse(json, fallback){ try { return JSON.parse(json); } catch { return fallback; } }
+  function loadState(){
+    const base = { quiz:{idx:0,correct:0,total:0}, particles:{idx:0,correct:0,total:0}, puzzle:{idx:0,correct:0,total:0}, lastType:"verb" };
+    const raw = localStorage.getItem(EX_LS_KEY);
+    if(!raw) return base;
+    const st = safeParse(raw, base);
+    return Object.assign(base, st);
+  }
+  const state = loadState();
+  function saveState(){ localStorage.setItem(EX_LS_KEY, JSON.stringify(state)); }
+
+  function escapeHtml(s){
+    return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
     }
+    return a;
+  }
+  function setEmptyQuestion(msg){
+    exerciseQuestionEl.classList.add("empty");
+    exerciseQuestionEl.textContent = msg;
+    exerciseOptionsEl.innerHTML = "";
+    exerciseFeedbackEl.textContent = "";
+  }
 
-    function updateSummary(){
-      globalStatEl.textContent = `Quiz ${st.quiz.correct}/${st.quiz.total} · Particule ${st.particles.correct} · Puzzle ${st.puzzle.correct}`;
+  let current = null;
 
-      summaryBoxEl.innerHTML =
-        `• <b>Quiz</b>: ${st.quiz.correct}/${st.quiz.total}<br/>`+
-        `• <b>Particule</b>: ${st.particles.correct} corecte<br/>`+
-        `• <b>Puzzle</b>: ${st.puzzle.correct} corecte`;
+  function setTypeLabel(type){
+    const map = {
+      verb: "Alege traducerea corectă (KO → RO)",
+      particle: "Alege particula corectă",
+      puzzle: "Puzzle — ordonează propoziția"
+    };
+    exerciseTypeLabelEl.textContent = map[type] || "—";
+  }
 
-      const last = st.quiz.custom.slice(0,6);
-      if(last.length===0){
-        customListEl.textContent = "—";
-      } else {
-        customListEl.innerHTML = last.map(x => `• <b>${escapeHtml(x.ko)}</b><br/><span style="color:rgba(27,22,48,.75)">${escapeHtml(x.ro||"")}</span>`).join("<br/><br/>");
-      }
-    }
+  function renderQuestion(type){
+    setTypeLabel(type);
+    exerciseFeedbackEl.textContent = "";
+    exerciseOptionsEl.innerHTML = "";
+    exerciseQuestionEl.classList.remove("empty");
 
-    // =========================
-    // QUIZ
-    // =========================
-    const quizKoEl = $("#quizKo");
-    const quizChoicesEl = $("#quizChoices");
-    const quizScoreEl = $("#quizScore");
-    const quizMsgEl = $("#quizMsg");
+    if(type==="verb"){
+      if(!QUIZ_BANK.length) return setEmptyQuestion("Nu există întrebări în banca QUIZ.");
+      if(state.quiz.idx >= QUIZ_BANK.length) state.quiz.idx = 0;
+      const q = QUIZ_BANK[state.quiz.idx];
+      const correct = q.ro;
 
-    function pickQuestion(){
-      const list = allQuiz();
-      if(list.length===0) return null;
-      if(st.quiz.idx >= list.length) st.quiz.idx = 0;
-      return list[st.quiz.idx];
-    }
+      const wrong = shuffle(QUIZ_BANK.filter(x=>x.ro!==correct)).slice(0,3).map(x=>x.ro);
+      const opts = shuffle([correct, ...wrong]);
 
-    function shuffle(arr){
-      const a = arr.slice();
-      for(let i=a.length-1;i>0;i--){
-        const j = Math.floor(Math.random()*(i+1));
-        [a[i],a[j]]=[a[j],a[i]];
-      }
-      return a;
-    }
+      exerciseSubtagEl.textContent = `Întrebarea ${state.quiz.idx+1} / ${QUIZ_BANK.length} · Scor ${state.quiz.correct}/${state.quiz.total}`;
+      exerciseQuestionEl.innerHTML = `<b>${escapeHtml(q.ko)}</b>`;
 
-    function renderQuiz(){
-      const q = pickQuestion();
-      if(!q){
-        quizKoEl.textContent = "—";
-        quizChoicesEl.innerHTML = "";
-        quizScoreEl.textContent = `Scor: ${st.quiz.correct} / ${st.quiz.total}`;
-        return;
-      }
-
-      quizKoEl.textContent = q.ko;
-      quizScoreEl.textContent = `Scor: ${st.quiz.correct} / ${st.quiz.total}`;
-const BASE_QUIZ = [
-  { ko:"저는 학생이에요.", ro:"Eu sunt student(ă)." },
-  { ko:"한국어를 공부해요.", ro:"Studiez limba coreeană." },
-  { ko:"오늘 날씨가 좋아요.", ro:"Azi vremea este bună." },
-  { ko:"커피를 마셔요.", ro:"Beau cafea." },
-  { ko:"집에 가요.", ro:"Merg acasă." },
-  { ko:"학교에 가요.", ro:"Merg la școală." },
-  { ko:"지금 뭐 해요?", ro:"Ce faci acum?" },
-  { ko:"내일 일해요.", ro:"Lucrez mâine." },
-  { ko:"친구를 만나요.", ro:"Mă întâlnesc cu un prieten." },
-  { ko:"한국 음식이 맛있어요.", ro:"Mâncarea coreeană este gustoasă." },
-
-  { ko:"아침에 일어나요.", ro:"Mă trezesc dimineața." },
-  { ko:"저녁에 운동해요.", ro:"Fac sport seara." },
-  { ko:"버스를 타요.", ro:"Iau autobuzul." },
-  { ko:"지하철을 이용해요.", ro:"Folosesc metroul." },
-  { ko:"책을 읽어요.", ro:"Citesc o carte." },
-  { ko:"텔레비전을 봐요.", ro:"Mă uit la televizor." },
-  { ko:"음악을 들어요.", ro:"Ascult muzică." },
-  { ko:"주말에 쉬어요.", ro:"Mă odihnesc în weekend." },
-  { ko:"영화를 봐요.", ro:"Văd un film." },
-  { ko:"사진을 찍어요.", ro:"Fac poze." },
-
-  { ko:"회사에서 일해요.", ro:"Lucrez la companie." },
-  { ko:"집에서 공부해요.", ro:"Studiez acasă." },
-  { ko:"한국에 살아요.", ro:"Locuiesc în Coreea." },
-  { ko:"서울에 가요.", ro:"Merg la Seul." },
-  { ko:"물 좀 주세요.", ro:"Dați-mi apă, vă rog." },
-  { ko:"얼마예요?", ro:"Cât costă?" },
-  { ko:"비가 와요.", ro:"Plouă." },
-  { ko:"눈이 와요.", ro:"Ninge." },
-  { ko:"바람이 불어요.", ro:"Bate vântul." },
-  { ko:"날씨가 더워요.", ro:"Este cald." },
-
-  { ko:"날씨가 추워요.", ro:"Este frig." },
-  { ko:"지금 몇 시예요?", ro:"Cât e ceasul acum?" },
-  { ko:"아홉 시에 시작해요.", ro:"Încep la ora nouă." },
-  { ko:"열 시에 끝나요.", ro:"Se termină la ora zece." },
-  { ko:"한국어가 어려워요.", ro:"Coreeana este dificilă." },
-  { ko:"그래도 재미있어요.", ro:"Totuși este interesant." },
-  { ko:"매일 연습해요.", ro:"Exersez zilnic." },
-  { ko:"천천히 말해 주세요.", ro:"Vă rog să vorbiți mai încet." },
-  { ko:"다시 말해 주세요.", ro:"Spuneți din nou, vă rog." },
-  { ko:"잘 모르겠어요.", ro:"Nu știu bine." },
-
-  { ko:"괜찮아요.", ro:"Este în regulă." },
-  { ko:"알겠어요.", ro:"Am înțeles." },
-  { ko:"몰라요.", ro:"Nu știu." },
-  { ko:"좋아해요.", ro:"Îmi place." },
-  { ko:"싫어해요.", ro:"Nu-mi place." },
-  { ko:"필요해요.", ro:"Am nevoie." },
-  { ko:"시간이 있어요.", ro:"Am timp." },
-  { ko:"시간이 없어요.", ro:"Nu am timp." },
-  { ko:"바빠요.", ro:"Sunt ocupat(ă)." },
-  { ko:"피곤해요.", ro:"Sunt obosit(ă)." },
-
-  { ko:"배고파요.", ro:"Mi-e foame." },
-  { ko:"목말라요.", ro:"Mi-e sete." },
-  { ko:"여행을 가요.", ro:"Merg în călătorie." },
-  { ko:"사진 찍는 것을 좋아해요.", ro:"Îmi place să fac poze." },
-  { ko:"운동하는 것을 좋아해요.", ro:"Îmi place să fac sport." },
-  { ko:"한국 드라마를 봐요.", ro:"Urmăresc drame coreene." },
-  { ko:"노래를 불러요.", ro:"Cânt." },
-  { ko:"친절해요.", ro:"Este amabil." },
-  { ko:"재미없어요.", ro:"Nu este interesant." },
-  { ko:"행복해요.", ro:"Sunt fericit(ă)." }
-];
-      // build options
-      const list = allQuiz();
-      const wrong = shuffle(list.filter(x=>x.ro!==q.ro)).slice(0,3).map(x=>x.ro);
-      const opts = shuffle([q.ro, ...wrong]);
-
-      quizChoicesEl.innerHTML = "";
       opts.forEach(opt=>{
-        const b = document.createElement("button");
-        b.type="button";
-        b.className="choice";
-        b.innerHTML = `<span>${escapeHtml(opt)}</span><span class="mini">tap</span>`;
-        b.addEventListener("click", ()=>{
-          // lock visual
-          $$(".choice", quizChoicesEl).forEach(x=>x.disabled=true);
+        const btn = document.createElement("button");
+        btn.type="button";
+        btn.className="ex-option";
+        btn.textContent = opt;
+        btn.addEventListener("click", ()=>{
+          document.querySelectorAll("#exerciseOptions .ex-option").forEach(b=>b.disabled=true);
 
-          const isGood = opt === q.ro;
-          st.quiz.total += 1;
-          if(isGood) st.quiz.correct += 1;
+          const ok = opt === correct;
+          state.quiz.total += 1;
+          if(ok) state.quiz.correct += 1;
 
-          b.classList.add(isGood ? "good" : "bad");
-          quizMsgEl.textContent = isGood ? "✅ Corect." : `❌ Greșit. Răspuns: ${q.ro}`;
-          saveState(st);
-          updateSummary();
-          renderQuizScoreOnly();
+          btn.classList.add(ok ? "good" : "bad");
+          exerciseFeedbackEl.textContent = ok ? "✅ Corect." : `❌ Greșit. Corect: ${correct}`;
+
+          saveState();
+          exerciseSubtagEl.textContent = `Întrebarea ${state.quiz.idx+1} / ${QUIZ_BANK.length} · Scor ${state.quiz.correct}/${state.quiz.total}`;
         });
-        quizChoicesEl.appendChild(b);
+        exerciseOptionsEl.appendChild(btn);
       });
+
+      current = { type:"verb" };
+      return;
     }
 
-    function renderQuizScoreOnly(){
-      quizScoreEl.textContent = `Scor: ${st.quiz.correct} / ${st.quiz.total}`;
-    }
+    if(type==="particle"){
+      if(!PARTICLES_BANK.length) return setEmptyQuestion("Nu există întrebări în banca PARTICULE.");
+      if(state.particles.idx >= PARTICLES_BANK.length) state.particles.idx = 0;
+      const q = PARTICLES_BANK[state.particles.idx];
 
-    $("#quizNextBtn").addEventListener("click", ()=>{
-      st.quiz.idx += 1;
-      quizMsgEl.textContent = "—";
-      saveState(st);
-      renderQuiz();
-      updateSummary();
-    });
+      exerciseSubtagEl.textContent = `Întrebarea ${state.particles.idx+1} / ${PARTICLES_BANK.length} · Corecte ${state.particles.correct}`;
+      exerciseQuestionEl.innerHTML = `<b>${escapeHtml(q.text)}</b>`;
 
-    $("#quizAddBtn").addEventListener("click", ()=>{
-      const ko = ($("#quizAddKo").value || "").trim();
-      const ro = ($("#quizAddRo").value || "").trim();
-      if(!ko || !ro){
-        quizMsgEl.textContent = "Scrie și KO și RO ca să adaugi.";
-        return;
-      }
-      // push in front so you see it fast
-      st.quiz.custom.unshift({ ko, ro, ts: Date.now() });
-      $("#quizAddKo").value = "";
-      $("#quizAddRo").value = "";
-      quizMsgEl.textContent = "✅ Adăugat. E salvat pe telefon.";
-      saveState(st);
-      updateSummary();
-      renderQuiz();
-    });
-
-    $("#quizSpeakBtn").addEventListener("click", ()=>{
-      const q = pickQuestion();
-      if(!q) return;
-      speakKorean(q.ko);
-    });
-
-    // =========================
-    // PARTICLES
-    // =========================
-    const pKoEl = $("#pKo");
-    const pChoicesEl = $("#pChoices");
-    const pScoreEl = $("#pScore");
-    const pMsgEl = $("#pMsg");
-const PARTICLES = [
-  { text:"저__ 학생이에요.", choices:["은","는","이","가"], answer:"는", explain:"Topic: 저는" },
-  { text:"친구__ 와요.", choices:["은","는","이","가"], answer:"가", explain:"Subiect: 친구가" },
-  { text:"커피__ 마셔요.", choices:["을","를","에","에서"], answer:"를", explain:"Obiect" },
-  { text:"학교__ 가요.", choices:["에","에서","을","를"], answer:"에", explain:"Destinație" },
-  { text:"집__ 공부해요.", choices:["에","에서","은","는"], answer:"에서", explain:"Loc acțiune" },
-
-  { text:"서울__ 살아요.", choices:["에","에서","은","는"], answer:"에", explain:"Loc rezidență" },
-  { text:"버스__ 타요.", choices:["을","를","에","에서"], answer:"를", explain:"Obiect" },
-  { text:"회사__ 일해요.", choices:["에","에서","은","는"], answer:"에서", explain:"Loc acțiune" },
-  { text:"책__ 읽어요.", choices:["을","를","에","에서"], answer:"을", explain:"Obiect" },
-  { text:"물이__ 있어요.", choices:["은","는","이","가"], answer:"가", explain:"Subiect nou" },
-
-  { text:"시간__ 없어요.", choices:["은","는","이","가"], answer:"이", explain:"Subiect" },
-  { text:"영화__ 봐요.", choices:["을","를","에","에서"], answer:"를", explain:"Obiect" },
-  { text:"카페__ 커피를 마셔요.", choices:["에","에서","은","는"], answer:"에서", explain:"Loc acțiune" },
-  { text:"오늘__ 공부해요.", choices:["은","는","이","가"], answer:"은", explain:"Topic timp" },
-  { text:"내일__ 쉬어요.", choices:["은","는","이","가"], answer:"는", explain:"Topic" },
-
-  { text:"친구__ 만나요.", choices:["을","를","이","가"], answer:"를", explain:"Obiect persoană" },
-  { text:"한국어__ 배워요.", choices:["을","를","에","에서"], answer:"를", explain:"Obiect" },
-  { text:"집__ 가요.", choices:["에","에서","은","는"], answer:"에", explain:"Destinație" },
-  { text:"아침__ 먹어요.", choices:["을","를","에","에서"], answer:"을", explain:"Obiect" },
-  { text:"저녁__ 먹어요.", choices:["을","를","에","에서"], answer:"을", explain:"Obiect" },
-
-  { text:"학교__ 공부해요.", choices:["에","에서","은","는"], answer:"에서", explain:"Loc" },
-  { text:"한국__ 가요.", choices:["에","에서","을","를"], answer:"에", explain:"Destinație" },
-  { text:"노래__ 불러요.", choices:["을","를","이","가"], answer:"를", explain:"Obiect" },
-  { text:"사진__ 찍어요.", choices:["을","를","에","에서"], answer:"을", explain:"Obiect" },
-  { text:"집__ 있어요.", choices:["에","에서","이","가"], answer:"에", explain:"Loc existență" },
-];
-    function renderParticles(){
-      if(st.particles.idx >= PARTICLES.length) st.particles.idx = 0;
-      const q = PARTICLES[st.particles.idx];
-      pKoEl.textContent = q.text;
-      pScoreEl.textContent = `Corecte: ${st.particles.correct}`;
-      pMsgEl.textContent = "—";
-
-      pChoicesEl.innerHTML = "";
       q.choices.forEach(ch=>{
-        const b = document.createElement("button");
-        b.type="button";
-        b.className="choice";
-        b.innerHTML = `<span>${escapeHtml(ch)}</span><span class="mini">tap</span>`;
-        b.addEventListener("click", ()=>{
-          $$(".choice", pChoicesEl).forEach(x=>x.disabled=true);
+        const btn = document.createElement("button");
+        btn.type="button";
+        btn.className="ex-option";
+        btn.textContent = ch;
+        btn.addEventListener("click", ()=>{
+          document.querySelectorAll("#exerciseOptions .ex-option").forEach(b=>b.disabled=true);
 
           const ok = ch === q.answer;
-          if(ok) st.particles.correct += 1;
-          b.classList.add(ok ? "good" : "bad");
-          pMsgEl.textContent = ok ? `✅ Corect. (${q.explain})` : `❌ Greșit. Corect: ${q.answer} — ${q.explain}`;
-          saveState(st);
-          updateSummary();
-          pScoreEl.textContent = `Corecte: ${st.particles.correct}`;
+          state.particles.total += 1;
+          if(ok) state.particles.correct += 1;
+
+          btn.classList.add(ok ? "good" : "bad");
+          exerciseFeedbackEl.textContent = ok ? `✅ Corect. (${q.explain})` : `❌ Greșit. Corect: ${q.answer} — ${q.explain}`;
+
+          saveState();
+          exerciseSubtagEl.textContent = `Întrebarea ${state.particles.idx+1} / ${PARTICLES_BANK.length} · Corecte ${state.particles.correct}`;
         });
-        pChoicesEl.appendChild(b);
-      });
-    }
-
-    $("#pNextBtn").addEventListener("click", ()=>{
-      st.particles.idx += 1;
-      saveState(st);
-      renderParticles();
-      updateSummary();
-    });
-// =========================
-    // PUZZLE
-    // =========================
-    const pzBankEl = $("#pzBank");
-    const pzLineEl = $("#pzLine");
-    const pzMsgEl = $("#pzMsg");
-    const pzScoreEl = $("#pzScore");
-
-    let currentPuzzle = null;
-    let built = [];
-// =========================
-// PUZZLES_001_100 (TOPIK I - nivel 1)
-// =========================
-const PUZZLES_001_100 = [
-  { words:["저는","학생이에요"], answer:"저는 학생이에요", ro:"Eu sunt student(ă)." },
-  { words:["저는","의사예요"], answer:"저는 의사예요", ro:"Eu sunt medic." },
-  { words:["저는","선생님이에요"], answer:"저는 선생님이에요", ro:"Eu sunt profesor(ă)." },
-  { words:["저는","회사원이에요"], answer:"저는 회사원이에요", ro:"Eu sunt angajat(ă) la firmă." },
-  { words:["저는","한국 사람이에요"], answer:"저는 한국 사람이에요", ro:"Eu sunt coreean(ă)." },
-  { words:["저는","루마니아 사람이에요"], answer:"저는 루마니아 사람이에요", ro:"Eu sunt român(ă)." },
-  { words:["저는","여자예요"], answer:"저는 여자예요", ro:"Eu sunt femeie." },
-  { words:["저는","남자예요"], answer:"저는 남자예요", ro:"Eu sunt bărbat." },
-
-  { words:["이것은","책이에요"], answer:"이것은 책이에요", ro:"Acesta este o carte." },
-  { words:["이것은","연필이에요"], answer:"이것은 연필이에요", ro:"Acesta este un creion." },
-  { words:["이것은","가방이에요"], answer:"이것은 가방이에요", ro:"Acesta este un ghiozdan." },
-  { words:["저것은","핸드폰이에요"], answer:"저것은 핸드폰이에요", ro:"Acela este un telefon." },
-  { words:["이것은","물이에요"], answer:"이것은 물이에요", ro:"Aceasta este apă." },
-  { words:["이것은","커피예요"], answer:"이것은 커피예요", ro:"Aceasta este cafea." },
-  { words:["저것은","차예요"], answer:"저것은 차예요", ro:"Aceea este ceai." },
-
-  { words:["저는","한국어를","공부해요"], answer:"저는 한국어를 공부해요", ro:"Eu studiez coreeană." },
-  { words:["저는","영어를","공부해요"], answer:"저는 영어를 공부해요", ro:"Eu studiez engleză." },
-  { words:["저는","책을","읽어요"], answer:"저는 책을 읽어요", ro:"Eu citesc o carte." },
-  { words:["저는","음악을","들어요"], answer:"저는 음악을 들어요", ro:"Eu ascult muzică." },
-  { words:["저는","물을","마셔요"], answer:"저는 물을 마셔요", ro:"Eu beau apă." },
-  { words:["저는","커피를","마셔요"], answer:"저는 커피를 마셔요", ro:"Eu beau cafea." },
-  { words:["저는","밥을","먹어요"], answer:"저는 밥을 먹어요", ro:"Eu mănânc (orez/masă)." },
-  { words:["저는","빵을","먹어요"], answer:"저는 빵을 먹어요", ro:"Eu mănânc pâine." },
-
-  { words:["저는","학교에","가요"], answer:"저는 학교에 가요", ro:"Eu merg la școală." },
-  { words:["저는","집에","가요"], answer:"저는 집에 가요", ro:"Eu merg acasă." },
-  { words:["저는","회사에","가요"], answer:"저는 회사에 가요", ro:"Eu merg la serviciu." },
-  { words:["저는","병원에","가요"], answer:"저는 병원에 가요", ro:"Eu merg la spital." },
-  { words:["저는","카페에","가요"], answer:"저는 카페에 가요", ro:"Eu merg la cafenea." },
-
-  { words:["저는","학교에서","공부해요"], answer:"저는 학교에서 공부해요", ro:"Eu studiez la școală." },
-  { words:["저는","집에서","공부해요"], answer:"저는 집에서 공부해요", ro:"Eu studiez acasă." },
-  { words:["저는","카페에서","커피를","마셔요"], answer:"저는 카페에서 커피를 마셔요", ro:"Eu beau cafea la cafenea." },
-  { words:["저는","집에서","밥을","먹어요"], answer:"저는 집에서 밥을 먹어요", ro:"Eu mănânc acasă." },
-
-  { words:["오늘","저는","학교에","가요"], answer:"오늘 저는 학교에 가요", ro:"Azi eu merg la școală." },
-  { words:["오늘","저는","한국어를","공부해요"], answer:"오늘 저는 한국어를 공부해요", ro:"Azi eu studiez coreeană." },
-  { words:["오늘","커피를","마셔요"], answer:"오늘 커피를 마셔요", ro:"Azi beau cafea." },
-  { words:["오늘","밥을","먹어요"], answer:"오늘 밥을 먹어요", ro:"Azi mănânc." },
-
-  { words:["내일","저는","회사에","가요"], answer:"내일 저는 회사에 가요", ro:"Mâine eu merg la serviciu." },
-  { words:["내일","저는","병원에","가요"], answer:"내일 저는 병원에 가요", ro:"Mâine eu merg la spital." },
-  { words:["내일","한국어를","공부해요"], answer:"내일 한국어를 공부해요", ro:"Mâine studiez coreeană." },
-
-  { words:["지금","저는","공부해요"], answer:"지금 저는 공부해요", ro:"Acum eu studiez." },
-  { words:["지금","저는","밥을","먹어요"], answer:"지금 저는 밥을 먹어요", ro:"Acum eu mănânc." },
-  { words:["지금","저는","물을","마셔요"], answer:"지금 저는 물을 마셔요", ro:"Acum eu beau apă." },
-
-  { words:["아침에","밥을","먹어요"], answer:"아침에 밥을 먹어요", ro:"Dimineața mănânc." },
-  { words:["아침에","커피를","마셔요"], answer:"아침에 커피를 마셔요", ro:"Dimineața beau cafea." },
-  { words:["점심에","밥을","먹어요"], answer:"점심에 밥을 먹어요", ro:"La prânz mănânc." },
-  { words:["저녁에","집에","가요"], answer:"저녁에 집에 가요", ro:"Seara merg acasă." },
-  { words:["저녁에","음악을","들어요"], answer:"저녁에 음악을 들어요", ro:"Seara ascult muzică." },
-
-  { words:["저는","좋아요"], answer:"저는 좋아요", ro:"Mie îmi place / îmi e bine." },
-  { words:["커피가","좋아요"], answer:"커피가 좋아요", ro:"Îmi place cafeaua." },
-  { words:["음악이","좋아요"], answer:"음악이 좋아요", ro:"Îmi place muzica." },
-  { words:["한국어가","재미있어요"], answer:"한국어가 재미있어요", ro:"Coreeana e interesantă/amuzantă." },
-  { words:["이","책이","좋아요"], answer:"이 책이 좋아요", ro:"Îmi place această carte." },
-
-  { words:["저는","친구가","있어요"], answer:"저는 친구가 있어요", ro:"Eu am un prieten/prieteni." },
-  { words:["저는","시간이","있어요"], answer:"저는 시간이 있어요", ro:"Eu am timp." },
-  { words:["저는","시간이","없어요"], answer:"저는 시간이 없어요", ro:"Eu nu am timp." },
-  { words:["돈이","있어요"], answer:"돈이 있어요", ro:"Am bani." },
-  { words:["돈이","없어요"], answer:"돈이 없어요", ro:"Nu am bani." },
-
-  { words:["저는","학생이","아니에요"], answer:"저는 학생이 아니에요", ro:"Eu nu sunt student(ă)." },
-  { words:["저는","한국 사람이","아니에요"], answer:"저는 한국 사람이 아니에요", ro:"Eu nu sunt coreean(ă)." },
-  { words:["이것은","책이","아니에요"], answer:"이것은 책이 아니에요", ro:"Acesta nu este o carte." },
-
-  { words:["안녕하세요"], answer:"안녕하세요", ro:"Bună ziua." },
-  { words:["감사합니다"], answer:"감사합니다", ro:"Mulțumesc." },
-  { words:["죄송합니다"], answer:"죄송합니다", ro:"Îmi pare rău." },
-  { words:["괜찮아요"], answer:"괜찮아요", ro:"E în regulă." },
-
-  { words:["저는","물","주세요"], answer:"저는 물 주세요", ro:"Vă rog, apă." },
-  { words:["커피","주세요"], answer:"커피 주세요", ro:"Vă rog, o cafea." },
-  { words:["이것","주세요"], answer:"이것 주세요", ro:"Vă rog, acesta." },
-
-  { words:["화장실이","어디예요"], answer:"화장실이 어디예요", ro:"Unde este toaleta?" },
-  { words:["학교가","어디예요"], answer:"학교가 어디예요", ro:"Unde este școala?" },
-  { words:["집이","어디예요"], answer:"집이 어디예요", ro:"Unde este casa?" },
-
-  { words:["저는","루마니아에서","왔어요"], answer:"저는 루마니아에서 왔어요", ro:"Eu am venit din România." },
-  { words:["저는","한국에서","왔어요"], answer:"저는 한국에서 왔어요", ro:"Eu am venit din Coreea." },
-
-  { words:["저는","서울에","가요"], answer:"저는 서울에 가요", ro:"Eu merg la Seoul." },
-  { words:["저는","부산에","가요"], answer:"저는 부산에 가요", ro:"Eu merg la Busan." },
-
-  { words:["저는","매일","공부해요"], answer:"저는 매일 공부해요", ro:"Eu studiez în fiecare zi." },
-  { words:["저는","매일","커피를","마셔요"], answer:"저는 매일 커피를 마셔요", ro:"Eu beau cafea zilnic." },
-  { words:["저는","가끔","영화를","봐요"], answer:"저는 가끔 영화를 봐요", ro:"Eu mă uit uneori la filme." },
-  { words:["저는","자주","음악을","들어요"], answer:"저는 자주 음악을 들어요", ro:"Eu ascult muzică des." },
-
-  { words:["저는","영화를","봐요"], answer:"저는 영화를 봐요", ro:"Eu mă uit la un film." },
-  { words:["저는","한국 드라마를","봐요"], answer:"저는 한국 드라마를 봐요", ro:"Eu mă uit la dramă coreeană." },
-  { words:["저는","사진을","찍어요"], answer:"저는 사진을 찍어요", ro:"Eu fac poze." },
-  { words:["저는","운동해요"], answer:"저는 운동해요", ro:"Eu fac sport." },
-
-  { words:["이것은","제","책이에요"], answer:"이것은 제 책이에요", ro:"Aceasta este cartea mea." },
-  { words:["저것은","제","가방이에요"], answer:"저것은 제 가방이에요", ro:"Acela este ghiozdanul meu." },
-  { words:["이것은","제","핸드폰이에요"], answer:"이것은 제 핸드폰이에요", ro:"Acesta este telefonul meu." },
-
-  { words:["저는","사과를","먹어요"], answer:"저는 사과를 먹어요", ro:"Eu mănânc un măr." },
-  { words:["저는","물고기를","먹어요"], answer:"저는 물고기를 먹어요", ro:"Eu mănânc pește." },
-  { words:["저는","김치를","먹어요"], answer:"저는 김치를 먹어요", ro:"Eu mănânc kimchi." },
-
-  { words:["오늘","날씨가","좋아요"], answer:"오늘 날씨가 좋아요", ro:"Azi vremea e bună." },
-  { words:["오늘","날씨가","추워요"], answer:"오늘 날씨가 추워요", ro:"Azi este frig." },
-  { words:["오늘","날씨가","더워요"], answer:"오늘 날씨가 더워요", ro:"Azi este cald." },
-
-  { words:["저는","바빠요"], answer:"저는 바빠요", ro:"Eu sunt ocupat(ă)." },
-  { words:["저는","피곤해요"], answer:"저는 피곤해요", ro:"Eu sunt obosit(ă)." },
-  { words:["저는","괜찮아요"], answer:"저는 괜찮아요", ro:"Eu sunt bine." },
-
-  { words:["지금","뭐","해요"], answer:"지금 뭐 해요", ro:"Ce faci acum?" },
-  { words:["지금","공부해요"], answer:"지금 공부해요", ro:"Studiez acum." },
-  { words:["지금","일해요"], answer:"지금 일해요", ro:"Lucrez acum." },
-
-  { words:["저는","주말에","쉬어요"], answer:"저는 주말에 쉬어요", ro:"Eu mă odihnesc în weekend." },
-  { words:["주말에","친구를","만나요"], answer:"주말에 친구를 만나요", ro:"În weekend mă întâlnesc cu un prieten." },
-
-  { words:["저는","한국어를","좋아해요"], answer:"저는 한국어를 좋아해요", ro:"Îmi place coreeana." },
-  { words:["저는","커피를","좋아해요"], answer:"저는 커피를 좋아해요", ro:"Îmi place cafeaua." },
-  { words:["저는","음악을","좋아해요"], answer:"저는 음악을 좋아해요", ro:"Îmi place muzica." },
-
-  { words:["이","가게는","좋아요"], answer:"이 가게는 좋아요", ro:"Acest magazin este bun/îmi place." },
-  { words:["이","카페는","좋아요"], answer:"이 카페는 좋아요", ro:"Această cafenea e bună/îmi place." },
-
-  { words:["저는","한","명","이에요"], answer:"저는 한 명이에요", ro:"Eu sunt o persoană." },
-  { words:["물","한","잔","주세요"], answer:"물 한 잔 주세요", ro:"Vă rog un pahar de apă." },
-  { words:["커피","한","잔","주세요"], answer:"커피 한 잔 주세요", ro:"Vă rog o cafea." },
-
-  { words:["저는","아침에","일어나요"], answer:"저는 아침에 일어나요", ro:"Eu mă trezesc dimineața." },
-  { words:["저는","아침에","샤워해요"], answer:"저는 아침에 샤워해요", ro:"Eu fac duș dimineața." },
-  { words:["저는","아침에","밥을","먹어요"], answer:"저는 아침에 밥을 먹어요", ro:"Eu mănânc dimineața." },
-
-  { words:["저는","학교에","버스로","가요"], answer:"저는 학교에 버스로 가요", ro:"Eu merg la școală cu autobuzul." },
-  { words:["저는","회사에","지하철로","가요"], answer:"저는 회사에 지하철로 가요", ro:"Eu merg la serviciu cu metroul." },
-  { words:["저는","집에","걸어서","가요"], answer:"저는 집에 걸어서 가요", ro:"Eu merg pe jos acasă." },
-
-  { words:["저는","친구와","커피를","마셔요"], answer:"저는 친구와 커피를 마셔요", ro:"Eu beau cafea cu un prieten." },
-  { words:["저는","가족과","저녁을","먹어요"], answer:"저는 가족과 저녁을 먹어요", ro:"Eu mănânc cina cu familia." },
-  { words:["저는","동생과","영화를","봐요"], answer:"저는 동생과 영화를 봐요", ro:"Eu mă uit la film cu fratele/sora." },
-
-  { words:["저는","도서관에서","공부해요"], answer:"저는 도서관에서 공부해요", ro:"Eu studiez la bibliotecă." },
-  { words:["저는","회사에서","일해요"], answer:"저는 회사에서 일해요", ro:"Eu lucrez la firmă." },
-  { words:["저는","집에서","쉬어요"], answer:"저는 집에서 쉬어요", ro:"Eu mă odihnesc acasă." },
-
-  { words:["오늘","비가","와요"], answer:"오늘 비가 와요", ro:"Azi plouă." },
-  { words:["오늘","눈이","와요"], answer:"오늘 눈이 와요", ro:"Azi ninge." },
-  { words:["오늘","날씨가","좋아요"], answer:"오늘 날씨가 좋아요", ro:"Azi vremea e bună." },
-
-  { words:["어제","학교에","갔어요"], answer:"어제 학교에 갔어요", ro:"Ieri am mers la școală." },
-  { words:["어제","집에서","공부했어요"], answer:"어제 집에서 공부했어요", ro:"Ieri am studiat acasă." },
-  { words:["어제","친구를","만났어요"], answer:"어제 친구를 만났어요", ro:"Ieri m-am întâlnit cu un prieten." },
-
-  { words:["내일","시험이","있어요"], answer:"내일 시험이 있어요", ro:"Mâine am examen." },
-  { words:["내일","시간이","있어요"], answer:"내일 시간이 있어요", ro:"Mâine am timp." },
-  { words:["내일","시간이","없어요"], answer:"내일 시간이 없어요", ro:"Mâine nu am timp." },
-
-  { words:["지금","텔레비전을","봐요"], answer:"지금 텔레비전을 봐요", ro:"Acum mă uit la televizor." },
-  { words:["지금","전화를","해요"], answer:"지금 전화를 해요", ro:"Acum dau un telefon." },
-  { words:["지금","메시지를","보내요"], answer:"지금 메시지를 보내요", ro:"Acum trimit un mesaj." },
-
-  { words:["주말에","영화를","봐요"], answer:"주말에 영화를 봐요", ro:"În weekend mă uit la filme." },
-  { words:["주말에","운동해요"], answer:"주말에 운동해요", ro:"În weekend fac sport." },
-  { words:["주말에","집에서","쉬어요"], answer:"주말에 집에서 쉬어요", ro:"În weekend mă odihnesc acasă." },
-
-  { words:["저는","한국어가","어려워요"], answer:"저는 한국어가 어려워요", ro:"Coreeana este grea pentru mine." },
-  { words:["저는","한국어가","쉬워요"], answer:"저는 한국어가 쉬워요", ro:"Coreeana este ușoară pentru mine." },
-  { words:["저는","이","문제가","쉬워요"], answer:"저는 이 문제가 쉬워요", ro:"Această problemă e ușoară." },
-
-  { words:["이","가방은","비싸요"], answer:"이 가방은 비싸요", ro:"Această geantă este scumpă." },
-  { words:["이","책은","싸요"], answer:"이 책은 싸요", ro:"Această carte e ieftină." },
-  { words:["이","카페는","조용해요"], answer:"이 카페는 조용해요", ro:"Această cafenea e liniștită." },
-
-  { words:["저는","노래를","잘","불러요"], answer:"저는 노래를 잘 불러요", ro:"Eu cânt bine." },
-  { words:["저는","수영을","못","해요"], answer:"저는 수영을 못 해요", ro:"Eu nu știu să înot." },
-  { words:["저는","운전을","잘","해요"], answer:"저는 운전을 잘 해요", ro:"Eu conduc bine." },
-
-  { words:["저는","매일","한국어를","공부해요"], answer:"저는 매일 한국어를 공부해요", ro:"Eu studiez coreeana zilnic." },
-  { words:["저는","매주","운동해요"], answer:"저는 매주 운동해요", ro:"Eu fac sport săptămânal." },
-  { words:["저는","매달","여행해요"], answer:"저는 매달 여행해요", ro:"Eu călătoresc lunar." },
-
-  { words:["학교에","학생이","많아요"], answer:"학교에 학생이 많아요", ro:"La școală sunt mulți elevi." },
-  { words:["이","도시에","사람이","많아요"], answer:"이 도시에 사람이 많아요", ro:"În acest oraș sunt mulți oameni." },
-  { words:["이","카페에","사람이","적어요"], answer:"이 카페에 사람이 적어요", ro:"În această cafenea sunt puțini oameni." },
-
-  { words:["저는","사진을","찍는","것을","좋아해요"], answer:"저는 사진을 찍는 것을 좋아해요", ro:"Îmi place să fac poze." },
-  { words:["저는","요리를","하는","것을","좋아해요"], answer:"저는 요리를 하는 것을 좋아해요", ro:"Îmi place să gătesc." },
-  { words:["저는","여행하는","것을","좋아해요"], answer:"저는 여행하는 것을 좋아해요", ro:"Îmi place să călătoresc." },
-
-  { words:["저는","한국어를","배우고","있어요"], answer:"저는 한국어를 배우고 있어요", ro:"Învăț coreeană (acum)." },
-  { words:["저는","비를","기다리고","있어요"], answer:"저는 비를 기다리고 있어요", ro:"Aștept ploaia." },
-  { words:["저는","친구를","기다리고","있어요"], answer:"저는 친구를 기다리고 있어요", ro:"Îmi aștept prietenul." },
-
-  { words:["저는","서울에","살아요"], answer:"저는 서울에 살아요", ro:"Eu locuiesc în Seoul." },
-  { words:["저는","루마니아에","살아요"], answer:"저는 루마니아에 살아요", ro:"Eu locuiesc în România." },
-  { words:["저는","지금","여기에","살아요"], answer:"저는 지금 여기에 살아요", ro:"Eu locuiesc aici acum." },
-
-  { words:["이","일은","중요해요"], answer:"이 일은 중요해요", ro:"Această muncă este importantă." },
-  { words:["이","시험은","어려워요"], answer:"이 시험은 어려워요", ro:"Acest examen este greu." },
-  { words:["이","문제는","쉬워요"], answer:"이 문제는 쉬워요", ro:"Această problemă e ușoară." },
-
-  { words:["저는","늦게","자요"], answer:"저는 늦게 자요", ro:"Eu dorm târziu." },
-  { words:["저는","일찍","일어나요"], answer:"저는 일찍 일어나요", ro:"Eu mă trezesc devreme." },
-  { words:["저는","밤에","공부해요"], answer:"저는 밤에 공부해요", ro:"Eu studiez noaptea." }
-
-  { words:["저는","한국어를","열심히","공부하고","있어요"], answer:"저는 한국어를 열심히 공부하고 있어요", ro:"Studiez coreeana din greu." },
-  { words:["요즘","날씨가","너무","더워요"], answer:"요즘 날씨가 너무 더워요", ro:"În ultima vreme este foarte cald." },
-  { words:["요즘","일이","많아서","바빠요"], answer:"요즘 일이 많아서 바빠요", ro:"În ultima vreme sunt ocupată pentru că am mult de lucru." },
-
-  { words:["시간이","있으면","운동해요"], answer:"시간이 있으면 운동해요", ro:"Dacă am timp, fac sport." },
-  { words:["비가","오면","집에","있어요"], answer:"비가 오면 집에 있어요", ro:"Dacă plouă, stau acasă." },
-  { words:["피곤하면","일찍","자요"], answer:"피곤하면 일찍 자요", ro:"Dacă sunt obosită, dorm devreme." },
-
-  { words:["저는","한국에","가고","싶어요"], answer:"저는 한국에 가고 싶어요", ro:"Vreau să merg în Coreea." },
-  { words:["저는","여행을","하고","싶어요"], answer:"저는 여행을 하고 싶어요", ro:"Vreau să călătoresc." },
-  { words:["주말에","쉬고","싶어요"], answer:"주말에 쉬고 싶어요", ro:"Vreau să mă odihnesc în weekend." },
-
-  { words:["약속이","있어서","먼저","가요"], answer:"약속이 있어서 먼저 가요", ro:"Plec mai devreme pentru că am o programare." },
-  { words:["비가","와서","못","갔어요"], answer:"비가 와서 못 갔어요", ro:"Nu am putut merge pentru că a plouat." },
-  { words:["시간이","없어서","못","만났어요"], answer:"시간이 없어서 못 만났어요", ro:"Nu ne-am întâlnit pentru că nu am avut timp." },
-
-  { words:["한국어를","배운","후에","일하고","싶어요"], answer:"한국어를 배운 후에 일하고 싶어요", ro:"Vreau să lucrez după ce învăț coreeana." },
-  { words:["저녁을","먹은","후에","공부해요"], answer:"저녁을 먹은 후에 공부해요", ro:"Studiez după ce mănânc cina." },
-  { words:["집에","간","후에","쉬어요"], answer:"집에 간 후에 쉬어요", ro:"Mă odihnesc după ce ajung acasă." },
-
-  { words:["일을","끝내고","집에","갔어요"], answer:"일을 끝내고 집에 갔어요", ro:"După ce am terminat munca, am mers acasă." },
-  { words:["샤워하고","바로","잤어요"], answer:"샤워하고 바로 잤어요", ro:"Am făcut duș și am dormit imediat." },
-  { words:["운동하고","커피를","마셨어요"], answer:"운동하고 커피를 마셨어요", ro:"Am făcut sport și am băut cafea." },
-
-  { words:["이","음식은","정말","맛있어요"], answer:"이 음식은 정말 맛있어요", ro:"Această mâncare este foarte gustoasă." },
-  { words:["그","영화는","너무","재미있었어요"], answer:"그 영화는 너무 재미있었어요", ro:"Filmului acela a fost foarte interesant." },
-  { words:["이","카페는","아주","조용해요"], answer:"이 카페는 아주 조용해요", ro:"Această cafenea este foarte liniștită." },
-
-  { words:["저는","아침보다","저녁이","좋아요"], answer:"저는 아침보다 저녁이 좋아요", ro:"Îmi place seara mai mult decât dimineața." },
-  { words:["집이","회사보다","멀어요"], answer:"집이 회사보다 멀어요", ro:"Casa este mai departe decât serviciul." },
-  { words:["오늘이","어제보다","더워요"], answer:"오늘이 어제보다 더워요", ro:"Azi este mai cald decât ieri." },
-
-  { words:["한국어는","생각보다","어려워요"], answer:"한국어는 생각보다 어려워요", ro:"Coreeana este mai grea decât credeam." },
-  { words:["시험이","생각보다","쉬웠어요"], answer:"시험이 생각보다 쉬웠어요", ro:"Examenul a fost mai ușor decât mă așteptam." },
-  { words:["집이","생각보다","가까워요"], answer:"집이 생각보다 가까워요", ro:"Casa este mai aproape decât credeam." },
-
-  { words:["지금","가는","중이에요"], answer:"지금 가는 중이에요", ro:"Sunt pe drum acum." },
-  { words:["지금","일하는","중이에요"], answer:"지금 일하는 중이에요", ro:"Lucrez chiar acum." },
-  { words:["지금","회의하는","중이에요"], answer:"지금 회의하는 중이에요", ro:"Sunt într-o ședință acum." },
-
-  { words:["비가","올","것","같아요"], answer:"비가 올 것 같아요", ro:"Cred că va ploua." },
-  { words:["이","시험은","어려울","것","같아요"], answer:"이 시험은 어려울 것 같아요", ro:"Cred că acest examen va fi greu." },
-  { words:["내일","바쁠","것","같아요"], answer:"내일 바쁠 것 같아요", ro:"Cred că mâine voi fi ocupată." },
-
-  { words:["한국에","가려고","해요"], answer:"한국에 가려고 해요", ro:"Am de gând să merg în Coreea." },
-  { words:["운동을","시작하려고","해요"], answer:"운동을 시작하려고 해요", ro:"Plănuiesc să încep sportul." },
-  { words:["일찍","자려고","해요"], answer:"일찍 자려고 해요", ro:"Am de gând să dorm devreme." },
-
-  { words:["약속이","있으니까","먼저","갈게요"], answer:"약속이 있으니까 먼저 갈게요", ro:"Pentru că am o întâlnire, plec mai devreme." },
-  { words:["피곤하니까","오늘은","쉴게요"], answer:"피곤하니까 오늘은 쉴게요", ro:"Pentru că sunt obosită, azi mă odihnesc." },
-  { words:["비가","오니까","우산을","가져가세요"], answer:"비가 오니까 우산을 가져가세요", ro:"Pentru că plouă, luați o umbrelă." },
-
-  { words:["한국어를","계속","공부해야","해요"], answer:"한국어를 계속 공부해야 해요", ro:"Trebuie să continui să studiez coreeana." },
-  { words:["약을","먹어야","해요"], answer:"약을 먹어야 해요", ro:"Trebuie să iau medicamente." },
-  { words:["일찍","가야","해요"], answer:"일찍 가야 해요", ro:"Trebuie să plec devreme." }
-    // =========================
-// PUZZLES_301_400 (TOPIK 3)
-// =========================
-const PUZZLES_301_400 = [
-  { words:["한국에","가면","한국어를","더","잘","배울","수","있어요"], answer:"한국에 가면 한국어를 더 잘 배울 수 있어요", ro:"Dacă merg în Coreea, pot învăța coreeana mai bine." },
-  { words:["시간이","있으면","운동을","하려고","해요"], answer:"시간이 있으면 운동을 하려고 해요", ro:"Dacă am timp, plănuiesc să fac sport." },
-  { words:["돈이","있으면","여행을","하고","싶어요"], answer:"돈이 있으면 여행을 하고 싶어요", ro:"Dacă am bani, vreau să călătoresc." },
-
-  { words:["한국어가","어려워서","공부하기가","힘들어요"], answer:"한국어가 어려워서 공부하기가 힘들어요", ro:"Pentru că coreeana e dificilă, e greu de studiat." },
-  { words:["일이","많아서","요즘","바빠요"], answer:"일이 많아서 요즘 바빠요", ro:"Pentru că am mult de lucru, sunt ocupată zilele astea." },
-  { words:["날씨가","추워서","집에","있었어요"], answer:"날씨가 추워서 집에 있었어요", ro:"Pentru că era frig, am stat acasă." },
-
-  { words:["비가","와서","약속을","취소했어요"], answer:"비가 와서 약속을 취소했어요", ro:"Am anulat întâlnirea pentru că a plouat." },
-  { words:["시간이","없어서","못","갔어요"], answer:"시간이 없어서 못 갔어요", ro:"Nu am putut merge pentru că nu am avut timp." },
-  { words:["아파서","회사에","안","갔어요"], answer:"아파서 회사에 안 갔어요", ro:"Nu am mers la serviciu pentru că eram bolnavă." },
-
-  { words:["한국어를","배운","지","1년","됐어요"], answer:"한국어를 배운 지 1년 됐어요", ro:"A trecut un an de când învăț coreeană." },
-  { words:["이","회사에서","일한","지","오래됐어요"], answer:"이 회사에서 일한 지 오래됐어요", ro:"Lucrez la această firmă de mult timp." },
-  { words:["여기에","온","지","얼마","안","됐어요"], answer:"여기에 온 지 얼마 안 됐어요", ro:"Nu a trecut mult timp de când am venit aici." },
-
-  { words:["한국에","가","본","적이","있어요"], answer:"한국에 가 본 적이 있어요", ro:"Am fost în Coreea (am experiența)." },
-  { words:["그","영화를","본","적이","없어요"], answer:"그 영화를 본 적이 없어요", ro:"Nu am văzut acel film." },
-  { words:["혼자","여행해","본","적이","있어요"], answer:"혼자 여행해 본 적이 있어요", ro:"Am călătorit singură." },
-
-  { words:["한국어를","배우기","시작했어요"], answer:"한국어를 배우기 시작했어요", ro:"Am început să învăț coreeana." },
-  { words:["운동을","하기","시작했어요"], answer:"운동을 하기 시작했어요", ro:"Am început să fac sport." },
-  { words:["이","책을","읽기","시작했어요"], answer:"이 책을 읽기 시작했어요", ro:"Am început să citesc această carte." },
-
-  { words:["한국어를","열심히","공부하고","있어요"], answer:"한국어를 열심히 공부하고 있어요", ro:"Studiez coreeana din greu." },
-  { words:["지금","회의를","하고","있어요"], answer:"지금 회의를 하고 있어요", ro:"Sunt într-o ședință acum." },
-  { words:["비가","오고","있어요"], answer:"비가 오고 있어요", ro:"Plouă acum." },
-
-  { words:["내일","비가","올","것","같아요"], answer:"내일 비가 올 것 같아요", ro:"Cred că mâine va ploua." },
-  { words:["이","시험은","어려울","것","같아요"], answer:"이 시험은 어려울 것 같아요", ro:"Cred că acest examen va fi greu." },
-  { words:["오늘","늦을","것","같아요"], answer:"오늘 늦을 것 같아요", ro:"Cred că azi voi întârzia." },
-
-  { words:["한국에","가려고","계획하고","있어요"], answer:"한국에 가려고 계획하고 있어요", ro:"Plănuiesc să merg în Coreea." },
-  { words:["운동을","계속","하려고","해요"], answer:"운동을 계속 하려고 해요", ro:"Plănuiesc să continui sportul." },
-  { words:["이","일을","끝내려고","해요"], answer:"이 일을 끝내려고 해요", ro:"Am de gând să termin această treabă." },
-
-  { words:["피곤하지만","계속","일해야","해요"], answer:"피곤하지만 계속 일해야 해요", ro:"Sunt obosită, dar trebuie să continui să lucrez." },
-  { words:["비싸지만","사고","싶어요"], answer:"비싸지만 사고 싶어요", ro:"Este scump, dar vreau să-l cumpăr." },
-  { words:["멀지만","한","번","가","볼게요"], answer:"멀지만 한 번 가 볼게요", ro:"Este departe, dar o să încerc să merg." },
-
-  { words:["한국어가","쉽지","않아요"], answer:"한국어가 쉽지 않아요", ro:"Coreeana nu este ușoară." },
-  { words:["이","문제는","생각보다","어려워요"], answer:"이 문제는 생각보다 어려워요", ro:"Problema aceasta este mai grea decât credeam." },
-  { words:["오늘은","생각보다","바빠요"], answer:"오늘은 생각보다 바빠요", ro:"Azi sunt mai ocupată decât mă așteptam." },
-
-  { words:["시간이","지나면","괜찮아질","거예요"], answer:"시간이 지나면 괜찮아질 거예요", ro:"Va fi mai bine cu timpul." },
-  { words:["조금","쉬면","나아질","거예요"], answer:"조금 쉬면 나아질 거예요", ro:"Dacă te odihnești puțin, va fi mai bine." },
-  { words:["연습하면","실력이","늘","거예요"], answer:"연습하면 실력이 늘 거예요", ro:"Dacă exersezi, nivelul va crește." },
-
-  { words:["한국어를","잘","하고","싶어요"], answer:"한국어를 잘 하고 싶어요", ro:"Vreau să vorbesc bine coreeana." },
-  { words:["더","열심히","공부해야","겠어요"], answer:"더 열심히 공부해야겠어요", ro:"Ar trebui să studiez mai mult." },
-  { words:["이제","결정해야","겠어요"], answer:"이제 결정해야겠어요", ro:"Acum trebuie să iau o decizie." }
-  // =========================
-// PUZZLES_401_500 (TOPIK 3)
-// =========================
-const PUZZLES_401_500 = [
-  { words:["한국어를","열심히","공부하면","실력이","늘","거예요"], answer:"한국어를 열심히 공부하면 실력이 늘 거예요", ro:"Dacă studiezi coreeana din greu, nivelul va crește." },
-  { words:["시간이","없으면","못","만나요"], answer:"시간이 없으면 못 만나요", ro:"Dacă nu am timp, nu ne putem vedea." },
-  { words:["비가","오면","우산을","가져가세요"], answer:"비가 오면 우산을 가져가세요", ro:"Dacă plouă, luați o umbrelă." },
-
-  { words:["날씨가","좋아서","산책을","했어요"], answer:"날씨가 좋아서 산책을 했어요", ro:"Pentru că vremea era bună, am făcut o plimbare." },
-  { words:["일이","끝나서","집에","갔어요"], answer:"일이 끝나서 집에 갔어요", ro:"Pentru că munca s-a terminat, am mers acasă." },
-  { words:["피곤해서","일찍","잤어요"], answer:"피곤해서 일찍 잤어요", ro:"Pentru că eram obosită, m-am culcat devreme." },
-
-  { words:["한국에","가","보고","싶어요"], answer:"한국에 가 보고 싶어요", ro:"Aș vrea să merg în Coreea." },
-  { words:["이","음식을","먹어","보고","싶어요"], answer:"이 음식을 먹어 보고 싶어요", ro:"Aș vrea să gust acest fel de mâncare." },
-  { words:["혼자","여행해","보고","싶어요"], answer:"혼자 여행해 보고 싶어요", ro:"Aș vrea să încerc să călătoresc singură." },
-
-  { words:["한국어를","배우기","어려워요"], answer:"한국어를 배우기 어려워요", ro:"Este greu să înveți coreeana." },
-  { words:["이","문제를","풀기","쉬워요"], answer:"이 문제를 풀기 쉬워요", ro:"Este ușor să rezolvi această problemă." },
-  { words:["혼자","하기","힘들어요"], answer:"혼자 하기 힘들어요", ro:"Este greu să faci asta singur." },
-
-  { words:["지금","공부하는","중이에요"], answer:"지금 공부하는 중이에요", ro:"Sunt în mijlocul studiului acum." },
-  { words:["회의를","하는","중이에요"], answer:"회의를 하는 중이에요", ro:"Sunt în ședință acum." },
-  { words:["운전하는","중이에요"], answer:"운전하는 중이에요", ro:"Sunt în timp ce conduc." },
-
-  { words:["한국어를","배울","때","재미있어요"], answer:"한국어를 배울 때 재미있어요", ro:"Când învăț coreeană, este interesant." },
-  { words:["운동할","때","기분이","좋아요"], answer:"운동할 때 기분이 좋아요", ro:"Când fac sport, mă simt bine." },
-  { words:["여행할","때","사진을","찍어요"], answer:"여행할 때 사진을 찍어요", ro:"Când călătoresc, fac poze." },
-
-  { words:["약속이","있어서","먼저","갈게요"], answer:"약속이 있어서 먼저 갈게요", ro:"Am o întâlnire, așa că plec mai devreme." },
-  { words:["일이","있어서","못","가요"], answer:"일이 있어서 못 가요", ro:"Nu pot merge pentru că am treabă." },
-  { words:["시간이","있어서","도와줄","수","있어요"], answer:"시간이 있어서 도와줄 수 있어요", ro:"Am timp, așa că pot ajuta." },
-
-  { words:["이","옷이","제일","편해요"], answer:"이 옷이 제일 편해요", ro:"Acești haine sunt cele mai comode." },
-  { words:["이","방법이","가장","쉬워요"], answer:"이 방법이 가장 쉬워요", ro:"Această metodă este cea mai ușoară." },
-  { words:["여기가","제일","조용해요"], answer:"여기가 제일 조용해요", ro:"Aici este cel mai liniștit." },
-
-  { words:["한국어를","잘","하려면","연습해야","해요"], answer:"한국어를 잘 하려면 연습해야 해요", ro:"Ca să vorbești bine coreeana, trebuie să exersezi." },
-  { words:["건강해지려면","운동해야","해요"], answer:"건강해지려면 운동해야 해요", ro:"Ca să devii sănătos, trebuie să faci sport." },
-  { words:["시험에","합격하려면","공부해야","해요"], answer:"시험에 합격하려면 공부해야 해요", ro:"Ca să treci examenul, trebuie să studiezi." },
-
-  { words:["생각해","보니까","맞아요"], answer:"생각해 보니까 맞아요", ro:"Acum că mă gândesc, este corect." },
-  { words:["이야기를","들어","보니까","이해돼요"], answer:"이야기를 들어 보니까 이해돼요", ro:"După ce am ascultat, înțeleg." },
-  { words:["써","보니까","편해요"], answer:"써 보니까 편해요", ro:"După ce am folosit, e comod." },
-
-  { words:["한국어","실력이","많이","늘었어요"], answer:"한국어 실력이 많이 늘었어요", ro:"Nivelul meu de coreeană a crescut mult." },
-  { words:["요즘","일이","많아졌어요"], answer:"요즘 일이 많아졌어요", ro:"În ultima vreme, munca a crescut." },
-  { words:["날씨가","갑자기","추워졌어요"], answer:"날씨가 갑자기 추워졌어요", ro:"Vremea s-a răcit brusc." },
-
-  { words:["앞으로","더","열심히","할게요"], answer:"앞으로 더 열심히 할게요", ro:"De acum înainte, voi munci mai mult." },
-  { words:["다음에는","꼭","갈게요"], answer:"다음에는 꼭 갈게요", ro:"Data viitoare sigur voi merge." },
-  { words:["기회가","있으면","다시","만나요"], answer:"기회가 있으면 다시 만나요", ro:"Dacă va fi ocazia, ne vedem din nou." },
-
-  { words:["지금","결정하는","게","좋겠어요"], answer:"지금 결정하는 게 좋겠어요", ro:"Ar fi bine să decidem acum." },
-  { words:["조금","쉬는","게","어때요"], answer:"조금 쉬는 게 어때요", ro:"Ce zici să ne odihnim puțin?" },
-  { words:["이","방법을","쓰는","게","좋아요"], answer:"이 방법을 쓰는 게 좋아요", ro:"Este bine să folosești această metodă." },
-
-  { words:["아직","익숙하지","않아요"], answer:"아직 익숙하지 않아요", ro:"Încă nu sunt obișnuită." },
-  { words:["시간이","좀","필요해요"], answer:"시간이 좀 필요해요", ro:"Am nevoie de puțin timp." },
-  { words:["천천히","해도","돼요"], answer:"천천히 해도 돼요", ro:"Poți să o faci încet, e ok." }
-  // =========================
-// PUZZLES_501_600 (TOPIK 3)
-// =========================
-const PUZZLES_501_600 = [
-  { words:["비가","와서","집에","있었어요"], answer:"비가 와서 집에 있었어요", ro:"Pentru că a plouat, am stat acasă." },
-  { words:["약속을","잊어버려서","미안해요"], answer:"약속을 잊어버려서 미안해요", ro:"Îmi pare rău că am uitat întâlnirea." },
-  { words:["몸이","안","좋아서","못","갔어요"], answer:"몸이 안 좋아서 못 갔어요", ro:"Nu am putut merge pentru că nu m-am simțit bine." },
-
-  { words:["시간이","남으면","영화를","볼게요"], answer:"시간이 남으면 영화를 볼게요", ro:"Dacă îmi rămâne timp, voi vedea un film." },
-  { words:["필요하면","연락","주세요"], answer:"필요하면 연락 주세요", ro:"Dacă este nevoie, contactați-mă." },
-  { words:["기회가","되면","다시","가고","싶어요"], answer:"기회가 되면 다시 가고 싶어요", ro:"Dacă va fi ocazia, aș vrea să merg din nou." },
-
-  { words:["생각보다","어려웠어요"], answer:"생각보다 어려웠어요", ro:"A fost mai greu decât credeam." },
-  { words:["예상보다","빨리","끝났어요"], answer:"예상보다 빨리 끝났어요", ro:"S-a terminat mai repede decât era de așteptat." },
-  { words:["말한","것보다","좋았어요"], answer:"말한 것보다 좋았어요", ro:"A fost mai bun decât am spus." },
-
-  { words:["아무리","바빠도","운동해요"], answer:"아무리 바빠도 운동해요", ro:"Oricât de ocupată aș fi, fac sport." },
-  { words:["아무리","생각해도","모르겠어요"], answer:"아무리 생각해도 모르겠어요", ro:"Oricât m-aș gândi, nu știu." },
-  { words:["아무리","해도","안","돼요"], answer:"아무리 해도 안 돼요", ro:"Orice aș face, nu merge." },
-
-  { words:["점점","날씨가","추워져요"], answer:"점점 날씨가 추워져요", ro:"Vremea devine din ce în ce mai rece." },
-  { words:["점점","한국어가","쉬워져요"], answer:"점점 한국어가 쉬워져요", ro:"Coreeana devine tot mai ușoară." },
-  { words:["점점","익숙해지고","있어요"], answer:"점점 익숙해지고 있어요", ro:"Devine din ce în ce mai familiar." },
-
-  { words:["하루","종일","일했어요"], answer:"하루 종일 일했어요", ro:"Am muncit toată ziua." },
-  { words:["밤","새","공부했어요"], answer:"밤 새 공부했어요", ro:"Am studiat toată noaptea." },
-  { words:["잠깐","밖에","나갔어요"], answer:"잠깐 밖에 나갔어요", ro:"Am ieșit puțin afară." },
-
-  { words:["생각","중이에요"], answer:"생각 중이에요", ro:"Sunt pe gânduri." },
-  { words:["고민","중이에요"], answer:"고민 중이에요", ro:"Mă gândesc serios." },
-  { words:["준비","중이에요"], answer:"준비 중이에요", ro:"Sunt în pregătire." },
-
-  { words:["못","알아들었어요"], answer:"못 알아들었어요", ro:"Nu am înțeles." },
-  { words:["잘","기억","안","나요"], answer:"잘 기억 안 나요", ro:"Nu-mi amintesc bine." },
-  { words:["아직","결정","못","했어요"], answer:"아직 결정 못 했어요", ro:"Încă nu am decis." },
-
-  { words:["조금","이상한","것","같아요"], answer:"조금 이상한 것 같아요", ro:"Parcă este puțin ciudat." },
-  { words:["그렇게","어렵지","않아요"], answer:"그렇게 어렵지 않아요", ro:"Nu este chiar atât de greu." },
-  { words:["생각보다","괜찮아요"], answer:"생각보다 괜찮아요", ro:"Este mai ok decât credeam." },
-
-  { words:["사람들이","많아서","시끄러워요"], answer:"사람들이 많아서 시끄러워요", ro:"Este zgomotos pentru că sunt mulți oameni." },
-  { words:["길이","막혀서","늦었어요"], answer:"길이 막혀서 늦었어요", ro:"Am întârziat pentru că era trafic." },
-  { words:["가격이","비싸서","못","샀어요"], answer:"가격이 비싸서 못 샀어요", ro:"Nu am cumpărat pentru că era scump." },
-
-  { words:["이제","익숙해졌어요"], answer:"이제 익숙해졌어요", ro:"Acum m-am obișnuit." },
-  { words:["이제","시작해요"], answer:"이제 시작해요", ro:"Acum începem." },
-  { words:["이제","그만할게요"], answer:"이제 그만할게요", ro:"Mă opresc acum." },
-
-  { words:["조금","더","생각해","볼게요"], answer:"조금 더 생각해 볼게요", ro:"Mă mai gândesc puțin." },
-  { words:["나중에","다시","연락할게요"], answer:"나중에 다시 연락할게요", ro:"Te contactez din nou mai târziu." },
-  { words:["다음에","또","만나요"], answer:"다음에 또 만나요", ro:"Ne vedem din nou data viitoare." }
-  // =========================
-// PUZZLES_TOPIK4_1_200
-// =========================
-const PUZZLES_TOPIK4_1_200 = [
-  { words:["비가","올","것","같아요"], answer:"비가 올 것 같아요", ro:"Cred că va ploua." },
-  { words:["시간이","걸릴","것","같아요"], answer:"시간이 걸릴 것 같아요", ro:"Cred că va dura." },
-  { words:["사람들이","많을","것","같아요"], answer:"사람들이 많을 것 같아요", ro:"Cred că vor fi mulți oameni." },
-
-  { words:["약속을","지켜야","돼요"], answer:"약속을 지켜야 돼요", ro:"Trebuie să respect promisiunea." },
-  { words:["지금","출발해야","돼요"], answer:"지금 출발해야 돼요", ro:"Trebuie să plec acum." },
-  { words:["더","열심히","공부해야","돼요"], answer:"더 열심히 공부해야 돼요", ro:"Trebuie să studiez mai mult." },
-
-  { words:["한국에","가","본","적이","있어요"], answer:"한국에 가 본 적이 있어요", ro:"Am fost vreodată în Coreea." },
-  { words:["이","영화를","본","적이","없어요"], answer:"이 영화를 본 적이 없어요", ro:"Nu am văzut acest film." },
-  { words:["그","사람을","만난","적이","있어요"], answer:"그 사람을 만난 적이 있어요", ro:"Am întâlnit acea persoană." },
-
-  { words:["비가","오면","집에","있을게요"], answer:"비가 오면 집에 있을게요", ro:"Dacă plouă, voi sta acasă." },
-  { words:["시간이","있으면","전화할게요"], answer:"시간이 있으면 전화할게요", ro:"Dacă am timp, te sun." },
-  { words:["필요하면","말해","주세요"], answer:"필요하면 말해 주세요", ro:"Spune-mi dacă este nevoie." },
-
-  { words:["비가","와서","못","갔어요"], answer:"비가 와서 못 갔어요", ro:"Nu am putut merge pentru că a plouat." },
-  { words:["아파서","회사에","못","갔어요"], answer:"아파서 회사에 못 갔어요", ro:"Nu am mers la muncă pentru că eram bolnavă." },
-  { words:["늦어서","택시를","탔어요"], answer:"늦어서 택시를 탔어요", ro:"Pentru că am întârziat, am luat taxi." },
-
-  { words:["열심히","공부했지만","어려웠어요"], answer:"열심히 공부했지만 어려웠어요", ro:"Am studiat mult, dar a fost greu." },
-  { words:["가격이","비싸지만","사고","싶어요"], answer:"가격이 비싸지만 사고 싶어요", ro:"Este scump, dar vreau să cumpăr." },
-  { words:["바쁘지만","참석할게요"], answer:"바쁘지만 참석할게요", ro:"Sunt ocupată, dar voi participa." },
-
-  { words:["생각해","보니까","맞아요"], answer:"생각해 보니까 맞아요", ro:"Gândindu-mă bine, e corect." },
-  { words:["들어","보니까","어려워요"], answer:"들어 보니까 어려워요", ro:"Din ce aud, e dificil." },
-  { words:["해","보니까","괜찮아요"], answer:"해 보니까 괜찮아요", ro:"După ce am încercat, e ok." },
-
-  { words:["그","사람이","온다고","했어요"], answer:"그 사람이 온다고 했어요", ro:"A spus că va veni." },
-  { words:["비가","온다고","들었어요"], answer:"비가 온다고 들었어요", ro:"Am auzit că va ploua." },
-  { words:["가격이","오른다고","해요"], answer:"가격이 오른다고 해요", ro:"Se spune că prețurile cresc." },
-
-  { words:["천천히","말해","주세요"], answer:"천천히 말해 주세요", ro:"Vă rog să vorbiți mai încet." },
-  { words:["조금","기다려","주세요"], answer:"조금 기다려 주세요", ro:"Vă rog să așteptați puțin." },
-  { words:["다시","설명해","주세요"], answer:"다시 설명해 주세요", ro:"Vă rog să explicați din nou." },
-
-  { words:["그","일은","제가","할게요"], answer:"그 일은 제가 할게요", ro:"Eu voi face acel lucru." },
-  { words:["제가","도와","줄게요"], answer:"제가 도와 줄게요", ro:"Vă ajut eu." },
-  { words:["내일","전화할게요"], answer:"내일 전화할게요", ro:"Voi suna mâine." },
-
-  { words:["생각보다","시간이","걸렸어요"], answer:"생각보다 시간이 걸렸어요", ro:"A durat mai mult decât credeam." },
-  { words:["예상보다","비쌌어요"], answer:"예상보다 비쌌어요", ro:"A fost mai scump decât era de așteptat." },
-  { words:["말한","것보다","쉬워요"], answer:"말한 것보다 쉬워요", ro:"Este mai ușor decât am spus." },
-
-  { words:["아무리","바빠도","와야","돼요"], answer:"아무리 바빠도 와야 돼요", ro:"Oricât de ocupat, trebuie să vii." },
-  { words:["아무리","생각해도","모르겠어요"], answer:"아무리 생각해도 모르겠어요", ro:"Oricât m-aș gândi, nu știu." },
-  { words:["아무리","해도","안","돼요"], answer:"아무리 해도 안 돼요", ro:"Orice aș face, nu merge." },
-
-  { words:["점점","날씨가","추워져요"], answer:"점점 날씨가 추워져요", ro:"Vremea devine din ce în ce mai rece." },
-  { words:["점점","사람이","많아져요"], answer:"점점 사람이 많아져요", ro:"Sunt din ce în ce mai mulți oameni." },
-  { words:["점점","익숙해져요"], answer:"점점 익숙해져요", ro:"Devine tot mai familiar." },
-
-  { words:["할","수","있을","것","같아요"], answer:"할 수 있을 것 같아요", ro:"Cred că pot face." },
-  { words:["못","할","것","같아요"], answer:"못 할 것 같아요", ro:"Cred că nu pot face." },
-  { words:["성공할","것","같아요"], answer:"성공할 것 같아요", ro:"Cred că va reuși." },
-
-  { words:["회의가","끝난","후에","전화할게요"], answer:"회의가 끝난 후에 전화할게요", ro:"Te sun după ce se termină ședința." },
-  { words:["수업이","끝난","다음에","만나요"], answer:"수업이 끝난 다음에 만나요", ro:"Ne vedem după curs." },
-  { words:["일을","다","한","후에","쉴게요"], answer:"일을 다 한 후에 쉴게요", ro:"Mă odihnesc după ce termin munca." },
-
-  { words:["한국어를","공부하는","중이에요"], answer:"한국어를 공부하는 중이에요", ro:"Sunt în curs de a studia coreeana." },
-  { words:["지금","회의","중이에요"], answer:"지금 회의 중이에요", ro:"Sunt în ședință acum." },
-  { words:["준비","중이에요"], answer:"준비 중이에요", ro:"Sunt în pregătire." }
-];
-
-    
-    function newPuzzle(){
-      if(st.puzzle.idx >= PUZZLES.length) st.puzzle.idx = 0;
-      currentPuzzle = PUZZLES[st.puzzle.idx];
-      built = [];
-      pzMsgEl.textContent = "—";
-      renderPuzzle();
-    }
-
-    function renderPuzzle(){
-      pzScoreEl.textContent = `Corecte: ${st.puzzle.correct}`;
-
-      // bank: show remaining words not used (simple)
-      pzBankEl.innerHTML = "";
-      currentPuzzle.words.forEach(w=>{
-        if(built.includes(w)) return;
-             pzBankEl.innerHTML = "";
-      currentPuzzle.words.forEach(w=>{
-        if(built.includes(w)) return;
-
-        const chip = document.createElement("span");
-        chip.className = "chip";
-        chip.textContent = w;
-        chip.addEventListener("click", ()=>{
-          built.push(w);
-          renderPuzzle();
-        });
-        pzBankEl.appendChild(chip);
+        exerciseOptionsEl.appendChild(btn);
       });
 
-      // line: show built words (click to remove)
-      pzLineEl.innerHTML = "";
-      built.forEach((w, idx)=>{
-        const chip = document.createElement("span");
-        chip.className = "chip";
-        chip.textContent = w;
-        chip.addEventListener("click", ()=>{
-          built.splice(idx, 1);
-          renderPuzzle();
+      current = { type:"particle" };
+      return;
+    }
+
+    if(type==="puzzle"){
+      if(!PUZZLE_BANK.length) return setEmptyQuestion("Nu există puzzle-uri în bancă.");
+      if(state.puzzle.idx >= PUZZLE_BANK.length) state.puzzle.idx = 0;
+      const pz = PUZZLE_BANK[state.puzzle.idx];
+
+      exerciseSubtagEl.textContent = `Puzzle ${state.puzzle.idx+1} / ${PUZZLE_BANK.length} · Corecte ${state.puzzle.correct}`;
+      exerciseQuestionEl.innerHTML = `<b>Aranjează cuvintele:</b>`;
+
+      exerciseOptionsEl.innerHTML = `
+        <div class="ex-puzzle">
+          <div class="ex-pz-row">
+            <div class="ex-pz-title">Cuvinte</div>
+            <div id="pzBank" class="ex-pz-bank"></div>
+          </div>
+          <div class="ex-pz-row" style="margin-top:10px;">
+            <div class="ex-pz-title">Propoziția ta</div>
+            <div id="pzLine" class="ex-pz-line"></div>
+          </div>
+          <div class="ex-pz-actions" style="margin-top:10px;">
+            <button type="button" class="secondary" id="pzClear">Curăță</button>
+          </div>
+        </div>
+      `;
+
+      const bankEl = document.getElementById("pzBank");
+      const lineEl = document.getElementById("pzLine");
+      const clearBtn = document.getElementById("pzClear");
+      let built = [];
+
+      function renderPuzzle(){
+        bankEl.innerHTML = "";
+        lineEl.innerHTML = "";
+
+        const remaining = pz.words.filter(w => !built.includes(w));
+        shuffle(remaining).forEach(w=>{
+          const chip = document.createElement("button");
+          chip.type="button";
+          chip.className="ex-chip";
+          chip.textContent = w;
+          chip.addEventListener("click", ()=>{
+            built.push(w);
+            renderPuzzle();
+          });
+          bankEl.appendChild(chip);
         });
-        pzLineEl.appendChild(chip);
+
+        built.forEach((w, idx)=>{
+          const chip = document.createElement("button");
+          chip.type="button";
+          chip.className="ex-chip active";
+          chip.textContent = w;
+          chip.addEventListener("click", ()=>{
+            built.splice(idx,1);
+            renderPuzzle();
+          });
+          lineEl.appendChild(chip);
+        });
+      }
+
+      clearBtn.addEventListener("click", ()=>{
+        built = [];
+        exerciseFeedbackEl.textContent = "";
+        renderPuzzle();
       });
 
-      // if empty line, show a small hint
-      if(built.length === 0){
-        const ghost = document.createElement("span");
-        ghost.style.color = "rgba(27,22,48,0.55)";
-        ghost.style.fontWeight = "800";
-        ghost.style.fontSize = "13px";
-        ghost.textContent = "Tap pe cuvinte din Word bank ↑";
-        pzLineEl.appendChild(ghost);
-      }
-    }
-
-    $("#pzClearBtn").addEventListener("click", ()=>{
-      built = [];
-      pzMsgEl.textContent = "—";
       renderPuzzle();
-    });
 
-    $("#pzNewBtn").addEventListener("click", ()=>{
-      st.puzzle.idx += 1;
-      saveState(st);
-      newPuzzle();
-      updateSummary();
-    });
-
-    $("#pzCheckBtn").addEventListener("click", ()=>{
-      if(!currentPuzzle) return;
-
-      const sentence = built.join(" ").trim();
-      if(!sentence){
-        pzMsgEl.textContent = "Construiește întâi propoziția.";
-        return;
-      }
-
-      const ok = sentence === currentPuzzle.answer;
-      if(ok){
-        st.puzzle.correct += 1;
-        pzMsgEl.textContent = `✅ Corect. RO: ${currentPuzzle.ro}`;
-      } else {
-        pzMsgEl.textContent = `❌ Greșit. Corect: "${currentPuzzle.answer}" · RO: ${currentPuzzle.ro}`;
-      }
-
-      saveState(st);
-      updateSummary();
-      renderPuzzle();
-    });
-
-    // =========================
-    // RESET (ALL)
-    // =========================
-    $("#resetAllBtn").addEventListener("click", ()=>{
-      const yes = confirm("Reset total? (scoruri + întrebări adăugate)");
-      if(!yes) return;
-
-      localStorage.removeItem(LS_EX);
-
-      // reset in-memory too (reîncarcă starea)
-      const fresh = {
-        quiz: { correct:0, total:0, idx:0, custom:[] },
-        particles: { correct:0, idx:0 },
-        puzzle: { correct:0, idx:0 },
-      };
-
-      st.quiz = fresh.quiz;
-      st.particles = fresh.particles;
-      st.puzzle = fresh.puzzle;
-
-      saveState(st);
-
-      // reset UI
-      $("#quizMsg").textContent = "Reset complet făcut.";
-      $("#pMsg").textContent = "—";
-      $("#pzMsg").textContent = "—";
-
-      renderQuiz();
-      renderParticles();
-      newPuzzle();
-      updateSummary();
-    });
-
-    // =========================
-    // AUDIO (KO) - simplu
-    // =========================
-    function speakKorean(text){
-      try{
-        if(!("speechSynthesis" in window)){
-          quizMsgEl.textContent = "Audio nu e disponibil pe acest browser.";
-          return;
-        }
-        const u = new SpeechSynthesisUtterance(text);
-        // încearcă o voce coreeană dacă există
-        const voices = speechSynthesis.getVoices?.() || [];
-        const koVoice = voices.find(v => (v.lang || "").toLowerCase().startsWith("ko"));
-        if(koVoice) u.voice = koVoice;
-        u.lang = koVoice?.lang || "ko-KR";
-        u.rate = 0.95;
-        speechSynthesis.cancel();
-        speechSynthesis.speak(u);
-      } catch (e){
-        quizMsgEl.textContent = "Audio a eșuat.";
-      }
+      current = { type:"puzzle", check: ()=> built.join(" ").trim() === pz.answer.trim(), answer:pz.answer, ro:pz.ro };
+      return;
     }
 
-    // Unele browsere încarcă vocile mai târziu
-    if("speechSynthesis" in window){
-      window.speechSynthesis.onvoiceschanged = () => {};
-    }
+    setEmptyQuestion("Selectează: Quiz / Particule / Puzzle.");
+  }
 
-    // =========================
-    // INIT
-    // =========================
-    updateSummary();
-    renderQuiz();
-    renderParticles();
-    newPuzzle();
+  function nextQuestion(){
+    const type = (exerciseTypeEl && exerciseTypeEl.value) ? exerciseTypeEl.value : "verb";
+    state.lastType = type;
+    if(type==="verb") state.quiz.idx += 1;
+    if(type==="particle") state.particles.idx += 1;
+    if(type==="puzzle") state.puzzle.idx += 1;
+    saveState();
+    renderQuestion(type);
+  }
+
+  function checkAnswer(){
+    const type = (exerciseTypeEl && exerciseTypeEl.value) ? exerciseTypeEl.value : "verb";
+    if(type==="puzzle" && current && current.type==="puzzle"){
+      const ok = current.check();
+      state.puzzle.total += 1;
+      if(ok) state.puzzle.correct += 1;
+      exerciseFeedbackEl.textContent = ok ? `✅ Corect! (${current.ro})` : `❌ Nu încă. Corect: ${current.answer}
+RO: ${current.ro}`;
+      saveState();
+      exerciseSubtagEl.textContent = `Puzzle ${state.puzzle.idx+1} / ${PUZZLE_BANK.length} · Corecte ${state.puzzle.correct}`;
+    } else {
+      exerciseFeedbackEl.textContent = "Alege o opțiune (tap).";
+    }
+  }
+
+  if(exerciseTypeEl){
+    exerciseTypeEl.value = state.lastType || "verb";
+    exerciseTypeEl.addEventListener("change", ()=> renderQuestion(exerciseTypeEl.value));
+  }
+  if(nextQuestionBtn) nextQuestionBtn.addEventListener("click", nextQuestion);
+  if(checkAnswerBtn) checkAnswerBtn.addEventListener("click", checkAnswer);
+
+  renderQuestion(exerciseTypeEl ? exerciseTypeEl.value : "verb"); renderQuestion(exerciseTypeEl ? exerciseTypeEl.value : "verb");
   </script>
 </body>
 </html>
+
