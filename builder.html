@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean – Builder</title>
+
+<style>
+/* ===============================
+   GLOBAL STYLE – BUILDER
+   =============================== */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: linear-gradient(180deg,#fbf7ff,#f3efff);
+  color: #1b1630;
+}
+
+.app {
+  max-width: 1000px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* ---------- Header ---------- */
+header {
+  background: rgba(255,255,255,0.85);
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+header p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: .7;
+}
+
+/* ---------- Cards ---------- */
+.card {
+  background: rgba(255,255,255,0.9);
+  border-radius: 22px;
+  padding: 16px;
+  margin-top: 16px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+}
+
+.card-title {
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+/* ---------- Controls ---------- */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+select, textarea, button {
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.15);
+}
+
+textarea {
+  width: 100%;
+  min-height: 90px;
+}
+
+button {
+  cursor: pointer;
+  background: #8b5cf6;
+  color: white;
+  border: none;
+}
+
+button.secondary {
+  background: #e5e1ff;
+  color: #1b1630;
+}
+
+button:hover {
+  opacity: .9;
+}
+
+/* ---------- Clause cards ---------- */
+.clause-card {
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 16px;
+  padding: 10px;
+  margin-top: 8px;
+}
+
+.small {
+  font-size: 12px;
+  opacity: .7;
+}
+
+/* ---------- Preview ---------- */
+.preview {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+/* ---------- Footer ---------- */
+footer {
+  text-align: center;
+  font-size: 12px;
+  opacity: .5;
+  margin-top: 30px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header>
+  <h1>Raluca Korean — Builder</h1>
+  <p>Scrii RO / EN → vezi propozițiile + preview KO</p>
+</header>
+
+<!-- INPUT RO / EN -->
+<div class="card">
+  <div class="card-title">Română / English</div>
+
+  <div class="row">
+    <select id="lang">
+      <option value="ro">Română</option>
+      <option value="en">English</option>
+    </select>
+
+    <button id="runBtn">Construiește</button>
+    <button class="secondary" id="clearBtn">Curăță</button>
+  </div>
+
+  <textarea id="inputText"
+    placeholder="Scrie mai multe propoziții, fiecare pe rând nou.
+Ex:
+Azi merg la cafenea.
+Mâine studiez coreeană."></textarea>
+</div>
+
+<!-- RESULT -->
+<div class="card">
+  <div class="card-title">Propoziții detectate</div>
+  <div id="clauses"></div>
+</div>
+
+<!-- PREVIEW -->
+<div class="card">
+  <div class="card-title">Preview coreean (ultimul rând)</div>
+  <div class="preview" id="previewKo">—</div>
+  <div class="small" id="countInfo"></div>
+</div>
+
+<footer>
+  Builder single-page • fără module • fără fișiere externe
+</footer>
+
+</div>
+
+<script>
+
+// Raluca Korean — Builder (propoziții multiple, structură stabilă)
+
+(function () {
+  const KEY = "rk_builder_v1";
+
+  const els = {
+    wrap: document.getElementById("sentencesWrap"),
+    add: document.getElementById("addSentenceBtn"),
+    remove: document.getElementById("removeSentenceBtn"),
+    reset: document.getElementById("resetAllBtn"),
+    previewKo: document.getElementById("previewKo"),
+    previewRo: document.getElementById("previewRo"),
+    previewHint: document.getElementById("previewHint"),
+  };
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return { sentences: [emptySentence()] };
+      const st = JSON.parse(raw);
+      if (!st || !Array.isArray(st.sentences) || st.sentences.length === 0) {
+        return { sentences: [emptySentence()] };
+      }
+      return st;
+    } catch {
+      return { sentences: [emptySentence()] };
+    }
+  }
+
+  function saveState(st) {
+    localStorage.setItem(KEY, JSON.stringify(st));
+  }
+
+  function emptySentence() {
+    return {
+      subject: "",
+      time: "",
+      place: "",
+      object: "",
+      verb: "",
+      ro: ""
+    };
+  }
+
+  function sentenceTitle(i) {
+    return `Propoziția ${i + 1}`;
+  }
+
+  function buildCard(i, s) {
+    const card = document.createElement("div");
+    card.className = "sentence-card";
+    card.dataset.index = String(i);
+
+    const head = document.createElement("div");
+    head.className = "sentence-head";
+
+    const left = document.createElement("div");
+    const title = document.createElement("div");
+    title.className = "sentence-title";
+    title.textContent = sentenceTitle(i);
+
+    const meta = document.createElement("div");
+    meta.className = "sentence-meta";
+    meta.textContent = "Completează câmpurile (schelet).";
+
+    left.appendChild(title);
+    left.appendChild(meta);
+
+    const right = document.createElement("div");
+    right.className = "sentence-meta";
+    right.textContent = `#${i + 1}`;
+
+    head.appendChild(left);
+    head.appendChild(right);
+
+    const grid = document.createElement("div");
+    grid.className = "table-grid";
+
+    grid.appendChild(cell(i, "Subiect (ex: 저는 / 나는)", "subject", s.subject));
+    grid.appendChild(cell(i, "Timp (ex: 오늘 / 내일 / 지금)", "time", s.time));
+    grid.appendChild(cell(i, "Loc (ex: 학교에 / 집에)", "place", s.place));
+    grid.appendChild(cell(i, "Obiect (ex: 커피를 / 책을)", "object", s.object));
+    grid.appendChild(cell(i, "Verb (ex: 가요 / 먹어요)", "verb", s.verb));
+    grid.appendChild(cell(i, "Traducere RO (natural)", "ro", s.ro));
+
+    card.appendChild(head);
+    card.appendChild(grid);
+
+    return card;
+  }
+
+  function cell(index, labelText, field, value) {
+    const box = document.createElement("div");
+    box.className = "cell";
+
+    const label = document.createElement("div");
+    label.className = "cell-label";
+    label.textContent = labelText;
+
+    const input = document.createElement("input");
+    input.className = "cell-input";
+    input.type = "text";
+    input.value = value || "";
+    input.placeholder = "scrie aici…";
+    input.addEventListener("input", () => {
+      const st = loadState();
+      const i = Number(index);
+      if (!st.sentences[i]) return;
+      st.sentences[i][field] = input.value;
+      saveState(st);
+      renderPreview(st);
+    });
+
+    box.appendChild(label);
+    box.appendChild(input);
+    return box;
+  }
+
+  function renderAll() {
+    const st = loadState();
+    els.wrap.innerHTML = "";
+    st.sentences.forEach((s, i) => els.wrap.appendChild(buildCard(i, s)));
+    renderPreview(st);
+    updateButtons(st);
+  }
+
+  function updateButtons(st) {
+    els.remove.disabled = st.sentences.length <= 1;
+    els.remove.style.opacity = st.sentences.length <= 1 ? "0.5" : "1";
+  }
+
+  function renderPreview(st) {
+    // KO: concatenează fiecare propoziție (fiecare pe linie)
+    const koLines = st.sentences.map(s => {
+      const parts = [s.subject, s.time, s.place, s.object, s.verb]
+        .map(x => (x || "").trim())
+        .filter(Boolean);
+      return parts.join(" ").trim();
+    }).filter(Boolean);
+
+    // RO: concatenează traducerile dacă există
+    const roLines = st.sentences
+      .map(s => (s.ro || "").trim())
+      .filter(Boolean);
+
+    els.previewKo.textContent = koLines.length ? koLines.join("  /  ") : "(completează câmpurile din propoziții)";
+    els.previewRo.textContent = roLines.length ? roLines.join("  /  ") : "";
+
+    const filled = koLines.length;
+    els.previewHint.textContent = filled
+      ? `Ai ${st.sentences.length} propoziții (vizibile). Preview-ul combină ce ai completat.`
+      : `Adaugă propoziții și completează câmpurile. (Încă nu avem liste/particule/conjugări — urmează după ce confirmi structura.)`;
+  }
+
+  // Actions
+  els.add.addEventListener("click", () => {
+    const st = loadState();
+    st.sentences.push(emptySentence());
+    saveState(st);
+    renderAll();
+    // scroll la ultima propoziție
+    requestAnimationFrame(() => {
+      const cards = els.wrap.querySelectorAll(".sentence-card");
+      const last = cards[cards.length - 1];
+      if (last) last.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  els.remove.addEventListener("click", () => {
+    const st = loadState();
+    if (st.sentences.length <= 1) return;
+    st.sentences.pop();
+    saveState(st);
+    renderAll();
+  });
+
+  els.reset.addEventListener("click", () => {
+    const st = { sentences: [emptySentence()] };
+    saveState(st);
+    renderAll();
+  });
+
+  // Init
+  renderAll();
+})();
+</script>
+
+</body>
+</html>
