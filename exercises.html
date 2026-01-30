@@ -244,6 +244,35 @@ if (type === "particle") {
 
   return;
 }  
+  function checkAnswer() {
+  if (!current) return;
+
+  if (current.type === "particle") {
+    if (!document.querySelector(".answer.selected")) {
+      exerciseFeedbackEl.textContent = "Alege o variantă.";
+      return;
+    }
+
+    const ok = current.check();
+
+    document.querySelectorAll(".answer").forEach(a => {
+      if (a.textContent === current.answer) {
+        a.classList.add("correct");
+      }
+      if (a.classList.contains("selected") && !ok) {
+        a.classList.add("wrong");
+      }
+    });
+
+    exerciseFeedbackEl.textContent = ok
+      ? `✅ Corect. ${current.explain}`
+      : `❌ Greșit. Corect: ${current.answer} — ${current.explain}`;
+
+    state.particles.total++;
+    if (ok) state.particles.correct++;
+    saveState();
+  }
+}
   function loadQuestion(){
   selectedAnswer = null;
   fEl.textContent = "";
