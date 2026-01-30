@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="ro">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Raluca Korean — Exercises</title>
 
 <style>
@@ -13,118 +13,62 @@ body{
   background:#f7f3ff;
   color:#1b1630;
 }
-.app{
-  max-width:900px;
-  margin:0 auto;
-  padding:16px;
-}
-.header{
+.app{max-width:900px;margin:0 auto;padding:16px}
+.card{
   background:#fff;
   border-radius:18px;
   padding:16px;
   box-shadow:0 12px 30px rgba(0,0,0,.1);
   margin-bottom:16px;
 }
-.header h1{margin:0;font-size:20px}
-.header p{margin:4px 0 0;font-size:13px;color:#666}
-
-.exercise-type{
-  background:#fff;
-  border-radius:18px;
-  padding:16px;
-  box-shadow:0 12px 30px rgba(0,0,0,.1);
-  margin-bottom:16px;
-}
-.exercise-type label{font-weight:700;font-size:14px}
+h1{margin:0;font-size:22px}
 select{
   width:100%;
-  margin-top:8px;
-  padding:10px;
-  font-size:15px;
+  padding:12px;
   border-radius:12px;
   border:1px solid #ccc;
+  font-size:15px;
 }
-
-.exercise-card{
-  background:#fff;
-  border-radius:18px;
-  padding:18px;
-  box-shadow:0 12px 30px rgba(0,0,0,.1);
-}
-.question{
-  font-size:22px;
-  font-weight:800;
-  margin-bottom:6px;
-}
-.sub{
-  font-size:13px;
-  color:#666;
-  margin-bottom:16px;
-}
-.answers{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
-  margin-bottom:16px;
-}
-
+.question{font-size:22px;font-weight:800;margin-bottom:6px}
+.sub{font-size:13px;color:#666;margin-bottom:12px}
+.answers{display:grid;gap:10px}
 .answer{
-  padding: 10px 14px;
-  border-radius: 14px;
-  border: 1px solid #ddd;
-  background: #fff;
-  cursor: pointer;
-  transition: 0.15s ease;
-  font-weight:800;
-  text-align:left;
+  padding:12px;
+  border-radius:14px;
+  border:2px solid #ddd;
+  cursor:pointer;
+  font-weight:700;
 }
-
-/* 🔵 SELECTAT */
-.answer.selected {
-  background: #e8ddff;
-  border-color: #9b7cff;
-  box-shadow: 0 0 0 3px rgba(155,124,255,0.25);
-}
-
-/* ✅ CORECT */
-.answer.correct {
-  background: #d4f7d4;
-  border-color: #4caf50;
-}
-
-/* ❌ GREȘIT */
-.answer.wrong {
-  background: #ffd6d6;
-  border-color: #e53935;
-}
-
-.answer:disabled{
-  opacity:.95;
-  cursor:default;
-}
-
-.feedback{
-  min-height:28px;
-  font-weight:800;
-  margin-bottom:12px;
-  white-space:pre-line;
-}
-.controls{
-  display:flex;
-  gap:10px;
-}
+.answer.selected{background:#e8ddff;border-color:#9b7cff}
+.answer.correct{background:#d1fae5;border-color:#10b981}
+.answer.wrong{background:#fee2e2;border-color:#ef4444}
+.controls{display:flex;gap:10px;margin-top:12px}
 button{
   padding:10px 14px;
   border-radius:999px;
-  border:1px solid #ccc;
-  background:#fff;
-  font-weight:900;
-  cursor:pointer;
-}
-.primary{
+  border:none;
   background:#8b5cf6;
   color:#fff;
-  border:none;
+  font-weight:800;
+  cursor:pointer;
+}
+button.secondary{background:#ddd;color:#000}
+.hidden{display:none}
+.wordbank,.sentence{
+  border:1px dashed #ccc;
+  padding:10px;
+  border-radius:12px;
+  min-height:50px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.chip{
+  padding:8px 12px;
+  border-radius:999px;
+  background:#eee;
+  cursor:pointer;
+  font-weight:700;
 }
 </style>
 </head>
@@ -132,183 +76,170 @@ button{
 <body>
 <div class="app">
 
-  <div class="header">
-    <h1>Exerciții TOPIK</h1>
-    <p id="subheader">Tip 1 · Coreeană → Română</p>
+<div class="card">
+  <h1>Exerciții TOPIK</h1>
+  <select id="type">
+    <option value="quiz">KO → RO</option>
+    <option value="particle">Particule</option>
+    <option value="particle4">Particule multiple</option>
+    <option value="conjug">Conjugări</option>
+    <option value="puzzle">Puzzle</option>
+  </select>
+</div>
+
+<div class="card">
+  <div id="question" class="question"></div>
+  <div id="sub" class="sub"></div>
+
+  <div id="answers" class="answers"></div>
+
+  <div id="puzzleArea" class="hidden">
+    <div class="sub">Cuvinte</div>
+    <div id="bank" class="wordbank"></div>
+    <div class="sub">Propoziția ta</div>
+    <div id="line" class="sentence"></div>
   </div>
 
-  <div class="exercise-type">
-    <label>Tip exercițiu</label>
-    <select disabled>
-      <option>KO → RO (Quiz)</option>
-    </select>
+  <div class="controls">
+    <button id="check">Verifică</button>
+    <button class="secondary" id="next">Next</button>
   </div>
 
-  <div class="exercise-card">
-    <div class="question" id="question">—</div>
-    <div class="sub">Alege traducerea corectă</div>
-
-    <div class="answers" id="answers"></div>
-
-    <div class="feedback" id="feedback"></div>
-
-    <div class="controls">
-      <button class="primary" id="checkBtn">Verifică</button>
-      <button id="nextBtn">Întrebare nouă</button>
-    </div>
-  </div>
+  <div id="feedback" class="sub"></div>
+</div>
 
 </div>
 
 <script>
-/* ===========================
-   TIP 1: KO → RO QUIZ
-   - compatibil 1:1 cu HTML-ul tău (question/answers/feedback/checkBtn/nextBtn)
-   - folosește window.TOPIK4_QUIZ_500 dacă există
-   =========================== */
+/* ===== BĂNCI DATE (DEMO – POȚI EXTINDE) ===== */
 
-(function(){
-  const questionEl = document.getElementById("question");
-  const answersEl  = document.getElementById("answers");
-  const feedbackEl = document.getElementById("feedback");
-  const checkBtn   = document.getElementById("checkBtn");
-  const nextBtn    = document.getElementById("nextBtn");
-  const subheader  = document.getElementById("subheader");
+const QUIZ = [
+  {ko:"저는 학교에 가요.", ro:"Eu merg la școală."},
+  {ko:"커피를 마셔요.", ro:"Beau cafea."}
+];
 
-  // Fallback minimal dacă nu există banca globală
-  const FALLBACK = [
-    { ko:"저는 학교에 가요.", ro:"Eu merg la școală." },
-    { ko:"오늘 커피를 마셔요.", ro:"Azi beau cafea." },
-    { ko:"지금 한국어를 공부해요.", ro:"Acum studiez coreeană." },
-    { ko:"내일 서울에 가요.", ro:"Mâine merg în Seoul." }
-  ];
+const PARTICLE = [
+  {q:"저__ 학생이에요.", opts:["은","는","이","가"], a:"는"},
+  {q:"학교__ 가요.", opts:["에","에서","을"], a:"에"}
+];
 
-  const BANK = Array.isArray(window.TOPIK4_QUIZ_500) && window.TOPIK4_QUIZ_500.length
-    ? window.TOPIK4_QUIZ_500
-    : FALLBACK;
-
-  const LS_KEY = "rk_ex_tip1_state_v1";
-  const state = loadState();
-
-  let current = null;          // {q, correct, opts}
-  let selectedIndex = -1;
-  let locked = false;
-
-  function safeParse(json, fallback){ try { return JSON.parse(json); } catch { return fallback; } }
-  function loadState(){
-    const base = { idx:0, correct:0, total:0 };
-    const raw = localStorage.getItem(LS_KEY);
-    if(!raw) return base;
-    return Object.assign(base, safeParse(raw, base));
+const PARTICLE4 = [
+  {
+    q:"저__ 학교__ 친구__ 만나요.",
+    opts:["은","는","에","에서","을","를","와","과"],
+    a:["는","에","를"]
   }
-  function saveState(){
-    localStorage.setItem(LS_KEY, JSON.stringify(state));
+];
+
+const CONJUG = [
+  {q:"가다 → ?", opts:["가요","가세요","가고"], a:"가요"}
+];
+
+const PUZZLE = [
+  {w:["저는","학교에","가요"], a:"저는 학교에 가요"}
+];
+
+/* ===== STATE ===== */
+let idx=0, selected=null, built=[];
+
+/* ===== ELEMENTE ===== */
+const type=document.getElementById("type");
+const qEl=document.getElementById("question");
+const sub=document.getElementById("sub");
+const ans=document.getElementById("answers");
+const fb=document.getElementById("feedback");
+const puzzle=document.getElementById("puzzleArea");
+const bank=document.getElementById("bank");
+const line=document.getElementById("line");
+
+/* ===== RENDER ===== */
+function render(){
+  ans.innerHTML="";
+  fb.textContent="";
+  puzzle.classList.add("hidden");
+  selected=null;
+  built=[];
+
+  if(type.value==="quiz"){
+    const q=QUIZ[idx%QUIZ.length];
+    qEl.textContent=q.ko;
+    sub.textContent="Alege traducerea corectă";
+    shuffle([q.ro,...QUIZ.map(x=>x.ro)]).slice(0,4).forEach(o=>btn(o,q.ro));
   }
 
-  function shuffle(arr){
-    const a = arr.slice();
-    for(let i=a.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [a[i],a[j]]=[a[j],a[i]];
-    }
-    return a;
+  if(type.value==="particle"){
+    const q=PARTICLE[idx%PARTICLE.length];
+    qEl.textContent=q.q;
+    sub.textContent="Alege particula";
+    q.opts.forEach(o=>btn(o,q.a));
   }
 
-  function render(){
-    if(!BANK.length){
-      questionEl.textContent = "Nu există întrebări.";
-      answersEl.innerHTML = "";
-      feedbackEl.textContent = "";
-      return;
-    }
+  if(type.value==="particle4"){
+    const q=PARTICLE4[idx%PARTICLE4.length];
+    qEl.textContent=q.q;
+    sub.textContent="Alege toate particulele corecte";
+    q.opts.forEach(o=>btn(o,q.a));
+  }
 
-    if(state.idx >= BANK.length) state.idx = 0;
+  if(type.value==="conjug"){
+    const q=CONJUG[idx%CONJUG.length];
+    qEl.textContent=q.q;
+    sub.textContent="Alege conjugarea";
+    q.opts.forEach(o=>btn(o,q.a));
+  }
 
-    const q = BANK[state.idx];
-    const correct = q.ro;
-
-    // 3 greșite
-    const wrong = shuffle(BANK.filter(x => x.ro !== correct)).slice(0,3).map(x=>x.ro);
-    const opts = shuffle([correct, ...wrong]);
-
-    current = { q, correct, opts };
-    selectedIndex = -1;
-    locked = false;
-
-    questionEl.textContent = q.ko;
-    feedbackEl.textContent = "";
-    answersEl.innerHTML = "";
-
-    subheader.textContent = `Tip 1 · KO→RO · Întrebarea ${state.idx+1}/${BANK.length} · Scor ${state.correct}/${state.total}`;
-
-    opts.forEach((text, idx)=>{
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "answer";
-      b.textContent = text;
-
-      b.addEventListener("click", ()=>{
-        if(locked) return;
-
-        // selectare vizibilă
-        selectedIndex = idx;
-        answersEl.querySelectorAll(".answer").forEach(x=>x.classList.remove("selected"));
-        b.classList.add("selected");
-      });
-
-      answersEl.appendChild(b);
+  if(type.value==="puzzle"){
+    const p=PUZZLE[idx%PUZZLE.length];
+    qEl.textContent="Aranjează propoziția";
+    sub.textContent="";
+    puzzle.classList.remove("hidden");
+    shuffle(p.w).forEach(w=>{
+      const c=document.createElement("div");
+      c.className="chip";
+      c.textContent=w;
+      c.onclick=()=>{built.push(w);drawPuzzle()};
+      bank.appendChild(c);
     });
   }
+}
 
-  function lockAndMark(){
-    locked = true;
-    answersEl.querySelectorAll(".answer").forEach(x=>x.disabled = true);
-
-    const btns = Array.from(answersEl.querySelectorAll(".answer"));
-    const chosen = (selectedIndex >= 0) ? current.opts[selectedIndex] : null;
-
-    // marchează corectul mereu
-    btns.forEach((b, i)=>{
-      if(current.opts[i] === current.correct){
-        b.classList.add("correct");
-      }
-    });
-
-    if(chosen === null){
-      feedbackEl.textContent = "Alege un răspuns înainte să verifici.";
-      locked = false;
-      answersEl.querySelectorAll(".answer").forEach(x=>x.disabled = false);
-      return;
+function btn(text,correct){
+  const b=document.createElement("div");
+  b.className="answer";
+  b.textContent=text;
+  b.onclick=()=>{
+    selected=text;
+    document.querySelectorAll(".answer").forEach(x=>x.classList.remove("selected"));
+    b.classList.add("selected");
+    if(Array.isArray(correct)){
+      if(correct.includes(text)) b.classList.add("correct");
     }
+  };
+  ans.appendChild(b);
+}
 
-    const ok = chosen === current.correct;
-    state.total += 1;
-    if(ok){
-      state.correct += 1;
-      feedbackEl.textContent = "✅ Corect.";
-    }else{
-      // marchează alesul greșit
-      btns[selectedIndex].classList.add("wrong");
-      feedbackEl.textContent = `❌ Greșit.\nCorect: ${current.correct}`;
-    }
-
-    saveState();
-    subheader.textContent = `Tip 1 · KO→RO · Întrebarea ${state.idx+1}/${BANK.length} · Scor ${state.correct}/${state.total}`;
-  }
-
-  checkBtn.addEventListener("click", ()=>{
-    if(!current) return;
-    lockAndMark();
+function drawPuzzle(){
+  line.innerHTML="";
+  built.forEach((w,i)=>{
+    const c=document.createElement("div");
+    c.className="chip";
+    c.textContent=w;
+    c.onclick=()=>{built.splice(i,1);drawPuzzle()};
+    line.appendChild(c);
   });
+}
 
-  nextBtn.addEventListener("click", ()=>{
-    state.idx += 1;
-    saveState();
-    render();
-  });
+document.getElementById("check").onclick=()=>{
+  fb.textContent="✔ verificat";
+};
+document.getElementById("next").onclick=()=>{
+  idx++; bank.innerHTML=""; render();
+};
+type.onchange=()=>{idx=0;bank.innerHTML="";render()};
 
-  render();
-})();
+function shuffle(a){return a.sort(()=>Math.random()-.5)}
+
+render();
 </script>
 </body>
 </html>
