@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Raluca Korean — Exercises</title>
+
+  <!-- Dacă ai style.css global, îl poți lăsa. Nu strică. -->
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* =========================================================
+       Raluca Korean — Exercises (single-file, stabil)
+       - Quiz TOPIK (KO→RO), Particule, Puzzle
+       - Fără framework
+       - Salvează progres local (telefon)
+       ========================================================= */
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      line-height:1.35;
+      -webkit-text-size-adjust:100%;
+    }
+
+    :root{
+      --bg0:#fbf7ff;
+      --ink:#1b1630;
+      --muted:#5f5a77;
+      --accent:#8b5cf6;
+      --accent2:#22c55e;
+      --card:rgba(255,255,255,0.78);
+      --card-strong:rgba(255,255,255,0.92);
+      --border:rgba(27,22,48,0.12);
+      --shadow:0 18px 40px rgba(27,22,48,0.12);
+      --radius-lg:22px;
+      --radius-md:16px;
+      --maxw:1040px;
+    }
+
+    body.pastel-theme{
+      color:var(--ink);
+      background:
+        radial-gradient(900px 500px at 12% 18%, rgba(139,92,246,0.18), transparent 55%),
+        radial-gradient(900px 520px at 88% 22%, rgba(34,197,94,0.14), transparent 55%),
+        radial-gradient(900px 520px at 45% 88%, rgba(6,182,212,0.12), transparent 55%),
+        linear-gradient(180deg, var(--bg0), #f7f3ff);
+    }
+
+    .shell{
+      max-width:var(--maxw);
+      margin:0 auto;
+      padding:18px 14px 26px;
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .topbar{
+      border:1px solid var(--border);
+      background:var(--card);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px);
+      padding:14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:10px; min-width:0;
+    }
+    .mark{
+      width:44px; height:44px;
+      border-radius:14px;
+      display:grid; place-items:center;
+      font-weight:900; color:#fff;
+      background: linear-gradient(135deg, rgba(139,92,246,1), rgba(6,182,212,0.95));
+      box-shadow:0 10px 24px rgba(139,92,246,0.25);
+      flex:0 0 auto;
+    }
+    .titleWrap{ min-width:0; }
+    .title{
+      margin:0;
+      font-size:18px;
+      font-weight:900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .subtitle{
+      margin-top:2px;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .topActions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid rgba(27,22,48,0.14);
+      background:rgba(255,255,255,0.9);
+      color:rgba(27,22,48,0.9);
+      border-radius:999px;
+      padding:9px 12px;
+      font-weight:900;
+      font-size:13px;
+      cursor:pointer;
+      box-shadow:0 10px 22px rgba(27,22,48,0.10);
+      transition:transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+      user-select:none;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .btn:hover{ transform:translateY(-1px); border-color:rgba(139,92,246,0.35); }
+    .btn:active{ transform:translateY(0px); box-shadow:0 8px 18px rgba(27,22,48,0.10); }
+
+    .btn.primary{ background:rgba(139,92,246,0.14); border-color:rgba(139,92,246,0.26); }
+    .btn.green{ background:rgba(34,197,94,0.14); border-color:rgba(34,197,94,0.26); }
+    .btn.ghost{ background:transparent; box-shadow:none; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media (min-width: 960px){
+      .grid{ grid-template-columns: 1.2fr 0.8fr; }
+    }
+
+    .card{
+      border:1px solid var(--border);
+      background:var(--card-strong);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px);
+      padding:14px;
+    }
+
+    .cardTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .cardTitle h2{
+      margin:0;
+      font-size:16px;
+      font-weight:900;
+    }
+    .hint{ font-size:12px; color:var(--muted); }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .tab{
+      border:1px solid rgba(27,22,48,0.12);
+      background:rgba(255,255,255,0.85);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:13px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.active{
+      background:rgba(139,92,246,0.16);
+      border-color:rgba(139,92,246,0.28);
+    }
+
+    .panel{ display:none; }
+    .panel.show{ display:block; }
+
+    .divider{
+      height:1px;
+      background:rgba(27,22,48,0.10);
+      margin:10px 0;
+    }
+
+    .qBox{
+      border:1px solid rgba(27,22,48,0.12);
+      background:rgba(255,255,255,0.9);
+      border-radius:var(--radius-md);
+      padding:12px;
+    }
+
+    .qKo{
+      font-size:20px;
+      font-weight:900;
+      margin:0 0 6px;
+      letter-spacing:.2px;
+    }
+    .qSub{
+      margin:0 0 10px;
+      font-size:12px;
+      color:rgba(27,22,48,0.65);
+      font-weight:800;
+    }
+
+    .choices{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:8px;
+    }
+    @media (min-width: 720px){
+      .choices{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .choice{
+      border:1px solid rgba(27,22,48,0.14);
+      background:rgba(255,255,255,0.95);
+      border-radius:14px;
+      padding:10px 10px;
+      cursor:pointer;
+      font-weight:900;
+      text-align:left;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      user-select:none;
+    }
+    .choice:hover{ border-color:rgba(139,92,246,0.35); }
+    .choice.good{ border-color:rgba(34,197,94,0.45); background:rgba(34,197,94,0.10); }
+    .choice.bad{ border-color:rgba(239,68,68,0.35); background:rgba(239,68,68,0.08); }
+
+    .mini{
+      font-size:12px;
+      color:rgba(27,22,48,0.65);
+      font-weight:800;
+    }
+
+    .statLine{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:10px;
+    }
+
+    .pillInfo{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      color:rgba(27,22,48,0.7);
+      background:rgba(34,197,94,0.12);
+      border:1px solid rgba(34,197,94,0.22);
+      padding:7px 10px;
+      border-radius:999px;
+      font-weight:900;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .inp{
+      flex: 1 1 240px;
+      border:1px solid rgba(27,22,48,0.14);
+      background:rgba(255,255,255,0.96);
+      border-radius:12px;
+      padding:10px 10px;
+      font-size:14px;
+      outline:none;
+    }
+
+    /* Puzzle */
+    .wordBank, .sentenceLine{
+      border:1px solid rgba(27,22,48,0.12);
+      background:rgba(255,255,255,0.9);
+      border-radius:var(--radius-md);
+      padding:10px;
+      min-height:56px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+
+    .chip{
+      border:1px solid rgba(27,22,48,0.14);
+      background:rgba(255,255,255,0.95);
+      border-radius:999px;
+      padding:8px 10px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .chip:hover{ border-color:rgba(139,92,246,0.35); }
+
+    .resultBox{
+      margin-top:10px;
+      border:1px dashed rgba(27,22,48,0.18);
+      background:rgba(255,255,255,0.65);
+      border-radius:var(--radius-md);
+      padding:10px;
+      font-size:13px;
+      color:rgba(27,22,48,0.75);
+      min-height:44px;
+    }
+  </style>
+</head>
+
+<body class="pastel-theme">
+  <div class="shell">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark">RK</div>
+        <div class="titleWrap">
+          <div class="title">Raluca Korean — Exercises</div>
+          <div class="subtitle">Quiz TOPIK · Particule · Puzzle (stabil)</div>
+        </div>
+      </div>
+      <div class="topActions">
+        <a class="btn ghost" href="index.html">⬅ Înapoi</a>
+        <button class="btn" id="resetAllBtn" type="button">🧽 Reset</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: CONTENT -->
+      <div class="card">
+        <div class="cardTitle">
+          <h2>Exerciții</h2>
+          <span class="pillInfo" id="globalStat">—</span>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="quiz">TOPIK Quiz</button>
+          <button class="tab" data-tab="particles">Particule</button>
+          <button class="tab" data-tab="puzzle">Puzzle</button>
+        </div>
+
+        <!-- QUIZ -->
+        <section class="panel show" id="panel-quiz">
+          <div class="qBox">
+            <p class="qKo" id="quizKo">—</p>
+            <p class="qSub" id="quizSub">Alege traducerea corectă (RO).</p>
+
+            <div class="choices" id="quizChoices"></div>
+
+            <div class="statLine">
+              <div class="row">
+                <button class="btn primary" id="quizNextBtn" type="button">➡ Next</button>
+                <button class="btn" id="quizSpeakBtn" type="button">🔊 Audio KO</button>
+              </div>
+              <div class="mini" id="quizScore">Scor: 0 / 0</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <input class="inp" id="quizAddKo" type="text" placeholder="Adaugă întrebare KO (ex: 저는 학교에 가요.)" />
+            <input class="inp" id="quizAddRo" type="text" placeholder="Traducere RO (ex: Eu merg la școală.)" />
+            <button class="btn green" id="quizAddBtn" type="button">+ Add</button>
+          </div>
+
+          <div class="resultBox" id="quizMsg">Tip: poți adăuga propriile întrebări. Se salvează pe telefon.</div>
+        </section>
+
+        <!-- PARTICLES -->
+        <section class="panel" id="panel-particles">
+          <div class="qBox">
+            <p class="qKo" id="pKo">—</p>
+            <p class="qSub">Alege particula corectă.</p>
+            <div class="choices" id="pChoices"></div>
+
+            <div class="statLine">
+              <div class="row">
+                <button class="btn primary" id="pNextBtn" type="button">➡ Next</button>
+              </div>
+              <div class="mini" id="pScore">Corecte: 0</div>
+            </div>
+          </div>
+
+          <div class="resultBox" id="pMsg">—</div>
+        </section>
+
+        <!-- PUZZLE -->
+        <section class="panel" id="panel-puzzle">
+          <div class="qBox">
+            <p class="qKo" id="pzTitle">Puzzle: aranjează propoziția</p>
+            <p class="qSub">Tap pe cuvinte ca să construiești propoziția. Tap din propoziție ca să o scoți.</p>
+
+            <div class="mini">Word bank</div>
+            <div class="wordBank" id="pzBank"></div>
+
+            <div class="mini" style="margin-top:10px;">Propoziția ta</div>
+            <div class="sentenceLine" id="pzLine"></div>
+
+            <div class="statLine">
+              <div class="row">
+                <button class="btn primary" id="pzCheckBtn" type="button">✅ Check</button>
+                <button class="btn" id="pzNewBtn" type="button">🎲 New</button>
+                <button class="btn" id="pzClearBtn" type="button">🧽 Clear</button>
+              </div>
+              <div class="mini" id="pzScore">Corecte: 0</div>
+            </div>
+          </div>
+
+          <div class="resultBox" id="pzMsg">—</div>
+        </section>
+      </div>
+
+      <!-- RIGHT: SUMMARY -->
+      <div class="card">
+        <div class="cardTitle">
+          <h2>Rezumat</h2>
+          <span class="hint">salvat pe telefon</span>
+        </div>
+
+        <div class="resultBox" id="summaryBox">—</div>
+
+        <div class="divider"></div>
+
+        <div class="cardTitle" style="margin-bottom:6px;">
+          <h2>Ultimele întrebări adăugate</h2>
+          <span class="hint">custom</span>
+        </div>
+        <div class="resultBox" id="customList">—</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================
+    // Raluca Korean — Exercises (single-file)
+    // =========================================================
+
+    const LS_EX = "rk_exercises_v1";
+
+    const BASE_QUIZ = [
+      { ko:"저는 학교에 가요.", ro:"Eu merg la școală." },
+      { ko:"오늘 커피를 마셔요.", ro:"Azi beau cafea." },
+      { ko:"내일 서울에 가요.", ro:"Mâine merg în Seoul." },
+      { ko:"지금 한국어를 공부해요.", ro:"Acum studiez coreeană." },
+      { ko:"저녁에 집에 와요.", ro:"Seara vin acasă." }
+    ];
+
+    const PARTICLES = [
+      // format: { text:"저__ 학생__.", choices:["은","는","이","가"], answer:"는", explain:"Topic marker (저는)"}
+      { text:"저__ 학생이에요.", choices:["은","는","이","가"], answer:"는", explain:"저 + topic = 저는" },
+      { text:"친구__ 와요.", choices:["은","는","이","가"], answer:"가", explain:"Subiect (cine vine) = 친구가" },
+      { text:"커피__ 마셔요.", choices:["을","를","에","에서"], answer:"를", explain:"Obiect = 커피를" },
+      { text:"학교__ 가요.", choices:["에","에서","을","를"], answer:"에", explain:"Destinație = 학교에" },
+      { text:"학교__ 공부해요.", choices:["에","에서","은","는"], answer:"에서", explain:"Loc acțiune = 학교에서" }
+    ];
+
+    const PUZZLES = [
+      { words:["저는","학교에","가요"], answer:"저는 학교에 가요" , ro:"Eu merg la școală." },
+      { words:["오늘","커피를","마셔요"], answer:"오늘 커피를 마셔요", ro:"Azi beau cafea." },
+      { words:["지금","한국어를","공부해요"], answer:"지금 한국어를 공부해요", ro:"Acum studiez coreeană." },
+      { words:["내일","서울에","가요"], answer:"내일 서울에 가요", ro:"Mâine merg în Seoul." }
+    ];
+
+    const $ = (s, r=document)=>r.querySelector(s);
+    const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+
+    function safeParse(json, fallback){
+      try{ return JSON.parse(json); } catch{ return fallback; }
+    }
+
+    function loadState(){
+      const raw = localStorage.getItem(LS_EX);
+      const base = {
+        quiz: { correct:0, total:0, idx:0, custom:[] },
+        particles: { correct:0, idx:0 },
+        puzzle: { correct:0, idx:0 },
+      };
+      if(!raw) return base;
+      const st = safeParse(raw, base);
+      if(!st.quiz) st.quiz = base.quiz;
+      if(!Array.isArray(st.quiz.custom)) st.quiz.custom = [];
+      if(!st.particles) st.particles = base.particles;
+      if(!st.puzzle) st.puzzle = base.puzzle;
+      return st;
+    }
+
+    function saveState(st){
+      localStorage.setItem(LS_EX, JSON.stringify(st));
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    const st = loadState();
+
+    // Tabs
+    $$(".tab").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        $$(".tab").forEach(x=>x.classList.remove("active"));
+        btn.classList.add("active");
+
+        const key = btn.getAttribute("data-tab");
+        $$(".panel").forEach(p=>p.classList.remove("show"));
+        $("#panel-"+key).classList.add("show");
+      });
+    });
+
+    // Global UI
+    const globalStatEl = $("#globalStat");
+    const summaryBoxEl = $("#summaryBox");
+    const customListEl = $("#customList");
+
+    function allQuiz(){
+      return [...st.quiz.custom, ...BASE_QUIZ];
+    }
+
+    function updateSummary(){
+      globalStatEl.textContent = `Quiz ${st.quiz.correct}/${st.quiz.total} · Particule ${st.particles.correct} · Puzzle ${st.puzzle.correct}`;
+
+      summaryBoxEl.innerHTML =
+        `• <b>Quiz</b>: ${st.quiz.correct}/${st.quiz.total}<br/>`+
+        `• <b>Particule</b>: ${st.particles.correct} corecte<br/>`+
+        `• <b>Puzzle</b>: ${st.puzzle.correct} corecte`;
+
+      const last = st.quiz.custom.slice(0,6);
+      if(last.length===0){
+        customListEl.textContent = "—";
+      } else {
+        customListEl.innerHTML = last.map(x => `• <b>${escapeHtml(x.ko)}</b><br/><span style="color:rgba(27,22,48,.75)">${escapeHtml(x.ro||"")}</span>`).join("<br/><br/>");
+      }
+    }
+
+    // =========================
+    // QUIZ
+    // =========================
+    const quizKoEl = $("#quizKo");
+    const quizChoicesEl = $("#quizChoices");
+    const quizScoreEl = $("#quizScore");
+    const quizMsgEl = $("#quizMsg");
+
+    function pickQuestion(){
+      const list = allQuiz();
+      if(list.length===0) return null;
+      if(st.quiz.idx >= list.length) st.quiz.idx = 0;
+      return list[st.quiz.idx];
+    }
+
+    function shuffle(arr){
+      const a = arr.slice();
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
+      }
+      return a;
+    }
+
+    function renderQuiz(){
+      const q = pickQuestion();
+      if(!q){
+        quizKoEl.textContent = "—";
+        quizChoicesEl.innerHTML = "";
+        quizScoreEl.textContent = `Scor: ${st.quiz.correct} / ${st.quiz.total}`;
+        return;
+      }
+
+      quizKoEl.textContent = q.ko;
+      quizScoreEl.textContent = `Scor: ${st.quiz.correct} / ${st.quiz.total}`;
+
+      // build options
+      const list = allQuiz();
+      const wrong = shuffle(list.filter(x=>x.ro!==q.ro)).slice(0,3).map(x=>x.ro);
+      const opts = shuffle([q.ro, ...wrong]);
+
+      quizChoicesEl.innerHTML = "";
+      opts.forEach(opt=>{
+        const b = document.createElement("button");
+        b.type="button";
+        b.className="choice";
+        b.innerHTML = `<span>${escapeHtml(opt)}</span><span class="mini">tap</span>`;
+        b.addEventListener("click", ()=>{
+          // lock visual
+          $$(".choice", quizChoicesEl).forEach(x=>x.disabled=true);
+
+          const isGood = opt === q.ro;
+          st.quiz.total += 1;
+          if(isGood) st.quiz.correct += 1;
+
+          b.classList.add(isGood ? "good" : "bad");
+          quizMsgEl.textContent = isGood ? "✅ Corect." : `❌ Greșit. Răspuns: ${q.ro}`;
+          saveState(st);
+          updateSummary();
+          renderQuizScoreOnly();
+        });
+        quizChoicesEl.appendChild(b);
+      });
+    }
+
+    function renderQuizScoreOnly(){
+      quizScoreEl.textContent = `Scor: ${st.quiz.correct} / ${st.quiz.total}`;
+    }
+
+    $("#quizNextBtn").addEventListener("click", ()=>{
+      st.quiz.idx += 1;
+      quizMsgEl.textContent = "—";
+      saveState(st);
+      renderQuiz();
+      updateSummary();
+    });
+
+    $("#quizAddBtn").addEventListener("click", ()=>{
+      const ko = ($("#quizAddKo").value || "").trim();
+      const ro = ($("#quizAddRo").value || "").trim();
+      if(!ko || !ro){
+        quizMsgEl.textContent = "Scrie și KO și RO ca să adaugi.";
+        return;
+      }
+      // push in front so you see it fast
+      st.quiz.custom.unshift({ ko, ro, ts: Date.now() });
+      $("#quizAddKo").value = "";
+      $("#quizAddRo").value = "";
+      quizMsgEl.textContent = "✅ Adăugat. E salvat pe telefon.";
+      saveState(st);
+      updateSummary();
+      renderQuiz();
+    });
+
+    $("#quizSpeakBtn").addEventListener("click", ()=>{
+      const q = pickQuestion();
+      if(!q) return;
+      speakKorean(q.ko);
+    });
+
+    // =========================
+    // PARTICLES
+    // =========================
+    const pKoEl = $("#pKo");
+    const pChoicesEl = $("#pChoices");
+    const pScoreEl = $("#pScore");
+    const pMsgEl = $("#pMsg");
+
+    function renderParticles(){
+      if(st.particles.idx >= PARTICLES.length) st.particles.idx = 0;
+      const q = PARTICLES[st.particles.idx];
+      pKoEl.textContent = q.text;
+      pScoreEl.textContent = `Corecte: ${st.particles.correct}`;
+      pMsgEl.textContent = "—";
+
+      pChoicesEl.innerHTML = "";
+      q.choices.forEach(ch=>{
+        const b = document.createElement("button");
+        b.type="button";
+        b.className="choice";
+        b.innerHTML = `<span>${escapeHtml(ch)}</span><span class="mini">tap</span>`;
+        b.addEventListener("click", ()=>{
+          $$(".choice", pChoicesEl).forEach(x=>x.disabled=true);
+
+          const ok = ch === q.answer;
+          if(ok) st.particles.correct += 1;
+          b.classList.add(ok ? "good" : "bad");
+          pMsgEl.textContent = ok ? `✅ Corect. (${q.explain})` : `❌ Greșit. Corect: ${q.answer} — ${q.explain}`;
+          saveState(st);
+          updateSummary();
+          pScoreEl.textContent = `Corecte: ${st.particles.correct}`;
+        });
+        pChoicesEl.appendChild(b);
+      });
+    }
+
+    $("#pNextBtn").addEventListener("click", ()=>{
+      st.particles.idx += 1;
+      saveState(st);
+      renderParticles();
+      updateSummary();
+    });
+
+    // =========================
+    // PUZZLE
+    // =========================
+    const pzBankEl = $("#pzBank");
+    const pzLineEl = $("#pzLine");
+    const pzMsgEl = $("#pzMsg");
+    const pzScoreEl = $("#pzScore");
+
+    let currentPuzzle = null;
+    let built = [];
+
+    function newPuzzle(){
+      if(st.puzzle.idx >= PUZZLES.length) st.puzzle.idx = 0;
+      currentPuzzle = PUZZLES[st.puzzle.idx];
+      built = [];
+      pzMsgEl.textContent = "—";
+      renderPuzzle();
+    }
+
+    function renderPuzzle(){
+      pzScoreEl.textContent = `Corecte: ${st.puzzle.correct}`;
+
+      // bank: show remaining words not used (simple)
+      pzBankEl.innerHTML = "";
+      currentPuzzle.words.forEach(w=>{
+        if(built.includes(w)) return;
+       
