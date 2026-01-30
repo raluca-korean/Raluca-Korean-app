@@ -23,42 +23,38 @@ body{
 }
 h1{margin:0;font-size:20px}
 .sub{font-size:13px;color:#666;margin-top:4px}
-select{
-  width:100%;
-  padding:10px;
-  border-radius:12px;
+select,button{
+  padding:10px 14px;
+  border-radius:999px;
   border:1px solid #ccc;
-  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
 }
-.question{font-size:22px;font-weight:800;margin-bottom:6px}
-.helper{font-size:13px;color:#666;margin-bottom:14px}
-.answers{display:grid;gap:10px;margin-bottom:14px}
+select{width:100%}
+.primary{background:#8b5cf6;color:#fff;border:none}
+.answers{display:grid;gap:10px;margin:16px 0}
 .answer{
-  padding:12px;border-radius:14px;border:2px solid #ddd;
-  background:#fafafa;font-weight:700;cursor:pointer;
+  padding:12px;
+  border-radius:14px;
+  border:2px solid #ddd;
+  background:#fafafa;
+  cursor:pointer;
+  font-weight:700;
 }
 .answer.selected{background:#e8ddff;border-color:#9b7cff}
 .answer.correct{background:#d1fae5;border-color:#10b981}
 .answer.wrong{background:#fee2e2;border-color:#ef4444}
-.feedback{min-height:24px;font-weight:700}
-.controls{display:flex;gap:10px;margin-top:10px}
-button{
-  padding:10px 14px;border-radius:999px;
-  border:1px solid #ccc;background:#fff;font-weight:800;cursor:pointer;
-}
-.primary{background:#8b5cf6;color:#fff;border:none}
-
-/* PUZZLE */
-.puzzle-bank,.puzzle-line{
-  border:2px dashed #ddd;border-radius:14px;
-  padding:10px;min-height:52px;
-  display:flex;gap:8px;flex-wrap:wrap;
-}
+.feedback{min-height:28px;font-weight:800}
+.puzzleRow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 .chip{
-  padding:8px 12px;border-radius:999px;
-  background:#f0f0ff;border:1px solid #aaa;
-  font-weight:800;cursor:pointer;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid #ccc;
+  background:#fff;
+  font-weight:800;
+  cursor:pointer;
 }
+.controls{display:flex;gap:10px}
 </style>
 </head>
 
@@ -83,26 +79,31 @@ button{
 </div>
 
 <div class="card">
-  <div class="question" id="question"></div>
-  <div class="helper" id="helper"></div>
+  <div id="question" style="font-size:22px;font-weight:900"></div>
+  <div class="sub" id="helper"></div>
 
-  <div class="answers" id="answers"></div>
+  <div id="answers" class="answers"></div>
 
   <div id="puzzleUI" style="display:none">
-    <div class="puzzle-bank" id="bank"></div>
-    <div class="puzzle-line" id="line"></div>
+    <div class="sub">Cuvinte</div>
+    <div id="bank" class="puzzleRow"></div>
+    <div class="sub">Propoziția ta</div>
+    <div id="line" class="puzzleRow"></div>
   </div>
 
-  <div class="feedback" id="feedback"></div>
+  <div id="feedback" class="feedback"></div>
 
   <div class="controls">
-    <button class="primary" id="check">Verifică</button>
+    <button id="check" class="primary">Verifică</button>
     <button id="next">Următorul</button>
   </div>
 </div>
 
 </div>
+
 <script>
+/* ================= DATA ================= */
+
 const DATA = {
   "ko-ro":[
     {q:"저는 학생이에요.",a:"Eu sunt student."},
@@ -125,187 +126,141 @@ const DATA = {
   ]
 };
 
+/* ================= STATE ================= */
+
 let type = "ko-ro";
 let index = 0;
-let selected = null;
+let selected = [];
 let built = [];
 
-const q = document.getElementById("question");
-const h = document.getElementById("helper");
-const a = document.getElementById("answers");
-const f = document.getElementById("feedback");
-const bank = document.getElementById("bank");
-const line = document.getElementById("line");
-const pUI = document.getElementById("puzzleUI");
+/* ================= ELEMENTE ================= */
 
-/* RESET TOTAL */
-function resetUI(){
-  a.innerHTML="";
-  f.textContent="";
-  selected=null;
+const qEl = question;
+const hEl = helper;
+const aEl = answers;
+const fEl = feedback;
+const bankEl = bank;
+const lineEl = line;
+const pUI = puzzleUI;
+
+/* ================= RENDER ================= */
+
+function reset(){
+  aEl.innerHTML="";
+  fEl.textContent="";
+  selected=[];
   built=[];
   pUI.style.display="none";
-  bank.innerHTML="";
-  line.innerHTML="";
+  bankEl.innerHTML="";
+  lineEl.innerHTML="";
 }
 
-/* RENDER GENERAL */
 function render(){
-  resetUI();
-  const d = DATA[type][index % DATA[type].length];
+  reset();
+  const d = DATA[type][ index % DATA[type].length ];
 
-  /* QUIZ */
-  if(type==="ko-ro" || type==="ro-ko" || type==="conjug"){
-    q.textContent = d.q;
-    h.textContent = "Alege varianta corectă";
-
-    const options = d.opts ? d.opts : [d.a,"Greșit","Alt greșit"];
-    options.sort(()=>Math.random()-0.5);
-
-    options.forEach(opt=>{
-      const el = document.createElement("div");
+  if(type==="ko-ro"||type==="ro-ko"||type==="conjug"){
+    qEl.textContent=d.q;
+    hEl.textContent="Alege varianta corectă";
+    const opts = d.opts ? d.opts : [d.a,"Greșit","Alt greșit"];
+    opts.sort(()=>Math.random()-0.5);
+    opts.forEach(o=>{
+      const el=document.createElement("div");
       el.className="answer";
-      el.textContent=opt;
+      el.textContent=o;
       el.onclick=()=>{
-        if(selected) return;
-        selected=true;
-        el.classList.add(opt===d.a?"correct":"wrong");
-        f.textContent = opt===d.a ? "✅ Corect" : "❌ Greșit";
+        if(selected.length) return;
+        selected=[o];
+        el.classList.add(o===d.a?"correct":"wrong");
+        fEl.textContent=o===d.a?"✅ Corect":"❌ Greșit";
       };
-      a.appendChild(el);
+      aEl.appendChild(el);
     });
   }
 
-  /* PARTICULE */
   if(type==="particle"){
-    q.textContent=d.q;
-    h.textContent="Alege particula corectă";
+    qEl.textContent=d.q;
+    hEl.textContent="Alege particula corectă";
     d.opts.forEach(o=>{
       const el=document.createElement("div");
       el.className="answer";
       el.textContent=o;
       el.onclick=()=>{
-        if(selected)return;
-        selected=true;
+        if(selected.length) return;
+        selected=[o];
         el.classList.add(o===d.a?"correct":"wrong");
-        f.textContent=o===d.a?"✅ Corect":"❌ Greșit";
+        fEl.textContent=o===d.a?"✅ Corect":"❌ Greșit";
       };
-      a.appendChild(el);
+      aEl.appendChild(el);
     });
   }
 
-  /* PARTICULE MULTIPLE */
   if(type==="particlePlus"){
-    q.textContent=d.q;
-    h.textContent="Alege TOATE corecte";
+    qEl.textContent=d.q;
+    hEl.textContent="Alege toate corecte";
     d.opts.forEach(o=>{
       const el=document.createElement("div");
       el.className="answer";
       el.textContent=o;
       el.onclick=()=>el.classList.toggle("selected");
-      a.appendChild(el);
+      aEl.appendChild(el);
     });
   }
 
-  /* PUZZLE */
   if(type==="puzzle"){
-    q.textContent="Ordonează propoziția";
-    h.textContent="";
+    qEl.textContent="Ordonează propoziția";
+    hEl.textContent="";
     pUI.style.display="block";
-
     d.w.forEach(w=>{
       const c=document.createElement("div");
       c.className="chip";
       c.textContent=w;
       c.onclick=()=>{
         built.push(w);
-        redrawPuzzle(d);
+        drawPuzzle();
       };
-      bank.appendChild(c);
+      bankEl.appendChild(c);
     });
   }
 }
 
-function redrawPuzzle(d){
-  line.innerHTML="";
+function drawPuzzle(){
+  lineEl.innerHTML="";
   built.forEach(w=>{
     const c=document.createElement("div");
     c.className="chip";
     c.textContent=w;
-    line.appendChild(c);
+    lineEl.appendChild(c);
   });
 }
 
-/* EVENTS */
-document.getElementById("type").onchange=e=>{
+/* ================= EVENTS ================= */
+
+typeSelect.onchange=e=>{
   type=e.target.value;
   index=0;
   render();
 };
-document.getElementById("next").onclick=()=>{
-  index++;
-  render();
-};
-document.getElementById("check").onclick=()=>{
+
+check.onclick=()=>{
+  const d=DATA[type][ index % DATA[type].length ];
+  if(type==="particlePlus"){
+    const picked=[...aEl.querySelectorAll(".selected")].map(x=>x.textContent);
+    fEl.textContent =
+      JSON.stringify(picked.sort())===JSON.stringify(d.a.sort())
+      ?"✅ Corect":"❌ Greșit";
+  }
   if(type==="puzzle"){
-    const d=DATA.puzzle[index % DATA.puzzle.length];
-    f.textContent = built.join(" ")===d.a ? "✅ Corect" : "❌ Greșit";
+    fEl.textContent = built.join(" ")===d.a ? "✅ Corect":"❌ Greșit";
   }
 };
 
-render();
-  const STORAGE_KEY = "rk_exercises_progress_v1";
-
-function loadProgress(){
-  try{
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
-      type:"ko-ro",
-      progress:{
-        "ko-ro":{idx:0,ok:0,total:0},
-        "ro-ko":{idx:0,ok:0,total:0},
-        "particle":{idx:0,ok:0,total:0},
-        "particlePlus":{idx:0,ok:0,total:0},
-        "conjug":{idx:0,ok:0,total:0},
-        "puzzle":{idx:0,ok:0,total:0}
-      }
-    };
-  }catch{
-    return null;
-  }
-}
-
-function saveProgress(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(PROGRESS));
-}
-  const PROGRESS = loadProgress();
-
-let type   = PROGRESS.type;
-let index  = PROGRESS.progress[type].idx;
-  PROGRESS.progress[type].total++;
-
-if(corect){
-  PROGRESS.progress[type].ok++;
-}
-
-saveProgress();
+next.onclick=()=>{
   index++;
-PROGRESS.progress[type].idx = index;
-saveProgress();
-render();
-  document.getElementById("type").onchange = e=>{
-  type = e.target.value;
-  PROGRESS.type = type;
-
-  index = PROGRESS.progress[type].idx || 0;
-
-  saveProgress();
   render();
 };
-  const p = PROGRESS.progress[type];
-feedback.textContent = `Scor: ${p.ok} / ${p.total}`;
-<button onclick="localStorage.removeItem('rk_exercises_progress_v1'); location.reload();">
-Reset progres
-</button>
+
+render();
 </script>
 </body>
 </html>
