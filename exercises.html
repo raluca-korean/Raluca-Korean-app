@@ -138,12 +138,7 @@ button{
   </div>
 
 </div>
-
 <script>
-/* ===========================
-   TIP 1 — KO → RO QUIZ
-   =========================== */
-
 const QUIZ = [
   { ko:"저는 학교에 가요.", ro:"Eu merg la școală." },
   { ko:"커피를 마셔요.", ro:"Beau cafea." },
@@ -153,56 +148,67 @@ const QUIZ = [
 ];
 
 let current = null;
-let selected = null;
+let selectedAnswer = null;
 
 const qEl = document.getElementById("question");
 const aEl = document.getElementById("answers");
 const fEl = document.getElementById("feedback");
 
 function shuffle(arr){
-  return arr.sort(()=>Math.random()-0.5);
+  return [...arr].sort(()=>Math.random()-0.5);
 }
 
 function loadQuestion(){
-  fEl.textContent="";
-  selected=null;
-  aEl.innerHTML="";
+  selectedAnswer = null;
+  fEl.textContent = "";
+  aEl.innerHTML = "";
 
   current = QUIZ[Math.floor(Math.random()*QUIZ.length)];
   qEl.textContent = current.ko;
 
   const wrong = shuffle(
-    QUIZ.filter(q=>q.ro!==current.ro)
-        .map(q=>q.ro)
+    QUIZ.filter(q=>q.ro!==current.ro).map(q=>q.ro)
   ).slice(0,3);
 
-  const options = shuffle([current.ro,...wrong]);
+  const options = shuffle([current.ro, ...wrong]);
 
   options.forEach(text=>{
-    const div=document.createElement("div");
-    div.className="answer";
-    div.textContent=text;
-    div.onclick=()=>{
-      document.querySelectorAll(".answer").forEach(a=>a.classList.remove("selected"));
-      selected=div;
+    const div = document.createElement("div");
+    div.className = "answer";
+    div.textContent = text;
+
+    div.addEventListener("click", ()=>{
+      document.querySelectorAll(".answer").forEach(a=>{
+        a.classList.remove("selected");
+      });
       div.classList.add("selected");
-    };
+      selectedAnswer = text;
+    });
+
     aEl.appendChild(div);
   });
 }
 
-document.getElementById("checkBtn").onclick=()=>{
-  if(!selected) return;
-  const ok = selected.textContent===current.ro;
+document.getElementById("checkBtn").onclick = ()=>{
+  if(!selectedAnswer){
+    fEl.textContent = "Alege un răspuns.";
+    return;
+  }
+
   document.querySelectorAll(".answer").forEach(a=>{
-    if(a.textContent===current.ro) a.classList.add("correct");
-    else if(a===selected) a.classList.add("wrong");
-    a.onclick=null;
+    a.onclick = null;
+    if(a.textContent === current.ro){
+      a.classList.add("correct");
+    } else if(a.textContent === selectedAnswer){
+      a.classList.add("wrong");
+    }
   });
-  fEl.textContent = ok ? "✅ Corect" : "❌ Greșit";
+
+  fEl.textContent =
+    selectedAnswer === current.ro ? "✅ Corect" : "❌ Greșit";
 };
 
-document.getElementById("nextBtn").onclick=loadQuestion;
+document.getElementById("nextBtn").onclick = loadQuestion;
 
 loadQuestion();
 </script>
