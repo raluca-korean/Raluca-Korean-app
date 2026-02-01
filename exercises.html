@@ -2660,11 +2660,48 @@ document.addEventListener("keydown", (e) => {
 });
 
 // init (setează valoarea inițială identic cu type)
-(function initDD(){
-  const initial = items.find(x => x.dataset.value === (typeof type !== "undefined" ? type : "ko-ro")) || items[0];
-  setTypeUI(initial.dataset.value, initial.textContent.trim());
-})();
-  
+(function initDropdown(){
+  const dd = document.getElementById("typeDD");
+  const btn = document.getElementById("typeBtn");
+  const menu = document.getElementById("typeMenu");
+  const label = document.getElementById("typeLabel");
+  const items = Array.from(menu.querySelectorAll(".ddItem"));
+
+  function setType(val, text){
+    type = val;
+    index = 0;
+    chainStep = 0;
+
+    label.textContent = text;
+    items.forEach(x => x.classList.toggle("active", x.dataset.value === val));
+
+    dd.classList.remove("open");
+    btn.setAttribute("aria-expanded","false");
+
+    render();
+    updateBadges();
+  }
+
+  btn.onclick = () => {
+    const open = dd.classList.toggle("open");
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+
+  items.forEach(it=>{
+    it.onclick = () => setType(it.dataset.value, it.textContent.trim());
+  });
+
+  document.addEventListener("click", e=>{
+    if(!dd.contains(e.target)){
+      dd.classList.remove("open");
+      btn.setAttribute("aria-expanded","false");
+    }
+  });
+
+  // init
+  const start = items.find(x=>x.dataset.value===type) || items[0];
+  setType(start.dataset.value, start.textContent.trim());
+})();  
 
   /* PARTICULE (1) */
   if(type==="particle"){
