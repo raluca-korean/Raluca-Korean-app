@@ -2312,8 +2312,36 @@ function ensureAudio(){
   }
   if(AC.state === "suspended") AC.resume();
 }
+/* ====== SFX TOGGLE ====== */
+let SFX_ON = localStorage.getItem("SFX_ON");
+SFX_ON = (SFX_ON === null) ? true : (SFX_ON === "1");
 
-function tone({freq=440, type="sine", dur=0.12, gain=0.08, ramp=0.01}){
+function setSfxUi(){
+  const btn = document.getElementById("soundBtn");
+  if(!btn) return;
+  btn.textContent = SFX_ON ? "🔊" : "🔇";
+  btn.classList.toggle("off", !SFX_ON);
+  btn.title = SFX_ON ? "Sunete: ON" : "Sunete: OFF";
+}
+
+function setSfx(on){
+  SFX_ON = !!on;
+  localStorage.setItem("SFX_ON", SFX_ON ? "1" : "0");
+  setSfxUi();
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  setSfxUi();
+  const btn = document.getElementById("soundBtn");
+  if(btn){
+    btn.onclick = ()=>{
+      setSfx(!SFX_ON);
+      // mic feedback când pornești
+      if(SFX_ON) { ensureAudio(); clickSfx(); }
+    };
+  }
+});
+    function tone({freq=440, type="sine", dur=0.12, gain=0.08, ramp=0.01}){
   ensureAudio();
   const t0 = AC.currentTime;
   const osc = AC.createOscillator();
