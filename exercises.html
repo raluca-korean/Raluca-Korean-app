@@ -2601,8 +2601,6 @@ function renderChain(){
     h.textContent = "CHAIN (3/3): Conjugare → alege răspunsul";
   }
 }
-
-
 /* =========================
    MAIN RENDER
 ========================= */
@@ -2611,12 +2609,14 @@ function render(){
 
   if(type==="chain"){
     renderChain();
+    updateBadges();
     return;
   }
 
   const arr = DATA[type];
   if(!arr || !arr.length){
     q.textContent = "Nu există iteme pentru acest mod.";
+    updateBadges();
     return;
   }
 
@@ -2630,13 +2630,14 @@ function render(){
   updateBadges();
 }
 
-// init (setează valoarea inițială identic cu type)
+/* =========================
+   DROPDOWN INIT
+========================= */
 (function initDropdown(){
   const dd = document.getElementById("typeDD");
   const btn = document.getElementById("typeBtn");
-  const menu = document.getElementById("typeMenu");
   const label = document.getElementById("typeLabel");
-  const items = Array.from(menu.querySelectorAll(".ddItem"));
+  const items = Array.from(document.querySelectorAll("#typeMenu .ddItem"));
 
   function setType(val, text){
     type = val;
@@ -2650,7 +2651,6 @@ function render(){
     btn.setAttribute("aria-expanded","false");
 
     render();
-    updateBadges();
   }
 
   btn.onclick = () => {
@@ -2669,51 +2669,17 @@ function render(){
     }
   });
 
-  // init
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape"){
+      dd.classList.remove("open");
+      btn.setAttribute("aria-expanded","false");
+    }
+  });
+
   const start = items.find(x=>x.dataset.value===type) || items[0];
   setType(start.dataset.value, start.textContent.trim());
-})();  
-
-
-  /* PARTICULE MULTIPLE */
-  if(type==="particlePlus"){
-    q.textContent=d.q;
-    h.textContent="Alege TOATE corecte";
-
-    d.opts.forEach(o=>{
-      const el=document.createElement("div");
-      el.className="answer";
-      el.textContent=o;
-      el.onclick=()=>el.classList.toggle("selected");
-      a.appendChild(el);
-    });
-
-    return;
-  }
-
-  /* PUZZLE */
-  if(type==="puzzle"){
-    q.textContent="Ordonează propoziția";
-    h.textContent="";
-    pUI.style.display="block";
-
-    d.w.forEach(w=>{
-      const c=document.createElement("div");
-      c.className="chip";
-      c.textContent=w;
-      c.onclick=()=>{
-         clickSfx();
-        built.push(w);
-        redrawPuzzle(d);
-      };
-      bank.appendChild(c);
-    });
-
-    return;
-  }
-
-  /* CHAIN (dacă îl activezi ulterior) — momentan nu face nimic aici */
-}
+})();
+    
 
 /* =========================
    EVENTS
