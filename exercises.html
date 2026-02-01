@@ -2628,21 +2628,24 @@ el.onclick = () => {
   }
 
   /* PARTICULE MULTIPLE */
-  if(type==="particlePlus"){
-    q.textContent=d.q;
-    h.textContent="Alege TOATE corecte";
+ if(type==="particlePlus"){
+  const d = DATA.particlePlus[index % DATA.particlePlus.length];
+  const picked = getSelectedMulti();
 
-    d.opts.forEach(o=>{
-      const el=document.createElement("div");
-      el.className="answer";
-      el.textContent=o;
-      el.onclick=()=>el.classList.toggle("selected");
-      a.appendChild(el);
-    });
+  // IMPORTANT: unele iteme au d.a string, altele array
+  const correctAns = Array.isArray(d.a) ? d.a : [d.a];
 
-    return;
-  }
+  const ok = sameSet(picked, correctAns);
+  f.textContent = ok ? "✅ Corect" : "❌ Greșit";
+  fx(ok);
 
+  total++;
+  if(ok){ correct++; streak++; }
+  else{ streak=0; }
+  updateBadges();
+
+  return;
+}
   /* PUZZLE */
  if(type==="puzzle"){
   const d = DATA.puzzle[index % DATA.puzzle.length];
