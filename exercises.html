@@ -2603,26 +2603,26 @@ el.onclick = () => {
       const el=document.createElement("div");
       el.className="answer";
       el.textContent=o;
+el.onclick = () => {
+  clickSfx();
+  if (selected) return;
+  selected = true;
 
-      el.onclick=()=>{
-         clickSfx();
-        if(selected) return;
-        selected = true;
+  const ok = (o === d.a);
 
-        // 1) marchează răspunsul corect (verde)
-        [...a.children].forEach(node=>{
-          if(node.textContent === d.a) node.classList.add("correct");
-        });
+  [...a.children].forEach(node => {
+    if (node.textContent === d.a) node.classList.add("correct");
+  });
 
-        // 2) marchează alegerea greșită (roșu) dacă e cazul
-        if(o !== d.a) el.classList.add("wrong");
+  if (!ok) el.classList.add("wrong");
+  f.textContent = ok ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
 
-        // 3) feedback
-        f.textContent = o === d.a ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
-      };
-fx(o===d.a);
-      a.appendChild(el);
-    });
+  fx(ok);
+  total++;
+  if (ok) { correct++; streak++; }
+  else { streak = 0; }
+  updateBadges();
+};     
 
     return;
   }
@@ -2644,26 +2644,20 @@ fx(o===d.a);
   }
 
   /* PUZZLE */
-  if(type==="puzzle"){
-    q.textContent="Ordonează propoziția";
-    h.textContent="";
-    pUI.style.display="block";
+ if(type==="puzzle"){
+  const d = DATA.puzzle[index % DATA.puzzle.length];
+  const ok = built.join(" ") === d.a;
 
-    d.w.forEach(w=>{
-      const c=document.createElement("div");
-      c.className="chip";
-      c.textContent=w;
-      c.onclick=()=>{
-         clickSfx();
-        built.push(w);
-        redrawPuzzle(d);
-      };
-      bank.appendChild(c);
-    });
+  f.textContent = ok ? "✅ Corect" : "❌ Greșit";
+  fx(ok);
 
-    return;
-  }
+  total++;
+  if(ok){ correct++; streak++; }
+  else{ streak=0; }
+  updateBadges();
 
+  return;
+}
   /* CHAIN (dacă îl activezi ulterior) — momentan nu face nimic aici */
 }
 
