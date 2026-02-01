@@ -2606,68 +2606,66 @@ function renderChain(){
    MAIN RENDER
 ========================= */
 function render(){
-  resetUI();
-  const d = DATA[type][index % DATA[type].length];
+  // ===== Custom dropdown logic =====
+const dd = document.getElementById("typeDD");
+const btn = document.getElementById("typeBtn");
+const menu = document.getElementById("typeMenu");
+const label = document.getElementById("typeLabel");
+const items = Array.from(menu.querySelectorAll(".ddItem"));
 
-  /* QUIZ (KO→RO / RO→KO / CONJUG) */
-  if(type==="ko-ro" || type==="ro-ko" || type==="conjug"){
-    q.textContent = d.q;
-    h.textContent = "Alege varianta corectă";
-const badge = document.getElementById("badge");
-if(badge){
-  const map = {
-    "ko-ro":"KO→RO",
-    "ro-ko":"RO→KO",
-    "particle":"Particle",
-    "particlePlus":"Particle+",
-    "conjug":"Conjug",
-    "puzzle":"Puzzle",
-    "chain":"Chain"
-  };
-  badge.innerHTML = `
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.22);font-weight:900">
-      ${map[type] || type}
-    </span>
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">
-      #${(index % DATA[type].length)+1}/${DATA[type].length}
-    </span>
-  `;
+function setTypeUI(val, text){
+  // type este variabila ta existentă
+  type = val;
+
+  label.textContent = text;
+  items.forEach(x => x.classList.toggle("active", x.dataset.value === val));
+
+  // dacă ai badge de mod:
+  if (val === "ko-ro") document.querySelector("#bMode span:last-child").textContent = "Mod: KO→RO";
+  else if (val === "ro-ko") document.querySelector("#bMode span:last-child").textContent = "Mod: RO→KO";
+  else document.querySelector("#bMode span:last-child").textContent = "Mod: " + text;
+
+  // AICI: cheamă funcția ta reală de reload/randare
+  // ex: loadQuestion(); sau render(); sau next();
+  if (typeof render === "function") render();
 }
-    const options = d.opts ? [...d.opts] : [d.a,"Greșit","Alt greșit"];
-    options.sort(()=>Math.random()-0.5);
 
-    options.forEach(opt=>{
-      const el = document.createElement("div");
-      el.className="answer";
-      el.textContent=opt;
+btn.addEventListener("click", () => {
+  const open = dd.classList.toggle("open");
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+});
 
-      el.onclick=()=>{
-         clickSfx();
-        if(selected) return;
-        selected = true;
+items.forEach(it => {
+  it.addEventListener("click", () => {
+    setTypeUI(it.dataset.value, it.textContent.trim());
+    dd.classList.remove("open");
+    btn.setAttribute("aria-expanded", "false");
+  });
+});
 
-        // 1) marchează răspunsul corect (verde)
-        [...a.children].forEach(node=>{
-          if(node.textContent === d.a) node.classList.add("correct");
-        });
-
-        // 2) marchează alegerea greșită (roșu) dacă e cazul
-        if(opt !== d.a) el.classList.add("wrong");
-
-        // 3) feedback
-        f.textContent = opt === d.a ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
-          };
-  fx(opt===d.a);    
-total++;
-if(opt===d.a){ correct++; streak++; }
-else{ streak = 0; }
-updateBadges();
-      a.appendChild(el);
-    });
-
-    return;
+// click în afară -> închide
+document.addEventListener("click", (e) => {
+  if (!dd.contains(e.target)) {
+    dd.classList.remove("open");
+    btn.setAttribute("aria-expanded", "false");
   }
-updateBadges();
+});
+
+// ESC -> închide
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    dd.classList.remove("open");
+    btn.setAttribute("aria-expanded", "false");
+  }
+});
+
+// init (setează valoarea inițială identic cu type)
+(function initDD(){
+  const initial = items.find(x => x.dataset.value === (typeof type !== "undefined" ? type : "ko-ro")) || items[0];
+  setTypeUI(initial.dataset.value, initial.textContent.trim());
+})();
+  
+
   /* PARTICULE (1) */
   if(type==="particle"){
     q.textContent=d.q;
