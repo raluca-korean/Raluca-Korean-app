@@ -1758,8 +1758,115 @@ button{
 ]  
 };
 
-
 /* =========================
+   AUTO: RO→KO  =>  CHAIN
+   (particlePlus + puzzle + conjug)
+========================= */
+
+/** Split simplu pentru puzzle chips */
+function koToPuzzleWords(ko){
+  return ko.trim().split(/\s+/); // separă pe spații
+}
+
+/** Detectează o conjugare “bună” (heuristic) din propoziție */
+function guessConjugFromSentence(ko){
+  // prioritizează finalul: ...했어요/갔어요/됐어요/해요 etc.
+  const m = ko.match(/([가-힣]+?)(했어요|했어|했습니?다|했어요|갔어요|왔어요|봤어요|먹었어요|탔어요|잤어요|했어요|해요|돼요|되면|해서|아서|어서|지만|면)\b/);
+  if(!m) return null;
+
+  const stem = m[1];
+  const ending = m[2];
+
+  // foarte simplu: oferă 3 opțiuni
+  // (nu e perfect lingvistic, dar funcționează ca exercițiu)
+  if(ending === "했어요"){
+    return { q: `${stem}하다 → trecut`, opts: [`${stem}해요`, `${stem}했어요`, `${stem}할 거예요`], a:`${stem}했어요` };
+  }
+  if(ending === "해요"){
+    return { q: `${stem}하다 → prezent`, opts: [`${stem}해요`, `${stem}했어요`, `${stem}할 거예요`], a:`${stem}해요` };
+  }
+  if(ending === "갔어요"){
+    return { q: `가다 → trecut`, opts: ["가요","갔어요","갈 거예요"], a:"갔어요" };
+  }
+  if(ending === "왔어요"){
+    return { q: `오다 → trecut`, opts: ["와요","왔어요","올 거예요"], a:"왔어요" };
+  }
+  if(ending === "됐어요"){
+    return { q: `되다 → trecut`, opts: ["돼요","됐어요","될 거예요"], a:"됐어요" };
+  }
+  if(ending === "되면"){
+    return { q: `되다 → condiție`, opts: ["돼요","되면","됐어요"], a:"되면" };
+  }
+  // fallback
+  return null;
+}
+
+/**
+ * AUTO particles:
+ * - marchează particule uzuale (가/이, 을/를, 에/에서, 은/는, 에게/한테)
+ * - produce q cu "__" și răspunsul ca array a[]
+ *
+ * IMPORTANT: ca să fie “particlePlus” corect, trebuie ca opts să includă TOATE
+ * particulele folosite în acel item (altfel nu poți alege varianta corectă).
+ */
+function koToParticlePlus(ko){
+  const rules = [
+    {re:/\b([가-힣]+)(은|는)\b/g, group:2},
+    {re:/\b([가-힣]+)(이|가)\b/g, group:2},
+    {re:/\b([가-힣]+)(을|를)\b/g, group:2},
+    {re:/\b([가-힣]+)(에|에서)\b/g, group:2},
+    {re:/\b([가-힣]+)(에게|한테)\b/g, group:2},
+    {re:/\b([가-힣]+)(와|과)\b/g, group:2},
+    {re:/\b([가-힣]+)(으로|로)\b/g, group:2},
+  ];
+
+  let q = ko;
+  let answers = [];
+
+  for(const r of rules){
+    q = q.replace(r.re, (m, w, p)=>{ answers.push(p); return `${w}__`; });
+  }
+
+  // dacă nu a găsit nimic, forțează să nu creeze particlePlus
+  if(answers.length < 2) return null;
+
+  // opts: set minim “corect” (conține particulele folosite + distractori apropiați)
+  const base = ["은","는","이","가","을","를","에","에서","에게","한테","와","과","으로","로"];
+  const used = Array.from(new Set(answers));
+  // păstrează doar opțiuni relevante + 2-4 distractori tipici
+  const opts = Array.from(new Set([...used, ...base])).slice(0, 12);
+
+  return { q, opts, a: answers };
+}
+
+/**
+ * Transformă un set RO→KO (q/opts/a) în CHAIN
+ * - folosește răspunsul corect d.a (coreeană)
+ */
+function roKoToChain(roKoArray, startId=1){
+  const out = [];
+  let id = startId;
+
+  for(const item of roKoArray){
+    const ko = item.a?.trim();
+    if(!ko) continue;
+
+    const particlePlus = koToParticlePlus(ko);
+    const puzzle = { w: koToPuzzleWords(ko), a: ko };
+    const conjug = guessConjugFromSentence(ko) || {
+      q:"(conjug) – selectează forma corectă",
+      opts:[ko, ko, ko],
+      a: ko
+    };
+
+    // dacă particlePlus nu are minim 2 spații, sari peste chain (sau îl faci puzzle+conjug)
+    if(!particlePlus) continue;
+
+    out.push({ id: id++, particlePlus, puzzle, conjug });
+  }
+  return out;
+}
+    /* =========================
    STATE + UI REFS
 ========================= */
 let type = "ko-ro";
