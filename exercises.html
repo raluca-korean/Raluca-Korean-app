@@ -2169,7 +2169,40 @@ let index = 0;
 
 let selected = null;       // pt quiz/conjug/particle (o singură alegere)
 let built = [];            // pt puzzle
-let lastCorrect = false;   // rezultatul ultimului răspuns (pt next/chain)
+    /* ====== STATS / BADGES ====== */
+let total = 0;
+let correct = 0;
+let streak = 0;
+
+const bMode = document.getElementById("bMode");
+const bCorrect = document.getElementById("bCorrect");
+const bTotal = document.getElementById("bTotal");
+const bStreak = document.getElementById("bStreak");
+const meterFill = document.getElementById("meterFill");
+
+function modeLabel(t){
+  const map = {
+    "ko-ro":"KO→RO",
+    "ro-ko":"RO→KO",
+    "particle":"PARTICLE",
+    "particlePlus":"PARTICLE+",
+    "conjug":"CONJUG",
+    "puzzle":"PUZZLE",
+    "chain":"CHAIN"
+  };
+  return map[t] || t;
+}
+
+function updateBadges(){
+  if(bMode) bMode.querySelector("span:last-child").textContent = "Mod: " + modeLabel(type);
+  if(bCorrect) bCorrect.querySelector("span:last-child").textContent = "Corecte: " + correct;
+  if(bTotal) bTotal.querySelector("span:last-child").textContent = "Total: " + total;
+  if(bStreak) bStreak.querySelector("span:last-child").textContent = "Streak: " + streak;
+
+  const pct = total === 0 ? 0 : Math.round((correct/total)*100);
+  if(meterFill) meterFill.style.width = pct + "%";
+}
+    let lastCorrect = false;   // rezultatul ultimului răspuns (pt next/chain)
 
 let chainStep = 0;         // 0=particlePlus, 1=puzzle, 2=conjug
 
