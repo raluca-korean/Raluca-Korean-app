@@ -1,3 +1,5 @@
+E17
+
 <!doctype html>
 <html lang="ro">
 <head>
@@ -93,76 +95,8 @@ body{
   pointer-events:none;
   z-index:0;
 }
-/* ===== Custom dropdown (în loc de <select>) ===== */
-.dd{ position:relative; width:100%; }
 
-.ddBtn{
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:12px 14px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(10, 8, 28, .65);
-  color: var(--text);
-  font-size:15px;
-  font-weight:900;
-  box-shadow: var(--shadow2);
-}
-
-.ddBtn:hover{
-  border-color: rgba(34,211,238,.30);
-  filter: brightness(1.05);
-}
-
-.ddChevron{ opacity:.8; }
-
-.ddMenu{
-  position:absolute;
-  left:0; right:0;
-  top: calc(100% + 10px);
-  z-index: 99999;
-  padding:10px;
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(10, 8, 28, .92);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 24px 70px rgba(0,0,0,.55);
-  display:none;
-}
-
-.dd.open .ddMenu{ display:block; }
-
-.ddItem{
-  width:100%;
-  text-align:left;
-  padding:12px 12px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.04);
-  color: var(--text);
-  font-weight:900;
-  cursor:pointer;
-  margin:6px 0;
-}
-
-.ddItem:hover{
-  border-color: rgba(34,211,238,.30);
-  background: rgba(34,211,238,.08);
-}
-
-.ddItem.active{
-  border-color: rgba(168,85,247,.45);
-  background: rgba(168,85,247,.14);
-}
-
-/* pe mobil: să nu iasă din ecran */
-@media (max-width:520px){
-  .ddMenu{ max-height: 55vh; overflow:auto; }
-}
-    /* conținutul mereu deasupra overlay-urilor */
+/* conținutul mereu deasupra overlay-urilor */
 .card > *{ position:relative; z-index:1; }
 
 h1{
@@ -506,30 +440,21 @@ select:focus, button:focus{
     </div>
 <div class="card">
   <label><b>Tip exercițiu</b></label>
-
-  <div class="dd" id="typeDD">
-    <button class="ddBtn" type="button" id="typeBtn" aria-haspopup="listbox" aria-expanded="false">
-      <span id="typeLabel">KO → RO</span>
-      <span class="ddChevron">▾</span>
-    </button>
-
-    <div class="ddMenu" id="typeMenu" role="listbox" aria-label="Tip exercițiu">
-      <button type="button" class="ddItem" role="option" data-value="ko-ro">KO → RO</button>
-      <button type="button" class="ddItem" role="option" data-value="ro-ko">RO → KO</button>
-      <button type="button" class="ddItem" role="option" data-value="particle">Particulă (1)</button>
-      <button type="button" class="ddItem" role="option" data-value="particlePlus">Particule multiple</button>
-      <button type="button" class="ddItem" role="option" data-value="conjug">Conjugare</button>
-      <button type="button" class="ddItem" role="option" data-value="puzzle">Puzzle</button>
-      <button type="button" class="ddItem" role="option" data-value="chain">chain</button>
-    </div>
-  </div>
+  <select id="type">
+    <option value="ko-ro">KO → RO</option>
+    <option value="ro-ko">RO → KO</option>
+    <option value="particle">Particulă (1)</option>
+    <option value="particlePlus">Particule multiple</option>
+    <option value="conjug">Conjugare</option>
+    <option value="puzzle">Puzzle</option>
+    <option value="chain">chain</option>
+  </select>
 </div>
 
-<div class="card" id="mainCard">
+<div class="card">
   <div class="question" id="question"></div>
   <div class="helper" id="helper"></div>
-  <div id="badge" style="display:inline-flex;gap:8px;align-items:center;margin-bottom:12px"></div>
-
+<div id="badge" style="display:inline-flex;gap:8px;align-items:center;margin-bottom:12px"></div>
   <div class="answers" id="answers"></div>
 
   <div id="puzzleUI" style="display:none">
@@ -543,6 +468,8 @@ select:focus, button:focus{
     <button class="primary" id="check">Verifică</button>
     <button id="next">Următorul</button>
   </div>
+</div>
+
 </div>
   <script>
     const DATA = {
@@ -2361,8 +2288,8 @@ const bank = document.getElementById("bank");
 const line = document.getElementById("line");
 const pUI = document.getElementById("puzzleUI");
 /* ====== FX HELPERS (shake + glow + flash) ====== */
-const mainCard = document.getElementById("mainCard");
-    const flash = document.createElement("div");
+const mainCard = document.querySelectorAll(".card")[2] || document.querySelector(".card"); // cardul cu întrebarea
+const flash = document.createElement("div");
 flash.className = "fxFlash";
 document.body.appendChild(flash);
 
@@ -2601,90 +2528,156 @@ function renderChain(){
     h.textContent = "CHAIN (3/3): Conjugare → alege răspunsul";
   }
 }
+
+
 /* =========================
    MAIN RENDER
 ========================= */
 function render(){
   resetUI();
+  const d = DATA[type][index % DATA[type].length];
 
-  if(type==="chain"){
-    renderChain();
-    updateBadges();
-    return;
-  }
-
-  const arr = DATA[type];
-  if(!arr || !arr.length){
-    q.textContent = "Nu există iteme pentru acest mod.";
-    updateBadges();
-    return;
-  }
-
-  const d = arr[index % arr.length];
-
-  if(type==="particle") renderParticleSingle(d);
-  else if(type==="particlePlus") renderParticlePlus(d);
-  else if(type==="puzzle") renderPuzzle(d);
-  else renderQuiz(d);
-
-  updateBadges();
-}
-
-/* =========================
-   DROPDOWN INIT
-========================= */
-(function initDropdown(){
-  const dd = document.getElementById("typeDD");
-  const btn = document.getElementById("typeBtn");
-  const label = document.getElementById("typeLabel");
-  const items = Array.from(document.querySelectorAll("#typeMenu .ddItem"));
-
-  function setType(val, text){
-    type = val;
-    index = 0;
-    chainStep = 0;
-
-    label.textContent = text;
-    items.forEach(x => x.classList.toggle("active", x.dataset.value === val));
-
-    dd.classList.remove("open");
-    btn.setAttribute("aria-expanded","false");
-
-    render();
-  }
-
-  btn.onclick = () => {
-    const open = dd.classList.toggle("open");
-    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  /* QUIZ (KO→RO / RO→KO / CONJUG) */
+  if(type==="ko-ro" || type==="ro-ko" || type==="conjug"){
+    q.textContent = d.q;
+    h.textContent = "Alege varianta corectă";
+const badge = document.getElementById("badge");
+if(badge){
+  const map = {
+    "ko-ro":"KO→RO",
+    "ro-ko":"RO→KO",
+    "particle":"Particle",
+    "particlePlus":"Particle+",
+    "conjug":"Conjug",
+    "puzzle":"Puzzle",
+    "chain":"Chain"
   };
+  badge.innerHTML = `
+    <span style="padding:6px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.22);font-weight:900">
+      ${map[type] || type}
+    </span>
+    <span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">
+      #${(index % DATA[type].length)+1}/${DATA[type].length}
+    </span>
+  `;
+}
+    const options = d.opts ? [...d.opts] : [d.a,"Greșit","Alt greșit"];
+    options.sort(()=>Math.random()-0.5);
 
-  items.forEach(it=>{
-    it.onclick = () => setType(it.dataset.value, it.textContent.trim());
-  });
+    options.forEach(opt=>{
+      const el = document.createElement("div");
+      el.className="answer";
+      el.textContent=opt;
 
-  document.addEventListener("click", e=>{
-    if(!dd.contains(e.target)){
-      dd.classList.remove("open");
-      btn.setAttribute("aria-expanded","false");
-    }
-  });
+      el.onclick=()=>{
+         clickSfx();
+        if(selected) return;
+        selected = true;
 
-  document.addEventListener("keydown", (e)=>{
-    if(e.key === "Escape"){
-      dd.classList.remove("open");
-      btn.setAttribute("aria-expanded","false");
-    }
-  });
+        // 1) marchează răspunsul corect (verde)
+        [...a.children].forEach(node=>{
+          if(node.textContent === d.a) node.classList.add("correct");
+        });
 
-  const start = items.find(x=>x.dataset.value===type) || items[0];
-  setType(start.dataset.value, start.textContent.trim());
-})();
-    
+        // 2) marchează alegerea greșită (roșu) dacă e cazul
+        if(opt !== d.a) el.classList.add("wrong");
+
+        // 3) feedback
+        f.textContent = opt === d.a ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
+          };
+  fx(opt===d.a);    
+total++;
+if(opt===d.a){ correct++; streak++; }
+else{ streak = 0; }
+updateBadges();
+      a.appendChild(el);
+    });
+
+    return;
+  }
+updateBadges();
+  /* PARTICULE (1) */
+  if(type==="particle"){
+    q.textContent=d.q;
+    h.textContent="Alege particula corectă";
+
+    d.opts.forEach(o=>{
+      const el=document.createElement("div");
+      el.className="answer";
+      el.textContent=o;
+
+      el.onclick=()=>{
+         clickSfx();
+        if(selected) return;
+        selected = true;
+
+        // 1) marchează răspunsul corect (verde)
+        [...a.children].forEach(node=>{
+          if(node.textContent === d.a) node.classList.add("correct");
+        });
+
+        // 2) marchează alegerea greșită (roșu) dacă e cazul
+        if(o !== d.a) el.classList.add("wrong");
+
+        // 3) feedback
+        f.textContent = o === d.a ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
+      };
+fx(o===d.a);
+      a.appendChild(el);
+    });
+
+    return;
+  }
+
+  /* PARTICULE MULTIPLE */
+  if(type==="particlePlus"){
+    q.textContent=d.q;
+    h.textContent="Alege TOATE corecte";
+
+    d.opts.forEach(o=>{
+      const el=document.createElement("div");
+      el.className="answer";
+      el.textContent=o;
+      el.onclick=()=>el.classList.toggle("selected");
+      a.appendChild(el);
+    });
+
+    return;
+  }
+
+  /* PUZZLE */
+  if(type==="puzzle"){
+    q.textContent="Ordonează propoziția";
+    h.textContent="";
+    pUI.style.display="block";
+
+    d.w.forEach(w=>{
+      const c=document.createElement("div");
+      c.className="chip";
+      c.textContent=w;
+      c.onclick=()=>{
+         clickSfx();
+        built.push(w);
+        redrawPuzzle(d);
+      };
+      bank.appendChild(c);
+    });
+
+    return;
+  }
+
+  /* CHAIN (dacă îl activezi ulterior) — momentan nu face nimic aici */
+}
 
 /* =========================
    EVENTS
 ========================= */
-
+document.getElementById("type").onchange=e=>{
+  type=e.target.value;
+  index=0;
+  render();
+  updateBadges();
+};
     document.getElementById("next").onclick=()=>{
   // la chain, Next sare la următorul chain (reset step)
   if(type==="chain"){
