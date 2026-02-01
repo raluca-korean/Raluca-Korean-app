@@ -2285,7 +2285,56 @@ function fx(ok){
   void mainCard.offsetWidth;
 
   mainCard.classList.add(ok ? "glow" : "shake");
+  if(ok) okSfx(); else badSfx();
 }
+  /* ====== SFX (offline) ====== */
+let AC = null;
+function ensureAudio(){
+  if(!AC){
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(AC.state === "suspended") AC.resume();
+}
+
+function tone({freq=440, type="sine", dur=0.12, gain=0.08, ramp=0.01}){
+  ensureAudio();
+  const t0 = AC.currentTime;
+  const osc = AC.createOscillator();
+  const g = AC.createGain();
+
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(gain, t0 + ramp);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+  osc.connect(g);
+  g.connect(AC.destination);
+
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.02);
+}
+
+function clickSfx(){
+  // un click scurt, discret
+  tone({freq: 900, type:"square", dur:0.04, gain:0.04, ramp:0.005});
+}
+
+function okSfx(){
+  // “ding” (două note)
+  tone({freq: 740, type:"sine", dur:0.10, gain:0.07, ramp:0.01});
+  setTimeout(()=>tone({freq: 990, type:"sine", dur:0.12, gain:0.07, ramp:0.01}), 90);
+}
+
+function badSfx(){
+  // “buzz” mic (două note joase)
+  tone({freq: 180, type:"sawtooth", dur:0.14, gain:0.06, ramp:0.01});
+  setTimeout(()=>tone({freq: 140, type:"sawtooth", dur:0.16, gain:0.06, ramp:0.01}), 110);
+}
+
+/* Opțional: activare audio la prima atingere oriunde */
+window.addEventListener("pointerdown", ensureAudio, { once:true });  
 /* =========================
    HELPERS
 ========================= */
