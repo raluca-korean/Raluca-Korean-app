@@ -2435,26 +2435,47 @@ function sameSet(a1,a2){
 
 /* =========================
    RENDERERS
-========================= */
-function renderQuiz(d){
+====function renderQuiz(d){
   q.textContent = d.q;
   h.textContent = "Alege varianta corectă";
-  const options = d.opts ? shuffle(d.opts) : shuffle([d.a,"Greșit","Alt greșit"]);
+
+  const options = d.opts ? shuffle(d.opts) : shuffle([d.a, "Greșit", "Alt greșit"]);
 
   options.forEach(opt=>{
     const el = document.createElement("div");
-    el.className="answer";
-    el.textContent=opt;
-    el.onclick=()=>{
+    el.className = "answer";
+    el.textContent = opt;
+
+    el.onclick = ()=>{
+      clickSfx();
       if(selected) return;
-      selected=true;
-      lastCorrect = (opt===d.a);
-      el.classList.add(lastCorrect ? "correct" : "wrong");
-      f.textContent = lastCorrect ? "✅ Corect" : "❌ Greșit";
+      selected = true;
+
+      const ok = (opt === d.a);
+
+      // marchează răspunsul corect
+      [...a.children].forEach(node=>{
+        if(node.textContent === d.a) node.classList.add("correct");
+      });
+
+      // marchează alegerea greșită
+      if(!ok) el.classList.add("wrong");
+
+      f.textContent = ok ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
+      fx(ok);
+
+      total++;
+      if(ok){ correct++; streak++; }
+      else{ streak = 0; }
+
+      updateBadges();
     };
+
     a.appendChild(el);
   });
 }
+
+==================== */
 
 function renderParticleSingle(d){
   q.textContent=d.q;
