@@ -2400,6 +2400,7 @@ function resetUI(){
   bank.innerHTML="";
   line.innerHTML="";
 }
+
 function shuffle(arr){
   return [...arr].sort(()=>Math.random()-0.5);
 }
@@ -2435,87 +2436,45 @@ function sameSet(a1,a2){
 
 /* =========================
    RENDERERS
-====function renderQuiz(d){
+========================= */
+function renderQuiz(d){
   q.textContent = d.q;
   h.textContent = "Alege varianta corectă";
-
-  const options = d.opts ? shuffle(d.opts) : shuffle([d.a, "Greșit", "Alt greșit"]);
+  const options = d.opts ? shuffle(d.opts) : shuffle([d.a,"Greșit","Alt greșit"]);
 
   options.forEach(opt=>{
     const el = document.createElement("div");
-    el.className = "answer";
-    el.textContent = opt;
-
-    el.onclick = ()=>{
-      clickSfx();
+    el.className="answer";
+    el.textContent=opt;
+    el.onclick=()=>{
       if(selected) return;
-      selected = true;
-
-      const ok = (opt === d.a);
-
-      // marchează răspunsul corect
-      [...a.children].forEach(node=>{
-        if(node.textContent === d.a) node.classList.add("correct");
-      });
-
-      // marchează alegerea greșită
-      if(!ok) el.classList.add("wrong");
-
-      f.textContent = ok ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
-      fx(ok);
-
-      total++;
-      if(ok){ correct++; streak++; }
-      else{ streak = 0; }
-
-      updateBadges();
+      selected=true;
+      lastCorrect = (opt===d.a);
+      el.classList.add(lastCorrect ? "correct" : "wrong");
+      f.textContent = lastCorrect ? "✅ Corect" : "❌ Greșit";
     };
-
     a.appendChild(el);
   });
 }
 
-==================== */
-
-/* =========================
-   PARTICLE (1) — single
-========================= */
 function renderParticleSingle(d){
-  q.textContent = d.q;
-  h.textContent = "Alege particula corectă";
-
-  d.opts.forEach(opt=>{
-    const el = document.createElement("div");
-    el.className = "answer";
-    el.textContent = opt;
-
-    el.onclick = ()=>{
-      clickSfx();
-      if(selected) return;
-      selected = true;
-
-      const ok = (opt === d.a);
-
-      // marchează răspunsul corect
-      [...a.children].forEach(node=>{
-        if(node.textContent === d.a) node.classList.add("correct");
-      });
-
-      // marchează alegerea greșită
-      if(!ok) el.classList.add("wrong");
-
-      f.textContent = ok ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
-      fx(ok);
-
-      total++;
-      if(ok){ correct++; streak++; }
-      else{ streak = 0; }
-
-      updateBadges();
+  q.textContent=d.q;
+  h.textContent="Alege particula corectă";
+  d.opts.forEach(o=>{
+    const el=document.createElement("div");
+    el.className="answer";
+    el.textContent=o;
+    el.onclick=()=>{
+      if(selected)return;
+      selected=true;
+      lastCorrect = (o===d.a);
+      el.classList.add(lastCorrect ? "correct":"wrong");
+      f.textContent = lastCorrect ? "✅ Corect":"❌ Greșit";
     };
-
     a.appendChild(el);
   });
+}
+
 function renderParticlePlus(d){
   q.textContent=d.q;
   h.textContent="Selectează TOATE corecte, apoi apasă Verifică";
@@ -2574,83 +2533,69 @@ function renderChain(){
 /* =========================
    MAIN RENDER
 ========================= */
-  function render(){
+function render(){
   resetUI();
+  const d = DATA[type][index % DATA[type].length];
 
-  // ✅ CHAIN: intră aici când selectezi "chain"
-  if(type === "chain"){
-    // safety: dacă DATA.chain lipsește
-    if(!DATA.chain || !DATA.chain.length){
-      q.textContent = "DATA.chain este gol.";
-      h.textContent = "Verifică generarea chain înainte de render().";
-      updateBadges();
-      return;
-    }
-    renderChain();
-    updateBadges();
-    return;
-  }
-
-  // ✅ restul modurilor
-  const arr = DATA[type];
-  if(!arr || !arr.length){
-    q.textContent = "Nu există iteme pentru acest mod.";
-    h.textContent = "";
-    updateBadges();
-    return;
-  }
-
-  const d = arr[index % arr.length];
-
-  // badge mic (dacă ai #badge în HTML)
-  const badge = document.getElementById("badge");
-  if(badge){
-    const map = {
-      "ko-ro":"KO→RO",
-      "ro-ko":"RO→KO",
-      "particle":"Particle",
-      "particlePlus":"Particle+",
-      "conjug":"Conjug",
-      "puzzle":"Puzzle",
-      "chain":"Chain"
-    };
-    badge.innerHTML = `
-      <span style="padding:6px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.22);font-weight:900">
-        ${map[type] || type}
-      </span>
-      <span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">
-        #${(index % arr.length)+1}/${arr.length}
-      </span>
-    `;
-  }
-
-  if(type === "ko-ro" || type === "ro-ko" || type === "conjug"){
-    renderQuiz(d);
-    updateBadges();
-    return;
-  }
-
-  if(type === "particle"){
-    renderParticleSingle(d);
-    updateBadges();
-    return;
-  }
-
-  if(type === "particlePlus"){
-    renderParticlePlus(d);
-    updateBadges();
-    return;
-  }
-
-  if(type === "puzzle"){
-    renderPuzzle(d);
-    updateBadges();
-    return;
-  }
-
-  updateBadges();
+  /* QUIZ (KO→RO / RO→KO / CONJUG) */
+  if(type==="ko-ro" || type==="ro-ko" || type==="conjug"){
+    q.textContent = d.q;
+    h.textContent = "Alege varianta corectă";
+const badge = document.getElementById("badge");
+if(badge){
+  const map = {
+    "ko-ro":"KO→RO",
+    "ro-ko":"RO→KO",
+    "particle":"Particle",
+    "particlePlus":"Particle+",
+    "conjug":"Conjug",
+    "puzzle":"Puzzle",
+    "chain":"Chain"
+  };
+  badge.innerHTML = `
+    <span style="padding:6px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.22);font-weight:900">
+      ${map[type] || type}
+    </span>
+    <span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">
+      #${(index % DATA[type].length)+1}/${DATA[type].length}
+    </span>
+  `;
 }
-  
+    const options = d.opts ? [...d.opts] : [d.a,"Greșit","Alt greșit"];
+    options.sort(()=>Math.random()-0.5);
+
+    options.forEach(opt=>{
+      const el = document.createElement("div");
+      el.className="answer";
+      el.textContent=opt;
+
+      el.onclick=()=>{
+         clickSfx();
+        if(selected) return;
+        selected = true;
+
+        // 1) marchează răspunsul corect (verde)
+        [...a.children].forEach(node=>{
+          if(node.textContent === d.a) node.classList.add("correct");
+        });
+
+        // 2) marchează alegerea greșită (roșu) dacă e cazul
+        if(opt !== d.a) el.classList.add("wrong");
+
+        // 3) feedback
+        f.textContent = opt === d.a ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
+          };
+  fx(opt===d.a);    
+total++;
+if(opt===d.a){ correct++; streak++; }
+else{ streak = 0; }
+updateBadges();
+      a.appendChild(el);
+    });
+
+    return;
+  }
+updateBadges();
   /* PARTICULE (1) */
   if(type==="particle"){
     q.textContent=d.q;
