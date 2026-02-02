@@ -2477,24 +2477,45 @@ function sameSet(a1,a2){
 
 ==================== */
 
+/* =========================
+   PARTICLE (1) — single
+========================= */
 function renderParticleSingle(d){
-  q.textContent=d.q;
-  h.textContent="Alege particula corectă";
-  d.opts.forEach(o=>{
-    const el=document.createElement("div");
-    el.className="answer";
-    el.textContent=o;
-    el.onclick=()=>{
-      if(selected)return;
-      selected=true;
-      lastCorrect = (o===d.a);
-      el.classList.add(lastCorrect ? "correct":"wrong");
-      f.textContent = lastCorrect ? "✅ Corect":"❌ Greșit";
+  q.textContent = d.q;
+  h.textContent = "Alege particula corectă";
+
+  d.opts.forEach(opt=>{
+    const el = document.createElement("div");
+    el.className = "answer";
+    el.textContent = opt;
+
+    el.onclick = ()=>{
+      clickSfx();
+      if(selected) return;
+      selected = true;
+
+      const ok = (opt === d.a);
+
+      // marchează răspunsul corect
+      [...a.children].forEach(node=>{
+        if(node.textContent === d.a) node.classList.add("correct");
+      });
+
+      // marchează alegerea greșită
+      if(!ok) el.classList.add("wrong");
+
+      f.textContent = ok ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
+      fx(ok);
+
+      total++;
+      if(ok){ correct++; streak++; }
+      else{ streak = 0; }
+
+      updateBadges();
     };
+
     a.appendChild(el);
   });
-}
-
 function renderParticlePlus(d){
   q.textContent=d.q;
   h.textContent="Selectează TOATE corecte, apoi apasă Verifică";
@@ -2553,17 +2574,24 @@ function renderChain(){
 /* =========================
    MAIN RENDER
 ========================= */
-function render(){
+  function render(){
   resetUI();
 
-  // ✅ CHAIN (intră aici când type === "chain")
+  // ✅ CHAIN: intră aici când selectezi "chain"
   if(type === "chain"){
+    // safety: dacă DATA.chain lipsește
+    if(!DATA.chain || !DATA.chain.length){
+      q.textContent = "DATA.chain este gol.";
+      h.textContent = "Verifică generarea chain înainte de render().";
+      updateBadges();
+      return;
+    }
     renderChain();
     updateBadges();
     return;
   }
 
-  // ✅ safety: dacă nu există date pentru tipul curent
+  // ✅ restul modurilor
   const arr = DATA[type];
   if(!arr || !arr.length){
     q.textContent = "Nu există iteme pentru acest mod.";
@@ -2574,7 +2602,7 @@ function render(){
 
   const d = arr[index % arr.length];
 
-  // ✅ badge mic (opțional, dar util)
+  // badge mic (dacă ai #badge în HTML)
   const badge = document.getElementById("badge");
   if(badge){
     const map = {
@@ -2596,7 +2624,6 @@ function render(){
     `;
   }
 
-  // ✅ restul modurilor
   if(type === "ko-ro" || type === "ro-ko" || type === "conjug"){
     renderQuiz(d);
     updateBadges();
@@ -2622,7 +2649,8 @@ function render(){
   }
 
   updateBadges();
-}    
+}
+  
   /* PARTICULE (1) */
   if(type==="particle"){
     q.textContent=d.q;
