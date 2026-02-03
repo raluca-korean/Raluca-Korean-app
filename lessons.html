@@ -1,83 +1,277 @@
 <!doctype html>
 <html lang="ro">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Raluca Korean — Lecții</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Lecții TOPIK</title>
+
+<style>
+:root{
+  --bg:#070617;
+  --card: rgba(16,14,40,.75);
+  --stroke: rgba(255,255,255,.12);
+  --text:#f3f4ff;
+  --muted: rgba(243,244,255,.7);
+  --accent:#7c3aed;
+  --accent2:#22d3ee;
+  --radius:22px;
+  --shadow:0 18px 50px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:linear-gradient(135deg,#090818,#071425);
+  color:var(--text);
+}
+
+.app{
+  max-width:1000px;
+  margin:0 auto;
+  padding:20px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:18px;
+  box-shadow:var(--shadow);
+}
+
+h1,h2,h3{margin:0 0 10px}
+h1{font-size:24px}
+h2{font-size:20px}
+h3{font-size:16px}
+
+.sub{color:var(--muted);font-size:13px}
+
+.grid{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:16px;
+}
+
+@media(max-width:720px){
+  .grid{grid-template-columns:1fr}
+}
+
+/* SIDEBAR */
+.lesson-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.lesson-item{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background:rgba(10,8,28,.55);
+  cursor:pointer;
+  font-weight:700;
+  transition:.15s;
+}
+
+.lesson-item:hover{
+  border-color:var(--accent2);
+}
+
+.lesson-item.active{
+  background:rgba(124,58,237,.18);
+  border-color:var(--accent);
+}
+
+/* CONTENT */
+.badge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(124,58,237,.15);
+  border:1px solid rgba(124,58,237,.35);
+  font-weight:800;
+  font-size:12px;
+  margin-bottom:10px;
+}
+
+.example{
+  background:rgba(10,8,28,.55);
+  border:1px dashed rgba(255,255,255,.18);
+  border-radius:14px;
+  padding:10px 12px;
+  margin:8px 0;
+}
+
+.example .ko{font-weight:900}
+.example .ro{font-size:13px;color:var(--muted)}
+
+.notes{
+  margin-top:10px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+button{
+  margin-top:14px;
+  padding:10px 16px;
+  border-radius:999px;
+  border:none;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  font-weight:900;
+  cursor:pointer;
+}
+</style>
 </head>
 
 <body>
 <div class="app">
 
-  <!-- HEADER (identic ca stil, NU copy-paste logică JS) -->
-  <div class="card headerCard">
-    <h1>Lecții TOPIK</h1>
-    <div class="sub">Gramatică · Exemple · Explicații</div>
-  </div>
-
-  <!-- SELECT TOPIK -->
+  <!-- HEADER -->
   <div class="card">
-    <label><b>Nivel</b></label>
-    <select id="levelSelect">
-      <option value="1">TOPIK 1</option>
-      <option value="2">TOPIK 2</option>
-      <option value="3">TOPIK 3</option>
-      <option value="4">TOPIK 4</option>
-    </select>
+    <h1>Lecții TOPIK</h1>
+    <div class="sub">Structurate • Clare • Legate de exerciții</div>
   </div>
 
-  <!-- LISTĂ LECȚII -->
-  <div class="card" id="lessonList"></div>
+  <!-- MAIN -->
+  <div class="grid">
 
-  <!-- CONȚINUT LECȚIE -->
-  <div class="card" id="lessonContent" style="display:none"></div>
+    <!-- SIDEBAR -->
+    <div class="card">
+      <h3>TOPIK 1–4</h3>
+      <div class="lesson-list" id="lessonList"></div>
+    </div>
 
+    <!-- CONTENT -->
+    <div class="card" id="lessonContent">
+      <div class="sub">Selectează o lecție din stânga</div>
+    </div>
+
+  </div>
 </div>
 
-<script>const DATA_LESSONS = {
-  1: [
-    {
-      title: "은 / 는 – topic",
-      content: `
-        <p><b>은 / 는</b> marchează tema propoziției.</p>
-        <p>저는 학생이에요.</p>
-      `
-    }
-  ],
-  2: [
-    {
-      title: "에 vs 에서",
-      content: `
-        <p><b>에</b> = locație statică</p>
-        <p><b>에서</b> = acțiune</p>
-      `
-    }
-  ]
-};
+<script>
+/* =========================
+   DATA LECȚII
+========================= */
+const LESSONS = [
+  {
+    id:"T1-01",
+    topik:1,
+    title:"은 / 는 — topic",
+    explanation:"Marchează tema propoziției (despre ce vorbim).",
+    structure:"Substantiv + 은 / 는",
+    examples:[
+      {ko:"저는 학생이에요.",ro:"Eu sunt student."},
+      {ko:"오늘은 바빠요.",ro:"Astăzi sunt ocupat."}
+    ],
+    notes:["Nu este același lucru cu subiectul gramatical."]
+  },
+  {
+    id:"T1-02",
+    topik:1,
+    title:"이 / 가 — subiect",
+    explanation:"Marchează subiectul care face acțiunea.",
+    structure:"Substantiv + 이 / 가",
+    examples:[
+      {ko:"비가 와요.",ro:"Plouă."},
+      {ko:"시간이 없어요.",ro:"Nu am timp."}
+    ],
+    notes:["Folosit frecvent pentru informații noi."]
+  },
+  {
+    id:"T2-01",
+    topik:2,
+    title:"-(으)려고 하다 — intenție",
+    explanation:"Exprimă planul sau intenția vorbitorului.",
+    structure:"Verb + (으)려고 하다",
+    examples:[
+      {ko:"한국어를 배우려고 해요.",ro:"Plănuiesc să învăț coreeana."}
+    ],
+    notes:["Nu se folosește pentru trecut."]
+  },
+  {
+    id:"T3-01",
+    topik:3,
+    title:"-아/어서 — cauză",
+    explanation:"Leagă cauza de rezultat.",
+    structure:"Verb/Adjectiv + 아/어서",
+    examples:[
+      {ko:"비가 와서 집에 있었어요.",ro:"Pentru că a plouat, am stat acasă."}
+    ],
+    notes:["Nu se folosește cu viitor sau imperativ."]
+  },
+  {
+    id:"T4-01",
+    topik:4,
+    title:"-(으)ㄴ/는 것 같다 — opinie",
+    explanation:"Exprimă o presupunere sau opinie.",
+    structure:"Verb + (으)ㄴ/는 것 같다",
+    examples:[
+      {ko:"이 방법이 좋은 것 같아요.",ro:"Cred că această metodă este bună."}
+    ],
+    notes:["Foarte frecvent în TOPIK 4."]
+  }
+];
 
-const levelSelect = document.getElementById("levelSelect");
-const list = document.getElementById("lessonList");
-const content = document.getElementById("lessonContent");
+/* =========================
+   UI
+========================= */
+const listEl = document.getElementById("lessonList");
+const contentEl = document.getElementById("lessonContent");
 
-function renderLessons(level){
-  list.innerHTML = "";
-  content.style.display = "none";
-
-  DATA_LESSONS[level].forEach((l, i)=>{
-    const btn = document.createElement("div");
-    btn.className = "answer";
-    btn.textContent = l.title;
-    btn.onclick = ()=>{
-      content.innerHTML = `<h2>${l.title}</h2>${l.content}`;
-      content.style.display = "block";
-    };
-    list.appendChild(btn);
+function renderList(){
+  listEl.innerHTML="";
+  LESSONS.forEach(l=>{
+    const el=document.createElement("div");
+    el.className="lesson-item";
+    el.textContent=`TOPIK ${l.topik} · ${l.title}`;
+    el.onclick=()=>selectLesson(l.id);
+    el.dataset.id=l.id;
+    listEl.appendChild(el);
   });
 }
 
-levelSelect.onchange = ()=>renderLessons(levelSelect.value);
-renderLessons("1");
+function selectLesson(id){
+  [...document.querySelectorAll(".lesson-item")]
+    .forEach(x=>x.classList.toggle("active",x.dataset.id===id));
+
+  const l = LESSONS.find(x=>x.id===id);
+  if(!l) return;
+
+  contentEl.innerHTML=`
+    <span class="badge">TOPIK ${l.topik}</span>
+    <h2>${l.title}</h2>
+    <p>${l.explanation}</p>
+    <div class="sub"><b>Structură:</b> ${l.structure}</div>
+
+    ${l.examples.map(e=>`
+      <div class="example">
+        <div class="ko">${e.ko}</div>
+        <div class="ro">${e.ro}</div>
+      </div>
+    `).join("")}
+
+    ${l.notes?.length ? `
+      <div class="notes">
+        <b>Note:</b>
+        <ul>${l.notes.map(n=>`<li>${n}</li>`).join("")}</ul>
+      </div>
+    `:""}
+
+    <button onclick="goExercises('${l.id}')">
+      Exersează această lecție →
+    </button>
+  `;
+}
+
+function goExercises(lessonId){
+  alert("Aici vei lega lecția " + lessonId + " de exerciții.");
+}
+
+/* INIT */
+renderList();
 </script>
 </body>
 </html>
