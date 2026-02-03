@@ -1,4 +1,4 @@
-E17
+E18
 
 <!doctype html>
 <html lang="ro">
@@ -2308,25 +2308,7 @@ function sameSet(a,b){
 function getSelectedMulti(){
   return [...a.querySelectorAll(".answer.selected")].map(x=>x.textContent);
 }
-    function toArrayA(a){
-  return Array.isArray(a) ? a : [a];
-}
 
-function markMultiCorrect(correctArr){
-  const correctSet = new Set(correctArr);
-
-  // 1) marchează toate corectele (verde)
-  [...document.querySelectorAll("#answers .answer")].forEach(el=>{
-    const t = el.textContent.trim();
-    if(correctSet.has(t)) el.classList.add("correct");
-  });
-
-  // 2) marchează greșelile selectate (roșu)
-  [...document.querySelectorAll("#answers .answer.selected")].forEach(el=>{
-    const t = el.textContent.trim();
-    if(!correctSet.has(t)) el.classList.add("wrong");
-  });
-}
 /* =========================
    RENDER MAIN
 ========================= */
@@ -2480,31 +2462,16 @@ function renderChain(){
   const item = DATA.chain[index % DATA.chain.length];
 
   if(chainStep===0){
-  const picked = getSelectedMulti();
-  const correctArr = toArrayA(item.particlePlus.a);
-  const ok = sameSet(picked, correctArr);
+    renderParticlePlus(item.particlePlus);
+    h.textContent="Pas 1 / 3";
+    return;
+  }
 
-  // ✅ arată răspunsul corect
-  markMultiCorrect(correctArr);
-
-  f.textContent = ok
-    ? "✅ Pas 1 corect"
-    : `❌ Pas 1 greșit — corect: ${correctArr.join(" + ")}`;
-
-  fx(ok);
-total++;
-if(ok){ correct++; streak++; chainStep = 1; setTimeout(render, 180); }
-else{ streak = 0; }
-updateBadges();
-return;
-}
-
-if(chainStep===1){
-  renderPuzzle(item.puzzle);
-  h.textContent="Pas 2 / 3";
-  return;
-}
-  
+  if(chainStep===1){
+    renderPuzzle(item.puzzle);
+    h.textContent="Pas 2 / 3";
+    return;
+  }
 
   renderQuiz(item.conjug);
   h.textContent="Pas 3 / 3";
@@ -2520,28 +2487,19 @@ document.getElementById("next").onclick=()=>{
 };
 
 document.getElementById("check").onclick=()=>{
- if(type==="particlePlus"){
-  const d = DATA.particlePlus[index % DATA.particlePlus.length];
+  if(type==="particlePlus"){
+    const d=DATA.particlePlus[index % DATA.particlePlus.length];
+    const ok = sameSet(getSelectedMulti(), d.a);
+    f.textContent = ok ? "✅ Corect" : "❌ Greșit";
+    fx(ok);
 
-  const correctArr = toArrayA(d.a);
-  const picked = getSelectedMulti();
-  const ok = sameSet(picked, correctArr);
+    total++;
+    if(ok){ correct++; streak++; }
+    else{ streak=0; }
+    updateBadges();
+    return;
+  }
 
-  // ✅ arată răspunsul corect
-  markMultiCorrect(correctArr);
-
-  f.textContent = ok
-    ? "✅ Corect"
-    : `❌ Greșit — corect: ${correctArr.join(" + ")}`;
-
-  fx(ok);
-
-  total++;
-  if(ok){ correct++; streak++; }
-  else{ streak = 0; }
-  updateBadges();
-  return;
-}
   if(type==="puzzle"){
     const d=DATA.puzzle[index % DATA.puzzle.length];
     const ok = built.join(" ")===d.a;
