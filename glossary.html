@@ -318,13 +318,20 @@ function startDailyQuiz(){
   dailyIndex = 0;
   showDailyQuestion();
 }
-
 function showDailyQuestion(){
-  const w = daily[dailyIndex];
-  if(!w){
-    alert("🎉 Ai terminat exercițiul de azi!");
+  const card = document.getElementById("dailyCard");
+
+  if(dailyIndex >= daily.length){
+    card.innerHTML = `
+      <h3>🎉 Gata pe azi!</h3>
+      <div class="sub">Ai terminat exercițiul „3 cuvinte pe zi”</div>
+
+      <button onclick="exitDailyQuiz()">⬅ Înapoi</button>
+    `;
     return;
   }
+
+  const w = daily[dailyIndex];
 
   const opts = [...WORDS]
     .sort(()=>0.5-Math.random())
@@ -334,18 +341,21 @@ function showDailyQuestion(){
   if(!opts.includes(w.ro)) opts[0]=w.ro;
   opts.sort(()=>0.5-Math.random());
 
-  const box = document.getElementById("dailyCard");
-  box.innerHTML = `
+  card.innerHTML = `
     <h3>🧠 Ce înseamnă:</h3>
     <div class="example"><b>${w.ko}</b></div>
 
     ${opts.map(o=>`
       <button onclick="checkDaily('${o}','${w.ro}')">${o}</button>
     `).join("")}
+
+    <div style="margin-top:12px">
+      <button onclick="exitDailyQuiz()">⬅ Înapoi</button>
+    </div>
   `;
 }
-
-function checkDaily(sel, ok){
+  
+  function checkDaily(sel, ok){
   if(sel===ok){
     dailyIndex++;
     showDailyQuestion();
@@ -356,7 +366,17 @@ function checkDaily(sel, ok){
   function refreshDaily(){
   pickDailyWords();
 }
-  search.oninput=render;
+  function exitDailyQuiz(){
+  const card = document.getElementById("dailyCard");
+  card.innerHTML = dailyOriginalHTML;
+  dailyMode = "view";
+}
+  function startDailyQuiz(){
+  dailyIndex = 0;
+  dailyMode = "quiz";
+  showDailyQuestion();
+}
+  .oninput=render;
 render();
 renderDailyWords();
 </script>
