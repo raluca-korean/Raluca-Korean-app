@@ -391,7 +391,130 @@ function rebuildPreview(){
   document.getElementById("previewSentence").textContent =
     sentence.join(" ").replace(/\s+/g," ");
 }
+/* =========================
+   DICTIONARE MINIMALE
+========================= */
+const RO = {
+  subject: [
+    ["eu","저"],["tu","너"],["noi","우리"]
+  ],
+  time: [
+    ["azi","오늘"],["astăzi","오늘"],["mâine","내일"],["ieri","어제"]
+  ],
+  place: [
+    ["cafenea","카페"],["cafea","카페"],["acasă","집"],["acasa","집"]
+  ],
+  object: [
+    ["carte","책"],["cafea","커피"],["apă","물"],["apa","물"]
+  ],
+  verb: [
+    ["merg","가다"],["citesc","읽다"],["beau","마시다"],
+    ["mănânc","먹다"],["mananc","먹다"]
+  ]
+};
 
+const EN = {
+  subject: [
+    ["i","저"],["you","너"],["we","우리"]
+  ],
+  time: [
+    ["today","오늘"],["tomorrow","내일"],["yesterday","어제"]
+  ],
+  place: [
+    ["cafe","카페"],["home","집"]
+  ],
+  object: [
+    ["book","책"],["coffee","커피"],["water","물"]
+  ],
+  verb: [
+    ["go","가다"],["read","읽다"],["drink","마시다"],["eat","먹다"]
+  ]
+};
+
+const CONNECTORS = [
+  {keys:["și","and"], ending:"-고"},
+  {keys:["dar","but"], ending:"-지만"},
+  {keys:["pentru că","because"], ending:"-어서"},
+  {keys:["dacă","if"], ending:"-(으)면"},
+  {keys:["când","when"], ending:"-(으)ㄹ 때"}
+];
+
+/* =========================
+   UTIL
+========================= */
+function normalize(t){
+  return t.toLowerCase()
+    .replace(/[.,!?]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+
+function find(dict, text){
+  for(const [k,v] of dict){
+    if(text.includes(k)) return v;
+  }
+  return "";
+}
+
+/* =========================
+   SPLIT CLAUZE
+========================= */
+function splitClauses(text){
+  let norm = normalize(text);
+  let clauses = [norm];
+  let endings = [];
+
+  CONNECTORS.forEach(c=>{
+    c.keys.forEach(k=>{
+      if(norm.includes(" "+k+" ")){
+        clauses = norm.split(" "+k+" ");
+        endings = clauses.map((_,i)=> i<clauses.length-1 ? c.ending : "");
+      }
+    });
+  });
+
+  return {clauses, endings};
+}
+
+/* =========================
+   AUTO FILL
+========================= */
+function autoFill(){
+  const text = document.getElementById("inputText").value;
+  if(!text) return;
+
+  const lang = document.getElementById("langSelect").value;
+  const dict = lang==="en" ? EN : RO;
+
+  const {clauses, endings} = splitClauses(text);
+
+  ensureClauseCount(clauses.length);
+
+  clauses.forEach((c,i)=>{
+    const block = document.querySelectorAll(".clause-block")[i];
+    const t = normalize(c);
+
+    const set = (k,v)=>{
+      const cell = block.querySelector(`.col[data-key="${k}"] .cell`);
+      if(cell && !cell.textContent.trim()) cell.textContent = v;
+    };
+
+    set("subject", find(dict.subject,t));
+    set("time", find(dict.time,t));
+    set("place", find(dict.place,t));
+    set("object", find(dict.object,t));
+    set("verb", find(dict.verb,t));
+    set("conj", endings[i]);
+  });
+
+  rebuildPreview();
+}
+
+/* =========================
+   BUTTON
+========================= */
+document.getElementById("autoFillBtn")
+  .addEventListener("click", autoFill);
 /* =========================
    LIVE UPDATE
 ========================= */
