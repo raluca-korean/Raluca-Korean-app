@@ -151,8 +151,51 @@ button{
 
   </div>
 </div>
+ contentEl.innerHTML=`
+    <span class="badge">TOPIK ${l.topik}</span>
+    <h2>${l.title}</h2>
+    <p>${l.explanation}</p>
+    <div class="sub"><b>Structură:</b> ${l.structure}</div>
 
-<script>
+    ${l.examples.map(e=>`
+      <div class="example">
+        <div class="ko">${e.ko}</div>
+        <div class="ro">${e.ro}</div>
+      </div>
+    `).join("")}
+
+    ${l.notes?.length ? `
+      <div class="notes">
+        <b>Note:</b>
+        <ul>${l.notes.map(n=>`<li>${n}</li>`).join("")}</ul>
+      </div>
+    `:""}
+
+    <button onclick="goExercises('${l.id}')">
+      Exersează această lecție →
+    </button>
+  `;
+}
+  function renderLessons(){
+  const box = document.getElementById("lessons");
+  box.innerHTML = "";
+
+  LESSONS.forEach(l=>{
+    const btn = document.createElement("button");
+    btn.className = "lessonBtn";
+    btn.textContent = `TOPIK ${l.level} · ${l.title}`;
+
+    btn.onclick = ()=>{
+      activeLessonId = l.id;
+      index = 0;
+      chainStep = 0;
+      render();
+    };
+
+    box.appendChild(btn);
+  });
+}
+  <script>
 /* =========================
    DATA LECȚII
 ========================= */
@@ -246,50 +289,7 @@ function selectLesson(id){
   const l = LESSONS.find(x=>x.id===id);
   if(!l) return;
 
-  contentEl.innerHTML=`
-    <span class="badge">TOPIK ${l.topik}</span>
-    <h2>${l.title}</h2>
-    <p>${l.explanation}</p>
-    <div class="sub"><b>Structură:</b> ${l.structure}</div>
-
-    ${l.examples.map(e=>`
-      <div class="example">
-        <div class="ko">${e.ko}</div>
-        <div class="ro">${e.ro}</div>
-      </div>
-    `).join("")}
-
-    ${l.notes?.length ? `
-      <div class="notes">
-        <b>Note:</b>
-        <ul>${l.notes.map(n=>`<li>${n}</li>`).join("")}</ul>
-      </div>
-    `:""}
-
-    <button onclick="goExercises('${l.id}')">
-      Exersează această lecție →
-    </button>
-  `;
-}
-  function renderLessons(){
-  const box = document.getElementById("lessons");
-  box.innerHTML = "";
-
-  LESSONS.forEach(l=>{
-    const btn = document.createElement("button");
-    btn.className = "lessonBtn";
-    btn.textContent = `TOPIK ${l.level} · ${l.title}`;
-
-    btn.onclick = ()=>{
-      activeLessonId = l.id;
-      index = 0;
-      chainStep = 0;
-      render();
-    };
-
-    box.appendChild(btn);
-  });
-}
+ 
   function getExercisesByType(type){
   const arr = getExercisesByType(type);
   if(activeLessonId){
