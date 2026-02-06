@@ -79,156 +79,277 @@ h1{margin:0 0 12px}
 </div>
 
 <script>
-"use strict";
+  (function () {
+  "use strict";
 
-/* =========================
-   CORE UTILS
-========================= */
-function hasBatchim(ch){
-  if(!ch) return false;
-  const code = ch.charCodeAt(ch.length-1);
-  if(code < 0xAC00 || code > 0xD7A3) return false;
-  return ((code - 0xAC00) % 28) !== 0;
-}
+  /* =========================
+     GLOBAL STATE
+  ========================= */
+  let LINKS = []; // conectori între clauze (ENDING / WORD)
 
-/* =========================
-   PARTICLES
-========================= */
-function subjectParticle(noun){
-  if(!noun) return "";
-  return noun + (hasBatchim(noun) ? "은" : "는");
-}
-
-function objectParticle(noun){
-  if(!noun) return "";
-  return noun + (hasBatchim(noun) ? "을" : "를");
-}
-
-function choosePlaceParticle(place, verb){
-  if(!place) return "";
-  if(verb === "가다" || verb === "오다") return place + "에";
-  return place + "에서";
-}
-
-/* =========================
-   ENDINGS
-========================= */
-function attachEnding(verbInf, ending){
-  if(!verbInf) return "";
-  if(!ending) return verbInf;
-
-  if(!verbInf.endsWith("다")) return verbInf;
-  const stem = verbInf.slice(0,-1);
-  const last = stem[stem.length-1];
-  const b = hasBatchim(last);
-
-  if(ending === "-고") return stem + "고";
-  if(ending === "-지만") return stem + "지만";
-  if(ending === "-아서" || ending === "-어서") return stem + ending.slice(1);
-  if(ending === "-(으)면") return stem + (b ? "으면":"면");
-  if(ending === "-(으)ㄹ 때") return stem + (b ? "을 때":"ㄹ 때");
-  if(ending === "-(으)려고") return stem + (b ? "으려고":"려고");
-
-  return stem + ending.replace(/^-/,"");
-}
-
-function politeVerb(verbInf){
-  if(!verbInf.endsWith("다")) return verbInf;
-  if(verbInf === "하다") return "해요";
-  const stem = verbInf.slice(0,-1);
-  const last = stem[stem.length-1];
-  const code = last.charCodeAt(0) - 0xAC00;
-  const jung = Math.floor((code % (21*28))/28);
-  const a = [0,2,8,9];
-  return stem + (a.includes(jung) ? "아요":"어요");
-}
-
-/* =========================
-   UI BUILD
-========================= */
-const host = document.getElementById("clausesHost");
-
-function col(key,label){
-  return `
-  <div class="col" data-key="${key}">
-    <div class="col-header">${label}</div>
-    <div class="col-body-main" contenteditable></div>
-  </div>`;
-}
-
-function clauseHTML(i){
-  return `
-  <div class="table-block" data-idx="${i}">
-    <div class="table-horizontal">
-      ${col("subject","SUBJECT")}
-      ${col("time","TIME")}
-      ${col("place","PLACE")}
-      ${col("mod","MOD")}
-      ${col("object","OBJECT")}
-      ${col("numeral","NUMERAL")}
-      ${col("counter","COUNTER")}
-      ${col("verb","VERB")}
-      ${col("conj","CONJ")}
-    </div>
-  </div>`;
-}
-
-function ensureClauses(n){
-  const cur = host.children.length;
-  for(let i=cur;i<n;i++) host.insertAdjacentHTML("beforeend",clauseHTML(i));
-}
-
-/* =========================
-   READ CELLS
-========================= */
-function read(idx,key){
-  return host.querySelector(`[data-idx="${idx}"] .col[data-key="${key}"] .col-body-main`)
-    ?.textContent.trim() || "";
-}
-
-/* =========================
-   BUILD PREVIEW
-========================= */
-function buildClause(i,last,polite){
-  const s = read(i,"subject");
-  const t = read(i,"time");
-  const p = read(i,"place");
-  const m = read(i,"mod");
-  const o = read(i,"object");
-  const n = read(i,"numeral");
-  const c = read(i,"counter");
-  const v = read(i,"verb");
-  const conj = read(i,"conj");
-
-  let subj = s ? subjectParticle(s) : "";
-  let obj = o ? objectParticle(o + (n && c ? " "+n+" "+c : "")) : "";
-  let place = choosePlaceParticle(p,v);
-
-  let verbOut = conj ? attachEnding(v,conj) : v;
-  if(last && polite && !conj) verbOut = politeVerb(v);
-
-  return [subj,t,place,m,obj,verbOut].filter(Boolean).join(" ");
-}
-
-function rebuild(){
-  const polite = document.getElementById("politeToggle").checked;
-  const blocks = host.children.length;
-  const out=[];
-  for(let i=0;i<blocks;i++){
-    const text = buildClause(i,i===blocks-1,polite);
-    if(text) out.push(text);
+  /* =========================
+     UTILS
+  ========================= */
+  function normalizeText(text) {
+    if (!text) return "";
+    return text
+      .toLowerCase()
+      .replace(/ş/g, "ș")
+      .replace(/ţ/g, "ț")
+      .replace(/[.,!?;:]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
-  document.getElementById("previewSentence").textContent =
-    out.join(" ") || "저 가요";
-}
 
-/* =========================
-   INIT
-========================= */
-ensureClauses(1);
-host.addEventListener("input",rebuild);
-document.getElementById("politeToggle").addEventListener("change",rebuild);
-rebuild();
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function hasBatchim(char) {
+    if (!char) return false;
+    const code = char.charCodeAt(0);
+    if (code < 0xac00 || code > 0xd7a3) return false;
+    return (code - 0xac00) % 28 !== 0;
+  }
+
+  function lastHangulChar(str) {
+    if (!str) return "";
+    return str.trim().slice(-1);
+  }
+
+  /* =========================
+     CONNECTORS (SPLIT)
+  ========================= */
+  const CONNECTORS = [
+    { keys: ["și", "si", "and"], ending: "-고" },
+    { keys: ["dar", "but"], ending: "-지만" },
+    { keys: ["pentru că", "pentru ca", "because"], ending: "-어서" },
+    { keys: ["dacă", "daca", "if"], ending: "-(으)면" },
+    { keys: ["când", "when"], ending: "-(으)ㄹ 때" },
+    { keys: ["ca să", "in order to"], ending: "-(으)려고" }
+  ];
+
+  function buildConnectorRegex() {
+    const all = CONNECTORS.flatMap(c => c.keys);
+    all.sort((a, b) => b.length - a.length);
+    return new RegExp("\\s(" + all.map(escapeRegExp).join("|") + ")\\s", "ig");
+  }
+
+  function mapConnector(token) {
+    token = token.toLowerCase();
+    for (const c of CONNECTORS) {
+      if (c.keys.includes(token)) {
+        return { ending: c.ending };
+      }
+    }
+    return { ending: "-고" };
+  }
+
+  function splitIntoChain(raw) {
+    const text = normalizeText(raw);
+    if (!text) return { clauses: [], links: [] };
+
+    const re = buildConnectorRegex();
+    let m, last = 0;
+    const clauses = [];
+    const links = [];
+
+    while ((m = re.exec(text)) !== null) {
+      const before = text.slice(last, m.index).trim();
+      if (before) clauses.push(before);
+      links.push(mapConnector(m[1]));
+      last = m.index + m[0].length;
+    }
+
+    const tail = text.slice(last).trim();
+    if (tail) clauses.push(tail);
+    while (links.length >= clauses.length) links.pop();
+
+    return { clauses, links };
+  }
+
+  /* =========================
+     SLOT RULES (RO / EN)
+  ========================= */
+  const RO = {
+    subject: [{ re: /\b(eu)\b/i, v: "저" }],
+    time: [{ re: /\b(azi|astăzi)\b/i, v: "오늘" }],
+    place: [{ re: /\b(cafenea)\b/i, v: "카페" }],
+    object: [{ re: /\b(carte)\b/i, v: "책" }],
+    numeral: [{ re: /\b(o|una)\b/i, v: "한" }],
+    counter: [{ re: /\b(carte)\b/i, v: "권" }],
+    verb: [{ re: /\b(merg)\b/i, v: "가다" }]
+  };
+
+  function matchSlot(rules, text) {
+    for (const r of rules) if (r.re.test(text)) return r.v;
+    return "";
+  }
+
+  function parseToSlots(text) {
+    const t = normalizeText(text);
+    return {
+      subject: matchSlot(RO.subject, t),
+      time: matchSlot(RO.time, t),
+      place: matchSlot(RO.place, t),
+      object: matchSlot(RO.object, t),
+      numeral: matchSlot(RO.numeral, t),
+      counter: matchSlot(RO.counter, t),
+      verb: matchSlot(RO.verb, t)
+    };
+  }
+
+  /* =========================
+     DOM HELPERS
+  ========================= */
+  const host = document.getElementById("clausesHost");
+
+  function tableId(i) {
+    return "tableP" + (i + 1);
+  }
+
+  function cell(id, key) {
+    return document.querySelector(`#${id} .col[data-key="${key}"] .col-body-main`);
+  }
+
+  function get(id, key) {
+    const c = cell(id, key);
+    return c ? c.textContent.trim() : "";
+  }
+
+  function set(id, key, v) {
+    const c = cell(id, key);
+    if (c) c.textContent = v || "";
+  }
+
+  function ensureClauseCount(n) {
+    const cur = host.children.length;
+    if (cur === n) return;
+
+    if (cur < n) {
+      for (let i = cur; i < n; i++) {
+        host.insertAdjacentHTML(
+          "beforeend",
+          `<section class="table-block" data-clause-index="${i}">
+            <div id="${tableId(i)}" class="table-horizontal"></div>
+          </section>`
+        );
+      }
+    } else {
+      for (let i = cur - 1; i >= n; i--) host.children[i].remove();
+    }
+  }
+
+  /* =========================
+     PARTICLES & ENDINGS
+  ========================= */
+  function choosePlaceParticle(place, verb) {
+    if (!place) return "";
+    if (verb === "가다" || verb === "오다") return place + "에";
+    return place + "에서";
+  }
+
+  function attachEnding(verb, ending) {
+    if (!ending || !verb.endsWith("다")) return verb;
+    const stem = verb.slice(0, -1);
+    const last = lastHangulChar(stem);
+    const b = hasBatchim(last);
+
+    if (ending === "-고") return stem + "고";
+    if (ending === "-지만") return stem + "지만";
+    if (ending === "-(으)면") return stem + (b ? "으면" : "면");
+    if (ending === "-(으)ㄹ 때") return stem + (b ? "을 때" : "ㄹ 때");
+    if (ending === "-(으)려고") return stem + (b ? "으려고" : "려고");
+    if (ending === "-어서") return stem + "어서";
+
+    return stem + ending;
+  }
+
+  function politeVerb(verb) {
+    if (!verb.endsWith("다")) return verb;
+    const stem = verb.slice(0, -1);
+    return stem + "요";
+  }
+
+  /* =========================
+     BUILD PREVIEW
+  ========================= */
+  function buildClause(i, isLast, polite) {
+    const id = tableId(i);
+
+    const subject = get(id, "subject");
+    const time = get(id, "time");
+    const placeB = get(id, "place");
+    const object = get(id, "object");
+    const numeral = get(id, "numeral");
+    const counter = get(id, "counter");
+    const verbInf = get(id, "verb");
+    const conj = get(id, "conj");
+
+    const obj =
+      object && numeral && counter
+        ? `${object} ${numeral} ${counter}`
+        : object;
+
+    const place = choosePlaceParticle(placeB, verbInf);
+
+    let verb = attachEnding(verbInf, conj);
+    if (isLast && polite && !conj) verb = politeVerb(verbInf);
+
+    return [subject, time, place, obj, verb].filter(Boolean).join(" ");
+  }
+
+  function rebuildPreview() {
+    const out = document.getElementById("previewSentence");
+    const polite = document.getElementById("politeToggle")?.checked;
+
+    const chunks = [];
+    for (let i = 0; i < host.children.length; i++) {
+      chunks.push(buildClause(i, i === host.children.length - 1, polite));
+    }
+
+    out.textContent = chunks.join(" ").trim() || "저 가요";
+  }
+
+  /* =========================
+     AUTOFILL
+  ========================= */
+  function autoFill() {
+    const input = document.getElementById("inputText").value;
+    const chain = splitIntoChain(input);
+
+    LINKS = chain.links;
+    ensureClauseCount(chain.clauses.length);
+
+    chain.clauses.forEach((c, i) => {
+      const slots = parseToSlots(c);
+      const id = tableId(i);
+      Object.entries(slots).forEach(([k, v]) => v && set(id, k, v));
+      if (LINKS[i]) set(id, "conj", LINKS[i].ending);
+    });
+
+    rebuildPreview();
+  }
+
+  /* =========================
+     INIT
+  ========================= */
+  function init() {
+    ensureClauseCount(1);
+    set("tableP1", "subject", "저");
+    set("tableP1", "verb", "가다");
+
+    document.getElementById("autoFillBtn")?.addEventListener("click", autoFill);
+    document.getElementById("clearBtn")?.addEventListener("click", () => location.reload());
+    document.addEventListener("input", rebuildPreview);
+    document.getElementById("politeToggle")?.addEventListener("change", rebuildPreview);
+
+    rebuildPreview();
+  }
+
+  window.addEventListener("DOMContentLoaded", init);
+})();
+  
 </script>
 </body>
 </html>
