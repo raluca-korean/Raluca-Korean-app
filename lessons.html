@@ -53,7 +53,6 @@ h3{font-size:16px}
   grid-template-columns:280px 1fr;
   gap:16px;
 }
-
 @media(max-width:720px){
   .grid{grid-template-columns:1fr}
 }
@@ -64,7 +63,6 @@ h3{font-size:16px}
   flex-direction:column;
   gap:8px;
 }
-
 .lesson-item{
   padding:10px 12px;
   border-radius:14px;
@@ -72,13 +70,8 @@ h3{font-size:16px}
   background:rgba(10,8,28,.55);
   cursor:pointer;
   font-weight:700;
-  transition:.15s;
 }
-
-.lesson-item:hover{
-  border-color:var(--accent2);
-}
-
+.lesson-item:hover{border-color:var(--accent2)}
 .lesson-item.active{
   background:rgba(124,58,237,.18);
   border-color:var(--accent);
@@ -95,7 +88,6 @@ h3{font-size:16px}
   font-size:12px;
   margin-bottom:10px;
 }
-
 .example{
   background:rgba(10,8,28,.55);
   border:1px dashed rgba(255,255,255,.18);
@@ -103,15 +95,9 @@ h3{font-size:16px}
   padding:10px 12px;
   margin:8px 0;
 }
-
 .example .ko{font-weight:900}
 .example .ro{font-size:13px;color:var(--muted)}
-
-.notes{
-  margin-top:10px;
-  font-size:13px;
-  color:var(--muted);
-}
+.notes{margin-top:10px;font-size:13px;color:var(--muted)}
 
 button{
   margin-top:14px;
@@ -126,16 +112,14 @@ button{
 </head>
 
 <body>
- <div id="lessons"></div> 
 <div class="app">
 
   <!-- HEADER -->
   <div class="card">
     <h1>Lecții TOPIK</h1>
-    <div class="sub">Structurate • Clare • Legate de exerciții</div>
+    <div class="sub">Structurate • Clare • Conectate cu exercițiile</div>
   </div>
 
-  <!-- MAIN -->
   <div class="grid">
 
     <!-- SIDEBAR -->
@@ -152,19 +136,23 @@ button{
   </div>
 </div>
 
- 
-  <script>
+<script>
 /* =========================
-   DATA LECȚII
+   INDEX LECȚII
 ========================= */
-  const LESSONS = [
-  { id:"T1-01", title:"Identitate", level:1 },
-  { id:"T1-02", title:"Viața zilnică", level:1 },
-  { id:"T2-01", title:"Muncă", level:2 },
-  { id:"T3-01", title:"Cauză (아서/어서)", level:3 },
+const LESSON_INDEX = [
+  {id:"T1-01", topik:1, title:"은 / 는 — topic"},
+  {id:"T1-02", topik:1, title:"이 / 가 — subiect"},
+  {id:"T2-01", topik:2, title:"-(으)려고 하다 — intenție"},
+  {id:"T3-01", topik:3, title:"-아/어서 — cauză"},
+  {id:"T4-01", topik:4, title:"-(으)ㄴ/는 것 같다 — opinie"}
+];
 
-  {
-    id:"T1-01",
+/* =========================
+   CONȚINUT LECȚII
+========================= */
+const LESSON_CONTENT = {
+  "T1-01":{
     topik:1,
     title:"은 / 는 — topic",
     explanation:"Marchează tema propoziției (despre ce vorbim).",
@@ -175,59 +163,78 @@ button{
     ],
     notes:["Nu este același lucru cu subiectul gramatical."]
   },
-  {
-    id:"T1-02",
+
+  "T1-02":{
     topik:1,
     title:"이 / 가 — subiect",
-    explanation:"Marchează subiectul care face acțiunea.",
+    explanation:"Marchează subiectul acțiunii.",
     structure:"Substantiv + 이 / 가",
     examples:[
       {ko:"비가 와요.",ro:"Plouă."},
       {ko:"시간이 없어요.",ro:"Nu am timp."}
-    ],
-    notes:["Folosit frecvent pentru informații noi."]
+    ]
   },
-  {
-    id:"T2-01",
+
+  "T2-01":{
     topik:2,
     title:"-(으)려고 하다 — intenție",
     explanation:"Exprimă planul sau intenția vorbitorului.",
     structure:"Verb + (으)려고 하다",
     examples:[
       {ko:"한국어를 배우려고 해요.",ro:"Plănuiesc să învăț coreeana."}
-    ],
-    notes:["Nu se folosește pentru trecut."]
+    ]
   },
-  {
-    id:"T3-01",
+
+  "T3-01":{
     topik:3,
     title:"-아/어서 — cauză",
     explanation:"Leagă cauza de rezultat.",
-    structure:"Verb/Adjectiv + 아/어서",
+    structure:"Verb/Adj + 아/어서",
     examples:[
       {ko:"비가 와서 집에 있었어요.",ro:"Pentru că a plouat, am stat acasă."}
-    ],
-    notes:["Nu se folosește cu viitor sau imperativ."]
+    ]
   },
-  {
-    id:"T4-01",
+
+  "T4-01":{
     topik:4,
     title:"-(으)ㄴ/는 것 같다 — opinie",
     explanation:"Exprimă o presupunere sau opinie.",
     structure:"Verb + (으)ㄴ/는 것 같다",
     examples:[
       {ko:"이 방법이 좋은 것 같아요.",ro:"Cred că această metodă este bună."}
-    ],
-    notes:["Foarte frecvent în TOPIK 4."]
+    ]
   }
-];
-let activeLessonId = null; // ex: "T1-01"
-  /* =========================
+};
+
+/* =========================
    UI
 ========================= */
 const listEl = document.getElementById("lessonList");
 const contentEl = document.getElementById("lessonContent");
- contentEl.innerHTML=`
+
+function renderList(){
+  listEl.innerHTML="";
+  LESSON_INDEX.forEach(l=>{
+    const el=document.createElement("div");
+    el.className="lesson-item";
+    el.textContent=`TOPIK ${l.topik} · ${l.title}`;
+    el.dataset.id=l.id;
+    el.onclick=()=>selectLesson(l.id);
+    listEl.appendChild(el);
+  });
+}
+
+function selectLesson(id){
+  document.querySelectorAll(".lesson-item")
+    .forEach(x=>x.classList.toggle("active",x.dataset.id===id));
+
+  const l = LESSON_CONTENT[id];
+  if(!l){
+    contentEl.innerHTML="<div class='sub'>Lecția nu există.</div>";
+    return;
+  }
+
+  contentEl.innerHTML=`
     <span class="badge">TOPIK ${l.topik}</span>
     <h2>${l.title}</h2>
     <p>${l.explanation}</p>
@@ -240,75 +247,28 @@ const contentEl = document.getElementById("lessonContent");
       </div>
     `).join("")}
 
-    ${l.notes?.length ? `
+    ${l.notes ? `
       <div class="notes">
         <b>Note:</b>
         <ul>${l.notes.map(n=>`<li>${n}</li>`).join("")}</ul>
       </div>
     `:""}
 
-    <button onclick="goExercises('${l.id}')">
+    <button onclick="goExercises('${id}')">
       Exersează această lecție →
     </button>
   `;
 }
-    function renderList(){
-  listEl.innerHTML="";
-  LESSONS.forEach(l=>{
-    const el=document.createElement("div");
-    el.className="lesson-item";
-    el.textContent=`TOPIK ${l.topik} · ${l.title}`;
-    el.onclick=()=>selectLesson(l.id);
-    el.dataset.id=l.id;
-    listEl.appendChild(el);
-  });
-}
 
-function selectLesson(id){
-  [...document.querySelectorAll(".lesson-item")]
-    .forEach(x=>x.classList.toggle("active",x.dataset.id===id));
-
-  const l = LESSONS.find(x=>x.id===id);
-  if(!l) return;
-
-  function renderLessons(){
-  const box = document.getElementById("lessons");
-  box.innerHTML = "";
-
-  LESSONS.forEach(l=>{
-    const btn = document.createElement("button");
-    btn.className = "lessonBtn";
-    btn.textContent = `TOPIK ${l.level} · ${l.title}`;
-
-    btn.onclick = ()=>{
-      activeLessonId = l.id;
-      index = 0;
-      chainStep = 0;
-      render();
-    };
-
-    box.appendChild(btn);
-  });
-  }
-  function getExercisesByType(type){
-  const arr = getExercisesByType(type);
-  if(activeLessonId){
-    arr = arr.filter(x => x.lessonId === activeLessonId);
-  }
-
-  return arr;
-}
-  function goExercises(lessonId){
-  const url = new URL("exercises.html", window.location.origin);
-  url.searchParams.set("lesson", lessonId);
-  window.location.href = url.toString();
+/* =========================
+   LINK CĂTRE EXERCIȚII
+========================= */
+function goExercises(lessonId){
+  window.location.href = `exercises.html?lesson=${lessonId}`;
 }
 
 /* INIT */
 renderList();
-  DATA.chain = DATA.chain.filter(
-  c => !activeLessonId || c.lessonId === activeLessonId
-);
-  </script>
+</script>
 </body>
 </html>
