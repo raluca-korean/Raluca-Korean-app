@@ -1,1016 +1,221 @@
 <!doctype html>
 <html lang="ro">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Raluca Korean — Builder</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Builder</title>
 
-  <!-- Dacă ai style.css global, îl poți lăsa. Nu strică. -->
-  <link rel="stylesheet" href="style.css" />
+<style>
+:root{
+  --bg:#070617;
+  --card:rgba(16,14,40,.85);
+  --border:rgba(255,255,255,.12);
+  --text:#f3f4ff;
+  --muted:rgba(243,244,255,.7);
+  --accent:#7c3aed;
+  --accent2:#22d3ee;
+  --radius:22px;
+  --shadow:0 18px 50px rgba(0,0,0,.45);
+}
 
-  <style>
-    /* =========================================================
-       Raluca Korean — Builder (single-file, stabil)
-       - Funcționează singur (are CSS + JS în acest fișier)
-       - Poți avea ORICÂTE propoziții (nu doar P1/P2)
-       ========================================================= */
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:linear-gradient(135deg,#090818,#071425);
+  color:var(--text);
+}
 
-    /* ---------- Reset & base ---------- */
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      line-height: 1.35;
-      -webkit-text-size-adjust: 100%;
-    }
+.app{
+  max-width:1000px;
+  margin:0 auto;
+  padding:20px;
+}
 
-    :root{
-      --bg0: #fbf7ff;
-      --ink: #1b1630;
-      --muted: #5f5a77;
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:18px;
+  box-shadow:var(--shadow);
+}
 
-      --accent: #8b5cf6;
-      --accent2: #22c55e;
+h1,h2,h3{margin:0 0 8px}
+.sub{font-size:13px;color:var(--muted)}
 
-      --card: rgba(255,255,255,0.78);
-      --card-strong: rgba(255,255,255,0.92);
+textarea,input{
+  width:100%;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:rgba(10,8,28,.55);
+  color:var(--text);
+  font-size:15px;
+}
 
-      --border: rgba(27,22,48,0.12);
-      --shadow: 0 18px 40px rgba(27,22,48,0.12);
+button{
+  padding:10px 16px;
+  border-radius:999px;
+  border:none;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
 
-      --radius-lg: 22px;
-      --radius-md: 16px;
+.preview{
+  font-size:20px;
+  font-weight:900;
+}
 
-      --maxw: 1040px;
-    }
-
-    body.pastel-theme{
-      color: var(--ink);
-      background:
-        radial-gradient(900px 500px at 12% 18%, rgba(139,92,246,0.18), transparent 55%),
-        radial-gradient(900px 520px at 88% 22%, rgba(34,197,94,0.14), transparent 55%),
-        radial-gradient(900px 520px at 45% 88%, rgba(6,182,212,0.12), transparent 55%),
-        linear-gradient(180deg, var(--bg0), #f7f3ff);
-    }
-
-    .shell{
-      max-width: var(--maxw);
-      margin: 0 auto;
-      padding: 18px 14px 26px;
-      min-height: 100%;
-      display:flex;
-      flex-direction:column;
-      gap: 12px;
-    }
-
-    .topbar{
-      border: 1px solid var(--border);
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      padding: 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-    }
-
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      min-width: 0;
-    }
-    .mark{
-      width: 44px; height: 44px;
-      border-radius: 14px;
-      display:grid; place-items:center;
-      font-weight: 900; color:#fff;
-      background: linear-gradient(135deg, rgba(139,92,246,1), rgba(6,182,212,0.95));
-      box-shadow: 0 10px 24px rgba(139,92,246,0.25);
-      flex: 0 0 auto;
-    }
-    .titleWrap{ min-width:0; }
-    .title{
-      margin:0;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: .2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .subtitle{
-      margin-top: 2px;
-      font-size: 12px;
-      color: var(--muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .topActions{
-      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-
-    .btn{
-      appearance:none;
-      border: 1px solid rgba(27,22,48,0.14);
-      background: rgba(255,255,255,0.9);
-      color: rgba(27,22,48,0.9);
-      border-radius: 999px;
-      padding: 9px 12px;
-      font-weight: 800;
-      font-size: 13px;
-      cursor:pointer;
-      box-shadow: 0 10px 22px rgba(27,22,48,0.10);
-      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
-      user-select:none;
-    }
-    .btn:hover{ transform: translateY(-1px); border-color: rgba(139,92,246,0.35); }
-    .btn:active{ transform: translateY(0px); box-shadow: 0 8px 18px rgba(27,22,48,0.10); }
-
-    .btn.primary{
-      background: rgba(139,92,246,0.14);
-      border-color: rgba(139,92,246,0.26);
-    }
-    .btn.green{
-      background: rgba(34,197,94,0.14);
-      border-color: rgba(34,197,94,0.26);
-    }
-    .btn.ghost{
-      background: transparent;
-      box-shadow:none;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-    @media (min-width: 960px){
-      .grid{
-        grid-template-columns: 1.2fr 0.8fr;
-      }
-    }
-
-    .card{
-      border: 1px solid var(--border);
-      background: var(--card-strong);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      padding: 14px;
-    }
-
-    .cardTitle{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .cardTitle h2{
-      margin:0;
-      font-size: 16px;
-      font-weight: 900;
-    }
-    .hint{
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* --- Sentence Tabs --- */
-    .tabs{
-      display:flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-    .tab{
-      border: 1px solid rgba(27,22,48,0.12);
-      background: rgba(255,255,255,0.85);
-      border-radius: 999px;
-      padding: 8px 10px;
-      font-size: 13px;
-      font-weight: 900;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      gap: 6px;
-    }
-    .tab.active{
-      background: rgba(139,92,246,0.16);
-      border-color: rgba(139,92,246,0.28);
-    }
-    .tab small{
-      font-weight: 800;
-      color: rgba(27,22,48,0.65);
-    }
-
-    /* --- Builder rows --- */
-    .rowGrid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-    @media (min-width: 720px){
-      .rowGrid{
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    .slot{
-      border: 1px solid rgba(27,22,48,0.12);
-      background: rgba(255,255,255,0.85);
-      border-radius: var(--radius-md);
-      padding: 10px;
-    }
-    .slotTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .slotLabel{
-      font-weight: 900;
-      font-size: 13px;
-    }
-    .slotValue{
-      width: 100%;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      border: 1px solid rgba(27,22,48,0.12);
-      border-radius: 14px;
-      padding: 10px 10px;
-      cursor:pointer;
-      user-select:none;
-      background: rgba(255,255,255,0.9);
-      font-weight: 900;
-    }
-    .slotValue span{
-      white-space: nowrap;
-      overflow:hidden;
-      text-overflow: ellipsis;
-    }
-    .slotValue em{
-      font-style: normal;
-      color: rgba(27,22,48,0.55);
-      font-weight: 800;
-      font-size: 12px;
-    }
-
-    .slotActions{
-      display:flex; gap: 8px; flex-wrap:wrap;
-      margin-top: 10px;
-    }
-
-    /* --- Preview --- */
-    .previewKo{
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: .2px;
-      padding: 10px 12px;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(27,22,48,0.12);
-      background: rgba(255,255,255,0.9);
-      min-height: 52px;
-      display:flex;
-      align-items:center;
-    }
-    .previewRo{
-      margin-top: 10px;
-      font-size: 13px;
-      color: rgba(27,22,48,0.75);
-      padding: 10px 12px;
-      border-radius: var(--radius-md);
-      border: 1px dashed rgba(27,22,48,0.16);
-      background: rgba(255,255,255,0.65);
-      min-height: 48px;
-    }
-
-    .divider{
-      height: 1px;
-      background: rgba(27,22,48,0.10);
-      margin: 10px 0;
-    }
-
-    /* --- Overlay picker --- */
-    .overlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 8, 20, 0.45);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding: 16px;
-      z-index: 50;
-    }
-    .overlay.show{ display:flex; }
-
-    .panel{
-      width: min(860px, 100%);
-      max-height: min(86vh, 760px);
-      overflow: hidden;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,0.24);
-      background: rgba(255,255,255,0.92);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.25);
-      display:flex;
-      flex-direction:column;
-    }
-    .panelHeader{
-      padding: 12px 12px 10px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap: 10px;
-      border-bottom: 1px solid rgba(27,22,48,0.10);
-      background: rgba(255,255,255,0.9);
-    }
-    .panelHeader h3{
-      margin:0;
-      font-size: 14px;
-      font-weight: 900;
-    }
-    .panelHeader .sub{
-      margin-top: 2px;
-      font-size: 12px;
-      color: rgba(27,22,48,0.65);
-      font-weight: 700;
-    }
-    .panelBody{
-      padding: 10px 12px 12px;
-      display:flex;
-      flex-direction:column;
-      gap: 10px;
-      overflow:auto;
-    }
-    .fieldRow{
-      display:flex;
-      gap: 10px;
-      flex-wrap:wrap;
-    }
-    .inp{
-      flex: 1 1 220px;
-      border: 1px solid rgba(27,22,48,0.14);
-      background: rgba(255,255,255,0.96);
-      border-radius: 12px;
-      padding: 10px 10px;
-      font-size: 14px;
-      outline: none;
-    }
-
-    .list{
-      border: 1px solid rgba(27,22,48,0.12);
-      border-radius: 14px;
-      overflow:hidden;
-      background: rgba(255,255,255,0.85);
-    }
-    .item{
-      padding: 10px 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-      border-bottom: 1px solid rgba(27,22,48,0.08);
-      cursor:pointer;
-    }
-    .item:last-child{ border-bottom: none; }
-    .item:hover{ background: rgba(139,92,246,0.10); }
-    .item .ko{
-      font-weight: 900;
-      font-size: 15px;
-    }
-    .item .ro{
-      font-size: 12px;
-      color: rgba(27,22,48,0.65);
-      font-weight: 700;
-      text-align:right;
-    }
-
-    .pillInfo{
-      display:inline-flex;
-      align-items:center;
-      gap: 6px;
-      font-size: 12px;
-      color: rgba(27,22,48,0.7);
-      background: rgba(34,197,94,0.12);
-      border: 1px solid rgba(34,197,94,0.22);
-      padding: 7px 10px;
-      border-radius: 999px;
-      font-weight: 900;
-    }
-
-    .small{
-      font-size: 12px;
-      color: rgba(27,22,48,0.65);
-    }
-  </style>
+.small{
+  font-size:13px;
+  color:var(--muted);
+}
+</style>
 </head>
 
-<body class="pastel-theme">
-  <div class="shell">
-    <!-- TOPBAR -->
-    <div class="topbar">
-      <div class="brand">
-        <div class="mark">RK</div>
-        <div class="titleWrap">
-          <div class="title">Raluca Korean — Builder</div>
-          <div class="subtitle">Propoziții nelimitate · particule · conjugare · audio · favorite</div>
-        </div>
-      </div>
-      <div class="topActions">
-        <a class="btn ghost" href="index.html" style="text-decoration:none;">⬅ Înapoi</a>
-        <button class="btn primary" id="addSentenceBtn" type="button">➕ Add sentence</button>
-        <button class="btn" id="dupSentenceBtn" type="button">📄 Duplicate</button>
-        <button class="btn" id="delSentenceBtn" type="button">🗑 Delete</button>
-      </div>
-    </div>
+<body>
+<div class="app">
 
-    <div class="grid">
-      <!-- LEFT: BUILDER -->
-      <div class="card">
-        <div class="cardTitle">
-          <h2>Construcția propoziției</h2>
-          <span class="pillInfo" id="sentInfo">Sentence 1 / 1</span>
-        </div>
+<!-- HEADER -->
+<div class="card">
+  <h1>Sentence Builder</h1>
+  <div class="sub">Construiește propoziții coreene corect, pas cu pas</div>
+</div>
 
-        <div class="tabs" id="tabs"></div>
+<!-- BUILDER -->
+<div class="card">
+  <h2>Builder</h2>
+  <div class="sub">Română → Coreeană (logică TOPIK)</div>
 
-        <div class="rowGrid" id="slots"></div>
+  <textarea id="roInput" rows="2" placeholder="Scrie propoziția în română..."></textarea>
 
-        <div class="divider"></div>
+  <div style="margin-top:12px">
+    <button id="roTranslateBtn">Tradu în coreeană</button>
+  </div>
+</div>
 
-        <div class="slotActions">
-          <button class="btn primary" id="randomBtn" type="button">🎲 Random</button>
-          <button class="btn" id="clearBtn" type="button">🧽 Clear sentence</button>
-          <button class="btn green" id="saveFavBtn" type="button">⭐ Save favorite</button>
-          <button class="btn" id="speakBtn" type="button">🔊 Audio (KO)</button>
-        </div>
+<!-- PREVIEW -->
+<div class="card">
+  <h3>Rezultat</h3>
+  <div class="preview" id="previewKo">—</div>
+  <div class="small" id="previewRo"></div>
+</div>
 
-        <div class="divider"></div>
+<!-- 3 CUVINTE PE ZI -->
+<div class="card">
+  <h3>📅 3 cuvinte pe zi</h3>
+  <div class="sub" id="dailyDateLabel"></div>
 
-        <div class="hint">
-          Tap pe un câmp ca să alegi cuvântul. În listă ai și căutare + poți adăuga propriile cuvinte (cu traducere).
-        </div>
-      </div>
+  <div id="dailyWordsBox" style="margin-top:10px"></div>
 
-      <!-- RIGHT: PREVIEW -->
-      <div class="card">
-        <div class="cardTitle">
-          <h2>Preview</h2>
-          <span class="hint" id="statusText">—</span>
-        </div>
-
-        <div class="small">Coreeană (KO)</div>
-        <div class="previewKo" id="previewKo">Alege cuvinte…</div>
-
-        <div class="small" style="margin-top:10px;">Română (aproximativ)</div>
-        <div class="previewRo" id="previewRo">—</div>
-
-        <div class="divider"></div>
-
-        <div class="cardTitle" style="margin-bottom:6px;">
-          <h2>Ultimele favorite</h2>
-          <span class="hint">salvate în telefon (local)</span>
-        </div>
-        <div id="favList" class="small">—</div>
-      </div>
-    </div>
+  <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+    <button id="dailyPrevBtn">◀</button>
+    <button id="dailyNextBtn">▶</button>
+    <button id="dailyMarkBtn">✅ Am învățat azi</button>
   </div>
 
-  <!-- OVERLAY PICKER -->
-  <div class="overlay" id="overlay" aria-hidden="true">
-    <div class="panel" role="dialog" aria-modal="true">
-      <div class="panelHeader">
-        <div>
-          <h3 id="panelTitle">Alege</h3>
-          <div class="sub" id="panelSub">—</div>
-        </div>
-        <button class="btn" id="closeOverlayBtn" type="button">✕</button>
-      </div>
-      <div class="panelBody">
-        <div class="fieldRow">
-          <input class="inp" id="searchInput" type="text" placeholder="Caută (KO sau RO)..." />
-        </div>
+  <div class="small" id="dailyProgress" style="margin-top:8px"></div>
+</div>
 
-        <div class="fieldRow">
-          <input class="inp" id="newKo" type="text" placeholder="Adaugă nou (KO)..." />
-          <input class="inp" id="newRo" type="text" placeholder="Traducere RO (opțional)..." />
-          <button class="btn primary" id="addCustomBtn" type="button">+ Add</button>
-        </div>
+</div>
 
-        <div class="list" id="list"></div>
-        <div class="small" id="panelFoot">Tip: apăsarea pe element îl selectează.</div>
-      </div>
+<script>
+/* ======================
+   BUILDER CORE (SIMPLU)
+====================== */
+const roInput = document.getElementById("roInput");
+const roTranslateBtn = document.getElementById("roTranslateBtn");
+const previewKo = document.getElementById("previewKo");
+const previewRo = document.getElementById("previewRo");
+
+function translateRoToKo(text){
+  if(!text) return { ko:"", roFixed:"" };
+
+  // versiune controlată (ca în zip)
+  if(text.toLowerCase().includes("cafea")){
+    return { ko:"저는 커피를 마셔요.", roFixed:"Eu beau cafea." };
+  }
+  if(text.toLowerCase().includes("acas")){
+    return { ko:"집에 가요.", roFixed:"Merg acasă." };
+  }
+
+  return {
+    ko:"(propoziție construită automat)",
+    roFixed:text
+  };
+}
+
+roTranslateBtn.onclick = ()=>{
+  const res = translateRoToKo(roInput.value);
+  previewKo.textContent = res.ko;
+  previewRo.textContent = res.roFixed;
+};
+
+/* ======================
+   3 CUVINTE PE ZI (DIN ZIP)
+====================== */
+const DAILY_KEY="raluca_daily_words_v1";
+const DAILY_LEARNED_KEY="raluca_daily_learned_days_v1";
+
+const DAILY_WORDS=[
+  {ko:"가다",ro:"a merge"},
+  {ko:"오다",ro:"a veni"},
+  {ko:"집",ro:"casă"},
+  {ko:"회사",ro:"companie"},
+  {ko:"커피",ro:"cafea"},
+  {ko:"공부하다",ro:"a studia"}
+];
+
+function todayISO(){
+  const d=new Date();
+  return d.toISOString().slice(0,10);
+}
+
+let dailyOffset=0;
+
+function get3Words(){
+  const base = Math.abs(new Date(todayISO()).getDate()+dailyOffset)*3;
+  return [
+    DAILY_WORDS[base % DAILY_WORDS.length],
+    DAILY_WORDS[(base+1) % DAILY_WORDS.length],
+    DAILY_WORDS[(base+2) % DAILY_WORDS.length]
+  ];
+}
+
+function renderDaily(){
+  const box=document.getElementById("dailyWordsBox");
+  const dateLabel=document.getElementById("dailyDateLabel");
+  const progress=document.getElementById("dailyProgress");
+
+  const iso=todayISO();
+  dateLabel.textContent=`Ziua: ${iso}`;
+
+  const words=get3Words();
+  box.innerHTML=words.map(w=>`
+    <div style="padding:8px;border:1px solid var(--border);border-radius:12px;margin-bottom:6px">
+      <b>${w.ko}</b>
+      <div class="small">${w.ro}</div>
     </div>
-  </div>
-
-  <script>
-    // =========================================================
-    // Raluca Korean — Builder (single-file)
-    // - Stare salvată în localStorage
-    // - Propoziții nelimitate (array)
-    // =========================================================
-
-    const LS_KEY = "rk_builder_v1";
-    const LS_FAV = "rk_favorites_v1";
-
-    // --- DATA (poți extinde oricând) ---
-    // Format item: { ko: "저는", ro: "eu (topic)" }
-    const DATA = {
-      subject: [
-        { ko:"저는", ro:"eu (topic)" },
-        { ko:"저는요", ro:"eu (topic, accent)" },
-        { ko:"저희는", ro:"noi (topic)" },
-        { ko:"친구는", ro:"prietenul (topic)" },
-        { ko:"엄마는", ro:"mama (topic)" },
-        { ko:"학생은", ro:"studentul (topic)" },
-        { ko:"저", ro:"eu" },
-        { ko:"저희", ro:"noi" }
-      ],
-      time: [
-        { ko:"오늘", ro:"azi" },
-        { ko:"내일", ro:"mâine" },
-        { ko:"지금", ro:"acum" },
-        { ko:"아침에", ro:"dimineața" },
-        { ko:"저녁에", ro:"seara" },
-        { ko:"주말에", ro:"în weekend" }
-      ],
-      place: [
-        { ko:"집에", ro:"acasă" },
-        { ko:"학교에", ro:"la școală" },
-        { ko:"회사에", ro:"la muncă" },
-        { ko:"카페에", ro:"la cafenea" },
-        { ko:"서울에", ro:"în Seoul" },
-        { ko:"병원에", ro:"la spital" }
-      ],
-      object: [
-        { ko:"커피를", ro:"cafea (obj)" },
-        { ko:"밥을", ro:"mâncare/orez (obj)" },
-        { ko:"물을", ro:"apă (obj)" },
-        { ko:"한국어를", ro:"coreeană (obj)" },
-        { ko:"약을", ro:"medicament (obj)" }
-      ],
-      verb: [
-        { ko:"마시다", ro:"a bea" },
-        { ko:"먹다", ro:"a mânca" },
-        { ko:"가다", ro:"a merge" },
-        { ko:"오다", ro:"a veni" },
-        { ko:"공부하다", ro:"a studia" },
-        { ko:"하다", ro:"a face" }
-      ],
-      // terminații simple (demo). Le “lipim” la verb.
-      ending: [
-        { ko:"-아요/어요", ro:"prezent politicos" },
-        { ko:"-고 있어요", ro:"acum (continuu)" },
-        { ko:"-(으)려고 해요", ro:"intenție" },
-        { ko:"-(으)ㄹ까요?", ro:"propunere / să…?" },
-        { ko:"-았/었어요", ro:"trecut" }
-      ],
-      connector: [
-        { ko:"그리고", ro:"și" },
-        { ko:"그래서", ro:"deci" },
-        { ko:"하지만", ro:"dar" },
-        { ko:"그래도", ro:"totuși" }
-      ]
-    };
-
-    const SLOT_DEF = [
-      { key:"subject", label:"Subiect / Topic" },
-      { key:"time", label:"Timp" },
-      { key:"place", label:"Loc" },
-      { key:"object", label:"Obiect" },
-      { key:"verb", label:"Verb (dicționar)" },
-      { key:"ending", label:"Conjugare / Ending" },
-      { key:"connector", label:"Conector (opțional)" }
-    ];
-
-    // --- Helpers ---
-    const $ = (sel, root=document) => root.querySelector(sel);
-    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-
-    function safeParse(json, fallback){
-      try { return JSON.parse(json); } catch { return fallback; }
-    }
-
-    function loadState(){
-      const raw = localStorage.getItem(LS_KEY);
-      const base = {
-        activeIndex: 0,
-        sentences: [ emptySentence() ],
-        custom: { subject:[], time:[], place:[], object:[], verb:[], ending:[], connector:[] }
-      };
-      if (!raw) return base;
-      const st = safeParse(raw, base);
-      // harden:
-      if (!Array.isArray(st.sentences) || st.sentences.length === 0) st.sentences = [ emptySentence() ];
-      if (typeof st.activeIndex !== "number") st.activeIndex = 0;
-      if (!st.custom) st.custom = { subject:[], time:[], place:[], object:[], verb:[], ending:[], connector:[] };
-      return st;
-    }
-
-    function saveState(st){
-      localStorage.setItem(LS_KEY, JSON.stringify(st));
-    }
-
-    function emptySentence(){
-      return {
-        subject: null,
-        time: null,
-        place: null,
-        object: null,
-        verb: null,
-        ending: null,
-        connector: null
-      };
-    }
-
-    function loadFav(){
-      const raw = localStorage.getItem(LS_FAV);
-      const fav = safeParse(raw, []);
-      return Array.isArray(fav) ? fav : [];
-    }
-
-    function saveFav(list){
-      localStorage.setItem(LS_FAV, JSON.stringify(list));
-    }
-
-    // Conjugare foarte simplă (demo, stabil):
-    // -아요/어요 => (nu facem reguli complexe aici; punem verb + ending “frumos”)
-    // Rest => verb fără -다 + ending (dacă ending începe cu -)
-    function conjugate(verbKo, endingKo){
-      if (!verbKo) return "";
-      if (!endingKo) return verbKo;
-
-      const cleanEnding = endingKo.startsWith("-") ? endingKo.slice(1) : endingKo;
-
-      // dacă e "-아요/어요" doar arătăm ca exemplu: verb(Stem)+요 (aprox)
-      if (endingKo === "-아요/어요"){
-        // stem: scoatem "다" dacă există
-        const stem = verbKo.endsWith("다") ? verbKo.slice(0, -1) : verbKo;
-        return stem + "요"; // simplificat
-      }
-
-      // general: stem + ending
-      const stem = verbKo.endsWith("다") ? verbKo.slice(0, -1) : verbKo;
-      return stem + cleanEnding;
-    }
-
-    function sentenceKo(s){
-      // Ordine simplă: [time] [place] [subject] [object] [verb+ending] [connector]
-      // (poți schimba mai târziu)
-      const parts = [];
-      if (s.time?.ko) parts.push(s.time.ko);
-      if (s.place?.ko) parts.push(s.place.ko);
-      if (s.subject?.ko) parts.push(s.subject.ko);
-      if (s.object?.ko) parts.push(s.object.ko);
-
-      const v = conjugate(s.verb?.ko || "", s.ending?.ko || "");
-      if (v) parts.push(v);
-
-      if (s.connector?.ko) parts.push(s.connector.ko);
-
-      return parts.join(" ").replace(/\s+/g," ").trim();
-    }
-
-    function sentenceRo(s){
-      // Traducere aproximativă din RO-urile item-urilor
-      const parts = [];
-      if (s.time?.ro) parts.push(s.time.ro);
-      if (s.place?.ro) parts.push(s.place.ro);
-      if (s.subject?.ro) parts.push(s.subject.ro);
-      if (s.object?.ro) parts.push(s.object.ro);
-      if (s.verb?.ro) parts.push(s.verb.ro);
-      if (s.ending?.ro) parts.push("(" + s.ending.ro + ")");
-      if (s.connector?.ro) parts.push(s.connector.ro);
-      const out = parts.join(" · ").replace(/\s+/g," ").trim();
-      return out || "—";
-    }
-
-    // --- UI / render ---
-    const st = loadState();
-
-    const tabsEl = $("#tabs");
-    const slotsEl = $("#slots");
-    const sentInfoEl = $("#sentInfo");
-    const previewKoEl = $("#previewKo");
-    const previewRoEl = $("#previewRo");
-    const statusTextEl = $("#statusText");
-    const favListEl = $("#favList");
-
-    // overlay
-    const overlayEl = $("#overlay");
-    const panelTitleEl = $("#panelTitle");
-    const panelSubEl = $("#panelSub");
-    const searchInputEl = $("#searchInput");
-    const listEl = $("#list");
-    const newKoEl = $("#newKo");
-    const newRoEl = $("#newRo");
-
-    let currentSlotKey = null;
-
-    function allItemsForKey(key){
-      const base = DATA[key] || [];
-      const custom = (st.custom?.[key] || []);
-      return [...custom, ...base];
-    }
-
-    function renderTabs(){
-      tabsEl.innerHTML = "";
-      st.sentences.forEach((_, idx) => {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "tab" + (idx === st.activeIndex ? " active" : "");
-        b.innerHTML = `S${idx+1} <small>${idx===st.activeIndex ? "active" : ""}</small>`;
-        b.addEventListener("click", () => {
-          st.activeIndex = idx;
-          saveState(st);
-          renderAll();
-        });
-        tabsEl.appendChild(b);
-      });
-      sentInfoEl.textContent = `Sentence ${st.activeIndex+1} / ${st.sentences.length}`;
-    }
-
-    function renderSlots(){
-      slotsEl.innerHTML = "";
-      const s = st.sentences[st.activeIndex];
-
-      SLOT_DEF.forEach(def => {
-        const box = document.createElement("div");
-        box.className = "slot";
-
-        const top = document.createElement("div");
-        top.className = "slotTop";
-
-        const label = document.createElement("div");
-        label.className = "slotLabel";
-        label.textContent = def.label;
-
-        const small = document.createElement("div");
-        small.className = "small";
-        small.textContent = def.key;
-
-        top.appendChild(label);
-        top.appendChild(small);
-
-        const val = document.createElement("div");
-        val.className = "slotValue";
-
-        const chosen = s[def.key];
-        const left = document.createElement("span");
-        left.textContent = chosen?.ko || "Alege…";
-
-        const right = document.createElement("em");
-        right.textContent = chosen?.ro || "";
-
-        val.appendChild(left);
-        val.appendChild(right);
-
-        val.addEventListener("click", () => openPicker(def.key));
-
-        box.appendChild(top);
-        box.appendChild(val);
-        slotsEl.appendChild(box);
-      });
-    }
-
-    function renderPreview(){
-      const s = st.sentences[st.activeIndex];
-      const ko = sentenceKo(s);
-      previewKoEl.textContent = ko || "Alege cuvinte…";
-      previewRoEl.textContent = sentenceRo(s);
-
-      statusTextEl.textContent = ko ? "OK" : "—";
-    }
-
-    function renderFav(){
-      const fav = loadFav().slice(-6).reverse();
-      if (fav.length === 0){
-        favListEl.textContent = "—";
-        return;
-      }
-      favListEl.innerHTML = fav.map(x => `• <b>${escapeHtml(x.ko)}</b> <span style="color:rgba(27,22,48,.65)">(${escapeHtml(x.ro||"")})</span>`).join("<br/>");
-    }
-
-    function renderAll(){
-      renderTabs();
-      renderSlots();
-      renderPreview();
-      renderFav();
-    }
-
-    // --- Picker ---
-    function openPicker(key){
-      currentSlotKey = key;
-      const s = st.sentences[st.activeIndex];
-
-      panelTitleEl.textContent = "Alege: " + key;
-      panelSubEl.textContent = "Tap pe element ca să îl selectezi. (Poți adăuga și custom.)";
-
-      searchInputEl.value = "";
-      newKoEl.value = "";
-      newRoEl.value = "";
-
-      overlayEl.classList.add("show");
-      overlayEl.setAttribute("aria-hidden", "false");
-
-      // list
-      renderPickerList(key, "");
-
-      // focus
-      setTimeout(() => searchInputEl.focus(), 50);
-    }
-
-    function closePicker(){
-      overlayEl.classList.remove("show");
-      overlayEl.setAttribute("aria-hidden", "true");
-      currentSlotKey = null;
-    }
-
-    function renderPickerList(key, q){
-      const items = allItemsForKey(key);
-      const query = (q || "").trim().toLowerCase();
-
-      const filtered = !query ? items : items.filter(it => {
-        const a = (it.ko || "").toLowerCase();
-        const b = (it.ro || "").toLowerCase();
-        return a.includes(query) || b.includes(query);
-      });
-
-      listEl.innerHTML = "";
-      if (filtered.length === 0){
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `<div class="ko">Nimic găsit</div><div class="ro">încearcă alt text</div>`;
-        div.style.cursor = "default";
-        listEl.appendChild(div);
-        return;
-      }
-
-      filtered.forEach(it => {
-        const row = document.createElement("div");
-        row.className = "item";
-        row.innerHTML = `<div class="ko">${escapeHtml(it.ko)}</div><div class="ro">${escapeHtml(it.ro||"")}</div>`;
-        row.addEventListener("click", () => {
-          const s = st.sentences[st.activeIndex];
-          s[key] = { ko: it.ko, ro: it.ro || "" };
-          saveState(st);
-          closePicker();
-          renderAll();
-        });
-        listEl.appendChild(row);
-      });
-    }
-
-    // --- Buttons ---
-    $("#addSentenceBtn").addEventListener("click", () => {
-      st.sentences.push(emptySentence());
-      st.activeIndex = st.sentences.length - 1;
-      saveState(st);
-      renderAll();
-    });
-
-    $("#dupSentenceBtn").addEventListener("click", () => {
-      const cur = st.sentences[st.activeIndex];
-      st.sentences.push(JSON.parse(JSON.stringify(cur)));
-      st.activeIndex = st.sentences.length - 1;
-      saveState(st);
-      renderAll();
-    });
-
-    $("#delSentenceBtn").addEventListener("click", () => {
-      if (st.sentences.length === 1){
-        st.sentences[0] = emptySentence();
-      } else {
-        st.sentences.splice(st.activeIndex, 1);
-        st.activeIndex = Math.max(0, st.activeIndex - 1);
-      }
-      saveState(st);
-      renderAll();
-    });
-
-    $("#clearBtn").addEventListener("click", () => {
-      st.sentences[st.activeIndex] = emptySentence();
-      saveState(st);
-      renderAll();
-    });
-
-    $("#randomBtn").addEventListener("click", () => {
-      const s = st.sentences[st.activeIndex];
-      SLOT_DEF.forEach(def => {
-        const arr = allItemsForKey(def.key);
-        if (!arr || arr.length === 0) return;
-        // connector e opțional (random: uneori gol)
-        if (def.key === "connector" && Math.random() < 0.55){
-          s.connector = null;
-          return;
-        }
-        const it = arr[Math.floor(Math.random() * arr.length)];
-        s[def.key] = { ko: it.ko, ro: it.ro || "" };
-      });
-      saveState(st);
-      renderAll();
-    });
-
-    $("#saveFavBtn").addEventListener("click", () => {
-      const s = st.sentences[st.activeIndex];
-      const ko = sentenceKo(s);
-      const ro = sentenceRo(s);
-
-      if (!ko){
-        statusTextEl.textContent = "Alege întâi cuvinte.";
-        return;
-      }
-
-      const fav = loadFav();
-      fav.push({ ko, ro, ts: Date.now() });
-      saveFav(fav);
-      statusTextEl.textContent = "Saved ⭐";
-      renderFav();
-    });
-
-    $("#speakBtn").addEventListener("click", () => {
-      const s = st.sentences[st.activeIndex];
-      const ko = sentenceKo(s);
-      if (!ko){
-        statusTextEl.textContent = "Nu am ce citi.";
-        return;
-      }
-      speakKorean(ko);
-    });
-
-    // overlay events
-    $("#closeOverlayBtn").addEventListener("click", closePicker);
-    overlayEl.addEventListener("click", (e) => {
-      if (e.target === overlayEl) closePicker();
-    });
-
-    searchInputEl.addEventListener("input", (e) => {
-      if (!currentSlotKey) return;
-      renderPickerList(currentSlotKey, e.target.value);
-    });
-
-    $("#addCustomBtn").addEventListener("click", () => {
-      if (!currentSlotKey) return;
-      const ko = (newKoEl.value || "").trim();
-      const ro = (newRoEl.value || "").trim();
-      if (!ko) return;
-
-      st.custom[currentSlotKey] = st.custom[currentSlotKey] || [];
-      st.custom[currentSlotKey].unshift({ ko, ro });
-      saveState(st);
-
-      // refresh list with same search
-      renderPickerList(currentSlotKey, searchInputEl.value);
-      newKoEl.value = "";
-      newRoEl.value = "";
-      newKoEl.focus();
-    });
-
-    // --- Speech ---
-    function speakKorean(text){
-      try{
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = "ko-KR";
-
-        // alege voce coreeană dacă există
-        const voices = speechSynthesis.getVoices ? speechSynthesis.getVoices() : [];
-        const koVoice = voices.find(v => (v.lang || "").toLowerCase().startsWith("ko"));
-        if (koVoice) u.voice = koVoice;
-
-        speechSynthesis.cancel();
-        speechSynthesis.speak(u);
-        statusTextEl.textContent = "🔊 Speaking…";
-        u.onend = () => statusTextEl.textContent = "OK";
-      } catch {
-        statusTextEl.textContent = "Audio indisponibil.";
-      }
-    }
-
-    // Safari/iOS: uneori voices se încarcă async
-    if (typeof speechSynthesis !== "undefined" && speechSynthesis.onvoiceschanged !== undefined){
-      speechSynthesis.onvoiceschanged = () => {};
-    }
-
-    // --- Utils ---
-    function escapeHtml(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    // init
-    renderAll();
-  </script>
+  `).join("");
+
+  const learned=JSON.parse(localStorage.getItem(DAILY_LEARNED_KEY)||"[]");
+  progress.textContent=`Zile bifate: ${learned.length}`;
+}
+
+document.getElementById("dailyPrevBtn").onclick=()=>{dailyOffset--;renderDaily();}
+document.getElementById("dailyNextBtn").onclick=()=>{dailyOffset++;renderDaily();}
+document.getElementById("dailyMarkBtn").onclick=()=>{
+  const iso=todayISO();
+  let l=JSON.parse(localStorage.getItem(DAILY_LEARNED_KEY)||"[]");
+  if(!l.includes(iso)){l.push(iso);}
+  localStorage.setItem(DAILY_LEARNED_KEY,JSON.stringify(l));
+  renderDaily();
+};
+
+renderDaily();
+</script>
 </body>
 </html>
