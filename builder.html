@@ -366,37 +366,43 @@ h1{
   /* =========================
      BUILD CLAUSE
   ========================= */
-  function buildClause(i,last){
-    const s=cell(i,"subject")?.textContent.trim();
-    const t=cell(i,"time")?.textContent.trim();
-    const p=cell(i,"place")?.textContent.trim();
-    const o=cell(i,"object")?.textContent.trim();
-    const n=cell(i,"numeral")?.textContent.trim();
-    const c=cell(i,"counter")?.textContent.trim();
-    const v=cell(i,"verb")?.textContent.trim();
-    const e=cell(i,"conj")?.textContent.trim();
+  function buildClause(i, isLast) {
+  const s = readCell(i, "subject"); // 저
+  const t = readCell(i, "time");    // 오늘
+  const p = readCell(i, "place");   // 집
+  const o = readCell(i, "object");  // 책
+  const n = readCell(i, "numeral"); // 한
+  const c = readCell(i, "counter"); // 권
+  const v = readCell(i, "verb");    // 읽다
+  const e = readCell(i, "conj");    // -고
 
-    const topic = i>0 || (e && e.includes("지만"));
-    const subj = s ? subjParticle(s,topic) : "";
+  // SUBJECT particle (preview only)
+  const subject = s ? addSubjectParticle(s, i) : "";
 
-    const noun = maybePlural(o,n,c);
-    const obj = noun ? objParticle(
-      c?`${noun} ${n} ${c}`:noun
-    ) : "";
-
-    let verbOut = attachEnding(v,e);
-    if(last && !e && document.getElementById("politeToggle")?.checked)
-      verbOut = polite(v);
-
-    return [
-      subj,
-      t,
-      placeParticle(p,v),
-      obj,
-      verbOut
-    ].filter(Boolean).join(" ");
+  // OBJECT particle (preview only)
+  let object = "";
+  if (o) {
+    const base = n && c ? `${o} ${n} ${c}` : o;
+    object = addObjectParticle(base);
   }
 
+  // PLACE particle (preview only)
+  const place = p ? addPlaceParticle(p, v) : "";
+
+  // VERB + ending
+  let verb = v;
+  if (e) verb = attachEnding(v, e);
+  else if (isLast && politeToggle.checked) verb = toPolite(v);
+
+  return [
+    subject,
+    t,
+    place,
+    object,
+    verb
+  ].filter(Boolean).join(" ");
+}
+  
   /* =========================
      PREVIEW
   ========================= */
