@@ -1,1208 +1,984 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ro">  <!-- Romanian interface language -->
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean – Study App v2.0</title>
+  <title>Raluca Korean – Builder (Reconstruire)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    /* --- Pastel Background and Base Styles --- */
     :root {
-      --bg: #f7f3ff;
-      --card-bg: #ffffff;
-      --accent: #c9b5ff;
-      --accent-strong: #9b7cff;
-      --text-main: #333333;
-      --text-soft: #666666;
-      --border: #e0d7ff;
-      --dimmed-bg: #f2eefc;
-      --overlay-bg: rgba(0, 0, 0, 0.2);
+      --bg1: #dff3ff;
+      --bg2: #ffe9ff;
+      --bg3: #f4fffc;
+      --bg4: #e8f0ff;
+      --accent: #7b5dff;
+      --card-bg: #ffffffcc;
+      --text-main: #2f343b;
+      --text-soft: #7a8088;
+      --border: #e1d7c7;
     }
-    header{text-align:center;padding:4px 8px 4px;}
-    header h1{font-size:18px;margin:2px 0;font-weight:700;color:var(--accent-strong);}
-    header p{margin:0;font-size:11px;color:var(--text-soft);}
- 
-    .screen{display:none;flex-direction:column;gap:10px;flex:1;min-height:0;}
-    .screen.active{display:flex;}
- 
-    .mode-panel{
-      background:var(--card-bg);border-radius:12px;border:1px solid var(--border);
-      padding:6px 8px;font-size:11px;display:flex;flex-direction:column;gap:4px;
-      box-shadow:0 4px 12px rgba(120,96,190,0.08);
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text-main);
+      background: linear-gradient(120deg, var(--bg1), var(--bg2), var(--bg3), var(--bg4));
+      background-size: 380% 380%;
+      animation: bgFlow 28s ease-in-out infinite;
     }
-    .mode-row{
-      display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;
+    @keyframes bgFlow {
+      0% { background-position: 0% 50%; }
+      50%{ background-position: 100% 50%; }
+      100%{ background-position: 0% 50%; }
     }
-    .mode-row label{font-size:11px;display:flex;align-items:center;gap:4px;}
-    .part-toggles{display:flex;flex-wrap:wrap;gap:6px;}
-    .chip{
-      display:inline-flex;align-items:center;gap:3px;
-      padding:3px 8px;border-radius:999px;background:#ede7ff;color:var(--accent-strong);
-      font-size:10px;cursor:pointer;
+    .app {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 18px 14px 80px;
     }
-    .chip input{margin:0;}
-    .section-label{font-size:11px;font-weight:600;color:var(--accent-strong);margin-top:2px;}
- 
-    .small-mode-btn{
-      padding:3px 8px;
-      font-size:10px;
-    }
-    .small-mode-btn.active{
-      background:var(--accent-strong);
-      color:#fff;
-    }
- 
-    .table-block{
-      background:var(--card-bg);border-radius:14px;padding:8px;
-      box-shadow:0 6px 16px rgba(120,96,190,0.08);
-      display:flex;flex-direction:column;gap:4px;
-    }
-    .table-title{
-      display:flex;align-items:center;justify-content:space-between;
-      font-size:11px;font-weight:600;color:var(--text-soft);
-      margin-bottom:4px;
-    }
-    .page-indicator{font-weight:600;color:var(--accent-strong);}
-    .table-horizontal{
-      display:flex;flex-wrap:wrap;align-items:center;
-      gap:6px;margin-bottom:4px;
-    }
-    .table-horizontal .cell{
-      padding:4px 6px;border-radius:6px;border:1px solid var(--border);
-      font-size:11px;color:var(--accent-strong);background:var(--dimmed-bg);
-    }
-    .table-horizontal .cell.highlight{background:var(--accent);}
- 
-    .controls{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
-    .btn-group button{
-      font-size:10px;
-      border-radius:4px;
-      padding:4px 6px;
-      cursor:pointer;
-      border:none;
-      background:var(--accent-strong);
-      color:#fff;
-    }
-    .btn-group button:disabled{opacity:0.5;}
- 
-    .builder-output{
-      background:var(--card-bg);border-radius:12px;border:1px solid var(--border);
-      padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:2px;
-      box-shadow:0 6px 16px rgba(120,96,190,0.08);
-    }
-    .output-line{display:flex;align-items:center;justify-content:space-between;}
-    .output-line p{margin:0;line-height:1.4;}
-    .output-line p+div{display:flex;align-items:center;gap:6px;}
-    .output-line button{
-      font-size:10px;
-      padding:2px 6px;
-      border-radius:4px;
-      border:none;
-      cursor:pointer;
-    }
-    #toggleTranslationBtn{background:#d0d5dd;color:#000;}
-    #toggleTranslationBtn.hidden{background:var(--accent-strong);color:#fff;}
-    #copyBtn{background:#d0d5dd;}
-    #copyBtn.active{background:var(--accent-strong);color:#fff;}
- 
-    .fav-list{
-      display:flex;flex-direction:column;gap:8px;
-      max-height:300px;overflow:auto;
-    }
-    .fav-item{
-      border:1px solid var(--border);border-radius:8px;
-      padding:4px 6px;display:flex;flex-direction:column;gap:2px;
-    }
-    .fav-item p{margin:0;font-size:12px;}
-    .fav-item p.tr{font-size:11px;color:var(--text-soft);}
-    .fav-item .remove-btn{
-      align-self:flex-start;
-      font-size:10px;color:var(--text-soft);
-      background:none;border:none;cursor:pointer;
-    }
-    .fav-item .remove-btn:hover{color:var(--accent-strong);}
- 
-    .overlay{
-      position:fixed;top:0;left:0;width:100%;height:100%;
-      background:var(--overlay-bg);display:flex;align-items:center;justify-content:center;
-      z-index:100;display:none;
-    }
-    .overlay.show{display:flex;}
-    .overlay-panel{
-      background:var(--card-bg);padding:10px 12px;border-radius:12px;
-      box-shadow:0 8px 20px rgba(0,0,0,0.2);max-width:90%;
-    }
-    .overlay-panel h3{
-      margin:4px 0;font-size:14px;font-weight:600;
-      color:var(--accent-strong);
-    }
-    .overlay-panel p{margin:4px 0;font-size:12px;color:var(--text-main);}
-    .overlay-panel ul{
-      padding-left:16px;margin:6px 0;
-      max-height:200px;overflow:auto;
-    }
-    .overlay-panel li{
-      font-size:12px;color:var(--text-main);
-      margin:2px 0;
-    }
-    .overlay-panel button{
-      font-size:12px;padding:4px 8px;border:none;
-      border-radius:4px;
-      background:var(--accent-strong);color:#fff;
-      cursor:pointer;
-    }
-    .overlay-panel button.close-btn{
-      background:none;color:var(--text-soft);
-      position:absolute;top:6px;right:8px;
-      font-size:16px;line-height:1;
-    }
- 
-    /* EXERCIȚII & LECȚII – mod TOPIK */
-    .quest-card{
-      border:1px solid var(--border);background:var(--card-bg);
-      box-shadow:0 4px 12px rgba(120,96,190,0.08);border-radius:8px;
-      padding:6px 8px;display:flex;flex-direction:column;gap:6px;
-      position:relative;
-    }
-    .quest-card:before{
-      content:"";position:absolute;top:-6px;left:10px;
-      background:#f0e5ff;padding:1px 6px;border-radius:4px;
-      font-size:9px;color:var(--accent-strong);
-    }
-    .quest-card.type-syll:before{content:"SYLLABLES";}
-    .quest-card.type-word:before{content:"WORDS";}
-    .quest-card.type-sentence:before{content:"SENTENCE";}
-    .quest-card h3{font-size:13px;margin:0;color:var(--accent-strong);}
-    .quest-content{display:flex;align-items:center;gap:6px;}
-    .quest-content p{margin:0;font-size:28px;color:var(--accent-strong);}
-    .quest-content p.blank{
-      background:var(--border);color:var(--border);border-radius:4px;
-      min-width:40px;min-height:32px;
-    }
-    .quest-content .opts{
-      display:flex;flex-wrap:wrap;gap:4px;
-      font-size:12px;
-    }
-    .quest-content .opts button{
-      border:1px solid var(--border);background:#fff;border-radius:4px;
-      padding:2px 6px;cursor:pointer;
-    }
-    .quest-content .opts button.correct{background:rgba(87,255,110,0.2);}
-    .quest-content .opts button.wrong{background:rgba(255,64,87,0.2);}
-    .quest-content .opts button:disabled{opacity:0.5;}
-    .quest-actions{display:flex;align-items:center;justify-content:space-between;}
-    .quest-actions button{
-      background:var(--accent-strong);color:#fff;
-      border:none;border-radius:4px;
-      font-size:11px;padding:3px 6px;
-      cursor:pointer;
-    }
-    .quest-actions .btn-text{
-      background:none;border:none;
-      font-size:11px;color:var(--accent-strong);
-      text-decoration:underline;cursor:pointer;
-    }
- 
-    /* CARD GENERAL – Română → Coreeană, Exerciții, Glosar */
-    .card{
-      background: linear-gradient(120deg, #ad92ff, #80b8ff);
-      border-radius:12px;padding:8px 12px;
-      color:#fff;display:flex;flex-direction:column;gap:6px;
-    }
-    .card h3{font-size:13px;margin:0;}
-    .card p{margin:0;font-size:11px;}
-    .ex-card{position:relative;}
-    .ex-card .tag{
-      position:absolute;top:-6px;right:8px;
-      background:#fff;color:#000;font-size:9px;
-      padding:1px 4px;border-radius:4px;
-    }
-    .gloss-card{
-      background: linear-gradient(120deg, #ff7272, #ffb972);
-      box-shadow:0 4px 12px rgba(255,88,88,0.2);
-    }
-    .gloss-card input{
-      width:100%;padding:4px 6px;
-      border-radius:4px;border:none;
-      font-size:12px;
-    }
-    .gloss-card .results{
-      display:flex;flex-direction:column;gap:4px;
-      max-height:240px;overflow:auto;
-    }
-    .gloss-card .result-item{
-      background:#fff;color:#000;
-      border-radius:4px;padding:2px 4px;
-      font-size:12px;
-    }
-    .gloss-card .result-item span{font-weight:600;}
- 
-    /* ANIMAȚIE BUBBLE */
-    @keyframes pop {
-      0% { transform: scale(1); }
-      80% { transform: scale(1.6); }
-      100% { transform: scale(1); opacity: 0; }
-    }
-    .bubble-msg {
-      position: absolute;
-      top: -4px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #000;
-      color: #fff;
-      font-size: 10px;
-      padding: 2px 4px;
-      border-radius: 4px;
-      opacity: 0;
-      pointer-events: none;
-    }
-    .bubble-msg.show {
-      animation: pop 0.6s forwards;
-    }
- 
-    /* THEME */
-    body { margin: 0; padding: 0; background: var(--bg); font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
-    body.pastel-theme {
-      background: radial-gradient(circle at top left, #ffe4ff 0%, #d7f0ff 40%, #f0e5ff 75%, #f3d4ff 100%);
-      font-weight: 500;
-    }
-    /* header sus */
-    body.pastel-theme .rk-header {
+    /* Header styling */
+    .rk-header {
+      padding: 12px 16px 16px;
+      border-radius: 26px;
       background: linear-gradient(120deg, #6fb8ff, #a774ff, #ff7fd1);
       color: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 18px 45px rgba(77,93,255,0.4);
+      margin-bottom: 16px;
     }
-    body.pastel-theme .rk-header h1{color:#fff;}
-    body.pastel-theme .nav-btn{
+    .rk-header-main { 
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    }
+    .rk-header-main h1 {
+      margin: 0; font-size: 20px; font-weight: 900;
+      letter-spacing: 0.06em; text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .rk-badge {
       background: rgba(255,255,255,0.3);
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    #subtitle {
+      margin: 4px 0 0;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    /* Section titles */
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 20px 0 8px;
+      color: var(--text-main);
+    }
+
+    /* Input and button controls for auto-fill */
+    .input-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .input-row input[type="text"] {
+      flex: 1;
+      min-width: 250px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+    button.primary { 
+      background: var(--accent);
       color: #fff;
     }
-    body.pastel-theme .nav-btn.active{background: #fff; color: var(--accent-strong);}
-    body.pastel-theme #randomBtn {
-      background: linear-gradient(135deg, #6cc9ff, #7af0ff);
+    button.secondary {
+      background: #ffffff99;
+      color: var(--text-main);
     }
-    body.pastel-theme #speakBtn {
-      background: linear-gradient(135deg, #6cc9ff, #5be6c6);
+    button:hover { opacity: 0.9; }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-top: 4px;
     }
-    body.pastel-theme #favBtn {
-      background: linear-gradient(135deg, #ff9a6c, #ff5f8c);
+
+    /* Table (columns) styling */
+    .clauses {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-    body.pastel-theme #resetBtn {
-      background: linear-gradient(135deg, #ff6b6b, #ff9a6c);
+    .table-horizontal {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
     }
-    body.pastel-theme .quest-card.type-syll:before{background:#d7f0ff;}
-    body.pastel-theme .quest-card.type-word:before{background:#c9b5ff;}
-    body.pastel-theme .quest-card.type-sentence:before{background:#ffdee9;}
- 
-    /* Ascund traducerea în română DOAR în preview-ul Builder */
-    .preview-line .ro-text.hidden{
-      filter: blur(4px);
+    .table-horizontal::-webkit-scrollbar {
+      height: 8px;
     }
-    .preview-line .ro-text.hidden:after{
-      content:"···";
-      color: var(--accent-strong);
+    .table-horizontal::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    .col {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      flex: none;
+      width: 150px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    .col-header {
+      background: var(--dimmed-bg, #f2eefc);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    /* Icons for headers based on data-key attribute */
+    .col[data-key="subject"] .col-header::before  { content: "👤"; position: absolute; left: 8px; }
+    .col[data-key="time"] .col-header::before     { content: "⏰"; position: absolute; left: 8px; }
+    .col[data-key="place"] .col-header::before    { content: "📍"; position: absolute; left: 8px; }
+    .col[data-key="mod"] .col-header::before      { content: "✨"; position: absolute; left: 8px; }
+    .col[data-key="object"] .col-header::before   { content: "🎯"; position: absolute; left: 8px; }
+    .col[data-key="numeral"] .col-header::before  { content: "#️⃣"; position: absolute; left: 8px; }
+    .col[data-key="counter"] .col-header::before  { content: "🔢"; position: absolute; left: 8px; }
+
+    .col-body {
+      padding: 4px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .col-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .col-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+    .item {
+      display: block;
+      width: 100%;
+      padding: 6px 8px;
+      margin: 2px 0;
+      font-size: 13px;
+      text-align: center;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: #fff;
+      color: var(--text-main);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .item:hover {
+      background: #eaeaea;
+    }
+    .item.selected {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Preview card (output) styling */
+    .preview-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-top: 8px;
+    }
+    .output-ko {
+      font-size: 18px;
       font-weight: 600;
-      margin-left: 4px;
+      margin: 0 0 8px;
+      color: #000;
+    }
+    .output-trans {
+      font-size: 14px;
+      margin: 0;
+      color: var(--text-main);
+    }
+    .output-trans.hidden {
+      display: none;
+    }
+    .lang-select {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .lang-select select {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    /* Politeness toggle */
+    .toggle-row {
+      margin: 4px 0 8px;
+      font-size: 13px;
+    }
+    .toggle-row label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-row input[type="checkbox"] {
+      transform: scale(1.2);
+      accent-color: var(--accent);
+      cursor: pointer;
     }
   </style>
 </head>
-<body class="pastel-theme">
-  <div class="app">
-    <header class="rk-header">
-      <h1>Raluca Korean</h1>
-      <p>Aplicație de studiu – versiunea 2.0</p>
-    </header>
-    <!-- Screens / Sections -->
-    <div class="screens" style="flex:1; display:flex; flex-direction:column; overflow:auto;">
-      <!-- BUILDER Screen -->
-      <div id="screen-builder" class="screen active" style="padding:8px 12px;">
-        <!-- Mode Panel (toggles, settings) -->
-        <div class="mode-panel">
-          <!-- Row 1: part toggles and randomize -->
-          <div class="mode-row">
-            <div class="part-toggles">
-              <span class="chip"><input type="checkbox" data-part="subject" checked /> Subiect</span>
-              <span class="chip"><input type="checkbox" data-part="time" /> Timp</span>
-              <span class="chip"><input type="checkbox" data-part="place" /> Loc</span>
-              <span class="chip"><input type="checkbox" data-part="mod" /> Mod</span>
-              <span class="chip"><input type="checkbox" data-part="object" /> Obiect</span>
-              <span class="chip"><input type="checkbox" data-part="verb" checked /> Predicat</span>
-            </div>
-            <button id="resetBtn">✖ Reset</button>
-          </div>
-          <!-- Row 2: mode toggles and random sentence -->
-          <div class="mode-row">
-            <label class="section-label">Mod:</label>
-            <div>
-              <button class="secondary small-mode-btn" data-mode="simple">Simplu</button>
-              <button class="secondary small-mode-btn active" data-mode="topik">TOPIK</button>
-            </div>
-            <button id="randomBtn">🎲 Random propoziție</button>
-          </div>
-          <!-- Row 3: sentence 2 toggle (for compound sentences) -->
-          <div class="mode-row builder-enable-p2">
-            <label>
-              <input type="checkbox" id="enableP2" />
-              Activează Propoziția 2 (fraza)
-            </label>
-          </div>
-        </div>
-        <!-- Table of sentence parts for Propoziția 1 (and P2 if enabled) -->
-        <div class="table-block">
-          <div class="table-title">
-            <span>Propoziția 1</span>
-            <span class="page-indicator" id="pageInfo"></span>
-          </div>
-          <div class="table-horizontal" id="tableP1"></div>
-          <div class="table-title hidden" id="titleP2">
-            <span>Propoziția 2 (continuare / frază)</span>
-          </div>
-          <div class="table-horizontal hidden" id="tableP2"></div>
-          <!-- Navigation Controls: Prev/Next model and randomize -->
-          <div class="controls">
-            <div class="btn-group">
-              <button id="prevBtn">⬅ Prev (rând model)</button>
-              <button id="nextBtn">Next ➡</button>
-            </div>
-            <div class="btn-group">
-              <button id="randomBtn2">🎲 Random</button>
-            </div>
-          </div>
-        </div>
-        <!-- Output block: Korean sentence preview and translation, actions (speak, save, toggle translation, copy) -->
-        <div class="builder-output">
-          <div class="output-line preview-line">
-            <p id="previewKo" class="ko-text" style="font-size:14px; font-weight:600; color:var(--accent-strong);">Alege cuvintele...</p>
-            <div>
-              <button id="speakBtn">🔊 Audio coreeană</button>
-              <button id="favBtn" class="secondary">⭐ Salvează propoziția</button>
-            </div>
-          </div>
-          <div class="output-line">
-            <p id="previewRo" class="ro-text" style="font-size:12px; color:var(--text-soft);">Alege cuvintele pentru a forma propoziția...</p>
-            <div>
-              <button id="toggleTranslationBtn">Ascunde traducerea</button>
-              <button id="copyBtn">Copiere</button>
-            </div>
-          </div>
-        </div>
-        <!-- Favorites overlay (for saved sentences) -->
-        <div class="overlay" id="overlay">
-          <div class="overlay-panel">
-            <button class="close-btn" id="closePanelBtn">&times;</button>
-            <h3 id="panelTitle">Salvate</h3>
-            <p id="panelSub">Propoziții salvate pentru exersare ulterioară:</p>
-            <ul class="fav-list" id="panelList"></ul>
-            <button id="clearFavBtn">Șterge tot</button>
-          </div>
-        </div>
-      </div>
-      <!-- EXERCISES Screen -->
-      <div id="screen-exercises" class="screen" style="padding:8px 12px; overflow:auto;">
-        <div class="card ex-card">
-          <h3>Exerciții recapitulative TOPIK</h3>
-          <p>Exersează completarea propozițiilor (Similar secțiunii 쓰기 – TOPIK I)</p>
-          <span class="tag">BETA</span>
-        </div>
-        <div id="exercisesContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
-      </div>
-      <!-- LESSONS Screen -->
-      <div id="screen-lessons" class="screen" style="padding:8px 12px;">
-        <div class="card">
-          <h3>Lecții</h3>
-          <p>Explicații gramaticale și exemple</p>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <!-- Example Lesson Entry (to be dynamically populated) -->
-          <div class="card ex-card">
-            <h3>Lecția 1: Introducere</h3>
-            <p>Exemplu: Azi am de învățat multe cuvinte coreene.</p>
-            <button id="lesson1TryBtn" class="btn-text">Încearcă în Builder &rarr;</button>
-            <span class="tag">NEW</span>
-          </div>
-          <!-- Additional lessons can be appended similarly -->
-        </div>
-      </div>
-      <!-- GLOSSARY Screen -->
-      <div id="screen-glossary" class="screen" style="padding:8px 12px;">
-        <div class="card gloss-card">
-          <h3>Glosar</h3>
-          <p>Căutare rapidă în toate cuvintele folosite</p>
-          <input type="text" id="glossarySearch" placeholder="Caută un cuvânt..." />
-          <div class="results" id="glossaryResults"></div>
-        </div>
-      </div>
+<body>
+<div class="app">
+  
+  <!-- Header -->
+  <div class="rk-header">
+    <div class="rk-header-main">
+      <h1>RALUCA KOREAN</h1>
+      <span class="rk-badge">Builder – Modular</span>
     </div>
-    <!-- Bottom Navigation -->
-    <div style="display:flex;">
-      <button class="nav-btn active" data-target="builder" style="flex:1;">Builder</button>
-      <button class="nav-btn" data-target="exercises" style="flex:1;">Exerciții</button>
-      <button class="nav-btn" data-target="lessons" style="flex:1;">Lecții</button>
-      <button class="nav-btn" data-target="glossary" style="flex:1;">Glosar</button>
+    <p id="subtitle">Construiește propoziții coreene din elemente date</p>
+  </div>
+
+  <!-- Auto-fill input and controls -->
+  <h3 class="section-title">Introdu propoziția</h3>
+  <div class="input-row">
+    <input id="inputText" type="text" placeholder="Ex: Astăzi merg la cafenea și citesc o carte și beau o cafea. 
+Today I go to the cafe and read a book and drink a coffee." />
+    <div class="btn-row">
+      <button id="autoFillBtn" class="primary">Completează automat builder-ul</button>
+      <button id="clearBtn" class="secondary">Curăță tot</button>
     </div>
   </div>
-  <script>
-    let LAST_RO_SENTENCE = "";
-    /* === LISTE DE CUVINTE (de bază) === */
-    const subjectData = [
-      // Persoane & pronume
-      { ko: "저는", ro: "eu (formal)", en: "I (formal)" },
-      { ko: "나는", ro: "eu (informal)", en: "I (informal)" },
-      { ko: "우리는", ro: "noi", en: "we" },
-      { ko: "당신은", ro: "tu / dvs.", en: "you" },
-      { ko: "너는", ro: "tu (informal)", en: "you (informal)" },
-      { ko: "여러분은", ro: "voi / dumneavoastră", en: "you (plural/formal)" },
-      { ko: "그는", ro: "el", en: "he" },
-      { ko: "그녀는", ro: "ea", en: "she" },
-      { ko: "그들은", ro: "ei / ele", en: "they" },
-      // Familie
-      { ko: "엄마는", ro: "mama", en: "mother" },
-      { ko: "아빠는", ro: "tata", en: "father" },
-      { ko: "형은", ro: "fratele mai mare (al unui băiat)", en: "older brother (of a boy)" },
-      { ko: "오빠는", ro: "fratele mai mare (al unei fete)", en: "older brother (of a girl)" },
-      { ko: "누나는", ro: "sora mai mare (a unui băiat)", en: "older sister (of a boy)" },
-      { ko: "언니는", ro: "sora mai mare (a unei fete)", en: "older sister (of a girl)" },
-      { ko: "남동생은", ro: "fratele mai mic", en: "younger brother" },
-      { ko: "여동생은", ro: "sora mai mică", en: "younger sister" },
-      { ko: "할머니는", ro: "bunica", en: "grandmother" },
-      { ko: "할아버지는", ro: "bunicul", en: "grandfather" },
-      // Altele
-      { ko: "학생은", ro: "elevul", en: "student" },
-      { ko: "선생님은", ro: "profesorul", en: "teacher" },
-      { ko: "친구는", ro: "prietenul / prietena", en: "friend" }
-    ];
-    const timeData = [
-      // Zile
-      { ko: "오늘", ro: "astăzi", en: "today" },
-      { ko: "내일", ro: "mâine", en: "tomorrow" },
-      { ko: "모레", ro: "poimâine", en: "the day after tomorrow" },
-      { ko: "어제", ro: "ieri", en: "yesterday" },
-      { ko: "그저께", ro: "alaltăieri", en: "the day before yesterday" },
-      // Momente ale zilei
-      { ko: "아침에", ro: "dimineața", en: "in the morning" },
-      { ko: "낮에", ro: "după-amiaza / ziua", en: "in the afternoon" },
-      { ko: "저녁에", ro: "seara", en: "in the evening" },
-      { ko: "밤에", ro: "noaptea", en: "at night" },
-      // Altele
-      { ko: "지금", ro: "acum", en: "now" },
-      { ko: "나중에", ro: "mai târziu", en: "later" },
-      { ko: "곧", ro: "în curând", en: "soon" },
-      { ko: "항상", ro: "întotdeauna", en: "always" },
-      { ko: "자주", ro: "des", en: "often" },
-      { ko: "가끔", ro: "ocazional", en: "sometimes" },
-      { ko: "절대", ro: "niciodată (urmat de negație)", en: "never (used with negation)" },
-      { ko: "일찍", ro: "devreme", en: "early" },
-      { ko: "늦게", ro: "târziu", en: "late" }
-    ];
-    const placeData = [
-      { ko: "학교에", ro: "la școală", en: "to school" },
-      { ko: "집에", ro: "acasă", en: "home" },
-      { ko: "마트에", ro: "la supermarket", en: "to the supermarket" },
-      { ko: "공원에", ro: "în parc", en: "to the park" },
-      { ko: "회사에", ro: "la firmă", en: "to the company" },
-      { ko: "도서관에", ro: "la bibliotecă", en: "to the library" },
-      { ko: "극장에", ro: "la teatru / cinematograf", en: "to the theater / cinema" },
-      { ko: "식당에", ro: "la restaurant", en: "to the restaurant" },
-      { ko: "바다에", ro: "la mare", en: "to the seaside" },
-      { ko: "산에", ro: "la munte", en: "to the mountains" },
-      { ko: "강에", ro: "la râu", en: "to the river" },
-      { ko: "호수에", ro: "la lac", en: "to the lake" },
-      { ko: "은행에", ro: "la bancă", en: "to the bank" },
-      { ko: "병원에", ro: "la spital", en: "to the hospital" },
-      { ko: "약국에", ro: "la farmacie", en: "to the pharmacy" }
-    ];
-    const modData = [
-      { ko: "혼자서", ro: "singur(ă)", en: "alone" },
-      { ko: "같이", ro: "împreună", en: "together" },
-      { ko: "잘", ro: "bine", en: "well" },
-      { ko: "빨리", ro: "repede", en: "quickly" },
-      { ko: "천천히", ro: "încet", en: "slowly" },
-      { ko: "조용히", ro: "liniștit", en: "quietly" },
-      { ko: "많이", ro: "mult", en: "a lot/many" },
-      { ko: "조금", ro: "puțin", en: "a little" },
-      { ko: "특히", ro: "în special", en: "especially" }
-    ];
-    const objectData = [
-      // Cuvinte de bază
-      { ko: "책을", ro: "carte", en: "book" },
-      { ko: "사과를", ro: "măr", en: "apple" },
-      { ko: "빵을", ro: "pâine", en: "bread" },
-      { ko: "물을", ro: "apă", en: "water" },
-      { ko: "커피를", ro: "cafea", en: "coffee" },
-      { ko: "차를", ro: "ceai", en: "tea" },
-      { ko: "신문을", ro: "ziar", en: "newspaper" },
-      { ko: "연필을", ro: "creion", en: "pencil" },
-      { ko: "편지를", ro: "scrisoare", en: "letter" },
-      { ko: "컴퓨터를", ro: "calculator", en: "computer" },
-      { ko: "텔레비전을", ro: "televizor", en: "television" },
-      { ko: "음악을", ro: "muzică", en: "music" },
-      { ko: "영화를", ro: "film", en: "movie" },
-      { ko: "사진을", ro: "fotografie", en: "photo" },
-      { ko: "옷을", ro: "haină / haine", en: "clothes" },
-      // Plural (pe persoană)
-      { ko: "책들을", ro: "cărți", en: "books" },
-      { ko: "사과들을", ro: "mere", en: "apples" },
-      // Alte substantive utile
-      { ko: "숙제를", ro: "temă / temele", en: "homework" },
-      { ko: "일을", ro: "treabă / treaba (muncă)", en: "work/job (task)" },
-      { ko: "음식을", ro: "mâncare", en: "food" },
-      { ko: "선물을", ro: "cadou", en: "present" },
-      { ko: "질문을", ro: "întrebare", en: "question" },
-      { ko: "대답을", ro: "răspuns", en: "answer" },
-      { ko: "이야기를", ro: "poveste / discuție", en: "story/conversation" },
-      { ko: "노래를", ro: "cântec", en: "song" }
-    ];
-    const numeralData = [
-      { ko: "한", ro: "un(o)", en: "one" },
-      { ko: "두", ro: "doi / două", en: "two" },
-      { ko: "세", ro: "trei", en: "three" },
-      { ko: "네", ro: "patru", en: "four" },
-      { ko: "다섯", ro: "cinci", en: "five" },
-      { ko: "여섯", ro: "șase", en: "six" },
-      { ko: "일곱", ro: "șapte", en: "seven" },
-      { ko: "여덟", ro: "opt", en: "eight" },
-      { ko: "아홉", ro: "nouă", en: "nine" },
-      { ko: "열", ro: "zece", en: "ten" },
-      // Sino-coreean (ex. pentru ore, etc.)
-      { ko: "십", ro: "zece (sino-coreean)", en: "ten (Sino-Korean)" },
-      { ko: "백", ro: "o sută", en: "hundred" },
-      { ko: "천", ro: "o mie", en: "thousand" },
-      { ko: "만", ro: "zece mii", en: "ten thousand" }
-    ];
-    const counterData = [
-      { ko: "개를", ro: "(obiecte în general)", en: "(things in general)" },
-      { ko: "명을", ro: "(persoane)", en: "(people)" },
-      { ko: "권을", ro: "(cărți/caiete)", en: "(books/notebooks)" },
-      { ko: "잔을", ro: "(cești/pahare)", en: "(cups/glasses)" },
-      { ko: "병을", ro: "(sticle)", en: "(bottles)" },
-      { ko: "마리를", ro: "(animale)", en: "(animals)" },
-      { ko: "대를", ro: "(mașini)", en: "(vehicles)" },
-      { ko: "시에", ro: "(ora fixă)", en: "(hour o'clock)" },
-      { ko: "분에", ro: "(minute)", en: "(minutes)" }
-    ];
-    const verbData = [
-      { ko: "갑니다", ro: "merg(e) (formal)", en: "go/goes (formal polite)" },
-      { ko: "가요", ro: "merg(e) (polite)", en: "go/goes (casual polite)" },
-      { ko: "간다", ro: "merg(e) (informal)", en: "go/goes (plain)" },
-      { ko: "왔습니다", ro: "am/a venit (formal)", en: "came (formal polite past)" },
-      { ko: "왔어요", ro: "am/a venit (polite)", en: "came (casual polite past)" },
-      { ko: "왔다", ro: "am/a venit (informal)", en: "came (plain past)" },
-      { ko: "합니다", ro: "fac(e) (formal)", en: "do/does (formal polite)" },
-      { ko: "해요", ro: "fac(e) (polite)", en: "do/does (casual polite)" },
-      { ko: "한다", ro: "fac(e) (informal)", en: "do/does (plain)" },
-      { ko: "먹습니다", ro: "mănânc(ă) (formal)", en: "eat/eats (formal polite)" },
-      { ko: "먹어요", ro: "mănânc(ă) (polite)", en: "eat/eats (casual polite)" },
-      { ko: "먹는다", ro: "mănânc(ă) (informal)", en: "eat/eats (plain)" },
-      { ko: "마십니다", ro: "beau (formal)", en: "drink/drinks (formal polite)" },
-      { ko: "마셔요", ro: "beau (polite)", en: "drink/drinks (casual polite)" },
-      { ko: "마신다", ro: "beau (informal)", en: "drink/drinks (plain)" },
-      { ko: "봅니다", ro: "privesc / văd (formal)", en: "see/sees (formal polite)" },
-      { ko: "봐요", ro: "privesc / văd (polite)", en: "see/sees (casual polite)" },
-      { ko: "본다", ro: "privesc / văd (informal)", en: "see/sees (plain)" },
-      { ko: "읽습니다", ro: "citesc (formal)", en: "read/reads (formal polite)" },
-      { ko: "읽어요", ro: "citesc (polite)", en: "read/reads (casual polite)" },
-      { ko: "읽는다", ro: "citesc (informal)", en: "read/reads (plain)" },
-      { ko: "씁니다", ro: "scriu (formal)", en: "write/writes (formal polite)" },
-      { ko: "써요", ro: "scriu (polite)", en: "write/writes (casual polite)" },
-      { ko: "쓴다", ro: "scriu (informal)", en: "write/writes (plain)" },
-      { ko: "말합니다", ro: "vorbesc (formal)", en: "speak/speaks (formal polite)" },
-      { ko: "말해요", ro: "vorbesc (polite)", en: "speak/speaks (casual polite)" },
-      { ko: "말한다", ro: "vorbesc (informal)", en: "speak/speaks (plain)" },
-      { ko: "듣습니다", ro: "ascultă (formal)", en: "listen/listens (formal polite)" },
-      { ko: "들어요", ro: "ascultă (polite)", en: "listen/listens (casual polite)" },
-      { ko: "듣는다", ro: "ascultă (informal)", en: "listen/listens (plain)" },
-      { ko: "공부합니다", ro: "studiază (formal)", en: "study/studies (formal polite)" },
-      { ko: "공부해요", ro: "studiază (polite)", en: "study/studies (casual polite)" },
-      { ko: "공부한다", ro: "studiază (informal)", en: "study/studies (plain)" },
-      { ko: "일합니다", ro: "lucrează (formal)", en: "work/works (formal polite)" },
-      { ko: "일해요", ro: "lucrează (polite)", en: "work/works (casual polite)" },
-      { ko: "일한다", ro: "lucrează (informal)", en: "work/works (plain)" },
-      { ko: "운동합니다", ro: "face sport (formal)", en: "exercise/exercises (formal polite)" },
-      { ko: "운동해요", ro: "face sport (polite)", en: "exercise/exercises (casual polite)" },
-      { ko: "운동한다", ro: "face sport (informal)", en: "exercise/exercises (plain)" },
-      { ko: "쉽니다", ro: "se odihnește (formal)", en: "rest/rests (formal polite)" },
-      { ko: "쉬어요", ro: "se odihnește (polite)", en: "rest/rests (casual polite)" },
-      { ko: "쉰다", ro: "se odihnește (informal)", en: "rest/rests (plain)" },
-      { ko: "놉니다", ro: "se joacă (formal)", en: "play/plays (formal polite)" },
-      { ko: "놀아요", ro: "se joacă (polite)", en: "play/plays (casual polite)" },
-      { ko: "논다", ro: "se joacă (informal)", en: "play/plays (plain)" },
-      { ko: "만납니다", ro: "se întâlnește (formal)", en: "meet/meets (formal polite)" },
-      { ko: "만나요", ro: "se întâlnește (polite)", en: "meet/meets (casual polite)" },
-      { ko: "만난다", ro: "se întâlnește (informal)", en: "meet/meets (plain)" },
-      { ko: "줍니다", ro: "dă (formal)", en: "give/gives (formal polite)" },
-      { ko: "줘요", ro: "dă (polite)", en: "give/gives (casual polite)" },
-      { ko: "준다", ro: "dă (informal)", en: "give/gives (plain)" },
-      { ko: "받습니다", ro: "primește (formal)", en: "receive/receives (formal polite)" },
-      { ko: "받아요", ro: "primește (polite)", en: "receive/receives (casual polite)" },
-      { ko: "받는다", ro: "primește (informal)", en: "receive/receives (plain)" },
-      { ko: "배웁니다", ro: "învață (formal)", en: "learn/learns (formal polite)" },
-      { ko: "배워요", ro: "învață (polite)", en: "learn/learns (casual polite)" },
-      { ko: "배운다", ro: "învață (informal)", en: "learn/learns (plain)" },
-      { ko: "가르칩니다", ro: "predă (formal)", en: "teach/teaches (formal polite)" },
-      { ko: "가르쳐요", ro: "predă (polite)", en: "teach/teaches (casual polite)" },
-      { ko: "가르친다", ro: "predă (informal)", en: "teach/teaches (plain)" }
-    ];
-    // Sentence 2 connectors (e.g., "and", "but", etc.)
-    const sentence2Data = [
-      { ko: "그리고", ro: "și / iar", en: "and/and then" },
-      { ko: "그래서", ro: "așa că", en: "so/therefore" },
-      { ko: "하지만", ro: "dar", en: "but/however" },
-      { ko: "그러나", ro: "însă", en: "but/however" },
-      { ko: "또는", ro: "sau", en: "or" }
-    ];
-    // TIP: The arrays above provide basic words for each part of the sentence.
- 
-    // Additional data structures for user-added (custom) words or saved sentences
-    const STORAGE_KEY = "ralucaKoreanCustomWords_v2";
-    const customData = { subject: [], time: [], place: [], mod: [], object: [], verb: [], predicate: [], sentence2: [] };
-    let favorites = [];
- 
-    // UI element references
-    const screens = document.querySelectorAll(".screen");
-    const navButtons = document.querySelectorAll(".nav-btn");
-    const screenBuilder = document.getElementById("screen-builder");
-    const screenExercises = document.getElementById("screen-exercises");
-    const screenLessons = document.getElementById("screen-lessons");
-    const screenGlossary = document.getElementById("screen-glossary");
- 
-    const previewKo = document.getElementById("previewKo");
-    const previewRo = document.getElementById("previewRo");
-    const pageInfo = document.getElementById("pageInfo");
-    const tableP1 = document.getElementById("tableP1");
-    const titleP2 = document.getElementById("titleP2");
-    const tableP2 = document.getElementById("tableP2");
- 
-    const randomBtn = document.getElementById("randomBtn");
-    const randomBtn2 = document.getElementById("randomBtn2");
-    const speakBtn = document.getElementById("speakBtn");
-    const favBtn = document.getElementById("favBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const enableP2 = document.getElementById("enableP2");
-    const toggleTranslationBtn = document.getElementById("toggleTranslationBtn");
-    const copyBtn = document.getElementById("copyBtn");
- 
-    const overlay = document.getElementById("overlay");
-    const panelTitle = document.getElementById("panelTitle");
-    const panelSub = document.getElementById("panelSub");
-    const panelList = document.getElementById("panelList");
-    const closePanelBtn = document.getElementById("closePanelBtn");
-    const clearFavBtn = document.getElementById("clearFavBtn");
- 
-    const exercisesContainer = document.getElementById("exercisesContainer");
-    const glossarySearch = document.getElementById("glossarySearch");
-    const glossaryResults = document.getElementById("glossaryResults");
- 
-    // On page load, retrieve any custom words from localStorage
-    function loadCustomData() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      Object.keys(customData).forEach(k => {
-        if (Array.isArray(saved[k])) {
-          customData[k] = saved[k];
-        }
-      });
+  <div class="hint">
+    *Introduceți o propoziție în română sau engleză și apăsați "Completează automat" pentru a popula tabelul.*
+  </div>
+
+  <!-- Builder table (clauses) -->
+  <h3 class="section-title">Builder (clauze)</h3>
+  <div id="clausesHost" class="clauses">
+    <!-- Clause tables will be inserted here by script -->
+  </div>
+  <div class="toggle-row">
+    <label>
+      <input type="checkbox" id="secondClauseToggle" />
+      <span>Propoziție secundară</span>
+    </label>
+    <label style="margin-left:16px;">
+      <input type="checkbox" id="politeToggle" checked />
+      <span>Politețe (doar ultima clauză)</span>
+    </label>
+  </div>
+
+  <!-- Output preview and controls -->
+  <div class="preview-card">
+    <p id="koOutput" class="output-ko"></p>
+    <p id="trOutput" class="output-trans"></p>
+    <div class="lang-select">
+      <span>Limba propoziției:</span>
+      <select id="langSelect">
+        <option value="ro" selected>Română</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+    <div class="btn-row" style="margin-top: 10px;">
+      <button id="prevBtn" class="secondary">← Propoziția anterioară</button>
+      <button id="nextBtn" class="secondary">Următoarea propoziție →</button>
+      <button id="randomBtn" class="primary">Random propoziție</button>
+      <button id="ttsBtn" class="primary">Audio coreeană 🔊</button>
+      <button id="saveBtn" class="secondary">Salvează propoziția</button>
+      <button id="toggleTransBtn" class="secondary">Ascunde traducerea</button>
+    </div>
+  </div>
+
+</div>  <!-- /.app container -->
+
+<script>
+(function () {
+  "use strict";
+
+  // =========================
+  // 1) Data Definitions 
+  // =========================
+  // Predefined vocabulary and mapping rules for categories:
+  const dataMap = {
+    subject: [
+      { re: /\b(eu)\b/i, value: "저는", trans: "Eu" },
+      { re: /\b(tu)\b/i, value: "너는", trans: "Tu" },
+      { re: /\b(noi)\b/i, value: "우리는", trans: "Noi" },
+      // Optionally one can add "el/ea" etc. but omitted for simplicity
+    ],
+    time: [
+      { re: /\b(azi|astăzi)\b/i, value: "오늘", trans: "astăzi" },
+      { re: /\b(mâine)\b/i, value: "내일", trans: "mâine" },
+      { re: /\b(ieri)\b/i, value: "어제", trans: "ieri" },
+      { re: /\b(acum)\b/i, value: "지금", trans: "acum" }
+    ],
+    place: [
+      { re: /\b(cafenea|cafe)\b/i, value: "카페에", trans: "la cafenea" },
+      { re: /\b(acasă|acasa)\b/i, value: "집에서", trans: "acasă" },
+      { re: /\b(școală|scoala)\b/i, value: "학교에서", trans: "la școală" },
+      { re: /\b(serviciu|firmă|firma|companie)\b/i, value: "회사에서", trans: "la serviciu" },
+      { re: /\b(magazin|supermarket)\b/i, value: "마트에서", trans: "la magazin" }
+    ],
+    mod: [
+      { re: /\b(bine|ok)\b/i, value: "잘", trans: "bine" },
+      { re: /\b(încet|incet)\b/i, value: "천천히", trans: "încet" },
+      { re: /\b(repe(de)?|rapid)\b/i, value: "빨리", trans: "repede" },
+      { re: /\b(mult)\b/i, value: "많이", trans: "mult" }
+    ],
+    object: [
+      { re: /\b(carte|cărți|carti)\b/i, value: "책", trans: "carte" },
+      { re: /\b(cafea)\b/i, value: "커피", trans: "cafea" },
+      { re: /\b(apă|apa)\b/i, value: "물", trans: "apă" },
+      { re: /\b(ceai)\b/i, value: "차", trans: "ceai" },
+      { re: /\b(mâncare|mancare|prânz|pranz|cină|cina|mic\s+dejun)\b/i, value: "음식", trans: "mâncare" }
+    ],
+    numeral: [
+      { re: /\b(o)\s+\w+/i, value: "한", trans: "o" },   // "o" before a noun (assuming feminine form) 
+      { re: /\b(una|un)\b/i, value: "한", trans: "un/una" }, // generic one
+      { re: /\b(două|doua)\b/i, value: "두", trans: "două" },
+      { re: /\b(trei)\b/i, value: "세", trans: "trei" }
+      // (We can extend to 4,5... if needed)
+    ],
+    counter: [
+      { re: /\b(carte|cărți|carti)\b/i, value: "권", trans: " (cărți)" },  // counter for books
+      { re: /\b(cafea|apă|apa|ceai|mâncare|mancare)\b/i, value: "개", trans: " (bucăți)" }  // general counter
+    ],
+    verb: [
+      { re: /\b(merg)\b|a\s+merge|să\s+merg/i, value: "가다", trans: "merg" },
+      { re: /\b(vin)\b|a\s+veni|să\s+vin/i, value: "오다", trans: "vin" },
+      { re: /\b(mănânc|mananc)\b|a\s+mânca|a\s+manca/i, value: "먹다", trans: "mănânc" },
+      { re: /\b(beau)\b|a\s+bea|să\s+beau/i, value: "마시다", trans: "beau" },
+      { re: /\b(citesc)\b|a\s+citi|să\s+citesc/i, value: "읽다", trans: "citesc" },
+      { re: /\b(lucrez)\b|a\s+lucra/i, value: "일하다", trans: "lucrez" }
+      // Additional verbs can be added here
+    ]
+  };
+
+  // The above dataMap provides:
+  // - value: the Korean word (with appropriate particle, if fixed)
+  // - trans: the Romanian word or phrase for translation
+  // Note: Some Korean values already include particles (e.g., "카페에" includes locative "에").
+  // This is a simplification; a more advanced logic might add particles dynamically.
+
+  // Example model sentences (each model defines selections for one or two clauses):
+  const exampleModels = [
+    { // Model 1: "Eu merg la cafenea."
+      clause1: { subject:"저는", time:"오늘", place:"카페에", mod:"", object:"", numeral:"", counter:"", verbOverride:"가요" },
+      clause2: null,
+      polite: true,
+      translation_ro: "Eu astăzi merg la cafenea.",
+      translation_en: "Today I go to the cafe."
+    },
+    { // Model 2: "Eu mănânc o cafea (beau o cafea)."
+      clause1: { subject:"저는", time:"", place:"", mod:"", object:"커피", numeral:"한", counter:"개", verbOverride:"마셔요" },
+      clause2: null,
+      polite: true,
+      translation_ro: "Eu beau o cafea.",
+      translation_en: "I drink a coffee."
+    },
+    { // Model 3: "Noi mâncăm multă mâncare acasă."
+      clause1: { subject:"우리는", time:"", place:"집에서", mod:"많이", object:"음식", numeral:"", counter:"", verbOverride:"먹어요" },
+      clause2: null,
+      polite: true,
+      translation_ro: "Noi mâncăm multă mâncare acasă.",
+      translation_en: "We eat a lot of food at home."
+    },
+    { // Model 4: "Astăzi merg la serviciu și citesc o carte."
+      clause1: { subject:"저는", time:"오늘", place:"회사에서", mod:"", object:"", numeral:"", counter:"", verbOverride:"가고" }, // using connective form for clause1 verb
+      clause2: { subject:"", time:"", place:"", mod:"", object:"책", numeral:"한", counter:"권", verbOverride:"읽어요" },
+      polite: true,
+      translation_ro: "Astăzi merg la serviciu și citesc o carte.",
+      translation_en: "Today I go to the office and read a book."
     }
-    loadCustomData();
- 
-    // Save custom data (if user adds custom words, etc.)
-    function saveCustomData() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(customData));
-      } catch (e) {
-        console.warn("Storage saving issue:", e);
-      }
+  ];
+  let currentModelIndex = -1;  // index for prev/next navigation
+
+  // Utility: list of categories for easy iteration (excluding verb which is handled contextually)
+  const categories = ["subject", "time", "place", "mod", "object", "numeral", "counter"];
+
+  // =========================
+  // 2) DOM Elements 
+  // =========================
+  const inputText = document.getElementById('inputText');
+  const clausesHost = document.getElementById('clausesHost');
+  const secondClauseToggle = document.getElementById('secondClauseToggle');
+  const politeToggle = document.getElementById('politeToggle');
+  const koOutput = document.getElementById('koOutput');
+  const trOutput = document.getElementById('trOutput');
+  const langSelect = document.getElementById('langSelect');
+  const autoFillBtn = document.getElementById('autoFillBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const randomBtn = document.getElementById('randomBtn');
+  const ttsBtn = document.getElementById('ttsBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const toggleTransBtn = document.getElementById('toggleTransBtn');
+
+  // We'll generate clause HTML blocks and maintain references to selection items.
+  let clauseElements = [];  // to store the DOM elements of clauses for easy access
+  let selections = {
+    clause1: { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" },
+    clause2: { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" }
+  };
+
+  // =========================
+  // 3) UI Generation Functions 
+  // =========================
+  // Function to create one column (category block) HTML string
+  function createColumnHTML(catKey, catLabel, exampleHint) {
+    // Build each item in list as a div.button with text (using dataMap for values)
+    let itemsHTML = "";
+    const dataList = dataMap[catKey] || [];
+    // For selection UI, we'll use Korean value for display if available, or a placeholder
+    dataList.forEach(entry => {
+      // Use Korean value as display if it's not empty
+      const displayText = entry.value ? entry.value.replace(/(~요|요|다)$/,"") : "(—)";
+      // ^ we strip any trailing verb endings or particles for display clarity
+      itemsHTML += `<div class="item" data-cat="${catKey}" data-val="${entry.value}" data-trans="${entry.trans}">${displayText || "—"}</div>`;
+    });
+    // If the category can be empty (optional), add a blank item option to deselect
+    itemsHTML += `<div class="item" data-cat="${catKey}" data-val="" data-trans=""">(niciunul)</div>`;
+    return `
+      <div class="col" data-key="${catKey}">
+        <div class="col-header">${catLabel}</div>
+        <div class="col-body">
+          ${itemsHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  // Function to generate the two clause tables based on current secondClauseToggle
+  function renderClauses() {
+    clausesHost.innerHTML = "";  // clear
+    clauseElements = [];
+    // Always render clause1
+    clausesHost.innerHTML += `<div id="clause1" class="table-horizontal"></div>`;
+    clauseElements.push(document.getElementById('clause1'));
+    clauseElements[0].innerHTML = 
+      createColumnHTML("subject","SUBJECT") +
+      createColumnHTML("time","TIME") +
+      createColumnHTML("place","PLACE") +
+      createColumnHTML("mod","MOD") +
+      createColumnHTML("object","OBJECT") +
+      createColumnHTML("numeral","NUMERAL") +
+      createColumnHTML("counter","COUNTER");
+    // Render clause2 if enabled
+    if (secondClauseToggle.checked) {
+      clausesHost.innerHTML += `<div id="clause2" class="table-horizontal"></div>`;
+      clauseElements.push(document.getElementById('clause2'));
+      clauseElements[1].innerHTML = 
+        createColumnHTML("subject","SUBJECT") +
+        createColumnHTML("time","TIME") +
+        createColumnHTML("place","PLACE") +
+        createColumnHTML("mod","MOD") +
+        createColumnHTML("object","OBJECT") +
+        createColumnHTML("numeral","NUMERAL") +
+        createColumnHTML("counter","COUNTER");
     }
- 
-    // Utility: choose a random element from an array
-    function rand(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
- 
-    // Utility: combine default data and custom data for a given category
-    function getCombinedList(category) {
-      switch (category) {
-        case "subject": return [...subjectData, ...customData.subject];
-        case "time": return [...timeData, ...customData.time];
-        case "place": return [...placeData, ...customData.place];
-        case "mod": return [...modData, ...customData.mod];
-        case "object": return [...objectData, ...customData.object];
-        case "numeral": return [...numeralData];
-        case "counter": return [...counterData];
-        case "verb": return [...verbData, ...customData.verb];
-        case "predicate": return [...verbData, ...customData.predicate]; // 'predicate' can hold entire predicate phrases, reuse verbData for now
-        case "sentence2": return [...sentence2Data];
-      }
-      return [];
-    }
- 
-    // Utility: Create a cell element for the table (word part)
-    function createCell(id, text, isHighlight = false) {
-      const cell = document.createElement("span");
-      cell.className = "cell" + (isHighlight ? " highlight" : "");
-      cell.textContent = text;
-      cell.dataset.id = id;
-      return cell;
-    }
- 
-    // Populate the table for a given sentence (p1 or p2) based on selected parts and a given random model or user selection
-    function buildSentenceParts(randomModelIndex = null) {
-      // Determine which parts are active (checked)
-      const activeParts = Array.from(document.querySelectorAll(".part-toggles input:checked")).map(inp => inp.getAttribute("data-part"));
-      // Always include "subject" and "verb" in active parts (ensuring at least a basic sentence structure)
-      if (!activeParts.includes("subject")) activeParts.unshift("subject");
-      if (!activeParts.includes("verb")) activeParts.push("verb");
- 
-      // If randomModelIndex is provided, use that model's configuration of parts; otherwise, use activeParts directly for free build
-      const modelParts = randomModelIndex != null ? sentenceModels[randomModelIndex] : activeParts;
- 
-      // Build or update table for sentence 1
-      tableP1.innerHTML = "";
-      modelParts.forEach(part => {
-        // For each part, get a random word (or placeholder if not active)
-        let wordObj = null;
-        if (part === "predicate") {
-          // If predicate (which might include verb plus ending) - treat as separate concept if needed
-          wordObj = rand(getCombinedList("predicate"));
-        } else {
-          const list = getCombinedList(part);
-          wordObj = list.length ? rand(list) : null;
-        }
-        let displayText = wordObj ? wordObj.ko : `(${part})`;
-        const cell = createCell(part, displayText, false);
-        tableP1.appendChild(cell);
-      });
-      // If sentence 2 is enabled, build table for sentence 2 similarly (with connector + second sentence structure)
-      if (enableP2.checked) {
-        titleP2.classList.remove("hidden");
-        tableP2.classList.remove("hidden");
-        tableP2.innerHTML = "";
-        // Always start sentence2 with a connector (choose one at random)
-        const connector = rand(sentence2Data);
-        tableP2.appendChild(createCell("connector", connector.ko, true));
-        // Then add a subject for second sentence unless it’s implicitly same subject? We'll include it for now
-        const partsP2 = ["subject", ...modelParts.filter(p => p !== "subject")]; // ensure subject appears first
-        partsP2.forEach((part, idx) => {
-          if (idx === 0) {
-            // first part is subject for sentence2
+    // After rendering, attach event listeners to all items for selection:
+    document.querySelectorAll('.item').forEach(itemEl => {
+      itemEl.addEventListener('click', () => onSelectItem(itemEl));
+    });
+  }
+
+  // Initialize clauses on page load:
+  renderClauses();
+
+  // =========================
+  // 4) Sentence Assembly 
+  // =========================
+  function updateSentenceOutput() {
+    // This function reads current selections and constructs:
+    // - The Korean sentence (combined clauses if any)
+    // - The Romanian/English translation based on langSelect
+    let koSentence = "";
+    let roSentence = "";
+    let enSentence = "";
+
+    // Helper function to construct one clause's sentence
+    function constructClause(sel, isLastClause) {
+      // Determine verb based on context:
+      let verbKor = "";
+      let verbTransRo = "";
+      let verbTransEn = "";
+
+      // If a specific verb override is provided (from example model), use that
+      if (sel.verbOverride) {
+        // verbOverride expected to be a conjugated Korean verb form (e.g. 가요, 먹어요, 가고)
+        verbKor = sel.verbOverride;
+        // For translation, find the base verb in dataMap to get ro and en (approximate)
+        const baseKor = sel.verbOverride.replace(/요|고$/, "다");  // approximate root
+        const verbEntry = dataMap.verb.find(v => v.value === baseKor);
+        if (verbEntry) {
+          verbTransRo = verbEntry.trans;
+          // For English, do a simple mapping:
+          const engMap = { "merg":"go", "vin":"come", "mănânc":"eat", "beau":"drink", "citesc":"read", "lucrez":"work" };
+          verbTransEn = engMap[verbEntry.trans] || verbEntry.trans;
+          if (!isLastClause && verbKor.endsWith("고")) {
+            // If not last clause and ends with 고 (and), add "și" or "and"
+            verbTransRo += " și";
+            verbTransEn += " and";
           }
-          if (part === "predicate") {
-            const wordObj = rand(getCombinedList("predicate"));
-            let displayText = wordObj ? wordObj.ko : `(${part})`;
-            tableP2.appendChild(createCell(part, displayText, false));
-          } else if (part !== "connector") {
-            const list = getCombinedList(part);
-            let wordObj = list.length ? rand(list) : null;
-            let displayText = wordObj ? wordObj.ko : `(${part})`;
-            tableP2.appendChild(createCell(part, displayText, false));
-          }
-        });
+        }
       } else {
-        titleP2.classList.add("hidden");
-        tableP2.classList.add("hidden");
-      }
-      updateSentencePreview();
-    }
- 
-    // Build the final Korean sentence from the table parts and update preview
-    function updateSentencePreview() {
-      // Gather Korean parts from the table cells
-      let koSentence = "";
-      tableP1.querySelectorAll(".cell").forEach(cell => {
-        koSentence += cell.textContent.replace(/[*]/g, "") + " ";
-      });
-      koSentence = koSentence.trim();
-      // If second sentence is enabled, add connector and parts
-      if (enableP2.checked) {
-        tableP2.querySelectorAll(".cell").forEach(cell => {
-          koSentence += " " + cell.textContent.replace(/[*]/g, "");
-        });
-        koSentence = koSentence.trim();
-      }
-      previewKo.textContent = koSentence || "…";
-      // Generate Romanian translation for the sentence
-      let roSentence = generateTranslation();
-      previewRo.textContent = roSentence || "…";
-      LAST_RO_SENTENCE = roSentence;
-    }
- 
-    // Generate translation in Romanian (and optionally English) based on current sentence structure
-    function generateTranslation() {
-      // For now, simple concatenation of selected parts' Romanian meaning
-      // In a real scenario, grammar adjustments would be necessary (word order, particles usage, etc.)
-      let roSentence = "";
-      let enSentence = "";
-      // Process parts from sentence 1
-      tableP1.querySelectorAll(".cell").forEach(cell => {
-        const id = cell.dataset.id;
-        const koText = cell.textContent;
-        let dataList = [];
-        if (id === "subject") dataList = subjectData;
-        else if (id === "time") dataList = timeData;
-        else if (id === "place") dataList = placeData;
-        else if (id === "mod") dataList = modData;
-        else if (id === "object") dataList = objectData;
-        else if (id === "numeral") dataList = numeralData;
-        else if (id === "counter") dataList = counterData;
-        else if (id === "verb") dataList = verbData;
-        else if (id === "predicate") dataList = verbData; // simplifying: treat like verb
-        const item = dataList.find(item => item.ko === koText);
-        if (item) {
-          roSentence += item.ro + " ";
-          enSentence += item.en + " ";
+        // Determine verb if not explicitly set:
+        if (sel.object) {
+          // if object exists, choose verb based on object
+          if (sel.object === "책") { verbKor = isLastClause? "읽어요" : "읽고"; verbTransRo = "citesc"; verbTransEn = "read"; }
+          else if (sel.object === "커피" || sel.object === "물" || sel.object === "차") { verbKor = isLastClause? "마셔요" : "마시고"; verbTransRo = "beau"; verbTransEn = "drink"; }
+          else if (sel.object === "음식") { verbKor = isLastClause? "먹어요" : "먹고"; verbTransRo = "mănânc"; verbTransEn = "eat"; }
+          else { verbKor = isLastClause? "해요" : "하고"; verbTransRo = "fac"; verbTransEn = "do"; } // generic fallback
+        } else if (sel.place) {
+          // if only place (no object), use 'go' or 'am/is at' depending on context
+          verbKor = isLastClause? "가요" : "가고";
+          verbTransRo = "merg";
+          verbTransEn = "go";
         } else {
-          // If item not found (e.g., placeholder or custom not recognized), just use the Korean as placeholder
-          roSentence += koText + " ";
-          enSentence += koText + " ";
-        }
-      });
-      roSentence = roSentence.trim();
-      enSentence = enSentence.trim();
-      // Process sentence 2 if present
-      if (enableP2.checked) {
-        let roSentence2 = "";
-        let enSentence2 = "";
-        tableP2.querySelectorAll(".cell").forEach(cell => {
-          const id = cell.dataset.id;
-          const koText = cell.textContent;
-          let dataList = [];
-          if (id === "connector") dataList = sentence2Data;
-          else if (id === "subject") dataList = subjectData;
-          else if (id === "time") dataList = timeData;
-          else if (id === "place") dataList = placeData;
-          else if (id === "mod") dataList = modData;
-          else if (id === "object") dataList = objectData;
-          else if (id === "numeral") dataList = numeralData;
-          else if (id === "counter") dataList = counterData;
-          else if (id === "verb") dataList = verbData;
-          else if (id === "predicate") dataList = verbData;
-          const item = dataList.find(item => item.ko === koText);
-          if (item) {
-            roSentence2 += item.ro + " ";
-            enSentence2 += item.en + " ";
-          } else {
-            roSentence2 += koText + " ";
-            enSentence2 += koText + " ";
-          }
-        });
-        roSentence2 = roSentence2.trim();
-        enSentence2 = enSentence2.trim();
-        if (roSentence && roSentence2) {
-          roSentence = roSentence + ", " + roSentence2;
-          enSentence = enSentence + ", " + enSentence2;
+          // if no object or place (just subject/time/mod), use a generic verb "do"
+          verbKor = isLastClause? "해요" : "하고";
+          verbTransRo = "fac";
+          verbTransEn = "do";
         }
       }
-      return roSentence;
+
+      // Politeness: if politeToggle is off, use informal endings (we can simply drop 요 for simplicity)
+      if (!politeToggle.checked) {
+        // Remove '요' polite endings for last clause
+        verbKor = verbKor.replace(/요$/, "");
+      }
+
+      // Build Korean clause:
+      // subject + time + place + object + (numeral+counter) + verb
+      const subjectKor = sel.subject || ""; 
+      const timeKor = sel.time || ""; 
+      const placeKor = sel.place || ""; 
+      let objectKor = sel.object || "";
+      if (sel.numeral && sel.counter) {
+        // if numeral and counter are present with object, combine them (e.g., "커피 한 개")
+        objectKor = objectKor + (sel.numeral ? " " + sel.numeral : "") + (sel.counter ? " " + sel.counter : "");
+      }
+      // If object exists but no numeral, add object particle (을/를) appropriately:
+      if (sel.object && !sel.numeral && !sel.counter) {
+        // Add object particle: use 를 if last char has vowel, 을 if consonant
+        const lastCharCode = sel.object.charCodeAt(sel.object.length-1);
+        const hasBatchim = (lastCharCode - 0xAC00) % 28 !== 0;
+        objectKor = sel.object + (hasBatchim ? "을" : "를");
+      }
+      // Compose clause Korean:
+      const clauseKor = [subjectKor, timeKor, placeKor, objectKor, verbKor].filter(Boolean).join(" ");
+      
+      // Build Romanian clause (approximate literal translation):
+      const subjectRo = sel.subject ? (dataMap.subject.find(e=>e.value===sel.subject)?.trans || "") : "";
+      const timeRo = sel.time ? (dataMap.time.find(e=>e.value===sel.time)?.trans || "") : "";
+      const placeRo = sel.place ? (dataMap.place.find(e=>e.value===sel.place)?.trans || "") : "";
+      const modRo = sel.mod ? (dataMap.mod.find(e=>e.value===sel.mod)?.trans || "") : "";
+      const objectRo = sel.object ? (dataMap.object.find(e=>e.value===sel.object)?.trans || "") : "";
+      const numeralRo = sel.numeral ? (dataMap.numeral.find(e=>e.value===sel.numeral)?.trans || "") : "";
+      let counterRo = "";
+      if (sel.counter) {
+        // for translation, we might just add generic word or plural form
+        counterRo = sel.counter === "권" ? (objectRo ? (objectRo.endsWith("e")?" de":"") + " cărți" : " de cărți")
+                  : sel.counter === "개" ? " (buc)" : "";
+        // The trans in dataMap.counter includes a hint (like "(cărți)" or "(bucăți)")
+        const counterEntry = dataMap.counter.find(e=>e.value===sel.counter);
+        if(counterEntry) counterRo = counterEntry.trans;
+      }
+      // Romanian clause assembly:
+      let clauseRo = [subjectRo, timeRo, placeRo, modRo, (numeralRo ? numeralRo : ""), objectRo + counterRo, verbTransRo].filter(Boolean).join(" ").trim();
+      // Clean up double spaces or dangling particles:
+      clauseRo = clauseRo.replace(/\s+/g, " ");
+      if (!isLastClause && clauseRo) clauseRo += " și";  // add conjunction 'și' if it's not last clause
+      
+      // English clause assembly (similar approach):
+      const subjectEn = sel.subject ? (sel.subject === "저는" || sel.subject === "우리는" ? "I/we" : "you") : ""; // simplistic
+      const timeEn = sel.time ? (dataMap.time.find(e=>e.value===sel.time)?.trans || "") : "";
+      const placeEn = sel.place ? (dataMap.place.find(e=>e.value===sel.place)?.trans || "").replace(/^la\s+/, "to ") : "";
+      const modEn = sel.mod ? (dataMap.mod.find(e=>e.value===sel.mod)?.trans || "") : "";
+      const objectEn = sel.object ? (dataMap.object.find(e=>e.value===sel.object)?.trans || "") : "";
+      const numeralEn = sel.numeral ? (sel.numeral === "한" ? "one" : sel.numeral === "두" ? "two" : sel.numeral === "세" ? "three" : "") : "";
+      let clauseEn = [subjectEn, timeEn, (sel.place ? "to" : ""), placeEn, modEn, numeralEn, objectEn, verbTransEn].filter(Boolean).join(" ").trim();
+      if (!isLastClause && clauseEn) clauseEn += " and";
+
+      return { ko: clauseKor, ro: clauseRo, en: clauseEn };
     }
- 
-    // Model patterns for sentences (for random mode)
-    const sentenceModels = [
-      // Each model is an array of parts that should appear in the sentence, in order
-      ["subject", "verb"],
-      ["subject", "object", "verb"],
-      ["subject", "place", "verb"],
-      ["subject", "time", "verb"],
-      ["subject", "time", "place", "verb"],
-      ["subject", "place", "object", "verb"],
-      ["subject", "time", "object", "verb"],
-      ["subject", "mod", "verb"],
-      ["subject", "mod", "object", "verb"],
-      ["subject", "time", "mod", "verb"],
-      ["subject", "time", "mod", "object", "verb"],
-      ["subject", "place", "mod", "verb"],
-      ["subject", "place", "mod", "object", "verb"],
-      ["subject", "time", "place", "mod", "verb"],
-      ["subject", "time", "place", "mod", "object", "verb"],
-      // Models including numeral & counter for countable objects
-      ["subject", "numeral", "counter", "object", "verb"],
-      ["subject", "time", "numeral", "counter", "object", "verb"],
-      ["subject", "place", "numeral", "counter", "object", "verb"],
-      ["subject", "time", "place", "numeral", "counter", "object", "verb"],
-      // If needed, can add more patterns (with mod, etc.)
-    ];
-    let currentModelIndex = 0;
- 
-    // Initialize builder with model 0
-    buildSentenceParts(currentModelIndex);
-    pageInfo.textContent = `Model ${currentModelIndex + 1}/${sentenceModels.length}`;
- 
-    // Event: toggle between modes (Simplu vs TOPIK)
-    document.querySelectorAll(".small-mode-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".small-mode-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        const mode = btn.getAttribute("data-mode");
-        if (mode === "simple") {
-          document.body.classList.add("pastel-theme");
-        } else {
-          // For TOPIK mode, possibly different theme or functionalities (if implemented)
-          document.body.classList.add("pastel-theme");
-          // If we had a different theme for TOPIK, we could toggle here
-        }
+
+    // Construct clause1 (always exists)
+    const clause1Result = constructClause(selections.clause1, (!secondClauseToggle.checked));
+    koSentence += clause1Result.ko;
+    roSentence += clause1Result.ro;
+    enSentence += clause1Result.en;
+    // Construct clause2 if active
+    if (secondClauseToggle.checked) {
+      const clause2Result = constructClause(selections.clause2, true);
+      // join with space (already added 'și/and' in clause1 if needed)
+      koSentence += (koSentence && clause2Result.ko ? " " : "") + clause2Result.ko;
+      roSentence += (roSentence && clause2Result.ro ? " " : "") + clause2Result.ro;
+      enSentence += (enSentence && clause2Result.en ? " " : "") + clause2Result.en;
+    }
+
+    // Update outputs on page
+    koOutput.textContent = koSentence;
+    // Choose translation based on selection
+    trOutput.textContent = (langSelect.value === "en") ? enSentence : roSentence;
+  }
+
+  // Selection handler for when a user clicks a word in a category column
+  function onSelectItem(itemEl) {
+    const cat = itemEl.getAttribute('data-cat');
+    const val = itemEl.getAttribute('data-val');
+    const trans = itemEl.getAttribute('data-trans');
+    const clauseIndex = itemEl.closest('.table-horizontal').id === "clause1" ? 1 : 2;
+    const clauseKey = clauseIndex === 1 ? 'clause1' : 'clause2';
+
+    // Toggle selection: if already selected, deselect it.
+    // Deselect other items in same category (within same clause)
+    const clauseElem = clauseIndex === 1 ? clauseElements[0] : clauseElements[1];
+    clauseElem.querySelectorAll(`.item[data-cat="${cat}"]`).forEach(elem => {
+      elem.classList.remove('selected');
+    });
+    if (selections[clauseKey][cat] === val) {
+      // if clicking the already selected value, we deselect it (toggle off)
+      selections[clauseKey][cat] = "";
+      // No item will be selected in UI for this category (all removed above)
+    } else {
+      // select new item
+      itemEl.classList.add('selected');
+      selections[clauseKey][cat] = val;
+    }
+    // Whenever a selection changes, we recalc the sentence
+    updateSentenceOutput();
+  }
+
+  // =========================
+  // 5) Auto-Fill (Parse input sentence)
+  // =========================
+  function autoFillBuilder(sentence) {
+    if (!sentence) return;
+    // Reset current selections
+    selections.clause1 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
+    selections.clause2 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
+    // Lowercase for matching (keep original for output as needed)
+    let text = sentence.trim();
+    const textLower = text.toLowerCase();
+
+    // Decide if there's a second clause (we'll split on common conjunctions like ' și ' or ' and ')
+    let parts = textLower.split(/\s+\w+\s+(?:și|and)\s+/i);
+    if (parts.length > 1) {
+      secondClauseToggle.checked = true;
+      renderClauses();  // re-render to ensure clause2 exists
+      // After re-render, re-bind the item click events:
+      document.querySelectorAll('.item').forEach(itemEl => {
+        itemEl.addEventListener('click', () => onSelectItem(itemEl));
       });
-    });
- 
-    // Event: toggle which parts are included (checkboxes)
-    document.querySelectorAll(".part-toggles input").forEach(input => {
-      input.addEventListener("change", () => {
-        // Rebuild the sentence model parts list (free build mode)
-        buildSentenceParts(null);
-      });
-    });
- 
-    // Event: Random sentence (free build mode)
-    randomBtn.addEventListener("click", () => {
-      // If currently in random model mode, pressing random could just regenerate using same model pattern
-      if (currentModelIndex != null) {
-        buildSentenceParts(currentModelIndex);
-      } else {
-        buildSentenceParts(null);
-      }
-    });
-    // Event: Random sentence (model mode) - second random button
-    randomBtn2.addEventListener("click", () => {
-      buildSentenceParts(currentModelIndex);
-    });
- 
-    // Event: Prev/Next model (for structured patterns)
-    prevBtn.addEventListener("click", () => {
-      currentModelIndex = (currentModelIndex - 1 + sentenceModels.length) % sentenceModels.length;
-      buildSentenceParts(currentModelIndex);
-      pageInfo.textContent = `Model ${currentModelIndex + 1}/${sentenceModels.length}`;
-    });
-    nextBtn.addEventListener("click", () => {
-      currentModelIndex = (currentModelIndex + 1) % sentenceModels.length;
-      buildSentenceParts(currentModelIndex);
-      pageInfo.textContent = `Model ${currentModelIndex + 1}/${sentenceModels.length}`;
-    });
- 
-    // Event: Enable/Disable sentence 2
-    enableP2.addEventListener("change", () => {
-      buildSentenceParts(currentModelIndex);
-    });
- 
-    // Event: Speak Korean sentence (using Web Speech API if available)
-    speakBtn.addEventListener("click", () => {
-      if (!("speechSynthesis" in window)) {
-        alert("Browserul nu suportă audio.");
-        return;
-      }
-      const text = previewKo.textContent;
-      if (!text || text.includes("alege cuvinte")) return;
-      const utterance = new SpeechSynthesisUtterance(text);
-      // Choose Korean voice if available
-      const koVoice = speechSynthesis.getVoices().find(v => v.lang.startsWith("ko"));
-      if (koVoice) utterance.voice = koVoice;
-      utterance.lang = "ko-KR";
-      speechSynthesis.speak(utterance);
-    });
- 
-    // Event: Save sentence (add to favorites)
-    favBtn.addEventListener("click", () => {
-      const ko = previewKo.textContent.trim();
-      let ro = previewRo.textContent.trim();
-      if (!ko || ko.includes("alege cuvinte")) return;
-      if (ro.startsWith("···")) ro = "";
-      const exists = favorites.some(f => f.ko === ko && f.ro === ro);
-      if (!exists) favorites.push({ ko, ro });
-      renderFavorites();
-      favBtn.textContent = "⭐ Salvat!";
-      setTimeout(() => { favBtn.textContent = "⭐ Salvează propoziția"; }, 800);
-    });
- 
-    // Event: Toggle translation visibility (hide/show translation text)
-    toggleTranslationBtn.addEventListener("click", () => {
-      const isHidden = previewRo.classList.toggle("hidden");
-      toggleTranslationBtn.textContent = isHidden ? "Arată traducerea" : "Ascunde traducerea";
-    });
- 
-    // Event: Copy Korean sentence to clipboard
-    copyBtn.addEventListener("click", () => {
-      const ko = previewKo.textContent.trim();
-      if (!ko || ko.includes("alege cuvinte")) return;
-      navigator.clipboard.writeText(ko).then(() => {
-        copyBtn.textContent = "Copiat!";
-        copyBtn.classList.add("active");
-        setTimeout(() => {
-          copyBtn.textContent = "Copiere";
-          copyBtn.classList.remove("active");
-        }, 1000);
-      }).catch(err => console.warn("Clipboard copy failed:", err));
-    });
- 
-    // Render favorites list in overlay
-    function renderFavorites() {
-      panelList.innerHTML = "";
-      favorites.forEach((item, index) => {
-        const li = document.createElement("li");
-        li.className = "fav-item";
-        const pKo = document.createElement("p");
-        pKo.textContent = item.ko;
-        const pRo = document.createElement("p");
-        pRo.textContent = item.ro;
-        pRo.className = "tr";
-        const removeBtn = document.createElement("button");
-        removeBtn.textContent = "× Șterge";
-        removeBtn.className = "remove-btn";
-        removeBtn.addEventListener("click", () => {
-          favorites.splice(index, 1);
-          renderFavorites();
-        });
-        li.appendChild(pKo);
-        if (item.ro) li.appendChild(pRo);
-        li.appendChild(removeBtn);
-        panelList.appendChild(li);
+    } else {
+      secondClauseToggle.checked = false;
+      renderClauses();
+      document.querySelectorAll('.item').forEach(itemEl => {
+        itemEl.addEventListener('click', () => onSelectItem(itemEl));
       });
     }
- 
-    // Event: open favorites overlay when clicking "Salvate" (not explicitly present as separate button, but could open when saving)
-    // Instead, let's open overlay on long press of save or something (not implemented fully here).
- 
-    // Overlay close & clear events
-    closePanelBtn.addEventListener("click", () => {
-      overlay.classList.remove("show");
-    });
-    clearFavBtn.addEventListener("click", () => {
-      if (confirm("Sigur ștergeți toate propozițiile salvate?")) {
-        favorites = [];
-        renderFavorites();
-      }
-    });
- 
-    // Event: Show overlay when saving a sentence (just to confirm save, optional)
-    // We won't show overlay on each save to avoid annoyance.
- 
-    // Navigation between screens
-    navButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const target = btn.getAttribute("data-target");
-        screens.forEach(scr => scr.classList.remove("active"));
-        document.getElementById("screen-" + target).classList.add("active");
-        navButtons.forEach(nb => nb.classList.remove("active"));
-        btn.classList.add("active");
-      });
-    });
- 
-    // ===== EXERCIȚII TOPIK – modul nou =====
-    // Example exercise data (for demonstration; these could be loaded from a separate data source)
-    const exercises = [
-      {
-        type: "word", // or 'syll' or 'sentence'
-        question: "집",
-        options: ["casă", "a veni", "băiat"],
-        answer: "casă"
-      },
-      {
-        type: "word",
-        question: "오다",
-        options: ["a veni", "a se juca", "a alerga"],
-        answer: "a veni"
-      }
-      // Additional exercises can be added here
-    ];
-    // Render exercises
-    function renderExercises() {
-      exercisesContainer.innerHTML = "";
-      exercises.forEach((ex, idx) => {
-        const card = document.createElement("div");
-        card.className = "quest-card type-" + ex.type;
-        const title = document.createElement("h3");
-        title.textContent = `Întrebarea ${idx + 1}`;
-        const content = document.createElement("div");
-        content.className = "quest-content";
-        if (ex.type === "sentence") {
-          // For sentence type, we might split into words and blank one
-          const parts = ex.question.split("____");
-          parts.forEach((part, i) => {
-            const p = document.createElement("p");
-            p.textContent = part;
-            if (i < parts.length - 1) {
-              // add blank
-              const blank = document.createElement("p");
-              blank.className = "blank";
-              blank.textContent = "____";
-              content.appendChild(p);
-              content.appendChild(blank);
-            } else {
-              content.appendChild(p);
-            }
-          });
-        } else {
-          const p = document.createElement("p");
-          p.textContent = ex.question;
-          content.appendChild(p);
-        }
-        if (ex.type !== "sentence") {
-          const opts = document.createElement("div");
-          opts.className = "opts";
-          ex.options.forEach(opt => {
-            const btn = document.createElement("button");
-            btn.textContent = opt;
-            btn.addEventListener("click", () => {
-              // Mark answer correctness
-              if (opt === ex.answer) {
-                btn.classList.add("correct");
-              } else {
-                btn.classList.add("wrong");
+    // Recompute parts after toggling second clause
+    parts = textLower.split(/\s+\w+\s+(?:și|and)\s+/i);
+    const part1 = parts[0] || textLower;
+    const part2 = parts[1] || "";
+
+    // Helper to fill one clause from a text part
+    function fillClauseFromText(clauseKey, textPart) {
+      // Iterate each category (except counter and verb, as counter depends on object and verb we infer)
+      categories.forEach(catKey => {
+        if (catKey === 'counter') return;  // skip counter in initial pass
+        const entries = dataMap[catKey];
+        for (let entry of entries) {
+          if (entry.re.test(textPart)) {
+            // If category is place, we might have "la <place>" in Romanian which was included in trans
+            selections[clauseKey][catKey] = entry.value;
+            // If we matched an object, we should also assign a counter if available for that object
+            if (catKey === "object") {
+              // find matching counter
+              const counterEntry = dataMap.counter.find(c => c.re.test(textPart));
+              if (counterEntry) {
+                selections[clauseKey].counter = counterEntry.value;
               }
-              // Disable all buttons after answer
-              opts.querySelectorAll("button").forEach(b => b.disabled = true);
-            });
-            opts.appendChild(btn);
-          });
-          content.appendChild(opts);
+            }
+            break;
+          }
         }
-        card.appendChild(title);
-        card.appendChild(content);
-        exercisesContainer.appendChild(card);
       });
+      // Subject: if none found in text but sentence likely has an implicit subject (like omitted "eu"), we default to "저는"
+      if (!selections[clauseKey].subject) {
+        if (/(?:eu|tu|noi|el|ea)\b/i.test(textPart)) {
+          // if some known pronoun is there but didn't match (due to regex requiring word boundary), try direct match
+          if (/\beu\b/i.test(textPart)) selections[clauseKey].subject = "저는";
+          else if (/\btu\b/i.test(textPart)) selections[clauseKey].subject = "너는";
+          else if (/\bnoi\b/i.test(textPart)) selections[clauseKey].subject = "우리는";
+        } else {
+          // default to "저는" if completely missing (assuming first person by default)
+          selections[clauseKey].subject = "저는";
+        }
+      }
     }
-    renderExercises();
- 
-    // ===== GLOSAR (căutare) =====
-    // Combine all data lists for glossary search
-    const glossaryData = [
-      ...subjectData, ...timeData, ...placeData, ...modData,
-      ...objectData, ...numeralData, ...counterData, ...verbData
-    ];
-    // Event: search in glossary
-    glossarySearch.addEventListener("input", () => {
-      const query = glossarySearch.value.trim().toLowerCase();
-      glossaryResults.innerHTML = "";
-      if (!query) return;
-      glossaryData.forEach(item => {
-        if (item.ro.toLowerCase().includes(query) || item.en.toLowerCase().includes(query) || item.ko.includes(query)) {
-          const div = document.createElement("div");
-          div.className = "result-item";
-          div.innerHTML = `<span>${item.ko}</span> — ${item.ro} (${item.en})`;
-          glossaryResults.appendChild(div);
+
+    fillClauseFromText('clause1', part1);
+    if (secondClauseToggle.checked && part2) {
+      fillClauseFromText('clause2', part2);
+      // For clause2, if subject was not explicitly in second clause, we leave subject empty (it can be omitted in translation)
+    }
+
+    // After filling selections, update UI highlight:
+    clauseElements.forEach((clauseEl, index) => {
+      const ck = index === 0 ? 'clause1' : 'clause2';
+      categories.forEach(catKey => {
+        const val = selections[ck][catKey];
+        if (val) {
+          const itemEl = clauseEl.querySelector(`.item[data-cat="${catKey}"][data-val="${val}"]`);
+          if (itemEl) itemEl.classList.add('selected');
         }
       });
     });
- 
-    // ===== LECȚII (exemple integrate cu Builder) =====
-    // Ex: Pentru butonul "Încearcă în Builder" la lecția 1:
-    function addLessonExample(btnId, roSentence) {
-      const btn = document.getElementById(btnId);
-      if (!btn) return;
-      btn.addEventListener("click", () => {
-        // Parse the Romanian sentence and try to pre-select matching words in builder
-        // (For simplicity, we'll just fill the builder fields randomly here)
-        currentModelIndex = null;
-        // Navigate to Builder screen
-        screens.forEach(scr => scr.classList.remove("active"));
-        screenBuilder.classList.add("active");
-        navButtons.forEach(nb => nb.classList.remove("active"));
-        document.querySelector('.nav-btn[data-target="builder"]').classList.add("active");
-        // Example: directly call random sentence for now
-        buildSentenceParts(null);
-        // In a real scenario, we would analyze roSentence and attempt to find matching ko components in data lists,
-        // then construct the sentence specifically. That would require a mapping of ro->ko per word, etc.
+    updateSentenceOutput();
+  }
+
+  // =========================
+  // 6) Event Listeners for Controls 
+  // =========================
+  // Auto-fill button
+  autoFillBtn.addEventListener('click', () => {
+    autoFillBuilder(inputText.value);
+  });
+  // Clear button
+  clearBtn.addEventListener('click', () => {
+    inputText.value = "";
+    secondClauseToggle.checked = false;
+    politeToggle.checked = true;
+    renderClauses();
+    // Reattach event listeners for new elements
+    document.querySelectorAll('.item').forEach(itemEl => {
+      itemEl.addEventListener('click', () => onSelectItem(itemEl));
+    });
+    // Reset selections
+    selections.clause1 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
+    selections.clause2 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
+    koOutput.textContent = "";
+    trOutput.textContent = "";
+  });
+  // Toggle second clause
+  secondClauseToggle.addEventListener('change', () => {
+    // Save current selections (for clause1) before re-render:
+    const prevSel1 = { ...selections.clause1 };
+    const prevSel2 = { ...selections.clause2 };
+    renderClauses();
+    // Reattach item event listeners
+    document.querySelectorAll('.item').forEach(itemEl => {
+      itemEl.addEventListener('click', () => onSelectItem(itemEl));
+    });
+    // Restore previous selections for clause1 and clause2 as applicable:
+    selections.clause1 = prevSel1;
+    selections.clause2 = prevSel2;
+    // Re-highlight the selected items in UI:
+    clauseElements.forEach((clauseEl, index) => {
+      const ck = index === 0 ? 'clause1' : 'clause2';
+      categories.forEach(catKey => {
+        const val = selections[ck][catKey];
+        if (val) {
+          const itemEl = clauseEl.querySelector(`.item[data-cat="${catKey}"][data-val="${val}"]`);
+          if (itemEl) itemEl.classList.add('selected');
+        }
       });
+    });
+    updateSentenceOutput();
+  });
+  // Politeness toggle
+  politeToggle.addEventListener('change', () => {
+    updateSentenceOutput();
+  });
+  // Language selection change
+  langSelect.addEventListener('change', () => {
+    // Simply re-run update to change translation
+    updateSentenceOutput();
+  });
+  // Random sentence button
+  randomBtn.addEventListener('click', () => {
+    // Deselect second clause if it was enabled:
+    secondClauseToggle.checked = false;
+    renderClauses();
+    document.querySelectorAll('.item').forEach(itemEl => {
+      itemEl.addEventListener('click', () => onSelectItem(itemEl));
+    });
+    // Reset selections
+    selections.clause1 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
+    selections.clause2 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
+    // For each category in clause1, pick a random entry (including possibly none for optional categories)
+    categories.forEach(catKey => {
+      const list = dataMap[catKey];
+      if (!list || list.length === 0) return;
+      // Allow a chance to pick nothing for optional fields (e.g., 50% chance for time, mod)
+      if ((catKey === 'time' || catKey === 'mod') && Math.random() < 0.5) {
+        selections.clause1[catKey] = "";
+      } else {
+        const randomEntry = list[Math.floor(Math.random() * list.length)];
+        selections.clause1[catKey] = randomEntry.value;
+        // If object chosen, assign counter if applicable
+        if (catKey === 'object') {
+          const counterEntry = dataMap.counter.find(c => c.re.test(randomEntry.trans));
+          selections.clause1.counter = counterEntry ? counterEntry.value : "";
+        }
+      }
+    });
+    // Ensure subject is not empty:
+    if (!selections.clause1.subject) {
+      selections.clause1.subject = "저는";
     }
- 
-    // Conectăm lecțiile direct (scriptul este la finalul <body>, deci elementele există)
-    addLessonExample("lesson1TryBtn", "Azi am de învățat multe cuvinte coreene.");
-    // Future lesson buttons can be connected similarly:
-    // addLessonExample("lesson2TryBtn", "...");
-  </script>
+    // If object is empty but place is present, ensure verb will be 'go' by having place.
+    // If both place and object randomly empty, at least time or mod will likely be present; otherwise it's just subject + verb "do".
+    // Update UI highlights:
+    clauseElements.forEach((clauseEl, index) => {
+      const ck = index === 0 ? 'clause1' : 'clause2';
+      categories.forEach(catKey => {
+        const val = selections[ck][catKey];
+        if (val) {
+          const itemEl = clauseEl.querySelector(`.item[data-cat="${catKey}"][data-val="${val}"]`);
+          if (itemEl) itemEl.classList.add('selected');
+        }
+      });
+    });
+    // Now update output
+    updateSentenceOutput();
+  });
+  // Prev/Next buttons for example models
+  prevBtn.addEventListener('click', () => {
+    if (exampleModels.length === 0) return;
+    currentModelIndex = (currentModelIndex <= 0) ? exampleModels.length - 1 : currentModelIndex - 1;
+    loadExampleModel(currentModelIndex);
+  });
+  nextBtn.addEventListener('click', () => {
+    if (exampleModels.length === 0) return;
+    currentModelIndex = (currentModelIndex + 1) % exampleModels.length;
+    loadExampleModel(currentModelIndex);
+  });
+  function loadExampleModel(index) {
+    const model = exampleModels[index];
+    if (!model) return;
+    // Set second clause toggle based on model
+    secondClauseToggle.checked = !!model.clause2;
+    renderClauses();
+    document.querySelectorAll('.item').forEach(itemEl => {
+      itemEl.addEventListener('click', () => onSelectItem(itemEl));
+    });
+    // Load selections from model
+    selections.clause1 = { ...selections.clause1, ...model.clause1 };
+    if (model.clause2) {
+      selections.clause2 = { ...selections.clause2, ...model.clause2 };
+    } else {
+      selections.clause2 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
+    }
+    politeToggle.checked = model.polite;
+    // Highlight selections in UI
+    clauseElements.forEach((clauseEl, idx) => {
+      const ck = idx === 0 ? 'clause1' : 'clause2';
+      categories.forEach(catKey => {
+        const val = selections[ck][catKey];
+        if (val) {
+          const itemEl = clauseEl.querySelector(`.item[data-cat="${catKey}"][data-val="${val}"]`);
+          if (itemEl) itemEl.classList.add('selected');
+        }
+      });
+    });
+    // Output directly from model translations if available:
+    koOutput.textContent = "";  // we'll reconstruct Korean from selections for accuracy
+    updateSentenceOutput();
+    // Override translation outputs with model's provided translation (for more natural phrasing if desired)
+    if (model.translation_ro && model.translation_en) {
+      if (langSelect.value === 'ro') {
+        trOutput.textContent = model.translation_ro;
+      } else {
+        trOutput.textContent = model.translation_en;
+      }
+    }
+  }
+  // Audio (TTS) button
+  ttsBtn.addEventListener('click', () => {
+    const textToSpeak = koOutput.textContent;
+    if (!textToSpeak) return;
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = 'ko-KR';  // ensure Korean voice
+    // Choose a Korean voice if available
+    const voices = speechSynthesis.getVoices();
+    utterance.voice = voices.find(v => v.lang.startsWith('ko') || v.lang.startsWith('ko-KR')) || null;
+    speechSynthesis.speak(utterance);
+  });
+  // Save sentence button
+  saveBtn.addEventListener('click', () => {
+    const ko = koOutput.textContent;
+    const tr = trOutput.textContent;
+    if (!ko || !tr) return;
+    try {
+      const savedList = JSON.parse(localStorage.getItem('savedSentences') || "[]");
+      savedList.push({ ko, tr });
+      localStorage.setItem('savedSentences', JSON.stringify(savedList));
+      // Feedback: briefly change button text or color to indicate success
+      saveBtn.textContent = "Saved! ✓";
+      setTimeout(() => { saveBtn.textContent = "Salvează propoziția"; }, 1000);
+    } catch (e) {
+      console.warn("Save failed: ", e);
+    }
+  });
+  // Hide/Show translation button
+  toggleTransBtn.addEventListener('click', () => {
+    if (trOutput.classList.contains('hidden')) {
+      // currently hidden, so show it
+      trOutput.classList.remove('hidden');
+      toggleTransBtn.textContent = "Ascunde traducerea";
+    } else {
+      trOutput.classList.add('hidden');
+      toggleTransBtn.textContent = "Arată traducerea";
+    }
+  });
+
+  // =========================
+  // 7) Initialization 
+  // =========================
+  // If needed, load first example or just start empty
+  currentModelIndex = 0;
+  loadExampleModel(currentModelIndex);
+})();
+</script>
 </body>
 </html>
