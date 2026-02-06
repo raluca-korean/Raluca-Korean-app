@@ -317,14 +317,25 @@ Today I go to the cafe and read a book and drink a coffee."></textarea>
       const alt = uniq.map(escapeRegExp).join("|");
       return new RegExp("\\s(" + alt + ")\\s", "ig");
     }
+function mapConnectorToken(token) {
+  const t = (token || "").toLowerCase();
 
-    function mapConnectorToken(token) {
-      const t = (token || "").toLowerCase();
-      for (const c of CONNECTORS) {
-        if (c.keys.some(k => k.toLowerCase() === t)) return { raw: token, type: c.type, ko: c.ko };
-      }
-      return { raw: token, type: "and", ko: "-고" };
+  for (const c of CONNECTORS) {
+    if (c.keys.some(k => k.toLowerCase() === t)) {
+      return {
+        type: c.type,
+        ending: c.ko,          // ENDING gramatical
+        word: null             // conector standalone (opțional)
+      };
     }
+  }
+
+  return {
+    type: "and",
+    ending: "-고",
+    word: null
+  };
+}  
 
     function splitIntoChain(raw) {
       const original = (raw || "").replace(/\s+/g, " ").trim();
