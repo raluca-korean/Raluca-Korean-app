@@ -1,3108 +1,498 @@
-E17
-
 <!doctype html>
 <html lang="ro">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Raluca Korean — Exercises</title>
-  <style>
+<title>Raluca Korean — Exerciții</title>
+
+<style>
 :root{
   --bg:#070617;
-  --bg2:#0b0a1f;
-
-  --card: rgba(16, 14, 40, .72);
-  --stroke: rgba(255,255,255,.10);
-
+  --card: rgba(16,14,40,.75);
+  --stroke: rgba(255,255,255,.12);
   --text:#f3f4ff;
-  --muted: rgba(243,244,255,.72);
-
-  --neon1:#a855f7; /* violet */
-  --neon2:#22d3ee; /* cyan */
-  --neon3:#fb7185; /* pink */
-  --ok:#34d399;
-  --bad:#fb7185;
-
-  --shadow: 0 18px 55px rgba(0,0,0,.45);
-  --shadow2: 0 12px 28px rgba(0,0,0,.35);
-  --radius: 22px;
+  --muted: rgba(243,244,255,.7);
+  --accent:#7c3aed;
+  --accent2:#22d3ee;
+  --good:#22c55e;
+  --bad:#ef4444;
+  --radius:22px;
+  --shadow:0 18px 50px rgba(0,0,0,.45);
 }
 
 *{box-sizing:border-box}
-html, body { height: 100%; }
-
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:linear-gradient(135deg,#090818,#071425);
   color:var(--text);
-  background:
-    radial-gradient(1200px 700px at 15% 10%, rgba(140,70,255,.35), transparent 60%),
-    radial-gradient(1200px 700px at 85% 20%, rgba(0,210,255,.25), transparent 60%),
-    linear-gradient(135deg, #090818, #071425);
-  overflow-x:hidden;
 }
 
-/* containerul care centrează tot conținutul */
-.app{
-  width:100%;
-  max-width: 980px;
-  margin: 0 auto;
-  padding-left: 18px;
-  padding-right: 18px;
-  padding-top: calc(22px + env(safe-area-inset-top));
-  padding-bottom: calc(22px + env(safe-area-inset-bottom));
-}
-
-/* cardurile */
+.app{max-width:1000px;margin:0 auto;padding:20px}
 .card{
-  position:relative; /* ✅ IMPORTANT: ancorează ::before/::after */
-  margin: 18px 0;
-  border-radius: var(--radius);
-  padding: 18px;
-  background: var(--card);
-  border: 1px solid var(--stroke);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
-  overflow:hidden; /* ✅ taie perfect overlay-urile */
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:18px;
+  box-shadow:var(--shadow);
 }
 
-.card::before{
-  content:"";
-  position:absolute;
-  inset:-2px;
-  border-radius: calc(var(--radius) + 2px); /* ✅ */
-  background:
-    radial-gradient(600px 140px at 20% 0%, rgba(168,85,247,.22), transparent 60%),
-    radial-gradient(600px 140px at 85% 0%, rgba(34,211,238,.18), transparent 60%),
-    radial-gradient(700px 160px at 60% 120%, rgba(251,113,133,.14), transparent 65%);
-  pointer-events:none;
-  z-index:0;
-}
+h1,h2,h3{margin:0 0 10px}
+h1{font-size:24px}
+h2{font-size:20px}
+h3{font-size:16px}
+.sub{color:var(--muted);font-size:13px}
 
-.card::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  border-radius: var(--radius);
-  background:
-    linear-gradient(135deg,
-      rgba(168,85,247,.25),
-      rgba(34,211,238,.18),
-      rgba(251,113,133,.12)
-    );
-  opacity:.20;
-  mix-blend-mode: screen;
-  pointer-events:none;
-  z-index:0;
-}
-
-/* conținutul mereu deasupra overlay-urilor */
-.card > *{ position:relative; z-index:1; }
-
-h1{
-  margin:0;
-  font-size:22px;
-  letter-spacing:.3px;
-}
-.sub{
-  font-size:13px;
-  color:var(--muted);
-  margin-top:6px;
-}
-
-label b{
-  font-size:13px;
-  color:rgba(243,244,255,.85);
-}
-
-select{
-  width:100%;
-  padding:12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(10, 8, 28, .65);
-  color: var(--text);
-  font-size:15px;
-  outline:none;
-  box-shadow: var(--shadow2);
-}
-
-.question{
-  font-size:26px;
-  font-weight:900;
-  margin-bottom:6px;
-  letter-spacing:.3px;
-  text-shadow: 0 0 22px rgba(168,85,247,.18);
-}
-
-.helper{
-  font-size:13px;
-  color:var(--muted);
-  margin-bottom:14px;
-}
-
-.answers{
+.grid{
   display:grid;
-  gap:10px;
-  margin-bottom:14px;
+  grid-template-columns:320px 1fr;
+  gap:16px;
 }
-
-.answer{
-  padding:14px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(10, 8, 28, .55);
-  color: var(--text);
-  font-weight:900;
-  cursor:pointer;
-  box-shadow: var(--shadow2);
-  transition: transform .10s ease, box-shadow .10s ease, border-color .10s ease, filter .10s ease;
-  user-select:none;
-}
-
-.answer:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 18px 40px rgba(0,0,0,.45);
-  border-color: rgba(34,211,238,.30);
-  filter: brightness(1.05);
-}
-
-.answer.selected{
-  background: rgba(168,85,247,.16);
-  border-color: rgba(168,85,247,.45);
-  box-shadow: 0 0 0 1px rgba(168,85,247,.18), var(--shadow2);
-}
-
-.answer.correct{
-  background: rgba(52,211,153,.12);
-  border-color: rgba(52,211,153,.55);
-  box-shadow:
-    0 0 0 1px rgba(52,211,153,.25),
-    0 0 24px rgba(52,211,153,.18);
-}
-
-.answer.wrong{
-  background: rgba(251,113,133,.10);
-  border-color: rgba(251,113,133,.60);
-  box-shadow: 0 0 0 1px rgba(251,113,133,.18), 0 0 26px rgba(251,113,133,.12);
-}
-
-.feedback{
-  min-height:24px;
-  font-weight:900;
-  letter-spacing:.2px;
-}
-
-.controls{
-  display:flex;
-  gap:10px;
-  margin-top:10px;
-  flex-wrap:wrap;
-}
-
-button{
-  padding:11px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(10, 8, 28, .55);
-  color: var(--text);
-  font-weight:900;
-  cursor:pointer;
-  box-shadow: var(--shadow2);
-  transition: transform .10s ease, box-shadow .10s ease, filter .10s ease;
-}
-
-button:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 18px 40px rgba(0,0,0,.45);
-  filter: brightness(1.06);
-}
-
-.primary{
-  border:none;
-  color:#0b071a;
-  background: linear-gradient(135deg, var(--neon2), var(--neon1));
-  box-shadow:
-    0 18px 45px rgba(34,211,238,.18),
-    0 14px 40px rgba(168,85,247,.18);
-}
-
-.primary:hover{
-  box-shadow:
-    0 22px 55px rgba(34,211,238,.22),
-    0 18px 50px rgba(168,85,247,.22);
-}
-
-button:active,.answer:active,.chip:active{
-  transform: translateY(0px) scale(.99);
-}
-
-/* PUZZLE */
-.puzzle-bank,.puzzle-line{
-  border: 1px dashed rgba(255,255,255,.18);
-  border-radius: 18px;
-  padding: 12px;
-  min-height: 56px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  background: rgba(10, 8, 28, .45);
-  box-shadow: var(--shadow2);
-}
-
-.chip{
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: rgba(34,211,238,.10);
-  border: 1px solid rgba(34,211,238,.28);
-  color: var(--text);
-  font-weight:900;
-  cursor:pointer;
-  user-select:none;
-  transition: transform .10s ease, box-shadow .10s ease, filter .10s ease;
-  box-shadow: 0 10px 26px rgba(0,0,0,.28);
-}
-
-.chip:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 18px 40px rgba(0,0,0,.42);
-  filter: brightness(1.08);
-}
-
-/* Focus ring */
-select:focus, button:focus{
-  outline: 2px solid rgba(34,211,238,.55);
-  outline-offset: 2px;
-}
-
-/* Responsive */
-@media (max-width:520px){
-  .question{font-size:22px}
-  .answer{padding:12px}
-}
-
-/* ====== NEON HEADER + BADGES ====== */
-.headerRow{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-}
-
-.titleWrap{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-
-.badges{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
+@media(max-width:820px){ .grid{grid-template-columns:1fr} }
 
 .badge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:8px 12px;
+  display:inline-block;
+  padding:6px 10px;
   border-radius:999px;
+  background:rgba(124,58,237,.15);
+  border:1px solid rgba(124,58,237,.35);
   font-weight:900;
   font-size:12px;
-  letter-spacing:.2px;
-  background: rgba(10, 8, 28, .55);
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow: 0 12px 28px rgba(0,0,0,.35);
-  user-select:none;
 }
 
-.badge .dot{
-  width:10px;height:10px;border-radius:999px;
-  background: linear-gradient(135deg, var(--neon2), var(--neon1));
-  box-shadow: 0 0 18px rgba(34,211,238,.25), 0 0 18px rgba(168,85,247,.22);
-}
-
-.badge.ok .dot{ background: var(--ok); box-shadow: 0 0 18px rgba(52,211,153,.25); }
-.badge.bad .dot{ background: var(--bad); box-shadow: 0 0 18px rgba(251,113,133,.25); }
-
-.meter{
-  margin-top:10px;
-  height:10px;
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pill{
+  padding:8px 10px;
   border-radius:999px;
-  background: rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.10);
-  overflow:hidden;
-  box-shadow: 0 12px 28px rgba(0,0,0,.25);
+  border:1px solid var(--stroke);
+  background:rgba(10,8,28,.55);
+  cursor:pointer;
+  font-weight:800;
+  font-size:12px;
 }
-.meter > div{
-  height:100%;
-  width:0%;
+.pill.active{
+  background:rgba(34,211,238,.12);
+  border-color:rgba(34,211,238,.35);
+}
+
+.btn{
+  padding:10px 16px;
   border-radius:999px;
-  background: linear-gradient(90deg, var(--neon2), var(--neon1), var(--neon3));
-  box-shadow: 0 0 24px rgba(34,211,238,.14), 0 0 24px rgba(168,85,247,.12);
-  transition: width .25s ease;
-}
-
-@media (max-width:520px){
-  .headerRow{flex-direction:column}
-  .badges{justify-content:flex-start}
-}
-
-/* ====== SHAKE + GLOW ====== */
-.fxFlash{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity .18s ease;
-  z-index:9999;
-}
-.fxFlash.ok{
-  background: radial-gradient(circle at 20% 10%, rgba(52,211,153,.22), transparent 55%),
-              radial-gradient(circle at 80% 70%, rgba(34,211,238,.14), transparent 60%);
-}
-.fxFlash.bad{
-  background: radial-gradient(circle at 25% 15%, rgba(251,113,133,.20), transparent 55%),
-              radial-gradient(circle at 85% 70%, rgba(168,85,247,.10), transparent 60%);
-}
-
-@keyframes shakeX{
-  0%{transform:translateX(0)}
-  15%{transform:translateX(-8px)}
-  30%{transform:translateX(8px)}
-  45%{transform:translateX(-6px)}
-  60%{transform:translateX(6px)}
-  75%{transform:translateX(-4px)}
-  90%{transform:translateX(4px)}
-  100%{transform:translateX(0)}
-}
-.shake{ animation: shakeX .45s ease; }
-
-@keyframes neonPulse{
-  0%{ box-shadow:0 12px 30px rgba(0,0,0,.12); transform:translateY(0) }
-  40%{ box-shadow:0 0 0 1px rgba(34,211,238,.25),
-               0 0 26px rgba(34,211,238,.18),
-               0 0 22px rgba(168,85,247,.16),
-               0 18px 42px rgba(0,0,0,.22);
-        transform:translateY(-1px)
-  }
-  100%{ box-shadow:0 12px 30px rgba(0,0,0,.12); transform:translateY(0) }
-}
-.glow{ animation: neonPulse .55s ease; }
-
-/* Sound button */
-.headerCard{ position:relative; }
-
-.soundBtn{
-  position:absolute;
-  top:14px;
-  right:14px;
-  width:46px;height:46px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.08);
-  backdrop-filter: blur(8px);
-  font-size:22px;
+  border:none;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
   font-weight:900;
   cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
+  color:var(--text);
 }
-.soundBtn.off{opacity:.55}
+.btn.ghost{
+  background:transparent;
+  border:1px solid var(--stroke);
+}
+.btn.small{padding:8px 12px;font-size:12px}
+
+.qbox{
+  background:rgba(10,8,28,.55);
+  border:1px solid var(--stroke);
+  border-radius:16px;
+  padding:14px;
+}
+.qTitle{font-weight:950;font-size:18px;margin-bottom:6px}
+.qHint{color:var(--muted);font-size:13px;margin-bottom:10px}
+
+.opts{display:grid;gap:10px;margin-top:12px}
+.opt{
+  padding:12px 12px;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background:rgba(10,8,28,.55);
+  cursor:pointer;
+  font-weight:850;
+  transition:.12s;
+}
+.opt:hover{border-color:rgba(34,211,238,.35)}
+.opt.correct{border-color:rgba(34,197,94,.65); background:rgba(34,197,94,.12)}
+.opt.wrong{border-color:rgba(239,68,68,.65); background:rgba(239,68,68,.12)}
+.opt.disabled{opacity:.65;cursor:not-allowed}
+
+.hr{height:1px;background:rgba(255,255,255,.08);margin:14px 0}
+
+.kv{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.kv .k{color:var(--muted);font-size:12px}
+.kv .v{font-weight:900}
+
+.toast{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background:rgba(10,8,28,.55);
+  color:var(--muted);
+  font-size:13px;
+}
+.toast.good{border-color:rgba(34,197,94,.55); color:rgba(232,255,241,.92)}
+.toast.bad{border-color:rgba(239,68,68,.55); color:rgba(255,235,235,.92)}
 </style>
- 
 </head>
+
 <body>
-  <div class="app">
+<div class="app">
 
-    <div class="card headerCard">
-      <div class="headerRow">
-        <div class="titleWrap">
-          <h1>Exerciții TOPIK</h1>
-          <div class="sub">Quiz · Particule · Conjugări · Puzzle · chain</div>
-        </div>
-
-        <div class="badges">
-          <div class="badge" id="bMode"><span class="dot"></span><span>Mod: KO→RO</span></div>
-          <div class="badge ok" id="bCorrect"><span class="dot"></span><span>Corecte: 0</span></div>
-          <div class="badge" id="bTotal"><span class="dot"></span><span>Total: 0</span></div>
-          <div class="badge" id="bStreak"><span class="dot"></span><span>Streak: 0</span></div>
-        </div>
+  <!-- HEADER -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <h1>Exerciții</h1>
+        <div class="sub" id="subtitle">Se încarcă…</div>
       </div>
-
-      <div class="meter" title="Progres sesiune">
-        <div id="meterFill"></div>
+      <div class="row">
+        <button class="btn ghost small" onclick="goBack()">← Înapoi la lecții</button>
       </div>
-
-      <button id="soundBtn" class="soundBtn" type="button" aria-label="Sunet">
-        🔊
-      </button>
     </div>
-<div class="card">
-  <label><b>Tip exercițiu</b></label>
-  <select id="type">
-    <option value="ko-ro">KO → RO</option>
-    <option value="ro-ko">RO → KO</option>
-    <option value="particle">Particulă (1)</option>
-    <option value="particlePlus">Particule multiple</option>
-    <option value="conjug">Conjugare</option>
-    <option value="puzzle">Puzzle</option>
-    <option value="chain">chain</option>
-  </select>
-</div>
 
-<div class="card">
-  <div class="question" id="question"></div>
-  <div class="helper" id="helper"></div>
-<div id="badge" style="display:inline-flex;gap:8px;align-items:center;margin-bottom:12px"></div>
-  <div class="answers" id="answers"></div>
+    <div class="hr"></div>
 
-  <div id="puzzleUI" style="display:none">
-    <div class="puzzle-bank" id="bank"></div>
-    <div class="puzzle-line" id="line"></div>
+    <div class="row">
+      <span class="badge" id="lessonBadge">TOPIK</span>
+
+      <div class="pill active" id="modeKORO" onclick="setMode('KO-RO')">KO → RO</div>
+      <div class="pill" id="modeROKO" onclick="setMode('RO-KO')">RO → KO</div>
+
+      <button class="btn ghost small" onclick="toggleShuffle()" id="shuffleBtn">Shuffle: OFF</button>
+      <button class="btn ghost small" onclick="restart()">Restart</button>
+    </div>
   </div>
 
-  <div class="feedback" id="feedback"></div>
+  <div class="grid">
 
-  <div class="controls">
-    <button class="primary" id="check">Verifică</button>
-    <button id="next">Următorul</button>
+    <!-- LEFT / STATS -->
+    <div class="card">
+      <h3>Status</h3>
+      <div class="kv"><div class="k">Lecție</div><div class="v" id="lessonTitle">—</div></div>
+      <div class="kv"><div class="k">Exerciții disponibile</div><div class="v" id="totalEx">0</div></div>
+      <div class="kv"><div class="k">Progres</div><div class="v" id="progress">0 / 0</div></div>
+      <div class="kv"><div class="k">Scor</div><div class="v" id="score">0</div></div>
+
+      <div class="hr"></div>
+
+      <div class="sub" style="line-height:1.4">
+        Filtrare automată după lecția din URL:<br>
+        <b>?lesson=T1-01</b> etc.
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn" onclick="next()" id="nextBtn">Următorul →</button>
+      </div>
+    </div>
+
+    <!-- RIGHT / QUESTION -->
+    <div class="card">
+      <div class="qbox">
+        <div class="qHint" id="qHint">—</div>
+        <div class="qTitle" id="qText">Se încarcă…</div>
+
+        <div class="opts" id="opts"></div>
+
+        <div id="feedback" class="toast" style="display:none"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-</div>
-  <script>
-    const DATA = {
-      /* =========================
-   TOPIK 1 – BAZE (PREZENT)
+<script>
+/* =========================
+   HELPERS URL
 ========================= */
-"ko-ro": [
-
-/* --- Lecția T1-01: Identitate & acțiuni simple --- */
-{
-  lessonId:"T1-01",
-  q:"저는 회사원이에요.",
-  opts:["Sunt angajat.","Sunt student.","Sunt profesor."],
-  a:"Sunt angajat."
-},
-{
-  lessonId:"T1-01",
-  q:"저는 회사에서 일해요.",
-  opts:["Lucrez la companie.","Studiez la școală.","Stau acasă."],
-  a:"Lucrez la companie."
-},
-{
-  lessonId:"T1-01",
-  q:"지금 집에 가요.",
-  opts:["Merg acasă acum.","Vin de acasă acum.","Rămân la birou."],
-  a:"Merg acasă acum."
-},
-
-/* --- Lecția T1-02: Rutina zilnică --- */
-{
-  lessonId:"T1-02",
-  q:"아침에 커피를 마셔요.",
-  opts:["Beau cafea dimineața.","Beau cafea seara.","Nu beau nimic."],
-  a:"Beau cafea dimineața."
-},
-{
-  lessonId:"T1-02",
-  q:"매일 한국어를 공부해요.",
-  opts:["Studiez coreeana zilnic.","Studiez rar.","Predau coreeana."],
-  a:"Studiez coreeana zilnic."
-},
-{
-  lessonId:"T1-02",
-  q:"매일 같은 시간에 일어나요.",
-  opts:["Mă trezesc la aceeași oră zilnic.","Mă trezesc aleator.","Nu mă trezesc."],
-  a:"Mă trezesc la aceeași oră zilnic."
-},
-{
-  lessonId:"T1-02",
-  q:"일찍 자요.",
-  opts:["Mă culc devreme.","Mă trezesc devreme.","Dorm toată ziua."],
-  a:"Mă culc devreme."
-},
-
-/* --- Lecția T1-03: Locuri & activități --- */
-{
-  lessonId:"T1-03",
-  q:"학교에서 공부해요.",
-  opts:["Studiez la școală.","Lucrez la școală.","Dorm la școală."],
-  a:"Studiez la școală."
-},
-{
-  lessonId:"T1-03",
-  q:"집에서 텔레비전을 봐요.",
-  opts:["Mă uit la televizor acasă.","Mă uit la televizor la muncă.","Nu am televizor."],
-  a:"Mă uit la televizor acasă."
-},
-{
-  lessonId:"T1-03",
-  q:"밖에서 밥을 먹어요.",
-  opts:["Mănânc în oraș.","Gătesc acasă.","Nu mănânc nimic."],
-  a:"Mănânc în oraș."
-},
-
-/* --- Lecția T1-04: Timp liber & relații --- */
-{
-  lessonId:"T1-04",
-  q:"친구를 만나요.",
-  opts:["Mă întâlnesc cu un prieten.","Mă cert cu un prieten.","Îl evit pe prieten."],
-  a:"Mă întâlnesc cu un prieten."
-},
-{
-  lessonId:"T1-04",
-  q:"주말에 쉬어요.",
-  opts:["Mă odihnesc în weekend.","Lucrez în weekend.","Călătoresc zilnic."],
-  a:"Mă odihnesc în weekend."
-},
-{
-  lessonId:"T1-04",
-  q:"저녁에 산책해요.",
-  opts:["Mă plimb seara.","Dorm seara.","Lucrez toată seara."],
-  a:"Mă plimb seara."
-},
+function getParam(name){
+  return new URLSearchParams(window.location.search).get(name);
+}
+function goBack(){
+  window.location.href = "lessons.html";
+}
 
 /* =========================
-   TOPIK 2 – VIAȚĂ ZILNICĂ
+   LECȚII (același mapping ca în lessons.html)
 ========================= */
-
-/* --- Lecția T2-01: Muncă & program --- */
-{
-  lessonId:"T2-01",
-  q:"회사에 늦었어요.",
-  opts:["Am întârziat la muncă.","Am ajuns devreme.","Nu merg la muncă."],
-  a:"Am întârziat la muncă."
-},
-{
-  lessonId:"T2-01",
-  q:"회의가 있어요.",
-  opts:["Este o ședință.","Este o petrecere.","Este o pauză."],
-  a:"Este o ședință."
-},
-{
-  lessonId:"T2-01",
-  q:"일이 많아요.",
-  opts:["Am mult de lucru.","Nu am nimic de făcut.","Sunt în vacanță."],
-  a:"Am mult de lucru."
-},
-{
-  lessonId:"T2-01",
-  q:"퇴근 후에 운동해요.",
-  opts:["Fac sport după muncă.","Fac sport înainte de muncă.","Nu fac sport."],
-  a:"Fac sport după muncă."
-},
-
-/* --- Lecția T2-02: Transport & oraș --- */
-{
-  lessonId:"T2-02",
-  q:"버스를 타요.",
-  opts:["Ia autobuzul.","Merge pe jos.","Conduce avionul."],
-  a:"Ia autobuzul."
-},
-{
-  lessonId:"T2-02",
-  q:"회사까지 지하철을 타요.",
-  opts:["Ia metroul până la serviciu.","Merge pe jos.","Merge cu avionul."],
-  a:"Ia metroul până la serviciu."
-},
-{
-  lessonId:"T2-02",
-  q:"우산을 챙겨요.",
-  opts:["Ia o umbrelă.","Ia o geantă.","Ia o carte."],
-  a:"Ia o umbrelă."
-},
+const LESSON_CONTENT = {
+  "T1-01":{ topik:1, title:"은 / 는 — topic" },
+  "T1-02":{ topik:1, title:"이 / 가 — subiect" },
+  "T2-01":{ topik:2, title:"-(으)려고 하다 — intenție" },
+  "T3-01":{ topik:3, title:"-아/어서 — cauză" },
+  "T4-01":{ topik:4, title:"-(으)ㄴ/는 것 같다 — opinie" }
+};
 
 /* =========================
-   TOPIK 3 – CAUZĂ · CONDIȚIE · CONTRAST
+   DATA EXERCIȚII (EXEMPLU COMPLET + EXTENSIBIL)
+   Structură:
+   { id, lessonId, dir:"KO-RO"|"RO-KO", q, opts:[...], a }
 ========================= */
-
-/* --- Lecția T3-01: Cauză (아서/어서) --- */
-{
-  lessonId:"T3-01",
-  q:"비가 많이 와서 길이 막혔어요.",
-  opts:[
-    "Drumul s-a aglomerat pentru că a plouat mult.",
-    "Drumul era liber pentru că a plouat.",
-    "Nu a plouat deloc."
-  ],
-  a:"Drumul s-a aglomerat pentru că a plouat mult."
-},
-{
-  lessonId:"T3-01",
-  q:"시간이 부족해서 택시를 이용했어요.",
-  opts:[
-    "Am folosit taxiul pentru că nu aveam timp.",
-    "Am mers pe jos pentru că aveam timp.",
-    "Nu am plecat."
-  ],
-  a:"Am folosit taxiul pentru că nu aveam timp."
-},
-
-/* --- Lecția T3-02: Contrast (지만) --- */
-{
-  lessonId:"T3-02",
-  q:"피곤하지만 끝까지 했어요.",
-  opts:[
-    "Deși eram obosit, am dus până la capăt.",
-    "Pentru că eram obosit, am renunțat.",
-    "Am dormit."
-  ],
-  a:"Deși eram obosit, am dus până la capăt."
-},
-
-/* --- Lecția T3-03: Condiție (면) --- */
-{
-  lessonId:"T3-03",
-  q:"시간이 있으면 운동해요.",
-  opts:[
-    "Dacă am timp, fac sport.",
-    "Fac sport doar când nu am timp.",
-    "Nu fac sport."
-  ],
-  a:"Dacă am timp, fac sport."
-},
-/* =========================
-   KO → RO — TOPIK 2
-   VIAȚĂ ZILNICĂ / CONVERSAȚIONAL
-========================= */
-
-{q:"저는 회사원이에요.",opts:["Sunt angajat.","Sunt student.","Sunt profesor."],a:"Sunt angajat."},
-{q:"지금 집에 가요.",opts:["Merg acasă acum.","Vin de acasă acum.","Rămân la birou."],a:"Merg acasă acum."},
-{q:"아침에 커피를 마셔요.",opts:["Beau cafea dimineața.","Beau cafea seara.","Nu beau nimic."],a:"Beau cafea dimineața."},
-{q:"매일 한국어를 공부해요.",opts:["Studiez coreeana zilnic.","Studiez rar.","Predau coreeana."],a:"Studiez coreeana zilnic."},
-{q:"학교에서 공부해요.",opts:["Studiez la școală.","Lucrez la școală.","Dorm la școală."],a:"Studiez la școală."},
-{q:"오늘은 바빠요.",opts:["Astăzi sunt ocupat.","Astăzi sunt liber.","Astăzi sunt bolnav."],a:"Astăzi sunt ocupat."},
-{q:"점심을 같이 먹어요.",opts:["Mâncăm prânzul împreună.","Mâncăm cina împreună.","Mâncăm separat."],a:"Mâncăm prânzul împreună."},
-{q:"퇴근 후에 운동해요.",opts:["Fac sport după muncă.","Fac sport înainte de muncă.","Nu fac sport."],a:"Fac sport după muncă."},
-{q:"주말에 쉬어요.",opts:["Mă odihnesc în weekend.","Lucrez în weekend.","Călătoresc zilnic."],a:"Mă odihnesc în weekend."},
-{q:"집에서 텔레비전을 봐요.",opts:["Mă uit la televizor acasă.","Mă uit la televizor la muncă.","Nu am televizor."],a:"Mă uit la televizor acasă."},
-
-{q:"친구를 만나요.",opts:["Mă întâlnesc cu un prieten.","Mă cert cu un prieten.","Îl evit pe prieten."],a:"Mă întâlnesc cu un prieten."},
-{q:"저녁에 산책해요.",opts:["Mă plimb seara.","Dorm seara.","Lucrez toată seara."],a:"Mă plimb seara."},
-{q:"비가 와요.",opts:["Plouă.","Ninge.","Este foarte cald."],a:"Plouă."},
-{q:"우산을 가져가요.",opts:["Ia o umbrelă.","Ia o geantă.","Ia o carte."],a:"Ia o umbrelă."},
-{q:"버스를 타요.",opts:["Ia autobuzul.","Merge pe jos.","Conduce avionul."],a:"Ia autobuzul."},
-
-{q:"회사에 늦었어요.",opts:["Am întârziat la muncă.","Am ajuns devreme.","Nu merg la muncă."],a:"Am întârziat la muncă."},
-{q:"회의가 있어요.",opts:["Este o ședință.","Este o petrecere.","Este o pauză."],a:"Este o ședință."},
-{q:"조금 피곤해요.",opts:["Sunt puțin obosit.","Sunt foarte fericit.","Sunt foarte energic."],a:"Sunt puțin obosit."},
-{q:"일이 많아요.",opts:["Am mult de lucru.","Nu am nimic de făcut.","Sunt în vacanță."],a:"Am mult de lucru."},
-{q:"일찍 자요.",opts:["Mă culc devreme.","Mă trezesc devreme.","Dorm toată ziua."],a:"Mă culc devreme."},
-
-{q:"매일 같은 시간에 일어나요.",opts:["Mă trezesc la aceeași oră zilnic.","Mă trezesc aleator.","Nu mă trezesc."],a:"Mă trezesc la aceeași oră zilnic."},
-{q:"음악을 들으면서 공부해요.",opts:["Studiez ascultând muzică.","Studiez în liniște.","Nu studiez deloc."],a:"Studiez ascultând muzică."},
-{q:"한국 드라마를 좋아해요.",opts:["Îmi plac dramele coreene.","Îmi plac doar filmele.","Nu îmi plac serialele."],a:"Îmi plac dramele coreene."},
-{q:"주말에 친구를 만나요.",opts:["Mă întâlnesc cu prietenii în weekend.","Lucrez mereu în weekend.","Stau singur."],a:"Mă întâlnesc cu prietenii în weekend."},
-{q:"밖에서 밥을 먹어요.",opts:["Mănânc în oraș.","Gătesc acasă.","Nu mănânc nimic."],a:"Mănânc în oraș."},
- {q:"저는 회사에서 일해요.",opts:["Lucrez la companie.","Studiez la școală.","Stau acasă."],a:"Lucrez la companie."},
-{q:"매일 아침에 운동해요.",opts:["Fac sport în fiecare dimineață.","Dorm dimineața.","Lucrez dimineața."],a:"Fac sport în fiecare dimineață."},
-{q:"오늘 날씨가 좋아요.",opts:["Vremea este bună astăzi.","Vremea este rea.","Este foarte frig."],a:"Vremea este bună astăzi."},
-{q:"주말에 친구를 만나요.",opts:["Mă întâlnesc cu prietenii în weekend.","Lucrez în weekend.","Stau singur."],a:"Mă întâlnesc cu prietenii în weekend."},
-{q:"집에서 쉬어요.",opts:["Mă odihnesc acasă.","Lucrez acasă.","Studiez afară."],a:"Mă odihnesc acasă."},
-
-{q:"아침에 일찍 일어나요.",opts:["Mă trezesc devreme dimineața.","Mă culc devreme.","Dorm toată ziua."],a:"Mă trezesc devreme dimineața."},
-{q:"회사까지 지하철을 타요.",opts:["Ia metroul până la serviciu.","Merge pe jos.","Merge cu avionul."],a:"Ia metroul până la serviciu."},
-{q:"점심을 밖에서 먹어요.",opts:["Mănânc prânzul afară.","Mănânc acasă.","Sar peste prânz."],a:"Mănânc prânzul afară."},
-{q:"일이 끝나고 집에 가요.",opts:["După muncă merg acasă.","După muncă ies la petrecere.","După muncă dorm la birou."],a:"După muncă merg acasă."},
-{q:"저녁에 요리해요.",opts:["Gătesc seara.","Dorm seara.","Lucrez seara."],a:"Gătesc seara."},
-
-{q:"텔레비전을 자주 봐요.",opts:["Mă uit des la televizor.","Nu am televizor.","Mă uit rar."],a:"Mă uit des la televizor."},
-{q:"한국 음식을 좋아해요.",opts:["Îmi place mâncarea coreeană.","Nu îmi place mâncarea.","Mănânc doar fast-food."],a:"Îmi place mâncarea coreeană."},
-{q:"매일 물을 많이 마셔요.",opts:["Beau multă apă zilnic.","Nu beau apă.","Beau doar cafea."],a:"Beau multă apă zilnic."},
-{q:"가끔 영화를 봐요.",opts:["Uneori văd filme.","Nu văd filme.","Văd filme zilnic."],a:"Uneori văd filme."},
-{q:"주말에는 늦게 일어나요.",opts:["În weekend mă trezesc târziu.","În weekend mă trezesc devreme.","Nu dorm deloc."],a:"În weekend mă trezesc târziu."},
-
-{q:"회사 일이 많아요.",opts:["Am mult de lucru la serviciu.","Nu am nimic de făcut.","Sunt în vacanță."],a:"Am mult de lucru la serviciu."},
-{q:"요즘 바빠요.",opts:["Sunt ocupat în ultima perioadă.","Sunt liber.","Nu fac nimic."],a:"Sunt ocupat în ultima perioadă."},
-{q:"회의가 있어요.",opts:["Este o ședință.","Este o petrecere.","Este o pauză."],a:"Este o ședință."},
-{q:"조금 피곤해요.",opts:["Sunt puțin obosit.","Sunt foarte energic.","Sunt bolnav."],a:"Sunt puțin obosit."},
-{q:"일찍 자려고 해요.",opts:["Încerc să mă culc devreme.","Dorm foarte târziu.","Nu dorm."],a:"Încerc să mă culc devreme."},
-
-{q:"내일 비가 와요.",opts:["Mâine plouă.","Mâine ninge.","Mâine este foarte cald."],a:"Mâine plouă."},
-{q:"우산을 챙겨요.",opts:["Ia o umbrelă.","Ia o geantă.","Ia o carte."],a:"Ia o umbrelă."},
-{q:"밖에 사람이 많아요.",opts:["Sunt mulți oameni afară.","Nu este nimeni.","Este foarte liniște."],a:"Sunt mulți oameni afară."},
-{q:"지금 시간이 없어요.",opts:["Nu am timp acum.","Am mult timp.","Sunt în vacanță."],a:"Nu am timp acum."},
-{q:"조금 기다려 주세요.",opts:["Vă rog să așteptați puțin.","Plecați imediat.","Nu așteptați."],a:"Vă rog să așteptați puțin."},
-
-{q:"같이 커피를 마셔요.",opts:["Bem cafea împreună.","Bem apă separat.","Nu bem nimic."],a:"Bem cafea împreună."},
-{q:"회사 근처에 식당이 있어요.",opts:["Este un restaurant lângă serviciu.","Nu este nimic.","Este un parc."],a:"Este un restaurant lângă serviciu."},
-{q:"자주 연락해요.",opts:["Ținem legătura des.","Nu vorbim.","Ne vedem rar."],a:"Ținem legătura des."},
-{q:"약속이 있어요.",opts:["Am o întâlnire.","Nu am planuri.","Stau acasă."],a:"Am o întâlnire."},
-{q:"조금 늦을 거예요.",opts:["Voi întârzia puțin.","Ajung devreme.","Nu mai vin."],a:"Voi întârzia puțin."},
-
-{q:"오늘 하루가 길었어요.",opts:["Ziua de azi a fost lungă.","Ziua a fost scurtă.","Ziua a fost liberă."],a:"Ziua de azi a fost lungă."},
-{q:"지금 집에 가는 중이에요.",opts:["Sunt pe drum spre casă.","Sunt la muncă.","Sunt în vacanță."],a:"Sunt pe drum spre casă."},
-{q:"집에 도착했어요.",opts:["Am ajuns acasă.","Am plecat de acasă.","Sunt la muncă."],a:"Am ajuns acasă."},
-{q:"샤워하고 쉬어요.",opts:["Fac duș și mă odihnesc.","Ies afară.","Lucrez."],a:"Fac duș și mă odihnesc."},
-{q:"내일 다시 일해요.",opts:["Mâine lucrez din nou.","Mâine sunt liber.","Mâine plec."],a:"Mâine lucrez din nou."},
- /* =========================
-   TOPIK 2 – VIAȚĂ ZILNICĂ (SET 2)
-========================= */
-
-{q:"아침에 커피를 마셔요.",opts:["Beau cafea dimineața.","Beau cafea seara.","Nu beau nimic."],a:"Beau cafea dimineața."},
-{q:"출근 시간이 바빠요.",opts:["Ora de mers la muncă este aglomerată.","Ora este liberă.","Nu merg la muncă."],a:"Ora de mers la muncă este aglomerată."},
-{q:"지하철이 항상 붐벼요.",opts:["Metroul este mereu aglomerat.","Metroul este gol.","Metroul nu circulă."],a:"Metroul este mereu aglomerat."},
-{q:"회사에 조금 일찍 도착해요.",opts:["Ajung puțin mai devreme la serviciu.","Ajung foarte târziu.","Nu ajung deloc."],a:"Ajung puțin mai devreme la serviciu."},
-{q:"업무를 먼저 확인해요.",opts:["Verific mai întâi sarcinile.","Pleacă imediat.","Nu lucrez."],a:"Verific mai întâi sarcinile."},
-
-{q:"오전에 회의가 있어요.",opts:["Am ședință dimineața.","Am pauză dimineața.","Dorm dimineața."],a:"Am ședință dimineața."},
-{q:"회의가 길어졌어요.",opts:["Ședința s-a prelungit.","Ședința s-a anulat.","Ședința a fost scurtă."],a:"Ședința s-a prelungit."},
-{q:"점심시간이 짧아요.",opts:["Pauza de prânz este scurtă.","Pauza este lungă.","Nu există pauză."],a:"Pauza de prânz este scurtă."},
-{q:"근처 식당에서 먹어요.",opts:["Mănânc la un restaurant din apropiere.","Mănânc acasă.","Nu mănânc."],a:"Mănânc la un restaurant din apropiere."},
-{q:"메뉴를 고르기 어려워요.",opts:["Este greu să aleg meniul.","Meniul este clar.","Nu există meniu."],a:"Este greu să aleg meniul."},
-
-{q:"오후에 집중이 안 돼요.",opts:["Nu mă pot concentra după-amiaza.","Mă concentrez perfect.","Dorm după-amiaza."],a:"Nu mă pot concentra după-amiaza."},
-{q:"커피를 한 잔 더 마셔요.",opts:["Mai beau o cafea.","Nu beau nimic.","Beau apă rece."],a:"Mai beau o cafea."},
-{q:"일이 생각보다 많아요.",opts:["Munca e mai multă decât credeam.","Munca e puțină.","Nu e muncă."],a:"Munca e mai multă decât credeam."},
-{q:"시간이 빨리 가요.",opts:["Timpul trece repede.","Timpul trece încet.","Timpul se oprește."],a:"Timpul trece repede."},
-{q:"퇴근 시간이 다가와요.",opts:["Se apropie ora de plecare.","Abia începe ziua.","Este miezul nopții."],a:"Se apropie ora de plecare."},
-
-{q:"집에 가는 길에 장을 봐요.",opts:["Fac cumpărături în drum spre casă.","Merg direct acasă.","Nu cumpăr nimic."],a:"Fac cumpărături în drum spre casă."},
-{q:"슈퍼마켓이 사람이 많아요.",opts:["Supermarketul e aglomerat.","Supermarketul e închis.","Nu e nimeni."],a:"Supermarketul e aglomerat."},
-{q:"필요한 것만 사요.",opts:["Cumpăr doar ce este necesar.","Cumpăr tot.","Nu cumpăr nimic."],a:"Cumpăr doar ce este necesar."},
-{q:"집에 와서 바로 쉬어요.",opts:["Ajung acasă și mă odihnesc imediat.","Lucrez din nou.","Ies afară."],a:"Ajung acasă și mă odihnesc imediat."},
-{q:"하루가 너무 길었어요.",opts:["Ziua a fost foarte lungă.","Ziua a fost scurtă.","Ziua a fost liberă."],a:"Ziua a fost foarte lungă."},
-
-{q:"저녁에 뉴스를 봐요.",opts:["Mă uit la știri seara.","Mă uit dimineața.","Nu mă uit."],a:"Mă uit la știri seara."},
-{q:"요즘 뉴스가 많아요.",opts:["Sunt multe știri în ultima vreme.","Nu sunt știri.","Știrile sunt vechi."],a:"Sunt multe știri în ultima vreme."},
-{q:"가끔 운동을 해요.",opts:["Fac sport din când în când.","Fac sport zilnic.","Nu fac sport."],a:"Fac sport din când în când."},
-{q:"몸이 조금 무거워요.",opts:["Mă simt puțin obosit.","Mă simt foarte bine.","Sunt bolnav grav."],a:"Mă simt puțin obosit."},
-{q:"일찍 자야겠어요.",opts:["Ar trebui să mă culc devreme.","Vreau să stau treaz.","Nu dorm."],a:"Ar trebui să mă culc devreme."},
-
-{q:"내일도 바쁠 것 같아요.",opts:["Cred că și mâine va fi ocupat.","Mâine va fi liber.","Nu știu nimic."],a:"Cred că și mâine va fi ocupat."},
-{q:"그래도 최선을 다해요.",opts:["Totuși dau tot ce pot.","Renunț.","Nu încerc."],a:"Totuși dau tot ce pot."},
-{q:"하루하루가 중요해요.",opts:["Fiecare zi este importantă.","Zilele nu contează.","Doar weekendul contează."],a:"Fiecare zi este importantă."},
-{q:"조금씩 나아지고 있어요.",opts:["Lucrurile se îmbunătățesc treptat.","Devine mai rău.","Nu se schimbă."],a:"Lucrurile se îmbunătățesc treptat."},
-{q:"내일도 열심히 할 거예요.",opts:["Și mâine voi munci din greu.","Mâine nu fac nimic.","Mâine renunț."],a:"Și mâine voi munci din greu."},
-    /* =========================
-   TOPIK 3 – KO → RO
-   CAUZĂ · CONDIȚIE · CONTRAST
-========================= */
-
-{q:"비가 많이 와서 길이 막혔어요.",opts:["Drumul s-a aglomerat pentru că a plouat mult.","Drumul era liber pentru că a plouat.","Nu a plouat deloc."],a:"Drumul s-a aglomerat pentru că a plouat mult."},
-{q:"시간이 부족해서 택시를 이용했어요.",opts:["Am folosit taxiul pentru că nu aveam timp.","Am mers pe jos pentru că aveam timp.","Nu am plecat."],a:"Am folosit taxiul pentru că nu aveam timp."},
-{q:"준비를 안 해서 걱정했어요.",opts:["Am fost îngrijorat pentru că nu m-am pregătit.","Eram sigur pe mine.","Nu mi-a păsat."],a:"Am fost îngrijorat pentru că nu m-am pregătit."},
-{q:"아파서 병원에 갔어요.",opts:["Am mers la spital pentru că eram bolnav.","Am mers la serviciu.","Nu m-am simțit rău."],a:"Am mers la spital pentru că eram bolnav."},
-{q:"일이 많아서 야근했어요.",opts:["Am lucrat peste program pentru că aveam mult de lucru.","Am plecat devreme.","Nu am lucrat deloc."],a:"Am lucrat peste program pentru că aveam mult de lucru."},
-
-{q:"피곤하지만 끝까지 했어요.",opts:["Deși eram obosit, am dus până la capăt.","Pentru că eram obosit, am renunțat.","Am dormit."],a:"Deși eram obosit, am dus până la capăt."},
-{q:"어려웠지만 포기하지 않았어요.",opts:["Deși a fost greu, nu am renunțat.","Pentru că a fost greu, am renunțat.","Nu am încercat."],a:"Deși a fost greu, nu am renunțat."},
-{q:"비싸지만 필요해서 샀어요.",opts:["Deși era scump, l-am cumpărat pentru că aveam nevoie.","L-am cumpărat pentru că era ieftin.","Nu aveam nevoie."],a:"Deși era scump, l-am cumpărat pentru că aveam nevoie."},
-{q:"늦었지만 연락했어요.",opts:["Deși am întârziat, am contactat.","Nu am contactat.","Am sosit devreme."],a:"Deși am întârziat, am contactat."},
-{q:"멀지만 직접 갔어요.",opts:["Deși era departe, am mers personal.","Nu am mers.","Era foarte aproape."],a:"Deși era departe, am mers personal."},
-
-{q:"시간이 있으면 운동해요.",opts:["Dacă am timp, fac sport.","Fac sport doar când nu am timp.","Nu fac sport."],a:"Dacă am timp, fac sport."},
-{q:"문제가 생기면 바로 알려 주세요.",opts:["Dacă apare o problemă, anunțați imediat.","Ignorați problema.","Așteptați mult."],a:"Dacă apare o problemă, anunțați imediat."},
-{q:"비가 오면 집에 있을 거예요.",opts:["Dacă va ploua, voi sta acasă.","Voi ieși chiar dacă plouă.","Nu contează vremea."],a:"Dacă va ploua, voi sta acasă."},
-{q:"시간이 되면 다시 이야기해요.",opts:["Dacă va fi timp, discutăm din nou.","Nu mai discutăm.","Discutăm imediat."],a:"Dacă va fi timp, discutăm din nou."},
-{q:"필요하면 도움을 요청하세요.",opts:["Dacă este nevoie, cere ajutor.","Nu cere ajutor.","Refuză ajutorul."],a:"Dacă este nevoie, cere ajutor."},
-
-{q:"생각보다 일이 오래 걸렸어요.",opts:["Munca a durat mai mult decât credeam.","Munca s-a terminat rapid.","Nu a existat muncă."],a:"Munca a durat mai mult decât credeam."},
-{q:"예상과 달라서 당황했어요.",opts:["Am fost derutat pentru că era diferit de așteptări.","Totul era clar.","Nu m-a surprins."],a:"Am fost derutat pentru că era diferit de așteptări."},
-{q:"혼자 결정하기가 어려웠어요.",opts:["A fost greu să decid singur.","A fost foarte ușor.","Nu a fost nevoie de decizie."],a:"A fost greu să decid singur."},
-{q:"다른 의견을 참고했어요.",opts:["Am luat în considerare alte opinii.","Am ignorat pe toți.","Am decis la întâmplare."],a:"Am luat în considerare alte opinii."},
-{q:"결국 그 방법을 선택했어요.",opts:["În cele din urmă am ales acea metodă.","Am renunțat.","Nu am ales nimic."],a:"În cele din urmă am ales acea metodă."},
-
-{q:"조금씩 익숙해지고 있어요.",opts:["Încetul cu încet mă obișnuiesc.","Devine mai greu.","Nu se schimbă nimic."],a:"Încetul cu încet mă obișnuiesc."},
-{q:"실수를 통해 많이 배웠어요.",opts:["Am învățat mult din greșeli.","Am evitat greșelile.","Nu am învățat nimic."],a:"Am învățat mult din greșeli."},
-{q:"경험이 쌓이면서 자신감이 생겼어요.",opts:["Pe măsură ce am acumulat experiență, am căpătat încredere.","Am pierdut încrederea.","Nu am experiență."],a:"Pe măsură ce am acumulat experiență, am căpătat încredere."},
-{q:"결과보다 과정이 중요하다고 생각해요.",opts:["Cred că procesul este mai important decât rezultatul.","Cred că doar rezultatul contează.","Procesul nu contează."],a:"Cred că procesul este mai important decât rezultatul."},
-{q:"앞으로 더 노력할 거예요.",opts:["Voi depune și mai mult efort pe viitor.","Mă opresc aici.","Nu voi mai încerca."],a:"Voi depune și mai mult efort pe viitor."},
-    /* =========================
-   TOPIK 3 – KO → RO
-   CHALLENGE MODE
-   (distractori foarte asemănători)
-========================= */
-
-{q:"비가 와서 약속에 늦었어요.",opts:[
-  "Am întârziat la întâlnire pentru că a plouat.",
-  "Am întârziat la întâlnire deși ploua.",
-  "Am ajuns la timp pentru că ploaia s-a oprit."
-],a:"Am întârziat la întâlnire pentru că a plouat."},
-
-{q:"시간이 부족해서 계획을 변경했어요.",opts:[
-  "Am schimbat planul din lipsă de timp.",
-  "Am schimbat planul deși aveam timp.",
-  "Am respectat planul pentru că aveam timp."
-],a:"Am schimbat planul din lipsă de timp."},
-
-{q:"아파도 출근했어요.",opts:[
-  "Deși eram bolnav, am mers la muncă.",
-  "Pentru că eram bolnav, nu am mers la muncă.",
-  "După ce m-am vindecat, am mers la muncă."
-],a:"Deși eram bolnav, am mers la muncă."},
-
-{q:"준비를 미리 해서 걱정하지 않았어요.",opts:[
-  "Nu m-am îngrijorat pentru că m-am pregătit din timp.",
-  "M-am îngrijorat deși m-am pregătit din timp.",
-  "Nu m-am pregătit și de aceea nu m-am îngrijorat."
-],a:"Nu m-am îngrijorat pentru că m-am pregătit din timp."},
-
-{q:"피곤했지만 끝까지 했어요.",opts:[
-  "Deși eram obosit, am dus până la capăt.",
-  "Pentru că eram obosit, am renunțat.",
-  "După ce m-am odihnit, am terminat."
-],a:"Deși eram obosit, am dus până la capăt."},
-
-{q:"시간이 있으면 다시 연락할게요.",opts:[
-  "Dacă am timp, te voi contacta din nou.",
-  "Te voi contacta din nou chiar dacă nu am timp.",
-  "Te-am contactat deja pentru că aveam timp."
-],a:"Dacă am timp, te voi contacta din nou."},
-
-{q:"비싸서 망설였어요.",opts:[
-  "Am ezitat pentru că era scump.",
-  "Am ezitat deși era ieftin.",
-  "Am cumpărat imediat pentru că era scump."
-],a:"Am ezitat pentru că era scump."},
-
-{q:"결과가 생각보다 안 좋아서 실망했어요.",opts:[
-  "Am fost dezamăgit pentru că rezultatul a fost mai slab decât mă așteptam.",
-  "Am fost mulțumit pentru că rezultatul a fost diferit.",
-  "Nu m-a surprins deloc rezultatul."
-],a:"Am fost dezamăgit pentru că rezultatul a fost mai slab decât mă așteptam."},
-
-{q:"문제가 생기면 바로 알려 주세요.",opts:[
-  "Dacă apare o problemă, anunțați imediat.",
-  "Anunțați imediat chiar dacă nu apare nicio problemă.",
-  "Anunțați după ce problema dispare."
-],a:"Dacă apare o problemă, anunțați imediat."},
-
-{q:"예상과 달라서 다시 확인했어요.",opts:[
-  "Pentru că era diferit de așteptări, am verificat din nou.",
-  "Deși era conform așteptărilor, am verificat din nou.",
-  "Am verificat din nou fără niciun motiv."
-],a:"Pentru că era diferit de așteptări, am verificat din nou."},
-
-{q:"어려웠지만 많이 배웠어요.",opts:[
-  "Deși a fost greu, am învățat mult.",
-  "Pentru că a fost ușor, am învățat puțin.",
-  "Nu a fost greu și nu am învățat nimic."
-],a:"Deși a fost greu, am învățat mult."},
-
-{q:"혼자 하기 어려워서 도움을 요청했어요.",opts:[
-  "Pentru că era greu să fac singur, am cerut ajutor.",
-  "Deși era ușor, am cerut ajutor.",
-  "Am cerut ajutor fără niciun motiv."
-],a:"Pentru că era greu să fac singur, am cerut ajutor."},
-
-{q:"시간이 지나면서 점점 익숙해졌어요.",opts:[
-  "Cu timpul, am devenit treptat mai obișnuit.",
-  "Cu timpul, a devenit din ce în ce mai dificil.",
-  "Nu s-a schimbat nimic în timp."
-],a:"Cu timpul, am devenit treptat mai obișnuit."},
-
-{q:"결정을 내리기 전에 충분히 생각했어요.",opts:[
-  "Am reflectat suficient înainte de a lua o decizie.",
-  "Am decis imediat fără să mă gândesc.",
-  "Am luat decizia după ce a fost prea târziu."
-],a:"Am reflectat suficient înainte de a lua o decizie."},
-
-{q:"상황에 따라 계획을 조정했어요.",opts:[
-  "Am ajustat planul în funcție de situație.",
-  "Am respectat planul indiferent de situație.",
-  "Am anulat totul fără motiv."
-],a:"Am ajustat planul în funcție de situație."},
-
-{q:"쉽지 않았지만 포기하지 않았어요.",opts:[
-  "Nu a fost ușor, dar nu am renunțat.",
-  "Pentru că nu a fost ușor, am renunțat.",
-  "A fost ușor și am renunțat."
-],a:"Nu a fost ușor, dar nu am renunțat."},
-
-{q:"결과보다는 과정을 중요하게 생각해요.",opts:[
-  "Consider procesul mai important decât rezultatul.",
-  "Consider doar rezultatul important.",
-  "Procesul nu are nicio valoare."
-],a:"Consider procesul mai important decât rezultatul."},
-
-{q:"문제가 반복되지 않도록 조심하고 있어요.",opts:[
-  "Sunt atent ca problema să nu se repete.",
-  "Las problema să se repete.",
-  "Aștept să apară din nou."
-],a:"Sunt atent ca problema să nu se repete."},
-
-{q:"지금은 힘들지만 나중에 도움이 될 거예요.",opts:[
-  "Este greu acum, dar va fi de ajutor mai târziu.",
-  "Este greu acum și va rămâne inutil.",
-  "Nu este greu și nu ajută."
-],a:"Este greu acum, dar va fi de ajutor mai târziu."},
-
-{q:"앞으로는 더 신중하게 행동할 거예요.",opts:[
-  "De acum înainte voi acționa mai prudent.",
-  "De acum înainte voi acționa impulsiv.",
-  "Nu voi schimba nimic."
-],a:"De acum înainte voi acționa mai prudent."},
-    /* =========================
-   TOPIK 3 – KO → RO
-   CHALLENGE MODE (SET 2)
-========================= */
-
-{q:"비가 많이 와서 길이 막혔어요.",opts:[
-  "Drumul s-a blocat pentru că a plouat mult.",
-  "Drumul s-a blocat deși nu a plouat.",
-  "Drumul s-a eliberat pentru că a plouat."
-],a:"Drumul s-a blocat pentru că a plouat mult."},
-
-{q:"시간이 없어서 택시를 탔어요.",opts:[
-  "Am luat taxiul pentru că nu aveam timp.",
-  "Am luat taxiul deși aveam timp.",
-  "Nu am luat taxiul pentru că aveam timp."
-],a:"Am luat taxiul pentru că nu aveam timp."},
-
-{q:"바빴지만 연락은 했어요.",opts:[
-  "Deși eram ocupat, tot am contactat.",
-  "Pentru că eram ocupat, nu am contactat.",
-  "După ce am devenit liber, am contactat."
-],a:"Deși eram ocupat, tot am contactat."},
-
-{q:"몸이 안 좋아서 병원에 갔어요.",opts:[
-  "Am mers la spital pentru că nu mă simțeam bine.",
-  "Am mers la spital deși mă simțeam bine.",
-  "Nu am mers la spital pentru că eram bine."
-],a:"Am mers la spital pentru că nu mă simțeam bine."},
-
-{q:"늦을 것 같아서 미리 전화했어요.",opts:[
-  "Am sunat dinainte pentru că părea că voi întârzia.",
-  "Am sunat după ce am ajuns.",
-  "Am sunat deși nu întârzia nimic."
-],a:"Am sunat dinainte pentru că părea că voi întârzia."},
-
-{q:"돈이 부족해서 그만두었어요.",opts:[
-  "Am renunțat pentru că nu aveam suficienți bani.",
-  "Am continuat deși nu aveam bani.",
-  "Am început pentru că aveam bani."
-],a:"Am renunțat pentru că nu aveam suficienți bani."},
-
-{q:"어렵긴 했지만 도움이 됐어요.",opts:[
-  "Deși a fost dificil, a fost de ajutor.",
-  "Pentru că a fost ușor, a ajutat.",
-  "Nu a fost dificil și nu a ajutat."
-],a:"Deși a fost dificil, a fost de ajutor."},
-
-{q:"시간이 되면 다시 이야기해요.",opts:[
-  "Dacă va fi timp, vom vorbi din nou.",
-  "Vom vorbi din nou chiar dacă nu e timp.",
-  "Am vorbit deja fără timp."
-],a:"Dacă va fi timp, vom vorbi din nou."},
-
-{q:"생각보다 복잡해서 다시 확인했어요.",opts:[
-  "Am verificat din nou pentru că era mai complicat decât credeam.",
-  "Am verificat din nou deși era simplu.",
-  "Nu am verificat deloc."
-],a:"Am verificat din nou pentru că era mai complicat decât credeam."},
-
-{q:"혼자서는 힘들어서 같이 했어요.",opts:[
-  "Pentru că era greu singur, am făcut împreună.",
-  "Deși era ușor singur, am făcut împreună.",
-  "Am făcut singur fără probleme."
-],a:"Pentru că era greu singur, am făcut împreună."},
-
-{q:"기다리다가 포기했어요.",opts:[
-  "Am renunțat după ce am așteptat.",
-  "Am renunțat înainte să aștept.",
-  "Nu am renunțat deloc."
-],a:"Am renunțat după ce am așteptat."},
-
-{q:"준비가 안 돼서 연기했어요.",opts:[
-  "Am amânat pentru că nu eram pregătit.",
-  "Am continuat deși nu eram pregătit.",
-  "Am terminat pentru că eram pregătit."
-],a:"Am amânat pentru că nu eram pregătit."},
-
-{q:"힘들어 보여서 도와줬어요.",opts:[
-  "L-am ajutat pentru că părea obosit.",
-  "L-am ignorat deși părea obosit.",
-  "Nu părea obosit, așa că l-am ajutat."
-],a:"L-am ajutat pentru că părea obosit."},
-
-{q:"잘 모르겠어서 물어봤어요.",opts:[
-  "Am întrebat pentru că nu eram sigur.",
-  "Nu am întrebat deși nu știam.",
-  "Am răspuns fără să știu."
-],a:"Am întrebat pentru că nu eram sigur."},
-
-{q:"시간이 지나니까 이해가 됐어요.",opts:[
-  "Cu timpul am ajuns să înțeleg.",
-  "Cu timpul a devenit mai confuz.",
-  "Nu am înțeles niciodată."
-],a:"Cu timpul am ajuns să înțeleg."},
-
-{q:"미리 알았더라면 다르게 했을 거예요.",opts:[
-  "Dacă aș fi știut dinainte, aș fi făcut altfel.",
-  "Pentru că știam, am făcut la fel.",
-  "Nu a contat ce știam."
-],a:"Dacă aș fi știut dinainte, aș fi făcut altfel."},
-
-{q:"피곤해서 집중이 안 됐어요.",opts:[
-  "Nu m-am putut concentra pentru că eram obosit.",
-  "M-am concentrat bine deși eram obosit.",
-  "Nu eram obosit și nu m-am concentrat."
-],a:"Nu m-am putut concentra pentru că eram obosit."},
-
-{q:"결국 포기할 수밖에 없었어요.",opts:[
-  "În cele din urmă nu am avut de ales decât să renunț.",
-  "Am ales să continui până la capăt.",
-  "Am renunțat imediat fără motiv."
-],a:"În cele din urmă nu am avut de ales decât să renunț."},
-
-{q:"상황이 바뀌면 다시 생각해 볼게요.",opts:[
-  "Dacă situația se schimbă, voi reanaliza.",
-  "Voi decide fără să țin cont de situație.",
-  "Nu voi mai gândi deloc."
-],a:"Dacă situația se schimbă, voi reanaliza."},
-
-{q:"지금은 어렵지만 곧 나아질 거예요.",opts:[
-  "Este greu acum, dar se va îmbunătăți curând.",
-  "Este greu acum și va rămâne la fel.",
-  "Nu este greu deloc."
-],a:"Este greu acum, dar se va îmbunătăți curând."},
-
-{q:"실수였다는 걸 나중에 알았어요.",opts:[
-  "Am realizat mai târziu că a fost o greșeală.",
-  "Am știut dinainte că e o greșeală.",
-  "Nu a fost niciodată o greșeală."
-],a:"Am realizat mai târziu că a fost o greșeală."}
-  ],
-      /* =========================
-   RO → KO — TOPIK 2 → 4
-   (alege varianta corectă)
-========================= */
-/* =========================
-   RO → KO
-   TOPIK 1 – BAZE
-========================= */
-"ro-ko": [
-
-/* --- Lecția T1-01: Identitate --- */
-{
-  lessonId:"T1-01",
-  q:"Sunt student.",
-  opts:["저는 학생이에요.","저는 회사원이에요.","저는 선생님이에요."],
-  a:"저는 학생이에요."
-},
-{
-  lessonId:"T1-01",
-  q:"Sunt angajat.",
-  opts:["저는 회사원이에요.","저는 학생이에요.","저는 의사예요."],
-  a:"저는 회사원이에요."
-},
-
-/* --- Lecția T1-02: Acțiuni zilnice --- */
-{
-  lessonId:"T1-02",
-  q:"Merg acasă acum.",
-  opts:["지금 집에 가요.","지금 집에 와요.","지금 회사에 가요."],
-  a:"지금 집에 가요."
-},
-{
-  lessonId:"T1-02",
-  q:"Beau cafea dimineața.",
-  opts:["아침에 커피를 마셔요.","저녁에 커피를 마셔요.","아침에 물을 마셔요."],
-  a:"아침에 커피를 마셔요."
-},
-{
-  lessonId:"T1-02",
-  q:"Studiez coreeana zilnic.",
-  opts:["매일 한국어를 공부해요.","가끔 한국어를 공부해요.","한국어를 가르쳐요."],
-  a:"매일 한국어를 공부해요."
-},
-
-/* --- Lecția T1-03: Locuri --- */
-{
-  lessonId:"T1-03",
-  q:"Studiez la școală.",
-  opts:["학교에서 공부해요.","회사에서 공부해요.","집에서 일해요."],
-  a:"학교에서 공부해요."
-},
-{
-  lessonId:"T1-03",
-  q:"Mă uit la televizor acasă.",
-  opts:["집에서 텔레비전을 봐요.","회사에서 텔레비전을 봐요.","텔레비전을 안 봐요."],
-  a:"집에서 텔레비전을 봐요."
-},
-
-/* --- Lecția T1-04: Timp liber --- */
-{
-  lessonId:"T1-04",
-  q:"Mă odihnesc în weekend.",
-  opts:["주말에 쉬어요.","주말에 일해요.","매일 일해요."],
-  a:"주말에 쉬어요."
-},
-{
-  lessonId:"T1-04",
-  q:"Mă întâlnesc cu un prieten.",
-  opts:["친구를 만나요.","친구와 싸워요.","친구를 피해요."],
-  a:"친구를 만나요."
-},
-
-/* =========================
-   TOPIK 2 – VIAȚĂ ZILNICĂ
-========================= */
-
-/* --- Lecția T2-01: Muncă --- */
-{
-  lessonId:"T2-01",
-  q:"Am întârziat la muncă.",
-  opts:["회사에 늦었어요.","회사에 일찍 갔어요.","회사에 안 갔어요."],
-  a:"회사에 늦었어요."
-},
-{
-  lessonId:"T2-01",
-  q:"Este o ședință.",
-  opts:["회의가 있어요.","파티가 있어요.","휴식이에요."],
-  a:"회의가 있어요."
-},
-{
-  lessonId:"T2-01",
-  q:"Fac sport după muncă.",
-  opts:["퇴근 후에 운동해요.","출근 전에 운동해요.","운동을 안 해요."],
-  a:"퇴근 후에 운동해요."
-},
-
-/* --- Lecția T2-02: Transport --- */
-{
-  lessonId:"T2-02",
-  q:"Ia autobuzul.",
-  opts:["버스를 타요.","지하철을 타요.","걸어가요."],
-  a:"버스를 타요."
-},
-{
-  lessonId:"T2-02",
-  q:"Ia metroul până la serviciu.",
-  opts:["회사까지 지하철을 타요.","회사까지 버스를 타요.","회사까지 걸어가요."],
-  a:"회사까지 지하철을 타요."
-},
-{
-  lessonId:"T2-02",
-  q:"Ia o umbrelă.",
-  opts:["우산을 챙겨요.","가방을 챙겨요.","책을 가져가요."],
-  a:"우산을 챙겨요."
-},
-
-/* =========================
-   TOPIK 3 – CAUZĂ · CONDIȚIE · CONTRAST
-========================= */
-
-/* --- Lecția T3-01: Cauză (아서/어서) --- */
-{
-  lessonId:"T3-01",
-  q:"Drumul s-a blocat pentru că a plouat mult.",
-  opts:[
-    "비가 많이 와서 길이 막혔어요.",
-    "비가 많이 오지만 길이 막혔어요.",
-    "비가 오면 길이 막혀요."
-  ],
-  a:"비가 많이 와서 길이 막혔어요."
-},
-{
-  lessonId:"T3-01",
-  q:"Am folosit taxiul pentru că nu aveam timp.",
-  opts:[
-    "시간이 부족해서 택시를 이용했어요.",
-    "시간이 있지만 택시를 이용했어요.",
-    "시간이 없으면 택시를 이용해요."
-  ],
-  a:"시간이 부족해서 택시를 이용했어요."
-},
-
-/* --- Lecția T3-02: Contrast (지만) --- */
-{
-  lessonId:"T3-02",
-  q:"Deși eram obosit, am dus până la capăt.",
-  opts:[
-    "피곤했지만 끝까지 했어요.",
-    "피곤해서 끝까지 했어요.",
-    "피곤하면 끝까지 해요."
-  ],
-  a:"피곤했지만 끝까지 했어요."
-},
-
-/* --- Lecția T3-03: Condiție (면) --- */
-{
-  lessonId:"T3-03",
-  q:"Dacă am timp, fac sport.",
-  opts:[
-    "시간이 있으면 운동해요.",
-    "시간이 있어서 운동해요.",
-    "시간이 있지만 운동해요."
-  ],
-  a:"시간이 있으면 운동해요."
-},
-
-
-/* ===== TOPIK 2 (basic, viață zilnică) ===== */
-
-{
-  q:"Eu sunt student.",
-  opts:[
-    "저는 학생이에요.",
-    "저는 회사원이에요.",
-    "저는 선생님이에요."
-  ],
-  a:"저는 학생이에요."
-},
-{
-  q:"Merg acasă acum.",
-  opts:[
-    "지금 집에 가요.",
-    "지금 집에 있어요.",
-    "지금 회사에 가요."
-  ],
-  a:"지금 집에 가요."
-},
-{
-  q:"Beau cafea dimineața.",
-  opts:[
-    "아침에 커피를 마셔요.",
-    "저녁에 커피를 마셔요.",
-    "아침에 밥을 먹어요."
-  ],
-  a:"아침에 커피를 마셔요."
-},
-{
-  q:"Studiez coreeana zilnic.",
-  opts:[
-    "매일 한국어를 공부해요.",
-    "가끔 한국어를 공부해요.",
-    "한국어를 가르쳐요."
-  ],
-  a:"매일 한국어를 공부해요."
-},
-{
-  q:"Mă întâlnesc cu un prieten.",
-  opts:[
-    "친구를 만나요.",
-    "친구를 불러요.",
-    "친구에게 전화해요."
-  ],
-  a:"친구를 만나요."
-},
-
-/* ===== TOPIK 3 (cauză, condiție, contrast) ===== */
-
-{
-  q:"Am întârziat pentru că a plouat.",
-  opts:[
+const EXERCISES = [
+  // -------- T1-01 (topic) — KO→RO
+  {id:"E-T1-01-001", lessonId:"T1-01", dir:"KO-RO", q:"저는 회사원이에요.", opts:["Sunt angajat.","Sunt student.","Sunt profesor."], a:"Sunt angajat."},
+  {id:"E-T1-01-002", lessonId:"T1-01", dir:"KO-RO", q:"오늘은 바빠요.", opts:["Astăzi sunt ocupat.","Astăzi sunt liber.","Astăzi sunt bolnav."], a:"Astăzi sunt ocupat."},
+  {id:"E-T1-01-003", lessonId:"T1-01", dir:"KO-RO", q:"주말에는 쉬어요.", opts:["Mă odihnesc în weekend.","Lucrez în weekend.","Călătoresc zilnic."], a:"Mă odihnesc în weekend."},
+  {id:"E-T1-01-004", lessonId:"T1-01", dir:"KO-RO", q:"저녁에 산책해요.", opts:["Mă plimb seara.","Dorm seara.","Lucrez toată seara."], a:"Mă plimb seara."},
+  {id:"E-T1-01-005", lessonId:"T1-01", dir:"KO-RO", q:"집에서 쉬어요.", opts:["Mă odihnesc acasă.","Lucrez acasă.","Studiez afară."], a:"Mă odihnesc acasă."},
+
+  // -------- T1-02 (subject) — KO→RO
+  {id:"E-T1-02-001", lessonId:"T1-02", dir:"KO-RO", q:"비가 와요.", opts:["Plouă.","Ninge.","Este foarte cald."], a:"Plouă."},
+  {id:"E-T1-02-002", lessonId:"T1-02", dir:"KO-RO", q:"시간이 없어요.", opts:["Nu am timp.","Am mult timp.","Sunt în vacanță."], a:"Nu am timp."},
+  {id:"E-T1-02-003", lessonId:"T1-02", dir:"KO-RO", q:"밖에 사람이 많아요.", opts:["Sunt mulți oameni afară.","Nu este nimeni.","Este foarte liniște."], a:"Sunt mulți oameni afară."},
+  {id:"E-T1-02-004", lessonId:"T1-02", dir:"KO-RO", q:"회의가 있어요.", opts:["Este o ședință.","Este o petrecere.","Este o pauză."], a:"Este o ședință."},
+  {id:"E-T1-02-005", lessonId:"T1-02", dir:"KO-RO", q:"조금 피곤해요.", opts:["Sunt puțin obosit.","Sunt foarte energic.","Sunt bolnav."], a:"Sunt puțin obosit."},
+
+  // -------- T3-01 (cauză 아/어서) — KO→RO
+  {id:"E-T3-01-001", lessonId:"T3-01", dir:"KO-RO", q:"비가 와서 약속에 늦었어요.", opts:[
+    "Am întârziat la întâlnire pentru că a plouat.",
+    "Am întârziat la întâlnire deși ploua.",
+    "Am ajuns la timp pentru că ploaia s-a oprit."
+  ], a:"Am întârziat la întâlnire pentru că a plouat."},
+  {id:"E-T3-01-002", lessonId:"T3-01", dir:"KO-RO", q:"시간이 없어서 택시를 탔어요.", opts:[
+    "Am luat taxiul pentru că nu aveam timp.",
+    "Am luat taxiul deși aveam timp.",
+    "Nu am luat taxiul pentru că aveam timp."
+  ], a:"Am luat taxiul pentru că nu aveam timp."},
+  {id:"E-T3-01-003", lessonId:"T3-01", dir:"KO-RO", q:"아파서 병원에 갔어요.", opts:[
+    "Am mers la spital pentru că eram bolnav.",
+    "Am mers la serviciu.",
+    "Nu m-am simțit rău."
+  ], a:"Am mers la spital pentru că eram bolnav."},
+
+  // -------- RO→KO (exemple) — legate de lecții
+  // T1-01 (topic)
+  {id:"E-T1-01-RK-001", lessonId:"T1-01", dir:"RO-KO", q:"Eu sunt student.", opts:["저는 학생이에요.","저는 선생님이에요.","저는 회사원이에요."], a:"저는 학생이에요."},
+  {id:"E-T1-01-RK-002", lessonId:"T1-01", dir:"RO-KO", q:"Astăzi sunt ocupat.", opts:["오늘은 바빠요.","오늘은 좋아요.","오늘은 비가 와요."], a:"오늘은 바빠요."},
+
+  // T1-02 (subject)
+  {id:"E-T1-02-RK-001", lessonId:"T1-02", dir:"RO-KO", q:"Plouă.", opts:["비가 와요.","눈이 와요.","바빠요."], a:"비가 와요."},
+  {id:"E-T1-02-RK-002", lessonId:"T1-02", dir:"RO-KO", q:"Nu am timp.", opts:["시간이 없어요.","시간이 많아요.","저는 학생이에요."], a:"시간이 없어요."},
+
+  // T3-01 (cauză)
+  {id:"E-T3-01-RK-001", lessonId:"T3-01", dir:"RO-KO", q:"Am întârziat pentru că a plouat.", opts:[
     "비가 와서 늦었어요.",
-    "비가 오면 늦어요.",
-    "비가 오지만 늦었어요."
-  ],
-  a:"비가 와서 늦었어요."
-},
-{
-  q:"Am luat un taxi pentru că nu aveam timp.",
-  opts:[
+    "비가 오지만 늦었어요.",
+    "비가 와서 일찍 왔어요."
+  ], a:"비가 와서 늦었어요."},
+  {id:"E-T3-01-RK-002", lessonId:"T3-01", dir:"RO-KO", q:"Am luat taxiul pentru că nu aveam timp.", opts:[
     "시간이 없어서 택시를 탔어요.",
-    "시간이 있으면 택시를 타요.",
-    "시간이 없지만 택시를 탔어요."
-  ],
-  a:"시간이 없어서 택시를 탔어요."
-},
-{
-  q:"Deși eram obosită, am continuat.",
-  opts:[
-    "피곤했지만 계속했어요.",
-    "피곤해서 계속했어요.",
-    "피곤하면 계속해요."
-  ],
-  a:"피곤했지만 계속했어요."
-},
-{
-  q:"Dacă am timp, fac sport.",
-  opts:[
-    "시간이 있으면 운동해요.",
-    "시간이 있어서 운동해요.",
-    "시간이 있지만 운동해요."
-  ],
-  a:"시간이 있으면 운동해요."
-},
-{
-  q:"Am mers la spital pentru că nu mă simțeam bine.",
-  opts:[
-    "몸이 안 좋아서 병원에 갔어요.",
-    "몸이 안 좋으면 병원에 가요.",
-    "몸이 안 좋지만 병원에 갔어요."
-  ],
-  a:"몸이 안 좋아서 병원에 갔어요."
-},
-
-/* ===== TOPIK 4 (abstract, opinie, analiză) ===== */
-
-{
-  q:"Rezultatul a fost diferit de așteptări.",
-  opts:[
-    "결과가 예상과 달랐어요.",
-    "결과가 예상이었어요.",
-    "결과를 예상했어요."
-  ],
-  a:"결과가 예상과 달랐어요."
-},
-{
-  q:"Cred că procesul este mai important decât rezultatul.",
-  opts:[
-    "결과보다 과정이 더 중요하다고 생각해요.",
-    "결과가 과정보다 중요해요.",
-    "과정은 중요하지 않아요."
-  ],
-  a:"결과보다 과정이 더 중요하다고 생각해요."
-},
-{
-  q:"Este necesar să analizăm situația.",
-  opts:[
-    "상황을 분석할 필요가 있어요.",
-    "상황을 분석했어요.",
-    "상황이 분석돼요."
-  ],
-  a:"상황을 분석할 필요가 있어요."
-},
-{
-  q:"Această decizie are un impact mare.",
-  opts:[
-    "이 결정은 큰 영향을 미쳐요.",
-    "이 결정은 영향이 없어요.",
-    "이 결정을 미뤘어요."
-  ],
-  a:"이 결정은 큰 영향을 미쳐요."
-},
-{
-  q:"Dacă situația se schimbă, voi reanaliza.",
-  opts:[
-    "상황이 바뀌면 다시 검토할게요.",
-    "상황이 바뀌어서 다시 검토했어요.",
-    "상황이 바뀌지만 다시 검토해요."
-  ],
-  a:"상황이 바뀌면 다시 검토할게요."
-}
-  ],
-
-  "particle": [
-    { q: "저__ 학생이에요.", opts: ["은","는","이","가"], a: "는" },
-    { q: "커피__ 마셔요.", opts: ["을","를","에","에서"], a: "를" },
-    { q: "학교__ 가요.", opts: ["에","에서","을","를"], a: "에" },
-    { q: "집__ 있어요.", opts: ["에","에서","이","가"], a: "에" },
-    { q: "책__ 읽어요.", opts: ["을","를","이","가"], a: "을" },
-    { q: "친구__ 만나요.", opts: ["을","를","에","에서"], a: "를" },
-    { q: "회사__ 가요.", opts: ["에","에서","을","를"], a: "에" },
-    { q: "물이__ 있어요.", opts: ["은","는","이","가"], a: "이" },
-    { q: "밥__ 먹어요.", opts: ["을","를","에","에서"], a: "을" },
-    { q: "서울__ 살아요.", opts: ["에","에서","을","를"], a: "에" },
-
-    { q:"저__ 한국 사람이에요.", opts:["은","는","이","가"], a:"는" },
-    { q:"친구__ 학생이에요.", opts:["은","는","이","가"], a:"는" },
-    { q:"물이__ 있어요.", opts:["은","는","이","가"], a:"이" },
-    { q:"시간__ 없어요.", opts:["은","는","이","가"], a:"이" },
-    { q:"이 문제__ 해결해야 합니다.", opts:["을","를","이","가"], a:"를" },
-    { q:"그 사실__ 알고 있어요.", opts:["을","를","이","가"], a:"을" },
-    { q:"이 계획__ 중요해요.", opts:["은","는","이","가"], a:"은" },
-    { q:"결과__ 만족스럽지 않아요.", opts:["은","는","이","가"], a:"는" },
-
-    { q:"회의__ 연기되었어요.", opts:["은","는","이","가"], a:"가" },
-    { q:"발표__ 끝났습니다.", opts:["은","는","이","가"], a:"가" },
-
-    { q:"보고서__ 제출했어요.", opts:["을","를","에","에서"], a:"를" },
-    { q:"자료__ 준비했어요.", opts:["을","를","이","가"], a:"를" },
-
-    { q:"회의__ 참석했어요.", opts:["에","에서","을","를"], a:"에" },
-    { q:"세미나__ 참가했어요.", opts:["에","에서","을","를"], a:"에" },
-
-    { q:"사무실__ 일하고 있어요.", opts:["에","에서","을","를"], a:"에서" },
-    { q:"연구실__ 실험을 진행해요.", opts:["에","에서","을","를"], a:"에서" },
-
-    { q:"이 정책__ 변경되었어요.", opts:["은","는","이","가"], a:"이" },
-    { q:"그 제도__ 폐지되었어요.", opts:["은","는","이","가"], a:"가" },
-
-    { q:"문제__ 발생했어요.", opts:["은","는","이","가"], a:"가" },
-    { q:"오류__ 발견했어요.", opts:["은","는","이","가"], a:"를" },
-
-    { q:"이 의견__ 동의해요.", opts:["에","에서","을","를"], a:"에" },
-    { q:"그 주장__ 반대해요.", opts:["에","에서","을","를"], a:"에" },
-
-    { q:"계약서__ 확인하세요.", opts:["을","를","이","가"], a:"를" },
-    { q:"조건__ 검토해야 해요.", opts:["을","를","이","가"], a:"을" },
-
-    { q:"회사__ 성장하고 있어요.", opts:["은","는","이","가"], a:"는" },
-    { q:"경제__ 회복되고 있어요.", opts:["은","는","이","가"], a:"는" },
-
-    { q:"상황__ 고려해야 합니다.", opts:["을","를","이","가"], a:"를" },
-    { q:"가능성__ 배제할 수 없어요.", opts:["을","를","이","가"], a:"을" },
-
-    { q:"이론__ 설명해 주세요.", opts:["을","를","이","가"], a:"을" },
-    { q:"개념__ 이해했어요.", opts:["을","를","이","가"], a:"를" },
-
-    { q:"문서__ 보관하세요.", opts:["을","를","에","에서"], a:"를" },
-    { q:"자료__ 공유했어요.", opts:["을","를","이","가"], a:"를" },
-
-    { q:"인터뷰__ 진행했어요.", opts:["을","를","에","에서"], a:"를" },
-    { q:"조사__ 실시했어요.", opts:["을","를","이","가"], a:"를" },
-
-    { q:"결정__ 내렸어요.", opts:["을","를","이","가"], a:"을" },
-    { q:"판단__ 보류했어요.", opts:["을","를","이","가"], a:"을" },
-
-    { q:"회의__ 마쳤습니다.", opts:["을","를","이","가"], a:"를" },
-    { q:"발표__ 준비 중이에요.", opts:["을","를","이","가"], a:"를" },
-
-    { q:"이 보고서__ 수정이 필요해요.", opts:["은","는","이","가"], a:"는" },
-    { q:"그 내용__ 문제없어요.", opts:["은","는","이","가"], a:"은" },
-
-    { q:"업무__ 분담했어요.", opts:["을","를","이","가"], a:"를" },
-    { q:"역할__ 나누었어요.", opts:["을","를","이","가"], a:"을" },
-
-    { q:"프로젝트__ 성공했어요.", opts:["은","는","이","가"], a:"가" },
-    { q:"시도__ 의미 있었어요.", opts:["은","는","이","가"], a:"는" },
-
-    { q:"기회__ 놓쳤어요.", opts:["을","를","이","가"], a:"를" },
-    { q:"위험__ 감수했어요.", opts:["을","를","이","가"], a:"를" },
-
-    { q:"목표__ 달성했어요.", opts:["을","를","이","가"], a:"를" },
-    { q:"성과__ 평가했어요.", opts:["을","를","이","가"], a:"를" },
-
-    { q:"규정__ 준수해야 해요.", opts:["을","를","이","가"], a:"를" },
-    { q:"원칙__ 지켜야 합니다.", opts:["을","를","이","가"], a:"을" },
-
-    { q:"이 방식__ 효율적이에요.", opts:["은","는","이","가"], a:"은" },
-    { q:"그 방법__ 비효율적이에요.", opts:["은","는","이","가"], a:"은" },
-
-    { q:"문제__ 해결책을 찾았어요.", opts:["은","는","이","가"], a:"는" },
-    { q:"대안__ 제시했어요.", opts:["을","를","이","가"], a:"을" },
-    {
-    q:"비__ 많이 와서 길__ 막혔어요.",
-    opts:["가","를","이","은"],
-    a:"가"
-  },
-  {
-    q:"시간__ 없어서 택시__ 탔어요.",
-    opts:["이","가","를","에"],
-    a:"이"
-  },
-  {
-    q:"몸__ 안 좋아서 병원__ 갔어요.",
-    opts:["이","가","에","을"],
-    a:"이"
-  },
-  {
-    q:"돈__ 부족해서 그만두었어요.",
-    opts:["이","가","을","는"],
-    a:"이"
-  },
-  {
-    q:"연락__ 했어요.",
-    opts:["을","를","이","가"],
-    a:"을"
-  },
-  {
-    q:"시간__ 되면 다시 이야기해요.",
-    opts:["이","가","을","은"],
-    a:"이"
-  },
-  {
-    q:"같이__ 했어요.",
-    opts:["를","을","가","에"],
-    a:"를"
-  },
-  {
-    q:"집중__ 안 됐어요.",
-    opts:["이","가","을","는"],
-    a:"이"
-  }
-  ],
-
-  "particlePlus": [
-    { q:"저__ 학교__ 가요.", opts:["은","는","에","에서"], a:["는","에"] },
-    { q:"아침__ 커피__ 마셔요.", opts:["에","에서","을","를"], a:["에","를"] },
-    { q:"저__ 집__ 있어요.", opts:["은","는","에","에서"], a:["는","에"] },
-    { q:"친구__ 카페__ 만나요.", opts:["을","를","에","에서"], a:["를","에서"] },
-    { q:"저__ 회사__ 일해요.", opts:["은","는","에","에서"], a:["는","에서"] },
-    { q:"오늘__ 도서관__ 공부해요.", opts:["에","에서","을","를"], a:["에","에서"] },
-    { q:"저__ 밥__ 먹어요.", opts:["은","는","을","를"], a:["는","을"] },
-    { q:"주말__ 집__ 쉬어요.", opts:["에","에서","을","를"], a:["에","에서"] },
-
-    { q:"저__ 한국 사람이에요.", opts:["은","는","이","가"], a:"는" },
-    { q:"친구__ 학생이에요.", opts:["은","는","이","가"], a:"는" },
-    { q:"물이__ 있어요.", opts:["은","는","이","가"], a:"이" },
-    { q:"시간__ 없어요.", opts:["은","는","이","가"], a:"이" },
-
-    { q:"커피__ 마셔요.", opts:["을","를","에","에서"], a:"를" },
-    { q:"밥__ 먹어요.", opts:["을","를","에","에서"], a:"을" },
-    { q:"책__ 읽어요.", opts:["을","를","이","가"], a:"을" },
-    { q:"영화__ 봐요.", opts:["을","를","에","에서"], a:"를" },
-
-    { q:"학교__ 가요.", opts:["에","에서","을","를"], a:"에" },
-    { q:"회사__ 다녀요.", opts:["에","에서","을","를"], a:"에" },
-    { q:"집__ 와요.", opts:["에","에서","을","를"], a:"에" },
-
-    { q:"카페__ 공부해요.", opts:["에","에서","을","를"], a:"에서" },
-    { q:"도서관__ 책을 읽어요.", opts:["에","에서","이","가"], a:"에서" },
-    { q:"집__ 쉬어요.", opts:["에","에서","을","를"], a:"에서" },
-
-    { q:"친구__ 만나요.", opts:["을","를","에","에서"], a:"를" },
-    { q:"선생님__ 질문해요.", opts:["을","를","이","가"], a:"을" },
-
-    { q:"오늘__ 비가 와요.", opts:["은","는","이","가"], a:"은" },
-    { q:"내일__ 시험이 있어요.", opts:["은","는","이","가"], a:"은" },
-
-    { q:"서울__ 살아요.", opts:["에","에서","을","를"], a:"에" },
-    { q:"한국__ 여행해요.", opts:["에","에서","을","를"], a:"을" },
-
-    { q:"음악__ 들어요.", opts:["을","를","이","가"], a:"을" },
-    { q:"사진__ 찍어요.", opts:["을","를","에","에서"], a:"을" },
-
-    { q:"주말__ 뭐 해요?", opts:["에","에서","은","는"], a:"에" },
-    { q:"아침__ 운동해요.", opts:["에","에서","을","를"], a:"에" },
-
-    { q:"친구__ 전화해요.", opts:["을","를","에","에서"], a:"를" },
-    { q:"부모님__ 만나요.", opts:["을","를","이","가"], a:"을" },
-
-    { q:"한국어__ 공부해요.", opts:["을","를","에","에서"], a:"를" },
-    { q:"일본어__ 배워요.", opts:["을","를","이","가"], a:"를" },
-
-    { q:"오늘__ 바빠요.", opts:["은","는","이","가"], a:"은" },
-    { q:"날씨__ 좋아요.", opts:["은","는","이","가"], a:"는" },
-
-    { q:"버스__ 타요.", opts:["을","를","에","에서"], a:"를" },
-    { q:"지하철__ 타요.", opts:["을","를","이","가"], a:"을" },
-
-    { q:"식당__ 밥을 먹어요.", opts:["에","에서","을","를"], a:"에서" },
-    { q:"집__ 저녁을 먹어요.", opts:["에","에서","을","를"], a:"에서" },
-
-    { q:"친구__ 이야기해요.", opts:["을","를","이","가"], a:"를" },
-    { q:"선생님__ 들어요.", opts:["을","를","이","가"], a:"을" },
-
-    { q:"공원__ 산책해요.", opts:["에","에서","을","를"], a:"에서" },
-    { q:"회사__ 일해요.", opts:["에","에서","을","를"], a:"에서" },
-
-    { q:"주스__ 마실까요?", opts:["을","를","이","가"], a:"를" },
-    { q:"케이크__ 먹을까요?", opts:["을","를","에","에서"], a:"를" },
-
-    { q:"한국__ 좋아해요.", opts:["을","를","이","가"], a:"을" },
-    { q:"이 도시__ 알아요.", opts:["을","를","이","가"], a:"를" },
-
-    { q:"시험__ 끝났어요.", opts:["은","는","이","가"], a:"이" },
-    { q:"수업__ 시작해요.", opts:["은","는","이","가"], a:"이" },
-
-    { q:"이 문제__ 해결해야 합니다.", opts:["을","를","이","가"], a:"를" },
-    { q:"그 사실__ 알고 있어요.", opts:["을","를","이","가"], a:"을" },
-    { q:"이 계획__ 중요해요.", opts:["은","는","이","가"], a:"은" },
-    { q:"결과__ 만족스럽지 않아요.", opts:["은","는","이","가"], a:"는" },
-
-    { q:"회의__ 연기되었어요.", opts:["은","는","이","가"], a:"가" },
-    { q:"발표__ 끝났습니다.", opts:["은","는","이","가"], a:"가" },
-  
-/* ===== cauză (-아서/어서) ===== */
-
-{
-  q:"비__ 많이 와서 길__ 막혔어요.",
-  opts:["이","가","을","를"],
-  a:["가","이"]
-},
-{
-  q:"시간__ 없어서 택시__ 탔어요.",
-  opts:["이","가","을","를"],
-  a:["이","를"]
-},
-{
-  q:"몸__ 안 좋아서 병원__ 갔어요.",
-  opts:["이","가","에","을"],
-  a:["이","에"]
-},
-{
-  q:"돈__ 부족해서 회사를 그만두었어요.",
-  opts:["이","가","을","를"],
-  a:["이","를"]
-},
-
-/* ===== contrast (-지만) ===== */
-
-{
-  q:"바쁘__ 연락__ 했어요.",
-  opts:["지만","서","을","를"],
-  a:["지만","을"]
-},
-{
-  q:"어렵__ 도움이 많이 됐어요.",
-  opts:["지만","어서","이","가"],
-  a:["지만","이"]
-},
-
-/* ===== condiție (-면) ===== */
-
-{
-  q:"시간__ 되면 다시 이야기__ 해요.",
-  opts:["이","가","를","을"],
-  a:["이","를"]
-},
-{
-  q:"문제__ 생기면 바로 연락__ 주세요.",
-  opts:["이","가","을","를"],
-  a:["가","을"]
-},
-
-/* ===== loc / direcție ===== */
-
-{
-  q:"집__ 바로 회사__ 갔어요.",
-  opts:["에","에서","을","를"],
-  a:["에서","에"]
-},
-{
-  q:"병원__ 진료__ 받았어요.",
-  opts:["에","에서","을","를"],
-  a:["에서","을"]
-},
-
-/* ===== topic vs subject ===== */
-
-{
-  q:"이 일__ 생각보다 시간__ 걸렸어요.",
-  opts:["은","는","이","가"],
-  a:["은","이"]
-},
-{
-  q:"그 계획__ 문제가 많__ 보여요.",
-  opts:["은","는","이","가"],
-  a:["은","아"]
-},
-
-/* ===== obiecte multiple ===== */
-
-{
-  q:"자료__ 미리 준비__ 했어요.",
-  opts:["을","를","이","가"],
-  a:["를","를"]
-},
-{
-  q:"의견__ 정리__ 발표했어요.",
-  opts:["을","를","이","가"],
-  a:["을","를"]
-},
-
-/* ===== situații reale TOPIK 3 ===== */
-
-{
-  q:"회의__ 길어져서 점심__ 못 먹었어요.",
-  opts:["이","가","을","를"],
-  a:["가","을"]
-},
-{
-  q:"사람__ 많아서 자리__ 없었어요.",
-  opts:["이","가","을","를"],
-  a:["이","가"]
-},
-{
-  q:"약속__ 잊어버려서 늦__ 도착했어요.",
-  opts:["을","를","게","게"],
-  a:["을","게"]
-},
-
-/* ===== opinie / analiză ===== */
-
-{
-  q:"이 방법__ 효과__ 있다고 생각해요.",
-  opts:["은","는","이","가"],
-  a:["은","가"]
-},
-{
-  q:"결과__ 과정__ 더 중요해요.",
-  opts:["은","는","이","가"],
-  a:["은","이"]
-}
-  ],
-
-  "conjug": [
-    { q:"먹다 → prezent", opts:["먹어요","먹습니다","먹을게요"], a:"먹어요" },
-    { q:"가다 → prezent", opts:["가요","갑니다","갈 거예요"], a:"가요" },
-    { q:"오다 → prezent", opts:["와요","옵니다","올 거예요"], a:"와요" },
-    { q:"보다 → prezent", opts:["봐요","봅니다","볼게요"], a:"봐요" },
-    { q:"마시다 → prezent", opts:["마셔요","마십니다","마실 거예요"], a:"마셔요" },
-    { q:"공부하다 → prezent", opts:["공부해요","공부합니다","공부할게요"], a:"공부해요" },
-    { q:"일하다 → prezent", opts:["일해요","일합니다","일할 거예요"], a:"일해요" },
-    { q:"만나다 → prezent", opts:["만나요","만납니다","만날게요"], a:"만나요" },
-    { q:"쓰다 → prezent", opts:["써요","씁니다","쓸 거예요"], a:"써요" },
-    { q:"읽다 → prezent", opts:["읽어요","읽습니다","읽을게요"], a:"읽어요" },
-
-    { q:"듣다 → prezent", opts:["들어요","듣습니다","들을게요"], a:"들어요" },
-    { q:"걷다 → prezent", opts:["걸어요","걷습니다","걸을게요"], a:"걸어요" },
-    { q:"돕다 → prezent", opts:["도와요","돕습니다","도울게요"], a:"도와요" },
-    { q:"쉽다 → prezent", opts:["쉬워요","쉽습니다","쉬울 거예요"], a:"쉬워요" },
-    { q:"어렵다 → prezent", opts:["어려워요","어렵습니다","어려울 거예요"], a:"어려워요" },
-    { q:"모르다 → prezent", opts:["몰라요","모릅니다","모를게요"], a:"몰라요" },
-    { q:"빠르다 → prezent", opts:["빨라요","빠릅니다","빠를 거예요"], a:"빨라요" },
-    { q:"다르다 → prezent", opts:["달라요","다릅니다","다를 거예요"], a:"달라요" },
-    { q:"고르다 → prezent", opts:["골라요","고릅니다","고를게요"], a:"골라요" },
-    { q:"부르다 → prezent", opts:["불러요","부릅니다","부를게요"], a:"불러요" },
-
-    { q:"결정하다 → prezent", opts:["결정해요","결정합니다","결정할게요"], a:"결정해요" },
-    { q:"선택하다 → prezent", opts:["선택해요","선택합니다","선택할게요"], a:"선택해요" },
-    { q:"확인하다 → prezent", opts:["확인해요","확인합니다","확인할게요"], a:"확인해요" },
-    { q:"필요하다 → prezent", opts:["필요해요","필요합니다","필요할게요"], a:"필요해요" },
-    { q:"가능하다 → prezent", opts:["가능해요","가능합니다","가능할게요"], a:"가능해요" },
-    { q:"이해하다 → prezent", opts:["이해해요","이해합니다","이해할게요"], a:"이해해요" },
-    { q:"비교하다 → prezent", opts:["비교해요","비교합니다","비교할게요"], a:"비교해요" },
-    { q:"포함하다 → prezent", opts:["포함해요","포함합니다","포함할게요"], a:"포함해요" },
-    { q:"발생하다 → prezent", opts:["발생해요","발생합니다","발생할게요"], a:"발생해요" },
-    { q:"유지하다 → prezent", opts:["유지해요","유지합니다","유지할게요"], a:"유지해요" },
-
-    { q:"먹다 → prezent politicos", opts:["먹어요","먹을게요","먹었습니다"], a:"먹어요" },
-    { q:"가다 → viitor intenție", opts:["가요","갈 거예요","갔어요"], a:"갈 거예요" },
-    { q:"보다 → trecut", opts:["봐요","보았어요","볼게요"], a:"보았어요" },
-    { q:"하다 → promisiune", opts:["해요","할게요","했어요"], a:"할게요" },
-    { q:"공부하다 → progres", opts:["공부해요","공부하고 있어요","공부했어요"], a:"공부하고 있어요" },
-
-    { q:"읽다 → presupunere", opts:["읽어요","읽을 것 같아요","읽었어요"], a:"읽을 것 같아요" },
-    { q:"비가 오다 → condiție", opts:["비가 와요","비가 오면","비가 왔어요"], a:"비가 오면" },
-    { q:"일하다 → experiență", opts:["일해요","일한 적이 있어요","일할게요"], a:"일한 적이 있어요" },
-    { q:"살다 → durată", opts:["살아요","살고 있어요","살았어요"], a:"살고 있어요" },
-    { q:"배우다 → scop", opts:["배워요","배우려고 해요","배웠어요"], a:"배우려고 해요" },
-
-    { q:"만나다 → simultan", opts:["만나요","만나면서","만났어요"], a:"만나면서" },
-    { q:"먹다 → contrast", opts:["먹어요","먹지만","먹었어요"], a:"먹지만" },
-    { q:"가다 → cauză", opts:["가요","가서","갔어요"], a:"가서" },
-    { q:"하다 → obligație", opts:["해요","해야 해요","했어요"], a:"해야 해요" },
-    { q:"보다 → încercare", opts:["봐요","봐 보다","봤어요"], a:"봐 보다" },
-
-    { q:"듣다 → intenție apropiată", opts:["들어요","들으려고 해요","들었어요"], a:"들으려고 해요" },
-    { q:"일어나다 → condiție negativă", opts:["일어나요","일어나지 않으면","일어났어요"], a:"일어나지 않으면" },
-    { q:"마시다 → decizie spontană", opts:["마셔요","마실게요","마셨어요"], a:"마실게요" },
-    { q:"공부하다 → rezultat", opts:["공부해요","공부해서","공부했어요"], a:"공부해서" },
-    { q:"살다 → schimbare", opts:["살아요","살게 되었어요","살았어요"], a:"살게 되었어요" },
-
-    { q:"보다 → încetare", opts:["봐요","보지 않게 되었어요","봤어요"], a:"보지 않게 되었어요" },
-    { q:"가다 → scop", opts:["가요","가러 가요","갔어요"], a:"가러 가요" },
-    { q:"먹다 → experiență negativă", opts:["먹어요","먹어 본 적이 없어요","먹었어요"], a:"먹어 본 적이 없어요" },
-    { q:"하다 → presupunere negativă", opts:["해요","하지 않을 것 같아요","했어요"], a:"하지 않을 것 같아요" },
-    { q:"알다 → realizare", opts:["알아요","알게 되었어요","알았어요"], a:"알게 되었어요" },
-  {
-    q:"오다 → cauză",
-    opts:["와서","오지만","오면"],
-    a:"와서"
-  },
-  {
-    q:"없다 → cauză",
-    opts:["없어서","없지만","없으면"],
-    a:"없어서"
-  },
-  {
-    q:"바쁘다 → contrast",
-    opts:["바쁘지만","바빠서","바쁘면"],
-    a:"바쁘지만"
-  },
-  {
-    q:"좋다 → cauză",
-    opts:["좋아서","좋지만","좋으면"],
-    a:"좋아서"
-  },
-  {
-    q:"되다 → condiție",
-    opts:["되면","돼서","되지만"],
-    a:"되면"
-  },
-  {
-    q:"부족하다 → cauză",
-    opts:["부족해서","부족하지만","부족하면"],
-    a:"부족해서"
-  },
-  {
-    q:"힘들다 → cauză",
-    opts:["힘들어서","힘들지만","힘들면"],
-    a:"힘들어서"
-  },
-  {
-    q:"피곤하다 → cauză",
-    opts:["피곤해서","피곤하지만","피곤하면"],
-    a:"피곤해서"
-  },
-  {
-    q:"오다 → cauză",
-    opts:["와서","오지만","오면"],
-    a:"와서"
-  },
-  {
-    q:"없다 → cauză",
-    opts:["없어서","없지만","없으면"],
-    a:"없어서"
-  },
-  {
-    q:"바쁘다 → contrast",
-    opts:["바쁘지만","바빠서","바쁘면"],
-    a:"바쁘지만"
-  },
-  {
-    q:"좋다 → cauză",
-    opts:["좋아서","좋지만","좋으면"],
-    a:"좋아서"
-  },
-  {
-    q:"되다 → condiție",
-    opts:["되면","돼서","되지만"],
-    a:"되면"
-  },
-  {
-    q:"부족하다 → cauză",
-    opts:["부족해서","부족하지만","부족하면"],
-    a:"부족해서"
-  },
-  {
-    q:"힘들다 → cauză",
-    opts:["힘들어서","힘들지만","힘들면"],
-    a:"힘들어서"
-  },
-  {
-    q:"피곤하다 → cauză",
-    opts:["피곤해서","피곤하지만","피곤하면"],
-    a:"피곤해서"
-  }
-  ],
-
-  "puzzle": [
-    { w:["저는","학교에","가요"], a:"저는 학교에 가요" },
-    { w:["오늘","커피를","마셔요"], a:"오늘 커피를 마셔요" },
-    { w:["지금","한국어를","공부해요"], a:"지금 한국어를 공부해요" },
-    { w:["내일","친구를","만나요"], a:"내일 친구를 만나요" },
-    { w:["집에서","텔레비전을","봐요"], a:"집에서 텔레비전을 봐요" },
-    { w:["아침에","일찍","일어나요"], a:"아침에 일찍 일어나요" },
-    { w:["저녁에","운동을","해요"], a:"저녁에 운동을 해요" },
-    { w:["주말에","영화를","봐요"], a:"주말에 영화를 봐요" },
-    { w:["매일","책을","읽어요"], a:"매일 책을 읽어요" },
-    { w:["버스로","회사에","가요"], a:"버스로 회사에 가요" },
-
-    { w:["저는","한국에서","일해요"], a:"저는 한국에서 일해요" },
-    { w:["어제","비가","왔어요"], a:"어제 비가 왔어요" },
-    { w:["시간이","있으면","공부해요"], a:"시간이 있으면 공부해요" },
-    { w:["친구와","같이","점심을","먹어요"], a:"친구와 같이 점심을 먹어요" },
-    { w:["한국어가","점점","어려워요"], a:"한국어가 점점 어려워요" },
-    { w:["사람이","많아서","기다려요"], a:"사람이 많아서 기다려요" },
-    { w:["날씨가","좋아서","산책해요"], a:"날씨가 좋아서 산책해요" },
-    { w:["수업이","끝난","후에","집에","가요"], a:"수업이 끝난 후에 집에 가요" },
-    { w:["문제가","생기면","연락해요"], a:"문제가 생기면 연락해요" },
-    { w:["한국에","온","지","2년","됐어요"], a:"한국에 온 지 2년 됐어요" },
-
-    { w:["아침에","시간이","없어서","밥을","못","먹었어요"], a:"아침에 시간이 없어서 밥을 못 먹었어요" },
-    { w:["한국에","오기","전에","많이","걱정했어요"], a:"한국에 오기 전에 많이 걱정했어요" },
-    { w:["생각보다","시험이","어려웠어요"], a:"생각보다 시험이 어려웠어요" },
-    { w:["친구에게","부탁해서","도와줬어요"], a:"친구에게 부탁해서 도와줬어요" },
-    { w:["날씨가","추워서","집에","있었어요"], a:"날씨가 추워서 집에 있었어요" },
-    { w:["필요한","물건을","미리","샀어요"], a:"필요한 물건을 미리 샀어요" },
-    { w:["일이","끝난","후에","전화했어요"], a:"일이 끝난 후에 전화했어요" },
-    { w:["수업을","듣는","동안","메모했어요"], a:"수업을 듣는 동안 메모했어요" },
-    { w:["사람이","많아서","자리가","없었어요"], a:"사람이 많아서 자리가 없었어요" },
-    { w:["약속을","잊어버려서","늦었어요"], a:"약속을 잊어버려서 늦었어요" },
-
-    { w:["시간이","부족해서","운동을","못","해요"], a:"시간이 부족해서 운동을 못 해요" },
-    { w:["회의가","길어져서","늦었어요"], a:"회의가 길어져서 늦었어요" },
-    { w:["경험이","많을수록","실력이","늘어요"], a:"경험이 많을수록 실력이 늘어요" },
-    { w:["계획대로","진행되지","않았어요"], a:"계획대로 진행되지 않았어요" },
-    { w:["결과에","대해","다시","생각해요"], a:"결과에 대해 다시 생각해요" },
-    { w:["문제를","해결하기","위해","노력해요"], a:"문제를 해결하기 위해 노력해요" },
-    { w:["상황에","따라","결정이","달라져요"], a:"상황에 따라 결정이 달라져요" },
-    { w:["의견을","정리해서","발표해요"], a:"의견을 정리해서 발표해요" },
-    { w:["필요한","자료를","미리","준비해요"], a:"필요한 자료를 미리 준비해요" },
-    { w:["조건을","만족하면","신청할","수","있어요"], a:"조건을 만족하면 신청할 수 있어요" },
-  { w:["비가","많이","와서","길이","막혔어요"], a:"비가 많이 와서 길이 막혔어요" },
-  { w:["시간이","없어서","택시를","탔어요"], a:"시간이 없어서 택시를 탔어요" },
-  { w:["바빴지만","연락은","했어요"], a:"바빴지만 연락은 했어요" },
-  { w:["몸이","안","좋아서","병원에","갔어요"], a:"몸이 안 좋아서 병원에 갔어요" },
-  { w:["늦을","것","같아서","미리","전화했어요"], a:"늦을 것 같아서 미리 전화했어요" },
-  { w:["돈이","부족해서","그만두었어요"], a:"돈이 부족해서 그만두었어요" },
-  { w:["어렵긴","했지만","도움이","됐어요"], a:"어렵긴 했지만 도움이 됐어요" },
-  { w:["시간이","되면","다시","이야기해요"], a:"시간이 되면 다시 이야기해요" },
-  { w:["혼자서는","힘들어서","같이","했어요"], a:"혼자서는 힘들어서 같이 했어요" },
-  { w:["피곤해서","집중이","안","됐어요"], a:"피곤해서 집중이 안 됐어요" }
- ],
-      "chain": [
-  {
-    id: 1,
-    particlePlus:{
-      q:"비__ 많이 와서 길__ 막혔어요.",
-      opts:["이","가","을","를"],
-      a:["가","이"]
-    },
-    puzzle:{
-      w:["비가","많이","와서","길이","막혔어요"],
-      a:"비가 많이 와서 길이 막혔어요"
-    },
-    conjug:{
-      q:"막히다 → trecut",
-      opts:["막혀요","막혔어요","막힐 거예요"],
-      a:"막혔어요"
-    }
-  },
-  {
-    id: 2,
-    particlePlus:{
-      q:"시간__ 없어서 택시__ 탔어요.",
-      opts:["이","가","을","를"],
-      a:["이","를"]
-    },
-    puzzle:{
-      w:["시간이","없어서","택시를","탔어요"],
-      a:"시간이 없어서 택시를 탔어요"
-    },
-    conjug:{
-      q:"타다 → trecut",
-      opts:["타요","탔어요","탈 거예요"],
-      a:"탔어요"
-    }
-  },
-  {
-    id: 3,
-    particlePlus:{
-      q:"몸__ 안 좋아서 병원__ 갔어요.",
-      opts:["이","가","에","을"],
-      a:["이","에"]
-    },
-    puzzle:{
-      w:["몸이","안","좋아서","병원에","갔어요"],
-      a:"몸이 안 좋아서 병원에 갔어요"
-    },
-    conjug:{
-      q:"가다 → trecut",
-      opts:["가요","갔어요","갈 거예요"],
-      a:"갔어요"
-    }
-  },
-  {
-    id: 4,
-    particlePlus:{
-      q:"약속__ 있어서 먼저 집__ 갔어요.",
-      opts:["이","가","에","에서","을","를"],
-      a:["이","에"]
-    },
-    puzzle:{
-      w:["약속이","있어서","먼저","집에","갔어요"],
-      a:"약속이 있어서 먼저 집에 갔어요"
-    },
-    conjug:{
-      q:"가다 → trecut",
-      opts:["가요","갔어요","갈 거예요"],
-      a:"갔어요"
-    }
-  },
-  {
-    id: 5,
-    particlePlus:{
-      q:"비__ 와서 우산__ 가져왔어요.",
-      opts:["이","가","을","를","에","에서"],
-      a:["가","을"]
-    },
-    puzzle:{
-      w:["비가","와서","우산을","가져왔어요"],
-      a:"비가 와서 우산을 가져왔어요"
-    },
-    conjug:{
-      q:"가져오다 → trecut",
-      opts:["가져와요","가져왔어요","가져올 거예요"],
-      a:"가져왔어요"
-    }
-  },
-  {
-    id: 6,
-    particlePlus:{
-      q:"시간__ 없어서 점심__ 못 먹었어요.",
-      opts:["이","가","을","를","에","에서"],
-      a:["이","을"]
-    },
-    puzzle:{
-      w:["시간이","없어서","점심을","못","먹었어요"],
-      a:"시간이 없어서 점심을 못 먹었어요"
-    },
-    conjug:{
-      q:"먹다 → negativ trecut",
-      opts:["먹어요","못 먹었어요","먹을 거예요"],
-      a:"못 먹었어요"
-    }
-  },
-  {
-    id: 7,
-    particlePlus:{
-      q:"길__ 막혀서 지하철__ 탔어요.",
-      opts:["이","가","을","를","에","에서"],
-      a:["이","을"]
-    },
-    puzzle:{
-      w:["길이","막혀서","지하철을","탔어요"],
-      a:"길이 막혀서 지하철을 탔어요"
-    },
-    conjug:{
-      q:"타다 → trecut",
-      opts:["타요","탔어요","탈 거예요"],
-      a:"탔어요"
-    }
-  },
-  {
-    id: 8,
-    particlePlus:{
-      q:"피곤__ 집__ 바로 잤어요.",
-      opts:["해서","지만","에","에서","을","를"],
-      a:["해서","에서"]
-    },
-    puzzle:{
-      w:["피곤해서","집에서","바로","잤어요"],
-      a:"피곤해서 집에서 바로 잤어요"
-    },
-    conjug:{
-      q:"자다 → trecut",
-      opts:["자요","잤어요","잘 거예요"],
-      a:"잤어요"
-    }
-  },
-  {
-    id: 9,
-    particlePlus:{
-      q:"일__ 많아서 오늘__ 야근해요.",
-      opts:["이","가","을","를","은","는"],
-      a:["이","은"]
-    },
-    puzzle:{
-      w:["일이","많아서","오늘은","야근해요"],
-      a:"일이 많아서 오늘은 야근해요"
-    },
-    conjug:{
-      q:"하다(야근하다) → prezent",
-      opts:["해요","했어요","할 거예요"],
-      a:"해요"
-    }
-  },
-  {
-    id: 10,
-    particlePlus:{
-      q:"늦__ 것 같아서 미리 전화__ 했어요.",
-      opts:["을","를","이","가","지만","어서"],
-      a:["을","를"]
-    },
-    puzzle:{
-      w:["늦을","것","같아서","미리","전화했어요"],
-      a:"늦을 것 같아서 미리 전화했어요"
-    },
-    conjug:{
-      q:"전화하다 → trecut",
-      opts:["전화해요","전화했어요","전화할 거예요"],
-      a:"전화했어요"
-    }
-  },
-  {
-    id: 11,
-    particlePlus:{
-      q:"문제__ 생겨서 담당자__ 연락했어요.",
-      opts:["이","가","을","를","에","에게"],
-      a:["가","에게"]
-    },
-    puzzle:{
-      w:["문제가","생겨서","담당자에게","연락했어요"],
-      a:"문제가 생겨서 담당자에게 연락했어요"
-    },
-    conjug:{
-      q:"연락하다 → trecut",
-      opts:["연락해요","연락했어요","연락할 거예요"],
-      a:"연락했어요"
-    }
-  },
-  {
-    id: 12,
-    particlePlus:{
-      q:"계획__ 바뀌어서 다시 확인__ 했어요.",
-      opts:["이","가","을","를","에","에서"],
-      a:["이","을"]
-    },
-    puzzle:{
-      w:["계획이","바뀌어서","다시","확인했어요"],
-      a:"계획이 바뀌어서 다시 확인했어요"
-    },
-    conjug:{
-      q:"확인하다 → trecut",
-      opts:["확인해요","확인했어요","확인할 거예요"],
-      a:"확인했어요"
-    }
-  },
-  {
-    id: 13,
-    particlePlus:{
-      q:"준비__ 안 해서 발표__ 걱정했어요.",
-      opts:["을","를","이","가"],
-      a:["를","를"]
-    },
-    puzzle:{
-      w:["준비를","안","해서","발표를","걱정했어요"],
-      a:"준비를 안 해서 발표를 걱정했어요"
-    },
-    conjug:{
-      q:"걱정하다 → trecut",
-      opts:["걱정해요","걱정했어요","걱정할 거예요"],
-      a:"걱정했어요"
-    }
-  },
-  {
-    id: 14,
-    particlePlus:{
-      q:"생각__ 달라서 결론__ 못 냈어요.",
-      opts:["이","가","을","를"],
-      a:["이","을"]
-    },
-    puzzle:{
-      w:["생각이","달라서","결론을","못","냈어요"],
-      a:"생각이 달라서 결론을 못 냈어요"
-    },
-    conjug:{
-      q:"내다(결론을 내다) → trecut",
-      opts:["내요","냈어요","낼 거예요"],
-      a:"냈어요"
-    }
-  },
-  {
-    id: 15,
-    particlePlus:{
-      q:"혼자__ 어렵아서 팀__ 같이 했어요.",
-      opts:["는","서","이랑","과","와","하고"],
-      a:["서는","이랑"]
-    },
-    puzzle:{
-      w:["혼자서는","어렵아서","팀이랑","같이","했어요"],
-      a:"혼자서는 어려워서 팀이랑 같이 했어요"
-    },
-    conjug:{
-      q:"하다 → trecut",
-      opts:["해요","했어요","할 거예요"],
-      a:"했어요"
-    }
-  },
-  {
-    id: 16,
-    particlePlus:{
-      q:"시간__ 되면 내일 다시 이야기__ 해요.",
-      opts:["이","가","를","을"],
-      a:["이","를"]
-    },
-    puzzle:{
-      w:["시간이","되면","내일","다시","이야기해요"],
-      a:"시간이 되면 내일 다시 이야기해요"
-    },
-    conjug:{
-      q:"되다 → condiție",
-      opts:["돼요","되면","됐어요"],
-      a:"되면"
-    }
-  },
-  {
-    id: 17,
-    particlePlus:{
-      q:"필요__ 도움__ 요청하세요.",
-      opts:["하면","해서","을","를"],
-      a:["하면","을"]
-    },
-    puzzle:{
-      w:["필요하면","도움을","요청하세요"],
-      a:"필요하면 도움을 요청하세요"
-    },
-    conjug:{
-      q:"요청하다 → imperativ politicos",
-      opts:["요청하세요","요청해요","요청했어요"],
-      a:"요청하세요"
-    }
-  },
-  {
-    id: 18,
-    particlePlus:{
-      q:"바쁘__ 연락__ 못 했어요.",
-      opts:["지만","어서","을","를"],
-      a:["어서","을"]
-    },
-    puzzle:{
-      w:["바빠서","연락을","못","했어요"],
-      a:"바빠서 연락을 못 했어요"
-    },
-    conjug:{
-      q:"하다 → negativ trecut",
-      opts:["못 했어요","했어요","할 거예요"],
-      a:"못 했어요"
-    }
-  },
-  {
-    id: 19,
-    particlePlus:{
-      q:"설명__ 들었지만 잘 이해__ 못 했어요.",
-      opts:["을","를","이","가"],
-      a:["을","를"]
-    },
-    puzzle:{
-      w:["설명을","들었지만","잘","이해를","못","했어요"],
-      a:"설명을 들었지만 잘 이해를 못 했어요"
-    },
-    conjug:{
-      q:"듣다 → trecut",
-      opts:["들어요","들었어요","들을 거예요"],
-      a:"들었어요"
-    }
-  },
-  {
-    id: 20,
-    particlePlus:{
-      q:"실수__ 해서 다시 해__ 봤어요.",
-      opts:["를","을","아","어"],
-      a:["를","아"]
-    },
-    puzzle:{
-      w:["실수를","해서","다시","해","봤어요"],
-      a:"실수를 해서 다시 해 봤어요"
-    },
-    conjug:{
-      q:"보다(해 보다) → trecut",
-      opts:["봐요","봤어요","볼 거예요"],
-      a:"봤어요"
-    }
-  },
-  {
-    id: 21,
-    particlePlus:{
-      q:"자료__ 부족해서 추가__ 찾았어요.",
-      opts:["이","가","로","을","를"],
-      a:["가","로"]
-    },
-    puzzle:{
-      w:["자료가","부족해서","추가로","찾았어요"],
-      a:"자료가 부족해서 추가로 찾았어요"
-    },
-    conjug:{
-      q:"찾다 → trecut",
-      opts:["찾아요","찾았어요","찾을 거예요"],
-      a:"찾았어요"
-    }
-  },
-  {
-    id: 22,
-    particlePlus:{
-      q:"비용__ 줄이려고 계획__ 수정했어요.",
-      opts:["을","를","이","가"],
-      a:["을","을"]
-    },
-    puzzle:{
-      w:["비용을","줄이려고","계획을","수정했어요"],
-      a:"비용을 줄이려고 계획을 수정했어요"
-    },
-    conjug:{
-      q:"수정하다 → trecut",
-      opts:["수정해요","수정했어요","수정할 거예요"],
-      a:"수정했어요"
-    }
-  },
-  {
-    id: 23,
-    particlePlus:{
-      q:"결정__ 내리기 전에 충분히 생각__ 했어요.",
-      opts:["을","를","이","가"],
-      a:["을","을"]
-    },
-    puzzle:{
-      w:["결정을","내리기","전에","충분히","생각을","했어요"],
-      a:"결정을 내리기 전에 충분히 생각을 했어요"
-    },
-    conjug:{
-      q:"생각하다 → trecut",
-      opts:["생각해요","생각했어요","생각할 거예요"],
-      a:"생각했어요"
-    }
-  },
-  {
-    id: 24,
-    particlePlus:{
-      q:"예상__ 달라서 다시 확인__ 했어요.",
-      opts:["과","와","을","를"],
-      a:["과","를"]
-    },
-    puzzle:{
-      w:["예상과","달라서","다시","확인을","했어요"],
-      a:"예상과 달라서 다시 확인을 했어요"
-    },
-    conjug:{
-      q:"하다(확인을 하다) → trecut",
-      opts:["해요","했어요","할 거예요"],
-      a:"했어요"
-    }
-  },
-  {
-    id: 25,
-    particlePlus:{
-      q:"상황__ 따라 방법__ 바꿨어요.",
-      opts:["에","에서","을","를"],
-      a:["에","을"]
-    },
-    puzzle:{
-      w:["상황에","따라","방법을","바꿨어요"],
-      a:"상황에 따라 방법을 바꿨어요"
-    },
-    conjug:{
-      q:"바꾸다 → trecut",
-      opts:["바꿔요","바꿨어요","바꿀 거예요"],
-      a:"바꿨어요"
-    }
-  },
-  {
-    id: 26,
-    particlePlus:{
-      q:"좋__ 기분__ 나아졌어요.",
-      opts:["아서","어서","이","가"],
-      a:["아서","이"]
-    },
-    puzzle:{
-      w:["좋아서","기분이","나아졌어요"],
-      a:"좋아서 기분이 나아졌어요"
-    },
-    conjug:{
-      q:"나아지다 → trecut",
-      opts:["나아져요","나아졌어요","나아질 거예요"],
-      a:"나아졌어요"
-    }
-  },
-  {
-    id: 27,
-    particlePlus:{
-      q:"연습__ 하면 실력__ 늘어요.",
-      opts:["을","를","이","가","면"],
-      a:["을","이"]
-    },
-    puzzle:{
-      w:["연습을","하면","실력이","늘어요"],
-      a:"연습을 하면 실력이 늘어요"
-    },
-    conjug:{
-      q:"늘다 → prezent",
-      opts:["늘어요","늘었어요","늘 거예요"],
-      a:"늘어요"
-    }
-  },
-  {
-    id: 28,
-    particlePlus:{
-      q:"규칙__ 지키지 않으면 문제__ 생겨요.",
-      opts:["을","를","이","가","면"],
-      a:["을","가"]
-    },
-    puzzle:{
-      w:["규칙을","지키지","않으면","문제가","생겨요"],
-      a:"규칙을 지키지 않으면 문제가 생겨요"
-    },
-    conjug:{
-      q:"생기다 → prezent",
-      opts:["생겨요","생겼어요","생길 거예요"],
-      a:"생겨요"
-    }
-  },
-  {
-    id: 29,
-    particlePlus:{
-      q:"목표__ 분명하면 방향__ 쉬워요.",
-      opts:["가","를","이","가","면"],
-      a:["가","이"]
-    },
-    puzzle:{
-      w:["목표가","분명하면","방향이","쉬워요"],
-      a:"목표가 분명하면 방향이 쉬워요"
-    },
-    conjug:{
-      q:"쉽다 → prezent",
-      opts:["쉬워요","쉬웠어요","쉬울 거예요"],
-      a:"쉬워요"
-    }
-  },
-  {
-    id: 30,
-    particlePlus:{
-      q:"가능__ 있으면 도전__ 해요.",
-      opts:["이","가","을","를","면"],
-      a:["이","을"]
-    },
-    puzzle:{
-      w:["가능성이","있으면","도전을","해요"],
-      a:"가능성이 있으면 도전을 해요"
-    },
-    conjug:{
-      q:"하다(도전하다) → prezent",
-      opts:["해요","했어요","할 거예요"],
-      a:"해요"
-    }
-  },
-  {
-    id: 31,
-    particlePlus:{
-      q:"조건__ 맞으면 신청__ 할 수 있어요.",
-      opts:["이","가","을","를","면"],
-      a:["이","을"]
-    },
-    puzzle:{
-      w:["조건이","맞으면","신청을","할","수","있어요"],
-      a:"조건이 맞으면 신청을 할 수 있어요"
-    },
-    conjug:{
-      q:"있다 → posibilitate",
-      opts:["있어요","있었어요","있을 거예요"],
-      a:"있어요"
-    }
-  },
-  {
-    id: 32,
-    particlePlus:{
-      q:"결과__ 안 좋아도 과정__ 의미__ 있어요.",
-      opts:["가","를","이","가","은","는"],
-      a:["가","은","이"]
-    },
-    puzzle:{
-      w:["결과가","안","좋아도","과정은","의미가","있어요"],
-      a:"결과가 안 좋아도 과정은 의미가 있어요"
-    },
-    conjug:{
-      q:"있다 → prezent",
-      opts:["있어요","있었어요","있을 거예요"],
-      a:"있어요"
-    }
-  },
-  {
-    id: 33,
-    particlePlus:{
-      q:"문제__ 커지기 전에 바로잡__ 해야 해요.",
-      opts:["가","를","이","가","아","어"],
-      a:["가","아"]
-    },
-    puzzle:{
-      w:["문제가","커지기","전에","바로잡아야","해요"],
-      a:"문제가 커지기 전에 바로잡아야 해요"
-    },
-    conjug:{
-      q:"하다(해야 하다) → obligație",
-      opts:["해야 해요","해요","했어요"],
-      a:"해야 해요"
-    }
-  }
-]  
-};
-// auto-append chain din ro-ko
-DATA.chain = (DATA.chain || []).concat( roKoToChain(DATA["ro-ko"] || [], 100) );
-    /* =========================
-   AUTO: RO→KO  =>  CHAIN
-   (particlePlus + puzzle + conjug)
+    "시간이 있어서 택시를 탔어요.",
+    "시간이 없어서 걸었어요."
+  ], a:"시간이 없어서 택시를 탔어요."}
+];
+
+/* =========================
+   STATE
 ========================= */
-
-/** Split simplu pentru puzzle chips */
-function koToPuzzleWords(ko){
-  return ko.trim().split(/\s+/); // separă pe spații
-}
-
-/** Detectează o conjugare “bună” (heuristic) din propoziție */
-function guessConjugFromSentence(ko){
-  // prioritizează finalul: ...했어요/갔어요/됐어요/해요 etc.
-  const m = ko.match(/([가-힣]+?)(했어요|했어|했습니?다|했어요|갔어요|왔어요|봤어요|먹었어요|탔어요|잤어요|했어요|해요|돼요|되면|해서|아서|어서|지만|면)\b/);
-  if(!m) return null;
-
-  const stem = m[1];
-  const ending = m[2];
-
-  // foarte simplu: oferă 3 opțiuni
-  // (nu e perfect lingvistic, dar funcționează ca exercițiu)
-  if(ending === "했어요"){
-    return { q: `${stem}하다 → trecut`, opts: [`${stem}해요`, `${stem}했어요`, `${stem}할 거예요`], a:`${stem}했어요` };
-  }
-  if(ending === "해요"){
-    return { q: `${stem}하다 → prezent`, opts: [`${stem}해요`, `${stem}했어요`, `${stem}할 거예요`], a:`${stem}해요` };
-  }
-  if(ending === "갔어요"){
-    return { q: `가다 → trecut`, opts: ["가요","갔어요","갈 거예요"], a:"갔어요" };
-  }
-  if(ending === "왔어요"){
-    return { q: `오다 → trecut`, opts: ["와요","왔어요","올 거예요"], a:"왔어요" };
-  }
-  if(ending === "됐어요"){
-    return { q: `되다 → trecut`, opts: ["돼요","됐어요","될 거예요"], a:"됐어요" };
-  }
-  if(ending === "되면"){
-    return { q: `되다 → condiție`, opts: ["돼요","되면","됐어요"], a:"되면" };
-  }
-  // fallback
-  return null;
-}
-
-/**
- * AUTO particles:
- * - marchează particule uzuale (가/이, 을/를, 에/에서, 은/는, 에게/한테)
- * - produce q cu "__" și răspunsul ca array a[]
- *
- * IMPORTANT: ca să fie “particlePlus” corect, trebuie ca opts să includă TOATE
- * particulele folosite în acel item (altfel nu poți alege varianta corectă).
- */
-function koToParticlePlus(ko){
-  const rules = [
-    {re:/\b([가-힣]+)(은|는)\b/g, group:2},
-    {re:/\b([가-힣]+)(이|가)\b/g, group:2},
-    {re:/\b([가-힣]+)(을|를)\b/g, group:2},
-    {re:/\b([가-힣]+)(에|에서)\b/g, group:2},
-    {re:/\b([가-힣]+)(에게|한테)\b/g, group:2},
-    {re:/\b([가-힣]+)(와|과)\b/g, group:2},
-    {re:/\b([가-힣]+)(으로|로)\b/g, group:2},
-  ];
-
-  let q = ko;
-  let answers = [];
-
-  for(const r of rules){
-    q = q.replace(r.re, (m, w, p)=>{ answers.push(p); return `${w}__`; });
-  }
-
-  // dacă nu a găsit nimic, forțează să nu creeze particlePlus
-  if(answers.length < 2) return null;
-
-  // opts: set minim “corect” (conține particulele folosite + distractori apropiați)
-  const base = ["은","는","이","가","을","를","에","에서","에게","한테","와","과","으로","로"];
-  const used = Array.from(new Set(answers));
-  // păstrează doar opțiuni relevante + 2-4 distractori tipici
-  const opts = Array.from(new Set([...used, ...base])).slice(0, 12);
-
-  return { q, opts, a: answers };
-}
-
-/**
- * Transformă un set RO→KO (q/opts/a) în CHAIN
- * - folosește răspunsul corect d.a (coreeană)
- */
-function roKoToChain(roKoArray, startId=1){
-  const out = [];
-  let id = startId;
-
-  for(const item of roKoArray){
-    const ko = item.a?.trim();
-    if(!ko) continue;
-
-    const particlePlus = koToParticlePlus(ko);
-    const puzzle = { w: koToPuzzleWords(ko), a: ko };
-    const conjug = guessConjugFromSentence(ko) || {
-      q:"(conjug) – selectează forma corectă",
-      opts:[ko, ko, ko],
-      a: ko
-    };
-
-    // dacă particlePlus nu are minim 2 spații, sari peste chain (sau îl faci puzzle+conjug)
-    if(!particlePlus) continue;
-
-    out.push({ id: id++, particlePlus, puzzle, conjug });
-  }
-  return out;
-}
-    /* =========================
-   STATE + UI REFS
-========================= */
-let type = "ko-ro";
+let mode = "KO-RO";          // "KO-RO" | "RO-KO"
+let shuffleOn = false;
+let lessonId = getParam("lesson") || ""; // ex: T1-01
+let pool = [];               // filtered exercises
 let index = 0;
+let locked = false;
+let score = 0;
 
-let selected = null;       // pt quiz/conjug/particle (o singură alegere)
-let built = [];            // pt puzzle
-    /* ====== STATS / BADGES ====== */
-let total = 0;
-let correct = 0;
-let streak = 0;
+/* =========================
+   DOM
+========================= */
+const subtitleEl = document.getElementById("subtitle");
+const badgeEl = document.getElementById("lessonBadge");
+const lessonTitleEl = document.getElementById("lessonTitle");
+const totalExEl = document.getElementById("totalEx");
+const progressEl = document.getElementById("progress");
+const scoreEl = document.getElementById("score");
+const qHintEl = document.getElementById("qHint");
+const qTextEl = document.getElementById("qText");
+const optsEl = document.getElementById("opts");
+const feedbackEl = document.getElementById("feedback");
+const modeKOROEl = document.getElementById("modeKORO");
+const modeROKOEl = document.getElementById("modeROKO");
+const shuffleBtn = document.getElementById("shuffleBtn");
+const nextBtn = document.getElementById("nextBtn");
 
-const bMode = document.getElementById("bMode");
-const bCorrect = document.getElementById("bCorrect");
-const bTotal = document.getElementById("bTotal");
-const bStreak = document.getElementById("bStreak");
-const meterFill = document.getElementById("meterFill");
-
-function modeLabel(t){
-  const map = {
-    "ko-ro":"KO→RO",
-    "ro-ko":"RO→KO",
-    "particle":"PARTICLE",
-    "particlePlus":"PARTICLE+",
-    "conjug":"CONJUG",
-    "puzzle":"PUZZLE",
-    "chain":"CHAIN"
-  };
-  return map[t] || t;
+/* =========================
+   CORE
+========================= */
+function setMode(newMode){
+  mode = newMode;
+  modeKOROEl.classList.toggle("active", mode==="KO-RO");
+  modeROKOEl.classList.toggle("active", mode==="RO-KO");
+  restart();
 }
 
-function updateBadges(){
-  if(bMode) bMode.querySelector("span:last-child").textContent = "Mod: " + modeLabel(type);
-  if(bCorrect) bCorrect.querySelector("span:last-child").textContent = "Corecte: " + correct;
-  if(bTotal) bTotal.querySelector("span:last-child").textContent = "Total: " + total;
-  if(bStreak) bStreak.querySelector("span:last-child").textContent = "Streak: " + streak;
-
-  const pct = total === 0 ? 0 : Math.round((correct/total)*100);
-  if(meterFill) meterFill.style.width = pct + "%";
+function toggleShuffle(){
+  shuffleOn = !shuffleOn;
+  shuffleBtn.textContent = `Shuffle: ${shuffleOn ? "ON" : "OFF"}`;
+  restart();
 }
-    let lastCorrect = false;   // rezultatul ultimului răspuns (pt next/chain)
 
-let chainStep = 0;         // 0=particlePlus, 1=puzzle, 2=conjug
-
-const q = document.getElementById("question");
-const h = document.getElementById("helper");
-const a = document.getElementById("answers");
-const f = document.getElementById("feedback");
-const bank = document.getElementById("bank");
-const line = document.getElementById("line");
-const pUI = document.getElementById("puzzleUI");
-/* ====== FX HELPERS (shake + glow + flash) ====== */
-const mainCard = document.querySelectorAll(".card")[2] || document.querySelector(".card"); // cardul cu întrebarea
-const flash = document.createElement("div");
-flash.className = "fxFlash";
-document.body.appendChild(flash);
-
-function fx(ok){
-  // flash overlay
-  flash.classList.remove("ok","bad");
-  flash.classList.add(ok ? "ok" : "bad");
-  flash.style.opacity = "1";
-  setTimeout(()=>{ flash.style.opacity = "0"; }, 160);
-
-  // shake / glow on main card
-  if(!mainCard) return;
-
-  mainCard.classList.remove("shake","glow");
-  // force reflow ca să repornească animația
-  void mainCard.offsetWidth;
-
-  mainCard.classList.add(ok ? "glow" : "shake");
-  if(ok) okSfx(); else badSfx();
+function restart(){
+  score = 0;
+  index = 0;
+  locked = false;
+  feedbackEl.style.display = "none";
+  buildPool();
+  if (shuffleOn) pool = shuffle(pool);
+  render();
 }
-  /* ====== SFX (offline) ====== */
-let AC = null;
-function ensureAudio(){
-  if(!AC){
-    AC = new (window.AudioContext || window.webkitAudioContext)();
+
+function buildPool(){
+  // Filtrează după lecție (dacă există) + direcție
+  let arr = EXERCISES.filter(x => x.dir === mode);
+
+  if (lessonId){
+    arr = arr.filter(x => x.lessonId === lessonId);
   }
-  if(AC.state === "suspended") AC.resume();
-}
-/* ====== SFX TOGGLE ====== */
-let SFX_ON = localStorage.getItem("SFX_ON");
-SFX_ON = (SFX_ON === null) ? true : (SFX_ON === "1");
 
-function setSfxUi(){
-  const btn = document.getElementById("soundBtn");
-  if(!btn) return;
-  btn.textContent = SFX_ON ? "🔊" : "🔇";
-  btn.classList.toggle("off", !SFX_ON);
-  btn.title = SFX_ON ? "Sunete: ON" : "Sunete: OFF";
+  pool = arr;
 }
 
-function setSfx(on){
-  SFX_ON = !!on;
-  localStorage.setItem("SFX_ON", SFX_ON ? "1" : "0");
-  setSfxUi();
-}
+function renderHeader(){
+  const l = LESSON_CONTENT[lessonId] || null;
 
-document.addEventListener("DOMContentLoaded", ()=>{
-  setSfxUi();
-  const btn = document.getElementById("soundBtn");
-  if(btn){
-    btn.onclick = ()=>{
-      setSfx(!SFX_ON);
-      // mic feedback când pornești
-      if(SFX_ON) { ensureAudio(); clickSfx(); }
-    };
+  if (lessonId && l){
+    subtitleEl.textContent = `Lecție selectată: ${lessonId} • ${l.title} • Mod: ${mode}`;
+    badgeEl.textContent = `TOPIK ${l.topik}`;
+    lessonTitleEl.textContent = `${lessonId} · ${l.title}`;
+  }else if (lessonId && !l){
+    subtitleEl.textContent = `Lecție: ${lessonId} (necunoscută) • Mod: ${mode}`;
+    badgeEl.textContent = `TOPIK`;
+    lessonTitleEl.textContent = lessonId;
+  }else{
+    subtitleEl.textContent = `Toate lecțiile • Mod: ${mode}`;
+    badgeEl.textContent = `TOPIK`;
+    lessonTitleEl.textContent = "Toate";
   }
-});
-    function tone({freq=440, type="sine", dur=0.12, gain=0.08, ramp=0.01}){
-  if(!SFX_ON) return;          // <— asta e cheia
-  ensureAudio();
-  const t0 = AC.currentTime;
-  const osc = AC.createOscillator();
-  const g = AC.createGain();
 
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, t0);
-
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(gain, t0 + ramp);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-
-  osc.connect(g);
-  g.connect(AC.destination);
-
-  osc.start(t0);
-  osc.stop(t0 + dur + 0.02);
-}
-function clickSfx(){
-  // un click scurt, discret
-  tone({freq: 900, type:"square", dur:0.04, gain:0.04, ramp:0.005});
+  totalExEl.textContent = String(pool.length);
+  progressEl.textContent = `${Math.min(index+1, pool.length)} / ${pool.length}`;
+  scoreEl.textContent = String(score);
 }
 
-function okSfx(){
-  // “ding” (două note)
-  tone({freq: 740, type:"sine", dur:0.10, gain:0.07, ramp:0.01});
-  setTimeout(()=>tone({freq: 990, type:"sine", dur:0.12, gain:0.07, ramp:0.01}), 90);
-}
-
-function badSfx(){
-  // “buzz” mic (două note joase)
-  tone({freq: 180, type:"sawtooth", dur:0.14, gain:0.06, ramp:0.01});
-  setTimeout(()=>tone({freq: 140, type:"sawtooth", dur:0.16, gain:0.06, ramp:0.01}), 110);
-}
-
-/* Opțional: activare audio la prima atingere oriunde */
-window.addEventListener("pointerdown", ensureAudio, { once:true });  
-/* =========================
-   HELPERS
-========================= */
-function resetUI(){
-  a.innerHTML="";
-  f.textContent="";
-  selected=null;
-  built=[];
-  lastCorrect=false;
-
-  pUI.style.display="none";
-  bank.innerHTML="";
-  line.innerHTML="";
-}
-
-function shuffle(arr){
-  return [...arr].sort(()=>Math.random()-0.5);
-}
-
-function redrawPuzzle(){
-  line.innerHTML="";
-  built.forEach(w=>{
-    const c=document.createElement("div");
-    c.className="chip";
-    c.textContent=w;
-    // click pe chip din linie = remove (util!)
-    c.onclick=()=>{
-      const i=built.indexOf(w);
-      if(i>-1) built.splice(i,1);
-      redrawPuzzle();
-    };
-    line.appendChild(c);
-  });
-}
-
-function getSelectedMulti(){
-  return [...document.querySelectorAll("#answers .answer.selected")].map(el=>el.textContent);
-}
-
-function sameSet(a1,a2){
-  if(a1.length!==a2.length) return false;
-  const s1=new Set(a1), s2=new Set(a2);
-  if(s1.size!==s2.size) return false;
-  for(const x of s1) if(!s2.has(x)) return false;
-  return true;
-}
-
-
-/* =========================
-   RENDERERS
-========================= */
-function renderQuiz(d){
-  q.textContent = d.q;
-  h.textContent = "Alege varianta corectă";
-  const options = d.opts ? shuffle(d.opts) : shuffle([d.a,"Greșit","Alt greșit"]);
-
-  options.forEach(opt=>{
-    const el = document.createElement("div");
-    el.className="answer";
-    el.textContent=opt;
-    el.onclick=()=>{
-      if(selected) return;
-      selected=true;
-      lastCorrect = (opt===d.a);
-      el.classList.add(lastCorrect ? "correct" : "wrong");
-      f.textContent = lastCorrect ? "✅ Corect" : "❌ Greșit";
-    };
-    a.appendChild(el);
-  });
-}
-
-function renderParticleSingle(d){
-  q.textContent=d.q;
-  h.textContent="Alege particula corectă";
-  d.opts.forEach(o=>{
-    const el=document.createElement("div");
-    el.className="answer";
-    el.textContent=o;
-    el.onclick=()=>{
-      if(selected)return;
-      selected=true;
-      lastCorrect = (o===d.a);
-      el.classList.add(lastCorrect ? "correct":"wrong");
-      f.textContent = lastCorrect ? "✅ Corect":"❌ Greșit";
-    };
-    a.appendChild(el);
-  });
-}
-
-function renderParticlePlus(d){
-  q.textContent=d.q;
-  h.textContent="Selectează TOATE corecte, apoi apasă Verifică";
-  d.opts.forEach(o=>{
-    const el=document.createElement("div");
-    el.className="answer";
-    el.textContent=o;
-    el.onclick=()=>el.classList.toggle("selected");
-    a.appendChild(el);
-  });
-}
-
-function renderPuzzle(d){
-  q.textContent="Ordonează propoziția";
-  h.textContent="Apasă pe cuvinte ca să construiești propoziția";
-  pUI.style.display="block";
-
-  bank.innerHTML="";
-  line.innerHTML="";
-
-  d.w.forEach(w=>{
-    const c=document.createElement("div");
-    c.className="chip";
-    c.textContent=w;
-    c.onclick=()=>{
-      built.push(w);
-      redrawPuzzle();
-    };
-    bank.appendChild(c);
-  });
-}
-
-
-/* =========================
-   CHAIN
-========================= */
-function getChainItem(){
-  return DATA.chain[index % DATA.chain.length];
-}
-
-function renderChain(){
-  const item = getChainItem();
-  if(chainStep===0){
-    renderParticlePlus(item.particlePlus);
-    h.textContent = "CHAIN (1/3): Particule multiple → selectează și apasă Verifică";
-  } else if(chainStep===1){
-    renderPuzzle(item.puzzle);
-    h.textContent = "CHAIN (2/3): Puzzle → construiește și apasă Verifică";
-  } else {
-    renderQuiz(item.conjug);
-    h.textContent = "CHAIN (3/3): Conjugare → alege răspunsul";
-  }
-}
-
-
-/* =========================
-   MAIN RENDER
-========================= */
 function render(){
-  resetUI();
-  const d = DATA[type][index % DATA[type].length];
+  buildPool();
+  renderHeader();
 
-  /* QUIZ (KO→RO / RO→KO / CONJUG) */
-  if(type==="ko-ro" || type==="ro-ko" || type==="conjug"){
-    q.textContent = d.q;
-    h.textContent = "Alege varianta corectă";
-const badge = document.getElementById("badge");
-if(badge){
-  const map = {
-    "ko-ro":"KO→RO",
-    "ro-ko":"RO→KO",
-    "particle":"Particle",
-    "particlePlus":"Particle+",
-    "conjug":"Conjug",
-    "puzzle":"Puzzle",
-    "chain":"Chain"
-  };
-  badge.innerHTML = `
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.22);font-weight:900">
-      ${map[type] || type}
-    </span>
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">
-      #${(index % DATA[type].length)+1}/${DATA[type].length}
-    </span>
-  `;
+  if (!pool.length){
+    qHintEl.textContent = "Nu există exerciții pentru acest filtru.";
+    qTextEl.textContent = "Adaugă exerciții în EXERCISES pentru această lecție/mod.";
+    optsEl.innerHTML = "";
+    nextBtn.disabled = true;
+    nextBtn.classList.add("disabled");
+    return;
+  }
+
+  if (index >= pool.length) index = pool.length - 1;
+
+  const ex = pool[index];
+  locked = false;
+
+  feedbackEl.style.display = "none";
+  feedbackEl.className = "toast";
+  feedbackEl.textContent = "";
+
+  qHintEl.textContent = mode === "KO-RO" ? "Alege traducerea corectă (KO → RO)" : "Alege varianta corectă (RO → KO)";
+  qTextEl.textContent = ex.q;
+
+  optsEl.innerHTML = "";
+  ex.opts.forEach(opt=>{
+    const b = document.createElement("div");
+    b.className = "opt";
+    b.textContent = opt;
+    b.onclick = ()=>choose(opt);
+    optsEl.appendChild(b);
+  });
+
+  nextBtn.disabled = true;
+  nextBtn.style.opacity = 0.6;
+
+  renderHeader();
 }
-    const options = d.opts ? [...d.opts] : [d.a,"Greșit","Alt greșit"];
-    options.sort(()=>Math.random()-0.5);
 
-    options.forEach(opt=>{
-      const el = document.createElement("div");
-      el.className="answer";
-      el.textContent=opt;
+function choose(selected){
+  if (locked) return;
+  locked = true;
 
-      el.onclick=()=>{
-         clickSfx();
-        if(selected) return;
-        selected = true;
+  const ex = pool[index];
+  const isCorrect = (selected === ex.a);
 
-        // 1) marchează răspunsul corect (verde)
-        [...a.children].forEach(node=>{
-          if(node.textContent === d.a) node.classList.add("correct");
-        });
+  // mark options
+  [...optsEl.children].forEach(el=>{
+    const t = el.textContent;
+    el.classList.add("disabled");
+    if (t === ex.a) el.classList.add("correct");
+    if (t === selected && !isCorrect) el.classList.add("wrong");
+  });
 
-        // 2) marchează alegerea greșită (roșu) dacă e cazul
-        if(opt !== d.a) el.classList.add("wrong");
-
-        // 3) feedback
-        f.textContent = opt === d.a ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
-          };
-  fx(opt===d.a);    
-total++;
-if(opt===d.a){ correct++; streak++; }
-else{ streak = 0; }
-updateBadges();
-      a.appendChild(el);
-    });
-
-    return;
+  if (isCorrect){
+    score += 1;
+    feedbackEl.style.display = "block";
+    feedbackEl.className = "toast good";
+    feedbackEl.textContent = "Corect ✅";
+  }else{
+    feedbackEl.style.display = "block";
+    feedbackEl.className = "toast bad";
+    feedbackEl.textContent = `Greșit ❌ Corect este: ${ex.a}`;
   }
-updateBadges();
-  /* PARTICULE (1) */
-  if(type==="particle"){
-    q.textContent=d.q;
-    h.textContent="Alege particula corectă";
 
-    d.opts.forEach(o=>{
-      const el=document.createElement("div");
-      el.className="answer";
-      el.textContent=o;
+  nextBtn.disabled = false;
+  nextBtn.style.opacity = 1;
 
-      el.onclick=()=>{
-         clickSfx();
-        if(selected) return;
-        selected = true;
+  renderHeader();
+}
 
-        // 1) marchează răspunsul corect (verde)
-        [...a.children].forEach(node=>{
-          if(node.textContent === d.a) node.classList.add("correct");
-        });
+function next(){
+  if (!pool.length) return;
 
-        // 2) marchează alegerea greșită (roșu) dacă e cazul
-        if(o !== d.a) el.classList.add("wrong");
+  // dacă nu a răspuns încă, nu avansează
+  if (!locked) return;
 
-        // 3) feedback
-        f.textContent = o === d.a ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
-      };
-fx(o===d.a);
-      a.appendChild(el);
-    });
+  index += 1;
 
+  if (index >= pool.length){
+    // final
+    qHintEl.textContent = "Gata 🎉";
+    qTextEl.textContent = `Ai terminat setul. Scor: ${score} / ${pool.length}`;
+    optsEl.innerHTML = "";
+    feedbackEl.style.display = "block";
+    feedbackEl.className = "toast";
+    feedbackEl.textContent = "Apasă Restart pentru a relua (sau schimbă modul / shuffle).";
+    nextBtn.disabled = true;
+    nextBtn.style.opacity = 0.6;
+    renderHeader();
     return;
   }
 
-  /* PARTICULE MULTIPLE */
-  if(type==="particlePlus"){
-    q.textContent=d.q;
-    h.textContent="Alege TOATE corecte";
-
-    d.opts.forEach(o=>{
-      const el=document.createElement("div");
-      el.className="answer";
-      el.textContent=o;
-      el.onclick=()=>el.classList.toggle("selected");
-      a.appendChild(el);
-    });
-
-    return;
-  }
-
-  /* PUZZLE */
-  if(type==="puzzle"){
-    q.textContent="Ordonează propoziția";
-    h.textContent="";
-    pUI.style.display="block";
-
-    d.w.forEach(w=>{
-      const c=document.createElement("div");
-      c.className="chip";
-      c.textContent=w;
-      c.onclick=()=>{
-         clickSfx();
-        built.push(w);
-        redrawPuzzle(d);
-      };
-      bank.appendChild(c);
-    });
-
-    return;
-  }
-
-  /* CHAIN (dacă îl activezi ulterior) — momentan nu face nimic aici */
+  render();
 }
 
 /* =========================
-   EVENTS
+   UTILS
 ========================= */
-document.getElementById("type").onchange=e=>{
-  type=e.target.value;
-  index=0;
-  render();
-  updateBadges();
-};
-    document.getElementById("next").onclick=()=>{
-  // la chain, Next sare la următorul chain (reset step)
-  if(type==="chain"){
-    index++;
-    chainStep=0;
-    render();
-    return;
+function shuffle(arr){
+  const a = arr.slice();
+  for (let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
   }
-  index++;
-  render();
-};
-
-document.getElementById("check").onclick=()=>{
-  // puzzle simplu
-if(type==="puzzle"){
-  const d=DATA.puzzle[index % DATA.puzzle.length];
-  const ok = built.join(" ")===d.a;
-  f.textContent = ok ? "✅ Corect" : "❌ Greșit";
-fx(ok);
-  total++;
-  if(ok){ correct++; streak++; }
-  else{ streak=0; }
-  updateBadges();
+  return a;
 }
-  // particlePlus simplu
-  if(type==="particlePlus"){
-    const d=DATA.particlePlus[index % DATA.particlePlus.length];
-    const picked=getSelectedMulti();
-    lastCorrect = sameSet(picked, d.a);
-    f.textContent = lastCorrect ? "✅ Corect" : "❌ Greșit";
-    return;
-  }
 
-  // CHAIN verificare + avansare
-  if(type==="chain"){
-    const item = getChainItem();
+/* =========================
+   INIT
+========================= */
+(function init(){
+  // set pills
+  modeKOROEl.classList.toggle("active", mode==="KO-RO");
+  modeROKOEl.classList.toggle("active", mode==="RO-KO");
+  shuffleBtn.textContent = `Shuffle: ${shuffleOn ? "ON" : "OFF"}`;
 
-    if(chainStep===0){
-      const picked=getSelectedMulti();
-      lastCorrect = sameSet(picked, item.particlePlus.a);
-      f.textContent = lastCorrect ? "✅ Corect (pas 1)" : "❌ Greșit (pas 1)";
-      if(lastCorrect){
-        chainStep=1;
-        setTimeout(render, 250);
-      }
-      return;
-    }
-
-    if(chainStep===1){
-      lastCorrect = (built.join(" ")===item.puzzle.a);
-      f.textContent = lastCorrect ? "✅ Corect (pas 2)" : "❌ Greșit (pas 2)";
-      if(lastCorrect){
-        chainStep=2;
-        setTimeout(render, 250);
-      }
-      return;
-    }
-
-    // chainStep===2 (conjug) — aici răspunsul se evaluează la click
-    if(!selected){
-      f.textContent = "Alege mai întâi un răspuns 🙂";
-      return;
-    }
-    if(lastCorrect){
-      f.textContent = "✅ Corect (chain complet) → următorul!";
-      index++;
-      chainStep=0;
-      setTimeout(render, 350);
-    } else {
-      f.textContent = "❌ Greșit (pas 3) — încearcă din nou";
-    }
-    return;
-  }
-};
-
-render();
+  // dacă vine din lessons.html -> avem lesson param
+  // default: KO-RO
+  restart();
+})();
 </script>
 </body>
 </html>
