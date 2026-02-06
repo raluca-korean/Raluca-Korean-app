@@ -1,167 +1,245 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<title>Raluca Korean – Clause Builder</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>Raluca Korean – Builder FINAL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{font-family:system-ui;background:#f4f6fb;margin:0;padding:20px}
-h1{margin:0 0 10px}
-.table{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px}
-.col{min-width:110px;background:#fff;border-radius:12px;padding:8px;border:1px solid #ddd}
-.col h4{margin:0 0 4px;font-size:11px;color:#666}
-.col div{font-size:15px;font-weight:700;min-height:1.4em}
-.col div[contenteditable]{outline:none}
-.block{margin-bottom:20px;padding:12px;border-radius:14px;background:#fff;border:1px solid #ddd}
-.preview{font-size:22px;font-weight:900}
-button{padding:8px 14px;border-radius:999px;border:none;background:#6b7cff;color:#fff;font-weight:800}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:linear-gradient(120deg,#dff3ff,#ffe9ff,#f4fffc,#e8f0ff);
+  background-size:400% 400%;
+  animation:bg 25s ease infinite;
+}
+@keyframes bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+.app{max-width:1050px;margin:auto;padding:18px}
+
+header{
+  background:linear-gradient(120deg,#6fb8ff,#a774ff,#ff7fd1);
+  color:#fff;
+  padding:16px;
+  border-radius:24px;
+  box-shadow:0 18px 45px rgba(0,0,0,.25)
+}
+header h1{margin:0;font-size:20px;font-weight:900}
+
+.card{
+  margin-top:16px;
+  padding:16px;
+  border-radius:22px;
+  background:#ffffffcc;
+  backdrop-filter:blur(14px);
+  box-shadow:0 14px 30px rgba(0,0,0,.12)
+}
+
+textarea{
+  width:100%;
+  min-height:70px;
+  border-radius:14px;
+  border:1px solid #ddd;
+  padding:10px;
+  font-size:14px
+}
+
+button{
+  border:none;
+  border-radius:999px;
+  padding:8px 16px;
+  font-weight:800;
+  cursor:pointer;
+  background:linear-gradient(135deg,#6b8cff,#9b6bff);
+  color:#fff;
+  box-shadow:0 8px 20px rgba(0,0,0,.25)
+}
+
+.table-block{
+  margin-top:14px;
+  padding:12px;
+  border-radius:20px;
+  background:#ffffffcc;
+  box-shadow:0 12px 26px rgba(0,0,0,.15)
+}
+
+.table-horizontal{
+  display:flex;
+  gap:8px;
+  overflow-x:auto
+}
+
+.col{
+  min-width:110px;
+  border-radius:16px;
+  padding:8px;
+  background:#fdfbf7;
+  box-shadow:0 8px 18px rgba(0,0,0,.15)
+}
+
+.col-header{
+  font-size:10px;
+  font-weight:900;
+  color:#7b5dff;
+  border-bottom:1px solid #ddd;
+  margin-bottom:4px
+}
+
+.col-body-main{
+  font-size:15px;
+  font-weight:900;
+  min-height:1.4em
+}
+.col-body-main[contenteditable]{outline:none}
+
+.preview{
+  margin-top:16px;
+  padding:14px;
+  border-radius:20px;
+  background:#ffffffcc;
+  box-shadow:0 14px 30px rgba(0,0,0,.15)
+}
+.preview h3{margin:0 0 6px;font-size:13px}
+.preview .ko{font-size:22px;font-weight:900}
 </style>
 </head>
 
 <body>
+<div class="app">
 
-<h1>Raluca Korean – Builder</h1>
+<header>
+  <h1>RALUCA KOREAN – BUILDER FINAL</h1>
+</header>
 
-<textarea id="inputText" placeholder="Astăzi merg la cafenea și citesc o carte și beau o cafea." style="width:100%;height:70px"></textarea>
+<div class="card">
+<textarea id="inputText" placeholder="Astăzi merg la cafenea și citesc o carte și beau o cafea."></textarea>
 <br><br>
-<button id="autoFill">Auto-fill</button>
+<button onclick="autoFill()">Auto-fill</button>
+<button onclick="resetAll()">Reset</button>
+</div>
 
 <div id="clauses"></div>
 
-<div class="block">
-  <label><input type="checkbox" id="polite"> Polite (ultima clauză)</label>
-  <div id="preview" class="preview">저 가요</div>
+<div class="preview">
+<h3>Propoziția finală</h3>
+<div class="ko" id="preview">저는 가요</div>
+</div>
+
 </div>
 
 <script>
-/* =======================
-   GLOBAL STATE
-======================= */
-let CURRENT_CHAIN = { clauses: [], links: [] };
+const CONNECTORS = {
+  "și":"-고",
+  "and":"-고",
+  "dar":"-지만",
+  "but":"-지만",
+  "pentru că":"-어서",
+  "because":"-어서",
+  "dacă":"-(으)면",
+  "if":"-(으)면"
+};
 
-/* =======================
-   SPLIT LOGIC
-======================= */
-const CONNECTORS = [
-  { keys:["și","si","and"], ending:"-고", word:null },
-  { keys:["dar","but"], ending:"-지만", word:null },
-  { keys:["pentru că","because"], ending:"-어서", word:null },
-  { keys:["apoi"], ending:"-고", word:"그리고" }
-];
-
-function splitIntoChain(text){
-  const t=text.toLowerCase().replace(/[.,!?]/g,"");
-  let clauses=[], links=[];
-  let rest=t;
-
-  while(true){
-    let found=null;
-    for(const c of CONNECTORS){
-      for(const k of c.keys){
-        const i=rest.indexOf(" "+k+" ");
-        if(i!==-1 && (!found || i<found.i))
-          found={i,k,c};
-      }
-    }
-    if(!found) break;
-
-    clauses.push(rest.slice(0,found.i).trim());
-    links.push({ending:found.c.ending,word:found.c.word});
-    rest=rest.slice(found.i+found.k.length+2);
-  }
-  clauses.push(rest.trim());
-  return {clauses,links};
+function hasBatchim(w){
+  if(!w) return false;
+  const c=w.charCodeAt(w.length-1);
+  if(c<0xAC00||c>0xD7A3) return false;
+  return ((c-0xAC00)%28)!==0;
 }
 
-/* =======================
-   UI
-======================= */
-function clauseHTML(i){
+function topic(w){return w+(hasBatchim(w)?"은":"는")}
+function obj(w){return w+(hasBatchim(w)?"을":"를")}
+
+function placeParticle(place,verb){
+  if(verb==="가다"||verb==="오다") return place+"에";
+  return place+"에서";
+}
+
+function attachEnding(v,e){
+  if(!e) return v;
+  if(!v.endsWith("다")) return v;
+  const stem=v.slice(0,-1);
+  if(e==="-(으)면") return stem+(hasBatchim(stem)?"으면":"면");
+  if(e==="-고") return stem+"고";
+  if(e==="-지만") return stem+"지만";
+  if(e==="-어서") return stem+"어서";
+  return stem+e.replace(/^-/,"");
+}
+
+function polite(v){
+  if(!v.endsWith("다")) return v;
+  const s=v.slice(0,-1);
+  return s+(hasBatchim(s)?"어요":"아요");
+}
+
+function splitClauses(t){
+  t=t.toLowerCase();
+  for(const k in CONNECTORS){
+    t=t.replaceAll(" "+k+" "," |"+CONNECTORS[k]+"| ");
+  }
+  const parts=t.split("|");
+  const clauses=[];
+  for(let i=0;i<parts.length;i+=2){
+    clauses.push({text:parts[i].trim(),ending:parts[i+1]||""});
+  }
+  return clauses;
+}
+
+function makeTable(i){
   return `
-  <div class="block" data-i="${i}">
-    <div class="table">
-      ${col("subject","SUBJ")}
-      ${col("time","TIME")}
-      ${col("place","PLACE")}
-      ${col("object","OBJ")}
-      ${col("verb","VERB")}
-      ${col("conj","ENDING")}
+  <div class="table-block" data-i="${i}">
+    <div class="table-horizontal">
+      <div class="col"><div class="col-header">SUBJECT</div><div class="col-body-main" contenteditable></div></div>
+      <div class="col"><div class="col-header">TIME</div><div class="col-body-main" contenteditable></div></div>
+      <div class="col"><div class="col-header">PLACE</div><div class="col-body-main" contenteditable></div></div>
+      <div class="col"><div class="col-header">OBJECT</div><div class="col-body-main" contenteditable></div></div>
+      <div class="col"><div class="col-header">VERB (…다)</div><div class="col-body-main" contenteditable></div></div>
+      <div class="col"><div class="col-header">ENDING</div><div class="col-body-main" contenteditable></div></div>
     </div>
   </div>`;
 }
-function col(k,l){
-  return `<div class="col" data-k="${k}"><h4>${l}</h4><div contenteditable></div></div>`;
-}
-function cell(i,k){
-  return document.querySelector(`[data-i="${i}"] [data-k="${k}"] div`);
-}
 
-/* =======================
-   BUILD CLAUSE (CURAT)
-======================= */
-function buildClause(i,isLast,polite){
-  const subj=cell(i,"subject").textContent.trim();
-  const time=cell(i,"time").textContent.trim();
-  const place=cell(i,"place").textContent.trim();
-  const obj=cell(i,"object").textContent.trim();
-  const verb=cell(i,"verb").textContent.trim();
-  const ending=cell(i,"conj").textContent.trim();
-
-  let v=verb;
-  if(v.endsWith("다") && ending){
-    v=v.slice(0,-1)+ending.replace("-","");
-  }
-  if(politeshould(isLast,polite,ending,verb)) v=toPolite(verb);
-
-  return [subj,time,place,obj,v].filter(Boolean).join(" ");
-}
-function politeshould(isLast,polite,ending,verb){
-  return polite && isLast && !ending && verb.endsWith("다");
-}
-function toPolite(v){
-  if(!v.endsWith("다"))return v;
-  const s=v.slice(0,-1);
-  return s.endsWith("하")?s.slice(0,-1)+"해요":s+"어요";
-}
-
-/* =======================
-   PREVIEW (SINGURUL LOC)
-======================= */
-function rebuildPreview(){
-  const p=[];
-  const n=CURRENT_CHAIN.clauses.length;
-  const polite=document.getElementById("polite").checked;
-
-  for(let i=0;i<n;i++){
-    p.push(buildClause(i,i===n-1,polite));
-    if(i<n-1 && CURRENT_CHAIN.links[i]?.word)
-      p.push(CURRENT_CHAIN.links[i].word);
-  }
-  document.getElementById("preview").textContent=p.join(" ").trim()||"저 가요";
-}
-
-/* =======================
-   AUTOFILL
-======================= */
-document.getElementById("autoFill").onclick=()=>{
-  const t=document.getElementById("inputText").value;
-  CURRENT_CHAIN=splitIntoChain(t);
+function autoFill(){
+  const text=document.getElementById("inputText").value;
+  const clauses=splitClauses(text);
   const host=document.getElementById("clauses");
   host.innerHTML="";
-  CURRENT_CHAIN.clauses.forEach((_,i)=>{
-    host.insertAdjacentHTML("beforeend",clauseHTML(i));
-    if(CURRENT_CHAIN.links[i])
-      cell(i,"conj").textContent=CURRENT_CHAIN.links[i].ending;
+  clauses.forEach((c,i)=>host.insertAdjacentHTML("beforeend",makeTable(i)));
+  rebuild();
+}
+
+function rebuild(){
+  const blocks=document.querySelectorAll(".table-block");
+  const out=[];
+  blocks.forEach((b,i)=>{
+    const cells=b.querySelectorAll(".col-body-main");
+    const s=cells[0].innerText.trim();
+    const t=cells[1].innerText.trim();
+    const p=cells[2].innerText.trim();
+    const o=cells[3].innerText.trim();
+    const v=cells[4].innerText.trim();
+    const e=cells[5].innerText.trim();
+    let parts=[];
+    if(s) parts.push(topic(s));
+    if(t) parts.push(t);
+    if(p) parts.push(placeParticle(p,v));
+    if(o) parts.push(obj(o));
+    let verb=v;
+    if(i===blocks.length-1) verb=polite(v);
+    else verb=attachEnding(v,e);
+    parts.push(verb);
+    out.push(parts.join(" "));
   });
-  rebuildPreview();
-};
+  document.getElementById("preview").innerText=out.join(" ");
+}
 
 document.addEventListener("input",e=>{
-  if(e.target.closest(".col")) rebuildPreview();
+  if(e.target.classList.contains("col-body-main")) rebuild();
 });
-document.getElementById("polite").onchange=rebuildPreview;
-</script>
 
+function resetAll(){
+  document.getElementById("clauses").innerHTML="";
+  document.getElementById("preview").innerText="저는 가요";
+}
+</script>
 </body>
 </html>
