@@ -148,7 +148,6 @@ const WORDS = [
   {ko:"친구", ro:"prieten"},
   {ko:"오늘", ro:"astăzi"},
 ];
-
 /* =========================
    FAVORITE
 ========================= */
@@ -268,8 +267,78 @@ function render(){
       </div>`;
   });
 }
+let daily = [];
 
-search.oninput=render;
+function pickDailyWords(){
+  daily = [...WORDS].sort(()=>0.5-Math.random()).slice(0,3);
+  renderDaily();
+}
+
+function renderDaily(){
+  const box = document.getElementById("dailyWords");
+  box.innerHTML = daily.map(w=>`
+    <div class="example">
+      <div class="ko">${w.ko}</div>
+      <div class="ro">${w.ro}</div>
+    </div>
+  `).join("");
+}
+ function speak(text){
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ko-KR";
+  speechSynthesis.speak(u);
+}
+
+function playDaily(){
+  daily.forEach((w,i)=>{
+    setTimeout(()=>speak(w.ko), i*1500);
+  });
+}
+  let dailyIndex = 0;
+
+function startDailyQuiz(){
+  dailyIndex = 0;
+  showDailyQuestion();
+}
+
+function showDailyQuestion(){
+  const w = daily[dailyIndex];
+  if(!w){
+    alert("🎉 Ai terminat exercițiul de azi!");
+    return;
+  }
+
+  const opts = [...WORDS]
+    .sort(()=>0.5-Math.random())
+    .slice(0,2)
+    .map(x=>x.ro);
+
+  if(!opts.includes(w.ro)) opts[0]=w.ro;
+  opts.sort(()=>0.5-Math.random());
+
+  const box = document.getElementById("dailyCard");
+  box.innerHTML = `
+    <h3>🧠 Ce înseamnă:</h3>
+    <div class="example"><b>${w.ko}</b></div>
+
+    ${opts.map(o=>`
+      <button onclick="checkDaily('${o}','${w.ro}')">${o}</button>
+    `).join("")}
+  `;
+}
+
+function checkDaily(sel, ok){
+  if(sel===ok){
+    dailyIndex++;
+    showDailyQuestion();
+  } else {
+    alert("❌ Mai încearcă");
+  }
+}
+  function refreshDaily(){
+  pickDailyWords();
+}
+  search.oninput=render;
 render();
 renderDailyWords();
 </script>
