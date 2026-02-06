@@ -82,17 +82,16 @@ h1{margin:0 0 12px}
   (function () {
   "use strict";
 
-  /* =========================
+  /* =====================================================
      GLOBAL STATE
-  ========================= */
-  let LINKS = []; // conectori între clauze (ENDING / WORD)
+  ===================================================== */
+  let LINKS = [];
 
-  /* =========================
+  /* =====================================================
      UTILS
-  ========================= */
-  function normalizeText(text) {
-    if (!text) return "";
-    return text
+  ===================================================== */
+  function normalizeText(t) {
+    return (t || "")
       .toLowerCase()
       .replace(/ş/g, "ș")
       .replace(/ţ/g, "ț")
@@ -105,25 +104,24 @@ h1{margin:0 0 12px}
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  function hasBatchim(char) {
-    if (!char) return false;
-    const code = char.charCodeAt(0);
-    if (code < 0xac00 || code > 0xd7a3) return false;
-    return (code - 0xac00) % 28 !== 0;
+  function hasBatchim(ch) {
+    if (!ch) return false;
+    const c = ch.charCodeAt(0);
+    if (c < 0xac00 || c > 0xd7a3) return false;
+    return (c - 0xac00) % 28 !== 0;
   }
 
   function lastHangulChar(str) {
-    if (!str) return "";
-    return str.trim().slice(-1);
+    return str ? str.trim().slice(-1) : "";
   }
 
-  /* =========================
-     CONNECTORS (SPLIT)
-  ========================= */
+  /* =====================================================
+     CONNECTORS (SPLIT + ENDINGS)
+  ===================================================== */
   const CONNECTORS = [
     { keys: ["și", "si", "and"], ending: "-고" },
     { keys: ["dar", "but"], ending: "-지만" },
-    { keys: ["pentru că", "pentru ca", "because"], ending: "-어서" },
+    { keys: ["pentru că", "pentru ca", "because"], ending: "-아서/어서" },
     { keys: ["dacă", "daca", "if"], ending: "-(으)면" },
     { keys: ["când", "when"], ending: "-(으)ㄹ 때" },
     { keys: ["ca să", "in order to"], ending: "-(으)려고" }
@@ -138,14 +136,12 @@ h1{margin:0 0 12px}
   function mapConnector(token) {
     token = token.toLowerCase();
     for (const c of CONNECTORS) {
-      if (c.keys.includes(token)) {
-        return { ending: c.ending };
-      }
+      if (c.keys.includes(token)) return c.ending;
     }
-    return { ending: "-고" };
+    return "-고";
   }
 
-  function splitIntoChain(raw) {
+  function splitIntoClauses(raw) {
     const text = normalizeText(raw);
     if (!text) return { clauses: [], links: [] };
 
@@ -168,17 +164,42 @@ h1{margin:0 0 12px}
     return { clauses, links };
   }
 
-  /* =========================
-     SLOT RULES (RO / EN)
-  ========================= */
-  const RO = {
-    subject: [{ re: /\b(eu)\b/i, v: "저" }],
-    time: [{ re: /\b(azi|astăzi)\b/i, v: "오늘" }],
-    place: [{ re: /\b(cafenea)\b/i, v: "카페" }],
-    object: [{ re: /\b(carte)\b/i, v: "책" }],
-    numeral: [{ re: /\b(o|una)\b/i, v: "한" }],
-    counter: [{ re: /\b(carte)\b/i, v: "권" }],
-    verb: [{ re: /\b(merg)\b/i, v: "가다" }]
+  /* =====================================================
+     SLOT RULES RO / EN
+  ===================================================== */
+  const RULES = {
+    subject: [
+      { re: /\b(eu|i)\b/i, v: "저" },
+      { re: /\b(tu|you)\b/i, v: "너" },
+      { re: /\b(noi|we)\b/i, v: "우리" }
+    ],
+    time: [
+      { re: /\b(azi|astăzi|today)\b/i, v: "오늘" },
+      { re: /\b(mâine|tomorrow)\b/i, v: "내일" },
+      { re: /\b(ieri|yesterday)\b/i, v: "어제" }
+    ],
+    place: [
+      { re: /\b(cafenea|cafe)\b/i, v: "카페" },
+      { re: /\b(acasa|acasă|home)\b/i, v: "집" },
+      { re: /\b(scoal[aă]|school)\b/i, v: "학교" }
+    ],
+    object: [
+      { re: /\b(carte|book)\b/i, v: "책" },
+      { re: /\b(cafea|coffee)\b/i, v: "커피" }
+    ],
+    numeral: [
+      { re: /\b(o|una|a|one)\b/i, v: "한" },
+      { re: /\b(dou[aă]|two)\b/i, v: "두" }
+    ],
+    counter: [
+      { re: /\b(carte|book)\b/i, v: "권" },
+      { re: /\b(cafea|coffee)\b/i, v: "잔" }
+    ],
+    verb: [
+      { re: /\b(merg|go)\b/i, v: "가다" },
+      { re: /\b(citesc|read)\b/i, v: "읽다" },
+      { re: /\b(beau|drink)\b/i, v: "마시다" }
+    ]
   };
 
   function matchSlot(rules, text) {
@@ -186,22 +207,16 @@ h1{margin:0 0 12px}
     return "";
   }
 
-  function parseToSlots(text) {
+  function parseSlots(text) {
     const t = normalizeText(text);
-    return {
-      subject: matchSlot(RO.subject, t),
-      time: matchSlot(RO.time, t),
-      place: matchSlot(RO.place, t),
-      object: matchSlot(RO.object, t),
-      numeral: matchSlot(RO.numeral, t),
-      counter: matchSlot(RO.counter, t),
-      verb: matchSlot(RO.verb, t)
-    };
+    const out = {};
+    for (const k in RULES) out[k] = matchSlot(RULES[k], t);
+    return out;
   }
 
-  /* =========================
+  /* =====================================================
      DOM HELPERS
-  ========================= */
+  ===================================================== */
   const host = document.getElementById("clausesHost");
 
   function tableId(i) {
@@ -213,8 +228,7 @@ h1{margin:0 0 12px}
   }
 
   function get(id, key) {
-    const c = cell(id, key);
-    return c ? c.textContent.trim() : "";
+    return cell(id, key)?.textContent.trim() || "";
   }
 
   function set(id, key, v) {
@@ -222,31 +236,29 @@ h1{margin:0 0 12px}
     if (c) c.textContent = v || "";
   }
 
-  function ensureClauseCount(n) {
+  function ensureClauses(n) {
     const cur = host.children.length;
     if (cur === n) return;
 
     if (cur < n) {
       for (let i = cur; i < n; i++) {
-        host.insertAdjacentHTML(
-          "beforeend",
-          `<section class="table-block" data-clause-index="${i}">
+        host.insertAdjacentHTML("beforeend", `
+          <section class="table-block" data-clause-index="${i}">
             <div id="${tableId(i)}" class="table-horizontal"></div>
-          </section>`
-        );
+          </section>
+        `);
       }
     } else {
       for (let i = cur - 1; i >= n; i--) host.children[i].remove();
     }
   }
 
-  /* =========================
+  /* =====================================================
      PARTICLES & ENDINGS
-  ========================= */
+  ===================================================== */
   function choosePlaceParticle(place, verb) {
     if (!place) return "";
-    if (verb === "가다" || verb === "오다") return place + "에";
-    return place + "에서";
+    return (verb === "가다" || verb === "오다") ? place + "에" : place + "에서";
   }
 
   function attachEnding(verb, ending) {
@@ -260,21 +272,20 @@ h1{margin:0 0 12px}
     if (ending === "-(으)면") return stem + (b ? "으면" : "면");
     if (ending === "-(으)ㄹ 때") return stem + (b ? "을 때" : "ㄹ 때");
     if (ending === "-(으)려고") return stem + (b ? "으려고" : "려고");
-    if (ending === "-어서") return stem + "어서";
+    if (ending === "-아서/어서") return stem + (b ? "어서" : "아서");
 
     return stem + ending;
   }
 
-  function politeVerb(verb) {
+  function polite(verb) {
     if (!verb.endsWith("다")) return verb;
-    const stem = verb.slice(0, -1);
-    return stem + "요";
+    return verb.slice(0, -1) + "요";
   }
 
-  /* =========================
-     BUILD PREVIEW
-  ========================= */
-  function buildClause(i, isLast, polite) {
+  /* =====================================================
+     BUILD SENTENCE
+  ===================================================== */
+  function buildClause(i, last, politeOn) {
     const id = tableId(i);
 
     const subject = get(id, "subject");
@@ -286,56 +297,55 @@ h1{margin:0 0 12px}
     const verbInf = get(id, "verb");
     const conj = get(id, "conj");
 
-    const obj =
-      object && numeral && counter
-        ? `${object} ${numeral} ${counter}`
-        : object;
+    const obj = object && numeral && counter
+      ? `${object} ${numeral} ${counter}`
+      : object;
 
     const place = choosePlaceParticle(placeB, verbInf);
-
     let verb = attachEnding(verbInf, conj);
-    if (isLast && polite && !conj) verb = politeVerb(verbInf);
+
+    if (last && politeOn && !conj) verb = polite(verbInf);
 
     return [subject, time, place, obj, verb].filter(Boolean).join(" ");
   }
 
   function rebuildPreview() {
-    const out = document.getElementById("previewSentence");
-    const polite = document.getElementById("politeToggle")?.checked;
+    const politeOn = document.getElementById("politeToggle")?.checked;
+    const out = [];
 
-    const chunks = [];
     for (let i = 0; i < host.children.length; i++) {
-      chunks.push(buildClause(i, i === host.children.length - 1, polite));
+      out.push(buildClause(i, i === host.children.length - 1, politeOn));
     }
 
-    out.textContent = chunks.join(" ").trim() || "저 가요";
+    document.getElementById("previewSentence").textContent =
+      out.join(" ").trim() || "저 가요";
   }
 
-  /* =========================
+  /* =====================================================
      AUTOFILL
-  ========================= */
+  ===================================================== */
   function autoFill() {
     const input = document.getElementById("inputText").value;
-    const chain = splitIntoChain(input);
+    const chain = splitIntoClauses(input);
 
     LINKS = chain.links;
-    ensureClauseCount(chain.clauses.length);
+    ensureClauses(chain.clauses.length);
 
     chain.clauses.forEach((c, i) => {
-      const slots = parseToSlots(c);
+      const slots = parseSlots(c);
       const id = tableId(i);
       Object.entries(slots).forEach(([k, v]) => v && set(id, k, v));
-      if (LINKS[i]) set(id, "conj", LINKS[i].ending);
+      if (LINKS[i]) set(id, "conj", LINKS[i]);
     });
 
     rebuildPreview();
   }
 
-  /* =========================
+  /* =====================================================
      INIT
-  ========================= */
+  ===================================================== */
   function init() {
-    ensureClauseCount(1);
+    ensureClauses(1);
     set("tableP1", "subject", "저");
     set("tableP1", "verb", "가다");
 
