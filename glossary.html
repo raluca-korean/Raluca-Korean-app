@@ -108,7 +108,12 @@ input{
   <div class="card">
     <input id="search" placeholder="Caută (KO / RO)">
   </div>
-
+<!-- 3 CUVINTE PE ZI -->
+<div class="card">
+  <h3>📅 3 cuvinte pe zi</h3>
+  <div class="sub">Repetă zilnic, fără stres</div>
+  <div id="dailyWords"></div>
+</div>
   <!-- WORDS -->
   <div class="card">
     <div class="badge" id="count"></div>
@@ -157,8 +162,52 @@ function openYouGlish(word){
   const url = `https://youglish.com/pronounce/${encodeURIComponent(word)}/korean`;
   window.open(url,"_blank");
 }
-
 /* =========================
+   3 CUVINTE PE ZI
+========================= */
+function getTodayKey(){
+  const d = new Date();
+  return d.toISOString().slice(0,10); // YYYY-MM-DD
+}
+
+function getDailyWords(){
+  const key = "DAILY_WORDS_" + getTodayKey();
+  let saved = localStorage.getItem(key);
+
+  if(saved){
+    return JSON.parse(saved);
+  }
+
+  // shuffle simplu
+  const shuffled = [...WORDS].sort(()=>Math.random()-0.5);
+  const daily = shuffled.slice(0,3);
+
+  localStorage.setItem(key, JSON.stringify(daily));
+  return daily;
+}
+
+function renderDailyWords(){
+  const box = document.getElementById("dailyWords");
+  if(!box) return;
+
+  const daily = getDailyWords();
+
+  box.innerHTML = daily.map(w=>`
+    <div class="word">
+      <div>
+        <div class="ko">${w.ko}</div>
+        <div class="ro">${w.ro}</div>
+      </div>
+      <div class="actions">
+        <span class="icon" onclick="speakKO('${w.ko}')">🔈</span>
+        <span class="icon" onclick="openYouGlish('${w.ko}')">🎥</span>
+        <span class="icon star ${isFav(w.ko)?'active':''}"
+              onclick="toggleFav('${w.ko}')">⭐</span>
+      </div>
+    </div>
+  `).join("");
+}
+  /* =========================
    TTS
 ========================= */
 let AC = null;
@@ -212,6 +261,7 @@ function render(){
 
 search.oninput=render;
 render();
+renderDailyWords();
 </script>
 </body>
 </html>
