@@ -207,8 +207,11 @@ function render(){
 function addClause(){ clauseCount++; render(); }
 function removeClause(){
   if(clauseCount>1){ clauseCount--; render(); }
+function placeWithParticle(place, verb){
+  if(!place) return "";
+  if(verb === "가다" || verb === "오다") return place + "에";
+  return place + "에서";
 }
-
 /* ================== PREVIEW ================== */
 function buildPreview(){
   const polite = document.getElementById("politeToggle").checked;
@@ -218,8 +221,16 @@ function buildPreview(){
     let verb=get("verb");
     let conj=get("conj");
     if(politenessNeeded(i,polite,conj,verb)) verb=toPolite(verb);
-    const chunk=[get("subject"),get("time"),get("place"),get("mod"),get("object"),verb+conj]
-      .filter(Boolean).join(" ");
+    const place = placeWithParticle(get("place"), get("verb"));
+
+const chunk = [
+  get("subject"),
+  get("time"),
+  place,
+  get("mod"),
+  get("object"),
+  verb + conj
+].filter(Boolean).join(" ");
     if(chunk) parts.push(chunk);
   });
   document.getElementById("previewSentence").textContent =
