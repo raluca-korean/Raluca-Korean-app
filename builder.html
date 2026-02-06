@@ -272,6 +272,10 @@ h1{
 
 <div class="preview">
   <div class="preview-title">Propoziția finală</div>
+  <label style="display:flex;align-items:center;gap:6px;">
+  <input type="checkbox" id="topicToggle" checked />
+  <span>은/는 (topic)</span>
+</label>
   <div class="preview-ko" id="previewSentence">저 가요</div>
 </div>
 
@@ -509,8 +513,25 @@ function autoFill(){
 
   rebuildPreview();
 }
+function hasBatchimChar(ch){
+  if(!ch) return false;
+  const code = ch.charCodeAt(0);
+  if(code < 0xAC00 || code > 0xD7A3) return false;
+  return ((code - 0xAC00) % 28) !== 0;
+}
 
-/* =========================
+function subjectParticle(word, useTopic){
+  if(!word) return "";
+  const last = word[word.length-1];
+  const batchim = hasBatchimChar(last);
+
+  if(useTopic){
+    return word + (batchim ? "은" : "는");
+  } else {
+    return word + (batchim ? "이" : "가");
+  }
+}
+  /* =========================
    BUTTON
 ========================= */
 document.getElementById("autoFillBtn")
