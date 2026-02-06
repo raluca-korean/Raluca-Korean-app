@@ -277,109 +277,132 @@ h1{
 
 </div>
 </body>
-
 <script>
-let clausesHost=document.getElementById("clauses");
-
-function hasBatchim(ch){
-  const c=ch.charCodeAt(ch.length-1);
-  if(c<0xAC00||c>0xD7A3)return false;
-  return (c-0xAC00)%28!==0;
+/* =========================
+   UTILITARE
+========================= */
+function hasBatchim(word){
+  if(!word) return false;
+  const ch = word[word.length-1];
+  const code = ch.charCodeAt(0);
+  if(code < 0xac00 || code > 0xd7a3) return false;
+  return (code - 0xac00) % 28 !== 0;
 }
 
-function particleSubject(n){
-  return hasBatchim(n)?"이":"가";
+function topicParticle(word){
+  return hasBatchim(word) ? "은" : "는";
 }
-function particleObject(n){
-  return hasBatchim(n)?"을":"를";
+function subjectParticle(word){
+  return hasBatchim(word) ? "이" : "가";
 }
-
-function placeParticle(p,v){
-  return (v==="가다"||v==="오다")?"에":"에서";
-}
-
-function polite(v){
-  if(!v.endsWith("다"))return v;
-  const s=v.slice(0,-1);
-  const last=s[s.length-1];
-  if(last==="하")return s.slice(0,-1)+"해요";
-  const code=last.charCodeAt(0)-0xAC00;
-  const jung=Math.floor((code%(21*28))/28);
-  return s+([0,2,8,9].includes(jung)?"아요":"어요");
+function objectParticle(word){
+  return hasBatchim(word) ? "을" : "를";
 }
 
-function attach(v,e){
-  if(!e||!v.endsWith("다"))return v;
-  const s=v.slice(0,-1);
-  if(e==="-(으)면")return s+(hasBatchim(s[s.length-1])?"으면":"면");
-  if(e==="-(으)ㄹ 때")return s+(hasBatchim(s[s.length-1])?"을 때":"ㄹ 때");
-  if(e==="-(으)려고")return s+(hasBatchim(s[s.length-1])?"으려고":"려고");
-  if(e==="고")return s+"고";
-  if(e==="지만")return s+"지만";
-  if(e==="어서")return s+"어서";
-  return s+e;
+/* =========================
+   VERB ENDINGS
+========================= */
+function politeVerb(verb){
+  if(!verb.endsWith("다")) return verb;
+  if(verb === "하다") return "해요";
+
+  const stem = verb.slice(0,-1);
+  const last = stem[stem.length-1];
+  const code = last.charCodeAt(0);
+  const jung = Math.floor((code - 0xac00) % (21*28) / 28);
+  const aGroup = [0,2,8,9]; // ㅏ ㅑ ㅗ ㅛ
+  return stem + (aGroup.includes(jung) ? "아요" : "어요");
 }
 
-function addClause(){
-  const idx=clausesHost.children.length+1;
-  const div=document.createElement("div");
-  div.className="table-block";
-  div.innerHTML=`
-  <div class="table-title">Propoziția ${idx}</div>
-  <div class="table">
-    ${col("subject","SUBJECT","저")}
-    ${col("time","TIME","오늘")}
-    ${col("place","PLACE","집")}
-    ${col("mod","MOD","잘")}
-    ${col("object","OBJECT","책")}
-    ${col("numeral","NUM","한")}
-    ${col("counter","COUNT","권")}
-    ${col("verb","VERB","가다")}
-    ${col("conj","CONJ","-고")}
-  </div>`;
-  clausesHost.appendChild(div);
-  rebuild();
+function attachEnding(verb, ending){
+  if(!ending) return verb;
+  if(!verb.endsWith("다")) return verb;
+
+  const stem = verb.slice(0,-1);
+  const batchim = hasBatchim(stem);
+
+  if(ending === "-고") return stem + "고";
+  if(ending === "-지만") return stem + "지만";
+  if(ending === "-아서" || ending === "-어서") return stem + ending.replace("-","");
+  if(ending === "-(으)면") return stem + (batchim ? "으면" : "면");
+  if(ending === "-(으)ㄹ 때") return stem + (batchim ? "을 때" : "ㄹ 때");
+  if(ending === "-(으)려고") return stem + (batchim ? "으려고" : "려고");
+
+  return stem + ending.replace("-","");
 }
 
-function col(k,l,ex){
-  return `
-  <div class="col" data-key="${k}">
-    <h4>${l}</h4>
-    <small>ex: ${ex}</small>
-    <div contenteditable></div>
-  </div>`;
+/* =========================
+   BUILD ONE CLAUSE
+========================= */
+function buildClause(block, isLast){
+  const get = k =>
+    block.querySelector(`.col[data-key="${k}"] .cell`)?.textContent.trim() || "";
+
+  let subject = get("subject");
+  let time    = get("time");
+  let place   = get("place");
+  let mod     = get("mod");
+  let object  = get("object");
+  let numeral = get("numeral");
+  let counter = get("counter");
+  let verb    = get("verb");
+  let conj    = get("conj");
+
+  let out = [];
+
+  if(subject) out.push(subject + topicParticle(subject));
+  if(time) out.push(time);
+
+  if(place){
+    if(verb === "가다" || verb === "오다") out.push(place + "에");
+    else out.push(place + "에서");
+  }
+
+  if(mod) out.push(mod);
+
+  if(object){
+    if(numeral && counter)
+      out.push(`${object}${objectParticle(object)} ${numeral} ${counter}`);
+    else
+      out.push(object + objectParticle(object));
+  }
+
+  if(isLast){
+    out.push(politeVerb(verb));
+  }else{
+    out.push(attachEnding(verb, conj));
+  }
+
+  return out.join(" ").trim();
 }
 
-function rebuild(){
-  const rows=[...clausesHost.children];
-  let out=[];
-  rows.forEach((r,i)=>{
-    const get=k=>r.querySelector(`[data-key="${k}"] div[contenteditable]`).innerText.trim();
-    let s=get("subject");
-    let t=get("time");
-    let p=get("place");
-    let m=get("mod");
-    let o=get("object");
-    let n=get("numeral");
-    let c=get("counter");
-    let v=get("verb");
-    let cj=get("conj");
+/* =========================
+   BUILD FULL SENTENCE
+========================= */
+function rebuildPreview(){
+  const clauses = document.querySelectorAll(".clause-block");
+  let sentence = [];
 
-    if(s)s+=particleSubject(s);
-    if(o)o+=particleObject(o);
-    if(p)p+=placeParticle(p,v);
-    if(o&&n&&c)o=`${n} ${c} ${o}`;
-
-    let verb=attach(v,cj);
-    if(i===rows.length-1)verb=polite(v);
-
-    out.push([s,t,p,m,o,verb].filter(Boolean).join(" "));
+  clauses.forEach((c,i)=>{
+    const built = buildClause(c, i === clauses.length-1);
+    if(built) sentence.push(built);
   });
-  document.getElementById("output").innerText=out.join(" ");
+
+  document.getElementById("previewSentence").textContent =
+    sentence.join(" ").replace(/\s+/g," ");
 }
 
-document.addEventListener("input",rebuild);
-addClause();
+/* =========================
+   LIVE UPDATE
+========================= */
+document.addEventListener("input", e=>{
+  if(e.target.classList.contains("cell")){
+    rebuildPreview();
+  }
+});
+
+/* INIT */
+rebuildPreview();
 </script>
 </body>
 </html>
