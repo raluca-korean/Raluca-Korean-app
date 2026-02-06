@@ -746,44 +746,40 @@ function mapConnectorToken(token) {
     // 9) Build & preview
     // =========================
     function buildClause(idx, isLastClause, politeLastEnabled) {
-      const tableId = getTableId(idx);
+  const tableId = getTableId(idx);
 
-      const subject = readCell(tableId, "subject");
-      const time    = readCell(tableId, "time");
-      const placeB  = readCell(tableId, "place");
-      const mod     = readCell(tableId, "mod");
-      const object  = readCell(tableId, "object");
-      const numeral = readCell(tableId, "numeral");
-      const counter = readCell(tableId, "counter");
-      const verbInf = readCell(tableId, "verb");
-      const conjRaw = readCell(tableId, "conj");
+  const subject = readCell(tableId, "subject");
+  const time    = readCell(tableId, "time");
+  const placeB  = readCell(tableId, "place");
+  const mod     = readCell(tableId, "mod");
+  const object  = readCell(tableId, "object");
+  const numeral = readCell(tableId, "numeral");
+  const counter = readCell(tableId, "counter");
+  const verbInf = readCell(tableId, "verb");
+  const conjRaw = readCell(tableId, "conj");
 
-      // object + numeral/counter
-      let obj = "";
-      if (object && numeral && counter) obj = object + " " + numeral + " " + counter;
-      else if (object) obj = object;
+  let obj = "";
+  if (object && numeral && counter) obj = `${object} ${numeral} ${counter}`;
+  else if (object) obj = object;
 
-      // place particle decided here
-      const place = choosePlaceParticle(placeB, verbInf);
+  const place = choosePlaceParticle(placeB, verbInf);
 
-      // attach ending to verb
-      let verbOut = attachEndingToVerb(verbInf, conjRaw);
+  let verbOut = attachEndingToVerb(verbInf, conjRaw);
 
-      // polite only if last clause and no ending in conj
-      if (politeLastEnabled && isLastClause) {
-        const conjNorm = normalizeEnding(conjRaw);
-        if (!conjNorm && verbInf) verbOut = politePresentFromInfinitive(verbInf);
-      }
+  if (politeLastEnabled && isLastClause && !conjRaw && verbInf) {
+    verbOut = politePresentFromInfinitive(verbInf);
+  }
 
-      const conjNorm = normalizeEnding(conjRaw);
-      const mid = isStandaloneConnector(conjNorm) ? conjNorm : "";
-
-      const parts = [subject, time, place, mod, obj, verbOut].filter(Boolean);
-      const clause = parts.join(" ").trim();
-
-      return { clause, mid };
-    }
-
+  return [
+    subject,
+    time,
+    place,
+    mod,
+    obj,
+    verbOut
+  ].filter(Boolean).join(" ").trim();
+}
+   
     function rebuildPreview() {
       const blocks = host.querySelectorAll("[data-clause-index]");
       const n = blocks.length;
@@ -863,7 +859,7 @@ function mapConnectorToken(token) {
       // conj in clauza i = link[i] (ending lipit de verbul clauzei i)
       for (let i=0; i<links.length; i++) {
         if (!onlyEmpty || !readCell(getTableId(i), "conj")) {
-          setCell(getTableId(i), "conj", links[i].ko);
+        setCell(getTableId(i), "conj", links[i].ending); 
         }
       }
 
