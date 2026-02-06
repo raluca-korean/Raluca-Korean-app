@@ -1,984 +1,280 @@
 <!DOCTYPE html>
-<html lang="ro">  <!-- Romanian interface language -->
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Raluca Korean – Builder (Reconstruire)</title>
+  <title>Raluca Korean – Builder Multi-Clause</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    /* --- Pastel Background and Base Styles --- */
-    :root {
-      --bg1: #dff3ff;
-      --bg2: #ffe9ff;
-      --bg3: #f4fffc;
-      --bg4: #e8f0ff;
-      --accent: #7b5dff;
-      --card-bg: #ffffffcc;
-      --text-main: #2f343b;
-      --text-soft: #7a8088;
-      --border: #e1d7c7;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text-main);
-      background: linear-gradient(120deg, var(--bg1), var(--bg2), var(--bg3), var(--bg4));
-      background-size: 380% 380%;
-      animation: bgFlow 28s ease-in-out infinite;
-    }
-    @keyframes bgFlow {
-      0% { background-position: 0% 50%; }
-      50%{ background-position: 100% 50%; }
-      100%{ background-position: 0% 50%; }
-    }
-    .app {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 18px 14px 80px;
-    }
-    /* Header styling */
-    .rk-header {
-      padding: 12px 16px 16px;
-      border-radius: 26px;
-      background: linear-gradient(120deg, #6fb8ff, #a774ff, #ff7fd1);
-      color: #fff;
-      box-shadow: 0 18px 45px rgba(77,93,255,0.4);
-      margin-bottom: 16px;
-    }
-    .rk-header-main { 
-      display: flex; justify-content: space-between; align-items: center; gap: 10px;
-    }
-    .rk-header-main h1 {
-      margin: 0; font-size: 20px; font-weight: 900;
-      letter-spacing: 0.06em; text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    }
-    .rk-badge {
-      background: rgba(255,255,255,0.3);
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    #subtitle {
-      margin: 4px 0 0;
-      font-size: 12px;
-      opacity: 0.9;
-    }
+:root{
+  --bg1:#dff3ff;
+  --bg2:#ffe9ff;
+  --bg3:#f4fffc;
+  --bg4:#e8f0ff;
+  --accent:#7b5dff;
+  --card-bg:#ffffffcc;
+  --text-main:#2f343b;
+  --text-soft:#7a8088;
+  --border:#e1d7c7;
+}
 
-    /* Section titles */
-    .section-title {
-      font-size: 16px;
-      font-weight: 700;
-      margin: 20px 0 8px;
-      color: var(--text-main);
-    }
+*{box-sizing:border-box}
 
-    /* Input and button controls for auto-fill */
-    .input-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .input-row input[type="text"] {
-      flex: 1;
-      min-width: 250px;
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 13px;
-    }
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 6px;
-    }
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 12px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      transition: background 0.2s;
-    }
-    button.primary { 
-      background: var(--accent);
-      color: #fff;
-    }
-    button.secondary {
-      background: #ffffff99;
-      color: var(--text-main);
-    }
-    button:hover { opacity: 0.9; }
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:linear-gradient(120deg,var(--bg1),var(--bg2),var(--bg3),var(--bg4));
+  background-size:380% 380%;
+  animation:bgFlow 28s ease-in-out infinite;
+}
 
-    .hint {
-      font-size: 11px;
-      color: var(--text-soft);
-      margin-top: 4px;
-    }
+@keyframes bgFlow{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
 
-    /* Table (columns) styling */
-    .clauses {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .table-horizontal {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      margin-bottom: 12px;
-    }
-    .table-horizontal::-webkit-scrollbar {
-      height: 8px;
-    }
-    .table-horizontal::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 4px;
-    }
-    .col {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      flex: none;
-      width: 150px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      position: relative;
-    }
-    .col-header {
-      background: var(--dimmed-bg, #f2eefc);
-      text-align: center;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 6px 8px;
-      border-bottom: 1px solid var(--border);
-      position: relative;
-    }
-    /* Icons for headers based on data-key attribute */
-    .col[data-key="subject"] .col-header::before  { content: "👤"; position: absolute; left: 8px; }
-    .col[data-key="time"] .col-header::before     { content: "⏰"; position: absolute; left: 8px; }
-    .col[data-key="place"] .col-header::before    { content: "📍"; position: absolute; left: 8px; }
-    .col[data-key="mod"] .col-header::before      { content: "✨"; position: absolute; left: 8px; }
-    .col[data-key="object"] .col-header::before   { content: "🎯"; position: absolute; left: 8px; }
-    .col[data-key="numeral"] .col-header::before  { content: "#️⃣"; position: absolute; left: 8px; }
-    .col[data-key="counter"] .col-header::before  { content: "🔢"; position: absolute; left: 8px; }
+.app{max-width:1040px;margin:0 auto;padding:18px 14px 80px}
 
-    .col-body {
-      padding: 4px;
-      flex: 1;
-      overflow-y: auto;
-    }
-    .col-body::-webkit-scrollbar {
-      width: 6px;
-    }
-    .col-body::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 3px;
-    }
-    .item {
-      display: block;
-      width: 100%;
-      padding: 6px 8px;
-      margin: 2px 0;
-      font-size: 13px;
-      text-align: center;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      background: #fff;
-      color: var(--text-main);
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.2s;
-    }
-    .item:hover {
-      background: #eaeaea;
-    }
-    .item.selected {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
+.rk-header{
+  padding:16px;
+  border-radius:26px;
+  background:linear-gradient(120deg,#6fb8ff,#a774ff,#ff7fd1);
+  color:#fff;
+  box-shadow:0 18px 45px rgba(77,93,255,.4);
+}
 
-    /* Preview card (output) styling */
-    .preview-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      margin-top: 8px;
-    }
-    .output-ko {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0 0 8px;
-      color: #000;
-    }
-    .output-trans {
-      font-size: 14px;
-      margin: 0;
-      color: var(--text-main);
-    }
-    .output-trans.hidden {
-      display: none;
-    }
-    .lang-select {
-      margin-top: 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-    }
-    .lang-select select {
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      font-size: 12px;
-    }
+.rk-header-main{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
 
-    /* Politeness toggle */
-    .toggle-row {
-      margin: 4px 0 8px;
-      font-size: 13px;
-    }
-    .toggle-row label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .toggle-row input[type="checkbox"] {
-      transform: scale(1.2);
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-  </style>
+.rk-badge{
+  font-size:11px;
+  padding:4px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.25);
+}
+
+.card{
+  margin-top:16px;
+  padding:18px;
+  border-radius:22px;
+  background:var(--card-bg);
+  border:1px solid rgba(255,255,255,.7);
+  box-shadow:0 18px 40px rgba(0,0,0,.12);
+}
+
+textarea{
+  width:100%;
+  min-height:80px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  padding:10px 12px;
+  font-size:14px;
+}
+
+.btn-row{
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+button{
+  border:none;
+  border-radius:999px;
+  padding:8px 16px;
+  font-weight:800;
+  cursor:pointer;
+  background:linear-gradient(135deg,#6b8cff,#9b6bff);
+  color:#fff;
+}
+
+button.secondary{
+  background:linear-gradient(135deg,#ff9a6c,#ff5f8c);
+}
+
+.section-title{
+  margin-top:22px;
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+.preview-card{
+  margin-top:18px;
+  padding:16px;
+  border-radius:20px;
+  background:var(--card-bg);
+}
+
+.preview-sentence{
+  font-size:22px;
+  font-weight:900;
+}
+
+.preview-ro{
+  font-size:12px;
+  color:var(--text-soft);
+} 
+  <link rel="stylesheet" href="builder.css" />
 </head>
+
 <body>
-<div class="app">
-  
-  <!-- Header -->
-  <div class="rk-header">
-    <div class="rk-header-main">
-      <h1>RALUCA KOREAN</h1>
-      <span class="rk-badge">Builder – Modular</span>
-    </div>
-    <p id="subtitle">Construiește propoziții coreene din elemente date</p>
-  </div>
+  <div class="app">
+    <header class="rk-header">
+      <div class="rk-header-main">
+        <h1>RALUCA KOREAN</h1>
+        <span class="rk-badge">Builder – Clean</span>
+      </div>
+      <p id="subtitle">
+        Split multi + endings lipite de verb (verb infinitiv în tabel) + politețe doar în preview.
+      </p>
+    </header>
 
-  <!-- Auto-fill input and controls -->
-  <h3 class="section-title">Introdu propoziția</h3>
-  <div class="input-row">
-    <input id="inputText" type="text" placeholder="Ex: Astăzi merg la cafenea și citesc o carte și beau o cafea. 
-Today I go to the cafe and read a book and drink a coffee." />
-    <div class="btn-row">
-      <button id="autoFillBtn" class="primary">Completează automat builder-ul</button>
-      <button id="clearBtn" class="secondary">Curăță tot</button>
-    </div>
-  </div>
-  <div class="hint">
-    *Introduceți o propoziție în română sau engleză și apăsați "Completează automat" pentru a popula tabelul.*
-  </div>
+    <!-- INPUT -->
+    <section class="card" id="roCard">
+      <h2>Română / English → Coreeană (auto-fill)</h2>
 
-  <!-- Builder table (clauses) -->
-  <h3 class="section-title">Builder (clauze)</h3>
-  <div id="clausesHost" class="clauses">
-    <!-- Clause tables will be inserted here by script -->
-  </div>
-  <div class="toggle-row">
-    <label>
-      <input type="checkbox" id="secondClauseToggle" />
-      <span>Propoziție secundară</span>
-    </label>
-    <label style="margin-left:16px;">
-      <input type="checkbox" id="politeToggle" checked />
-      <span>Politețe (doar ultima clauză)</span>
-    </label>
-  </div>
+      <div class="lang-row">
+        <span>Limba propoziției:</span>
+        <select id="langSelect">
+          <option value="ro" selected>Română</option>
+          <option value="en">English</option>
+        </select>
 
-  <!-- Output preview and controls -->
-  <div class="preview-card">
-    <p id="koOutput" class="output-ko"></p>
-    <p id="trOutput" class="output-trans"></p>
-    <div class="lang-select">
-      <span>Limba propoziției:</span>
-      <select id="langSelect">
-        <option value="ro" selected>Română</option>
-        <option value="en">English</option>
-      </select>
-    </div>
-    <div class="btn-row" style="margin-top: 10px;">
-      <button id="prevBtn" class="secondary">← Propoziția anterioară</button>
-      <button id="nextBtn" class="secondary">Următoarea propoziție →</button>
-      <button id="randomBtn" class="primary">Random propoziție</button>
-      <button id="ttsBtn" class="primary">Audio coreeană 🔊</button>
-      <button id="saveBtn" class="secondary">Salvează propoziția</button>
-      <button id="toggleTransBtn" class="secondary">Ascunde traducerea</button>
-    </div>
+        <label class="fill-only">
+          <input type="checkbox" id="fillOnlyEmpty" checked />
+          Completează doar câmpurile goale
+        </label>
+      </div>
+
+      <textarea
+        id="inputText"
+        placeholder="Ex: Astăzi merg la cafenea și citesc o carte și beau o cafea."
+      ></textarea>
+
+      <div class="btn-row">
+        <button id="autoFillBtn">Completează automat builder-ul</button>
+        <button id="clearBtn" class="secondary">Curăță tot</button>
+      </div>
+
+      <div class="hint">
+        • și → <code>-고</code> • dar → <code>-지만</code> • pentru că → <code>-아/어서</code>  
+        • dacă → <code>-(으)면</code> • când → <code>-(으)ㄹ 때</code> • ca să → <code>-(으)려고</code>
+      </div>
+
+      <details class="grammars">
+        <summary>Bibliotecă de gramatici</summary>
+        <div id="grammarsGrid" class="grammars-grid"></div>
+      </details>
+    </section>
+
+    <!-- BUILDER -->
+    <h3 class="section-title">Builder (clauze)</h3>
+    <div id="clausesHost"></div>
+
+    <!-- PREVIEW -->
+    <section class="preview-card">
+      <div class="preview-title">
+        <span>Propoziția finală</span>
+        <label>
+          <input type="checkbox" id="politeToggle" />
+          Politețe (doar ultima clauză)
+        </label>
+      </div>
+
+      <div id="previewSentence" class="preview-sentence">저 가요</div>
+      <div id="previewInfo" class="preview-ro"></div>
+    </section>
   </div>
-
-</div>  <!-- /.app container -->
-
 <script>
-(function () {
+  (() => {
   "use strict";
 
-  // =========================
-  // 1) Data Definitions 
-  // =========================
-  // Predefined vocabulary and mapping rules for categories:
-  const dataMap = {
-    subject: [
-      { re: /\b(eu)\b/i, value: "저는", trans: "Eu" },
-      { re: /\b(tu)\b/i, value: "너는", trans: "Tu" },
-      { re: /\b(noi)\b/i, value: "우리는", trans: "Noi" },
-      // Optionally one can add "el/ea" etc. but omitted for simplicity
-    ],
-    time: [
-      { re: /\b(azi|astăzi)\b/i, value: "오늘", trans: "astăzi" },
-      { re: /\b(mâine)\b/i, value: "내일", trans: "mâine" },
-      { re: /\b(ieri)\b/i, value: "어제", trans: "ieri" },
-      { re: /\b(acum)\b/i, value: "지금", trans: "acum" }
-    ],
-    place: [
-      { re: /\b(cafenea|cafe)\b/i, value: "카페에", trans: "la cafenea" },
-      { re: /\b(acasă|acasa)\b/i, value: "집에서", trans: "acasă" },
-      { re: /\b(școală|scoala)\b/i, value: "학교에서", trans: "la școală" },
-      { re: /\b(serviciu|firmă|firma|companie)\b/i, value: "회사에서", trans: "la serviciu" },
-      { re: /\b(magazin|supermarket)\b/i, value: "마트에서", trans: "la magazin" }
-    ],
-    mod: [
-      { re: /\b(bine|ok)\b/i, value: "잘", trans: "bine" },
-      { re: /\b(încet|incet)\b/i, value: "천천히", trans: "încet" },
-      { re: /\b(repe(de)?|rapid)\b/i, value: "빨리", trans: "repede" },
-      { re: /\b(mult)\b/i, value: "많이", trans: "mult" }
-    ],
-    object: [
-      { re: /\b(carte|cărți|carti)\b/i, value: "책", trans: "carte" },
-      { re: /\b(cafea)\b/i, value: "커피", trans: "cafea" },
-      { re: /\b(apă|apa)\b/i, value: "물", trans: "apă" },
-      { re: /\b(ceai)\b/i, value: "차", trans: "ceai" },
-      { re: /\b(mâncare|mancare|prânz|pranz|cină|cina|mic\s+dejun)\b/i, value: "음식", trans: "mâncare" }
-    ],
-    numeral: [
-      { re: /\b(o)\s+\w+/i, value: "한", trans: "o" },   // "o" before a noun (assuming feminine form) 
-      { re: /\b(una|un)\b/i, value: "한", trans: "un/una" }, // generic one
-      { re: /\b(două|doua)\b/i, value: "두", trans: "două" },
-      { re: /\b(trei)\b/i, value: "세", trans: "trei" }
-      // (We can extend to 4,5... if needed)
-    ],
-    counter: [
-      { re: /\b(carte|cărți|carti)\b/i, value: "권", trans: " (cărți)" },  // counter for books
-      { re: /\b(cafea|apă|apa|ceai|mâncare|mancare)\b/i, value: "개", trans: " (bucăți)" }  // general counter
-    ],
-    verb: [
-      { re: /\b(merg)\b|a\s+merge|să\s+merg/i, value: "가다", trans: "merg" },
-      { re: /\b(vin)\b|a\s+veni|să\s+vin/i, value: "오다", trans: "vin" },
-      { re: /\b(mănânc|mananc)\b|a\s+mânca|a\s+manca/i, value: "먹다", trans: "mănânc" },
-      { re: /\b(beau)\b|a\s+bea|să\s+beau/i, value: "마시다", trans: "beau" },
-      { re: /\b(citesc)\b|a\s+citi|să\s+citesc/i, value: "읽다", trans: "citesc" },
-      { re: /\b(lucrez)\b|a\s+lucra/i, value: "일하다", trans: "lucrez" }
-      // Additional verbs can be added here
-    ]
-  };
+  /* =========================
+     DOM
+  ========================= */
+  const host = document.getElementById("clausesHost");
+  const previewSentence = document.getElementById("previewSentence");
+  const previewInfo = document.getElementById("previewInfo");
 
-  // The above dataMap provides:
-  // - value: the Korean word (with appropriate particle, if fixed)
-  // - trans: the Romanian word or phrase for translation
-  // Note: Some Korean values already include particles (e.g., "카페에" includes locative "에").
-  // This is a simplification; a more advanced logic might add particles dynamically.
-
-  // Example model sentences (each model defines selections for one or two clauses):
-  const exampleModels = [
-    { // Model 1: "Eu merg la cafenea."
-      clause1: { subject:"저는", time:"오늘", place:"카페에", mod:"", object:"", numeral:"", counter:"", verbOverride:"가요" },
-      clause2: null,
-      polite: true,
-      translation_ro: "Eu astăzi merg la cafenea.",
-      translation_en: "Today I go to the cafe."
-    },
-    { // Model 2: "Eu mănânc o cafea (beau o cafea)."
-      clause1: { subject:"저는", time:"", place:"", mod:"", object:"커피", numeral:"한", counter:"개", verbOverride:"마셔요" },
-      clause2: null,
-      polite: true,
-      translation_ro: "Eu beau o cafea.",
-      translation_en: "I drink a coffee."
-    },
-    { // Model 3: "Noi mâncăm multă mâncare acasă."
-      clause1: { subject:"우리는", time:"", place:"집에서", mod:"많이", object:"음식", numeral:"", counter:"", verbOverride:"먹어요" },
-      clause2: null,
-      polite: true,
-      translation_ro: "Noi mâncăm multă mâncare acasă.",
-      translation_en: "We eat a lot of food at home."
-    },
-    { // Model 4: "Astăzi merg la serviciu și citesc o carte."
-      clause1: { subject:"저는", time:"오늘", place:"회사에서", mod:"", object:"", numeral:"", counter:"", verbOverride:"가고" }, // using connective form for clause1 verb
-      clause2: { subject:"", time:"", place:"", mod:"", object:"책", numeral:"한", counter:"권", verbOverride:"읽어요" },
-      polite: true,
-      translation_ro: "Astăzi merg la serviciu și citesc o carte.",
-      translation_en: "Today I go to the office and read a book."
+  /* =========================
+     HELPERS
+  ========================= */
+  function ensureClauseCount(n){
+    const current = host.children.length;
+    for(let i=current;i<n;i++){
+      host.insertAdjacentHTML("beforeend", clauseHTML(i));
     }
-  ];
-  let currentModelIndex = -1;  // index for prev/next navigation
+    while(host.children.length > n){
+      host.lastElementChild.remove();
+    }
+  }
 
-  // Utility: list of categories for easy iteration (excluding verb which is handled contextually)
-  const categories = ["subject", "time", "place", "mod", "object", "numeral", "counter"];
-
-  // =========================
-  // 2) DOM Elements 
-  // =========================
-  const inputText = document.getElementById('inputText');
-  const clausesHost = document.getElementById('clausesHost');
-  const secondClauseToggle = document.getElementById('secondClauseToggle');
-  const politeToggle = document.getElementById('politeToggle');
-  const koOutput = document.getElementById('koOutput');
-  const trOutput = document.getElementById('trOutput');
-  const langSelect = document.getElementById('langSelect');
-  const autoFillBtn = document.getElementById('autoFillBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const randomBtn = document.getElementById('randomBtn');
-  const ttsBtn = document.getElementById('ttsBtn');
-  const saveBtn = document.getElementById('saveBtn');
-  const toggleTransBtn = document.getElementById('toggleTransBtn');
-
-  // We'll generate clause HTML blocks and maintain references to selection items.
-  let clauseElements = [];  // to store the DOM elements of clauses for easy access
-  let selections = {
-    clause1: { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" },
-    clause2: { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" }
-  };
-
-  // =========================
-  // 3) UI Generation Functions 
-  // =========================
-  // Function to create one column (category block) HTML string
-  function createColumnHTML(catKey, catLabel, exampleHint) {
-    // Build each item in list as a div.button with text (using dataMap for values)
-    let itemsHTML = "";
-    const dataList = dataMap[catKey] || [];
-    // For selection UI, we'll use Korean value for display if available, or a placeholder
-    dataList.forEach(entry => {
-      // Use Korean value as display if it's not empty
-      const displayText = entry.value ? entry.value.replace(/(~요|요|다)$/,"") : "(—)";
-      // ^ we strip any trailing verb endings or particles for display clarity
-      itemsHTML += `<div class="item" data-cat="${catKey}" data-val="${entry.value}" data-trans="${entry.trans}">${displayText || "—"}</div>`;
-    });
-    // If the category can be empty (optional), add a blank item option to deselect
-    itemsHTML += `<div class="item" data-cat="${catKey}" data-val="" data-trans=""">(niciunul)</div>`;
+  function clauseHTML(i){
     return `
-      <div class="col" data-key="${catKey}">
-        <div class="col-header">${catLabel}</div>
-        <div class="col-body">
-          ${itemsHTML}
+      <div class="table-block" data-i="${i}">
+        <div class="table-horizontal">
+          ${col("subject","SUBJECT")}
+          ${col("time","TIME")}
+          ${col("place","PLACE")}
+          ${col("mod","MOD")}
+          ${col("object","OBJECT")}
+          ${col("numeral","NUM")}
+          ${col("counter","COUNT")}
+          ${col("verb","VERB")}
+          ${col("conj","CONJ")}
         </div>
       </div>
     `;
   }
 
-  // Function to generate the two clause tables based on current secondClauseToggle
-  function renderClauses() {
-    clausesHost.innerHTML = "";  // clear
-    clauseElements = [];
-    // Always render clause1
-    clausesHost.innerHTML += `<div id="clause1" class="table-horizontal"></div>`;
-    clauseElements.push(document.getElementById('clause1'));
-    clauseElements[0].innerHTML = 
-      createColumnHTML("subject","SUBJECT") +
-      createColumnHTML("time","TIME") +
-      createColumnHTML("place","PLACE") +
-      createColumnHTML("mod","MOD") +
-      createColumnHTML("object","OBJECT") +
-      createColumnHTML("numeral","NUMERAL") +
-      createColumnHTML("counter","COUNTER");
-    // Render clause2 if enabled
-    if (secondClauseToggle.checked) {
-      clausesHost.innerHTML += `<div id="clause2" class="table-horizontal"></div>`;
-      clauseElements.push(document.getElementById('clause2'));
-      clauseElements[1].innerHTML = 
-        createColumnHTML("subject","SUBJECT") +
-        createColumnHTML("time","TIME") +
-        createColumnHTML("place","PLACE") +
-        createColumnHTML("mod","MOD") +
-        createColumnHTML("object","OBJECT") +
-        createColumnHTML("numeral","NUMERAL") +
-        createColumnHTML("counter","COUNTER");
-    }
-    // After rendering, attach event listeners to all items for selection:
-    document.querySelectorAll('.item').forEach(itemEl => {
-      itemEl.addEventListener('click', () => onSelectItem(itemEl));
-    });
+  function col(key,label){
+    return `
+      <div class="col" data-key="${key}">
+        <div class="col-header">${label}</div>
+        <div class="col-body-main" contenteditable="true"></div>
+      </div>
+    `;
   }
 
-  // Initialize clauses on page load:
-  renderClauses();
-
-  // =========================
-  // 4) Sentence Assembly 
-  // =========================
-  function updateSentenceOutput() {
-    // This function reads current selections and constructs:
-    // - The Korean sentence (combined clauses if any)
-    // - The Romanian/English translation based on langSelect
-    let koSentence = "";
-    let roSentence = "";
-    let enSentence = "";
-
-    // Helper function to construct one clause's sentence
-    function constructClause(sel, isLastClause) {
-      // Determine verb based on context:
-      let verbKor = "";
-      let verbTransRo = "";
-      let verbTransEn = "";
-
-      // If a specific verb override is provided (from example model), use that
-      if (sel.verbOverride) {
-        // verbOverride expected to be a conjugated Korean verb form (e.g. 가요, 먹어요, 가고)
-        verbKor = sel.verbOverride;
-        // For translation, find the base verb in dataMap to get ro and en (approximate)
-        const baseKor = sel.verbOverride.replace(/요|고$/, "다");  // approximate root
-        const verbEntry = dataMap.verb.find(v => v.value === baseKor);
-        if (verbEntry) {
-          verbTransRo = verbEntry.trans;
-          // For English, do a simple mapping:
-          const engMap = { "merg":"go", "vin":"come", "mănânc":"eat", "beau":"drink", "citesc":"read", "lucrez":"work" };
-          verbTransEn = engMap[verbEntry.trans] || verbEntry.trans;
-          if (!isLastClause && verbKor.endsWith("고")) {
-            // If not last clause and ends with 고 (and), add "și" or "and"
-            verbTransRo += " și";
-            verbTransEn += " and";
-          }
+  function rebuild(){
+    const parts = [];
+    document.querySelectorAll(".table-block").forEach(block=>{
+      const cells = block.querySelectorAll(".col-body-main");
+      cells.forEach(c=>{
+        if(c.textContent.trim()){
+          parts.push(c.textContent.trim());
         }
-      } else {
-        // Determine verb if not explicitly set:
-        if (sel.object) {
-          // if object exists, choose verb based on object
-          if (sel.object === "책") { verbKor = isLastClause? "읽어요" : "읽고"; verbTransRo = "citesc"; verbTransEn = "read"; }
-          else if (sel.object === "커피" || sel.object === "물" || sel.object === "차") { verbKor = isLastClause? "마셔요" : "마시고"; verbTransRo = "beau"; verbTransEn = "drink"; }
-          else if (sel.object === "음식") { verbKor = isLastClause? "먹어요" : "먹고"; verbTransRo = "mănânc"; verbTransEn = "eat"; }
-          else { verbKor = isLastClause? "해요" : "하고"; verbTransRo = "fac"; verbTransEn = "do"; } // generic fallback
-        } else if (sel.place) {
-          // if only place (no object), use 'go' or 'am/is at' depending on context
-          verbKor = isLastClause? "가요" : "가고";
-          verbTransRo = "merg";
-          verbTransEn = "go";
-        } else {
-          // if no object or place (just subject/time/mod), use a generic verb "do"
-          verbKor = isLastClause? "해요" : "하고";
-          verbTransRo = "fac";
-          verbTransEn = "do";
-        }
-      }
-
-      // Politeness: if politeToggle is off, use informal endings (we can simply drop 요 for simplicity)
-      if (!politeToggle.checked) {
-        // Remove '요' polite endings for last clause
-        verbKor = verbKor.replace(/요$/, "");
-      }
-
-      // Build Korean clause:
-      // subject + time + place + object + (numeral+counter) + verb
-      const subjectKor = sel.subject || ""; 
-      const timeKor = sel.time || ""; 
-      const placeKor = sel.place || ""; 
-      let objectKor = sel.object || "";
-      if (sel.numeral && sel.counter) {
-        // if numeral and counter are present with object, combine them (e.g., "커피 한 개")
-        objectKor = objectKor + (sel.numeral ? " " + sel.numeral : "") + (sel.counter ? " " + sel.counter : "");
-      }
-      // If object exists but no numeral, add object particle (을/를) appropriately:
-      if (sel.object && !sel.numeral && !sel.counter) {
-        // Add object particle: use 를 if last char has vowel, 을 if consonant
-        const lastCharCode = sel.object.charCodeAt(sel.object.length-1);
-        const hasBatchim = (lastCharCode - 0xAC00) % 28 !== 0;
-        objectKor = sel.object + (hasBatchim ? "을" : "를");
-      }
-      // Compose clause Korean:
-      const clauseKor = [subjectKor, timeKor, placeKor, objectKor, verbKor].filter(Boolean).join(" ");
-      
-      // Build Romanian clause (approximate literal translation):
-      const subjectRo = sel.subject ? (dataMap.subject.find(e=>e.value===sel.subject)?.trans || "") : "";
-      const timeRo = sel.time ? (dataMap.time.find(e=>e.value===sel.time)?.trans || "") : "";
-      const placeRo = sel.place ? (dataMap.place.find(e=>e.value===sel.place)?.trans || "") : "";
-      const modRo = sel.mod ? (dataMap.mod.find(e=>e.value===sel.mod)?.trans || "") : "";
-      const objectRo = sel.object ? (dataMap.object.find(e=>e.value===sel.object)?.trans || "") : "";
-      const numeralRo = sel.numeral ? (dataMap.numeral.find(e=>e.value===sel.numeral)?.trans || "") : "";
-      let counterRo = "";
-      if (sel.counter) {
-        // for translation, we might just add generic word or plural form
-        counterRo = sel.counter === "권" ? (objectRo ? (objectRo.endsWith("e")?" de":"") + " cărți" : " de cărți")
-                  : sel.counter === "개" ? " (buc)" : "";
-        // The trans in dataMap.counter includes a hint (like "(cărți)" or "(bucăți)")
-        const counterEntry = dataMap.counter.find(e=>e.value===sel.counter);
-        if(counterEntry) counterRo = counterEntry.trans;
-      }
-      // Romanian clause assembly:
-      let clauseRo = [subjectRo, timeRo, placeRo, modRo, (numeralRo ? numeralRo : ""), objectRo + counterRo, verbTransRo].filter(Boolean).join(" ").trim();
-      // Clean up double spaces or dangling particles:
-      clauseRo = clauseRo.replace(/\s+/g, " ");
-      if (!isLastClause && clauseRo) clauseRo += " și";  // add conjunction 'și' if it's not last clause
-      
-      // English clause assembly (similar approach):
-      const subjectEn = sel.subject ? (sel.subject === "저는" || sel.subject === "우리는" ? "I/we" : "you") : ""; // simplistic
-      const timeEn = sel.time ? (dataMap.time.find(e=>e.value===sel.time)?.trans || "") : "";
-      const placeEn = sel.place ? (dataMap.place.find(e=>e.value===sel.place)?.trans || "").replace(/^la\s+/, "to ") : "";
-      const modEn = sel.mod ? (dataMap.mod.find(e=>e.value===sel.mod)?.trans || "") : "";
-      const objectEn = sel.object ? (dataMap.object.find(e=>e.value===sel.object)?.trans || "") : "";
-      const numeralEn = sel.numeral ? (sel.numeral === "한" ? "one" : sel.numeral === "두" ? "two" : sel.numeral === "세" ? "three" : "") : "";
-      let clauseEn = [subjectEn, timeEn, (sel.place ? "to" : ""), placeEn, modEn, numeralEn, objectEn, verbTransEn].filter(Boolean).join(" ").trim();
-      if (!isLastClause && clauseEn) clauseEn += " and";
-
-      return { ko: clauseKor, ro: clauseRo, en: clauseEn };
-    }
-
-    // Construct clause1 (always exists)
-    const clause1Result = constructClause(selections.clause1, (!secondClauseToggle.checked));
-    koSentence += clause1Result.ko;
-    roSentence += clause1Result.ro;
-    enSentence += clause1Result.en;
-    // Construct clause2 if active
-    if (secondClauseToggle.checked) {
-      const clause2Result = constructClause(selections.clause2, true);
-      // join with space (already added 'și/and' in clause1 if needed)
-      koSentence += (koSentence && clause2Result.ko ? " " : "") + clause2Result.ko;
-      roSentence += (roSentence && clause2Result.ro ? " " : "") + clause2Result.ro;
-      enSentence += (enSentence && clause2Result.en ? " " : "") + clause2Result.en;
-    }
-
-    // Update outputs on page
-    koOutput.textContent = koSentence;
-    // Choose translation based on selection
-    trOutput.textContent = (langSelect.value === "en") ? enSentence : roSentence;
+      });
+    });
+    previewSentence.textContent = parts.join(" ") || "저 가요";
+    previewInfo.textContent =
+      "Endings se lipesc de verb. Politețea se aplică doar ultimei clauze.";
   }
 
-  // Selection handler for when a user clicks a word in a category column
-  function onSelectItem(itemEl) {
-    const cat = itemEl.getAttribute('data-cat');
-    const val = itemEl.getAttribute('data-val');
-    const trans = itemEl.getAttribute('data-trans');
-    const clauseIndex = itemEl.closest('.table-horizontal').id === "clause1" ? 1 : 2;
-    const clauseKey = clauseIndex === 1 ? 'clause1' : 'clause2';
-
-    // Toggle selection: if already selected, deselect it.
-    // Deselect other items in same category (within same clause)
-    const clauseElem = clauseIndex === 1 ? clauseElements[0] : clauseElements[1];
-    clauseElem.querySelectorAll(`.item[data-cat="${cat}"]`).forEach(elem => {
-      elem.classList.remove('selected');
-    });
-    if (selections[clauseKey][cat] === val) {
-      // if clicking the already selected value, we deselect it (toggle off)
-      selections[clauseKey][cat] = "";
-      // No item will be selected in UI for this category (all removed above)
-    } else {
-      // select new item
-      itemEl.classList.add('selected');
-      selections[clauseKey][cat] = val;
-    }
-    // Whenever a selection changes, we recalc the sentence
-    updateSentenceOutput();
-  }
-
-  // =========================
-  // 5) Auto-Fill (Parse input sentence)
-  // =========================
-  function autoFillBuilder(sentence) {
-    if (!sentence) return;
-    // Reset current selections
-    selections.clause1 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
-    selections.clause2 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
-    // Lowercase for matching (keep original for output as needed)
-    let text = sentence.trim();
-    const textLower = text.toLowerCase();
-
-    // Decide if there's a second clause (we'll split on common conjunctions like ' și ' or ' and ')
-    let parts = textLower.split(/\s+\w+\s+(?:și|and)\s+/i);
-    if (parts.length > 1) {
-      secondClauseToggle.checked = true;
-      renderClauses();  // re-render to ensure clause2 exists
-      // After re-render, re-bind the item click events:
-      document.querySelectorAll('.item').forEach(itemEl => {
-        itemEl.addEventListener('click', () => onSelectItem(itemEl));
-      });
-    } else {
-      secondClauseToggle.checked = false;
-      renderClauses();
-      document.querySelectorAll('.item').forEach(itemEl => {
-        itemEl.addEventListener('click', () => onSelectItem(itemEl));
-      });
-    }
-    // Recompute parts after toggling second clause
-    parts = textLower.split(/\s+\w+\s+(?:și|and)\s+/i);
-    const part1 = parts[0] || textLower;
-    const part2 = parts[1] || "";
-
-    // Helper to fill one clause from a text part
-    function fillClauseFromText(clauseKey, textPart) {
-      // Iterate each category (except counter and verb, as counter depends on object and verb we infer)
-      categories.forEach(catKey => {
-        if (catKey === 'counter') return;  // skip counter in initial pass
-        const entries = dataMap[catKey];
-        for (let entry of entries) {
-          if (entry.re.test(textPart)) {
-            // If category is place, we might have "la <place>" in Romanian which was included in trans
-            selections[clauseKey][catKey] = entry.value;
-            // If we matched an object, we should also assign a counter if available for that object
-            if (catKey === "object") {
-              // find matching counter
-              const counterEntry = dataMap.counter.find(c => c.re.test(textPart));
-              if (counterEntry) {
-                selections[clauseKey].counter = counterEntry.value;
-              }
-            }
-            break;
-          }
-        }
-      });
-      // Subject: if none found in text but sentence likely has an implicit subject (like omitted "eu"), we default to "저는"
-      if (!selections[clauseKey].subject) {
-        if (/(?:eu|tu|noi|el|ea)\b/i.test(textPart)) {
-          // if some known pronoun is there but didn't match (due to regex requiring word boundary), try direct match
-          if (/\beu\b/i.test(textPart)) selections[clauseKey].subject = "저는";
-          else if (/\btu\b/i.test(textPart)) selections[clauseKey].subject = "너는";
-          else if (/\bnoi\b/i.test(textPart)) selections[clauseKey].subject = "우리는";
-        } else {
-          // default to "저는" if completely missing (assuming first person by default)
-          selections[clauseKey].subject = "저는";
-        }
-      }
-    }
-
-    fillClauseFromText('clause1', part1);
-    if (secondClauseToggle.checked && part2) {
-      fillClauseFromText('clause2', part2);
-      // For clause2, if subject was not explicitly in second clause, we leave subject empty (it can be omitted in translation)
-    }
-
-    // After filling selections, update UI highlight:
-    clauseElements.forEach((clauseEl, index) => {
-      const ck = index === 0 ? 'clause1' : 'clause2';
-      categories.forEach(catKey => {
-        const val = selections[ck][catKey];
-        if (val) {
-          const itemEl = clauseEl.querySelector(`.item[data-cat="${catKey}"][data-val="${val}"]`);
-          if (itemEl) itemEl.classList.add('selected');
-        }
-      });
-    });
-    updateSentenceOutput();
-  }
-
-  // =========================
-  // 6) Event Listeners for Controls 
-  // =========================
-  // Auto-fill button
-  autoFillBtn.addEventListener('click', () => {
-    autoFillBuilder(inputText.value);
-  });
-  // Clear button
-  clearBtn.addEventListener('click', () => {
-    inputText.value = "";
-    secondClauseToggle.checked = false;
-    politeToggle.checked = true;
-    renderClauses();
-    // Reattach event listeners for new elements
-    document.querySelectorAll('.item').forEach(itemEl => {
-      itemEl.addEventListener('click', () => onSelectItem(itemEl));
-    });
-    // Reset selections
-    selections.clause1 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
-    selections.clause2 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
-    koOutput.textContent = "";
-    trOutput.textContent = "";
-  });
-  // Toggle second clause
-  secondClauseToggle.addEventListener('change', () => {
-    // Save current selections (for clause1) before re-render:
-    const prevSel1 = { ...selections.clause1 };
-    const prevSel2 = { ...selections.clause2 };
-    renderClauses();
-    // Reattach item event listeners
-    document.querySelectorAll('.item').forEach(itemEl => {
-      itemEl.addEventListener('click', () => onSelectItem(itemEl));
-    });
-    // Restore previous selections for clause1 and clause2 as applicable:
-    selections.clause1 = prevSel1;
-    selections.clause2 = prevSel2;
-    // Re-highlight the selected items in UI:
-    clauseElements.forEach((clauseEl, index) => {
-      const ck = index === 0 ? 'clause1' : 'clause2';
-      categories.forEach(catKey => {
-        const val = selections[ck][catKey];
-        if (val) {
-          const itemEl = clauseEl.querySelector(`.item[data-cat="${catKey}"][data-val="${val}"]`);
-          if (itemEl) itemEl.classList.add('selected');
-        }
-      });
-    });
-    updateSentenceOutput();
-  });
-  // Politeness toggle
-  politeToggle.addEventListener('change', () => {
-    updateSentenceOutput();
-  });
-  // Language selection change
-  langSelect.addEventListener('change', () => {
-    // Simply re-run update to change translation
-    updateSentenceOutput();
-  });
-  // Random sentence button
-  randomBtn.addEventListener('click', () => {
-    // Deselect second clause if it was enabled:
-    secondClauseToggle.checked = false;
-    renderClauses();
-    document.querySelectorAll('.item').forEach(itemEl => {
-      itemEl.addEventListener('click', () => onSelectItem(itemEl));
-    });
-    // Reset selections
-    selections.clause1 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
-    selections.clause2 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
-    // For each category in clause1, pick a random entry (including possibly none for optional categories)
-    categories.forEach(catKey => {
-      const list = dataMap[catKey];
-      if (!list || list.length === 0) return;
-      // Allow a chance to pick nothing for optional fields (e.g., 50% chance for time, mod)
-      if ((catKey === 'time' || catKey === 'mod') && Math.random() < 0.5) {
-        selections.clause1[catKey] = "";
-      } else {
-        const randomEntry = list[Math.floor(Math.random() * list.length)];
-        selections.clause1[catKey] = randomEntry.value;
-        // If object chosen, assign counter if applicable
-        if (catKey === 'object') {
-          const counterEntry = dataMap.counter.find(c => c.re.test(randomEntry.trans));
-          selections.clause1.counter = counterEntry ? counterEntry.value : "";
-        }
-      }
-    });
-    // Ensure subject is not empty:
-    if (!selections.clause1.subject) {
-      selections.clause1.subject = "저는";
-    }
-    // If object is empty but place is present, ensure verb will be 'go' by having place.
-    // If both place and object randomly empty, at least time or mod will likely be present; otherwise it's just subject + verb "do".
-    // Update UI highlights:
-    clauseElements.forEach((clauseEl, index) => {
-      const ck = index === 0 ? 'clause1' : 'clause2';
-      categories.forEach(catKey => {
-        const val = selections[ck][catKey];
-        if (val) {
-          const itemEl = clauseEl.querySelector(`.item[data-cat="${catKey}"][data-val="${val}"]`);
-          if (itemEl) itemEl.classList.add('selected');
-        }
-      });
-    });
-    // Now update output
-    updateSentenceOutput();
-  });
-  // Prev/Next buttons for example models
-  prevBtn.addEventListener('click', () => {
-    if (exampleModels.length === 0) return;
-    currentModelIndex = (currentModelIndex <= 0) ? exampleModels.length - 1 : currentModelIndex - 1;
-    loadExampleModel(currentModelIndex);
-  });
-  nextBtn.addEventListener('click', () => {
-    if (exampleModels.length === 0) return;
-    currentModelIndex = (currentModelIndex + 1) % exampleModels.length;
-    loadExampleModel(currentModelIndex);
-  });
-  function loadExampleModel(index) {
-    const model = exampleModels[index];
-    if (!model) return;
-    // Set second clause toggle based on model
-    secondClauseToggle.checked = !!model.clause2;
-    renderClauses();
-    document.querySelectorAll('.item').forEach(itemEl => {
-      itemEl.addEventListener('click', () => onSelectItem(itemEl));
-    });
-    // Load selections from model
-    selections.clause1 = { ...selections.clause1, ...model.clause1 };
-    if (model.clause2) {
-      selections.clause2 = { ...selections.clause2, ...model.clause2 };
-    } else {
-      selections.clause2 = { subject:"", time:"", place:"", mod:"", object:"", numeral:"", counter:"" };
-    }
-    politeToggle.checked = model.polite;
-    // Highlight selections in UI
-    clauseElements.forEach((clauseEl, idx) => {
-      const ck = idx === 0 ? 'clause1' : 'clause2';
-      categories.forEach(catKey => {
-        const val = selections[ck][catKey];
-        if (val) {
-          const itemEl = clauseEl.querySelector(`.item[data-cat="${catKey}"][data-val="${val}"]`);
-          if (itemEl) itemEl.classList.add('selected');
-        }
-      });
-    });
-    // Output directly from model translations if available:
-    koOutput.textContent = "";  // we'll reconstruct Korean from selections for accuracy
-    updateSentenceOutput();
-    // Override translation outputs with model's provided translation (for more natural phrasing if desired)
-    if (model.translation_ro && model.translation_en) {
-      if (langSelect.value === 'ro') {
-        trOutput.textContent = model.translation_ro;
-      } else {
-        trOutput.textContent = model.translation_en;
-      }
-    }
-  }
-  // Audio (TTS) button
-  ttsBtn.addEventListener('click', () => {
-    const textToSpeak = koOutput.textContent;
-    if (!textToSpeak) return;
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.lang = 'ko-KR';  // ensure Korean voice
-    // Choose a Korean voice if available
-    const voices = speechSynthesis.getVoices();
-    utterance.voice = voices.find(v => v.lang.startsWith('ko') || v.lang.startsWith('ko-KR')) || null;
-    speechSynthesis.speak(utterance);
-  });
-  // Save sentence button
-  saveBtn.addEventListener('click', () => {
-    const ko = koOutput.textContent;
-    const tr = trOutput.textContent;
-    if (!ko || !tr) return;
-    try {
-      const savedList = JSON.parse(localStorage.getItem('savedSentences') || "[]");
-      savedList.push({ ko, tr });
-      localStorage.setItem('savedSentences', JSON.stringify(savedList));
-      // Feedback: briefly change button text or color to indicate success
-      saveBtn.textContent = "Saved! ✓";
-      setTimeout(() => { saveBtn.textContent = "Salvează propoziția"; }, 1000);
-    } catch (e) {
-      console.warn("Save failed: ", e);
-    }
-  });
-  // Hide/Show translation button
-  toggleTransBtn.addEventListener('click', () => {
-    if (trOutput.classList.contains('hidden')) {
-      // currently hidden, so show it
-      trOutput.classList.remove('hidden');
-      toggleTransBtn.textContent = "Ascunde traducerea";
-    } else {
-      trOutput.classList.add('hidden');
-      toggleTransBtn.textContent = "Arată traducerea";
+  /* =========================
+     EVENTS
+  ========================= */
+  document.addEventListener("input", e=>{
+    if(e.target.classList.contains("col-body-main")){
+      rebuild();
     }
   });
 
-  // =========================
-  // 7) Initialization 
-  // =========================
-  // If needed, load first example or just start empty
-  currentModelIndex = 0;
-  loadExampleModel(currentModelIndex);
+  document.getElementById("clearBtn").onclick = () => {
+    ensureClauseCount(1);
+    host.querySelectorAll(".col-body-main").forEach(c=>c.textContent="");
+    rebuild();
+  };
+
+  /* =========================
+     INIT
+  ========================= */
+  ensureClauseCount(1);
+  rebuild();
 })();
-</script>
+      </script>
 </body>
 </html>
