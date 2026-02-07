@@ -85,6 +85,265 @@ placeholder="Ex: Astăzi merg la cafenea și citesc o carte și beau o cafea."><
 </div>
 
 <script>
+ /* =========================================================
+   RALUCA KOREAN – SENTENCE BUILDER
+   builder.js (FULL, FINAL)
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  /* =========================================================
+     1. CONFIG
+     ========================================================= */
+
+  const COLUMNS = [
+    { key: "subject",  label: "SUBJECT",  type: "noun" },
+    { key: "time",     label: "TIME",     type: "time" },
+    { key: "place",    label: "PLACE",    type: "place" },
+    { key: "mod",      label: "MOD",      type: "adverb" },
+    { key: "object",   label: "OBJECT",   type: "noun" },
+    { key: "numeral",  label: "NUMERAL",  type: "number" },
+    { key: "counter",  label: "COUNTER",  type: "counter" },
+    { key: "verb",     label: "VERB",     type: "verb" },
+    { key: "conj",     label: "CONJ",     type: "connector" }
+  ];
+
+  const VERBS_GO = ["가다", "오다"];
+
+  /* =========================================================
+     2. STATE
+     ========================================================= */
+
+  let clauses = [];
+  let activeClause = 0;
+  let politeLast = false;
+
+  /* =========================================================
+     3. DOM ROOT
+     ========================================================= */
+
+  const root = document.getElementById("builder-root");
+  if (!root) {
+    console.error("builder-root not found");
+    return;
+  }
+
+  /* =========================================================
+     4. HELPERS – HANGUL
+     ========================================================= */
+
+  function hasBatchim(char) {
+    if (!char) return false;
+    const code = char.charCodeAt(0);
+    if (code < 0xac00 || code > 0xd7a3) return false;
+    return ((code - 0xac00) % 28) !== 0;
+  }
+
+  function lastChar(word) {
+    return word ? word[word.length - 1] : "";
+  }
+
+  /* =========================================================
+     5. PARTICLES
+     ========================================================= */
+
+  function topicParticle(word) {
+    return hasBatchim(lastChar(word)) ? "은" : "는";
+  }
+
+  function objectParticle(word) {
+    return hasBatchim(lastChar(word)) ? "을" : "를";
+  }
+
+  function placeParticle(place, verb) {
+    if (VERBS_GO.includes(verb)) return "에";
+    return "에서";
+  }
+
+  /* =========================================================
+     6. VERB ENDINGS
+     ========================================================= */
+
+  function attachEnding(verbInf, ending) {
+    if (!verbInf || !ending) return verbInf;
+    if (!verbInf.endsWith("다")) return verbInf;
+
+    const stem = verbInf.slice(0, -1);
+    const last = lastChar(stem);
+    const batchim = hasBatchim(last);
+
+    switch (ending) {
+      case "-고":       return stem + "고";
+      case "-지만":     return stem + "지만";
+      case "-아서":
+      case "-어서":     return stem + ending.replace("-", "");
+      case "-(으)면":   return stem + (batchim ? "으면" : "면");
+      case "-(으)ㄹ 때":return stem + (batchim ? "을 때" : "ㄹ 때");
+      case "-(으)려고": return stem + (batchim ? "으려고" : "려고");
+      default:          return stem + ending.replace("-", "");
+    }
+  }
+
+  function politePresent(verbInf) {
+    if (!verbInf.endsWith("다")) return verbInf;
+    if (verbInf === "하다") return "해요";
+
+    const stem = verbInf.slice(0, -1);
+    const last = lastChar(stem);
+    const code = last.charCodeAt(0) - 0xac00;
+    const jung = Math.floor((code % (21 * 28)) / 28);
+    const isA = [0, 2, 8, 9].includes(jung);
+
+    return stem + (isA ? "아요" : "어요");
+  }
+
+  /* =========================================================
+     7. CLAUSE FACTORY
+     ========================================================= */
+
+  function createEmptyClause() {
+    const obj = {};
+    COLUMNS.forEach(c => obj[c.key] = "");
+    return obj;
+  }
+
+  /* =========================================================
+     8. UI BUILD
+     ========================================================= */
+
+  function buildUI() {
+    root.innerHTML = `
+      <h2>Raluca Korean – Builder</h2>
+
+      <div class="controls">
+        <button id="addClause">+ Clauză</button>
+        <label>
+          <input type="checkbox" id="politeToggle">
+          Polite (ultima clauză)
+        </label>
+      </div>
+
+      <div id="clauses"></div>
+
+      <div class="preview">
+        <strong>Propoziția finală:</strong>
+        <div id="previewText"></div>
+      </div>
+    `;
+
+    document.getElementById("addClause").onclick = () => {
+      clauses.push(createEmptyClause());
+      activeClause = clauses.length - 1;
+      render();
+    };
+
+    document.getElementById("politeToggle").onchange = e => {
+      politeLast = e.target.checked;
+      renderPreview();
+    };
+  }
+
+  /* =========================================================
+     9. RENDER CLAUSES
+     ========================================================= */
+
+  function render() {
+    const host = document.getElementById("clauses");
+    host.innerHTML = "";
+
+    clauses.forEach((clause, idx) => {
+      const div = document.createElement("div");
+      div.className = "clause" + (idx === activeClause ? " active" : "");
+      div.onclick = () => { activeClause = idx; render(); };
+
+      div.innerHTML = `
+        <h4>Propoziția ${idx + 1}</h4>
+        <div class="row">
+          ${COLUMNS.map(col => `
+            <div class="cell">
+              <label>${col.label}</label>
+              <input data-key="${col.key}" value="${clause[col.key] || ""}">
+            </div>
+          `).join("")}
+        </div>
+      `;
+
+      div.querySelectorAll("input").forEach(inp => {
+        inp.oninput = e => {
+          clause[e.target.dataset.key] = e.target.value.trim();
+          renderPreview();
+        };
+      });
+
+      host.appendChild(div);
+    });
+
+    renderPreview();
+  }
+
+  /* =========================================================
+     10. BUILD SENTENCE
+     ========================================================= */
+
+  function buildClauseSentence(clause, isLast) {
+    let parts = [];
+
+    if (clause.subject)
+      parts.push(clause.subject + topicParticle(clause.subject));
+
+    if (clause.time)
+      parts.push(clause.time);
+
+    if (clause.place)
+      parts.push(clause.place + placeParticle(clause.place, clause.verb));
+
+    if (clause.mod)
+      parts.push(clause.mod);
+
+    if (clause.object) {
+      let obj = clause.object;
+      if (clause.numeral && clause.counter)
+        obj += " " + clause.numeral + clause.counter;
+      parts.push(obj + objectParticle(obj));
+    }
+
+    let verb = clause.verb;
+
+    if (isLast && politeLast)
+      verb = politePresent(verb);
+    else
+      verb = attachEnding(verb, clause.conj);
+
+    if (verb) parts.push(verb);
+
+    return parts.join(" ");
+  }
+
+  function renderPreview() {
+    const out = document.getElementById("previewText");
+    if (!out) return;
+
+    const sentence = clauses
+      .map((c, i) => buildClauseSentence(c, i === clauses.length - 1))
+      .join(" ");
+
+    out.textContent = sentence || "—";
+  }
+
+  /* =========================================================
+     11. INIT
+     ========================================================= */
+
+  function init() {
+    clauses = [createEmptyClause()];
+    buildUI();
+    render();
+  }
+
+  init();
+
+})(); 
  /* ======================================================
    RALUCA KOREAN — BUILDER.JS (FINAL, FULL, STABLE)
    ====================================================== */
