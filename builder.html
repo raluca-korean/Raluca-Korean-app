@@ -85,154 +85,188 @@ placeholder="Ex: Astăzi merg la cafenea și citesc o carte și beau o cafea."><
 </div>
 
 <script>
-"use strict";
+ /* ======================================================
+   RALUCA KOREAN — BUILDER.JS (FINAL, FULL, STABLE)
+   ====================================================== */
+(function () {
+  "use strict";
 
-/* ==========================
-   CONFIG
-========================== */
-const COLUMNS = [
-  ["subject","SUBIECT"],
-  ["time","TIMP"],
-  ["place","LOC"],
-  ["mod","MOD"],
-  ["object","OBIECT"],
-  ["numeral","NUMERAL"],
-  ["counter","COUNTER"],
-  ["verb","VERB (…다)"],
-  ["conj","CONJ / ENDING"]
-];
+  /* =========================
+     HELPERS — HANGUL
+  ========================= */
+  function lastHangulChar(str) {
+    const s = (str || "").trim();
+    return s ? s[s.length - 1] : "";
+  }
 
-const host = document.getElementById("clausesHost");
+  function hasBatchim(char) {
+    if (!char) return false;
+    const code = char.charCodeAt(0);
+    if (code < 0xac00 || code > 0xd7a3) return false;
+    return (code - 0xac00) % 28 !== 0;
+  }
 
-/* ==========================
-   UTILS
-========================== */
-function hasBatchim(ch){
-  const code = ch.charCodeAt(ch.length-1);
-  if(code<0xac00||code>0xd7a3) return false;
-  return (code-0xac00)%28!==0;
-}
+  /* =========================
+     PARTICLES
+  ========================= */
+  function subjectParticle(word) {
+    if (!word) return "";
+    return hasBatchim(lastHangulChar(word)) ? "은" : "는";
+  }
 
-function attachEnding(verb, ending){
-  if(!verb||!verb.endsWith("다")) return verb;
-  if(!ending) return verb;
+  function objectParticle(word) {
+    if (!word) return "";
+    return hasBatchim(lastHangulChar(word)) ? "을" : "를";
+  }
 
-  const stem = verb.slice(0,-1);
-  const last = stem[stem.length-1];
-  const b = hasBatchim(last);
+  function placeParticle(place, verb) {
+    if (!place) return "";
+    if (verb === "가다" || verb === "오다") return "에";
+    return "에서";
+  }
 
-  if(ending==="-고"||ending==="고") return stem+"고";
-  if(ending==="-지만"||ending==="지만") return stem+"지만";
-  if(ending==="-아서"||ending==="아서") return stem+"아서";
-  if(ending==="-어서"||ending==="어서") return stem+"어서";
-  if(ending==="-(으)면") return stem+(b?"으면":"면");
+  /* =========================
+     ENDINGS
+  ========================= */
+  function attachEnding(verbInf, ending) {
+    if (!verbInf || !ending) return verbInf;
+    if (!verbInf.endsWith("다")) return verbInf;
 
-  return stem+ending.replace(/^-/,"");
-}
+    const stem = verbInf.slice(0, -1);
+    const last = lastHangulChar(stem);
+    const batchim = hasBatchim(last);
 
-function politeForm(verb){
-  if(!verb||!verb.endsWith("다")) return verb;
-  const stem = verb.slice(0,-1);
-  const last = stem[stem.length-1];
-  const code = last.charCodeAt(0);
-  const jung = Math.floor(((code-0xac00)%(21*28))/28);
-  const aGroup=[0,2,8,9];
-  return stem+(aGroup.includes(jung)?"아요":"어요");
-}
+    if (ending === "-고") return stem + "고";
+    if (ending === "-지만") return stem + "지만";
+    if (ending === "-아서" || ending === "-어서") return stem + ending.slice(1);
+    if (ending === "-(으)면") return stem + (batchim ? "으면" : "면");
+    if (ending === "-(으)ㄹ 때") return stem + (batchim ? "을 때" : "ㄹ 때");
+    if (ending === "-(으)려고") return stem + (batchim ? "으려고" : "려고");
 
-function placeParticle(place, verb){
-  if(!place) return "";
-  if(verb==="가다"||verb==="오다") return place+"에";
-  return place+"에서";
-}
+    return stem + ending.replace(/^[-]/, "");
+  }
 
-/* ==========================
-   UI
-========================== */
-function createClause(){
-  const block=document.createElement("div");
-  block.className="table-block";
+  function politePresent(verbInf) {
+    if (!verbInf || !verbInf.endsWith("다")) return verbInf;
+    if (verbInf === "하다") return "해요";
 
-  const table=document.createElement("div");
-  table.className="table";
+    const stem = verbInf.slice(0, -1);
+    const last = lastHangulChar(stem);
+    const code = last.charCodeAt(0);
+    const jung = Math.floor(((code - 0xac00) % (21 * 28)) / 28);
+    const aGroup = [0, 2, 8, 9]; // ㅏ ㅑ ㅗ ㅛ
+    return stem + (aGroup.includes(jung) ? "아요" : "어요");
+  }
 
-  COLUMNS.forEach(c=>{
-    const col=document.createElement("div");
-    col.className="col";
-    col.dataset.key=c[0];
-    col.innerHTML=`<h4>${c[1]}</h4><div contenteditable="true"></div>`;
-    table.appendChild(col);
-  });
+  /* =========================
+     DOM HELPERS
+  ========================= */
+  function cell(tableId, key) {
+    return document.querySelector(
+      `#${tableId} .col[data-key="${key}"] .col-body-main`
+    );
+  }
 
-  block.appendChild(table);
-  host.appendChild(block);
-}
+  function read(tableId, key) {
+    const c = cell(tableId, key);
+    return c ? c.textContent.trim() : "";
+  }
 
-function resetAll(){
-  host.innerHTML="";
-  createClause();
-  buildPreview();
-}
+  function write(tableId, key, value) {
+    const c = cell(tableId, key);
+    if (c) c.textContent = value || "";
+  }
 
-/* ==========================
-   BUILD SENTENCE
-========================== */
-function read(clause,key){
-  return clause.querySelector(`[data-key="${key}"] div`).textContent.trim();
-}
+  /* =========================
+     BUILD CLAUSE
+  ========================= */
+  function buildClause(idx, isLast, polite) {
+    const tableId = "tableP" + (idx + 1);
 
-function buildPreview(){
-  const clauses=[...host.children];
-  const polite=document.getElementById("politeToggle").checked;
-  let out=[];
+    const subject = read(tableId, "subject");
+    const time = read(tableId, "time");
+    const placeBase = read(tableId, "place");
+    const mod = read(tableId, "mod");
+    const object = read(tableId, "object");
+    const numeral = read(tableId, "numeral");
+    const counter = read(tableId, "counter");
+    const verbInf = read(tableId, "verb");
+    const conj = read(tableId, "conj");
 
-  clauses.forEach((cl,i)=>{
-    const subject=read(cl,"subject");
-    const time=read(cl,"time");
-    const placeBase=read(cl,"place");
-    const mod=read(cl,"mod");
-    const object=read(cl,"object");
-    const numeral=read(cl,"numeral");
-    const counter=read(cl,"counter");
-    const verb=read(cl,"verb");
-    const conj=read(cl,"conj");
+    let subjectOut = subject ? subject + subjectParticle(subject) : "";
+    let objectOut = "";
 
-    const place=placeParticle(placeBase,verb);
-    let obj=object;
-    if(object&&numeral&&counter) obj=`${object} ${numeral}${counter}`;
+    if (object && numeral && counter)
+      objectOut =
+        numeral + " " + counter + objectParticle(counter);
+    else if (object)
+      objectOut = object + objectParticle(object);
 
-    let vOut=verb;
-    if(conj) vOut=attachEnding(verb,conj);
-    if(!conj&&polite&&i===clauses.length-1)
-      vOut=politeForm(verb);
+    let placeOut = placeBase
+      ? placeBase + placeParticle(placeBase, verbInf)
+      : "";
 
-    const chunk=[subject,time,place,mod,obj,vOut].filter(Boolean).join(" ");
-    out.push(chunk);
-  });
+    let verbOut = attachEnding(verbInf, conj);
 
-  document.getElementById("previewSentence").textContent=
-    out.join(" ").replace(/\s+/g," ").trim()||"저 가요";
-}
+    if (isLast && polite && !conj) {
+      verbOut = politePresent(verbInf);
+    }
 
-/* ==========================
-   EVENTS
-========================== */
-document.addEventListener("input",e=>{
-  if(e.target.closest(".col")) buildPreview();
-});
+    return [
+      subjectOut,
+      time,
+      placeOut,
+      mod,
+      objectOut,
+      verbOut
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
 
-document.getElementById("addClause").onclick=()=>{
-  createClause();
-  buildPreview();
-};
+  /* =========================
+     PREVIEW
+  ========================= */
+  function rebuildPreview() {
+    const blocks = document.querySelectorAll("[data-clause-index]");
+    const polite = document.getElementById("politeToggle")?.checked;
+    const out = document.getElementById("previewSentence");
 
-document.getElementById("resetAll").onclick=resetAll;
-document.getElementById("politeToggle").onchange=buildPreview;
+    const parts = [];
+    blocks.forEach((_, i) => {
+      const clause = buildClause(i, i === blocks.length - 1, polite);
+      if (clause) parts.push(clause);
+    });
 
-/* ==========================
-   INIT
-========================== */
-resetAll();
+    out.textContent = parts.join(" ").trim() || "저 가요";
+  }
+
+  /* =========================
+     LIVE UPDATE
+  ========================= */
+  function wire() {
+    document.addEventListener("input", e => {
+      if (e.target.classList.contains("col-body-main")) {
+        rebuildPreview();
+      }
+    });
+
+    document
+      .getElementById("politeToggle")
+      ?.addEventListener("change", rebuildPreview);
+  }
+
+  /* =========================
+     INIT
+  ========================= */
+  function init() {
+    wire();
+    rebuildPreview();
+  }
+
+  window.addEventListener("DOMContentLoaded", init);
+})(); 
+
 </script>
 
 </body>
