@@ -153,223 +153,169 @@ button.secondary{
 
   </div>
  <script> 
-  /* =========================================================
-   RALUCA KOREAN – BUILDER LOGIC (FINAL)
-   ========================================================= */
+  /* ======================================================
+   RALUCA KOREAN – BUILDER.JS (FINAL)
+   Logică identică cu „Bun tabel”
+   ====================================================== */
 
-/* ===================== UTILITARE ===================== */
+(() => {
+  "use strict";
 
-function hasFinalConsonant(word) {
-  if (!word) return false;
-  const code = word.charCodeAt(word.length - 1);
-  if (code < 0xac00 || code > 0xd7a3) return false;
-  return ((code - 0xac00) % 28) !== 0;
-}
-
-function particle(word, pair) {
-  if (!word) return "";
-  const [a, b] = pair.split("/");
-  return hasFinalConsonant(word) ? a : b;
-}
-
-/* ===================== PARTICULE ===================== */
-
-function subjectParticle(word) {
-  return particle(word, "은/는");
-}
-
-function focusSubjectParticle(word) {
-  return particle(word, "이/가");
-}
-
-function objectParticle(word) {
-  return particle(word, "을/를");
-}
-
-function placeParticle(place, verb) {
-  const movementVerbs = ["가다", "오다", "다니다"];
-  return movementVerbs.includes(verb) ? "에" : "에서";
-}
-
-/* ===================== DATE DE BAZĂ ===================== */
-
-const DATA = {
-  subject: [
-    { ko: "저", ro: "eu (formal)" },
-    { ko: "친구", ro: "prieten" },
-    { ko: "학생", ro: "student" }
-  ],
-
-  time: [
-    { ko: "오늘", ro: "astăzi" },
-    { ko: "내일", ro: "mâine" }
-  ],
-
-  place: [
-    { ko: "집", ro: "acasă" },
-    { ko: "카페", ro: "cafenea" }
-  ],
-
-  mod: [
-    { ko: "잘", ro: "bine" },
-    { ko: "천천히", ro: "încet" }
-  ],
-
-  object: [
-    { ko: "책", ro: "carte" },
-    { ko: "커피", ro: "cafea" }
-  ],
-
-  numeral: [
-    { ko: "한", ro: "un/o" },
-    { ko: "두", ro: "doi/două" }
-  ],
-
-  counter: [
-    { ko: "권", ro: "volum (cărți)" },
-    { ko: "잔", ro: "ceașcă" }
-  ],
-
-  verb: [
-    { inf: "가다", stem: "가", polite: "가요", ro: "a merge" },
-    { inf: "읽다", stem: "읽", polite: "읽어요", ro: "a citi" },
-    { inf: "마시다", stem: "마시", polite: "마셔요", ro: "a bea" }
-  ],
-
-  conj: [
-    { ko: "그리고", ro: "și" },
-    { ko: "그래서", ro: "deci" }
-  ]
-};
-
-/* ===================== STARE BUILDER ===================== */
-
-const state = {
-  subject: null,
-  time: null,
-  place: null,
-  mod: null,
-  object: null,
-  numeral: null,
-  counter: null,
-  verb: null,
-  conj: null
-};
-
-/* ===================== SELECTARE ===================== */
-
-function selectPart(key, value) {
-  state[key] = value;
-  render();
-}
-
-/* ===================== BUILD SENTENCE ===================== */
-
-function buildSentence() {
-  if (!state.verb) return "";
-
-  const v = state.verb;
-  let parts = [];
-
-  if (state.subject) {
-    parts.push(state.subject.ko + subjectParticle(state.subject.ko));
+  /* =========================
+     UTILS HANGUL
+  ========================= */
+  function hasBatchim(ch) {
+    if (!ch) return false;
+    const c = ch.charCodeAt(ch.length - 1);
+    if (c < 0xac00 || c > 0xd7a3) return false;
+    return (c - 0xac00) % 28 !== 0;
   }
 
-  if (state.time) {
-    parts.push(state.time.ko);
+  function lastHangul(str) {
+    const s = (str || "").trim();
+    return s ? s[s.length - 1] : "";
   }
 
-  if (state.place) {
-    parts.push(
-      state.place.ko +
-      placeParticle(state.place.ko, v.inf)
+  /* =========================
+     PARTICLE LOGIC
+  ========================= */
+
+  // 은/는 (topic)
+  function subjectParticle(noun) {
+    if (!noun) return "";
+    return noun + (hasBatchim(lastHangul(noun)) ? "은" : "는");
+  }
+
+  // 을/를 (object)
+  function objectParticle(noun) {
+    if (!noun) return "";
+    return noun + (hasBatchim(lastHangul(noun)) ? "을" : "를");
+  }
+
+  // 에 / 에서 (place)
+  function placeParticle(place, verb) {
+    if (!place) return "";
+    if (verb === "가다" || verb === "오다") return place + "에";
+    return place + "에서";
+  }
+
+  /* =========================
+     VERB + ENDING
+  ========================= */
+
+  function attachEnding(verbInf, endingRaw) {
+    if (!verbInf) return "";
+    if (!endingRaw) return verbInf;
+
+    let e = endingRaw.replace(/^[-~]/, "").trim();
+    if (!verbInf.endsWith("다")) return verbInf;
+
+    const stem = verbInf.slice(0, -1);
+    const last = lastHangul(stem);
+    const b = hasBatchim(last);
+
+    if (e === "고") return stem + "고";
+    if (e === "지만") return stem + "지만";
+    if (e === "아서" || e === "어서") return stem + e;
+    if (e === "(으)면") return stem + (b ? "으면" : "면");
+    if (e === "(으)려고") return stem + (b ? "으려고" : "려고");
+    if (e === "(으)ㄹ 때") return stem + (b ? "을 때" : "ㄹ 때");
+
+    return stem + e;
+  }
+
+  function politePresent(verbInf) {
+    if (!verbInf || !verbInf.endsWith("다")) return verbInf;
+    const stem = verbInf.slice(0, -1);
+    const last = lastHangul(stem);
+
+    if (stem.endsWith("하")) return stem.slice(0, -1) + "해요";
+
+    const code = last.charCodeAt(0);
+    const jung = Math.floor(((code - 0xac00) % (21 * 28)) / 28);
+    const aGroup = [0, 2, 8, 9];
+    return stem + (aGroup.includes(jung) ? "아요" : "어요");
+  }
+
+  /* =========================
+     DOM HELPERS
+  ========================= */
+
+  function cell(idx, key) {
+    return document.querySelector(
+      `[data-clause-index="${idx}"] .col[data-key="${key}"] .col-body-main`
     );
   }
 
-  if (state.mod) {
-    parts.push(state.mod.ko);
+  function val(idx, key) {
+    const c = cell(idx, key);
+    return c ? c.textContent.trim() : "";
   }
 
-  if (state.object) {
-    let obj = state.object.ko;
+  /* =========================
+     BUILD CLAUSE
+  ========================= */
 
-    if (state.numeral && state.counter) {
-      obj =
-        state.numeral.ko +
-        " " +
-        state.counter.ko +
-        " " +
-        obj;
-    }
+  function buildClause(idx, isLast, polite) {
+    const subj = val(idx, "subject");
+    const time = val(idx, "time");
+    const place = val(idx, "place");
+    const mod = val(idx, "mod");
+    const obj = val(idx, "object");
+    const num = val(idx, "numeral");
+    const ctr = val(idx, "counter");
+    const verb = val(idx, "verb");
+    const conj = val(idx, "conj");
 
-    obj += objectParticle(state.object.ko);
-    parts.push(obj);
+    const parts = [];
+
+    if (subj) parts.push(subjectParticle(subj));
+    if (time) parts.push(time);
+    if (place) parts.push(placeParticle(place, verb));
+    if (mod) parts.push(mod);
+
+    if (obj && num && ctr) parts.push(`${objParticle(obj)} ${num}${ctr}`);
+    else if (obj) parts.push(objectParticle(obj));
+
+    let verbOut = attachEnding(verb, conj);
+    if (polite && isLast && !conj) verbOut = politePresent(verb);
+
+    if (verbOut) parts.push(verbOut);
+
+    return parts.join(" ").trim();
   }
 
-  parts.push(v.polite);
+  /* =========================
+     PREVIEW
+  ========================= */
 
-  return parts.join(" ");
-}
+  function rebuildPreview() {
+    const clauses = document.querySelectorAll("[data-clause-index]");
+    const polite = document.getElementById("politeToggle")?.checked;
+    const out = [];
 
-/* ===================== HIGHLIGHT CLAUSE ===================== */
+    clauses.forEach((_, i) => {
+      const text = buildClause(i, i === clauses.length - 1, polite);
+      if (text) out.push(text);
+    });
 
-function highlightByRole(sentence) {
-  return sentence
-    .replace(state.subject?.ko ?? "", `<span class="hl subject">${state.subject?.ko ?? ""}</span>`)
-    .replace(state.time?.ko ?? "", `<span class="hl time">${state.time?.ko ?? ""}</span>`)
-    .replace(state.place?.ko ?? "", `<span class="hl place">${state.place?.ko ?? ""}</span>`)
-    .replace(state.object?.ko ?? "", `<span class="hl object">${state.object?.ko ?? ""}</span>`)
-    .replace(state.verb?.polite ?? "", `<span class="hl verb">${state.verb?.polite ?? ""}</span>`);
-}
+    document.getElementById("previewSentence").textContent =
+      out.join(" ") || "저는 가요";
+  }
 
-/* ===================== RANDOM ===================== */
+  /* =========================
+     LIVE
+  ========================= */
 
-function randomSentence() {
-  Object.keys(state).forEach(key => {
-    const arr = DATA[key];
-    if (!arr) return;
-    state[key] = arr[Math.floor(Math.random() * arr.length)];
+  document.addEventListener("input", e => {
+    if (e.target.classList.contains("col-body-main")) rebuildPreview();
   });
-  render();
-}
 
-/* ===================== AUDIO ===================== */
+  document.getElementById("politeToggle")
+    ?.addEventListener("change", rebuildPreview);
 
-function speakKorean(text) {
-  const ut = new SpeechSynthesisUtterance(text);
-  ut.lang = "ko-KR";
-  speechSynthesis.speak(ut);
-}
-
-/* ===================== SAVE ===================== */
-
-function saveSentence(sentence) {
-  const favs = JSON.parse(localStorage.getItem("rk_favs") || "[]");
-  favs.push(sentence);
-  localStorage.setItem("rk_favs", JSON.stringify(favs));
-}
-
-/* ===================== RENDER ===================== */
-
-function render() {
-  const sentence = buildSentence();
-  const preview = document.getElementById("previewKo");
-  if (!preview) return;
-
-  preview.innerHTML = highlightByRole(sentence);
-}
-
-/* ===================== EXPORT ===================== */
-
-window.RKBuilder = {
-  DATA,
-  state,
-  selectPart,
-  randomSentence,
-  speakKorean,
-  saveSentence,
-  buildSentence
-};
+  window.addEventListener("DOMContentLoaded", rebuildPreview);
+})();  
 </script>
 </body>
 </html>
