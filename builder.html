@@ -2339,19 +2339,20 @@ const DOM = {
    ========================= */
 let indexModelRow = 0;
     
-
-    function makeEmptySentence(){
+function makeEmptySentence(){
   const s = {};
-  columns.forEach(col => s[col.key] = col.data[0] || "");
+  columns.forEach(col => {
+    s[col.key] = Array.isArray(col.data?.[0])
+      ? []
+      : (col.data?.[0] || "");
+  });
+
+  // asigurăm explicit adjectivele ca array
+  s.subjectAdj = [];
+  s.objectAdj  = [];
+
   return s;
-}
-
-// sentences[0] = propoziția 1, sentences[1] = propoziția 2, etc.
-let sentences = [ makeEmptySentence() ];
-
-// activeMap per sentence: ce coloane sunt ON/OFF
-let actives = [ makeAllActive() ];
-
+}    
 function makeAllActive(){
   const a = {};
   columns.forEach(col => a[col.key] = true);
