@@ -2547,19 +2547,20 @@ function buildClauseSentence(state, activeMap, conjOverride = null){
   const koParts = [];
   const roSegs  = [];
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
-// SUBJECT ADJECTIVES (atributive)
-if (state.subjectAdj?.length) {
-  const adj = state.subjectAdj.map(a => {
-    // adjectivele descriptive devin forme atributive
-    return makeAttributive(a);
-  }).join("고 ");
-
-  koParts.push(adj);
-}
-  // subject
+// SUBJECT (with attributive adjectives)
 if (use("subject") && state.subject) {
-  koParts.push(addSubjectWithParticle(state.subject));
-} 
+
+  let subj = state.subject;
+
+  if (state.subjectAdj?.length) {
+    const adj = state.subjectAdj
+      .map(a => makeAttributive(a))
+      .join("고 ");
+    subj = adj + " " + subj;
+  }
+
+  koParts.push(addSubjectWithParticle(subj));
+}
   // time
   if(state.time && use("time")){
     koParts.push(addTimeWithParticle(state.time));
