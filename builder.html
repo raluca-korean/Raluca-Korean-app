@@ -1,4 +1,4 @@
-Bb2
+B13
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1997,234 +1997,192 @@ body.pastel-theme {
       <div class="panel-list" id="panelList"></div>
     </div>
   </div>
-
-<script>
-  /* =========================================================
-   BUILDER.JS – CLEAN, MULTI-CLAUSE, FINAL
+  <script>
+   /* =========================================================
+   BUILDER.JS – CLEAN REWRITE (v1)
    ========================================================= */
 
-/* ================= DOM ================= */
-
-const tableP1   = document.getElementById("tableP1");
-const previewKo = document.getElementById("previewKo");
-const randomBtn = document.getElementById("randomBtn");
-const speakBtn  = document.getElementById("speakBtn");
-const resetBtn  = document.getElementById("resetBtn");
-
-const overlay   = document.getElementById("overlay");
-const panelList = document.getElementById("panelList");
-const panelTitle= document.getElementById("panelTitle");
-const closePanelBtn = document.getElementById("closePanelBtn");
-
-/* ================= STRUCTURĂ FIXĂ ================= */
-
-const COLUMNS = [
-  { key:"subject",  label:"SUBJECT"  },
-  { key:"time",     label:"TIME"     },
-  { key:"place",    label:"PLACE"    },
-  { key:"mod",      label:"MOD"      },
-  { key:"object",   label:"OBJECT"   },
-  { key:"numeral",  label:"NUMERAL"  },
-  { key:"counter",  label:"COUNTER"  },
-  { key:"verb",     label:"VERB"     },
-  { key:"conjug",   label:"CONJUG"   }
-];
-
-/* ================= DATE ================= */
+/* =======================
+   1. DATE DE BAZĂ
+   ======================= */
 
 const DATA = {
-  subject:["저","나","너","우리"],
-  time:["오늘","어제","내일","지금"],
-  place:["집","학교","회사","카페"],
-  mod:["잘","천천히","열심히"],
-  object:["커피","책","물"],
-  numeral:["","한","두","세"],
-  counter:["","개","잔","권"],
-  verb:["가다","오다","마시다","읽다"],
-  conjug:[
-    "-아요/어요",
-    "-았어요/었어요",
-    "-고",
-    "-고 나서",
-    "-고 있어요"
+  subject: [
+    { ko: "저", ro: "eu (formal)" },
+    { ko: "나", ro: "eu (informal)" },
+    { ko: "너", ro: "tu" },
+    { ko: "우리", ro: "noi" }
+  ],
+  time: [
+    { ko: "오늘", ro: "astăzi" },
+    { ko: "어제", ro: "ieri" },
+    { ko: "내일", ro: "mâine" },
+    { ko: "지금", ro: "acum" }
+  ],
+  place: [
+    { ko: "집", ro: "acasă" },
+    { ko: "학교", ro: "școală" },
+    { ko: "회사", ro: "firmă" },
+    { ko: "카페", ro: "cafenea" }
+  ],
+  object: [
+    { ko: "책", ro: "carte" },
+    { ko: "커피", ro: "cafea" },
+    { ko: "물", ro: "apă" }
+  ],
+  verb: [
+    { ko: "가다", ro: "a merge" },
+    { ko: "오다", ro: "a veni" },
+    { ko: "먹다", ro: "a mânca" },
+    { ko: "마시다", ro: "a bea" }
+  ],
+  conjug: [
+    { ko: "-아요/어요", ro: "prezent politicos" },
+    { ko: "-았어요/었어요", ro: "trecut politicos" },
+    { ko: "-고", ro: "și" }
   ]
 };
 
-/* ================= MODEL ================= */
+/* =======================
+   2. STARE GLOBALĂ
+   ======================= */
 
-function emptyClause(){
-  return {
-    subject:"",
-    time:"",
-    place:"",
-    mod:"",
-    object:"",
-    numeral:"",
-    counter:"",
-    verb:"",
-    conjug:""
-  };
+const state = {
+  subject: null,
+  time: null,
+  place: null,
+  object: null,
+  verb: null,
+  conjug: "-아요/어요"
+};
+
+/* =======================
+   3. UTILITARE
+   ======================= */
+
+function qs(id) {
+  return document.getElementById(id);
 }
 
-/* ================= STATE ================= */
+function hasBatchim(word) {
+  const code = word.charCodeAt(word.length - 1) - 0xac00;
+  return code % 28 !== 0;
+}
 
-const clauses = [ emptyClause() ];
-let panelCtx = null;
+function subjectParticle(word) {
+  if (["저", "나", "너", "우리"].includes(word)) {
+    return hasBatchim(word) ? "은" : "는";
+  }
+  return hasBatchim(word) ? "이" : "가";
+}
 
-/* ================= RENDER ================= */
+function objectParticle(word) {
+  return hasBatchim(word) ? "을" : "를";
+}
 
-function render(){
-  tableP1.innerHTML = "";
+/* =======================
+   4. CONJUGARE VERBE
+   ======================= */
 
-  clauses.forEach((clause,rowIndex)=>{
-    const row = document.createElement("div");
-    row.className = "table-horizontal";
+function conjugate(verb, conj) {
+  if (!verb) return "";
 
-    COLUMNS.forEach(col=>{
-      const cell = document.createElement("div");
-      cell.className = "col";
-      cell.dataset.key = col.key;
-      cell.dataset.row = rowIndex;
+  const stem = verb.replace("다", "");
 
-      const h = document.createElement("div");
-      h.className = "col-header";
-      h.textContent = col.label;
+  if (conj === "-아요/어요") {
+    if (verb === "가다") return "가요";
+    if (verb === "오다") return "와요";
+    return stem + "어요";
+  }
 
-      const b = document.createElement("div");
-      b.className = "col-body-main";
-      b.textContent = clause[col.key] || "—";
+  if (conj === "-았어요/었어요") {
+    if (verb === "가다") return "갔어요";
+    if (verb === "오다") return "왔어요";
+    return stem + "었어요";
+  }
 
-      cell.appendChild(h);
-      cell.appendChild(b);
+  if (conj === "-고") {
+    return stem + "고";
+  }
 
-      cell.onclick = ()=>openPanel(rowIndex,col.key);
+  return stem;
+}
 
-      row.appendChild(cell);
-    });
+/* =======================
+   5. BUILDER UI
+   ======================= */
 
-    tableP1.appendChild(row);
+function renderColumn(key) {
+  const el = qs(`col-${key}`);
+  if (!el) return;
+
+  el.innerHTML = "";
+  DATA[key].forEach(item => {
+    const btn = document.createElement("button");
+    btn.className = "cell";
+    btn.textContent = item.ko;
+    btn.title = item.ro;
+
+    btn.onclick = () => {
+      state[key] = item.ko;
+      render();
+    };
+
+    el.appendChild(btn);
   });
+}
 
+function renderAllColumns() {
+  ["subject", "time", "place", "object", "verb", "conjug"].forEach(renderColumn);
+}
+
+/* =======================
+   6. CONSTRUIRE PROPOZIȚIE
+   ======================= */
+
+function buildSentence() {
+  const parts = [];
+
+  if (state.subject) {
+    parts.push(state.subject + subjectParticle(state.subject));
+  }
+  if (state.time) parts.push(state.time);
+  if (state.place) parts.push(state.place + "에");
+  if (state.object) {
+    parts.push(state.object + objectParticle(state.object));
+  }
+  if (state.verb) {
+    parts.push(conjugate(state.verb, state.conjug));
+  }
+
+  return parts.join(" ");
+}
+
+/* =======================
+   7. RENDER PREVIEW
+   ======================= */
+
+function renderPreview() {
+  const ko = buildSentence();
+  qs("previewKo").textContent = ko || "—";
+}
+
+/* =======================
+   8. RENDER GLOBAL
+   ======================= */
+
+function render() {
   renderPreview();
 }
 
-/* ================= PANEL ================= */
+/* =======================
+   9. INIT
+   ======================= */
 
-function openPanel(rowIndex,key){
-  panelCtx = {rowIndex,key};
-  panelTitle.textContent = key.toUpperCase();
-  panelList.innerHTML = "";
-
-  DATA[key].forEach(v=>{
-    const item = document.createElement("div");
-    item.className = "panel-item";
-    item.textContent = v || "(gol)";
-    item.onclick = ()=>selectValue(v);
-    panelList.appendChild(item);
-  });
-
-  overlay.classList.remove("hidden");
-}
-
-closePanelBtn.onclick = ()=>{
-  overlay.classList.add("hidden");
-};
-
-/* ================= SELECT ================= */
-
-function selectValue(value){
-  const {rowIndex,key} = panelCtx;
-  clauses[rowIndex][key] = value;
-
-  // conjugare de legătură → creează automat o propoziție nouă
-  if(
-    key === "conjug" &&
-    ["-고","-고 나서"].includes(value) &&
-    rowIndex === clauses.length-1
-  ){
-    clauses.push(emptyClause());
-  }
-
-  overlay.classList.add("hidden");
-  panelCtx = null;
+document.addEventListener("DOMContentLoaded", () => {
+  renderAllColumns();
   render();
-}
-
-/* ================= BUILD ================= */
-
-function buildClause(c){
-  const out = [];
-
-  if(c.subject) out.push(c.subject);
-  if(c.time)    out.push(c.time);
-  if(c.place)  out.push(c.place);
-  if(c.mod)    out.push(c.mod);
-
-  if(c.object){
-    if(c.numeral && c.counter){
-      out.push(`${c.numeral}${c.counter} ${c.object}`);
-    }else{
-      out.push(c.object);
-    }
-  }
-
-  if(c.verb){
-    out.push(conjugate(c.verb,c.conjug));
-  }
-
-  return out.join(" ");
-}
-
-function conjugate(v,cj){
-  if(!cj) return v;
-  if(!v.endsWith("다")) return v+cj;
-  return v.replace("다","") + cj.replace("-","");
-}
-
-/* ================= PREVIEW ================= */
-
-function renderPreview(){
-  const txt = clauses
-    .map(c=>buildClause(c))
-    .filter(Boolean)
-    .join(" ");
-  previewKo.textContent = txt || "(alege cuvinte)";
-}
-
-/* ================= RANDOM ================= */
-
-randomBtn.onclick = ()=>{
-  clauses.forEach(c=>{
-    Object.keys(c).forEach(k=>{
-      const arr = DATA[k];
-      if(arr) c[k] = arr[Math.floor(Math.random()*arr.length)];
-    });
-  });
-  render();
-};
-
-/* ================= RESET ================= */
-
-resetBtn.onclick = ()=>{
-  clauses.length = 0;
-  clauses.push(emptyClause());
-  render();
-};
-
-/* ================= AUDIO ================= */
-
-speakBtn.onclick = ()=>{
-  const t = previewKo.textContent;
-  if(!t) return;
-  const u = new SpeechSynthesisUtterance(t);
-  u.lang = "ko-KR";
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
-};
-
-/* ================= INIT ================= */
-
-render();  
-</script>    
+});
+  </script>
 </body>
 </html> 
