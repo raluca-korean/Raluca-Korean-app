@@ -1997,194 +1997,201 @@ body.pastel-theme {
       <div class="panel-list" id="panelList"></div>
     </div>
   </div>
-<script>
-  /* =========================================================
-   BUILDER.JS – FINAL, CURAT, NELIMITAT
-   ========================================================= */
+  <script>
+/*********************************************************
+ * BUILDER.JS — MULTI-CLAUSE REAL (FINAL)
+ *********************************************************/
 
-/* ================== DATE ================== */
+/* =======================
+   CONFIG
+======================= */
 
-const DATA = {
-  subject: ["저","나","너","우리","너희"],
-  time: ["오늘","어제","내일","지금"],
-  place: ["집","학교","회사","카페"],
-  mod: ["잘","열심히","천천히"],
-  object: ["책","커피","물"],
-  numeral: ["","한","두","세"],
-  counter: ["","개","권","잔"],
-  verb: ["가다","오다","먹다","마시다","읽다"],
-  conjug: ["-아요/어요","-았어요/었어요","-고","-고 있어요"]
-};
+const COLUMNS = [
+  { key:"subject", title:"SUBJECT", hint:"Cine?", data:["저","나","너","우리"] },
+  { key:"time",    title:"TIME",    hint:"Când?", data:["오늘","어제","내일","지금"] },
+  { key:"place",   title:"PLACE",   hint:"Unde?", data:["집","학교","회사","카페"] },
+  { key:"mod",     title:"MOD",     hint:"Cum?", data:["잘","천천히","빨리"] },
+  { key:"object",  title:"OBJECT",  hint:"Ce?", data:["책","커피","물"] },
+  { key:"verb",    title:"VERB",    hint:"Acțiune", data:["가다","먹다","마시다"] },
+  { key:"conjug",  title:"CONJUG",  hint:"Formă", data:["-아요/어요","-고","-았어요/었어요"] }
+];
 
-const translations = {
-  subject:{저:"eu",나:"eu",너:"tu"},
-  time:{오늘:"azi",어제:"ieri",내일:"mâine"},
-  place:{집:"acasă",학교:"școală",회사:"firmă"},
-  mod:{잘:"bine",열심히:"cu sârguință"},
-  object:{책:"carte",커피:"cafea"},
-  numeral:{한:"unu",두:"doi",세:"trei"},
-  counter:{개:"buc.",권:"vol."},
-  verb:{가다:"a merge",먹다:"a mânca"},
-  conjug:{
-    "-아요/어요":"prezent",
-    "-았어요/었어요":"trecut",
-    "-고":"și"
-  }
-};
+/* =======================
+   STATE
+======================= */
 
-/* ================== STRUCTURĂ ================== */
+let clauseId = 1;
+const clauses = [];
 
-function createClause() {
-  return {
-    active: {
-      subject:true,time:true,place:true,mod:true,
-      object:true,numeral:true,counter:true,
-      verb:true,conjug:true
-    },
-    state: {
-      subject:"저",time:"",place:"",mod:"",
-      object:"",numeral:"",counter:"",
-      verb:"가다",conjug:"-아요/어요"
-    }
-  };
+function createClause(){
+  const state = {};
+  const active = {};
+  COLUMNS.forEach(c=>{
+    state[c.key] = c.data[0] || "";
+    active[c.key] = true;
+  });
+  return { id: clauseId++, state, active };
 }
 
-const clauses = [ createClause() ];
+clauses.push(createClause());
 
-/* ================== DOM ================== */
+/* =======================
+   DOM
+======================= */
 
-const tablesWrap = document.getElementById("builderTables");
-const previewKo  = document.getElementById("previewKo");
-const previewRo  = document.getElementById("previewRo");
-const addClauseBtn = document.getElementById("addClauseBtn");
+const tableP1   = document.getElementById("tableP1");
+const previewKo = document.getElementById("previewKo");
+const previewRo = document.getElementById("previewRo");
 
-/* ================== HELPERS ================== */
+const prevBtn  = document.getElementById("prevBtn");
+const nextBtn  = document.getElementById("nextBtn");
+const resetBtn = document.getElementById("resetBtn");
+
+/* =======================
+   PARTICULE
+======================= */
 
 function hasBatchim(w){
   if(!w) return false;
-  const c=w.charCodeAt(w.length-1)-0xAC00;
-  return c>=0 && c%28!==0;
+  const c = w.charCodeAt(w.length-1)-0xAC00;
+  return c>=0 && c<=11171 && c%28!==0;
 }
-function subjP(w){ return w+(hasBatchim(w)?"은":"는"); }
-function objP(w){ return w+(hasBatchim(w)?"을":"를"); }
-
-function conjugate(v,cj){
-  if(!v) return "";
-  const stem=v.replace("다","");
-  if(cj==="-아요/어요") return stem+"요";
-  if(cj==="-았어요/었어요") return stem+"었어요";
-  if(cj==="-고") return stem+"고";
-  if(cj==="-고 있어요") return stem+"고 있어요";
-  return stem+cj.replace("-","");
+function pickSubjectParticle(w){
+  return hasBatchim(w) ? "은":"는";
+}
+function pickObjectParticle(w){
+  return hasBatchim(w) ? "을":"를";
+}
+function pickPlaceParticle(_,verb){
+  return ["가다","오다"].includes(verb) ? "에":"에서";
 }
 
-/* ================== RENDER ================== */
+/* =======================
+   BUILD SENTENCE
+======================= */
 
-function renderClause(clause, idx){
-  const box=document.createElement("div");
-  box.className="table-block";
+function buildClauseSentence(clause){
+  const s = clause.state;
+  const a = clause.active;
+  const out = [];
 
-  box.innerHTML=`
-    <div class="table-title">
-      <span>Propoziția ${idx+1}</span>
-    </div>
-    <div class="table-horizontal"></div>
-  `;
+  if(a.subject && s.subject)
+    out.push(s.subject+pickSubjectParticle(s.subject));
+  if(a.time && s.time)
+    out.push(s.time);
+  if(a.place && s.place)
+    out.push(s.place+pickPlaceParticle(s.place,s.verb));
+  if(a.mod && s.mod)
+    out.push(s.mod);
+  if(a.object && s.object)
+    out.push(s.object+pickObjectParticle(s.object));
 
-  const table=box.querySelector(".table-horizontal");
+  if(a.verb && s.verb){
+    const stem = s.verb.replace("다","");
+    const cj = s.conjug;
+    if(cj==="-고") out.push(stem+"고");
+    else if(cj==="-았어요/었어요") out.push(stem+"었어요");
+    else out.push(stem+"요");
+  }
 
-  Object.keys(DATA).forEach(key=>{
-    const col=document.createElement("div");
-    col.className="col";
-    col.dataset.key=key;
-
-    col.innerHTML=`
-      <div class="col-header">
-        <span>${key.toUpperCase()}</span>
-        <input type="checkbox" ${clause.active[key]?"checked":""}>
-      </div>
-      <div class="col-body-main">${clause.state[key]||""}</div>
-    `;
-
-    col.querySelector("input").onchange=e=>{
-      clause.active[key]=e.target.checked;
-      render();
-    };
-
-    col.onclick=()=>{
-      const arr=DATA[key];
-      let i=arr.indexOf(clause.state[key]);
-      clause.state[key]=arr[(i+1)%arr.length];
-      render();
-    };
-
-    table.appendChild(col);
-  });
-
-  return box;
+  return out.join(" ");
 }
+
+/* =======================
+   RENDER
+======================= */
 
 function render(){
-  tablesWrap.innerHTML="";
-  clauses.forEach((c,i)=>{
-    tablesWrap.appendChild(renderClause(c,i));
+  tableP1.innerHTML = "";
+
+  clauses.forEach((clause,idx)=>{
+    const row = document.createElement("div");
+    row.className = "table-horizontal";
+
+    COLUMNS.forEach(col=>{
+      const box = document.createElement("div");
+      box.className = "col";
+      if(!clause.active[col.key]) box.classList.add("dimmed");
+
+      const h = document.createElement("div");
+      h.className = "col-header";
+      h.textContent = col.title;
+
+      const cb = document.createElement("input");
+      cb.type="checkbox";
+      cb.checked=clause.active[col.key];
+      cb.onchange=()=>{
+        clause.active[col.key]=cb.checked;
+        render();
+      };
+      h.appendChild(cb);
+
+      const label = document.createElement("div");
+      label.className="col-body-label";
+      label.textContent=col.hint;
+
+      const main = document.createElement("div");
+      main.className="col-body-main";
+      main.textContent=clause.state[col.key];
+
+      box.onclick=()=>{
+        const arr=col.data;
+        let i=arr.indexOf(clause.state[col.key]);
+        clause.state[col.key]=arr[(i+1)%arr.length];
+        render();
+      };
+
+      box.append(h,label,main);
+      row.appendChild(box);
+    });
+
+    tableP1.appendChild(row);
   });
+
   updatePreview();
 }
 
-/* ================== PREVIEW ================== */
-
-function buildKo(){
-  return clauses.map(c=>{
-    const s=c.state;
-    const a=c.active;
-    const out=[];
-
-    if(a.subject && s.subject) out.push(subjP(s.subject));
-    if(a.time && s.time) out.push(s.time);
-    if(a.place && s.place) out.push(s.place+"에서");
-    if(a.mod && s.mod) out.push(s.mod);
-
-    if(a.object && s.object){
-      let o="";
-      if(a.numeral && s.numeral) o+=s.numeral+" ";
-      o+=s.object;
-      if(a.counter && s.counter) o+=" "+s.counter;
-      out.push(objP(o));
-    }
-
-    if(a.verb) out.push(conjugate(s.verb,s.conjug));
-
-    return out.join(" ");
-  }).join(" ");
-}
-
-function buildRo(){
-  return clauses.map(c=>{
-    return Object.keys(c.state)
-      .filter(k=>c.active[k] && c.state[k])
-      .map(k=>translations[k]?.[c.state[k]]||c.state[k])
-      .join(" ");
-  }).join(". ")+".";
-}
+/* =======================
+   PREVIEW
+======================= */
 
 function updatePreview(){
-  previewKo.textContent = buildKo() || "(alege cuvinte)";
-  previewRo.textContent = buildRo();
+  const text = clauses
+    .map(c=>buildClauseSentence(c))
+    .filter(Boolean)
+    .join(" ");
+
+  previewKo.textContent = text || "(alege cuvinte)";
+  previewRo.textContent = "";
 }
 
-/* ================== EVENTS ================== */
+/* =======================
+   CONTROLS
+======================= */
 
-if(addClauseBtn){
-  addClauseBtn.onclick=()=>{
-    clauses.push(createClause());
+nextBtn.onclick = ()=>{
+  clauses.push(createClause());
+  render();
+};
+
+prevBtn.onclick = ()=>{
+  if(clauses.length>1){
+    clauses.pop();
     render();
-  };
-}
+  }
+};
 
-/* ================== INIT ================== */
+resetBtn.onclick = ()=>{
+  clauses.length=0;
+  clauses.push(createClause());
+  render();
+};
 
-render();   
+/* =======================
+   INIT
+======================= */
+
+render();
   </script>
 </body>
 </html> 
