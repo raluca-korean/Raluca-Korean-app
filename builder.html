@@ -1,4 +1,4 @@
-Bb2
+B13
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1997,211 +1997,2266 @@ body.pastel-theme {
       <div class="panel-list" id="panelList"></div>
     </div>
   </div>
+
   <script>
-    /*********************************************************
- * BUILDER.JS – FINAL
- * Fraze reale coreene, clauze multiple, un singur rând
- *********************************************************/
+    let LAST_RO_SENTENCE = "";
+/* === LISTE DE CUVINTE (de bază) === */
+const subjects = [
+  "저","나","너","우리","너희","사람","학생","선생님","직원","전문가","지원자","관리자",
+  "부모님","아이","어른","시민","고객","의사","간호사","연구자","관계자","대표","회장",
+  "사용자","참가자","운전자","주민","환자"
+];
+const times = [
+  "오늘","어제","내일","지금","방금","조금 후에","곧","최근에","요즘","마침내","결국",
+  "이전에","이후에","당시에","한동안","계속","가끔","항상","자주","점점","차츰","일찍","늦게"
+];
+const places = [
+  "집","학교","회사","식당","카페","도서관","병원","시장","백화점","공항","기차역",
+  "버스정류장","연구소","기관","지역사회","환경","대기업","회의실","법원","경찰서",
+  "해변","산","공원","은행"
+];
+const mods = [
+  "잘","열심히","조용히","천천히","빨리","정말","아주","너무","많이","조금","갑자기","미리",
+  "벌써","아까","방금","금방","곧","항상","자주","가끔","드물게","상당히","꽤","도대체","절대로",
+  "적극적으로","충분히","특히","오히려","점점","차츰","계속"
+];
+const objects = [
+  "책","커피","물","음식","영화","가방","전화","옷","자료","데이터","계획","조건","상황","문제",
+  "해결책","요약","보고서","문서","컴퓨터","노트북","편지","선물","의견","정보","관계","결과",
+  "원인","방법","제품","서비스","정책","문화","채소","견과류"
+];
+const numerals = new Array(60).fill("");
+const counters = [
+  "개","명","권","장","대","병","잔","마리","번","살","송이","줄","점","건","회","가지","쪽"
+];
+const verbs = [
+  "가다","오다","먹다","마시다","보다","읽다","쓰다","배우다","사다","주다","받다","일하다",
+  "공부하다","요리하다","청소하다","준비하다","도와주다","사용하다","필요하다","좋아하다",
+  "싫어하다","기다리다","쉬다","만나다","걷다","달리다","앉다","서다","결정하다","제안하다",
+  "전달하다","유지하다","발생하다","증가하다","감소하다","인정하다","분석하다","관찰하다",
+  "해결하다","연구하다","협력하다","요청하다","충족하다","비교하다","설명하다","예상하다"
+];
+const conjugations = [
+  "-아요/어요","-았어요/었어요","-고 있어요","-고 싶어요","-(으)세요","-(으)ㄹ 거예요",
+  "-고","-지 마세요","-아/어 주세요","-아/어야 돼요","-(으)ㄹ 수 있어요","-(으)ㄹ 수 없어요",
+  "-더라고요","-네요","-군요","-고 나서","-기 전에","-(으)면서","-(으)며",
+  "-(으)ㄹ지도 몰라요","-(으)ㄹ게요","-(으)ㄹ래요?","-(으)ㄹ까요?","-는 게 어때요?",
+  "-는 중이에요","-아/어도 돼요","-(으)면 안 돼요","-(으)나","-(으)므로","-(으)ㄴ/는 만큼",
+  "-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도","-(으)ㄴ/는 반면에","-도록 하다",
+  "-게 되다","-아/어지다","-기 마련이다","-기에","-길래","-고 말다","-고자 하다","-(으)ㄹ 뿐이다"
+];
+ /* ============================================================
+   PARSER RO → BUILDER (V2, mai complet)
+   ============================================================ */
 
-/* =======================
-   CONFIG
-======================= */
+/* 1. Normalizare text română:
+   - litere mici
+   - diacritice uniformizate
+   - scoatem semnele de punctuație
+*/
+function normalizeRo(text) {
+  if (!text) return "";
+  let t = text.toLowerCase();
 
-const PARTS = [
-  { key: "subject", title: "SUBJECT", hint: "Cine?", data: ["저","나","너","우리"] },
-  { key: "time",    title: "TIME",    hint: "Când?", data: ["오늘","어제","내일","지금"] },
-  { key: "place",   title: "PLACE",   hint: "Unde?", data: ["집","학교","회사","카페"] },
-  { key: "mod",     title: "MOD",     hint: "Cum?", data: ["잘","천천히","조용히"] },
-  { key: "object",  title: "OBJECT",  hint: "Ce?", data: ["책","커피","물"] },
-  { key: "verb",    title: "VERB",    hint: "Acțiune", data: ["가다","먹다","마시다","읽다"] }
+  // uniformizăm diacritice / variante
+  t = t.replace(/ş/g, "ș").replace(/ţ/g, "ț");
+  t = t.replace(/Ã¢/g, "â").replace(/Ã®/g, "î");
+
+  // scoatem unele semne de punctuație
+  t = t.replace(/[.,!?;:]/g, " ");
+
+  // spații multiple → un singur spațiu
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
+}
+
+/* 2. Reguli pentru fiecare slot
+   - fiecare regulă are un regex și un value (cuvântul coreean)
+   - ORDINEA contează: primele reguli sunt mai „prioritare”
+*/
+
+const RO_RULES = {
+  subject: [
+    // eu (formal) – 저
+    { re: /\beu\s*\(formal\)|eu\s*-\s*formal\b/, value: "저" },
+    // eu (informal) – 나
+    { re: /\beu\s*\(informal\)|eu\s*-\s*informal\b/, value: "나" },
+    // dacă apare simplu „eu” → default 저 (poți schimba)
+    { re: /\beu\b/, value: "저" },
+    // tu
+    { re: /\btu\b/, value: "너" }
+  ],
+
+  time: [
+    { re: /\bazi\b|\bastăzi\b/, value: "오늘" },
+    { re: /\bmâine\b/, value: "내일" },
+    { re: /\bieri\b/, value: "어제" },
+    { re: /\bacum\b/, value: "지금" }
+  ],
+
+  place: [
+    { re: /\bacas[ăa]\b/, value: "집" },
+    { re: /la\s+școal[ăa]|la\s+scoala|școal[ăa]\b|scoala\b/, value: "학교" },
+    { re: /la\s+firm[ăa]|la\s+serviciu|la\s+companie|firm[ăa]\b|serviciu\b|companie\b/, value: "회사" },
+    { re: /la\s+banc[ăa]|banc[ăa]\b/, value: "은행" },
+    { re: /cafenea|cafene[al]/, value: "카페" }
+  ],
+
+  mod: [
+    { re: /\bbine\b|frumos\b|ok\b/, value: "잘" },
+    { re: /în\s+liniște|in\s+liniste|liniște|liniste/, value: "조용히" },
+    { re: /cu\s+sârguint[ăa]|cu\s+sarguinta|harnic|cu\s+mult\s+efort/, value: "열심히" },
+    { re: /încet|incet/, value: "천천히" },
+    { re: /repede|rapid/, value: "빨리" }
+  ],
+
+  object: [
+    { re: /cafea/, value: "커피" },
+    { re: /\bap[ăa]\b|ap[ăa]\s+mineral[ăa]?/, value: "물" },
+    { re: /carte|c[ăa]rțile|c[ăa]rti\b/, value: "책" },
+    { re: /m[ăa]ncare|pr[ăa]nzul|cina|mic\s+dejun/, value: "음식" },
+    { re: /ceai\b/, value: "차" }
+  ],
+
+  // opțional: număr pentru obiect (doar 1–3, ca exemplu)
+  numeral: [
+    { re: /\bo\s+carte\b|\bună\s+carte\b|\b(o|un)\s+caf(ea|ea)\b/, value: "한" },
+    { re: /\bdou[ăa]\s+carți|dou[ăa]\s+cafele/, value: "두" },
+    { re: /\btrei\s+carți|trei\s+cafele/, value: "세" }
+  ],
+
+  // opțional: alegem classifier în funcție de obiect
+  counter: [
+    { re: /carte|c[ăa]rti\b/, value: "권" },  // pentru cărți
+    { re: /cafea|ap[ăa]\b|ceai\b|m[ăa]ncare/, value: "개" } // general
+  ],
+
+  // verb foarte simplu – doar pentru propoziția mare
+  verb: [
+    { re: /merg\b|a merge|să merg|sa merg/, value: "가요" },
+    { re: /vin\b|a veni|să vin|sa vin/, value: "와요" },
+    { re: /beau\b|a bea|să beau|sa beau/, value: "마셔요" },
+    { re: /m[ăa]n[âa]nc\b|m[ăa]nânc|mananc|a m[ăa]nca/, value: "먹어요" },
+    { re: /citesc|a citi|să citesc|sa citesc/, value: "읽어요" },
+    { re: /lucrez|a lucra/, value: "일해요" }
+  ]
+};
+
+/* 3. Helper: ia primul value al regulii care se potrivește */
+function matchSlot(rules, text) {
+  if (!rules) return null;
+  for (const rule of rules) {
+    if (rule.re.test(text)) return rule.value;
+  }
+  return null;
+}
+
+/* 4. Funcția principală: text RO → sloturi Builder */
+function parseRomanianToSlots(text) {
+  const t = normalizeRo(text);
+
+  const slots = {
+    subject: matchSlot(RO_RULES.subject, t),
+    time:    matchSlot(RO_RULES.time, t),
+    place:   matchSlot(RO_RULES.place, t),
+    mod:     matchSlot(RO_RULES.mod, t),
+    object:  matchSlot(RO_RULES.object, t),
+    numeral: matchSlot(RO_RULES.numeral, t),
+    counter: matchSlot(RO_RULES.counter, t),
+    verb:    matchSlot(RO_RULES.verb, t)
+  };
+
+  return slots;
+}
+
+/* 5. Aplică sloturile în Propoziția 1 (tabelul de sus) */
+function applySlotsToBuilderP1(slots) {
+  const table = document.getElementById("tableP1");
+  if (!table || !slots) return;
+
+  const setCol = (key, value) => {
+    if (!value) return;
+    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    if (col) {
+      col.textContent = value;
+    }
+  };
+
+  setCol("subject", slots.subject);
+  setCol("time",    slots.time);
+  setCol("place",   slots.place);
+  setCol("mod",     slots.mod);
+  setCol("object",  slots.object);
+  setCol("numeral", slots.numeral);
+  setCol("counter", slots.counter);
+  // verbul îl folosim doar la reconstrucția propoziției, nu umplem coloană (deocamdată)
+}
+
+/* 6. Reconstruiește propoziția coreeană mare din sloturi */
+function rebuildPreviewFromBuilderP1(slotsFromParser) {
+  const table = document.getElementById("tableP1");
+  if (!table) return;
+
+  const pick = (key) => {
+    const col = table.querySelector('.col[data-key="' + key + '"] .col-body-main');
+    return col ? col.textContent.trim() : "";
+  };
+
+  const subject = pick("subject") || "저";
+  const time    = pick("time");
+  const place   = pick("place");
+  const mod     = pick("mod");
+  const numeral = pick("numeral");
+  const counter = pick("counter");
+  const object  = pick("object");
+
+  // dacă avem numeral+counter+object → „책 한 권” etc.
+  let objectChunk = "";
+  if (object && numeral && counter) {
+    objectChunk = object + " " + numeral + " " + counter;
+  } else if (object) {
+    objectChunk = object;
+  }
+
+  // verb: dacă parserul a găsit ceva, îl folosim, altfel 가요
+  const verb =
+    (slotsFromParser && slotsFromParser.verb) ||
+    "가요";
+
+  const pieces = [subject, time, place, mod, objectChunk, verb].filter(Boolean);
+  const sentence = pieces.join(" ");
+
+  const out =
+    document.getElementById("previewSentence") ||
+    document.getElementById("previewKo") ||
+    document.querySelector(".preview-sentence");
+
+  if (out) {
+    out.textContent = sentence;
+  }
+}  
+   // === Limbă de intrare (Română / English) din switch-ul de sus ===
+function getInputLang() {
+  const el = document.querySelector('input[name="inputLang"]:checked');
+  // fallback: dacă nu găsim nimic, presupunem Română
+  return el ? el.value : "ro";
+} 
+    /* === TRADUCERI (coreeană → română) === */
+const translations = {
+  subject:{ "저":"eu (formal)","나":"eu (informal)","너":"tu","우리":"noi","너희":"voi",
+    "사람":"persoană","학생":"student/ă","선생님":"profesor","직원":"angajat",
+    "부모님":"părinți","아이":"copil","어른":"adult","고객":"client","의사":"medic",
+    "간호사":"asistentă","연구자":"cercetător","대표":"reprezentant","환자":"pacient"
+  },
+  time:{ "오늘":"astăzi","어제":"ieri","내일":"mâine","지금":"acum","방금":"tocmai acum",
+    "조금 후에":"puțin mai târziu","곧":"în curând","최근에":"recent","요즘":"în ultima vreme",
+    "마침내":"în cele din urmă","결국":"până la urmă","이전에":"înainte","이후에":"după",
+    "당시에":"atunci","한동안":"o perioadă","계속":"continuă","가끔":"din când în când",
+    "항상":"întotdeauna","자주":"des","점점":"din ce în ce","차츰":"treptat",
+    "일찍":"devreme","늦게":"târziu"
+  },
+  place:{ "집":"acasă","학교":"școală","회사":"firmă / companie","식당":"restaurant","카페":"cafenea",
+    "도서관":"bibliotecă","병원":"spital","시장":"piață","백화점":"magazin universal",
+    "공항":"aeroport","기차역":"gară","버스정류장":"stație de autobuz","연구소":"laborator",
+    "기관":"instituție","지역사회":"comunitate","환경":"mediu","대기업":"corporație mare",
+    "회의실":"sală de ședințe","법원":"instanță","경찰서":"secție de poliție",
+    "해변":"plajă","산":"munte","공원":"parc","은행":"bancă"
+  },
+  mod:{ "잘":"bine","열심히":"cu sârguință","조용히":"în liniște","천천히":"încet",
+    "빨리":"repede","정말":"cu adevărat","아주":"foarte","너무":"prea / foarte",
+    "많이":"mult","조금":"puțin","갑자기":"brusc","미리":"în avans","벌써":"deja",
+    "아까":"mai devreme","방금":"chiar acum","금방":"imediat","곧":"în curând",
+    "항상":"mereu","자주":"des","가끔":"din când în când","드물게":"rar",
+    "상당히":"destul de","꽤":"binișor","도대체":"(deloc / în întrebări)",
+    "절대로":"niciodată (interdicție)","적극적으로":"activ","충분히":"suficient",
+    "특히":"în special","오히려":"mai degrabă","점점":"din ce în ce","차츰":"treptat",
+    "계속":"în mod continuu"
+  },
+    object:{ 
+    "책":"carte","커피":"cafea","물":"apă","음식":"mâncare","영화":"film",
+    "가방":"geantă","전화":"telefon","옷":"haine","자료":"materiale","데이터":"date",
+    "계획":"plan","조건":"condiție","상황":"situație","문제":"problemă",
+    "해결책":"soluție","요약":"rezumat","보고서":"raport","문서":"document",
+    "컴퓨터":"calculator","노트북":"laptop","편지":"scrisoare","선물":"cadou",
+    "의견":"opinie","정보":"informație","관계":"relație","결과":"rezultat",
+    "원인":"cauză","방법":"metodă","제품":"produs","서비스":"serviciu",
+    "정책":"politică","문화":"cultură",
+    "채소":"legume",
+    "견과류":"alune / nuci"
+  },
+  numeral:{},
+  counter:{ "개":"bucată","명":"persoană","권":"volum (carte)","장":"foaie / pagină",
+    "대":"aparat / vehicul","병":"sticlă","잔":"cană / pahar",
+    "마리":"animal","번":"dată","살":"ani (vârstă)","송이":"buchet / ciorchine",
+    "줄":"rând / șir","점":"punct","건":"caz","회":"dată (ocazie)",
+    "가지":"fel / tip","쪽":"pagină / direcție"
+  },
+  verb:{
+    "가다":"a merge","오다":"a veni","먹다":"a mânca","마시다":"a bea","보다":"a vedea / a se uita",
+    "읽다":"a citi","쓰다":"a scrie","배우다":"a învăța","사다":"a cumpăra","주다":"a da",
+    "받다":"a primi","일하다":"a lucra","공부하다":"a studia","요리하다":"a găti",
+    "청소하다":"a face curat","준비하다":"a pregăti","도와주다":"a ajuta",
+    "사용하다":"a folosi","필요하다":"a fi necesar","좋아하다":"a plăcea",
+    "싫어하다":"a nu plăcea / a urî","기다리다":"a aștepta","쉬다":"a se odihni",
+    "만나다":"a se întâlni","걷다":"a merge pe jos","달리다":"a alerga",
+    "앉다":"a se așeza","서다":"a sta în picioare","결정하다":"a decide",
+    "제안하다":"a propune","전달하다":"a transmite","유지하다":"a menține",
+    "발생하다":"a se produce","증가하다":"a crește","감소하다":"a scădea",
+    "인정하다":"a recunoaște","분석하다":"a analiza","관찰하다":"a observa",
+    "해결하다":"a rezolva","연구하다":"a cerceta","협력하다":"a colabora",
+    "요청하다":"a solicita","충족하다":"a satisface","비교하다":"a compara",
+    "설명하다":"a explica","예상하다":"a anticipa"
+  },
+  conjug:{
+    "-아요/어요":"prezent politicos",
+    "-았어요/었어요":"trecut politicos",
+    "-고 있어요":"acțiune în desfășurare",
+    "-고 싶어요":"vreau să...",
+     "-고":"și", 
+    "-(으)세요":"imperativ / onorific",
+    "-(으)ㄹ 거예요":"viitor",
+    "-지 마세요":"nu faceți..., vă rog",
+    "-아/어 주세요":"vă rog să...",
+    "-아/어야 돼요":"trebuie să...",
+    "-(으)ㄹ 수 있어요":"pot să...",
+    "-(으)ㄹ 수 없어요":"nu pot să...",
+    "-더라고요":"am observat că...",
+    "-네요":"exclamativ (observație surprinsă)",
+    "-군요":"exclamativ (constatare)",
+    "-고 나서":"după ce...",
+    "-기 전에":"înainte să...",
+    "-(으)면서":"în timp ce...",
+    "-(으)며":"și (în timp ce)",
+    "-(으)ㄹ지도 몰라요":"s-ar putea să...",
+    "-(으)ㄹ게요":"voi face (pentru tine)",
+    "-(으)ㄹ래요?":"ai chef să...? / vreau să...",
+    "-(으)ㄹ까요?":"să facem...?",
+    "-는 게 어때요?":"ce-ar fi să...?",
+    "-는 중이에요":"sunt în mijlocul acțiunii",
+    "-아/어도 돼요":"poți să..., e în regulă",
+    "-(으)면 안 돼요":"nu ai voie să...",
+    "-도록 하다":"să faci în așa fel încât să...",
+    "-게 되다":"ajungi să...",
+    "-아/어지다":"a deveni...",
+    "-기에":"pentru că..., fiindcă",
+    "-길래":"pentru că (am văzut / simțit eu)",
+    "-고 말다":"în cele din urmă ajunge să...",
+    "-고자 하다":"a intenționa să...",
+    "-(으)ㄹ 뿐이다":"doar..., nimic altceva"
+  }
+};
+
+/* === SALVARE CUVINTE NOI === */
+const STORAGE_KEY="ralucaKoreanCustomWords_v2";
+const customData={
+  subject:[],time:[],place:[],mod:[],object:[],
+  numeral:[],counter:[],verb:[],conjug:[]
+};
+function loadCustomData(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    const saved=JSON.parse(raw);
+    Object.keys(customData).forEach(k=>{
+      if(Array.isArray(saved[k]))customData[k]=saved[k];
+    });
+    Object.entries(customData).forEach(([key,arr])=>{
+      arr.forEach(entry=>{
+        if(!entry||!entry.word)return;
+        const w=entry.word,ro=entry.ro||"";
+        let ref=null;
+        if(key==="subject")ref=subjects;
+        else if(key==="time")ref=times;
+        else if(key==="place")ref=places;
+        else if(key==="mod")ref=mods;
+        else if(key==="object")ref=objects;
+        else if(key==="numeral")ref=numerals;
+        else if(key==="counter")ref=counters;
+        else if(key==="verb")ref=verbs;
+        else if(key==="conjug")ref=conjugations;
+        if(ref&&!ref.includes(w))ref.push(w);
+        if(!translations[key])translations[key]={};
+        if(ro)translations[key][w]=ro;
+      });
+    });
+  }catch(e){}
+}
+    // ================= RO -> KO (parser simplu din dicționarul app-ului) =================
+const roInput = document.getElementById("roInput");
+ // === Wrapper general pentru traducere ===
+function translateInputToKo() {
+  const text = (roInput.value || "").trim();
+  const lang = getInputLang();
+
+  let result;
+  if (!text) {
+    result = { ko: "", roFixed: "" };
+  } else if (lang === "en") {
+    // NOUL PIPELINE: EN → KO
+    result = translateEnToKo(text);
+  } else {
+    // PIPELINE VECHI: RO → KO
+    result = translateRoToKo(text);
+  }
+
+  // aici folosești exact aceleași elemente pe care le foloseai până acum
+  // pentru a afișa rezultatul
+  document.getElementById("koOutput").textContent = result.ko || "";
+  document.getElementById("roCorrected").textContent = result.roFixed || "";
+}
+    // reverse map: română -> coreeană (din translations)
+function stripDiacritics(s){
+  return (s||"")
+    .replace(/ă/g,"a").replace(/â/g,"a").replace(/î/g,"i")
+    .replace(/ș/g,"s").replace(/ş/g,"s")
+    .replace(/ț/g,"t").replace(/ţ/g,"t");
+}
+
+function normRo(s){
+  return stripDiacritics(
+    (s||"")
+      .toLowerCase()
+      .replace(/[.,!?;]/g," ")
+  )
+  .replace(/\s+/g," ")
+  .trim();
+}
+function buildReverseMap(){
+  const rev = {
+    subject:{}, time:{}, place:{}, mod:{},
+    object:{}, counter:{}, verb:{}, conjug:{}
+  };
+
+  Object.entries(translations).forEach(([cat, map])=>{
+    if(!rev[cat]) return;
+
+    Object.entries(map).forEach(([ko, ro])=>{
+      if(!ro) return;
+
+      // ex: "a cumpăra" → "a cumpara"
+      const norm = normRo(ro);
+
+      // cheia de bază (ce aveai și înainte)
+      if(!rev[cat][norm]) rev[cat][norm] = ko;
+
+      // 👇 în plus: suport pentru forme de tip "cumpăr", "să cumpăr"
+      if(norm.startsWith("a ")){
+        // "a cumpara" → "cumpara"
+        const base = norm.replace(/^a\s+/, ""); 
+        if(base){
+          // "cumpara" → "cumpar" (tăiem ultima vocală a infinitivului)
+          const stem = base.replace(/[aei]$/, ""); 
+          if(stem){
+            // "cumpar" → prinde "cumpăr legume"
+            if(!rev[cat][stem]) rev[cat][stem] = ko;
+
+            // "sa cumpar" → prinde "să cumpăr legume"
+            const saKey = "sa " + stem;
+            if(!rev[cat][saKey]) rev[cat][saKey] = ko;
+          }
+        }
+      }
+    });
+  });
+
+  return rev;
+}
+let REV = buildReverseMap();
+
+// detectează conjugarea din română (foarte practic)
+function detectConjFromRo(ro){
+  const t = normRo(ro);
+
+  // 0) CONECTORI care cer propoziția 2 (linking)
+  // --- "și / și apoi / iar" → -고 ---
+  if (/\bsi apoi\b/.test(t) ||
+      /\bsi dupa\b/.test(t) ||
+      /\biar\b/.test(t) ||
+      /\bsi\b/.test(t)) {
+    return "-고";   // și / apoi / iar
+  }   
+    // 0) ORICE „si / și” → -고 (leagă două acțiuni, cere propoziția 2)
+  if (/\bsi\b/.test(t)) {
+    return "-고";
+  }
+  if (/\bdupa ce\b/.test(t)) {
+    // „După ce ajung acasă, beau cafea”
+    return "-고 나서";           // după ce...
+  }
+ 
+  if (/\binainte sa\b/.test(t)) {
+    // „Înainte să plec la muncă...”
+    return "-기 전에";           // înainte să...
+  }
+  if (/\bin timp ce\b/.test(t)) {
+    // „În timp ce învăț, beau cafea”
+    return "-(으)면서";          // în timp ce...
+  }
+  if (/\bpentru ca\b/.test(t) ||
+      /\bdeoarece\b/.test(t) ||
+      /\bfiindca\b/.test(t)) {
+    // „Pentru că plouă, stau acasă”
+    return "-기에";             // deoarece / pentru că...
+  }
+  if (/\bdesi\b/.test(t) ||
+      /\bchiar daca\b/.test(t)) {
+    // „Deși e obosită, studiază”
+    return "-(으)ㄴ/는데도";      // deși / chiar dacă...
+  }
+  if (/\bpe masura ce\b/.test(t) ||
+      /\bcu cat\b/.test(t)) {
+    // „Pe măsură ce învăț mai mult...”
+    return "-(으)ㄹ수록";        // cu cât... cu atât...
+  }
+  // 1) INTENȚIE / OBLIGAȚIE / ABILITATE
+  if(/\bvreau sa\b/.test(t))        return "-고 싶어요";
+  if(/\btrebuie sa\b/.test(t))      return "-아/어야 돼요";
+  if(/\bnu pot sa\b/.test(t))       return "-(으)ㄹ 수 없어요";
+  if(/\bpot sa\b/.test(t))          return "-(으)ㄹ 수 있어요";
+
+  // 2) FUTUR
+  if(/\b(maine|mâine)\b/.test(t) ||
+     /\bvoi\b/.test(t) ||
+     /\bo sa\b/.test(t)){
+    return "-(으)ㄹ 거예요";
+  }
+
+  // 3) TRECUT
+  if(/\b(ieri|deja|tocmai)\b/.test(t) ||
+     /\bam\b/.test(t)){
+    return "-았어요/었어요";
+  }
+
+  // 4) „și” → -고  ⭐
+  // normRo face „și” → „si”, deci căutăm \bsi\b
+  if(/\bsi\b/.test(t)){
+    return "-고";
+  }
+
+  // 5) NEGATIV
+  if(/\bnu\b/.test(t))        return "-지 마세요";
+
+  // 6) FALLBACK: prezent politicos
+  return "-아요/어요";
+}  
+   // --- Împarte propoziția română în două fraze după „și / iar / apoi” ---
+function splitRoIntoClauses(txt){
+  if (!txt) return null;
+
+  // căutăm primul „și / si / iar / apoi” (cu spații în jur)
+  const re = /\s+(și|si|iar|apoi)\s+/i;
+  const m  = txt.match(re);
+  if (!m) return null;
+
+  const first  = txt.slice(0, m.index).trim();
+  const second = txt.slice(m.index + m[0].length).trim();
+
+  // dacă nu avem ambele părți, nu facem split
+  if (!first || !second) return null;
+
+  return { first, second };
+} 
+// caută cel mai bun match RO în reverse map (match pe “include”, nu doar exact)
+function findKoByRo(cat, text){
+  const t = normRo(text);
+  const keys = Object.keys(REV[cat]||{});
+  // preferăm potriviri mai lungi
+  keys.sort((a,b)=>b.length-a.length);
+  for(const k of keys){
+    if(k && t.includes(k)) return REV[cat][k];
+  }
+  return null;
+}
+    // ==== FORME ROMÂNEȘTI → INFINITIV (pt. detectarea verbului) ====
+const RO_FORM_TO_INF = {
+  // MERGE / PLECA -> tratăm ca "a merge" (=> 가다)
+  "plec":"a merge","pleci":"a merge","pleacă":"a merge","pleaca":"a merge",
+  "pleca":"a merge","plecam":"a merge","plecați":"a merge",
+  "merg":"a merge","mergi":"a merge","merge":"a merge","mergem":"a merge","mergeți":"a merge",
+
+  // VENI
+  "vin":"a veni","vii":"a veni","vine":"a veni","venim":"a veni","veniți":"a veni",
+
+  // MÂNCA
+  "mănânc":"a mânca","mananc":"a mânca",
+  "mănânci":"a mânca","mananci":"a mânca",
+  "mănâncă":"a mânca","mananca":"a mânca",
+
+  // BEA
+  "beau":"a bea","bei":"a bea","bea":"a bea","bem":"a bea","beți":"a bea",
+
+  // CITI
+  "citesc":"a citi","citești":"a citi","citesti":"a citi",
+  "citește":"a citi","citeste":"a citi",
+  "citim":"a citi","citiți":"a citi","cititi":"a citi",
+
+  // SCRIE
+  "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie",
+  "scriem":"a scrie","scrieți":"a scrie","scrieti":"a scrie"
+};
+
+// foarte simplu: găsește subiect (eu/tu/noi/voi) + cuvinte pe care le știe glosarul
+function parseRoToState(roSentence){
+  const msg = [];
+  const t = normRo(roSentence);
+
+  // SUBJECT
+  let subj = "";
+  if(/\beu\b/.test(t))      subj = "저";
+  else if(/\btu\b/.test(t)) subj = "너";
+  else if(/\bnoi\b/.test(t))subj = "우리";
+  else if(/\bvoi\b/.test(t))subj = "너희";
+
+  // TIME
+  const time =
+    findKoByRo("time", roSentence) ||
+    (/\bastazi\b/.test(t) ? "오늘" : "") ||
+    (/\bmaine\b/.test(t)  ? "내일" : "") ||
+    (/\bieri\b/.test(t)   ? "어제" : "");
+
+  // PLACE
+  let place = findKoByRo("place", roSentence);
+  if(!place && /\bbanc(ă|a)\b/i.test(roSentence)) place = "은행";
+  // piață / piata → 시장
+  if(!place && /\bpiat[ăa]\b/i.test(roSentence))  place = "시장";
+
+  // MOD / OBJECT
+  const mod    = findKoByRo("mod", roSentence);
+  const object = findKoByRo("object", roSentence);
+
+  // VERB (1) din dicționar
+  let verb = findKoByRo("verb", roSentence);
+
+  // VERB (2) infinitiv "a ___"
+  if(!verb){
+    const m = t.match(/\ba\s+([a-zăâîșț]+)/i);
+    if(m){
+      const inf = ("a " + m[1]).toLowerCase();
+      verb = REV.verb[inf] || "";
+    }
+  }
+
+  // VERB (3) forme conjugate (merg, plec, citesc...)
+  if(!verb){
+    for(const w of t.split(" ")){
+      const inf = RO_FORM_TO_INF[w];
+      if(inf && REV.verb[inf]){
+        verb = REV.verb[inf];
+        break;
+      }
+    }
+  }
+
+  // VERB (4) sinonime manuale (pleca, sosi, ajunge)
+  if(!verb){
+    if(/\bpleca\b/.test(t) ||
+       /\bplec\b/.test(t) ||
+       /\bpleci\b/.test(t) ||
+       /\bplecam\b/.test(t) ||
+       /\bplecați\b/.test(t)) {
+      verb = "가다";           // pleca → a merge
+    } else if(/\bsosi\b/.test(t) ||
+              /\bajunge\b/.test(t) ||
+              /\bajuns\b/.test(t)) {
+      verb = "오다";           // sosi / ajunge → a veni
+    }
+  }
+
+  const conj = detectConjFromRo(roSentence);
+
+  if(!subj) msg.push("• Nu am detectat clar subiectul (eu/tu/noi/voi).");
+  if(!verb) msg.push("• Nu am găsit verb în dicționar (încearcă și infinitiv: „a merge”, „a veni”).");
+
+  return {
+    state: {
+      subject: subj,
+      time,
+      place:  place  || "",
+      mod:    mod    || "",
+      object: object || "",
+      numeral:"",
+      counter:"",
+      verb:   verb   || "",
+      conjug: conj   || "-아요/어요"
+    },
+    msg
+  };
+}
+function saveCustomData(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(customData));}catch(e){}
+}
+loadCustomData();
+
+/* === HANGUL helperi pt conjugare === */
+const H_BASE=0xAC00;
+const JONG=["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ",
+            "ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const JUNG=["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ",
+            "ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+
+function decomposeLastSyl(word){
+  if(!word)return null;
+  const ch=word.charCodeAt(word.length-1);
+  const code=ch-H_BASE;
+  if(code<0||code>11171)return null;
+  const jong=code%28;
+  const jung=((code-jong)/28)%21;
+  const cho=Math.floor((code-jong)/28/21);
+  return{cho,jung,jong,prefix:word.slice(0,-1)};
+}
+function hasBatchim(s){
+  const d=decomposeLastSyl(s);
+  return d?d.jong!==0:false;
+}
+function getVerbStem(dict){
+  if(!dict)return"";
+  return dict.endsWith("다")?dict.slice(0,-1):dict;
+}
+
+/* verbe speciale */
+const specialVerbMap={
+  "가다":{present:"가요",past:"갔어요"},
+  "오다":{present:"와요",past:"왔어요"},
+  "보다":{present:"봐요",past:"봤어요"},
+  "하다":{present:"해요",past:"했어요"},
+  "먹다":{past:"먹었어요"},
+  "읽다":{past:"읽었어요"},
+  "마시다":{past:"마셨어요"},
+  "살다":{past:"살았어요"}
+};
+
+function presentPolite(dict){
+  if(specialVerbMap[dict]?.present)return specialVerbMap[dict].present;
+  if(dict==="하다")return"해요";
+  const stem=getVerbStem(dict);
+  const d=decomposeLastSyl(stem);
+  if(!d)return stem+"요";
+  const v=JUNG[d.jung];
+  const aGroup=["ㅏ","ㅑ","ㅗ","ㅛ","ㅘ","ㅙ","ㅚ"].includes(v);
+  if(stem.length===1&&aGroup)return stem+"요";
+  return stem+(aGroup?"아요":"어요");
+}
+function pastPolite(dict){
+  if(specialVerbMap[dict]?.past)return specialVerbMap[dict].past;
+  if(dict==="하다")return"했어요";
+  const stem=getVerbStem(dict);
+  const d=decomposeLastSyl(stem);
+  if(!d)return stem+"었어요";
+  const v=JUNG[d.jung];
+  const aGroup=["ㅏ","ㅑ","ㅗ","ㅛ","ㅘ","ㅙ","ㅚ"].includes(v);
+  if(aGroup)return stem+"았어요";
+  return stem+"었어요";
+}
+function stemPlusAeo(dict){
+  if(dict==="하다")return"해";
+  const stem=getVerbStem(dict);
+  const d=decomposeLastSyl(stem);
+  if(!d)return stem;
+  const v=JUNG[d.jung];
+  const aGroup=["ㅏ","ㅑ","ㅗ","ㅛ","ㅘ","ㅙ","ㅚ"].includes(v);
+  if(stem.length===1&&aGroup)return stem;
+  return stem+(aGroup?"아":"어");
+}
+
+/* FUTUR -(으)ㄹ… cu compunerea corectă a lui ㄹ */
+function futureL(dict){
+  const stem=getVerbStem(dict);
+  const d=decomposeLastSyl(stem);
+  if(!d)return stem+"ᆯ"; // fallback rar
+  if(d.jong===0){
+    // fără batchim → punem ㄹ ca 받침: 자 → 잘, 가 → 갈
+    const newCode=H_BASE + d.cho*21*28 + d.jung*28 + 8; // index 8 = ㄹ
+    const ch=String.fromCharCode(newCode);
+    return d.prefix+ch;
+  }else{
+    // cu batchim → adăugăm "을" separat: 먹다 → 먹을
+    return stem+"을";
+  }
+}
+
+/* conjugări care leagă P2 */
+const linkingConjugations=new Set([
+  "-고","-고 나서","-기 전에","-(으)면서","-(으)며",
+  "-(으)나","-(으)므로","-(으)ㄴ/는 만큼",
+  "-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도",
+  "-(으)ㄴ/는 반면에","-도록 하다","-기에","-길래","-고 말다","-고자 하다"
+]);
+const isLinkingConj=v=>linkingConjugations.has(v);
+
+/* ce conjugări „trag” spre trecut / viitor */
+const timePastWords=new Set(["어제","이전에","당시에","한동안","최근에","마침내","결국","방금"]);
+const timeFutureWords=new Set(["내일","조금 후에","곧","이후에"]);
+const conjPastLike=new Set(["-았어요/었어요","-더라고요"]);
+const conjFutureLike=new Set(["-(으)ㄹ 거예요","-(으)ㄹ게요","-(으)ㄹ래요?","-(으)ㄹ지도 몰라요"]);
+function conjugationType(cj){
+  if(!cj)return"none";
+  if(conjPastLike.has(cj))return"past";
+  if(conjFutureLike.has(cj))return"future";
+  return"present";
+}
+
+/* === VERB + CONJUGARE → expresie finală coreeană === */
+function buildVerbPhrase(dictVerb,cj){
+  if(!dictVerb&&!cj)return"";
+  if(!dictVerb)return cj||"";
+  if(!cj)return dictVerb;
+
+  if(cj==="-아요/어요")return presentPolite(dictVerb);
+  if(cj==="-았어요/었어요")return pastPolite(dictVerb);
+  if(cj==="-(으)세요")return futureL(dictVerb)+"세요";
+  if(cj==="-(으)ㄹ 거예요")return futureL(dictVerb)+" 거예요";
+  if(cj==="-(으)ㄹ게요")return futureL(dictVerb)+"게요";
+  if(cj==="-(으)ㄹ래요?")return futureL(dictVerb)+"래요?";
+  if(cj==="-(으)ㄹ까요?")return futureL(dictVerb)+"까요?";
+  if(cj==="-(으)ㄹ 수 있어요")return futureL(dictVerb)+" 수 있어요";
+  if(cj==="-(으)ㄹ 수 없어요")return futureL(dictVerb)+" 수 없어요";
+  if(cj==="-(으)ㄹ지도 몰라요")return futureL(dictVerb)+"지도 몰라요";
+
+  if(cj==="-고 있어요")return getVerbStem(dictVerb)+"고 있어요";
+  if(cj==="-고 싶어요")return getVerbStem(dictVerb)+"고 싶어요";
+  if(cj==="-지 마세요")return getVerbStem(dictVerb)+"지 마세요";
+  if(cj==="-아/어 주세요")return stemPlusAeo(dictVerb)+" 주세요";
+  if(cj==="-아/어야 돼요")return stemPlusAeo(dictVerb)+"야 돼요";
+  if(cj==="-는 중이에요")return getVerbStem(dictVerb)+"는 중이에요";
+  if(cj==="-아/어도 돼요")return stemPlusAeo(dictVerb)+"도 돼요";
+
+  if(cj==="-게 되다")return getVerbStem(dictVerb)+"게 돼요";
+  if(cj==="-아/어지다")return stemPlusAeo(dictVerb)+"지다";
+
+  if(isLinkingConj(cj)){
+    if(cj==="-고 나서")return getVerbStem(dictVerb)+"고 나서";
+    if(cj==="-기 전에")return getVerbStem(dictVerb)+"기 전에";
+    if(cj.includes("면서"))return getVerbStem(dictVerb)+"면서";
+    if(cj.includes("며"))return getVerbStem(dictVerb)+"며";
+    if(cj==="-도록 하다")return getVerbStem(dictVerb)+"도록 해요";
+    if(cj==="-고 말다")return getVerbStem(dictVerb)+"고 말았어요";
+    if(cj==="-고자 하다")return getVerbStem(dictVerb)+"고자 해요";
+    if(cj==="-기에")return getVerbStem(dictVerb)+"기에";
+    if(cj==="-길래")return getVerbStem(dictVerb)+"길래";
+    return getVerbStem(dictVerb)+cj.replace(/^-/, "");
+  }
+
+  // fallback – verb + final, fără spațiu și fără „-”
+return getVerbStem(dictVerb)+cj.replace(/^-/, "");
+}
+
+/* === RESTUL APP-ULUI (builder, preview etc.) === */
+
+const glossaryEntries=[];
+const columns=[
+  {key:"subject",title:"SUBJECT",ko:"주어",data:subjects,hint:"Cine?",allowCustom:true},
+  {key:"time",title:"TIME",ko:"시간",data:times,hint:"Când?",allowCustom:true},
+  {key:"place",title:"PLACE",ko:"장소",data:places,hint:"Unde?",allowCustom:true},
+  {key:"mod",title:"MOD",ko:"방법",data:mods,hint:"Cum?",allowCustom:true},
+  {key:"object",title:"OBJECT",ko:"목적어",data:objects,hint:"Ce?",allowCustom:true},
+  {key:"numeral",title:"NUMERAL",ko:"",data:numerals,hint:"Număr",allowCustom:true},
+  {key:"counter",title:"COUNTER",ko:"수량사",data:counters,hint:"Clasificator",allowCustom:true},
+  {key:"verb",title:"VERB",ko:"동사",data:verbs,hint:"Acțiune",allowCustom:true},
+  {key:"conjug",title:"CONJUGĂRI",ko:"",data:conjugations,hint:"Formă verbală",allowCustom:true}
+];
+const maxLen=Math.max(...columns.map(c=>c.data.length));
+
+let index=0;
+const stateP1={},stateP2={},activeP1={},activeP2={};
+columns.forEach(col=>{
+  stateP1[col.key]=col.data[0]||"";
+  stateP2[col.key]=col.data[0]||"";
+  activeP1[col.key]=true;
+  activeP2[col.key]=true;
+});
+
+/* referințe DOM (presupunem că restul HTML e ca în versiunea ta actuală) */
+const tableP1=document.getElementById("tableP1");
+const tableP2=document.getElementById("tableP2");
+const titleP2=document.getElementById("titleP2");
+const togglesP1=document.getElementById("togglesP1");
+const togglesP2=document.getElementById("togglesP2");
+const enableP2=document.getElementById("enableP2");
+const prevBtn=document.getElementById("prevBtn");
+const nextBtn=document.getElementById("nextBtn");
+const resetBtn=document.getElementById("resetBtn");
+const pageInfoEl=document.getElementById("pageInfo");
+const previewKo=document.getElementById("previewKo");
+const previewRo=document.getElementById("previewRo");
+const naturalHint=document.getElementById("naturalHint");
+const toggleRoBtn=document.getElementById("toggleRoBtn");
+const randomBtn=document.getElementById("randomBtn");
+const speakBtn=document.getElementById("speakBtn");
+const favBtn=document.getElementById("favBtn");
+const overlay=document.getElementById("overlay");
+const panelTitle=document.getElementById("panelTitle");
+const panelSub=document.getElementById("panelSub");
+const panelList=document.getElementById("panelList");
+const closePanelBtn=document.getElementById("closePanelBtn");
+const panelSearchInput=document.getElementById("panelSearchInput");
+const newWordInput=document.getElementById("newWordInput");
+const newWordTransInput=document.getElementById("newWordTransInput");
+const addWordBtn=document.getElementById("addWordBtn");
+const modeButtons=document.querySelectorAll(".small-mode-btn");
+const subtitleEl=document.getElementById("subtitle");
+// === SINGLE SCREEN MODE (builder only) ===
+function setScreen() {
+  const el = document.getElementById("screen-builder");
+  if (el) el.classList.add("active");
+}
+    /* navigare ecrane – varianta corectă */
+function setScreen(name){
+  // ascund toate ecranele
+  Object.entries(screens).forEach(([key, el])=>{
+    if(!el) return;
+    el.classList.toggle("active", key === name);
+  });
+
+  // marchează butonul activ în bara de jos
+  navButtons.forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.target === name);
+  });
+}
+
+// click pe butoanele din nav
+navButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const target = btn.dataset.target;   // builder / exercises / lessons / glossary
+    setScreen(target);
+  });
+});
+    // ====== STEPPER pentru Builder (click pe pași) ======
+const builderSteps = document.querySelectorAll(".builder-step");
+
+// zonele la care facem scroll pentru fiecare pas
+const builderStepTargets = [
+  document.getElementById("roInput"),        // Pas 1: textarea Română
+  document.getElementById("togglesP1"),      // Pas 2: chip-urile SUBJECT/TIME...
+  document.querySelector(".preview-card")    // Pas 3: propoziția de jos
 ];
 
-const CONNECTORS = ["-고", "-아서/어서"];
-
-/* =======================
-   STATE
-======================= */
-
-const clauses = [];
-let activeClauseIndex = 0;
-
-/* =======================
-   DOM
-======================= */
-
-const table = document.getElementById("tableP1");
-const previewKo = document.getElementById("previewKo");
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
-const resetBtn = document.getElementById("resetBtn");
-
-/* =======================
-   HELPERS LINGVISTICE
-======================= */
-
-function hasBatchim(word){
-  if(!word) return false;
-  const code = word.charCodeAt(word.length-1) - 0xAC00;
-  if(code < 0 || code > 11171) return false;
-  return code % 28 !== 0;
-}
-
-function subjectParticle(w){
-  return w + (hasBatchim(w) ? "은" : "는");
-}
-function objectParticle(w){
-  return w + (hasBatchim(w) ? "을" : "를");
-}
-function placeParticle(w, verb){
-  return w + (["가다","오다"].includes(verb) ? "에" : "에서");
-}
-
-/* =======================
-   CLAUSE FACTORY
-======================= */
-
-function createClause(connector = null){
-  const parts = {};
-  const active = {};
-
-  PARTS.forEach(p=>{
-    parts[p.key] = p.data[0];
-    active[p.key] = true;
+function activateBuilderStep(index){
+  builderSteps.forEach((step,i)=>{
+    step.classList.toggle("active", i===index);
   });
 
-  return { parts, active, connector };
+  const target = builderStepTargets[index];
+  if(target){
+    target.scrollIntoView({behavior:"smooth", block:"center"});
+    if(index === 0 && roInput){
+      roInput.focus();
+    }
+  }
 }
 
-/* =======================
-   INIT
-======================= */
+builderSteps.forEach((step,i)=>{
+  step.addEventListener("click", ()=>{
+    activateBuilderStep(i);
+  });
+});
+/* mod simplu / TOPIK */
+let currentMode="topik";
+const simpleColumnsSet={subject:true,time:true,object:true,verb:true,conjug:true};
+function isColumnVisible(key){
+  return currentMode==="topik"||!!simpleColumnsSet[key];
+}
+modeButtons.forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    currentMode=btn.dataset.mode;
+    modeButtons.forEach(b=>b.classList.toggle("active",b===btn));
+    render();
+  });
+});
+   // Împarte o frază românească în maxim 2 propoziții, la "și / iar / după ce..."
+function splitRoIntoTwoClauses(text) {
+  if (!text) return { p1: "", p2: "" };
 
-clauses.push(createClause()); // clauza principală
-render();
+  // rupem la primul "și / şi / si / iar / dupa ce / după ce"
+  const parts = text.split(/şi apoi|și apoi|si apoi|şi dupa|și dupa|si dupa|şi|și|si|iar|după ce|dupa ce/i);
 
-/* =======================
-   RENDER
-======================= */
+  const p1 = (parts[0] || "").trim();
+  const p2 = (parts[1] || "").trim();
 
-function render(){
-  table.innerHTML = "";
+  return { p1, p2 };
+}
+    
+ const roTranslateBtn = document.getElementById("roTranslateBtn");
+if (roTranslateBtn) {
+  roTranslateBtn.addEventListener("click", () => {
+     const txt = roInput.value || "";
+    LAST_RO_SENTENCE = txt;
 
-  clauses.forEach((clause, idx)=>{
-    const row = document.createElement("div");
-    row.className = "clause-row";
-    row.style.display = "flex";
-    row.style.gap = "6px";
+    // 0) încerc să văd dacă am două fraze legate cu „și / iar / apoi”
+    const split = splitRoIntoClauses(txt);
 
-    if(clause.connector){
-      const conn = document.createElement("div");
-      conn.className = "clause-connector";
-      conn.textContent = clause.connector;
-      conn.style.fontWeight = "700";
-      conn.style.alignSelf = "center";
-      row.appendChild(conn);
+    if (split) {
+      // 🔹 CAZ: două propoziții legate cu „și / iar / apoi”
+
+      // P1: prima parte + -고
+      const parsed1 = parseRoToState(split.first);
+      Object.assign(stateP1, parsed1.state);
+      stateP1.conjug   = "-고";     // forțăm -고 la P1
+      activeP1.conjug  = true;      // ne asigurăm că este ON
+
+      // P2: a doua parte, detectată normal
+      const parsed2 = parseRoToState(split.second);
+      Object.assign(stateP2, parsed2.state);
+
+      // activăm vizual Propoziția 2
+      if (enableP2) {
+        enableP2.checked = true;
+      }
+      if (tableP2) {
+        tableP2.classList.remove("hidden");
+      }
+
+      render();
+
+    } else {
+      // 🔹 CAZ: o singură propoziție (fără „și / iar / apoi” între acțiuni)
+
+      const parsed = parseRoToState(txt);
+      Object.assign(stateP1, parsed.state);
+
+      // dezactivăm Propoziția 2 în UI
+      if (enableP2) {
+        enableP2.checked = false;
+      }
+      if (tableP2) {
+        tableP2.classList.add("hidden");
+      }
+
+      render();
     }
 
-    PARTS.forEach(p=>{
-      const col = document.createElement("div");
-      col.className = "col";
-      if(!clause.active[p.key]) col.classList.add("dimmed");
+    // 3) Ro → Ko + româna corectată (rămâne ca înainte)
+    const res = translateRoToKo(txt);
+    document.getElementById("roToKoResult").textContent = res.ko;
+    document.getElementById("roCorrected").textContent = res.roFixed;
+  });
+}
+    function createToggleChips(){
+  columns.forEach(col=>{
+    // --- Propoziția 1 ---
+    const chip1 = document.createElement("label");
+    chip1.className = "chip";
+    const cb1 = document.createElement("input");
+    cb1.type = "checkbox";
+    cb1.checked = true;
+    cb1.dataset.key = col.key;
+    cb1.dataset.clause = "p1";
+    chip1.appendChild(cb1);
+    chip1.append(col.title);
+    togglesP1.appendChild(chip1);
 
-      const h = document.createElement("div");
-      h.className = "col-header";
-      h.textContent = p.title;
-
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = clause.active[p.key];
-      cb.onchange = () => {
-        clause.active[p.key] = cb.checked;
-        updatePreview();
-        render();
-      };
-      h.appendChild(cb);
-
-      const label = document.createElement("div");
-      label.className = "col-body-label";
-      label.textContent = p.hint;
-
-      const main = document.createElement("div");
-      main.className = "col-body-main";
-      main.textContent = clause.parts[p.key];
-
-      col.append(h,label,main);
-
-      col.onclick = () => {
-        const arr = p.data;
-        const i = arr.indexOf(clause.parts[p.key]);
-        clause.parts[p.key] = arr[(i+1)%arr.length];
-        updatePreview();
-        render();
-      };
-
-      row.appendChild(col);
-    });
-
-    table.appendChild(row);
+    // --- Propoziția 2 ---
+    const chip2 = document.createElement("label");
+    chip2.className = "chip";
+    const cb2 = document.createElement("input");
+    cb2.type = "checkbox";
+    cb2.checked = true;
+    cb2.dataset.key = col.key;
+    cb2.dataset.clause = "p2";
+    chip2.appendChild(cb2);
+    chip2.append(col.title);
+    togglesP2.appendChild(chip2);
   });
 
+  const sync = (wrapper, map) => {
+    // stare inițială (toate ON, deci fără .chip-off)
+    wrapper.querySelectorAll("input[type='checkbox']").forEach(cb=>{
+      cb.parentElement.classList.toggle("chip-off", !cb.checked);
+    });
+
+    wrapper.addEventListener("change", e => {
+      const cb = e.target;
+      if (cb.tagName !== "INPUT") return;
+
+      const key = cb.dataset.key;
+      map[key] = cb.checked;
+
+      // vizual: chip-ul devine „stins” când este debifat
+      cb.parentElement.classList.toggle("chip-off", !cb.checked);
+
+      render();
+    });
+  };
+
+  sync(togglesP1, activeP1);
+  sync(togglesP2, activeP2);
+}
+createToggleChips();
+enableP2.addEventListener("change", ()=>{
+  const on = enableP2.checked;
+
+  // titlul rămâne mereu vizibil, ascundem doar tabelul P2
+  if (on) {
+    tableP2.classList.remove("hidden");
+  } else {
+    tableP2.classList.add("hidden");
+  }
+
+  // sincronizăm și bifa vizibilă de lângă titlu (dacă există)
+  if (titleP2Checkbox) {
+    titleP2Checkbox.checked = on;
+  }
+
+  updatePreview();
+});
+    /* helper particule */
+const pronouns=new Set(["저","나","너","우리","너희"]);
+function addSubjectWithParticle(word){
+  if(!word)return"";
+  const b=hasBatchim(word);
+  if(pronouns.has(word))return word+(b?"은":"는");
+  return word+(b?"이":"가");
+}
+const timeAdverbsNoParticle=new Set(["오늘","어제","내일","지금","방금","요즘","항상","자주","가끔","계속","점점","차츰"]);
+function addTimeWithParticle(word){
+  if(!word)return"";
+  if(timeAdverbsNoParticle.has(word))return word;
+  return word+"에";
+}
+function addPlaceWithParticle(word, verbKo){
+  if(!word) return "";
+
+  // verbe de mișcare – merg la / vin la → 에
+  const motionVerbs = new Set(["가다","오다","나가다","들어가다","돌아가다","돌아오다"]);
+
+  if(verbKo && motionVerbs.has(verbKo)) {
+    return word + "에";
+  }
+  // altfel, locul acțiunii → 에서
+  return word + "에서";
+}
+function addObjectWithParticle(word){
+  if(!word)return"";
+  return word+(hasBatchim(word)?"을":"를");
+}
+// ================= PARTICLE PICKERS (pentru exerciții particlePlus) =================
+
+function pickSubjectParticle(word){
+  if(!word) return "은/는";
+  const b = hasBatchim(word);
+  // pronume: 저/나/너/우리/너희 -> 은/는
+  if(pronouns.has(word)) return b ? "은" : "는";
+  // rest -> 이/가
+  return b ? "이" : "가";
+}
+
+function pickObjectParticle(word){
+  if(!word) return "을/를";
+  return hasBatchim(word) ? "을" : "를";
+}
+
+// TIME: majoritatea adverbelor nu cer particulă
+function pickTimeParticle(word){
+  if(!word) return "";
+  if(timeAdverbsNoParticle.has(word)) return "";
+  return "에";
+}
+
+// PLACE: pentru exerciții – locul acțiunii
+function pickPlaceParticle(word){
+  if(!word) return "에서";
+  return "에서";
+}
+/* desenare coloane – cu bifă ON/OFF în fiecare căsuță */
+function renderClauseRow(container, activeMap, state, clauseId){
+  container.innerHTML = "";
+
+  columns.forEach(col=>{
+    if (!isColumnVisible(col.key)) return;
+
+    const colDiv = document.createElement("div");
+    colDiv.className = "col";
+    colDiv.dataset.key = col.key;
+    colDiv.dataset.clause = clauseId;
+
+    // dacă partea este dezactivată în activeMap → coloana apare "stinsă"
+    if (activeMap[col.key] === false) {
+      colDiv.classList.add("dimmed");
+    }
+
+    // ==== HEADER: titlu + bifă mică ====
+    const header = document.createElement("div");
+    header.className = "col-header";
+
+    const titleSpan = document.createElement("span");
+    titleSpan.textContent = col.title + (col.ko ? ` (${col.ko})` : "");
+    header.appendChild(titleSpan);
+
+    // bifa care controlează activeMap[col.key]
+    const toggle = document.createElement("input");
+    toggle.type = "checkbox";
+    toggle.className = "col-toggle";
+    toggle.checked = activeMap[col.key] !== false;  // default ON
+
+    toggle.addEventListener("change", () => {
+      // actualizăm starea logică (folosită la construirea propoziției)
+      activeMap[col.key] = toggle.checked;
+      render();   // redesenează tabel + propoziție
+    });
+
+    header.appendChild(toggle);
+    colDiv.appendChild(header);
+
+    // ==== LABEL (hint: Cine? Când? Unde? etc.) ====
+    const label = document.createElement("div");
+    label.className = "col-body-label";
+    label.textContent = col.hint || "";
+    colDiv.appendChild(label);
+
+    // ==== CUVÂNTUL ALES ====
+    const main = document.createElement("div");
+    main.className = "col-body-main";
+    main.textContent = state[col.key] || "";
+    colDiv.appendChild(main);
+
+    // ==== EXTRA (⭐ cere propoziția 2 la conjugări de legătură) ====
+    const extra = document.createElement("div");
+    extra.className = "col-body-extra";
+    if (col.key === "conjug" && state[col.key] && isLinkingConj(state[col.key])) {
+      extra.textContent = "⭐ cere propoziția 2";
+    }
+    colDiv.appendChild(extra);
+
+    container.appendChild(colDiv);
+  });
+}
+    /* === CONSTRUIRE propoziție + traducere pe părți === */
+const labelsRo = {
+  subject: "SUBJECT",
+  time: "TIME",
+  place: "PLACE",
+  mod: "MOD",
+  object: "OBJECT",
+  numeral: "NUMĂR",
+  counter: "COUNTER",
+  verb: "VERB"
+};
+
+function buildClauseSentence(state, activeMap, conjOverride) {
+  const koParts = [];
+  const roSegs  = [];
+  const use = (key) => activeMap[key] !== false && isColumnVisible(key);
+
+  // SUBJECT
+  const subj = state.subject;
+  if (subj && use("subject")) {
+    koParts.push(addSubjectWithParticle(subj));
+    const ro = (translations.subject && translations.subject[subj]) || subj;
+    roSegs.push(`${labelsRo.subject}: ${ro}`);
+  }
+
+  // TIME
+  const t = state.time;
+  if (t && use("time")) {
+    koParts.push(addTimeWithParticle(t));
+    const ro = (translations.time && translations.time[t]) || t;
+    roSegs.push(`${labelsRo.time}: ${ro}`);
+  }
+
+  // avem nevoie de verb & conjugare pentru loc
+  const v      = state.verb;
+  const cjUsed = conjOverride || state.conjug;
+
+  // PLACE
+  const p = state.place;
+  if (p && use("place")) {
+    koParts.push(addPlaceWithParticle(p, v));
+    const ro = (translations.place && translations.place[p]) || p;
+    roSegs.push(`${labelsRo.place}: ${ro}`);
+  }
+
+  // MOD
+  const m = state.mod;
+  if (m && use("mod")) {
+    koParts.push(m);
+    const ro = (translations.mod && translations.mod[m]) || m;
+    roSegs.push(`${labelsRo.mod}: ${ro}`);
+  }
+
+  // OBJECT
+  const obj = state.object;
+  if (obj && use("object")) {
+    koParts.push(addObjectWithParticle(obj));
+    const ro = (translations.object && translations.object[obj]) || obj;
+    roSegs.push(`${labelsRo.object}: ${ro}`);
+  }
+
+  // NUMERAL
+  const num = state.numeral;
+  if (num && use("numeral")) {
+    koParts.push(num);
+    const ro = (translations.numeral && translations.numeral[num]) || num;
+    roSegs.push(`${labelsRo.numeral}: ${ro}`);
+  }
+
+  // COUNTER
+  const cnt = state.counter;
+  if (cnt && use("counter")) {
+    koParts.push(cnt);
+    const ro = (translations.counter && translations.counter[cnt]) || cnt;
+    roSegs.push(`${labelsRo.counter}: ${ro}`);
+  }
+
+  // VERB + CONJUGARE
+ // VERB + CONJUGARE
+if (v || cjUsed) {
+  const vp = buildVerbPhrase(v, cjUsed);
+  if (vp) {
+    koParts.push(vp);
+
+    const roVerb = (translations.verb && translations.verb[v]) || v || "";
+    const cjExp  = (translations.conjug && translations.conjug[cjUsed]) || "";
+    let combined = roVerb || "";
+
+    // ✅ dacă avem explicație pentru terminație
+    if (cjExp) {
+      if (cjUsed === "-고") {
+        // doar „și” – fără paranteze
+        combined += ` ${cjExp}`;
+      } else {
+        // celelalte rămân cu explicația în paranteze
+        combined += ` ${cjExp} `;
+      }
+    }
+    roSegs.push(`${labelsRo.verb}: ${combined}`);
+  }
+}
+  return {
+    ko:     koParts.join(" "),
+    roText: roSegs.join(" / "),
+    time:   t,
+    conj:   cjUsed
+  };
+}
+
+/* ==== CONJUGARE ROMÂNEASCĂ (simplă) ====
+   (folosită doar ca să facă propoziția românească să sune natural) */
+const RO_FORMS = {
+  "a merge":   { "1sg":"merg","2sg":"mergi","3sg":"merge","1pl":"mergem","2pl":"mergeți","3pl":"merg" },
+  "a veni":    { "1sg":"vin","2sg":"vii","3sg":"vine","1pl":"venim","2pl":"veniți","3pl":"vin" },
+  "a mânca":   { "1sg":"mănânc","2sg":"mănânci","3sg":"mănâncă","1pl":"mâncăm","2pl":"mâncați","3pl":"mănâncă" },
+  "a bea":     { "1sg":"beau","2sg":"bei","3sg":"bea","1pl":"bem","2pl":"beți","3pl":"beau" },
+  "a citi":    { "1sg":"citesc","2sg":"citești","3sg":"citește","1pl":"citim","2pl":"citiți","3pl":"citesc" },
+  "a scrie":   { "1sg":"scriu","2sg":"scrii","3sg":"scrie","1pl":"scriem","2pl":"scrieți","3pl":"scriu" },
+  "a merge pe jos": {
+    "1sg":"merg pe jos","2sg":"mergi pe jos","3sg":"merge pe jos",
+    "1pl":"mergem pe jos","2pl":"mergeți pe jos","3pl":"merg pe jos"
+  }
+};
+
+function stripInfinitive(roVerb){
+  return (roVerb || "").replace(/^\s*a\s+/i, "").trim();
+}
+
+function roConjExactTemplate(cj){
+  const map = {
+    "-아요/어요":         v => `${v}`,
+    "-았어요/었어요":     v => `${v} (în trecut)`,
+    "-고 있어요":         v => `${v} acum`,
+    "-고 싶어요":         v => `vreau să ${v}`,
+    "-(으)ㄹ 거예요":      v => `voi ${v}`,
+    "-지 마세요":         v => `nu ${v}, te rog`,
+    "-아/어야 돼요":       v => `trebuie să ${v}`,
+    "-(으)ㄹ 수 있어요":   v => `pot să ${v}`,
+    "-(으)ㄹ 수 없어요":   v => `nu pot să ${v}`,
+    "-기 전에":           v => `înainte să ${v}`,
+    "-고 나서":           v => `după ce ${v}`,
+    "-(으)면서":           v => `în timp ce ${v}`,
+    "-(으)ㄹ까요?":        v => `să ${v}?`
+  };
+  return map[cj] || null;
+}
+
+function roPersonFromSubjectKo(subjKo){
+  if(subjKo==="저"||subjKo==="나") return "1sg";
+  if(subjKo==="너")               return "2sg";
+  if(subjKo==="우리")             return "1pl";
+  if(subjKo==="너희")             return "2pl";
+  return "3sg";
+}
+
+function roAgreeVerb(roVerbInf, subjKo){
+  const inf = (roVerbInf || "").trim().toLowerCase();
+  const person = roPersonFromSubjectKo(subjKo);
+  const forms = RO_FORMS[inf];
+  if(forms && forms[person]) return forms[person];
+  return stripInfinitive(roVerbInf);
+}
+
+function buildRoVerbPhrase(roVerbInf, cj, subjKo){
+  const v = roAgreeVerb(roVerbInf, subjKo);
+  if(!v && !cj) return "";
+  if(!cj) return v;
+
+  const fn = roConjExactTemplate(cj);
+  if(fn) return fn(v || "(verbul)");
+
+  const cjExp = (translations.conjug && translations.conjug[cj]) || cj;
+  return (v ? v + " " : "") + `(${cjExp})`;
+}
+
+/* Propoziție românească naturală – Time → Subject → Place → Mod → Object → Verb */
+function buildNaturalRomanian(state, activeMap){
+  const use = (key) =>
+    activeMap[key] !== false && isColumnVisible(key) && state[key];
+
+  const getRo = (catKey, stateKey) => {
+    const dict = translations[catKey] || {};
+    const raw  = state[stateKey];
+    if (!raw) return "";
+    return dict[raw] || raw;
+  };
+
+  const timeRo    = use("time")    ? getRo("time", "time")       : "";
+  const subjRo    = use("subject") ? getRo("subject", "subject") : "";
+  const placeRo   = use("place")   ? getRo("place", "place")     : "";
+  const modRo     = use("mod")     ? getRo("mod", "mod")         : "";
+  const objectRo  = use("object")  ? getRo("object", "object")   : "";
+  const numeralRo = use("numeral") ? (state.numeral || "")       : "";
+
+  let objectPhrase = "";
+  if (objectRo) {
+    const arr = [];
+    if (numeralRo) arr.push(numeralRo);
+    arr.push(objectRo);
+    objectPhrase = arr.join(" ");
+  }
+
+  const verbRaw   = state.verb || "";
+  const verbRoInf = (translations.verb && translations.verb[verbRaw]) || verbRaw || "";
+  const conjUsed  =
+    (activeMap.conjug !== false && isColumnVisible("conjug")) ? (state.conjug || "") : "";
+  const verbPhrase =
+    (activeMap.verb !== false && isColumnVisible("verb"))
+      ? buildRoVerbPhrase(verbRoInf, conjUsed, state.subject)
+      : "";
+
+  const parts = [];
+  if (timeRo)       parts.push(timeRo);
+  if (subjRo)       parts.push(subjRo);
+  if (placeRo)      parts.push(placeRo);
+  if (modRo)        parts.push(modRo);
+  if (objectPhrase) parts.push(objectPhrase);
+  if (verbPhrase)   parts.push(verbPhrase);
+
+  if (!parts.length) return "";
+  let sentence = parts.join(" ");
+  sentence = sentence.replace(/\s+/g," ");
+  sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+  if (!/[.!?]$/.test(sentence)) sentence += ".";
+  return sentence;
+}
+
+/* verificare naturalitate simplă */
+function analyzeNaturalnessP1(){
+  const t  = stateP1.time;
+  const cj = stateP1.conjug;
+  if(!t || !cj) return { ok:true, msg:"", suggestion:null };
+
+  const tType =
+    timePastWords.has(t)   ? "past"   :
+    timeFutureWords.has(t) ? "future" :
+    "neutral";
+
+  const cType = conjugationType(cj);
+
+  if(tType==="past" && cType==="future"){
+    const suggested = "-았어요/었어요";
+    const sent = buildClauseSentence(stateP1, activeP1, suggested);
+    return {
+      ok:false,
+      msg:`„${t}” (trecut) cu final viitor „${cj}” nu se prea folosește. Exemplu mai natural:`,
+      suggestion:sent.ko
+    };
+  }
+
+  if(tType==="future" && cType==="past"){
+    const suggested = "-(으)ㄹ 거예요";
+    const sent = buildClauseSentence(stateP1, activeP1, suggested);
+    return {
+      ok:false,
+      msg:`„${t}” (viitor) cu final de trecut „${cj}” poate suna nenatural. Exemplu mai natural:`,
+      suggestion:sent.ko
+    };
+  }
+
+  return { ok:true, msg:"", suggestion:null };
+}
+
+let showRo = true;
+
+function updatePreview() {
+  // P1
+  const c1 = buildClauseSentence(stateP1, activeP1, null);
+  let fullKo = c1.ko || "";
+
+  // P2 – doar dacă avem conjuncție de legătură
+  let c2 = null;
+  if (
+    enableP2.checked &&
+    stateP1.conjug &&
+    isLinkingConj(stateP1.conjug)
+  ) {
+    c2 = buildClauseSentence(stateP2, activeP2, null);
+    if (c2.ko) fullKo += " " + c2.ko;
+  }
+
+  if (!fullKo.trim()) {
+    previewKo.textContent = "(alege cuvinte din tabel)";
+    previewRo.textContent = "";
+    naturalHint.textContent = "";
+    return;
+  }
+
+  previewKo.textContent = fullKo;
+
+  const ro1 = buildNaturalRomanian(stateP1, activeP1);
+  const ro2 = c2 ? buildNaturalRomanian(stateP2, activeP2) : "";
+  const fullRo = ro1 + (ro2 ? " " + ro2 : "");
+
+  previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
+
+  const nat = analyzeNaturalnessP1();
+  if (nat.ok) {
+    naturalHint.textContent =
+      "✅ Propoziție naturală (după regulile simple din aplicație).";
+  } else {
+    naturalHint.textContent = `⚠ ${nat.msg} 「${nat.suggestion}」`;
+  }
+}
+    function loadRow(i){
+  columns.forEach(col=>{
+    stateP1[col.key]=col.data[i]||"";
+  });
+}
+prevBtn.addEventListener("click",()=>{
+  if(index>0){index--;loadRow(index);render();}
+});
+nextBtn.addEventListener("click",()=>{
+  if(index<maxLen-1){index++;loadRow(index);render();}
+});
+resetBtn.addEventListener("click",()=>{
+  [...togglesP1.querySelectorAll("input")].forEach(cb=>{cb.checked=true;activeP1[cb.dataset.key]=true;});
+  [...togglesP2.querySelectorAll("input")].forEach(cb=>{cb.checked=true;activeP2[cb.dataset.key]=true;});
+  render();
+});
+toggleRoBtn.addEventListener("click",()=>{
+  showRo=!showRo;
+  toggleRoBtn.textContent=showRo?"Ascunde traducerea":"Arată traducerea";
+  updatePreview();
+});
+
+/* panel liste + adăugare cuvânt nou – exact ca înainte (nu schimb logică) */
+let panelClause="p1",panelKey="subject";
+function renderPanelList(col){
+  panelList.innerHTML="";
+  const key=col.key;
+  const map=translations[key]||{};
+  const filter=(panelSearchInput.value||"").trim().toLowerCase();
+  const words=col.data.filter(w=>{
+    if(!w)return false;
+    if(!filter)return true; 
+    return w.toLowerCase().startsWith(filter);
+  });
+  if(!words.length){
+    const empty=document.createElement("div");
+    empty.className="panel-item";
+    empty.textContent="Nu există cuvinte pentru filtrul introdus.";
+    panelList.appendChild(empty);
+    return;
+  }
+  words.forEach(word=>{
+    const item=document.createElement("div");
+    item.className="panel-item";
+    const main=document.createElement("div");
+    main.className="panel-item-main";
+    main.textContent=word;
+    item.appendChild(main);
+
+    const extra=document.createElement("div");
+    extra.className="panel-item-extra";
+    const ro=map[word];
+    if(ro){
+      const tag=document.createElement("div");
+      tag.className="panel-item-tag";
+      tag.textContent=ro;
+      extra.appendChild(tag);
+    }
+    if(key==="conjug"&&isLinkingConj(word)){
+      const star=document.createElement("div");
+      star.className="panel-item-tag";
+      star.textContent="⭐ P2";
+      extra.appendChild(star);
+    }
+    item.appendChild(extra);
+
+    item.addEventListener("click",()=>{
+      const target=panelClause==="p1"?stateP1:stateP2;
+      target[key]=word;
+     if (key === "conjug" && isLinkingConj(word)) {
+  enableP2.checked = true;
+  enableP2.dispatchEvent(new Event("change"));
+}
+      overlay.classList.add("hidden");
+      render();
+    });
+
+    panelList.appendChild(item);
+  });
+}
+function openPanel(clause,key){
+  panelClause=clause;panelKey=key;
+  const col=columns.find(c=>c.key===key);if(!col)return;
+  panelTitle.textContent=(clause==="p1"?"Propoziția 1 – ":"Propoziția 2 – ")+col.title;
+  panelSub.textContent=col.hint||"";
+  panelSearchInput.value="";newWordInput.value="";newWordTransInput.value="";
+  renderPanelList(col);
+  overlay.classList.remove("hidden");
+  panelSearchInput.focus();
+}
+closePanelBtn.addEventListener("click",()=>overlay.classList.add("hidden"));
+overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.classList.add("hidden");});
+panelSearchInput.addEventListener("input",()=>{
+  const col=columns.find(c=>c.key===panelKey);
+  if(col)renderPanelList(col);
+});
+addWordBtn.addEventListener("click",()=>{
+  const txt=newWordInput.value.trim();
+  if(!txt)return;
+  const roTxt=(newWordTransInput.value||"").trim();
+  const col=columns.find(c=>c.key===panelKey);
+  if(!col||!col.allowCustom)return;
+
+  if(!col.data.includes(txt))col.data.push(txt);
+  if(!translations[panelKey])translations[panelKey]={};
+  if(roTxt)translations[panelKey][txt]=roTxt;
+
+  if(!customData[panelKey])customData[panelKey]=[];
+  const exists=customData[panelKey].some(e=>e.word===txt);
+  if(!exists)customData[panelKey].push({word:txt,ro:roTxt});
+  else customData[panelKey].forEach(e=>{if(e.word===txt)e.ro=roTxt;});
+  saveCustomData();
+
+  newWordInput.value="";newWordTransInput.value="";
+  renderPanelList(col);
+  REV = buildReverseMap();
+});
+
+/* click scurt = următorul cuvânt; long press = panel */
+function cycleColumnValue(clause,key){
+  const col=columns.find(c=>c.key===key);if(!col)return;
+  const arr=col.data;
+  const state=clause==="p1"?stateP1:stateP2;
+  const cur=state[key];
+  let idx=arr.indexOf(cur);
+  if(idx===-1)idx=0;
+  let nextIdx=(idx+1)%arr.length;
+  state[key]=arr[nextIdx]||"";
+  render();
+}
+let longPressTimer=null,pressTarget=null;
+function attachPressHandlers(tableEl){
+  tableEl.addEventListener("pointerdown", e => {
+    const colDiv = e.target.closest(".col");
+    if (!colDiv) return;
+
+    // 👉 dacă am dat click pe checkbox-ul ON/OFF, nu blocăm nimic
+    if (e.target.matches("input.col-toggle")) {
+      // lăsăm browserul să bifeze și să trimită evenimentul "change"
+      return;
+    }
+
+    e.preventDefault();
+    pressTarget = colDiv;
+    longPressTimer = setTimeout(() => {
+      if (pressTarget === colDiv) {
+        openPanel(colDiv.dataset.clause || "p1", colDiv.dataset.key);
+        pressTarget = null;
+      }
+    }, 450);
+  });
+
+  tableEl.addEventListener("pointerup", e => {
+    const colDiv = e.target.closest(".col");
+
+    // 👉 iarăși: dacă doar ai apăsat pe checkbox, nu facem ciclat / long-press
+    if (e.target.matches("input.col-toggle")) {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      pressTarget = null;
+      return;
+    }
+
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    if (pressTarget && colDiv === pressTarget) {
+      cycleColumnValue(colDiv.dataset.clause || "p1", colDiv.dataset.key);
+    }
+    pressTarget = null;
+  });
+
+  tableEl.addEventListener("pointerleave", () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    pressTarget = null;
+  });
+}
+    attachPressHandlers(tableP1);
+attachPressHandlers(tableP2);
+
+/* random, audio, favorite – ca înainte */
+randomBtn.addEventListener("click",()=>{
+  columns.forEach(col=>{
+    if(!activeP1[col.key]||!isColumnVisible(col.key))return;
+    const arr=col.data.filter(x=>x!==""&&x!=null);
+    if(!arr.length)return;
+    stateP1[col.key]=arr[Math.floor(Math.random()*arr.length)];
+  });
+  render();
+});
+    speakBtn.addEventListener("click", () => {
+  if (!("speechSynthesis" in window)) {
+    alert("Browserul nu suportă audio.");
+    return;
+  }
+
+  const text = previewKo.textContent;
+  if (!text || text.includes("alege cuvinte")) return;
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ko-KR";
+
+  // alegem PRIMA voce coreeană disponibilă pentru Web Speech
+  const voices = window.speechSynthesis.getVoices();
+  const koVoices = voices.filter(v =>
+    v.lang && v.lang.toLowerCase().startsWith("ko")
+  );
+
+  if (koVoices.length > 0) {
+    u.voice = koVoices[0];   // din păcate, asta e vocea „veche”
+  }
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+});
+const favorites=[];
+const favoritesListEl=document.getElementById("favoritesList");
+function renderFavorites(){
+  if(!favoritesListEl)return;
+  favoritesListEl.innerHTML="";
+  if(!favorites.length){
+    const div=document.createElement("div");
+    div.className="small-label";
+    div.textContent="Nu ai salvat încă nicio propoziție.";
+    favoritesListEl.appendChild(div);
+    return;
+  }
+  favorites.forEach(f=>{
+    const item=document.createElement("div");
+    item.className="fav-item";
+    const ko=document.createElement("div");
+    ko.className="fav-ko";
+    ko.textContent=f.ko;
+    const ro=document.createElement("div");
+    ro.className="fav-ro";
+    ro.textContent=f.ro;
+    item.appendChild(ko);item.appendChild(ro);
+    favoritesListEl.appendChild(item);
+  });
+}
+favBtn.addEventListener("click",()=>{
+  const ko=previewKo.textContent.trim();
+  let ro=previewRo.textContent.trim();
+  if(!ko||ko.includes("alege cuvinte"))return;
+  if(ro.startsWith("···"))ro="";
+  const exists=favorites.some(f=>f.ko===ko&&f.ro===ro);
+  if(!exists)favorites.push({ko,ro});
+  renderFavorites();
+  favBtn.textContent="⭐ Salvat!";
+  setTimeout(()=>{favBtn.textContent="⭐ Salvează propoziția";},800);
+});
+
+
+/* inițializare */
+function render(){
+  renderClauseRow(tableP1,activeP1,stateP1,"p1");
+  if(enableP2.checked)renderClauseRow(tableP2,activeP2,stateP2,"p2");
+  pageInfoEl.textContent=`Rând model: ${index+1} / ${maxLen}`;
+  prevBtn.disabled=index===0;
+  nextBtn.disabled=index===maxLen-1;
   updatePreview();
 }
+ function translateRoToKo(roText) {
+  // păstrăm ultima propoziție, cum era și înainte
+  LAST_RO_SENTENCE = roText || "";
+  const original = (roText || "").trim();
 
-/* =======================
-   SENTENCE BUILDER
-======================= */
+  if (!original) {
+    return { ko: "", roFixed: "" };
+  }
 
-function buildClauseText(clause, isLast){
-  const p = clause.parts;
-  const a = clause.active;
+  // 1) Parsăm propoziția românească
+  const parsed = parseRoToState(original);
+
+  // 2) Construim propoziția coreeană din state-ul parserului
+  const koResult = buildClauseSentence(
+    parsed.state,
+    {
+      subject: true,
+      time: true,
+      place: true,
+      mod: true,
+      object: true,
+      numeral: false,
+      counter: false,
+      verb: true,
+      conjug: true,
+    },
+    null
+  ).ko;
+
+  // 3) Construim propoziția românească „corectată”
+  let roFixed = buildNaturalRomanian(
+    parsed.state,
+    {
+      subject: true,
+      time: true,
+      place: true,
+      mod: true,
+      object: true,
+      numeral: false,
+      counter: false,
+      verb: true,
+      conjug: true,
+    },
+    null
+  );
+// ======================================================
+//    ENGLISH → KOREAN  (pipeline separat, cap-coadă)
+// ======================================================
+
+// Dicționare simple pentru cuvinte frecvente.
+// Poți extinde foarte ușor aceste liste.
+const EN_SUBJECTS = [
+  { re: /\bI\b/i, ko: "저", label: "I (formal)" },
+  { re: /\byou\b/i, ko: "당신", label: "you" },
+  { re: /\bhe\b/i, ko: "그", label: "he" },
+  { re: /\bshe\b/i, ko: "그녀", label: "she" },
+  { re: /\bwe\b/i, ko: "우리", label: "we" },
+  { re: /\bthey\b/i, ko: "그들", label: "they" }
+];
+
+const EN_TIMES = [
+  { re: /\btoday\b/i, ko: "오늘" },
+  { re: /\byesterday\b/i, ko: "어제" },
+  { re: /\btomorrow\b/i, ko: "내일" },
+  { re: /\bnow\b/i, ko: "지금" },
+  { re: /\bthis morning\b/i, ko: "오늘 아침" },
+  { re: /\btonight\b/i, ko: "오늘 밤" }
+];
+
+const EN_PLACES = [
+  { re: /\bhome\b/i, ko: "집에" },
+  { re: /\bschool\b/i, ko: "학교에" },
+  { re: /\bthe school\b/i, ko: "학교에" },
+  { re: /\bto school\b/i, ko: "학교에" },
+  { re: /\bcafe\b/i, ko: "카페에" },
+  { re: /\bwork\b/i, ko: "회사에" },
+  { re: /\boffice\b/i, ko: "사무실에" }
+];
+
+const EN_OBJECTS = [
+  { re: /\bcoffee\b/i, ko: "커피를" },
+  { re: /\btea\b/i, ko: "차를" },
+  { re: /\bbook\b/i, ko: "책을" },
+  { re: /\bbooks\b/i, ko: "책을" },
+  { re: /\bKorean\b/i, ko: "한국어를" },
+  { re: /\bKorean language\b/i, ko: "한국어를" },
+  { re: /\bhomework\b/i, ko: "숙제를" }
+];
+
+// Verbe de bază – aici decizi forma finală (prezent politicos)
+const EN_VERBS = [
+  { re: /\bgo\b/i, ko: "가요" },
+  { re: /\bcome\b/i, ko: "와요" },
+  { re: /\bdrink\b/i, ko: "마셔요" },
+  { re: /\beat\b/i, ko: "먹어요" },
+  { re: /\bstudy\b/i, ko: "공부해요" },
+  { re: /\bread\b/i, ko: "읽어요" },
+  { re: /\bmeet\b/i, ko: "만나요" },
+  { re: /\bwork\b/i, ko: "일해요" },
+  { re: /\bsleep\b/i, ko: "자요" }
+];
+
+// Un mic helper: găsește primul match într-o listă
+function findEnMatch(list, text) {
+  for (const item of list) {
+    if (item.re.test(text)) {
+      return item;
+    }
+  }
+  return null;
+}
+
+function capitalizeSentence(str) {
+  const s = (str || "").trim();
+  if (!s) return "";
+  const first = s.charAt(0).toUpperCase();
+  const rest = s.slice(1);
+  const withDot = /[.!?]$/.test(rest) ? rest : rest + ".";
+  return first + withDot;
+}
+
+// *** Motorul principal EN → KO ***
+function translateEnToKo(enText) {
+  const original = (enText || "").trim();
+  if (!original) {
+    return { ko: "", roFixed: "" };
+  }
+
+  const text = original.toLowerCase();
+
+  // 1) Subject
+  const subj = findEnMatch(EN_SUBJECTS, text);
+  const koSubj = subj ? subj.ko : ""; // poți pune "저" default dacă vrei
+
+  // 2) Time
+  const time = findEnMatch(EN_TIMES, text);
+  const koTime = time ? time.ko : "";
+
+  // 3) Place
+  const place = findEnMatch(EN_PLACES, text);
+  const koPlace = place ? place.ko : "";
+
+  // 4) Object
+  const obj = findEnMatch(EN_OBJECTS, text);
+  const koObj = obj ? obj.ko : "";
+
+  // 5) Verb
+  const verb = findEnMatch(EN_VERBS, text);
+  const koVerb = verb ? verb.ko : "";
+
+  // 6) Conector „and” simplu: dacă apare "and read", "and drink" etc,
+  // facem "가고 읽어요", "가고 마셔요" etc.
+  let koSentence = "";
+
+  // Mai întâi încercăm să vedem dacă există "and <verb>"
+  const andMatch = text.match(/\band\s+([a-z]+)/i);
+  if (andMatch) {
+    const secondVerbWord = andMatch[1];
+    const secondVerb = findEnMatch(
+      EN_VERBS,
+      secondVerbWord
+    );
+
+    if (verb && secondVerb) {
+      // compunem: SUBJECT TIME PLACE OBJECT1 VERB-고 OBJECT2 VERB2
+      // ca schemă simplă
+      const firstPart = [
+        koSubj,
+        koTime,
+        koPlace,
+        koObj
+      ].filter(Boolean).join(" ");
+
+      const firstVerb = verb.ko.replace(/요$/, "고"); // 가요 → 가고
+      const secondVerbKo = secondVerb.ko;
+
+      koSentence = [firstPart, firstVerb, secondVerbKo]
+        .filter(Boolean)
+        .join(" ");
+    }
+  }
+
+  // Dacă nu avem structură cu "and", facem propoziție simplă
+  if (!koSentence) {
+    koSentence = [
+      koSubj,
+      koTime,
+      koPlace,
+      koObj,
+      koVerb
+    ].filter(Boolean).join(" ");
+  }
+
+  // EN corectat / reformulat (deocamdată doar cu literă mare + punct)
+  const enFixed = capitalizeSentence(original);
+
+  return {
+    ko: koSentence || "(could not build Korean sentence)",
+    roFixed: enFixed
+  };
+}
+   // === Progrămel separat: repară „și. Cuvânt” → „și cuvânt” ===
+function smartJoinRomanian(text) {
+  if (!text || typeof text !== "string") return text;
+
+  return text
+    // 1) cazurile cu paranteze: „(și). Cuvânt”
+    .replace(/\(\s*și\s*\)\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+    .replace(/\(\s*si\s*\)\.\s+([A-ZA-Z])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+
+    // 2) cazul „și). Cuvânt”
+    .replace(/și\)\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+    .replace(/si\)\.\s+([A-ZA-Z])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+
+    // 3) cazul simplu „și. Cuvânt”
+    .replace(/și\.\s+([A-ZĂÂÎȘȚ])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    })
+    .replace(/si\.\s+([A-ZA-Z])/g, function (_, p1) {
+      return "și " + p1.toLowerCase();
+    });
+}
+   // 5) Rezultatul final
+  return {
+    ko: koResult || "(nu am putut construi propoziția)",
+    roFixed: roFixed || original,
+  };
+}
+
+// ===== TOP cuvinte uzuale (poți extinde oricând) =====
+const DAILY_TOP = [
+  // SUBJECT (super frecvent)
+  {ko:"저", cat:"subject"}, {ko:"나", cat:"subject"}, {ko:"너", cat:"subject"}, {ko:"우리", cat:"subject"},
+
+  // TIME
+  {ko:"오늘", cat:"time"}, {ko:"어제", cat:"time"}, {ko:"내일", cat:"time"}, {ko:"지금", cat:"time"},
+  {ko:"요즘", cat:"time"}, {ko:"방금", cat:"time"}, {ko:"곧", cat:"time"},
+
+  // PLACE
+  {ko:"집", cat:"place"}, {ko:"학교", cat:"place"}, {ko:"회사", cat:"place"}, {ko:"카페", cat:"place"},
+  {ko:"식당", cat:"place"}, {ko:"병원", cat:"place"}, {ko:"도서관", cat:"place"}, {ko:"은행", cat:"place"},
+
+  // MOD
+  {ko:"잘", cat:"mod"}, {ko:"천천히", cat:"mod"}, {ko:"빨리", cat:"mod"}, {ko:"정말", cat:"mod"},
+  {ko:"아주", cat:"mod"}, {ko:"너무", cat:"mod"}, {ko:"많이", cat:"mod"}, {ko:"조금", cat:"mod"},
+
+  // OBJECT
+  {ko:"책", cat:"object"}, {ko:"물", cat:"object"}, {ko:"커피", cat:"object"}, {ko:"음식", cat:"object"},
+  {ko:"가방", cat:"object"}, {ko:"전화", cat:"object"}, {ko:"돈", cat:"object"}, // (dacă vrei, îl adăugăm și în listă + traduceri)
+  {ko:"정보", cat:"object"}, {ko:"문제", cat:"object"},
+
+  // VERB (cele mai folosite în vorbire)
+  {ko:"가다", cat:"verb"}, {ko:"오다", cat:"verb"}, {ko:"먹다", cat:"verb"}, {ko:"마시다", cat:"verb"},
+  {ko:"보다", cat:"verb"}, {ko:"읽다", cat:"verb"}, {ko:"쓰다", cat:"verb"}, {ko:"사다", cat:"verb"},
+  {ko:"주다", cat:"verb"}, {ko:"받다", cat:"verb"}, {ko:"일하다", cat:"verb"}, {ko:"공부하다", cat:"verb"},
+  {ko:"좋아하다", cat:"verb"}, {ko:"싫어하다", cat:"verb"}, {ko:"기다리다", cat:"verb"}, {ko:"쉬다", cat:"verb"},
+  {ko:"만나다", cat:"verb"}
+];
+function buildDailyPool(){
+  // folosim strict TOP words (cele mai uzuale) + traduceri din dictionarul tău
   const out = [];
 
-  if(a.subject) out.push(subjectParticle(p.subject));
-  if(a.time) out.push(p.time);
-  if(a.place) out.push(placeParticle(p.place, p.verb));
-  if(a.mod) out.push(p.mod);
-  if(a.object) out.push(objectParticle(p.object));
+  const pickTranslation = (catKey, ko) => (translations[catKey] && translations[catKey][ko]) ? translations[catKey][ko] : "";
 
-  const stem = p.verb.replace("다","");
-  if(isLast){
-    out.push(stem + "요");
-  } else {
-    if(clause.connector === "-고") out.push(stem + "고");
-    else out.push(stem + "어서");
+  DAILY_TOP.forEach(x=>{
+    const catKey = x.cat;      // subject/time/place/mod/object/verb etc
+    const ko = x.ko;
+
+    // dacă nu există în listele tale, îl putem ignora sau îl adăugăm (eu recomand să îl adaugi)
+    out.push({
+      ko,
+      ro: pickTranslation(catKey, ko),
+      cat: catKey.toUpperCase()
+    });
+  });
+
+  // eliminăm duplicate
+  const seen = new Set();
+  return out.filter(w=>{
+    const k = w.ko+"|"+w.cat;
+    if(seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+function getDailyState(){
+  const raw = localStorage.getItem(DAILY_KEY);
+  if(raw){
+    try { return JSON.parse(raw); } catch(e){}
   }
-
-  return out.join(" ");
+  // generăm o ordine fixă (shuffle) care rămâne aceeași
+  const pool = buildDailyPool();
+  const order = shuffleSeeded(pool, "RALUCA-DAILY-SEED-v1");
+  const state = { order, createdAt: Date.now() };
+  localStorage.setItem(DAILY_KEY, JSON.stringify(state));
+  return state;
 }
 
-function updatePreview(){
-  const sentence = clauses
-    .map((c,i)=>buildClauseText(c, i === clauses.length-1))
-    .join(" ");
-  previewKo.textContent = sentence || "(alege cuvinte din tabel)";
+function getLearnedDays(){
+  try {
+    return JSON.parse(localStorage.getItem(DAILY_LEARNED_KEY) || "[]");
+  } catch(e){
+    return [];
+  }
+}
+function setLearnedDays(arr){
+  localStorage.setItem(DAILY_LEARNED_KEY, JSON.stringify(arr));
 }
 
-/* =======================
-   CONTROLS
-======================= */
+function dayOffset(baseISO, offset){
+  const [y,m,d] = baseISO.split("-").map(Number);
+  const dt = new Date(y, m-1, d);
+  dt.setDate(dt.getDate() + offset);
+  return todayLocalISO(dt);
+}
 
-nextBtn.onclick = () => {
-  clauses.push(createClause(CONNECTORS[0]));
-  render();
-};
+let dailyOffset = 0;
 
-prevBtn.onclick = () => {
-  if(clauses.length > 1){
-    clauses.pop();
-    render();
+
+
+function renderDailyWords(){
+  const iso = dayOffset(todayLocalISO(), dailyOffset);
+
+  const dateLabel = document.getElementById("dailyDateLabel");
+  const box = document.getElementById("dailyWordsBox");
+  const progress = document.getElementById("dailyProgress");
+  const markBtn = document.getElementById("dailyMarkBtn");
+
+  if(!dateLabel || !box || !progress || !markBtn) return;
+
+  dateLabel.textContent = dailyOffset===0 ? `Azi (${iso})` : `${dailyOffset<0?"Ieri/Mai devreme":"Mai târziu"} (${iso})`;
+
+  const words = get3WordsForISO(iso);
+  box.innerHTML = "";
+
+    words.forEach(w => {
+    const row = document.createElement("div");
+    row.style.padding = "8px";
+    row.style.border = "1px solid var(--border)";
+    row.style.borderRadius = "12px";
+    row.style.background = "#faf8ff";
+
+    row.innerHTML = `
+      <div style="font-weight:700;font-size:14px;">${w.ko}</div>
+      <div class="small-label">${w.ro || ""}</div>
+      <div class="glossary-cat">${w.cat}</div>
+    `;
+
+    box.appendChild(row);
+  });
+
+  const learned = getLearnedDays();
+  const isLearned = learned.includes(iso);
+  markBtn.textContent = isLearned ? "✅ Marcat ca învățat" : "✅ Am învățat azi";
+  markBtn.disabled = isLearned;
+
+  progress.textContent = `Zile bifate: ${learned.length}`;
+}
+
+function setupDailyUI(){
+  const prev = document.getElementById("dailyPrevBtn");
+  const next = document.getElementById("dailyNextBtn");
+  const mark = document.getElementById("dailyMarkBtn");
+
+  if(prev) prev.addEventListener("click", ()=>{ dailyOffset--; renderDailyWords(); });
+  if(next) next.addEventListener("click", ()=>{ dailyOffset++; renderDailyWords(); });
+
+  if(mark) mark.addEventListener("click", ()=>{
+    const iso = dayOffset(todayLocalISO(), dailyOffset);
+    const learned = getLearnedDays();
+    if(!learned.includes(iso)){
+      learned.push(iso);
+      setLearnedDays(learned);
+    }
+    renderDailyWords();
+  });
+
+  renderDailyWords();
+}
+    /* ========= INITIALIZARE APLICAȚIE ========= */
+
+// Pornim cu primul rând din model în Builder
+loadRow(index);
+setScreen("builder");
+render();
+
+
+renderFavorites && renderFavorites();
+
+
+  // ===== MUTĂ BLOCUL „ROMÂNĂ → COREEANĂ” ÎN JOSUL BUILDER-ULUI =====
+document.addEventListener("DOMContentLoaded", () => {
+  // 1) Butonul "Tradu în coreeană"
+  const roBtn = document.getElementById("roTranslateBtn");
+  // 2) Textul cu propoziția coreeană (preview)
+  const previewKo = document.getElementById("previewKo");
+
+  if (!roBtn || !previewKo) {
+    return; // dacă nu găsește elementele, nu face nimic
   }
-};
 
-resetBtn.onclick = () => {
-  clauses.length = 0;
-  clauses.push(createClause());
-  render();
-};
-  
+  // cardul/blocul în care stă butonul de traducere
+  const roBlock = roBtn.closest(".card") || roBtn.parentElement;
+  // cardul cu propoziția coreeană
+  const previewCard = previewKo.closest(".card") || previewKo.parentElement;
+
+  if (!roBlock || !previewCard || !previewCard.parentElement) {
+    return;
+  }
+
+  // Mutăm blocul Română → Coreeană IMEDIAT după cardul de preview
+  previewCard.insertAdjacentElement("afterend", roBlock);
+});
+    // ==== SYNC: Traducerea aproximativă (Builder) -> bloc "Română → Coreeană" ====
+(function () {
+  const previewRo = document.getElementById("previewRo");  // linia de română de sub Builder
+  const roInput   = document.getElementById("roInput");    // textarea din cardul "Română → Coreeană"
+
+  // dacă nu găsește elementele, nu face nimic (de siguranță)
+  if (!previewRo || !roInput) return;
+
+  function syncApproxToRoInput() {
+    const text = (previewRo.textContent || "").trim();
+    if (!text) return;          // dacă e gol, nu completăm nimic
+    roInput.value = text;       // punem traducerea aproximativă în textarea de jos
+  }
+
+  // urmărim orice schimbare în previewRo (de la Builder, Random propoziție etc.)
+  const observer = new MutationObserver(syncApproxToRoInput);
+  observer.observe(previewRo, {
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+
+  // sincronizare inițială (dacă există deja o propoziție în Builder)
+  syncApproxToRoInput();
+})();
+      
+document.addEventListener("DOMContentLoaded", () => {
+
+  const enableP2 = document.getElementById("enableP2");
+  const titleP2  = document.getElementById("titleP2");
+  const tableP2  = document.getElementById("tableP2");
+
+  if (!enableP2 || !titleP2 || !tableP2) return;
+
+  const syncP2 = () => {
+    const on = enableP2.checked;
+    titleP2.classList.toggle("hidden", !on);
+    tableP2.classList.toggle("hidden", !on);
+  };
+
+  enableP2.addEventListener("change", syncP2);
+  syncP2();
+
+});
+
   </script>
 </body>
 </html> 
