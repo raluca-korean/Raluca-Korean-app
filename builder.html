@@ -2000,16 +2000,13 @@ body.pastel-theme {
 
 <script>
   /* =========================================================
-   BUILDER.JS – FINAL COMPLET
-   NU modifica HTML / CSS
-   NU reduce / NU inventa
+   BUILDER.JS – CLEAN, MULTI-CLAUSE, FINAL
    ========================================================= */
 
-/* ======================= DOM ======================= */
+/* ================= DOM ================= */
 
 const tableP1   = document.getElementById("tableP1");
 const previewKo = document.getElementById("previewKo");
-const previewRo = document.getElementById("previewRo");
 const randomBtn = document.getElementById("randomBtn");
 const speakBtn  = document.getElementById("speakBtn");
 const resetBtn  = document.getElementById("resetBtn");
@@ -2019,8 +2016,7 @@ const panelList = document.getElementById("panelList");
 const panelTitle= document.getElementById("panelTitle");
 const closePanelBtn = document.getElementById("closePanelBtn");
 
-/* ======================= STRUCTURĂ FIXĂ ======================= */
-/* EXACT coloanele din UI-ul tău */
+/* ================= STRUCTURĂ FIXĂ ================= */
 
 const COLUMNS = [
   { key:"subject",  label:"SUBJECT"  },
@@ -2034,22 +2030,27 @@ const COLUMNS = [
   { key:"conjug",   label:"CONJUG"   }
 ];
 
-/* ======================= DATE ======================= */
-/* datele tale – se pot extinde ulterior */
+/* ================= DATE ================= */
 
 const DATA = {
   subject:["저","나","너","우리"],
-  time:["오늘","어제","내일"],
+  time:["오늘","어제","내일","지금"],
   place:["집","학교","회사","카페"],
   mod:["잘","천천히","열심히"],
   object:["커피","책","물"],
   numeral:["","한","두","세"],
   counter:["","개","잔","권"],
   verb:["가다","오다","마시다","읽다"],
-  conjug:["-아요/어요","-고","-고 있어요","-았어요/었어요"]
+  conjug:[
+    "-아요/어요",
+    "-았어요/었어요",
+    "-고",
+    "-고 나서",
+    "-고 있어요"
+  ]
 };
 
-/* ======================= MODEL PROPOZIȚIE ======================= */
+/* ================= MODEL ================= */
 
 function emptyClause(){
   return {
@@ -2065,14 +2066,12 @@ function emptyClause(){
   };
 }
 
-/* ======================= STATE ======================= */
+/* ================= STATE ================= */
 
-const clauses = [];
-clauses.push(emptyClause());
+const clauses = [ emptyClause() ];
+let panelCtx = null;
 
-let panelContext = null;
-
-/* ======================= RENDER ======================= */
+/* ================= RENDER ================= */
 
 function render(){
   tableP1.innerHTML = "";
@@ -2087,20 +2086,18 @@ function render(){
       cell.dataset.key = col.key;
       cell.dataset.row = rowIndex;
 
-      const header = document.createElement("div");
-      header.className = "col-header";
-      header.textContent = col.label;
+      const h = document.createElement("div");
+      h.className = "col-header";
+      h.textContent = col.label;
 
-      const main = document.createElement("div");
-      main.className = "col-body-main";
-      main.textContent = clause[col.key] || "—";
+      const b = document.createElement("div");
+      b.className = "col-body-main";
+      b.textContent = clause[col.key] || "—";
 
-      cell.appendChild(header);
-      cell.appendChild(main);
+      cell.appendChild(h);
+      cell.appendChild(b);
 
-      cell.onclick = ()=>{
-        openPanel(rowIndex,col.key);
-      };
+      cell.onclick = ()=>openPanel(rowIndex,col.key);
 
       row.appendChild(cell);
     });
@@ -2111,22 +2108,18 @@ function render(){
   renderPreview();
 }
 
-/* ======================= PANEL ======================= */
+/* ================= PANEL ================= */
 
 function openPanel(rowIndex,key){
-  panelContext = { rowIndex, key };
+  panelCtx = {rowIndex,key};
   panelTitle.textContent = key.toUpperCase();
   panelList.innerHTML = "";
 
-  DATA[key].forEach(val=>{
+  DATA[key].forEach(v=>{
     const item = document.createElement("div");
     item.className = "panel-item";
-    item.textContent = val || "(gol)";
-
-    item.onclick = ()=>{
-      setValue(val);
-    };
-
+    item.textContent = v || "(gol)";
+    item.onclick = ()=>selectValue(v);
     panelList.appendChild(item);
   });
 
@@ -2137,44 +2130,35 @@ closePanelBtn.onclick = ()=>{
   overlay.classList.add("hidden");
 };
 
-/* ======================= SET VALUE ======================= */
+/* ================= SELECT ================= */
 
-function setValue(value){
-  if(!panelContext) return;
-
-  const {rowIndex,key} = panelContext;
+function selectValue(value){
+  const {rowIndex,key} = panelCtx;
   clauses[rowIndex][key] = value;
 
-  // dacă se pune CONJUG pe ultimul rând → adaugă propoziție nouă
-  if(key==="conjug" && rowIndex === clauses.length-1){
+  // conjugare de legătură → creează automat o propoziție nouă
+  if(
+    key === "conjug" &&
+    ["-고","-고 나서"].includes(value) &&
+    rowIndex === clauses.length-1
+  ){
     clauses.push(emptyClause());
   }
 
   overlay.classList.add("hidden");
-  panelContext = null;
+  panelCtx = null;
   render();
 }
 
-/* ======================= PREVIEW ======================= */
-
-function renderPreview(){
-  const text = clauses
-    .map(c=>buildClause(c))
-    .filter(Boolean)
-    .join(" ");
-
-  previewKo.textContent = text || "(alege cuvinte)";
-}
-
-/* ======================= BUILD PROPOZIȚIE ======================= */
+/* ================= BUILD ================= */
 
 function buildClause(c){
   const out = [];
 
   if(c.subject) out.push(c.subject);
-  if(c.time) out.push(c.time);
-  if(c.place) out.push(c.place);
-  if(c.mod) out.push(c.mod);
+  if(c.time)    out.push(c.time);
+  if(c.place)  out.push(c.place);
+  if(c.mod)    out.push(c.mod);
 
   if(c.object){
     if(c.numeral && c.counter){
@@ -2191,26 +2175,35 @@ function buildClause(c){
   return out.join(" ");
 }
 
-/* ======================= CONJUGARE ======================= */
-
-function conjugate(verb,ending){
-  if(!ending) return verb;
-  if(!verb.endsWith("다")) return verb+ending;
-  return verb.replace("다","") + ending.replace("-","");
+function conjugate(v,cj){
+  if(!cj) return v;
+  if(!v.endsWith("다")) return v+cj;
+  return v.replace("다","") + cj.replace("-","");
 }
 
-/* ======================= RANDOM ======================= */
+/* ================= PREVIEW ================= */
+
+function renderPreview(){
+  const txt = clauses
+    .map(c=>buildClause(c))
+    .filter(Boolean)
+    .join(" ");
+  previewKo.textContent = txt || "(alege cuvinte)";
+}
+
+/* ================= RANDOM ================= */
 
 randomBtn.onclick = ()=>{
   clauses.forEach(c=>{
     Object.keys(c).forEach(k=>{
-      c[k] = DATA[k]?.[Math.floor(Math.random()*DATA[k].length)] || "";
+      const arr = DATA[k];
+      if(arr) c[k] = arr[Math.floor(Math.random()*arr.length)];
     });
   });
   render();
 };
 
-/* ======================= RESET ======================= */
+/* ================= RESET ================= */
 
 resetBtn.onclick = ()=>{
   clauses.length = 0;
@@ -2218,22 +2211,20 @@ resetBtn.onclick = ()=>{
   render();
 };
 
-/* ======================= AUDIO ======================= */
+/* ================= AUDIO ================= */
 
 speakBtn.onclick = ()=>{
-  const text = previewKo.textContent;
-  if(!text) return;
-  const u = new SpeechSynthesisUtterance(text);
+  const t = previewKo.textContent;
+  if(!t) return;
+  const u = new SpeechSynthesisUtterance(t);
   u.lang = "ko-KR";
+  speechSynthesis.cancel();
   speechSynthesis.speak(u);
 };
 
-/* ======================= INIT ======================= */
+/* ================= INIT ================= */
 
-render();
-
-/* ======================= END ======================= */
- 
+render();  
 </script>    
 </body>
 </html> 
