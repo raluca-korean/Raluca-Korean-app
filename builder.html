@@ -1,4 +1,4 @@
-B4
+B7
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -2894,7 +2894,30 @@ const newWordTransInput=document.getElementById("newWordTransInput");
 const addWordBtn=document.getElementById("addWordBtn");
 const modeButtons=document.querySelectorAll(".small-mode-btn");
 const subtitleEl=document.getElementById("subtitle");
+const screens={
+  builder:document.getElementById("screen-builder"),
+  exercises:document.getElementById("screen-exercises"),
+  glossary:document.getElementById("screen-glossary"),
+  lessons:document.getElementById("screen-lessons")
+};
+    const navButtons=document.querySelectorAll(".nav-btn");
+    /* navigare ecrane – varianta corectă */
+function setScreen(name){
+  // ascund toate ecranele
+  Object.entries(screens).forEach(([key, el])=>{
+    if(!el) return;
+    el.classList.toggle("active", key === name);
+  });
 
+  // marchează butonul activ în bara de jos
+  navButtons.forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.target === name);
+  });
+}
+
+// click pe butoanele din nav
+navButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
     const target = btn.dataset.target;   // builder / exercises / lessons / glossary
     setScreen(target);
   });
@@ -3760,13 +3783,122 @@ favBtn.addEventListener("click",()=>{
   setTimeout(()=>{favBtn.textContent="⭐ Salvează propoziția";},800);
 });
 
+/* ================== EXERCIȚII TOPIK – modul nou ================== */
+
+// Elemente din HTML pentru exerciții
+const exerciseTypeEl = document.getElementById("exerciseType");
+const exerciseQuestionEl = document.getElementById("exerciseQuestion");
+const exerciseOptionsEl = document.getElementById("exerciseOptions");
+const exerciseFeedbackEl = document.getElementById("exerciseFeedback");
+const checkAnswerBtn = document.getElementById("checkAnswerBtn");
+const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+
+let currentExercise = null;
+
 // helper random
 function randItem(arr){
   return arr[Math.floor(Math.random()*arr.length)];
 }
 
+// Construim o propoziție coreeană simplă pentru exerciții (fără particule complicate)
+function buildSimpleKoreanSentence(parts){
+  const out = [];
+  if(parts.time) out.push(parts.time);
+  if(parts.subject) out.push(parts.subject);
+  if(parts.place) out.push(parts.place);
+  if(parts.mod) out.push(parts.mod);
+  if(parts.object) out.push(parts.object);
+  if(parts.verb) out.push(parts.verb);
+  return out.join(" ");
+}
 
- 
+// 1) Exercițiu: Alege VERBUL corect
+function makeVerbExercise(){
+  const subj = randItem(subjects);
+  const t = randItem(times);
+  const place = randItem(places);
+  const obj = randItem(objects);
+  const correctVerb = randItem(verbs);
+
+  const sentenceKorean = buildSimpleKoreanSentence({
+    time: t,
+    subject: subj,
+    place: place,
+    object: obj,
+    verb: "___"
+  });
+
+  // opțiuni (4 verbe, 1 corect)
+  const options = new Set();
+  options.add(correctVerb);
+  while(options.size < 4){
+    options.add(randItem(verbs));
+  }
+  const optionsArr = Array.from(options).sort(() => Math.random()-0.5);
+
+  currentExercise = {
+    type: "verb",
+    correct: correctVerb,
+    options: optionsArr
+  };
+
+  exerciseQuestionEl.textContent = `Alege verbul corect pentru propoziția:  ${sentenceKorean}`;
+  renderExerciseOptions(optionsArr);
+  exerciseFeedbackEl.textContent = "";
+}
+
+// 2) Exercițiu: Alege PARTICULA corectă – simplificat
+// De ex: 오늘 ___ 친구를 만나요.
+// răspuns posibil: 에, 에서, 을/를 etc. (facem doar un exercițiu de recunoaștere)
+const simpleParticles = ["은/는","이/가","을/를","에","에서"];
+
+// ✅ Distrageri (opțiuni greșite) – folosite ca “capcane”
+const particleChoices = ["은","는","이","가","을","를","에","에서"];
+function makeParticleExercise(){
+  const subj = randItem(subjects);
+  const obj  = randItem(objects);
+  const verb = randItem(verbs);
+
+  // particula corectă pentru OBIECT (을/를)
+  const correct = pickObjectParticle(obj); // "을" sau "를"
+
+  // propoziție cu UN SINGUR BLANK
+  const sentence = `${subj} ${obj} ___ ${presentPolite(verb)}.`;
+
+  // opțiuni (4), 1 corect + 3 capcane
+  const options = new Set([correct]);
+  while(options.size < 4){
+    options.add(randItem(particleChoices)); // ["은","는","이","가","을","를","에","에서"]
+  }
+  const optionsArr = Array.from(options).sort(()=>Math.random()-0.5);
+
+  currentExercise = { type:"particle", correct, options: optionsArr };
+
+  exerciseQuestionEl.textContent = `Alege particula corectă:  ${sentence}`;
+  renderExerciseOptions(optionsArr);
+  exerciseFeedbackEl.textContent = "";
+}
+function makeParticlePlusExercise(){
+  const t = randItem(times);
+  const subj = randItem(subjects);
+  const place = randItem(places);
+  const obj = randItem(objects);
+  const verb = randItem(verbs);
+
+  // particule corecte
+  const p1 = pickSubjectParticle(subj);   // (1) subiect
+  const p2 = pickTimeParticle(t);         // (2) timp (poate fi "")
+  const p3 = pickPlaceParticle(place);    // (3) loc
+  const p4 = pickObjectParticle(obj);     // (4) obiect
+
+  // Propoziție: TIME(2) SUBJECT(1) PLACE(3) OBJECT(4) + verb politicos simplu
+  const verbForm = presentPolite(verb);
+
+  // Dacă timpul nu are particulă, păstrăm blank-ul dar acceptăm “(gol)” ca răspuns corect
+  const sentence =
+    `${t} (2) ${subj} (1) ${place} (3) ${obj} (4) ${verbForm}.`;
+
+  // opțiuni pentru fiecare blank
   function buildOptions(correct){
     const options = new Set();
     // includem corectul (sau "" dacă e cazul)
