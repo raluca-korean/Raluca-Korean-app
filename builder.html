@@ -2894,7 +2894,34 @@ const newWordTransInput=document.getElementById("newWordTransInput");
 const addWordBtn=document.getElementById("addWordBtn");
 const modeButtons=document.querySelectorAll(".small-mode-btn");
 const subtitleEl=document.getElementById("subtitle");
+const screens={
+  builder:document.getElementById("screen-builder"),
+  exercises:document.getElementById("screen-exercises"),
+  glossary:document.getElementById("screen-glossary"),
+  lessons:document.getElementById("screen-lessons")
+};
+    const navButtons=document.querySelectorAll(".nav-btn");
+    /* navigare ecrane – varianta corectă */
+function setScreen(name){
+  // ascund toate ecranele
+  Object.entries(screens).forEach(([key, el])=>{
+    if(!el) return;
+    el.classList.toggle("active", key === name);
+  });
 
+  // marchează butonul activ în bara de jos
+  navButtons.forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.target === name);
+  });
+}
+
+// click pe butoanele din nav
+navButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const target = btn.dataset.target;   // builder / exercises / lessons / glossary
+    setScreen(target);
+  });
+});
     // ====== STEPPER pentru Builder (click pe pași) ======
 const builderSteps = document.querySelectorAll(".builder-step");
 
@@ -3756,6 +3783,17 @@ favBtn.addEventListener("click",()=>{
   setTimeout(()=>{favBtn.textContent="⭐ Salvează propoziția";},800);
 });
 
+/* ================== EXERCIȚII TOPIK – modul nou ================== */
+
+// Elemente din HTML pentru exerciții
+const exerciseTypeEl = document.getElementById("exerciseType");
+const exerciseQuestionEl = document.getElementById("exerciseQuestion");
+const exerciseOptionsEl = document.getElementById("exerciseOptions");
+const exerciseFeedbackEl = document.getElementById("exerciseFeedback");
+const checkAnswerBtn = document.getElementById("checkAnswerBtn");
+const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+
+let currentExercise = null;
 
 // helper random
 function randItem(arr){
