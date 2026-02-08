@@ -1998,200 +1998,210 @@ body.pastel-theme {
     </div>
   </div>
   <script>
-/*********************************************************
- * BUILDER.JS — MULTI-CLAUSE REAL (FINAL)
+    /*********************************************************
+ * BUILDER.JS – FINAL
+ * Fraze reale coreene, clauze multiple, un singur rând
  *********************************************************/
 
 /* =======================
    CONFIG
 ======================= */
 
-const COLUMNS = [
-  { key:"subject", title:"SUBJECT", hint:"Cine?", data:["저","나","너","우리"] },
-  { key:"time",    title:"TIME",    hint:"Când?", data:["오늘","어제","내일","지금"] },
-  { key:"place",   title:"PLACE",   hint:"Unde?", data:["집","학교","회사","카페"] },
-  { key:"mod",     title:"MOD",     hint:"Cum?", data:["잘","천천히","빨리"] },
-  { key:"object",  title:"OBJECT",  hint:"Ce?", data:["책","커피","물"] },
-  { key:"verb",    title:"VERB",    hint:"Acțiune", data:["가다","먹다","마시다"] },
-  { key:"conjug",  title:"CONJUG",  hint:"Formă", data:["-아요/어요","-고","-았어요/었어요"] }
+const PARTS = [
+  { key: "subject", title: "SUBJECT", hint: "Cine?", data: ["저","나","너","우리"] },
+  { key: "time",    title: "TIME",    hint: "Când?", data: ["오늘","어제","내일","지금"] },
+  { key: "place",   title: "PLACE",   hint: "Unde?", data: ["집","학교","회사","카페"] },
+  { key: "mod",     title: "MOD",     hint: "Cum?", data: ["잘","천천히","조용히"] },
+  { key: "object",  title: "OBJECT",  hint: "Ce?", data: ["책","커피","물"] },
+  { key: "verb",    title: "VERB",    hint: "Acțiune", data: ["가다","먹다","마시다","읽다"] }
 ];
+
+const CONNECTORS = ["-고", "-아서/어서"];
 
 /* =======================
    STATE
 ======================= */
 
-let clauseId = 1;
 const clauses = [];
-
-function createClause(){
-  const state = {};
-  const active = {};
-  COLUMNS.forEach(c=>{
-    state[c.key] = c.data[0] || "";
-    active[c.key] = true;
-  });
-  return { id: clauseId++, state, active };
-}
-
-clauses.push(createClause());
+let activeClauseIndex = 0;
 
 /* =======================
    DOM
 ======================= */
 
-const tableP1   = document.getElementById("tableP1");
+const table = document.getElementById("tableP1");
 const previewKo = document.getElementById("previewKo");
-const previewRo = document.getElementById("previewRo");
-
-const prevBtn  = document.getElementById("prevBtn");
-const nextBtn  = document.getElementById("nextBtn");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
 const resetBtn = document.getElementById("resetBtn");
 
 /* =======================
-   PARTICULE
+   HELPERS LINGVISTICE
 ======================= */
 
-function hasBatchim(w){
-  if(!w) return false;
-  const c = w.charCodeAt(w.length-1)-0xAC00;
-  return c>=0 && c<=11171 && c%28!==0;
+function hasBatchim(word){
+  if(!word) return false;
+  const code = word.charCodeAt(word.length-1) - 0xAC00;
+  if(code < 0 || code > 11171) return false;
+  return code % 28 !== 0;
 }
-function pickSubjectParticle(w){
-  return hasBatchim(w) ? "은":"는";
+
+function subjectParticle(w){
+  return w + (hasBatchim(w) ? "은" : "는");
 }
-function pickObjectParticle(w){
-  return hasBatchim(w) ? "을":"를";
+function objectParticle(w){
+  return w + (hasBatchim(w) ? "을" : "를");
 }
-function pickPlaceParticle(_,verb){
-  return ["가다","오다"].includes(verb) ? "에":"에서";
+function placeParticle(w, verb){
+  return w + (["가다","오다"].includes(verb) ? "에" : "에서");
 }
 
 /* =======================
-   BUILD SENTENCE
+   CLAUSE FACTORY
 ======================= */
 
-function buildClauseSentence(clause){
-  const s = clause.state;
-  const a = clause.active;
-  const out = [];
+function createClause(connector = null){
+  const parts = {};
+  const active = {};
 
-  if(a.subject && s.subject)
-    out.push(s.subject+pickSubjectParticle(s.subject));
-  if(a.time && s.time)
-    out.push(s.time);
-  if(a.place && s.place)
-    out.push(s.place+pickPlaceParticle(s.place,s.verb));
-  if(a.mod && s.mod)
-    out.push(s.mod);
-  if(a.object && s.object)
-    out.push(s.object+pickObjectParticle(s.object));
+  PARTS.forEach(p=>{
+    parts[p.key] = p.data[0];
+    active[p.key] = true;
+  });
 
-  if(a.verb && s.verb){
-    const stem = s.verb.replace("다","");
-    const cj = s.conjug;
-    if(cj==="-고") out.push(stem+"고");
-    else if(cj==="-았어요/었어요") out.push(stem+"었어요");
-    else out.push(stem+"요");
-  }
-
-  return out.join(" ");
+  return { parts, active, connector };
 }
+
+/* =======================
+   INIT
+======================= */
+
+clauses.push(createClause()); // clauza principală
+render();
 
 /* =======================
    RENDER
 ======================= */
 
 function render(){
-  tableP1.innerHTML = "";
+  table.innerHTML = "";
 
-  clauses.forEach((clause,idx)=>{
+  clauses.forEach((clause, idx)=>{
     const row = document.createElement("div");
-    row.className = "table-horizontal";
+    row.className = "clause-row";
+    row.style.display = "flex";
+    row.style.gap = "6px";
 
-    COLUMNS.forEach(col=>{
-      const box = document.createElement("div");
-      box.className = "col";
-      if(!clause.active[col.key]) box.classList.add("dimmed");
+    if(clause.connector){
+      const conn = document.createElement("div");
+      conn.className = "clause-connector";
+      conn.textContent = clause.connector;
+      conn.style.fontWeight = "700";
+      conn.style.alignSelf = "center";
+      row.appendChild(conn);
+    }
+
+    PARTS.forEach(p=>{
+      const col = document.createElement("div");
+      col.className = "col";
+      if(!clause.active[p.key]) col.classList.add("dimmed");
 
       const h = document.createElement("div");
       h.className = "col-header";
-      h.textContent = col.title;
+      h.textContent = p.title;
 
       const cb = document.createElement("input");
-      cb.type="checkbox";
-      cb.checked=clause.active[col.key];
-      cb.onchange=()=>{
-        clause.active[col.key]=cb.checked;
+      cb.type = "checkbox";
+      cb.checked = clause.active[p.key];
+      cb.onchange = () => {
+        clause.active[p.key] = cb.checked;
+        updatePreview();
         render();
       };
       h.appendChild(cb);
 
       const label = document.createElement("div");
-      label.className="col-body-label";
-      label.textContent=col.hint;
+      label.className = "col-body-label";
+      label.textContent = p.hint;
 
       const main = document.createElement("div");
-      main.className="col-body-main";
-      main.textContent=clause.state[col.key];
+      main.className = "col-body-main";
+      main.textContent = clause.parts[p.key];
 
-      box.onclick=()=>{
-        const arr=col.data;
-        let i=arr.indexOf(clause.state[col.key]);
-        clause.state[col.key]=arr[(i+1)%arr.length];
+      col.append(h,label,main);
+
+      col.onclick = () => {
+        const arr = p.data;
+        const i = arr.indexOf(clause.parts[p.key]);
+        clause.parts[p.key] = arr[(i+1)%arr.length];
+        updatePreview();
         render();
       };
 
-      box.append(h,label,main);
-      row.appendChild(box);
+      row.appendChild(col);
     });
 
-    tableP1.appendChild(row);
+    table.appendChild(row);
   });
 
   updatePreview();
 }
 
 /* =======================
-   PREVIEW
+   SENTENCE BUILDER
 ======================= */
 
-function updatePreview(){
-  const text = clauses
-    .map(c=>buildClauseSentence(c))
-    .filter(Boolean)
-    .join(" ");
+function buildClauseText(clause, isLast){
+  const p = clause.parts;
+  const a = clause.active;
+  const out = [];
 
-  previewKo.textContent = text || "(alege cuvinte)";
-  previewRo.textContent = "";
+  if(a.subject) out.push(subjectParticle(p.subject));
+  if(a.time) out.push(p.time);
+  if(a.place) out.push(placeParticle(p.place, p.verb));
+  if(a.mod) out.push(p.mod);
+  if(a.object) out.push(objectParticle(p.object));
+
+  const stem = p.verb.replace("다","");
+  if(isLast){
+    out.push(stem + "요");
+  } else {
+    if(clause.connector === "-고") out.push(stem + "고");
+    else out.push(stem + "어서");
+  }
+
+  return out.join(" ");
+}
+
+function updatePreview(){
+  const sentence = clauses
+    .map((c,i)=>buildClauseText(c, i === clauses.length-1))
+    .join(" ");
+  previewKo.textContent = sentence || "(alege cuvinte din tabel)";
 }
 
 /* =======================
    CONTROLS
 ======================= */
 
-nextBtn.onclick = ()=>{
-  clauses.push(createClause());
+nextBtn.onclick = () => {
+  clauses.push(createClause(CONNECTORS[0]));
   render();
 };
 
-prevBtn.onclick = ()=>{
-  if(clauses.length>1){
+prevBtn.onclick = () => {
+  if(clauses.length > 1){
     clauses.pop();
     render();
   }
 };
 
-resetBtn.onclick = ()=>{
-  clauses.length=0;
+resetBtn.onclick = () => {
+  clauses.length = 0;
   clauses.push(createClause());
   render();
 };
-
-/* =======================
-   INIT
-======================= */
-
-render();
+  
   </script>
 </body>
 </html> 
