@@ -1999,297 +1999,192 @@ body.pastel-theme {
   </div>
 
   <script>
-    /*********************************************************
- * BUILDER.JS – CLEAN VERSION (BUILDER ONLY)
- *********************************************************/
+    /* =========================================================
+   BUILDER.JS – FINAL, CURAT, NELIMITAT
+   ========================================================= */
 
-/* =======================
-   DATE DE BAZĂ
-======================= */
+/* ================== DATE ================== */
 
-const columns = [
-  { key: "subject", title: "SUBJECT", hint: "Cine?", data: ["저","나","너","우리"] },
-  { key: "time",    title: "TIME",    hint: "Când?", data: ["오늘","어제","내일","지금"] },
-  { key: "place",   title: "PLACE",   hint: "Unde?", data: ["집","학교","회사","카페"] },
-  { key: "mod",     title: "MOD",     hint: "Cum?", data: ["잘","천천히","빨리"] },
-  { key: "object",  title: "OBJECT",  hint: "Ce?", data: ["책","커피","물"] },
-  { key: "verb",    title: "VERB",    hint: "Acțiune", data: ["가다","먹다","마시다"] },
-  { key: "conjug",  title: "CONJUG",  hint: "Formă", data: ["-아요/어요","-고","-았어요/었어요"] }
-];
-
-const maxLen = Math.max(...columns.map(c => c.data.length));
-
-let index = 0;
-
-/* =======================
-   STATE
-======================= */
-
-const stateP1 = {};
-const stateP2 = {};
-const activeP1 = {};
-const activeP2 = {};
-
-columns.forEach(col => {
-  stateP1[col.key] = col.data[0] || "";
-  stateP2[col.key] = col.data[0] || "";
-  activeP1[col.key] = true;
-  activeP2[col.key] = true;
-});
-
-/* =======================
-   DOM
-======================= */
-
-const tableP1   = document.getElementById("tableP1");
-const tableP2   = document.getElementById("tableP2");
-const titleP2   = document.getElementById("titleP2");
-const enableP2  = document.getElementById("enableP2");
-
-const togglesP1 = document.getElementById("togglesP1");
-const togglesP2 = document.getElementById("togglesP2");
-
-const prevBtn   = document.getElementById("prevBtn");
-const nextBtn   = document.getElementById("nextBtn");
-const resetBtn  = document.getElementById("resetBtn");
-const pageInfo  = document.getElementById("pageInfo");
-
-const previewKo = document.getElementById("previewKo");
-const previewRo = document.getElementById("previewRo");
-const naturalHint = document.getElementById("naturalHint");
-
-/* =======================
-   HELPERS
-======================= */
-
-function hasBatchim(word){
-  if(!word) return false;
-  const code = word.charCodeAt(word.length-1) - 0xAC00;
-  if(code < 0 || code > 11171) return false;
-  return code % 28 !== 0;
-}
-
-function subjectParticle(w){
-  return w + (hasBatchim(w) ? "은" : "는");
-}
-function objectParticle(w){
-  return w + (hasBatchim(w) ? "을" : "를");
-}
-
-/* =======================
-   RENDER COLOANE
-======================= */
-
-function renderClauseRow(container, state, active){
-  container.innerHTML = "";
-
-  columns.forEach(col => {
-    const colDiv = document.createElement("div");
-    colDiv.className = "col";
-    if (!active[col.key]) colDiv.classList.add("dimmed");
-
-    const h = document.createElement("div");
-    h.className = "col-header";
-    h.textContent = col.title;
-
-    const toggle = document.createElement("input");
-    toggle.type = "checkbox";
-    toggle.checked = active[col.key];
-    toggle.addEventListener("change", () => {
-      active[col.key] = toggle.checked;
-      render();
-    });
-
-    h.appendChild(toggle);
-    colDiv.appendChild(h);
-
-    const label = document.createElement("div");
-    label.className = "col-body-label";
-    label.textContent = col.hint;
-    colDiv.appendChild(label);
-
-    const main = document.createElement("div");
-    main.className = "col-body-main";
-    main.textContent = state[col.key];
-    colDiv.appendChild(main);
-
-    colDiv.addEventListener("click", () => {
-      const arr = col.data;
-      let i = arr.indexOf(state[col.key]);
-      state[col.key] = arr[(i+1) % arr.length];
-      render();
-    });
-
-    container.appendChild(colDiv);
-  });
-}
-
-/* =======================
-   PREVIEW
-======================= */
-function buildSentence(state, active){
-  const parts = [];
-
-  if(active.subject && state.subject){
-    parts.push(state.subject + pickSubjectParticle(state.subject));
-  }
-
-  if(active.time && state.time){
-    parts.push(state.time + pickTimeParticle(state.time));
-  }
-
-  if(active.place && state.place){
-    parts.push(
-      state.place + pickPlaceParticle(state.place, state.verb)
-    );
-  }
-
-  if(active.mod && state.mod){
-    parts.push(state.mod);
-  }
-
-  if(active.object && state.object){
-    parts.push(state.object + pickObjectParticle(state.object));
-  }
-
-  if(active.verb && state.verb){
-    let stem = state.verb.replace("다","");
-    const cj = state.conjug || "-아요/어요";
-
-    if(cj === "-고")       parts.push(stem + "고");
-    else if(cj === "-았어요/었어요") parts.push(stem + "었어요");
-    else                   parts.push(stem + "요");
-  }
-
-  return parts.join(" ");
-}
-    function updatePreview(){
-  const s1 = buildSentence(stateP1, activeP1);
-  let out = s1;
-
-  if(enableP2.checked){
-    const s2 = buildSentence(stateP2, activeP2);
-    if(s2) out += " " + s2;
-  }
-
-  previewKo.textContent = out || "(alege cuvinte din tabel)";
-  previewRo.textContent = "";
-  naturalHint.textContent = "";
-}
-
-/* =======================
-   CONTROALE
-======================= */
-
-function loadRow(i){
-  columns.forEach(col=>{
-    stateP1[col.key] = col.data[i] || "";
-  });
-}
-
-prevBtn.onclick = () => {
-  if(index > 0){ index--; loadRow(index); render(); }
-};
-nextBtn.onclick = () => {
-  if(index < maxLen-1){ index++; loadRow(index); render(); }
-};
-resetBtn.onclick = () => {
-  Object.keys(activeP1).forEach(k => activeP1[k] = true);
-  Object.keys(activeP2).forEach(k => activeP2[k] = true);
-  render();
+const DATA = {
+  subject: ["저","나","너","우리","너희"],
+  time: ["오늘","어제","내일","지금"],
+  place: ["집","학교","회사","카페"],
+  mod: ["잘","열심히","천천히"],
+  object: ["책","커피","물"],
+  numeral: ["","한","두","세"],
+  counter: ["","개","권","잔"],
+  verb: ["가다","오다","먹다","마시다","읽다"],
+  conjug: ["-아요/어요","-았어요/었어요","-고","-고 있어요"]
 };
 
-enableP2.onchange = () => {
-  const on = enableP2.checked;
-  titleP2.classList.toggle("hidden", !on);
-  tableP2.classList.toggle("hidden", !on);
-  render();
+const translations = {
+  subject:{저:"eu",나:"eu",너:"tu"},
+  time:{오늘:"azi",어제:"ieri",내일:"mâine"},
+  place:{집:"acasă",학교:"școală",회사:"firmă"},
+  mod:{잘:"bine",열심히:"cu sârguință"},
+  object:{책:"carte",커피:"cafea"},
+  numeral:{한:"unu",두:"doi",세:"trei"},
+  counter:{개:"buc.",권:"vol."},
+  verb:{가다:"a merge",먹다:"a mânca"},
+  conjug:{
+    "-아요/어요":"prezent",
+    "-았어요/었어요":"trecut",
+    "-고":"și"
+  }
 };
 
-/* =======================
-   TOGGLES (CHIPS)
-======================= */
+/* ================== STRUCTURĂ ================== */
 
-function createToggleChips(wrapper, active){
-  wrapper.innerHTML = "";
-  columns.forEach(col=>{
-    const label = document.createElement("label");
-    label.className = "chip";
+function createClause() {
+  return {
+    active: {
+      subject:true,time:true,place:true,mod:true,
+      object:true,numeral:true,counter:true,
+      verb:true,conjug:true
+    },
+    state: {
+      subject:"저",time:"",place:"",mod:"",
+      object:"",numeral:"",counter:"",
+      verb:"가다",conjug:"-아요/어요"
+    }
+  };
+}
 
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = true;
-    cb.onchange = () => {
-      active[col.key] = cb.checked;
+const clauses = [ createClause() ];
+
+/* ================== DOM ================== */
+
+const tablesWrap = document.getElementById("builderTables");
+const previewKo  = document.getElementById("previewKo");
+const previewRo  = document.getElementById("previewRo");
+const addClauseBtn = document.getElementById("addClauseBtn");
+
+/* ================== HELPERS ================== */
+
+function hasBatchim(w){
+  if(!w) return false;
+  const c=w.charCodeAt(w.length-1)-0xAC00;
+  return c>=0 && c%28!==0;
+}
+function subjP(w){ return w+(hasBatchim(w)?"은":"는"); }
+function objP(w){ return w+(hasBatchim(w)?"을":"를"); }
+
+function conjugate(v,cj){
+  if(!v) return "";
+  const stem=v.replace("다","");
+  if(cj==="-아요/어요") return stem+"요";
+  if(cj==="-았어요/었어요") return stem+"었어요";
+  if(cj==="-고") return stem+"고";
+  if(cj==="-고 있어요") return stem+"고 있어요";
+  return stem+cj.replace("-","");
+}
+
+/* ================== RENDER ================== */
+
+function renderClause(clause, idx){
+  const box=document.createElement("div");
+  box.className="table-block";
+
+  box.innerHTML=`
+    <div class="table-title">
+      <span>Propoziția ${idx+1}</span>
+    </div>
+    <div class="table-horizontal"></div>
+  `;
+
+  const table=box.querySelector(".table-horizontal");
+
+  Object.keys(DATA).forEach(key=>{
+    const col=document.createElement("div");
+    col.className="col";
+    col.dataset.key=key;
+
+    col.innerHTML=`
+      <div class="col-header">
+        <span>${key.toUpperCase()}</span>
+        <input type="checkbox" ${clause.active[key]?"checked":""}>
+      </div>
+      <div class="col-body-main">${clause.state[key]||""}</div>
+    `;
+
+    col.querySelector("input").onchange=e=>{
+      clause.active[key]=e.target.checked;
       render();
     };
 
-    label.appendChild(cb);
-    label.append(col.title);
-    wrapper.appendChild(label);
-  });
-}
+    col.onclick=()=>{
+      const arr=DATA[key];
+      let i=arr.indexOf(clause.state[key]);
+      clause.state[key]=arr[(i+1)%arr.length];
+      render();
+    };
 
-/* =======================
-   RENDER GENERAL
-======================= */
+    table.appendChild(col);
+  });
+
+  return box;
+}
 
 function render(){
-  renderClauseRow(tableP1, stateP1, activeP1);
-  if(enableP2.checked)
-    renderClauseRow(tableP2, stateP2, activeP2);
-
-  pageInfo.textContent = `Rând: ${index+1} / ${maxLen}`;
+  tablesWrap.innerHTML="";
+  clauses.forEach((c,i)=>{
+    tablesWrap.appendChild(renderClause(c,i));
+  });
   updatePreview();
 }
-/* =======================
-   PARTICLE PICKERS (CORECTE)
-======================= */
 
-const pronouns = new Set(["저","나","너","우리","너희"]);
+/* ================== PREVIEW ================== */
 
-function pickSubjectParticle(word){
-  if(!word) return "";
-  const b = hasBatchim(word);
+function buildKo(){
+  return clauses.map(c=>{
+    const s=c.state;
+    const a=c.active;
+    const out=[];
 
-  // pronume → 은/는
-  if(pronouns.has(word)){
-    return b ? "은" : "는";
-  }
-  // substantive → 이/가
-  return b ? "이" : "가";
+    if(a.subject && s.subject) out.push(subjP(s.subject));
+    if(a.time && s.time) out.push(s.time);
+    if(a.place && s.place) out.push(s.place+"에서");
+    if(a.mod && s.mod) out.push(s.mod);
+
+    if(a.object && s.object){
+      let o="";
+      if(a.numeral && s.numeral) o+=s.numeral+" ";
+      o+=s.object;
+      if(a.counter && s.counter) o+=" "+s.counter;
+      out.push(objP(o));
+    }
+
+    if(a.verb) out.push(conjugate(s.verb,s.conjug));
+
+    return out.join(" ");
+  }).join(" ");
 }
 
-function pickObjectParticle(word){
-  if(!word) return "";
-  return hasBatchim(word) ? "을" : "를";
+function buildRo(){
+  return clauses.map(c=>{
+    return Object.keys(c.state)
+      .filter(k=>c.active[k] && c.state[k])
+      .map(k=>translations[k]?.[c.state[k]]||c.state[k])
+      .join(" ");
+  }).join(". ")+".";
 }
 
-const timeNoParticle = new Set([
-  "오늘","어제","내일","지금","요즘","항상","자주","가끔","방금"
-]);
-
-function pickTimeParticle(word){
-  if(!word) return "";
-  if(timeNoParticle.has(word)) return "";
-  return "에";
+function updatePreview(){
+  previewKo.textContent = buildKo() || "(alege cuvinte)";
+  previewRo.textContent = buildRo();
 }
 
-function pickPlaceParticle(word, verb){
-  if(!word) return "";
+/* ================== EVENTS ================== */
 
-  const motionVerbs = new Set(["가다","오다"]);
-  if(motionVerbs.has(verb)) return "에";
-  return "에서";
+if(addClauseBtn){
+  addClauseBtn.onclick=()=>{
+    clauses.push(createClause());
+    render();
+  };
 }
-    /* =======================
-   INIT
-======================= */
 
-createToggleChips(togglesP1, activeP1);
-createToggleChips(togglesP2, activeP2);
+/* ================== INIT ================== */
 
-loadRow(index);
 render();   
     
   </script>
