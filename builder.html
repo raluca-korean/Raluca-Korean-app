@@ -2212,7 +2212,138 @@ enableP2.addEventListener("change",()=>{
 /* ================= INIT ================= */
 
 render();
+/* =========================================================
+   CONJUGARE REALĂ – MOTOR CENTRAL
+   ========================================================= */
 
+/* --- Hangul helpers --- */
+const H_BASE = 0xAC00;
+const JUNG = [
+  "ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ",
+  "ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"
+];
+
+function decomposeLastSyl(word){
+  if(!word) return null;
+  const ch = word.charCodeAt(word.length-1);
+  const code = ch - H_BASE;
+  if(code < 0 || code > 11171) return null;
+  const jong = code % 28;
+  const jung = ((code - jong) / 28) % 21;
+  return { jung, jong };
+}
+
+function hasBatchim(word){
+  const d = decomposeLastSyl(word);
+  return d ? d.jong !== 0 : false;
+}
+
+function verbStem(dict){
+  return dict && dict.endsWith("다") ? dict.slice(0,-1) : dict;
+}
+
+/* --- verbe speciale --- */
+const SPECIAL_VERBS = {
+  "가다": { present:"가요", past:"갔어요" },
+  "오다": { present:"와요", past:"왔어요" },
+  "하다": { present:"해요", past:"했어요" },
+  "보다": { present:"봐요", past:"봤어요" },
+  "먹다": { past:"먹었어요" },
+  "마시다": { past:"마셨어요" },
+  "읽다": { past:"읽었어요" }
+};
+
+/* --- prezent politicos --- */
+function presentPolite(dict){
+  if(SPECIAL_VERBS[dict]?.present) return SPECIAL_VERBS[dict].present;
+
+  const stem = verbStem(dict);
+  const d = decomposeLastSyl(stem);
+  if(!d) return stem + "요";
+
+  const v = JUNG[d.jung];
+  const aGroup = ["ㅏ","ㅑ","ㅗ","ㅛ","ㅘ","ㅙ","ㅚ"].includes(v);
+  return stem + (aGroup ? "아요" : "어요");
+}
+
+/* --- trecut politicos --- */
+function pastPolite(dict){
+  if(SPECIAL_VERBS[dict]?.past) return SPECIAL_VERBS[dict].past;
+
+  const stem = verbStem(dict);
+  const d = decomposeLastSyl(stem);
+  if(!d) return stem + "었어요";
+
+  const v = JUNG[d.jung];
+  const aGroup = ["ㅏ","ㅑ","ㅗ","ㅛ","ㅘ","ㅙ","ㅚ"].includes(v);
+  return stem + (aGroup ? "았어요" : "었어요");
+}
+
+/* --- viitor -(으)ㄹ --- */
+function futureBase(dict){
+  const stem = verbStem(dict);
+  const d = decomposeLastSyl(stem);
+  if(!d) return stem;
+
+  if(d.jong === 0){
+    // fără batchim → ㄹ
+    const code = stem.charCodeAt(stem.length-1) - H_BASE;
+    const newChar = String.fromCharCode(H_BASE + code + 8);
+    return stem.slice(0,-1) + newChar;
+  }
+  return stem + "을";
+}
+
+/* --- CONSTRUCȚIE FINALĂ VERB + CONJUGARE --- */
+function buildVerbPhrase(dictVerb, conjug){
+  if(!dictVerb && !conjug) return "";
+
+  // fallback
+  if(!dictVerb) return conjug || "";
+
+  switch(conjug){
+
+    case "-아요/어요":
+      return presentPolite(dictVerb);
+
+    case "-았어요/었어요":
+      return pastPolite(dictVerb);
+
+    case "-고 있어요":
+      return verbStem(dictVerb) + "고 있어요";
+
+    case "-고 싶어요":
+      return verbStem(dictVerb) + "고 싶어요";
+
+    case "-(으)세요":
+      return futureBase(dictVerb) + "세요";
+
+    case "-(으)ㄹ 거예요":
+      return futureBase(dictVerb) + " 거예요";
+
+    case "-고":
+      return verbStem(dictVerb) + "고";
+
+    case "-고 나서":
+      return verbStem(dictVerb) + "고 나서";
+
+    case "-기 전에":
+      return verbStem(dictVerb) + "기 전에";
+
+    case "-(으)면서":
+      return verbStem(dictVerb) + "면서";
+
+    case "-아/어 주세요":
+      return verbStem(dictVerb) + " 주세요";
+
+    case "-아/어야 돼요":
+      return verbStem(dictVerb) + "야 돼요";
+
+    default:
+      // fallback generic
+      return verbStem(dictVerb) + conjug.replace(/^-/, "");
+  }
+}
 </script>    
 </body>
 </html> 
