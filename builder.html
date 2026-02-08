@@ -2237,8 +2237,47 @@ function render(){
   pageInfo.textContent = `Rând: ${index+1} / ${maxLen}`;
   updatePreview();
 }
-
 /* =======================
+   PARTICLE PICKERS (CORECTE)
+======================= */
+
+const pronouns = new Set(["저","나","너","우리","너희"]);
+
+function pickSubjectParticle(word){
+  if(!word) return "";
+  const b = hasBatchim(word);
+
+  // pronume → 은/는
+  if(pronouns.has(word)){
+    return b ? "은" : "는";
+  }
+  // substantive → 이/가
+  return b ? "이" : "가";
+}
+
+function pickObjectParticle(word){
+  if(!word) return "";
+  return hasBatchim(word) ? "을" : "를";
+}
+
+const timeNoParticle = new Set([
+  "오늘","어제","내일","지금","요즘","항상","자주","가끔","방금"
+]);
+
+function pickTimeParticle(word){
+  if(!word) return "";
+  if(timeNoParticle.has(word)) return "";
+  return "에";
+}
+
+function pickPlaceParticle(word, verb){
+  if(!word) return "";
+
+  const motionVerbs = new Set(["가다","오다"]);
+  if(motionVerbs.has(verb)) return "에";
+  return "에서";
+}
+    /* =======================
    INIT
 ======================= */
 
