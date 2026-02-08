@@ -1,4 +1,4 @@
-B13
+Bb8
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1941,6 +1941,9 @@ body.pastel-theme {
           ➤ Sistem de <b>conjugare reală</b>: verbul se unește cu finalul (ex: 가다 + -고 있어요 → 가고 있어요).
         </div>
 <div class="builder-controls">
+  <button id="toggleClausesBtn" class="secondary small">
+    ➕ Arată continuarea
+  </button>
 </div>
   <div class="preview-card">
           <div class="preview-title">
@@ -3487,52 +3490,55 @@ on(DOM.enableP2, "change", ()=>{
     if(DOM.roCorrected) DOM.roCorrected.textContent = res.roFixed || "";
   });
 }
-on(DOM.toggleClausesBtn, "click", () => {
-  showExtraClauses = !showExtraClauses;
 
-  DOM.toggleClausesBtn.textContent = showExtraClauses
-    ? "➖ Ascunde continuarea"
-    : "➕ Arată continuarea";
-
-  renderAll();
-});
-    /* =========================
+/* =========================
    23) RENDER ALL (fixează “tabelele nu sunt”)
    - NU mai referim variabile inexistente: screens/navButtons/setScreen etc.
    ========================= */
 function renderAll(){
   ensureLinkedSentences();
-// butonul apare DOAR dacă există minim 2 propoziții
-if (sentences.length > 1) {
-  show(DOM.toggleClausesBtn);
-} else {
-  hide(DOM.toggleClausesBtn);
-}
-  // P1 mereu
-  if (DOM.tableP1 && sentences[0] && actives[0]) {
+
+  if(DOM.tableP1 && sentences[0] && actives[0]){
     renderClauseRow(DOM.tableP1, actives[0], sentences[0], 0);
   }
-
-  // P2 (și restul) – controlat DOAR de showExtraClauses
-  if (DOM.tableP2 && sentences[1] && actives[1]) {
-    if (showExtraClauses) {
+if (!sentences.length) return;
+  const wantP2 = DOM.enableP2 ? DOM.enableP2.checked : false;
+  if(DOM.tableP2){
+    if(wantP2 && sentences[1] && actives[1]){
       show(DOM.tableP2);
       DOM.titleP2 && show(DOM.titleP2);
       renderClauseRow(DOM.tableP2, actives[1], sentences[1], 1);
-    } else {
+    }else{
       hide(DOM.tableP2);
       DOM.titleP2 && hide(DOM.titleP2);
     }
-  } else {
-    // dacă nu există P2 în DOM sau nu există sentences[1]
-    DOM.tableP2 && hide(DOM.tableP2);
-    DOM.titleP2 && hide(DOM.titleP2);
   }
 
-  updateModelNav();
-  updatePreview();
+  renderExtraClauses();   // 👈 AICI
+  const lastClause = document.querySelector(
+  `.clause-extra[data-clause-index="${sentences.length-1}"]`
+);
+if (lastClause) {
+  lastClause.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-    /* =========================
+  // ===== EXTRA CLAUSES (P3+) =====
+const extra = $("#extra-clauses");
+if (extra) {
+  extra.innerHTML = "";
+
+  for (let i = 2; i < sentences.length; i++) {
+    const { wrap, table } = createClauseTable(i);
+    extra.appendChild(wrap);
+
+    renderClauseRow(table, actives[i], sentences[i], i);
+    attachPressHandlers(table, i);
+  }
+}
+
+updateModelNav();
+updatePreview();  
+}
+/* =========================
    24) BOOTSTRAP
    ========================= */
 document.addEventListener("DOMContentLoaded", ()=>{
