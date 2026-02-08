@@ -2127,38 +2127,43 @@ function renderClauseRow(container, state, active){
 /* =======================
    PREVIEW
 ======================= */
-
 function buildSentence(state, active){
   const parts = [];
 
-  if(active.subject && state.subject)
-    parts.push(subjectParticle(state.subject));
+  if(active.subject && state.subject){
+    parts.push(state.subject + pickSubjectParticle(state.subject));
+  }
 
-  if(active.time && state.time)
-    parts.push(state.time);
+  if(active.time && state.time){
+    parts.push(state.time + pickTimeParticle(state.time));
+  }
 
-  if(active.place && state.place)
-    parts.push(state.place + "에서");
+  if(active.place && state.place){
+    parts.push(
+      state.place + pickPlaceParticle(state.place, state.verb)
+    );
+  }
 
-  if(active.mod && state.mod)
+  if(active.mod && state.mod){
     parts.push(state.mod);
+  }
 
-  if(active.object && state.object)
-    parts.push(objectParticle(state.object));
+  if(active.object && state.object){
+    parts.push(state.object + pickObjectParticle(state.object));
+  }
 
   if(active.verb && state.verb){
-    let v = state.verb.replace("다","");
-    let cj = state.conjug || "-아요/어요";
-    if(cj === "-고") v += "고";
-    else if(cj === "-았어요/었어요") v += "었어요";
-    else v += "요";
-    parts.push(v);
+    let stem = state.verb.replace("다","");
+    const cj = state.conjug || "-아요/어요";
+
+    if(cj === "-고")       parts.push(stem + "고");
+    else if(cj === "-았어요/었어요") parts.push(stem + "었어요");
+    else                   parts.push(stem + "요");
   }
 
   return parts.join(" ");
 }
-
-function updatePreview(){
+    function updatePreview(){
   const s1 = buildSentence(stateP1, activeP1);
   let out = s1;
 
