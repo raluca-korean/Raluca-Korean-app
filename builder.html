@@ -3627,41 +3627,65 @@ on(DOM.enableP2, "change", ()=>{
    23) RENDER ALL (fixează “tabelele nu sunt”)
    - NU mai referim variabile inexistente: screens/navButtons/setScreen etc.
    ========================= */
-function renderAll(){
+    function renderAll() {
   ensureLinkedSentences();
 
-  if(DOM.tableP1 && sentences[0] && actives[0]){
+  /* =====================
+     P1 – întotdeauna
+     ===================== */
+  if (DOM.tableP1 && sentences[0] && actives[0]) {
     renderClauseRow(DOM.tableP1, actives[0], sentences[0], 0);
   }
-if (!sentences.length) return;
- 
-if (DOM.tableP2 && sentences[1] && actives[1]) {
- 
-    
-  renderExtraClauses();   // 👈 AICI
-  const lastClause = document.querySelector(
-  `.clause-extra[data-clause-index="${sentences.length-1}"]`
-);
-if (lastClause) {
-  lastClause.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-  // ===== EXTRA CLAUSES (P3+) =====
-const extra = $("#extra-clauses");
-if (extra) {
-  extra.innerHTML = "";
 
-  for (let i = 2; i < sentences.length; i++) {
-    const { wrap, table } = createClauseTable(i);
-    extra.appendChild(wrap);
-
-    renderClauseRow(table, actives[i], sentences[i], i);
-    attachPressHandlers(table, i);
+  /* =====================
+     P2 – apare dacă există sentences[1]
+     ===================== */
+  if (DOM.tableP2 && DOM.titleP2) {
+    if (sentences.length >= 2 && sentences[1] && actives[1]) {
+      show(DOM.tableP2);
+      show(DOM.titleP2);
+      renderClauseRow(DOM.tableP2, actives[1], sentences[1], 1);
+    } else {
+      hide(DOM.tableP2);
+      hide(DOM.titleP2);
+    }
   }
-}
 
-updateModelNav();
-updatePreview();  
+  /* =====================
+     P3+ – EXTRA CLAUSES
+     ===================== */
+  const extra = document.querySelector("#extra-clauses");
+  if (extra) {
+    extra.innerHTML = "";
+
+    for (let i = 2; i < sentences.length; i++) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "table-block clause-extra";
+      wrapper.dataset.clauseIndex = i;
+
+      const title = document.createElement("div");
+      title.className = "table-title";
+      title.innerHTML = `<span>Propoziția ${i + 1}</span>`;
+      wrapper.appendChild(title);
+
+      const table = document.createElement("div");
+      table.className = "table-horizontal";
+      wrapper.appendChild(table);
+
+      extra.appendChild(wrapper);
+
+      renderClauseRow(table, actives[i], sentences[i], i);
+      attachPressHandlers(table, i);
+    }
+  }
+
+  /* =====================
+     Preview + UI
+     ===================== */
+  updateModelNav();
+  updatePreview();
 }
+    
 /* =========================
    24) BOOTSTRAP
    ========================= */
