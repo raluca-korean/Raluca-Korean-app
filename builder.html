@@ -1,4 +1,4 @@
-Bb9
+Bb11
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1926,6 +1926,14 @@ body.pastel-theme {
     Propoziția 2
   </label>
 </div>
+
+<div id="titleP2" class="hidden">
+  <span>Propoziția 2 (continuare)</span>
+</div>
+<div id="extra-clauses"></div>
+  <div id="tableP2" class="table-block hidden">
+  <!-- coloanele P2 -->
+</div>
   <div class="legend">
           ➤ Tap scurt pe coloană = treci la următorul cuvânt.  
           ➤ Ține apăsat pe coloană = deschizi lista completă (cu traduceri + căutare).  
@@ -2539,19 +2547,17 @@ function buildClauseSentence(state, activeMap, conjOverride = null){
   const koParts = [];
   const roSegs  = [];
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
-// SUBJECT (with attributive adjectives)
-if (use("subject") && state.subject) {
 
-  let subj = state.subject;
-
-  if (state.subjectAdj?.length) {
-    const adj = state.subjectAdj
-      .map(a => makeAttributive(a))
-      .join("고 ");
-    subj = adj + " " + subj;
+  // subject
+ // SUBJECT (+ adjectiv)
+if(use("subject")){
+  let subj = state.subject || "";
+  if(state.subjectAdj){
+    subj = state.subjectAdj + " " + subj;
   }
-
-  koParts.push(addSubjectWithParticle(subj));
+  if(subj){
+    koParts.push(addSubjectWithParticle(subj));
+  }
 }
   // time
   if(state.time && use("time")){
@@ -2822,23 +2828,23 @@ function createClauseTable(clauseIndex){
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
-function ensureLinkedSentences() {
-  let i = 0;
-
-  while (i < sentences.length) {
-    const cj = sentences[i]?.conjug;
-
-    if (cj && isLinkingConj(cj)) {
-      if (!sentences[i + 1]) {
+function ensureLinkedSentences(){
+  // dacă o propoziție are conjugare de legătură, trebuie să existe încă una după ea
+  for(let i=0; i<sentences.length; i++){
+    const cj = sentences[i].conjug;
+    if(cj && isLinkingConj(cj)){
+      if(!sentences[i+1]){
         sentences.push(makeEmptySentence());
         actives.push(makeAllActive());
       }
     }
-
-    i++;
   }
+
+  // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
+  // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
-    function updatePreview(){
+
+function updatePreview(){
   if(!DOM.previewKo || !DOM.previewRo) return;
 
   ensureLinkedSentences();
@@ -3329,15 +3335,8 @@ const RO_FORM_TO_INF = {
   "citesc":"a citi","citesti":"a citi","citești":"a citi","citeste":"a citi","citește":"a citi","citim":"a citi","cititi":"a citi","citiți":"a citi",
   "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie","scriem":"a scrie","scrieti":"a scrie","scrieți":"a scrie"
 };
-function makeAttributive(adj){
-  // 예쁘다 → 예쁜
-  // 뚱뚱하다 → 뚱뚱한
-  if (adj.endsWith("다")) {
-    return adj.slice(0, -1) + "ㄴ";
-  }
-  return adj;
-}
-  function parseRoToState(roSentence){
+
+function parseRoToState(roSentence){
   const t = normRo(roSentence);
 
   // subject
@@ -3612,10 +3611,12 @@ if (DOM.tableP2 && sentences[1] && actives[1]) {
     show(DOM.tableP2);
     DOM.titleP2 && show(DOM.titleP2);
     renderClauseRow(DOM.tableP2, actives[1], sentences[1], 1);
-
+  } else {
+    hide(DOM.tableP2);
+    DOM.titleP2 && hide(DOM.titleP2);
   }
 }
- 
+  renderExtraClauses();   // 👈 AICI
   const lastClause = document.querySelector(
   `.clause-extra[data-clause-index="${sentences.length-1}"]`
 );
@@ -3662,7 +3663,34 @@ document.addEventListener("DOMContentLoaded", ()=>{
   // first render
   renderAll();
 });
- 
+  function renderExtraClauses() {
+  if (!DOM.extraClauses) return;
+
+  DOM.extraClauses.innerHTML = "";
+
+  // începem de la propoziția 3 (index 2)
+  for (let i = 2; i < sentences.length; i++) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-block";
+
+    const title = document.createElement("div");
+    title.className = "table-title";
+    title.innerHTML = `<span>Propoziția ${i + 1}</span>`;
+    wrapper.appendChild(title);
+
+    const table = document.createElement("div");
+    table.className = "table-horizontal";
+    wrapper.appendChild(table);
+
+    DOM.extraClauses.appendChild(wrapper);
+
+    // render tabelul EXACT ca P1 / P2
+    renderClauseRow(table, actives[i], sentences[i], i);
+
+    // long-press + click
+    attachPressHandlers(table, i);
+  }
+}
   </script>
 </body>
 </html> 
