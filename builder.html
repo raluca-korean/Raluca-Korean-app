@@ -2280,9 +2280,6 @@ const activeP1 = clauses[0].active;
 
 const stateP2  = clauses[1].state;
 const activeP2 = clauses[1].active;
-    
-    let sentences = clauses.map(c => c.state);
-let actives   = clauses.map(c => c.active);
     /* =========================
    4) DOM (nu presupunem nimic: doar id-uri dacă există)
    ========================= */
@@ -2341,26 +2338,19 @@ const DOM = {
    - Propoziții dinamice (1..N)
    ========================= */
 let indexModelRow = 0;
-function makeEmptySentence(){
-  return {
-    subject: "",
-    subjectAdj: [],
+    
 
-    time: "",
-    place: "",
-    mod: "",
+    function makeEmptySentence(){
+  const s = {};
+  columns.forEach(col => s[col.key] = col.data[0] || "");
+  return s;
+}
 
-    object: "",
-    objectAdj: [],
+// sentences[0] = propoziția 1, sentences[1] = propoziția 2, etc.
+let sentences = [ makeEmptySentence() ];
 
-    numeral: "",
-    counter: "",
-
-    verb: "",
-    descVerb: "",
-    conjug: ""
-  };
-}    
+// activeMap per sentence: ce coloane sunt ON/OFF
+let actives = [ makeAllActive() ];
 
 function makeAllActive(){
   const a = {};
@@ -2369,7 +2359,7 @@ function makeAllActive(){
 }
 
 let showRo = true;
-  
+    let showExtraClauses = false;    
 let currentMode = "topik"; // topik vs simple
 const simpleColumnsSet = {subject:true,time:true,object:true,verb:true,conjug:true};
 
@@ -2557,13 +2547,12 @@ function buildClauseSentence(state, activeMap, conjOverride = null){
   const koParts = [];
   const roSegs  = [];
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
-// SUBJECT (with optional attributive adjectives)
+// SUBJECT (with attributive adjectives)
 if (use("subject") && state.subject) {
 
   let subj = state.subject;
 
-  // DOAR dacă NU avem adjectiv predicativ
-  if (!state.descVerb && state.subjectAdj?.length) {
+  if (state.subjectAdj?.length) {
     const adj = state.subjectAdj
       .map(a => makeAttributive(a))
       .join("고 ");
@@ -2597,18 +2586,9 @@ if (use("subject") && state.subject) {
   // OBJECT (+ adjectiv)
 if(use("object")){
   let obj = state.object || "";
-  if (use("object") && state.object) {
-  let obj = state.object;
-
-  if (state.objectAdj?.length) {
-    const adj = state.objectAdj
-      .map(a => makeAttributive(a))
-      .join("고 ");
-    obj = adj + " " + obj;
+  if(state.objectAdj){
+    obj = state.objectAdj + " " + obj;
   }
-
-  koParts.push(addObjectWithParticle(obj));
-}
   if(obj){
     koParts.push(addObjectWithParticle(obj));
   }
@@ -2809,13 +2789,7 @@ function renderClauseRow(container, activeMap, state, clauseIndex){
     // main
     const main = document.createElement("div");
     main.className = "col-body-main";
-    const val = state[col.key];
-
-if (Array.isArray(val)) {
-  main.textContent = val.join(" / ");
-} else {
-  main.textContent = val || "";
-}
+    main.textContent = state[col.key] || "";
     colDiv.appendChild(main);
 
     // extra
@@ -3058,7 +3032,7 @@ if (key === "subject") {
   item.appendChild(addBtn);
 }
     // ➕ suport ATRIBUTE multiple (ex: frumoasă + grasă)
-if (key === "subjectAdj" || key === "objectAdj") {
+if (key === "attribute") {
   const addBtn = document.createElement("button");
   addBtn.textContent = "➕";
   addBtn.className = "panel-add-btn";
@@ -3098,7 +3072,7 @@ if (key === "subjectAdj" || key === "objectAdj") {
 
       // dacă e linking conj -> asigurăm propoziție următoare + enableP2 on (dacă există)
       if(key === "conjug" && isLinkingConj(word)){
-  
+  showExtraClauses = true;   // 👈 ASTA E CHEIA
   ensureLinkedSentences();
 
         if(DOM.enableP2){
@@ -3633,51 +3607,48 @@ on(DOM.enableP2, "change", ()=>{
    23) RENDER ALL (fixează “tabelele nu sunt”)
    - NU mai referim variabile inexistente: screens/navButtons/setScreen etc.
    ========================= */
-    function renderAll() {
+function renderAll(){
   ensureLinkedSentences();
 
-  /* =====================
-     P1 – întotdeauna
-     ===================== */
-  if (DOM.tableP1 && sentences[0] && actives[0]) {
+  if(DOM.tableP1 && sentences[0] && actives[0]){
     renderClauseRow(DOM.tableP1, actives[0], sentences[0], 0);
   }
-
-  /* =====================
-     P3+ – EXTRA CLAUSES
-     ===================== */
-  const extra = document.querySelector("#extra-clauses");
-  if (extra) {
-    extra.innerHTML = "";
-
-    for (let i = 2; i < sentences.length; i++) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "table-block clause-extra";
-      wrapper.dataset.clauseIndex = i;
-
-      const title = document.createElement("div");
-      title.className = "table-title";
-      title.innerHTML = `<span>Propoziția ${i + 1}</span>`;
-      wrapper.appendChild(title);
-
-      const table = document.createElement("div");
-      table.className = "table-horizontal";
-      wrapper.appendChild(table);
-
-      extra.appendChild(wrapper);
-
-      renderClauseRow(table, actives[i], sentences[i], i);
-      attachPressHandlers(table, i);
-    }
+if (!sentences.length) return;
+  // P2 = apare AUTOMAT dacă există showExtraClauses
+if (DOM.tableP2 && sentences[1] && actives[1]) {
+  if (showExtraClauses) {
+    show(DOM.tableP2);
+    DOM.titleP2 && show(DOM.titleP2);
+    renderClauseRow(DOM.tableP2, actives[1], sentences[1], 1);
+  } else {
+    hide(DOM.tableP2);
+    DOM.titleP2 && hide(DOM.titleP2);
   }
-
-  /* =====================
-     Preview + UI
-     ===================== */
-  updateModelNav();
-  updatePreview();
 }
-    
+  renderExtraClauses();   // 👈 AICI
+  const lastClause = document.querySelector(
+  `.clause-extra[data-clause-index="${sentences.length-1}"]`
+);
+if (lastClause) {
+  lastClause.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+  // ===== EXTRA CLAUSES (P3+) =====
+const extra = $("#extra-clauses");
+if (extra) {
+  extra.innerHTML = "";
+
+  for (let i = 2; i < sentences.length; i++) {
+    const { wrap, table } = createClauseTable(i);
+    extra.appendChild(wrap);
+
+    renderClauseRow(table, actives[i], sentences[i], i);
+    attachPressHandlers(table, i);
+  }
+}
+
+updateModelNav();
+updatePreview();  
+}
 /* =========================
    24) BOOTSTRAP
    ========================= */
@@ -3701,7 +3672,34 @@ document.addEventListener("DOMContentLoaded", ()=>{
   // first render
   renderAll();
 });
-  
+  function renderExtraClauses() {
+  if (!DOM.extraClauses) return;
+
+  DOM.extraClauses.innerHTML = "";
+
+  // începem de la propoziția 3 (index 2)
+  for (let i = 2; i < sentences.length; i++) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-block";
+
+    const title = document.createElement("div");
+    title.className = "table-title";
+    title.innerHTML = `<span>Propoziția ${i + 1}</span>`;
+    wrapper.appendChild(title);
+
+    const table = document.createElement("div");
+    table.className = "table-horizontal";
+    wrapper.appendChild(table);
+
+    DOM.extraClauses.appendChild(wrapper);
+
+    // render tabelul EXACT ca P1 / P2
+    renderClauseRow(table, actives[i], sentences[i], i);
+
+    // long-press + click
+    attachPressHandlers(table, i);
+  }
+}
   </script>
 </body>
 </html> 
