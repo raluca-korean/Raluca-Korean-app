@@ -1859,21 +1859,6 @@ body.pastel-theme {
   font-weight: 600;
   opacity: 0.85;
 }
-    .preview-ko{
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.preview-ro{
-  font-size: 15px;
-  opacity: 0.8;
-}
-
-.preview-hint{
-  font-size: 13px;
-  opacity: 0.5;
-}
   </style>
 </head>
 <body class="pastel-theme">
@@ -1971,12 +1956,8 @@ body.pastel-theme {
           <div class="preview-ro" id="previewRo"></div>
 
           <div class="preview-natural" id="naturalHint"></div>
-<div class="preview-block">
-  <div id="previewKo" class="preview-ko">(propoziția în coreeană)</div>
-  <div id="previewRo" class="preview-ro"></div>
-  <div id="naturalHint" class="preview-hint"></div>
-</div>
-    <div class="preview-buttons">
+
+          <div class="preview-buttons">
             <button id="randomBtn">🎲 Random propoziție</button>
             <button id="speakBtn">🔊 Audio coreeană</button>
             <button id="favBtn" class="secondary">⭐ Salvează propoziția</button>
@@ -2316,7 +2297,6 @@ const DOM = {
   previewRo: $("#previewRo"),
 
   naturalHint: $("#naturalHint"),
-  extraClauses: $("#extra-clauses"),
   toggleRoBtn: $("#toggleRoBtn"),
 
   randomBtn: $("#randomBtn"),
@@ -2582,19 +2562,15 @@ function buildClauseSentence(state, activeMap, conjOverride = null){
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
 
   // subject
-if (use("subject") && state.subject) {
-
-  let subj = state.subject;
-
-  // adjective atributive
-  if (state.subjectAdj?.length) {
-    const adj = state.subjectAdj
-      .map(a => makeAttributive(a))
-      .join("고 ");
-    subj = adj + " " + formatSubject(subj);
+ // SUBJECT (+ adjectiv)
+if(use("subject")){
+  let subj = state.subject || "";
+  if(state.subjectAdj){
+    subj = state.subjectAdj + " " + subj;
   }
-
-  koParts.push(addSubjectWithParticle(subj));
+  if(subj){
+    koParts.push(addSubjectWithParticle(subj));
+  }
 }
   // time
   if(state.time && use("time")){
@@ -3641,7 +3617,7 @@ if (DOM.tableP2 && sentences[1] && actives[1]) {
     DOM.titleP2 && hide(DOM.titleP2);
   }
 }
- 
+  renderExtraClauses();   // 👈 AICI
   const lastClause = document.querySelector(
   `.clause-extra[data-clause-index="${sentences.length-1}"]`
 );
