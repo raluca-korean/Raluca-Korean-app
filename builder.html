@@ -2562,15 +2562,19 @@ function buildClauseSentence(state, activeMap, conjOverride = null){
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
 
   // subject
- // SUBJECT (+ adjectiv)
-if(use("subject")){
-  let subj = state.subject || "";
-  if(state.subjectAdj){
-    subj = state.subjectAdj + " " + subj;
+if (use("subject") && state.subject) {
+
+  let subj = state.subject;
+
+  // adjective atributive
+  if (state.subjectAdj?.length) {
+    const adj = state.subjectAdj
+      .map(a => makeAttributive(a))
+      .join("고 ");
+    subj = adj + " " + formatSubject(subj);
   }
-  if(subj){
-    koParts.push(addSubjectWithParticle(subj));
-  }
+
+  koParts.push(addSubjectWithParticle(subj));
 }
   // time
   if(state.time && use("time")){
