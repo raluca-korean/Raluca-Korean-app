@@ -1934,7 +1934,6 @@ body.pastel-theme {
   <div id="tableP2" class="table-block hidden">
   <!-- coloanele P2 -->
 </div>
-  
   <div class="legend">
           ➤ Tap scurt pe coloană = treci la următorul cuvânt.  
           ➤ Ține apăsat pe coloană = deschizi lista completă (cu traduceri + căutare).  
@@ -2004,9 +2003,7 @@ body.pastel-theme {
         <input type="text" id="newWordTransInput" placeholder="Traducere în română (ex: unu, azi) – opțional" />
         <button id="addWordBtn" class="secondary">+ Add</button>
       </div>
-<div id="previewKo"></div>
-<div id="previewRo"></div>
-<div id="naturalHint"></div>
+
       <div class="panel-list" id="panelList"></div>
     </div>
   </div>
@@ -2280,7 +2277,8 @@ const activeP2 = clauses[1].active;
     /* =========================
    4) DOM (nu presupunem nimic: doar id-uri dacă există)
    ========================= */
-    const DOM = {
+const DOM = {
+  // builder tables (din HTML-ul tău)
   tableP1: $("#tableP1"),
   tableP2: $("#tableP2"),
   titleP2: $("#titleP2"),
@@ -2295,26 +2293,26 @@ const activeP2 = clauses[1].active;
   pageInfoEl: $("#pageInfo"),
 
   previewKo: $("#previewKo"),
+
   previewRo: $("#previewRo"),
+
   naturalHint: $("#naturalHint"),
   toggleRoBtn: $("#toggleRoBtn"),
 
   randomBtn: $("#randomBtn"),
   speakBtn: $("#speakBtn"),
   favBtn: $("#favBtn"),
+  favoritesListEl: $("#favoritesList"),
 
   overlay: $("#overlay"),
   panelTitle: $("#panelTitle"),
   panelSub: $("#panelSub"),
   panelList: $("#panelList"),
-
-  roInput: $("#roInput"),
-  roTranslateBtn: $("#roTranslateBtn"),
-  roToKoResult: $("#roToKoResult"),
-  roCorrected: $("#roCorrected"),
-
-  ✅ extraClauses: $("#extra-clauses")
-};
+  closePanelBtn: $("#closePanelBtn"),
+  panelSearchInput: $("#panelSearchInput"),
+  newWordInput: $("#newWordInput"),
+  newWordTransInput: $("#newWordTransInput"),
+  addWordBtn: $("#addWordBtn"),
 
   // Ro→Ko block
   roInput: $("#roInput"),
@@ -3620,6 +3618,25 @@ if (DOM.tableP2 && sentences[1] && actives[1]) {
   }
 }
   renderExtraClauses();   // 👈 AICI
+  const lastClause = document.querySelector(
+  `.clause-extra[data-clause-index="${sentences.length-1}"]`
+);
+if (lastClause) {
+  lastClause.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+  // ===== EXTRA CLAUSES (P3+) =====
+const extra = $("#extra-clauses");
+if (extra) {
+  extra.innerHTML = "";
+
+  for (let i = 2; i < sentences.length; i++) {
+    const { wrap, table } = createClauseTable(i);
+    extra.appendChild(wrap);
+
+    renderClauseRow(table, actives[i], sentences[i], i);
+    attachPressHandlers(table, i);
+  }
+}
 
 updateModelNav();
 updatePreview();  
