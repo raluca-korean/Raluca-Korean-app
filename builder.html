@@ -2504,13 +2504,23 @@ function buildVerbPhrase(dictVerb, cj){
 const pronouns = new Set(["저","나","너","우리","너희"]);
 const timeAdverbsNoParticle = new Set(["오늘","어제","내일","지금","방금","요즘","항상","자주","가끔","계속","점점","차츰"]);
 
-function addSubjectWithParticle(word){
-  if(!word) return "";
-  const b = hasBatchim(word);
-  if(pronouns.has(word)) return word + (b ? "은" : "는");
-  return word + (b ? "이" : "가");
-}
+function addSubjectWithParticle(subjectValue){
+  if (!subjectValue) return "";
 
+  // ARRAY SUBJECT
+  if (Array.isArray(subjectValue)) {
+    const joined = subjectValue.join("과 ");
+    return joined + "이";  
+    // simplificare stabilă TOPIK (plural logic)
+  }
+
+  const b = hasBatchim(subjectValue);
+  if (pronouns.has(subjectValue)) {
+    return subjectValue + (b ? "은" : "는");
+  }
+
+  return subjectValue + (b ? "이" : "가");
+}
 function addTimeWithParticle(word){
   if(!word) return "";
   if(timeAdverbsNoParticle.has(word)) return word;
