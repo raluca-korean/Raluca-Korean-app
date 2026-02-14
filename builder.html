@@ -2885,12 +2885,19 @@ function updatePreview(){
 
     const isLast = (i === sentences.length - 1);
 
-    const cj = sentences[i].conjug;   // 🔒 cheia REALĂ
+    const cj = sentences[i].conjug || "";
     let conjOverride = null;
 
-    // ✅ FIX: linking conj NU curge spre următoarea propoziție
-    if(!isLast && cj && isLinkingConj(cj)){
-      conjOverride = cj;
+    /* ✅ REGULĂ CORECTĂ */
+
+    if(cj && isLinkingConj(cj)){
+      if(!isLast){
+        // propoziția curentă → rămâne la formă de legătură
+        conjOverride = cj;
+      } else {
+        // ultima propoziție NU are voie să rămână în -고
+        conjOverride = "-아요/어요";
+      }
     }
 
     const built = buildClauseSentence(
@@ -2913,18 +2920,15 @@ function updatePreview(){
     }
   }
 
-  // ✅ PREVIEW KO
   if(DOM.previewKo){
     DOM.previewKo.textContent = koParts.join(" ");
   }
 
-  // ✅ PREVIEW RO
   if(DOM.previewRo){
     DOM.previewRo.textContent = roParts.join(" ");
   }
 }
-
-/* =========================
+    /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
