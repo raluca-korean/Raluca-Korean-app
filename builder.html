@@ -2472,11 +2472,15 @@ function futureL(dict){
   return stem + "을";
 }
 
-function buildVerbPhrase(dictVerb, cj){
-  if(!dictVerb && !cj) return "";
-  if(!dictVerb) return cj || "";
-  if(!cj) return dictVerb;
+function buildVerbPhrase(dictVerb, cj) {
 
+  if (!dictVerb && !cj) return "";
+
+  // dacă nu avem verb → returnăm doar conjugarea (ex: expresii standalone)
+  if (!dictVerb) return cj || "";
+
+  // dacă nu avem conjugare → returnăm verbul de dicționar
+  if (!cj) return dictVerb;
   if(cj === "-아요/어요") return presentPolite(dictVerb);
   if(cj === "-았어요/었어요") return pastPolite(dictVerb);
   if(cj === "-(으)세요") return futureL(dictVerb) + "세요";
@@ -2507,10 +2511,18 @@ function buildVerbPhrase(dictVerb, cj){
     if(cj === "-고자 하다") return getVerbStem(dictVerb) + "고자 해요";
     if(cj === "-기에") return getVerbStem(dictVerb) + "기에";
     if(cj === "-길래") return getVerbStem(dictVerb) + "길래";
-    return getVerbStem(dictVerb) + cj.replace(/^-/, "");
-  }
 
-  return getVerbStem(dictVerb) + cj.replace(/^-/, "");
+     /* =========================
+     FALLBACK SIGUR
+     ========================= */
+
+  // 🔒 IMPORTANT:
+  // dacă nu recunoaștem conjugarea → NU o lipim la verb
+  // returnăm conjugarea pură (evită bug "-고" → "-지 마세요")
+
+  if (cj) return cj;
+
+  return dictVerb;
 }
 
 /* =========================
