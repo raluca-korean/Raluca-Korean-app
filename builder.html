@@ -2872,19 +2872,21 @@ function ensureLinkedSentences(){
 }
 function updatePreview(){
 
-  const koParts = [];
-  const roParts = [];
+  if(!DOM.previewKo || !DOM.previewRo) return;
 
   ensureLinkedSentences();
+
+  const koParts = [];
+  const roParts = [];
 
   for(let i = 0; i < sentences.length; i++){
 
     const isLast = (i === sentences.length - 1);
 
-    const cj = sentences[i].conjug;   // 🔒 cheia REALĂ
+    const cj = sentences[i].conjug || "";
     let conjOverride = null;
 
-    // ✅ FIX: linking conj NU curge spre următoarea propoziție
+    // ✅ DOAR pentru propozițiile NON-finale
     if(!isLast && cj && isLinkingConj(cj)){
       conjOverride = cj;
     }
@@ -2909,18 +2911,23 @@ function updatePreview(){
     }
   }
 
-  // ✅ PREVIEW KO
-  if(DOM.previewKo){
-    DOM.previewKo.textContent = koParts.join(" ");
+  const fullKo = koParts.join(" ").trim();
+
+  if(!fullKo){
+    DOM.previewKo.textContent = "(alege cuvinte din tabel)";
+    DOM.previewRo.textContent = "";
+    DOM.naturalHint && (DOM.naturalHint.textContent = "");
+    return;
   }
 
-  // ✅ PREVIEW RO
-  if(DOM.previewRo){
-    DOM.previewRo.textContent = roParts.join(" ");
-  }
-}
+  DOM.previewKo.textContent = fullKo;
 
-/* =========================
+  const fullRo = roParts.join(" ").trim();
+  DOM.previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
+
+  DOM.naturalHint && (DOM.naturalHint.textContent =
+    "✅ Propoziție (după regulile simple din aplicație).");
+}/* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
