@@ -60,13 +60,9 @@ Bb9
       font-size:11px;font-weight:600;color:var(--text-soft);
       display:flex;justify-content:space-between;align-items:center;
     }
-   .table-horizontal{
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  overflow-x: auto;
-  align-items: stretch;
-}
+    .table-horizontal{
+      display:flex;flex-direction:row;overflow-x:auto;padding-bottom:4px;gap:6px;
+    }
     .col{
       min-width:110px;max-width:140px;flex:0 0 auto;background:#faf8ff;border-radius:10px;
       border:1px solid var(--border);display:flex;flex-direction:column;
@@ -1971,8 +1967,8 @@ body.pastel-theme {
 <div id="titleP2" class="hidden">
   <span>Propoziția 2 (continuare)</span>
 </div>
-  <div id="tableP2" class="table-horizontal hidden">
-    <!-- coloanele P2 -->
+  <div id="tableP2" class="table-block hidden">
+  <!-- coloanele P2 -->
 </div>
   <div class="legend">
           ➤ Tap scurt pe coloană = treci la următorul cuvânt.  
@@ -2322,7 +2318,7 @@ const DOM = {
   speakBtn: $("#speakBtn"),
   favBtn: $("#favBtn"),
   favoritesListEl: $("#favoritesList"),
-extraClauses: $("#extra-clauses"),
+
   overlay: $("#overlay"),
   panelTitle: $("#panelTitle"),
   panelSub: $("#panelSub"),
@@ -2619,48 +2615,37 @@ const labelsRo = {
     koParts.push(state.mod);
     roSegs.push(`${labelsRo.mod}: ${(translations.mod?.[state.mod] || state.mod)}`);
   }
-/* NUMERAL + COUNTER + OBJECT (ordine corectă) */
-if(use("object")){
-  const obj = state.object || "";
 
-  if(obj){
-    if(state.numeral && use("numeral")){
-      koParts.push(state.numeral);
+  /* OBJECT (+ adjectiv) */
+  if(use("object")){
+    let obj = state.object || "";
+    if(state.objectAdj){
+      obj = state.objectAdj + " " + obj;
     }
-
-    if(state.counter && use("counter")){
-      koParts.push(state.counter);
+    if(obj){
+      koParts.push(addObjectWithParticle(obj));
     }
-
-    koParts.push(addObjectWithParticle(obj));
-  }
-} 
-/* VERB + CONJUG */
-if((v || cj) && (use("verb") || use("conjug"))){
-
-  let vp = "";
-
-  // ✅ dacă e linking conj → DOAR verb legat
-  if(cj && isLinkingConj(cj)){
-    vp = buildVerbPhrase(v, cj);
-  } 
-  // ✅ propoziție normală
-  else {
-    vp = buildVerbPhrase(v, cj);
   }
 
-  if(vp){
-    koParts.push(vp);
-
-    const roVerb = translations.verb?.[v] || v || "";
-    const cjExp  = translations.conjug?.[cj] || "";
-
-    let combined = roVerb;
-    if(cjExp) combined += ` ${cjExp}`;
-
-    roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
+  /* NUMERAL */
+  if(state.numeral && use("numeral")){
+    koParts.push(state.numeral);
+    roSegs.push(`${labelsRo.numeral}: ${(translations.numeral?.[state.numeral] || state.numeral)}`);
   }
-} 
+
+  /* COUNTER */
+  if(state.counter && use("counter")){
+    koParts.push(state.counter);
+    roSegs.push(`${labelsRo.counter}: ${(translations.counter?.[state.counter] || state.counter)}`);
+  }
+
+  /* VERB + CONJUG */
+  if((v || cj) && (use("verb") || use("conjug"))){
+
+    const vp = buildVerbPhrase(v, cj);
+
+    if(vp){
+      koParts.push(vp);
 
       const roVerb = translations.verb?.[v] || v || "";
       const cjExp  = translations.conjug?.[cj] || "";
@@ -2856,18 +2841,6 @@ function createClauseTable(clauseIndex){
   hint.className = "small-label";
   hint.textContent = "↳ continuare logică (conjugare de legătură)";
   wrap.insertBefore(hint, table);
-   const table = document.createElement("div");
-table.className = "table-horizontal";
-
-if (sentences[clauseIndex-1]?.conjug && isLinkingConj(sentences[clauseIndex-1].conjug)) {
-  const hint = document.createElement("div");
-  hint.className = "small-label";
-  hint.textContent = "↳ continuare logică (conjugare de legătură)";
-  wrap.appendChild(hint);
-}
-
-wrap.appendChild(title);
-wrap.appendChild(table); 
 }
   
 
@@ -2908,12 +2881,11 @@ function updatePreview(){
 
     const isLast = (i === sentences.length - 1);
 
-    const cj = sentences[i].conjug;
+    const cj = sentences[i].conjug;   // 🔒 cheia REALĂ
     let conjOverride = null;
 
-    // ✅ FIX CRITIC
-    // Linking conj se aplică DOAR propoziției curente
-    if(cj && isLinkingConj(cj)){
+    // ✅ FIX: linking conj NU curge spre următoarea propoziție
+    if(!isLast && cj && isLinkingConj(cj)){
       conjOverride = cj;
     }
 
@@ -2937,15 +2909,18 @@ function updatePreview(){
     }
   }
 
+  // ✅ PREVIEW KO
   if(DOM.previewKo){
     DOM.previewKo.textContent = koParts.join(" ");
   }
 
+  // ✅ PREVIEW RO
   if(DOM.previewRo){
     DOM.previewRo.textContent = roParts.join(" ");
   }
 }
-    /* =========================
+
+/* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
