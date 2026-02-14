@@ -1905,6 +1905,22 @@ body.pastel-theme {
 <div class="table-horizontal" id="tableP1"></div>
 
 
+<!-- ===== ENABLE PROPOZIȚIA 2 ===== -->
+<div class="builder-enable-p2">
+  <label>
+    <input type="checkbox" id="enableP2">
+    Activează Propoziția 2 (frază)
+  </label>
+</div>
+
+
+<!-- ===== PROPOZIȚIA 2 ===== -->
+<div class="table-title hidden" id="titleP2">
+  <span>Propoziția 2 (continuare / frază)</span>
+</div>
+<div class="table-horizontal hidden" id="tableP2"></div>
+
+
 <!-- ===== PROPOZIȚIA 3+ ===== -->
 <div id="extra-clauses"></div>
 
@@ -1924,7 +1940,8 @@ body.pastel-theme {
     </button>
   </div>
 
-
+  <div class="preview-ro" id="previewRo"></div>
+  <div class="preview-hint" id="naturalHint"></div>
 
   <div class="preview-buttons">
     <button id="randomBtn">🎲 Random propoziție</button>
@@ -2855,21 +2872,19 @@ function ensureLinkedSentences(){
 }
 function updatePreview(){
 
-  if(!DOM.previewKo || !DOM.previewRo) return;
-
-  ensureLinkedSentences();
-
   const koParts = [];
   const roParts = [];
+
+  ensureLinkedSentences();
 
   for(let i = 0; i < sentences.length; i++){
 
     const isLast = (i === sentences.length - 1);
 
-    const cj = sentences[i].conjug || "";
+    const cj = sentences[i].conjug;   // 🔒 cheia REALĂ
     let conjOverride = null;
 
-    // ✅ DOAR pentru propozițiile NON-finale
+    // ✅ FIX: linking conj NU curge spre următoarea propoziție
     if(!isLast && cj && isLinkingConj(cj)){
       conjOverride = cj;
     }
@@ -2894,23 +2909,18 @@ function updatePreview(){
     }
   }
 
-  const fullKo = koParts.join(" ").trim();
-
-  if(!fullKo){
-    DOM.previewKo.textContent = "(alege cuvinte din tabel)";
-    DOM.previewRo.textContent = "";
-    DOM.naturalHint && (DOM.naturalHint.textContent = "");
-    return;
+  // ✅ PREVIEW KO
+  if(DOM.previewKo){
+    DOM.previewKo.textContent = koParts.join(" ");
   }
 
-  DOM.previewKo.textContent = fullKo;
+  // ✅ PREVIEW RO
+  if(DOM.previewRo){
+    DOM.previewRo.textContent = roParts.join(" ");
+  }
+}
 
-  const fullRo = roParts.join(" ").trim();
-  DOM.previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
-
-  DOM.naturalHint && (DOM.naturalHint.textContent =
-    "✅ Propoziție (după regulile simple din aplicație).");
-}/* =========================
+/* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
