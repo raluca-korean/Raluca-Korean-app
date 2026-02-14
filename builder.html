@@ -2570,8 +2570,41 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
+function buildClauseSentence(sentence, activeMap, conjOverride = null) {
 
-function buildClauseSentence(state, activeMap, conjOverride = null){
+  const parts = [];
+
+  // 🔒 CONJUGAREA ESTE FIXATĂ AICI (NU MAI CURGE ÎNAPOI)
+  const conjug = conjOverride ?? sentence.conjug;
+
+  columns.forEach(col => {
+
+    if (!activeMap[col.key]) return;
+
+    const value = sentence[col.key];
+    if (!value) return;
+
+    // verbul NU intră direct, e tratat separat
+    if (col.key === "verb") return;
+
+    parts.push(value);
+  });
+
+  // verbul (dacă există)
+  if (activeMap.verb && sentence.verb) {
+    parts.push(sentence.verb);
+  }
+
+  // 🔗 CONJUGAREA SE APLICĂ DOAR LOCAL
+  if (activeMap.conjug && conjug) {
+    parts.push(conjug);
+  }
+
+  return {
+    ko: parts.join(" ").trim()
+  };
+}
+    buildClauseSentence(state, activeMap, conjOverride = null){
   const koParts = [];
   const roSegs  = [];
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
