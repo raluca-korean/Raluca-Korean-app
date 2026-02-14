@@ -2869,17 +2869,28 @@ function updatePreview(){
   const roParts = [];
 
   for(let i=0; i<sentences.length; i++){
-    // dacă HTML are enableP2 și e off -> nu arătăm peste 1 propoziție
-    
 
-    const built = buildClauseSentence(sentences[i], actives[i]);
-    if(built.ko) koParts.push(built.ko);
-    const roNat = buildNaturalRomanian(sentences[i], actives[i]);
-    if(roNat) roParts.push(roNat);
+  const isLast = (i === sentences.length - 1);
+  const cj = sentences[i].conjug;
 
-    // dacă conjugarea NU e linking, dar avem fraze după, ele devin independente:
-    // (nu le lipim automat – aici respectăm builder-ul tău: fraze apar dacă există)
+  let conjOverride = null;
+
+  // 🔥 CHEIA FIXULUI
+  if(!isLast && cj && isLinkingConj(cj)){
+    conjOverride = cj;  
   }
+
+  const built = buildClauseSentence(
+    sentences[i],
+    actives[i],
+    conjOverride   // 👈 IMPORTANT
+  );
+
+  if(built.ko) koParts.push(built.ko);
+
+  const roNat = buildNaturalRomanian(sentences[i], actives[i]);
+  if(roNat) roParts.push(roNat);
+}
 DOM.previewKo.textContent = koParts.join(" ");
 DOM.previewRo.textContent = roParts.join(" ");
   const fullKo = koParts.join(" ").trim();
