@@ -2570,112 +2570,87 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
-function buildClauseSentence(sentence, activeMap, conjOverride = null) {
 
-  const parts = [];
+  function buildClauseSentence(state, activeMap, conjOverride = null){
 
-  // 🔒 CONJUGAREA ESTE FIXATĂ AICI (NU MAI CURGE ÎNAPOI)
-  const conjug = conjOverride ?? sentence.conjug;
-
-  columns.forEach(col => {
-
-    if (!activeMap[col.key]) return;
-
-    const value = sentence[col.key];
-    if (!value) return;
-
-    // verbul NU intră direct, e tratat separat
-    if (col.key === "verb") return;
-
-    parts.push(value);
-  });
-
-  // verbul (dacă există)
-  if (activeMap.verb && sentence.verb) {
-    parts.push(sentence.verb);
-  }
-
-  // 🔗 CONJUGAREA SE APLICĂ DOAR LOCAL
-  if (activeMap.conjug && conjug) {
-    parts.push(conjug);
-  }
-
-  return {
-    ko: parts.join(" ").trim()
-  };
-}
-    buildClauseSentence(state, activeMap, conjOverride = null){
   const koParts = [];
   const roSegs  = [];
+
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
 
-  // subject
- // SUBJECT (+ adjectiv)
-if(use("subject")){
-  let subj = state.subject || "";
-  if(state.subjectAdj){
-    subj = state.subjectAdj + " " + subj;
+  const v  = state.verb || "";
+
+  // 🔒 snapshot conjugare (CHEIA FIXULUI)
+  const cj = conjOverride ?? state.conjug ?? "";
+
+  /* SUBJECT (+ adjectiv) */
+  if(use("subject")){
+    let subj = state.subject || "";
+    if(state.subjectAdj){
+      subj = state.subjectAdj + " " + subj;
+    }
+    if(subj){
+      koParts.push(addSubjectWithParticle(subj));
+    }
   }
-  if(subj){
-    koParts.push(addSubjectWithParticle(subj));
-  }
-}
-  // time
+
+  /* TIME */
   if(state.time && use("time")){
     koParts.push(addTimeWithParticle(state.time));
     roSegs.push(`${labelsRo.time}: ${(translations.time?.[state.time] || state.time)}`);
   }
 
-  const v = state.verb || "";
-  const cj = conjOverride || state.conjug || "";
-
-  // place
+  /* PLACE */
   if(state.place && use("place")){
     koParts.push(addPlaceWithParticle(state.place, v));
     roSegs.push(`${labelsRo.place}: ${(translations.place?.[state.place] || state.place)}`);
   }
 
-  // mod
+  /* MOD */
   if(state.mod && use("mod")){
     koParts.push(state.mod);
     roSegs.push(`${labelsRo.mod}: ${(translations.mod?.[state.mod] || state.mod)}`);
   }
 
-  // object
-  // OBJECT (+ adjectiv)
-if(use("object")){
-  let obj = state.object || "";
-  if(state.objectAdj){
-    obj = state.objectAdj + " " + obj;
+  /* OBJECT (+ adjectiv) */
+  if(use("object")){
+    let obj = state.object || "";
+    if(state.objectAdj){
+      obj = state.objectAdj + " " + obj;
+    }
+    if(obj){
+      koParts.push(addObjectWithParticle(obj));
+    }
   }
-  if(obj){
-    koParts.push(addObjectWithParticle(obj));
-  }
-}
-  // numeral
+
+  /* NUMERAL */
   if(state.numeral && use("numeral")){
     koParts.push(state.numeral);
     roSegs.push(`${labelsRo.numeral}: ${(translations.numeral?.[state.numeral] || state.numeral)}`);
   }
 
-  // counter
+  /* COUNTER */
   if(state.counter && use("counter")){
     koParts.push(state.counter);
     roSegs.push(`${labelsRo.counter}: ${(translations.counter?.[state.counter] || state.counter)}`);
   }
 
-  // verb + conjug
+  /* VERB + CONJUG */
   if((v || cj) && (use("verb") || use("conjug"))){
+
     const vp = buildVerbPhrase(v, cj);
+
     if(vp){
       koParts.push(vp);
+
       const roVerb = translations.verb?.[v] || v || "";
       const cjExp  = translations.conjug?.[cj] || "";
+
       let combined = roVerb;
       if(cjExp){
-        if(cj === "-고") combined += ` ${cjExp}`;
-        else combined += ` ${cjExp}`;
+        combined += ` ${cjExp}`;
       }
+
       roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
     }
   }
@@ -2686,8 +2661,7 @@ if(use("object")){
     conj: cj
   };
 }
-
-/* =========================
+    /* =========================
    11) NATURAL ROMANIAN (keep-ul tău, simplificat dar corect)
    ========================= */
 
