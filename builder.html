@@ -2870,6 +2870,7 @@ function ensureLinkedSentences(){
   // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
+
 function updatePreview(){
 
   const koParts = [];
@@ -2881,11 +2882,12 @@ function updatePreview(){
 
     const isLast = (i === sentences.length - 1);
 
-    const cj = sentences[i].conjug;   // 🔒 cheia REALĂ
+    const cj = sentences[i].conjug;
     let conjOverride = null;
 
-    // ✅ FIX: linking conj NU curge spre următoarea propoziție
-    if(!isLast && cj && isLinkingConj(cj)){
+    // ✅ FIX CRITIC
+    // Linking conj se aplică DOAR propoziției curente
+    if(cj && isLinkingConj(cj)){
       conjOverride = cj;
     }
 
@@ -2909,18 +2911,15 @@ function updatePreview(){
     }
   }
 
-  // ✅ PREVIEW KO
   if(DOM.previewKo){
     DOM.previewKo.textContent = koParts.join(" ");
   }
 
-  // ✅ PREVIEW RO
   if(DOM.previewRo){
     DOM.previewRo.textContent = roParts.join(" ");
   }
 }
-
-/* =========================
+    /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
