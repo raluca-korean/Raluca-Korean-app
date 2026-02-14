@@ -2874,34 +2874,35 @@ function updatePreview(){
 
   for(let i = 0; i < sentences.length; i++){
 
-    const built = buildClauseSentence(
-      sentences[i],
-      actives[i]
-    );
+  const cj = sentences[i].conjug;
+  const prevCj = i > 0 ? sentences[i - 1].conjug : null;
 
-    if(built?.ko){
-      koParts.push(built.ko);
-    }
+  let conjForThisSentence = cj;
 
-    const roNat = buildNaturalRomanian(
-      sentences[i],
-      actives[i]
-    );
-
-    if(roNat){
-      roParts.push(roNat);
-    }
+  // ✅ COPY comportament P1 → P2
+  if(prevCj && isLinkingConj(prevCj)){
+    conjForThisSentence = cj;  
   }
 
-  if(DOM.previewKo){
-    DOM.previewKo.textContent = koParts.join(" ");
+  const built = buildClauseSentence(
+    { ...sentences[i], conjug: conjForThisSentence },
+    actives[i]
+  );
+
+  if(built?.ko){
+    koParts.push(built.ko);
   }
 
-  if(DOM.previewRo){
-    DOM.previewRo.textContent = roParts.join(" ");
+  const roNat = buildNaturalRomanian(
+    sentences[i],
+    actives[i]
+  );
+
+  if(roNat){
+    roParts.push(roNat);
   }
 }
-    /* =========================
+  /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
