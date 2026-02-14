@@ -2642,14 +2642,32 @@ const labelsRo = {
     koParts.push(state.counter);
     roSegs.push(`${labelsRo.counter}: ${(translations.counter?.[state.counter] || state.counter)}`);
   }
+/* VERB + CONJUG */
+if((v || cj) && (use("verb") || use("conjug"))){
 
-  /* VERB + CONJUG */
-  if((v || cj) && (use("verb") || use("conjug"))){
+  let vp = "";
 
-    const vp = buildVerbPhrase(v, cj);
+  // ✅ dacă e linking conj → DOAR verb legat
+  if(cj && isLinkingConj(cj)){
+    vp = buildVerbPhrase(v, cj);
+  } 
+  // ✅ propoziție normală
+  else {
+    vp = buildVerbPhrase(v, cj);
+  }
 
-    if(vp){
-      koParts.push(vp);
+  if(vp){
+    koParts.push(vp);
+
+    const roVerb = translations.verb?.[v] || v || "";
+    const cjExp  = translations.conjug?.[cj] || "";
+
+    let combined = roVerb;
+    if(cjExp) combined += ` ${cjExp}`;
+
+    roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
+  }
+} 
 
       const roVerb = translations.verb?.[v] || v || "";
       const cjExp  = translations.conjug?.[cj] || "";
