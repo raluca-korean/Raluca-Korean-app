@@ -2878,52 +2878,54 @@ function ensureLinkedSentences(){
   // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
-
 function updatePreview(){
-  if(!DOM.previewKo || !DOM.previewRo) return;
-
-  ensureLinkedSentences();
 
   const koParts = [];
   const roParts = [];
 
-  for(let i=0; i<sentences.length; i++){
+  ensureLinkedSentences();
 
-  const isLast = (i === sentences.length - 1);
-  const cj = sentences[i].conjug;
+  for(let i = 0; i < sentences.length; i++){
 
-  let conjOverride = null;
+    const isLast = (i === sentences.length - 1);
 
-  // 🔥 CHEIA FIXULUI
-  if(!isLast && cj && isLinkingConj(cj)){
-    conjOverride = cj;  
+    const cj = sentences[i].conjug;   // 🔒 cheia REALĂ
+    let conjOverride = null;
+
+    // ✅ FIX: linking conj NU curge spre următoarea propoziție
+    if(!isLast && cj && isLinkingConj(cj)){
+      conjOverride = cj;
+    }
+
+    const built = buildClauseSentence(
+      sentences[i],
+      actives[i],
+      conjOverride
+    );
+
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
+
+    const roNat = buildNaturalRomanian(
+      sentences[i],
+      actives[i]
+    );
+
+    if(roNat){
+      roParts.push(roNat);
+    }
   }
 
-  const built = buildClauseSentence(
-    sentences[i],
-    actives[i],
-    conjOverride   // 👈 IMPORTANT
-  );
-
-  if(built.ko) koParts.push(built.ko);
-
-  const roNat = buildNaturalRomanian(sentences[i], actives[i]);
-  if(roNat) roParts.push(roNat);
-}
-DOM.previewKo.textContent = koParts.join(" ");
-DOM.previewRo.textContent = roParts.join(" ");
-  const fullKo = koParts.join(" ").trim();
-  if(!fullKo){
-    text(DOM.previewKo, "(alege cuvinte din tabel)");
-    text(DOM.previewRo, "");
-    text(DOM.naturalHint, "");
-    return;
+  // ✅ PREVIEW KO
+  if(DOM.previewKo){
+    DOM.previewKo.textContent = koParts.join(" ");
   }
 
-  text(DOM.previewKo, fullKo);
-  const fullRo = roParts.join(" ").trim();
-  text(DOM.previewRo, showRo ? fullRo : "··· traducere ascunsă ···");
-  text(DOM.naturalHint, "✅ Propoziție (după regulile simple din aplicație).");
+  // ✅ PREVIEW RO
+  if(DOM.previewRo){
+    DOM.previewRo.textContent = roParts.join(" ");
+  }
 }
 
 /* =========================
