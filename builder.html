@@ -2511,8 +2511,12 @@ function buildVerbPhrase(dictVerb, cj) {
     if(cj === "-기에") return getVerbStem(dictVerb) + "기에";
     if(cj === "-길래") return getVerbStem(dictVerb) + "길래";
   }
-// ✅ FALLBACK SIGUR
-return getVerbStem(dictVerb) + (cj.replace("-", "") || ""); 
+
+  // ✅ FALLBACK SIGUR
+  if (cj) return cj;
+
+  return dictVerb;
+}
     /* =========================
    9) PARTICLE HELPERS
    ========================= */
@@ -2581,7 +2585,8 @@ const labelsRo = {
   const v  = state.verb || "";
 
   // 🔒 snapshot conjugare (CHEIA FIXULUI)
- const cj = state.conjug || "";
+  const cj = conjOverride ?? state.conjug ?? "";
+
   /* SUBJECT (+ adjectiv) */
   if(use("subject")){
     let subj = state.subject || "";
@@ -2874,35 +2879,48 @@ function updatePreview(){
 
   for(let i = 0; i < sentences.length; i++){
 
-  const cj = sentences[i].conjug;
-  const prevCj = i > 0 ? sentences[i - 1].conjug : null;
+    const isLast = (i === sentences.length - 1);
 
-  let conjForThisSentence = cj;
+    const cj = sentences[i].conjug;   // 🔒 cheia REALĂ
+    let conjOverride = null;
 
-  // ✅ COPY comportament P1 → P2
-  if(prevCj && isLinkingConj(prevCj)){
-    conjForThisSentence = cj;  
+    // ✅ FIX: linking conj NU curge spre următoarea propoziție
+    if(!isLast && cj && isLinkingConj(cj)){
+      conjOverride = cj;
+    }
+
+    const built = buildClauseSentence(
+      sentences[i],
+      actives[i],
+      conjOverride
+    );
+
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
+
+    const roNat = buildNaturalRomanian(
+      sentences[i],
+      actives[i]
+    );
+
+    if(roNat){
+      roParts.push(roNat);
+    }
   }
 
-  const built = buildClauseSentence(
-    { ...sentences[i], conjug: conjForThisSentence },
-    actives[i]
-  );
-
-  if(built?.ko){
-    koParts.push(built.ko);
+  // ✅ PREVIEW KO
+  if(DOM.previewKo){
+    DOM.previewKo.textContent = koParts.join(" ");
   }
 
-  const roNat = buildNaturalRomanian(
-    sentences[i],
-    actives[i]
-  );
-
-  if(roNat){
-    roParts.push(roNat);
+  // ✅ PREVIEW RO
+  if(DOM.previewRo){
+    DOM.previewRo.textContent = roParts.join(" ");
   }
 }
-  /* =========================
+
+/* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
