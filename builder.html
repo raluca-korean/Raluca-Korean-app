@@ -2880,30 +2880,37 @@ function ensureLinkedSentences(){
 
   // reset fluiditate SUBJECT
   window.__prevSubject = null;
+let prevHadLinking = false;
 
-  for(let i = 0; i < sentences.length; i++){
+for(let i = 0; i < sentences.length; i++){
 
-    // 🔹 Construire KO
-    const built = buildClauseSentence(
-      sentences[i],
-      actives[i]
-    );
+  const cj = sentences[i].conjug || "";
+  const isLink = isLinkingConj(cj);
 
-    if(built?.ko){
-      koParts.push(built.ko);
-    }
+  let conjOverride = cj;
 
-    // 🔹 Construire RO
-    const roNat = buildNaturalRomanian(
-      sentences[i],
-      actives[i]
-    );
+  // ✅ dacă propoziția anterioară a fost linking
+  if(prevHadLinking){
 
-    if(roNat){
-      roParts.push(roNat);
+    // următoarea propoziție trebuie FINALĂ
+    if(isLink){
+      conjOverride = "";  
     }
   }
 
+  const built = buildClauseSentence(
+    sentences[i],
+    actives[i],
+    conjOverride
+  );
+
+  if(built?.ko) koParts.push(built.ko);
+
+  const roNat = buildNaturalRomanian(sentences[i], actives[i);
+  if(roNat) roParts.push(roNat);
+
+  prevHadLinking = isLink;
+}
   const fullKo = koParts.join(" ").trim();
 
   if(!fullKo){
