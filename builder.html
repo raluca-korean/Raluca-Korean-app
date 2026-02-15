@@ -2894,44 +2894,57 @@ function updatePreview(){
   const koParts = [];
   const roParts = [];
 
-  window.__prevSubject = null;
-
-  let prevHadLinking = false;
+  let prevCjRaw = "";
 
   for(let i = 0; i < sentences.length; i++){
-const cjRaw = sentences[i].conjug || "";
-const cj = getSafeFinalConjugation(cjRaw, i === sentences.length - 1);
-    const isLink = isLinkingConj(cj);
 
-    let conjOverride = cj;
+    const isLast = (i === sentences.length - 1);
 
-    // ✅ LOGICA VERB FINAL
-    if(prevHadLinking){
+    const cjRaw = sentences[i].conjug || "";
 
-      if(isLink){
-        conjOverride = "";
-      }
-      else if(!cj){
-        conjOverride = "-아요/어요";
-      }
+    /* =========================
+       1️⃣ PREVENT DOUBLE LINKING
+       ========================= */
+    let cj = cjRaw;
+
+    if(isLinkingConj(prevCjRaw) && isLinkingConj(cjRaw)){
+      cj = "";   // eliminăm linking-ul curent
     }
 
+    /* =========================
+       2️⃣ SAFE FINAL CONJUGATION
+       ========================= */
+    cj = getSafeFinalConjugation(cj, isLast);
+
+    /* =========================
+       3️⃣ BUILD KO
+       ========================= */
     const built = buildClauseSentence(
       sentences[i],
       actives[i],
-      conjOverride
+      cj   // 🔒 snapshot final
     );
 
-    if(built?.ko) koParts.push(built.ko);
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
 
+    /* =========================
+       4️⃣ BUILD RO
+       ========================= */
     const roNat = buildNaturalRomanian(
       sentences[i],
       actives[i]
     );
 
-    if(roNat) roParts.push(roNat);
+    if(roNat){
+      roParts.push(roNat);
+    }
 
-    prevHadLinking = isLink;
+    /* =========================
+       5️⃣ STORE RAW (NU override)
+       ========================= */
+    prevCjRaw = cjRaw;
   }
 
   const fullKo = koParts.join(" ").trim();
