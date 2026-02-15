@@ -2870,55 +2870,23 @@ function ensureLinkedSentences(){
   // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
-function updatePreview(){
-
+   function updatePreview(){
   const koParts = [];
   const roParts = [];
 
   ensureLinkedSentences();
 
   for(let i = 0; i < sentences.length; i++){
+    const built = buildClauseSentence(sentences[i], actives[i]);
+    if(built?.ko) koParts.push(built.ko);
 
-    const isLast = (i === sentences.length - 1);
-
-    const cj = sentences[i].conjug;   // 🔒 cheia REALĂ
-    let conjOverride = null;
-
-    // ✅ FIX: linking conj NU curge spre următoarea propoziție
-    if(!isLast && cj && isLinkingConj(cj)){
-      conjOverride = cj;
-    }
-
-    const built = buildClauseSentence(
-      sentences[i],
-      actives[i],
-      conjOverride
-    );
-
-    if(built?.ko){
-      koParts.push(built.ko);
-    }
-
-    const roNat = buildNaturalRomanian(
-      sentences[i],
-      actives[i]
-    );
-
-    if(roNat){
-      roParts.push(roNat);
-    }
+    const roNat = buildNaturalRomanian(sentences[i], actives[i]);
+    if(roNat) roParts.push(roNat);
   }
 
-  // ✅ PREVIEW KO
-  if(DOM.previewKo){
-    DOM.previewKo.textContent = koParts.join(" ");
-  }
-
-  // ✅ PREVIEW RO
-  if(DOM.previewRo){
-    DOM.previewRo.textContent = roParts.join(" ");
-  }
-}
+  if(DOM.previewKo) DOM.previewKo.textContent = koParts.join(" ");
+  if(DOM.previewRo) DOM.previewRo.textContent = roParts.join(" ");
+} 
 
 /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
