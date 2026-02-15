@@ -2589,53 +2589,57 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
-function buildClauseSentence(state, activeMap, cjOverride = null, options = {}){
 
+ function buildClauseSentence(state, activeMap){
   const koParts = [];
   const roSegs  = [];
 
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
+
   const v  = state.verb || "";
-  const cj = cjOverride ?? state.conjug ?? "";
-const hideTime  = options.hideTime === true;
-const hidePlace = options.hidePlace === true;
-  
-  /* SUBJECT */
-  if(!hideSubject && use("subject")){
-    let subj = state.subject || "";
 
-    if(state.subjectAdj){
-      subj = state.subjectAdj + " " + subj;
-    }
+  const cj = state.conjug || "";
+   
+/* SUBJECT (+ adjectiv) */
+if(use("subject")){
 
-    if(subj){
-      koParts.push(addSubjectWithParticle(subj));
-    }
+  let subj = state.subject || "";
+
+  if(state.subjectAdj){
+    subj = state.subjectAdj + " " + subj;
   }
 
-  /* TIME */
- if(!hideTime && state.time && use("time")){
-   koParts.push(addTimeWithParticle(state.time));
+  // ✅ FIX FLUIDITATE
+  const prevSubj = window.__prevSubject;
+  const shouldHide =
+    prevSubj &&
+    prevSubj === subj &&
+    state.__clauseIndex > 0;
+
+  if(subj && !shouldHide){
+    koParts.push(addSubjectWithParticle(subj));
   }
 
+  window.__prevSubject = subj;
+}
   /* PLACE */
-  if(!hidePlace && state.place && use("place")){
+  if(state.place && use("place")){
     koParts.push(addPlaceWithParticle(state.place, v));
+    roSegs.push(`${labelsRo.place}: ${(translations.place?.[state.place] || state.place)}`);
   }
 
   /* MOD */
   if(state.mod && use("mod")){
     koParts.push(state.mod);
+    roSegs.push(`${labelsRo.mod}: ${(translations.mod?.[state.mod] || state.mod)}`);
   }
 
-  /* OBJECT */
+  /* OBJECT (+ adjectiv) */
   if(use("object")){
     let obj = state.object || "";
-
     if(state.objectAdj){
       obj = state.objectAdj + " " + obj;
     }
-
     if(obj){
       koParts.push(addObjectWithParticle(obj));
     }
@@ -2644,24 +2648,35 @@ const hidePlace = options.hidePlace === true;
   /* NUMERAL */
   if(state.numeral && use("numeral")){
     koParts.push(state.numeral);
+    roSegs.push(`${labelsRo.numeral}: ${(translations.numeral?.[state.numeral] || state.numeral)}`);
   }
 
   /* COUNTER */
   if(state.counter && use("counter")){
     koParts.push(state.counter);
+    roSegs.push(`${labelsRo.counter}: ${(translations.counter?.[state.counter] || state.counter)}`);
   }
-
-  /* VERB + CONJUG — FIX ROBUST */
-if((v || cj) && (use("verb") || use("conjug"))){
+/* VERB + CONJUG */
+if(v && use("verb")){
 
   const vp = buildVerbPhrase(v, cj);
 
   if(vp){
     koParts.push(vp);
+
+    const roVerb = translations.verb?.[v] || v;
+    const cjExp  = translations.conjug?.[cj] || "";
+
+    let combined = roVerb;
+    if(cjExp) combined += ` ${cjExp}`;
+
+    roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
   }
-}
+}  
+
   return {
     ko: koParts.join(" ").trim(),
+    roText: roSegs.join(" / ").trim(),
     conj: cj
   };
 }
@@ -2874,71 +2889,67 @@ function ensureLinkedSentences(){
 }
 function updatePreview(){
 
-  if(!DOM.previewKo) return;
+  if(!DOM.previewKo || !DOM.previewRo) return;
+
   ensureLinkedSentences();
 
   const koParts = [];
   const roParts = [];
 
-  let prevTime  = null;
-  let prevPlace = null;
+  let prevCjRaw = "";
 
   for(let i = 0; i < sentences.length; i++){
 
-    const clause = sentences[i];
-    const cj = clause.conjug || "";
-    const isLink = isLinkingConj(cj);
+    const isLast = (i === sentences.length - 1);
 
-    let conjOverride = cj;
+    const cjRaw = sentences[i].conjug || "";
 
-    // ✅ dacă propoziția anterioară a fost linking → asta devine finală
-    if(i > 0){
-      const prevCJ = sentences[i-1].conjug || "";
-      if(isLinkingConj(prevCJ) && isLink){
-        conjOverride = "";
-      }
+    /* =========================
+       1️⃣ PREVENT DOUBLE LINKING
+       ========================= */
+    let cj = cjRaw;
+
+    if(isLinkingConj(prevCjRaw) && isLinkingConj(cjRaw)){
+      cj = "";   // eliminăm linking-ul curent
     }
 
-    // 💎 AUTO-HIDE TIME
-    let hideTime = false;
-    if(clause.time && clause.time === prevTime){
-      hideTime = true;
-    }
+    /* =========================
+       2️⃣ SAFE FINAL CONJUGATION
+       ========================= */
+    cj = getSafeFinalConjugation(cj, isLast);
 
-    // 💎 AUTO-HIDE PLACE
-    let hidePlace = false;
-    if(clause.place && clause.place === prevPlace){
-      hidePlace = true;
-    }
-
+    /* =========================
+       3️⃣ BUILD KO
+       ========================= */
     const built = buildClauseSentence(
-      clause,
+      sentences[i],
       actives[i],
-      conjOverride,
-      {
-        hideSubject: isLink,
-        hideTime: hideTime,
-        hidePlace: hidePlace
-      }
+      cj   // 🔒 snapshot final
     );
 
     if(built?.ko){
       koParts.push(built.ko);
     }
 
-    const roNat = buildNaturalRomanian(clause, actives[i]);
+    /* =========================
+       4️⃣ BUILD RO
+       ========================= */
+    const roNat = buildNaturalRomanian(
+      sentences[i],
+      actives[i]
+    );
+
     if(roNat){
       roParts.push(roNat);
     }
 
-    prevTime  = clause.time || null;
-    prevPlace = clause.place || null;
+    /* =========================
+       5️⃣ STORE RAW (NU override)
+       ========================= */
+    prevCjRaw = cjRaw;
   }
 
-  // 💎 NATURAL SPACING FIX
-  const fullKo = koParts.join(" ")
-    .replace(/\s+/g," ")
-    .trim();
+  const fullKo = koParts.join(" ").trim();
 
   if(!fullKo){
     DOM.previewKo.textContent = "(alege cuvinte din tabel)";
@@ -2953,7 +2964,7 @@ function updatePreview(){
   DOM.previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
 
   DOM.naturalHint && (DOM.naturalHint.textContent =
-    "✅ Propoziție (fluiditate naturală activă)");
+    "✅ Propoziție (după regulile simple din aplicație).");
 }
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
