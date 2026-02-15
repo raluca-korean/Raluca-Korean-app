@@ -2896,13 +2896,17 @@ function updatePreview(){
   const koParts = [];
   const roParts = [];
 
-  let prevCjRaw = "";
+  let prevCjRaw   = "";
+  let prevSubject = null;
+  let prevTime    = null;
+  let prevPlace   = null;
 
   for(let i = 0; i < sentences.length; i++){
 
     const isLast = (i === sentences.length - 1);
 
-    const cjRaw = sentences[i].conjug || "";
+    const s = sentences[i];
+    const cjRaw = s.conjug || "";
 
     /* =========================
        1️⃣ PREVENT DOUBLE LINKING
@@ -2910,7 +2914,7 @@ function updatePreview(){
     let cj = cjRaw;
 
     if(isLinkingConj(prevCjRaw) && isLinkingConj(cjRaw)){
-      cj = "";   // eliminăm linking-ul curent
+      cj = "";
     }
 
     /* =========================
@@ -2919,34 +2923,47 @@ function updatePreview(){
     cj = getSafeFinalConjugation(cj, isLast);
 
     /* =========================
-       3️⃣ BUILD KO
+       3️⃣ SUBJECT VISIBILITY LOGIC
+       ========================= */
+    let hideSubject = false;
+
+    if(i > 0 && isLinkingConj(prevCjRaw)){
+
+      const sameSubject = (s.subject === prevSubject);
+      const sameTime    = (s.time === prevTime);
+      const samePlace   = (s.place === prevPlace);
+
+      if(sameSubject && sameTime && samePlace){
+        hideSubject = true;
+      }
+    }
+
+    /* =========================
+       4️⃣ BUILD CLAUSE
        ========================= */
     const built = buildClauseSentence(
-      sentences[i],
+      s,
       actives[i],
-      cj   // 🔒 snapshot final
+      cj,
+      { hideSubject }   // 👈 NOU param
     );
 
     if(built?.ko){
       koParts.push(built.ko);
     }
 
-    /* =========================
-       4️⃣ BUILD RO
-       ========================= */
-    const roNat = buildNaturalRomanian(
-      sentences[i],
-      actives[i]
-    );
-
+    const roNat = buildNaturalRomanian(s, actives[i]);
     if(roNat){
       roParts.push(roNat);
     }
 
     /* =========================
-       5️⃣ STORE RAW (NU override)
+       5️⃣ STORE SNAPSHOT
        ========================= */
-    prevCjRaw = cjRaw;
+    prevCjRaw   = cjRaw;
+    prevSubject = s.subject;
+    prevTime    = s.time;
+    prevPlace   = s.place;
   }
 
   const fullKo = koParts.join(" ").trim();
