@@ -2890,77 +2890,65 @@ function updatePreview(){
   const koParts = [];
   const roParts = [];
 
-  let prevCjRaw   = "";
-  let prevSubject = null;
-  let prevTime    = null;
-  let prevPlace   = null;
+  let prevTime  = null;
+  let prevPlace = null;
 
   for(let i = 0; i < sentences.length; i++){
 
-    const isLast = (i === sentences.length - 1);
+    const clause = sentences[i];
+    const cj = clause.conjug || "";
+    const isLink = isLinkingConj(cj);
 
-    const s = sentences[i];
-    const cjRaw = s.conjug || "";
+    let conjOverride = cj;
 
-    /* =========================
-       1️⃣ PREVENT DOUBLE LINKING
-       ========================= */
-    let cj = cjRaw;
-
-    if(isLinkingConj(prevCjRaw) && isLinkingConj(cjRaw)){
-      cj = "";
-    }
-
-    /* =========================
-       2️⃣ SAFE FINAL CONJUGATION
-       ========================= */
-    cj = getSafeFinalConjugation(cj, isLast);
-
-    /* =========================
-       3️⃣ SUBJECT VISIBILITY LOGIC
-       ========================= */
-    let hideSubject = false;
-
-    if(i > 0 && isLinkingConj(prevCjRaw)){
-
-      const sameSubject = (s.subject === prevSubject);
-      const sameTime    = (s.time === prevTime);
-      const samePlace   = (s.place === prevPlace);
-
-      if(sameSubject && sameTime && samePlace){
-        hideSubject = true;
+    // ✅ dacă propoziția anterioară a fost linking → asta devine finală
+    if(i > 0){
+      const prevCJ = sentences[i-1].conjug || "";
+      if(isLinkingConj(prevCJ) && isLink){
+        conjOverride = "";
       }
     }
 
-    /* =========================
-       4️⃣ BUILD CLAUSE
-       ========================= */
+    // 💎 AUTO-HIDE TIME
+    let hideTime = false;
+    if(clause.time && clause.time === prevTime){
+      hideTime = true;
+    }
+
+    // 💎 AUTO-HIDE PLACE
+    let hidePlace = false;
+    if(clause.place && clause.place === prevPlace){
+      hidePlace = true;
+    }
+
     const built = buildClauseSentence(
-      s,
+      clause,
       actives[i],
-      cj,
-      { hideSubject }   // 👈 NOU param
+      conjOverride,
+      {
+        hideSubject: isLink,
+        hideTime: hideTime,
+        hidePlace: hidePlace
+      }
     );
 
     if(built?.ko){
       koParts.push(built.ko);
     }
 
-    const roNat = buildNaturalRomanian(s, actives[i]);
+    const roNat = buildNaturalRomanian(clause, actives[i]);
     if(roNat){
       roParts.push(roNat);
     }
 
-    /* =========================
-       5️⃣ STORE SNAPSHOT
-       ========================= */
-    prevCjRaw   = cjRaw;
-    prevSubject = s.subject;
-    prevTime    = s.time;
-    prevPlace   = s.place;
+    prevTime  = clause.time || null;
+    prevPlace = clause.place || null;
   }
 
-  const fullKo = koParts.join(" ").trim();
+  // 💎 NATURAL SPACING FIX
+  const fullKo = koParts.join(" ")
+    .replace(/\s+/g," ")
+    .trim();
 
   if(!fullKo){
     DOM.previewKo.textContent = "(alege cuvinte din tabel)";
@@ -2975,7 +2963,7 @@ function updatePreview(){
   DOM.previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
 
   DOM.naturalHint && (DOM.naturalHint.textContent =
-    "✅ Propoziție (după regulile simple din aplicație).");
+    "✅ Propoziție (fluiditate naturală activă)");
 }
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
