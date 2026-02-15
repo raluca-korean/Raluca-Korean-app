@@ -2589,57 +2589,53 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
+ function buildClauseSentence(state, activeMap, cjOverride = null, options = {}){
 
- function buildClauseSentence(state, activeMap){
   const koParts = [];
   const roSegs  = [];
 
   const use = (key) => activeMap[key] !== false && isColumnVisible(key);
-
   const v  = state.verb || "";
+  const cj = cjOverride ?? state.conjug ?? "";
 
-  const cj = state.conjug || "";
-   
-/* SUBJECT (+ adjectiv) */
-if(use("subject")){
+  const hideSubject = options.hideSubject === true;
 
-  let subj = state.subject || "";
+  /* SUBJECT */
+  if(!hideSubject && use("subject")){
+    let subj = state.subject || "";
 
-  if(state.subjectAdj){
-    subj = state.subjectAdj + " " + subj;
+    if(state.subjectAdj){
+      subj = state.subjectAdj + " " + subj;
+    }
+
+    if(subj){
+      koParts.push(addSubjectWithParticle(subj));
+    }
   }
 
-  // ✅ FIX FLUIDITATE
-  const prevSubj = window.__prevSubject;
-  const shouldHide =
-    prevSubj &&
-    prevSubj === subj &&
-    state.__clauseIndex > 0;
-
-  if(subj && !shouldHide){
-    koParts.push(addSubjectWithParticle(subj));
+  /* TIME */
+  if(state.time && use("time")){
+    koParts.push(addTimeWithParticle(state.time));
   }
 
-  window.__prevSubject = subj;
-}
   /* PLACE */
   if(state.place && use("place")){
     koParts.push(addPlaceWithParticle(state.place, v));
-    roSegs.push(`${labelsRo.place}: ${(translations.place?.[state.place] || state.place)}`);
   }
 
   /* MOD */
   if(state.mod && use("mod")){
     koParts.push(state.mod);
-    roSegs.push(`${labelsRo.mod}: ${(translations.mod?.[state.mod] || state.mod)}`);
   }
 
-  /* OBJECT (+ adjectiv) */
+  /* OBJECT */
   if(use("object")){
     let obj = state.object || "";
+
     if(state.objectAdj){
       obj = state.objectAdj + " " + obj;
     }
+
     if(obj){
       koParts.push(addObjectWithParticle(obj));
     }
@@ -2648,15 +2644,21 @@ if(use("subject")){
   /* NUMERAL */
   if(state.numeral && use("numeral")){
     koParts.push(state.numeral);
-    roSegs.push(`${labelsRo.numeral}: ${(translations.numeral?.[state.numeral] || state.numeral)}`);
   }
 
   /* COUNTER */
   if(state.counter && use("counter")){
     koParts.push(state.counter);
-    roSegs.push(`${labelsRo.counter}: ${(translations.counter?.[state.counter] || state.counter)}`);
   }
-/* VERB + CONJUG */
+
+  /* VERB */
+  if((v || cj) && (use("verb") || use("conjug"))){
+    const vp = buildVerbPhrase(v, cj);
+    if(vp) koParts.push(vp);
+  }
+
+ 
+    /* VERB + CONJUG */
 if(v && use("verb")){
 
   const vp = buildVerbPhrase(v, cj);
@@ -2673,13 +2675,11 @@ if(v && use("verb")){
     roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
   }
 }  
-
-  return {
+ return {
     ko: koParts.join(" ").trim(),
-    roText: roSegs.join(" / ").trim(),
     conj: cj
   };
-}
+}  
     /* =========================
    11) NATURAL ROMANIAN (keep-ul tău, simplificat dar corect)
    ========================= */
