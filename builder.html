@@ -1863,11 +1863,6 @@ body.pastel-theme {
     #screen-builder #roCard{
   display: none;
 }
-    #roCard #previewRo {
-  margin-top: 6px;
-  font-size: 13px;
-  opacity: 0.85;
-}
   </style>
 </head>
 <body class="pastel-theme">
@@ -1934,9 +1929,7 @@ body.pastel-theme {
     </button>
   </div>
 
- <div class="preview-ko" id="roToKoResult"></div>
-<div class="preview-ro" id="previewRo"></div>   <!-- 👈 aici -->
-<div class="preview-ro" id="roCorrected"></div>
+  <div class="preview-ro" id="previewRo"></div>
   <div class="preview-hint" id="naturalHint"></div>
 
   <div class="preview-buttons">
@@ -2574,16 +2567,6 @@ function formatSubject(subjectValue){
 
   return subjectValue;
 }
-    function fixKoreanSpacing(text){
-  if(!text) return "";
-
-  return text
-    // elimină spații înainte de particule uzuale
-    .replace(/\s+(은|는|이|가|을|를|에|에서|으로|로|와|과)/g, "$1")
-    // curăță spații multiple
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
     /* =========================
    10) BUILD ONE CLAUSE (KO + RO)
    ========================= */
@@ -2659,32 +2642,30 @@ if(use("subject")){
     roSegs.push(`${labelsRo.counter}: ${(translations.counter?.[state.counter] || state.counter)}`);
   }
 /* VERB + CONJUG */
-/* VERB + CONJUG — SAFE */
 if(v && use("verb")){
 
   const vp = buildVerbPhrase(v, cj);
 
   if(vp){
     koParts.push(vp);
-  }else{
-    // fallback de siguranță
-    koParts.push(v);
+
+    const roVerb = translations.verb?.[v] || v;
+    const cjExp  = translations.conjug?.[cj] || "";
+
+    let combined = roVerb;
+    if(cjExp) combined += ` ${cjExp}`;
+
+    roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
   }
+}  
 
-  const roVerb = translations.verb?.[v] || v;
-  const cjExp  = translations.conjug?.[cj] || "";
-
-  let combined = roVerb;
-  if(cjExp) combined += ` ${cjExp}`;
-
-  roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
+  return {
+    ko: koParts.join(" ").trim(),
+    roText: roSegs.join(" / ").trim(),
+    conj: cj
+  };
 }
-return {
-  ko: koParts.join(" ").trim(),
-  roText: roSegs.join(" / ").trim(),   // 👈 IMPORTANT
-  conj: cj
-};
-   /* =========================
+    /* =========================
    11) NATURAL ROMANIAN (keep-ul tău, simplificat dar corect)
    ========================= */
 
@@ -2925,22 +2906,16 @@ function updatePreview(){
     /* =========================
        3️⃣ BUILD KO
        ========================= */
-   const hideSubject =
-  i > 0 &&
- (sentences[i].subject || null) === window.__prevSubject
-     !sentences[i].time &&
-  !sentences[i].place;
+    const built = buildClauseSentence(
+      sentences[i],
+      actives[i],
+      cj   // 🔒 snapshot final
+    );
 
-const built = buildClauseSentence(
-  sentences[i],
-  actives[i],
-  conjOverride,
-  { hideSubject }
-);
     if(built?.ko){
       koParts.push(built.ko);
     }
-window.__prevSubject = sentences[i].subject || null;
+
     /* =========================
        4️⃣ BUILD RO
        ========================= */
@@ -2968,7 +2943,8 @@ window.__prevSubject = sentences[i].subject || null;
     return;
   }
 
- DOM.previewKo.textContent = fixKoreanSpacing(fullKo);
+  DOM.previewKo.textContent = fullKo;
+
   const fullRo = roParts.join(" ").trim();
   DOM.previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
 
