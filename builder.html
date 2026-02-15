@@ -2589,7 +2589,7 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
- function buildClauseSentence(state, activeMap, cjOverride = null, options = {}){
+function buildClauseSentence(state, activeMap, cjOverride = null, options = {}){
 
   const koParts = [];
   const roSegs  = [];
@@ -2650,29 +2650,30 @@ const labelsRo = {
   if(state.counter && use("counter")){
     koParts.push(state.counter);
   }
- 
-    /* VERB + CONJUG */
-if(v && use("verb")){
 
-  const vp = buildVerbPhrase(v, cj);
+  /* VERB + CONJUG */
+  if((v || cj) && (use("verb") || use("conjug"))){
 
-  if(vp){
-    koParts.push(vp);
+    const vp = buildVerbPhrase(v, cj);
 
-    const roVerb = translations.verb?.[v] || v;
-    const cjExp  = translations.conjug?.[cj] || "";
+    if(vp){
+      koParts.push(vp);
 
-    let combined = roVerb;
-    if(cjExp) combined += ` ${cjExp}`;
+      const roVerb = translations.verb?.[v] || v;
+      const cjExp  = translations.conjug?.[cj] || "";
 
-    roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
+      let combined = roVerb;
+      if(cjExp) combined += ` ${cjExp}`;
+
+      roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
+    }
   }
-}  
- return {
+
+  return {
     ko: koParts.join(" ").trim(),
     conj: cj
   };
-}  
+}
     /* =========================
    11) NATURAL ROMANIAN (keep-ul tău, simplificat dar corect)
    ========================= */
