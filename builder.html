@@ -2585,23 +2585,28 @@ const labelsRo = {
 
   const cj = state.conjug || "";
    
-  /* SUBJECT (+ adjectiv) */
-  if(use("subject")){
-    let subj = state.subject || "";
-    if(state.subjectAdj){
-      subj = state.subjectAdj + " " + subj;
-    }
-    if(subj){
-      koParts.push(addSubjectWithParticle(subj));
-    }
+/* SUBJECT (+ adjectiv) */
+if(use("subject")){
+
+  let subj = state.subject || "";
+
+  if(state.subjectAdj){
+    subj = state.subjectAdj + " " + subj;
   }
 
-  /* TIME */
-  if(state.time && use("time")){
-    koParts.push(addTimeWithParticle(state.time));
-    roSegs.push(`${labelsRo.time}: ${(translations.time?.[state.time] || state.time)}`);
+  // ✅ FIX FLUIDITATE
+  const prevSubj = window.__prevSubject;
+  const shouldHide =
+    prevSubj &&
+    prevSubj === subj &&
+    state.__clauseIndex > 0;
+
+  if(subj && !shouldHide){
+    koParts.push(addSubjectWithParticle(subj));
   }
 
+  window.__prevSubject = subj;
+}
   /* PLACE */
   if(state.place && use("place")){
     koParts.push(addPlaceWithParticle(state.place, v));
@@ -2871,23 +2876,64 @@ function ensureLinkedSentences(){
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
    function updatePreview(){
-  const koParts = [];
-  const roParts = [];
+
+  if(!DOM.previewKo || !DOM.previewRo) return;
 
   ensureLinkedSentences();
 
-  for(let i = 0; i < sentences.length; i++){
-    const built = buildClauseSentence(sentences[i], actives[i]);
-    if(built?.ko) koParts.push(built.ko);
+  const koParts = [];
+  const roParts = [];
 
-    const roNat = buildNaturalRomanian(sentences[i], actives[i]);
-    if(roNat) roParts.push(roNat);
+  // ✅ reset fluiditate
+  window.__prevSubject = null;
+
+  for(let i = 0; i < sentences.length; i++){
+
+    const isLast = (i === sentences.length - 1);
+
+    const cj = sentences[i].conjug || "";
+
+    const conjOverride = (!isLast && isLinkingConj(cj))
+      ? cj
+      : cj;
+
+    const built = buildClauseSentence(
+      sentences[i],
+      actives[i],
+      conjOverride
+    );
+
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
+
+    const roNat = buildNaturalRomanian(
+      sentences[i],
+      actives[i]
+    );
+
+    if(roNat){
+      roParts.push(roNat);
+    }
   }
 
-  if(DOM.previewKo) DOM.previewKo.textContent = koParts.join(" ");
-  if(DOM.previewRo) DOM.previewRo.textContent = roParts.join(" ");
-} 
+  const fullKo = koParts.join(" ").trim();
 
+  if(!fullKo){
+    DOM.previewKo.textContent = "(alege cuvinte din tabel)";
+    DOM.previewRo.textContent = "";
+    DOM.naturalHint && (DOM.naturalHint.textContent = "");
+    return;
+  }
+
+  DOM.previewKo.textContent = fullKo;
+
+  const fullRo = roParts.join(" ").trim();
+  DOM.previewRo.textContent = showRo ? fullRo : "··· traducere ascunsă ···";
+
+  DOM.naturalHint && (DOM.naturalHint.textContent =
+    "✅ Propoziție (după regulile simple din aplicație).");
+}
 /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
