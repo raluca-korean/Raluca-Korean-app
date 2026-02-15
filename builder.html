@@ -2869,7 +2869,7 @@ function ensureLinkedSentences(){
   // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
- function updatePreview(){
+function updatePreview(){
 
   if(!DOM.previewKo || !DOM.previewRo) return;
 
@@ -2878,39 +2878,46 @@ function ensureLinkedSentences(){
   const koParts = [];
   const roParts = [];
 
-  // reset fluiditate SUBJECT
   window.__prevSubject = null;
-let prevHadLinking = false;
 
-for(let i = 0; i < sentences.length; i++){
+  let prevHadLinking = false;
 
-  const cj = sentences[i].conjug || "";
-  const isLink = isLinkingConj(cj);
+  for(let i = 0; i < sentences.length; i++){
 
-  let conjOverride = cj;
+    const cj = sentences[i].conjug || "";
+    const isLink = isLinkingConj(cj);
 
-  // ✅ dacă propoziția anterioară a fost linking
-  if(prevHadLinking){
+    let conjOverride = cj;
 
-    // următoarea propoziție trebuie FINALĂ
-    if(isLink){
-      conjOverride = "";  
+    // ✅ LOGICA VERB FINAL
+    if(prevHadLinking){
+
+      if(isLink){
+        conjOverride = "";
+      }
+      else if(!cj){
+        conjOverride = "-아요/어요";
+      }
     }
+
+    const built = buildClauseSentence(
+      sentences[i],
+      actives[i],
+      conjOverride
+    );
+
+    if(built?.ko) koParts.push(built.ko);
+
+    const roNat = buildNaturalRomanian(
+      sentences[i],
+      actives[i]
+    );
+
+    if(roNat) roParts.push(roNat);
+
+    prevHadLinking = isLink;
   }
 
-  const built = buildClauseSentence(
-    sentences[i],
-    actives[i],
-    conjOverride
-  );
-
-  if(built?.ko) koParts.push(built.ko);
-
-  const roNat = buildNaturalRomanian(sentences[i], actives[i);
-  if(roNat) roParts.push(roNat);
-
-  prevHadLinking = isLink;
-}
   const fullKo = koParts.join(" ").trim();
 
   if(!fullKo){
