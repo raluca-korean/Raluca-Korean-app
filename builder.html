@@ -2659,24 +2659,27 @@ if(use("subject")){
     roSegs.push(`${labelsRo.counter}: ${(translations.counter?.[state.counter] || state.counter)}`);
   }
 /* VERB + CONJUG */
+/* VERB + CONJUG — SAFE */
 if(v && use("verb")){
 
   const vp = buildVerbPhrase(v, cj);
 
   if(vp){
     koParts.push(vp);
-
-    const roVerb = translations.verb?.[v] || v;
-    const cjExp  = translations.conjug?.[cj] || "";
-
-    let combined = roVerb;
-    if(cjExp) combined += ` ${cjExp}`;
-
-    roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
+  }else{
+    // fallback de siguranță
+    koParts.push(v);
   }
-}  
 
-  return {
+  const roVerb = translations.verb?.[v] || v;
+  const cjExp  = translations.conjug?.[cj] || "";
+
+  let combined = roVerb;
+  if(cjExp) combined += ` ${cjExp}`;
+
+  roSegs.push(`${labelsRo.verb}: ${combined}`.trim());
+}
+   return {
     ko: fixKoreanSpacing(koParts.join(" ")),
     roText: roSegs.join(" / ").trim(),
     conj: cj
