@@ -3207,17 +3207,17 @@ function cycleColumnValue(clauseIndex, colKey){
   updatePreview();
   renderAll();
 }
-    attachPressHandlers(tableEl, clauseIndex){
+   function attachPressHandlers(tableEl, clauseIndex){
   if(!tableEl) return;
 
   let longPressTimer = null;
-  let pressTarget = null;
+  let pressTarget    = null;
 
   tableEl.addEventListener("pointerdown", (e)=>{
     const colDiv = e.target.closest(".col");
     if(!colDiv) return;
 
-    // dacă e checkbox, nu intervenim
+    // ignoră checkbox toggle
     if(e.target && e.target.matches("input.col-toggle")) return;
 
     e.preventDefault();
@@ -3234,24 +3234,27 @@ function cycleColumnValue(clauseIndex, colKey){
   tableEl.addEventListener("pointerup", (e)=>{
     const colDiv = e.target.closest(".col");
 
-    if(e.target && e.target.matches("input.col-toggle")){
-      if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; }
-      pressTarget = null;
-      return;
+    if(longPressTimer){
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
     }
 
-    if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; }
     if(pressTarget && colDiv === pressTarget){
       cycleColumnValue(clauseIndex, colDiv.dataset.key);
     }
+
     pressTarget = null;
   });
 
   tableEl.addEventListener("pointerleave", ()=>{
-    if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; }
+    if(longPressTimer){
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
     pressTarget = null;
   });
-}
+} 
+
 
 /* =========================
    18) FAVORITES
