@@ -3182,30 +3182,31 @@ function openPanel(clauseIndex, key){
 /* =========================
    17) CLICK / LONG-PRESS pe coloană
    ========================= */
-function cycleColumnValue(clauseIndex, key){
-  const col = columns.find(c=>c.key===key);
-  if(!col) return;
-  const arr = col.data;
+function cycleColumnValue(clauseIndex, colKey){
+
   const state = sentences[clauseIndex];
   if(!state) return;
 
-  const cur = state[key];
-  let idx = arr.indexOf(cur);
-  if(idx === -1) idx = 0;
-  const nextIdx = (idx + 1) % arr.length;
-  state[key] = arr[nextIdx] || "";
+  const values = getColumnValues(colKey);
+  if(!values?.length) return;
 
-  // dacă schimb conj în linking -> asigur propoziție următoare
-  if(key === "conjug" && isLinkingConj(state[key])){
-    ensureLinkedSentences();
-    if(DOM.enableP2){
-      DOM.enableP2.checked = true;
-      DOM.enableP2.dispatchEvent(new Event("change"));
-    }
+  const current = state[colKey];
+  const idx = values.indexOf(current);
+  const nextIdx = (idx + 1) % values.length;
+
+  const newValue = values[nextIdx];
+
+  // ✅ UPDATE REAL DATA MODEL
+  state[colKey] = newValue;
+
+  // ✅ SYNC dacă e verb / conjugare
+  if(colKey === "verb" || colKey === "conjug"){
+    syncVerbConjugation(state);
   }
 
+  updatePreview();
   renderAll();
-}
+}    
 
 function attachPressHandlers(tableEl, clauseIndex){
   if(!tableEl) return;
