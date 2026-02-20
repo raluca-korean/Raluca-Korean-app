@@ -1,4 +1,4 @@
-Bb92
+Bb91
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -2478,10 +2478,13 @@ function futureL(dict){
   }
   return stem + "을";
 }
-function buildVerbPhrase(dictVerb, cj){
 
-  if(!dictVerb) return "";
-  if(!cj) return dictVerb;
+function buildVerbPhrase(dictVerb, cj) {
+
+  if (!dictVerb && !cj) return "";
+if (!dictVerb) return "";
+
+  if (!cj) return dictVerb;
 
   if(cj === "-아요/어요") return presentPolite(dictVerb);
   if(cj === "-았어요/었어요") return pastPolite(dictVerb);
@@ -2894,10 +2897,8 @@ function ensureLinkedSentences(){
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
 function updatePreview(){
-
+window.__prevSubject = null;
   if(!DOM.previewKo || !DOM.previewRo) return;
-
-  window.__prevSubject = null;
 
   ensureLinkedSentences();
 
@@ -2909,21 +2910,29 @@ function updatePreview(){
   let prevPlace   = null;
 
   for(let i = 0; i < sentences.length; i++){
+const s  = sentences[i];
 
-    const s = sentences[i];
-    if(!s) continue;
+// ✅ FIX UNIVERSAL — regenerează forma verbală
+syncVerbConjugation(s);
 
-    s.__clauseIndex = i;
-
-    syncVerbConjugation(s);
-
+const cj = s.conjug || "";    
     const sameSubject = s.subject === prevSubject;
     const sameTime    = s.time === prevTime;
     const samePlace   = s.place === prevPlace;
 
-    const hideSubject = i > 0 && sameSubject && sameTime && samePlace;
+    // ✅ HIDE SUBJECT logic
+    const hideSubject =
+      i > 0 &&
+      sameSubject &&
+      sameTime &&
+      samePlace;
 
-    const built = buildClauseSentence(s, actives[i]);
+    const built = buildClauseSentence(
+      s,
+      actives[i],
+      cj,
+      { hideSubject }
+    );
 
     if(built?.ko) koParts.push(built.ko);
 
@@ -2940,6 +2949,7 @@ function updatePreview(){
   if(!fullKo){
     DOM.previewKo.textContent = "(alege cuvinte din tabel)";
     DOM.previewRo.textContent = "";
+    DOM.naturalHint && (DOM.naturalHint.textContent = "");
     return;
   }
 
@@ -2947,6 +2957,9 @@ function updatePreview(){
 
   const fullRo = roParts.join(" ").trim();
   DOM.previewRo.textContent = showRo ? fullRo : "";
+
+  DOM.naturalHint && (DOM.naturalHint.textContent =
+    "✅ Propoziție fluentă.");
 }
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
