@@ -3289,22 +3289,35 @@ function renderFavorites(){
    19) AUDIO (WebSpeech)
    ========================= */
 function speakKorean(textToSpeak){
+
   if(!("speechSynthesis" in window)) return;
+
   const t = (textToSpeak || "").trim();
   if(!t) return;
 
-  const u = new SpeechSynthesisUtterance(t);
-  u.lang = "ko-KR";
+  const speakNow = () => {
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = "ko-KR";
 
+    const voices = window.speechSynthesis.getVoices();
+    const koVoice = voices.find(v => v.lang?.toLowerCase().startsWith("ko"));
+
+    if(koVoice) u.voice = koVoice;
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  };
+
+  // ✅ IMPORTANT pentru iOS
   const voices = window.speechSynthesis.getVoices();
-  const koVoices = voices.filter(v => (v.lang || "").toLowerCase().startsWith("ko"));
-  if(koVoices.length) u.voice = koVoices[0];
 
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
+  if(!voices.length){
+    window.speechSynthesis.addEventListener("voiceschanged", speakNow, { once:true });
+  } else {
+    speakNow();
+  }
 }
-
-/* =========================
+    /* =========================
    20) RO PARSER (din codul tău, minimal stabil)
    ========================= */
 function stripDiacritics(s){
