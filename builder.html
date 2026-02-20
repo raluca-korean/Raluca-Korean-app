@@ -2953,17 +2953,27 @@ function updatePreview(){
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
-  // aplicăm același rând-model pe propoziția 1 (ca în versiunea ta)
+
+  if(!sentences[0]) return;
+
   const s = sentences[0];
-  columns.forEach(col => { s[col.key] = col.data[i] || ""; });
-}
 
-function updateModelNav(){
-  if(DOM.pageInfoEl) DOM.pageInfoEl.textContent = `Rând model: ${indexModelRow+1} / ${maxLen}`;
-  if(DOM.prevBtn) DOM.prevBtn.disabled = (indexModelRow === 0);
-  if(DOM.nextBtn) DOM.nextBtn.disabled = (indexModelRow === maxLen-1);
-}
+  columns.forEach(col=>{
+    const val = col.data[i];
+    s[col.key] = val || "";
+  });
 
+  syncVerbConjugation(s);
+}
+   function updateModelNav(){
+
+  if(DOM.pageInfoEl){
+    DOM.pageInfoEl.textContent = `Rând model: ${indexModelRow+1} / ${maxLen}`;
+  }
+
+  if(DOM.prevBtn) DOM.prevBtn.disabled = (indexModelRow <= 0);
+  if(DOM.nextBtn) DOM.nextBtn.disabled = (indexModelRow >= maxLen-1);
+}
 /* =========================
    15) CHIPS (togglesP1/togglesP2) – compat cu HTML tău
    - IMPORTANT: nu dublăm toggles în col+chip; ambele rămân funcționale
