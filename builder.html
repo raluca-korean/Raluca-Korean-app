@@ -2886,8 +2886,8 @@ function ensureLinkedSentences(){
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
 function updatePreview(){
-window.__prevSubject = null;
-  if(!DOM.previewKo || !DOM.previewRo) return;
+
+  if(!DOM.previewKo) return;
 
   ensureLinkedSentences();
 
@@ -2899,32 +2899,35 @@ window.__prevSubject = null;
   let prevPlace   = null;
 
   for(let i = 0; i < sentences.length; i++){
-const s  = sentences[i];
 
-// ✅ FIX UNIVERSAL — regenerează forma verbală
-syncVerbConjugation(s);
+    const s = sentences[i];
+    if(!s) continue;
 
-const cj = s.conjug || "";    
+    syncVerbConjugation(s);
+
     const sameSubject =
-  JSON.stringify(s.subject) === JSON.stringify(prevSubject);
-    const sameTime    = s.time === prevTime;
-    const samePlace   = s.place === prevPlace;
+      JSON.stringify(s.subject) === JSON.stringify(prevSubject);
 
-    // ✅ HIDE SUBJECT logic
+    const sameTime  = s.time === prevTime;
+    const samePlace = s.place === prevPlace;
+
     const hideSubject =
       i > 0 &&
       sameSubject &&
       sameTime &&
       samePlace;
 
-    const built = buildClauseSentence(
-      s,
-      actives[i],
-      cj,
-      { hideSubject }
-    );
+    const built = buildClauseSentence(s, actives[i]);
 
-    if(built?.ko) koParts.push(built.ko);
+    if(built?.ko){
+
+      if(hideSubject){
+        const koNoSubj = built.ko.replace(/^[^ ]+ /, "");
+        koParts.push(koNoSubj);
+      }else{
+        koParts.push(built.ko);
+      }
+    }
 
     const roNat = buildNaturalRomanian(s, actives[i]);
     if(roNat) roParts.push(roNat);
@@ -2938,18 +2941,20 @@ const cj = s.conjug || "";
 
   if(!fullKo){
     DOM.previewKo.textContent = "(alege cuvinte din tabel)";
-    DOM.previewRo.textContent = "";
+    DOM.previewRo && (DOM.previewRo.textContent = "");
     DOM.naturalHint && (DOM.naturalHint.textContent = "");
     return;
   }
 
   DOM.previewKo.textContent = fullKo;
 
-  const fullRo = roParts.join(" ").trim();
-  DOM.previewRo.textContent = showRo ? fullRo : "";
+  if(DOM.previewRo){
+    const fullRo = roParts.join(" ").trim();
+    DOM.previewRo.textContent = showRo ? fullRo : "";
+  }
 
-  DOM.naturalHint && (DOM.naturalHint.textContent =
-    "✅ Propoziție fluentă.");
+  DOM.naturalHint &&
+    (DOM.naturalHint.textContent = "✅ Propoziție fluentă.");
 }
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
