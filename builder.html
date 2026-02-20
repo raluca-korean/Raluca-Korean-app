@@ -1,4 +1,4 @@
-Bb9
+Bb92
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1959,9 +1959,9 @@ body.pastel-theme {
   <button id="saveBtn">⭐ Salvează propoziția</button>
 
   <!-- ✅ mutate aici -->
-<button id="prevModel">⬅ Prev (rând model)</button>
-<button id="nextModel">Next ➡</button>
-<span id="pageInfo" class="small-label"></span>
+  <button id="prevModel">⬅ Prev (rând model)</button>
+  <button id="nextModel">Next ➡</button>
+</div>
         </div>
 <div class="builder-enable-p2">
   <label>
@@ -2282,7 +2282,6 @@ loadCustomData();
   {key:"verb", title:"VERB", ko:"동사", data:verbs, hint:"Acțiune", allowCustom:true},
   {key:"conjug", title:"CONJUGĂRI", ko:"", data:conjugations, hint:"Formă verbală", allowCustom:true}
 ];
-    const maxLen = Math.max(...columns.map(c => c.data.length));
     const MULTI_VALUE_SLOTS = new Set(["subject"]);
     const maxLen = Math.max(...columns.map(c => c.data.length));
     // ===== CLAUSE ENGINE (GENERALIZARE P1 / P2) =====
@@ -2301,6 +2300,7 @@ const activeP2 = clauses[1].active;
    4) DOM (nu presupunem nimic: doar id-uri dacă există)
    ========================= */
 const DOM = {
+  // builder tables (din HTML-ul tău)
   tableP1: $("#tableP1"),
   tableP2: $("#tableP2"),
   titleP2: $("#titleP2"),
@@ -2309,22 +2309,21 @@ const DOM = {
   togglesP1: $("#togglesP1"),
   togglesP2: $("#togglesP2"),
 
-  // ✅ FIX PREV / NEXT
-  prevBtn: $("#prevModel"),
-  nextBtn: $("#nextModel"),
+  prevBtn: $("#prevBtn"),
+  nextBtn: $("#nextBtn"),
+  resetBtn: $("#resetBtn"),
   pageInfoEl: $("#pageInfo"),
 
   previewKo: $("#previewKo"),
+
   previewRo: $("#previewRo"),
 
   naturalHint: $("#naturalHint"),
-
-  // ✅ FIX AUDIO
-  speakBtn: $("#audioBtn"),
+  toggleRoBtn: $("#toggleRoBtn"),
 
   randomBtn: $("#randomBtn"),
-  favBtn: $("#saveBtn"),
-
+  speakBtn: $("#speakBtn"),
+  favBtn: $("#favBtn"),
   favoritesListEl: $("#favoritesList"),
 
   overlay: $("#overlay"),
@@ -2333,19 +2332,23 @@ const DOM = {
   panelList: $("#panelList"),
   closePanelBtn: $("#closePanelBtn"),
   panelSearchInput: $("#panelSearchInput"),
-
   newWordInput: $("#newWordInput"),
   newWordTransInput: $("#newWordTransInput"),
   addWordBtn: $("#addWordBtn"),
 
+  // Ro→Ko block
   roInput: $("#roInput"),
   roTranslateBtn: $("#roTranslateBtn"),
   roToKoResult: $("#roToKoResult"),
   roCorrected: $("#roCorrected"),
 
+  // input language switch (ro/en)
   inputLangRadio: $$('input[name="inputLang"]'),
+
+  // mode buttons
   modeButtons: $$(".small-mode-btn")
 };
+
 /* =========================
    5) APP STATE (IMPORTANT)
    - Propoziții dinamice (1..N)
@@ -2949,27 +2952,17 @@ function updatePreview(){
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
-
-  if(!sentences[0]) return;
-
+  // aplicăm același rând-model pe propoziția 1 (ca în versiunea ta)
   const s = sentences[0];
-
-  columns.forEach(col=>{
-    const val = col.data[i];
-    s[col.key] = val || "";
-  });
-
-  syncVerbConjugation(s);
+  columns.forEach(col => { s[col.key] = col.data[i] || ""; });
 }
-   function updateModelNav(){
 
-  if(DOM.pageInfoEl){
-    DOM.pageInfoEl.textContent = `Rând model: ${indexModelRow+1} / ${maxLen}`;
-  }
-
-  if(DOM.prevBtn) DOM.prevBtn.disabled = (indexModelRow <= 0);
-  if(DOM.nextBtn) DOM.nextBtn.disabled = (indexModelRow >= maxLen-1);
+function updateModelNav(){
+  if(DOM.pageInfoEl) DOM.pageInfoEl.textContent = `Rând model: ${indexModelRow+1} / ${maxLen}`;
+  if(DOM.prevBtn) DOM.prevBtn.disabled = (indexModelRow === 0);
+  if(DOM.nextBtn) DOM.nextBtn.disabled = (indexModelRow === maxLen-1);
 }
+
 /* =========================
    15) CHIPS (togglesP1/togglesP2) – compat cu HTML tău
    - IMPORTANT: nu dublăm toggles în col+chip; ambele rămân funcționale
@@ -3296,35 +3289,22 @@ function renderFavorites(){
    19) AUDIO (WebSpeech)
    ========================= */
 function speakKorean(textToSpeak){
-
   if(!("speechSynthesis" in window)) return;
-
   const t = (textToSpeak || "").trim();
   if(!t) return;
 
-  const speakNow = () => {
-    const u = new SpeechSynthesisUtterance(t);
-    u.lang = "ko-KR";
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang = "ko-KR";
 
-    const voices = window.speechSynthesis.getVoices();
-    const koVoice = voices.find(v => v.lang?.toLowerCase().startsWith("ko"));
-
-    if(koVoice) u.voice = koVoice;
-
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
-  };
-
-  // ✅ IMPORTANT pentru iOS
   const voices = window.speechSynthesis.getVoices();
+  const koVoices = voices.filter(v => (v.lang || "").toLowerCase().startsWith("ko"));
+  if(koVoices.length) u.voice = koVoices[0];
 
-  if(!voices.length){
-    window.speechSynthesis.addEventListener("voiceschanged", speakNow, { once:true });
-  } else {
-    speakNow();
-  }
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
 }
-    /* =========================
+
+/* =========================
    20) RO PARSER (din codul tău, minimal stabil)
    ========================= */
 function stripDiacritics(s){
@@ -3545,20 +3525,20 @@ function setupUI(){
 
   // Prev/Next model row
   on(DOM.prevBtn, "click", ()=>{
-  if(indexModelRow > 0){
-    indexModelRow--;
-    loadModelRow(indexModelRow);
-    renderAll();
-  }
-});
+    if(indexModelRow > 0){
+      indexModelRow--;
+      loadModelRow(indexModelRow);
+      renderAll();
+    }
+  });
+  on(DOM.nextBtn, "click", ()=>{
+    if(indexModelRow < maxLen-1){
+      indexModelRow++;
+      loadModelRow(indexModelRow);
+      renderAll();
+    }
+  });
 
-on(DOM.nextBtn, "click", ()=>{
-  if(indexModelRow < maxLen-1){
-    indexModelRow++;
-    loadModelRow(indexModelRow);
-    renderAll();
-  }
-});
   // Reset toggles
   on(DOM.resetBtn, "click", ()=>{
     actives = actives.map(()=>makeAllActive());
@@ -3589,11 +3569,12 @@ on(DOM.nextBtn, "click", ()=>{
   });
 
   // Speak
-on(DOM.speakBtn, "click", ()=>{
-  const ko = DOM.previewKo?.textContent?.trim();
-  if(!ko || ko.includes("alege")) return;
-  speakKorean(ko);
-});
+  on(DOM.speakBtn, "click", ()=>{
+    const ko = (DOM.previewKo?.textContent || "").trim();
+    if(!ko || ko.includes("alege cuvinte")) return;
+    speakKorean(ko);
+  });
+
   // Favorite
   on(DOM.favBtn, "click", ()=>{
     const ko = (DOM.previewKo?.textContent || "").trim();
