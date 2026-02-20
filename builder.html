@@ -2668,7 +2668,8 @@ if(use("subject")){
    ======================= */
 if(v && use("verb")){
 
- const vp = state.verbPhrase || buildVerbPhrase(v, cj);
+  const vp = buildVerbPhrase(v, cj);
+
   if(vp){
     koParts.push(vp);
   }
@@ -2901,12 +2902,10 @@ window.__prevSubject = null;
   let prevPlace   = null;
 
   for(let i = 0; i < sentences.length; i++){
-const s  = sentences[i];
 
-// ✅ FIX UNIVERSAL — regenerează forma verbală
-syncVerbConjugation(s);
+    const s  = sentences[i];
+    const cj = s.conjug || "";
 
-const cj = s.conjug || "";    
     const sameSubject = s.subject === prevSubject;
     const sameTime    = s.time === prevTime;
     const samePlace   = s.place === prevPlace;
@@ -3182,42 +3181,42 @@ function openPanel(clauseIndex, key){
 /* =========================
    17) CLICK / LONG-PRESS pe coloană
    ========================= */
-function cycleColumnValue(clauseIndex, colKey){
-
+function cycleColumnValue(clauseIndex, key){
+  const col = columns.find(c=>c.key===key);
+  if(!col) return;
+  const arr = col.data;
   const state = sentences[clauseIndex];
   if(!state) return;
 
-  const values = getColumnValues(colKey);
-  if(!values?.length) return;
+  const cur = state[key];
+  let idx = arr.indexOf(cur);
+  if(idx === -1) idx = 0;
+  const nextIdx = (idx + 1) % arr.length;
+  state[key] = arr[nextIdx] || "";
 
-  const current = state[colKey];
-  const idx     = values.indexOf(current);
-  const nextIdx = (idx + 1) % values.length;
-
-  const newValue = values[nextIdx];
-
-  // ✅ UPDATE MODEL
-  state[colKey] = newValue;
-
-  // ✅ SYNC verb + conjug
-  if(colKey === "verb" || colKey === "conjug"){
-    syncVerbConjugation(state);
+  // dacă schimb conj în linking -> asigur propoziție următoare
+  if(key === "conjug" && isLinkingConj(state[key])){
+    ensureLinkedSentences();
+    if(DOM.enableP2){
+      DOM.enableP2.checked = true;
+      DOM.enableP2.dispatchEvent(new Event("change"));
+    }
   }
 
-  updatePreview();
   renderAll();
 }
-   function attachPressHandlers(tableEl, clauseIndex){
+
+function attachPressHandlers(tableEl, clauseIndex){
   if(!tableEl) return;
 
   let longPressTimer = null;
-  let pressTarget    = null;
+  let pressTarget = null;
 
   tableEl.addEventListener("pointerdown", (e)=>{
     const colDiv = e.target.closest(".col");
     if(!colDiv) return;
 
-    // ignoră checkbox toggle
+    // dacă e checkbox, nu intervenim
     if(e.target && e.target.matches("input.col-toggle")) return;
 
     e.preventDefault();
@@ -3234,27 +3233,24 @@ function cycleColumnValue(clauseIndex, colKey){
   tableEl.addEventListener("pointerup", (e)=>{
     const colDiv = e.target.closest(".col");
 
-    if(longPressTimer){
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
+    if(e.target && e.target.matches("input.col-toggle")){
+      if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; }
+      pressTarget = null;
+      return;
     }
 
+    if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; }
     if(pressTarget && colDiv === pressTarget){
       cycleColumnValue(clauseIndex, colDiv.dataset.key);
     }
-
     pressTarget = null;
   });
 
   tableEl.addEventListener("pointerleave", ()=>{
-    if(longPressTimer){
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-    }
+    if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; }
     pressTarget = null;
   });
-} 
-
+}
 
 /* =========================
    18) FAVORITES
@@ -3739,18 +3735,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   // first render
   renderAll();
 });
-    function syncVerbConjugation(state){
-  if(!state) return;
-
-  const v  = state.verb;
-  const cj = state.conjug;
-
-  if(!v || !cj) return;
-
-  state.verbPhrase = buildVerbPhrase(v, cj);
-}
-
-    function renderExtraClauses() {
+  function renderExtraClauses() {
   if (!DOM.extraClauses) return;
 
   DOM.extraClauses.innerHTML = "";
