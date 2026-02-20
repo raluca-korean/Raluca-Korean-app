@@ -2041,12 +2041,13 @@ body.pastel-theme {
 /* =========================
    0) SAFE DOM HELPERS
    ========================= */
-const $  = (sel, root = document) => root.querySelector(sel);
+const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 const text = (el, v) => { if (el) el.textContent = v; };
 const show = (el) => el && el.classList.remove("hidden");
 const hide = (el) => el && el.classList.add("hidden");
+
 /* =========================
    1) DATA: LISTE + TRADUCERI (din codul tău)
    ========================= */
@@ -2298,10 +2299,8 @@ const activeP2 = clauses[1].active;
     /* =========================
    4) DOM (nu presupunem nimic: doar id-uri dacă există)
    ========================= */
-/* =========================
-   4) DOM
-   ========================= */
 const DOM = {
+  // builder tables (din HTML-ul tău)
   tableP1: $("#tableP1"),
   tableP2: $("#tableP2"),
   titleP2: $("#titleP2"),
@@ -2316,6 +2315,7 @@ const DOM = {
   pageInfoEl: $("#pageInfo"),
 
   previewKo: $("#previewKo"),
+
   previewRo: $("#previewRo"),
 
   naturalHint: $("#naturalHint"),
@@ -2326,28 +2326,30 @@ const DOM = {
   favBtn: $("#favBtn"),
   favoritesListEl: $("#favoritesList"),
 
-  extraClauses: $("#extra-clauses"),
-
   overlay: $("#overlay"),
   panelTitle: $("#panelTitle"),
   panelSub: $("#panelSub"),
   panelList: $("#panelList"),
   closePanelBtn: $("#closePanelBtn"),
   panelSearchInput: $("#panelSearchInput"),
-
   newWordInput: $("#newWordInput"),
   newWordTransInput: $("#newWordTransInput"),
   addWordBtn: $("#addWordBtn"),
 
+  // Ro→Ko block
   roInput: $("#roInput"),
   roTranslateBtn: $("#roTranslateBtn"),
   roToKoResult: $("#roToKoResult"),
   roCorrected: $("#roCorrected"),
 
+  // input language switch (ro/en)
   inputLangRadio: $$('input[name="inputLang"]'),
+
+  // mode buttons
   modeButtons: $$(".small-mode-btn")
 };
-    /* =========================
+
+/* =========================
    5) APP STATE (IMPORTANT)
    - Propoziții dinamice (1..N)
    ========================= */
@@ -2476,15 +2478,16 @@ function futureL(dict){
   }
   return stem + "을";
 }
-function buildVerbPhrase(dictVerb, cj){
 
-  if(!dictVerb) return "";
+function buildVerbPhrase(dictVerb, cj) {
 
-  if(!cj) return dictVerb;
+  if (!dictVerb && !cj) return "";
+if (!dictVerb) return "";
+
+  if (!cj) return dictVerb;
 
   if(cj === "-아요/어요") return presentPolite(dictVerb);
   if(cj === "-았어요/었어요") return pastPolite(dictVerb);
-
   if(cj === "-(으)세요") return futureL(dictVerb) + "세요";
   if(cj === "-(으)ㄹ 거예요") return futureL(dictVerb) + " 거예요";
   if(cj === "-(으)ㄹ게요") return futureL(dictVerb) + "게요";
@@ -2501,7 +2504,6 @@ function buildVerbPhrase(dictVerb, cj){
   if(cj === "-아/어야 돼요") return stemPlusAeo(dictVerb) + "야 돼요";
   if(cj === "-는 중이에요") return getVerbStem(dictVerb) + "는 중이에요";
   if(cj === "-아/어도 돼요") return stemPlusAeo(dictVerb) + "도 돼요";
-
   if(isLinkingConj(cj)){
     if(cj === "-고") return getVerbStem(dictVerb) + "고";
     if(cj === "-고 나서") return getVerbStem(dictVerb) + "고 나서";
@@ -2515,7 +2517,8 @@ function buildVerbPhrase(dictVerb, cj){
     if(cj === "-길래") return getVerbStem(dictVerb) + "길래";
   }
 
-  return dictVerb; // fallback sigur
+  // ✅ FALLBACK SIGUR
+  return dictVerb;
 }
 function getSafeFinalConjugation(cj, isLast){
 
@@ -2594,55 +2597,55 @@ const labelsRo = {
 };
 
  function buildClauseSentence(state, activeMap){
-
   const koParts = [];
   const roSegs  = [];
 
-  const use = (key) =>
-    activeMap[key] !== false &&
-    isColumnVisible(key);
+  const use = (key) => activeMap[key] !== false && isColumnVisible(key);
 
   const v  = state.verb || "";
+
   const cj = state.conjug || "";
+   
+/* SUBJECT (+ adjectiv) */
+if(use("subject")){
 
-  /* SUBJECT (+ adjectiv) */
-  if(use("subject")){
+  let subj = state.subject || "";
 
-    let subj = state.subject || "";
-
-    if(state.subjectAdj){
-      subj = state.subjectAdj + " " + subj;
-    }
-
-    if(subj){
-      koParts.push(addSubjectWithParticle(subj));
-    }
+  if(state.subjectAdj){
+    subj = state.subjectAdj + " " + subj;
   }
 
-  /* TIME */
-  if(state.time && use("time")){
-    koParts.push(addTimeWithParticle(state.time));
+  // ✅ FIX FLUIDITATE
+  const prevSubj = window.__prevSubject;
+  const shouldHide =
+    prevSubj &&
+    prevSubj === subj &&
+    (state.__clauseIndex ?? 0) > 0;
+
+  if(subj && !shouldHide){
+    koParts.push(addSubjectWithParticle(subj));
   }
 
+  window.__prevSubject = subj;
+}
   /* PLACE */
   if(state.place && use("place")){
     koParts.push(addPlaceWithParticle(state.place, v));
+    roSegs.push(`${labelsRo.place}: ${(translations.place?.[state.place] || state.place)}`);
   }
 
   /* MOD */
   if(state.mod && use("mod")){
     koParts.push(state.mod);
+    roSegs.push(`${labelsRo.mod}: ${(translations.mod?.[state.mod] || state.mod)}`);
   }
 
   /* OBJECT (+ adjectiv) */
   if(use("object")){
-
     let obj = state.object || "";
-
     if(state.objectAdj){
       obj = state.objectAdj + " " + obj;
     }
-
     if(obj){
       koParts.push(addObjectWithParticle(obj));
     }
@@ -2651,26 +2654,29 @@ const labelsRo = {
   /* NUMERAL */
   if(state.numeral && use("numeral")){
     koParts.push(state.numeral);
+    roSegs.push(`${labelsRo.numeral}: ${(translations.numeral?.[state.numeral] || state.numeral)}`);
   }
 
   /* COUNTER */
   if(state.counter && use("counter")){
     koParts.push(state.counter);
+    roSegs.push(`${labelsRo.counter}: ${(translations.counter?.[state.counter] || state.counter)}`);
   }
+/* VERB + CONJUG */
+/* =======================
+   VERB + CONJUGARE — FIX FINAL
+   ======================= */
+if(v && use("verb")){
 
-  /* VERB */
-  if(v && use("verb")){
-
-    const vp = buildVerbPhrase(v, cj);
-    state.verbPhrase = vp;
-
-    if(vp){
-      koParts.push(vp);
-    }
+ const vp = state.verbPhrase || buildVerbPhrase(v, cj);
+  if(vp){
+    koParts.push(vp);
   }
+}
 
   return {
     ko: koParts.join(" ").trim(),
+    roText: roSegs.join(" / ").trim(),
     conj: cj
   };
 }
@@ -2882,8 +2888,8 @@ function ensureLinkedSentences(){
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
 function updatePreview(){
-
-  if(!DOM.previewKo) return;
+window.__prevSubject = null;
+  if(!DOM.previewKo || !DOM.previewRo) return;
 
   ensureLinkedSentences();
 
@@ -2895,35 +2901,31 @@ function updatePreview(){
   let prevPlace   = null;
 
   for(let i = 0; i < sentences.length; i++){
+const s  = sentences[i];
 
-    const s = sentences[i];
-    if(!s) continue;
+// ✅ FIX UNIVERSAL — regenerează forma verbală
+syncVerbConjugation(s);
 
-    syncVerbConjugation(s);
+const cj = s.conjug || "";    
+    const sameSubject = s.subject === prevSubject;
+    const sameTime    = s.time === prevTime;
+    const samePlace   = s.place === prevPlace;
 
-    const sameSubject =
-      JSON.stringify(s.subject) === JSON.stringify(prevSubject);
-
-    const sameTime  = s.time === prevTime;
-    const samePlace = s.place === prevPlace;
-
+    // ✅ HIDE SUBJECT logic
     const hideSubject =
       i > 0 &&
       sameSubject &&
       sameTime &&
       samePlace;
 
-    const built = buildClauseSentence(s, actives[i]);
+    const built = buildClauseSentence(
+      s,
+      actives[i],
+      cj,
+      { hideSubject }
+    );
 
-    if(built?.ko){
-
-      if(hideSubject){
-        const koNoSubj = built.ko.replace(/^[^ ]+ /, "");
-        koParts.push(koNoSubj);
-      }else{
-        koParts.push(built.ko);
-      }
-    }
+    if(built?.ko) koParts.push(built.ko);
 
     const roNat = buildNaturalRomanian(s, actives[i]);
     if(roNat) roParts.push(roNat);
@@ -2937,20 +2939,18 @@ function updatePreview(){
 
   if(!fullKo){
     DOM.previewKo.textContent = "(alege cuvinte din tabel)";
-    DOM.previewRo && (DOM.previewRo.textContent = "");
+    DOM.previewRo.textContent = "";
     DOM.naturalHint && (DOM.naturalHint.textContent = "");
     return;
   }
 
   DOM.previewKo.textContent = fullKo;
 
-  if(DOM.previewRo){
-    const fullRo = roParts.join(" ").trim();
-    DOM.previewRo.textContent = showRo ? fullRo : "";
-  }
+  const fullRo = roParts.join(" ").trim();
+  DOM.previewRo.textContent = showRo ? fullRo : "";
 
-  DOM.naturalHint &&
-    (DOM.naturalHint.textContent = "✅ Propoziție fluentă.");
+  DOM.naturalHint && (DOM.naturalHint.textContent =
+    "✅ Propoziție fluentă.");
 }
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
@@ -3191,9 +3191,9 @@ function cycleColumnValue(clauseIndex, colKey){
   if(!values?.length) return;
 
   const current = state[colKey];
+  const idx     = values.indexOf(current);
+  const nextIdx = (idx + 1) % values.length;
 
-const idx = Math.max(0, values.indexOf(current));
-const nextIdx = (idx + 1) % values.length;
   const newValue = values[nextIdx];
 
   // ✅ UPDATE MODEL
@@ -3211,12 +3211,13 @@ const nextIdx = (idx + 1) % values.length;
   if(!tableEl) return;
 
   let longPressTimer = null;
-  let pressTarget = null;
+  let pressTarget    = null;
 
   tableEl.addEventListener("pointerdown", (e)=>{
     const colDiv = e.target.closest(".col");
     if(!colDiv) return;
 
+    // ignoră checkbox toggle
     if(e.target && e.target.matches("input.col-toggle")) return;
 
     e.preventDefault();
@@ -3252,8 +3253,10 @@ const nextIdx = (idx + 1) % values.length;
     }
     pressTarget = null;
   });
-}
-    /* =========================
+} 
+
+
+/* =========================
    18) FAVORITES
    ========================= */
 const favorites = [];
@@ -3697,6 +3700,18 @@ if (lastClause) {
   lastClause.scrollIntoView({ behavior: "smooth", block: "start" });
 }
   // ===== EXTRA CLAUSES (P3+) =====
+const extra = $("#extra-clauses");
+if (extra) {
+  extra.innerHTML = "";
+
+  for (let i = 2; i < sentences.length; i++) {
+    const { wrap, table } = createClauseTable(i);
+    extra.appendChild(wrap);
+
+    renderClauseRow(table, actives[i], sentences[i], i);
+    attachPressHandlers(table, i);
+  }
+}
 
 updateModelNav();
 updatePreview();  
@@ -3735,7 +3750,34 @@ document.addEventListener("DOMContentLoaded", ()=>{
   state.verbPhrase = buildVerbPhrase(v, cj);
 }
 
-   
+    function renderExtraClauses() {
+  if (!DOM.extraClauses) return;
+
+  DOM.extraClauses.innerHTML = "";
+
+  // începem de la propoziția 3 (index 2)
+  for (let i = 2; i < sentences.length; i++) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-block";
+
+    const title = document.createElement("div");
+    title.className = "table-title";
+    title.innerHTML = `<span>Propoziția ${i + 1}</span>`;
+    wrapper.appendChild(title);
+
+    const table = document.createElement("div");
+    table.className = "table-horizontal";
+    wrapper.appendChild(table);
+
+    DOM.extraClauses.appendChild(wrapper);
+
+    // render tabelul EXACT ca P1 / P2
+    renderClauseRow(table, actives[i], sentences[i], i);
+
+    // long-press + click
+    attachPressHandlers(table, i);
+  }
+}
   </script>
 </body>
 </html> 
