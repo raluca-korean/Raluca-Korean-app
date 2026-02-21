@@ -3281,57 +3281,48 @@ function ensureLinkedSentences(){
   // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
-  function updatePreview(){
+ function updatePreview(){
 
-  const previewKo = document.getElementById("previewKo");
-  const previewRo = document.getElementById("previewRo");
+  if(!DOM.previewKo) return;
 
-  if(!previewKo) return;
+  ensureLinkedSentences();
 
   const koParts = [];
+  const roParts = [];
 
-  let prevSubject = null;
-  let prevTime    = null;
-  let prevPlace   = null;
-
-  for(let i=0; i<sentences.length; i++){
-
-    const s  = sentences[i];
-    const cj = s.conjug || "";
-
-    const sameSubject = s.subject === prevSubject;
-    const sameTime    = s.time === prevTime;
-    const samePlace   = s.place === prevPlace;
-
-    const hideSubject =
-      i > 0 &&
-      sameSubject &&
-      sameTime &&
-      samePlace;
+  for(let i = 0; i < sentences.length; i++){
 
     const built = buildClauseSentence(
-      {...s, hideSubject},
+      sentences[i],
       actives[i]
     );
 
-    if(built?.ko) koParts.push(built.ko);
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
 
-    prevSubject = s.subject || null;
-    prevTime    = s.time || null;
-    prevPlace   = s.place || null;
+    const ro = buildNaturalRomanian(
+      sentences[i],
+      actives[i]
+    );
+
+    if(ro){
+      roParts.push(ro);
+    }
   }
 
   const fullKo = koParts.join(" ").trim();
-
-  previewKo.textContent =
+  DOM.previewKo.textContent =
     fullKo || "(alege cuvinte din tabel)";
 
- if(previewRo){
-previewRo.textContent = showRo ? buildFullRomanian() : "";
-} 
-    updateNaturalHint(fullKo);
-  updatePreviewCardState();
-} 
+  if(DOM.previewRo){
+    DOM.previewRo.textContent =
+      showRo ? roParts.join(" ").trim() : "";
+  }
+
+  // 🔥 SINCRONIZARE CU BLOCUL ROMANO-KOREAN
+  updateRomanianBlock();
+}
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
