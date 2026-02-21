@@ -3281,48 +3281,57 @@ function ensureLinkedSentences(){
   // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
- function updatePreview(){
+  function updatePreview(){
 
-  if(!DOM.previewKo) return;
+  const previewKo = document.getElementById("previewKo");
+  const previewRo = document.getElementById("previewRo");
 
-  ensureLinkedSentences();
+  if(!previewKo) return;
 
   const koParts = [];
-  const roParts = [];
 
-  for(let i = 0; i < sentences.length; i++){
+  let prevSubject = null;
+  let prevTime    = null;
+  let prevPlace   = null;
+
+  for(let i=0; i<sentences.length; i++){
+
+    const s  = sentences[i];
+    const cj = s.conjug || "";
+
+    const sameSubject = s.subject === prevSubject;
+    const sameTime    = s.time === prevTime;
+    const samePlace   = s.place === prevPlace;
+
+    const hideSubject =
+      i > 0 &&
+      sameSubject &&
+      sameTime &&
+      samePlace;
 
     const built = buildClauseSentence(
-      sentences[i],
+      {...s, hideSubject},
       actives[i]
     );
 
-    if(built?.ko){
-      koParts.push(built.ko);
-    }
+    if(built?.ko) koParts.push(built.ko);
 
-    const ro = buildNaturalRomanian(
-      sentences[i],
-      actives[i]
-    );
-
-    if(ro){
-      roParts.push(ro);
-    }
+    prevSubject = s.subject || null;
+    prevTime    = s.time || null;
+    prevPlace   = s.place || null;
   }
 
   const fullKo = koParts.join(" ").trim();
-  DOM.previewKo.textContent =
+
+  previewKo.textContent =
     fullKo || "(alege cuvinte din tabel)";
 
-  if(DOM.previewRo){
-    DOM.previewRo.textContent =
-      showRo ? roParts.join(" ").trim() : "";
-  }
-
-  // 🔥 SINCRONIZARE CU BLOCUL ROMANO-KOREAN
-  updateRomanianBlock();
-}
+ if(previewRo){
+previewRo.textContent = showRo ? buildFullRomanian() : "";
+} 
+    updateNaturalHint(fullKo);
+  updatePreviewCardState();
+} 
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
@@ -4023,22 +4032,21 @@ on(DOM.enableP2, "change", ()=>{
   renderAll();
 });
   // RO Translate button
- on(DOM.roTranslateBtn, "click", ()=>{
+  on(DOM.roTranslateBtn, "click", ()=>{
+    const txt = (DOM.roInput?.value || "").trim();
 
-  const txt = (DOM.roInput?.value || "").trim();
-  if(!txt) return;
+    // 1) Umple builder state
+    const res = translateRoToKo(txt);
 
-  const res = translateRoToKo(txt);
+    // 2) Render builder + preview
+    renderAll();
 
-  renderAll();
-  updatePreview();
+    // 3) Rezultate RO->KO bloc (dacă există)
+    if(DOM.roToKoResult) DOM.roToKoResult.textContent = res.ko || "";
+    if(DOM.roCorrected) DOM.roCorrected.textContent = res.roFixed || "";
+  });
+}
 
-  if(DOM.roToKoResult)
-    DOM.roToKoResult.textContent = res.ko || "";
-
-  if(DOM.roCorrected)
-    DOM.roCorrected.textContent = res.roFixed || "";
-});
 /* =========================
    23) RENDER ALL (fixează “tabelele nu sunt”)
    - NU mai referim variabile inexistente: screens/navButtons/setScreen etc.
@@ -4199,27 +4207,6 @@ document.getElementById("roTranslateBtn")?.addEventListener("click", () => {
   }
 
   return parts.join(" ");
-}
-    function updateRomanianBlock(){
-
-  const roEl = document.getElementById("roCorrected");
-  if(!roEl) return;
-
-  const roParts = [];
-
-  for(let i = 0; i < sentences.length; i++){
-
-    const ro = buildNaturalRomanian(
-      sentences[i],
-      actives[i]
-    );
-
-    if(ro){
-      roParts.push(ro);
-    }
-  }
-
-  roEl.textContent = roParts.join(" ").trim();
 }
   </script>
 </body>
