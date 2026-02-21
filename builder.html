@@ -4079,25 +4079,25 @@ updatePreview();
 /* =========================
    24) BOOTSTRAP
    ========================= */
-document.addEventListener("DOMContentLoaded", ()=>{
-  // init state
-  loadModelRow(indexModelRow);
+on(DOM.roTranslateBtn, "click", ()=>{
 
-  // chips
-  createToggleChips();
+  const txt = (DOM.roInput?.value || "").trim();
+  if(!txt) return;
 
-  // attach long-press handlers (P1/P2)
-  attachPressHandlers(DOM.tableP1, 0);
-  attachPressHandlers(DOM.tableP2, 1);
+  const res = translateRoToKo(txt);
 
-  // UI events
-  setupUI();
-
-  // favorites initial
-  renderFavorites();
-
-  // first render
   renderAll();
+
+  if(DOM.roToKoResult)
+    DOM.roToKoResult.textContent = res.ko || "";
+
+  if(DOM.roCorrected)
+    DOM.roCorrected.textContent = res.roFixed || "";
+
+  // 🔥 SYNC KO → BUILDER
+  if(res.ko){
+    syncBuilderFromKorean(res.ko, 0);
+  }
 });
   function renderExtraClauses() {
   if (!DOM.extraClauses) return;
