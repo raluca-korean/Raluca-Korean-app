@@ -3331,18 +3331,6 @@ previewRo.textContent = showRo ? buildFullRomanian() : "";
     updateNaturalHint(fullKo);
   updatePreviewCardState();
 } 
-    // ===== SYNC către blocul Română → Coreeană =====
-const roToKo = document.getElementById("roToKoResult");
-const roCorr = document.getElementById("roCorrected");
-
-if(roToKo){
-  roToKo.textContent = fullKo || "";
-if(roCorr){
-  roCorr.textContent = buildNaturalRomanian(
-    sentences[0],
-    actives[0]
-  );
-}
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
@@ -4043,26 +4031,19 @@ on(DOM.enableP2, "change", ()=>{
   renderAll();
 });
   // RO Translate button
-on(DOM.roTranslateBtn, "click", ()=>{
+  on(DOM.roTranslateBtn, "click", ()=>{
+    const txt = (DOM.roInput?.value || "").trim();
 
-  const txt = (DOM.roInput?.value || "").trim();
-  if(!txt) return;
+    // 1) Umple builder state
+    const res = translateRoToKo(txt);
 
-  const res = translateRoToKo(txt);
+    // 2) Render builder + preview
+    renderAll();
 
-  renderAll();
-
-  if(DOM.roToKoResult)
-    DOM.roToKoResult.textContent = res.ko || "";
-
-  if(DOM.roCorrected)
-    DOM.roCorrected.textContent = res.roFixed || "";
-
-  // 🔥 SYNC KO → BUILDER
-  if(res.ko){
-    syncBuilderFromKorean(res.ko, 0);
-  }
-});
+    // 3) Rezultate RO->KO bloc (dacă există)
+    if(DOM.roToKoResult) DOM.roToKoResult.textContent = res.ko || "";
+    if(DOM.roCorrected) DOM.roCorrected.textContent = res.roFixed || "";
+  });
 }
 
 /* =========================
