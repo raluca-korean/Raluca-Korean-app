@@ -3614,16 +3614,28 @@ function detectConjFromRo(ro){
 // split RO în 2 (strict pentru butonul roTranslate; builder suportă N, dar aici e util)
 function splitRoIntoClauses(txt){
   if(!txt) return null;
-  const re = /\s+(și|si|iar|apoi)\s+/i;
-  const m  = txt.match(re);
-  if(!m) return null;
-  const first  = txt.slice(0, m.index).trim();
-  const second = txt.slice(m.index + m[0].length).trim();
-  if(!first || !second) return null;
-  return { first, second, link: (m[1] || "").toLowerCase() };
-}
 
-// find best KO by RO include
+  const clean = txt
+    .replace(/\s+/g," ")
+    .trim();
+
+  const re = /\b(și|si|iar|apoi)\b/i;
+  const m  = clean.match(re);
+
+  if(!m) return null;
+
+  const parts = clean.split(re);
+
+  if(parts.length < 3) return null;
+
+  const first  = parts[0].trim();
+  const second = parts[2].trim();
+
+  if(!first || !second) return null;
+
+  return { first, second, link: m[1].toLowerCase() };
+}
+    // find best KO by RO include
 function findKoByRo(cat, text){
   const t = normRo(text);
   const keys = Object.keys(REV[cat] || {}).sort((a,b)=>b.length-a.length);
