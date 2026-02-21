@@ -4023,21 +4023,22 @@ on(DOM.enableP2, "change", ()=>{
   renderAll();
 });
   // RO Translate button
-  on(DOM.roTranslateBtn, "click", ()=>{
-    const txt = (DOM.roInput?.value || "").trim();
+ on(DOM.roTranslateBtn, "click", ()=>{
 
-    // 1) Umple builder state
-    const res = translateRoToKo(txt);
+  const txt = (DOM.roInput?.value || "").trim();
+  if(!txt) return;
 
-    // 2) Render builder + preview
-    renderAll();
+  const res = translateRoToKo(txt);
 
-    // 3) Rezultate RO->KO bloc (dacă există)
-    if(DOM.roToKoResult) DOM.roToKoResult.textContent = res.ko || "";
-    if(DOM.roCorrected) DOM.roCorrected.textContent = res.roFixed || "";
-  });
-}
+  renderAll();
+  updatePreview();
 
+  if(DOM.roToKoResult)
+    DOM.roToKoResult.textContent = res.ko || "";
+
+  if(DOM.roCorrected)
+    DOM.roCorrected.textContent = res.roFixed || "";
+});
 /* =========================
    23) RENDER ALL (fixează “tabelele nu sunt”)
    - NU mai referim variabile inexistente: screens/navButtons/setScreen etc.
