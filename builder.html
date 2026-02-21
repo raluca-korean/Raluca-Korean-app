@@ -2787,88 +2787,73 @@ const labelsRo = {
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
 
- function buildClauseSentence(state, activeMap){
+function buildClauseSentence(state, activeMap){
+
   const koParts = [];
-  const roSegs  = [];
-
-  const use = (key) => activeMap[key] !== false && isColumnVisible(key);
-
   const v  = state.verb || "";
-
   const cj = state.conjug || "";
-   
-/* SUBJECT (+ adjectiv) */
-if(use("subject")){
 
-  let subj = state.subject || "";
+  const use = (key) =>
+    activeMap?.[key] !== false &&
+    isColumnVisible(key);
 
-  if(state.subjectAdj){
-    subj = state.subjectAdj + " " + subj;
-  }
+  /* SUBJECT */
+  if(use("subject") && state.subject){
 
-  // ✅ FIX FLUIDITATE
-  const prevSubj = window.__prevSubject;
-  const shouldHide =
-    prevSubj &&
-    prevSubj === subj &&
-    (state.__clauseIndex ?? 0) > 0;
+    let subj = state.subject;
 
-  if(subj && !shouldHide){
+    if(state.subjectAdj){
+      subj = state.subjectAdj + " " + subj;
+    }
+
     koParts.push(addSubjectWithParticle(subj));
   }
 
-  window.__prevSubject = subj;
-}
+  /* TIME */
+  if(use("time") && state.time){
+    koParts.push(state.time);
+  }
+
   /* PLACE */
-  if(state.place && use("place")){
+  if(use("place") && state.place){
     koParts.push(addPlaceWithParticle(state.place, v));
-    roSegs.push(`${labelsRo.place}: ${(translations.place?.[state.place] || state.place)}`);
   }
 
   /* MOD */
-  if(state.mod && use("mod")){
+  if(use("mod") && state.mod){
     koParts.push(state.mod);
-    roSegs.push(`${labelsRo.mod}: ${(translations.mod?.[state.mod] || state.mod)}`);
   }
 
-  /* OBJECT (+ adjectiv) */
-  if(use("object")){
-    let obj = state.object || "";
+  /* OBJECT */
+  if(use("object") && state.object){
+
+    let obj = state.object;
+
     if(state.objectAdj){
       obj = state.objectAdj + " " + obj;
     }
-    if(obj){
-      koParts.push(addObjectWithParticle(obj));
-    }
+
+    koParts.push(addObjectWithParticle(obj));
   }
 
   /* NUMERAL */
-  if(state.numeral && use("numeral")){
+  if(use("numeral") && state.numeral){
     koParts.push(state.numeral);
-    roSegs.push(`${labelsRo.numeral}: ${(translations.numeral?.[state.numeral] || state.numeral)}`);
   }
 
   /* COUNTER */
-  if(state.counter && use("counter")){
+  if(use("counter") && state.counter){
     koParts.push(state.counter);
-    roSegs.push(`${labelsRo.counter}: ${(translations.counter?.[state.counter] || state.counter)}`);
   }
-/* VERB + CONJUG */
-/* =======================
-   VERB + CONJUGARE — FIX FINAL
-   ======================= */
-if(v && use("verb")){
 
-  const vp = buildVerbPhrase(v, cj);
-
-  if(vp){
-    koParts.push(vp);
+  /* VERB */
+  if(use("verb") || use("conjug")){
+    const vp = buildVerbPhrase(v, cj);
+    if(vp) koParts.push(vp);
   }
-}
 
   return {
-    ko: koParts.join(" ").trim(),
-    roText: roSegs.join(" / ").trim(),
+    ko: koParts.join(" ").replace(/\s+/g," ").trim(),
     conj: cj
   };
 }
