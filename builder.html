@@ -2927,8 +2927,23 @@ function buildRoVerbPhrase(roVerbInf, cj, subjKo){
   const cjExp = translations.conjug?.[cj] || cj;
   return (v ? v + " " : "") + `(${cjExp})`;
 }
+function fixDoubleLinking(text){
+  if(!text) return text;
 
-function buildNaturalRomanian(state, activeMap){
+  const linkingForms = ["-고", "-면서", "-며", "-고 나서"];
+
+  let fixed = text;
+
+  linkingForms.forEach(form => {
+    const double = form + " " + form;
+    if(fixed.includes(double)){
+      fixed = fixed.replace(double, form);
+    }
+  });
+
+  return fixed;
+}
+    function buildNaturalRomanian(state, activeMap){
   const use = (key) => activeMap[key] !== false && isColumnVisible(key) && state[key];
 
   const getRo = (catKey, stateKey) => {
