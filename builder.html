@@ -3158,18 +3158,13 @@ function ensureLinkedSentences(){
   // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
-  function updatePreview(){
-const previewRoKo   = document.getElementById("previewRoKo");
-const previewRoText = document.getElementById("previewRoText");
+    function updatePreview(){
 
-if(previewRoKo){
-  previewRoKo.textContent = fullKo || "";
-}
+  const previewKo      = document.getElementById("previewKo");
+  const previewRo      = document.getElementById("previewRo");
+  const previewRoKo    = document.getElementById("previewRoKo");
+  const previewRoText  = document.getElementById("previewRoText");
 
-if(previewRoText){
-  previewRoText.textContent = showRo ? buildFullRomanian() : "";
-}
-  
   if(!previewKo) return;
 
   const koParts = [];
@@ -3178,10 +3173,9 @@ if(previewRoText){
   let prevTime    = null;
   let prevPlace   = null;
 
-  for(let i=0; i<sentences.length; i++){
+  for(let i = 0; i < sentences.length; i++){
 
-    const s  = sentences[i];
-    const cj = s.conjug || "";
+    const s = sentences[i];
 
     const sameSubject = s.subject === prevSubject;
     const sameTime    = s.time === prevTime;
@@ -3194,33 +3188,44 @@ if(previewRoText){
       samePlace;
 
     const built = buildClauseSentence(
-      {...s, hideSubject},
+      { ...s, hideSubject },
       actives[i]
     );
 
-    if(built?.ko) koParts.push(built.ko);
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
 
     prevSubject = s.subject || null;
     prevTime    = s.time || null;
     prevPlace   = s.place || null;
   }
-const fullKo = koParts.join(" ").trim();
 
-previewKo.textContent = fullKo || "(alege cuvinte din tabel)";
+  /* ✅ KO FINAL */
+  const fullKo = koParts.join(" ").replace(/\s+/g," ").trim();
 
-if(previewRo){
-  previewRo.textContent = showRo ? buildFullRomanian() : "";
+  previewKo.textContent =
+    fullKo || "(alege cuvinte din tabel)";
+
+  /* ✅ RO FINAL */
+  if(previewRo){
+    previewRo.textContent =
+      showRo ? buildFullRomanian() : "";
+  }
+
+  /* ✅ CARD Română ↔ Coreeană */
+  if(previewRoKo){
+    previewRoKo.textContent = fullKo || "";
+  }
+
+  if(previewRoText){
+    previewRoText.textContent =
+      showRo ? buildFullRomanian() : "";
+  }
+
+  updateNaturalHint(fullKo);
+  updatePreviewCardState();
 }
-
-/* ✅ SYNC STABIL */
-const roToKo = document.getElementById("roToKoResult");
-if (roToKo) roToKo.textContent = fullKo || "";
-
-const roCorr = document.getElementById("roCorrected");
-if (roCorr) roCorr.textContent = showRo ? buildFullRomanian() : "";
-
-updateNaturalHint(fullKo);
-updatePreviewCardState();  } 
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
