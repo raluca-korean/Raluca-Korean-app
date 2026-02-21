@@ -1,4 +1,4 @@
-Bb10
+Bb16
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -3147,7 +3147,7 @@ function bestMatchFromList(sentenceKo, list){
 
 /** ---- detect conjugation by known endings list (you likely already have DATA.conjug) ---- */
 function detectConjugation(sentenceKo){
-const list = conjugations;
+  const list = DATA?.conjug || [];
   const s = sentenceKo;
 
   // prefer longest match
@@ -3172,7 +3172,7 @@ const list = conjugations;
 
 /** ---- detect verb by matching any verb stem inside sentence ---- */
 function detectVerb(sentenceKo){
-  const list = verbs;
+  const list = DATA?.verb || [];
   const s = sentenceKo;
 
   // Longest stem wins
@@ -3206,46 +3206,62 @@ function syncBuilderFromKorean(koSentence, idx = 0){
   const clean = normalizeKoText(koSentence);
   if(!clean) return;
 
-  if(!sentences[idx])
-    sentences[idx] = makeEmptySentence();
+  // ensure sentence exists
+  if(!sentences[idx]) sentences[idx] = {};
 
-  // SUBJECT / TIME / PLACE / MOD / OBJECT / NUMERAL / COUNTER
-  ["subject","time","place","mod","object","numeral","counter"]
-    .forEach(key=>{
+  // 1) match simple parts
+  for(const key of ["subject","time","place","mod","object","numeral","counter"]){
+    const list = DATA?.[key] || [];
+    const found = bestMatchFromList(clean, list);
 
-      const list =
-        columns.find(c=>c.key===key)?.data || [];
+    if(found){
+      sentences[idx][key] = getKoVal(found);
+      // optional store ro too if you use it
+      sentences[idx][key + "_ro"] = getRoVal(found) || "";
+    } else {
+      // don’t wipe if user already picked manually; comment next line if you want keep
+      // sentences[idx][key] = "";
+    }
+  }
 
-      const found = list.find(w =>
-        clean.includes(stripParticles(w))
-      );
+  // 2) verb + conjug
+  const verbFound = detectVerb(clean);
+  if(verbFound){
+    sentences[idx].verb = getKoVal(verbFound);
+    sentences[idx].verb_ro = getRoVal(verbFound) || "";
+  }
 
-      if(found){
-        sentences[idx][key] = found;
-      }
-    });
+  const conjFound = detectConjugation(clean);
+  if(conjFound){
+    sentences[idx].conjug = getKoVal(conjFound);
+    sentences[idx].conjug_ro = getRoVal(conjFound) || "";
+  }
 
-  // VERB
-  const verbFound = verbs.find(v=>{
-    const stem = getVerbStem(v);
-    return clean.includes(stem);
-  });
-
-  if(verbFound)
-    sentences[idx].verb = verbFound;
-
-  // CONJUG
-  const conjFound = conjugations.find(cj=>{
-    const cjSearch = cj.replace("-", "");
-    return clean.endsWith(cjSearch);
-  });
-
-  if(conjFound)
-    sentences[idx].conjug = conjFound;
-
-  renderAll();
-  updatePreview();
+  // 3) refresh UI and preview
+  renderTable(idx);       // your existing function that draws tableP1/tableP2 etc.
+  renderToggles();        // if you have (optional)
+  updatePreview();        // MUST refresh previewKo
 }
+
+/* Hook it into RO translate button:
+   - if you already compute koResult somewhere, call syncBuilderFromKorean(koResult,0)
+*/
+document.getElementById("roTranslateBtn")?.addEventListener("click", async () => {
+
+  const roText = document.getElementById("roInput")?.value || "";
+  if(!roText.trim()) return;
+
+  // You already have your translation method; keep it.
+  // Replace translateRoToKo with your real one.
+ const { ko, roFixed } = translateRoToKo(roText);
+  // display (if you want)
+  const roToKoResult = document.getElementById("roToKoResult");
+  const roCorrected  = document.getElementById("roCorrected");
+  if(roToKoResult) roToKoResult.textContent = ko || "";
+  if(roCorrected) roCorrected.textContent = roFixed || "";
+  // 🔥 SYNC INTO BUILDER TABLE
+  if(ko) syncBuilderFromKorean(ko, 0);
+});    
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
@@ -4079,28 +4095,27 @@ updatePreview();
 /* =========================
    24) BOOTSTRAP
    ========================= */
-on(DOM.roTranslateBtn, "click", ()=>{
+document.addEventListener("DOMContentLoaded", ()=>{
+  // init state
+  loadModelRow(indexModelRow);
 
-  const txt = (DOM.roInput?.value || "").trim();
-  if(!txt) return;
+  // chips
+  createToggleChips();
 
-  const res = translateRoToKo(txt);
+  // attach long-press handlers (P1/P2)
+  attachPressHandlers(DOM.tableP1, 0);
+  attachPressHandlers(DOM.tableP2, 1);
 
+  // UI events
+  setupUI();
+
+  // favorites initial
+  renderFavorites();
+
+  // first render
   renderAll();
-
-  if(DOM.roToKoResult)
-    DOM.roToKoResult.textContent = res.ko || "";
-
-  if(DOM.roCorrected)
-    DOM.roCorrected.textContent = res.roFixed || "";
-
-  // 🔥 SYNC KO → BUILDER
-  if(res.ko){
-    syncBuilderFromKorean(res.ko, 0);
-  }
 });
-    });
-    function renderExtraClauses() {
+  function renderExtraClauses() {
   if (!DOM.extraClauses) return;
 
   DOM.extraClauses.innerHTML = "";
