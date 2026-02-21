@@ -3040,69 +3040,63 @@ function ensureLinkedSentences(){
   // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
-function updatePreview(){
-window.__prevSubject = null;
-  if(!DOM.previewKo || !DOM.previewRo) return;
+   function updatePreview(){
 
-  ensureLinkedSentences();
+  /* =========================
+     1) Construire propoziție KO
+     ========================= */
+  const previewEl = document.getElementById("previewKo");
+  if(!previewEl) return;
 
-  const koParts = [];
-  const roParts = [];
+  let koSentence = "";
 
-  let prevSubject = null;
-  let prevTime    = null;
-  let prevPlace   = null;
-
-  for(let i = 0; i < sentences.length; i++){
-
-    const s  = sentences[i];
-    const cj = s.conjug || "";
-
-    const sameSubject = s.subject === prevSubject;
-    const sameTime    = s.time === prevTime;
-    const samePlace   = s.place === prevPlace;
-
-    // ✅ HIDE SUBJECT logic
-    const hideSubject =
-      i > 0 &&
-      sameSubject &&
-      sameTime &&
-      samePlace;
-
-    const built = buildClauseSentence(
-      s,
-      actives[i],
-      cj,
-      { hideSubject }
-    );
-
-    if(built?.ko) koParts.push(built.ko);
-
-    const roNat = buildNaturalRomanian(s, actives[i]);
-    if(roNat) roParts.push(roNat);
-
-    prevSubject = s.subject || null;
-    prevTime    = s.time || null;
-    prevPlace   = s.place || null;
+  if (typeof buildClauseSentence === "function") {
+    koSentence = buildClauseSentence();
   }
 
-  const fullKo = koParts.join(" ").trim();
+  previewEl.textContent = koSentence || "(alege cuvinte din tabel)";
 
-  if(!fullKo){
-    DOM.previewKo.textContent = "(alege cuvinte din tabel)";
-    DOM.previewRo.textContent = "";
-    DOM.naturalHint && (DOM.naturalHint.textContent = "");
-    return;
+
+  /* =========================
+     2) Traducere RO preview
+     ========================= */
+  const previewRoEl = document.getElementById("previewRo");
+
+  if(previewRoEl){
+    if (typeof buildRomanianPreview === "function") {
+      previewRoEl.textContent = buildRomanianPreview() || "";
+    }
   }
 
-  DOM.previewKo.textContent = fullKo;
 
-  const fullRo = roParts.join(" ").trim();
-  DOM.previewRo.textContent = showRo ? fullRo : "";
+  /* =========================
+     3) Hint naturalitate
+     ========================= */
+  const naturalHintEl = document.getElementById("naturalHint");
 
-  DOM.naturalHint && (DOM.naturalHint.textContent =
-    "✅ Propoziție fluentă.");
-}
+  if(naturalHintEl){
+    if (typeof buildNaturalHint === "function") {
+      naturalHintEl.textContent = buildNaturalHint() || "";
+    }
+  }
+
+
+  /* =========================
+     4) Highlight preview card
+     ========================= */
+  const previewCard = previewEl.closest(".preview-card");
+
+  if (previewCard) {
+    const text = previewEl.textContent || "";
+
+    if (text.trim() && !text.includes("(alege")) {
+      previewCard.classList.add("has-content");
+    } else {
+      previewCard.classList.remove("has-content");
+    }
+  }
+} 
+
    
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
