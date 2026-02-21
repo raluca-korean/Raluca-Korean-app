@@ -3037,7 +3037,192 @@ function createClauseTable(clauseIndex){
   wrap.appendChild(table);
 
   return { wrap, table };
+}/* =========================
+   1) RO -> TABLE -> KO SYNC
+   ========================= */
+
+/**
+ * DATA expected format example (adjust to your real structure):
+ * DATA.subject = [{ko:"저", ro:"eu"}, {ko:"저는", ro:"eu (topic)"} ...]
+ * or you may store as strings. Code handles both.
+ */
+
+const BUILDER_KEYS_P1 = ["subject","time","place","mod","object","numeral","counter","verb","conjug"];
+
+/** ---- helpers: normalize ---- */
+function normalizeKoText(s){
+  return (s || "")
+    .replace(/\s+/g, " ")
+    .replace(/[.?!]/g, "")
+    .trim();
 }
+
+function stripParticles(word){
+  // removes common attached particles at end (topic/subject/object/place…)
+  return (word || "").replace(/(은|는|이|가|을|를|에|에서|으로|로|와|과|도|만|까지|부터|께|한테|에게)$/g, "");
+}
+
+function getKoVal(item){
+  if(item == null) return "";
+  if(typeof item === "string") return item;
+  return item.ko || item.korean || item.value || "";
+}
+
+function getRoVal(item){
+  if(item == null) return "";
+  if(typeof item === "string") return "";
+  return item.ro || item.romanian || item.trans || "";
+}
+
+/** ---- find best match from a list by longest occurrence in sentence ---- */
+function bestMatchFromList(sentenceKo, list){
+  if(!Array.isArray(list) || !list.length) return null;
+
+  const s = sentenceKo;
+  let best = null;
+  let bestLen = 0;
+
+  for(const item of list){
+    const ko = getKoVal(item);
+    if(!ko) continue;
+
+    // try direct match
+    if(s.includes(ko) && ko.length > bestLen){
+      best = item;
+      bestLen = ko.length;
+      continue;
+    }
+
+    // try without particle
+    const k2 = stripParticles(ko);
+    if(k2 && s.includes(k2) && k2.length > bestLen){
+      best = item;
+      bestLen = k2.length;
+    }
+  }
+
+  return best;
+}
+
+/** ---- detect conjugation by known endings list (you likely already have DATA.conjug) ---- */
+function detectConjugation(sentenceKo){
+  const list = DATA?.conjug || [];
+  const s = sentenceKo;
+
+  // prefer longest match
+  let best = null;
+  let bestLen = 0;
+
+  for(const item of list){
+    const cj = getKoVal(item); // in your data conj values are like "-아요/어요" or "가요" ??? adjust if needed
+    if(!cj) continue;
+
+    // If your conjug list is grammar labels (e.g. "-고 있어요"), search by ending token without leading "-"
+    const cjSearch = cj.startsWith("-") ? cj.slice(1) : cj;
+
+    if(cjSearch && s.endsWith(cjSearch) && cjSearch.length > bestLen){
+      best = item;
+      bestLen = cjSearch.length;
+    }
+  }
+
+  return best;
+}
+
+/** ---- detect verb by matching any verb stem inside sentence ---- */
+function detectVerb(sentenceKo){
+  const list = DATA?.verb || [];
+  const s = sentenceKo;
+
+  // Longest stem wins
+  let best = null;
+  let bestLen = 0;
+
+  for(const item of list){
+    const v = getKoVal(item); // e.g. "가다"
+    if(!v) continue;
+
+    // stem = remove 다
+    const stem = v.endsWith("다") ? v.slice(0, -1) : v;
+
+    // if stem appears anywhere in sentence (가, 가고, 갑, etc.)
+    if(stem && s.includes(stem) && stem.length > bestLen){
+      best = item;
+      bestLen = stem.length;
+    }
+  }
+
+  return best;
+}
+
+/**
+ * Main sync: from Korean sentence -> fill builder P1 columns
+ * @param {string} koSentence
+ * @param {number} idx sentence index (0 for P1)
+ */
+function syncBuilderFromKorean(koSentence, idx = 0){
+
+  const clean = normalizeKoText(koSentence);
+  if(!clean) return;
+
+  // ensure sentence exists
+  if(!sentences[idx]) sentences[idx] = {};
+
+  // 1) match simple parts
+  for(const key of ["subject","time","place","mod","object","numeral","counter"]){
+    const list = DATA?.[key] || [];
+    const found = bestMatchFromList(clean, list);
+
+    if(found){
+      sentences[idx][key] = getKoVal(found);
+      // optional store ro too if you use it
+      sentences[idx][key + "_ro"] = getRoVal(found) || "";
+    } else {
+      // don’t wipe if user already picked manually; comment next line if you want keep
+      // sentences[idx][key] = "";
+    }
+  }
+
+  // 2) verb + conjug
+  const verbFound = detectVerb(clean);
+  if(verbFound){
+    sentences[idx].verb = getKoVal(verbFound);
+    sentences[idx].verb_ro = getRoVal(verbFound) || "";
+  }
+
+  const conjFound = detectConjugation(clean);
+  if(conjFound){
+    sentences[idx].conjug = getKoVal(conjFound);
+    sentences[idx].conjug_ro = getRoVal(conjFound) || "";
+  }
+
+  // 3) refresh UI and preview
+  renderTable(idx);       // your existing function that draws tableP1/tableP2 etc.
+  renderToggles();        // if you have (optional)
+  updatePreview();        // MUST refresh previewKo
+}
+
+/* Hook it into RO translate button:
+   - if you already compute koResult somewhere, call syncBuilderFromKorean(koResult,0)
+*/
+document.getElementById("roTranslateBtn")?.addEventListener("click", async () => {
+
+  const roText = document.getElementById("roInput")?.value || "";
+  if(!roText.trim()) return;
+
+  // You already have your translation method; keep it.
+  // Replace translateRoToKo with your real one.
+  const { ko, correctedRo } = await translateRoToKo(roText);
+
+  // display (if you want)
+  const roToKoResult = document.getElementById("roToKoResult");
+  const roCorrected  = document.getElementById("roCorrected");
+  if(roToKoResult) roToKoResult.textContent = ko || "";
+  if(roCorrected)  roCorrected.textContent  = correctedRo || "";
+
+  // 🔥 SYNC INTO BUILDER TABLE
+  if(ko) syncBuilderFromKorean(ko, 0);
+});    
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
