@@ -4222,6 +4222,37 @@ function syncBuilderFromKorean(koSentence, idx = 0){
   renderAll();     // IMPORTANT – redraw table
   updatePreview(); // IMPORTANT – rebuild KO preview
 }
+    document.addEventListener("DOMContentLoaded", () => {
+
+  const roBtn = document.getElementById("roTranslateBtn");
+  if(!roBtn) {
+    console.warn("❌ roTranslateBtn nu exista in DOM");
+    return;
+  }
+
+  roBtn.addEventListener("click", async () => {
+
+    const roText = document.getElementById("roInput")?.value || "";
+    if(!roText.trim()) return;
+
+    const result = await translateRoToKo(roText); 
+    // ← funcția TA existentă
+
+    const ko = result?.ko || "";
+    const correctedRo = result?.correctedRo || "";
+
+    if(document.getElementById("roToKoResult"))
+      document.getElementById("roToKoResult").textContent = ko;
+
+    if(document.getElementById("roCorrected"))
+      document.getElementById("roCorrected").textContent = correctedRo;
+
+    if(ko){
+      syncBuilderFromKorean(ko, 0);
+    }
+  });
+
+});
   </script>
 </body>
 </html> 
