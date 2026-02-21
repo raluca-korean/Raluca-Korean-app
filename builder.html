@@ -4164,9 +4164,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     attachPressHandlers(table, i);
   }
 }
-   
- 
-    function buildFullRomanian(){
+function buildFullRomanian(){
 
   const parts = [];
 
@@ -4189,19 +4187,36 @@ document.addEventListener("DOMContentLoaded", ()=>{
       sameTime &&
       samePlace;
 
-    const ro = buildNaturalRomanian(
+    let ro = buildNaturalRomanian(
       {...s, hideSubject},
       actives[i]
     );
 
-    if(ro) parts.push(ro);
+    if(!ro) continue;
+
+    /* ✅ eliminăm punct intermediar dacă urmează linking */
+    const cj = s.conjug || "";
+
+    if(isLinkingConj(cj)){
+      ro = ro.replace(/[.]$/, "");  // scoate punctul
+    }
+
+    parts.push(ro);
 
     prevSubject = s.subject || null;
     prevTime    = s.time || null;
     prevPlace   = s.place || null;
   }
 
-  return parts.join(" ");
+  let full = parts.join(" ").trim();
+
+  /* ✅ corecții finale */
+  full = full.replace(/\s+/g," ");
+
+  /* ✅ evităm dubluri de tip: "și și" */
+  full = full.replace(/și\s+și/g,"și");
+
+  return full;
 }
   </script>
 </body>
