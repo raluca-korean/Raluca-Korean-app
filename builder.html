@@ -2942,13 +2942,27 @@ function buildClauseSentence(state, activeMap){
   if(use("counter") && state.counter){
     koParts.push(state.counter);
   }
+/* VERB */
+if(use("verb") || use("conjug")){
 
-  /* VERB */
-  if(use("verb") || use("conjug")){
-    const vp = buildVerbPhrase(v, cj);
+  const verbs = state.verb;
+
+  if(Array.isArray(verbs)){
+
+    verbs.forEach((v,i)=>{
+      const cjUsed =
+        (i < verbs.length-1) ? "-고" : cj;
+
+      const vp = buildVerbPhrase(v, cjUsed);
+      if(vp) koParts.push(vp);
+    });
+
+  } else {
+
+    const vp = buildVerbPhrase(verbs, cj);
     if(vp) koParts.push(vp);
   }
-
+} 
   return {
     ko: koParts.join(" ").replace(/\s+/g," ").trim(),
     conj: cj
