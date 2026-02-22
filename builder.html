@@ -2650,6 +2650,42 @@ function fixFinalLinking(text){
 
   return text;
 }
+    const LINKING_SET = new Set([
+  "-고","-고 나서","-기 전에","-(으)면서","-(으)며",
+  "-(으)나","-(으)므로","-(으)ㄴ/는 만큼",
+  "-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도",
+  "-(으)ㄴ/는 반면에","-도록 하다","-기에","-길래","-고 말다","-고자 하다"
+]);
+
+function isLinkingConjugation(cj){
+  return LINKING_SET.has(cj);
+}
+
+function preventDoubleLinking(prev, current){
+  if(isLinkingConjugation(prev) && isLinkingConjugation(current)){
+    return "";
+  }
+  return current;
+}
+
+function ensureLinkedSentences(){
+
+  let needsNext = false;
+
+  for(let i=0; i<sentences.length; i++){
+    const cj = sentences[i]?.conjug;
+    if(isLinkingConjugation(cj)){
+      needsNext = true;
+    }
+  }
+
+  if(needsNext && !sentences[1]){
+    sentences.push(makeEmptySentence());
+    actives.push(makeAllActive());
+  }
+
+  showExtraClauses = needsNext;
+}
     /* =========================
    8) HANGUL HELPERS (batchim, conjugare)
    ========================= */
