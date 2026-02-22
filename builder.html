@@ -3746,27 +3746,50 @@ const RO_FORM_TO_INF = {
   "citesc":"a citi","citesti":"a citi","citești":"a citi","citeste":"a citi","citește":"a citi","citim":"a citi","cititi":"a citi","citiți":"a citi",
   "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie","scriem":"a scrie","scrieti":"a scrie","scrieți":"a scrie"
 };
+    function parseRoToState(roSentence){
 
-function parseRoToState(roSentence){
   const t = normRo(roSentence);
 
-  // subject
+  /* SUBJECT */
   let subj = "";
   if(/\beu\b/.test(t)) subj = "저";
   else if(/\btu\b/.test(t)) subj = "너";
   else if(/\bnoi\b/.test(t)) subj = "우리";
   else if(/\bvoi\b/.test(t)) subj = "너희";
 
-  // time/place/mod/object/verb
-  const time   = findKoByRo("time", roSentence) || (/\bastazi\b/.test(t) ? "오늘" : "") || (/\bmaine\b/.test(t) ? "내일" : "") || (/\bieri\b/.test(t) ? "어제" : "");
-  const place  = findKoByRo("place", roSentence) || (/\bbanc(a|ă)\b/.test(t) ? "은행" : "") || (/\bpiat(a|ă)\b/.test(t) ? "시장" : "");
+  /* TIME / PLACE / MOD / OBJECT */
+  const time =
+    findKoByRo("time", roSentence) ||
+    (/\bastazi\b/.test(t) ? "오늘" : "") ||
+    (/\bmaine\b/.test(t) ? "내일" : "") ||
+    (/\bieri\b/.test(t) ? "어제" : "");
+
+  const place =
+    findKoByRo("place", roSentence) ||
+    (/\bbanc(a|ă)\b/.test(t) ? "은행" : "") ||
+    (/\bpiat(a|ă)\b/.test(t) ? "시장" : "");
+
   const mod    = findKoByRo("mod", roSentence);
   const object = findKoByRo("object", roSentence);
 
+  /* VERB */
   let verb = findKoByRo("verb", roSentence);
 
-  // infinitiv "a ___"
-  if(!verb){
+  // ✅ MULTI-VERB detection (fără a elimina logica existentă)
+  const verbMatches = [];
+
+  Object.keys(RO_FORM_TO_INF).forEach(form=>{
+    if(t.includes(form)){
+      const inf = RO_FORM_TO_INF[form];
+      const ko  = REV.verb?.[normRo(inf)];
+      if(ko) verbMatches.push(ko);
+    }
+  });
+
+  const cleanVerbs = verbMatches.filter(Boolean);
+
+  /* INFINITIV "a ___" */
+  if(!verb && !cleanVerbs.length){
     const m = t.match(/\ba\s+([a-zăâîșț]+)/i);
     if(m){
       const inf = ("a " + m[1]).toLowerCase();
@@ -3774,8 +3797,8 @@ function parseRoToState(roSentence){
     }
   }
 
-  // forme conjugate
-  if(!verb){
+  /* FORME CONJUGATE */
+  if(!verb && !cleanVerbs.length){
     for(const w of t.split(" ")){
       const inf = RO_FORM_TO_INF[w];
       if(inf){
@@ -3785,8 +3808,8 @@ function parseRoToState(roSentence){
     }
   }
 
-  // sinonime simple
-  if(!verb){
+  /* SINONIME SIMPLE */
+  if(!verb && !cleanVerbs.length){
     if(/\bpleca\b|\bplec\b|\bpleci\b/.test(t)) verb = "가다";
     else if(/\bsosi\b|\bajunge\b|\bajuns\b/.test(t)) verb = "오다";
   }
@@ -3801,21 +3824,14 @@ function parseRoToState(roSentence){
     object: object || "",
     numeral: "",
     counter: "",
-    verb: verb || "",
+
+    // ✅ dacă avem mai multe verbe → array
+    verb: cleanVerbs.length ? cleanVerbs : (verb || ""),
+
     conjug: conj || "-아요/어요"
   };
 }
-// detect multiple verbs (merg citesc mananc)
-const verbMatches = [];
-Object.keys(RO_FORM_TO_INF).forEach(form=>{
-  if(t.includes(form)) verbMatches.push(REV.verb?.[normRo(RO_FORM_TO_INF[form])]);
-});
 
-const cleanVerbs = verbMatches.filter(Boolean);
-
-...
-verb: cleanVerbs.length ? cleanVerbs : (verb || "") };
-    }
     /* =========================
    21) RO -> KO (butonul "Tradu în coreeană")
    - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
