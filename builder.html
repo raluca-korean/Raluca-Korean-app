@@ -3243,27 +3243,22 @@ function ensureLinkedSentences() {
     // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
-    function updatePreview(){
+function updatePreview(){
 
-  const previewKo     = document.getElementById("previewKo");
-  const previewRo     = document.getElementById("previewRo");
-  const previewRoKo   = document.getElementById("previewRoKo");
-  const previewRoText = document.getElementById("previewRoText");
+  const previewKo = document.getElementById("previewKo");
+  const previewRo = document.getElementById("previewRo");
 
   if(!previewKo) return;
 
   const koParts = [];
 
-  for(let i = 0; i < sentences.length; i++){
+  for(let i=0; i<sentences.length; i++){
 
     const s = sentences[i];
     if(!s) continue;
 
-    // ✅ regula ta FINALĂ:
-    const hideSubject = i > 0;
-
     const built = buildClauseSentence(
-      { ...s, hideSubject },
+      { ...s, hideSubject: i > 0 },
       actives[i]
     );
 
@@ -3274,25 +3269,13 @@ function ensureLinkedSentences() {
 
   const fullKo = koParts.join(" ").replace(/\s+/g," ").trim();
 
-  previewKo.textContent =
-    fullKo || "(alege cuvinte din tabel)";
+  previewKo.textContent = fullKo || "(alege cuvinte din tabel)";
 
   if(previewRo){
-    previewRo.textContent =
-      showRo ? buildFullRomanian() : "";
-  }
-
-  if(previewRoKo){
-    previewRoKo.textContent = fullKo || "";
-  }
-
-  if(previewRoText){
-    previewRoText.textContent =
-      showRo ? buildFullRomanian() : "";
+    previewRo.textContent = showRo ? buildFullRomanian() : "";
   }
 
   updateNaturalHint(fullKo);
-  updatePreviewCardState();
 }
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
