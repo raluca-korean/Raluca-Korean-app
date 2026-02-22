@@ -4201,7 +4201,104 @@ function buildFullRomanian(){
 
   return full;
 }
-    function splitRomanianText(text){
+  function splitRomanianText(text){
+  if(!text) return [];
+
+  return text
+    .replace(/\s+/g," ")
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function detectMultipleVerbs(roSentence){
+
+  const t = normRo(roSentence);
+  const found = [];
+
+  Object.entries(RO_FORM_TO_INF).forEach(([form, inf])=>{
+    if(t.includes(form)){
+      const ko = REV.verb?.[normRo(inf)];
+      if(ko && !found.includes(ko)){
+        found.push(ko);
+      }
+    }
+  });
+
+  return found;
+}
+
+function parseRoToState(roSentence){
+
+  const t = normRo(roSentence);
+
+  let subj = "";
+  if(/\beu\b/.test(t)) subj = "저";
+  else if(/\btu\b/.test(t)) subj = "너";
+  else if(/\bnoi\b/.test(t)) subj = "우리";
+  else if(/\bvoi\b/.test(t)) subj = "너희";
+
+  const verbsDetected = detectMultipleVerbs(roSentence);
+
+  let verb = findKoByRo("verb", roSentence);
+
+  if(!verb && verbsDetected.length){
+    verb = verbsDetected[0];
+  }
+
+  const conj = detectConjFromRo(roSentence);
+
+  return {
+    subject: subj || "저",
+    time: findKoByRo("time", roSentence) || "",
+    place: findKoByRo("place", roSentence) || "",
+    mod: findKoByRo("mod", roSentence) || "",
+    object: findKoByRo("object", roSentence) || "",
+    numeral: "",
+    counter: "",
+    verb: verb || "",
+    verbsMulti: verbsDetected,
+    conjug: conj || "-아요/어요"
+  };
+}
+    function translateRoToBuilder(roText){
+
+  const clauses = splitRomanianText(roText);
+
+  if(!clauses.length) return;
+
+  sentences = [];
+  actives   = [];
+
+  clauses.forEach((clause, idx)=>{
+
+    const parsed = parseRoToState(clause);
+
+    sentences.push(parsed);
+    actives.push(makeAllActive());
+
+    if(parsed.verbsMulti?.length > 1){
+
+      parsed.verbsMulti.forEach((verbKo, vIdx)=>{
+
+        if(vIdx === 0) return;
+
+        sentences.push({
+          ...parsed,
+          verb: verbKo,
+          conjug: "-고"
+        });
+
+        actives.push(makeAllActive());
+      });
+    }
+  });
+
+  ensureLinkedSentences();
+  renderAll();
+}
+    
+    
       </script>
 </body>
 </html> 
