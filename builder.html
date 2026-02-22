@@ -3170,24 +3170,27 @@ document.getElementById("roTranslateBtn")?.addEventListener("click", async () =>
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
-function ensureLinkedSentences(){
+function ensureLinkedSentences() {
 
-  for(let i=0; i<sentences.length; i++){
+  let needsExtra = false;
 
+  // 🔒 parcurgere SAFE (fără push în loop)
+  for (let i = 0; i < sentences.length; i++) {
     const cj = sentences[i]?.conjug;
-
-    if(isLinkingConjugation(cj)){
-
-      if(!sentences[i+1]){
-        sentences.push(makeEmptySentence());
-        actives.push(makeAllActive());
-      }
-
-      enableP2 = true;
+    if (isLinkingConjugation(cj)) {
+      needsExtra = true;
     }
   }
+
+  // ➕ adăugăm propoziție DOAR O DATĂ
+  if (needsExtra && sentences.length < 2) {
+    sentences.push(makeEmptySentence());
+    actives.push(makeAllActive());
+  }
+
+  enableP2 = needsExtra;
 }
-  // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
+    // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
     function updatePreview(){
