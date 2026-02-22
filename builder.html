@@ -3245,37 +3245,31 @@ function ensureLinkedSentences() {
 }
 function updatePreview(){
 
-  const previewKo = document.getElementById("previewKo");
-  const previewRo = document.getElementById("previewRo");
+  ensureLinkedSentences();
 
-  if(!previewKo) return;
+  const fullKo = buildFullKorean();
 
-  const koParts = [];
-
-  for(let i=0; i<sentences.length; i++){
-
-    const s = sentences[i];
-    if(!s) continue;
-
-    const built = buildClauseSentence(
-      { ...s, hideSubject: i > 0 },
-      actives[i]
-    );
-
-    if(built?.ko){
-      koParts.push(built.ko);
-    }
+  if(DOM.previewKo){
+    DOM.previewKo.textContent =
+      fullKo || "(alege cuvinte din tabel)";
   }
 
-  const fullKo = koParts.join(" ").replace(/\s+/g," ").trim();
+  if(DOM.previewRo){
+    DOM.previewRo.textContent =
+      showRo ? buildFullRomanian() : "";
+  }
 
-  previewKo.textContent = fullKo || "(alege cuvinte din tabel)";
+  if(DOM.previewRoKo){
+    DOM.previewRoKo.textContent = fullKo || "";
+  }
 
-  if(previewRo){
-    previewRo.textContent = showRo ? buildFullRomanian() : "";
+  if(DOM.previewRoText){
+    DOM.previewRoText.textContent =
+      showRo ? buildFullRomanian() : "";
   }
 
   updateNaturalHint(fullKo);
+  updatePreviewCardState();
 }
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
