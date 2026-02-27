@@ -3796,45 +3796,50 @@ function parseRoToState(roSentence){
    - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
    ========================= */
 function translateRoToKo(roText){
+
   const original = (roText || "").trim();
   if(!original) return { ko:"", roFixed:"" };
 
-  // 1) split pe "și/iar/apoi" -> P1 -고 + P2
-  const split = splitRoIntoClauses(original);
-  if(split){
-    sentences = [ makeEmptySentence(), makeEmptySentence() ];
-    actives   = [ makeAllActive(), makeAllActive() ];
+  const norm = normRo(original);
 
-    const s1 = parseRoToState(split.first);
-    const s2 = parseRoToState(split.second);
+  // 🔥 SPLIT PE CONECTORI MULTIPLI
+  const clausesRo = norm
+    .split(/\b(și|si|iar|apoi)\b/i)
+    .filter(x => !/^(și|si|iar|apoi)$/i.test(x))
+    .map(x => x.trim())
+    .filter(Boolean);
 
-    sentences[0] = s1;
-    sentences[0].conjug = "-고"; // forțăm legătura
-    sentences[1] = s2;
-
-    if(DOM.enableP2){
-      DOM.enableP2.checked = true;
-      DOM.enableP2.dispatchEvent(new Event("change"));
-    }
-  }else{
-    // 2) o propoziție
+  // dacă nu există conectori -> o propoziție
+  if(clausesRo.length <= 1){
     sentences = [ makeEmptySentence() ];
     actives   = [ makeAllActive() ];
     sentences[0] = parseRoToState(original);
+  }else{
+    // 🔥 N PROPOZIȚII
+    sentences = [];
+    actives   = [];
 
-    if(DOM.enableP2){
-      DOM.enableP2.checked = false;
-      DOM.enableP2.dispatchEvent(new Event("change"));
-    }
+    clausesRo.forEach((cl, index)=>{
+      const st = parseRoToState(cl);
+
+      // toate în afară de ultima primesc -고
+      if(index < clausesRo.length - 1){
+        st.conjug = "-고";
+      }
+
+      sentences.push(st);
+      actives.push(makeAllActive());
+    });
   }
 
-  const builtKo = buildClauseSentence(sentences[0], actives[0]).ko;
-  const roFixed = buildNaturalRomanian(sentences[0], actives[0]);
+  renderAll();
 
-  return { ko: builtKo || "(nu am putut construi propoziția)", roFixed: roFixed || original };
+  return {
+    ko: buildClauseSentence(sentences[0], actives[0]).ko,
+    roFixed: buildFullRomanian()
+  };
 }
-
-/* =========================
+    /* =========================
    22) UI EVENTS
    ========================= */
 function setupUI(){
