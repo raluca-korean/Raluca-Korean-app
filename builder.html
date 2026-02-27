@@ -1,3 +1,5 @@
+Bb25
+
 Bb23
 
 Bb17
@@ -902,11 +904,9 @@ button:disabled{
   color:var(--text-soft);
 }
     /* Ascunde rezultatul coreean + româna corectată din blocul Română → Coreeană */
-#roToKoResult,
-#roCorrected {
-  display: none;
-}
-
+    #roToKoResult{ display:none; }
+#roCorrected{ display:block; }
+    
     /* Ascund bara veche "Mod afișare / Propoziția 1–2" */
 #screen-builder > .mode-panel{
   display:none;
@@ -2333,6 +2333,8 @@ body.pastel-theme .story-separator{
           <span class="translate-icon">🇷🇴➡️🇰🇷</span>
           Tradu în coreeană
         </button>
+         <div id="roToKoResult"></div>
+  <div id="roCorrected"></div>
       </div>
 
       <!-- LEGEND -->
@@ -3269,46 +3271,45 @@ function createClauseTable(clauseIndex){
   return { wrap, table };
 }
 
-document.getElementById("roTranslateBtn")?.addEventListener("click", async () => {
-
-  const roText = document.getElementById("roInput")?.value || "";
-  if(!roText.trim()) return;
-
-  // You already have your translation method; keep it.
-  // Replace translateRoToKo with your real one.
- const { ko, roFixed } = translateRoToKo(roText);
-  // display (if you want)
-  const roToKoResult = document.getElementById("roToKoResult");
-  const roCorrected  = document.getElementById("roCorrected");
-  if(roToKoResult) roToKoResult.textContent = ko || "";
-  if(roCorrected) roCorrected.textContent = roFixed || "";
-  // 🔥 SYNC INTO BUILDER TABLE
-  if(ko) syncBuilderFromKorean(ko, 0);
-});    
+  
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
-function ensureLinkedSentences() {
+    function ensureLinkedSentences() {
+  // 0) Asigură structuri minime (NU return dacă lipsesc)
+  if (!Array.isArray(sentences)) sentences = [];
+  if (!Array.isArray(actives)) actives = [];
 
+  // dacă nu ai nicio propoziție, creează P1
+  if (sentences.length === 0) sentences.push(makeEmptySentence());
+
+  // asigură actives pentru fiecare propoziție existentă
+  while (actives.length < sentences.length) actives.push(makeAllActive());
+  // dacă cumva actives are mai multe decât sentences, taie (safe)
+  if (actives.length > sentences.length) actives.length = sentences.length;
+
+  // 1) Detectăm dacă există linking în oricare propoziție
   let needsExtra = false;
-
-  // 🔒 parcurgere SAFE (fără push în loop)
   for (let i = 0; i < sentences.length; i++) {
-    const cj = sentences[i]?.conjug;
-    if (isLinkingConjugation(cj)) {
-      needsExtra = true;
+    const s = sentences[i] || (sentences[i] = makeEmptySentence());
+    const cj = (s.conjug || "").trim();
+
+    if (isLinkingConj(cj)) needsExtra = true;
+
+    // 2) Ultima propoziție NU poate rămâne linking
+    if (i === sentences.length - 1 && isLinkingConj(cj)) {
+      s.conjug = "-아요/어요";
+    }
   }
 
-  // ➕ adăugăm propoziție DOAR O DATĂ
+  // 3) Dacă e nevoie de continuare, adaugă P2 o singură dată
   if (needsExtra && sentences.length < 2) {
     sentences.push(makeEmptySentence());
     actives.push(makeAllActive());
   }
 
-  enableP2 = needsExtra;
-}
-    // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
-  // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
+  // 4) flag UI
+  showExtraClauses = needsExtra;
 }
     function updatePreview(){
 
