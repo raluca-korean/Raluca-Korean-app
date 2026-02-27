@@ -3288,27 +3288,41 @@ document.getElementById("roTranslateBtn")?.addEventListener("click", async () =>
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
-function ensureLinkedSentences() {
+    function ensureLinkedSentences() {
+  // 0) Asigură structuri minime (NU return dacă lipsesc)
+  if (!Array.isArray(sentences)) sentences = [];
+  if (!Array.isArray(actives)) actives = [];
 
+  // dacă nu ai nicio propoziție, creează P1
+  if (sentences.length === 0) sentences.push(makeEmptySentence());
+
+  // asigură actives pentru fiecare propoziție existentă
+  while (actives.length < sentences.length) actives.push(makeAllActive());
+  // dacă cumva actives are mai multe decât sentences, taie (safe)
+  if (actives.length > sentences.length) actives.length = sentences.length;
+
+  // 1) Detectăm dacă există linking în oricare propoziție
   let needsExtra = false;
-
-  // 🔒 parcurgere SAFE (fără push în loop)
   for (let i = 0; i < sentences.length; i++) {
-    const cj = sentences[i]?.conjug;
-    if (isLinkingConjugation(cj)) {
-      needsExtra = true;
+    const s = sentences[i] || (sentences[i] = makeEmptySentence());
+    const cj = (s.conjug || "").trim();
+
+    if (isLinkingConj(cj)) needsExtra = true;
+
+    // 2) Ultima propoziție NU poate rămâne linking
+    if (i === sentences.length - 1 && isLinkingConj(cj)) {
+      s.conjug = "-아요/어요";
+    }
   }
 
-  // ➕ adăugăm propoziție DOAR O DATĂ
+  // 3) Dacă e nevoie de continuare, adaugă P2 o singură dată
   if (needsExtra && sentences.length < 2) {
     sentences.push(makeEmptySentence());
     actives.push(makeAllActive());
   }
 
-  enableP2 = needsExtra;
-}
-    // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
-  // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
+  // 4) flag UI
+  showExtraClauses = needsExtra;
 }
     function updatePreview(){
 
