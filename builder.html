@@ -3322,30 +3322,40 @@ document.getElementById("roTranslateBtn")?.addEventListener("click", async () =>
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
-function ensureLinkedSentences(){
-  // dacă nu există, ieșim safe
-  if(!Array.isArray(sentences) || !sentences.length) return;
-  if(!Array.isArray(actives) || !actives.length) return;
+    function ensureLinkedSentences() {
+  // 0) Asigură structuri minime (NU return dacă lipsesc)
+  if (!Array.isArray(sentences)) sentences = [];
+  if (!Array.isArray(actives)) actives = [];
 
-  // 1) detectăm dacă există linking (-고, -기 전에 etc.)
+  // dacă nu ai nicio propoziție, creează P1
+  if (sentences.length === 0) sentences.push(makeEmptySentence());
+
+  // asigură actives pentru fiecare propoziție existentă
+  while (actives.length < sentences.length) actives.push(makeAllActive());
+  // dacă cumva actives are mai multe decât sentences, taie (safe)
+  if (actives.length > sentences.length) actives.length = sentences.length;
+
+  // 1) Detectăm dacă există linking în oricare propoziție
   let needsExtra = false;
-  for(let i = 0; i < sentences.length; i++){
-    const cj = (sentences[i]?.conjug || "").trim();
-    if(isLinkingConj(cj)) needsExtra = true;
+  for (let i = 0; i < sentences.length; i++) {
+    const s = sentences[i] || (sentences[i] = makeEmptySentence());
+    const cj = (s.conjug || "").trim();
 
-    // 2) ultima propoziție nu are voie să rămână "linking"
-    if(i === sentences.length - 1 && isLinkingConj(cj)){
-      sentences[i].conjug = "-아요/어요";
+    if (isLinkingConj(cj)) needsExtra = true;
+
+    // 2) Ultima propoziție NU poate rămâne linking
+    if (i === sentences.length - 1 && isLinkingConj(cj)) {
+      s.conjug = "-아요/어요";
     }
   }
 
-  // 3) dacă trebuie propoziție 2, o adăugăm o singură dată
-  if(needsExtra && sentences.length < 2){
+  // 3) Dacă e nevoie de continuare, adaugă P2 o singură dată
+  if (needsExtra && sentences.length < 2) {
     sentences.push(makeEmptySentence());
     actives.push(makeAllActive());
   }
 
-  // 4) control UI (P2 vizibil / invizibil)
+  // 4) flag UI
   showExtraClauses = needsExtra;
 }
     function updatePreview(){
