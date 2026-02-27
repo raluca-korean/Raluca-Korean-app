@@ -3308,57 +3308,44 @@ function ensureLinkedSentences() {
     // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
-    function updatePreview(){
+function updatePreview(){
 
-  const previewKo     = document.getElementById("previewKo");
-  const previewRo     = document.getElementById("previewRo");
-  const previewRoKo   = document.getElementById("previewRoKo");
-  const previewRoText = document.getElementById("previewRoText");
+  if(!sentences.length) return;
 
-  if(!previewKo) return;
+  let fullKo = "";
+  let fullRo = "";
 
-  const koParts = [];
+  sentences.forEach((s, i)=>{
 
-  for(let i = 0; i < sentences.length; i++){
+    const built = buildClauseSentence(s, actives[i]);
 
-    const s = sentences[i];
-    if(!s) continue;
+    if(!built) return;
 
-    // ✅ regula ta FINALĂ:
-    const hideSubject = i > 0;
+    fullKo += built.ko + " ";
+    fullRo += built.ro + " ";
+  });
 
-    const built = buildClauseSentence(
-      { ...s, hideSubject },
-      actives[i]
-    );
+  fullKo = fullKo.trim();
+  fullRo = fullRo.trim();
 
-    if(built?.ko){
-      koParts.push(built.ko);
-    }
+  // 🔥 UPDATE PREVIEW KO
+  const previewKo = document.getElementById("previewKo");
+  if(previewKo){
+    previewKo.textContent = fullKo || "(alege cuvinte din tabel)";
   }
 
-  const fullKo = koParts.join(" ").replace(/\s+/g," ").trim();
-
-  previewKo.textContent =
-    fullKo || "(alege cuvinte din tabel)";
-
-  if(previewRo){
-    previewRo.textContent =
-      showRo ? buildFullRomanian() : "";
+  // 🔥 UPDATE ROMANIAN BLOCK
+  const roToKo = document.getElementById("roToKoResult");
+  if(roToKo){
+    roToKo.textContent = fullKo || "";
   }
 
-  if(previewRoKo){
-    previewRoKo.textContent = fullKo || "";
+  const roCorr = document.getElementById("roCorrected");
+  if(roCorr){
+    roCorr.textContent = fullRo || "";
   }
+}    
 
-  if(previewRoText){
-    previewRoText.textContent =
-      showRo ? buildFullRomanian() : "";
-  }
-
-  updateNaturalHint(fullKo);
-  updatePreviewCardState();
-}
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
