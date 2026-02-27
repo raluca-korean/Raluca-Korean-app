@@ -1,3 +1,5 @@
+Bb23
+
 Bb17
 <!DOCTYPE html>
 <html lang="ko">
@@ -2331,9 +2333,7 @@ body.pastel-theme .story-separator{
           <span class="translate-icon">🇷🇴➡️🇰🇷</span>
           Tradu în coreeană
         </button>
-        </div>
-      <div id="roToKoResult"></div>
-<div id="roCorrected"></div> 
+      </div>
 
       <!-- LEGEND -->
       <div class="legend">
@@ -3001,8 +3001,7 @@ const labelsRo = {
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
 
-function buildClauseSentence(state, activeMap, clauseIndex){
-  if(!state) return { ko:"", ro:"", conj:"" };
+function buildClauseSentence(state, activeMap){
 
   const koParts = [];
   const v  = state.verb || "";
@@ -3012,9 +3011,7 @@ function buildClauseSentence(state, activeMap, clauseIndex){
     activeMap?.[key] !== false &&
     isColumnVisible(key);
 
-  /* =====================
-     SUBJECT
-  ===================== */
+  /* SUBJECT */
   if(use("subject") && state.subject){
 
     let subj = state.subject;
@@ -3026,30 +3023,22 @@ function buildClauseSentence(state, activeMap, clauseIndex){
     koParts.push(addSubjectWithParticle(subj));
   }
 
-  /* =====================
-     TIME
-  ===================== */
+  /* TIME */
   if(use("time") && state.time){
-    koParts.push(addTimeWithParticle(state.time));
+    koParts.push(state.time);
   }
 
-  /* =====================
-     PLACE
-  ===================== */
+  /* PLACE */
   if(use("place") && state.place){
     koParts.push(addPlaceWithParticle(state.place, v));
   }
 
-  /* =====================
-     MOD
-  ===================== */
+  /* MOD */
   if(use("mod") && state.mod){
     koParts.push(state.mod);
   }
 
-  /* =====================
-     OBJECT
-  ===================== */
+  /* OBJECT */
   if(use("object") && state.object){
 
     let obj = state.object;
@@ -3061,47 +3050,24 @@ function buildClauseSentence(state, activeMap, clauseIndex){
     koParts.push(addObjectWithParticle(obj));
   }
 
-  /* =====================
-     NUMERAL
-  ===================== */
+  /* NUMERAL */
   if(use("numeral") && state.numeral){
     koParts.push(state.numeral);
   }
 
-  /* =====================
-     COUNTER
-  ===================== */
+  /* COUNTER */
   if(use("counter") && state.counter){
     koParts.push(state.counter);
   }
 
-  /* =====================
-     VERB + CONJUGATION
-  ===================== */
+  /* VERB */
   if(use("verb") || use("conjug")){
-    const safeCj = getSafeConjugation(clauseIndex);
-    const vp = buildVerbPhrase(v, safeCj);
+    const vp = buildVerbPhrase(v, cj);
     if(vp) koParts.push(vp);
   }
 
-  /* =====================
-     FINAL KO
-  ===================== */
-  let koSentence = koParts
-    .join(" ")
-    .replace(/\s+/g," ")
-    .trim();
-
-  koSentence = fixFinalLinking(koSentence);
-
-  /* =====================
-     FINAL RO (natural)
-  ===================== */
-  const roSentence = buildNaturalRomanian(state, activeMap);
-
   return {
-    ko: koSentence,
-    ro: roSentence,
+    ko: koParts.join(" ").replace(/\s+/g," ").trim(),
     conj: cj
   };
 }
@@ -3322,85 +3288,78 @@ document.getElementById("roTranslateBtn")?.addEventListener("click", async () =>
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
-    function ensureLinkedSentences() {
-  // 0) Asigură structuri minime (NU return dacă lipsesc)
-  if (!Array.isArray(sentences)) sentences = [];
-  if (!Array.isArray(actives)) actives = [];
+function ensureLinkedSentences() {
 
-  // dacă nu ai nicio propoziție, creează P1
-  if (sentences.length === 0) sentences.push(makeEmptySentence());
-
-  // asigură actives pentru fiecare propoziție existentă
-  while (actives.length < sentences.length) actives.push(makeAllActive());
-  // dacă cumva actives are mai multe decât sentences, taie (safe)
-  if (actives.length > sentences.length) actives.length = sentences.length;
-
-  // 1) Detectăm dacă există linking în oricare propoziție
   let needsExtra = false;
+
+  // 🔒 parcurgere SAFE (fără push în loop)
   for (let i = 0; i < sentences.length; i++) {
-    const s = sentences[i] || (sentences[i] = makeEmptySentence());
-    const cj = (s.conjug || "").trim();
-
-    if (isLinkingConj(cj)) needsExtra = true;
-
-    // 2) Ultima propoziție NU poate rămâne linking
-    if (i === sentences.length - 1 && isLinkingConj(cj)) {
-      s.conjug = "-아요/어요";
-    }
+    const cj = sentences[i]?.conjug;
+    if (isLinkingConjugation(cj)) {
+      needsExtra = true;
   }
 
-  // 3) Dacă e nevoie de continuare, adaugă P2 o singură dată
+  // ➕ adăugăm propoziție DOAR O DATĂ
   if (needsExtra && sentences.length < 2) {
     sentences.push(makeEmptySentence());
     actives.push(makeAllActive());
   }
 
-  // 4) flag UI
-  showExtraClauses = needsExtra;
+  enableP2 = needsExtra;
+}
+    // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
+  // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
     function updatePreview(){
-if(!sentences.length) return;
-  const fullKo = buildFullKorean();
-  const fullRo = buildFullRomanian();
 
-  const previewKo = document.getElementById("previewKo");
-  if(previewKo){
-    previewKo.textContent = fullKo || "(alege cuvinte din tabel)";
-  }
+  const previewKo     = document.getElementById("previewKo");
+  const previewRo     = document.getElementById("previewRo");
+  const previewRoKo   = document.getElementById("previewRoKo");
+  const previewRoText = document.getElementById("previewRoText");
 
-  const roToKo = document.getElementById("roToKoResult");
-  if(roToKo){
-    roToKo.textContent = fullKo || "";
-  }
+  if(!previewKo) return;
 
-  const roCorr = document.getElementById("roCorrected");
-  if(roCorr){
-    roCorr.textContent = fullRo || "";
-  }
-}
-   function buildFullKorean(){
-
-  const parts = [];
+  const koParts = [];
 
   for(let i = 0; i < sentences.length; i++){
 
-    if(!sentences[i] || !actives[i]) continue;
+    const s = sentences[i];
+    if(!s) continue;
+
+    // ✅ regula ta FINALĂ:
+    const hideSubject = i > 0;
 
     const built = buildClauseSentence(
-      sentences[i],
-      actives[i],
-      i
+      { ...s, hideSubject },
+      actives[i]
     );
 
-    if(!built || !built.ko) continue;
-
-    parts.push(built.ko);
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
   }
 
-  let full = parts.join(" ").trim();
-  full = full.replace(/\s+/g," ");
+  const fullKo = koParts.join(" ").replace(/\s+/g," ").trim();
 
-  return full;
+  previewKo.textContent =
+    fullKo || "(alege cuvinte din tabel)";
+
+  if(previewRo){
+    previewRo.textContent =
+      showRo ? buildFullRomanian() : "";
+  }
+
+  if(previewRoKo){
+    previewRoKo.textContent = fullKo || "";
+  }
+
+  if(previewRoText){
+    previewRoText.textContent =
+      showRo ? buildFullRomanian() : "";
+  }
+
+  updateNaturalHint(fullKo);
+  updatePreviewCardState();
 }
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
@@ -4184,8 +4143,8 @@ on(DOM.enableP2, "change", ()=>{
    - NU mai referim variabile inexistente: screens/navButtons/setScreen etc.
    ========================= */
 function renderAll(){
-  try { ensureLinkedSentences(); } catch(e) { console.error(e); }
-  
+  ensureLinkedSentences();
+
   if(DOM.tableP1 && sentences[0] && actives[0]){
     renderClauseRow(DOM.tableP1, actives[0], sentences[0], 0);
   }
