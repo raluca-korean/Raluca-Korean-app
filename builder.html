@@ -3000,8 +3000,9 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
-
 function buildClauseSentence(state, activeMap){
+
+  if(!state) return { ko:"", ro:"", conj:"" };
 
   const koParts = [];
   const v  = state.verb || "";
@@ -3011,7 +3012,9 @@ function buildClauseSentence(state, activeMap){
     activeMap?.[key] !== false &&
     isColumnVisible(key);
 
-  /* SUBJECT */
+  /* =====================
+     SUBJECT
+  ===================== */
   if(use("subject") && state.subject){
 
     let subj = state.subject;
@@ -3023,22 +3026,30 @@ function buildClauseSentence(state, activeMap){
     koParts.push(addSubjectWithParticle(subj));
   }
 
-  /* TIME */
+  /* =====================
+     TIME
+  ===================== */
   if(use("time") && state.time){
-    koParts.push(state.time);
+    koParts.push(addTimeWithParticle(state.time));
   }
 
-  /* PLACE */
+  /* =====================
+     PLACE
+  ===================== */
   if(use("place") && state.place){
     koParts.push(addPlaceWithParticle(state.place, v));
   }
 
-  /* MOD */
+  /* =====================
+     MOD
+  ===================== */
   if(use("mod") && state.mod){
     koParts.push(state.mod);
   }
 
-  /* OBJECT */
+  /* =====================
+     OBJECT
+  ===================== */
   if(use("object") && state.object){
 
     let obj = state.object;
@@ -3050,24 +3061,49 @@ function buildClauseSentence(state, activeMap){
     koParts.push(addObjectWithParticle(obj));
   }
 
-  /* NUMERAL */
+  /* =====================
+     NUMERAL
+  ===================== */
   if(use("numeral") && state.numeral){
     koParts.push(state.numeral);
   }
 
-  /* COUNTER */
+  /* =====================
+     COUNTER
+  ===================== */
   if(use("counter") && state.counter){
     koParts.push(state.counter);
   }
 
-  /* VERB */
+  /* =====================
+     VERB + CONJUGATION
+  ===================== */
   if(use("verb") || use("conjug")){
-    const vp = buildVerbPhrase(v, cj);
+    const safeCj = getSafeConjugation(
+      sentences.indexOf(state)
+    );
+    const vp = buildVerbPhrase(v, safeCj);
     if(vp) koParts.push(vp);
   }
 
+  /* =====================
+     FINAL KO
+  ===================== */
+  let koSentence = koParts
+    .join(" ")
+    .replace(/\s+/g," ")
+    .trim();
+
+  koSentence = fixFinalLinking(koSentence);
+
+  /* =====================
+     FINAL RO (natural)
+  ===================== */
+  const roSentence = buildNaturalRomanian(state, activeMap);
+
   return {
-    ko: koParts.join(" ").replace(/\s+/g," ").trim(),
+    ko: koSentence,
+    ro: roSentence,
     conj: cj
   };
 }
