@@ -2997,76 +2997,73 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
-
 function buildClauseSentence(state, activeMap){
 
-  const koParts = [];
-  const v  = state.verb || "";
-  const cj = state.conjug || "";
+  if(!state) return "";
 
-  const use = (key) =>
-    activeMap?.[key] !== false &&
-    isColumnVisible(key);
+  const parts = [];
 
-  /* SUBJECT */
-  if(use("subject") && state.subject){
-
-    let subj = state.subject;
-
-    if(state.subjectAdj){
-      subj = state.subjectAdj + " " + subj;
-    }
-
-    koParts.push(addSubjectWithParticle(subj));
-  }
-
-  /* TIME */
-  if(use("time") && state.time){
-    koParts.push(state.time);
-  }
-
-  /* PLACE */
-  if(use("place") && state.place){
-    koParts.push(addPlaceWithParticle(state.place, v));
-  }
-
-  /* MOD */
-  if(use("mod") && state.mod){
-    koParts.push(state.mod);
-  }
-
-  /* OBJECT */
-  if(use("object") && state.object){
-
-    let obj = state.object;
-
-    if(state.objectAdj){
-      obj = state.objectAdj + " " + obj;
-    }
-
-    koParts.push(addObjectWithParticle(obj));
-  }
-
-  /* NUMERAL */
-  if(use("numeral") && state.numeral){
-    koParts.push(state.numeral);
-  }
-
-  /* COUNTER */
-  if(use("counter") && state.counter){
-    koParts.push(state.counter);
-  }
-
-  /* VERB */
-  if(use("verb") || use("conjug")){
-    const vp = buildVerbPhrase(v, cj);
-    if(vp) koParts.push(vp);
-  }
-
-  return {
-    ko: koParts.join(" ").replace(/\s+/g," ").trim(),
-    conj: cj
+  const isActive = (key) => {
+    if(!activeMap) return true;
+    if(activeMap[key] === undefined) return true;
+    return !!activeMap[key];
   };
+
+  // 1️⃣ SUBJECT
+  if(state.subject && isActive("subject")){
+    parts.push(state.subject);
+  }
+
+  // 2️⃣ ADJ (SUBJECT)
+  if(state.adjSubject && isActive("adjSubject")){
+    parts.push(state.adjSubject);
+  }
+
+  // 3️⃣ TIME
+  if(state.time && isActive("time")){
+    parts.push(state.time);
+  }
+
+  // 4️⃣ PLACE
+  if(state.place && isActive("place")){
+    parts.push(state.place);
+  }
+
+  // 5️⃣ MOD (adverb)
+  if(state.mod && isActive("mod")){
+    parts.push(state.mod);
+  }
+
+  // 6️⃣ ADJ (OBJECT)
+  if(state.adjObject && isActive("adjObject")){
+    parts.push(state.adjObject);
+  }
+
+  // 7️⃣ NUMERAL + COUNTER
+  if(state.numeral && state.counter && isActive("numeral")){
+    parts.push(state.numeral + " " + state.counter);
+  }
+
+  // 8️⃣ OBJECT
+  if(state.object && isActive("object")){
+    parts.push(state.object);
+  }
+
+  // 9️⃣ VERB
+  if(state.verb && isActive("verb")){
+    parts.push(state.verb);
+  }
+
+  // 🔟 CONJUGATION
+  if(state.conjug && isActive("conjug")){
+    parts.push(state.conjug.replace("-", ""));
+  }
+
+  return parts
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
     /* =========================
    11) NATURAL ROMANIAN (keep-ul tău, simplificat dar corect)
