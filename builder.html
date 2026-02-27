@@ -3306,56 +3306,29 @@ function createClauseTable(clauseIndex){
   // 4) flag UI
   showExtraClauses = needsExtra;
 }
-    function updatePreview(){
+  function updatePreview(){
 
-  const previewKo     = document.getElementById("previewKo");
-  const previewRo     = document.getElementById("previewRo");
-  const previewRoKo   = document.getElementById("previewRoKo");
-  const previewRoText = document.getElementById("previewRoText");
-
-  if(!previewKo) return;
-
-  const koParts = [];
-
-  for(let i = 0; i < sentences.length; i++){
-
-    const s = sentences[i];
-    if(!s) continue;
-
-    // ✅ regula ta FINALĂ:
-    const hideSubject = i > 0;
-
-    const built = buildClauseSentence(
-      { ...s, hideSubject },
-      actives[i]
-    );
-
-    if(built?.ko){
-      koParts.push(built.ko);
-    }
+  if(!Array.isArray(sentences) || !sentences.length){
+    return;
   }
 
-  const fullKo = koParts.join(" ").replace(/\s+/g," ").trim();
+  const fullKo = buildFullKorean();
+  const fullRo = buildFullRomanian ? buildFullRomanian() : "";
 
-  previewKo.textContent =
-    fullKo || "(alege cuvinte din tabel)";
-
-  if(previewRo){
-    previewRo.textContent =
-      showRo ? buildFullRomanian() : "";
+  const previewKo = document.getElementById("previewKo");
+  if(previewKo){
+    previewKo.textContent = fullKo || "(alege cuvinte din tabel)";
   }
 
-  if(previewRoKo){
-    previewRoKo.textContent = fullKo || "";
+  const roToKo = document.getElementById("roToKoResult");
+  if(roToKo){
+    roToKo.textContent = fullKo || "";
   }
 
-  if(previewRoText){
-    previewRoText.textContent =
-      showRo ? buildFullRomanian() : "";
+  const roCorr = document.getElementById("roCorrected");
+  if(roCorr){
+    roCorr.textContent = fullRo || "";
   }
-
-  updateNaturalHint(fullKo);
-  updatePreviewCardState();
 }
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
