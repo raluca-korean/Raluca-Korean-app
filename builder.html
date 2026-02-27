@@ -3322,30 +3322,33 @@ document.getElementById("roTranslateBtn")?.addEventListener("click", async () =>
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
-function ensureLinkedSentences() {
+function ensureLinkedSentences(){
+  // dacă nu există, ieșim safe
+  if(!Array.isArray(sentences) || !sentences.length) return;
+  if(!Array.isArray(actives) || !actives.length) return;
 
+  // 1) detectăm dacă există linking (-고, -기 전에 etc.)
   let needsExtra = false;
+  for(let i = 0; i < sentences.length; i++){
+    const cj = (sentences[i]?.conjug || "").trim();
+    if(isLinkingConj(cj)) needsExtra = true;
 
-  for (let i = 0; i < sentences.length; i++) {
-    const cj = sentences[i]?.conjug;
-    if (isLinkingConj(cj)) {
-      needsExtra = true;
-      break;
+    // 2) ultima propoziție nu are voie să rămână "linking"
+    if(i === sentences.length - 1 && isLinkingConj(cj)){
+      sentences[i].conjug = "-아요/어요";
     }
   }
 
-  // adăugăm propoziție doar dacă este nevoie
-  if (needsExtra && sentences.length < 2) {
+  // 3) dacă trebuie propoziție 2, o adăugăm o singură dată
+  if(needsExtra && sentences.length < 2){
     sentences.push(makeEmptySentence());
     actives.push(makeAllActive());
   }
 
+  // 4) control UI (P2 vizibil / invizibil)
   showExtraClauses = needsExtra;
 }
-    // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
-  // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
-}
-function updatePreview(){
+    function updatePreview(){
 if(!sentences.length) return;
   const fullKo = buildFullKorean();
   const fullRo = buildFullRomanian();
