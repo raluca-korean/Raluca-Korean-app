@@ -1,4 +1,4 @@
-Bb16
+Bb17
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -2520,7 +2520,7 @@ loadCustomData();
   {key:"verb", title:"VERB", ko:"동사", data:verbs, hint:"Acțiune", allowCustom:true},
   {key:"conjug", title:"CONJUGĂRI", ko:"", data:conjugations, hint:"Formă verbală", allowCustom:true}
 ];
-    const MULTI_VALUE_SLOTS = new Set(["subject", "verb"]);    
+    const MULTI_VALUE_SLOTS = new Set(["subject"]);
     const maxLen = Math.max(...columns.map(c => c.data.length));
     // ===== CLAUSE ENGINE (GENERALIZARE P1 / P2) =====
 const clauses = [
@@ -2592,15 +2592,14 @@ const DOM = {
    5) APP STATE (IMPORTANT)
    - Propoziții dinamice (1..N)
    ========================= */
+let indexModelRow = 0;
+    
 
     function makeEmptySentence(){
   const s = {};
   columns.forEach(col => s[col.key] = col.data[0] || "");
   return s;
 }
-   let indexModelRow = 0;
-
-let enableP2 = false;   // ✅ AICI 
 
 // sentences[0] = propoziția 1, sentences[1] = propoziția 2, etc.
 let sentences = [ makeEmptySentence() ];
@@ -2630,62 +2629,26 @@ function isColumnVisible(key){
 /* =========================
    7) LINKING CONJUGATIONS
    ========================= */
-
-    const LINKING_SET = new Set([
+const linkingConjugations = new Set([
   "-고","-고 나서","-기 전에","-(으)면서","-(으)며",
   "-(으)나","-(으)므로","-(으)ㄴ/는 만큼",
   "-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도",
   "-(으)ㄴ/는 반면에","-도록 하다","-기에","-길래","-고 말다","-고자 하다"
 ]);
-
-function isLinkingConjugation(cj){
-  return LINKING_SET.has(cj);
-}
-
-function preventDoubleLinking(prev, current){
-
-  if(isLinkingConjugation(prev) && isLinkingConjugation(current)){
-    return "";
-  }
-
-  return current;
-}
-function ensureLinkedSentences(){
-
-  let needsNext = false;
-
-  for(let i = 0; i < sentences.length; i++){
-    const cj = sentences[i]?.conjug;
-    if(isLinkingConjugation(cj)){
-      needsNext = true;
-    }
-  }
-
-  // ➕ adăugăm propoziția 2 doar o dată
-  if(needsNext && sentences.length < 2){
-    sentences.push(makeEmptySentence());
-    actives.push(makeAllActive());
-  }
-
-  showExtraClauses = needsNext;
-}
-    function fixFinalLinking(text){
-
+const isLinkingConj = (v) => linkingConjugations.has(v);
+function fixFinalLinking(text){
   if(!text) return text;
 
-  const linkingForms = [
-    "고", "면서", "며", "고 나서"
-  ];
+  const linkingForms = ["-고", "-면서", "-며", "-고 나서"];
 
   for(const form of linkingForms){
-
     if(text.trim().endsWith(form)){
-      return text.replace(new RegExp(form + "$"), "아요/어요");
+      return text.replace(form, "-아요/어요");
     }
   }
 
   return text;
-}    
+}
     /* =========================
    8) HANGUL HELPERS (batchim, conjugare)
    ========================= */
@@ -2832,25 +2795,27 @@ function buildVerbPhrase(dictVerb, cj) {
 }
 function getSafeConjugation(i){
 
-  const current =
+  const cj =
     sentences[i]?.conjug ??
+    sentences[i]?.conj ??
     "";
 
   const prev =
     sentences[i-1]?.conjug ??
+    sentences[i-1]?.conj ??
     "";
 
-  // 🚫 linking după linking
-  if(isLinkingConjugation(prev) && isLinkingConjugation(current)){
+  // 🚫 linking după linking → anulăm
+  if(isLinkingConj(prev) && isLinkingConj(cj)){
     return "";
   }
 
-  // 🚫 ultima propoziție NU poate fi linking
-  if(i === sentences.length - 1 && isLinkingConjugation(current)){
+  // 🚫 ultima propoziție linking → convertim
+  if(i === sentences.length - 1 && isLinkingConj(cj)){
     return "-아요/어요";
   }
 
-  return current;
+  return cj;
 }
     function preventDoubleLinking(prevCj, currentCj){
 
@@ -2976,27 +2941,13 @@ function buildClauseSentence(state, activeMap){
   if(use("counter") && state.counter){
     koParts.push(state.counter);
   }
-/* VERB */
-if(use("verb") || use("conjug")){
 
-  const verbs = state.verb;
-
-  if(Array.isArray(verbs)){
-
-    verbs.forEach((v,i)=>{
-      const cjUsed =
-        (i < verbs.length-1) ? "-고" : cj;
-
-      const vp = buildVerbPhrase(v, cjUsed);
-      if(vp) koParts.push(vp);
-    });
-
-  } else {
-
-    const vp = buildVerbPhrase(verbs, cj);
+  /* VERB */
+  if(use("verb") || use("conjug")){
+    const vp = buildVerbPhrase(v, cj);
     if(vp) koParts.push(vp);
   }
-} 
+
   return {
     ko: koParts.join(" ").replace(/\s+/g," ").trim(),
     conj: cj
@@ -3200,14 +3151,12 @@ function createClauseTable(clauseIndex){
   return { wrap, table };
 }
 
-document.getElementById("roTranslateBtn")?.addEventListener("click", ()=>{
+document.getElementById("roTranslateBtn")?.addEventListener("click", async () => {
 
   const roText = document.getElementById("roInput")?.value || "";
   if(!roText.trim()) return;
 
-  translateRoToBuilder(roText);
-});
-    // You already have your translation method; keep it.
+  // You already have your translation method; keep it.
   // Replace translateRoToKo with your real one.
  const { ko, roFixed } = translateRoToKo(roText);
   // display (if you want)
@@ -3243,28 +3192,51 @@ function ensureLinkedSentences() {
     // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
   // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
 }
-function updatePreview(){
+    function updatePreview(){
 
-  ensureLinkedSentences();
+  const previewKo     = document.getElementById("previewKo");
+  const previewRo     = document.getElementById("previewRo");
+  const previewRoKo   = document.getElementById("previewRoKo");
+  const previewRoText = document.getElementById("previewRoText");
 
-  const fullKo = buildFullKorean();
+  if(!previewKo) return;
 
-  if(DOM.previewKo){
-    DOM.previewKo.textContent =
-      fullKo || "(alege cuvinte din tabel)";
+  const koParts = [];
+
+  for(let i = 0; i < sentences.length; i++){
+
+    const s = sentences[i];
+    if(!s) continue;
+
+    // ✅ regula ta FINALĂ:
+    const hideSubject = i > 0;
+
+    const built = buildClauseSentence(
+      { ...s, hideSubject },
+      actives[i]
+    );
+
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
   }
 
-  if(DOM.previewRo){
-    DOM.previewRo.textContent =
+  const fullKo = koParts.join(" ").replace(/\s+/g," ").trim();
+
+  previewKo.textContent =
+    fullKo || "(alege cuvinte din tabel)";
+
+  if(previewRo){
+    previewRo.textContent =
       showRo ? buildFullRomanian() : "";
   }
 
-  if(DOM.previewRoKo){
-    DOM.previewRoKo.textContent = fullKo || "";
+  if(previewRoKo){
+    previewRoKo.textContent = fullKo || "";
   }
 
-  if(DOM.previewRoText){
-    DOM.previewRoText.textContent =
+  if(previewRoText){
+    previewRoText.textContent =
       showRo ? buildFullRomanian() : "";
   }
 
@@ -3759,50 +3731,27 @@ const RO_FORM_TO_INF = {
   "citesc":"a citi","citesti":"a citi","citești":"a citi","citeste":"a citi","citește":"a citi","citim":"a citi","cititi":"a citi","citiți":"a citi",
   "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie","scriem":"a scrie","scrieti":"a scrie","scrieți":"a scrie"
 };
-    function parseRoToState(roSentence){
 
+function parseRoToState(roSentence){
   const t = normRo(roSentence);
 
-  /* SUBJECT */
+  // subject
   let subj = "";
   if(/\beu\b/.test(t)) subj = "저";
   else if(/\btu\b/.test(t)) subj = "너";
   else if(/\bnoi\b/.test(t)) subj = "우리";
   else if(/\bvoi\b/.test(t)) subj = "너희";
 
-  /* TIME / PLACE / MOD / OBJECT */
-  const time =
-    findKoByRo("time", roSentence) ||
-    (/\bastazi\b/.test(t) ? "오늘" : "") ||
-    (/\bmaine\b/.test(t) ? "내일" : "") ||
-    (/\bieri\b/.test(t) ? "어제" : "");
-
-  const place =
-    findKoByRo("place", roSentence) ||
-    (/\bbanc(a|ă)\b/.test(t) ? "은행" : "") ||
-    (/\bpiat(a|ă)\b/.test(t) ? "시장" : "");
-
+  // time/place/mod/object/verb
+  const time   = findKoByRo("time", roSentence) || (/\bastazi\b/.test(t) ? "오늘" : "") || (/\bmaine\b/.test(t) ? "내일" : "") || (/\bieri\b/.test(t) ? "어제" : "");
+  const place  = findKoByRo("place", roSentence) || (/\bbanc(a|ă)\b/.test(t) ? "은행" : "") || (/\bpiat(a|ă)\b/.test(t) ? "시장" : "");
   const mod    = findKoByRo("mod", roSentence);
   const object = findKoByRo("object", roSentence);
 
-  /* VERB */
   let verb = findKoByRo("verb", roSentence);
 
-  // ✅ MULTI-VERB detection (fără a elimina logica existentă)
-  const verbMatches = [];
-
-  Object.keys(RO_FORM_TO_INF).forEach(form=>{
-    if(t.includes(form)){
-      const inf = RO_FORM_TO_INF[form];
-      const ko  = REV.verb?.[normRo(inf)];
-      if(ko) verbMatches.push(ko);
-    }
-  });
-
-  const cleanVerbs = verbMatches.filter(Boolean);
-
-  /* INFINITIV "a ___" */
-  if(!verb && !cleanVerbs.length){
+  // infinitiv "a ___"
+  if(!verb){
     const m = t.match(/\ba\s+([a-zăâîșț]+)/i);
     if(m){
       const inf = ("a " + m[1]).toLowerCase();
@@ -3810,8 +3759,8 @@ const RO_FORM_TO_INF = {
     }
   }
 
-  /* FORME CONJUGATE */
-  if(!verb && !cleanVerbs.length){
+  // forme conjugate
+  if(!verb){
     for(const w of t.split(" ")){
       const inf = RO_FORM_TO_INF[w];
       if(inf){
@@ -3821,8 +3770,8 @@ const RO_FORM_TO_INF = {
     }
   }
 
-  /* SINONIME SIMPLE */
-  if(!verb && !cleanVerbs.length){
+  // sinonime simple
+  if(!verb){
     if(/\bpleca\b|\bplec\b|\bpleci\b/.test(t)) verb = "가다";
     else if(/\bsosi\b|\bajunge\b|\bajuns\b/.test(t)) verb = "오다";
   }
@@ -3837,15 +3786,12 @@ const RO_FORM_TO_INF = {
     object: object || "",
     numeral: "",
     counter: "",
-
-    // ✅ dacă avem mai multe verbe → array
-    verb: cleanVerbs.length ? cleanVerbs : (verb || ""),
-
+    verb: verb || "",
     conjug: conj || "-아요/어요"
   };
 }
 
-    /* =========================
+/* =========================
    21) RO -> KO (butonul "Tradu în coreeană")
    - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
    ========================= */
@@ -4195,131 +4141,6 @@ function buildFullRomanian(){
 
   return full;
 }
-   function buildFullKorean(){
-
-  const parts = [];
-
-  for(let i = 0; i < sentences.length; i++){
-
-    const s = sentences[i];
-    if(!s) continue;
-
-    const safeConj = getSafeConjugation(i);
-
-    const built = buildClauseSentence(
-      {
-        ...s,
-        conjug: safeConj,
-        hideSubject: i > 0   // 🔥 regula ta
-      },
-      actives[i]
-    );
-
-    if(built?.ko){
-      parts.push(built.ko);
-    }
-  }
-
-  return parts.join(" ").replace(/\s+/g," ").trim();
-} 
-  function splitRomanianText(text){
-  if(!text) return [];
-
-  return text
-    .replace(/\s+/g," ")
-    .split(/[.!?]+/)
-    .map(s => s.trim())
-    .filter(Boolean);
-}
-
-function detectMultipleVerbs(roSentence){
-
-  const t = normRo(roSentence);
-  const found = [];
-
-  Object.entries(RO_FORM_TO_INF).forEach(([form, inf])=>{
-    if(t.includes(form)){
-      const ko = REV.verb?.[normRo(inf)];
-      if(ko && !found.includes(ko)){
-        found.push(ko);
-      }
-    }
-  });
-
-  return found;
-}
-
-function parseRoToState(roSentence){
-
-  const t = normRo(roSentence);
-
-  let subj = "";
-  if(/\beu\b/.test(t)) subj = "저";
-  else if(/\btu\b/.test(t)) subj = "너";
-  else if(/\bnoi\b/.test(t)) subj = "우리";
-  else if(/\bvoi\b/.test(t)) subj = "너희";
-
-  const verbsDetected = detectMultipleVerbs(roSentence);
-
-  let verb = findKoByRo("verb", roSentence);
-
-  if(!verb && verbsDetected.length){
-    verb = verbsDetected[0];
-  }
-
-  const conj = detectConjFromRo(roSentence);
-
-  return {
-    subject: subj || "저",
-    time: findKoByRo("time", roSentence) || "",
-    place: findKoByRo("place", roSentence) || "",
-    mod: findKoByRo("mod", roSentence) || "",
-    object: findKoByRo("object", roSentence) || "",
-    numeral: "",
-    counter: "",
-    verb: verb || "",
-    verbsMulti: verbsDetected,
-    conjug: conj || "-아요/어요"
-  };
-}
-    function translateRoToBuilder(roText){
-
-  const clauses = splitRomanianText(roText);
-
-  if(!clauses.length) return;
-
-  sentences = [];
-  actives   = [];
-
-  clauses.forEach((clause, idx)=>{
-
-    const parsed = parseRoToState(clause);
-
-    sentences.push(parsed);
-    actives.push(makeAllActive());
-
-    if(parsed.verbsMulti?.length > 1){
-
-      parsed.verbsMulti.forEach((verbKo, vIdx)=>{
-
-        if(vIdx === 0) return;
-
-        sentences.push({
-          ...parsed,
-          verb: verbKo,
-          conjug: "-고"
-        });
-
-        actives.push(makeAllActive());
-      });
-    }
-  });
-
-  ensureLinkedSentences();
-  renderAll();
-}
-    
-    
-      </script>
+  </script>
 </body>
 </html> 
