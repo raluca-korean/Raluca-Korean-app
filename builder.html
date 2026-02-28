@@ -3288,27 +3288,35 @@ document.getElementById("roTranslateBtn")?.addEventListener("click", async () =>
     /* =========================
    13) PREVIEW: KO + RO pentru N propoziții
    ========================= */
-function ensureLinkedSentences() {
+function ensureLinkedSentences(){
+  if(!Array.isArray(sentences) || !sentences.length) return;
+  if(!Array.isArray(actives) || !actives.length) return;
 
-  let needsExtra = false;
+  // 1) determinăm câte propoziții sunt NECESARE pe baza linking-urilor
+  let neededLen = 1;
 
-  // 🔒 parcurgere SAFE (fără push în loop)
-  for (let i = 0; i < sentences.length; i++) {
-    const cj = sentences[i]?.conjug;
-    if (isLinkingConjugation(cj)) {
-      needsExtra = true;
+  for(let i = 0; i < sentences.length; i++){
+    const cj = (sentences[i]?.conjug || "").trim();
+
+    // dacă propoziția i e linking, atunci trebuie să existe i+1
+    if(isLinkingConj(cj)){
+      neededLen = Math.max(neededLen, i + 2);
+    }
+
+    // ultima propoziție nu are voie să rămână linking
+    if(i === sentences.length - 1 && isLinkingConj(cj)){
+      sentences[i].conjug = "-아요/어요";
+    }
   }
 
-  // ➕ adăugăm propoziție DOAR O DATĂ
-  if (needsExtra && sentences.length < 2) {
+  // 2) completăm sentences/actives până la neededLen
+  while(sentences.length < neededLen){
     sentences.push(makeEmptySentence());
     actives.push(makeAllActive());
   }
 
-  enableP2 = needsExtra;
-}
-    // dacă user a debifat enableP2 și are doar HTML cu 2 tabele,
-  // îl respectăm: păstrăm max 2 pentru UI, dar state intern rămâne N
+  // 3) control UI: dacă avem nevoie de cel puțin 2 propoziții, arătăm extra
+  showExtraClauses = (neededLen > 1);
 }
     function updatePreview(){
 
