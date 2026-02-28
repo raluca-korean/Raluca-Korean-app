@@ -3962,7 +3962,6 @@ function setupUI(){
   // Reset toggles
   on(DOM.resetBtn, "click", ()=>{
     actives = actives.map(()=>makeAllActive());
-    // resync chips UI
     createToggleChips();
     renderAll();
   });
@@ -3974,7 +3973,7 @@ function setupUI(){
     updatePreview();
   });
 
-  // Random (pe propoziția 1, doar coloanele active)
+  // Random
   on(DOM.randomBtn, "click", ()=>{
     const s = sentences[0];
     const a = actives[0];
@@ -4008,7 +4007,7 @@ function setupUI(){
     renderFavorites();
     if(DOM.favBtn){
       DOM.favBtn.textContent = "⭐ Salvat!";
-      setTimeout(()=>{ if(DOM.favBtn) DOM.favBtn.textContent="⭐ Salvează propoziția"; }, 800);
+      setTimeout(()=>{ if(DOM.favBtn) DOM.favBtn.textContent="💾"; }, 800);
     }
   });
 
@@ -4049,133 +4048,104 @@ function setupUI(){
     renderPanelList(col);
   });
 
-  // Enable P2 (doar UI pentru tabelul 2, ca în HTML-ul tău)
-on(DOM.enableP2, "change", ()=>{
-  const onOff = DOM.enableP2.checked;
+  // Enable P2
+  on(DOM.enableP2, "change", ()=>{
+    const onOff = DOM.enableP2.checked;
 
-  // 🔴 FIX CRITIC: creează propoziția 2 la bifare
-  if (onOff) {
-    if (!sentences[1]) {
-      sentences[1] = makeEmptySentence();
-      actives[1]   = makeAllActive();
+    if (onOff) {
+      if (!sentences[1]) {
+        sentences[1] = makeEmptySentence();
+        actives[1]   = makeAllActive();
+      }
     }
-  }
 
-  if(DOM.tableP2){
-    onOff ? show(DOM.tableP2) : hide(DOM.tableP2);
-  }
-  if(DOM.titleP2){
-    onOff ? show(DOM.titleP2) : hide(DOM.titleP2);
-  }
+    if(DOM.tableP2){
+      onOff ? show(DOM.tableP2) : hide(DOM.tableP2);
+    }
+    if(DOM.titleP2){
+      onOff ? show(DOM.titleP2) : hide(DOM.titleP2);
+    }
 
-  renderAll();
-});
- // RO Translate button
-on(DOM.roTranslateBtn, "click", ()=>{
-  const txt = (DOM.roInput?.value || "").trim();
+    renderAll();
+  });
 
-  if(!txt) return;
+  // RO Translate button
+  on(DOM.roTranslateBtn, "click", ()=>{
+    const txt = (DOM.roInput?.value || "").trim();
+    if(!txt) return;
 
-  translateRoToKo(txt);
+    translateRoToKo(txt);
+    updatePreview();
 
-  // NU mai chemăm renderAll
-  updatePreview();
+    if (DOM.roInput) {
+      DOM.roInput.value = buildFullRomanian();
+    }
+  });
+} // ✅ AICI se închide setupUI corect
 
-  if (DOM.roInput) {
-    DOM.roInput.value = buildFullRomanian();
-  }
-});
-  document.addEventListener("DOMContentLoaded", () => {
-  setupUI();
-  loadModelRow(indexModelRow);
-  renderAll();
-});
-}
-  /* =========================
-   23) RENDER ALL (fixează “tabelele nu sunt”)
-   - NU mai referim variabile inexistente: screens/navButtons/setScreen etc.
+
+// ✅ dacă nu ai aceste funcții definite în altă parte, pune no-op ca să nu crape:
+function updateNaturalHint(){ }
+function updatePreviewCardState(){ }
+
+
+/* =========================
+   23) RENDER ALL
    ========================= */
 function renderAll(){
   ensureLinkedSentences();
 
-  if(DOM.tableP1 && sentences[0] && actives[0]){
+  if(!sentences[0] || !actives[0]) return;
+
+  if(DOM.tableP1){
     renderClauseRow(DOM.tableP1, actives[0], sentences[0], 0);
   }
-if (!sentences[0] || !actives[0]) return;
-  // P2 = apare AUTOMAT dacă există showExtraClauses
-if (DOM.tableP2 && sentences[1] && actives[1]) {
-  if (showExtraClauses) {
-    show(DOM.tableP2);
-    DOM.titleP2 && show(DOM.titleP2);
-    renderClauseRow(DOM.tableP2, actives[1], sentences[1], 1);
-  } else {
-    hide(DOM.tableP2);
-    DOM.titleP2 && hide(DOM.titleP2);
+
+  if (DOM.tableP2 && sentences[1] && actives[1]) {
+    if (showExtraClauses) {
+      show(DOM.tableP2);
+      DOM.titleP2 && show(DOM.titleP2);
+      renderClauseRow(DOM.tableP2, actives[1], sentences[1], 1);
+    } else {
+      hide(DOM.tableP2);
+      DOM.titleP2 && hide(DOM.titleP2);
+    }
   }
-}
-  renderExtraClauses();   // 👈 AICI
-  const lastClause = document.querySelector(
-  `.clause-extra[data-clause-index="${sentences.length-1}"]`
-);
-if (lastClause) {
-  lastClause.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-  // ===== EXTRA CLAUSES (P3+) =====
-const extra = $("#extra-clauses");
-if (extra) {
-  extra.innerHTML = "";
 
-  for (let i = 2; i < sentences.length; i++) {
-    const { wrap, table } = createClauseTable(i);
-    extra.appendChild(wrap);
+  renderExtraClauses();
 
-    renderClauseRow(table, actives[i], sentences[i], i);
-    attachPressHandlers(table, i);
+  // EXTRA P3+
+  const extra = $("#extra-clauses");
+  if (extra) {
+    extra.innerHTML = "";
+    for (let i = 2; i < sentences.length; i++) {
+      const { wrap, table } = createClauseTable(i);
+      extra.appendChild(wrap);
+      renderClauseRow(table, actives[i], sentences[i], i);
+      attachPressHandlers(table, i);
+    }
   }
+
+  updateModelNav();
+  updatePreview();
 }
 
-updateModelNav();
-updatePreview();  
-}
-const refreshBtn = document.getElementById("refreshBtn");
-const homeBtn    = document.getElementById("homeBtn");
 
-if(refreshBtn){
-  refreshBtn.addEventListener("click", ()=>{
-    location.reload();
-  });
-}
-
-if(homeBtn){
-  homeBtn.addEventListener("click", ()=>{
-    window.location.href = "index.html"; 
-    // 🔥 dacă pagina principală are alt nume, modifică aici
-  });
-} 
 /* =========================
-   24) BOOTSTRAP
+   24) BOOTSTRAP (UN SINGUR)
    ========================= */
 document.addEventListener("DOMContentLoaded", ()=>{
-  // init state
   loadModelRow(indexModelRow);
-
-  // chips
   createToggleChips();
 
-  // attach long-press handlers (P1/P2)
   attachPressHandlers(DOM.tableP1, 0);
   attachPressHandlers(DOM.tableP2, 1);
 
-  // UI events
   setupUI();
-
-  // favorites initial
   renderFavorites();
-
-  // first render
   renderAll();
 });
-    
+    }
     function renderExtraClauses() {
   if (!DOM.extraClauses) return;
 
