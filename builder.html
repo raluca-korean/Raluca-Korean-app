@@ -3914,54 +3914,38 @@ function parseRoToState(roSentence){
    - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
    ========================= */
 function translateRoToKo(roText){
-
   const original = (roText || "").trim();
+
   if(!original){
     sentences = [ makeEmptySentence() ];
     actives   = [ makeAllActive() ];
     showExtraClauses = false;
-    enableP2 = false;
     renderAll();
     return { ko:"", roFixed:"" };
   }
 
   const norm = normRo(original);
 
-  // 🔥 split pe conectori multipli
   const clausesRo = norm
     .split(/\b(și|si|iar|apoi)\b/i)
     .filter(x => !/^(și|si|iar|apoi)$/i.test(x))
     .map(x => x.trim())
     .filter(Boolean);
 
-  // reset state
   sentences = [];
   actives   = [];
 
-  // 🔥 dacă este o singură propoziție
   if(clausesRo.length <= 1){
-
     const st = parseRoToState(original);
-
     sentences.push(st);
     actives.push(makeAllActive());
-
     showExtraClauses = false;
-    enableP2 = false;
-
-  }else{
-
-    // 🔥 propoziții multiple
+  } else {
     clausesRo.forEach((cl, index)=>{
-
       const st = parseRoToState(cl);
 
-      // 🔥 DOAR prima propoziție păstrează subiectul
-      if(index > 0){
-        st.subject = "";
-      }
+      if(index > 0) st.subject = "";
 
-      // 🔥 toate în afară de ultima primesc -고
       if(index < clausesRo.length - 1){
         st.conjug = "-고";
       }
@@ -3970,9 +3954,7 @@ function translateRoToKo(roText){
       actives.push(makeAllActive());
     });
 
-    // 🔥 activăm automat P2 (și restul)
     showExtraClauses = true;
-    enableP2 = true;
   }
 
   renderAll();
