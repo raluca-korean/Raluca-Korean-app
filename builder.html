@@ -2706,21 +2706,22 @@ let indexModelRow = 0;
     let sentences = [ makeEmptySentence() ];
 let actives   = [ makeAllActive() ];
     function makeEmptySentence(){
-  return {
-    subject: "",
-    subjectAdjs: [],
-    time: "",
-    place: "",
-    mod: "",
-    object: "",
-    objectAdjs: [],
-    numeral: "",
-    counter: "",
-    verb: "",
-    conjug: ""
-  };
-}
-    function makeAllActive(){
+
+  const s = {};
+
+  // inițializare din columns (cum ai deja)
+  columns.forEach(col => {
+    s[col.key] = col.data[0] || "";
+  });
+
+  // 🔥 ADAUGĂ ASTA
+  s.subjectAdjs = [];
+  s.objectAdjs = [];
+
+  return s;
+}  
+
+function makeAllActive(){
   const a = {};
   columns.forEach(col => a[col.key] = true);
   return a;
@@ -2730,71 +2731,8 @@ let showRo = true;
     let showExtraClauses = false;    
 let currentMode = "topik"; // topik vs simple
 const simpleColumnsSet = {subject:true,time:true,object:true,verb:true,conjug:true};
-function buildKoreanSentence(sentence){
 
-  let parts = [];
-
-  sentence.clauses.forEach((clause, index)=>{
-
-    let clauseParts = [];
-
-    // TIME multiplu
-    if(clause.times.length){
-      clauseParts.push(
-        clause.times.map(t=>mapRoTime(t)).join("과 ")
-      );
-    }
-
-    // SUBJECT multiplu
-    if(clause.subjects.length){
-      let subs = clause.subjects.map(s=>{
-        let adjs = s.adjs.map(mapRoAdj).join("고 ");
-        return (adjs ? adjs+" " : "") + mapRoNoun(s.noun);
-      });
-      clauseParts.push(subs.join("과 ") + "는");
-    }
-
-    // PLACE multiplu
-    if(clause.places.length){
-      clauseParts.push(
-        clause.places.map(p=>mapRoPlace(p)).join("과 ") + "에서"
-      );
-    }
-
-    // OBJECT
-    if(clause.objects.length){
-      clause.objects.forEach(obj=>{
-        let adjs = obj.adjs.map(mapRoAdj).join("고 ");
-        let numeral = obj.numeral ? obj.numeral + " " + (obj.counter || "") : "";
-        clauseParts.push(
-          (adjs ? adjs+" " : "") +
-          mapRoNoun(obj.noun) +
-          (numeral ? " " + numeral : "") +
-          "을"
-        );
-      });
-    }
-
-    // SUBCLAUSE temporală
-    clause.subClauses.forEach(sub=>{
-      if(sub.type==="temporal"){
-        clauseParts.push(
-          mapRoVerbStem(sub.verb) + "한 후에"
-        );
-      }
-    });
-
-    // VERB
-    clauseParts.push(
-      conjugateKorean(mapRoVerb(clause.verb), clause.tense)
-    );
-
-    parts.push(clauseParts.join(" "));
-  });
-
-  return parts.join(" ");
-}
-    /* =========================
+/* =========================
    6) MODE: ce coloane se văd
    ========================= */
 function isColumnVisible(key){
@@ -3984,9 +3922,9 @@ function parseRoToState(roSentence){
    21) RO -> KO (butonul "Tradu în coreeană")
    - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
    ========================= */
-    function translateRoToKo(roText){
-
+function translateRoToKo(roText){
   const original = (roText || "").trim();
+
   if(!original){
     sentences = [ makeEmptySentence() ];
     actives   = [ makeAllActive() ];
@@ -3995,55 +3933,40 @@ function parseRoToState(roSentence){
     return { ko:"", roFixed:"" };
   }
 
-  const text = normRo(original);
+  const norm = normRo(original);
 
-  // 🔎 detectăm verbe conjugate
-  const words = text.split(" ");
-  const verbIndexes = [];
+  const clausesRo = norm
+    .split(/\b(și|si|iar|apoi)\b/i)
+    .filter(x => !/^(și|si|iar|apoi)$/i.test(x))
+    .map(x => x.trim())
+    .filter(Boolean);
 
-  words.forEach((w,i)=>{
-    if(RO_FORM_TO_INF[w]) verbIndexes.push(i);
-    if(/\bvoi\b|\bo sa\b/.test(w)) verbIndexes.push(i);
-  });
-
-  // dacă nu găsim verbe → o singură propoziție
-  if(verbIndexes.length <= 1){
-    sentences = [ parseRoToState(original) ];
-    actives   = [ makeAllActive() ];
-    showExtraClauses = false;
-    renderAll();
-    return {
-      ko: buildFullKorean(),
-      roFixed: buildFullRomanian()
-    };
-  }
-
-  // 🔥 împărțire inteligentă
   sentences = [];
   actives   = [];
 
-  for(let i=0; i<verbIndexes.length; i++){
-    const start = verbIndexes[i];
-    const end   = verbIndexes[i+1] || words.length;
-
-    const clauseWords = words.slice(start, end).join(" ");
-    const st = parseRoToState(clauseWords);
-
-    if(i > 0) st.subject = "";
-
-    if(i < verbIndexes.length - 1){
-      st.conjug = "-고";
-    }
-
+  if(clausesRo.length <= 1){
+    const st = parseRoToState(original);
     sentences.push(st);
     actives.push(makeAllActive());
+    showExtraClauses = false;
+  } else {
+    clausesRo.forEach((cl, index)=>{
+      const st = parseRoToState(cl);
+
+      if(index > 0) st.subject = "";
+
+      if(index < clausesRo.length - 1){
+        st.conjug = "-고";
+      }
+
+      sentences.push(st);
+      actives.push(makeAllActive());
+    });
+
+    showExtraClauses = true;
   }
 
- if (sentences.length > 1 && DOM.enableP2) {
-  DOM.enableP2.checked = true;
-  DOM.enableP2.dispatchEvent(new Event("change"));
-}
-      renderAll();
+  renderAll();
 
   return {
     ko: buildFullKorean(),
