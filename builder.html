@@ -3333,26 +3333,19 @@ function updateModelNav(){
   if(DOM.prevBtn) DOM.prevBtn.disabled = (indexModelRow === 0);
   if(DOM.nextBtn) DOM.nextBtn.disabled = (indexModelRow >= maxLen-1);
 }
-
-/* =========================
-   14) CHIPS (togglesP1/togglesP2)
-   ========================= */
 /* =========================
    14) CHIPS (togglesP1/togglesP2)
    ========================= */
 function createToggleChips(){
-
-  if(!DOM.togglesP1) return;
+  if(!DOM.togglesP1 && !DOM.togglesP2) return;
 
   const buildFor = (wrapper, clauseIndex) => {
     if(!wrapper) return;
-
     wrapper.innerHTML = "";
 
     if(!actives[clauseIndex]) return;
 
-    columns.forEach(col => {
-
+    columns.forEach(col=>{
       if(!isColumnVisible(col.key)) return;
 
       const chip = document.createElement("label");
@@ -3369,29 +3362,25 @@ function createToggleChips(){
 
       chip.classList.toggle("chip-off", !cb.checked);
 
+      cb.addEventListener("change", ()=>{
+        const idx = Number(cb.dataset.clauseIndex);
+        const key = cb.dataset.key;
+
+        if(!actives[idx]) actives[idx] = createAllActive();
+        actives[idx][key] = cb.checked;
+
+        chip.classList.toggle("chip-off", !cb.checked);
+        renderAll();
+      });
+
       wrapper.appendChild(chip);
     });
-
-    wrapper.onchange = (e)=>{
-      const cb = e.target;
-      if(!cb || cb.tagName !== "INPUT") return;
-
-      const key = cb.dataset.key;
-      const idx = Number(cb.dataset.clauseIndex);
-
-      if(!actives[idx]) actives[idx] = createAllActive();
-
-      actives[idx][key] = cb.checked;
-
-      cb.parentElement.classList.toggle("chip-off", !cb.checked);
-
-      renderAll();
-    };
   };
 
   buildFor(DOM.togglesP1, 0);
   buildFor(DOM.togglesP2, 1);
 }
+     
  /* =========================
    LONG PRESS (iOS SAFE) + CLICK
    - delegare pe container (nu pe fiecare .col)
@@ -3485,6 +3474,119 @@ function attachPressHandlers(container, clauseIndex){
   container.addEventListener("pointercancel", clearAll, {passive:true});
   container.addEventListener("pointerleave", clearAll, {passive:true});
 }
+     let panelClauseIndex = 0;
+let panelKey = "subject";
+
+function openPanel(clauseIndex, key){
+  panelClauseIndex = clauseIndex;
+  panelKey = key;
+
+  const col = columns.find(c => c.key === key);
+  if(!col) return;
+
+  if(DOM.panelTitle) DOM.panelTitle.textContent = `Propoziția ${clauseIndex + 1} – ${col.title}`;
+  if(DOM.panelSub) DOM.panelSub.textContent = col.hint || "";
+
+  if(DOM.panelSearchInput) DOM.panelSearchInput.value = "";
+  if(DOM.newWordInput) DOM.newWordInput.value = "";
+  if(DOM.newWordTransInput) DOM.newWordTransInput.value = "";
+
+  renderPanelList(col);
+
+  // IMPORTANT: overlay poate fi null dacă lipsește în HTML
+  if(DOM.overlay){
+    DOM.overlay.classList.remove("hidden");
+  }
+}
+
+function renderPanelList(col){
+  if(!DOM.panelList) return;
+
+  DOM.panelList.innerHTML = "";
+
+  const key = col.key;
+  const map = translations[key] || {};
+  const filter = (DOM.panelSearchInput?.value || "").trim().toLowerCase();
+
+  const words = (col.data || []).filter(w=>{
+    if(!w) return false;
+    if(!filter) return true;
+    return String(w).toLowerCase().includes(filter);
+  });
+
+  if(!words.length){
+    const empty = document.createElement("div");
+    empty.className = "panel-item";
+    empty.textContent = "Nu există cuvinte pentru filtrul introdus.";
+    DOM.panelList.appendChild(empty);
+    return;
+  }
+
+  words.forEach(word=>{
+    const item = document.createElement("div");
+    item.className = "panel-item";
+
+    const main = document.createElement("div");
+    main.className = "panel-item-main";
+    main.textContent = word;
+    item.appendChild(main);
+
+    const extra = document.createElement("div");
+    extra.className = "panel-item-extra";
+
+    const ro = map[word];
+    if(ro){
+      const tag = document.createElement("div");
+      tag.className = "panel-item-tag";
+      tag.textContent = ro;
+      extra.appendChild(tag);
+    }
+
+    if(key === "conjug" && isLinkingConj(word)){
+      const star = document.createElement("div");
+      star.className = "panel-item-tag";
+      star.textContent = "⭐ linking";
+      extra.appendChild(star);
+    }
+
+    item.appendChild(extra);
+
+    // CLICK -> select (single)
+    item.addEventListener("click", ()=>{
+      if(!sentences[panelClauseIndex]){
+        ensureClauseCount(panelClauseIndex + 1);
+      }
+
+      // ✅ adjective columns sunt multi-array, nu string
+      if(key === "subjectAdj"){
+        const arr = sentences[panelClauseIndex].subjectAdjs || [];
+        if(!arr.includes(word)) arr.push(word);
+        sentences[panelClauseIndex].subjectAdjs = arr;
+      } else if(key === "objectAdj"){
+        const arr = sentences[panelClauseIndex].objectAdjs || [];
+        if(!arr.includes(word)) arr.push(word);
+        sentences[panelClauseIndex].objectAdjs = arr;
+      } else if(key === "subject"){
+        sentences[panelClauseIndex][key] = word;
+      } else {
+        sentences[panelClauseIndex][key] = word;
+      }
+
+      // linking -> asigură propoziție următoare
+      if(key === "conjug"){
+        handleLinkingAt(panelClauseIndex);
+        enforceNoDoubleLinking();
+        enforceFinalNotLinking();
+      }
+
+      if(DOM.overlay) DOM.overlay.classList.add("hidden");
+      renderAll();
+    });
+
+    DOM.panelList.appendChild(item);
+  });
+}
+     
      /* =========================
    16) APPLY WORD TO STATE
    ========================= */
