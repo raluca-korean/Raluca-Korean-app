@@ -3922,9 +3922,9 @@ function parseRoToState(roSentence){
    21) RO -> KO (butonul "Tradu în coreeană")
    - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
    ========================= */
-function translateRoToKo(roText){
-  const original = (roText || "").trim();
+    function translateRoToKo(roText){
 
+  const original = (roText || "").trim();
   if(!original){
     sentences = [ makeEmptySentence() ];
     actives   = [ makeAllActive() ];
@@ -3933,37 +3933,51 @@ function translateRoToKo(roText){
     return { ko:"", roFixed:"" };
   }
 
-  const norm = normRo(original);
+  const text = normRo(original);
 
-  const clausesRo = norm
-    .filter(x => !/^(și|si|iar|apoi)$/i.test(x))
-    .map(x => x.trim())
-    .filter(Boolean);
+  // 🔎 detectăm verbe conjugate
+  const words = text.split(" ");
+  const verbIndexes = [];
 
+  words.forEach((w,i)=>{
+    if(RO_FORM_TO_INF[w]) verbIndexes.push(i);
+    if(/\bvoi\b|\bo sa\b/.test(w)) verbIndexes.push(i);
+  });
+
+  // dacă nu găsim verbe → o singură propoziție
+  if(verbIndexes.length <= 1){
+    sentences = [ parseRoToState(original) ];
+    actives   = [ makeAllActive() ];
+    showExtraClauses = false;
+    renderAll();
+    return {
+      ko: buildFullKorean(),
+      roFixed: buildFullRomanian()
+    };
+  }
+
+  // 🔥 împărțire inteligentă
   sentences = [];
   actives   = [];
 
-  if(clausesRo.length <= 1){
-    const st = parseRoToState(original);
+  for(let i=0; i<verbIndexes.length; i++){
+    const start = verbIndexes[i];
+    const end   = verbIndexes[i+1] || words.length;
+
+    const clauseWords = words.slice(start, end).join(" ");
+    const st = parseRoToState(clauseWords);
+
+    if(i > 0) st.subject = "";
+
+    if(i < verbIndexes.length - 1){
+      st.conjug = "-고";
+    }
+
     sentences.push(st);
     actives.push(makeAllActive());
-    showExtraClauses = false;
-  } else {
-    clausesRo.forEach((cl, index)=>{
-      const st = parseRoToState(cl);
-
-      if(index > 0) st.subject = "";
-
-      if(index < clausesRo.length - 1){
-        st.conjug = "-고";
-      }
-
-      sentences.push(st);
-      actives.push(makeAllActive());
-    });
-
-    showExtraClauses = true;
   }
+
+  showExtraClauses = sentences.length > 1;
 
   renderAll();
 
