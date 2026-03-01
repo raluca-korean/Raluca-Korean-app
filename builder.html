@@ -2809,93 +2809,51 @@ function enforceNoDoubleLinking(){
    ========================= */
 
 const _boundPressContainers = new WeakSet();
-
+/* =========================
+   LONG PRESS + CLICK (SAFE)
+   ========================= */
 function attachPressHandlers(container, clauseIndex){
   if(!container) return;
-  if(_boundPressContainers.has(container)) return; // IMPORTANT: bind once
-  _boundPressContainers.add(container);
 
-  // iOS: evită delay / gesture issues
-  try { container.style.touchAction = "manipulation"; } catch(e){}
+  // 🔴 PREVENIM atașarea multiplă
+  if(container.dataset.handlersAttached === "true") return;
+  container.dataset.handlersAttached = "true";
 
-  const LONG_MS = 520;
-  const MOVE_TOL = 10;
+  let pressTimer = null;
+  let moved = false;
 
-  let timer = null;
-  let didLong = false;
-  let startX = 0, startY = 0;
-  let targetCol = null;
+  container.addEventListener("touchstart", (e)=>{
+    moved = false;
+    pressTimer = setTimeout(()=>{
+      const col = e.target.closest(".col");
+      if(col){
+        openPanel(clauseIndex, col.dataset.key);
+      }
+    }, 500);
+  }, { passive:true });
 
-  const clearAll = () => {
-    if(timer){ clearTimeout(timer); timer = null; }
-    didLong = false;
-    targetCol = null;
-  };
+  container.addEventListener("touchmove", ()=>{
+    moved = true;
+    clearTimeout(pressTimer);
+  }, { passive:true });
 
-  container.addEventListener("pointerdown", (e)=>{
-    const col = e.target.closest(".col");
-    if(!col) return;
-
-    // dacă a apăsat pe toggle checkbox, nu facem long press / cycle
-    if(e.target && e.target.matches("input.col-toggle")) return;
-
-    // capture pointer (stabil pe iOS)
-    if(col.setPointerCapture && e.pointerId != null){
-      try{ col.setPointerCapture(e.pointerId); }catch(_){}
+  container.addEventListener("touchend", (e)=>{
+    if(!moved){
+      const col = e.target.closest(".col");
+      if(col){
+        cycleColumnValue(clauseIndex, col.dataset.key);
+      }
     }
+    clearTimeout(pressTimer);
+  });
 
-    targetCol = col;
-    didLong = false;
-    startX = e.clientX || 0;
-    startY = e.clientY || 0;
-
-    timer = setTimeout(()=>{
-      if(!targetCol) return;
-      didLong = true;
-
-      const key = targetCol.dataset.key;
-      if(!key) return;
-
-      // deschide panelul
-      openPanel(clauseIndex, key);
-    }, LONG_MS);
-  }, {passive:true});
-
-  container.addEventListener("pointermove", (e)=>{
-    if(!targetCol || !timer) return;
-    const x = e.clientX || 0;
-    const y = e.clientY || 0;
-    const dx = Math.abs(x - startX);
-    const dy = Math.abs(y - startY);
-    if(dx > MOVE_TOL || dy > MOVE_TOL){
-      // dacă userul „scroll-ează”, anulăm long press
-      clearAll();
-    }
-  }, {passive:true});
-
-  container.addEventListener("pointerup", (e)=>{
+  container.addEventListener("click", (e)=>{
     const col = e.target.closest(".col");
-    if(!col) { clearAll(); return; }
-
-    // dacă a apăsat pe toggle checkbox, nu facem nimic aici
-    if(e.target && e.target.matches("input.col-toggle")) { clearAll(); return; }
-
-    // dacă s-a declanșat long press, nu mai facem cycle
-    if(didLong){ clearAll(); return; }
-
-    // tap/click normal -> cycle
-    clearAll();
-    const key = col.dataset.key;
-    if(!key) return;
-    cycleColumnValue(clauseIndex, key);
-  }, {passive:true});
-
-  container.addEventListener("pointercancel", clearAll, {passive:true});
-  container.addEventListener("pointerleave", clearAll, {passive:true});
+    if(col){
+      cycleColumnValue(clauseIndex, col.dataset.key);
+    }
+  });
 }
-     let panelClauseIndex = 0;
-let panelKey = "subject";
-
      /* =========================
    7) HANGUL HELPERS (batchim, conjugare)
    ========================= */
