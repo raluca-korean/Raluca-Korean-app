@@ -3937,16 +3937,19 @@ function translateRoToKo(roText){
    22) UI EVENTS
    ========================= */
 function setupUI(){
-  // Mode buttons
+
+  /* ===== MODE SWITCH ===== */
   DOM.modeButtons.forEach(btn=>{
     on(btn, "click", ()=>{
       currentMode = btn.dataset.mode || "topik";
-      DOM.modeButtons.forEach(b => b.classList.toggle("active", b === btn));
+      DOM.modeButtons.forEach(b => 
+        b.classList.toggle("active", b === btn)
+      );
       renderAll();
     });
   });
 
-  // Prev/Next model row
+  /* ===== MODEL NAV ===== */
   on(DOM.prevBtn, "click", ()=>{
     if(indexModelRow > 0){
       indexModelRow--;
@@ -3954,6 +3957,7 @@ function setupUI(){
       renderAll();
     }
   });
+
   on(DOM.nextBtn, "click", ()=>{
     if(indexModelRow < maxLen-1){
       indexModelRow++;
@@ -3962,74 +3966,79 @@ function setupUI(){
     }
   });
 
-  // Reset toggles
+  /* ===== RESET ===== */
   on(DOM.resetBtn, "click", ()=>{
     actives = actives.map(()=>makeAllActive());
     createToggleChips();
     renderAll();
   });
 
-  // Show/Hide RO
+  /* ===== TOGGLE RO ===== */
   on(DOM.toggleRoBtn, "click", ()=>{
     showRo = !showRo;
-    if(DOM.toggleRoBtn) DOM.toggleRoBtn.textContent = showRo ? "Ascunde traducerea" : "Arată traducerea";
+    if(DOM.toggleRoBtn){
+      DOM.toggleRoBtn.textContent = 
+        showRo ? "Ascunde traducerea" : "Arată traducerea";
+    }
     updatePreview();
   });
 
-  // Random
+  /* ===== RANDOM ===== */
   on(DOM.randomBtn, "click", ()=>{
     const s = sentences[0];
     const a = actives[0];
+
     columns.forEach(col=>{
       if(!isColumnVisible(col.key)) return;
       if(a[col.key] === false) return;
-      const arr = col.data.filter(x => x !== "" && x != null);
+
+      const arr = col.data.filter(x => x);
       if(!arr.length) return;
+
       s[col.key] = arr[Math.floor(Math.random()*arr.length)];
     });
+
     renderAll();
   });
 
-  // Speak
+  /* ===== SPEAK ===== */
   on(DOM.speakBtn, "click", ()=>{
     const ko = (DOM.previewKo?.textContent || "").trim();
-    if(!ko || ko.includes("alege cuvinte")) return;
+    if(!ko || ko.includes("alege")) return;
     speakKorean(ko);
   });
 
-  // Favorite
+  /* ===== FAVORITE ===== */
   on(DOM.favBtn, "click", ()=>{
     const ko = (DOM.previewKo?.textContent || "").trim();
-    let ro = (DOM.previewRo?.textContent || "").trim();
-    if(!ko || ko.includes("alege cuvinte")) return;
-    if(ro.startsWith("···")) ro = "";
+    const ro = (DOM.previewRo?.textContent || "").trim();
 
-    const exists = favorites.some(f => f.ko === ko && f.ro === ro);
-    if(!exists) favorites.push({ko,ro});
+    if(!ko || ko.includes("alege")) return;
+
+    const exists = favorites.some(f => f.ko === ko);
+    if(!exists) favorites.push({ko, ro});
 
     renderFavorites();
-    if(DOM.favBtn){
-      DOM.favBtn.textContent = "⭐ Salvat!";
-      setTimeout(()=>{ if(DOM.favBtn) DOM.favBtn.textContent="💾"; }, 800);
-    }
   });
 
-  // Overlay / Panel close
+  /* ===== PANEL CLOSE ===== */
   on(DOM.closePanelBtn, "click", ()=> hide(DOM.overlay));
-  on(DOM.overlay, "click", (e)=>{ if(e.target === DOM.overlay) hide(DOM.overlay); });
+  on(DOM.overlay, "click", (e)=>{
+    if(e.target === DOM.overlay) hide(DOM.overlay);
+  });
 
-  // Panel search
+  /* ===== PANEL SEARCH ===== */
   on(DOM.panelSearchInput, "input", ()=>{
     const col = columns.find(c=>c.key===panelKey);
     if(col) renderPanelList(col);
   });
 
-  // Add new word
+  /* ===== ADD WORD ===== */
   on(DOM.addWordBtn, "click", ()=>{
     const txt = (DOM.newWordInput?.value || "").trim();
     if(!txt) return;
-    const roTxt = (DOM.newWordTransInput?.value || "").trim();
 
+    const roTxt = (DOM.newWordTransInput?.value || "").trim();
     const col = columns.find(c=>c.key===panelKey);
     if(!col || !col.allowCustom) return;
 
@@ -4037,29 +4046,22 @@ function setupUI(){
     if(!translations[panelKey]) translations[panelKey] = {};
     if(roTxt) translations[panelKey][txt] = roTxt;
 
-    if(!customData[panelKey]) customData[panelKey] = [];
-    const exists = customData[panelKey].some(e=>e.word===txt);
-    if(!exists) customData[panelKey].push({word:txt,ro:roTxt});
-    else customData[panelKey].forEach(e=>{ if(e.word===txt) e.ro = roTxt; });
-
     saveCustomData();
     REV = buildReverseMap();
 
-    if(DOM.newWordInput) DOM.newWordInput.value = "";
-    if(DOM.newWordTransInput) DOM.newWordTransInput.value = "";
+    DOM.newWordInput.value = "";
+    DOM.newWordTransInput.value = "";
 
     renderPanelList(col);
   });
 
-  // Enable P2
+  /* ===== ENABLE P2 ===== */
   on(DOM.enableP2, "change", ()=>{
     const onOff = DOM.enableP2.checked;
 
-    if (onOff) {
-      if (!sentences[1]) {
-        sentences[1] = makeEmptySentence();
-        actives[1]   = makeAllActive();
-      }
+    if(onOff && !sentences[1]){
+      sentences[1] = makeEmptySentence();
+      actives[1]   = makeAllActive();
     }
 
     if(DOM.tableP2){
@@ -4072,7 +4074,7 @@ function setupUI(){
     renderAll();
   });
 
-  // RO Translate button
+  /* ===== RO TRANSLATE ===== */
   on(DOM.roTranslateBtn, "click", ()=>{
     const txt = (DOM.roInput?.value || "").trim();
     if(!txt) return;
@@ -4080,12 +4082,18 @@ function setupUI(){
     translateRoToKo(txt);
     updatePreview();
 
-    if (DOM.roInput) {
-      DOM.roInput.value = buildFullRomanian();
-    }
+    DOM.roInput.value = buildFullRomanian();
   });
-} // ✅ AICI se închide setupUI corect
 
+  /* ===== HEADER BUTTONS ===== */
+  on(DOM.refreshBtn, "click", ()=>{
+    location.reload();
+  });
+
+  on(DOM.homeBtn, "click", ()=>{
+    window.location.href = "index.html";
+  });
+}
 
 // ✅ dacă nu ai aceste funcții definite în altă parte, pune no-op ca să nu crape:
 function updateNaturalHint(){ }
