@@ -3002,16 +3002,17 @@ function buildClauseSentence(state, activeMap){
   const use = (key) =>
     activeMap?.[key] !== false &&
     isColumnVisible(key);
-  /* SUBJECT */
-  if(!state.hideSubject && use("subject") && state.subject){
-    let subj = state.subject;
+  /* ===== SUBJECT ===== */
+if (!state.hideSubject && use("subject") && state.subject) {
 
-    if(state.subjectAdj){
-      subj = state.subjectAdj + " " + subj;
-    }
+  let subjectWord = state.subject;
 
-    koParts.push(addSubjectWithParticle(subj));
+  if (state.subjectAdjs && state.subjectAdjs.length) {
+    subjectWord = state.subjectAdjs.join(" ") + " " + state.subject;
   }
+
+  koParts.push(addSubjectWithParticle(subjectWord));
+}
   /* TIME */
   if(use("time") && state.time){
     koParts.push(state.time);
@@ -3027,25 +3028,26 @@ function buildClauseSentence(state, activeMap){
     koParts.push(state.mod);
   }
 
-  /* OBJECT */
-  if(use("object") && state.object){
+/* ===== OBJECT ===== */
+if (use("object") && state.object) {
 
-    let obj = state.object;
+  let objectWord = state.object;
 
-    if(state.objectAdj){
-      obj = state.objectAdj + " " + obj;
-    }
-
-    koParts.push(addObjectWithParticle(obj));
+  if (state.objectAdjs && state.objectAdjs.length) {
+    objectWord = state.objectAdjs.join(" ") + " " + state.object;
   }
-/* NUMERAL + COUNTER */
-const hasNum = use("numeral") && state.numeral;
-if(hasNum){
-  koParts.push(state.numeral);
-  if(use("counter") && state.counter) koParts.push(state.counter);
-} else {
-  // dacă nu ai număr, NU afișa counter
-}
+
+  // numeral + counter (doar dacă există)
+  if (use("numeral") && state.numeral) {
+    koParts.push(state.numeral);
+
+    if (use("counter") && state.counter) {
+      koParts.push(state.counter);
+    }
+  }
+
+  koParts.push(addObjectWithParticle(objectWord));
+} 
   /* VERB */
   if(use("verb") || use("conjug")){
     const vp = buildVerbPhrase(v, cj);
