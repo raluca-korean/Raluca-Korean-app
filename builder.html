@@ -2821,27 +2821,30 @@ function enforceNoDoubleLinking(){
    ========================= */
 
 const _boundPressContainers = new WeakSet();
-/* =========================
-   LONG PRESS + CLICK (SAFE)
+     /* =========================
+   LONG PRESS + CLICK (STABIL)
    ========================= */
 function attachPressHandlers(container, clauseIndex){
   if(!container) return;
 
-  // 🔴 PREVENIM atașarea multiplă
+  // 🔴 Prevenim atașarea multiplă
   if(container.dataset.handlersAttached === "true") return;
   container.dataset.handlersAttached = "true";
 
   let pressTimer = null;
   let moved = false;
 
+  // LONG PRESS
   container.addEventListener("touchstart", (e)=>{
     moved = false;
+
     pressTimer = setTimeout(()=>{
       const col = e.target.closest(".col");
       if(col){
         openPanel(clauseIndex, col.dataset.key);
       }
     }, 500);
+
   }, { passive:true });
 
   container.addEventListener("touchmove", ()=>{
@@ -2850,15 +2853,17 @@ function attachPressHandlers(container, clauseIndex){
   }, { passive:true });
 
   container.addEventListener("touchend", (e)=>{
+    clearTimeout(pressTimer);
+
     if(!moved){
       const col = e.target.closest(".col");
       if(col){
         cycleColumnValue(clauseIndex, col.dataset.key);
       }
     }
-    clearTimeout(pressTimer);
   });
 
+  // CLICK (desktop)
   container.addEventListener("click", (e)=>{
     const col = e.target.closest(".col");
     if(col){
