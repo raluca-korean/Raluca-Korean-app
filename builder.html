@@ -3618,8 +3618,48 @@ function applyWordToState(clauseIndex, key, word){
 
   renderAll();
 }
-
 /* =========================
+   CYCLE COLUMN VALUE (tap scurt)
+   ========================= */
+
+function cycleColumnValue(clauseIndex, key){
+  if(!sentences[clauseIndex]) return;
+
+  const col = columns.find(c => c.key === key);
+  if(!col || !Array.isArray(col.data)) return;
+
+  const list = col.data;
+  if(!list.length) return;
+
+  const state = sentences[clauseIndex];
+
+  // ADJECTIVE COLUMNS (multi-select arrays)
+  if(key === "subjectAdj"){
+    const current = state.subjectAdjs?.[0] || "";
+    const idx = list.indexOf(current);
+    const next = list[(idx + 1) % list.length];
+    state.subjectAdjs = next ? [next] : [];
+  }
+  else if(key === "objectAdj"){
+    const current = state.objectAdjs?.[0] || "";
+    const idx = list.indexOf(current);
+    const next = list[(idx + 1) % list.length];
+    state.objectAdjs = next ? [next] : [];
+  }
+  else{
+    const current = state[key] || "";
+    const idx = list.indexOf(current);
+    const next = list[(idx + 1) % list.length];
+    state[key] = next;
+  }
+
+  if(key === "conjug"){
+    handleLinkingAt(clauseIndex);
+  }
+
+  renderAll();
+}
+     /* =========================
    17) RO → STATE PARSER (simplu, stabil)
    ========================= */
 
