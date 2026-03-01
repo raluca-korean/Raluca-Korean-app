@@ -3445,35 +3445,50 @@ function createToggleChips(){
   buildFor(DOM.togglesP1, 0);
   buildFor(DOM.togglesP2, 1);
 }
-     
-
+/* =========================
+   OPEN PANEL
+   ========================= */
 function openPanel(clauseIndex, key){
-  panelClauseIndex = clauseIndex;
-  panelKey = key;
+  if(!DOM.overlay) return;
 
   const col = columns.find(c => c.key === key);
   if(!col) return;
 
-  if(DOM.panelTitle) DOM.panelTitle.textContent = `Propoziția ${clauseIndex + 1} – ${col.title}`;
-  if(DOM.panelSub) DOM.panelSub.textContent = col.hint || "";
+  // Titlu
+  if(DOM.panelTitle){
+    DOM.panelTitle.textContent = `Propoziția ${clauseIndex + 1} – ${col.title}`;
+  }
 
+  if(DOM.panelSub){
+    DOM.panelSub.textContent = col.hint || "";
+  }
+
+  // Reset inputs
   if(DOM.panelSearchInput) DOM.panelSearchInput.value = "";
   if(DOM.newWordInput) DOM.newWordInput.value = "";
   if(DOM.newWordTransInput) DOM.newWordTransInput.value = "";
 
-  renderPanelList(col);
+  // Render listă
+  renderPanelList(col, clauseIndex);
 
-  // IMPORTANT: overlay poate fi null dacă lipsește în HTML
-  if(DOM.overlay){
-    DOM.overlay.classList.remove("hidden");
-  }
+  // 🔥 Blochează scroll body (important iOS)
+  document.body.style.overflow = "hidden";
+
+  // Afișează overlay
+  DOM.overlay.classList.remove("hidden");
 }
+     /* =========================
+   CLOSE PANEL
+   ========================= */
 function closePanel(){
   if(DOM.overlay){
     DOM.overlay.classList.add("hidden");
   }
+
+  // 🔥 Deblochează scroll body
   document.body.style.overflow = "";
 }
+
      function renderPanelList(col){
   if(!DOM.panelList) return;
 
