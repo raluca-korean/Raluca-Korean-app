@@ -3402,9 +3402,9 @@ function createToggleChips(){
    ========================= */
 let panelClauseIndex = 0;
 let panelKey = "subject";
-
 function renderPanelList(col){
   if(!DOM.panelList) return;
+
   DOM.panelList.innerHTML = "";
 
   const key = col.key;
@@ -3453,86 +3453,121 @@ function renderPanelList(col){
     }
 
     item.appendChild(extra);
-// ➕ suport valori multiple (ex: Ana + Vasile)
-if (key === "subject") {
-  const addBtn = document.createElement("button");
-  addBtn.textContent = "➕";
-  addBtn.className = "panel-add-btn";
 
-  addBtn.addEventListener("click", (e)=>{
-    e.stopPropagation(); // NU declanșează click-ul principal
+    /* =============================
+       MULTI SUPPORT
+    ==============================*/
 
-    if(!sentences[panelClauseIndex]){
-      sentences[panelClauseIndex] = makeEmptySentence();
-      actives[panelClauseIndex] = makeAllActive();
+    // SUBJECT MULTIPLE (Ana + Vasile)
+    if(key === "subject"){
+      const addBtn = document.createElement("button");
+      addBtn.textContent = "➕";
+      addBtn.className = "panel-add-btn";
+
+      addBtn.addEventListener("click", (e)=>{
+        e.stopPropagation();
+
+        if(!sentences[panelClauseIndex]){
+          sentences[panelClauseIndex] = makeEmptySentence();
+          actives[panelClauseIndex] = makeAllActive();
+        }
+
+        let current = sentences[panelClauseIndex][key];
+
+        if (!current){
+          sentences[panelClauseIndex][key] = [word];
+        } 
+        else if (Array.isArray(current)){
+          if (!current.includes(word)) current.push(word);
+        } 
+        else {
+          if (current !== word){
+            sentences[panelClauseIndex][key] = [current, word];
+          }
+        }
+
+        hide(DOM.overlay);
+        renderAll();
+      });
+
+      item.appendChild(addBtn);
     }
 
-    let current = sentences[panelClauseIndex][key];
+    // SUBJECT ADJECTIVES MULTIPLE
+    if(key === "subjectAdj"){
+      const addBtn = document.createElement("button");
+      addBtn.textContent = "➕";
+      addBtn.className = "panel-add-btn";
 
-    if (!current) {
-      sentences[panelClauseIndex][key] = [word];
-    } else if (Array.isArray(current)) {
-      if (!current.includes(word)) current.push(word);
-    } else {
-      if (current !== word) {
-        sentences[panelClauseIndex][key] = [current, word];
-      }
+      addBtn.addEventListener("click", (e)=>{
+        e.stopPropagation();
+
+        if(!sentences[panelClauseIndex]){
+          sentences[panelClauseIndex] = makeEmptySentence();
+          actives[panelClauseIndex] = makeAllActive();
+        }
+
+        let current = sentences[panelClauseIndex].subjectAdjs;
+
+        if(!current){
+          sentences[panelClauseIndex].subjectAdjs = [word];
+        } 
+        else if(!current.includes(word)){
+          current.push(word);
+        }
+
+        hide(DOM.overlay);
+        renderAll();
+      });
+
+      item.appendChild(addBtn);
     }
 
-    hide(DOM.overlay);
-    renderAll();
-  });
+    // OBJECT ADJECTIVES MULTIPLE
+    if(key === "objectAdj"){
+      const addBtn = document.createElement("button");
+      addBtn.textContent = "➕";
+      addBtn.className = "panel-add-btn";
 
-  item.appendChild(addBtn);
-}
-    // ➕ suport ATRIBUTE multiple (ex: frumoasă + grasă)
-if (key === "attribute") {
-  const addBtn = document.createElement("button");
-  addBtn.textContent = "➕";
-  addBtn.className = "panel-add-btn";
+      addBtn.addEventListener("click", (e)=>{
+        e.stopPropagation();
 
-  addBtn.addEventListener("click", (e)=>{
-    e.stopPropagation(); // NU declanșează click-ul principal
+        if(!sentences[panelClauseIndex]){
+          sentences[panelClauseIndex] = makeEmptySentence();
+          actives[panelClauseIndex] = makeAllActive();
+        }
 
-    if(!sentences[panelClauseIndex]){
-      sentences[panelClauseIndex] = makeEmptySentence();
-      actives[panelClauseIndex] = makeAllActive();
+        let current = sentences[panelClauseIndex].objectAdjs;
+
+        if(!current){
+          sentences[panelClauseIndex].objectAdjs = [word];
+        } 
+        else if(!current.includes(word)){
+          current.push(word);
+        }
+
+        hide(DOM.overlay);
+        renderAll();
+      });
+
+      item.appendChild(addBtn);
     }
 
-    let current = sentences[panelClauseIndex][key];
+    /* =============================
+       NORMAL CLICK (single select)
+    ==============================*/
 
-    if (!current) {
-      sentences[panelClauseIndex][key] = [word];
-    } else if (Array.isArray(current)) {
-      if (!current.includes(word)) current.push(word);
-    } else {
-      if (current !== word) {
-        sentences[panelClauseIndex][key] = [current, word];
-      }
-    }
-
-    hide(DOM.overlay);
-    renderAll();
-  });
-
-  item.appendChild(addBtn);
-}
     item.addEventListener("click", ()=>{
       if(!sentences[panelClauseIndex]){
         sentences[panelClauseIndex] = makeEmptySentence();
         actives[panelClauseIndex] = makeAllActive();
       }
+
       sentences[panelClauseIndex][key] = word;
 
-      // dacă e linking conj -> asigurăm propoziție următoare + enableP2 on (dacă există)
       if(key === "conjug" && isLinkingConj(word)){
-  showExtraClauses = true;   // 👈 ASTA E CHEIA
-  ensureLinkedSentences();
-
-        if(DOM.enableP2){
-          DOM.enableP2.checked = true;
-          DOM.enableP2.dispatchEvent(new Event("change"));
-        }
+        showExtraClauses = true;
+        ensureLinkedSentences();
       }
 
       hide(DOM.overlay);
