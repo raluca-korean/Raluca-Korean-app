@@ -2737,8 +2737,71 @@ let showRo = true;
     let showExtraClauses = false;    
 let currentMode = "topik"; // topik vs simple
 const simpleColumnsSet = {subject:true,time:true,object:true,verb:true,conjug:true};
+function buildKoreanSentence(sentence){
 
-/* =========================
+  let parts = [];
+
+  sentence.clauses.forEach((clause, index)=>{
+
+    let clauseParts = [];
+
+    // TIME multiplu
+    if(clause.times.length){
+      clauseParts.push(
+        clause.times.map(t=>mapRoTime(t)).join("과 ")
+      );
+    }
+
+    // SUBJECT multiplu
+    if(clause.subjects.length){
+      let subs = clause.subjects.map(s=>{
+        let adjs = s.adjs.map(mapRoAdj).join("고 ");
+        return (adjs ? adjs+" " : "") + mapRoNoun(s.noun);
+      });
+      clauseParts.push(subs.join("과 ") + "는");
+    }
+
+    // PLACE multiplu
+    if(clause.places.length){
+      clauseParts.push(
+        clause.places.map(p=>mapRoPlace(p)).join("과 ") + "에서"
+      );
+    }
+
+    // OBJECT
+    if(clause.objects.length){
+      clause.objects.forEach(obj=>{
+        let adjs = obj.adjs.map(mapRoAdj).join("고 ");
+        let numeral = obj.numeral ? obj.numeral + " " + (obj.counter || "") : "";
+        clauseParts.push(
+          (adjs ? adjs+" " : "") +
+          mapRoNoun(obj.noun) +
+          (numeral ? " " + numeral : "") +
+          "을"
+        );
+      });
+    }
+
+    // SUBCLAUSE temporală
+    clause.subClauses.forEach(sub=>{
+      if(sub.type==="temporal"){
+        clauseParts.push(
+          mapRoVerbStem(sub.verb) + "한 후에"
+        );
+      }
+    });
+
+    // VERB
+    clauseParts.push(
+      conjugateKorean(mapRoVerb(clause.verb), clause.tense)
+    );
+
+    parts.push(clauseParts.join(" "));
+  });
+
+  return parts.join(" ");
+}
+    /* =========================
    6) MODE: ce coloane se văd
    ========================= */
 function isColumnVisible(key){
