@@ -3392,82 +3392,100 @@ function createToggleChips(){
   buildFor(DOM.togglesP1, 0);
   buildFor(DOM.togglesP2, 1);
 }
-     /* =========================
-   15) LONG PRESS PANEL (SELECȚIE CUVINTE)
+ /* =========================
+   LONG PRESS (iOS SAFE) + CLICK
+   - delegare pe container (nu pe fiecare .col)
+   - bind o singură dată per container (nu se dublează la re-render)
+   - long-press -> openPanel()
+   - tap/click -> cycleColumnValue()
    ========================= */
 
-let pressTimer = null;
-let currentPanel = { clauseIndex:0, key:null };
+const _boundPressContainers = new WeakSet();
+
 function attachPressHandlers(container, clauseIndex){
   if(!container) return;
+  if(_boundPressContainers.has(container)) return; // IMPORTANT: bind once
+  _boundPressContainers.add(container);
 
-  $$(".col", container).forEach(colEl=>{
-    const key = colEl.dataset.key;
+  // iOS: evită delay / gesture issues
+  try { container.style.touchAction = "manipulation"; } catch(e){}
+
+  const LONG_MS = 520;
+  const MOVE_TOL = 10;
+
+  let timer = null;
+  let didLong = false;
+  let startX = 0, startY = 0;
+  let targetCol = null;
+
+  const clearAll = () => {
+    if(timer){ clearTimeout(timer); timer = null; }
+    didLong = false;
+    targetCol = null;
+  };
+
+  container.addEventListener("pointerdown", (e)=>{
+    const col = e.target.closest(".col");
+    if(!col) return;
+
+    // dacă a apăsat pe toggle checkbox, nu facem long press / cycle
+    if(e.target && e.target.matches("input.col-toggle")) return;
+
+    // capture pointer (stabil pe iOS)
+    if(col.setPointerCapture && e.pointerId != null){
+      try{ col.setPointerCapture(e.pointerId); }catch(_){}
+    }
+
+    targetCol = col;
+    didLong = false;
+    startX = e.clientX || 0;
+    startY = e.clientY || 0;
+
+    timer = setTimeout(()=>{
+      if(!targetCol) return;
+      didLong = true;
+
+      const key = targetCol.dataset.key;
+      if(!key) return;
+
+      // deschide panelul
+      openPanel(clauseIndex, key);
+    }, LONG_MS);
+  }, {passive:true});
+
+  container.addEventListener("pointermove", (e)=>{
+    if(!targetCol || !timer) return;
+    const x = e.clientX || 0;
+    const y = e.clientY || 0;
+    const dx = Math.abs(x - startX);
+    const dy = Math.abs(y - startY);
+    if(dx > MOVE_TOL || dy > MOVE_TOL){
+      // dacă userul „scroll-ează”, anulăm long press
+      clearAll();
+    }
+  }, {passive:true});
+
+  container.addEventListener("pointerup", (e)=>{
+    const col = e.target.closest(".col");
+    if(!col) { clearAll(); return; }
+
+    // dacă a apăsat pe toggle checkbox, nu facem nimic aici
+    if(e.target && e.target.matches("input.col-toggle")) { clearAll(); return; }
+
+    // dacă s-a declanșat long press, nu mai facem cycle
+    if(didLong){ clearAll(); return; }
+
+    // tap/click normal -> cycle
+    clearAll();
+    const key = col.dataset.key;
     if(!key) return;
+    cycleColumnValue(clauseIndex, key);
+  }, {passive:true});
 
-    let pressTimer = null;
-
-    colEl.addEventListener("pointerdown", (e)=>{
-      e.preventDefault();
-
-      pressTimer = setTimeout(()=>{
-        openPanel(clauseIndex, key);
-      }, 500); // 500ms long press
-    });
-
-    colEl.addEventListener("pointerup", ()=>{
-      clearTimeout(pressTimer);
-    });
-
-    colEl.addEventListener("pointerleave", ()=>{
-      clearTimeout(pressTimer);
-    });
-
-    colEl.addEventListener("pointercancel", ()=>{
-      clearTimeout(pressTimer);
-    });
-  });
+  container.addEventListener("pointercancel", clearAll, {passive:true});
+  container.addEventListener("pointerleave", clearAll, {passive:true});
 }
-
-function openPanel(clauseIndex, key){
-  if(!DOM.overlay || !DOM.panelList) return;
-
-  currentPanel = { clauseIndex, key };
-
-  DOM.overlay.classList.add("active");
-  DOM.panelList.innerHTML = "";
-  text(DOM.panelTitle, key.toUpperCase());
-  text(DOM.panelSub, "");
-
-  const column = columns.find(c=>c.key===key);
-  if(!column) return;
-
-  const data = column.data || [];
-
-  data.forEach(word=>{
-    const item = document.createElement("div");
-    item.className = "panel-item";
-    item.textContent = word || "(gol)";
-
-    item.onclick = ()=>{
-      applyWordToState(clauseIndex, key, word);
-      closePanel();
-    };
-
-    DOM.panelList.appendChild(item);
-  });
-}
-
-function closePanel(){
-  if(DOM.overlay) DOM.overlay.classList.remove("active");
-}
-
-on(DOM.closePanelBtn, "click", closePanel);
-on(DOM.overlay, "click", (e)=>{
-  if(e.target === DOM.overlay) closePanel();
-});
-
-/* =========================
+     /* =========================
    16) APPLY WORD TO STATE
    ========================= */
 
