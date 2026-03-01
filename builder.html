@@ -3248,7 +3248,210 @@ function createClauseTable(clauseIndex){
 
   return { wrap, table };
 }  
+/* ============================================================
+   FINAL SENTENCE ENGINE — CLEAN ARCHITECTURE
+   Single source of truth: sentences[] + actives[]
+   Unlimited clauses
+   No P1/P2 hacks
+============================================================ */
 
+/* =========================
+   1️⃣ MODEL
+========================= */
+
+let sentences = [ createEmptySentence() ];
+let actives   = [ createAllActive() ];
+
+function createEmptySentence(){
+  const s = {};
+
+  columns.forEach(col=>{
+    s[col.key] = "";
+  });
+
+  s.subjectAdjs = [];
+  s.objectAdjs  = [];
+
+  return s;
+}
+
+function createAllActive(){
+  const a = {};
+  columns.forEach(col=>{
+    a[col.key] = true;
+  });
+  return a;
+}
+
+function addClause(){
+  sentences.push(createEmptySentence());
+  actives.push(createAllActive());
+}
+
+function removeClause(index){
+  if(index <= 0) return; // nu ștergem prima
+  sentences.splice(index,1);
+  actives.splice(index,1);
+}
+
+/* =========================
+   2️⃣ LINKING RULE
+========================= */
+
+function handleLinking(clauseIndex){
+
+  const current = sentences[clauseIndex];
+  if(!current) return;
+
+  const cj = current.conjug;
+
+  if(!cj) return;
+
+  if(isLinkingConj(cj)){
+    if(clauseIndex === sentences.length - 1){
+      addClause();
+    }
+  }else{
+    // dacă nu mai e linking și există propoziție următoare goală
+    if(clauseIndex < sentences.length - 1){
+      const next = sentences[clauseIndex + 1];
+      const isEmpty = Object.values(next).every(v =>
+        v === "" || (Array.isArray(v) && v.length === 0)
+      );
+      if(isEmpty){
+        removeClause(clauseIndex + 1);
+      }
+    }
+  }
+}
+
+/* =========================
+   3️⃣ RENDER ALL
+========================= */
+
+function renderAll(){
+
+  if(!DOM.tableP1) return;
+
+  // curățăm toate tabelele
+  if(DOM.tableP1) DOM.tableP1.innerHTML = "";
+  if(DOM.tableP2) DOM.tableP2.innerHTML = "";
+  if(DOM.extraClauses) DOM.extraClauses.innerHTML = "";
+
+  // RENDER CLAUSES
+  for(let i = 0; i < sentences.length; i++){
+
+    let container;
+
+    if(i === 0){
+      container = DOM.tableP1;
+    }
+    else if(i === 1 && DOM.tableP2){
+      show(DOM.tableP2);
+      DOM.titleP2 && show(DOM.titleP2);
+      container = DOM.tableP2;
+    }
+    else{
+      if(!DOM.extraClauses) continue;
+
+      const block = document.createElement("div");
+      block.className = "table-block";
+
+      const title = document.createElement("div");
+      title.className = "table-title";
+      title.textContent = `Propoziția ${i+1}`;
+
+      const table = document.createElement("div");
+      table.className = "table-horizontal";
+
+      block.appendChild(title);
+      block.appendChild(table);
+      DOM.extraClauses.appendChild(block);
+
+      container = table;
+    }
+
+    renderClauseRow(container, actives[i], sentences[i], i);
+    attachPressHandlers(container, i);
+  }
+
+  updatePreview();
+}
+
+/* =========================
+   4️⃣ UPDATE PREVIEW (KO + RO)
+========================= */
+
+function updatePreview(){
+
+  if(!DOM.previewKo) return;
+
+  const koParts = [];
+  const roParts = [];
+
+  for(let i = 0; i < sentences.length; i++){
+
+    const built = buildClauseSentence(
+      { ...sentences[i], hideSubject: i > 0 },
+      actives[i]
+    );
+
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
+
+    const ro = buildNaturalRomanian(
+      { ...sentences[i], hideSubject: i > 0 },
+      actives[i]
+    );
+
+    if(ro){
+      roParts.push(ro.replace(/[.]$/,""));
+    }
+  }
+
+  const fullKo = koParts.join(" ").trim();
+  const fullRo = roParts.join(" ").trim();
+
+  DOM.previewKo.textContent =
+    fullKo || "(alege cuvinte din tabel)";
+
+  if(DOM.previewRo){
+    DOM.previewRo.textContent = fullRo ? fullRo + "." : "";
+  }
+
+  if(DOM.roInput){
+    DOM.roInput.value = fullRo ? fullRo + "." : "";
+  }
+}
+
+/* =========================
+   5️⃣ OVERRIDE cycleColumnValue
+========================= */
+
+function cycleColumnValue(clauseIndex, key){
+
+  const col = columns.find(c=>c.key===key);
+  if(!col) return;
+
+  const arr = col.data.filter(x=>x);
+  if(!arr.length) return;
+
+  const state = sentences[clauseIndex];
+  if(!state) return;
+
+  let idx = arr.indexOf(state[key]);
+  if(idx === -1) idx = 0;
+  const nextIdx = (idx + 1) % arr.length;
+
+  state[key] = arr[nextIdx];
+
+  if(key === "conjug"){
+    handleLinking(clauseIndex);
+  }
+
+  renderAll();
+}
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
