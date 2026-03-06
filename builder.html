@@ -3333,19 +3333,26 @@ function updateModelNav(){
   if(DOM.prevBtn) DOM.prevBtn.disabled = (indexModelRow === 0);
   if(DOM.nextBtn) DOM.nextBtn.disabled = (indexModelRow >= maxLen-1);
 }
+
+/* =========================
+   14) CHIPS (togglesP1/togglesP2)
+   ========================= */
 /* =========================
    14) CHIPS (togglesP1/togglesP2)
    ========================= */
 function createToggleChips(){
-  if(!DOM.togglesP1 && !DOM.togglesP2) return;
+
+  if(!DOM.togglesP1) return;
 
   const buildFor = (wrapper, clauseIndex) => {
     if(!wrapper) return;
+
     wrapper.innerHTML = "";
 
     if(!actives[clauseIndex]) return;
 
-    columns.forEach(col=>{
+    columns.forEach(col => {
+
       if(!isColumnVisible(col.key)) return;
 
       const chip = document.createElement("label");
@@ -3362,232 +3369,105 @@ function createToggleChips(){
 
       chip.classList.toggle("chip-off", !cb.checked);
 
-      cb.addEventListener("change", ()=>{
-        const idx = Number(cb.dataset.clauseIndex);
-        const key = cb.dataset.key;
-
-        if(!actives[idx]) actives[idx] = createAllActive();
-        actives[idx][key] = cb.checked;
-
-        chip.classList.toggle("chip-off", !cb.checked);
-        renderAll();
-      });
-
       wrapper.appendChild(chip);
     });
+
+    wrapper.onchange = (e)=>{
+      const cb = e.target;
+      if(!cb || cb.tagName !== "INPUT") return;
+
+      const key = cb.dataset.key;
+      const idx = Number(cb.dataset.clauseIndex);
+
+      if(!actives[idx]) actives[idx] = createAllActive();
+
+      actives[idx][key] = cb.checked;
+
+      cb.parentElement.classList.toggle("chip-off", !cb.checked);
+
+      renderAll();
+    };
   };
 
   buildFor(DOM.togglesP1, 0);
   buildFor(DOM.togglesP2, 1);
 }
-     
- /* =========================
-   LONG PRESS (iOS SAFE) + CLICK
-   - delegare pe container (nu pe fiecare .col)
-   - bind o singură dată per container (nu se dublează la re-render)
-   - long-press -> openPanel()
-   - tap/click -> cycleColumnValue()
+     /* =========================
+   15) LONG PRESS PANEL (SELECȚIE CUVINTE)
    ========================= */
 
-const _boundPressContainers = new WeakSet();
-
+let pressTimer = null;
+let currentPanel = { clauseIndex:0, key:null };
 function attachPressHandlers(container, clauseIndex){
   if(!container) return;
-  if(_boundPressContainers.has(container)) return; // IMPORTANT: bind once
-  _boundPressContainers.add(container);
 
-  // iOS: evită delay / gesture issues
-  try { container.style.touchAction = "manipulation"; } catch(e){}
-
-  const LONG_MS = 520;
-  const MOVE_TOL = 10;
-
-  let timer = null;
-  let didLong = false;
-  let startX = 0, startY = 0;
-  let targetCol = null;
-
-  const clearAll = () => {
-    if(timer){ clearTimeout(timer); timer = null; }
-    didLong = false;
-    targetCol = null;
-  };
-
-  container.addEventListener("pointerdown", (e)=>{
-    const col = e.target.closest(".col");
-    if(!col) return;
-
-    // dacă a apăsat pe toggle checkbox, nu facem long press / cycle
-    if(e.target && e.target.matches("input.col-toggle")) return;
-
-    // capture pointer (stabil pe iOS)
-    if(col.setPointerCapture && e.pointerId != null){
-      try{ col.setPointerCapture(e.pointerId); }catch(_){}
-    }
-
-    targetCol = col;
-    didLong = false;
-    startX = e.clientX || 0;
-    startY = e.clientY || 0;
-
-    timer = setTimeout(()=>{
-      if(!targetCol) return;
-      didLong = true;
-
-      const key = targetCol.dataset.key;
-      if(!key) return;
-
-      // deschide panelul
-      openPanel(clauseIndex, key);
-    }, LONG_MS);
-  }, {passive:true});
-
-  container.addEventListener("pointermove", (e)=>{
-    if(!targetCol || !timer) return;
-    const x = e.clientX || 0;
-    const y = e.clientY || 0;
-    const dx = Math.abs(x - startX);
-    const dy = Math.abs(y - startY);
-    if(dx > MOVE_TOL || dy > MOVE_TOL){
-      // dacă userul „scroll-ează”, anulăm long press
-      clearAll();
-    }
-  }, {passive:true});
-
-  container.addEventListener("pointerup", (e)=>{
-    const col = e.target.closest(".col");
-    if(!col) { clearAll(); return; }
-
-    // dacă a apăsat pe toggle checkbox, nu facem nimic aici
-    if(e.target && e.target.matches("input.col-toggle")) { clearAll(); return; }
-
-    // dacă s-a declanșat long press, nu mai facem cycle
-    if(didLong){ clearAll(); return; }
-
-    // tap/click normal -> cycle
-    clearAll();
-    const key = col.dataset.key;
+  $$(".col", container).forEach(colEl=>{
+    const key = colEl.dataset.key;
     if(!key) return;
-    cycleColumnValue(clauseIndex, key);
-  }, {passive:true});
 
-  container.addEventListener("pointercancel", clearAll, {passive:true});
-  container.addEventListener("pointerleave", clearAll, {passive:true});
+    let pressTimer = null;
+
+    colEl.addEventListener("pointerdown", (e)=>{
+      e.preventDefault();
+
+      pressTimer = setTimeout(()=>{
+        openPanel(clauseIndex, key);
+      }, 500); // 500ms long press
+    });
+
+    colEl.addEventListener("pointerup", ()=>{
+      clearTimeout(pressTimer);
+    });
+
+    colEl.addEventListener("pointerleave", ()=>{
+      clearTimeout(pressTimer);
+    });
+
+    colEl.addEventListener("pointercancel", ()=>{
+      clearTimeout(pressTimer);
+    });
+  });
 }
-     let panelClauseIndex = 0;
-let panelKey = "subject";
 
 function openPanel(clauseIndex, key){
-  panelClauseIndex = clauseIndex;
-  panelKey = key;
+  if(!DOM.overlay || !DOM.panelList) return;
 
-  const col = columns.find(c => c.key === key);
-  if(!col) return;
+  currentPanel = { clauseIndex, key };
 
-  if(DOM.panelTitle) DOM.panelTitle.textContent = `Propoziția ${clauseIndex + 1} – ${col.title}`;
-  if(DOM.panelSub) DOM.panelSub.textContent = col.hint || "";
-
-  if(DOM.panelSearchInput) DOM.panelSearchInput.value = "";
-  if(DOM.newWordInput) DOM.newWordInput.value = "";
-  if(DOM.newWordTransInput) DOM.newWordTransInput.value = "";
-
-  renderPanelList(col);
-
-  // IMPORTANT: overlay poate fi null dacă lipsește în HTML
-  if(DOM.overlay){
-    DOM.overlay.classList.remove("hidden");
-  }
-}
-
-function renderPanelList(col){
-  if(!DOM.panelList) return;
-
+  DOM.overlay.classList.add("active");
   DOM.panelList.innerHTML = "";
+  text(DOM.panelTitle, key.toUpperCase());
+  text(DOM.panelSub, "");
 
-  const key = col.key;
-  const map = translations[key] || {};
-  const filter = (DOM.panelSearchInput?.value || "").trim().toLowerCase();
+  const column = columns.find(c=>c.key===key);
+  if(!column) return;
 
-  const words = (col.data || []).filter(w=>{
-    if(!w) return false;
-    if(!filter) return true;
-    return String(w).toLowerCase().includes(filter);
-  });
+  const data = column.data || [];
 
-  if(!words.length){
-    const empty = document.createElement("div");
-    empty.className = "panel-item";
-    empty.textContent = "Nu există cuvinte pentru filtrul introdus.";
-    DOM.panelList.appendChild(empty);
-    return;
-  }
-
-  words.forEach(word=>{
+  data.forEach(word=>{
     const item = document.createElement("div");
     item.className = "panel-item";
+    item.textContent = word || "(gol)";
 
-    const main = document.createElement("div");
-    main.className = "panel-item-main";
-    main.textContent = word;
-    item.appendChild(main);
-
-    const extra = document.createElement("div");
-    extra.className = "panel-item-extra";
-
-    const ro = map[word];
-    if(ro){
-      const tag = document.createElement("div");
-      tag.className = "panel-item-tag";
-      tag.textContent = ro;
-      extra.appendChild(tag);
-    }
-
-    if(key === "conjug" && isLinkingConj(word)){
-      const star = document.createElement("div");
-      star.className = "panel-item-tag";
-      star.textContent = "⭐ linking";
-      extra.appendChild(star);
-    }
-
-    item.appendChild(extra);
-
-    // CLICK -> select (single)
-    item.addEventListener("click", ()=>{
-      if(!sentences[panelClauseIndex]){
-        ensureClauseCount(panelClauseIndex + 1);
-      }
-
-      // ✅ adjective columns sunt multi-array, nu string
-      if(key === "subjectAdj"){
-        const arr = sentences[panelClauseIndex].subjectAdjs || [];
-        if(!arr.includes(word)) arr.push(word);
-        sentences[panelClauseIndex].subjectAdjs = arr;
-      } else if(key === "objectAdj"){
-        const arr = sentences[panelClauseIndex].objectAdjs || [];
-        if(!arr.includes(word)) arr.push(word);
-        sentences[panelClauseIndex].objectAdjs = arr;
-      } else if(key === "subject"){
-        sentences[panelClauseIndex][key] = word;
-      } else {
-        sentences[panelClauseIndex][key] = word;
-      }
-
-      // linking -> asigură propoziție următoare
-      if(key === "conjug"){
-        handleLinkingAt(panelClauseIndex);
-        enforceNoDoubleLinking();
-        enforceFinalNotLinking();
-      }
-
-      if(DOM.overlay) DOM.overlay.classList.add("hidden");
-      renderAll();
-    });
+    item.onclick = ()=>{
+      applyWordToState(clauseIndex, key, word);
+      closePanel();
+    };
 
     DOM.panelList.appendChild(item);
   });
 }
-     
-     /* =========================
+
+function closePanel(){
+  if(DOM.overlay) DOM.overlay.classList.remove("active");
+}
+
+on(DOM.closePanelBtn, "click", closePanel);
+on(DOM.overlay, "click", (e)=>{
+  if(e.target === DOM.overlay) closePanel();
+});
+
+/* =========================
    16) APPLY WORD TO STATE
    ========================= */
 
