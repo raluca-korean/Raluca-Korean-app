@@ -2688,20 +2688,8 @@ const DOM = {
   refreshBtn: $("#refreshBtn"),
   homeBtn: $("#homeBtn")
 };
-if(DOM.closePanelBtn){
-  DOM.closePanelBtn.addEventListener("click", ()=>{
-    closePanel();
-  });
-}
 
-if(DOM.overlay){
-  DOM.overlay.addEventListener("click", (e)=>{
-    if(e.target === DOM.overlay){
-      closePanel();
-    }
-  });
-}
-     /* =========================
+/* =========================
    5) APP STATE (1..N)
    ========================= */
 let indexModelRow = 0;
@@ -2812,66 +2800,8 @@ function enforceNoDoubleLinking(){
     }
   }
 }
- /* =========================
-   LONG PRESS (iOS SAFE) + CLICK
-   - delegare pe container (nu pe fiecare .col)
-   - bind o singură dată per container (nu se dublează la re-render)
-   - long-press -> openPanel()
-   - tap/click -> cycleColumnValue()
-   ========================= */
 
-const _boundPressContainers = new WeakSet();
-     /* =========================
-   LONG PRESS + CLICK (STABIL)
-   ========================= */
-function attachPressHandlers(container, clauseIndex){
-  if(!container) return;
-
-  // 🔴 Prevenim atașarea multiplă
-  if(container.dataset.handlersAttached === "true") return;
-  container.dataset.handlersAttached = "true";
-
-  let pressTimer = null;
-  let moved = false;
-
-  // LONG PRESS
-  container.addEventListener("touchstart", (e)=>{
-    moved = false;
-
-    pressTimer = setTimeout(()=>{
-      const col = e.target.closest(".col");
-      if(col){
-        openPanel(clauseIndex, col.dataset.key);
-      }
-    }, 500);
-
-  }, { passive:true });
-
-  container.addEventListener("touchmove", ()=>{
-    moved = true;
-    clearTimeout(pressTimer);
-  }, { passive:true });
-
-  container.addEventListener("touchend", (e)=>{
-    clearTimeout(pressTimer);
-
-    if(!moved){
-      const col = e.target.closest(".col");
-      if(col){
-        cycleColumnValue(clauseIndex, col.dataset.key);
-      }
-    }
-  });
-
-  // CLICK (desktop)
-  container.addEventListener("click", (e)=>{
-    const col = e.target.closest(".col");
-    if(col){
-      cycleColumnValue(clauseIndex, col.dataset.key);
-    }
-  });
-}
-     /* =========================
+/* =========================
    7) HANGUL HELPERS (batchim, conjugare)
    ========================= */
 const H_BASE = 0xAC00;
@@ -3450,51 +3380,126 @@ function createToggleChips(){
   buildFor(DOM.togglesP1, 0);
   buildFor(DOM.togglesP2, 1);
 }
-/* =========================
-   OPEN PANEL
+     
+ /* =========================
+   LONG PRESS (iOS SAFE) + CLICK
+   - delegare pe container (nu pe fiecare .col)
+   - bind o singură dată per container (nu se dublează la re-render)
+   - long-press -> openPanel()
+   - tap/click -> cycleColumnValue()
    ========================= */
+
+const _boundPressContainers = new WeakSet();
+
+function attachPressHandlers(container, clauseIndex){
+  if(!container) return;
+  if(_boundPressContainers.has(container)) return; // IMPORTANT: bind once
+  _boundPressContainers.add(container);
+
+  // iOS: evită delay / gesture issues
+  try { container.style.touchAction = "manipulation"; } catch(e){}
+
+  const LONG_MS = 520;
+  const MOVE_TOL = 10;
+
+  let timer = null;
+  let didLong = false;
+  let startX = 0, startY = 0;
+  let targetCol = null;
+
+  const clearAll = () => {
+    if(timer){ clearTimeout(timer); timer = null; }
+    didLong = false;
+    targetCol = null;
+  };
+
+  container.addEventListener("pointerdown", (e)=>{
+    const col = e.target.closest(".col");
+    if(!col) return;
+
+    // dacă a apăsat pe toggle checkbox, nu facem long press / cycle
+    if(e.target && e.target.matches("input.col-toggle")) return;
+
+    // capture pointer (stabil pe iOS)
+    if(col.setPointerCapture && e.pointerId != null){
+      try{ col.setPointerCapture(e.pointerId); }catch(_){}
+    }
+
+    targetCol = col;
+    didLong = false;
+    startX = e.clientX || 0;
+    startY = e.clientY || 0;
+
+    timer = setTimeout(()=>{
+      if(!targetCol) return;
+      didLong = true;
+
+      const key = targetCol.dataset.key;
+      if(!key) return;
+
+      // deschide panelul
+      openPanel(clauseIndex, key);
+    }, LONG_MS);
+  }, {passive:true});
+
+  container.addEventListener("pointermove", (e)=>{
+    if(!targetCol || !timer) return;
+    const x = e.clientX || 0;
+    const y = e.clientY || 0;
+    const dx = Math.abs(x - startX);
+    const dy = Math.abs(y - startY);
+    if(dx > MOVE_TOL || dy > MOVE_TOL){
+      // dacă userul „scroll-ează”, anulăm long press
+      clearAll();
+    }
+  }, {passive:true});
+
+  container.addEventListener("pointerup", (e)=>{
+    const col = e.target.closest(".col");
+    if(!col) { clearAll(); return; }
+
+    // dacă a apăsat pe toggle checkbox, nu facem nimic aici
+    if(e.target && e.target.matches("input.col-toggle")) { clearAll(); return; }
+
+    // dacă s-a declanșat long press, nu mai facem cycle
+    if(didLong){ clearAll(); return; }
+
+    // tap/click normal -> cycle
+    clearAll();
+    const key = col.dataset.key;
+    if(!key) return;
+    cycleColumnValue(clauseIndex, key);
+  }, {passive:true});
+
+  container.addEventListener("pointercancel", clearAll, {passive:true});
+  container.addEventListener("pointerleave", clearAll, {passive:true});
+}
+     let panelClauseIndex = 0;
+let panelKey = "subject";
+
 function openPanel(clauseIndex, key){
-  if(!DOM.overlay) return;
+  panelClauseIndex = clauseIndex;
+  panelKey = key;
 
   const col = columns.find(c => c.key === key);
   if(!col) return;
 
-  // Titlu
-  if(DOM.panelTitle){
-    DOM.panelTitle.textContent = `Propoziția ${clauseIndex + 1} – ${col.title}`;
-  }
+  if(DOM.panelTitle) DOM.panelTitle.textContent = `Propoziția ${clauseIndex + 1} – ${col.title}`;
+  if(DOM.panelSub) DOM.panelSub.textContent = col.hint || "";
 
-  if(DOM.panelSub){
-    DOM.panelSub.textContent = col.hint || "";
-  }
-
-  // Reset inputs
   if(DOM.panelSearchInput) DOM.panelSearchInput.value = "";
   if(DOM.newWordInput) DOM.newWordInput.value = "";
   if(DOM.newWordTransInput) DOM.newWordTransInput.value = "";
 
-  // Render listă
-  renderPanelList(col, clauseIndex);
+  renderPanelList(col);
 
-  // 🔥 Blochează scroll body (important iOS)
-  document.body.style.overflow = "hidden";
-
-  // Afișează overlay
-  DOM.overlay.classList.remove("hidden");
-}
-     /* =========================
-   CLOSE PANEL
-   ========================= */
-function closePanel(){
+  // IMPORTANT: overlay poate fi null dacă lipsește în HTML
   if(DOM.overlay){
-    DOM.overlay.classList.add("hidden");
+    DOM.overlay.classList.remove("hidden");
   }
-
-  // 🔥 Deblochează scroll body
-  document.body.style.overflow = "";
 }
 
-     function renderPanelList(col){
+function renderPanelList(col){
   if(!DOM.panelList) return;
 
   DOM.panelList.innerHTML = "";
@@ -3613,48 +3618,8 @@ function applyWordToState(clauseIndex, key, word){
 
   renderAll();
 }
+
 /* =========================
-   CYCLE COLUMN VALUE (tap scurt)
-   ========================= */
-
-function cycleColumnValue(clauseIndex, key){
-  if(!sentences[clauseIndex]) return;
-
-  const col = columns.find(c => c.key === key);
-  if(!col || !Array.isArray(col.data)) return;
-
-  const list = col.data;
-  if(!list.length) return;
-
-  const state = sentences[clauseIndex];
-
-  // ADJECTIVE COLUMNS (multi-select arrays)
-  if(key === "subjectAdj"){
-    const current = state.subjectAdjs?.[0] || "";
-    const idx = list.indexOf(current);
-    const next = list[(idx + 1) % list.length];
-    state.subjectAdjs = next ? [next] : [];
-  }
-  else if(key === "objectAdj"){
-    const current = state.objectAdjs?.[0] || "";
-    const idx = list.indexOf(current);
-    const next = list[(idx + 1) % list.length];
-    state.objectAdjs = next ? [next] : [];
-  }
-  else{
-    const current = state[key] || "";
-    const idx = list.indexOf(current);
-    const next = list[(idx + 1) % list.length];
-    state[key] = next;
-  }
-
-  if(key === "conjug"){
-    handleLinkingAt(clauseIndex);
-  }
-
-  renderAll();
-}
-     /* =========================
    17) RO → STATE PARSER (simplu, stabil)
    ========================= */
 
@@ -3759,32 +3724,13 @@ function renderFavorites(){
     DOM.favoritesListEl.appendChild(el);
   });
 }
-/* =========================
-   TOP BUTTONS (SAVE / HOME / REFRESH)
-   ========================= */
 
 on(DOM.favBtn, "click", ()=>{
   const full = buildFullKorean();
-  if(!full) return;
-
-  if(!favorites.includes(full)){
+  if(full && !favorites.includes(full)){
     favorites.push(full);
     renderFavorites();
   }
-});
-
-on(DOM.refreshBtn, "click", ()=>{
-  // regenerează preview fără a reseta propozițiile
-  renderAll();
-});
-
-on(DOM.homeBtn, "click", ()=>{
-  // reset total arhitectură 1..N
-  sentences = [ createEmptySentence() ];
-  actives   = [ createAllActive() ];
-  indexModelRow = 0;
-  loadModelRow(0);
-  renderAll();
 });
 
 /* =========================
