@@ -2688,8 +2688,20 @@ const DOM = {
   refreshBtn: $("#refreshBtn"),
   homeBtn: $("#homeBtn")
 };
+if(DOM.closePanelBtn){
+  DOM.closePanelBtn.addEventListener("click", ()=>{
+    closePanel();
+  });
+}
 
-/* =========================
+if(DOM.overlay){
+  DOM.overlay.addEventListener("click", (e)=>{
+    if(e.target === DOM.overlay){
+      closePanel();
+    }
+  });
+}
+     /* =========================
    5) APP STATE (1..N)
    ========================= */
 let indexModelRow = 0;
@@ -2800,8 +2812,66 @@ function enforceNoDoubleLinking(){
     }
   }
 }
+ /* =========================
+   LONG PRESS (iOS SAFE) + CLICK
+   - delegare pe container (nu pe fiecare .col)
+   - bind o singură dată per container (nu se dublează la re-render)
+   - long-press -> openPanel()
+   - tap/click -> cycleColumnValue()
+   ========================= */
 
-/* =========================
+const _boundPressContainers = new WeakSet();
+     /* =========================
+   LONG PRESS + CLICK (STABIL)
+   ========================= */
+function attachPressHandlers(container, clauseIndex){
+  if(!container) return;
+
+  // 🔴 Prevenim atașarea multiplă
+  if(container.dataset.handlersAttached === "true") return;
+  container.dataset.handlersAttached = "true";
+
+  let pressTimer = null;
+  let moved = false;
+
+  // LONG PRESS
+  container.addEventListener("touchstart", (e)=>{
+    moved = false;
+
+    pressTimer = setTimeout(()=>{
+      const col = e.target.closest(".col");
+      if(col){
+        openPanel(clauseIndex, col.dataset.key);
+      }
+    }, 500);
+
+  }, { passive:true });
+
+  container.addEventListener("touchmove", ()=>{
+    moved = true;
+    clearTimeout(pressTimer);
+  }, { passive:true });
+
+  container.addEventListener("touchend", (e)=>{
+    clearTimeout(pressTimer);
+
+    if(!moved){
+      const col = e.target.closest(".col");
+      if(col){
+        cycleColumnValue(clauseIndex, col.dataset.key);
+      }
+    }
+  });
+
+  // CLICK (desktop)
+  container.addEventListener("click", (e)=>{
+    const col = e.target.closest(".col");
+    if(col){
+      cycleColumnValue(clauseIndex, col.dataset.key);
+    }
+  });
+}
+     /* =========================
    7) HANGUL HELPERS (batchim, conjugare)
    ========================= */
 const H_BASE = 0xAC00;
@@ -3333,26 +3403,19 @@ function updateModelNav(){
   if(DOM.prevBtn) DOM.prevBtn.disabled = (indexModelRow === 0);
   if(DOM.nextBtn) DOM.nextBtn.disabled = (indexModelRow >= maxLen-1);
 }
-
-/* =========================
-   14) CHIPS (togglesP1/togglesP2)
-   ========================= */
 /* =========================
    14) CHIPS (togglesP1/togglesP2)
    ========================= */
 function createToggleChips(){
-
-  if(!DOM.togglesP1) return;
+  if(!DOM.togglesP1 && !DOM.togglesP2) return;
 
   const buildFor = (wrapper, clauseIndex) => {
     if(!wrapper) return;
-
     wrapper.innerHTML = "";
 
     if(!actives[clauseIndex]) return;
 
-    columns.forEach(col => {
-
+    columns.forEach(col=>{
       if(!isColumnVisible(col.key)) return;
 
       const chip = document.createElement("label");
@@ -3369,102 +3432,157 @@ function createToggleChips(){
 
       chip.classList.toggle("chip-off", !cb.checked);
 
+      cb.addEventListener("change", ()=>{
+        const idx = Number(cb.dataset.clauseIndex);
+        const key = cb.dataset.key;
+
+        if(!actives[idx]) actives[idx] = createAllActive();
+        actives[idx][key] = cb.checked;
+
+        chip.classList.toggle("chip-off", !cb.checked);
+        renderAll();
+      });
+
       wrapper.appendChild(chip);
     });
-
-    wrapper.onchange = (e)=>{
-      const cb = e.target;
-      if(!cb || cb.tagName !== "INPUT") return;
-
-      const key = cb.dataset.key;
-      const idx = Number(cb.dataset.clauseIndex);
-
-      if(!actives[idx]) actives[idx] = createAllActive();
-
-      actives[idx][key] = cb.checked;
-
-      cb.parentElement.classList.toggle("chip-off", !cb.checked);
-
-      renderAll();
-    };
   };
 
   buildFor(DOM.togglesP1, 0);
   buildFor(DOM.togglesP2, 1);
 }
-     /* =========================
-   15) LONG PRESS PANEL (SELECȚIE CUVINTE)
+/* =========================
+   OPEN PANEL
    ========================= */
+function openPanel(clauseIndex, key){
+  if(!DOM.overlay) return;
 
-let pressTimer = null;
-let currentPanel = { clauseIndex:0, key:null };
+  const col = columns.find(c => c.key === key);
+  if(!col) return;
 
-function attachPressHandlers(container, clauseIndex){
-  if(!container) return;
+  // Titlu
+  if(DOM.panelTitle){
+    DOM.panelTitle.textContent = `Propoziția ${clauseIndex + 1} – ${col.title}`;
+  }
 
-  $$(".col", container).forEach(colEl=>{
-    const key = colEl.dataset.key;
-    if(!key) return;
+  if(DOM.panelSub){
+    DOM.panelSub.textContent = col.hint || "";
+  }
 
-    const start = (e)=>{
-      e.preventDefault();
-      pressTimer = setTimeout(()=>{
-        openPanel(clauseIndex, key);
-      }, 450);
-    };
+  // Reset inputs
+  if(DOM.panelSearchInput) DOM.panelSearchInput.value = "";
+  if(DOM.newWordInput) DOM.newWordInput.value = "";
+  if(DOM.newWordTransInput) DOM.newWordTransInput.value = "";
 
-    const cancel = ()=>{
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    };
+  // Render listă
+  renderPanelList(col, clauseIndex);
 
-    on(colEl, "mousedown", start);
-    on(colEl, "touchstart", start);
-    on(colEl, "mouseup", cancel);
-    on(colEl, "mouseleave", cancel);
-    on(colEl, "touchend", cancel);
-  });
+  // 🔥 Blochează scroll body (important iOS)
+  document.body.style.overflow = "hidden";
+
+  // Afișează overlay
+  DOM.overlay.classList.remove("hidden");
+}
+     /* =========================
+   CLOSE PANEL
+   ========================= */
+function closePanel(){
+  if(DOM.overlay){
+    DOM.overlay.classList.add("hidden");
+  }
+
+  // 🔥 Deblochează scroll body
+  document.body.style.overflow = "";
 }
 
-function openPanel(clauseIndex, key){
-  if(!DOM.overlay || !DOM.panelList) return;
+     function renderPanelList(col){
+  if(!DOM.panelList) return;
 
-  currentPanel = { clauseIndex, key };
-
-  DOM.overlay.classList.add("active");
   DOM.panelList.innerHTML = "";
-  text(DOM.panelTitle, key.toUpperCase());
-  text(DOM.panelSub, "");
 
-  const column = columns.find(c=>c.key===key);
-  if(!column) return;
+  const key = col.key;
+  const map = translations[key] || {};
+  const filter = (DOM.panelSearchInput?.value || "").trim().toLowerCase();
 
-  const data = column.data || [];
+  const words = (col.data || []).filter(w=>{
+    if(!w) return false;
+    if(!filter) return true;
+    return String(w).toLowerCase().includes(filter);
+  });
 
-  data.forEach(word=>{
+  if(!words.length){
+    const empty = document.createElement("div");
+    empty.className = "panel-item";
+    empty.textContent = "Nu există cuvinte pentru filtrul introdus.";
+    DOM.panelList.appendChild(empty);
+    return;
+  }
+
+  words.forEach(word=>{
     const item = document.createElement("div");
     item.className = "panel-item";
-    item.textContent = word || "(gol)";
 
-    item.onclick = ()=>{
-      applyWordToState(clauseIndex, key, word);
-      closePanel();
-    };
+    const main = document.createElement("div");
+    main.className = "panel-item-main";
+    main.textContent = word;
+    item.appendChild(main);
+
+    const extra = document.createElement("div");
+    extra.className = "panel-item-extra";
+
+    const ro = map[word];
+    if(ro){
+      const tag = document.createElement("div");
+      tag.className = "panel-item-tag";
+      tag.textContent = ro;
+      extra.appendChild(tag);
+    }
+
+    if(key === "conjug" && isLinkingConj(word)){
+      const star = document.createElement("div");
+      star.className = "panel-item-tag";
+      star.textContent = "⭐ linking";
+      extra.appendChild(star);
+    }
+
+    item.appendChild(extra);
+
+    // CLICK -> select (single)
+    item.addEventListener("click", ()=>{
+      if(!sentences[panelClauseIndex]){
+        ensureClauseCount(panelClauseIndex + 1);
+      }
+
+      // ✅ adjective columns sunt multi-array, nu string
+      if(key === "subjectAdj"){
+        const arr = sentences[panelClauseIndex].subjectAdjs || [];
+        if(!arr.includes(word)) arr.push(word);
+        sentences[panelClauseIndex].subjectAdjs = arr;
+      } else if(key === "objectAdj"){
+        const arr = sentences[panelClauseIndex].objectAdjs || [];
+        if(!arr.includes(word)) arr.push(word);
+        sentences[panelClauseIndex].objectAdjs = arr;
+      } else if(key === "subject"){
+        sentences[panelClauseIndex][key] = word;
+      } else {
+        sentences[panelClauseIndex][key] = word;
+      }
+
+      // linking -> asigură propoziție următoare
+      if(key === "conjug"){
+        handleLinkingAt(panelClauseIndex);
+        enforceNoDoubleLinking();
+        enforceFinalNotLinking();
+      }
+
+      if(DOM.overlay) DOM.overlay.classList.add("hidden");
+      renderAll();
+    });
 
     DOM.panelList.appendChild(item);
   });
 }
-
-function closePanel(){
-  if(DOM.overlay) DOM.overlay.classList.remove("active");
-}
-
-on(DOM.closePanelBtn, "click", closePanel);
-on(DOM.overlay, "click", (e)=>{
-  if(e.target === DOM.overlay) closePanel();
-});
-
-/* =========================
+     
+     /* =========================
    16) APPLY WORD TO STATE
    ========================= */
 
@@ -3495,8 +3613,48 @@ function applyWordToState(clauseIndex, key, word){
 
   renderAll();
 }
-
 /* =========================
+   CYCLE COLUMN VALUE (tap scurt)
+   ========================= */
+
+function cycleColumnValue(clauseIndex, key){
+  if(!sentences[clauseIndex]) return;
+
+  const col = columns.find(c => c.key === key);
+  if(!col || !Array.isArray(col.data)) return;
+
+  const list = col.data;
+  if(!list.length) return;
+
+  const state = sentences[clauseIndex];
+
+  // ADJECTIVE COLUMNS (multi-select arrays)
+  if(key === "subjectAdj"){
+    const current = state.subjectAdjs?.[0] || "";
+    const idx = list.indexOf(current);
+    const next = list[(idx + 1) % list.length];
+    state.subjectAdjs = next ? [next] : [];
+  }
+  else if(key === "objectAdj"){
+    const current = state.objectAdjs?.[0] || "";
+    const idx = list.indexOf(current);
+    const next = list[(idx + 1) % list.length];
+    state.objectAdjs = next ? [next] : [];
+  }
+  else{
+    const current = state[key] || "";
+    const idx = list.indexOf(current);
+    const next = list[(idx + 1) % list.length];
+    state[key] = next;
+  }
+
+  if(key === "conjug"){
+    handleLinkingAt(clauseIndex);
+  }
+
+  renderAll();
+}
+     /* =========================
    17) RO → STATE PARSER (simplu, stabil)
    ========================= */
 
@@ -3601,13 +3759,32 @@ function renderFavorites(){
     DOM.favoritesListEl.appendChild(el);
   });
 }
+/* =========================
+   TOP BUTTONS (SAVE / HOME / REFRESH)
+   ========================= */
 
 on(DOM.favBtn, "click", ()=>{
   const full = buildFullKorean();
-  if(full && !favorites.includes(full)){
+  if(!full) return;
+
+  if(!favorites.includes(full)){
     favorites.push(full);
     renderFavorites();
   }
+});
+
+on(DOM.refreshBtn, "click", ()=>{
+  // regenerează preview fără a reseta propozițiile
+  renderAll();
+});
+
+on(DOM.homeBtn, "click", ()=>{
+  // reset total arhitectură 1..N
+  sentences = [ createEmptySentence() ];
+  actives   = [ createAllActive() ];
+  indexModelRow = 0;
+  loadModelRow(0);
+  renderAll();
 });
 
 /* =========================
