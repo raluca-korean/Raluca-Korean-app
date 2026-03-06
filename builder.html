@@ -3398,6 +3398,7 @@ function createToggleChips(){
 
 let pressTimer = null;
 let currentPanel = { clauseIndex:0, key:null };
+
 function attachPressHandlers(container, clauseIndex){
   if(!container) return;
 
@@ -3405,27 +3406,23 @@ function attachPressHandlers(container, clauseIndex){
     const key = colEl.dataset.key;
     if(!key) return;
 
-    let pressTimer = null;
-
-    colEl.addEventListener("pointerdown", (e)=>{
+    const start = (e)=>{
       e.preventDefault();
-
       pressTimer = setTimeout(()=>{
         openPanel(clauseIndex, key);
-      }, 500); // 500ms long press
-    });
+      }, 450);
+    };
 
-    colEl.addEventListener("pointerup", ()=>{
+    const cancel = ()=>{
       clearTimeout(pressTimer);
-    });
+      pressTimer = null;
+    };
 
-    colEl.addEventListener("pointerleave", ()=>{
-      clearTimeout(pressTimer);
-    });
-
-    colEl.addEventListener("pointercancel", ()=>{
-      clearTimeout(pressTimer);
-    });
+    on(colEl, "mousedown", start);
+    on(colEl, "touchstart", start);
+    on(colEl, "mouseup", cancel);
+    on(colEl, "mouseleave", cancel);
+    on(colEl, "touchend", cancel);
   });
 }
 
