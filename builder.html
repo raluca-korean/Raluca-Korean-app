@@ -3742,33 +3742,8 @@ on(DOM.speakBtn, "click", ()=>{
   utter.lang = "ko-KR";
   speechSynthesis.speak(utter);
 });
+
 /* =========================
-   HOME (RESET COMPLET)
-   ========================= */
-function handleHome(){
-
-  // reset complet aplicație
-  sentences = [ createEmptySentence() ];
-  actives   = [ createAllActive() ];
-  indexModelRow = 0;
-
-  // reîncarcă primul rând model
-  loadModelRow(0);
-
-  // curăță preview
-  if(DOM.previewKo) DOM.previewKo.textContent = "(alege cuvinte din tabel)";
-  if(DOM.previewRo) DOM.previewRo.textContent = "";
-  if(DOM.roInput) DOM.roInput.value = "";
-
-  renderAll();
-}
-     /* =========================
-   REFRESH (doar re-render)
-   ========================= */
-function handleRefresh(){
-  renderAll();
-}  
-     /* =========================
    19) FAVORITES
    ========================= */
 
@@ -3784,40 +3759,44 @@ function renderFavorites(){
     DOM.favoritesListEl.appendChild(el);
   });
 }
-   /* =========================
-   HEADER BUTTONS (HOME / REFRESH)
+/* =========================
+   TOP BUTTONS (SAVE / HOME / REFRESH)
    ========================= */
+
+on(DOM.favBtn, "click", ()=>{
+  const full = buildFullKorean();
+  if(!full) return;
+
+  if(!favorites.includes(full)){
+    favorites.push(full);
+    renderFavorites();
+  }
+});
+
+on(DOM.refreshBtn, "click", ()=>{
+  // regenerează preview fără a reseta propozițiile
+  renderAll();
+});
+
+on(DOM.homeBtn, "click", ()=>{
+  // reset total arhitectură 1..N
+  sentences = [ createEmptySentence() ];
+  actives   = [ createAllActive() ];
+  indexModelRow = 0;
+  loadModelRow(0);
+  renderAll();
+});
+
+/* =========================
+   20) INIT
+   ========================= */
+
 function init(){
-
-  const homeBtn = document.getElementById("homeBtn");
-  const refreshBtn = document.getElementById("refreshBtn");
-
-  if(homeBtn){
-    homeBtn.addEventListener("click", function(){
-
-      sentences = [ createEmptySentence() ];
-      actives   = [ createAllActive() ];
-      indexModelRow = 0;
-
-      loadModelRow(0);
-      renderAll();
-
-    });
-  }
-
-  if(refreshBtn){
-    refreshBtn.addEventListener("click", function(){
-
-      renderAll();
-
-    });
-  }
-
   loadModelRow(0);
   renderAll();
 }
-document.addEventListener("DOMContentLoaded", init);  
-    
+
+document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
 </html> 
