@@ -3323,52 +3323,89 @@ function chooseSubjectParticle(word, state, clauseIndex){
   /* =========================
    KOREAN NATURAL WORD ORDER
    ========================= */
-
 function buildNaturalKoreanOrder(parts){
 
   if(!parts || !parts.length) return "";
 
+  const subject = [];
   const time = [];
   const place = [];
+  const manner = [];
   const object = [];
-  const others = [];
   const verb = [];
+  const other = [];
 
   parts.forEach(p=>{
 
     if(!p) return;
-if(p.endsWith("에서") || p.endsWith("에")){  
-      place.push(p);
+
+    // SUBJECT
+    if(p.endsWith("은") || p.endsWith("는") || p.endsWith("이") || p.endsWith("가")){
+      subject.push(p);
       return;
     }
 
-    if(p.includes("을") || p.includes("를")){
-      object.push(p);
-      return;
-    }
-
-    if(p.endsWith("요") || p.endsWith("다")){
-      verb.push(p);
-      return;
-    }
-
-    if(/\d/.test(p) || p.includes("오늘") || p.includes("어제")){
+    // TIME
+    if(
+      p.includes("오늘") ||
+      p.includes("어제") ||
+      p.includes("내일") ||
+      p.includes("지금") ||
+      p.includes("요즘")
+    ){
       time.push(p);
       return;
     }
 
-    others.push(p);
+    // PLACE
+    if(p.endsWith("에서") || p.endsWith("에")){
+      place.push(p);
+      return;
+    }
+
+    // OBJECT
+    if(p.endsWith("을") || p.endsWith("를")){
+      object.push(p);
+      return;
+    }
+
+    // VERB
+    if(
+      p.endsWith("요") ||
+      p.endsWith("다") ||
+      p.endsWith("어요") ||
+      p.endsWith("아요")
+    ){
+      verb.push(p);
+      return;
+    }
+
+    // MANNER
+    if(
+      p.endsWith("히") ||
+      p.endsWith("게")
+    ){
+      manner.push(p);
+      return;
+    }
+
+    other.push(p);
 
   });
 
   return [
-    ...others,
     ...time,
+    ...subject,
     ...place,
+    ...manner,
     ...object,
-    ...verb
-  ].join(" ").replace(/\s+/g," ").trim();
-}
+    ...verb,
+    ...other
+  ]
+  .join(" ")
+  .replace(/\s+/g," ")
+  .trim();
+}    
     /* =========================
    APPLY PARTICLES
    ========================= */
