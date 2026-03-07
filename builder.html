@@ -3300,26 +3300,33 @@ function removeRepeatedSubject(sentences){
     /* =========================
    AUTO TOPIC VS SUBJECT
    ========================= */
-
 function chooseSubjectParticle(word, state, clauseIndex){
+
   if(!word) return "";
 
-  const topicParticle = hasBatchim(word) ? "은" : "는";
+  const topicParticle   = hasBatchim(word) ? "은" : "는";
   const subjectParticle = hasBatchim(word) ? "이" : "가";
 
-  /* prima propoziție -> topic */
+  // prima propoziție → topic
   if(clauseIndex === 0){
     return topicParticle;
   }
 
-  /* dacă subiectul s-a schimbat -> subject particle */
-  if(state.newSubject === true){
-    return subjectParticle;
+  const prev = sentences[clauseIndex - 1];
+
+  if(!prev) return topicParticle;
+
+  const prevSubject = prev.subject || "";
+  const currentSubject = word;
+
+  // dacă subiectul este același → topic
+  if(prevSubject === currentSubject){
+    return topicParticle;
   }
 
-  /* implicit */
-  return topicParticle;
-}
+  // dacă subiectul s-a schimbat → subject particle
+  return subjectParticle;
+}    
   /* =========================
    KOREAN NATURAL WORD ORDER
    ========================= */
