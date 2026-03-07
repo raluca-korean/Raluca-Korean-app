@@ -2697,7 +2697,95 @@ const DOM = {
   refreshBtn: $("#refreshBtn"),
 homeBtn: $("#homeBtn")
   };
+   function generateKoreanClause(state){
 
+  const parts=[];
+
+  if(state.time)
+    parts.push(addTimeWithParticle(state.time));
+
+  if(state.subject)
+    parts.push(addSubjectWithParticle(state.subject));
+
+  if(state.place)
+    parts.push(addPlaceWithParticle(state.place,state.verb));
+
+  if(state.objects?.length)
+    parts.push(addObjectWithParticle(state.objects.join("과")));
+
+  const verb = buildVerbPhrase(state.verb,"-아요/어요");
+
+  if(verb) parts.push(verb);
+
+  return buildNaturalKoreanOrder(parts);
+
+}
+  function generateKoreanSentence(text){
+
+  const parsed = parseRomanianSentence(text);
+
+  const clauses = planClauses(parsed);
+
+  const parts=[];
+
+  clauses.forEach((c,i)=>{
+
+    const clause = generateKoreanClause(c);
+
+    if(i<clauses.length-1){
+
+      const base = clause.replace(/요$/, "");
+
+      parts.push(base + c.connector);
+
+    }else{
+
+      parts.push(clause);
+
+    }
+
+  });
+
+  return parts.join(" ");
+}  
+    function planClauses(state){
+
+  const clauses=[];
+
+  if(state.connector==="because"){
+
+    clauses.push({
+      ...state,
+      connector:"기 때문에"
+    });
+
+  }
+
+  if(state.connector==="while"){
+
+    clauses.push({
+      ...state,
+      connector:"면서"
+    });
+
+  }
+
+  if(state.connector==="contrast"){
+
+    clauses.push({
+      ...state,
+      connector:"지만"
+    });
+
+  }
+
+  clauses.push({
+    ...state,
+    connector:null
+  });
+
+  return clauses;
+}
 /* =========================
    5) APP STATE (IMPORTANT)
    - Propoziții dinamice (1..N)
