@@ -3100,84 +3100,96 @@ function buildClauseSentence(state, activeMap, clauseIndex){
     isColumnVisible(key);
 
   /* ===== SUBJECT ===== */
+  if (!state.hideSubject && use("subject")) {
 
-if (!state.hideSubject && use("subject")) {
+    let subjectWord = "";
 
-  let subjectWord = "";
+    if (state.subjects && state.subjects.length) {
+      subjectWord = buildList(state.subjects, "와");
+    } else {
+      subjectWord = state.subject || "";
+    }
 
-  if(state.subjects && state.subjects.length){
-    subjectWord = state.subjects.join("와 ");
+    if (subjectWord) {
+      if (state.subjectAdjs && state.subjectAdjs.length) {
+        subjectWord = state.subjectAdjs.join(" ") + " " + subjectWord;
+      }
+
+      koParts.push(addSubjectWithParticle(subjectWord, state, clauseIndex));
+    }
   }
-  else if(state.subject){
-    subjectWord = state.subject;
-  }
 
-  if (state.subjectAdjs && state.subjectAdjs.length) {
-    subjectWord = state.subjectAdjs.join(" ") + " " + subjectWord;
-  }
-
-  if(subjectWord){
-    koParts.push(addSubjectWithParticle(subjectWord));
-  }
-}
   /* ===== TIME ===== */
-if(use("time")){
+  if (use("time")) {
 
-  if(state.times && state.times.length){
-    koParts.push(buildMultiple(state.times,"와"));
-  }
-  else if(state.time){
-    koParts.push(state.time);
+    let timeWord = "";
+
+    if (state.times && state.times.length) {
+      timeWord = buildList(state.times, "와");
+    } else {
+      timeWord = state.time || "";
+    }
+
+    if (timeWord) {
+      koParts.push(addTimeWithParticle(timeWord));
+    }
   }
 
-}
   /* ===== PLACE ===== */
-if(use("place")){
+  if (use("place")) {
 
-  if(state.places && state.places.length){
-
-    state.places.forEach(p=>{
-      koParts.push(addPlaceWithParticle(p,v));
-    });
-
-  }
-  else if(state.place){
-    koParts.push(addPlaceWithParticle(state.place,v));
+    if (state.places && state.places.length) {
+      state.places.forEach(placeWord => {
+        if (placeWord) koParts.push(addPlaceWithParticle(placeWord, v));
+      });
+    } else if (state.place) {
+      koParts.push(addPlaceWithParticle(state.place, v));
+    }
   }
 
-}
   /* ===== MOD ===== */
-  if(use("mod") && state.mod){
-    koParts.push(state.mod);
+  if (use("mod")) {
+    if (state.mods && state.mods.length) {
+      state.mods.forEach(modWord => {
+        if (modWord) koParts.push(modWord);
+      });
+    } else if (state.mod) {
+      koParts.push(state.mod);
+    }
   }
 
   /* ===== OBJECT ===== */
-  if(use("object")){
+  if (use("object")) {
 
-  if(state.objects && state.objects.length){
+    let objectWord = "";
 
-    state.objects.forEach(o=>{
-      koParts.push(addObjectWithParticle(o));
-    });
-
-  }
-  else if(state.object){
-
-    let objectWord = state.object;
-
-    if(state.objectAdjs && state.objectAdjs.length){
-      objectWord = state.objectAdjs.join(" ") + " " + state.object;
+    if (state.objects && state.objects.length) {
+      objectWord = buildList(state.objects, "과");
+    } else {
+      objectWord = state.object || "";
     }
 
-    koParts.push(addObjectWithParticle(objectWord));
+    if (objectWord) {
+      if (state.objectAdjs && state.objectAdjs.length) {
+        objectWord = state.objectAdjs.join(" ") + " " + objectWord;
+      }
 
+      if (use("numeral") && state.numeral) {
+        koParts.push(state.numeral);
+
+        if (use("counter") && state.counter) {
+          koParts.push(state.counter);
+        }
+      }
+
+      koParts.push(addObjectWithParticle(objectWord));
+    }
   }
 
-}
   /* ===== VERB ===== */
-  if(use("verb") || use("conjug")){
+  if (use("verb") || use("conjug")) {
     const vp = buildVerbPhrase(v, cj);
-    if(vp) koParts.push(vp);
+    if (vp) koParts.push(vp);
   }
 
   return {
@@ -3185,7 +3197,6 @@ if(use("place")){
     conj: cj
   };
 }
-    
     /* =========================
    KOREAN PARTICLE ENGINE
    ========================= */
