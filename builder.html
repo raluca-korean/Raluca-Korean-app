@@ -2996,8 +2996,7 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
-
-function buildClauseSentence(state, activeMap){
+function buildClauseSentence(state, activeMap, clauseIndex){
 
   const koParts = [];
   const v  = state.verb || "";
@@ -3006,62 +3005,66 @@ function buildClauseSentence(state, activeMap){
   const use = (key) =>
     activeMap?.[key] !== false &&
     isColumnVisible(key);
+
   /* ===== SUBJECT ===== */
-if (!state.hideSubject && use("subject") && state.subject) {
+  if (!state.hideSubject && use("subject") && state.subject) {
 
-  let subjectWord = state.subject;
+    let subjectWord = state.subject;
 
-  if (state.subjectAdjs && state.subjectAdjs.length) {
-    subjectWord = state.subjectAdjs.join(" ") + " " + state.subject;
+    if (state.subjectAdjs && state.subjectAdjs.length) {
+      subjectWord = state.subjectAdjs.join(" ") + " " + state.subject;
+    }
+
+    koParts.push(addSubjectWithParticle(subjectWord, state, clauseIndex));
   }
 
-koParts.push(addSubjectWithParticle(subjectWord, state, clauseIndex));
-  /* TIME */
+  /* ===== TIME ===== */
   if(use("time") && state.time){
     koParts.push(state.time);
   }
 
-  /* PLACE */
+  /* ===== PLACE ===== */
   if(use("place") && state.place){
     koParts.push(addPlaceWithParticle(state.place, v));
   }
 
-  /* MOD */
+  /* ===== MOD ===== */
   if(use("mod") && state.mod){
     koParts.push(state.mod);
   }
 
-/* ===== OBJECT ===== */
-if (use("object") && state.object) {
+  /* ===== OBJECT ===== */
+  if (use("object") && state.object) {
 
-  let objectWord = state.object;
+    let objectWord = state.object;
 
-  if (state.objectAdjs && state.objectAdjs.length) {
-    objectWord = state.objectAdjs.join(" ") + " " + state.object;
-  }
-
-  // numeral + counter (doar dacă există)
-  if (use("numeral") && state.numeral) {
-    koParts.push(state.numeral);
-
-    if (use("counter") && state.counter) {
-      koParts.push(state.counter);
+    if (state.objectAdjs && state.objectAdjs.length) {
+      objectWord = state.objectAdjs.join(" ") + " " + state.object;
     }
+
+    if (use("numeral") && state.numeral) {
+      koParts.push(state.numeral);
+
+      if (use("counter") && state.counter) {
+        koParts.push(state.counter);
+      }
+    }
+
+    koParts.push(addObjectWithParticle(objectWord));
   }
 
-  koParts.push(addObjectWithParticle(objectWord));
-} 
-  /* VERB */
+  /* ===== VERB ===== */
   if(use("verb") || use("conjug")){
     const vp = buildVerbPhrase(v, cj);
     if(vp) koParts.push(vp);
   }
 
   return {
- ko: buildNaturalKoreanOrder(koParts),
+    ko: buildNaturalKoreanOrder(koParts),
     conj: cj
   };
 }
+    
     /* =========================
    KOREAN PARTICLE ENGINE
    ========================= */
