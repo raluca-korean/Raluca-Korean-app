@@ -3264,6 +3264,32 @@ function addPersonParticle(word){
   if(!word) return "";
   return particlePerson(word);
 }
+    const COLUMN_ENGINE = {
+  subject: { particle: addSubjectWithParticle },
+  object: { particle: addObjectWithParticle },
+  place: { particle: addPlaceWithParticle },
+  person: { particle: particlePerson },
+  time: { particle: addTimeWithParticle },
+  mod: { particle: w => w }
+};
+
+function buildParts(state){
+
+  const parts = {};
+
+  Object.keys(COLUMN_ENGINE).forEach(key=>{
+
+    if(!state[key]) return;
+
+    const fn = COLUMN_ENGINE[key].particle;
+
+    parts[key] = fn(state[key]);
+
+  });
+
+  return parts;
+
+}
     /* =========================
    REMOVE REPEATED SUBJECT
    ========================= */
