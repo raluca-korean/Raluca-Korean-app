@@ -3979,22 +3979,18 @@ function translateRoToKo(roText){
 function setupUI(){
 
   /* ===== MODE SWITCH ===== */
-  if(DOM.modeButtons){
-    DOM.modeButtons.forEach(btn=>{
-      on(btn,"click",()=>{
-        currentMode = btn.dataset.mode || "topik";
-
-        DOM.modeButtons.forEach(b=>{
-          b.classList.toggle("active", b === btn);
-        });
-
-        renderAll();
-      });
+  DOM.modeButtons.forEach(btn=>{
+    on(btn, "click", ()=>{
+      currentMode = btn.dataset.mode || "topik";
+      DOM.modeButtons.forEach(b => 
+        b.classList.toggle("active", b === btn)
+      );
+      renderAll();
     });
-  }
+  });
 
   /* ===== MODEL NAV ===== */
-  on(DOM.prevBtn,"click",()=>{
+  on(DOM.prevBtn, "click", ()=>{
     if(indexModelRow > 0){
       indexModelRow--;
       loadModelRow(indexModelRow);
@@ -4002,7 +3998,7 @@ function setupUI(){
     }
   });
 
-  on(DOM.nextBtn,"click",()=>{
+  on(DOM.nextBtn, "click", ()=>{
     if(indexModelRow < maxLen-1){
       indexModelRow++;
       loadModelRow(indexModelRow);
@@ -4011,26 +4007,24 @@ function setupUI(){
   });
 
   /* ===== RESET ===== */
-  on(DOM.resetBtn,"click",()=>{
+  on(DOM.resetBtn, "click", ()=>{
     actives = actives.map(()=>makeAllActive());
     createToggleChips();
     renderAll();
   });
 
   /* ===== TOGGLE RO ===== */
-  on(DOM.toggleRoBtn,"click",()=>{
+  on(DOM.toggleRoBtn, "click", ()=>{
     showRo = !showRo;
-
     if(DOM.toggleRoBtn){
-      DOM.toggleRoBtn.textContent =
+      DOM.toggleRoBtn.textContent = 
         showRo ? "Ascunde traducerea" : "Arată traducerea";
     }
-
     updatePreview();
   });
 
   /* ===== RANDOM ===== */
-  on(DOM.randomBtn,"click",()=>{
+  on(DOM.randomBtn, "click", ()=>{
     const s = sentences[0];
     const a = actives[0];
 
@@ -4038,7 +4032,7 @@ function setupUI(){
       if(!isColumnVisible(col.key)) return;
       if(a[col.key] === false) return;
 
-      const arr = col.data.filter(x=>x);
+      const arr = col.data.filter(x => x);
       if(!arr.length) return;
 
       s[col.key] = arr[Math.floor(Math.random()*arr.length)];
@@ -4048,64 +4042,100 @@ function setupUI(){
   });
 
   /* ===== SPEAK ===== */
-  on(DOM.speakBtn,"click",()=>{
+  on(DOM.speakBtn, "click", ()=>{
     const ko = (DOM.previewKo?.textContent || "").trim();
     if(!ko || ko.includes("alege")) return;
-
     speakKorean(ko);
   });
 
   /* ===== FAVORITE ===== */
-  on(DOM.favBtn,"click",()=>{
+  on(DOM.favBtn, "click", ()=>{
     const ko = (DOM.previewKo?.textContent || "").trim();
     const ro = (DOM.previewRo?.textContent || "").trim();
 
     if(!ko || ko.includes("alege")) return;
 
-    const exists = favorites.some(f=>f.ko === ko);
+    const exists = favorites.some(f => f.ko === ko);
+    if(!exists) favorites.push({ko, ro});
 
-    if(!exists){
-      favorites.push({ko,ro});
-      renderFavorites();
+    renderFavorites();
+  });
+
+  /* ===== PANEL CLOSE ===== */
+  on(DOM.closePanelBtn, "click", ()=> hide(DOM.overlay));
+  on(DOM.overlay, "click", (e)=>{
+    if(e.target === DOM.overlay) hide(DOM.overlay);
+  });
+
+  /* ===== PANEL SEARCH ===== */
+  on(DOM.panelSearchInput, "input", ()=>{
+    const col = columns.find(c=>c.key===panelKey);
+    if(col) renderPanelList(col);
+  });
+
+  /* ===== ADD WORD ===== */
+  on(DOM.addWordBtn, "click", ()=>{
+    const txt = (DOM.newWordInput?.value || "").trim();
+    if(!txt) return;
+
+    const roTxt = (DOM.newWordTransInput?.value || "").trim();
+    const col = columns.find(c=>c.key===panelKey);
+    if(!col || !col.allowCustom) return;
+
+    if(!col.data.includes(txt)) col.data.push(txt);
+    if(!translations[panelKey]) translations[panelKey] = {};
+    if(roTxt) translations[panelKey][txt] = roTxt;
+
+    saveCustomData();
+    REV = buildReverseMap();
+
+    DOM.newWordInput.value = "";
+    DOM.newWordTransInput.value = "";
+
+    renderPanelList(col);
+  });
+
+  /* ===== ENABLE P2 ===== */
+  on(DOM.enableP2, "change", ()=>{
+    const onOff = DOM.enableP2.checked;
+
+    if(onOff && !sentences[1]){
+      sentences[1] = makeEmptySentence();
+      actives[1]   = makeAllActive();
     }
-  });
 
-  /* ===== HEADER BUTTONS (HOME / REFRESH) ===== */
-
-  on(DOM.homeBtn,"click",()=>{
-
-    sentences = [ createEmptySentence() ];
-    actives   = [ createAllActive() ];
-
-    indexModelRow = 0;
-
-    loadModelRow(0);
-    renderAll();
-
-  });
-
-  on(DOM.refreshBtn,"click",()=>{
+    if(DOM.tableP2){
+      onOff ? show(DOM.tableP2) : hide(DOM.tableP2);
+    }
+    if(DOM.titleP2){
+      onOff ? show(DOM.titleP2) : hide(DOM.titleP2);
+    }
 
     renderAll();
-
   });
 
   /* ===== RO TRANSLATE ===== */
-
-  on(DOM.roTranslateBtn,"click",()=>{
+  on(DOM.roTranslateBtn, "click", ()=>{
     const txt = (DOM.roInput?.value || "").trim();
     if(!txt) return;
 
     translateRoToKo(txt);
     updatePreview();
 
-    if(DOM.roInput){
-      DOM.roInput.value = buildFullRomanian();
-    }
+    DOM.roInput.value = buildFullRomanian();
   });
 
+  /* ===== HEADER BUTTONS ===== */
+  on(DOM.refreshBtn, "click", ()=>{
+    location.reload();
+  });
+
+  on(DOM.homeBtn, "click", ()=>{
+    window.location.href = "index.html";
+  });
 }
-    // ✅ dacă nu ai aceste funcții definite în altă parte, pune no-op ca să nu crape:
+
+// ✅ dacă nu ai aceste funcții definite în altă parte, pune no-op ca să nu crape:
 function updateNaturalHint(){ }
 function updatePreviewCardState(){ }
 
