@@ -1,5 +1,3 @@
-Bbb1
-
 Bb23
 
 Bb17
@@ -2632,7 +2630,18 @@ loadCustomData();
 ];
     const MULTI_VALUE_SLOTS = new Set(["subject"]);
     const maxLen = Math.max(...columns.map(c => c.data.length));
-  
+    // ===== CLAUSE ENGINE (GENERALIZARE P1 / P2) =====
+const clauses = [
+  { id: 1, state: {}, active: {} },
+  { id: 2, state: {}, active: {} }
+];
+
+// aliasuri TEMPORARE (NU schimbă nimic în restul codului)
+const stateP1  = clauses[0].state;
+const activeP1 = clauses[0].active;
+
+const stateP2  = clauses[1].state;
+const activeP2 = clauses[1].active;
     /* =========================
    4) DOM (nu presupunem nimic: doar id-uri dacă există)
    ========================= */
@@ -2718,7 +2727,8 @@ function makeAllActive(){
   return a;
 }
 
-let showRo = true;  
+let showRo = true;
+    let showExtraClauses = false;    
 let currentMode = "topik"; // topik vs simple
 const simpleColumnsSet = {subject:true,time:true,object:true,verb:true,conjug:true};
 
@@ -3250,7 +3260,81 @@ function createClauseTable(clauseIndex){
 
   return { wrap, table };
 }  
+    /* =========================
+   13) PREVIEW: KO + RO pentru N propoziții
+   ========================= */
+function ensureLinkedSentences(){
+  if(!Array.isArray(sentences) || !sentences.length) return;
+  if(!Array.isArray(actives) || !actives.length) return;
 
+  // 1) determinăm câte propoziții sunt NECESARE pe baza linking-urilor
+  let neededLen = 1;
+
+  for(let i = 0; i < sentences.length; i++){
+    const cj = (sentences[i]?.conjug || "").trim();
+
+    // dacă propoziția i e linking, atunci trebuie să existe i+1
+    if(isLinkingConj(cj)){
+      neededLen = Math.max(neededLen, i + 2);
+    }
+
+    // ultima propoziție nu are voie să rămână linking
+    if(i === sentences.length - 1 && isLinkingConj(cj)){
+      sentences[i].conjug = "-아요/어요";
+    }
+  }
+
+  // 2) completăm sentences/actives până la neededLen
+  while(sentences.length < neededLen){
+    sentences.push(makeEmptySentence());
+    actives.push(makeAllActive());
+  }
+
+  // 3) control UI: dacă avem nevoie de cel puțin 2 propoziții, arătăm extra
+  showExtraClauses = (neededLen > 1);
+}
+  function updatePreview(){
+
+  const previewKo = document.getElementById("previewKo");
+  const previewRo = document.getElementById("previewRo");
+  if(!previewKo) return;
+
+  const koParts = [];
+
+  for(let i = 0; i < sentences.length; i++){
+    const s = sentences[i];
+    if(!s) continue;
+
+    const hideSubject = i > 0;
+
+    const built = buildClauseSentence(
+      { ...s, hideSubject },
+      actives[i]
+    );
+
+    if(built?.ko){
+      koParts.push(built.ko);
+    }
+  }
+
+  const fullKo = koParts.join(" ").replace(/\s+/g," ").trim();
+
+  previewKo.textContent =
+    fullKo || "(alege cuvinte din tabel)";
+
+  if(previewRo){
+    previewRo.textContent =
+      showRo ? buildFullRomanian() : "";
+  }
+
+  // 🔥 AICI ESTE FIXUL
+  if (DOM.roInput) {
+    DOM.roInput.value = buildFullRomanian();
+  }
+
+  updateNaturalHint(fullKo);
+  updatePreviewCardState();
+}
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
@@ -4055,6 +4139,49 @@ function setupUI(){
 function updateNaturalHint(){ }
 function updatePreviewCardState(){ }
 
+
+/* =========================
+   23) RENDER ALL
+   ========================= */
+function renderAll(){
+  ensureLinkedSentences();
+
+  if(!sentences[0] || !actives[0]) return;
+
+  if(DOM.tableP1){
+    renderClauseRow(DOM.tableP1, actives[0], sentences[0], 0);
+  }
+
+  if (DOM.tableP2 && sentences[1] && actives[1]) {
+    if (showExtraClauses) {
+      show(DOM.tableP2);
+      DOM.titleP2 && show(DOM.titleP2);
+      renderClauseRow(DOM.tableP2, actives[1], sentences[1], 1);
+    } else {
+      hide(DOM.tableP2);
+      DOM.titleP2 && hide(DOM.titleP2);
+    }
+  }
+
+  renderExtraClauses();
+
+  // EXTRA P3+
+  const extra = $("#extra-clauses");
+  if (extra) {
+    extra.innerHTML = "";
+    for (let i = 2; i < sentences.length; i++) {
+      const { wrap, table } = createClauseTable(i);
+      extra.appendChild(wrap);
+      renderClauseRow(table, actives[i], sentences[i], i);
+      attachPressHandlers(table, i);
+    }
+  }
+
+  updateModelNav();
+  updatePreview();
+}
+
+
 /* =========================
    24) BOOTSTRAP (UN SINGUR)
    ========================= */
@@ -4070,7 +4197,34 @@ document.addEventListener("DOMContentLoaded", ()=>{
   renderAll();
 });
     
+    function renderExtraClauses() {
+  if (!DOM.extraClauses) return;
 
+  DOM.extraClauses.innerHTML = "";
+
+  // începem de la propoziția 3 (index 2)
+  for (let i = 2; i < sentences.length; i++) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-block";
+
+    const title = document.createElement("div");
+    title.className = "table-title";
+    title.innerHTML = `<span>Propoziția ${i + 1}</span>`;
+    wrapper.appendChild(title);
+
+    const table = document.createElement("div");
+    table.className = "table-horizontal";
+    wrapper.appendChild(table);
+
+    DOM.extraClauses.appendChild(wrapper);
+
+    // render tabelul EXACT ca P1 / P2
+    renderClauseRow(table, actives[i], sentences[i], i);
+
+    // long-press + click
+    attachPressHandlers(table, i);
+  }
+}
 function buildFullRomanian(){
 
   const parts = [];
