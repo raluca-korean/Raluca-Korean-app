@@ -3069,113 +3069,87 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
-function buildClauseSentence(state, activeMap, clauseIndex){
+    function buildClauseSentence(state, activeMap){
 
   const koParts = [];
-  const v  = state.verb || "";
-  const cj = state.conjug || "";
+
+  const v = state.verb || "";
+  const cj = state.conjug || state.conj || "";
 
   const use = (key) =>
     activeMap?.[key] !== false &&
     isColumnVisible(key);
 
   /* ===== SUBJECT ===== */
-  if (!state.hideSubject && use("subject")) {
 
-    let subjectWord = "";
+  if(!state.hideSubject && use("subject") && state.subject){
 
-    if (state.subjects && state.subjects.length) {
-      subjectWord = buildList(state.subjects, "와");
-    } else {
-      subjectWord = state.subject || "";
+    let subjectWord = state.subject;
+
+    if(state.subjectAdjs && state.subjectAdjs.length){
+      subjectWord = state.subjectAdjs.join(" ") + " " + state.subject;
     }
 
-    if (subjectWord) {
-      if (state.subjectAdjs && state.subjectAdjs.length) {
-        subjectWord = state.subjectAdjs.join(" ") + " " + subjectWord;
-      }
-
-      koParts.push(addSubjectWithParticle(subjectWord, state, clauseIndex));
-    }
+    koParts.push(addSubjectWithParticle(subjectWord));
   }
 
   /* ===== TIME ===== */
-  if (use("time")) {
 
-    let timeWord = "";
-
-    if (state.times && state.times.length) {
-      timeWord = buildList(state.times, "와");
-    } else {
-      timeWord = state.time || "";
-    }
-
-    if (timeWord) {
-      koParts.push(addTimeWithParticle(timeWord));
-    }
+  if(use("time") && state.time){
+    koParts.push(addTimeWithParticle(state.time));
   }
 
   /* ===== PLACE ===== */
-  if (use("place")) {
 
-    if (state.places && state.places.length) {
-      state.places.forEach(placeWord => {
-        if (placeWord) koParts.push(addPlaceWithParticle(placeWord, v));
-      });
-    } else if (state.place) {
-      koParts.push(addPlaceWithParticle(state.place, v));
-    }
+  if(use("place") && state.place){
+    koParts.push(addPlaceWithParticle(state.place, v));
+  }
+
+  /* ===== PERSON ===== */
+
+  if(use("person") && state.person){
+    koParts.push(particlePerson(state.person));
   }
 
   /* ===== MOD ===== */
-  if (use("mod")) {
-    if (state.mods && state.mods.length) {
-      state.mods.forEach(modWord => {
-        if (modWord) koParts.push(modWord);
-      });
-    } else if (state.mod) {
-      koParts.push(state.mod);
-    }
+
+  if(use("mod") && state.mod){
+    koParts.push(state.mod);
   }
 
   /* ===== OBJECT ===== */
-  if (use("object")) {
 
-    let objectWord = "";
+  if(use("object") && state.object){
 
-    if (state.objects && state.objects.length) {
-      objectWord = buildList(state.objects, "과");
-    } else {
-      objectWord = state.object || "";
+    let objectWord = state.object;
+
+    if(state.objectAdjs && state.objectAdjs.length){
+      objectWord = state.objectAdjs.join(" ") + " " + state.object;
     }
 
-    if (objectWord) {
-      if (state.objectAdjs && state.objectAdjs.length) {
-        objectWord = state.objectAdjs.join(" ") + " " + objectWord;
-      }
-
-      if (use("numeral") && state.numeral) {
-        koParts.push(state.numeral);
-
-        if (use("counter") && state.counter) {
-          koParts.push(state.counter);
-        }
-      }
-
-      koParts.push(addObjectWithParticle(objectWord));
+    if(use("numeral") && state.numeral){
+      koParts.push(state.numeral);
     }
+
+    if(use("counter") && state.counter){
+      koParts.push(state.counter);
+    }
+
+    koParts.push(addObjectWithParticle(objectWord));
   }
 
   /* ===== VERB ===== */
-  if (use("verb") || use("conjug")) {
+
+  if(use("verb") || use("conjug")){
     const vp = buildVerbPhrase(v, cj);
-    if (vp) koParts.push(vp);
+    if(vp) koParts.push(vp);
   }
 
   return {
     ko: buildNaturalKoreanOrder(koParts),
     conj: cj
   };
+
 }
     /* =========================
    KOREAN PARTICLE ENGINE
