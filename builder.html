@@ -3199,6 +3199,56 @@ function chooseSubjectParticle(word, state, clauseIndex){
   /* implicit */
   return topicParticle;
 }
+  /* =========================
+   KOREAN NATURAL WORD ORDER
+   ========================= */
+
+function buildNaturalKoreanOrder(parts){
+
+  if(!parts || !parts.length) return "";
+
+  const time = [];
+  const place = [];
+  const object = [];
+  const others = [];
+  const verb = [];
+
+  parts.forEach(p=>{
+
+    if(!p) return;
+
+    if(p.includes("에서") || p.includes("에")){
+      place.push(p);
+      return;
+    }
+
+    if(p.includes("을") || p.includes("를")){
+      object.push(p);
+      return;
+    }
+
+    if(p.endsWith("요") || p.endsWith("다")){
+      verb.push(p);
+      return;
+    }
+
+    if(/\d/.test(p) || p.includes("오늘") || p.includes("어제")){
+      time.push(p);
+      return;
+    }
+
+    others.push(p);
+
+  });
+
+  return [
+    ...others,
+    ...time,
+    ...place,
+    ...object,
+    ...verb
+  ].join(" ").replace(/\s+/g," ").trim();
+}
     /* =========================
    APPLY PARTICLES
    ========================= */
