@@ -2748,6 +2748,98 @@ homeBtn: $("#homeBtn")
 
   return parts.join(" ");
 }  
+   function planKoreanSentence(elements){
+
+  if(!elements || !elements.length) return "";
+
+  const buckets = {};
+
+  KOREAN_ORDER.forEach(type=>{
+    buckets[type] = [];
+  });
+
+  elements.forEach(el=>{
+    if(!el || !el.type) return;
+
+    if(!buckets[el.type]){
+      buckets.other = buckets.other || [];
+      buckets.other.push(el.text);
+      return;
+    }
+
+    buckets[el.type].push(el.text);
+  });
+
+  const ordered = [];
+
+  KOREAN_ORDER.forEach(type=>{
+    if(buckets[type]?.length){
+      ordered.push(...buckets[type]);
+    }
+  });
+
+  if(buckets.other){
+    ordered.push(...buckets.other);
+  }
+
+  return ordered.join(" ").replace(/\s+/g," ").trim();
+}
+   function buildSentenceElements(state){
+
+  const elements = [];
+
+  if(state.time){
+    elements.push({
+      type:"time",
+      text:addTimeWithParticle(state.time)
+    });
+  }
+
+  if(state.subject){
+    elements.push({
+      type:"subject",
+      text:addSubjectWithParticle(state.subject)
+    });
+  }
+
+  if(state.place){
+    elements.push({
+      type:"place",
+      text:addPlaceWithParticle(state.place,state.verb)
+    });
+  }
+
+  if(state.object){
+    elements.push({
+      type:"object",
+      text:addObjectWithParticle(state.object)
+    });
+  }
+
+  const vp = buildVerbPhrase(state.verb,state.conj);
+
+  if(vp){
+    elements.push({
+      type:"verb",
+      text:vp
+    });
+  }
+
+  return elements;
+}
+    function buildSentence(state){
+
+  const elements = buildSentenceElements(state);
+
+  const sentence = planKoreanSentence(elements);
+
+  return {
+    ko: sentence,
+    conj: state.conj
+  };
+
+}
+    
     function planClauses(state){
 
   const clauses=[];
