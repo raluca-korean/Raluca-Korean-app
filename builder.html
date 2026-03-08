@@ -3837,34 +3837,40 @@ function parseRomanianSentence(text){
    12) RENDER: TABLE (1 propoziție)
    - IMPORTANT: nu mai facem coduri care se bat cap în cap
    ========================= */
-function renderClauseRow(container, activeMap, state, clauseIndex){
+ function renderClauseRow(container, activeMap, state, clauseIndex){
+
   if(!container) return;
+
   container.innerHTML = "";
 
   columns.forEach(col=>{
+
     if(!isColumnVisible(col.key)) return;
 
     const colDiv = document.createElement("div");
     colDiv.className = "col";
     colDiv.dataset.key = col.key;
-    colDiv.dataset.clauseIndex = String(clauseIndex);
+    colDiv.dataset.clauseIndex = clauseIndex;
 
-    if(activeMap[col.key] === false) colDiv.classList.add("dimmed");
+    if(activeMap[col.key] === false){
+      colDiv.classList.add("dimmed");
+    }
 
-    // header
     const header = document.createElement("div");
     header.className = "col-header";
 
-    const titleSpan = document.createElement("span");
-    titleSpan.textContent = col.title + (col.ko ? ` (${col.ko})` : "");
-    header.appendChild(titleSpan);
+    const title = document.createElement("span");
+    title.textContent =
+      col.title + (col.ko ? " ("+col.ko+")" : "");
 
-    // toggle mic ON/OFF
+    header.appendChild(title);
+
     const toggle = document.createElement("input");
     toggle.type = "checkbox";
     toggle.className = "col-toggle";
     toggle.checked = activeMap[col.key] !== false;
-    toggle.addEventListener("change", ()=>{
+
+    toggle.addEventListener("change",()=>{
       activeMap[col.key] = toggle.checked;
       renderAll();
     });
@@ -3872,16 +3878,36 @@ function renderClauseRow(container, activeMap, state, clauseIndex){
     header.appendChild(toggle);
     colDiv.appendChild(header);
 
-    // label
     const label = document.createElement("div");
     label.className = "col-body-label";
     label.textContent = col.hint || "";
     colDiv.appendChild(label);
 
-    // main
     const main = document.createElement("div");
     main.className = "col-body-main";
-   function getColumnDisplayValue(state, key){
+    main.textContent =
+      getColumnDisplayValue(state, col.key);
+
+    colDiv.appendChild(main);
+
+    const extra = document.createElement("div");
+    extra.className = "col-body-extra";
+
+    if(col.key === "conjug"){
+      const v = state[col.key];
+      if(v && isLinkingConj(v)){
+        extra.textContent =
+          "⭐ cere propoziția următoare";
+      }
+    }
+
+    colDiv.appendChild(extra);
+
+    container.appendChild(colDiv);
+
+  });
+}
+    function getColumnDisplayValue(state, key){
 
   if(key === "subject"){
     if(state.subjects && state.subjects.length){
