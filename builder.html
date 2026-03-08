@@ -3499,6 +3499,72 @@ function chooseConnector(prev,next){
     .replace(/\s+/g," ")
     .trim();
 }
+   // =========================
+// KOREAN GRAMMAR ENGINE
+// =========================
+
+const SENTENCE_PATTERNS = [
+
+  ["time","subject","place","object","verb"],
+  ["subject","time","place","object","verb"],
+  ["place","subject","object","verb"],
+  ["subject","object","place","verb"],
+  ["time","place","subject","object","verb"]
+
+];
+
+function extractElements(state){
+
+  return {
+
+    subject: buildSubjectPhrase(state),
+
+    time: buildTimePhrase(state),
+
+    place: buildPlacePhrase(state),
+
+    object: buildObjectPhrase(state),
+
+    verb: buildVerbPhrase(state.verb,state.conjug)
+
+  };
+
+}
+
+function generateSentenceVariation(state){
+
+  const parts = extractElements(state);
+
+  const pattern =
+    SENTENCE_PATTERNS[
+      Math.floor(Math.random()*SENTENCE_PATTERNS.length)
+    ];
+
+  const result=[];
+
+  pattern.forEach(p=>{
+    if(parts[p]) result.push(parts[p]);
+  });
+
+  return result.join(" ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+  function generateVariations(state,count=5){
+
+  const results=new Set();
+
+  while(results.size<count){
+
+    const s=generateSentenceVariation(state);
+
+    if(s) results.add(s);
+
+  }
+
+  return [...results];
+
+}
    /* =========================
    KOREAN NATURAL WORD ORDER
    ========================= */
