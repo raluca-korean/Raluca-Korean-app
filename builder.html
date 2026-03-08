@@ -4022,33 +4022,39 @@ function createClauseTable(clauseIndex){
 
   showExtraClauses = requiredLength > 1;
 }
-    function updatePreview(){
+function updatePreview(){
 
   if(!DOM.previewKo) return;
 
-  // elimină subiectele duplicate
   normalizeSubjects?.();
 
-  const ko = generateGrammarTreeSentence() || buildComplexSentence();
-     DOM.previewKo.textContent =
+  let ko = "";
+
+  try{
+    ko =
+      generateGrammarTreeSentence() ||
+      buildComplexSentence();
+  }catch(e){
+    ko = buildComplexSentence();
+  }
+
+  DOM.previewKo.textContent =
     ko || "(alege cuvinte din tabel)";
 
   if(DOM.previewRo && showRo){
-    DOM.previewRo.textContent = buildFullRomanian();
+    DOM.previewRo.textContent =
+      buildFullRomanian();
   }
 
-  // sincronizare input RO
   if(DOM.roInput){
-    DOM.roInput.value = buildFullRomanian();
+    DOM.roInput.value =
+      buildFullRomanian();
   }
 
   updateNaturalHint?.(ko);
   updatePreviewCardState?.();
-} 
-   const variations = generateVariations(sentences[0],3);
-
-console.log("Variations:",variations);
-   /* =========================
+}
+    /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
