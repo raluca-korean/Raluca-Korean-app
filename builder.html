@@ -3373,7 +3373,7 @@ function addSubjectWithSubjectParticle(word){
   return word + particleSubject(word);
 }
 
-    const CLAUSE_CONNECTORS = {
+const CLAUSE_CONNECTORS = {
   and: "고",
   but: "지만",
   while: "면서",
@@ -3381,6 +3381,47 @@ function addSubjectWithSubjectParticle(word){
   if: "면",
   background: "는데"
 };
+
+// =========================
+// KOREAN GRAMMAR BRAIN
+// =========================
+
+const GRAMMAR_RELATIONS = {
+  cause: ["-기에","-니까","-아서","-어서"],
+  contrast: ["-지만","-(으)ㄴ/는데도"],
+  sequence: ["-고 나서","-기 전에"],
+  simultaneous: ["-(으)면서","-(으)며"],
+  condition: ["-면"],
+  background: ["-는데"],
+  purpose: ["-(으)려고"],
+  attempt: ["-아/어 보다"]
+};
+
+function pickRandom(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function chooseClauseRelation(prev,next){
+
+  if(!prev || !next) return "sequence";
+
+  if(prev.time && next.time) return "sequence";
+
+  if(prev.verb === next.verb) return "contrast";
+
+  if(prev.object && next.object) return "background";
+
+  return "cause";
+}
+
+function chooseConnector(prev,next){
+
+  const relation = chooseClauseRelation(prev,next);
+
+  const options = GRAMMAR_RELATIONS[relation];
+
+  return pickRandom(options);
+}
    function joinClauses(clauses){
 
   if(!clauses || !clauses.length) return "";
