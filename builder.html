@@ -4437,57 +4437,39 @@ function parseRoToState(text){
    - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
    ========================= */
 function translateRoToKo(roText){
-  const original = (roText || "").trim();
 
-  if(!original){
-    sentences = [ makeEmptySentence() ];
-    actives   = [ makeAllActive() ];
-    showExtraClauses = false;
-    renderAll();
-    return { ko:"", roFixed:"" };
-  }
-
-  const norm = normRo(original);
-
-  const clausesRo = norm
-    .split(/\b(și|si|iar|apoi)\b/i)
-    .filter(x => !/^(și|si|iar|apoi)$/i.test(x))
-    .map(x => x.trim())
+  const parts = roText
+    .split(/\b(si|și|apoi|iar)\b/i)
+    .map(s=>s.trim())
     .filter(Boolean);
 
-  sentences = [];
-  actives   = [];
+  sentences=[];
+  actives=[];
 
-  if(clausesRo.length <= 1){
-    const st = parseRoToState(original);
+  parts.forEach((p,i)=>{
+
+    const st=parseRoToState(p);
+
+    if(i>0) st.subject="";
+
+    if(i<parts.length-1){
+      st.conjug="-고";
+    }
+
     sentences.push(st);
     actives.push(makeAllActive());
-    showExtraClauses = false;
-  } else {
-    clausesRo.forEach((cl, index)=>{
-      const st = parseRoToState(cl);
+  });
 
-      if(index > 0) st.subject = "";
-
-      if(index < clausesRo.length - 1){
-        st.conjug = "-고";
-      }
-
-      sentences.push(st);
-      actives.push(makeAllActive());
-    });
-
-    showExtraClauses = true;
-  }
+  showExtraClauses = parts.length>1;
 
   renderAll();
 
   return {
-    ko: buildFullKorean(),
+    ko: buildComplexSentence(),
     roFixed: buildFullRomanian()
   };
 }
-    /* =========================
+   /* =========================
    22) UI EVENTS
    ========================= */
 function setupUI(){
