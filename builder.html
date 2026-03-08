@@ -4551,6 +4551,7 @@ const RO_FORM_TO_INF = {
   "citesc":"a citi","citesti":"a citi","citești":"a citi","citeste":"a citi","citește":"a citi","citim":"a citi","cititi":"a citi","citiți":"a citi",
   "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie","scriem":"a scrie","scrieti":"a scrie","scrieți":"a scrie"
 };
+   
 function parseRoToState(text){
   const t = normRo(text);
   const state = makeEmptySentence();
@@ -4612,6 +4613,54 @@ function parseRoToState(text){
   state.conjug = detectConjFromRo(t);
 
   return state;
+}
+    /* =========================
+   ADVANCED CLAUSE PARSER
+   ========================= */
+
+function splitRomanianClauses(text){
+
+  const connectors = [
+    "și","si","iar","apoi","dar","însă","insa","deși","desi",
+    "deoarece","pentru că","pentru ca","fiindcă","fiindca",
+    "astfel încât","astfel incat","așa încât","asa incat",
+    "în timp ce","in timp ce","pe când","pe cand",
+    "dacă","daca","chiar dacă","chiar daca",
+    "în cazul în care","in cazul in care",
+    "de parcă","de parca",
+    "întrucât","intrucat",
+    "faptul că","faptul ca",
+    "din cauza","din această cauză","din aceasta cauza",
+    "prin urmare","ca urmare","drept urmare",
+    "cu toate acestea","totuși","totusi",
+    "pe de altă parte","pe de alta parte"
+  ]
+
+  const pattern = new RegExp(
+    "\\b(" + connectors.join("|") + ")\\b",
+    "gi"
+  )
+
+  const raw = text
+    .split(pattern)
+    .map(s => s.trim())
+    .filter(Boolean)
+
+  const clauses = []
+
+  for(let i=0;i<raw.length;i++){
+
+    const part = raw[i]
+
+    if(connectors.includes(part.toLowerCase())){
+      continue
+    }
+
+    clauses.push(part)
+
+  }
+
+  return clauses
 }
     /* =========================
    21) RO -> KO (butonul "Tradu în coreeană")
