@@ -2952,8 +2952,142 @@ function buildVerbPhrase(dictVerb, cj) {
    ========================= */
 const pronouns = new Set(["저","나","너","우리","너희"]);
 const timeAdverbsNoParticle = new Set(["오늘","어제","내일","지금","방금","요즘","항상","자주","가끔","계속","점점","차츰"]);
-    
-    
+    function planKoreanSentence(state, active){
+
+  const use = (k)=>
+    active?.[k] !== false &&
+    typeof isColumnVisible === "function" ?
+    isColumnVisible(k) : true;
+
+  const slots={
+    time:[],
+    topic:[],
+    subject:[],
+    place:[],
+    manner:[],
+    object:[],
+    verb:[]
+  }
+
+  const v = state.verb || "";
+  const cj = state.conjug || "";
+
+  /* TIME */
+
+  if(use("time")){
+    let t = state.time || "";
+    if(state.times?.length){
+      t = state.times.join("과");
+    }
+
+    if(t){
+      slots.time.push(addTimeWithParticle(t));
+    }
+  }
+
+  /* SUBJECT / TOPIC */
+
+  if(!state.hideSubject && use("subject")){
+
+    let s = state.subject || "";
+
+    if(state.subjects?.length){
+      s = state.subjects.join("과");
+    }
+
+    if(state.subjectAdjs?.length){
+      s = state.subjectAdjs.join(" ") + " " + s;
+    }
+
+    if(s){
+
+      if(slots.time.length){
+        slots.topic.push(addSubjectWithParticle(s));
+      }else{
+        slots.subject.push(addSubjectWithSubjectParticle(s));
+      }
+
+    }
+  }
+
+  /* PLACE */
+
+  if(use("place")){
+
+    let p = state.place || "";
+
+    if(state.places?.length){
+      p = state.places.join("과");
+    }
+
+    if(p){
+      slots.place.push(addPlaceWithParticle(p,v));
+    }
+  }
+
+  /* MANNER */
+
+  if(use("mod")){
+
+    let m = state.mod || "";
+
+    if(state.mods?.length){
+      m = state.mods.join(" ");
+    }
+
+    if(m){
+      slots.manner.push(m);
+    }
+  }
+
+  /* OBJECT */
+
+  if(use("object")){
+
+    let o = state.object || "";
+
+    if(state.objects?.length){
+      o = state.objects.join("과");
+    }
+
+    if(state.objectAdjs?.length){
+      o = state.objectAdjs.join(" ") + " " + o;
+    }
+
+    if(o){
+
+      if(use("numeral") && state.numeral){
+        slots.object.push(state.numeral);
+      }
+
+      if(use("counter") && state.counter){
+        slots.object.push(state.counter);
+      }
+
+      slots.object.push(addObjectWithParticle(o));
+    }
+  }
+
+  /* VERB */
+
+  if(use("verb") || use("conjug")){
+    const vp = buildVerbPhrase(v,cj);
+    if(vp) slots.verb.push(vp);
+  }
+
+  return [
+    ...slots.time,
+    ...slots.topic,
+    ...slots.subject,
+    ...slots.place,
+    ...slots.object,
+    ...slots.manner,
+    ...slots.verb
+  ]
+  .join(" ")
+  .replace(/\s+/g," ")
+  .trim()
+}
     /* =========================
    10) BUILD ONE CLAUSE (KO + RO)
    ========================= */
