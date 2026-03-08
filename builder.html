@@ -3088,20 +3088,25 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
- function buildClauseSentence(state, activeMap){
+function buildClauseSentence(state, activeMap){
 
-  const koParts = [];
+  if(!state){
+    return {
+      ko:"",
+      conj:""
+    };
+  }
 
-  const v  = state.verb || "";
-  const cj = state.conjug || state.conj || "";
+  const use = (key)=>{
+    return activeMap?.[key] !== false && isColumnVisible(key);
+  };
 
-  const use = (key) =>
-    activeMap?.[key] !== false &&
-    isColumnVisible(key);
+  const parts = [];
 
-  /* ======================
-     SUBJECT
-  ====================== */
+  const verb = state.verb || "";
+  const conjug = state.conjug || state.conj || "";
+
+  /* SUBJECT */
 
   if(!state.hideSubject && use("subject")){
 
@@ -3109,24 +3114,25 @@ const labelsRo = {
 
     if(state.subjects && state.subjects.length){
       subjectWord = state.subjects.join("과");
-    }
-    else{
+    }else{
       subjectWord = state.subject || "";
     }
 
     if(subjectWord){
 
       if(state.subjectAdjs && state.subjectAdjs.length){
-        subjectWord = state.subjectAdjs.join(" ") + " " + subjectWord;
+        subjectWord =
+          state.subjectAdjs.join(" ") + " " + subjectWord;
       }
-  const p = chooseSubjectParticle(subjectWord,state);
-koParts.push(subjectWord + p);    
+
+      const particle =
+        hasBatchim(subjectWord) ? "이" : "가";
+
+      parts.push(subjectWord + particle);
     }
   }
 
-  /* ======================
-     TIME
-  ====================== */
+  /* TIME */
 
   if(use("time")){
 
@@ -3134,19 +3140,25 @@ koParts.push(subjectWord + p);
 
     if(state.times && state.times.length){
       timeWord = state.times.join("과");
-    }
-    else{
+    }else{
       timeWord = state.time || "";
     }
 
     if(timeWord){
-      koParts.push(addTimeWithParticle(timeWord));
+
+      const noParticle = new Set([
+        "오늘","어제","내일","지금"
+      ]);
+
+      if(noParticle.has(timeWord)){
+        parts.push(timeWord);
+      }else{
+        parts.push(timeWord + "에");
+      }
     }
   }
 
-  /* ======================
-     PLACE
-  ====================== */
+  /* PLACE */
 
   if(use("place")){
 
@@ -3154,27 +3166,16 @@ koParts.push(subjectWord + p);
 
     if(state.places && state.places.length){
       placeWord = state.places.join("과");
-    }
-    else{
+    }else{
       placeWord = state.place || "";
     }
 
     if(placeWord){
-      koParts.push(addPlaceWithParticle(placeWord, v));
+      parts.push(placeWord + "에서");
     }
   }
 
-  /* ======================
-     PERSON
-  ====================== */
-
-  if(use("person") && state.person){
-    koParts.push(particlePerson(state.person));
-  }
-
-  /* ======================
-     MOD
-  ====================== */
+  /* MOD */
 
   if(use("mod")){
 
@@ -3182,19 +3183,16 @@ koParts.push(subjectWord + p);
 
     if(state.mods && state.mods.length){
       modWord = state.mods.join(" ");
-    }
-    else{
+    }else{
       modWord = state.mod || "";
     }
 
     if(modWord){
-      koParts.push(modWord);
+      parts.push(modWord);
     }
   }
 
-  /* ======================
-     OBJECT
-  ====================== */
+  /* OBJECT */
 
   if(use("object")){
 
@@ -3202,49 +3200,53 @@ koParts.push(subjectWord + p);
 
     if(state.objects && state.objects.length){
       objectWord = state.objects.join("과");
-    }
-    else{
+    }else{
       objectWord = state.object || "";
     }
 
     if(objectWord){
 
       if(state.objectAdjs && state.objectAdjs.length){
-        objectWord = state.objectAdjs.join(" ") + " " + objectWord;
+        objectWord =
+          state.objectAdjs.join(" ") + " " + objectWord;
       }
 
       if(use("numeral") && state.numeral){
-        koParts.push(state.numeral);
+        parts.push(state.numeral);
       }
 
       if(use("counter") && state.counter){
-        koParts.push(state.counter);
+        parts.push(state.counter);
       }
 
-      koParts.push(addObjectWithParticle(objectWord));
+      const particle =
+        hasBatchim(objectWord) ? "을" : "를";
+
+      parts.push(objectWord + particle);
     }
   }
 
-  /* ======================
-     VERB
-  ====================== */
+  /* VERB */
 
   if(use("verb") || use("conjug")){
 
-    const vp = buildVerbPhrase(v, cj);
+    const vp = buildVerbPhrase(verb, conjug);
 
     if(vp){
-      koParts.push(vp);
+      parts.push(vp);
     }
   }
 
-  /* ======================
-     FINAL ORDER
-  ====================== */
-return {
-  ko: planKoreanSentence(state, activeMap),
-  conj: cj
-};
+  const koSentence =
+    parts.join(" ")
+    .replace(/\s+/g," ")
+    .trim();
+
+  return {
+    ko: koSentence,
+    conj: conjug
+  };
+}
     /* =========================
    KOREAN PARTICLE ENGINE
    ========================= */
