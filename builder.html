@@ -4359,66 +4359,80 @@ const RO_FORM_TO_INF = {
   "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie","scriem":"a scrie","scrieti":"a scrie","scrieți":"a scrie"
 };
 
-function parseRoToState(roSentence){
-  const t = normRo(roSentence);
+function parseRoToState(text){
 
-  // subject
-  let subj = "";
-  if(/\beu\b/.test(t)) subj = "저";
-  else if(/\btu\b/.test(t)) subj = "너";
-  else if(/\bnoi\b/.test(t)) subj = "우리";
-  else if(/\bvoi\b/.test(t)) subj = "너희";
+  const t = normRo(text);
 
-  // time/place/mod/object/verb
-  const time   = findKoByRo("time", roSentence) || (/\bastazi\b/.test(t) ? "오늘" : "") || (/\bmaine\b/.test(t) ? "내일" : "") || (/\bieri\b/.test(t) ? "어제" : "");
-  const place  = findKoByRo("place", roSentence) || (/\bbanc(a|ă)\b/.test(t) ? "은행" : "") || (/\bpiat(a|ă)\b/.test(t) ? "시장" : "");
-  const mod    = findKoByRo("mod", roSentence);
-  const object = findKoByRo("object", roSentence);
+  const state = makeEmptySentence();
 
-  let verb = findKoByRo("verb", roSentence);
+  /* SUBJECT */
 
-  // infinitiv "a ___"
-  if(!verb){
-    const m = t.match(/\ba\s+([a-zăâîșț]+)/i);
-    if(m){
-      const inf = ("a " + m[1]).toLowerCase();
-      verb = REV.verb?.[normRo(inf)] || "";
-    }
-  }
+  if(/\beu\b/.test(t)) state.subject="저";
+  else if(/\btu\b/.test(t)) state.subject="너";
+  else if(/\bnoi\b/.test(t)) state.subject="우리";
+  else if(/\bvoi\b/.test(t)) state.subject="너희";
 
-  // forme conjugate
-  if(!verb){
-    for(const w of t.split(" ")){
-      const inf = RO_FORM_TO_INF[w];
-      if(inf){
-        const ko = REV.verb?.[normRo(inf)];
-        if(ko){ verb = ko; break; }
-      }
-    }
-  }
+  /* TIME */
 
-  // sinonime simple
-  if(!verb){
-    if(/\bpleca\b|\bplec\b|\bpleci\b/.test(t)) verb = "가다";
-    else if(/\bsosi\b|\bajunge\b|\bajuns\b/.test(t)) verb = "오다";
-  }
+  if(/\bieri\b/.test(t)) state.time="어제";
+  if(/\bastazi\b/.test(t)) state.time="오늘";
+  if(/\bmaine\b/.test(t)) state.time="내일";
 
-  const conj = detectConjFromRo(roSentence);
+  /* PLACE */
 
-  return {
-    subject: subj || "저",
-    time: time || "",
-    place: place || "",
-    mod: mod || "",
-    object: object || "",
-    numeral: "",
-    counter: "",
-    verb: verb || "",
-    conjug: conj || "-아요/어요"
-  };
+  if(/\bsc[oă]ala\b/.test(t)) state.place="학교";
+  if(/\bspital\b/.test(t)) state.place="병원";
+  if(/\bparc\b/.test(t)) state.place="공원";
+  if(/\bbanc[aă]\b/.test(t)) state.place="은행";
+
+  /* OBJECT */
+
+  if(/\bcarte\b/.test(t)) state.object="책";
+  if(/\bcafea\b/.test(t)) state.object="커피";
+  if(/\bapa\b/.test(t)) state.object="물";
+  if(/\bfilm\b/.test(t)) state.object="영화";
+  if(/\bdate\b/.test(t)) state.object="데이터";
+
+  /* VERB */
+
+  if(/\bmerge\b|\bplec\b|\bpleaca\b/.test(t))
+    state.verb="가다";
+
+  if(/\bvine\b|\bsoseste\b/.test(t))
+    state.verb="오다";
+
+  if(/\bmananc\b|\bm[aă]n[aă]nca\b/.test(t))
+    state.verb="먹다";
+
+  if(/\bbeau\b|\bbea\b/.test(t))
+    state.verb="마시다";
+
+  if(/\bcitesc\b|\bciti\b/.test(t))
+    state.verb="읽다";
+
+  if(/\banaliz/.test(t))
+    state.verb="분석하다";
+
+  /* MOD */
+
+  if(/\brepede\b/.test(t)) state.mod="빨리";
+  if(/\bincet\b/.test(t)) state.mod="천천히";
+  if(/\bbine\b/.test(t)) state.mod="잘";
+
+  /* CONJUGATION */
+
+  if(/\bieri\b|\bam\b/.test(t))
+    state.conjug="-았어요/었어요";
+
+  else if(/\bmaine\b|\bvoi\b/.test(t))
+    state.conjug="-(으)ㄹ 거예요";
+
+  else
+    state.conjug="-아요/어요";
+
+  return state;
 }
-
-/* =========================
+   /* =========================
    21) RO -> KO (butonul "Tradu în coreeană")
    - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
    ========================= */
