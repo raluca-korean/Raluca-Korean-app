@@ -3366,81 +3366,159 @@ const labelsRo = {
   subject:"SUBJECT", time:"TIME", place:"PLACE", mod:"MOD",
   object:"OBJECT", numeral:"NUMĂR", counter:"COUNTER", verb:"VERB"
 };
-    function buildClauseSentence(state, activeMap){
+ function buildClauseSentence(state, activeMap){
 
   const koParts = [];
 
-  const v = state.verb || "";
+  const v  = state.verb || "";
   const cj = state.conjug || state.conj || "";
 
   const use = (key) =>
     activeMap?.[key] !== false &&
     isColumnVisible(key);
 
-  /* ===== SUBJECT ===== */
+  /* ======================
+     SUBJECT
+  ====================== */
 
-  if(!state.hideSubject && use("subject") && state.subject){
+  if(!state.hideSubject && use("subject")){
 
-    let subjectWord = state.subject;
+    let subjectWord = "";
 
-    if(state.subjectAdjs && state.subjectAdjs.length){
-      subjectWord = state.subjectAdjs.join(" ") + " " + state.subject;
+    if(state.subjects && state.subjects.length){
+      subjectWord = state.subjects.join("과");
+    }
+    else{
+      subjectWord = state.subject || "";
     }
 
-    koParts.push(addSubjectWithParticle(subjectWord));
+    if(subjectWord){
+
+      if(state.subjectAdjs && state.subjectAdjs.length){
+        subjectWord = state.subjectAdjs.join(" ") + " " + subjectWord;
+      }
+
+      koParts.push(addSubjectWithParticle(subjectWord));
+    }
   }
 
-  /* ===== TIME ===== */
+  /* ======================
+     TIME
+  ====================== */
 
-  if(use("time") && state.time){
-    koParts.push(addTimeWithParticle(state.time));
+  if(use("time")){
+
+    let timeWord = "";
+
+    if(state.times && state.times.length){
+      timeWord = state.times.join("과");
+    }
+    else{
+      timeWord = state.time || "";
+    }
+
+    if(timeWord){
+      koParts.push(addTimeWithParticle(timeWord));
+    }
   }
 
-  /* ===== PLACE ===== */
+  /* ======================
+     PLACE
+  ====================== */
 
-  if(use("place") && state.place){
-    koParts.push(addPlaceWithParticle(state.place, v));
+  if(use("place")){
+
+    let placeWord = "";
+
+    if(state.places && state.places.length){
+      placeWord = state.places.join("과");
+    }
+    else{
+      placeWord = state.place || "";
+    }
+
+    if(placeWord){
+      koParts.push(addPlaceWithParticle(placeWord, v));
+    }
   }
 
-  /* ===== PERSON ===== */
+  /* ======================
+     PERSON
+  ====================== */
 
   if(use("person") && state.person){
     koParts.push(particlePerson(state.person));
   }
 
-  /* ===== MOD ===== */
+  /* ======================
+     MOD
+  ====================== */
 
-  if(use("mod") && state.mod){
-    koParts.push(state.mod);
+  if(use("mod")){
+
+    let modWord = "";
+
+    if(state.mods && state.mods.length){
+      modWord = state.mods.join(" ");
+    }
+    else{
+      modWord = state.mod || "";
+    }
+
+    if(modWord){
+      koParts.push(modWord);
+    }
   }
 
-  /* ===== OBJECT ===== */
+  /* ======================
+     OBJECT
+  ====================== */
 
-  if(use("object") && state.object){
+  if(use("object")){
 
-    let objectWord = state.object;
+    let objectWord = "";
 
-    if(state.objectAdjs && state.objectAdjs.length){
-      objectWord = state.objectAdjs.join(" ") + " " + state.object;
+    if(state.objects && state.objects.length){
+      objectWord = state.objects.join("과");
+    }
+    else{
+      objectWord = state.object || "";
     }
 
-    if(use("numeral") && state.numeral){
-      koParts.push(state.numeral);
-    }
+    if(objectWord){
 
-    if(use("counter") && state.counter){
-      koParts.push(state.counter);
-    }
+      if(state.objectAdjs && state.objectAdjs.length){
+        objectWord = state.objectAdjs.join(" ") + " " + objectWord;
+      }
 
-    koParts.push(addObjectWithParticle(objectWord));
+      if(use("numeral") && state.numeral){
+        koParts.push(state.numeral);
+      }
+
+      if(use("counter") && state.counter){
+        koParts.push(state.counter);
+      }
+
+      koParts.push(addObjectWithParticle(objectWord));
+    }
   }
 
-  /* ===== VERB ===== */
+  /* ======================
+     VERB
+  ====================== */
 
   if(use("verb") || use("conjug")){
+
     const vp = buildVerbPhrase(v, cj);
-    if(vp) koParts.push(vp);
+
+    if(vp){
+      koParts.push(vp);
+    }
   }
+
+  /* ======================
+     FINAL ORDER
+  ====================== */
 
   return {
     ko: buildNaturalKoreanOrder(koParts),
