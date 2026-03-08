@@ -4990,116 +4990,32 @@ function buildFullRomanian(){
 
   return parts.join(" ").replace(/\s+/g," ").trim();
 }
-    async function loadVocabulary(){
+  async function loadVocabulary(){
 
  const res = await fetch("vocab-korean.json")
- const vocab = await res.json()
+ vocab = await res.json()
 
  columns.find(c=>c.key==="subject").data = vocab.subjects
  columns.find(c=>c.key==="object").data = vocab.objects
  columns.find(c=>c.key==="verb").data = vocab.verbs
  columns.find(c=>c.key==="mod").data = vocab.modifiers
-    }
-
-
-
-let vocab = {}
-
-async function loadVocab(){
-
-const response = await fetch("vocab-korean.json")
-
-vocab = await response.json()
-
-addClause()
 
 }
+  document.addEventListener("DOMContentLoaded", async () => {
 
-function createSelect(list){
+ await loadVocabulary()
 
-const select = document.createElement("select")
+ loadModelRow(indexModelRow);
+ createToggleChips();
 
-list.forEach(word=>{
+ attachPressHandlers(DOM.tableP1, 0);
+ attachPressHandlers(DOM.tableP2, 1);
 
-const option = document.createElement("option")
+ setupUI();
+ renderFavorites();
+ renderAll();
 
-option.value = word.ko
-option.textContent = word.ko + " — " + word.ro + " / " + word.en
-
-select.appendChild(option)
-
-})
-
-return select
-
-}
-
-function cell(element){
-
-const td = document.createElement("td")
-
-td.appendChild(element)
-
-return td
-
-}
-
-function addClause(){
-
-const tbody = document.querySelector("#builder tbody")
-
-const row = document.createElement("tr")
-
-row.innerHTML = "<td>Clause</td>"
-
-const modifier = createSelect(vocab.modifiers)
-const subject = createSelect(vocab.subjects)
-const object = createSelect(vocab.objects)
-const verb = createSelect(vocab.verbs)
-const connector = createSelect(vocab.connectors)
-
-row.appendChild(cell(modifier))
-row.appendChild(cell(subject))
-row.appendChild(cell(object))
-row.appendChild(cell(verb))
-row.appendChild(cell(connector))
-
-tbody.appendChild(row)
-
-}
-
-function buildSentence(){
-
-const rows = document.querySelectorAll("#builder tbody tr")
-
-let sentence = ""
-
-rows.forEach(row=>{
-
-const selects = row.querySelectorAll("select")
-
-const modifier = selects[0].value
-const subject = selects[1].value
-const object = selects[2].value
-const verb = selects[3].value
-const connector = selects[4].value
-
-sentence += modifier + " " + subject + " " + object + " " + verb + " " + connector + " "
-
-})
-
-document.getElementById("output").value = sentence.trim()
-
-}
-
-function clearTable(){
-
-document.querySelector("#builder tbody").innerHTML = ""
-
-addClause()
-
-}
-
+});  
 </script>
 </body>
 </html> 
