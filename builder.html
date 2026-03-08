@@ -3299,6 +3299,7 @@ function particlePerson(word){
   if(!word) return "";
   return word + "에게";
 }
+   
  function addSubjectWithParticle(word,state){
 
   if(!word) return ""
@@ -3313,38 +3314,39 @@ function particlePerson(word){
 
   return word + chooseObjectParticle(word);
 }
-   function chooseSubjectParticle(word,state){
+   function addSubjectWithParticle(word,state){
 
-  if(!word) return "";
+  if(!word) return ""
 
-  const batchim = hasBatchim(word);
+  const p = chooseSubjectParticle(word,state)
 
-  const topicParticle   = batchim ? "은" : "는";
-  const subjectParticle = batchim ? "이" : "가";
-
-  /* ===== CONTEXT ===== */
-
-  const hasTime  = !!state.time;
-  const hasPlace = !!state.place;
-  const hasObject = !!state.object;
-
-  /* ===== RULES ===== */
-
-  // dacă există deja context → topic
-  if(hasTime || hasPlace){
-    return topicParticle;
-  }
-
-  // propoziții simple → topic
-  if(!hasObject){
-    return topicParticle;
-  }
-
-  // focus pe subiect → subject particle
-  return subjectParticle;
+  return word + p
 }
+
+function chooseSubjectParticle(word,state){
+
+  const batchim = hasBatchim(word)
+
+  const topicParticle   = batchim ? "은" : "는"
+  const subjectParticle = batchim ? "이" : "가"
+
+  const hasTime  = !!state.time
+  const hasPlace = !!state.place
+  const hasObject = !!state.object
+
+  if(hasTime || hasPlace) return topicParticle
+  if(!hasObject) return topicParticle
+
+  return subjectParticle
+}
+
+function addObjectWithParticle(word){
+  if(!word) return ""
+  return word + chooseObjectParticle(word)
+}
+
 function chooseObjectParticle(word){
-  return hasBatchim(word) ? "을" : "를";
+  return hasBatchim(word) ? "을" : "를"
 }
    function addPlaceWithParticle(word,verb){
 
