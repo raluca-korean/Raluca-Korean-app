@@ -3451,8 +3451,55 @@ function chooseConnector(prev,next){
 
   return result.replace(/\s+/g," ").trim();
 }
-    
- /* =========================
+    function buildComplexSentence(){
+
+  const clauses = [];
+
+  for(let i=0;i<sentences.length;i++){
+
+    const s = sentences[i];
+    if(!s) continue;
+
+    const built = buildClauseSentence(
+      { ...s, hideSubject:i>0 },
+      actives[i]
+    );
+
+    if(!built?.ko) continue;
+
+    clauses.push({
+      text: built.ko,
+      state: s
+    });
+  }
+
+  if(!clauses.length) return "";
+
+  let result = "";
+
+  for(let i=0;i<clauses.length;i++){
+
+    const cur = clauses[i];
+
+    if(i === clauses.length-1){
+      result += cur.text;
+      break;
+    }
+
+    const next = clauses[i+1];
+
+    const connector = chooseConnector(cur.state,next.state);
+
+    const base = cur.text.replace(/요$/,"");
+
+    result += base + connector + " ";
+  }
+
+  return result
+    .replace(/\s+/g," ")
+    .trim();
+}
+   /* =========================
    KOREAN NATURAL WORD ORDER
    ========================= */
     function buildNaturalKoreanOrder(parts){
