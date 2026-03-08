@@ -3313,8 +3313,37 @@ function addObjectWithParticle(word){
 
   return word+(hasBatchim(word)?"을":"를")
 }
+function chooseSubjectParticle(word,state){
 
-function addPlaceWithParticle(word,verb){
+  if(!word) return "";
+
+  const batchim = hasBatchim(word);
+
+  const topicParticle   = batchim ? "은" : "는";
+  const subjectParticle = batchim ? "이" : "가";
+
+  /* ===== CONTEXT ===== */
+
+  const hasTime  = !!state.time;
+  const hasPlace = !!state.place;
+  const hasObject = !!state.object;
+
+  /* ===== RULES ===== */
+
+  // dacă există deja context → topic
+  if(hasTime || hasPlace){
+    return topicParticle;
+  }
+
+  // propoziții simple → topic
+  if(!hasObject){
+    return topicParticle;
+  }
+
+  // focus pe subiect → subject particle
+  return subjectParticle;
+}
+   function addPlaceWithParticle(word,verb){
 
   if(!word) return ""
 
