@@ -3093,10 +3093,11 @@ if(use("place")){
     const vp = buildVerbPhrase(v,cj);
     if(vp) slots.verb.push(vp);
   }
-return [
+return cleanupSentence(
+[
   ...slots.time,
-  ...slots.subject,
   ...slots.topic,
+  ...slots.subject,
   ...slots.place,
   ...slots.object,
   ...slots.manner,
@@ -3105,7 +3106,8 @@ return [
 .join(" ")
 .replace(/\s+/g," ")
 .trim()
-}
+);
+    }
     const particleCache = new Map();
 
 function cachedParticle(word,type){
@@ -3129,7 +3131,26 @@ function cachedParticle(word,type){
   particleCache.set(key,result);
 
   return result;
-}
+}function cleanupSentence(str){
+
+  let s = str;
+
+  // 1. elimină locuri duplicate (păstrează ultimul)
+  const places = s.match(/\S+에서/g);
+  if(places && places.length > 1){
+    const last = places[places.length-1];
+    s = s.replace(/\S+에서/g,"").replace(last,last);
+  }
+
+  // 2. elimină counter generic greșit pentru cărți
+  s = s.replace(/개 책/g,"책");
+
+  // 3. elimină conjugare dublă
+  s = s.replace(/아요아/g,"아요");
+  s = s.replace(/어요어/g,"어요");
+
+  return s;
+}    
     /* =========================
    10) BUILD ONE CLAUSE (KO + RO)
    ========================= */
