@@ -4955,26 +4955,36 @@ function buildFullRomanian(){
   return parts.join(" ").replace(/\s+/g," ").trim();
 }
    let vocab = {};
-async function loadVocabulary(){
+    async function loadVocabulary(){
 
   const res = await fetch("./vocab-korean.json");
   vocab = await res.json();
 
-  const fill = (targetArray, vocabArray, translationKey) => {
-    if (!Array.isArray(vocabArray)) return;
+  function fill(list, vocabArray, trKey){
 
-    targetArray.length = 0;
+    if(!Array.isArray(vocabArray)) return;
+
+    const seen = new Set();
+    list.length = 0;
 
     vocabArray.forEach(w=>{
-      if(!w || !w.ko) return;
 
-      targetArray.push(w.ko);
+      if(!w?.ko) return;
 
-      if(translationKey){
-        translations[translationKey][w.ko] = w.ro || w.en || "";
+      const word = w.ko.trim();
+
+      if(seen.has(word)) return;
+
+      seen.add(word);
+      list.push(word);
+
+      if(trKey){
+        translations[trKey][word] = w.ro || w.en || "";
       }
+
     });
-  };
+
+  }
 
   fill(subjects, vocab.subjects, "subject");
   fill(objects, vocab.objects, "object");
@@ -4987,59 +4997,52 @@ async function loadVocabulary(){
   if(Array.isArray(vocab.subjectAdjectives)){
     subjectAdjectives.length = 0;
     vocab.subjectAdjectives.forEach(w=>{
-      if(w?.ko) subjectAdjectives.push(w.ko);
+      if(w?.ko) subjectAdjectives.push(w.ko.trim());
     });
   }
 
   if(Array.isArray(vocab.objectAdjectives)){
     objectAdjectives.length = 0;
     vocab.objectAdjectives.forEach(w=>{
-      if(w?.ko) objectAdjectives.push(w.ko);
+      if(w?.ko) objectAdjectives.push(w.ko.trim());
     });
   }
 
   REV = buildReverseMap();
 }
-    }
+
 document.addEventListener("DOMContentLoaded", async () => {
 
   try {
 
-    // 1. încărcăm vocabularul
     await loadVocabulary();
 
-    // 2. resetăm listele din columns
-    columns.forEach(col => {
-      if (!col.data) col.data = [];
+    columns.forEach(col=>{
+      if(!Array.isArray(col.data)) col.data = [];
     });
 
-    // 3. inițializăm propozițiile
     sentences = [ makeEmptySentence() ];
     actives   = [ makeAllActive() ];
 
-    // 4. rând model
     loadModelRow(indexModelRow);
 
-    // 5. UI
     setupUI();
 
-    // 6. toggle chips
     createToggleChips();
 
-    // 7. handlers
     attachPressHandlers(DOM.tableP1,0);
     attachPressHandlers(DOM.tableP2,1);
 
-    // 8. randare
     renderAll();
 
   } catch(err){
 
-    console.error("APP BOOT ERROR",err);
+    console.error("APP BOOT ERROR", err);
 
   }
 
 });
+   
   </script>
 </body>
 </html> 
