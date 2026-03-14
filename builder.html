@@ -4430,7 +4430,13 @@ function speakKorean(textToSpeak){
   const u = new SpeechSynthesisUtterance(t);
   u.lang = "ko-KR";
 
-  const voices = window.speechSynthesis.getVoices();
+const voices = window.speechSynthesis.getVoices();
+if(!voices.length){
+  window.speechSynthesis.onvoiceschanged = ()=>{
+    speakKorean(textToSpeak);
+  };
+  return;
+}
   const koVoices = voices.filter(v => (v.lang || "").toLowerCase().startsWith("ko"));
   if(koVoices.length) u.voice = koVoices[0];
 
