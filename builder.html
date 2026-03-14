@@ -5089,74 +5089,81 @@ function buildFullRomanian(){
 
   return parts.join(" ").replace(/\s+/g," ").trim();
 }
-async function loadVocabulary(){
+ async function loadVocabulary(){
 
-  const res = await fetch("./vocab-korean.json");
-  vocab = await res.json();
+  try{
 
-  const byKey = (key) => columns.find(c => c.key === key);
+    const res = await fetch("https://raluca-korean.github.io/Raluca-Korean-app/vocab-korean.json");
 
-  function fillColumn(key, vocabArray, trKey){
+    if(!res.ok){
+      throw new Error("JSON load failed: " + res.status);
+    }
 
-    if(!Array.isArray(vocabArray)) return;
+    vocab = await res.json();
 
-    const col = byKey(key);
-    if(!col) return;
+    const map = {
+      subject: vocab.subjects,
+      subjectAdj: vocab.subjectAdjectives,
+      time: vocab.times,
+      place: vocab.places,
+      mod: vocab.modifiers,
+      object: vocab.objects,
+      objectAdj: vocab.objectAdjectives,
+      verb: vocab.verbs,
+      conjug: vocab.conjugations
+    };
 
-    const seen = new Set();
-    const list = [];
+    columns.forEach(col => {
 
-    vocabArray.forEach(w => {
+      const list = map[col.key];
 
-      if(!w?.ko) return;
+      if(!Array.isArray(list)) return;
 
-      const word = w.ko.trim();
+      col.data.length = 0;
 
-      if(seen.has(word)) return;
-      seen.add(word);
+      list.forEach(item => {
 
-      list.push(word);
+        if(!item || !item.ko) return;
 
-      if(trKey){
-        translations[trKey][word] = w.ro || w.en || "";
-      }
+        const word = item.ko.trim();
+
+        if(!col.data.includes(word)){
+          col.data.push(word);
+        }
+
+        if(!translations[col.key]){
+          translations[col.key] = {};
+        }
+
+        translations[col.key][word] = item.ro || item.en || "";
+
+      });
 
     });
 
-    // IMPORTANT: nu rupem referința array
-    col.data.length = 0;
-    col.data.push(...list);
+  }catch(err){
+
+    console.error("VOCAB LOAD ERROR",err);
+    alert("JSON nu s-a încărcat");
+
   }
 
-  fillColumn("subject", vocab.subjects, "subject");
-  fillColumn("object", vocab.objects, "object");
-  fillColumn("verb", vocab.verbs, "verb");
-  fillColumn("mod", vocab.modifiers, "mod");
-  fillColumn("time", vocab.times, "time");
-  fillColumn("place", vocab.places, "place");
-  fillColumn("conjug", vocab.conjugations, "conjug");
+}
+    document.addEventListener("DOMContentLoaded", async () => {
 
-  fillColumn("subjectAdj", vocab.subjectAdjectives);
-  fillColumn("objectAdj", vocab.objectAdjectives);
+  try{
 
-  REV = buildReverseMap();
-}  
-document.addEventListener("DOMContentLoaded", async () => {
+    await loadVocabulary();
 
-  try {
+    loadCustomData();
 
-   await loadVocabulary();
-
-console.log("columns", columns);
-console.log("vocab", vocab);
-    maxLen = Math.max(1, ...columns.map(c => (c.data || []).length));
+    maxLen = Math.max(1, ...columns.map(c => c.data.length));
 
     sentences = [ makeEmptySentence() ];
     actives   = [ makeAllActive() ];
 
-    loadModelRow(indexModelRow);
-
     setupUI();
+
     createToggleChips();
 
     if(DOM.tableP1) attachPressHandlers(DOM.tableP1,0);
@@ -5164,11 +5171,16 @@ console.log("vocab", vocab);
 
     renderAll();
 
-  } catch(err){
-    console.error("APP BOOT ERROR", err);
+    console.log("APP READY");
+
+  }catch(err){
+
+    console.error("BOOT ERROR",err);
+    alert("APP BOOT ERROR");
+
   }
 
-});   
+});
   </script>
 </body>
 </html> 
