@@ -4955,91 +4955,46 @@ function buildFullRomanian(){
   return parts.join(" ").replace(/\s+/g," ").trim();
 }
    let vocab = {};
+async function loadVocabulary(){
 
- async function loadVocabulary(){
-
-  const res = await fetch("vocab-korean.json");
+  const res = await fetch("./vocab-korean.json");
   vocab = await res.json();
 
-  const byKey = (key) => {
-    const col = columns.find(c => c.key === key);
-    if (!col) {
-      console.warn("Missing column:", key);
-      return null;
-    }
-    return col;
+  const fill = (targetArray, vocabArray, translationKey) => {
+    if (!Array.isArray(vocabArray)) return;
+
+    targetArray.length = 0;
+
+    vocabArray.forEach(w=>{
+      if(!w || !w.ko) return;
+
+      targetArray.push(w.ko);
+
+      if(translationKey){
+        translations[translationKey][w.ko] = w.ro || w.en || "";
+      }
+    });
   };
 
-  if (vocab.subjects?.length) {
-    const col = byKey("subject");
-    if (col) col.data = vocab.subjects.map(w => w.ko);
+  fill(subjects, vocab.subjects, "subject");
+  fill(objects, vocab.objects, "object");
+  fill(verbs, vocab.verbs, "verb");
+  fill(mods, vocab.modifiers, "mod");
+  fill(times, vocab.times, "time");
+  fill(places, vocab.places, "place");
+  fill(conjugations, vocab.conjugations, "conjug");
 
-    vocab.subjects.forEach(w => {
-      translations.subject[w.ko] = w.ro || w.en || "";
+  if(Array.isArray(vocab.subjectAdjectives)){
+    subjectAdjectives.length = 0;
+    vocab.subjectAdjectives.forEach(w=>{
+      if(w?.ko) subjectAdjectives.push(w.ko);
     });
   }
 
-  if (vocab.objects?.length) {
-    const col = byKey("object");
-    if (col) col.data = vocab.objects.map(w => w.ko);
-
-    vocab.objects.forEach(w => {
-      translations.object[w.ko] = w.ro || w.en || "";
-    });
-  }
-
-  if (vocab.verbs?.length) {
-    const col = byKey("verb");
-    if (col) col.data = vocab.verbs.map(w => w.ko);
-
-    vocab.verbs.forEach(w => {
-      translations.verb[w.ko] = w.ro || w.en || "";
-    });
-  }
-
-  if (vocab.modifiers?.length) {
-    const col = byKey("mod");
-    if (col) col.data = vocab.modifiers.map(w => w.ko);
-
-    vocab.modifiers.forEach(w => {
-      translations.mod[w.ko] = w.ro || w.en || "";
-    });
-  }
-
-  if (vocab.subjectAdjectives?.length) {
-    const col = byKey("subjectAdj");
-    if (col) col.data = vocab.subjectAdjectives.map(w => w.ko);
-  }
-
-  if (vocab.objectAdjectives?.length) {
-    const col = byKey("objectAdj");
-    if (col) col.data = vocab.objectAdjectives.map(w => w.ko);
-  }
-
-  if (vocab.times?.length) {
-    const col = byKey("time");
-    if (col) col.data = vocab.times.map(w => w.ko);
-
-    vocab.times.forEach(w => {
-      translations.time[w.ko] = w.ro || w.en || "";
-    });
-  }
-
-  if (vocab.places?.length) {
-    const col = byKey("place");
-    if (col) col.data = vocab.places.map(w => w.ko);
-
-    vocab.places.forEach(w => {
-      translations.place[w.ko] = w.ro || w.en || "";
-    });
-  }
-
-  if (vocab.conjugations?.length) {
-    const col = byKey("conjug");
-    if (col) col.data = vocab.conjugations.map(w => w.ko);
-
-    vocab.conjugations.forEach(w => {
-      translations.conjug[w.ko] = w.ro || w.en || "";
+  if(Array.isArray(vocab.objectAdjectives)){
+    objectAdjectives.length = 0;
+    vocab.objectAdjectives.forEach(w=>{
+      if(w?.ko) objectAdjectives.push(w.ko);
     });
   }
 
