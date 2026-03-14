@@ -2981,10 +2981,7 @@ function buildVerbPhrase(dictVerb, cj){
     if(cj === "-기에") return stem + "기에";
     if(cj === "-길래") return stem + "길래";
   }
-  // prevent double conjugation
-  if(dictVerb.endsWith("요") || dictVerb.endsWith("다") === false){
-    return dictVerb;
-  }
+
   return presentPolite(dictVerb);
 }    
 
@@ -3050,21 +3047,19 @@ if(use("place")){
 
   if(p){
     slots.place.push(addPlaceWithParticle(p,v));
-let p = buildEnumeration(state.places, state.place);
-
-if(p){
-
-  const parts = p.split(/\s*과\s*|\s*,\s*/);
-
-  if(parts.length > 1){
-    p = parts.join("과 ") + "에서";
-  }else{
-    p = addPlaceWithParticle(parts[0],v);
   }
 
-  slots.place.push(p);
 }
+      /* MANNER */
+
+  if(use("mod")){
+
+  let m = buildEnumeration(state.mods, state.mod);
+    if(m){
+      slots.manner.push(m);
+    }
   }
+
   /* OBJECT */
 
   if(use("object")){
@@ -3095,21 +3090,20 @@ if(p){
     const vp = buildVerbPhrase(v,cj);
     if(vp) slots.verb.push(vp);
   }
-return cleanupSentence(
-[
-  ...slots.time,
-  ...slots.topic,
-  ...slots.subject,
-  ...slots.place,
-  ...slots.object,
-  ...slots.manner,
-  ...slots.verb
-]
-.join(" ")
-.replace(/\s+/g," ")
-.trim()
-);
-    }
+
+  return [
+    ...slots.time,
+    ...slots.topic,
+    ...slots.subject,
+    ...slots.place,
+    ...slots.object,
+    ...slots.manner,
+    ...slots.verb
+  ]
+  .join(" ")
+  .replace(/\s+/g," ")
+  .trim()
+}
     const particleCache = new Map();
 
 function cachedParticle(word,type){
@@ -3131,29 +3125,9 @@ function cachedParticle(word,type){
   }
 
   particleCache.set(key,result);
-sentence = sentence.replace(/요아$/, "요");
+
   return result;
 }
-    function cleanupSentence(str){
-
-  let s = str;
-
-  // 1. elimină locuri duplicate (păstrează ultimul)
-  const places = s.match(/\S+에서/g);
-  if(places && places.length > 1){
-    const last = places[places.length-1];
-    s = s.replace(/\S+에서/g,"").replace(last,last);
-  }
-
-  // 2. elimină counter generic greșit pentru cărți
-  s = s.replace(/개 책/g,"책");
-
-  // 3. elimină conjugare dublă
-  s = s.replace(/아요아/g,"아요");
-  s = s.replace(/어요어/g,"어요");
-
-  return s;
-}    
     /* =========================
    10) BUILD ONE CLAUSE (KO + RO)
    ========================= */
@@ -3444,18 +3418,12 @@ function addTimeWithParticle(word){
 }
 
 /* ===== MULTI WORD BUILDER ===== */
-function addSubjectWithSubjectParticle(subject){
 
-  const list = subject.split(/\s*과\s*|\s*,\s*/);
-
-  const processed = list.map(w=>{
-    if(!w) return "";
-    const particle = hasBatchim(w) ? "이" : "가";
-    return w + particle;
-  });
-
-  return processed.join(" ");
+function addSubjectWithSubjectParticle(word){
+  if(!word) return "";
+  return word + particleSubject(word);
 }
+
 const CLAUSE_CONNECTORS = {
   and: "고",
   but: "지만",
