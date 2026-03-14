@@ -4909,15 +4909,16 @@ function renderAll(){
 
   ensureLinkedSentences();
 
-  if(!sentences[0] || !actives[0]) return;
+  if(!Array.isArray(sentences) || !sentences.length){
+    sentences=[makeEmptySentence()];
+  }
+
+  if(!Array.isArray(actives) || !actives.length){
+    actives=[makeAllActive()];
+  }
 
   if(DOM.tableP1){
-    renderClauseRow(
-      DOM.tableP1,
-      actives[0],
-      sentences[0],
-      0
-    );
+    renderClauseRow(DOM.tableP1,actives[0],sentences[0],0);
   }
 
   if(DOM.tableP2 && sentences[1]){
@@ -4925,26 +4926,24 @@ function renderAll(){
     if(showExtraClauses){
 
       show(DOM.tableP2);
-      DOM.titleP2 && show(DOM.titleP2);
+      if(DOM.titleP2) show(DOM.titleP2);
 
-      renderClauseRow(
-        DOM.tableP2,
-        actives[1],
-        sentences[1],
-        1
-      );
+      renderClauseRow(DOM.tableP2,actives[1],sentences[1],1);
 
     }else{
 
       hide(DOM.tableP2);
-      DOM.titleP2 && hide(DOM.titleP2);
+      if(DOM.titleP2) hide(DOM.titleP2);
 
     }
   }
 
-  renderExtraClauses();
-  updateModelNav();
-  updatePreview();
+  if(typeof renderExtraClauses==="function"){
+    renderExtraClauses();
+  }
+
+  updateModelNav?.();
+  updatePreview?.();
 }
     /* =========================
    24) BOOTSTRAP (UN SINGUR)
