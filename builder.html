@@ -4454,33 +4454,53 @@ function normRo(s){
 
 // reverse map RO -> KO (din translations)
 function buildReverseMap(){
-  const rev = { subject:{}, time:{}, place:{}, mod:{}, object:{}, counter:{}, verb:{}, conjug:{} };
-  Object.entries(translations).forEach(([cat, map])=>{
-    if(!rev[cat]) return;
-    Object.entries(map).forEach(([ko, ro])=>{
-      if(!ro) return;
-      const n = normRo(ro);
-      if(!rev[cat][n]) rev[cat][n] = ko;
 
-      // suport "a ___" -> stem
+  const rev = { subject:{}, time:{}, place:{}, mod:{}, object:{}, counter:{}, verb:{}, conjug:{} };
+
+  if(typeof translations !== "object") return rev;
+
+  Object.entries(translations).forEach(([cat,map])=>{
+
+    if(!rev[cat]) return;
+
+    Object.entries(map || {}).forEach(([ko,ro])=>{
+
+      if(!ro) return;
+
+      const n = normRo(ro);
+
+      if(!rev[cat][n]){
+        rev[cat][n] = ko;
+      }
+
       if(n.startsWith("a ")){
-        const base = n.replace(/^a\s+/, "");
+        const base = n.replace(/^a\s+/,"");
+
         if(base){
-          const stem = base.replace(/[aei]$/, "");
-          if(stem){
-            if(!rev[cat][stem]) rev[cat][stem] = ko;
-            const saKey = "sa " + stem;
-            if(!rev[cat][saKey]) rev[cat][saKey] = ko;
+
+          const stem = base.replace(/[aei]$/,"");
+
+          if(stem && !rev[cat][stem]){
+            rev[cat][stem] = ko;
           }
+
+          const saKey = "sa " + stem;
+
+          if(!rev[cat][saKey]){
+            rev[cat][saKey] = ko;
+          }
+
         }
       }
-    });
-  });
-  return rev;
-}
-let REV = buildReverseMap();
 
-// detect conj din română (păstrat din codul tău, dar curățat)
+    });
+
+  });
+
+  return rev;
+
+}
+    // detect conj din română (păstrat din codul tău, dar curățat)
 function detectConjFromRo(ro){
   const t = normRo(ro);
 
