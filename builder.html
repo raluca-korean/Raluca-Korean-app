@@ -4939,69 +4939,53 @@ function buildFullRomanian(){
   return parts.join(" ").replace(/\s+/g," ").trim();
 }
    let vocab = {};
-
 async function loadVocabulary(){
-  const res = await fetch("vocab-korean.json");
-  vocab = await res.json();
+
+  const res = await fetch("./vocab-korean.json");
+  const vocab = await res.json();
 
   const byKey = (key) => columns.find(c => c.key === key);
 
-  if (vocab.subjects?.length) {
-    byKey("subject").data = vocab.subjects.map(w => w.ko);
-    vocab.subjects.forEach(w => {
-      translations.subject[w.ko] = w.ro || w.en || "";
+  function fillColumn(key, vocabArray, trKey){
+
+    if(!Array.isArray(vocabArray)) return;
+
+    const col = byKey(key);
+    if(!col) return;
+
+    const seen = new Set();
+    const list = [];
+
+    vocabArray.forEach(w => {
+
+      if(!w?.ko) return;
+
+      const word = w.ko.trim();
+
+      if(seen.has(word)) return;
+      seen.add(word);
+
+      list.push(word);
+
+      if(trKey){
+        translations[trKey][word] = w.ro || w.en || "";
+      }
+
     });
+
+    col.data = list;
   }
 
-  if (vocab.objects?.length) {
-    byKey("object").data = vocab.objects.map(w => w.ko);
-    vocab.objects.forEach(w => {
-      translations.object[w.ko] = w.ro || w.en || "";
-    });
-  }
+  fillColumn("subject", vocab.subjects, "subject");
+  fillColumn("object", vocab.objects, "object");
+  fillColumn("verb", vocab.verbs, "verb");
+  fillColumn("mod", vocab.modifiers, "mod");
+  fillColumn("time", vocab.times, "time");
+  fillColumn("place", vocab.places, "place");
+  fillColumn("conjug", vocab.conjugations, "conjug");
 
-  if (vocab.verbs?.length) {
-    byKey("verb").data = vocab.verbs.map(w => w.ko);
-    vocab.verbs.forEach(w => {
-      translations.verb[w.ko] = w.ro || w.en || "";
-    });
-  }
-
-  if (vocab.modifiers?.length) {
-    byKey("mod").data = vocab.modifiers.map(w => w.ko);
-    vocab.modifiers.forEach(w => {
-      translations.mod[w.ko] = w.ro || w.en || "";
-    });
-  }
-
-  if (vocab.subjectAdjectives?.length) {
-    byKey("subjectAdj").data = vocab.subjectAdjectives.map(w => w.ko);
-  }
-
-  if (vocab.objectAdjectives?.length) {
-    byKey("objectAdj").data = vocab.objectAdjectives.map(w => w.ko);
-  }
-
-  if (vocab.times?.length) {
-    byKey("time").data = vocab.times.map(w => w.ko);
-    vocab.times.forEach(w => {
-      translations.time[w.ko] = w.ro || w.en || "";
-    });
-  }
-
-  if (vocab.places?.length) {
-    byKey("place").data = vocab.places.map(w => w.ko);
-    vocab.places.forEach(w => {
-      translations.place[w.ko] = w.ro || w.en || "";
-    });
-  }
-
-  if (vocab.conjugations?.length) {
-    byKey("conjug").data = vocab.conjugations.map(w => w.ko);
-    vocab.conjugations.forEach(w => {
-      translations.conjug[w.ko] = w.ro || w.en || "";
-    });
-  }
+  fillColumn("subjectAdj", vocab.subjectAdjectives);
+  fillColumn("objectAdj", vocab.objectAdjectives);
 
   REV = buildReverseMap();
 }
