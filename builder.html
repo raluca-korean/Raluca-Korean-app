@@ -3672,13 +3672,22 @@ function buildRoVerbPhrase(roVerbInf, cj, subjKo){
   return (v ? v + " " : "") + `(${cjExp})`;
 }
     
-    function buildNaturalRomanian(state, activeMap){
-  const use = (key) => activeMap[key] !== false && isColumnVisible(key) && state[key];
+   function buildNaturalRomanian(state, activeMap){
+
+  if(!state) return "";
+
+  const use = (key) =>
+    activeMap?.[key] !== false &&
+    isColumnVisible(key) &&
+    state?.[key];
 
   const getRo = (catKey, stateKey) => {
-    const raw = state[stateKey];
+
+    const raw = state?.[stateKey];
+
     if(!raw) return "";
-    return translations[catKey]?.[raw] || raw;
+
+    return translations?.[catKey]?.[raw] || raw;
   };
 
   const timeRo   = use("time") ? getRo("time","time") : "";
@@ -3686,22 +3695,40 @@ function buildRoVerbPhrase(roVerbInf, cj, subjKo){
   const placeRo  = use("place") ? getRo("place","place") : "";
   const modRo    = use("mod") ? getRo("mod","mod") : "";
   const objRo    = use("object") ? getRo("object","object") : "";
-  const numRo    = use("numeral") ? (state.numeral || "") : "";
+  const numRo    = use("numeral") ? (state?.numeral || "") : "";
 
   let objPhrase = "";
+
   if(objRo){
-    const arr = [];
+
+    const arr=[];
+
     if(numRo) arr.push(numRo);
+
     arr.push(objRo);
+
     objPhrase = arr.join(" ");
   }
 
-  const verbKo   = state.verb || "";
-  const verbRoInf = translations.verb?.[verbKo] || verbKo || "";
-  const conjUsed = (use("conjug") ? (state.conjug || "") : "");
-  const verbPhrase = (use("verb") ? buildRoVerbPhrase(verbRoInf, conjUsed, state.subject) : "");
+  const verbKo = state?.verb || "";
 
-  const parts = [];
+  const verbRoInf =
+    translations?.verb?.[verbKo] ||
+    verbKo ||
+    "";
+
+  const conjUsed =
+    use("conjug")
+    ? (state?.conjug || "")
+    : "";
+
+  const verbPhrase =
+    use("verb")
+    ? buildRoVerbPhrase(verbRoInf,conjUsed,state?.subject)
+    : "";
+
+  const parts=[];
+
   if(timeRo) parts.push(timeRo);
   if(subjRo) parts.push(subjRo);
   if(placeRo) parts.push(placeRo);
@@ -3710,13 +3737,25 @@ function buildRoVerbPhrase(roVerbInf, cj, subjKo){
   if(verbPhrase) parts.push(verbPhrase);
 
   if(!parts.length) return "";
-  let sentence = parts.join(" ").replace(/\s+/g," ").trim();
-  sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
-if(!/[.!?]$/.test(sentence)) sentence += ".";
-sentence = sentence.replace(/\.\s+\./g,".");
-      return sentence;
-}
-   function parseRomanianSentence(text){
+
+  let sentence =
+    parts.join(" ")
+    .replace(/\s+/g," ")
+    .trim();
+
+  sentence =
+    sentence.charAt(0).toUpperCase() +
+    sentence.slice(1);
+
+  if(!/[.!?]$/.test(sentence))
+    sentence += ".";
+
+  sentence =
+    sentence.replace(/\.\s+\./g,".");
+
+  return sentence;
+} 
+    function parseRomanianSentence(text){
 
   const state = makeEmptySentence();
 
@@ -3730,12 +3769,15 @@ sentence = sentence.replace(/\.\s+\./g,".");
 
   if(t.includes("laborator")) state.place="연구실";
 
-  if(t.includes("date")) state.objects.push("데이터");
+  if(t.includes("date")){
+    if(!state.objects) state.objects=[];
+    state.objects.push("데이터");
+  }
 
   if(t.includes("analiz")) state.verb="분석하다";
 
   return state;
-}
+}   
    
     /* =========================
    12) RENDER: TABLE (1 propoziție)
