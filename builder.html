@@ -5151,8 +5151,38 @@ function fillColumn(key, data){
   data.forEach(v => col.data.push(v));
 
 }
-    function loadCustomWords(){}
-  async function loadVocabulary(){
+  function loadCustomWords(){
+  try{
+    const raw = localStorage.getItem(CUSTOM_KEY);
+    if(!raw) return;
+
+    const saved = JSON.parse(raw);
+    if(!saved || typeof saved !== "object") return;
+
+    Object.entries(saved).forEach(([key, arr]) => {
+      const col = columns.find(c => c.key === key);
+      if(!col || !Array.isArray(arr)) return;
+
+      arr.forEach(entry => {
+        const word = typeof entry === "string" ? entry.trim() : (entry?.word || "").trim();
+        const ro   = typeof entry === "string" ? "" : (entry?.ro || "").trim();
+
+        if(!word) return;
+
+        if(!col.data.includes(word)){
+          col.data.push(word);
+        }
+
+        if(!translations[key]) translations[key] = {};
+        if(ro) translations[key][word] = ro;
+      });
+    });
+
+  }catch(err){
+    console.error("loadCustomWords error:", err);
+  }
+}
+    async function loadVocabulary(){
 
   const res = await fetch("./vocab-korean.json");
   vocab = await res.json();
