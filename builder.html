@@ -5215,9 +5215,10 @@ function renderAll(){
   updateModelNav();
   updatePreview();
 }
-    /* =========================
-   24) BOOTSTRAP (UN SINGUR)
+ /* =========================
+   24) BOOTSTRAP
    ========================= */
+
 function renderExtraClauses(){
 
   if(!DOM.extraClauses) return;
@@ -5228,33 +5229,22 @@ function renderExtraClauses(){
 
   for(let i = 2; i < sentences.length; i++){
 
-    if(!sentences[i]) continue;
+    const block = createClauseTable(i);
 
-    const block = document.createElement("div");
-    block.className = "table-block clause-extra";
-
-    const title = document.createElement("div");
-    title.className = "table-title";
-    title.innerHTML = `<span>Propoziția ${i+1}</span>`;
-
-    const table = document.createElement("div");
-    table.className = "table-horizontal";
-
-    block.appendChild(title);
-    block.appendChild(table);
-
-    DOM.extraClauses.appendChild(block);
+    DOM.extraClauses.appendChild(block.wrap);
 
     renderClauseRow(
-      table,
+      block.table,
       actives[i],
       sentences[i],
       i
     );
 
-    attachPressHandlers(table, i);
+    attachPressHandlers(block.table, i);
+
   }
-}    
+
+}
 function buildFullRomanian(){
 
   const parts = [];
@@ -5309,6 +5299,32 @@ function buildFullRomanian(){
 
   return full;
 }
+   
+function init(){
+
+  setupUI();
+
+  createToggleChips();
+
+  loadModelRow(indexModelRow);
+
+  attachPressHandlers(DOM.tableP1,0);
+
+  if(DOM.tableP2){
+    attachPressHandlers(DOM.tableP2,1);
+  }
+
+  renderAll();
+
+}
+
+/* =========================
+   START APP
+   ========================= */
+
+document.addEventListener("DOMContentLoaded", init);
+
+
     function buildFullKorean(){
 
   const parts = [];
