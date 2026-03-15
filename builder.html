@@ -2560,76 +2560,52 @@ const translations = {
   }
 };
 
- /* =========================
+    /* =========================
    2) STORAGE: CUSTOM WORDS
    ========================= */
-
 const STORAGE_KEY = "ralucaKoreanCustomWords_v2";
-const CUSTOM_KEY = STORAGE_KEY;
-    const customData = {
-  subject:[],
-  time:[],
-  place:[],
-  mod:[],
-  object:[],
-  numeral:[],
-  counter:[],
-  verb:[],
-  conjug:[]
+const customData = {
+  subject:[],time:[],place:[],mod:[],object:[],
+  numeral:[],counter:[],verb:[],conjug:[]
 };
 
 function loadCustomData(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return;
-
     const saved = JSON.parse(raw);
-
     Object.keys(customData).forEach(k=>{
       if(Array.isArray(saved[k])) customData[k] = saved[k];
     });
 
+    // inject în liste + translations
     Object.entries(customData).forEach(([key,arr])=>{
       arr.forEach(entry=>{
         if(!entry || !entry.word) return;
-
         const w = entry.word;
         const ro = entry.ro || "";
 
         const listMap = {
-          subject: subjects,
-          time: times,
-          place: places,
-          mod: mods,
-          object: objects,
-          numeral: numerals,
-          counter: counters,
-          verb: verbs,
-          conjug: conjugations
+          subject: subjects, time: times, place: places, mod: mods, object: objects,
+          numeral: numerals, counter: counters, verb: verbs, conjug: conjugations
         };
-
         const list = listMap[key];
-
         if(list && !list.includes(w)) list.push(w);
 
         if(!translations[key]) translations[key] = {};
         if(ro) translations[key][w] = ro;
       });
     });
-
-  }catch(e){
-    console.error(e);
-  }
-}
-
-function saveCustomData(){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(customData));
   }catch(e){}
 }
 
+function saveCustomData(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(customData)); }catch(e){}
+}
+
 loadCustomData();
-    /* =========================
+
+/* =========================
    3) COLUMNS CONFIG
    ========================= */
 
@@ -2653,7 +2629,7 @@ loadCustomData();
   {key:"conjug", title:"CONJUGĂRI", ko:"", data:conjugations, hint:"Formă verbală", allowCustom:true}
 ];
     const MULTI_VALUE_SLOTS = new Set(["subject"]);
- let maxLen = Math.max(1, ...columns.map(c => c.data.length));
+    const maxLen = Math.max(...columns.map(c => c.data.length));
     // ===== CLAUSE ENGINE (GENERALIZARE P1 / P2) =====
 const clauses = [
   { id: 1, state: {}, active: {} },
@@ -3008,18 +2984,7 @@ function buildVerbPhrase(dictVerb, cj){
 
   return presentPolite(dictVerb);
 }    
-function buildEnumeration(list, single){
 
-  if(Array.isArray(list) && list.length){
-    return list.join("과");
-  }
-
-  if(single){
-    return single;
-  }
-
-  return "";
-}
     /* =========================
    9) PARTICLE HELPERS
    ========================= */
@@ -3139,7 +3104,6 @@ if(use("place")){
   .replace(/\s+/g," ")
   .trim()
 }
-    
     const particleCache = new Map();
 
 function cachedParticle(word,type){
@@ -3308,14 +3272,16 @@ function buildClauseSentence(state, activeMap){
       parts.push(objectWord + particle);
     }
   }
-/* VERB */
-if(use("verb") || use("conjug")){
-  const vp = buildVerbPhrase(verb, conjug);
-  if(vp){
-    parts.push(vp);
-  }
-}
-  if(vp){
+
+  /* VERB */
+
+  if(use("verb") || use("conjug")){
+
+    const vp = buildVerbPhrase(
+  conjugateVerb(verb,"present","yo"),
+  conjug
+);
+    if(vp){
       parts.push(vp);
     }
   }
@@ -3378,7 +3344,8 @@ function particlePerson(word){
   if(!word) return "";
   return word + "에게";
 }
- function addSubjectWithParticle(word,state={}){  
+   
+ function addSubjectWithParticle(word,state){
 
   if(!word) return ""
 
@@ -3392,7 +3359,15 @@ function particlePerson(word){
 
   return word + chooseObjectParticle(word);
 }
-    
+   function addSubjectWithParticle(word,state){
+
+  if(!word) return ""
+
+  const p = chooseSubjectParticle(word,state)
+
+  return word + p
+}
+
 function chooseSubjectParticle(word,state){
 
   const batchim = hasBatchim(word)
@@ -4907,48 +4882,7 @@ function setupUI(){
 
     renderPanelList(col);
   });
-function addCustomWord(columnKey, word, ro = ""){
-  try{
-    if(!columnKey || !word) return;
 
-    const cleanWord = String(word).trim();
-    const cleanRo   = String(ro || "").trim();
-    if(!cleanWord) return;
-
-    const col = columns.find(c => c.key === columnKey);
-    if(!col) return;
-
-    if(!col.data.includes(cleanWord)){
-      col.data.push(cleanWord);
-    }
-
-    if(!translations[columnKey]) translations[columnKey] = {};
-    if(cleanRo) translations[columnKey][cleanWord] = cleanRo;
-
-    const raw = localStorage.getItem(CUSTOM_KEY);
-    const custom = raw ? JSON.parse(raw) : {};
-
-    if(!Array.isArray(custom[columnKey])){
-      custom[columnKey] = [];
-    }
-
-    const exists = custom[columnKey].some(entry => {
-      if(typeof entry === "string") return entry === cleanWord;
-      return entry?.word === cleanWord;
-    });
-
-    if(!exists){
-      custom[columnKey].push({
-        word: cleanWord,
-        ro: cleanRo
-      });
-    }
-
-    localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
-  }catch(err){
-    console.error("addCustomWord error:", err);
-  }
-}
   /* ===== ENABLE P2 ===== */
   on(DOM.enableP2, "change", ()=>{
     const onOff = DOM.enableP2.checked;
@@ -5145,119 +5079,63 @@ function buildFullRomanian(){
   return parts.join(" ").replace(/\s+/g," ").trim();
 }
    let vocab = {};
-function fillColumn(key, data){
 
-  const col = columns.find(c => c.key === key);
-
-  if(!col) return;
-
-  if(!Array.isArray(data)) return;
-
-  col.data.length = 0;
-
-  data.forEach(v => col.data.push(v));
-
-}
-  function loadCustomWords(){
-  try{
-    const raw = localStorage.getItem(CUSTOM_KEY);
-    if(!raw) return;
-
-    const saved = JSON.parse(raw);
-    if(!saved || typeof saved !== "object") return;
-
-    Object.entries(saved).forEach(([key, arr]) => {
-      const col = columns.find(c => c.key === key);
-      if(!col || !Array.isArray(arr)) return;
-
-      arr.forEach(entry => {
-        const word = typeof entry === "string" ? entry.trim() : (entry?.word || "").trim();
-        const ro   = typeof entry === "string" ? "" : (entry?.ro || "").trim();
-
-        if(!word) return;
-
-        if(!col.data.includes(word)){
-          col.data.push(word);
-        }
-
-        if(!translations[key]) translations[key] = {};
-        if(ro) translations[key][word] = ro;
-      });
-    });
-
-  }catch(err){
-    console.error("loadCustomWords error:", err);
-  }
-}
-    async function loadVocabulary(){
+async function loadVocabulary(){
 
   const res = await fetch("./vocab-korean.json");
-  vocab = await res.json();
+  const data = await res.json();
 
-  const byKey = key => columns.find(c => c.key === key);
+  vocab = data;
 
-  function fillColumn(key, vocabArray, trKey){
+  fillColumn("subject", data.subjects, "subject");
+  fillColumn("object", data.objects, "object");
+  fillColumn("verb", data.verbs, "verb");
+  fillColumn("mod", data.modifiers, "mod");
+  fillColumn("time", data.times, "time");
+  fillColumn("place", data.places, "place");
+  fillColumn("conjug", data.conjugations, "conjug");
 
-    if(!Array.isArray(vocabArray)) return;
+  fillColumn("subjectAdj", data.subjectAdjectives);
+  fillColumn("objectAdj", data.objectAdjectives);
 
-    const col = byKey(key);
-    if(!col) return;
+  fillColumn("numeral", data.numerals);
+  fillColumn("counter", data.counters);
 
-    const seen = new Set();
-    const list = [];
-
-    vocabArray.forEach(w => {
-
-      if(!w?.ko) return;
-
-      const word = w.ko.trim();
-
-      if(seen.has(word)) return;
-      seen.add(word);
-
-      list.push(word);
-
-      if(trKey){
-        translations[trKey][word] = w.ro || w.en || "";
-      }
-
-    });
-
-    col.data.length = 0;
-    col.data.push(...list);
-  }
-
-  fillColumn("subject", vocab.subjects, "subject");
-  fillColumn("object", vocab.objects, "object");
-  fillColumn("verb", vocab.verbs, "verb");
-  fillColumn("mod", vocab.modifiers, "mod");
-  fillColumn("time", vocab.times, "time");
-  fillColumn("place", vocab.places, "place");
-  fillColumn("conjug", vocab.conjugations, "conjug");
-
-  fillColumn("subjectAdj", vocab.subjectAdjectives);
-  fillColumn("objectAdj", vocab.objectAdjectives);
+  loadCustomWords();
 
 }
     document.addEventListener("DOMContentLoaded", async () => {
 
-  await loadVocabulary();
+  try {
 
-  loadCustomWords();
+    // 1. încărcăm vocabularul
+    await loadVocabulary();
 
-  maxLen = Math.max(1, ...columns.map(c => (c.data || []).length));
+    // 2. inițializăm propoziția de bază
+    sentences = [ makeEmptySentence() ];
+    actives   = [ makeAllActive() ];
 
-  sentences = [ makeEmptySentence() ];
-  actives   = [ makeAllActive() ];
+    // 3. rând model
+    loadModelRow(indexModelRow);
 
-  loadModelRow(indexModelRow);
+    // 4. UI
+    setupUI();
 
-  setupUI();
-  createToggleChips();
+    // 5. toggle chips
+    createToggleChips();
 
-  renderAll();
+    // 6. atașăm handler-ele de long press
+    attachPressHandlers(DOM.tableP1, 0);
+    attachPressHandlers(DOM.tableP2, 1);
+
+    // 7. render inițial
+    renderAll();
+
+  } catch(e){
+    console.error(e);
+  }
 
 });
   </script>
 </body>
-</html>
+</html> 
