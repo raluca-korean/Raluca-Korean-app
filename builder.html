@@ -5079,47 +5079,102 @@ function buildFullRomanian(){
   return parts.join(" ").replace(/\s+/g," ").trim();
 }
    let vocab = {};
-   async function loadVocabulary(){
+    async function loadVocabulary(){
 
-  const res = await fetch("./vocab-korean.json");
-  const vocab = await res.json();
+  try{
 
-  function fillColumn(key, arr){
+    const res = await fetch("./vocab-korean.json");
+    const vocab = await res.json();
 
-    const col = columns.find(c => c.key === key);
-    if(!col) return;
+    const map = {
+      subject: "subjects",
+      object: "objects",
+      verb: "verbs",
+      time: "times",
+      place: "places",
+      mod: "modifiers",
+      conjug: "conjugations"
+    };
 
-    if(!Array.isArray(arr)) return;   // IMPORTANT
+    Object.entries(map).forEach(([colKey, jsonKey]) => {
 
-    col.data.length = 0;
+      const col = columns.find(c => c.key === colKey);
+      const list = vocab[jsonKey];
 
-    arr.forEach(entry => {
+      if(!col || !Array.isArray(list)) return;
 
-      if(!entry || !entry.ko) return;
+      list.forEach(entry => {
 
-      const word = entry.ko.trim();
-      if(!word) return;
+        if(!entry || !entry.ko) return;
 
-      col.data.push(word);
+        const word = entry.ko.trim();
+        if(!word) return;
 
-      if(!translations[key]) translations[key] = {};
-      translations[key][word] = entry.ro || entry.en || "";
+        // NU resetăm col.data
+        if(!col.data.includes(word)){
+          col.data.push(word);
+        }
+
+        if(!translations[colKey]) translations[colKey] = {};
+        translations[colKey][word] = entry.ro || entry.en || "";
+
+      });
 
     });
 
+  }catch(err){
+    console.error("Vocabulary load error:", err);
   }
 
-  fillColumn("subject", vocab.subjects);
-  fillColumn("object", vocab.objects);
-  fillColumn("verb", vocab.verbs);
-  fillColumn("time", vocab.times);
-  fillColumn("place", vocab.places);
-  fillColumn("mod", vocab.modifiers);
-  fillColumn("conjug", vocab.conjugations);
+}
+    async function loadVocabulary(){
 
-  // IMPORTANT pentru builder
-  maxLen = Math.max(1, ...columns.map(c => c.data.length));
-} 
+  try{
+
+    const res = await fetch("./vocab-korean.json");
+    const vocab = await res.json();
+
+    const map = {
+      subject: "subjects",
+      object: "objects",
+      verb: "verbs",
+      time: "times",
+      place: "places",
+      mod: "modifiers",
+      conjug: "conjugations"
+    };
+
+    Object.entries(map).forEach(([colKey, jsonKey]) => {
+
+      const col = columns.find(c => c.key === colKey);
+      const list = vocab[jsonKey];
+
+      if(!col || !Array.isArray(list)) return;
+
+      list.forEach(entry => {
+
+        if(!entry || !entry.ko) return;
+
+        const word = entry.ko.trim();
+        if(!word) return;
+
+        // NU resetăm col.data
+        if(!col.data.includes(word)){
+          col.data.push(word);
+        }
+
+        if(!translations[colKey]) translations[colKey] = {};
+        translations[colKey][word] = entry.ro || entry.en || "";
+
+      });
+
+    });
+
+  }catch(err){
+    console.error("Vocabulary load error:", err);
+  }
+
+}
     document.addEventListener("DOMContentLoaded", async () => {
 
   try {
