@@ -5152,62 +5152,75 @@ function fillColumn(key, data){
 
 }
     function loadCustomWords(){}
-    async function loadVocabulary(){
+  async function loadVocabulary(){
 
   const res = await fetch("./vocab-korean.json");
-  const data = await res.json();
+  vocab = await res.json();
 
-  vocab = data;
+  const byKey = key => columns.find(c => c.key === key);
 
-  fillColumn("subject", data.subjects, "subject");
-  fillColumn("object", data.objects, "object");
-  fillColumn("verb", data.verbs, "verb");
-  fillColumn("mod", data.modifiers, "mod");
-  fillColumn("time", data.times, "time");
-  fillColumn("place", data.places, "place");
-  fillColumn("conjug", data.conjugations, "conjug");
+  function fillColumn(key, vocabArray, trKey){
 
-  fillColumn("subjectAdj", data.subjectAdjectives);
-  fillColumn("objectAdj", data.objectAdjectives);
+    if(!Array.isArray(vocabArray)) return;
 
-  fillColumn("numeral", data.numerals);
-  fillColumn("counter", data.counters);
+    const col = byKey(key);
+    if(!col) return;
 
-  loadCustomWords();
+    const seen = new Set();
+    const list = [];
+
+    vocabArray.forEach(w => {
+
+      if(!w?.ko) return;
+
+      const word = w.ko.trim();
+
+      if(seen.has(word)) return;
+      seen.add(word);
+
+      list.push(word);
+
+      if(trKey){
+        translations[trKey][word] = w.ro || w.en || "";
+      }
+
+    });
+
+    col.data.length = 0;
+    col.data.push(...list);
+  }
+
+  fillColumn("subject", vocab.subjects, "subject");
+  fillColumn("object", vocab.objects, "object");
+  fillColumn("verb", vocab.verbs, "verb");
+  fillColumn("mod", vocab.modifiers, "mod");
+  fillColumn("time", vocab.times, "time");
+  fillColumn("place", vocab.places, "place");
+  fillColumn("conjug", vocab.conjugations, "conjug");
+
+  fillColumn("subjectAdj", vocab.subjectAdjectives);
+  fillColumn("objectAdj", vocab.objectAdjectives);
 
 }
     document.addEventListener("DOMContentLoaded", async () => {
 
-  try {
+  await loadVocabulary();
 
-    // 1. încărcăm vocabularul
-    await loadVocabulary();
+  loadCustomWords();
 
-    // 2. inițializăm propoziția de bază
-    sentences = [ makeEmptySentence() ];
-    actives   = [ makeAllActive() ];
+  maxLen = Math.max(1, ...columns.map(c => (c.data || []).length));
 
-    // 3. rând model
-    loadModelRow(indexModelRow);
+  sentences = [ makeEmptySentence() ];
+  actives   = [ makeAllActive() ];
 
-    // 4. UI
-    setupUI();
+  loadModelRow(indexModelRow);
 
-    // 5. toggle chips
-    createToggleChips();
+  setupUI();
+  createToggleChips();
 
-    // 6. atașăm handler-ele de long press
-    attachPressHandlers(DOM.tableP1, 0);
-    attachPressHandlers(DOM.tableP2, 1);
-
-    // 7. render inițial
-    renderAll();
-
-  } catch(e){
-    console.error(e);
-  }
+  renderAll();
 
 });
-</script>
+  </script>
 </body>
 </html>
