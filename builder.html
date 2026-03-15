@@ -5079,7 +5079,7 @@ function buildFullRomanian(){
   return parts.join(" ").replace(/\s+/g," ").trim();
 }
    let vocab = {};
-async function loadVocabulary(){
+   async function loadVocabulary(){
 
   const res = await fetch("./vocab-korean.json");
   const vocab = await res.json();
@@ -5089,18 +5089,24 @@ async function loadVocabulary(){
     const col = columns.find(c => c.key === key);
     if(!col) return;
 
+    if(!Array.isArray(arr)) return;   // IMPORTANT
+
     col.data.length = 0;
 
     arr.forEach(entry => {
 
-      if(!entry.ko) return;
+      if(!entry || !entry.ko) return;
 
-      col.data.push(entry.ko);
+      const word = entry.ko.trim();
+      if(!word) return;
+
+      col.data.push(word);
 
       if(!translations[key]) translations[key] = {};
-      translations[key][entry.ko] = entry.ro || "";
+      translations[key][word] = entry.ro || entry.en || "";
 
     });
+
   }
 
   fillColumn("subject", vocab.subjects);
@@ -5111,7 +5117,9 @@ async function loadVocabulary(){
   fillColumn("mod", vocab.modifiers);
   fillColumn("conjug", vocab.conjugations);
 
-}
+  // IMPORTANT pentru builder
+  maxLen = Math.max(1, ...columns.map(c => c.data.length));
+} 
     document.addEventListener("DOMContentLoaded", async () => {
 
   try {
