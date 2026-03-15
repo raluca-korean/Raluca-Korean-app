@@ -2604,27 +2604,42 @@ function saveCustomData(){
 }
 
 loadCustomData();
-const CUSTOM_KEY = "ralucaKoreanCustomWords";
+    const CUSTOM_KEY = "ralucaKoreanCustomWords";
 
 function loadCustomWords(){
 
-  const raw = localStorage.getItem(CUSTOM_KEY);
-  if(!raw) return;
+  try{
 
-  const custom = JSON.parse(raw);
+    const raw = localStorage.getItem(CUSTOM_KEY);
+    if(!raw) return;
 
-  Object.entries(custom).forEach(([key,arr])=>{
+    const custom = JSON.parse(raw);
 
-    const col = columns.find(c=>c.key===key);
-    if(!col) return;
+    if(!custom || typeof custom !== "object") return;
 
-    arr.forEach(word=>{
-      if(!col.data.includes(word)){
-        col.data.push(word);
-      }
+    Object.entries(custom).forEach(([key,arr])=>{
+
+      if(!Array.isArray(arr)) return;
+
+      const col = columns.find(c => c.key === key);
+      if(!col || !Array.isArray(col.data)) return;
+
+      arr.forEach(entry=>{
+
+        const word = typeof entry === "string" ? entry : entry?.word;
+        if(!word) return;
+
+        if(!col.data.includes(word)){
+          col.data.push(word);
+        }
+
+      });
+
     });
 
-  });
+  }catch(err){
+    console.error("Custom vocab load error:", err);
+  }
 
 }
     /* =========================
