@@ -5081,28 +5081,69 @@ function buildFullRomanian(){
    let vocab = {};
 
 async function loadVocabulary(){
+  const res = await fetch("vocab-korean.json");
+  vocab = await res.json();
 
-  const res = await fetch("./vocab-korean.json");
-  const data = await res.json();
+  const byKey = (key) => columns.find(c => c.key === key);
 
-  vocab = data;
+  if (vocab.subjects?.length) {
+    byKey("subject").data = vocab.subjects.map(w => w.ko);
+    vocab.subjects.forEach(w => {
+      translations.subject[w.ko] = w.ro || w.en || "";
+    });
+  }
 
-  fillColumn("subject", data.subjects, "subject");
-  fillColumn("object", data.objects, "object");
-  fillColumn("verb", data.verbs, "verb");
-  fillColumn("mod", data.modifiers, "mod");
-  fillColumn("time", data.times, "time");
-  fillColumn("place", data.places, "place");
-  fillColumn("conjug", data.conjugations, "conjug");
+  if (vocab.objects?.length) {
+    byKey("object").data = vocab.objects.map(w => w.ko);
+    vocab.objects.forEach(w => {
+      translations.object[w.ko] = w.ro || w.en || "";
+    });
+  }
 
-  fillColumn("subjectAdj", data.subjectAdjectives);
-  fillColumn("objectAdj", data.objectAdjectives);
+  if (vocab.verbs?.length) {
+    byKey("verb").data = vocab.verbs.map(w => w.ko);
+    vocab.verbs.forEach(w => {
+      translations.verb[w.ko] = w.ro || w.en || "";
+    });
+  }
 
-  fillColumn("numeral", data.numerals);
-  fillColumn("counter", data.counters);
+  if (vocab.modifiers?.length) {
+    byKey("mod").data = vocab.modifiers.map(w => w.ko);
+    vocab.modifiers.forEach(w => {
+      translations.mod[w.ko] = w.ro || w.en || "";
+    });
+  }
 
-  loadCustomWords();
+  if (vocab.subjectAdjectives?.length) {
+    byKey("subjectAdj").data = vocab.subjectAdjectives.map(w => w.ko);
+  }
 
+  if (vocab.objectAdjectives?.length) {
+    byKey("objectAdj").data = vocab.objectAdjectives.map(w => w.ko);
+  }
+
+  if (vocab.times?.length) {
+    byKey("time").data = vocab.times.map(w => w.ko);
+    vocab.times.forEach(w => {
+      translations.time[w.ko] = w.ro || w.en || "";
+    });
+  }
+
+  if (vocab.places?.length) {
+    byKey("place").data = vocab.places.map(w => w.ko);
+    vocab.places.forEach(w => {
+      translations.place[w.ko] = w.ro || w.en || "";
+    });
+  }
+
+  if (vocab.conjugations?.length) {
+    byKey("conjug").data = vocab.conjugations.map(w => w.ko);
+    vocab.conjugations.forEach(w => {
+      translations.conjug[w.ko] = w.ro || w.en || "";
+    });
+  }
+
+  REV = buildReverseMap();
 }
     document.addEventListener("DOMContentLoaded", async () => {
 
@@ -5124,15 +5165,17 @@ async function loadVocabulary(){
     // 5. toggle chips
     createToggleChips();
 
-    // 6. atașăm handler-ele de long press
-    attachPressHandlers(DOM.tableP1, 0);
-    attachPressHandlers(DOM.tableP2, 1);
+    // 6. handlers pentru coloane
+    attachPressHandlers(DOM.tableP1,0);
+    attachPressHandlers(DOM.tableP2,1);
 
-    // 7. render inițial
+    // 7. randare inițială
     renderAll();
 
-  } catch(e){
-    console.error(e);
+  } catch(err){
+
+    console.error("APP BOOT ERROR",err);
+
   }
 
 });
