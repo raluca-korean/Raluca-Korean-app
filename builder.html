@@ -4884,38 +4884,19 @@ function parseRoToState(text){
 
   return state;
 }
-    function normalizeWord(w){
+   function normalizeWord(w){
 
-  let word = w
-    .toLowerCase()
-    .replace(/[.,!?]/g,"")
-    .trim();
+  if(w.endsWith("em")) return w.slice(0,-2);
+  if(w.endsWith("im")) return w.slice(0,-2);
+  if(w.endsWith("ăm")) return w.slice(0,-2);
 
-  return normalizeRomanianVerb(word);
+  return w;
 }
-   const base = normalizeWord(w);
+  const base = normalizeWord(w);
 
 if(dictionaryIndex.verbs[base]){
   state.verbs.push(dictionaryIndex.verbs[base]);
-}
-    function normalizeRomanianVerb(word){
-
-  const w = word.toLowerCase();
-
-  const endings = [
-    "ăm","em","im","ăm","am","ai","au",
-    "e","i","ă","esc","ești","ește",
-    "eam","eau","eam","eam","eam"
-  ];
-
-  for(const end of endings){
-    if(w.endsWith(end)){
-      return w.slice(0, w.length - end.length);
-    }
-  }
-
-  return w;
-} 
+}  
     /* =========================
    ADVANCED CLAUSE PARSER (FIXED)
    ========================= */
@@ -5215,35 +5196,37 @@ function renderAll(){
   updateModelNav();
   updatePreview();
 }
- /* =========================
-   24) BOOTSTRAP
+    /* =========================
+   24) BOOTSTRAP (UN SINGUR)
    ========================= */
 
-function renderExtraClauses(){
-
-  if(!DOM.extraClauses) return;
+    function renderExtraClauses() {
+  if (!DOM.extraClauses) return;
 
   DOM.extraClauses.innerHTML = "";
 
-  if(!showExtraClauses) return;
+  // începem de la propoziția 3 (index 2)
+  for (let i = 2; i < sentences.length; i++) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-block";
 
-  for(let i = 2; i < sentences.length; i++){
+    const title = document.createElement("div");
+    title.className = "table-title";
+    title.innerHTML = `<span>Propoziția ${i + 1}</span>`;
+    wrapper.appendChild(title);
 
-    const block = createClauseTable(i);
+    const table = document.createElement("div");
+    table.className = "table-horizontal";
+    wrapper.appendChild(table);
 
-    DOM.extraClauses.appendChild(block.wrap);
+    DOM.extraClauses.appendChild(wrapper);
 
-    renderClauseRow(
-      block.table,
-      actives[i],
-      sentences[i],
-      i
-    );
+    // render tabelul EXACT ca P1 / P2
+    renderClauseRow(table, actives[i], sentences[i], i);
 
-    attachPressHandlers(block.table, i);
-
+    // long-press + click
+    attachPressHandlers(table, i);
   }
-
 }
 function buildFullRomanian(){
 
@@ -5299,32 +5282,6 @@ function buildFullRomanian(){
 
   return full;
 }
-   
-function init(){
-
-  setupUI();
-
-  createToggleChips();
-
-  loadModelRow(indexModelRow);
-
-  attachPressHandlers(DOM.tableP1,0);
-
-  if(DOM.tableP2){
-    attachPressHandlers(DOM.tableP2,1);
-  }
-
-  renderAll();
-
-}
-
-/* =========================
-   START APP
-   ========================= */
-
-document.addEventListener("DOMContentLoaded", init);
-
-
     function buildFullKorean(){
 
   const parts = [];
