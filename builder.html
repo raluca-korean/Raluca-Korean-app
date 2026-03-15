@@ -4909,39 +4909,48 @@ function setupUI(){
 
     renderPanelList(col);
   });
-function addCustomWord(columnKey, word){
+function addCustomWord(columnKey, word, ro = ""){
+  try{
+    if(!columnKey || !word) return;
 
-  if(!word) return;
+    const cleanWord = String(word).trim();
+    const cleanRo   = String(ro || "").trim();
+    if(!cleanWord) return;
 
-  const raw = localStorage.getItem(CUSTOM_KEY);
-  const custom = raw ? JSON.parse(raw) : {};
+    const col = columns.find(c => c.key === columnKey);
+    if(!col) return;
 
-  if(!custom[columnKey]){
-    custom[columnKey] = [];
+    if(!col.data.includes(cleanWord)){
+      col.data.push(cleanWord);
+    }
+
+    if(!translations[columnKey]) translations[columnKey] = {};
+    if(cleanRo) translations[columnKey][cleanWord] = cleanRo;
+
+    const raw = localStorage.getItem(CUSTOM_KEY);
+    const custom = raw ? JSON.parse(raw) : {};
+
+    if(!Array.isArray(custom[columnKey])){
+      custom[columnKey] = [];
+    }
+
+    const exists = custom[columnKey].some(entry => {
+      if(typeof entry === "string") return entry === cleanWord;
+      return entry?.word === cleanWord;
+    });
+
+    if(!exists){
+      custom[columnKey].push({
+        word: cleanWord,
+        ro: cleanRo
+      });
+    }
+
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
+  }catch(err){
+    console.error("addCustomWord error:", err);
   }
-
-  if(!custom[columnKey].includes(word)){
-    custom[columnKey].push(word);
-  }
-
-  localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
-
 }
-  addWordBtn.addEventListener("click", ()=>{
-
-  const word = newWordInput.value.trim();
-  if(!word) return;
-
-  addCustomWord(currentColumn, word);
-addCustomWord(panelKey, word);
-    const col = columns.find(c=>c.key===currentColumn);
-  if(col){
-    col.data.push(word);
-  }
-
-  renderPanelList();
-
-});
   /* ===== ENABLE P2 ===== */
   on(DOM.enableP2, "change", ()=>{
     const onOff = DOM.enableP2.checked;
