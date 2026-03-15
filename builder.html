@@ -3982,81 +3982,94 @@ function parseRomanianSentence(text){
 
   const state = {...SentenceModel};
 
-  const t = text.toLowerCase();
-
-  const words = t
+  const words = text
+    .toLowerCase()
     .replace(/[.,!?]/g,"")
     .split(/\s+/);
 
-  /* TIME */
-
-  if(t.includes("ieri")) state.time = "어제";
-  if(t.includes("astăzi") || t.includes("azi")) state.time = "오늘";
-  if(t.includes("mâine") || t.includes("maine")) state.time = "내일";
-
-  /* SUBJECT */
-
-  if(t.includes("eu")) state.subject = "저";
-  if(t.includes("noi")) state.subject = "우리";
-
-  /* ARRAYS */
-
   state.places = [];
   state.verbs = [];
+  state.objects = [];
 
   words.forEach(w=>{
 
+    /* TIME */
+
+    if(w==="ieri") state.time="어제";
+    if(w==="astăzi" || w==="azi") state.time="오늘";
+    if(w==="mâine" || w==="maine") state.time="내일";
+
+    /* SUBJECT */
+
+    if(w==="eu") state.subject="저";
+    if(w==="noi") state.subject="우리";
+
+    if(w==="maria"){
+      state.subjects = state.subjects || [];
+      state.subjects.push("마리아");
+    }
+
     /* PLACES */
 
-    if(w === "acasă" || w === "acasa"){
+    if(w==="acasă" || w==="acasa"){
       state.places.push("집");
     }
 
-    if(w === "școală" || w === "scoala"){
+    if(w==="școală" || w==="scoala"){
       state.places.push("학교");
     }
 
-    if(w === "bibliotecă" || w === "biblioteca"){
+    if(w==="bibliotecă" || w==="biblioteca"){
       state.places.push("도서관");
     }
 
-    if(w === "laborator"){
+    if(w==="laborator"){
       state.places.push("연구실");
     }
 
     /* VERBS */
 
-    if(w === "citesc" || w === "citim"){
+    if(w==="citim" || w==="citesc"){
       state.verbs.push("읽다");
     }
 
-    if(w === "vin" || w === "venim"){
+    if(w==="venim" || w==="vin"){
       state.verbs.push("오다");
     }
 
-    if(w === "mănânc" || w === "mâncăm" || w === "mancam"){
+    if(w==="mâncăm" || w==="mancam"){
       state.verbs.push("먹다");
     }
 
-    if(w === "studiez" || w === "studiem"){
+    if(w==="studiem"){
       state.verbs.push("공부하다");
     }
 
-    if(w === "scriu" || w === "scriem"){
+    if(w==="scriem"){
       state.verbs.push("쓰다");
+    }
+
+    if(w==="mergem"){
+      state.verbs.push("가다");
+    }
+
+    if(w==="cumpărăm" || w==="cumparam"){
+      state.verbs.push("사다");
+    }
+
+    /* OBJECT */
+
+    if(w==="mâncare" || w==="mancare"){
+      state.objects.push("음식");
     }
 
   });
 
-  /* fallback dacă există doar un loc */
-
-  if(!state.place && state.places.length === 1){
+  if(!state.place && state.places.length===1){
     state.place = state.places[0];
   }
 
-  /* fallback dacă există un singur verb */
-
-  if(!state.verb && state.verbs.length === 1){
+  if(!state.verb && state.verbs.length===1){
     state.verb = state.verbs[0];
   }
 
