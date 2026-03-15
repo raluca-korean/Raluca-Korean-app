@@ -2560,51 +2560,75 @@ const translations = {
   }
 };
 
-    /* =========================
+ /* =========================
    2) STORAGE: CUSTOM WORDS
    ========================= */
+
 const STORAGE_KEY = "ralucaKoreanCustomWords_v2";
+
 const customData = {
-  subject:[],time:[],place:[],mod:[],object:[],
-  numeral:[],counter:[],verb:[],conjug:[]
+  subject:[],
+  time:[],
+  place:[],
+  mod:[],
+  object:[],
+  numeral:[],
+  counter:[],
+  verb:[],
+  conjug:[]
 };
 
 function loadCustomData(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return;
+
     const saved = JSON.parse(raw);
+
     Object.keys(customData).forEach(k=>{
       if(Array.isArray(saved[k])) customData[k] = saved[k];
     });
 
-    // inject în liste + translations
     Object.entries(customData).forEach(([key,arr])=>{
       arr.forEach(entry=>{
         if(!entry || !entry.word) return;
+
         const w = entry.word;
         const ro = entry.ro || "";
 
         const listMap = {
-          subject: subjects, time: times, place: places, mod: mods, object: objects,
-          numeral: numerals, counter: counters, verb: verbs, conjug: conjugations
+          subject: subjects,
+          time: times,
+          place: places,
+          mod: mods,
+          object: objects,
+          numeral: numerals,
+          counter: counters,
+          verb: verbs,
+          conjug: conjugations
         };
+
         const list = listMap[key];
+
         if(list && !list.includes(w)) list.push(w);
 
         if(!translations[key]) translations[key] = {};
         if(ro) translations[key][w] = ro;
       });
     });
-  }catch(e){}
+
+  }catch(e){
+    console.error(e);
+  }
 }
 
 function saveCustomData(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(customData)); }catch(e){}
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(customData));
+  }catch(e){}
 }
 
 loadCustomData();
-
     /* =========================
    3) COLUMNS CONFIG
    ========================= */
