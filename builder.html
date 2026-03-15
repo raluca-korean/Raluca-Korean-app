@@ -3976,21 +3976,84 @@ function parseRomanianSentence(text){
 
   const t = text.toLowerCase();
 
-  if(t.includes("ieri")) state.time="어제";
-  if(t.includes("astăzi")) state.time="오늘";
+  const words = t
+    .replace(/[.,!?]/g,"")
+    .split(/\s+/);
 
-  if(t.includes("eu")) state.subject="저";
-  if(t.includes("noi")) state.subject="우리";
+  /* TIME */
 
-  if(t.includes("laborator")) state.place="연구실";
+  if(t.includes("ieri")) state.time = "어제";
+  if(t.includes("astăzi") || t.includes("azi")) state.time = "오늘";
+  if(t.includes("mâine") || t.includes("maine")) state.time = "내일";
 
-  if(t.includes("date")) state.objects.push("데이터");
+  /* SUBJECT */
 
-  if(t.includes("analiz")) state.verb="분석하다";
+  if(t.includes("eu")) state.subject = "저";
+  if(t.includes("noi")) state.subject = "우리";
+
+  /* ARRAYS */
+
+  state.places = [];
+  state.verbs = [];
+
+  words.forEach(w=>{
+
+    /* PLACES */
+
+    if(w === "acasă" || w === "acasa"){
+      state.places.push("집");
+    }
+
+    if(w === "școală" || w === "scoala"){
+      state.places.push("학교");
+    }
+
+    if(w === "bibliotecă" || w === "biblioteca"){
+      state.places.push("도서관");
+    }
+
+    if(w === "laborator"){
+      state.places.push("연구실");
+    }
+
+    /* VERBS */
+
+    if(w === "citesc" || w === "citim"){
+      state.verbs.push("읽다");
+    }
+
+    if(w === "vin" || w === "venim"){
+      state.verbs.push("오다");
+    }
+
+    if(w === "mănânc" || w === "mâncăm" || w === "mancam"){
+      state.verbs.push("먹다");
+    }
+
+    if(w === "studiez" || w === "studiem"){
+      state.verbs.push("공부하다");
+    }
+
+    if(w === "scriu" || w === "scriem"){
+      state.verbs.push("쓰다");
+    }
+
+  });
+
+  /* fallback dacă există doar un loc */
+
+  if(!state.place && state.places.length === 1){
+    state.place = state.places[0];
+  }
+
+  /* fallback dacă există un singur verb */
+
+  if(!state.verb && state.verbs.length === 1){
+    state.verb = state.verbs[0];
+  }
 
   return state;
 }
-  
     /* =========================
    12) RENDER: TABLE (1 propoziție)
    - IMPORTANT: nu mai facem coduri care se bat cap în cap
