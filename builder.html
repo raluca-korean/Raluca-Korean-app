@@ -2383,69 +2383,8 @@ body.pastel-theme .story-separator{
    - Păstrează: panel, long-press, chips, toggles, preview KO/RO, audio, favorites,
                 custom words + localStorage, parser RO→state, particule + conjugări
    ============================================================ */
-// /js/core/vocabulary.js
-
-let GLOBAL_VOCAB = null;
-let dictionaryIndex = null;
-
-async function loadVocabulary(){
-
-  if(GLOBAL_VOCAB) return GLOBAL_VOCAB;
-
-  const res = await fetch("/app/data/vocab-korean.json");
-
-  if(!res.ok){
-    throw new Error("Failed to load vocab JSON");
-  }
-
-  const vocab = await res.json();
-
-  GLOBAL_VOCAB = vocab;
-
-  dictionaryIndex = buildDictionaryIndex(vocab);
-
-  return vocab;
-}
-
 
 /* =========================
-   BUILD INDEX (RO → KO)
-========================= */
-
-function buildDictionaryIndex(dict){
-
-  const index = {};
-
-  Object.keys(dict).forEach(category => {
-
-    index[category] = {};
-
-    dict[category].forEach(entry => {
-
-      if(!entry || !entry.ro || !entry.ko) return;
-
-      const key = entry.ro.toLowerCase().trim();
-
-      index[category][key] = entry.ko;
-
-    });
-
-  });
-
-  return index;
-}
-
-
-/* =========================
-   GET WORD
-========================= */
-
-function getWord(category, roWord){
-
-  if(!dictionaryIndex) return null;
-
-  return dictionaryIndex?.[category]?.[roWord.toLowerCase()] || null;
-}/* =========================
    0) SAFE DOM HELPERS
    ========================= */
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -5491,6 +5430,12 @@ fetch("vocab-korean.json")
   }
 
 });
-  </script>
+    <script src="./js/core/vocabulary.js"></script>
+<script src="./js/core/conjugation.js"></script>
+<script src="./js/core/parser.js"></script>
+<script src="./js/core/sentence-builder.js"></script>
+
+<script src="./js/pages/builder-page.js"></script>
+</script>
 </body>
 </html> 
