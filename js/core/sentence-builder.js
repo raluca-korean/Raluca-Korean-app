@@ -25,11 +25,13 @@ function renderAll(){
   let result = "";
 
   if(s.time) result += s.time + " ";
-
-  if(s.subject){
+if(s.subject){
+  if(s.subject === "저"){
+    result += "제가 ";
+  } else {
     result += s.subject + subjectParticle(s.subject) + " ";
   }
-
+}
   if(s.place){
     result += s.place + placeParticle(s.place) + " ";
   }
