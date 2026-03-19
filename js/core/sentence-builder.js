@@ -25,10 +25,22 @@ function renderAll(){
   let result = "";
 
   if(s.time) result += s.time + " ";
-  if(s.subject) result += s.subject + " ";
-  if(s.place) result += s.place + " ";
-  if(s.object) result += s.object + " ";
-  if(s.verb) result += s.verb;
+
+  if(s.subject){
+    result += s.subject + subjectParticle(s.subject) + " ";
+  }
+
+  if(s.place){
+    result += s.place + placeParticle(s.place) + " ";
+  }
+
+  if(s.object){
+    result += s.object + objectParticle(s.object) + " ";
+  }
+
+  if(s.verb){
+    result += s.verb + "다";
+  }
 
   const output = document.querySelector(".result-korean");
 
