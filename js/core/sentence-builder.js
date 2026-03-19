@@ -1,13 +1,14 @@
 let sentences = [];
 let actives = [];
-
 function makeEmptySentence(){
   return {
     subject: "",
-    verb: "",
-    object: "",
-    time: "",
-    place: "" // 🔥 OBLIGATORIU
+    subjectAdj: "",
+    places: [],
+    objects: [],
+    objectAdj: "",
+    verbs: [],
+    time: ""
   };
 }
 function makeAllActive(){
