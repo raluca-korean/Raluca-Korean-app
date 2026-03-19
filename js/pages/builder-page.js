@@ -1,20 +1,21 @@
 document.addEventListener("DOMContentLoaded", async () => {
 
-  try {
+  await loadVocabulary();   // 🔥 obligatoriu
 
-    await loadVocabulary();
+  console.log("TEST VOCAB:", GLOBAL_VOCAB);
 
-    initBuilderPage();
+  // exemplu test manual (ca să vezi că merge)
+  sentences[0] = {
+    subject: "저",
+    place: "학교",
+    object: "밥",
+    verb: "먹다",
+    time: "오늘"
+  };
 
-  } catch(err){
-
-    console.error("BOOT ERROR", err);
-
-  }
+  renderAll();
 
 });
-
-
 function initBuilderPage(){
 
   sentences = [ makeEmptySentence() ];
