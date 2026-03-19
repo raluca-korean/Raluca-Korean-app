@@ -25,72 +25,89 @@ function renderAll(){
   const s = sentences[0];
   let result = "";
 
-  // TIME
+  // 1. TIME
   if(s.time){
     result += s.time + " ";
   }
 
-  // SUBJECT
+  // 2. SUBJECT + ADJ
   if(s.subject){
-    if(s.subject === "저"){
+
+    let subj = s.subject;
+
+    if(s.subjectAdj){
+      subj = s.subjectAdj + " " + subj;
+    }
+
+    if(subj === "저"){
       result += "제가 ";
     } else {
-      result += s.subject + subjectParticle(s.subject) + " ";
+      result += subj + subjectParticle(subj) + " ";
     }
   }
 
-  // PLACE (acceptă și nou, și vechi)
+  // 3. PLACES (multiple, coreean corect)
   if(s.places && s.places.length){
-    s.places.forEach(p => {
-      result += p + placeParticle(p) + " ";
-    });
-  } else if(s.place){
-    result += s.place + placeParticle(s.place) + " ";
+
+    if(s.places.length === 1){
+      result += s.places[0] + placeParticle(s.places[0]) + " ";
+    } else {
+      // legăm cu "와/과"
+      s.places.forEach((p, i) => {
+
+        if(i === 0){
+          result += p;
+        } else if(i < s.places.length - 1){
+          result += "와 " + p;
+        } else {
+          result += "와 " + p + placeParticle(p) + " ";
+        }
+
+      });
+    }
   }
 
-  // OBJECT (acceptă și nou, și vechi)
+  // 4. OBJECTS + ADJ
   if(s.objects && s.objects.length){
-    s.objects.forEach((obj, index) => {
-      if(index === s.objects.length - 1){
-        result += obj + objectParticle(obj) + " ";
-      } else {
-        result += obj + " ";
+
+    s.objects.forEach((obj, i) => {
+
+      let fullObj = obj;
+
+      if(s.objectAdj){
+        fullObj = s.objectAdj + " " + obj;
       }
+
+      if(i === s.objects.length - 1){
+        result += fullObj + objectParticle(obj) + " ";
+      } else {
+        result += fullObj + " ";
+      }
+
     });
-  } else if(s.object){
-    result += s.object + objectParticle(s.object) + " ";
   }
 
-  // 🔥 fallback dacă lipsește obiectul pentru "먹다"
-  const firstVerb = (s.verbs && s.verbs[0]) || s.verb;
-  if((!s.objects || s.objects.length === 0) && !s.object && firstVerb === "먹다"){
-    result += "밥을 ";
-  }
-
-  // VERBS (acceptă și nou, și vechi)
+  // 5. VERBS (multiple corect coreean)
   if(s.verbs && s.verbs.length){
 
-    s.verbs.forEach((v, index) => {
+    s.verbs.forEach((v, i) => {
 
-      let verb = v;
-      if(!verb.endsWith("다")) verb += "다";
+      let verb = v.endsWith("다") ? v : v + "다";
 
-      if(index < s.verbs.length - 1){
-        result += verb.replace("다","") + "고 ";
+      // multiple → -고
+      if(i < s.verbs.length - 1){
+        const stem = verb.replace("다", "");
+        result += stem + "고 ";
       } else {
+        // ultimul → conjugat
         result += conjugateVerb(verb, "present");
       }
 
     });
 
-  } else if(s.verb){
-
-    let verb = s.verb;
-    if(!verb.endsWith("다")) verb += "다";
-
-    result += conjugateVerb(verb, "present");
   }
 
+  // OUTPUT
   const output = document.querySelector(".result-korean");
   if(output){
     output.textContent = result.trim();
