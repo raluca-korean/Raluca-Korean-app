@@ -39,9 +39,15 @@ if(s.subject){
   if(s.object){
     result += s.object + objectParticle(s.object) + " ";
   }
+if(s.verb){
+  let verb = s.verb;
 
-  if(s.verb){
-  const conjugated = conjugateVerb(s.verb, "present");
+  // 🔥 forțăm forma corectă de dicționar
+  if(!verb.endsWith("다")){
+    verb = verb + "다";
+  }
+
+  const conjugated = conjugateVerb(verb, "present");
   result += conjugated;
 }
   const output = document.querySelector(".result-korean");
