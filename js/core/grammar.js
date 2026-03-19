@@ -7,9 +7,14 @@ function hasBatchim(word){
   return (code - 0xAC00) % 28 !== 0;
 }
 
-
 function subjectParticle(word){
-  return hasBatchim(word) ? "이" : "가";
+  if(word === "저") return "가"; // special case handled later
+
+  const lastChar = word[word.length - 1];
+  const code = lastChar.charCodeAt(0) - 44032;
+  const jong = code % 28;
+
+  return jong === 0 ? "가" : "이";
 }
 
 function objectParticle(word){
