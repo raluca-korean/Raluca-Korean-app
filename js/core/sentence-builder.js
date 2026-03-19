@@ -20,7 +20,7 @@ function makeAllActive(){
   };
 }
 
- function renderAll(){
+function renderAll(){
 
   const s = sentences[0];
   let result = "";
@@ -39,41 +39,54 @@ function makeAllActive(){
     }
   }
 
-  // PLACE
-  if(s.place){
-    result += s.place + placeParticle(s.place) + " ";
+  // 🔥 PLACES (array)
+  if(s.places && s.places.length){
+    s.places.forEach(p => {
+      result += p + placeParticle(p) + " ";
+    });
   }
 
-  // OBJECT
-  if(s.object){
-    result += s.object + objectParticle(s.object) + " ";
+  // 🔥 OBJECTS (array)
+  if(s.objects && s.objects.length){
+    s.objects.forEach((obj, index) => {
+      if(index === s.objects.length - 1){
+        result += obj + objectParticle(obj) + " ";
+      } else {
+        result += obj + " ";
+      }
+    });
   }
 
-  // 🔥 fallback obiect (dacă lipsește)
-  if(!s.object && s.verb){
-    if(s.verb === "먹다"){
+  // 🔥 fallback dacă nu există obiect
+  if((!s.objects || s.objects.length === 0) && s.verbs && s.verbs.length){
+    if(s.verbs[0] === "먹다"){
       result += "밥을 ";
     }
   }
 
-  // 🔥 VERB — logic corect
-  let verb = s.verb;
+  // 🔥 VERBS (array)
+  if(s.verbs && s.verbs.length){
 
-  // dacă NU avem verb → îl deducem din obiect
-  if(!verb){
-    if(s.object === "책") verb = "읽다";
-    else if(s.object === "밥") verb = "먹다";
-    else if(s.object === "물") verb = "마시다";
-    else verb = "하다"; // fallback
+    s.verbs.forEach((v, index) => {
+
+      let verb = v;
+
+      if(!verb.endsWith("다")){
+        verb += "다";
+      }
+
+      // NU ultimul → -고
+      if(index < s.verbs.length - 1){
+        const stem = verb.replace("다", "");
+        result += stem + "고 ";
+      } else {
+        // ultimul → conjugat
+        result += conjugateVerb(verb, "present");
+      }
+
+    });
+
   }
-
-  // siguranță: adaugă "다"
-  if(!verb.endsWith("다")){
-    verb += "다";
-  }
-
-  // conjugare
-  result += conjugateVerb(verb, "present");
 
   // OUTPUT
   const output = document.querySelector(".result-korean");
