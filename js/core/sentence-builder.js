@@ -20,18 +20,17 @@ function makeAllActive(){
     time: true
   };
 }
-
 function renderAll(){
 
-  const s = sentences[0];
+  const s = sentences[0] || makeEmptySentence();
   let result = "";
 
-  // 1. TIME
+  // TIME
   if(s.time){
     result += s.time + " ";
   }
 
-  // 2. SUBJECT + ADJ
+  // SUBJECT
   if(s.subject){
 
     let subj = s.subject;
@@ -47,13 +46,12 @@ function renderAll(){
     }
   }
 
-  // 3. PLACES (multiple, coreean corect)
+  // PLACES
   if(s.places && s.places.length){
 
     if(s.places.length === 1){
       result += s.places[0] + placeParticle(s.places[0]) + " ";
     } else {
-      // legăm cu "와/과"
       s.places.forEach((p, i) => {
 
         if(i === 0){
@@ -68,7 +66,7 @@ function renderAll(){
     }
   }
 
-  // 4. OBJECTS + ADJ
+  // OBJECTS
   if(s.objects && s.objects.length){
 
     s.objects.forEach((obj, i) => {
@@ -88,34 +86,40 @@ function renderAll(){
     });
   }
 
-  // 5. VERBS (multiple corect coreean)
-// 🔥 VERB FINAL (nu mai afișează doar gramatică)
-if(s.verbs && s.verbs.length){
+  // VERBS
+  if(s.verbs && s.verbs.length){
 
-  s.verbs.forEach((v, i) => {
+    s.verbs.forEach((v, i) => {
 
-    let verb = v;
+      let verb = v;
 
-    if(!verb.endsWith("다")){
-      verb += "다";
-    }
-
-    // dacă e selectată o conjugare (ex: -(으)ㄴ/는데도)
-    if(s.conjugation){
-      if(i === s.verbs.length - 1){
-        result += applyGrammar(verb, s.conjugation); // 🔥 IMPORTANT
-      } else {
-        result += verb.replace("다","") + "고 ";
+      if(!verb.endsWith("다")){
+        verb += "다";
       }
-    } else {
-      if(i < s.verbs.length - 1){
-        result += verb.replace("다","") + "고 ";
+
+      if(s.conjugation){
+        if(i === s.verbs.length - 1){
+          result += applyGrammar(verb, s.conjugation);
+        } else {
+          result += verb.replace("다","") + "고 ";
+        }
       } else {
-        result += conjugateVerb(verb, "present");
+        if(i < s.verbs.length - 1){
+          result += verb.replace("다","") + "고 ";
+        } else {
+          result += conjugateVerb(verb, "present");
+        }
       }
-    }
 
-  });
+    });
 
+  }
+
+  // 🔥 OUTPUT FINAL
+  const output = document.querySelector(".result-korean");
+
+  if(output){
+    output.textContent = result.trim();
+  }
 }
-}
+ 
