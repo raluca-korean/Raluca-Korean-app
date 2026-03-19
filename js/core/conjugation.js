@@ -14,15 +14,13 @@ function presentPolite(verb){
   const vowel = Math.floor((code % 588) / 28);
   const jong = code % 28;
 
-  // fără batchim
   if(jong === 0){
-    if(vowel === 0 || vowel === 8){ // ㅏ sau ㅗ
-      return stem + "요";   // 🔥 AICI ERA BUGUL
+    if(vowel === 0 || vowel === 8){
+      return stem + "요";
     }
     return stem + "어요";
   }
 
-  // cu batchim
   return stem + "어요";
 }
 function conjugateVerb(verb, tense){
