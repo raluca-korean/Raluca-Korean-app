@@ -31,3 +31,5 @@ function initBuilderPage(){
   renderAll();
 
 }
+console.log("VOCAB:", GLOBAL_VOCAB);
+console.log("INDEX:", dictionaryIndex);
