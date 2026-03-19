@@ -47,8 +47,12 @@ function makeAllActive(){
   if(s.object){
     result += s.object + objectParticle(s.object) + " ";
   }
-
-  // 🔥 VERB — CONTROL TOTAL
+if(!s.object && s.verb){
+  if(s.verb === "먹다"){
+    result += "밥을 ";
+  }
+}
+   // 🔥 VERB — CONTROL TOTAL
   if(s.object){
     // dacă există obiect → folosim verb logic
     const verb = "읽다"; // pentru 책
