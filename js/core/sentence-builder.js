@@ -39,9 +39,9 @@ function renderAll(){
   }
 
   if(s.verb){
-    result += s.verb + "다";
-  }
-
+  const conjugated = conjugateVerb(s.verb, "present");
+  result += conjugated;
+}
   const output = document.querySelector(".result-korean");
 
   if(output){
