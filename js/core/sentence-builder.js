@@ -18,42 +18,53 @@ function makeAllActive(){
     time: true
   };
 }
-function renderAll(){
+
+ function renderAll(){
 
   const s = sentences[0];
-
   let result = "";
 
-  if(s.time) result += s.time + " ";
-if(s.subject){
-  if(s.subject === "저"){
-    result += "제가 ";
-  } else {
-    result += s.subject + subjectParticle(s.subject) + " ";
+  // TIME
+  if(s.time){
+    result += s.time + " ";
   }
-}
+
+  // SUBJECT
+  if(s.subject){
+    if(s.subject === "저"){
+      result += "제가 ";
+    } else {
+      result += s.subject + subjectParticle(s.subject) + " ";
+    }
+  }
+
+  // PLACE
   if(s.place){
     result += s.place + placeParticle(s.place) + " ";
   }
 
+  // OBJECT
   if(s.object){
     result += s.object + objectParticle(s.object) + " ";
   }
-if(s.verb){
-  let verb = s.verb;
 
-  // 🔥 forțăm forma corectă de dicționar
-  if(!verb.endsWith("다")){
-    verb = verb + "다";
+  // 🔥 VERB — CONTROL TOTAL
+  if(s.object){
+    // dacă există obiect → folosim verb logic
+    const verb = "읽다"; // pentru 책
+    result += conjugateVerb(verb, "present");
+  } else if(s.verb){
+    let verb = s.verb;
+
+    if(!verb.endsWith("다")){
+      verb += "다";
+    }
+
+    result += conjugateVerb(verb, "present");
   }
 
-  const conjugated = conjugateVerb(verb, "present");
-  result += conjugated;
-}
   const output = document.querySelector(".result-korean");
-
   if(output){
     output.textContent = result.trim();
   }
-
 }
