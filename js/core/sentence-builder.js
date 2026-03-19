@@ -20,5 +20,20 @@ function makeAllActive(){
 }
 
 function renderAll(){
-  console.log("Rendering sentences:", sentences);
+
+  const s = sentences[0];
+
+  let result = "";
+
+  if(s.subject) result += s.subject + " ";
+  if(s.time) result += s.time + " ";
+  if(s.object) result += s.object + " ";
+  if(s.verb) result += s.verb;
+
+  const output = document.querySelector(".result-korean");
+
+  if(output){
+    output.textContent = result.trim();
+  }
+
 }
