@@ -39,14 +39,16 @@ function renderAll(){
     }
   }
 
-  // 🔥 PLACES (array)
+  // PLACE (acceptă și nou, și vechi)
   if(s.places && s.places.length){
     s.places.forEach(p => {
       result += p + placeParticle(p) + " ";
     });
+  } else if(s.place){
+    result += s.place + placeParticle(s.place) + " ";
   }
 
-  // 🔥 OBJECTS (array)
+  // OBJECT (acceptă și nou, și vechi)
   if(s.objects && s.objects.length){
     s.objects.forEach((obj, index) => {
       if(index === s.objects.length - 1){
@@ -55,40 +57,40 @@ function renderAll(){
         result += obj + " ";
       }
     });
+  } else if(s.object){
+    result += s.object + objectParticle(s.object) + " ";
   }
 
-  // 🔥 fallback dacă nu există obiect
-  if((!s.objects || s.objects.length === 0) && s.verbs && s.verbs.length){
-    if(s.verbs[0] === "먹다"){
-      result += "밥을 ";
-    }
+  // 🔥 fallback dacă lipsește obiectul pentru "먹다"
+  const firstVerb = (s.verbs && s.verbs[0]) || s.verb;
+  if((!s.objects || s.objects.length === 0) && !s.object && firstVerb === "먹다"){
+    result += "밥을 ";
   }
 
-  // 🔥 VERBS (array)
+  // VERBS (acceptă și nou, și vechi)
   if(s.verbs && s.verbs.length){
 
     s.verbs.forEach((v, index) => {
 
       let verb = v;
+      if(!verb.endsWith("다")) verb += "다";
 
-      if(!verb.endsWith("다")){
-        verb += "다";
-      }
-
-      // NU ultimul → -고
       if(index < s.verbs.length - 1){
-        const stem = verb.replace("다", "");
-        result += stem + "고 ";
+        result += verb.replace("다","") + "고 ";
       } else {
-        // ultimul → conjugat
         result += conjugateVerb(verb, "present");
       }
 
     });
 
+  } else if(s.verb){
+
+    let verb = s.verb;
+    if(!verb.endsWith("다")) verb += "다";
+
+    result += conjugateVerb(verb, "present");
   }
 
-  // OUTPUT
   const output = document.querySelector(".result-korean");
   if(output){
     output.textContent = result.trim();
