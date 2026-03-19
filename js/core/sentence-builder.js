@@ -47,26 +47,34 @@ function makeAllActive(){
   if(s.object){
     result += s.object + objectParticle(s.object) + " ";
   }
-if(!s.object && s.verb){
-  if(s.verb === "먹다"){
-    result += "밥을 ";
-  }
-}
-   // 🔥 VERB — CONTROL TOTAL
-  if(s.object){
-    // dacă există obiect → folosim verb logic
-    const verb = "읽다"; // pentru 책
-    result += conjugateVerb(verb, "present");
-  } else if(s.verb){
-    let verb = s.verb;
 
-    if(!verb.endsWith("다")){
-      verb += "다";
+  // 🔥 fallback obiect (dacă lipsește)
+  if(!s.object && s.verb){
+    if(s.verb === "먹다"){
+      result += "밥을 ";
     }
-
-    result += conjugateVerb(verb, "present");
   }
 
+  // 🔥 VERB — logic corect
+  let verb = s.verb;
+
+  // dacă NU avem verb → îl deducem din obiect
+  if(!verb){
+    if(s.object === "책") verb = "읽다";
+    else if(s.object === "밥") verb = "먹다";
+    else if(s.object === "물") verb = "마시다";
+    else verb = "하다"; // fallback
+  }
+
+  // siguranță: adaugă "다"
+  if(!verb.endsWith("다")){
+    verb += "다";
+  }
+
+  // conjugare
+  result += conjugateVerb(verb, "present");
+
+  // OUTPUT
   const output = document.querySelector(".result-korean");
   if(output){
     output.textContent = result.trim();
