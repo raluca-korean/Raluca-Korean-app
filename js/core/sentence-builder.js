@@ -88,28 +88,33 @@ function renderAll(){
   }
 
   // 5. VERBS (multiple corect coreean)
-  if(s.verbs && s.verbs.length){
+// 🔥 VERB FINAL (nu mai afișează doar gramatică)
+if(s.verbs && s.verbs.length){
 
-    s.verbs.forEach((v, i) => {
+  s.verbs.forEach((v, i) => {
 
-      let verb = v.endsWith("다") ? v : v + "다";
+    let verb = v;
 
-      // multiple → -고
-      if(i < s.verbs.length - 1){
-        const stem = verb.replace("다", "");
-        result += stem + "고 ";
+    if(!verb.endsWith("다")){
+      verb += "다";
+    }
+
+    // dacă e selectată o conjugare (ex: -(으)ㄴ/는데도)
+    if(s.conjugation){
+      if(i === s.verbs.length - 1){
+        result += applyGrammar(verb, s.conjugation); // 🔥 IMPORTANT
       } else {
-        // ultimul → conjugat
+        result += verb.replace("다","") + "고 ";
+      }
+    } else {
+      if(i < s.verbs.length - 1){
+        result += verb.replace("다","") + "고 ";
+      } else {
         result += conjugateVerb(verb, "present");
       }
+    }
 
-    });
+  });
 
-  }
-
-  // OUTPUT
-  const output = document.querySelector(".result-korean");
-  if(output){
-    output.textContent = result.trim();
-  }
 }
+  
