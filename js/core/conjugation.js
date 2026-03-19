@@ -34,3 +34,13 @@ function conjugateVerb(verb, tense){
   }
   return verb;
 }
+function applyGrammar(verb, grammar){
+
+  const stem = verb.replace("다","");
+
+  if(grammar === "-(으)ㄴ/는데도"){
+    return stem + "는데도";
+  }
+
+  return conjugateVerb(verb, "present");
+}
