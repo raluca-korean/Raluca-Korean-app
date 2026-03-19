@@ -8,7 +8,7 @@ function makeEmptySentence(){
     objects: [],
     objectAdj: "",
     verbs: [],
-    time: ""
+    time: "",
     conjugation: ""
 };
 }
