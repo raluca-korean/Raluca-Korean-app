@@ -18,15 +18,15 @@ function makeAllActive(){
     time: true
   };
 }
-
 function renderAll(){
 
   const s = sentences[0];
 
   let result = "";
 
-  if(s.subject) result += s.subject + " ";
   if(s.time) result += s.time + " ";
+  if(s.subject) result += s.subject + " ";
+  if(s.place) result += s.place + " ";
   if(s.object) result += s.object + " ";
   if(s.verb) result += s.verb;
 
