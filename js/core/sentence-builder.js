@@ -6,10 +6,10 @@ function makeEmptySentence(){
     subject: "",
     verb: "",
     object: "",
-    time: ""
+    time: "",
+    place: "" // 🔥 OBLIGATORIU
   };
 }
-
 function makeAllActive(){
   return {
     subject: true,
