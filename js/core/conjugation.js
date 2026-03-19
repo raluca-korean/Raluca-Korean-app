@@ -3,29 +3,26 @@ function getVerbStem(verb){
 }
 
 function presentPolite(verb){
-  const stem = getVerbStem(verb);
-
+  const stem = verb.replace("다", "");
   const lastChar = stem[stem.length - 1];
   const code = lastChar.charCodeAt(0) - 44032;
+
+  const vowel = Math.floor((code % 588) / 28);
   const jong = code % 28;
 
-  // fără batchim
-  if(jong === 0){
-    if(stem.endsWith("하")){
-      return stem.slice(0, -1) + "해요";
-    }
+  if(stem.endsWith("하")){
+    return stem.slice(0, -1) + "해요";
+  }
 
-    if("ㅏㅗ".includes(lastChar)){
+  if(jong === 0){
+    if(vowel === 0 || vowel === 8){
       return stem + "아요";
     }
-
     return stem + "어요";
   }
 
-  // cu batchim
   return stem + "어요";
 }
-
 function conjugateVerb(verb, tense){
   if(tense === "present"){
     return presentPolite(verb);
