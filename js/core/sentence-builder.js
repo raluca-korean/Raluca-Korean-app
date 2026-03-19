@@ -9,7 +9,8 @@ function makeEmptySentence(){
     objectAdj: "",
     verbs: [],
     time: ""
-  };
+    conjugation: ""
+};
 }
 function makeAllActive(){
   return {
