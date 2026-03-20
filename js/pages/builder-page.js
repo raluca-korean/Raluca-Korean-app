@@ -57,18 +57,24 @@ function updateSentence(key, value){
 
   renderAll();
 }
+
 function attachPressHandlers(table){
 
-  const cells = table.querySelectorAll(".cell");
+  const columns = table.querySelectorAll(".col");
 
-  cells.forEach(cell => {
+  columns.forEach(col => {
 
-    cell.addEventListener("click", () => {
+    col.addEventListener("click", () => {
 
-      const key = cell.dataset.type;   // ex: place, verb, object
-      const value = cell.dataset.value;
+      const type = col.dataset.type;     // 🔥 trebuie să existe
+      const value = col.dataset.value;   // 🔥 trebuie să existe
 
-      updateSentence(key, value);   // 🔥 AICI E TOT
+      if(!type || !value){
+        console.log("LIPSEȘTE DATASET", col);
+        return;
+      }
+
+      updateSentence(type, value);  // 🔥 AICI SE REZOLVĂ TOT
 
     });
 
