@@ -25,8 +25,54 @@ function initBuilderPage(){
 }
 console.log("VOCAB:", GLOBAL_VOCAB);
 console.log("INDEX:", dictionaryIndex);
-col.dataset.type = part.type;     // 🔥 subject / verb / place / object
-col.dataset.value = value.ko;     // 🔥 cuvântul coreean
+function loadModelRow(indexModelRow){
+
+  const table = DOM.tableP1;
+  table.innerHTML = "";
+
+  const model = MODEL_ROWS[indexModelRow];
+
+  model.parts.forEach(part => {
+
+    const col = document.createElement("div");
+    col.className = "col";
+
+    let index = 0;
+
+    function updateUI(){
+      const value = part.values[index];
+
+      col.textContent = value.ko;
+
+      col.dataset.type = part.type;
+      col.dataset.value = value.ko;
+    }
+
+    // click = NEXT WORD + updateSentence
+    col.addEventListener("click", () => {
+
+      index = (index + 1) % part.values.length;
+
+      updateUI();
+
+      updateSentence(part.type, col.dataset.value);
+
+    });
+
+    // LONG PRESS = list completă (opțional)
+    col.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+
+      console.log("LISTĂ:", part.values);
+      // aici poți deschide panelul tău existent
+    });
+
+    updateUI();
+    table.appendChild(col);
+
+  });
+
+}
 function updateSentence(key, value){
 
   const s = sentences[0];
