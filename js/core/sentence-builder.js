@@ -1,5 +1,14 @@
+/* =========================
+   STATE
+========================= */
+
 let sentences = [];
 let actives = [];
+
+/* =========================
+   INIT STRUCT
+========================= */
+
 function makeEmptySentence(){
   return {
     subject: "",
@@ -10,8 +19,9 @@ function makeEmptySentence(){
     verbs: [],
     time: "",
     conjugation: ""
-};
+  };
 }
+
 function makeAllActive(){
   return {
     subject: true,
@@ -20,17 +30,84 @@ function makeAllActive(){
     time: true
   };
 }
-function renderAll(){
 
-  const s = sentences[0] || makeEmptySentence();
+/* =========================
+   PARTICLES
+========================= */
+
+function hasBatchim(word){
+  const last = word[word.length - 1];
+  const code = last.charCodeAt(0) - 44032;
+  return code % 28 !== 0;
+}
+
+function subjectParticle(word){
+  return hasBatchim(word) ? "이" : "가";
+}
+
+function objectParticle(word){
+  return hasBatchim(word) ? "을" : "를";
+}
+
+function placeParticle(word){
+  return "에서";
+}
+
+/* =========================
+   ENUM (X și Y)
+========================= */
+
+function joinWithWa(list){
+  if(list.length === 1) return list[0];
+
   let result = "";
 
-  // TIME
+  list.forEach((w, i) => {
+    if(i === 0){
+      result += w;
+    } else if(i < list.length - 1){
+      result += "와 " + w;
+    } else {
+      result += "와 " + w;
+    }
+  });
+
+  return result;
+}
+
+/* =========================
+   VERB CONJUGATION (basic safe)
+========================= */
+
+function conjugateVerb(verb){
+
+  if(!verb.endsWith("다")){
+    verb += "다";
+  }
+
+  const stem = verb.slice(0, -1);
+
+  if(stem.endsWith("하")){
+    return stem.replace("하", "해요");
+  }
+
+  return stem + "요";
+}
+
+/* =========================
+   BUILD SENTENCE (CORE)
+========================= */
+
+function buildSentence(s){
+
+  let result = "";
+
+  /* 1. TIME */
   if(s.time){
     result += s.time + " ";
   }
 
-  // SUBJECT
+  /* 2. SUBJECT */
   if(s.subject){
 
     let subj = s.subject;
@@ -46,47 +123,29 @@ function renderAll(){
     }
   }
 
-  // PLACES
+  /* 3. PLACES */
   if(s.places && s.places.length){
 
-    if(s.places.length === 1){
-      result += s.places[0] + placeParticle(s.places[0]) + " ";
-    } else {
-      s.places.forEach((p, i) => {
-
-        if(i === 0){
-          result += p;
-        } else if(i < s.places.length - 1){
-          result += "와 " + p;
-        } else {
-          result += "와 " + p + placeParticle(p) + " ";
-        }
-
-      });
-    }
+    const p = joinWithWa(s.places);
+    result += p + placeParticle(s.places[s.places.length - 1]) + " ";
   }
 
-  // OBJECTS
+  /* 4. OBJECTS */
   if(s.objects && s.objects.length){
 
-    s.objects.forEach((obj, i) => {
-
-      let fullObj = obj;
-
+    let objs = s.objects.map(o => {
       if(s.objectAdj){
-        fullObj = s.objectAdj + " " + obj;
+        return s.objectAdj + " " + o;
       }
-
-      if(i === s.objects.length - 1){
-        result += fullObj + objectParticle(obj) + " ";
-      } else {
-        result += fullObj + " ";
-      }
-
+      return o;
     });
+
+    const joined = joinWithWa(objs);
+
+    result += joined + objectParticle(s.objects[s.objects.length - 1]) + " ";
   }
 
-  // VERBS
+  /* 5. VERBS */
   if(s.verbs && s.verbs.length){
 
     s.verbs.forEach((v, i) => {
@@ -97,29 +156,32 @@ function renderAll(){
         verb += "다";
       }
 
-      if(s.conjugation){
-        if(i === s.verbs.length - 1){
-          result += applyGrammar(verb, s.conjugation);
-        } else {
-          result += verb.replace("다","") + "고 ";
-        }
+      if(i < s.verbs.length - 1){
+        result += verb.replace("다","") + "고 ";
       } else {
-        if(i < s.verbs.length - 1){
-          result += verb.replace("다","") + "고 ";
-        } else {
-          result += conjugateVerb(verb, "present");
-        }
+        result += conjugateVerb(verb);
       }
 
     });
 
   }
 
-  // 🔥 OUTPUT FINAL
+  return result.trim();
+}
+
+/* =========================
+   RENDER
+========================= */
+
+function renderAll(){
+
+  const s = sentences[0];
+
+  const result = buildSentence(s);
+
   const output = document.querySelector(".result-korean");
 
   if(output){
-    output.textContent = result.trim();
+    output.textContent = result;
   }
 }
- 
