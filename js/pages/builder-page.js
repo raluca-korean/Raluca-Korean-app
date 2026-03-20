@@ -79,14 +79,9 @@ function updateSentence(key, value){
     }
   }
 
-  else if(key === "subject"){
-    s.subject = value;
-  }
-
-  else if(key === "time"){
-    s.time = value;
+  else {
+    s[key] = value;
   }
 
   renderAll();
 }
-
