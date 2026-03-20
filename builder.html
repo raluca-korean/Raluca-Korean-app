@@ -4291,11 +4291,25 @@ function parseRomanianSentence(text){
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
 function loadModelRow(i){
-  // aplicăm același rând-model pe propoziția 1 (ca în versiunea ta)
-  const s = sentences[0];
-  columns.forEach(col => { s[col.key] = col.data[i] || ""; });
-}
 
+  sentences.forEach((s, idx)=>{
+
+    columns.forEach(col => {
+
+      if(!col.data.length) return;
+
+      const value = col.data[i % col.data.length] || "";
+
+      // NU suprascriem arrays (multi-select)
+      if(Array.isArray(s[col.key])) return;
+
+      s[col.key] = value;
+
+    });
+
+  });
+
+}
 function updateModelNav(){
   if(DOM.pageInfoEl) DOM.pageInfoEl.textContent = `Rând model: ${indexModelRow+1} / ${maxLen}`;
   if(DOM.prevBtn) DOM.prevBtn.disabled = (indexModelRow === 0);
