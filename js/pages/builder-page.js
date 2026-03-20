@@ -1,21 +1,12 @@
 document.addEventListener("DOMContentLoaded", async () => {
 
-  await loadVocabulary();   // 🔥 obligatoriu
+  await loadVocabulary();
 
-  console.log("TEST VOCAB:", GLOBAL_VOCAB);
-
-  // exemplu test manual (ca să vezi că merge)
-  sentences[0] = {
-    subject: "저",
-    place: "학교",
-    object: "밥",
-    verb: "먹다",
-    time: "오늘"
-  };
-
-  renderAll();
+  initBuilderPage();   // 🔥 ASTA E CHEIA
 
 });
+
+ 
 function initBuilderPage(){
 
   sentences = [ makeEmptySentence() ];
@@ -56,8 +47,12 @@ function updateSentence(key, value){
     }
   }
 
-  else {
-    s[key] = value;
+  else if(key === "subject"){
+    s.subject = value;
+  }
+
+  else if(key === "time"){
+    s.time = value;
   }
 
   renderAll();
