@@ -17,9 +17,6 @@ function initBuilderPage(){
   setupUI();
   createToggleChips();
 
-  attachPressHandlers(DOM.tableP1,0);
-  attachPressHandlers(DOM.tableP2,1);
-
   renderAll();
 
 }
