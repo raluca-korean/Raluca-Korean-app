@@ -25,6 +25,8 @@ function initBuilderPage(){
 }
 console.log("VOCAB:", GLOBAL_VOCAB);
 console.log("INDEX:", dictionaryIndex);
+col.dataset.type = part.type;     // 🔥 subject / verb / place / object
+col.dataset.value = value.ko;     // 🔥 cuvântul coreean
 function updateSentence(key, value){
 
   const s = sentences[0];
