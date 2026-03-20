@@ -33,30 +33,7 @@ function loadModelRow(indexModelRow){
 
     let index = 0;
 
-    function updateUI(){
-      const value = part.values[index];
-
-      col.textContent = value.ko;
-
-      col.dataset.type = part.type;
-      col.dataset.value = value.ko;
-    }
-
-    col.addEventListener("click", () => {
-
-      index = (index + 1) % part.values.length;
-
-      updateUI();
-
-      updateSentence(part.type, col.dataset.value);
-    });
-
-    updateUI();
-    table.appendChild(col);
-
-  });
-
-}
+    
 function updateSentence(key, value){
 
   const s = sentences[0];
@@ -84,4 +61,49 @@ function updateSentence(key, value){
   }
 
   renderAll();
+}
+function buildTableFromVocab(){
+
+  const table = DOM.tableP1;
+  table.innerHTML = "";
+
+  const map = {
+    subject: subjects,
+    time: times,
+    place: places,
+    object: objects,
+    verb: verbs
+  };
+
+  Object.entries(map).forEach(([type, list]) => {
+
+    if(!list || !list.length) return;
+
+    const col = document.createElement("div");
+    col.className = "col";
+
+    let index = 0;
+
+    function updateUI(){
+      const word = list[index];
+      col.textContent = word;
+      col.dataset.type = type;
+      col.dataset.value = word;
+    }
+
+    col.addEventListener("click", () => {
+
+      index = (index + 1) % list.length;
+
+      updateUI();
+
+      updateSentence(type, list[index]); // 🔥 DIRECT, fără dataset
+
+    });
+
+    updateUI();
+    table.appendChild(col);
+
+  });
+
 }
