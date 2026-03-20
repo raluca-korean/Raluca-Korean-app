@@ -5298,13 +5298,13 @@ function buildFullRomanian(){
 
   return parts.join(" ").replace(/\s+/g," ").trim();
 }
-   let vocab = {};
-    async function loadVocabulary(){
-
+  async function loadVocabulary(){
   try{
 
     const res = await fetch("./vocab-korean.json");
-    const vocab = await res.json();
+    vocab = await res.json();   // ✅ FIX
+
+    dictionaryIndex = buildDictionaryIndex(vocab); // ✅ mutat aici
 
     const map = {
       subject: "subjects",
@@ -5330,7 +5330,6 @@ function buildFullRomanian(){
         const word = entry.ko.trim();
         if(!word) return;
 
-        // NU resetăm col.data
         if(!col.data.includes(word)){
           col.data.push(word);
         }
@@ -5342,74 +5341,11 @@ function buildFullRomanian(){
 
     });
 
-  }catch(err){
-    console.error("Vocabulary load error:", err);
-  }
-
-}
-   async function loadDictionary(){
-
-  const res = await fetch("./vocab-korean.json");
-  const dict = await res.json();
-
-  window.KOREAN_DICT = dict;
-
-} 
- let dictionaryIndex;
-
-fetch("vocab-korean.json")
-  .then(r=>r.json())
-  .then(data=>{
-     dictionary = data;
-     dictionaryIndex = buildDictionaryIndex(dictionary);
-  });   
-    async function loadVocabulary(){
-
-  try{
-
-    const res = await fetch("./vocab-korean.json");
-    const vocab = await res.json();
-
-    const map = {
-      subject: "subjects",
-      object: "objects",
-      verb: "verbs",
-      time: "times",
-      place: "places",
-      mod: "modifiers",
-      conjug: "conjugations"
-    };
-
-    Object.entries(map).forEach(([colKey, jsonKey]) => {
-
-      const col = columns.find(c => c.key === colKey);
-      const list = vocab[jsonKey];
-
-      if(!col || !Array.isArray(list)) return;
-
-      list.forEach(entry => {
-
-        if(!entry || !entry.ko) return;
-
-        const word = entry.ko.trim();
-        if(!word) return;
-
-        // NU resetăm col.data
-        if(!col.data.includes(word)){
-          col.data.push(word);
-        }
-
-        if(!translations[colKey]) translations[colKey] = {};
-        translations[colKey][word] = entry.ro || entry.en || "";
-
-      });
-
-    });
+    console.log("VOCAB OK:", vocab); // 🔥 verificare
 
   }catch(err){
     console.error("Vocabulary load error:", err);
   }
-
 }
     document.addEventListener("DOMContentLoaded", async () => {
 
