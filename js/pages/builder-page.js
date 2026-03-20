@@ -45,7 +45,6 @@ function loadModelRow(indexModelRow){
       col.dataset.value = value.ko;
     }
 
-    // click = NEXT WORD + updateSentence
     col.addEventListener("click", () => {
 
       index = (index + 1) % part.values.length;
@@ -53,15 +52,6 @@ function loadModelRow(indexModelRow){
       updateUI();
 
       updateSentence(part.type, col.dataset.value);
-
-    });
-
-    // LONG PRESS = list completă (opțional)
-    col.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-
-      console.log("LISTĂ:", part.values);
-      // aici poți deschide panelul tău existent
     });
 
     updateUI();
