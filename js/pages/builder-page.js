@@ -106,26 +106,3 @@ function updateSentence(key, value){
   renderAll();
 }
 
-function attachPressHandlers(table){
-
-  const columns = table.querySelectorAll(".col");
-
-  columns.forEach(col => {
-
-    col.addEventListener("click", () => {
-
-      const type = col.dataset.type;     // 🔥 trebuie să existe
-      const value = col.dataset.value;   // 🔥 trebuie să existe
-
-      if(!type || !value){
-        console.log("LIPSEȘTE DATASET", col);
-        return;
-      }
-
-      updateSentence(type, value);  // 🔥 AICI SE REZOLVĂ TOT
-
-    });
-
-  });
-
-}
