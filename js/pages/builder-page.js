@@ -33,31 +33,31 @@ function loadModelRow(indexModelRow){
 
     let index = 0;
 
-    
-function updateSentence(key, value){
+    function updateSentence(key, value){
 
   const s = sentences[0];
 
   if(key === "place"){
-    if(!s.places.includes(value)){
-      s.places.push(value);
-    }
+    if(!s.places) s.places = [];
+    if(!s.places.includes(value)) s.places.push(value);
   }
 
   else if(key === "object"){
-    if(!s.objects.includes(value)){
-      s.objects.push(value);
-    }
+    if(!s.objects) s.objects = [];
+    if(!s.objects.includes(value)) s.objects.push(value);
   }
 
   else if(key === "verb"){
-    if(!s.verbs.includes(value)){
-      s.verbs.push(value);
-    }
+    if(!s.verbs) s.verbs = [];
+    if(!s.verbs.includes(value)) s.verbs.push(value);
   }
 
-  else {
-    s[key] = value;
+  else if(key === "subject"){
+    s.subject = value;
+  }
+
+  else if(key === "time"){
+    s.time = value;
   }
 
   renderAll();
