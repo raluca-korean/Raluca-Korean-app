@@ -57,3 +57,21 @@ function updateSentence(key, value){
 
   renderAll();
 }
+function attachPressHandlers(table){
+
+  const cells = table.querySelectorAll(".cell");
+
+  cells.forEach(cell => {
+
+    cell.addEventListener("click", () => {
+
+      const key = cell.dataset.type;   // ex: place, verb, object
+      const value = cell.dataset.value;
+
+      updateSentence(key, value);   // 🔥 AICI E TOT
+
+    });
+
+  });
+
+}
