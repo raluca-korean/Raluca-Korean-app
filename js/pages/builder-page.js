@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 });
 
- 
 function initBuilderPage(){
 
   sentences = [ makeEmptySentence() ];
@@ -18,10 +17,8 @@ function initBuilderPage(){
   createToggleChips();
 
   renderAll();
+} 
 
-}
-console.log("VOCAB:", GLOBAL_VOCAB);
-console.log("INDEX:", dictionaryIndex);
 function loadModelRow(indexModelRow){
 
   const table = DOM.tableP1;
