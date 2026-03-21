@@ -1,92 +1,105 @@
 /* =========================
-   GLOBAL STATE
+   STATE (NU SE SCHIMBĂ)
 ========================= */
 
 let sentences = [];
-let MODE = "manual"; // "manual" | "auto"
+let actives = [];
 
 /* =========================
-   DATA (AUTO MODE)
+   STRUCT (COMPATIBIL CU UI)
 ========================= */
 
-const DATA = {
-  subjects: ["저","친구","학생","선생님"],
-  places: ["학교","집","카페","회사"],
-  objects: ["밥","커피","책","영화"],
-  verbs: ["먹다","마시다","읽다","보다","공부하다","일하다"],
-  times: ["오늘","어제","내일","지금"]
-};
-
-/* =========================
-   GRAMMAR ENGINE
-========================= */
-
-window.GRAMMAR_ENGINE = {
-  connectors: {
-    cause: ["아서","니까","기 때문에"],
-    sequence: ["고","고 나서"],
-    contrast: ["지만"],
-    condition: ["면"]
-  },
-  pick(type){
-    const list = this.connectors[type];
-    return list ? list[Math.floor(Math.random()*list.length)] : "고";
-  }
-};
+function makeEmptySentence(){
+  return {
+    subject: "",
+    subjectAdj: "",
+    places: [],
+    objects: [],
+    objectAdj: "",
+    verbs: [],
+    time: "",
+    conjugation: ""
+  };
+}
 
 /* =========================
    HELPERS
 ========================= */
 
-function random(arr){
-  return arr[Math.floor(Math.random()*arr.length)];
+function cleanJoin(arr){
+  return arr.filter(Boolean).join(" ").replace(/\s+/g," ").trim();
+}
+
+function stripEnding(text){
+  return (text || "").replace(/요$|니다$|습니다$/,"");
 }
 
 function hasBatchim(word){
   if(!word) return false;
+
   const code = word.charCodeAt(word.length - 1);
   if(code < 44032 || code > 55203) return false;
+
   return (code - 44032) % 28 !== 0;
 }
 
 /* =========================
-   SENTENCE STRUCT
+   PARTICLES
 ========================= */
 
-function makeSentence(){
-  return {
-    subject: "",
-    place: "",
-    object: "",
-    verb: "",
-    time: "",
-    reason: false
-  };
+function topicParticle(word){
+  return hasBatchim(word) ? "은" : "는";
+}
+
+function subjectParticle(word){
+  return hasBatchim(word) ? "이" : "가";
+}
+
+function objectParticle(word){
+  return hasBatchim(word) ? "을" : "를";
 }
 
 /* =========================
-   VERB ENGINE
+   ENUM (X și Y)
+========================= */
+
+function joinWithWa(list){
+  if(!list || !list.length) return "";
+
+  if(list.length === 1) return list[0];
+
+  return list.map((w,i)=>{
+    if(i === 0) return w;
+    return "와 " + w;
+  }).join(" ");
+}
+
+/* =========================
+   VERB ENGINE (SAFE)
 ========================= */
 
 function getStem(v){
-  return v.endsWith("다") ? v.slice(0,-1) : v;
+  return v && v.endsWith("다") ? v.slice(0,-1) : v || "";
 }
 
 function decompose(c){
+  if(!c) return null;
+
   const code = c.charCodeAt(0);
   if(code < 44032 || code > 55203) return null;
+
   const base = code - 44032;
+
   return {
     vowel: Math.floor((base % 588)/28),
     jong: base % 28
   };
 }
 
-function present(v){
+function presentPolite(v){
 
   if(!v) return "";
 
-  // irregular basic
   if(v === "하다") return "해요";
   if(v === "가다") return "가요";
   if(v === "오다") return "와요";
@@ -98,7 +111,7 @@ function present(v){
   const d = decompose(stem[stem.length-1]);
   if(!d) return stem + "어요";
 
-  const A = [0,2,8,9,10,11]; // ㅏ group
+  const A = [0,2,8,9,10,11];
 
   if(d.jong === 0){
     return stem + (A.includes(d.vowel) ? "아요" : "어요");
@@ -107,77 +120,106 @@ function present(v){
   return stem + "어요";
 }
 
-function buildVerb(v){
-  return present(v);
+/* =========================
+   VERB BUILDER
+========================= */
+
+function buildVerbPhrase(v){
+  return presentPolite(v);
 }
 
 /* =========================
-   CLAUSE BUILDER
+   CLAUSE BUILDER (CORE)
 ========================= */
 
 function buildClause(s, hideSubject=false){
 
   const parts = [];
 
-  // TIME
+  /* TIME */
   if(s.time){
     parts.push(s.time);
   }
 
-  // SUBJECT
+  /* SUBJECT */
   if(!hideSubject && s.subject){
-    if(s.subject === "저"){
+
+    let subj = s.subject;
+
+    if(s.subjectAdj){
+      subj = s.subjectAdj + " " + subj;
+    }
+
+    if(subj === "저"){
       parts.push("제가");
     } else {
-      parts.push(
-        s.subject + (hasBatchim(s.subject) ? "은" : "는")
-      );
+      parts.push(subj + topicParticle(subj));
     }
   }
 
-  // PLACE
-  if(s.place){
-    parts.push(s.place + "에서");
+  /* PLACES */
+  if(s.places && s.places.length){
+    const p = joinWithWa(s.places);
+    parts.push(p + "에서");
   }
 
-  // OBJECT
-  if(s.object){
-    parts.push(
-      s.object + (hasBatchim(s.object) ? "을" : "를")
-    );
+  /* OBJECTS */
+  if(s.objects && s.objects.length){
+
+    const objs = s.objects.map(o=>{
+      if(s.objectAdj){
+        return s.objectAdj + " " + o;
+      }
+      return o;
+    });
+
+    const joined = joinWithWa(objs);
+
+    parts.push(joined + objectParticle(s.objects[s.objects.length-1]));
   }
 
-  // VERB
-  if(s.verb){
-    parts.push(buildVerb(s.verb));
+  /* VERBS */
+  if(s.verbs && s.verbs.length){
+
+    s.verbs.forEach((v,i)=>{
+
+      if(i < s.verbs.length - 1){
+        parts.push(getStem(v) + "고");
+      } else {
+        parts.push(buildVerbPhrase(v));
+      }
+
+    });
   }
 
-  return parts.join(" ");
+  return cleanJoin(parts);
 }
 
 /* =========================
    CONNECTOR LOGIC
 ========================= */
 
-function chooseConnector(a,b){
+function chooseConnector(prev,next){
 
-  if(a.reason){
-    return GRAMMAR_ENGINE.pick("cause");
+  if(!prev || !next) return "고";
+
+  if(prev.reason){
+    return window.GRAMMAR_ENGINE?.pick("cause") || "아서";
   }
 
-  if(a.verb === b.verb){
+  if(prev.verbs?.[0] === next.verbs?.[0]){
     return "지만";
   }
 
-  if(b.time === "내일"){
+  if(next.time && next.time.includes("내일")){
     return "면";
   }
 
-  return GRAMMAR_ENGINE.pick("sequence");
+  return window.GRAMMAR_ENGINE?.pick("sequence") || "고";
 }
 
 /* =========================
-   SENTENCE ENGINE
+   FINAL SENTENCE ENGINE
 ========================= */
 
 function buildSentence(list){
@@ -201,53 +243,19 @@ function buildSentence(list){
 
     const connector = chooseConnector(list[i], next);
 
-    result += clause.replace(/요$/,"") + connector + " ";
+    result += stripEnding(clause) + connector + " ";
   }
 
-  return result.trim();
+  return cleanJoin([result]);
 }
 
 /* =========================
-   AUTO GENERATOR
-========================= */
-
-function generateSentence(){
-
-  const s1 = makeSentence();
-  const s2 = makeSentence();
-
-  s1.subject = random(DATA.subjects);
-  s1.place = random(DATA.places);
-  s1.object = random(DATA.objects);
-  s1.verb = random(DATA.verbs);
-  s1.time = random(DATA.times);
-
-  s2.object = random(DATA.objects);
-  s2.verb = random(DATA.verbs);
-  s2.time = random(DATA.times);
-
-  if(Math.random() > 0.5){
-    s1.reason = true;
-  }
-
-  return [s1, s2];
-}
-
-/* =========================
-   RENDER
+   RENDER (LEGAT DE UI)
 ========================= */
 
 function renderAll(){
 
-  let data;
-
-  if(MODE === "auto"){
-    data = generateSentence();
-  } else {
-    data = sentences;
-  }
-
-  const result = buildSentence(data);
+  const result = buildSentence(sentences);
 
   const output = document.querySelector(".result-korean");
 
