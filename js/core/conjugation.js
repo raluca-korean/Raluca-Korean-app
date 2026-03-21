@@ -1,9 +1,8 @@
 
-
 function getVerbStem(verb){
+  if(!verb) return "";
   return verb.endsWith("다") ? verb.slice(0, -1) : verb;
 }
-
 function presentPolite(verb){
 
   if(verb === "하다") return "해요";
