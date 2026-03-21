@@ -4289,8 +4289,46 @@ function parseRomanianSentence(text){
 
   showExtraClauses = requiredLength > 1;
 }
-    
-   function updatePreviewCardState(){
+    function updateNaturalHint(text){
+
+  const hint = document.getElementById("naturalHint");
+  if(!hint) return;
+
+  // dacă nu există text → golim
+  if(!text || !text.trim()){
+    hint.textContent = "";
+    return;
+  }
+
+  const t = text.trim();
+
+  // 🔥 detectare propoziții compuse (mai inteligent)
+  const isComplex =
+    t.includes("고") ||
+    t.includes("면서") ||
+    t.includes("지만") ||
+    t.includes("기 때문에") ||
+    t.includes("면") ||
+    t.includes("는데");
+
+  if(isComplex){
+    hint.textContent = "⭐ propoziție compusă";
+    return;
+  }
+
+  // 🔥 detectare propoziție simplă
+  const hasVerbEnding =
+    /요$|다$|습니다$/.test(t);
+
+  if(hasVerbEnding){
+    hint.textContent = "✔️ propoziție corectă";
+    return;
+  }
+
+  // fallback
+  hint.textContent = "";
+}
+    function updatePreviewCardState(){
 
   const card = document.querySelector(".preview-card");
   if(!card) return;
