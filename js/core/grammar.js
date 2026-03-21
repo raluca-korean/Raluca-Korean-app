@@ -42,6 +42,7 @@ window.GRAMMAR_ENGINE = {
   // =====================
   // PARTICLES
   // =====================
+// SUBJECT
 subject(word){
 
   if(word === "저") return "가";   // 제가
@@ -49,11 +50,17 @@ subject(word){
   if(word === "너") return "가";   // 네가
 
   return this.hasBatchim(word) ? "이" : "가";
-}
-  object(word){
-    return this.hasBatchim(word) ? "을" : "를";
-  },
+},
 
+// TOPIC
+topic(word){
+  return this.hasBatchim(word) ? "은" : "는";
+},
+
+// OBJECT
+object(word){
+  return this.hasBatchim(word) ? "을" : "를";
+}
   place(word){
     return "에서";
   }
