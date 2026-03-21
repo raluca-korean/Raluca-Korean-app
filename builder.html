@@ -2635,6 +2635,50 @@ function joinVerbs(verbs){
   return place + " " + verb;
 
 } 
+   function buildAdvancedSentence(){
+
+  const clauses = [];
+
+  for(let i=0;i<sentences.length;i++){
+
+    const s = sentences[i];
+    if(!s) continue;
+
+    const built = planKoreanSentence(s, actives[i]);
+    if(!built) continue;
+
+    clauses.push({
+      text: built,
+      state: s
+    });
+
+  }
+
+  if(!clauses.length) return "";
+
+  let result = "";
+
+  for(let i=0;i<clauses.length;i++){
+
+    const current = clauses[i];
+
+    if(i === clauses.length-1){
+      result += current.text;
+      break;
+    }
+
+    const next = clauses[i+1];
+
+    const connector = chooseAdvancedConnector(current.state, next.state);
+
+    const base = current.text.replace(/요$/,"");
+
+    result += base + connector + " ";
+
+  }
+
+  return result.replace(/\s+/g," ").trim();
+} 
   function buildDictionaryIndex(dict){
 
   const index = {};
@@ -2652,7 +2696,39 @@ function joinVerbs(verbs){
 
   return index;
 }
-        /* =========================
+   function chooseAdvancedConnector(prev,next){
+
+  if(!prev || !next) return "고";
+
+  // CAUZĂ
+  if(prev.reason || next.result){
+    return "기 때문에";
+  }
+
+  // CONTRAST
+  if(prev.verb === next.verb){
+    return "지만";
+  }
+
+  // CONDIȚIE
+  if(next.time && next.time.includes("내일")){
+    return "면";
+  }
+
+  // SIMULTAN
+  if(prev.place === next.place){
+    return "면서";
+  }
+
+  // BACKGROUND
+  if(prev.object && next.verb){
+    return "는데";
+  }
+
+  // DEFAULT NATURAL
+  return "고";
+}
+    /* =========================
    2) STORAGE: CUSTOM WORDS
    ========================= */
 const STORAGE_KEY = "ralucaKoreanCustomWords_v2";
