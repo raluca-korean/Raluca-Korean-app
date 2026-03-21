@@ -3053,53 +3053,83 @@ function futureL(dict){
   if(d.jong === 0){
     const newCode = H_BASE + d.cho*21*28 + d.jung*28 + 8; // ㄹ 받침
     return d.prefix + String.fromCharCode(newCode);
-  }
-  return stem + "을";
-}
-function buildVerbPhrase(dictVerb, cj){
+  return presentPolite(dictVerb);
+}    
+function buildVerbPhrase(dictVerb, cj, state){
 
   if(!dictVerb) return "";
 
   const stem = getVerbStem(dictVerb);
 
-  // implicit polite present
-  if(!cj) return presentPolite(dictVerb);
+  // =====================
+  // NO CJ → folosim sistemul nou
+  // =====================
+  if(!cj){
+    return conjugateVerb(
+      dictVerb,
+      state.tense,
+      state.politeness
+    );
+  }
 
-  // polite present
-  if(cj === "-아요/어요") return presentPolite(dictVerb);
+  // =====================
+  // CJ BASIC → mapare pe noul sistem
+  // =====================
+  if(cj === "-아요/어요"){
+    return conjugateVerb(dictVerb, "present", "haeyo");
+  }
 
-  // polite past
-  if(cj === "-았어요/었어요") return pastPolite(dictVerb);
+  if(cj === "-았어요/었어요"){
+    return conjugateVerb(dictVerb, "past", "haeyo");
+  }
 
-  // future
+  // =====================
+  // FUTURE
+  // =====================
   if(cj === "-(으)ㄹ 거예요") return futureL(dictVerb) + " 거예요";
   if(cj === "-(으)ㄹ게요") return futureL(dictVerb) + "게요";
   if(cj === "-(으)ㄹ래요?") return futureL(dictVerb) + "래요?";
   if(cj === "-(으)ㄹ까요?") return futureL(dictVerb) + "까요?";
 
-  // ability
+  // =====================
+  // ABILITY
+  // =====================
   if(cj === "-(으)ㄹ 수 있어요") return futureL(dictVerb) + " 수 있어요";
   if(cj === "-(으)ㄹ 수 없어요") return futureL(dictVerb) + " 수 없어요";
 
-  // progressive
+  // =====================
+  // PROGRESSIVE
+  // =====================
   if(cj === "-고 있어요") return stem + "고 있어요";
 
-  // desire
+  // =====================
+  // DESIRE
+  // =====================
   if(cj === "-고 싶어요") return stem + "고 싶어요";
 
-  // prohibition
+  // =====================
+  // PROHIBITION
+  // =====================
   if(cj === "-지 마세요") return stem + "지 마세요";
 
-  // request
+  // =====================
+  // REQUEST
+  // =====================
   if(cj === "-아/어 주세요") return stemPlusAeo(dictVerb) + " 주세요";
 
-  // obligation
+  // =====================
+  // OBLIGATION
+  // =====================
   if(cj === "-아/어야 돼요") return stemPlusAeo(dictVerb) + "야 돼요";
 
-  // permission
+  // =====================
+  // PERMISSION
+  // =====================
   if(cj === "-아/어도 돼요") return stemPlusAeo(dictVerb) + "도 돼요";
 
-  // linking
+  // =====================
+  // LINKING (TOPIK)
+  // =====================
   if(isLinkingConj(cj)){
     if(cj === "-고") return stem + "고";
     if(cj === "-고 나서") return stem + "고 나서";
@@ -3113,10 +3143,16 @@ function buildVerbPhrase(dictVerb, cj){
     if(cj === "-길래") return stem + "길래";
   }
 
-  return presentPolite(dictVerb);
-}    
-
-    /* =========================
+  // =====================
+  // FALLBACK
+  // =====================
+  return conjugateVerb(
+    dictVerb,
+    state.tense,
+    state.politeness
+  );
+}
+  /* =========================
    9) PARTICLE HELPERS
    ========================= */
 const pronouns = new Set(["저","나","너","우리","너희"]);
