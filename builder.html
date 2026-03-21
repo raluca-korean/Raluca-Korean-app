@@ -2728,6 +2728,49 @@ function joinVerbs(verbs){
   // DEFAULT NATURAL
   return "고";
 }
+    const LEARNING_MEMORY = {
+  mistakes: {},
+  frequency: {},
+  lastUsed: {}
+};
+
+function trackUsage(word,type){
+
+  const key = type + "_" + word;
+
+  LEARNING_MEMORY.frequency[key] =
+    (LEARNING_MEMORY.frequency[key] || 0) + 1;
+
+  LEARNING_MEMORY.lastUsed[key] = Date.now();
+
+}
+
+function trackMistake(word,type){
+
+  const key = type + "_" + word;
+
+  LEARNING_MEMORY.mistakes[key] =
+    (LEARNING_MEMORY.mistakes[key] || 0) + 1;
+
+}
+
+function getSmartSuggestions(type){
+
+  const list = columns.find(c=>c.key===type)?.data || [];
+
+  return list.sort((a,b)=>{
+
+    const fa = LEARNING_MEMORY.frequency[type+"_"+a] || 0;
+    const fb = LEARNING_MEMORY.frequency[type+"_"+b] || 0;
+
+    const ma = LEARNING_MEMORY.mistakes[type+"_"+a] || 0;
+    const mb = LEARNING_MEMORY.mistakes[type+"_"+b] || 0;
+
+    return (mb - ma) + (fb - fa);
+
+  });
+
+}
     /* =========================
    2) STORAGE: CUSTOM WORDS
    ========================= */
