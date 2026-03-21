@@ -3151,28 +3151,25 @@ function futureL(dict){
     return d.prefix + String.fromCharCode(newCode);
   return presentPolite(dictVerb);
 }    
-  function buildVerbPhrase(dictVerb, state){
-  return conjugateVerb(
-    dictVerb,
-    state.tense,
-    state.politeness
-  );
-}
- 
+function buildVerbPhrase(dictVerb, state, cj){
+
+  if(!dictVerb) return "";
+
+  const stem = getVerbStem(dictVerb);
 
   // =====================
-  // NO CJ → folosim sistemul nou
+  // NO CJ → sistem dinamic (tense + politeness)
   // =====================
   if(!cj){
     return conjugateVerb(
       dictVerb,
-      state.tense,
-      state.politeness
+      state?.tense || "present",
+      state?.politeness || "haeyo"
     );
   }
 
   // =====================
-  // CJ BASIC → mapare pe noul sistem
+  // CJ BASIC
   // =====================
   if(cj === "-아요/어요"){
     return conjugateVerb(dictVerb, "present", "haeyo");
@@ -3243,12 +3240,12 @@ function futureL(dict){
   }
 
   // =====================
-  // FALLBACK
+  // FALLBACK (safe)
   // =====================
   return conjugateVerb(
     dictVerb,
-    state.tense,
-    state.politeness
+    state?.tense || "present",
+    state?.politeness || "haeyo"
   );
 }
   /* =========================
