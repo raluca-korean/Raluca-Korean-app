@@ -42,13 +42,14 @@ window.GRAMMAR_ENGINE = {
   // =====================
   // PARTICLES
   // =====================
-  subject(word){
+subject(word){
 
-    if(word === "저") return "가"; // coreean special
+  if(word === "저") return "가";   // 제가
+  if(word === "나") return "가";   // 내가
+  if(word === "너") return "가";   // 네가
 
-    return this.hasBatchim(word) ? "이" : "가";
-  },
-
+  return this.hasBatchim(word) ? "이" : "가";
+}
   object(word){
     return this.hasBatchim(word) ? "을" : "를";
   },
