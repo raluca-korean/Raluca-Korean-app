@@ -185,3 +185,102 @@ function renderAll(){
     output.textContent = result;
   }
 }
+// =====================
+// SENTENCE ENGINE FINAL
+// =====================
+
+function cleanJoin(arr){
+  return arr.filter(Boolean).join(" ").replace(/\s+/g," ").trim();
+}
+
+function stripEnding(text){
+  return (text || "").replace(/요$|니다$|습니다$/,"");
+}
+
+function buildClause(state){
+
+  const parts = [];
+
+  const time = state.time ? 
+    (["오늘","어제","내일","지금"].includes(state.time)
+      ? state.time
+      : state.time + "에") : "";
+
+  const subject = (!state.hideSubject && state.subject)
+    ? state.subject + (hasBatchim(state.subject) ? "은" : "는")
+    : "";
+
+  const place = state.place ? state.place + "에서" : "";
+
+  const object = state.object
+    ? state.object + (hasBatchim(state.object) ? "을" : "를")
+    : "";
+
+  const verb = buildVerbPhrase(state.verb, state);
+
+  if(time) parts.push(time);
+  if(subject) parts.push(subject);
+  if(place) parts.push(place);
+  if(object) parts.push(object);
+  if(state.mod) parts.push(state.mod);
+  if(verb) parts.push(verb);
+
+  return cleanJoin(parts);
+}
+
+function chooseConnector(prev,next){
+
+  if(prev.reason || next.result){
+    return window.GRAMMAR_ENGINE?.pick("cause") || "기 때문에";
+  }
+
+  if(prev.verb === next.verb){
+    return "지만";
+  }
+
+  if(next.time && next.time.includes("내일")){
+    return "면";
+  }
+
+  if(prev.place && prev.place === next.place){
+    return "면서";
+  }
+
+  if(prev.object && next.verb){
+    return "는데";
+  }
+
+  return window.GRAMMAR_ENGINE?.pick("sequence") || "고";
+}
+
+function buildSentence(sentences){
+
+  if(!sentences || !sentences.length) return "";
+
+  let result = "";
+
+  for(let i=0;i<sentences.length;i++){
+
+    const s = sentences[i];
+
+    const clause = buildClause({
+      ...s,
+      hideSubject: i > 0
+    });
+
+    if(!clause) continue;
+
+    if(i === sentences.length - 1){
+      result += clause;
+      break;
+    }
+
+    const next = sentences[i+1];
+
+    const connector = chooseConnector(s, next);
+
+    result += stripEnding(clause) + connector + " ";
+  }
+
+  return cleanJoin([result]);
+}
