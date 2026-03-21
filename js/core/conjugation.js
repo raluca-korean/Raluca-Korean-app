@@ -3,7 +3,7 @@ function getVerbStem(verb){
 }
 
 // =====================
-// PRESENT (REAL)
+// PRESENT
 // =====================
 function presentPolite(verb){
 
@@ -17,17 +17,10 @@ function presentPolite(verb){
 
   const A_GROUP = [0,2,8]; // ㅏ,ㅑ,ㅗ
 
-  // fără batchim
   if(jong === 0){
-
-    if(A_GROUP.includes(vowel)){
-      return stem + "아요";
-    }else{
-      return stem + "어요";
-    }
+    return stem + (A_GROUP.includes(vowel) ? "아요" : "어요");
   }
 
-  // cu batchim
   return stem + "어요";
 }
 
@@ -47,12 +40,7 @@ function pastPolite(verb){
   const A_GROUP = [0,2,8];
 
   if(jong === 0){
-
-    if(A_GROUP.includes(vowel)){
-      return stem + "았어요";
-    }else{
-      return stem + "었어요";
-    }
+    return stem + (A_GROUP.includes(vowel) ? "았어요" : "었어요");
   }
 
   return stem + "었어요";
@@ -67,75 +55,78 @@ function futureL(verb){
   const last = stem.charCodeAt(stem.length - 1) - 44032;
   const jong = last % 28;
 
-  if(jong === 0){
-    return stem + "ㄹ";
-  }
-
-  return stem + "을";
+  return jong === 0 ? stem + "ㄹ" : stem + "을";
 }
 
 // =====================
-// MAIN ENGINE
+// CORE CONJUGATION
+// =====================
+function conjugateVerb(verb, tense="present", politeness="haeyo"){
+
+  let result = "";
+
+  if(tense === "present") result = presentPolite(verb);
+  if(tense === "past") result = pastPolite(verb);
+  if(tense === "future") result = futureL(verb) + " 거예요";
+
+  // politeness
+  if(politeness === "informal"){
+    result = result.replace("요","");
+  }
+
+  if(politeness === "formal"){
+    const stem = getVerbStem(verb);
+    const last = stem.charCodeAt(stem.length - 1) - 44032;
+    const jong = last % 28;
+
+    result = jong === 0 ? stem + "ㅂ니다" : stem + "습니다";
+  }
+
+  return result;
+}
+
+// =====================
+// MAIN BUILDER
 // =====================
 function buildVerbPhrase(dictVerb, state){
 
   if(!dictVerb) return "";
 
   const stem = getVerbStem(dictVerb);
-
   const cj = state?.conjug;
   const tense = state?.tense || "present";
   const politeness = state?.politeness || "haeyo";
 
-  // =====================
-  // NO CJ → sistem smart
-  // =====================
+  // fără conjugare → smart
   if(!cj){
     return conjugateVerb(dictVerb, tense, politeness);
   }
 
-  // =====================
   // BASIC
-  // =====================
   if(cj === "-아요/어요") return presentPolite(dictVerb);
   if(cj === "-았어요/었어요") return pastPolite(dictVerb);
 
-  // =====================
   // FUTURE
-  // =====================
   if(cj === "-(으)ㄹ 거예요"){
     return futureL(dictVerb) + " 거예요";
   }
 
-  // =====================
   // PROGRESSIVE
-  // =====================
-  if(cj === "-고 있어요"){
-    return stem + "고 있어요";
-  }
+  if(cj === "-고 있어요") return stem + "고 있어요";
 
-  // =====================
   // DESIRE
-  // =====================
-  if(cj === "-고 싶어요"){
-    return stem + "고 싶어요";
-  }
+  if(cj === "-고 싶어요") return stem + "고 싶어요";
 
-  // =====================
   // GRAMMAR ENGINE
-  // =====================
   if(state?.grammar?.type){
-
     const connector = GRAMMAR_ENGINE.pick(state.grammar.type);
-
     return stem + connector;
   }
 
-  // =====================
-  // FALLBACK
-  // =====================
+  // fallback
   return conjugateVerb(dictVerb, tense, politeness);
 }
+
 
 // =====================
 // CONJUGATION CORE
