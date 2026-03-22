@@ -5,7 +5,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   initApp();               // apoi render
 
 });
+let CURRENT_LANG = "ro"; // default
+function tr(type, word){
 
+  if(!word) return "";
+
+  const entry = window.KOREAN_TRANSLATIONS?.[type]?.[word];
+
+  if(!entry) return word;
+
+  return entry[CURRENT_LANG] || word;
+}
 function initBuilderPage(){
 
   sentences = [ makeEmptySentence() ];
