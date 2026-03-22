@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", async () => {
 
-  await loadVocabulary();
+  await loadVocabulary();   // 🔥 OBLIGATORIU
 
-  initBuilderPage();   // 🔥 ASTA E CHEIA
+  initApp();               // apoi render
 
 });
 
