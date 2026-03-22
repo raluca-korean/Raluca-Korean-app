@@ -1,11 +1,31 @@
+/* ============================================================
+   BUILDER PAGE (FINAL CLEAN VERSION)
+============================================================ */
+
+/* =========================
+   GLOBAL STATE
+========================= */
+
+let sentences = [];
+let actives = [];
+let CURRENT_LANG = "ro";
+
+/* =========================
+   INIT
+========================= */
+
 document.addEventListener("DOMContentLoaded", async () => {
 
-  await loadVocabulary();   // 🔥 OBLIGATORIU
+  await loadVocabulary();   // 🔥 din vocabulary.js
 
-  initApp();               // apoi render
+  initBuilderPage();
 
 });
-let CURRENT_LANG = "ro"; // default
+
+/* =========================
+   TRANSLATION HELPER
+========================= */
+
 function tr(type, word){
 
   if(!word) return "";
@@ -16,65 +36,68 @@ function tr(type, word){
 
   return entry[CURRENT_LANG] || word;
 }
+
+/* =========================
+   INIT BUILDER
+========================= */
+
 function initBuilderPage(){
 
   sentences = [ makeEmptySentence() ];
-  actives = [ makeAllActive() ];
-
-  loadModelRow(indexModelRow);
+  actives   = [ makeAllActive() ];
 
   setupUI();
-  createToggleChips();
-
-  renderAll();
-} 
-
-function loadModelRow(indexModelRow){
-
-  const table = DOM.tableP1;
-  table.innerHTML = "";
-
-  const model = MODEL_ROWS[indexModelRow];
-
-  model.parts.forEach(part => {
-
-    const col = document.createElement("div");
-    col.className = "col";
-
-    let index = 0;
-
-    function updateSentence(key, value){
-
-  const s = sentences[0];
-
-  if(key === "place"){
-    if(!s.places) s.places = [];
-    if(!s.places.includes(value)) s.places.push(value);
-  }
-
-  else if(key === "object"){
-    if(!s.objects) s.objects = [];
-    if(!s.objects.includes(value)) s.objects.push(value);
-  }
-
-  else if(key === "verb"){
-    if(!s.verbs) s.verbs = [];
-    if(!s.verbs.includes(value)) s.verbs.push(value);
-  }
-
-  else if(key === "subject"){
-    s.subject = value;
-  }
-
-  else if(key === "time"){
-    s.time = value;
-  }
+  buildTableFromVocab();
 
   renderAll();
 }
+
+/* =========================
+   STRUCT
+========================= */
+
+function makeEmptySentence(){
+  return {
+    subject:"",
+    time:"",
+    place:"",
+    object:"",
+    verb:"",
+    conjug:""
+  };
+}
+
+function makeAllActive(){
+  return {
+    subject:true,
+    time:true,
+    place:true,
+    object:true,
+    verb:true,
+    conjug:true
+  };
+}
+
+/* =========================
+   VOCAB (DIN GLOBAL)
+========================= */
+
+const subjects = window.KOREAN_VOCAB.subjects;
+const times    = window.KOREAN_VOCAB.times;
+const places   = window.KOREAN_VOCAB.places;
+const objects  = window.KOREAN_VOCAB.objects;
+const verbs    = window.KOREAN_VOCAB.verbs;
+
+/* =========================
+   TABLE BUILDER (FIXED)
+========================= */
+
 function buildTableFromVocab(){
 
-  const table = DOM.tableP1;
+  const table = document.getElementById("tableP1");
+
+  if(!table) return;
+
   table.innerHTML = "";
 
   const map = {
@@ -96,9 +119,11 @@ function buildTableFromVocab(){
 
     function updateUI(){
       const word = list[index];
-      col.textContent = word;
-      col.dataset.type = type;
-      col.dataset.value = word;
+
+      col.innerHTML = `
+        <div>${word}</div>
+        <small>${tr(type, word)}</small>
+      `;
     }
 
     col.addEventListener("click", () => {
@@ -107,7 +132,7 @@ function buildTableFromVocab(){
 
       updateUI();
 
-      updateSentence(type, list[index]); // 🔥 DIRECT, fără dataset
+      updateSentence(type, list[index]);
 
     });
 
@@ -117,57 +142,67 @@ function buildTableFromVocab(){
   });
 
 }
-window.KOREAN_VOCAB = {
 
-  subjects: [
-    "저","나","너","우리","너희","사람","학생","선생님","직원","전문가"
-  ],
+/* =========================
+   UPDATE SENTENCE
+========================= */
 
-  subjectAdjectives: [
-    "예쁜","착한","똑똑한","키가 큰","젊은","늙은"
-  ],
+function updateSentence(key, value){
 
-  times: [
-    "오늘","어제","내일","지금","방금","곧","요즘","항상","자주"
-  ],
+  const s = sentences[0];
 
-  places: [
-    "집","학교","회사","카페","병원","공항","은행"
-  ],
+  s[key] = value;
 
-  modifiers: [
-    "잘","열심히","조용히","천천히","빨리","정말","아주","너무"
-  ],
-
-  objects: [
-    "책","커피","물","음식","영화","데이터","문제","결과"
-  ],
-
-  objectAdjectives: [
-    "예쁜","맛있는","큰","작은","새로운","오래된"
-  ],
-
-  numerals: new Array(60).fill(""),
-
-  counters: [
-    "개","명","권","장","대","병","잔"
-  ],
-
-  verbs: [
-    "가다","오다","먹다","마시다","보다","읽다","쓰다","공부하다","일하다"
-  ],
-
-  conjugations: [
-    "-아요/어요","-았어요/었어요","-고 있어요","-고 싶어요",
-    "-(으)ㄹ 거예요","-고","-기 때문에","-(으)면서"
-  ]
-
-};
-function buildFullRomanian(){
-  ...
+  renderAll();
 }
 
-function buildFullTranslation(){   // 🔥 AICI O PUI
+/* =========================
+   KOREAN BUILD
+========================= */
+
+function buildKoreanSentence(s){
+
+  if(!s) return "";
+
+  const parts = [];
+
+  if(s.time)   parts.push(s.time);
+  if(s.subject) parts.push(s.subject + "는");
+  if(s.place)  parts.push(s.place + "에서");
+  if(s.object) parts.push(s.object + "을");
+
+  if(s.verb){
+    parts.push(s.verb.replace("다","아요"));
+  }
+
+  return parts.join(" ");
+}
+
+/* =========================
+   TRANSLATION BUILD
+========================= */
+
+function buildNaturalSentence(s){
+
+  if(!s) return "";
+
+  const parts = [];
+
+  if(s.time)   parts.push(tr("time", s.time));
+  if(s.subject) parts.push(tr("subject", s.subject));
+  if(s.place)  parts.push(tr("place", s.place));
+  if(s.object) parts.push(tr("object", s.object));
+  if(s.verb)   parts.push(tr("verb", s.verb));
+
+  return parts.join(" ");
+}
+
+/* =========================
+   FULL TRANSLATION
+========================= */
+
+function buildFullTranslation(){
+
   const parts = [];
 
   for(let i=0;i<sentences.length;i++){
@@ -175,10 +210,7 @@ function buildFullTranslation(){   // 🔥 AICI O PUI
     const s = sentences[i];
     if(!s) continue;
 
-    const txt = buildNaturalSentence(
-      {...s, hideSubject:i>0},
-      actives[i]
-    );
+    const txt = buildNaturalSentence(s);
 
     if(txt) parts.push(txt);
   }
@@ -186,6 +218,52 @@ function buildFullTranslation(){   // 🔥 AICI O PUI
   return parts.join(" ");
 }
 
-function buildFullKorean(){
-  ...
+/* =========================
+   RENDER
+========================= */
+
+function renderAll(){
+
+  const s = sentences[0];
+
+  const ko = buildKoreanSentence(s);
+  const trText = buildFullTranslation();
+
+  const koEl = document.getElementById("previewKo");
+  const roEl = document.getElementById("previewRo");
+
+  if(koEl){
+    koEl.textContent = ko || "(alege cuvinte)";
+  }
+
+  if(roEl){
+    roEl.textContent = trText;
+  }
+}
+
+/* =========================
+   UI
+========================= */
+
+function setupUI(){
+
+  const langRoBtn = document.getElementById("langRo");
+  const langEnBtn = document.getElementById("langEn");
+
+  if(langRoBtn && langEnBtn){
+
+    langRoBtn.addEventListener("click", ()=>{
+      CURRENT_LANG = "ro";
+      langRoBtn.classList.add("active");
+      langEnBtn.classList.remove("active");
+      renderAll();
+    });
+
+    langEnBtn.addEventListener("click", ()=>{
+      CURRENT_LANG = "en";
+      langEnBtn.classList.add("active");
+      langRoBtn.classList.remove("active");
+      renderAll();
+    });
+  }
 }
