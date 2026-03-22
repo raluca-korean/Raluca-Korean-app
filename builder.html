@@ -5088,24 +5088,35 @@ function setupUI(){
    ========================= */
     function renderAll(){
 
+  // =========================
+  // 1. SAFETY: asigurăm structura
+  // =========================
   ensureLinkedSentences();
 
   if(!sentences[0] || !actives[0]) return;
 
-  // P1
+  // =========================
+  // 2. RENDER PROPOZIȚIA 1
+  // =========================
   if(DOM.tableP1){
+
     renderClauseRow(
       DOM.tableP1,
       actives[0],
       sentences[0],
       0
     );
+
+    // 🔥 FIX CRITIC: click + long press
+    attachPressHandlers(DOM.tableP1, 0);
   }
 
-  // P2
-  if(DOM.tableP2 && sentences[1]){
+  // =========================
+  // 3. RENDER PROPOZIȚIA 2
+  // =========================
+  if(DOM.tableP2){
 
-    if(showExtraClauses){
+    if(showExtraClauses && sentences[1]){
 
       show(DOM.tableP2);
       DOM.titleP2 && show(DOM.titleP2);
@@ -5117,25 +5128,39 @@ function setupUI(){
         1
       );
 
-    }else{
+      // 🔥 FIX CRITIC
+      attachPressHandlers(DOM.tableP2, 1);
+
+    } else {
 
       hide(DOM.tableP2);
       DOM.titleP2 && hide(DOM.titleP2);
-
     }
   }
 
-  // EXTRA
+  // =========================
+  // 4. EXTRA CLAUSES (3+)
+  // =========================
   renderExtraClauses();
 
-  // NAV
+  // =========================
+  // 5. NAV MODEL
+  // =========================
   updateModelNav();
 
-  // 🔥 IMPORTANT
+  // =========================
+  // 6. PREVIEW (KO + RO)
+  // =========================
   updatePreview();
+
+  // =========================
+  // 7. DEBUG SAFE (optional dar util)
+  // =========================
+  if(!DOM.previewKo){
+    console.warn("previewKo nu există în DOM");
+  }
+
 }
-    
-      
     /* =========================
    24) BOOTSTRAP (UN SINGUR)
    ========================= */
