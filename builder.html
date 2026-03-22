@@ -4354,11 +4354,15 @@ function renderPanelList(col){
   const key = col.key;
   const map = translations[key] || {};
   const filter = (DOM.panelSearchInput?.value || "").trim().toLowerCase();
-const words = getSmartSuggestions(col.key).filter(w=>{
+const words = (typeof getSmartSuggestions === "function"
+  ? getSmartSuggestions(col.key)
+  : col.data
+).filter(w=>{
   if(!w) return false;
-    if(!filter) return true;
-    return w.toLowerCase().startsWith(filter);
-  });
+  if(!filter) return true;
+  return w.toLowerCase().startsWith(filter);
+});
+ 
 
   if(!words.length){
     const empty = document.createElement("div");
