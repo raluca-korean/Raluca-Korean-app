@@ -163,3 +163,29 @@ window.KOREAN_VOCAB = {
   ]
 
 };
+function buildFullRomanian(){
+  ...
+}
+
+function buildFullTranslation(){   // 🔥 AICI O PUI
+  const parts = [];
+
+  for(let i=0;i<sentences.length;i++){
+
+    const s = sentences[i];
+    if(!s) continue;
+
+    const txt = buildNaturalSentence(
+      {...s, hideSubject:i>0},
+      actives[i]
+    );
+
+    if(txt) parts.push(txt);
+  }
+
+  return parts.join(" ");
+}
+
+function buildFullKorean(){
+  ...
+}
