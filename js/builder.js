@@ -892,35 +892,7 @@ function chooseConnector(prev,next){
 
   return pickRandom(options);
 }
-   function joinClauses(clauses){
-
-  if(!clauses || !clauses.length) return "";
-
-  let result = "";
-
-  clauses.forEach((c,i)=>{
-
-    if(!c) return;
-
-    const text = c.text || "";
-
-    if(i === clauses.length-1){
-      result += text;
-    }
-    else{
-
-      const type = c.connector || "and";
-      const connector = CLAUSE_CONNECTORS[type] || "고";
-
-      const base = text.replace(/요$|다$/, "");
-
-      result += base + connector + " ";
-    }
-
-  });
-
-  return result.replace(/\s+/g," ").trim();
-}
+   
 
     // =========================
 // KOREAN GRAMMAR TREE ENGINE
