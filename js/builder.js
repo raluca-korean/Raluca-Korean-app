@@ -2474,3 +2474,55 @@ function applyConnector(sentence, connector){
 
   return [...parts, transformed].join(" ");
 }
+function reorderKoreanNatural(parts){
+
+  const time = [];
+  const topic = [];
+  const place = [];
+  const object = [];
+  const manner = [];
+  const verb = [];
+
+  parts.forEach(p=>{
+
+    if(p.includes("오늘") || p.includes("어제")){
+      time.push(p);
+      return;
+    }
+
+    if(p.endsWith("은") || p.endsWith("는")){
+      topic.push(p);
+      return;
+    }
+
+    if(p.endsWith("에서") || p.endsWith("에")){
+      place.push(p);
+      return;
+    }
+
+    if(p.endsWith("을") || p.endsWith("를")){
+      object.push(p);
+      return;
+    }
+
+    if(p.endsWith("히")){
+      manner.push(p);
+      return;
+    }
+
+    if(p.endsWith("요") || p.endsWith("다")){
+      verb.push(p);
+      return;
+    }
+
+  });
+
+  return [
+    ...time,
+    ...topic,
+    ...place,
+    ...object,
+    ...manner,
+    ...verb
+  ].join(" ").trim();
+}
