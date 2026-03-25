@@ -776,30 +776,9 @@ const labelsRo = {
    KOREAN PARTICLE ENGINE
    ========================= */
 
-function hasBatchim(word){
-  if(!word) return false;
 
-  const last = word.charCodeAt(word.length - 1);
 
-  if(last < 44032 || last > 55203) return false;
 
-  return (last - 44032) % 28 !== 0;
-}
-
-function particleTopic(word){
-  if(!word) return "";
-  return hasBatchim(word) ? "은" : "는";
-}
-
-function particleSubject(word){
-  if(!word) return "";
-  return hasBatchim(word) ? "이" : "가";
-}
-
-function particleObject(word){
-  if(!word) return "";
-  return hasBatchim(word) ? "을" : "를";
-}
 
 function particleAnd(word){
   if(!word) return "";
