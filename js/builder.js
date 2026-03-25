@@ -526,55 +526,7 @@ function fixFinalLinking(text){
   return text;
 }
   
-function conjugateVerb(verb, tense="present", politeness="yo"){
 
-if(!verb) return "";
-
-const stem = verb.replace("다","");
-const last = stem[stem.length-1];
-
-const code = last.charCodeAt(0) - 44032;
-const batchim = code % 28;
-
-let result="";
-
-if(tense==="present"){
-
-if(batchim===0){
-result = stem + "아요";
-}else{
-result = stem + "어요";
-}
-
-}
-
-if(tense==="past"){
-
-if(batchim===0){
-result = stem + "았어요";
-}else{
-result = stem + "었어요";
-}
-
-}
-
-if(tense==="future"){
-
-if(batchim===0){
-result = stem + "ㄹ 거예요";
-}else{
-result = stem + "을 거예요";
-}
-
-}
-
-if(politeness==="formal"){
-result = stem + "습니다";
-}
-
-return result;
-
-}
     /* =========================
    8) HANGUL HELPERS (batchim, conjugare)
    ========================= */
