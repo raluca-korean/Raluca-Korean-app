@@ -760,14 +760,6 @@ function particlePerson(word){
 
   return word + chooseObjectParticle(word);
 }
-   function addSubjectWithParticle(word,state){
-
-  if(!word) return ""
-
-  const p = chooseSubjectParticle(word,state)
-
-  return word + p
-}
 
 function chooseSubjectParticle(word,state){
 
