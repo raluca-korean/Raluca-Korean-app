@@ -2414,4 +2414,24 @@ function buildComplexSentence(){
 
   return result.replace(/\s+/g," ").trim();
 }
+function applySubjectOmission(sentences){
+
+  let lastSubject = null;
+
+  sentences.forEach((s,i)=>{
+
+    if(!s) return;
+
+    if(i === 0){
+      lastSubject = s.subject;
+      return;
+    }
+
+    if(s.subject === lastSubject){
+      s.hideSubject = true;
+    }
+
+    lastSubject = s.subject;
+  });
+}
 
