@@ -2463,3 +2463,14 @@ function transformVerbForConnector(verb, connector){
 
   return stem + connector;
 }
+function applyConnector(sentence, connector){
+
+  if(!sentence) return "";
+
+  const parts = sentence.split(" ");
+  const last = parts.pop();
+
+  const transformed = transformVerbForConnector(last, connector);
+
+  return [...parts, transformed].join(" ");
+}
