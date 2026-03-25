@@ -546,12 +546,6 @@ function decomposeLastSyl(word){
   const cho = Math.floor((code - jong)/28/21);
   return { cho, jung, jong, prefix: word.slice(0,-1) };
 }
-    
-function getVerbStem(dict){
-  if(!dict) return "";
-  return dict.endsWith("다") ? dict.slice(0,-1) : dict;
-}
-
 const specialVerbMap = {
   "가다":{present:"가요",past:"갔어요"},
   "오다":{present:"와요",past:"왔어요"},
