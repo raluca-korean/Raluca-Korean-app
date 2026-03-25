@@ -940,23 +940,6 @@ function extractElements(state){
   };
 
 }
-
-
-  function generateVariations(state,count=5){
-
-  const results=new Set();
-
-  while(results.size<count){
-
-    const s=generateSentenceVariation(state);
-
-    if(s) results.add(s);
-
-  }
-
-  return [...results];
-
-}
    /* =========================
    KOREAN NATURAL WORD ORDER
    ========================= */
