@@ -1,94 +1,93 @@
-window.GRAMMAR_ENGINE = {
+window.Grammar = {
 
-  // =====================
-  // CONNECTORS
-  // =====================
-  connectors: {
-
-    cause: ["-아서","-기에","-니까"],
-    contrast: ["-지만","-(으)ㄴ/는데도"],
-    sequence: ["-고 나서","-기 전에"],
-    simultaneous: ["-(으)면서","-(으)며"],
-    condition: ["-면"],
-    background: ["-는데"],
-    result: ["-니까","-게 되다"],
-    purpose: ["-(으)려고"],
-    attempt: ["-아/어 보다"]
-
-  },
-
-  pick(type){
-    const list = this.connectors[type];
-
-    if(!list || !list.length){
-      return "-고";
-    }
-
-    return list[Math.floor(Math.random() * list.length)];
-  },
-
-  // =====================
+  // =========================
   // PHONOLOGY
-  // =====================
+  // =========================
   hasBatchim(word){
-    const lastChar = word[word.length - 1];
-    const code = lastChar.charCodeAt(0);
 
-    if(code < 0xAC00 || code > 0xD7A3) return false;
+    if(!word) return false;
 
-    return (code - 0xAC00) % 28 !== 0;
+    const lastChar = word.charCodeAt(word.length - 1);
+
+    if(lastChar < 44032 || lastChar > 55203) return false;
+
+    return (lastChar - 44032) % 28 !== 0;
   },
 
-  // =====================
+  // =========================
   // PARTICLES
-  // =====================
-// SUBJECT
-subject(word){
+  // =========================
+  subject(word){
 
-  if(word === "저") return "가";   // 제가
-  if(word === "나") return "가";   // 내가
-  if(word === "너") return "가";   // 네가
+    if(word === "저") return "가";
+    if(word === "나") return "가";
+    if(word === "너") return "가";
 
-  return this.hasBatchim(word) ? "이" : "가";
-},
+    return this.hasBatchim(word) ? "이" : "가";
+  },
 
-// TOPIC
-topic(word){
-  return this.hasBatchim(word) ? "은" : "는";
-},
+  topic(word){
+    return this.hasBatchim(word) ? "은" : "는";
+  },
 
-// OBJECT
-object(word){
-  return this.hasBatchim(word) ? "을" : "를";
-}
+  object(word){
+    return this.hasBatchim(word) ? "을" : "를";
+  },
+
   place(word){
     return "에서";
+  },
+
+  // =========================
+  // BUILD SENTENCE
+  // =========================
+  buildSentence(sentences, actives){
+
+    const parts = [];
+
+    for(let i = 0; i < sentences.length; i++){
+
+      const s = sentences[i];
+      if(!s) continue;
+
+      const clause = this.buildClause(s, actives[i], i > 0);
+
+      if(clause) parts.push(clause);
+    }
+
+    return parts.join(" ").replace(/\s+/g," ").trim();
+  },
+
+  buildClause(state, active, hideSubject){
+
+    const parts = [];
+
+    if(!hideSubject && state.subject){
+      parts.push(state.subject + this.topic(state.subject));
+    }
+
+    if(state.time){
+      parts.push(state.time);
+    }
+
+    if(state.place){
+      parts.push(state.place + this.place(state.place));
+    }
+
+    if(state.object){
+      parts.push(state.object + this.object(state.object));
+    }
+
+    if(state.verb){
+      parts.push(
+        Conjugation.buildVerbPhrase(
+          state.verb,
+          state.conjug
+        )
+      );
+    }
+
+    return parts.join(" ");
   }
 
 };
-hasBatchim(word){
-  const lastChar = word[word.length - 1];
-  const code = lastChar.charCodeAt(0);
-
-  if(code < 0xAC00 || code > 0xD7A3) return false;
-
-  return (code - 0xAC00) % 28 !== 0;
-}
-
-function subjectParticle(word){
-  if(word === "저") return "가"; // special case handled later
-
-  const lastChar = word[word.length - 1];
-  const code = lastChar.charCodeAt(0) - 44032;
-  const jong = code % 28;
-
-  return jong === 0 ? "가" : "이";
-}
-
-function objectParticle(word){
-  return hasBatchim(word) ? "을" : "를";
-}
-
-function placeParticle(word){
-  return "에서";
-}
