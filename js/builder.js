@@ -2435,4 +2435,31 @@ function applySubjectOmission(sentences){
     lastSubject = s.subject;
   });
 }
+function transformVerbForConnector(verb, connector){
 
+  if(!verb) return "";
+
+  const stem = getVerbStem(verb);
+
+  if(connector === "-고 나서"){
+    return stem + "고 나서";
+  }
+
+  if(connector === "-기 전에"){
+    return stem + "기 전에";
+  }
+
+  if(connector === "-면서"){
+    return stem + "면서";
+  }
+
+  if(connector === "-지만"){
+    return stem + "지만";
+  }
+
+  if(connector === "-기에"){
+    return stem + "기에";
+  }
+
+  return stem + connector;
+}
