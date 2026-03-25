@@ -936,56 +936,6 @@ function createClauseNode(state){
 
 }
 
-function buildGrammarTree(){
-
-  const nodes=[];
-
-  sentences.forEach(s=>{
-    if(!s) return;
-    nodes.push(createClauseNode(s));
-  });
-
-  for(let i=0;i<nodes.length-1;i++){
-
-    const current=nodes[i];
-    const next=nodes[i+1];
-
-    current.connector=chooseConnector(
-      current.state,
-      next.state
-    );
-
-    current.children.push(next);
-  }
-
-  return nodes[0];
-}
-  function buildFromTree(node){
-
-  if(!node) return "";
-
-  const built=buildClauseSentence(
-    {...node.state},
-    actives[0]
-  );
-
-  let result=built.ko.replace(/요$/,"");
-
-  if(node.children.length){
-
-    const child=node.children[0];
-
-    result+=node.connector+" ";
-
-    result+=buildFromTree(child);
-
-  }else{
-
-    result+=built.ko.endsWith("요")?"":"요";
-  }
-
-  return result;
-}
   
    // =========================
 // KOREAN GRAMMAR ENGINE
