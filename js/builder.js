@@ -2320,3 +2320,98 @@ function buildFullRomanian(){
   }
 
 });
+const CLAUSE_RELATIONS = {
+
+  cause: {
+    connectors: ["-아서","-기에","-니까"],
+    rule: (a,b) => a.reason && b.result
+  },
+
+  contrast: {
+    connectors: ["-지만","-(으)ㄴ/는데도"],
+    rule: (a,b) => a.positive && b.negative
+  },
+
+  sequence: {
+    connectors: ["-고 나서","-기 전에"],
+    rule: (a,b) => a.time && b.time
+  },
+
+  background: {
+    connectors: ["-는데"],
+    rule: (a,b) => true
+  },
+
+  condition: {
+    connectors: ["-면"],
+    rule: (a,b) => a.condition
+  }
+
+};
+function detectRelation(a,b){
+
+  if(a.time && b.time) return "sequence";
+
+  if(a.object && b.object) return "contrast";
+
+  if(a.verb && b.verb && a.verb !== b.verb) return "cause";
+
+  return "background";
+}
+function pickConnectorSmart(a,b){
+
+  const type = detectRelation(a,b);
+
+  const group = CLAUSE_RELATIONS[type];
+
+  if(!group) return "-고";
+
+  return group.connectors[
+    Math.floor(Math.random()*group.connectors.length)
+  ];
+}
+function applyConnector(base, connector){
+
+  if(!base) return "";
+
+  // scoate final politeness
+  base = base.replace(/요$/, "");
+
+  return base + connector;
+}
+function buildComplexSentence(){
+
+  if(!sentences.length) return "";
+
+  let result = "";
+
+  for(let i=0;i<sentences.length;i++){
+
+    const s = sentences[i];
+    if(!s) continue;
+
+    let clause = planKoreanSentence(s, actives[i]);
+
+    if(!clause) continue;
+
+    if(i < sentences.length-1){
+
+      const next = sentences[i+1];
+
+      const connector = pickConnectorSmart(s,next);
+
+      clause = applyConnector(clause, connector);
+
+      result += clause + " ";
+
+    }else{
+
+      result += clause;
+
+    }
+
+  }
+
+  return result.replace(/\s+/g," ").trim();
+}
+
