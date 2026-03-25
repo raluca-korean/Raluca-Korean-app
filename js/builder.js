@@ -905,16 +905,6 @@ function createClauseNode(state){
 // KOREAN GRAMMAR ENGINE
 // =========================
 
-const SENTENCE_PATTERNS = [
-
-  ["time","subject","place","object","verb"],
-  ["subject","time","place","object","verb"],
-  ["place","subject","object","verb"],
-  ["subject","object","place","verb"],
-  ["time","place","subject","object","verb"]
-
-];
-
 function extractElements(state){
 
   return {
