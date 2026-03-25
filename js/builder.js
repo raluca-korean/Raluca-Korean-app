@@ -1359,10 +1359,11 @@ function parseRomanianSentence(text){
     DOM.roInput.value =
       buildFullRomanian();
   }
-
+applySubjectOmission(sentences);
   updateNaturalHint?.(ko);
   updatePreviewCardState?.();
 }
+
     /* =========================
    14) MODEL ROW (prev/next): ca înainte (tabel model)
    ========================= */
