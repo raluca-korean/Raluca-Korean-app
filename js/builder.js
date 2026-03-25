@@ -2371,15 +2371,7 @@ function pickConnectorSmart(a,b){
     Math.floor(Math.random()*group.connectors.length)
   ];
 }
-function applyConnector(base, connector){
 
-  if(!base) return "";
-
-  // scoate final politeness
-  base = base.replace(/요$/, "");
-
-  return base + connector;
-}
 function buildComplexSentence(){
 
   if(!sentences.length) return "";
