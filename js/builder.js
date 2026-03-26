@@ -249,14 +249,7 @@ function joinVerbs(verbs){
 
   return "";
 }    
-   function buildSentence(parsed){
-
-  const place = joinPlaces(parsed.places);
-  const verb  = joinVerbs(parsed.verbs);
-
-  return place + " " + verb;
-
-} 
+   
   function buildDictionaryIndex(dict){
 
   const index = {};
