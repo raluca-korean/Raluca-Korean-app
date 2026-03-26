@@ -688,28 +688,7 @@ if(vp) slots.verb.push(vp);
 }
     const particleCache = new Map();
 
-function cachedParticle(word,type){
 
-  const key = word + "_" + type;
-
-  if(particleCache.has(key)){
-    return particleCache.get(key);
-  }
-
-  let result="";
-
-  if(type==="subject"){
-    result = hasBatchim(word) ? "이" : "가";
-  }
-
-  if(type==="object"){
-    result = hasBatchim(word) ? "을" : "를";
-  }
-
-  particleCache.set(key,result);
-
-  return result;
-}
     /* =========================
    10) BUILD ONE CLAUSE (KO + RO)
    ========================= */
