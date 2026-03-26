@@ -2311,7 +2311,11 @@ function applyConnector(sentence, connector){
   if(!sentence) return "";
 
   const parts = sentence.split(" ");
-  const last = parts.pop();
+  let last = parts[parts.length - 1];
+
+if(!last) return sentence;
+
+parts.pop();
 
   const transformed = transformVerbForConnector(last, connector);
 
