@@ -2129,26 +2129,7 @@ function buildFullRomanian(){
 
   return full;
 }
-    function buildFullKorean(){
 
-  const parts = [];
-
-  for(let i = 0; i < sentences.length; i++){
-    const s = sentences[i];
-    if(!s) continue;
-
-    const built = buildClauseSentence(
-      { ...s, hideSubject: i > 0 },
-      actives[i]
-    );
-
-    if(built?.ko){
-      parts.push(built.ko);
-    }
-  }
-
-  return parts.join(" ").replace(/\s+/g," ").trim();
-}
   async function loadVocabulary(){
   try{
 
