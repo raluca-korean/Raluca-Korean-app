@@ -663,16 +663,7 @@ if(vp) slots.verb.push(vp);
   .trim()
 }
     const particleCache = new Map();
-function hasBatchim(word){
-  if(!word) return false;
-  const code = word.charCodeAt(word.length-1) - 0xAC00;
-  if(code < 0 || code > 11171) return false;
-  return (code % 28) !== 0;
-}
 
-function particleSubject(word){
-  return hasBatchim(word) ? "이" : "가";
-}
 
     /* =========================
    10) BUILD ONE CLAUSE (KO + RO)
@@ -687,16 +678,23 @@ const labelsRo = {
    ========================= */
 
 
+function hasBatchim(word){
+  if(!word) return false;
+  const code = word.charCodeAt(word.length-1) - 0xAC00;
+  if(code < 0 || code > 11171) return false;
+  return (code % 28) !== 0;
+}
 
+function particleSubject(word){
+  return hasBatchim(word) ? "이" : "가";
+}
 
 
 function particleAnd(word){
   if(!word) return "";
   return hasBatchim(word) ? "과" : "와";
 }
-function particleSubject(word){
-  return hasBatchim(word) ? "이" : "가";
-}
+
 function particlePlace(word){
   if(!word) return "";
   return word + "에서";
