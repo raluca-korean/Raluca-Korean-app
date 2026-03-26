@@ -1256,7 +1256,7 @@ function parseRomanianSentence(text){
     DOM.roInput.value =
       buildFullRomanian();
   }
-applySubjectOmission(sentences);
+
   updateNaturalHint?.(ko);
   updatePreviewCardState?.();
 }
