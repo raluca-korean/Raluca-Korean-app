@@ -820,7 +820,7 @@ function chooseClauseRelation(prev,next){
 function chooseConnector(prev,next){
 
   const relation = chooseClauseRelation(prev,next);
-
+const options = CLAUSE_RELATIONS[relation]?.connectors || ["-고"];
   return pickRandom(options);
 }
 
