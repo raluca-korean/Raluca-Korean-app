@@ -844,20 +844,7 @@ const CLAUSE_CONNECTORS = {
   background: "는데"
 };
 
-// =========================
-// KOREAN GRAMMAR BRAIN
-// =========================
 
-const GRAMMAR_RELATIONS = {
-  cause: ["-기에","-니까","-아서","-어서"],
-  contrast: ["-지만","-(으)ㄴ/는데도"],
-  sequence: ["-고 나서","-기 전에"],
-  simultaneous: ["-(으)면서","-(으)며"],
-  condition: ["-면"],
-  background: ["-는데"],
-  purpose: ["-(으)려고"],
-  attempt: ["-아/어 보다"]
-};
 
 function pickRandom(arr){
   return arr[Math.floor(Math.random()*arr.length)];
