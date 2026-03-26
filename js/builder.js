@@ -538,8 +538,22 @@ const specialVerbMap = {
   "살다":{past:"살았어요"}
 };
 
+function buildVerbPhrase(verb, cj){
 
+  if(!verb && !cj) return "";
 
+  const stem = verb ? getVerbStem(verb) : "";
+
+  if(!cj) return stem;
+
+  if(cj === "-아요/어요") return presentPolite(verb);
+  if(cj === "-았어요/었어요") return pastPolite(verb);
+  if(cj === "-고") return stem + "고";
+  if(cj === "-고 나서") return stem + "고 나서";
+  if(cj === "-기 전에") return stem + "기 전에";
+
+  return presentPolite(verb);
+}
 
     /* =========================
    9) PARTICLE HELPERS
