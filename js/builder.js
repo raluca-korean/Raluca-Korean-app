@@ -800,10 +800,7 @@ function addWords(columnKey, arr){
 }
     /* ===== MULTI WORD BUILDER ===== */
 
-function addSubjectWithSubjectParticle(word){
-  if(!word) return "";
-  return word + particleSubject(word);
-}
+
 
 const CLAUSE_CONNECTORS = {
   and: "고",
