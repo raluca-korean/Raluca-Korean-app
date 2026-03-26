@@ -608,7 +608,7 @@ if(use("place")){
 let p = buildEnumeration(state.places, state.place);
 
 if(p){
-  slots.place.push(p + "에서");
+  slots.place.push(addPlaceWithParticle(p, v));
 }
 
 }
