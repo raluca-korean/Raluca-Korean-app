@@ -1234,7 +1234,6 @@ function parseRomanianSentence(text){
 
   try{
     ko =
-      generateGrammarTreeSentence() ||
       buildComplexSentence();
   }catch(e){
     ko = buildComplexSentence();
