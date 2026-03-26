@@ -690,7 +690,9 @@ function particleAnd(word){
   if(!word) return "";
   return hasBatchim(word) ? "과" : "와";
 }
-
+function particleSubject(word){
+  return hasBatchim(word) ? "이" : "가";
+}
 function particlePlace(word){
   if(!word) return "";
   return word + "에서";
