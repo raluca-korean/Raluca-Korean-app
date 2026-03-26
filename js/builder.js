@@ -821,8 +821,6 @@ function chooseConnector(prev,next){
 
   const relation = chooseClauseRelation(prev,next);
 
-  const options = GRAMMAR_RELATIONS[relation];
-
   return pickRandom(options);
 }
 
