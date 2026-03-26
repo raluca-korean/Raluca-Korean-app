@@ -598,7 +598,7 @@ let t = buildEnumeration(state.times, state.time);
   s = state.subjectAdjs.join(" ") + " " + s;
 }
 
-slots.subject.push(addSubjectWithSubjectParticle(s));
+slots.subject.push(addSubjectWithParticle(s, state));
     }
   }
 
