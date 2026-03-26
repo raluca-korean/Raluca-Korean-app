@@ -2310,16 +2310,20 @@ function applyConnector(sentence, connector){
 
   if(!sentence) return "";
 
-  const parts = sentence.split(" ");
-  let last = parts[parts.length - 1];
+  // 1. găsim ultimul verb corect (nu ultimul cuvânt)
+  const match = sentence.match(/([가-힣]+요|[가-힣]+다)$/);
 
-if(!last) return sentence;
+  if(!match) return sentence;
 
-parts.pop();
+  const verb = match[0];
 
-  const transformed = transformVerbForConnector(last, connector);
+  // 2. scoatem DOAR verbul final (safe)
+  const base = sentence.slice(0, -verb.length).trim();
 
-  return [...parts, transformed].join(" ");
+  // 3. transformăm verbul
+  const transformed = transformVerbForConnector(verb, connector);
+
+  return base + " " + transformed;
 }
 function reorderKoreanNatural(parts){
 
