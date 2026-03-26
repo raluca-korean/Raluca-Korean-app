@@ -2239,7 +2239,6 @@ function pickConnectorSmart(a,b){
     Math.floor(Math.random()*group.connectors.length)
   ];
 }
-
 function buildComplexSentence(){
 
   if(!sentences.length) return "";
@@ -2252,13 +2251,11 @@ function buildComplexSentence(){
     if(!s) continue;
 
     let clause = planKoreanSentence(s, actives[i]);
-
     if(!clause) continue;
 
-    if(i < sentences.length-1){
+    if(i < sentences.length - 1){
 
       const next = sentences[i+1];
-
       const connector = pickAdvancedConnector(s,next);
 
       clause = applyConnector(clause, connector);
@@ -2266,15 +2263,14 @@ function buildComplexSentence(){
       result += clause + " ";
 
     }else{
-
       result += clause;
-
     }
 
   }
 
   return result.replace(/\s+/g," ").trim();
 }
+
 function transformVerbForConnector(verb, connector){
 
   if(!verb) return "";
