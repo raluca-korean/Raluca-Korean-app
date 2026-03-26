@@ -595,12 +595,10 @@ let t = buildEnumeration(state.times, state.time);
 
    let s = buildEnumeration(state.subjects, state.subject);
     if(state.subjectAdjs?.length){
-      s = state.subjectAdjs.join(" ") + " " + s;
-    }
-else{
-        slots.subject.push(addSubjectWithSubjectParticle(s));
-      }
+  s = state.subjectAdjs.join(" ") + " " + s;
+}
 
+slots.subject.push(addSubjectWithSubjectParticle(s));
     }
   }
 
