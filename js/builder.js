@@ -356,19 +356,7 @@ const activeP1 = clauses[0].active;
 
 const stateP2  = clauses[1].state;
 const activeP2 = clauses[1].active;
-    function fillBuilderColumns(){
-
-  const dict = window.KOREAN_DICT;
-
-  addWords("subject", dict.subjects);
-  addWords("object", dict.objects);
-  addWords("verb", dict.verbs);
-  addWords("time", dict.times);
-  addWords("place", dict.places);
-  addWords("mod", dict.modifiers);
-  addWords("conjug", dict.conjugations);
-
-}
+    
     /* =========================
    4) DOM (nu presupunem nimic: doar id-uri dacă există)
    ========================= */
