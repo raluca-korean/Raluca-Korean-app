@@ -2308,6 +2308,27 @@ function transformVerbForConnector(verb, connector){
 
   return stem + connector;
 }
+function pickAdvancedConnector(a,b){
+
+  if(a.time && b.time){
+    return "-고 나서";
+  }
+
+  if(a.verb === b.verb){
+    return "-면서";
+  }
+
+  if(a.object && b.object){
+    return "-지만";
+  }
+
+  if(a.reason){
+    return "-기에";
+  }
+
+  return "-고";
+}
+
 function applyConnector(sentence, connector){
 
   if(!sentence) return "";
