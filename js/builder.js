@@ -819,27 +819,6 @@ const CLAUSE_CONNECTORS = {
 function pickRandom(arr){
   return arr[Math.floor(Math.random()*arr.length)];
 }
-
-function chooseClauseRelation(prev,next){
-
-  if(!prev || !next) return "sequence";
-
-  if(prev.time && next.time) return "sequence";
-
-  if(prev.verb === next.verb) return "contrast";
-
-  if(prev.object && next.object) return "background";
-
-  return "cause";
-}
-
-function chooseConnector(prev,next){
-
-  const relation = chooseClauseRelation(prev,next);
-const options = CLAUSE_RELATIONS[relation]?.connectors || ["-고"];
-  return pickRandom(options);
-}
-
    /* =========================
    KOREAN NATURAL WORD ORDER
    ========================= */
