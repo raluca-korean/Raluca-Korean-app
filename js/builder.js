@@ -583,12 +583,7 @@ let t = buildEnumeration(state.times, state.time);
     if(state.subjectAdjs?.length){
       s = state.subjectAdjs.join(" ") + " " + s;
     }
-
-    if(s){
-
-      if(slots.time.length){
-        slots.topic.push(addSubjectWithParticle(s));
-      }else{
+else{
         slots.subject.push(addSubjectWithSubjectParticle(s));
       }
 
