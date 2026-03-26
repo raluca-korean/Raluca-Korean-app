@@ -731,7 +731,14 @@ function chooseSubjectParticle(word,state){
 
   return subjectParticle
 }
+function hasBatchim(word){
+  if(!word) return false;
 
+  const last = word.charCodeAt(word.length-1) - 0xAC00;
+  if(last < 0 || last > 11171) return false;
+
+  return (last % 28) !== 0;
+}
 function addObjectWithParticle(word){
   if(!word) return ""
   return word + chooseObjectParticle(word)
