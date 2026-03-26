@@ -884,23 +884,6 @@ function chooseConnector(prev,next){
 
   return pickRandom(options);
 }
-   
-
-    // =========================
-// KOREAN GRAMMAR TREE ENGINE
-// =========================
-
-function createClauseNode(state){
-
-  return {
-    state,
-    children:[],
-    connector:null
-  };
-
-}
-
-  
    // =========================
 // KOREAN GRAMMAR ENGINE
 // =========================
