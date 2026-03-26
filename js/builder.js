@@ -884,27 +884,7 @@ function chooseConnector(prev,next){
 
   return pickRandom(options);
 }
-   // =========================
-// KOREAN GRAMMAR ENGINE
-// =========================
 
-function extractElements(state){
-
-  return {
-
-    subject: buildSubjectPhrase(state),
-
-    time: buildTimePhrase(state),
-
-    place: buildPlacePhrase(state),
-
-    object: buildObjectPhrase(state),
-
-    verb: buildVerbPhrase(state.verb,state.conjug)
-
-  };
-
-}
    /* =========================
    KOREAN NATURAL WORD ORDER
    ========================= */
