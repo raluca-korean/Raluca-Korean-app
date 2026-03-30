@@ -8,6 +8,13 @@ window.Conjugation = {
     return verb.endsWith("다") ? verb.slice(0,-1) : verb;
   },
 
+/* ============================================================
+   1) VERB STEM
+============================================================ */
+function getVerbStem(verb) {
+  if (!verb) return "";
+  return verb.endsWith("다") ? verb.slice(0, -1) : verb;
+}
   // =====================
   // HANGUL
   // =====================
