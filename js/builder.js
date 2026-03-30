@@ -1978,8 +1978,10 @@ function setupUI(){
 
   ensureLinkedSentences();
 
-  if(!sentences[0] || !actives[0]) return;
-
+ if(!sentences.length){
+  sentences = [makeEmptySentence()];
+  actives = [makeAllActive()];
+}
   // P1
   if(DOM.tableP1){
     renderClauseRow(
@@ -2022,7 +2024,8 @@ function setupUI(){
   // 🔥 IMPORTANT
   updatePreview();
 }
-    
+  console.log("tableP1:", DOM.tableP1);
+console.log("sentences:", sentences);  
       
     /* =========================
    24) BOOTSTRAP (UN SINGUR)
