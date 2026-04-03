@@ -1,9 +1,4 @@
-/* =========================
-   STATE (NU SE SCHIMBĂ)
-========================= */
 
-let sentences = [];
-let actives = [];
 
 /* =========================
    STRUCT (COMPATIBIL CU UI)
