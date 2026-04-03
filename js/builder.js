@@ -2400,15 +2400,3 @@ function reorderKoreanNatural(parts){
     ...verb
   ].join(" ").trim();
 }
-function renderAll(){
-  console.log("🔥 RENDER ALL CALLED");
-
-  const el = document.getElementById("tableP1");
-
-  if(!el){
-    console.error("❌ tableP1 NU există");
-    return;
-  }
-
-  el.innerHTML = "<div style='padding:20px'>TEST TABLE</div>";
-}
