@@ -117,3 +117,97 @@ function addVocabWord(type, word){
 window.loadVocabulary = loadVocabulary;
 window.getVocab = getVocab;
 window.addVocabWord = addVocabWord;
+window.Vocabulary = {
+
+  data: {},
+
+  init(){
+    this.data = JSON.parse(JSON.stringify(window.VocabData));
+    this.loadUserData();
+  },
+
+  // =====================
+  // GET
+  // =====================
+  get(category){
+    return this.data[category] || [];
+  },
+
+  getRandom(category){
+    const list = this.get(category);
+    return list[Math.floor(Math.random() * list.length)];
+  },
+
+  getByLevel(category, level){
+    return this.get(category).filter(w => w.level <= level);
+  },
+
+  search(category, query){
+    query = query.toLowerCase();
+
+    return this.get(category).filter(w =>
+      w.ko.includes(query) ||
+      w.ro.includes(query)
+    );
+  },
+
+  // =====================
+  // ADD WORD (USER)
+  // =====================
+  add(category, ko, ro){
+
+    const word = {
+      ko,
+      ro,
+      level: 1,
+      freq: 1,
+      user: true
+    };
+
+    this.data[category].push(word);
+
+    this.saveUserData();
+  },
+
+  // =====================
+  // FAVORITE
+  // =====================
+  toggleFavorite(category, ko){
+
+    const word = this.get(category).find(w => w.ko === ko);
+    if(!word) return;
+
+    word.favorite = !word.favorite;
+
+    this.saveUserData();
+  },
+
+  // =====================
+  // TRACK USAGE
+  // =====================
+  increaseFreq(category, ko){
+
+    const word = this.get(category).find(w => w.ko === ko);
+    if(!word) return;
+
+    word.freq = (word.freq || 0) + 1;
+
+    this.saveUserData();
+  },
+
+  // =====================
+  // STORAGE
+  // =====================
+  saveUserData(){
+    localStorage.setItem("vocab_user", JSON.stringify(this.data));
+  },
+
+  loadUserData(){
+
+    const saved = localStorage.getItem("vocab_user");
+    if(saved){
+      this.data = JSON.parse(saved);
+    }
+  }
+
+};
