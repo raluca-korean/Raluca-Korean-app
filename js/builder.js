@@ -1,4 +1,5 @@
-    /* ============================================================
+console.log("🔥 builder.js loaded");
+/* ============================================================
    builder.js (REWRITE 100%, cap-coadă, robust, fără duplicări)
    - Respectă HTML-ul tău (id-uri existente) + NU crapă dacă lipsesc unele
    - Builder cu 1..N propoziții (NU hard-limit 2)
