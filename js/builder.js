@@ -2407,20 +2407,3 @@ window.addEventListener("DOMContentLoaded", () => {
 
   renderAll(); // deja există la tine
 });
-function renderAll(){
-  console.log("🔥 renderAll RUNNING");
-
-  const table = document.getElementById("tableP1");
-
-  if(!table){
-    console.error("❌ tableP1 NOT FOUND");
-    return;
-  }
-
-  table.innerHTML = `
-    <div class="col">
-      <div class="col-header">TEST</div>
-      <div class="col-body-main">OK</div>
-    </div>
-  `;
-}
