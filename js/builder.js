@@ -1071,8 +1071,11 @@ function parseRomanianSentence(text){
    - IMPORTANT: nu mai facem coduri care se bat cap în cap
    ========================= */
   function renderClauseRow(container, activeMap, state, clauseIndex){
-
-  if(!container) return;
+console.log("columns:", columns);
+console.log("visible check:", columns.map(c => [c.key, isColumnVisible(c.key)]));
+console.log("state:", state);
+console.log("activeMap:", activeMap);
+     if(!container) return;
 
   container.innerHTML = "";
 
