@@ -1989,9 +1989,7 @@ function setupUI(){
     sentences = [makeEmptySentence()];
     actives = [makeAllActive()];
   }
-if (DOM.tableP1) {
-  DOM.tableP1.innerHTML = "TEST";
-}
+
        // P1
   if(DOM.tableP1){
     renderClauseRow(
