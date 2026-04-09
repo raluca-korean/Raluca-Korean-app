@@ -2400,9 +2400,3 @@ function reorderKoreanNatural(parts){
     ...verb
   ].join(" ").trim();
 }
-window.addEventListener("DOMContentLoaded", () => {
-
-  Vocabulary.init();
-
-  renderAll(); // deja există la tine
-});
