@@ -1081,8 +1081,7 @@ console.log("activeMap:", activeMap);
 
   columns.forEach(col => {
 
-    if(!isColumnVisible(col.key)) return;
-
+   if(isColumnVisible && isColumnVisible(col.key) === false) return;
     const colDiv = document.createElement("div");
     colDiv.className = "col";
     colDiv.dataset.key = col.key;
