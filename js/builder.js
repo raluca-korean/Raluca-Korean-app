@@ -1977,12 +1977,17 @@ function setupUI(){
    ========================= */
     function renderAll(){
 
+  console.log("🔥 renderAll START");
+  console.log("tableP1:", DOM.tableP1);
+  console.log("sentences:", sentences);
+
   ensureLinkedSentences();
 
- if(!sentences.length){
-  sentences = [makeEmptySentence()];
-  actives = [makeAllActive()];
-}
+  if(!sentences.length){
+    sentences = [makeEmptySentence()];
+    actives = [makeAllActive()];
+  }
+
   // P1
   if(DOM.tableP1){
     renderClauseRow(
