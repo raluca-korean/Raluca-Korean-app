@@ -1105,8 +1105,7 @@ function parseRomanianSentence(text){
       activeMap[col.key] = toggle.checked;
       renderAll();
     });
-attachPressHandlers(DOM.tableP1,0);
-attachPressHandlers(DOM.tableP2,1);
+
       header.appendChild(toggle);
     colDiv.appendChild(header);
 
