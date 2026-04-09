@@ -502,10 +502,8 @@ const simpleColumnsSet = {subject:true,time:true,object:true,verb:true,conjug:tr
    6) MODE: ce coloane se văd
    ========================= */
 function isColumnVisible(key){
-  if(currentMode === "topik") return true;
-  return !!simpleColumnsSet[key];
+  return visibility?.[key] !== false;
 }
-
 /* =========================
    7) LINKING CONJUGATIONS
    ========================= */
