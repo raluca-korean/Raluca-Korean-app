@@ -2030,13 +2030,6 @@ function setupUI(){
   // 🔥 IMPORTANT
   updatePreview();
 }
- 
-
-  console.log("🔥 renderAll START");
-  console.log("tableP1:", DOM.tableP1);
-  console.log("sentences:", sentences);
-
-  ensureLinkedSentences();   
 /* =========================
    24) BOOTSTRAP (UN SINGUR)
    ========================= */
