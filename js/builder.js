@@ -1337,7 +1337,9 @@ function createToggleChips(){
   createFor(DOM.togglesP1, 0);
   createFor(DOM.togglesP2, 1);
 }
-
+if(!window.visibility){
+  window.visibility = {};
+}
 /* =========================
    16) PANEL (long press) – complet, safe
    ========================= */
