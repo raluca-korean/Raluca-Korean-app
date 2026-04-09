@@ -1277,8 +1277,7 @@ function loadModelRow(i){
       const value = col.data[i % col.data.length] || "";
 
       // NU suprascriem arrays (multi-select)
-      if(Array.isArray(s[col.key])) return;
-
+     if(["subjects","places","verbs","objects","mods"].includes(col.key)) return;
       s[col.key] = value;
 
     });
