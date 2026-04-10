@@ -1023,10 +1023,7 @@ function buildRoVerbPhrase(roVerbInf, cj, subjKo){
    ========================= */
   function renderClauseRow(container, activeMap, state, clauseIndex){
      console.log("VAL:", col.key, getColumnDisplayValue(state, col.key));
-     console.log("columns:", columns);
-console.log("visible check:", columns.map(c => [c.key, isColumnVisible(c.key)]));
-console.log("state:", state);
-console.log("activeMap:", activeMap);
+
      if(!container) return;
 
   container.innerHTML = "";
