@@ -2039,3 +2039,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("APP BOOT ERROR", err);
   }
 });
+const clausesWrap = document.getElementById("clausesWrap");
