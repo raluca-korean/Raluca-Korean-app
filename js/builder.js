@@ -1992,31 +1992,54 @@ function setupUI(){
 function renderAll(){
   ensureLinkedSentences();
 
-  if(!sentences.length){
-    sentences = [makeEmptySentence()];
-    actives = [makeAllActive()];
-  }
+  if(!clausesWrap) return;
 
-  if(DOM.tableP1){
-    renderClauseRow(DOM.tableP1, actives[0], sentences[0], 0);
-  }
+  clausesWrap.innerHTML = "";
 
-  if(DOM.tableP2 && sentences[1]){
-    if(showExtraClauses){
-      show(DOM.tableP2);
-      DOM.titleP2 && show(DOM.titleP2);
-      renderClauseRow(DOM.tableP2, actives[1], sentences[1], 1);
-    }else{
-      hide(DOM.tableP2);
-      DOM.titleP2 && hide(DOM.titleP2);
-    }
-  }
+  sentences.forEach((state, i) => {
 
-  renderExtraClauses();
-  updateModelNav();
+    const card = document.createElement("div");
+    card.className = "clause-card";
+
+    const head = document.createElement("div");
+    head.className = "clause-head";
+
+    const title = document.createElement("div");
+    title.className = "clause-title";
+    title.textContent = `Propoziția ${i+1}`;
+
+    head.appendChild(title);
+    card.appendChild(head);
+
+    const table = document.createElement("div");
+    table.className = "table";
+
+    columns.forEach(col => {
+
+      if(!isColumnVisible(col.key)) return;
+
+      const colDiv = document.createElement("div");
+      colDiv.className = "col";
+
+      colDiv.innerHTML = `
+        <div class="col-header">${col.title}</div>
+        <div class="col-body-main">${getColumnDisplayValue(state, col.key) || "-"}</div>
+        <div class="col-body-sub">${translations[col.key]?.[state[col.key]] || ""}</div>
+      `;
+
+      colDiv.addEventListener("click", () => {
+        cycleColumnValue(i, col.key);
+      });
+
+      table.appendChild(colDiv);
+    });
+
+    card.appendChild(table);
+    clausesWrap.appendChild(card);
+  });
+
   updatePreview();
 }
-
 /* =========================
    25) BOOTSTRAP
 ========================= */
