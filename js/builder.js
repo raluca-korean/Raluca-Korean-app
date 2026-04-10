@@ -272,7 +272,60 @@ function joinVerbs(verbs){
 
   return "";
 }    
-   
+  function buildDictionaryIndex(vocab){
+
+  const index = {};
+
+  if(!vocab) return index;
+
+  Object.entries(vocab).forEach(([category, list])=>{
+
+    if(!Array.isArray(list)) return;
+
+    index[category] = {};
+
+    list.forEach(entry=>{
+
+      if(!entry || !entry.ko) return;
+
+      const ko = entry.ko.trim();
+
+      // 🔹 ROMÂNĂ
+      if(entry.ro){
+        const ro = entry.ro.toLowerCase().trim();
+
+        if(ro){
+          index[category][ro] = ko;
+
+          // fără diacritice (fallback)
+          const roSimple = ro
+            .replace(/ă/g,"a")
+            .replace(/â/g,"a")
+            .replace(/î/g,"i")
+            .replace(/ș/g,"s")
+            .replace(/ş/g,"s")
+            .replace(/ț/g,"t")
+            .replace(/ţ/g,"t");
+
+          index[category][roSimple] = ko;
+        }
+      }
+
+      // 🔹 ENGLEZĂ
+      if(entry.en){
+        const en = entry.en.toLowerCase().trim();
+
+        if(en){
+          index[category][en] = ko;
+        }
+      }
+
+    });
+
+  });
+
+  return index;
+} 
 function buildVocabIndex(vocab){
 
   const index = {};
