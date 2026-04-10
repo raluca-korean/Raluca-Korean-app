@@ -212,7 +212,7 @@ function buildClause(s, hideSubject=false){
       if(i < s.verbs.length - 1){
         parts.push(getStem(v) + "고");
       } else {
-        parts.push(buildVerbPhrase(v));
+        parts.push(buildVerbPhrase(v, s.grammar));
       }
 
     });
