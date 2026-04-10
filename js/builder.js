@@ -1714,18 +1714,8 @@ function translateRoToKo(text){
 
   const clean = normRo(text);
 
-  // 🔥 detect limbă
-  const lang = (
-    clean.includes("and") ||
-    clean.includes("but") ||
-    clean.includes("because")
-  ) ? "en" : "ro";
-
-  // 🔥 split propoziții
   const parts = clean.split(
-    lang === "ro"
-      ? /(si|dar|apoi|dupa|pentru ca|ca sa)/
-      : /(and|but|then|after|because)/
+    /(si|dar|apoi|dupa|pentru ca|ca sa|and|but|because|after)/
   );
 
   sentences = [];
@@ -1736,54 +1726,47 @@ function translateRoToKo(text){
     chunk = chunk.trim();
     if(!chunk) continue;
 
-    if(["si","dar","and","but","then"].includes(chunk)) continue;
+    if(["si","dar","and","but"].includes(chunk)) continue;
 
     const s = makeEmptySentence();
 
-    const words = chunk.split(/\s+/);
+    // SUBJECT
+    s.subject = findMatchesAdvanced(chunk, "subjects")[0] || "";
 
-    for(const word of words){
+    // OBJECTS
+    s.objects = [
+      ...findMatchesAdvanced(chunk, "objects"),
+      ...findMatchesAdvanced(chunk, "nouns")
+    ];
 
-      // SUBJECT
-      if(["eu","i"].includes(word)) s.subject = "저";
-      if(["noi","we"].includes(word)) s.subject = "우리";
-      if(["tu","you"].includes(word)) s.subject = "너";
+    // VERBS
+    s.verbs = findMatchesAdvanced(chunk, "verbs");
 
-      // TIME
-      if(["azi","astazi","today"].includes(word)) s.time = "오늘";
-      if(["ieri","yesterday"].includes(word)) s.time = "어제";
-      if(["maine","tomorrow"].includes(word)) s.time = "내일";
+    // ADJECTIVES
+    s.objectAdjs = findMatchesAdvanced(chunk, "adjectives");
 
-      // PLACE
-      if(["acasa","home"].includes(word)) s.places.push("집");
-      if(["scoala","school"].includes(word)) s.places.push("학교");
+    // MODIFIERS
+    s.mods = [
+      ...findMatchesAdvanced(chunk, "adverbs"),
+      ...findMatchesAdvanced(chunk, "modifiers")
+    ];
 
-      // OBJECT
-      if(["carte","book"].includes(word)) s.objects.push("책");
-      if(["apa","water"].includes(word)) s.objects.push("물");
+    // TIME
+    const time = findMatchesAdvanced(chunk, "nouns")
+      .filter(w => ["오늘","어제","내일"].includes(w));
 
-      // VERB
-      if(["merg","go"].includes(word)) s.verbs.push("가다");
-      if(["mananc","eat"].includes(word)) s.verbs.push("먹다");
-      if(["beau","drink"].includes(word)) s.verbs.push("마시다");
+    if(time.length) s.time = time[0];
+
+    // GRAMMAR
+    const grammar = findMatchesAdvanced(chunk, "grammar");
+
+    if(grammar.length){
+      s.conjug = grammar[0];
     }
 
-    // 🔥 GRAMMAR DETECTION (KEY)
-    if(clean.includes("dupa") || clean.includes("after")){
-      s.conjug = "-고 나서";
-    }
-
-    if(clean.includes("pentru ca") || clean.includes("because")){
-      s.conjug = "-기에";
-      s.reason = true;
-    }
-
-    if(clean.includes("ca sa") || clean.includes("to")){
-      s.conjug = "-(으)려고";
-    }
-
-    if(clean.includes("dar") || clean.includes("but")){
-      s.conjug = "-지만";
+    // fallback
+    if(!s.conjug){
+      s.conjug = "-아요/어요";
     }
 
     sentences.push(s);
