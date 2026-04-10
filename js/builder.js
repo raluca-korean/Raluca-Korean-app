@@ -1611,112 +1611,253 @@ function speakKorean(textToSpeak){
 }
 
 /* =========================
-   20) RO PARSER (din codul tău, minimal stabil)
-   ========================= */
+   20) PARSER RO / EN → KO
+   - complet
+   - data-driven din vocab.json
+   - compatibil cu sentences[]
+========================= */
+
 function stripDiacritics(s){
-  return (s||"")
-    .replace(/ă/g,"a").replace(/â/g,"a").replace(/î/g,"i")
-    .replace(/ș/g,"s").replace(/ş/g,"s")
-    .replace(/ț/g,"t").replace(/ţ/g,"t");
+  return (s || "")
+    .replace(/ă/g, "a").replace(/â/g, "a").replace(/î/g, "i")
+    .replace(/ș/g, "s").replace(/ş/g, "s")
+    .replace(/ț/g, "t").replace(/ţ/g, "t");
 }
+
 function normRo(s){
-  return stripDiacritics((s||"").toLowerCase().replace(/[.,!?;]/g," "))
-    .replace(/\s+/g," ").trim();
+  return stripDiacritics(
+    (s || "")
+      .toLowerCase()
+      .replace(/[.,!?;:()[\]"]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
-// reverse map RO -> KO (din translations)
-function buildReverseMap(){
-  const rev = { subject:{}, time:{}, place:{}, mod:{}, object:{}, counter:{}, verb:{}, conjug:{} };
-  Object.entries(translations).forEach(([cat, map])=>{
-    if(!rev[cat]) return;
-    Object.entries(map).forEach(([ko, ro])=>{
-      if(!ro) return;
-      const n = normRo(ro);
-      if(!rev[cat][n]) rev[cat][n] = ko;
+function detectInputLang(text){
+  const t = normRo(text);
 
-      // suport "a ___" -> stem
-      if(n.startsWith("a ")){
-        const base = n.replace(/^a\s+/, "");
-        if(base){
-          const stem = base.replace(/[aei]$/, "");
-          if(stem){
-            if(!rev[cat][stem]) rev[cat][stem] = ko;
-            const saKey = "sa " + stem;
-            if(!rev[cat][saKey]) rev[cat][saKey] = ko;
-          }
-        }
+  const enHints = [
+    " and ", " but ", " because ", " after ", " before ", " while ",
+    " i ", " we ", " you ", " they ", " he ", " she "
+  ];
+
+  const roHints = [
+    " si ", " și ", " dar ", " pentru ca ", " pentru că ", " dupa ", " după ",
+    " eu ", " noi ", " tu ", " ei ", " ea "
+  ];
+
+  let enScore = 0;
+  let roScore = 0;
+
+  enHints.forEach(x => { if((" " + t + " ").includes(x)) enScore++; });
+  roHints.forEach(x => { if((" " + t + " ").includes(normRo(x))) roScore++; });
+
+  return enScore > roScore ? "en" : "ro";
+}
+
+function buildVocabIndex(vocab){
+  const index = {};
+
+  if(!vocab) return index;
+
+  Object.entries(vocab).forEach(([category, list]) => {
+    if(!Array.isArray(list)) return;
+
+    index[category] = {};
+
+    list.forEach(entry => {
+      if(!entry || !entry.ko) return;
+
+      const ko = entry.ko.trim();
+
+      if(entry.ro){
+        const ro = normRo(entry.ro);
+        if(ro) index[category][ro] = ko;
+      }
+
+      if(entry.en){
+        const en = entry.en.toLowerCase().trim();
+        if(en) index[category][en] = ko;
       }
     });
   });
-  return rev;
+
+  return index;
 }
-let REV = buildReverseMap();
 
-// detect conj din română (păstrat din codul tău, dar curățat)
-function detectConjFromRo(ro){
-  const t = normRo(ro);
+function findMatchesAdvanced(text, category){
+  const results = [];
+  const dict = VOCAB_INDEX[category] || {};
+  const clean = normRo(text);
 
-  // linking / conectori
-  if(/\bdupa ce\b/.test(t)) return "-고 나서";
-  if(/\binainte sa\b/.test(t)) return "-기 전에";
-  if(/\bin timp ce\b/.test(t)) return "-(으)면서";
-  if(/\bpentru ca\b|\bdeoarece\b|\bfiindca\b/.test(t)) return "-기에";
-  if(/\bdesi\b|\bchiar daca\b/.test(t)) return "-(으)ㄴ/는데도";
-  if(/\bpe masura ce\b|\bcu cat\b/.test(t)) return "-(으)ㄹ수록";
+  Object.entries(dict)
+    .sort((a, b) => b[0].length - a[0].length) // expresiile lungi înainte
+    .forEach(([key, ko]) => {
+      if(clean.includes(key) && !results.includes(ko)){
+        results.push(ko);
+      }
+    });
 
-  // intenție/obligație/abilitate
+  return results;
+}
+
+function splitInputClauses(text){
+  const clean = normRo(text);
+
+  return clean
+    .split(/\b(si|și|dar|apoi|dupa ce|după ce|dupa|după|pentru ca|pentru că|ca sa|ca să|and|but|then|after|before|because|while)\b/)
+    .map(s => normRo(s))
+    .filter(Boolean)
+    .filter(s => ![
+      "si","și","dar","apoi","dupa","după","dupa ce","după ce",
+      "pentru ca","pentru că","ca sa","ca să",
+      "and","but","then","after","before","because","while"
+    ].includes(s));
+}
+
+function detectConjFromText(chunk){
+  const t = normRo(chunk);
+
+  if(/\bdupa ce\b|\bafter\b/.test(t)) return "-고 나서";
+  if(/\binainte\b|\bbefore\b/.test(t)) return "-기 전에";
+  if(/\bin timp ce\b|\bwhile\b/.test(t)) return "-(으)면서";
+  if(/\bpentru ca\b|\bpentru că\b|\bbecause\b/.test(t)) return "-기 때문에";
+  if(/\bca sa\b|\bca să\b|\bin order to\b/.test(t)) return "-기 위해서";
   if(/\bvreau sa\b/.test(t)) return "-고 싶어요";
-  if(/\btrebuie sa\b/.test(t)) return "-아/어야 돼요";
-  if(/\bnu pot sa\b/.test(t)) return "-(으)ㄹ 수 없어요";
-  if(/\bpot sa\b/.test(t)) return "-(으)ㄹ 수 있어요";
+  if(/\btrebuie sa\b|\bmust\b/.test(t)) return "-아/어야 하다";
+  if(/\bpot sa\b|\bcan\b/.test(t)) return "-(으)ㄹ 수 있어요";
+  if(/\bnu pot sa\b|\bcannot\b|\bcan t\b/.test(t)) return "-(으)ㄹ 수 없어요";
+  if(/\bmaine\b|\btomorrow\b|\bwill\b/.test(t)) return "-(으)ㄹ 거예요";
+  if(/\bieri\b|\byesterday\b/.test(t)) return "-았어요/었어요";
 
-  // viitor
-  if(/\bmaine\b|\bvoi\b|\bo sa\b/.test(t)) return "-(으)ㄹ 거예요";
-
-  // trecut
-  if(/\bieri\b|\bdeja\b|\btocmai\b|\bam\b/.test(t)) return "-았어요/었어요";
-
-  // "și" -> -고 (doar dacă e între acțiuni; noi o tratăm în split)
-  // fallback prezent
   return "-아요/어요";
 }
-const CONNECTORS = {
-  and: ["-고"],
-  cause: ["-아서", "-어서"],
-  contrast: ["-지만"],
-  sequence: ["-고 나서"],
-  background: ["-는데"],
-  choice: ["-거나"],
-  simultaneous: ["-면서"],
-  result: ["-니까"],
-  condition: ["-면"],
-  intention: ["-(으)려고"],
-  attempt: ["-아/어 보다"],
-  obligation: ["-아/어야 하다"]
-};
-function findKoByRo(type, text){
 
-  const listMap = {
-    subject: subjects,
-    time: times,
-    place: places,
-    mod: mods,
-    object: objects,
-    verb: verbs
-  };
+function buildSentenceFromChunk(chunk){
+  const s = makeEmptySentence();
+  const clean = normRo(chunk);
 
-  const list = listMap[type] || [];
-
-  for(const item of list){
-    const ro = (translations[type]?.[item] || "").toLowerCase();
-    if(text.includes(ro)){
-      return item;
-    }
+  // SUBJECT
+  const subjectMatches = findMatchesAdvanced(clean, "subjects");
+  if(subjectMatches.length){
+    s.subject = subjectMatches[0];
+    s.subjects = [subjectMatches[0]];
   }
 
-  return "";
+  // TIME
+  const timeMatches = [
+    ...findMatchesAdvanced(clean, "times"),
+    ...findMatchesAdvanced(clean, "time")
+  ];
+  if(timeMatches.length){
+    s.time = timeMatches[0];
+    s.times = [...timeMatches];
+  }
+
+  // PLACE
+  const placeMatches = [
+    ...findMatchesAdvanced(clean, "places"),
+    ...findMatchesAdvanced(clean, "place")
+  ];
+  if(placeMatches.length){
+    s.place = placeMatches[0];
+    s.places = [...placeMatches];
+  }
+
+  // OBJECTS
+  const objectMatches = [
+    ...findMatchesAdvanced(clean, "objects"),
+    ...findMatchesAdvanced(clean, "nouns")
+  ];
+  if(objectMatches.length){
+    s.object = objectMatches[0];
+    s.objects = [...objectMatches];
+  }
+
+  // ADJECTIVES
+  const adjectiveMatches = findMatchesAdvanced(clean, "adjectives");
+  if(adjectiveMatches.length){
+    s.objectAdjs = [...adjectiveMatches];
+  }
+
+  // ADVERBS + MODIFIERS
+  const modMatches = [
+    ...findMatchesAdvanced(clean, "adverbs"),
+    ...findMatchesAdvanced(clean, "modifiers")
+  ];
+  if(modMatches.length){
+    s.mod = modMatches[0];
+    s.mods = [...modMatches];
+  }
+
+  // VERBS
+  const verbMatches = findMatchesAdvanced(clean, "verbs");
+  if(verbMatches.length){
+    s.verb = verbMatches[0];
+    s.verbs = [...verbMatches];
+  } else {
+    s.verb = "하다";
+    s.verbs = ["하다"];
+  }
+
+  // GRAMMAR
+  const grammarMatches = findMatchesAdvanced(clean, "grammar");
+  if(grammarMatches.length){
+    s.conjug = grammarMatches[0];
+  } else {
+    s.conjug = detectConjFromText(clean);
+  }
+
+  // CONNECTORS (opțional; util pentru extindere)
+  const connectorMatches = findMatchesAdvanced(clean, "connectors");
+  if(connectorMatches.length){
+    s.connector = connectorMatches[0];
+  }
+
+  // FLAGS logice pentru engine
+  if(s.conjug === "-기 때문에" || /\bpentru ca\b|\bpentru că\b|\bbecause\b/.test(clean)){
+    s.reason = true;
+  }
+
+  if(s.conjug === "-면"){
+    s.condition = true;
+  }
+
+  return s;
 }
-    
+
+function translateRoToKo(text){
+  const lang = detectInputLang(text);
+  const parts = splitInputClauses(text);
+
+  sentences = [];
+  actives = [];
+
+  parts.forEach(chunk => {
+    const s = buildSentenceFromChunk(chunk);
+
+    sentences.push(s);
+    actives.push(makeAllActive());
+  });
+
+  if(!sentences.length){
+    sentences = [makeEmptySentence()];
+    actives = [makeAllActive()];
+  }
+
+  showExtraClauses = sentences.length > 1;
+
+  renderAll();
+
+  return {
+    lang,
+    ko: buildComplexSentence(),
+    roFixed: buildFullRomanian()
+  };
+}
+
+
 // forme conjugate -> infinitiv
 const RO_FORM_TO_INF = {
   "plec":"a merge","pleci":"a merge","pleaca":"a merge","pleacă":"a merge","plecam":"a merge","plecati":"a merge","plecați":"a merge",
@@ -1727,94 +1868,7 @@ const RO_FORM_TO_INF = {
   "citesc":"a citi","citesti":"a citi","citești":"a citi","citeste":"a citi","citește":"a citi","citim":"a citi","cititi":"a citi","citiți":"a citi",
   "scriu":"a scrie","scrii":"a scrie","scrie":"a scrie","scriem":"a scrie","scrieti":"a scrie","scrieți":"a scrie"
 };
-   /* =========================
-   21) RO -> KO (butonul "Tradu în coreeană")
-   - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
-   ========================= */
-function translateRoToKo(text){
-
-  const clean = normRo(text);
-
-  const parts = clean.split(
-    /(si|dar|apoi|dupa|pentru ca|ca sa|and|but|because|after)/
-  );
-
-  sentences = [];
-  actives = [];
-
-  for(let chunk of parts){
-
-    chunk = chunk.trim();
-    if(!chunk) continue;
-
-    if(["si","dar","and","but"].includes(chunk)) continue;
-
-    const s = makeEmptySentence();
-
-    // SUBJECT
-    s.subject = findMatchesAdvanced(chunk, "subjects")[0] || "";
-
-    // OBJECTS
-    s.objects = [
-      ...findMatchesAdvanced(chunk, "objects"),
-      ...findMatchesAdvanced(chunk, "nouns")
-    ];
-
-    // VERBS
-    s.verbs = findMatchesAdvanced(chunk, "verbs");
-
-    // ADJECTIVES
-    s.objectAdjs = findMatchesAdvanced(chunk, "adjectives");
-
-    // MODIFIERS
-    s.mods = [
-      ...findMatchesAdvanced(chunk, "adverbs"),
-      ...findMatchesAdvanced(chunk, "modifiers")
-    ];
-
-    // TIME
-const time = findMatchesAdvanced(chunk, "time");
-
-if(time.length){
-  s.time = time[0];
-}
-   .filter(w => ["오늘","어제","내일"].includes(w));
-
-    if(time.length) s.time = time[0];
-
-    // GRAMMAR
-// GRAMMAR
-const grammar = findMatchesAdvanced(chunk, "grammar");
-
-if(grammar.length){
-  s.conjug = grammar[0];
-}
-
-const connectors = findMatchesAdvanced(chunk, "connectors");
-
-if(connectors.length){
-  s.connector = connectors[0];
-}
-     // fallback
-    if(!s.conjug){
-      s.conjug = "-아요/어요";
-    }
-
-    sentences.push(s);
-    actives.push(makeAllActive());
-  }
-if(s.subject){
-  s.subjects = [s.subject];
-}
-   showExtraClauses = sentences.length > 1;
-
-  renderAll();
-
-  return {
-    ko: buildComplexSentence(),
-    roFixed: buildFullRomanian()
-  };
-}
+  
 /* =========================
    22) UI EVENTS
    ========================= */
