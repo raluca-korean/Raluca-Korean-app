@@ -217,8 +217,11 @@ function buildClause(s, hideSubject=false){
 
     });
   }
-
-  return cleanJoin(parts);
+/* GRAMMAR FINAL */
+if(s.grammar && (!s.verbs || s.verbs.length === 0)){
+  parts.push(s.grammar.ko);
+}
+   return cleanJoin(parts);
 }
 
 /* =========================
