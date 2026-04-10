@@ -1683,95 +1683,123 @@ function detectConjFromText(chunk){
 
   return "-아요/어요";
 }
-
 function buildSentenceFromChunk(chunk){
+
   const s = makeEmptySentence();
   const clean = normRo(chunk);
 
-  // SUBJECT
-  const subjectMatches = findMatchesAdvanced(clean, "subjects");
+  /* =========================
+     SUBJECT
+  ========================= */
+  const subjectMatches = findMatchesAdvanced(clean, "subject");
+
   if(subjectMatches.length){
     s.subject = subjectMatches[0];
-    s.subjects = [subjectMatches[0]];
+    s.subjects = [...subjectMatches];
   }
 
-  // TIME
-  const timeMatches = [
-    ...findMatchesAdvanced(clean, "times"),
-    ...findMatchesAdvanced(clean, "time")
-  ];
+  /* =========================
+     TIME
+  ========================= */
+  const timeMatches = findMatchesAdvanced(clean, "time");
+
   if(timeMatches.length){
     s.time = timeMatches[0];
     s.times = [...timeMatches];
   }
 
-  // PLACE
-  const placeMatches = [
-    ...findMatchesAdvanced(clean, "places"),
-    ...findMatchesAdvanced(clean, "place")
-  ];
+  /* =========================
+     PLACE
+  ========================= */
+  const placeMatches = findMatchesAdvanced(clean, "place");
+
   if(placeMatches.length){
     s.place = placeMatches[0];
     s.places = [...placeMatches];
   }
 
-  // OBJECTS
-  const objectMatches = [
-    ...findMatchesAdvanced(clean, "objects"),
-    ...findMatchesAdvanced(clean, "nouns")
-  ];
+  /* =========================
+     OBJECT
+  ========================= */
+  const objectMatches = findMatchesAdvanced(clean, "object");
+
   if(objectMatches.length){
     s.object = objectMatches[0];
     s.objects = [...objectMatches];
   }
 
-  // ADJECTIVES
-  const adjectiveMatches = findMatchesAdvanced(clean, "adjectives");
+  /* =========================
+     ADJECTIVES (OBJECT)
+  ========================= */
+  const adjectiveMatches = findMatchesAdvanced(clean, "adjective");
+
   if(adjectiveMatches.length){
     s.objectAdjs = [...adjectiveMatches];
   }
 
-  // ADVERBS + MODIFIERS
-  const modMatches = [
-    ...findMatchesAdvanced(clean, "adverbs"),
-    ...findMatchesAdvanced(clean, "modifiers")
-  ];
+  /* =========================
+     MOD (ADVERBS)
+  ========================= */
+  const modMatches = findMatchesAdvanced(clean, "mod");
+
   if(modMatches.length){
     s.mod = modMatches[0];
     s.mods = [...modMatches];
   }
 
-  // VERBS
-  const verbMatches = findMatchesAdvanced(clean, "verbs");
+  /* =========================
+     VERB
+  ========================= */
+  const verbMatches = findMatchesAdvanced(clean, "verb");
+
   if(verbMatches.length){
     s.verb = verbMatches[0];
     s.verbs = [...verbMatches];
-  } else {
+  }else{
+    // fallback smart
     s.verb = "하다";
     s.verbs = ["하다"];
   }
 
-  // GRAMMAR
-  const grammarMatches = findMatchesAdvanced(clean, "grammar");
+  /* =========================
+     CONJUG / GRAMMAR
+  ========================= */
+  const grammarMatches = findMatchesAdvanced(clean, "conjug");
+
   if(grammarMatches.length){
     s.conjug = grammarMatches[0];
-  } else {
+  }else{
     s.conjug = detectConjFromText(clean);
   }
 
-  // CONNECTORS (opțional; util pentru extindere)
-  const connectorMatches = findMatchesAdvanced(clean, "connectors");
-  if(connectorMatches.length){
-    s.connector = connectorMatches[0];
-  }
+  /* =========================
+     EXTRA FLAGS (LOGIC)
+  ========================= */
 
-  // FLAGS logice pentru engine
-  if(s.conjug === "-기 때문에" || /\bpentru ca\b|\bpentru că\b|\bbecause\b/.test(clean)){
+  // cauză
+  if(
+    s.conjug === "-기 때문에" ||
+    /\bpentru ca\b|\bpentru că\b|\bbecause\b/.test(clean)
+  ){
     s.reason = true;
   }
 
-  if(s.conjug === "-면"){
+  // condiție
+  if(
+    s.conjug === "-면" ||
+    /\bdaca\b|\bdacă\b|\bif\b/.test(clean)
+  ){
     s.condition = true;
+  }
+
+  // contrast
+  if(/\bdar\b|\bbut\b/.test(clean)){
+    s.contrast = true;
+  }
+
+  // secvență
+  if(/\bdupa\b|\bdupă\b|\bafter\b/.test(clean)){
+    s.sequence = true;
   }
 
   return s;
