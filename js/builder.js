@@ -1783,13 +1783,19 @@ if(time.length){
     if(time.length) s.time = time[0];
 
     // GRAMMAR
-    const grammar = findMatchesAdvanced(chunk, "grammar");
+// GRAMMAR
+const grammar = findMatchesAdvanced(chunk, "grammar");
 
-    if(grammar.length){
-      s.conjug = grammar[0];
-    }
+if(grammar.length){
+  s.conjug = grammar[0];
+}
 
-    // fallback
+const connectors = findMatchesAdvanced(chunk, "connectors");
+
+if(connectors.length){
+  s.connector = connectors[0];
+}
+     // fallback
     if(!s.conjug){
       s.conjug = "-아요/어요";
     }
