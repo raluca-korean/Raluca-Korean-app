@@ -1593,20 +1593,24 @@ function buildVocabIndex(vocab){
 
   const index = {};
 
-  const KEY_MAP = {
-    subjects: "subject",
-    objects: "object",
-    verbs: "verb",
-    times: "time",
-    places: "place",
-    modifiers: "mod",
-    adjectives: "adjective",
-    adverbs: "mod",
-    grammar: "conjug",
-    conjugations: "conjug",
-    connectors: "conjug"
-  };
+const KEY_MAP = {
+  subjects: "subject",
+  objects: "object",
+  verbs: "verb",
+  times: "time",
+  places: "place",
+  modifiers: "mod",
 
+  subjectAdjectives: "subjectAdj",
+  objectAdjectives: "objectAdj",
+
+  adjectives: "objectAdj", // fallback
+
+  adverbs: "mod",
+  grammar: "conjug",
+  conjugations: "conjug",
+  connectors: "conjug"
+};
   Object.entries(vocab).forEach(([category, list])=>{
 
     if(!Array.isArray(list)) return;
