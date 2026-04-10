@@ -240,11 +240,10 @@ function chooseConnector(prev,next){
     return "기 때문에";
   }
 
-  if(prev.verbs?.[0] === next.verbs?.[0]){
-    return "지만";
-  }
-
-  if(next.time && next.time.includes("내일")){
+if(prev.verbs?.[0] === next.verbs?.[0]){
+  return prev.grammar ? "" : "지만";
+}
+   if(next.time && next.time.includes("내일")){
     return "면";
   }
 
