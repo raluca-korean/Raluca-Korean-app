@@ -1607,35 +1607,61 @@ function detectInputLang(text){
 }
 
 function buildVocabIndex(vocab){
+
   const index = {};
 
-  if(!vocab) return index;
+  const KEY_MAP = {
+    subjects: "subject",
+    objects: "object",
+    verbs: "verb",
+    times: "time",
+    places: "place",
+    modifiers: "mod",
+    adjectives: "adjective",
+    adverbs: "mod",
+    grammar: "conjug",
+    conjugations: "conjug",
+    connectors: "conjug"
+  };
 
-  Object.entries(vocab).forEach(([category, list]) => {
+  Object.entries(vocab).forEach(([category, list])=>{
+
     if(!Array.isArray(list)) return;
 
-    index[category] = {};
+    const normalized = KEY_MAP[category] || category;
 
-    list.forEach(entry => {
+    if(!index[normalized]){
+      index[normalized] = {};
+    }
+
+    list.forEach(entry=>{
+
       if(!entry || !entry.ko) return;
 
       const ko = entry.ko.trim();
 
+      // ROMÂNĂ
       if(entry.ro){
         const ro = normRo(entry.ro);
-        if(ro) index[category][ro] = ko;
+        if(ro){
+          index[normalized][ro] = ko;
+        }
       }
 
+      // ENGLEZĂ
       if(entry.en){
         const en = entry.en.toLowerCase().trim();
-        if(en) index[category][en] = ko;
+        if(en){
+          index[normalized][en] = ko;
+        }
       }
+
     });
+
   });
 
   return index;
 }
-
 function findMatchesAdvanced(text, category){
   const results = [];
   const dict = VOCAB_INDEX[category] || {};
