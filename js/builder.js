@@ -958,8 +958,7 @@ function buildRoVerbPhrase(roVerbInf, cj, subjKo){
    - IMPORTANT: nu mai facem coduri care se bat cap în cap
    ========================= */
   function renderClauseRow(container, activeMap, state, clauseIndex){
-     console.log("VAL:", col.key, getColumnDisplayValue(state, col.key));
-
+console.log("renderClauseRow state:", state);
      if(!container) return;
 
   container.innerHTML = "";
