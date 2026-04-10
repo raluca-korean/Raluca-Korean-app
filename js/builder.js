@@ -1774,7 +1774,11 @@ function splitInputClauses(text){
       "and","but","then","after","before","because","while"
     ].includes(s));
 }
-
+  return text
+    .split(/(dupa ce|după ce|before|after|while|pentru ca|pentru că|si|și|and|but)/)
+    .map(s => s.trim())
+    .filter(s => s && s.length > 2);
+}
 function detectConjFromText(chunk){
   const t = normRo(chunk);
 
