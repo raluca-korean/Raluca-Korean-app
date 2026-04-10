@@ -227,13 +227,17 @@ if(s.grammar && (!s.verbs || s.verbs.length === 0)){
 /* =========================
    CONNECTOR LOGIC
 ========================= */
-
 function chooseConnector(prev,next){
 
   if(!prev || !next) return "고";
 
+  // dacă avem grammar explicit → NU suprascrie
+  if(prev.grammar){
+    return "";
+  }
+
   if(prev.reason){
-    return window.GRAMMAR_ENGINE?.pick("cause") || "아서";
+    return "기 때문에";
   }
 
   if(prev.verbs?.[0] === next.verbs?.[0]){
@@ -244,9 +248,8 @@ function chooseConnector(prev,next){
     return "면";
   }
 
-  return window.GRAMMAR_ENGINE?.pick("sequence") || "고";
+  return "고";
 }
-
 /* =========================
    FINAL SENTENCE ENGINE
 ========================= */
