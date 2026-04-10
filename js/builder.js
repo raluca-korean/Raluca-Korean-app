@@ -1542,7 +1542,6 @@ function speakKorean(textToSpeak){
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(u);
 }
-
 /* =========================
    20) PARSER RO / EN → KO
    - complet
@@ -1566,11 +1565,31 @@ function normRo(s){
       .trim()
   );
 }
-function normalizeVerbForms(text){
 
+const SEMANTIC_MAP = {
+  "consume": "먹다",
+  "drink": "마시다",
+  "study": "공부하다",
+  "learn": "배우다",
+  "buy": "사다",
+  "walk": "걷다",
+  "run": "달리다",
+  "go": "가다",
+  "come": "오다",
+  "read": "읽다",
+  "write": "쓰다",
+  "eat": "먹다",
+  "merge": "가다",
+  "veni": "오다",
+  "citi": "읽다",
+  "scrie": "쓰다",
+  "bea": "마시다",
+  "manca": "먹다"
+};
+
+function normalizeVerbForms(text){
   let t = normRo(text);
 
-  // ENGLISH → BASE
   const EN_MAP = {
     "going": "go",
     "went": "go",
@@ -1583,16 +1602,24 @@ function normalizeVerbForms(text){
     "drinking": "drink",
     "drank": "drink",
     "reading": "read",
-    "read": "read",
     "writing": "write",
-    "wrote": "write"
+    "wrote": "write",
+    "studying": "study",
+    "studied": "study",
+    "learning": "learn",
+    "learned": "learn",
+    "bought": "buy",
+    "buying": "buy",
+    "walking": "walk",
+    "walked": "walk",
+    "running": "run",
+    "ran": "run"
   };
 
-  Object.entries(EN_MAP).forEach(([k,v])=>{
+  Object.entries(EN_MAP).forEach(([k, v])=>{
     t = t.replace(new RegExp(`\\b${k}\\b`, "g"), v);
   });
 
-  // ROMANIAN → INFINITIV
   const RO_MAP = {
     "merg": "merge",
     "mergi": "merge",
@@ -1600,52 +1627,98 @@ function normalizeVerbForms(text){
     "mergeai": "merge",
     "mergea": "merge",
     "mergeau": "merge",
+    "mergem": "merge",
+    "mergeti": "merge",
+    "mergeți": "merge",
 
+    "vin": "veni",
+    "vii": "veni",
+    "vine": "veni",
     "veneam": "veni",
     "venea": "veni",
-    "venit": "veni",
+    "veneau": "veni",
+    "venim": "veni",
+    "veniti": "veni",
+    "veniți": "veni",
 
-    "mancam": "manca",
-    "mancai": "manca",
+    "mananc": "manca",
+    "mănânc": "manca",
+    "mananci": "manca",
+    "mănânci": "manca",
     "manca": "manca",
+    "mancam": "manca",
+    "mâncam": "manca",
+    "mancai": "manca",
+    "măncați": "manca",
+    "mancati": "manca",
 
-    "beam": "bea",
+    "beau": "bea",
+    "bei": "bea",
     "bea": "bea",
+    "beam": "bea",
+    "beti": "bea",
+    "beți": "bea",
 
+    "citesc": "citi",
+    "citesti": "citi",
+    "citești": "citi",
+    "citeste": "citi",
+    "citește": "citi",
     "citeam": "citi",
     "citea": "citi",
+    "citim": "citi",
+    "cititi": "citi",
+    "citiți": "citi",
 
+    "scriu": "scrie",
+    "scrii": "scrie",
+    "scrie": "scrie",
     "scriam": "scrie",
-    "scria": "scrie"
+    "scria": "scrie",
+    "scriem": "scrie",
+    "scrieti": "scrie",
+    "scrieți": "scrie"
   };
 
-  Object.entries(RO_MAP).forEach(([k,v])=>{
+  Object.entries(RO_MAP).forEach(([k, v])=>{
     t = t.replace(new RegExp(`\\b${k}\\b`, "g"), v);
   });
 
   return t;
 }
+
 function detectImplicitSubject(text){
+  const t = normalizeVerbForms(text);
 
-  const t = normRo(text);
-
-  // persoana I
-  if(/\bmerg\b|\bfac\b|\bmananc\b|\bmănânc\b|\bvreau\b|\bpot\b/.test(t)){
+  if(/\bmerg\b|\bfac\b|\bmanca\b|\bbea\b|\bciti\b|\bscrie\b|\bvreau\b|\bpot\b/.test(t)){
     return "저";
   }
 
-  // persoana II
-  if(/\bmergi\b|\bfaci\b|\bmananci\b|\bmănânci\b/.test(t)){
+  if(/\bmergi\b|\bfaci\b/.test(t)){
     return "너";
   }
 
-  // plural
   if(/\bmergem\b|\bfacem\b/.test(t)){
     return "우리";
   }
 
-  return null;
+  return "";
 }
+
+function detectTense(text){
+  const t = normalizeVerbForms(text);
+
+  if(/\bieri\b|\byesterday\b|\bmergeam\b|\bveneam\b|\bciteam\b|\bscriam\b|\bmancam\b|\bbeam\b/.test(t)){
+    return "past";
+  }
+
+  if(/\bmaine\b|\bmâine\b|\btomorrow\b|\bvoi\b|\bwill\b/.test(t)){
+    return "future";
+  }
+
+  return "present";
+}
+
 function detectInputLang(text){
   const t = normRo(text);
 
@@ -1662,38 +1735,39 @@ function detectInputLang(text){
   let enScore = 0;
   let roScore = 0;
 
-  enHints.forEach(x => { if((" " + t + " ").includes(x)) enScore++; });
-  roHints.forEach(x => { if((" " + t + " ").includes(normRo(x))) roScore++; });
+  enHints.forEach(x => {
+    if((" " + t + " ").includes(normRo(x))) enScore++;
+  });
+
+  roHints.forEach(x => {
+    if((" " + t + " ").includes(normRo(x))) roScore++;
+  });
 
   return enScore > roScore ? "en" : "ro";
 }
 
 function buildVocabIndex(vocab){
-
   const index = {};
 
-const KEY_MAP = {
-  subjects: "subject",
-  objects: "object",
-  verbs: "verb",
-  times: "time",
-  places: "place",
-  modifiers: "mod",
+  const KEY_MAP = {
+    subjects: "subject",
+    objects: "object",
+    verbs: "verb",
+    times: "time",
+    time: "time",
+    places: "place",
+    modifiers: "mod",
+    subjectAdjectives: "subjectAdj",
+    objectAdjectives: "objectAdj",
+    adjectives: "objectAdj",
+    adverbs: "mod",
+    grammar: "conjug",
+    conjugations: "conjug",
+    connectors: "connector",
+    nouns: "object"
+  };
 
-  subjectAdjectives: "subjectAdj",
-  objectAdjectives: "objectAdj",
-
-  adjectives: "objectAdj", // fallback
-
-  adverbs: "mod",
-  grammar: "conjug",
-  conjugations: "conjug",
-  connectors: "conjug"
-};
-  index["verb"]["go"] = "가다";
-index["verb"]["merge"] = "가다"; 
-  Object.entries(vocab).forEach(([category, list])=>{
-
+  Object.entries(vocab || {}).forEach(([category, list])=>{
     if(!Array.isArray(list)) return;
 
     const normalized = KEY_MAP[category] || category;
@@ -1703,190 +1777,149 @@ index["verb"]["merge"] = "가다";
     }
 
     list.forEach(entry=>{
-
       if(!entry || !entry.ko) return;
 
       const ko = entry.ko.trim();
 
-      // ROMÂNĂ
       if(entry.ro){
         const ro = normRo(entry.ro);
-        if(ro){
-          index[normalized][ro] = ko;
-        }
+        if(ro) index[normalized][ro] = ko;
       }
-// ENGLEZĂ
-if(entry.en){
-  const en = normRo(entry.en); // 🔥 FIX IMPORTANT
-  if(en){
-    index[normalized][en] = ko;
-  }
-}      
+
+      if(entry.en){
+        const en = normRo(entry.en);
+        if(en) index[normalized][en] = ko;
+      }
     });
-
   });
-const SEMANTIC_MAP = {
-  "consume": "먹다",
-  "drink": "마시다",
-  "study": "공부하다",
-  "learn": "배우다",
-  "buy": "사다",
-  "walk": "걷다",
-  "run": "달리다"
-};
-   return index;
-}
-function findMatchesAdvanced(text, category){
 
+  Object.entries(SEMANTIC_MAP).forEach(([k, v])=>{
+    if(!index.verb) index.verb = {};
+    index.verb[normRo(k)] = v;
+  });
+
+  return index;
+}
+
+function findMatchesAdvanced(text, category){
   const results = [];
   const dict = VOCAB_INDEX[category] || {};
-const clean = normalizeVerbForms(text);
-   
-  Object.entries(dict)
-    .sort((a,b)=>b[0].length - a[0].length)
-    .forEach(([key, ko])=>{
+  const clean = normalizeVerbForms(text);
 
-      const regex = new RegExp(`\\b${key}\\b`);
+  Object.entries(dict)
+    .sort((a, b) => b[0].length - a[0].length)
+    .forEach(([key, ko])=>{
+      const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`\\b${safeKey}\\b`, "g");
 
       if(regex.test(clean) && !results.includes(ko)){
         results.push(ko);
       }
-
     });
-// semantic fallback
-Object.entries(SEMANTIC_MAP).forEach(([k,v])=>{
-  if(clean.includes(k) && !results.includes(v)){
-    results.push(v);
-  }
-});
-   return results;
+
+  return results;
 }
+
 function splitInputClauses(text){
   const clean = normRo(text);
 
   return clean
-    .split(/\b(si|și|dar|apoi|dupa ce|după ce|dupa|după|pentru ca|pentru că|ca sa|ca să|and|but|then|after|before|because|while)\b/)
+    .split(/\b(dupa ce|după ce|inainte|înainte|pentru ca|pentru că|ca sa|ca să|si|și|dar|apoi|and|but|then|after|before|because|while)\b/)
     .map(s => normRo(s))
     .filter(Boolean)
     .filter(s => ![
-      "si","și","dar","apoi","dupa","după","dupa ce","după ce",
-      "pentru ca","pentru că","ca sa","ca să",
+      "si","și","dar","apoi",
+      "dupa ce","după ce",
+      "inainte","înainte",
+      "pentru ca","pentru că",
+      "ca sa","ca să",
       "and","but","then","after","before","because","while"
     ].includes(s));
 }
-  return text
-    .split(/(dupa ce|după ce|before|after|while|pentru ca|pentru că|si|și|and|but)/)
-    .map(s => s.trim())
-    .filter(s => s && s.length > 2);
-}
-function detectConjFromText(chunk){
-  const t = normRo(chunk);
 
-  if(/\bdupa ce\b|\bafter\b/.test(t)) return "-고 나서";
-  if(/\binainte\b|\bbefore\b/.test(t)) return "-기 전에";
+function detectConjFromText(chunk){
+  const t = normalizeVerbForms(chunk);
+
+  if(/\bdupa ce\b|\bdupă ce\b|\bafter\b/.test(t)) return "-고 나서";
+  if(/\binainte\b|\bînainte\b|\bbefore\b/.test(t)) return "-기 전에";
   if(/\bin timp ce\b|\bwhile\b/.test(t)) return "-(으)면서";
   if(/\bpentru ca\b|\bpentru că\b|\bbecause\b/.test(t)) return "-기 때문에";
   if(/\bca sa\b|\bca să\b|\bin order to\b/.test(t)) return "-기 위해서";
-  if(/\bvreau sa\b/.test(t)) return "-고 싶어요";
-  if(/\btrebuie sa\b|\bmust\b/.test(t)) return "-아/어야 하다";
-  if(/\bpot sa\b|\bcan\b/.test(t)) return "-(으)ㄹ 수 있어요";
-  if(/\bnu pot sa\b|\bcannot\b|\bcan t\b/.test(t)) return "-(으)ㄹ 수 없어요";
-  if(/\bmaine\b|\btomorrow\b|\bwill\b/.test(t)) return "-(으)ㄹ 거예요";
-  if(/\bieri\b|\byesterday\b/.test(t)) return "-았어요/었어요";
+  if(/\bvreau sa\b|\bvreau să\b/.test(t)) return "-고 싶어요";
+  if(/\btrebuie sa\b|\btrebuie să\b|\bmust\b/.test(t)) return "-아/어야 하다";
+  if(/\bnu pot sa\b|\bnu pot să\b|\bcannot\b|\bcan't\b/.test(t)) return "-(으)ㄹ 수 없어요";
+  if(/\bpot sa\b|\bpot să\b|\bcan\b/.test(t)) return "-(으)ㄹ 수 있어요";
+
+  const tense = detectTense(t);
+  if(tense === "past") return "-았어요/었어요";
+  if(tense === "future") return "-(으)ㄹ 거예요";
 
   return "-아요/어요";
 }
+
 function buildSentenceFromChunk(chunk){
-
   const s = makeEmptySentence();
-  const clean = normRo(chunk);
+  const clean = normalizeVerbForms(chunk);
 
-  /* =========================
-     SUBJECT
-  ========================= */
   const subjectMatches = findMatchesAdvanced(clean, "subject");
-if(!s.subject){
-  const implicit = detectImplicitSubject(clean);
-  if(implicit){
-    s.subject = implicit;
+  if(subjectMatches.length){
+    s.subject = subjectMatches[0];
+    s.subjects = [...subjectMatches];
+  } else {
+    const implicit = detectImplicitSubject(clean);
+    if(implicit){
+      s.subject = implicit;
+      s.subjects = [implicit];
+    }
   }
 
-
-  /* =========================
-     TIME
-  ========================= */
   const timeMatches = findMatchesAdvanced(clean, "time");
-
   if(timeMatches.length){
     s.time = timeMatches[0];
     s.times = [...timeMatches];
   }
 
-  /* =========================
-     PLACE
-  ========================= */
   const placeMatches = findMatchesAdvanced(clean, "place");
-
   if(placeMatches.length){
     s.place = placeMatches[0];
     s.places = [...placeMatches];
   }
 
-  /* =========================
-     OBJECT
-  ========================= */
   const objectMatches = findMatchesAdvanced(clean, "object");
-
   if(objectMatches.length){
     s.object = objectMatches[0];
     s.objects = [...objectMatches];
   }
 
-  /* =========================
-     ADJECTIVES (OBJECT)
-  ========================= */
-  const adjectiveMatches = findMatchesAdvanced(clean, "adjective");
-
-  if(adjectiveMatches.length){
-    s.objectAdjs = [...adjectiveMatches];
+  const objectAdjMatches = findMatchesAdvanced(clean, "objectAdj");
+  if(objectAdjMatches.length){
+    s.objectAdjs = [...objectAdjMatches];
   }
 
-  /* =========================
-     MOD (ADVERBS)
-  ========================= */
-  const modMatches = findMatchesAdvanced(clean, "mod");
+  const subjectAdjMatches = findMatchesAdvanced(clean, "subjectAdj");
+  if(subjectAdjMatches.length){
+    s.subjectAdjs = [...subjectAdjMatches];
+  }
 
+  const modMatches = findMatchesAdvanced(clean, "mod");
   if(modMatches.length){
     s.mod = modMatches[0];
     s.mods = [...modMatches];
   }
 
-  /* =========================
-     VERB
-  ========================= */
   const verbMatches = findMatchesAdvanced(clean, "verb");
-
   if(verbMatches.length){
     s.verb = verbMatches[0];
     s.verbs = [...verbMatches];
   }
 
-  /* =========================
-     CONJUG / GRAMMAR
-  ========================= */
   const grammarMatches = findMatchesAdvanced(clean, "conjug");
-
   if(grammarMatches.length){
     s.conjug = grammarMatches[0];
-  }else{
+  } else {
     s.conjug = detectConjFromText(clean);
   }
 
-  /* =========================
-     EXTRA FLAGS (LOGIC)
-  ========================= */
-
-  // cauză
   if(
     s.conjug === "-기 때문에" ||
     /\bpentru ca\b|\bpentru că\b|\bbecause\b/.test(clean)
@@ -1894,7 +1927,6 @@ if(!s.subject){
     s.reason = true;
   }
 
-  // condiție
   if(
     s.conjug === "-면" ||
     /\bdaca\b|\bdacă\b|\bif\b/.test(clean)
@@ -1902,12 +1934,10 @@ if(!s.subject){
     s.condition = true;
   }
 
-  // contrast
   if(/\bdar\b|\bbut\b/.test(clean)){
     s.contrast = true;
   }
 
-  // secvență
   if(/\bdupa\b|\bdupă\b|\bafter\b/.test(clean)){
     s.sequence = true;
   }
@@ -1922,9 +1952,8 @@ function translateRoToKo(text){
   sentences = [];
   actives = [];
 
-  parts.forEach(chunk => {
+  parts.forEach(chunk=>{
     const s = buildSentenceFromChunk(chunk);
-
     sentences.push(s);
     actives.push(makeAllActive());
   });
@@ -1944,21 +1973,7 @@ function translateRoToKo(text){
     roFixed: buildFullRomanian()
   };
 }
-if(!s.conjug){
 
-  const tense = detectTense(clean);
-
-  if(tense === "past"){
-    s.conjug = "-았어요/었어요";
-  }
-  else if(tense === "future"){
-    s.conjug = "-(으)ㄹ 거예요";
-  }
-  else{
-    s.conjug = "-아요/어요";
-  }
-}
-// forme conjugate -> infinitiv
 const RO_FORM_TO_INF = {
   "plec":"a merge","pleci":"a merge","pleaca":"a merge","pleacă":"a merge","plecam":"a merge","plecati":"a merge","plecați":"a merge",
   "merg":"a merge","mergi":"a merge","merge":"a merge","mergem":"a merge","mergeti":"a merge","mergeți":"a merge",
