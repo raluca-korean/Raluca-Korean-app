@@ -1773,8 +1773,12 @@ function translateRoToKo(text){
     ];
 
     // TIME
-    const time = findMatchesAdvanced(chunk, "nouns")
-      .filter(w => ["오늘","어제","내일"].includes(w));
+const time = findMatchesAdvanced(chunk, "time");
+
+if(time.length){
+  s.time = time[0];
+}
+   .filter(w => ["오늘","어제","내일"].includes(w));
 
     if(time.length) s.time = time[0];
 
