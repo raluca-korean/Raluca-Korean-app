@@ -263,30 +263,707 @@ Ex: Today I go to school, read a book, and then eat."></textarea>
   <div id="clausesWrap" class="clauses-wrap"></div>
 
 </div>
-  <script> 
-    function addClause(){
-  sentences.push(makeEmptySentence());
-  actives.push(makeAllActive());
+
+<script>
+/* =========================================================
+   1) VOCAB
+========================================================= */
+const vocab = {
+  subject: [
+    {ko:"저", ro:"eu", en:"i"},
+    {ko:"너", ro:"tu", en:"you"},
+    {ko:"그", ro:"el", en:"he"},
+    {ko:"그녀", ro:"ea", en:"she"},
+    {ko:"우리", ro:"noi", en:"we"},
+    {ko:"그들", ro:"ei", en:"they"},
+    {ko:"학생", ro:"student", en:"student"},
+    {ko:"선생님", ro:"profesor", en:"teacher"},
+    {ko:"친구", ro:"prieten", en:"friend"}
+  ],
+
+  time: [
+    {ko:"", ro:"", en:""},
+    {ko:"오늘", ro:"astăzi", en:"today"},
+    {ko:"어제", ro:"ieri", en:"yesterday"},
+    {ko:"내일", ro:"mâine", en:"tomorrow"},
+    {ko:"요즘", ro:"în ultima vreme", en:"these days"},
+    {ko:"지금", ro:"acum", en:"now"},
+    {ko:"방금", ro:"tocmai", en:"just now"}
+  ],
+
+  place: [
+    {ko:"", ro:"", en:""},
+    {ko:"집", ro:"acasă", en:"home"},
+    {ko:"학교", ro:"școală", en:"school"},
+    {ko:"회사", ro:"companie", en:"company"},
+    {ko:"도서관", ro:"bibliotecă", en:"library"},
+    {ko:"식당", ro:"restaurant", en:"restaurant"},
+    {ko:"카페", ro:"cafenea", en:"cafe"},
+    {ko:"병원", ro:"spital", en:"hospital"}
+  ],
+
+  object: [
+    {ko:"", ro:"", en:""},
+    {ko:"밥", ro:"mâncare", en:"food"},
+    {ko:"책", ro:"carte", en:"book"},
+    {ko:"커피", ro:"cafea", en:"coffee"},
+    {ko:"물", ro:"apă", en:"water"},
+    {ko:"영화", ro:"film", en:"movie"},
+    {ko:"문제", ro:"problemă", en:"problem"},
+    {ko:"숙제", ro:"temă", en:"homework"}
+  ],
+
+  mod: [
+    {ko:"", ro:"", en:""},
+    {ko:"열심히", ro:"cu sârguință", en:"hard"},
+    {ko:"천천히", ro:"încet", en:"slowly"},
+    {ko:"빨리", ro:"repede", en:"quickly"},
+    {ko:"계속", ro:"continuu", en:"continuously"},
+    {ko:"조용히", ro:"în liniște", en:"quietly"}
+  ],
+
+  verb: [
+    {base:"가다", present:"가요", past:"갔어요", future:"갈 거예요", ro:"a merge", en:"go"},
+    {base:"오다", present:"와요", past:"왔어요", future:"올 거예요", ro:"a veni", en:"come"},
+    {base:"먹다", present:"먹어요", past:"먹었어요", future:"먹을 거예요", ro:"a mânca", en:"eat"},
+    {base:"마시다", present:"마셔요", past:"마셨어요", future:"마실 거예요", ro:"a bea", en:"drink"},
+    {base:"읽다", present:"읽어요", past:"읽었어요", future:"읽을 거예요", ro:"a citi", en:"read"},
+    {base:"쓰다", present:"써요", past:"썼어요", future:"쓸 거예요", ro:"a scrie", en:"write"},
+    {base:"공부하다", present:"공부해요", past:"공부했어요", future:"공부할 거예요", ro:"a studia", en:"study"},
+    {base:"보다", present:"봐요", past:"봤어요", future:"볼 거예요", ro:"a vedea", en:"see"},
+    {base:"사다", present:"사요", past:"샀어요", future:"살 거예요", ro:"a cumpăra", en:"buy"},
+    {base:"걷다", present:"걸어요", past:"걸었어요", future:"걸을 거예요", ro:"a merge pe jos", en:"walk"},
+    {base:"달리다", present:"달려요", past:"달렸어요", future:"달릴 거예요", ro:"a alerga", en:"run"},
+    {base:"하다", present:"해요", past:"했어요", future:"할 거예요", ro:"a face", en:"do"}
+  ],
+
+  connector: [
+    {ko:"", ro:"", en:""},
+    {ko:"고", ro:"și", en:"and"},
+    {ko:"고 나서", ro:"după ce", en:"after"},
+    {ko:"면서", ro:"în timp ce", en:"while"},
+    {ko:"지만", ro:"dar", en:"but"},
+    {ko:"기 때문에", ro:"pentru că", en:"because"}
+  ]
+};
+
+/* =========================================================
+   2) MAP INDEX
+========================================================= */
+const INDEX = {
+  subject: {},
+  time: {},
+  place: {},
+  object: {},
+  mod: {},
+  verb: {},
+  connector: {}
+};
+
+function normText(s){
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[.,!?;:()[\]"]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function registerIndex(cat, key, value){
+  const k = normText(key);
+  if(!k) return;
+  INDEX[cat][k] = value;
+}
+
+function buildIndex(){
+  vocab.subject.forEach(x=>{
+    registerIndex("subject", x.ro, x.ko);
+    registerIndex("subject", x.en, x.ko);
+  });
+
+  vocab.time.forEach(x=>{
+    registerIndex("time", x.ro, x.ko);
+    registerIndex("time", x.en, x.ko);
+  });
+
+  vocab.place.forEach(x=>{
+    registerIndex("place", x.ro, x.ko);
+    registerIndex("place", x.en, x.ko);
+  });
+
+  vocab.object.forEach(x=>{
+    registerIndex("object", x.ro, x.ko);
+    registerIndex("object", x.en, x.ko);
+  });
+
+  vocab.mod.forEach(x=>{
+    registerIndex("mod", x.ro, x.ko);
+    registerIndex("mod", x.en, x.ko);
+  });
+
+  vocab.verb.forEach(x=>{
+    registerIndex("verb", x.ro, x.base);
+    registerIndex("verb", x.en, x.base);
+  });
+
+  vocab.connector.forEach(x=>{
+    registerIndex("connector", x.ro, x.ko);
+    registerIndex("connector", x.en, x.ko);
+  });
+
+  /* forme verbale EN */
+  [
+    ["going","가다"],["went","가다"],["gone","가다"],
+    ["coming","오다"],["came","오다"],
+    ["eating","먹다"],["ate","먹다"],
+    ["drinking","마시다"],["drank","마시다"],
+    ["reading","읽다"],["writing","쓰다"],["wrote","쓰다"],
+    ["studying","공부하다"],["studied","공부하다"],
+    ["walking","걷다"],["walked","걷다"],
+    ["running","달리다"],["ran","달리다"],
+    ["buying","사다"],["bought","사다"],
+    ["doing","하다"],["did","하다"]
+  ].forEach(([a,b])=>registerIndex("verb", a, b));
+
+  /* forme verbale RO */
+  [
+    ["merg","가다"],["merge","가다"],["mergeam","가다"],["mergeai","가다"],["mergea","가다"],["mergem","가다"],
+    ["vin","오다"],["vine","오다"],["veneam","오다"],["venea","오다"],["venim","오다"],
+    ["mananc","먹다"],["mănânc","먹다"],["mancam","먹다"],["mâncam","먹다"],["manca","먹다"],["mănâncă","먹다"],
+    ["beau","마시다"],["beam","마시다"],["bea","마시다"],
+    ["citesc","읽다"],["citeam","읽다"],["citea","읽다"],["citim","읽다"],
+    ["scriu","쓰다"],["scriam","쓰다"],["scria","쓰다"],
+    ["studiez","공부하다"],["studiam","공부하다"],
+    ["cumpar","사다"],["cumpăr","사다"],["cumparam","사다"],["cumpăram","사다"],
+    ["alerg","달리다"],["alergam","달리다"],
+    ["merg pe jos","걷다"],["plimb","걷다"],
+    ["fac","하다"],["faceam","하다"],["făceam","하다"]
+  ].forEach(([a,b])=>registerIndex("verb", a, b));
+}
+buildIndex();
+
+/* =========================================================
+   3) HELPERS
+========================================================= */
+function hasBatchim(word){
+  if(!word) return false;
+  const ch = word.charCodeAt(word.length - 1);
+  const code = ch - 0xAC00;
+  if(code < 0 || code > 11171) return false;
+  return (code % 28) !== 0;
+}
+
+function subjectParticle(word){
+  return hasBatchim(word) ? "은" : "는";
+}
+
+function objectParticle(word){
+  return hasBatchim(word) ? "을" : "를";
+}
+
+function placeParticle(word, baseVerb){
+  const motion = new Set(["가다","오다"]);
+  return motion.has(baseVerb) ? "에" : "에서";
+}
+
+function findByKo(cat, ko){
+  if(cat === "verb"){
+    return vocab.verb.find(v => v.base === ko) || vocab.verb[0];
+  }
+  return vocab[cat].find(v => v.ko === ko) || vocab[cat][0];
+}
+
+function getKo(cat, idx){
+  if(cat === "verb") return vocab.verb[idx];
+  return vocab[cat][idx];
+}
+
+function indexOfKo(cat, ko){
+  if(cat === "verb") return Math.max(0, vocab.verb.findIndex(v => v.base === ko));
+  return Math.max(0, vocab[cat].findIndex(v => v.ko === ko));
+}
+
+function chooseLinker(a, b){
+  if(a.explicitConnector) return a.explicitConnector;
+  if(a.reason) return "기 때문에";
+  if(a.sequence) return "고 나서";
+  if(a.contrast) return "지만";
+  if(a.simultaneous) return "면서";
+  return "고";
+}
+
+function buildLinkedVerb(baseVerb, linker){
+  const v = findByKo("verb", baseVerb);
+  if(!v) return "";
+
+  const stem = v.base.replace(/다$/, "");
+
+  if(linker === "고") return stem + "고";
+  if(linker === "고 나서") return stem + "고 나서";
+  if(linker === "면서") return stem + "면서";
+  if(linker === "지만") return stem + "지만";
+  if(linker === "기 때문에") return stem + "기 때문에";
+
+  return v.present;
+}
+
+function detectInputLang(text){
+  const t = " " + normText(text) + " ";
+  const roHints = [" eu "," noi "," tu "," si "," dar "," pentru ca "," dupa "," maine "," ieri "];
+  const enHints = [" i "," we "," you "," and "," but "," because "," after "," tomorrow "," yesterday "];
+
+  let ro = 0, en = 0;
+  roHints.forEach(x=>{ if(t.includes(x)) ro++; });
+  enHints.forEach(x=>{ if(t.includes(x)) en++; });
+
+  return en > ro ? "en" : "ro";
+}
+
+function detectImplicitSubject(text){
+  const t = normText(text);
+
+  if(/\b(i|go|went|eat|drink|read|write|study|buy|run|walk|do)\b/.test(t)) return "저";
+  if(/\b(we)\b/.test(t)) return "우리";
+  if(/\b(you)\b/.test(t)) return "너";
+
+  if(/\b(merg|mananc|mănânc|beau|citesc|scriu|studiez|cumpar|cumpăr|alerg|fac)\b/.test(t)) return "저";
+  if(/\b(mergem|mancam|mâncăm|bem|citim|scriem|studiem|cumparam|cumpărăm|facem)\b/.test(t)) return "우리";
+  if(/\b(mergi|mananci|mănânci|bei|citești|scrii|faci)\b/.test(t)) return "너";
+
+  return "";
+}
+
+function detectTense(text){
+  const t = normText(text);
+
+  if(/\b(yesterday|went|ate|drank|came|wrote|studied|did|was|were)\b/.test(t)) return "past";
+  if(/\b(tomorrow|will|gonna)\b/.test(t)) return "future";
+  if(/\b(ieri|aseara|aseară|trecut|mergeam|veneam|mancam|mâncam|citeam|scriam|faceam|făceam)\b/.test(t)) return "past";
+  if(/\b(maine|mâine|voi|o sa|o să)\b/.test(t)) return "future";
+
+  return "present";
+}
+
+function splitInputClauses(text){
+  const raw = normText(text);
+  return raw
+    .split(/\b(si|and|dar|but|apoi|then|dupa ce|after|before|inainte|in timp ce|while|because|pentru ca)\b/)
+    .map(x => normText(x))
+    .filter(Boolean)
+    .filter(x => ![
+      "si","and","dar","but","apoi","then","dupa ce","after","before","inainte",
+      "in timp ce","while","because","pentru ca"
+    ].includes(x));
+}
+
+function findBestMatch(text, category){
+  const clean = normText(text);
+  const dict = INDEX[category];
+  const keys = Object.keys(dict).sort((a,b)=>b.length-a.length);
+
+  for(const k of keys){
+    const re = new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+    if(re.test(clean)) return dict[k];
+  }
+  return "";
+}
+
+/* =========================================================
+   4) STATE
+========================================================= */
+let inputLangMode = "ro";
+let clauses = [makeClause(), makeClause()];
+
+function makeClause(){
+  return {
+    subject: 0,
+    time: 0,
+    place: 0,
+    object: 0,
+    mod: 0,
+    verb: 0,
+    connector: 1
+  };
+}
+
+/* =========================================================
+   5) PARSER
+========================================================= */
+function buildSentenceFromChunk(chunk){
+  const s = makeClause();
+  const clean = normText(chunk);
+
+  let subjectKo = findBestMatch(clean, "subject");
+  if(!subjectKo){
+    subjectKo = detectImplicitSubject(clean);
+  }
+  if(subjectKo){
+    s.subject = indexOfKo("subject", subjectKo);
+  }
+
+  const timeKo = findBestMatch(clean, "time");
+  if(timeKo){
+    s.time = indexOfKo("time", timeKo);
+  }
+
+  const placeKo = findBestMatch(clean, "place");
+  if(placeKo){
+    s.place = indexOfKo("place", placeKo);
+  }
+
+  const objectKo = findBestMatch(clean, "object");
+  if(objectKo){
+    s.object = indexOfKo("object", objectKo);
+  }
+
+  const modKo = findBestMatch(clean, "mod");
+  if(modKo){
+    s.mod = indexOfKo("mod", modKo);
+  }
+
+  const verbKo = findBestMatch(clean, "verb");
+  if(verbKo){
+    s.verb = indexOfKo("verb", verbKo);
+  }
+
+  const tense = detectTense(clean);
+  s.tense = tense;
+
+  if(/\b(pentru ca|because)\b/.test(clean)){
+    s.reason = true;
+    s.explicitConnector = "기 때문에";
+  }
+  if(/\b(dupa|după|after|then)\b/.test(clean)){
+    s.sequence = true;
+    s.explicitConnector = "고 나서";
+  }
+  if(/\b(dar|but)\b/.test(clean)){
+    s.contrast = true;
+    s.explicitConnector = "지만";
+  }
+  if(/\b(in timp ce|while)\b/.test(clean)){
+    s.simultaneous = true;
+    s.explicitConnector = "면서";
+  }
+
+  return s;
+}
+
+function parseFreeText(){
+  const txt = document.getElementById("freeInput").value.trim();
+  if(!txt) return;
+
+  const lang = inputLangMode === "auto" ? detectInputLang(txt) : inputLangMode;
+  const parts = splitInputClauses(txt);
+
+  clauses = parts.length ? parts.map(buildSentenceFromChunk) : [makeClause()];
+  renderAll();
+
+  console.log("Detected input language:", lang);
+}
+
+/* =========================================================
+   6) KOREAN BUILD
+========================================================= */
+function buildClauseKo(c, isLast, prevSubjectKo){
+  const subj = getKo("subject", c.subject);
+  const time = getKo("time", c.time);
+  const place = getKo("place", c.place);
+  const object = getKo("object", c.object);
+  const mod = getKo("mod", c.mod);
+  const verb = getKo("verb", c.verb);
+
+  const parts = [];
+
+  const subjKo = subj.ko || "";
+  if(subjKo && subjKo !== prevSubjectKo){
+    parts.push(subjKo + subjectParticle(subjKo));
+  }
+
+  if(time.ko) parts.push(time.ko);
+  if(place.ko) parts.push(place.ko + placeParticle(place.ko, verb.base));
+  if(object.ko) parts.push(object.ko + objectParticle(object.ko));
+  if(mod.ko) parts.push(mod.ko);
+
+  if(isLast){
+    if(c.tense === "past") parts.push(verb.past);
+    else if(c.tense === "future") parts.push(verb.future);
+    else parts.push(verb.present);
+  } else {
+    const linker = chooseLinker(c, clauses[clauses.indexOf(c)+1]);
+    parts.push(buildLinkedVerb(verb.base, linker));
+  }
+
+  return {
+    text: parts.join(" ").replace(/\s+/g," ").trim(),
+    subjectKo: subjKo
+  };
+}
+
+function buildFullKorean(){
+  let out = [];
+  let prevSubjectKo = "";
+
+  clauses.forEach((c, i)=>{
+    const built = buildClauseKo(c, i === clauses.length - 1, prevSubjectKo);
+    if(built.text) out.push(built.text);
+    prevSubjectKo = built.subjectKo || prevSubjectKo;
+  });
+
+  return out.join(" ").replace(/\s+/g," ").trim();
+}
+
+/* =========================================================
+   7) RO / EN BUILD
+========================================================= */
+function buildClauseRo(c, isLast, prevSubjectKo){
+  const subj = getKo("subject", c.subject);
+  const time = getKo("time", c.time);
+  const place = getKo("place", c.place);
+  const object = getKo("object", c.object);
+  const mod = getKo("mod", c.mod);
+  const verb = getKo("verb", c.verb);
+
+  const parts = [];
+
+  if(subj.ko && subj.ko !== prevSubjectKo) parts.push(subj.ro);
+  if(time.ro) parts.push(time.ro);
+
+  let verbRo = verb.ro.replace(/^a\s+/,"");
+  if(c.tense === "past") verbRo += " (în trecut)";
+  else if(c.tense === "future") verbRo = "voi " + verbRo;
+
+  if(place.ro) parts.push(place.ro);
+  if(object.ro) parts.push(object.ro);
+  if(mod.ro) parts.push(mod.ro);
+
+  if(isLast){
+    parts.push(verbRo);
+  } else {
+    const linker = chooseLinker(c, clauses[clauses.indexOf(c)+1]);
+    const connRo = findByKo("connector", linker)?.ro || "și";
+    parts.push(verbRo + " " + connRo);
+  }
+
+  return {
+    text: parts.join(" ").replace(/\s+/g," ").trim(),
+    subjectKo: subj.ko || ""
+  };
+}
+
+function buildClauseEn(c, isLast, prevSubjectKo){
+  const subj = getKo("subject", c.subject);
+  const time = getKo("time", c.time);
+  const place = getKo("place", c.place);
+  const object = getKo("object", c.object);
+  const mod = getKo("mod", c.mod);
+  const verb = getKo("verb", c.verb);
+
+  const parts = [];
+
+  if(subj.ko && subj.ko !== prevSubjectKo) parts.push(subj.en);
+  if(time.en) parts.push(time.en);
+  if(place.en) parts.push(place.en);
+  if(mod.en) parts.push(mod.en);
+
+  let verbEn = verb.en;
+  if(c.tense === "past") verbEn += " (past)";
+  else if(c.tense === "future") verbEn = "will " + verbEn;
+
+  if(object.en) parts.push(object.en);
+
+  if(isLast){
+    parts.push(verbEn);
+  } else {
+    const linker = chooseLinker(c, clauses[clauses.indexOf(c)+1]);
+    const connEn = findByKo("connector", linker)?.en || "and";
+    parts.push(verbEn + " " + connEn);
+  }
+
+  return {
+    text: parts.join(" ").replace(/\s+/g," ").trim(),
+    subjectKo: subj.ko || ""
+  };
+}
+
+function buildFullRomanian(){
+  let out = [];
+  let prevSubjectKo = "";
+
+  clauses.forEach((c, i)=>{
+    const built = buildClauseRo(c, i === clauses.length - 1, prevSubjectKo);
+    if(built.text) out.push(built.text);
+    prevSubjectKo = built.subjectKo || prevSubjectKo;
+  });
+
+  return out.join(" ").replace(/\s+/g," ").trim();
+}
+
+function buildFullEnglish(){
+  let out = [];
+  let prevSubjectKo = "";
+
+  clauses.forEach((c, i)=>{
+    const built = buildClauseEn(c, i === clauses.length - 1, prevSubjectKo);
+    if(built.text) out.push(built.text);
+    prevSubjectKo = built.subjectKo || prevSubjectKo;
+  });
+
+  return out.join(" ").replace(/\s+/g," ").trim();
+}
+
+/* =========================================================
+   8) UI
+========================================================= */
+function cycleValue(clauseIndex, key){
+  const c = clauses[clauseIndex];
+  const arr = vocab[key];
+  c[key] = (c[key] + 1) % arr.length;
+  renderAll();
+}
+
+function renderClauseCard(c, i){
+  const wrap = document.createElement("div");
+  wrap.className = "clause-card";
+
+  const head = document.createElement("div");
+  head.className = "clause-head";
+  head.innerHTML = `
+    <div class="clause-title">Propoziția ${i + 1}</div>
+    <div class="clause-actions">
+      <button class="ghost" onclick="randomClause(${i})">Random</button>
+      <button class="ghost" onclick="removeClause(${i})">Șterge</button>
+    </div>
+  `;
+
+  const table = document.createElement("div");
+  table.className = "table";
+
+  const defs = [
+    ["subject","Subject"],
+    ["time","Time"],
+    ["place","Place"],
+    ["object","Object"],
+    ["mod","Mod"],
+    ["verb","Verb"],
+    ["connector","Connector"]
+  ];
+
+  defs.forEach(([key, label])=>{
+    const col = document.createElement("div");
+    col.className = "col";
+    col.onclick = ()=>cycleValue(i, key);
+
+    let main = "";
+    let sub = "";
+
+    if(key === "verb"){
+      const v = getKo("verb", c[key]);
+      main = v.present;
+      sub = `${v.base} / ${v.ro} / ${v.en}`;
+    } else if(key === "connector"){
+      const link = getKo("connector", c[key]);
+      main = link.ko || "auto";
+      sub = link.ro || "auto";
+    } else {
+      const item = getKo(key, c[key]);
+      main = item.ko || "—";
+      sub = [item.ro, item.en].filter(Boolean).join(" / ");
+    }
+
+    col.innerHTML = `
+      <div class="col-header">${label}</div>
+      <div class="col-body-main">${main}</div>
+      <div class="col-body-sub">${sub}</div>
+    `;
+
+    table.appendChild(col);
+  });
+
+  wrap.appendChild(head);
+  wrap.appendChild(table);
+
+  return wrap;
+}
+
+function renderClauses(){
+  const root = document.getElementById("clausesWrap");
+  root.innerHTML = "";
+  clauses.forEach((c, i)=>root.appendChild(renderClauseCard(c, i)));
+}
+
+function updatePreview(){
+  document.getElementById("previewKo").innerText = buildFullKorean() || "(nimic)";
+  document.getElementById("previewRo").innerText = buildFullRomanian() || "";
+  document.getElementById("previewEn").innerText = buildFullEnglish() || "";
+}
+
+function renderAll(){
+  renderClauses();
+  updatePreview();
+}
+
+/* =========================================================
+   9) ACTIONS
+========================================================= */
+function addClause(){
+  clauses.push(makeClause());
+  renderAll();
+}
+
+function removeClause(i){
+  if(clauses.length === 1){
+    clauses = [makeClause()];
+  } else {
+    clauses.splice(i, 1);
+  }
+  renderAll();
+}
+
+function randomClause(i){
+  clauses[i] = {
+    subject: Math.floor(Math.random() * vocab.subject.length),
+    time: Math.floor(Math.random() * vocab.time.length),
+    place: Math.floor(Math.random() * vocab.place.length),
+    object: Math.floor(Math.random() * vocab.object.length),
+    mod: Math.floor(Math.random() * vocab.mod.length),
+    verb: Math.floor(Math.random() * vocab.verb.length),
+    connector: Math.floor(Math.random() * vocab.connector.length)
+  };
   renderAll();
 }
 
 function randomAll(){
-  sentences.forEach((s, i) => {
-    columns.forEach(col=>{
-      const arr = col.data.filter(Boolean);
-      if(arr.length){
-        s[col.key] = arr[Math.floor(Math.random()*arr.length)];
-      }
-    });
-  });
+  clauses = clauses.map(()=>({
+    subject: Math.floor(Math.random() * vocab.subject.length),
+    time: Math.floor(Math.random() * vocab.time.length),
+    place: Math.floor(Math.random() * vocab.place.length),
+    object: Math.floor(Math.random() * vocab.object.length),
+    mod: Math.floor(Math.random() * vocab.mod.length),
+    verb: Math.floor(Math.random() * vocab.verb.length),
+    connector: Math.floor(Math.random() * vocab.connector.length)
+  }));
   renderAll();
 }
 
 function clearAll(){
-  sentences = [makeEmptySentence()];
-  actives = [makeAllActive()];
+  clauses = [makeClause()];
+  document.getElementById("freeInput").value = "";
   renderAll();
 }
- </script>
-  <script src="builder.js"></script>
+
+function setInputLang(mode){
+  inputLangMode = mode;
+  document.getElementById("langRO").classList.toggle("active", mode === "ro");
+  document.getElementById("langEN").classList.toggle("active", mode === "en");
+  document.getElementById("langAUTO").classList.toggle("active", mode === "auto");
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+renderAll();
+</script>
+</body>
 </html>
