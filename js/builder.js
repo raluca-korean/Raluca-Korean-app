@@ -273,24 +273,35 @@ function joinVerbs(verbs){
   return "";
 }    
    
-  function buildDictionaryIndex(dict){
+function buildVocabIndex(vocab){
 
   const index = {};
 
-  Object.keys(dict).forEach(category=>{
+  Object.entries(vocab).forEach(([category, list])=>{
 
     index[category] = {};
 
-    dict[category].forEach(entry=>{
-      const key = entry.ro.toLowerCase();
-      index[category][key] = entry.ko;
+    list.forEach(entry=>{
+
+      if(!entry.ko) return;
+
+      const ko = entry.ko.trim();
+
+      if(entry.ro){
+        index[category][entry.ro.toLowerCase()] = ko;
+      }
+
+      if(entry.en){
+        index[category][entry.en.toLowerCase()] = ko;
+      }
+
     });
 
   });
 
   return index;
 }
-        /* =========================
+/* =========================
    2) STORAGE: CUSTOM WORDS
    ========================= */
 const STORAGE_KEY = "ralucaKoreanCustomWords_v2";
