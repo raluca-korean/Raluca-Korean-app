@@ -1663,21 +1663,26 @@ function buildVocabIndex(vocab){
   return index;
 }
 function findMatchesAdvanced(text, category){
+
   const results = [];
   const dict = VOCAB_INDEX[category] || {};
+
   const clean = normRo(text);
 
   Object.entries(dict)
-    .sort((a, b) => b[0].length - a[0].length) // expresiile lungi înainte
-    .forEach(([key, ko]) => {
-      if(clean.includes(key) && !results.includes(ko)){
+    .sort((a,b)=>b[0].length - a[0].length)
+    .forEach(([key, ko])=>{
+
+      const regex = new RegExp(`\\b${key}\\b`);
+
+      if(regex.test(clean) && !results.includes(ko)){
         results.push(ko);
       }
+
     });
 
   return results;
 }
-
 function splitInputClauses(text){
   const clean = normRo(text);
 
