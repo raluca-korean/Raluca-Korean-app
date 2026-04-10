@@ -274,8 +274,11 @@ function buildSentence(list){
     const next = list[i+1];
 
     const connector = chooseConnector(list[i], next);
-
-    result += stripEnding(clause) + connector + " ";
+if(connector){
+  result += stripEnding(clause) + connector + " ";
+} else {
+  result += clause + " ";
+}
   }
 
   return cleanJoin([result]);
