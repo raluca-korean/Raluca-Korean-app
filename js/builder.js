@@ -1778,41 +1778,96 @@ const RO_FORM_TO_INF = {
    21) RO -> KO (butonul "Tradu în coreeană")
    - IMPORTANT: aici doar umple builder-ul, nu e „motor separat”
    ========================= */
-    function translateRoToKo(roText){
+function translateRoToKo(text){
 
-const parts = splitRomanianClauses(roText)
+  const clean = normRo(text);
 
-sentences=[]
-actives=[]
+  // 🔥 detect limbă
+  const lang = (
+    clean.includes("and") ||
+    clean.includes("but") ||
+    clean.includes("because")
+  ) ? "en" : "ro";
 
-parts.forEach((p,i)=>{
+  // 🔥 split propoziții
+  const parts = clean.split(
+    lang === "ro"
+      ? /(si|dar|apoi|dupa|pentru ca|ca sa)/
+      : /(and|but|then|after|because)/
+  );
 
-const st = parseRoToState(p)
+  sentences = [];
+  actives = [];
 
-if(i>0) st.subject=""
+  for(let chunk of parts){
 
-if(i < parts.length-1){
-st.conjug="-고"
-}else{
-st.conjug=""
+    chunk = chunk.trim();
+    if(!chunk) continue;
+
+    if(["si","dar","and","but","then"].includes(chunk)) continue;
+
+    const s = makeEmptySentence();
+
+    const words = chunk.split(/\s+/);
+
+    for(const word of words){
+
+      // SUBJECT
+      if(["eu","i"].includes(word)) s.subject = "저";
+      if(["noi","we"].includes(word)) s.subject = "우리";
+      if(["tu","you"].includes(word)) s.subject = "너";
+
+      // TIME
+      if(["azi","astazi","today"].includes(word)) s.time = "오늘";
+      if(["ieri","yesterday"].includes(word)) s.time = "어제";
+      if(["maine","tomorrow"].includes(word)) s.time = "내일";
+
+      // PLACE
+      if(["acasa","home"].includes(word)) s.places.push("집");
+      if(["scoala","school"].includes(word)) s.places.push("학교");
+
+      // OBJECT
+      if(["carte","book"].includes(word)) s.objects.push("책");
+      if(["apa","water"].includes(word)) s.objects.push("물");
+
+      // VERB
+      if(["merg","go"].includes(word)) s.verbs.push("가다");
+      if(["mananc","eat"].includes(word)) s.verbs.push("먹다");
+      if(["beau","drink"].includes(word)) s.verbs.push("마시다");
+    }
+
+    // 🔥 GRAMMAR DETECTION (KEY)
+    if(clean.includes("dupa") || clean.includes("after")){
+      s.conjug = "-고 나서";
+    }
+
+    if(clean.includes("pentru ca") || clean.includes("because")){
+      s.conjug = "-기에";
+      s.reason = true;
+    }
+
+    if(clean.includes("ca sa") || clean.includes("to")){
+      s.conjug = "-(으)려고";
+    }
+
+    if(clean.includes("dar") || clean.includes("but")){
+      s.conjug = "-지만";
+    }
+
+    sentences.push(s);
+    actives.push(makeAllActive());
+  }
+
+  showExtraClauses = sentences.length > 1;
+
+  renderAll();
+
+  return {
+    ko: buildComplexSentence(),
+    roFixed: buildFullRomanian()
+  };
 }
-
-sentences.push(st)
-actives.push(makeAllActive())
-
-})
-
-showExtraClauses = parts.length>1
-
-renderAll()
-
-return{
-ko: buildComplexSentence(),
-roFixed: buildFullRomanian()
-}
-
-}
-    /* =========================
+/* =========================
    22) UI EVENTS
    ========================= */
 function setupUI(){
