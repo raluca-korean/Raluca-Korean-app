@@ -2111,8 +2111,8 @@ function buildFullRomanian(){
 
     const res = await fetch("./vocab-korean.json");
     vocab = await res.json();   // ✅ FIX
-
-    dictionaryIndex = buildDictionaryIndex(vocab); // ✅ mutat aici
+VOCAB_INDEX = buildVocabIndex(vocab);
+     dictionaryIndex = buildDictionaryIndex(vocab); // ✅ mutat aici
 
     const map = {
       subject: "subjects",
