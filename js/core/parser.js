@@ -1,29 +1,114 @@
-window.Parser = {
+parse(text){
 
-  // =========================
-  // NORMALIZE
-  // =========================
-  normalize(text){
-    return (text || "")
-      .toLowerCase()
-      .trim()
-      .replace(/[.,!?;:]/g, "")
-      .replace(/ă/g, "a")
-      .replace(/â/g, "a")
-      .replace(/î/g, "i")
-      .replace(/ș/g, "s")
-      .replace(/ş/g, "s")
-      .replace(/ț/g, "t")
-      .replace(/ţ/g, "t");
-  },
+  const clean = this.normalize(text);
 
-  tokenize(text){
-    return this.normalize(text)
-      .split(/\s+/)
-      .filter(Boolean);
-  },
+  // 🔥 detect limbă
+  const lang = (
+    clean.includes("and") ||
+    clean.includes("but") ||
+    clean.includes("because")
+  ) ? "en" : "ro";
 
-  // =========================
+  // 🔥 split propoziții
+  const parts = clean.split(
+    lang === "ro"
+      ? /(si|dar|apoi|dupa|pentru ca|ca sa)/
+      : /(and|but|then|after|because)/
+  );
+
+  const sentences = [];
+
+  for(let chunk of parts){
+
+    chunk = chunk.trim();
+    if(!chunk) continue;
+
+    // ignorăm conectorii puri
+    if(["si","dar","and","but","then"].includes(chunk)) continue;
+
+    const words = chunk.split(/\s+/);
+
+    const s = window.SENTENCE_BUILDER.makeEmptySentence();
+
+    for(const word of words){
+
+      // =====================
+      // TIME
+      // =====================
+      if(word === "azi" || word === "astazi" || word === "today") s.time = "오늘";
+      if(word === "ieri" || word === "yesterday") s.time = "어제";
+      if(word === "maine" || word === "tomorrow") s.time = "내일";
+
+      // =====================
+      // SUBJECT
+      // =====================
+      if(["eu","i"].includes(word)) s.subject = "저";
+      if(["noi","we"].includes(word)) s.subject = "우리";
+      if(["tu","you"].includes(word)) s.subject = "너";
+
+      // =====================
+      // PLACE
+      // =====================
+      if(["acasa","home"].includes(word)) s.places = ["집"];
+      if(["scoala","school"].includes(word)) s.places = ["학교"];
+      if(["restaurant"].includes(word)) s.places = ["식당"];
+
+      // =====================
+      // OBJECT
+      // =====================
+      if(["carte","book"].includes(word)) s.objects = ["책"];
+      if(["apa","water"].includes(word)) s.objects = ["물"];
+      if(["mancare","food"].includes(word)) s.objects = ["음식"];
+      if(["cafea","coffee"].includes(word)) s.objects = ["커피"];
+
+      // =====================
+      // ADJECTIVE
+      // =====================
+      if(["frumos","beautiful"].includes(word)) s.subjectAdj = "예쁜";
+      if(["bun","good"].includes(word)) s.objectAdj = "좋은";
+
+      // =====================
+      // MOD
+      // =====================
+      if(["bine","well"].includes(word)) s.mod = "잘";
+      if(["repede","fast"].includes(word)) s.mod = "빨리";
+
+      // =====================
+      // VERBS
+      // =====================
+      if(["merg","go"].includes(word)) s.verbs = ["가다"];
+      if(["vin","come"].includes(word)) s.verbs = ["오다"];
+      if(["mananc","eat"].includes(word)) s.verbs = ["먹다"];
+      if(["beau","drink"].includes(word)) s.verbs = ["마시다"];
+      if(["citesc","read"].includes(word)) s.verbs = ["읽다"];
+    }
+
+    // =====================
+    // 🔥 GRAMMAR (IMPORTANT)
+    // =====================
+    if(clean.includes("dupa") || clean.includes("after")){
+      s.grammar = { ko:"고 나서" };
+    }
+
+    if(clean.includes("pentru ca") || clean.includes("because")){
+      s.grammar = { ko:"기 때문에" };
+      s.reason = true;
+    }
+
+    if(clean.includes("ca sa") || clean.includes("to")){
+      s.grammar = { ko:"려고" };
+    }
+
+    if(clean.includes("dar") || clean.includes("but")){
+      s.grammar = { ko:"지만" };
+    }
+
+    sentences.push(s);
+  }
+
+  return sentences;
+}
+// =========================
   // MAIN PARSER
   // =========================
   parse(text){
