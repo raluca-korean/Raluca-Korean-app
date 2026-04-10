@@ -1,202 +1,626 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Raluca Korean – Builder</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Raluca Korean – TOPIK Builder v2</title>
 
 <style>
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#f4f0ff;
-}
+  *{box-sizing:border-box}
 
-.app{
-  max-width:900px;
-  margin:auto;
-  padding:12px;
-}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:#f4f0ff;
+    color:#1f1b2d;
+  }
 
-.table-horizontal{
-  display:flex;
-  gap:8px;
-  overflow-x:auto;
-}
+  .app{
+    max-width:1500px;
+    margin:0 auto;
+    padding:20px;
+  }
 
-.col{
-  min-width:110px;
-  padding:8px;
-  border-radius:12px;
-  background:white;
-  cursor:pointer;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
+  h1{
+    margin:0 0 18px;
+    font-size:34px;
+    font-weight:800;
+    text-align:center;
+  }
 
-.col-header{
-  font-size:11px;
-  font-weight:700;
-  margin-bottom:4px;
-}
+  .topbar{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
 
-.col-body-main{
-  font-size:16px;
-  font-weight:700;
-}
+  button{
+    border:none;
+    border-radius:12px;
+    padding:10px 16px;
+    background:#7b5fff;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 6px 18px rgba(123,95,255,.22);
+  }
 
-.preview{
-  margin-top:16px;
-  padding:14px;
-  background:white;
-  border-radius:16px;
-  text-align:center;
-}
+  button:hover{
+    transform:translateY(-1px);
+  }
 
-.preview-ko{
-  font-size:22px;
-  font-weight:800;
-}
+  .btn-danger{
+    background:#ff5f7a;
+    box-shadow:0 6px 18px rgba(255,95,122,.22);
+  }
 
-.preview-ro{
-  font-size:14px;
-  opacity:0.7;
-}
+  .btn-soft{
+    background:#a18cff;
+  }
 
-button{
-  margin-top:10px;
-  padding:8px 12px;
-  border:none;
-  border-radius:10px;
-  background:#7b5fff;
-  color:white;
-  cursor:pointer;
-}
+  .section{
+    background:#ffffff;
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 8px 24px rgba(60,40,120,.08);
+  }
+
+  .section-title{
+    font-size:22px;
+    font-weight:800;
+    margin-bottom:14px;
+  }
+
+  .clauses-list{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .clause-card{
+    background:#faf8ff;
+    border:1px solid #ece6ff;
+    border-radius:16px;
+    padding:14px;
+  }
+
+  .clause-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+  }
+
+  .clause-title{
+    font-size:20px;
+    font-weight:800;
+  }
+
+  .clause-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .table-horizontal{
+    display:grid;
+    grid-template-columns:repeat(7,minmax(120px,1fr));
+    gap:10px;
+  }
+
+  @media (max-width:1100px){
+    .table-horizontal{
+      grid-template-columns:repeat(3,minmax(120px,1fr));
+    }
+  }
+
+  @media (max-width:700px){
+    .table-horizontal{
+      grid-template-columns:repeat(2,minmax(120px,1fr));
+    }
+  }
+
+  .col{
+    min-height:92px;
+    padding:10px;
+    border-radius:14px;
+    background:#fff;
+    cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+    border:1px solid #eee7ff;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+
+  .col:hover{
+    background:#f5f0ff;
+  }
+
+  .col-header{
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    color:#5d5190;
+  }
+
+  .col-body-main{
+    font-size:22px;
+    font-weight:800;
+    line-height:1.15;
+    word-break:keep-all;
+  }
+
+  .col-body-sub{
+    font-size:12px;
+    color:#766a9b;
+  }
+
+  .mini-preview{
+    margin-top:12px;
+    padding:12px;
+    border-radius:14px;
+    background:#f8f5ff;
+    border:1px solid #ece6ff;
+  }
+
+  .mini-ko{
+    font-size:23px;
+    font-weight:800;
+    text-align:center;
+    margin-bottom:8px;
+    word-break:keep-all;
+    line-height:1.4;
+  }
+
+  .mini-ro{
+    font-size:15px;
+    text-align:center;
+    color:#665a87;
+    line-height:1.5;
+  }
+
+  .preview-wrap{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+
+  @media (max-width:900px){
+    .preview-wrap{
+      grid-template-columns:1fr;
+    }
+  }
+
+  .preview-box{
+    background:#ffffff;
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 8px 22px rgba(70,50,130,.08);
+    min-height:260px;
+  }
+
+  .preview-label{
+    font-size:14px;
+    font-weight:800;
+    color:#6a5d92;
+    margin-bottom:12px;
+    text-transform:uppercase;
+  }
+
+  .preview-ko{
+    font-size:34px;
+    font-weight:900;
+    line-height:1.6;
+    text-align:center;
+    white-space:pre-wrap;
+    word-break:keep-all;
+  }
+
+  .preview-ro{
+    font-size:22px;
+    line-height:1.65;
+    text-align:center;
+    white-space:pre-wrap;
+  }
+
+  .hint{
+    text-align:center;
+    font-size:14px;
+    color:#6d6292;
+    margin-top:8px;
+  }
 </style>
 </head>
 
 <body>
 <div class="app">
 
-<h2>Builder propoziții</h2>
+  <h1>Builder propoziții TOPIK – Nelimitat</h1>
 
-<div id="tableP1" class="table-horizontal"></div>
+  <div class="topbar">
+    <button id="addClauseBtn">+ Adaugă propoziție</button>
+    <button id="randomAllBtn">Random tot</button>
+    <button id="removeLastBtn" class="btn-soft">Șterge ultima</button>
+  </div>
 
-<div class="preview">
-  <div id="previewKo" class="preview-ko"></div>
-  <div id="previewRo" class="preview-ro"></div>
-</div>
+  <div class="section">
+    <div class="section-title">Propoziții componente</div>
+    <div id="clausesList" class="clauses-list"></div>
+  </div>
 
-<button id="randomBtn">Random</button>
+  <div class="preview-wrap">
+    <div class="preview-box">
+      <div class="preview-label">Coreeană</div>
+      <div id="previewKo" class="preview-ko"></div>
+      <div class="hint">Propoziție compusă finală</div>
+    </div>
+
+    <div class="preview-box">
+      <div class="preview-label">Română</div>
+      <div id="previewRo" class="preview-ro"></div>
+      <div class="hint">Traducere orientativă</div>
+    </div>
+  </div>
 
 </div>
 
 <script>
+/* =========================================================
+   VOCAB
+========================================================= */
 
-/* ===============================
-   VOCABULAR MINIM (extensibil)
-================================ */
 const vocab = {
-  subject:[
-    {ko:"저는", ro:"eu"},
-    {ko:"그는", ro:"el"}
+  subject: [
+    { ko: "저는", ro: "eu" },
+    { ko: "그는", ro: "el" },
+    { ko: "그녀는", ro: "ea" },
+    { ko: "우리는", ro: "noi" },
+    { ko: "학생들은", ro: "studenții" },
+    { ko: "사람들은", ro: "oamenii" },
+    { ko: "연구자들은", ro: "cercetătorii" },
+    { ko: "전문가들은", ro: "experții" }
   ],
-  time:[
-    {ko:"오늘", ro:"azi"},
-    {ko:"내일", ro:"mâine"}
+
+  time: [
+    { ko: "오늘", ro: "azi" },
+    { ko: "내일", ro: "mâine" },
+    { ko: "어제", ro: "ieri" },
+    { ko: "요즘", ro: "în ultima vreme" },
+    { ko: "최근에", ro: "recent" },
+    { ko: "방학 동안", ro: "în timpul vacanței" },
+    { ko: "수업 후에", ro: "după curs" },
+    { ko: "문제가 생긴 후에", ro: "după ce a apărut problema" }
   ],
-  place:[
-    {ko:"학교에서", ro:"la școală"},
-    {ko:"집에서", ro:"acasă"}
+
+  place: [
+    { ko: "학교에서", ro: "la școală" },
+    { ko: "집에서", ro: "acasă" },
+    { ko: "도서관에서", ro: "la bibliotecă" },
+    { ko: "카페에서", ro: "la cafenea" },
+    { ko: "회사에서", ro: "la companie" },
+    { ko: "연구실에서", ro: "în laborator" },
+    { ko: "회의실에서", ro: "în sala de ședință" }
   ],
-  object:[
-    {ko:"밥을", ro:"mâncare"},
-    {ko:"책을", ro:"carte"}
+
+  object: [
+    { ko: "밥을", ro: "mâncare" },
+    { ko: "책을", ro: "cartea" },
+    { ko: "커피를", ro: "cafeaua" },
+    { ko: "자료를", ro: "materialele" },
+    { ko: "문제를", ro: "problema" },
+    { ko: "계획을", ro: "planul" },
+    { ko: "보고서를", ro: "raportul" },
+    { ko: "결과를", ro: "rezultatul" }
   ],
-  verb:[
-    {ko:"먹어요", ro:"mănânc"},
-    {ko:"읽어요", ro:"citesc"}
+
+  mod: [
+    { ko: "열심히", ro: "cu sârguință" },
+    { ko: "천천히", ro: "încet" },
+    { ko: "조용히", ro: "în liniște" },
+    { ko: "계속", ro: "continuu" },
+    { ko: "자주", ro: "des" },
+    { ko: "신중하게", ro: "cu grijă" },
+    { ko: "적극적으로", ro: "activ" },
+    { ko: "체계적으로", ro: "sistematic" }
+  ],
+
+  verb: [
+    { base: "먹다", ko: "먹어요", ro: "mănânc" },
+    { base: "읽다", ko: "읽어요", ro: "citesc" },
+    { base: "공부하다", ko: "공부해요", ro: "studiez" },
+    { base: "마시다", ko: "마셔요", ro: "beau" },
+    { base: "일하다", ko: "일해요", ro: "lucrez" },
+    { base: "준비하다", ko: "준비해요", ro: "pregătesc" },
+    { base: "분석하다", ko: "분석해요", ro: "analizez" },
+    { base: "설명하다", ko: "설명해요", ro: "explic" },
+    { base: "해결하다", ko: "해결해요", ro: "rezolv" }
+  ],
+
+  connector: [
+    { ko: "고", ro: "și", type: "and" },
+    { ko: "고 나서", ro: "după ce", type: "after" },
+    { ko: "면서", ro: "în timp ce", type: "while" },
+    { ko: "지만", ro: "dar", type: "but" },
+    { ko: "기 때문에", ro: "pentru că", type: "because" }
   ]
 };
 
-/* ===============================
+const SLOT_ORDER = ["subject","time","place","object","mod","verb","connector"];
+
+/* =========================================================
    STATE
-================================ */
-let state = {
-  subject:0,
-  time:0,
-  place:0,
-  object:0,
-  verb:0
-};
+========================================================= */
 
-/* ===============================
-   BUILD UI
-================================ */
-function buildTable(){
-  const table = document.getElementById("tableP1");
-  table.innerHTML = "";
+let clauses = [
+  makeEmptyClause(),
+  makeEmptyClause(),
+  makeEmptyClause()
+];
 
-  Object.keys(vocab).forEach(key=>{
-    const col = document.createElement("div");
-    col.className = "col";
+function makeEmptyClause() {
+  return {
+    subject: rand(vocab.subject.length),
+    time: rand(vocab.time.length),
+    place: rand(vocab.place.length),
+    object: rand(vocab.object.length),
+    mod: rand(vocab.mod.length),
+    verb: rand(vocab.verb.length),
+    connector: rand(vocab.connector.length)
+  };
+}
 
-    col.innerHTML = `
-      <div class="col-header">${key.toUpperCase()}</div>
-      <div class="col-body-main">${vocab[key][state[key]].ko}</div>
-    `;
+/* =========================================================
+   HELPERS
+========================================================= */
 
-    col.onclick = ()=>{
-      state[key] = (state[key]+1) % vocab[key].length;
-      buildTable();
-      updatePreview();
+function rand(max){
+  return Math.floor(Math.random() * max);
+}
+
+function getItem(group, idx){
+  return vocab[group][idx];
+}
+
+function getStem(dictForm){
+  if(!dictForm) return "";
+  return dictForm.replace(/다$/, "");
+}
+
+function makeConnectorForm(base, connectorKo){
+  const stem = getStem(base);
+
+  if(connectorKo === "고") return stem + "고";
+  if(connectorKo === "고 나서") return stem + "고 나서";
+  if(connectorKo === "면서") return stem + "면서";
+  if(connectorKo === "지만") return stem + "지만";
+  if(connectorKo === "기 때문에") return stem + "기 때문에";
+
+  return stem;
+}
+
+function buildClauseKo(clause){
+  const s = getItem("subject", clause.subject).ko;
+  const t = getItem("time", clause.time).ko;
+  const p = getItem("place", clause.place).ko;
+  const o = getItem("object", clause.object).ko;
+  const m = getItem("mod", clause.mod).ko;
+  const v = getItem("verb", clause.verb).ko;
+
+  return `${s} ${t} ${p} ${o} ${m} ${v}`.replace(/\s+/g," ").trim();
+}
+
+function buildClauseRo(clause){
+  const s = getItem("subject", clause.subject).ro;
+  const t = getItem("time", clause.time).ro;
+  const p = getItem("place", clause.place).ro;
+  const o = getItem("object", clause.object).ro;
+  const m = getItem("mod", clause.mod).ro;
+  const v = getItem("verb", clause.verb).ro;
+
+  return `${s} ${t} ${p} ${m} ${v} ${o}`.replace(/\s+/g," ").trim();
+}
+
+function buildCombinedKo(){
+  if(!clauses.length) return "";
+
+  let parts = [];
+
+  clauses.forEach((clause, index) => {
+    const s = getItem("subject", clause.subject).ko;
+    const t = getItem("time", clause.time).ko;
+    const p = getItem("place", clause.place).ko;
+    const o = getItem("object", clause.object).ko;
+    const m = getItem("mod", clause.mod).ko;
+    const v = getItem("verb", clause.verb);
+    const c = getItem("connector", clause.connector);
+
+    if(index === 0){
+      if(index === clauses.length - 1){
+        parts.push(`${s} ${t} ${p} ${o} ${m} ${v.ko}`);
+      } else {
+        parts.push(`${s} ${t} ${p} ${o} ${m} ${makeConnectorForm(v.base, c.ko)}`);
+      }
+      return;
+    }
+
+    if(index === clauses.length - 1){
+      parts.push(`${t} ${p} ${o} ${m} ${v.ko}`);
+    } else {
+      parts.push(`${t} ${p} ${o} ${m} ${makeConnectorForm(v.base, c.ko)}`);
+    }
+  });
+
+  return parts.join(" ").replace(/\s+/g," ").trim() + ".";
+}
+
+function buildCombinedRo(){
+  if(!clauses.length) return "";
+
+  let parts = [];
+
+  clauses.forEach((clause, index) => {
+    const s = getItem("subject", clause.subject).ro;
+    const t = getItem("time", clause.time).ro;
+    const p = getItem("place", clause.place).ro;
+    const o = getItem("object", clause.object).ro;
+    const m = getItem("mod", clause.mod).ro;
+    const v = getItem("verb", clause.verb).ro;
+    const c = getItem("connector", clause.connector).ro;
+
+    if(index === 0){
+      if(index === clauses.length - 1){
+        parts.push(`${s} ${t} ${p} ${m} ${v} ${o}`);
+      } else {
+        parts.push(`${s} ${t} ${p} ${m} ${v} ${o}, ${c}`);
+      }
+      return;
+    }
+
+    if(index === clauses.length - 1){
+      parts.push(`${t} ${p} ${m} ${v} ${o}`);
+    } else {
+      parts.push(`${t} ${p} ${m} ${v} ${o}, ${c}`);
+    }
+  });
+
+  return parts.join(" ").replace(/\s+/g," ").trim() + ".";
+}
+
+/* =========================================================
+   RENDER CLAUSE CARD
+========================================================= */
+
+function renderClauses(){
+  const root = document.getElementById("clausesList");
+  root.innerHTML = "";
+
+  clauses.forEach((clause, clauseIndex) => {
+    const card = document.createElement("div");
+    card.className = "clause-card";
+
+    const top = document.createElement("div");
+    top.className = "clause-top";
+
+    const title = document.createElement("div");
+    title.className = "clause-title";
+    title.textContent = `Propoziția ${clauseIndex + 1}`;
+
+    const actions = document.createElement("div");
+    actions.className = "clause-actions";
+
+    const randomBtn = document.createElement("button");
+    randomBtn.className = "btn-soft";
+    randomBtn.textContent = "Random";
+    randomBtn.onclick = () => {
+      clauses[clauseIndex] = makeEmptyClause();
+      renderAll();
     };
 
-    table.appendChild(col);
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn-danger";
+    deleteBtn.textContent = "Șterge";
+    deleteBtn.onclick = () => {
+      if(clauses.length === 1) return;
+      clauses.splice(clauseIndex, 1);
+      renderAll();
+    };
+
+    actions.appendChild(randomBtn);
+    actions.appendChild(deleteBtn);
+
+    top.appendChild(title);
+    top.appendChild(actions);
+
+    const table = document.createElement("div");
+    table.className = "table-horizontal";
+
+    SLOT_ORDER.forEach(key => {
+      const item = getItem(key, clause[key]);
+
+      const col = document.createElement("div");
+      col.className = "col";
+      col.innerHTML = `
+        <div class="col-header">${key.toUpperCase()}</div>
+        <div class="col-body-main">${item.ko}</div>
+        <div class="col-body-sub">${item.ro}</div>
+      `;
+
+      col.onclick = () => {
+        clause[key] = (clause[key] + 1) % vocab[key].length;
+        renderAll();
+      };
+
+      table.appendChild(col);
+    });
+
+    const mini = document.createElement("div");
+    mini.className = "mini-preview";
+
+    const miniKo = document.createElement("div");
+    miniKo.className = "mini-ko";
+    miniKo.textContent = buildClauseKo(clause);
+
+    const miniRo = document.createElement("div");
+    miniRo.className = "mini-ro";
+    miniRo.textContent = buildClauseRo(clause);
+
+    mini.appendChild(miniKo);
+    mini.appendChild(miniRo);
+
+    card.appendChild(top);
+    card.appendChild(table);
+    card.appendChild(mini);
+
+    root.appendChild(card);
   });
 }
 
-/* ===============================
-   PREVIEW
-================================ */
-function updatePreview(){
-  const ko = `
-    ${vocab.subject[state.subject].ko}
-    ${vocab.time[state.time].ko}
-    ${vocab.place[state.place].ko}
-    ${vocab.object[state.object].ko}
-    ${vocab.verb[state.verb].ko}
-  `;
+/* =========================================================
+   MAIN PREVIEW
+========================================================= */
 
-  const ro = `
-    ${vocab.subject[state.subject].ro}
-    ${vocab.verb[state.verb].ro}
-    ${vocab.object[state.object].ro}
-    ${vocab.place[state.place].ro}
-    ${vocab.time[state.time].ro}
-  `;
-
-  document.getElementById("previewKo").innerText = ko;
-  document.getElementById("previewRo").innerText = ro;
+function renderPreview(){
+  document.getElementById("previewKo").textContent = buildCombinedKo();
+  document.getElementById("previewRo").textContent = buildCombinedRo();
 }
 
-/* ===============================
-   RANDOM
-================================ */
-document.getElementById("randomBtn").onclick = ()=>{
-  Object.keys(state).forEach(k=>{
-    state[k] = Math.floor(Math.random()*vocab[k].length);
-  });
-  buildTable();
-  updatePreview();
+function renderAll(){
+  renderClauses();
+  renderPreview();
+}
+
+/* =========================================================
+   EVENTS
+========================================================= */
+
+document.getElementById("addClauseBtn").onclick = () => {
+  clauses.push(makeEmptyClause());
+  renderAll();
 };
 
-/* ===============================
+document.getElementById("randomAllBtn").onclick = () => {
+  clauses = clauses.map(() => makeEmptyClause());
+  renderAll();
+};
+
+document.getElementById("removeLastBtn").onclick = () => {
+  if(clauses.length === 1) return;
+  clauses.pop();
+  renderAll();
+};
+
+/* =========================================================
    INIT
-================================ */
-buildTable();
-updatePreview();
+========================================================= */
 
+renderAll();
 </script>
-
 </body>
 </html>
