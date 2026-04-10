@@ -2299,16 +2299,16 @@ VOCAB_INDEX = buildVocabIndex(vocab);
 if(!VOCAB_INDEX || Object.keys(VOCAB_INDEX).length === 0){
   console.error("VOCAB_INDEX EMPTY");
 }
-     const map = {
-      subject: "subjects",
-      object: "objects",
-      verb: "verbs",
-      time: "times",
-      place: "places",
-      mod: "modifiers",
-      conjug: "conjugations"
-    };
-
+   const map = {
+  subject: "subjects",
+  object: "objects",
+  verb: "verbs",
+  time: "times",
+  place: "places",
+  mod: "modifiers",
+  conjug: Array.isArray(vocab.conjugations) ? "conjugations" : "grammar"
+};
+     
     Object.entries(map).forEach(([colKey, jsonKey]) => {
 
       const col = columns.find(c => c.key === colKey);
