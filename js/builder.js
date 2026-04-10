@@ -301,6 +301,21 @@ function buildVocabIndex(vocab){
 
   return index;
 }
+function findMatchesAdvanced(text, category){
+
+  const results = [];
+  const dict = VOCAB_INDEX[category] || {};
+
+  Object.entries(dict).forEach(([key, ko])=>{
+
+    if(text.includes(key)){
+      results.push(ko);
+    }
+
+  });
+
+  return results;
+}
 /* =========================
    2) STORAGE: CUSTOM WORDS
    ========================= */
