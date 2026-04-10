@@ -1797,8 +1797,10 @@ if(time.length){
     sentences.push(s);
     actives.push(makeAllActive());
   }
-
-  showExtraClauses = sentences.length > 1;
+if(s.subject){
+  s.subjects = [s.subject];
+}
+   showExtraClauses = sentences.length > 1;
 
   renderAll();
 
