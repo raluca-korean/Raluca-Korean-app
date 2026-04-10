@@ -176,11 +176,18 @@ function buildClause(s, hideSubject=false){
       subj = s.subjectAdj + " " + subj;
     }
 
-    if(subj === "저"){
-      parts.push("제가");
-    } else {
-      parts.push(subj + topicParticle(subj));
-    }
+ if(subj === "저"){
+  parts.push("제가");
+} else {
+
+  // 🔥 dacă ai obiect → topic
+  if(s.objects && s.objects.length){
+    parts.push(subj + topicParticle(subj));
+  } else {
+    parts.push(subj + subjectParticle(subj));
+  }
+
+}
   }
 
   /* PLACES */
