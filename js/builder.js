@@ -1669,6 +1669,8 @@ const KEY_MAP = {
   conjugations: "conjug",
   connectors: "conjug"
 };
+  index["verb"]["go"] = "가다";
+index["verb"]["merge"] = "가다"; 
   Object.entries(vocab).forEach(([category, list])=>{
 
     if(!Array.isArray(list)) return;
