@@ -2297,7 +2297,7 @@ const CLAUSE_RELATIONS = {
   }
 
 };
-
+console.log("VOCAB INDEX:", VOCAB_INDEX);
 function detectRelation(a,b){
 
   if(a.time && b.time) return "sequence";
