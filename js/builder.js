@@ -1753,8 +1753,13 @@ const clean = normalizeVerbForms(text);
       }
 
     });
-
-  return results;
+// semantic fallback
+Object.entries(SEMANTIC_MAP).forEach(([k,v])=>{
+  if(clean.includes(k) && !results.includes(v)){
+    results.push(v);
+  }
+});
+   return results;
 }
 function splitInputClauses(text){
   const clean = normRo(text);
