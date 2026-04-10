@@ -279,20 +279,39 @@ function buildVocabIndex(vocab){
 
   Object.entries(vocab).forEach(([category, list])=>{
 
+    if(!Array.isArray(list)) return;
+
     index[category] = {};
 
     list.forEach(entry=>{
 
-      if(!entry.ko) return;
+      if(!entry || !entry.ko) return;
 
       const ko = entry.ko.trim();
 
+      // RO
       if(entry.ro){
-        index[category][entry.ro.toLowerCase()] = ko;
+
+        const ro = entry.ro.toLowerCase().trim();
+
+        index[category][ro] = ko;
+
+        // fără diacritice
+        const roSimple = ro
+          .replace(/ă/g,"a")
+          .replace(/â/g,"a")
+          .replace(/î/g,"i")
+          .replace(/ș/g,"s")
+          .replace(/ş/g,"s")
+          .replace(/ț/g,"t")
+          .replace(/ţ/g,"t");
+
+        index[category][roSimple] = ko;
       }
 
+      // EN
       if(entry.en){
-        index[category][entry.en.toLowerCase()] = ko;
+        index[category][entry.en.toLowerCase().trim()] = ko;
       }
 
     });
