@@ -208,13 +208,18 @@ function buildClause(s, hideSubject=false){
   if(s.verbs && s.verbs.length){
 
     s.verbs.forEach((v,i)=>{
+if(i < s.verbs.length - 1){
+  parts.push(getStem(v) + "고");
+} else {
 
-      if(i < s.verbs.length - 1){
-        parts.push(getStem(v) + "고");
-      } else {
-        parts.push(buildVerbPhrase(v, s.grammar));
-      }
+  // 🔥 grammar care se aplică pe acțiunea finală
+  if(s.grammar && s.grammar.ko.includes("고 나서") && s.verbs.length > 1){
+    parts.push(getStem(v) + "고 나서");
+  } else {
+    parts.push(buildVerbPhrase(v, s.grammar));
+  }
 
+}
     });
   }
 /* GRAMMAR FINAL */
