@@ -1927,8 +1927,20 @@ function translateRoToKo(text){
     roFixed: buildFullRomanian()
   };
 }
+if(!s.conjug){
 
+  const tense = detectTense(clean);
 
+  if(tense === "past"){
+    s.conjug = "-았어요/었어요";
+  }
+  else if(tense === "future"){
+    s.conjug = "-(으)ㄹ 거예요";
+  }
+  else{
+    s.conjug = "-아요/어요";
+  }
+}
 // forme conjugate -> infinitiv
 const RO_FORM_TO_INF = {
   "plec":"a merge","pleci":"a merge","pleaca":"a merge","pleacă":"a merge","plecam":"a merge","plecati":"a merge","plecați":"a merge",
