@@ -1,4 +1,21 @@
-  const modRo = state.mod ? (translations.mod?.[state.mod] || state.mod) : "";
+function buildNaturalRomanian(state, active){
+  const use = (k) =>
+    active?.[k] !== false &&
+    (typeof isColumnVisible === "function" ? isColumnVisible(k) : true);
+
+  const parts = [];
+
+  const subjectKo = state.subject || "";
+  const subjectRo = translations.subject?.[subjectKo] || "";
+
+  let subjectText = subjectRo;
+  if(state.subjectAdjs?.length && subjectText){
+    subjectText = state.subjectAdjs.map(x => translations.subjectAdj?.[x] || x).join(" ") + " " + subjectText;
+  }
+
+  const timeRo = state.time ? (translations.time?.[state.time] || state.time) : "";
+  const placeRo = state.place ? (translations.place?.[state.place] || state.place) : "";
+ const modRo = state.mod ? (translations.mod?.[state.mod] || state.mod) : "";
   const objectRoBase = state.object ? (translations.object?.[state.object] || state.object) : "";
   const verbRoInf = state.verb ? (translations.verb?.[state.verb] || state.verb) : "";
 
