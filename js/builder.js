@@ -1788,11 +1788,12 @@ function buildSentenceFromChunk(chunk){
      SUBJECT
   ========================= */
   const subjectMatches = findMatchesAdvanced(clean, "subject");
-
-  if(subjectMatches.length){
-    s.subject = subjectMatches[0];
-    s.subjects = [...subjectMatches];
+if(!s.subject){
+  const implicit = detectImplicitSubject(clean);
+  if(implicit){
+    s.subject = implicit;
   }
+
 
   /* =========================
      TIME
