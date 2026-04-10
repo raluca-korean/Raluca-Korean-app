@@ -1566,7 +1566,65 @@ function normRo(s){
       .trim()
   );
 }
+function normalizeVerbForms(text){
 
+  let t = normRo(text);
+
+  // ENGLISH → BASE
+  const EN_MAP = {
+    "going": "go",
+    "went": "go",
+    "gone": "go",
+    "comes": "come",
+    "coming": "come",
+    "came": "come",
+    "eating": "eat",
+    "ate": "eat",
+    "drinking": "drink",
+    "drank": "drink",
+    "reading": "read",
+    "read": "read",
+    "writing": "write",
+    "wrote": "write"
+  };
+
+  Object.entries(EN_MAP).forEach(([k,v])=>{
+    t = t.replace(new RegExp(`\\b${k}\\b`, "g"), v);
+  });
+
+  // ROMANIAN → INFINITIV
+  const RO_MAP = {
+    "merg": "merge",
+    "mergi": "merge",
+    "mergeam": "merge",
+    "mergeai": "merge",
+    "mergea": "merge",
+    "mergeau": "merge",
+
+    "veneam": "veni",
+    "venea": "veni",
+    "venit": "veni",
+
+    "mancam": "manca",
+    "mancai": "manca",
+    "manca": "manca",
+
+    "beam": "bea",
+    "bea": "bea",
+
+    "citeam": "citi",
+    "citea": "citi",
+
+    "scriam": "scrie",
+    "scria": "scrie"
+  };
+
+  Object.entries(RO_MAP).forEach(([k,v])=>{
+    t = t.replace(new RegExp(`\\b${k}\\b`, "g"), v);
+  });
+
+  return t;
+}
 function detectInputLang(text){
   const t = normRo(text);
 
