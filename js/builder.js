@@ -1625,6 +1625,27 @@ function normalizeVerbForms(text){
 
   return t;
 }
+function detectImplicitSubject(text){
+
+  const t = normRo(text);
+
+  // persoana I
+  if(/\bmerg\b|\bfac\b|\bmananc\b|\bmănânc\b|\bvreau\b|\bpot\b/.test(t)){
+    return "저";
+  }
+
+  // persoana II
+  if(/\bmergi\b|\bfaci\b|\bmananci\b|\bmănânci\b/.test(t)){
+    return "너";
+  }
+
+  // plural
+  if(/\bmergem\b|\bfacem\b/.test(t)){
+    return "우리";
+  }
+
+  return null;
+}
 function detectInputLang(text){
   const t = normRo(text);
 
