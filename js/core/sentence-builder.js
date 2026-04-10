@@ -118,11 +118,42 @@ function presentPolite(v){
 /* =========================
    VERB BUILDER
 ========================= */
+function buildVerbPhrase(v, grammar){
 
-function buildVerbPhrase(v){
+  if(!v) return "";
+
+  const stem = getStem(v);
+
+  if(!grammar){
+    return presentPolite(v);
+  }
+
+  const g = grammar.ko || "";
+
+  // 🔥 TOPIK 6 patterns
+
+  if(g.includes("고 나서")){
+    return stem + "고 나서";
+  }
+
+  if(g.includes("기 때문에")){
+    return stem + "기 때문에";
+  }
+
+  if(g.includes("려고")){
+    return stem + "려고 합니다";
+  }
+
+  if(g.includes("고 있다")){
+    return stem + "고 있습니다";
+  }
+
+  if(g.includes("지만")){
+    return presentPolite(v) + "지만";
+  }
+
   return presentPolite(v);
 }
-
 /* =========================
    CLAUSE BUILDER (CORE)
 ========================= */
