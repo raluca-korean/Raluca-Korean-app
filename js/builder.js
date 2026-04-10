@@ -2226,6 +2226,9 @@ const CLAUSE_RELATIONS = {
   }
 
 };
+if(!VOCAB_INDEX || Object.keys(VOCAB_INDEX).length === 0){
+  console.error("VOCAB_INDEX EMPTY");
+}
 function detectRelation(a,b){
 
   if(a.time && b.time) return "sequence";
