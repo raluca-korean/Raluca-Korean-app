@@ -455,6 +455,8 @@ homeBtn: $("#homeBtn")
    ========================= */
 let indexModelRow = 0;
     let sentences = [ makeEmptySentence() ];
+let VOCAB_INDEX = {};
+let vocab = {};
 let actives   = [ makeAllActive() ];
  function makeEmptySentence(){
 
