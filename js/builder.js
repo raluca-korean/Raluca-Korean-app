@@ -1773,10 +1773,6 @@ function buildSentenceFromChunk(chunk){
   if(verbMatches.length){
     s.verb = verbMatches[0];
     s.verbs = [...verbMatches];
-  }else{
-    // fallback smart
-    s.verb = "하다";
-    s.verbs = ["하다"];
   }
 
   /* =========================
