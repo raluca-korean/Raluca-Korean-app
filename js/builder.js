@@ -1709,9 +1709,8 @@ function findMatchesAdvanced(text, category){
 
   const results = [];
   const dict = VOCAB_INDEX[category] || {};
-
-  const clean = normRo(text);
-
+const clean = normalizeVerbForms(text);
+   
   Object.entries(dict)
     .sort((a,b)=>b[0].length - a[0].length)
     .forEach(([key, ko])=>{
