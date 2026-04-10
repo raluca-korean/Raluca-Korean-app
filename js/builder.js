@@ -1725,8 +1725,16 @@ if(entry.en){
     });
 
   });
-
-  return index;
+const SEMANTIC_MAP = {
+  "consume": "먹다",
+  "drink": "마시다",
+  "study": "공부하다",
+  "learn": "배우다",
+  "buy": "사다",
+  "walk": "걷다",
+  "run": "달리다"
+};
+   return index;
 }
 function findMatchesAdvanced(text, category){
 
