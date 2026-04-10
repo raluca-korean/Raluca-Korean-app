@@ -1623,7 +1623,9 @@ function normRo(s){
   return stripDiacritics((s||"").toLowerCase().replace(/[.,!?;]/g," "))
     .replace(/\s+/g," ").trim();
 }
-
+if(s.subject){
+  s.subjects = [s.subject];
+}
 // reverse map RO -> KO (din translations)
 function buildReverseMap(){
   const rev = { subject:{}, time:{}, place:{}, mod:{}, object:{}, counter:{}, verb:{}, conjug:{} };
