@@ -2128,8 +2128,10 @@ function buildFullRomanian(){
     const res = await fetch("./vocab-korean.json");
     vocab = await res.json();   // ✅ FIX
 VOCAB_INDEX = buildVocabIndex(vocab);
-
-    const map = {
+if(!VOCAB_INDEX || Object.keys(VOCAB_INDEX).length === 0){
+  console.error("VOCAB_INDEX EMPTY");
+}
+     const map = {
       subject: "subjects",
       object: "objects",
       verb: "verbs",
