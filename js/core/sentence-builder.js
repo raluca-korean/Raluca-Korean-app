@@ -1,5 +1,3 @@
-
-
 /* =========================
    STRUCT (COMPATIBIL CU UI)
 ========================= */
@@ -13,7 +11,9 @@ function makeEmptySentence(){
     objectAdj: "",
     verbs: [],
     time: "",
-    conjugation: ""
+    conjugation: "",
+    grammar: null,
+    reason: false
   };
 }
 
@@ -22,11 +22,11 @@ function makeEmptySentence(){
 ========================= */
 
 function cleanJoin(arr){
-  return arr.filter(Boolean).join(" ").replace(/\s+/g," ").trim();
+  return arr.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }
 
 function stripEnding(text){
-  return (text || "").replace(/요$|니다$|습니다$/,"");
+  return (text || "").replace(/요$|니다$|습니다$/, "");
 }
 
 function hasBatchim(word){
@@ -60,10 +60,9 @@ function objectParticle(word){
 
 function joinWithWa(list){
   if(!list || !list.length) return "";
-
   if(list.length === 1) return list[0];
 
-  return list.map((w,i)=>{
+  return list.map((w, i) => {
     if(i === 0) return w;
     return "와 " + w;
   }).join(" ");
@@ -74,7 +73,7 @@ function joinWithWa(list){
 ========================= */
 
 function getStem(v){
-  return v && v.endsWith("다") ? v.slice(0,-1) : v || "";
+  return v && v.endsWith("다") ? v.slice(0, -1) : (v || "");
 }
 
 function decompose(c){
@@ -86,13 +85,12 @@ function decompose(c){
   const base = code - 44032;
 
   return {
-    vowel: Math.floor((base % 588)/28),
+    vowel: Math.floor((base % 588) / 28),
     jong: base % 28
   };
 }
 
 function presentPolite(v){
-
   if(!v) return "";
 
   if(v === "하다") return "해요";
@@ -103,10 +101,10 @@ function presentPolite(v){
   const stem = getStem(v);
   if(!stem) return "";
 
-  const d = decompose(stem[stem.length-1]);
+  const d = decompose(stem[stem.length - 1]);
   if(!d) return stem + "어요";
 
-  const A = [0,2,8,9,10,11];
+  const A = [0, 2, 8, 9, 10, 11];
 
   if(d.jong === 0){
     return stem + (A.includes(d.vowel) ? "아요" : "어요");
@@ -118,19 +116,14 @@ function presentPolite(v){
 /* =========================
    VERB BUILDER
 ========================= */
-function buildVerbPhrase(v, grammar){
 
+function buildVerbPhrase(v, grammar){
   if(!v) return "";
 
   const stem = getStem(v);
+  if(!grammar) return presentPolite(v);
 
-  if(!grammar){
-    return presentPolite(v);
-  }
-
-  const g = grammar.ko || "";
-
-  // 🔥 TOPIK 6 patterns
+  const g = grammar.ko || grammar || "";
 
   if(g.includes("고 나서")){
     return stem + "고 나서";
@@ -152,14 +145,22 @@ function buildVerbPhrase(v, grammar){
     return presentPolite(v) + "지만";
   }
 
+  if(g.includes("아/어야 하다")){
+    return stem + "어야 해요";
+  }
+
+  if(g.includes("아/어도 되다")){
+    return stem + "어도 돼요";
+  }
+
   return presentPolite(v);
 }
+
 /* =========================
    CLAUSE BUILDER (CORE)
 ========================= */
 
-function buildClause(s, hideSubject=false){
-
+function buildClause(s, hideSubject = false){
   const parts = [];
 
   /* TIME */
@@ -169,25 +170,21 @@ function buildClause(s, hideSubject=false){
 
   /* SUBJECT */
   if(!hideSubject && s.subject){
-
     let subj = s.subject;
 
     if(s.subjectAdj){
       subj = s.subjectAdj + " " + subj;
     }
 
- if(subj === "저"){
-  parts.push("제가");
-} else {
-
-  // 🔥 dacă ai obiect → topic
-  if(s.objects && s.objects.length){
-    parts.push(subj + topicParticle(subj));
-  } else {
-    parts.push(subj + subjectParticle(subj));
-  }
-
-}
+    if(subj === "저"){
+      parts.push("제가");
+    } else {
+      if(s.objects && s.objects.length){
+        parts.push(subj + topicParticle(subj));
+      } else {
+        parts.push(subj + subjectParticle(subj));
+      }
+    }
   }
 
   /* PLACES */
@@ -198,8 +195,7 @@ function buildClause(s, hideSubject=false){
 
   /* OBJECTS */
   if(s.objects && s.objects.length){
-
-    const objs = s.objects.map(o=>{
+    const objs = s.objects.map(o => {
       if(s.objectAdj){
         return s.objectAdj + " " + o;
       }
@@ -207,43 +203,39 @@ function buildClause(s, hideSubject=false){
     });
 
     const joined = joinWithWa(objs);
-
-    parts.push(joined + objectParticle(s.objects[s.objects.length-1]));
+    parts.push(joined + objectParticle(s.objects[s.objects.length - 1]));
   }
 
   /* VERBS */
   if(s.verbs && s.verbs.length){
-
-    s.verbs.forEach((v,i)=>{
-if(i < s.verbs.length - 1){
-  parts.push(getStem(v) + "고");
-} else {
-
-  // 🔥 grammar care se aplică pe acțiunea finală
-  if(s.grammar && s.grammar.ko.includes("고 나서") && s.verbs.length > 1){
-    parts.push(getStem(v) + "고 나서");
-  } else {
-    parts.push(buildVerbPhrase(v, s.grammar));
-  }
-
-}
+    s.verbs.forEach((v, i) => {
+      if(i < s.verbs.length - 1){
+        parts.push(getStem(v) + "고");
+      } else {
+        if(s.grammar && (s.grammar.ko || s.grammar).includes("고 나서") && s.verbs.length > 1){
+          parts.push(getStem(v) + "고 나서");
+        } else {
+          parts.push(buildVerbPhrase(v, s.grammar));
+        }
+      }
     });
   }
-/* GRAMMAR FINAL */
-if(s.grammar && (!s.verbs || s.verbs.length === 0)){
-  parts.push(s.grammar.ko);
-}
-   return cleanJoin(parts);
+
+  /* GRAMMAR FINAL */
+  if(s.grammar && (!s.verbs || s.verbs.length === 0)){
+    parts.push(s.grammar.ko || s.grammar);
+  }
+
+  return cleanJoin(parts);
 }
 
 /* =========================
    CONNECTOR LOGIC
 ========================= */
-function chooseConnector(prev,next){
 
+function chooseConnector(prev, next){
   if(!prev || !next) return "고";
 
-  // dacă avem grammar explicit → NU suprascrie
   if(prev.grammar){
     return "";
   }
@@ -252,29 +244,28 @@ function chooseConnector(prev,next){
     return "기 때문에";
   }
 
-if(prev.verbs?.[0] === next.verbs?.[0]){
-  return prev.grammar ? "" : "지만";
-}
-   if(next.time && next.time.includes("내일")){
+  if(prev.verbs?.[0] === next.verbs?.[0]){
+    return prev.grammar ? "" : "지만";
+  }
+
+  if(next.time && next.time.includes("내일")){
     return "면";
   }
 
   return "고";
 }
+
 /* =========================
    FINAL SENTENCE ENGINE
 ========================= */
 
 function buildSentence(list){
-
   if(!list || !list.length) return "";
 
   let result = "";
 
-  for(let i=0;i<list.length;i++){
-
-    const clause = buildClause(list[i], i>0);
-
+  for(let i = 0; i < list.length; i++){
+    const clause = buildClause(list[i], i > 0);
     if(!clause) continue;
 
     if(i === list.length - 1){
@@ -282,14 +273,14 @@ function buildSentence(list){
       break;
     }
 
-    const next = list[i+1];
-
+    const next = list[i + 1];
     const connector = chooseConnector(list[i], next);
-if(connector){
-  result += stripEnding(clause) + connector + " ";
-} else {
-  result += clause + " ";
-}
+
+    if(connector){
+      result += stripEnding(clause) + connector + " ";
+    } else {
+      result += clause + " ";
+    }
   }
 
   return cleanJoin([result]);
@@ -300,12 +291,25 @@ if(connector){
 ========================= */
 
 function renderAll(){
-
   const result = buildSentence(sentences);
-
   const output = document.querySelector(".result-korean");
 
   if(output){
     output.textContent = result || "(alege cuvinte)";
   }
 }
+
+/* =========================
+   EXPORT GLOBAL (SAFE)
+========================= */
+
+window.SENTENCE_BUILDER = {
+  makeEmptySentence,
+  buildClause,
+  buildSentence,
+  renderAll,
+  topicParticle,
+  subjectParticle,
+  objectParticle,
+  presentPolite
+};
