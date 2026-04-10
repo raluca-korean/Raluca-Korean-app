@@ -1634,15 +1634,13 @@ const KEY_MAP = {
           index[normalized][ro] = ko;
         }
       }
-
-      // ENGLEZĂ
-      if(entry.en){
-        const en = entry.en.toLowerCase().trim();
-        if(en){
-          index[normalized][en] = ko;
-        }
-      }
-
+// ENGLEZĂ
+if(entry.en){
+  const en = normRo(entry.en); // 🔥 FIX IMPORTANT
+  if(en){
+    index[normalized][en] = ko;
+  }
+}      
     });
 
   });
