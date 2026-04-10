@@ -273,23 +273,6 @@ function joinVerbs(verbs){
   return "";
 }    
 
-function findMatchesAdvanced(text, category){
-
-  const results = [];
-  const dict = VOCAB_INDEX[category] || {};
-
-  const clean = normRo(text);
-
-  Object.entries(dict).forEach(([key, ko])=>{
-
-    if(clean.includes(key)){
-      results.push(ko);
-    }
-
-  });
-
-  return results;
-}
 /* =========================
    2) STORAGE: CUSTOM WORDS
    ========================= */
