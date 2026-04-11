@@ -2977,23 +2977,35 @@ if(badge){
       el.className="answer";
       el.textContent=o;
 
-      el.onclick=()=>{
-         clickSfx();
-        if(selected) return;
-        selected = true;
+el.onclick=()=>{
+  clickSfx();
+  if(selected) return;
+  selected = true;
 
-        // 1) marchează răspunsul corect (verde)
-        [...a.children].forEach(node=>{
-          if(node.textContent === d.a) node.classList.add("correct");
-        });
+  const isCorrect = (o === d.a);
 
-        // 2) marchează alegerea greșită (roșu) dacă e cazul
-        if(o !== d.a) el.classList.add("wrong");
+  [...a.children].forEach(node=>{
+    if(node.textContent === d.a) node.classList.add("correct");
+  });
 
-        // 3) feedback
-        f.textContent = o === d.a ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
-      };
-fx(o===d.a);
+  if(!isCorrect) el.classList.add("wrong");
+
+  f.textContent = isCorrect
+    ? "✅ Corect"
+    : `❌ Greșit — corect: ${d.a}`;
+
+  fx(isCorrect);
+
+  total++;
+  if(isCorrect){
+    correct++;
+    streak++;
+  }else{
+    streak = 0;
+  }
+
+  updateBadges();
+};
       a.appendChild(el);
     });
 
