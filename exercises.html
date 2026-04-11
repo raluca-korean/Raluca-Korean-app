@@ -2882,12 +2882,87 @@ function renderChain(){
 /* =========================
    MAIN RENDER
 ========================= */
-function render(){
+    function render(){
   resetUI();
 
-  if(type==="particlePlus"){
-    const d = DATA.particlePlus[index % DATA.particlePlus.length];
+  const d = DATA[type][index % DATA[type].length];
 
+  // BADGE
+  const badge = document.getElementById("badge");
+  if(badge){
+    const map = {
+      "ko-ro":"KO→RO",
+      "ro-ko":"RO→KO",
+      "particle":"Particle",
+      "particlePlus":"Particle+",
+      "conjug":"Conjug",
+      "puzzle":"Puzzle",
+      "chain":"Chain"
+    };
+    badge.innerHTML = `
+      <span style="padding:6px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.22);font-weight:900">
+        ${map[type] || type}
+      </span>
+      <span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">
+        #${(index % DATA[type].length)+1}/${DATA[type].length}
+      </span>
+    `;
+  }
+
+  // =========================
+  // QUIZ (KO→RO / RO→KO / CONJUG)
+  // =========================
+  if(type==="ko-ro" || type==="ro-ko" || type==="conjug"){
+    q.textContent = d.q;
+    h.textContent = "Alege varianta corectă";
+
+    const options = [...d.opts].sort(()=>Math.random()-0.5);
+
+    options.forEach(opt=>{
+      const el = document.createElement("div");
+      el.className="answer";
+      el.textContent=opt;
+
+      el.onclick=()=>{
+        clickSfx();
+        if(selected) return;
+        selected = true;
+
+        [...a.children].forEach(node=>{
+          if(node.textContent === d.a) node.classList.add("correct");
+        });
+
+        if(opt !== d.a) el.classList.add("wrong");
+
+        const ok = opt === d.a;
+        f.textContent = ok ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
+
+        fx(ok);
+        total++;
+        if(ok){ correct++; streak++; }
+        else{ streak=0; }
+
+        updateBadges();
+      };
+
+      a.appendChild(el);
+    });
+
+    return;
+  }
+
+  // =========================
+  // PARTICULE SIMPLE
+  // =========================
+  if(type==="particle"){
+    renderParticleSingle(d);
+    return;
+  }
+
+  // =========================
+  // PARTICULE MULTIPLE
+  // =========================
+  if(type==="particlePlus"){
     q.textContent = d.q;
     h.textContent = "Selectează TOATE corecte, apoi Verifică";
 
@@ -2905,148 +2980,24 @@ function render(){
     });
 
     return;
-  }    
-  /* QUIZ (KO→RO / RO→KO / CONJUG) */
-  if(type==="ko-ro" || type==="ro-ko" || type==="conjug"){
-    q.textContent = d.q;
-    h.textContent = "Alege varianta corectă";
-const badge = document.getElementById("badge");
-if(badge){
-  const map = {
-    "ko-ro":"KO→RO",
-    "ro-ko":"RO→KO",
-    "particle":"Particle",
-    "particlePlus":"Particle+",
-    "conjug":"Conjug",
-    "puzzle":"Puzzle",
-    "chain":"Chain"
-  };
-  badge.innerHTML = `
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.22);font-weight:900">
-      ${map[type] || type}
-    </span>
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">
-      #${(index % DATA[type].length)+1}/${DATA[type].length}
-    </span>
-  `;
-}
-    const options = d.opts ? [...d.opts] : [d.a,"Greșit","Alt greșit"];
-    options.sort(()=>Math.random()-0.5);
-
-    options.forEach(opt=>{
-      const el = document.createElement("div");
-      el.className="answer";
-      el.textContent=opt;
-
-      el.onclick=()=>{
-         clickSfx();
-        if(selected) return;
-        selected = true;
-
-        // 1) marchează răspunsul corect (verde)
-        [...a.children].forEach(node=>{
-          if(node.textContent === d.a) node.classList.add("correct");
-        });
-
-        // 2) marchează alegerea greșită (roșu) dacă e cazul
-        if(opt !== d.a) el.classList.add("wrong");
-
-        // 3) feedback
-        f.textContent = opt === d.a ? "✅ Corect" : `❌ Greșit — corect: ${d.a}`;
-          };
-      /* PARTICULE (1) */
-  if(type==="particle"){
-    q.textContent=d.q;
-    h.textContent="Alege particula corectă";
-
-    d.opts.forEach(o=>{
-      const el=document.createElement("div");
-      el.className="answer";
-      el.textContent=o;
-
-el.onclick=()=>{
-  clickSfx();
-  if(selected) return;
-  selected = true;
-
-  const isCorrect = (o === d.a);
-
-  [...a.children].forEach(node=>{
-    if(node.textContent === d.a) node.classList.add("correct");
-  });
-
-  if(!isCorrect) el.classList.add("wrong");
-
-  f.textContent = isCorrect
-    ? "✅ Corect"
-    : `❌ Greșit — corect: ${d.a}`;
-
-  fx(isCorrect);
-
-  total++;
-  if(isCorrect){
-    correct++;
-    streak++;
-  }else{
-    streak = 0;
   }
 
-  updateBadges();
-};
-      a.appendChild(el);
-    });
-
-    return;
-  }
-
-  /* PARTICULE MULTIPLE */
-   
-     
-  if(type==="particlePlus"){
-  q.textContent = d.q;
-  h.textContent = "Selectează TOATE corecte, apoi Verifică";
-
-  d.opts.forEach(o=>{
-    const el=document.createElement("div");
-    el.className="answer";
-    el.textContent=o;
-
-    el.onclick=()=>{
-      clickSfx();
-      el.classList.toggle("selected");
-    };
-
-    a.appendChild(el);
-  });
-const d = DATA.particlePlus[index % DATA.particlePlus.length];
-    return;
-}
-    
-  /* PUZZLE */
+  // =========================
+  // PUZZLE
+  // =========================
   if(type==="puzzle"){
-    q.textContent="Ordonează propoziția";
-    h.textContent="";
-    pUI.style.display="block";
-
-    d.w.forEach(w=>{
-      const c=document.createElement("div");
-      c.className="chip";
-      c.textContent=w;
-      c.onclick=()=>{
-         clickSfx();
-        built.push(w);
-        redrawPuzzle(d);
-      };
-      bank.appendChild(c);
-    });
-
+    renderPuzzle(d);
     return;
   }
 
-  /* CHAIN (dacă îl activezi ulterior) — momentan nu face nimic aici */
-}
-
-/* =========================
+  // =========================
+  // CHAIN
+  // =========================
+  if(type==="chain"){
+    renderChain();
+    return;
+  }
+}/* =========================
    EVENTS
 ========================= */
 document.getElementById("type").onchange=e=>{
