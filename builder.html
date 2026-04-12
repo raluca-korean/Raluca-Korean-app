@@ -1,28 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ro">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Raluca Korean – Focus Mode</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Raluca Korean — Focus Builder</title>
+
   <style>
     :root{
       --bg-1:#f7f4ee;
-      --bg-2:#f1f5fb;
-      --card:#ffffffcc;
+      --bg-2:#eef4fb;
+      --card:rgba(255,255,255,.82);
       --card-solid:#ffffff;
+      --line:#e6e9f1;
       --text:#171717;
       --muted:#6f7280;
-      --soft:#eef2f7;
-      --line:#e7e9ef;
+      --soft:#f6f8fc;
       --accent:#111827;
-      --accent-soft:#f5f7fb;
+      --accent-2:#7c3aed;
+      --accent-3:#22d3ee;
       --gold:#caa86a;
       --green:#14804a;
       --red:#c0392b;
       --shadow:0 20px 60px rgba(15,23,42,.10);
       --shadow-soft:0 12px 30px rgba(15,23,42,.06);
       --radius-xl:28px;
-      --radius-lg:20px;
+      --radius-lg:22px;
       --radius-md:16px;
       --radius-sm:12px;
       --transition:220ms cubic-bezier(.2,.8,.2,1);
@@ -30,44 +32,61 @@
 
     *{box-sizing:border-box}
     html,body{height:100%}
+
     body{
       margin:0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
                    "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
       color:var(--text);
       background:
         radial-gradient(circle at top left, rgba(255,255,255,.95), transparent 28%),
-        radial-gradient(circle at 85% 15%, rgba(202,168,106,.10), transparent 18%),
+        radial-gradient(circle at 85% 15%, rgba(124,58,237,.08), transparent 20%),
+        radial-gradient(circle at 15% 90%, rgba(34,211,238,.08), transparent 20%),
         linear-gradient(145deg, var(--bg-1), var(--bg-2));
       display:flex;
       justify-content:center;
-      padding:32px 16px;
+      padding:28px 14px;
     }
 
     .app{
-      width:min(920px, 100%);
+      width:min(980px,100%);
       display:flex;
       flex-direction:column;
       gap:18px;
     }
 
-    .top{
-      text-align:center;
-      padding:12px 10px 4px;
-      animation:fadeUp .5s ease both;
+    .top-card,
+    .main-card,
+    .panel-card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.65);
+      backdrop-filter:blur(16px);
+      box-shadow:var(--shadow);
+      border-radius:var(--radius-xl);
+    }
+
+    .top-card{
+      padding:22px;
+    }
+
+    .top-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
     }
 
     .eyebrow{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      background:rgba(255,255,255,.72);
-      border:1px solid rgba(255,255,255,.75);
-      backdrop-filter: blur(10px);
+      background:rgba(255,255,255,.74);
+      border:1px solid rgba(255,255,255,.8);
       border-radius:999px;
       padding:8px 14px;
       font-size:12px;
-      font-weight:700;
+      font-weight:800;
       letter-spacing:.08em;
       text-transform:uppercase;
       color:#6b7280;
@@ -76,14 +95,14 @@
 
     .dot{
       width:8px;height:8px;border-radius:50%;
-      background:linear-gradient(135deg,#9d7f44,#e2c689);
-      box-shadow:0 0 0 4px rgba(202,168,106,.15);
+      background:linear-gradient(135deg,var(--accent-2),var(--accent-3));
+      box-shadow:0 0 0 4px rgba(124,58,237,.10);
     }
 
     h1{
-      margin:16px 0 8px;
-      font-size:clamp(28px,4vw,44px);
-      line-height:1.05;
+      margin:14px 0 8px;
+      font-size:clamp(28px,4vw,42px);
+      line-height:1.06;
       letter-spacing:-.03em;
       font-weight:800;
     }
@@ -92,41 +111,102 @@
       margin:0;
       color:var(--muted);
       font-size:clamp(14px,2vw,17px);
+      line-height:1.5;
+    }
+
+    .top-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .lang-btn,
+    .ghost-btn,
+    .level-btn,
+    .action-btn,
+    .builder-item{
+      transition:transform var(--transition), box-shadow var(--transition), border-color var(--transition), background var(--transition), opacity var(--transition);
+    }
+
+    .lang-btn,
+    .ghost-btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background:var(--card-solid);
+      color:var(--accent);
+      border-radius:999px;
+      padding:10px 14px;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:var(--shadow-soft);
+    }
+
+    .lang-btn.active{
+      background:linear-gradient(135deg,var(--accent-3),var(--accent-2));
+      color:#04111a;
+      border:none;
     }
 
     .main-card{
-      background:var(--card);
-      border:1px solid rgba(255,255,255,.65);
-      backdrop-filter:blur(16px);
-      box-shadow:var(--shadow);
-      border-radius:var(--radius-xl);
-      padding:28px;
+      padding:26px;
       display:flex;
       flex-direction:column;
-      gap:22px;
-      animation:fadeUp .65s ease both;
+      gap:20px;
+    }
+
+    .controls-bar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .controls-title{
+      font-size:13px;
+      color:#8a8f99;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-weight:800;
+    }
+
+    .level-list{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .level-btn{
+      appearance:none;
+      border:none;
+      border-radius:999px;
+      padding:10px 14px;
+      background:#ffffff;
+      border:1px solid var(--line);
+      color:#1f2937;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow:var(--shadow-soft);
+    }
+
+    .level-btn.active{
+      background:linear-gradient(135deg,#111827,#374151);
+      color:#fff;
+      border-color:#111827;
     }
 
     .sentence-zone{
-      background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.55));
+      background:linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.56));
       border:1px solid var(--line);
       border-radius:24px;
       padding:30px 22px;
       text-align:center;
       cursor:pointer;
-      transition:transform var(--transition), box-shadow var(--transition), border-color var(--transition), background var(--transition);
       box-shadow:var(--shadow-soft);
       user-select:none;
-    }
-
-    .sentence-zone:hover{
-      transform:translateY(-2px);
-      border-color:#d7dce5;
-      box-shadow:0 16px 34px rgba(15,23,42,.09);
-    }
-
-    .sentence-zone:active{
-      transform:translateY(0) scale(.998);
     }
 
     .sentence-label{
@@ -151,14 +231,13 @@
       display:inline-block;
       padding:.02em .14em;
       border-radius:12px;
-      transition:background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
       margin:0 .03em;
+      transition:background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
     }
 
     .word.active{
       background:linear-gradient(180deg, rgba(202,168,106,.18), rgba(202,168,106,.10));
       box-shadow:inset 0 0 0 1px rgba(202,168,106,.32);
-      color:#111827;
       transform:translateY(-1px);
     }
 
@@ -170,7 +249,7 @@
 
     .translation{
       display:flex;
-      gap:10px;
+      gap:12px;
       align-items:flex-start;
       font-size:15px;
       color:#30343d;
@@ -178,10 +257,10 @@
     }
 
     .translation .lang{
-      width:74px;
-      min-width:74px;
+      width:84px;
+      min-width:84px;
       color:#8a8f99;
-      font-weight:700;
+      font-weight:800;
       text-transform:uppercase;
       letter-spacing:.08em;
       font-size:11px;
@@ -206,33 +285,22 @@
       color:var(--accent);
       border-radius:999px;
       padding:14px 18px;
-      min-width:150px;
+      min-width:160px;
       display:inline-flex;
       align-items:center;
       justify-content:center;
       gap:10px;
       font-size:15px;
-      font-weight:700;
+      font-weight:800;
       box-shadow:var(--shadow-soft);
       border:1px solid var(--line);
       cursor:pointer;
-      transition:transform var(--transition), box-shadow var(--transition), background var(--transition), border-color var(--transition);
     }
 
-    .action-btn:hover{
-      transform:translateY(-2px);
-      box-shadow:0 16px 30px rgba(15,23,42,.10);
-      border-color:#d6dae3;
-    }
-
-    .action-btn:active{
-      transform:translateY(0);
-    }
-
-    .action-btn.listening{
-      background:#111827;
-      color:white;
-      border-color:#111827;
+    .action-btn.primary{
+      background:linear-gradient(135deg,var(--accent-3),var(--accent-2));
+      color:#04111a;
+      border:none;
     }
 
     .action-icon{
@@ -244,9 +312,8 @@
       text-align:center;
       min-height:24px;
       font-size:14px;
-      font-weight:600;
+      font-weight:700;
       color:var(--muted);
-      transition:color var(--transition), opacity var(--transition);
     }
 
     .status.success{ color:var(--green); }
@@ -256,7 +323,6 @@
     .builder-wrap{
       display:grid;
       gap:12px;
-      animation:fadeUp .8s ease both;
     }
 
     .builder-head{
@@ -265,6 +331,7 @@
       align-items:center;
       gap:12px;
       padding:2px 4px 0;
+      flex-wrap:wrap;
     }
 
     .builder-title{
@@ -296,18 +363,7 @@
       text-align:left;
       cursor:pointer;
       box-shadow:var(--shadow-soft);
-      transition:transform var(--transition), border-color var(--transition), box-shadow var(--transition), background var(--transition), opacity var(--transition);
       min-height:94px;
-    }
-
-    .builder-item:hover{
-      transform:translateY(-2px);
-      border-color:#d7dce5;
-      box-shadow:0 16px 28px rgba(15,23,42,.08);
-    }
-
-    .builder-item:active{
-      transform:translateY(0);
     }
 
     .builder-item.disabled{
@@ -343,6 +399,45 @@
       line-height:1.35;
     }
 
+    .bottom-grid{
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:18px;
+    }
+
+    .panel-card{
+      padding:18px;
+    }
+
+    .panel-title{
+      font-size:13px;
+      color:#8a8f99;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-weight:800;
+      margin-bottom:12px;
+    }
+
+    .mini-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .mini-item{
+      padding:12px 14px;
+      background:rgba(255,255,255,.7);
+      border:1px solid var(--line);
+      border-radius:16px;
+      font-size:14px;
+      line-height:1.5;
+    }
+
+    .mini-item strong{
+      display:block;
+      margin-bottom:4px;
+      font-size:13px;
+    }
+
     .hint{
       text-align:center;
       color:#9aa1ac;
@@ -357,608 +452,182 @@
       padding-bottom:2px;
     }
 
-    @media (max-width: 760px){
-      .main-card{ padding:20px; }
+    .top-card button:hover,
+    .main-card button:hover,
+    .panel-card button:hover,
+    .sentence-zone:hover{
+      transform:translateY(-2px);
+      box-shadow:0 16px 30px rgba(15,23,42,.10);
+    }
+
+    .sentence-zone:active,
+    button:active{
+      transform:translateY(0);
+    }
+
+    @media (max-width: 860px){
       .builder{ grid-template-columns:repeat(2, minmax(0,1fr)); }
       .builder-item:last-child{ grid-column:1 / -1; }
-      .translation{ flex-direction:column; gap:4px; }
-      .translation .lang{ width:auto; min-width:auto; padding-top:0; }
+      .bottom-grid{ grid-template-columns:1fr; }
     }
 
-    @media (max-width: 480px){
+    @media (max-width: 560px){
       body{ padding:20px 12px; }
+      .main-card{ padding:20px; }
       .sentence-zone{ padding:24px 16px; }
       .builder{ grid-template-columns:1fr; }
+      .translation{ flex-direction:column; gap:4px; }
+      .translation .lang{ width:auto; min-width:auto; padding-top:0; }
       .action-btn{ width:100%; }
-      .builder-head{ flex-direction:column; align-items:flex-start; }
-    }
-
-    @keyframes fadeUp{
-      from{ opacity:0; transform:translateY(10px); }
-      to{ opacity:1; transform:translateY(0); }
     }
   </style>
 </head>
 <body>
   <main class="app" id="app">
-    <section class="top">
-      <div class="eyebrow"><span class="dot"></span> Focus Builder</div>
-      <h1>Raluca Korean – Focus Mode</h1>
-      <p class="subtitle">Build, listen, and speak Korean sentences</p>
+
+    <section class="top-card">
+      <div class="top-row">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> Focus Builder</div>
+          <h1 id="pageTitle">Raluca Korean – Focus Builder</h1>
+          <p class="subtitle" id="pageSubtitle">Construiește, ascultă și spune propoziții coreene.</p>
+        </div>
+
+        <div class="top-actions">
+          <button class="lang-btn active" id="langRo" type="button">Română</button>
+          <button class="lang-btn" id="langEn" type="button">English</button>
+        </div>
+      </div>
     </section>
 
     <section class="main-card">
+      <div class="controls-bar">
+        <div class="controls-title" id="levelTitle">Nivel TOPIK</div>
+
+        <div class="level-list" id="levelList">
+          <button class="level-btn active" data-level="1" type="button">TOPIK 1</button>
+          <button class="level-btn" data-level="2" type="button">TOPIK 2</button>
+          <button class="level-btn" data-level="3" type="button">TOPIK 3</button>
+          <button class="level-btn" data-level="4" type="button">TOPIK 4</button>
+          <button class="level-btn" data-level="5" type="button">TOPIK 5</button>
+          <button class="level-btn" data-level="6" type="button">TOPIK 6</button>
+        </div>
+      </div>
+
       <div class="sentence-zone" id="sentenceZone" role="button" tabindex="0" aria-label="Play Korean sentence">
-        <div class="sentence-label">Korean sentence</div>
-        <h2 class="sentence" id="sentenceDisplay"></h2>
+        <div class="sentence-label" id="sentenceLabel">Propoziție coreeană</div>
+        <h2 class="sentence" id="sentenceDisplay">
+          <span class="word">오늘</span>
+          <span class="word">저는</span>
+          <span class="word">도서관에서</span>
+          <span class="word">한국어를</span>
+          <span class="word">공부해요</span>
+        </h2>
       </div>
 
       <div class="translations">
         <div class="translation">
-          <span class="lang">Romanian</span>
-          <span class="text" id="roTranslation"></span>
+          <span class="lang">Română</span>
+          <span class="text" id="roTranslation">Astăzi eu studiez limba coreeană la bibliotecă.</span>
         </div>
         <div class="translation">
           <span class="lang">English</span>
-          <span class="text" id="enTranslation"></span>
+          <span class="text" id="enTranslation">Today I study Korean at the library.</span>
         </div>
       </div>
 
       <div class="actions">
-        <button class="action-btn" id="playBtn" type="button" aria-label="Play sentence">
+        <button class="action-btn primary" id="playBtn" type="button">
           <span class="action-icon">🔊</span>
-          <span>Play</span>
+          <span id="playBtnText">Pronunție</span>
         </button>
-        <button class="action-btn" id="speakBtn" type="button" aria-label="Speak and compare">
+
+        <button class="action-btn" id="speakBtn" type="button">
           <span class="action-icon">🎤</span>
-          <span>Speak</span>
+          <span id="speakBtnText">Exersează vorbirea</span>
         </button>
       </div>
 
-      <div class="status info" id="status">Tap the sentence or press Play.</div>
+      <div class="status info" id="status">Atinge propoziția sau apasă pe butonul de pronunție.</div>
+
+      <div class="builder-wrap">
+        <div class="builder-head">
+          <div class="builder-title" id="builderTitle">Sentence builder</div>
+          <div class="builder-note" id="builderNote">Apasă pe fiecare bloc pentru a schimba cuvântul</div>
+        </div>
+
+        <div class="builder" id="builder">
+          <button class="builder-item" data-key="subject" type="button">
+            <span class="builder-label" id="subjectLabel">Subject</span>
+            <span class="builder-value" id="subjectValue">저</span>
+            <span class="builder-sub" id="subjectSub">eu / I</span>
+          </button>
+
+          <button class="builder-item" data-key="time" type="button">
+            <span class="builder-label" id="timeLabel">Time</span>
+            <span class="builder-value" id="timeValue">오늘</span>
+            <span class="builder-sub" id="timeSub">astăzi / today</span>
+          </button>
+
+          <button class="builder-item" data-key="place" type="button">
+            <span class="builder-label" id="placeLabel">Place</span>
+            <span class="builder-value" id="placeValue">도서관</span>
+            <span class="builder-sub" id="placeSub">bibliotecă / library</span>
+          </button>
+
+          <button class="builder-item" data-key="object" type="button">
+            <span class="builder-label" id="objectLabel">Object</span>
+            <span class="builder-value" id="objectValue">한국어</span>
+            <span class="builder-sub" id="objectSub">coreeană / Korean</span>
+          </button>
+
+          <button class="builder-item" data-key="verb" type="button">
+            <span class="builder-label" id="verbLabel">Verb</span>
+            <span class="builder-value" id="verbValue">공부해요</span>
+            <span class="builder-sub" id="verbSub">a studia / to study</span>
+          </button>
+        </div>
+
+        <div class="hint" id="builderHint">Ordine: timp → subiect → loc → obiect → verb</div>
+        <div class="footer-note" id="builderFooter">În pasul următor activăm logica, audio și recunoașterea vocală.</div>
+      </div>
     </section>
 
-    <section class="builder-wrap">
-      <div class="builder-head">
-        <div class="builder-title">Sentence builder</div>
-        <div class="builder-note">Tap each block to cycle</div>
-      </div>
+    <section class="bottom-grid">
+      <section class="panel-card">
+        <div class="panel-title" id="grammarTitle">Gramatică activă</div>
 
-      <div class="builder" id="builder">
-        <button class="builder-item" data-key="subject" type="button">
-          <span class="builder-label">Subject</span>
-          <span class="builder-value" id="subjectValue"></span>
-          <span class="builder-sub" id="subjectSub"></span>
-        </button>
+        <div class="mini-list">
+          <div class="mini-item">
+            <strong id="grammarItem1Title">Particule</strong>
+            <span id="grammarItem1Text">Subiectul va primi automat 은/는, iar obiectul 을/를.</span>
+          </div>
 
-        <button class="builder-item" data-key="time" type="button">
-          <span class="builder-label">Time</span>
-          <span class="builder-value" id="timeValue"></span>
-          <span class="builder-sub" id="timeSub"></span>
-        </button>
+          <div class="mini-item">
+            <strong id="grammarItem2Title">Loc</strong>
+            <span id="grammarItem2Text">Pagina va alege automat 에 sau 에서, în funcție de verb.</span>
+          </div>
 
-        <button class="builder-item" data-key="place" type="button">
-          <span class="builder-label">Place</span>
-          <span class="builder-value" id="placeValue"></span>
-          <span class="builder-sub" id="placeSub"></span>
-        </button>
+          <div class="mini-item">
+            <strong id="grammarItem3Title">Nivel</strong>
+            <span id="grammarItem3Text">Pe nivelurile mari vom folosi structuri mai avansate, nu doar propoziții simple.</span>
+          </div>
+        </div>
+      </section>
 
-        <button class="builder-item" data-key="object" type="button">
-          <span class="builder-label">Object</span>
-          <span class="builder-value" id="objectValue"></span>
-          <span class="builder-sub" id="objectSub"></span>
-        </button>
+      <section class="panel-card">
+        <div class="panel-title" id="focusModeTitle">Focus mode</div>
 
-        <button class="builder-item" data-key="verb" type="button">
-          <span class="builder-label">Verb</span>
-          <span class="builder-value" id="verbValue"></span>
-          <span class="builder-sub" id="verbSub"></span>
-        </button>
-      </div>
-
-      <div class="hint">Sentence order: Time → Subject → Place → Object → Verb</div>
-      <div class="footer-note">Uses built-in browser speech synthesis and speech recognition.</div>
+        <div class="mini-list">
+          <div class="mini-item" id="focusItem1">Un singur exemplu clar pe ecran.</div>
+          <div class="mini-item" id="focusItem2">Ascultare, înțelegere și speaking în același loc.</div>
+          <div class="mini-item" id="focusItem3">Pregătit pentru vocabular real și TOPIK 1–6.</div>
+        </div>
+      </section>
     </section>
+
   </main>
 
-  <script>
-    (() => {
-      "use strict";
-
-      const data = {
-        subject: [
-          { ko: "저", en: "I", ro: "eu" },
-          { ko: "라루카", en: "Raluca", ro: "Raluca" },
-          { ko: "민수", en: "Minsu", ro: "Minsu" },
-          { ko: "학생", en: "the student", ro: "studentul" },
-          { ko: "선생님", en: "the teacher", ro: "profesorul" }
-        ],
-        time: [
-          { ko: "오늘", en: "Today", ro: "Astăzi" },
-          { ko: "지금", en: "Right now", ro: "Chiar acum" },
-          { ko: "아침에", en: "In the morning", ro: "Dimineața" },
-          { ko: "오후에", en: "In the afternoon", ro: "După-amiaza" },
-          { ko: "내일", en: "Tomorrow", ro: "Mâine" },
-          { ko: "주말에", en: "On the weekend", ro: "În weekend" }
-        ],
-        place: [
-          { ko: "집", enPhrase: "at home", roPhrase: "acasă" },
-          { ko: "학교", enPhrase: "at school", roPhrase: "la școală" },
-          { ko: "카페", enPhrase: "at the café", roPhrase: "la cafenea" },
-          { ko: "도서관", enPhrase: "at the library", roPhrase: "la bibliotecă" },
-          { ko: "공원", enPhrase: "at the park", roPhrase: "în parc" },
-          { ko: "회사", enPhrase: "at the office", roPhrase: "la birou" }
-        ],
-        object: [
-          { ko: "한국어", en: "Korean", ro: "coreeană", groups: ["study"] },
-          { ko: "문법", en: "grammar", ro: "gramatică", groups: ["study"] },
-          { ko: "책", en: "a book", ro: "o carte", groups: ["read"] },
-          { ko: "신문", en: "the newspaper", ro: "ziarul", groups: ["read"] },
-          { ko: "커피", en: "coffee", ro: "cafea", groups: ["drink"] },
-          { ko: "물", en: "water", ro: "apă", groups: ["drink"] },
-          { ko: "영화", en: "a movie", ro: "un film", groups: ["watch"] },
-          { ko: "드라마", en: "a drama", ro: "un serial", groups: ["watch"] },
-          { ko: "친구", en: "a friend", ro: "un prieten", groups: ["meet"] },
-          { ko: "선생님", en: "the teacher", ro: "profesorul", groups: ["meet"] },
-          { ko: "음악", en: "music", ro: "muzică", groups: ["listen"] },
-          { ko: "팟캐스트", en: "a podcast", ro: "un podcast", groups: ["listen"] }
-        ],
-        verb: [
-          { ko: "공부하다", polite: "공부해요", en: "study", ro: "studiez", group: "study", placeParticle: "에서", usesObject: true },
-          { ko: "읽다",     polite: "읽어요",   en: "read",  ro: "citesc", group: "read", placeParticle: "에서", usesObject: true },
-          { ko: "마시다",   polite: "마셔요",   en: "drink", ro: "beau", group: "drink", placeParticle: "에서", usesObject: true },
-          { ko: "보다",     polite: "봐요",     en: "watch", ro: "mă uit la", group: "watch", placeParticle: "에서", usesObject: true },
-          { ko: "만나다",   polite: "만나요",   en: "meet",  ro: "mă întâlnesc cu", group: "meet", placeParticle: "에서", usesObject: true },
-          { ko: "듣다",     polite: "들어요",   en: "listen to", ro: "ascult", group: "listen", placeParticle: "에서", usesObject: true },
-          { ko: "가다",     polite: "가요",     en: "go", ro: "merg", group: null, placeParticle: "에", usesObject: false },
-          { ko: "있다",     polite: "있어요",   en: "stay", ro: "stau", group: null, placeParticle: "에", usesObject: false }
-        ]
-      };
-
-      const state = {
-        subject: 0,
-        time: 0,
-        place: 0,
-        verb: 0,
-        objectByGroup: {
-          study: 0,
-          read: 0,
-          drink: 0,
-          watch: 0,
-          meet: 0,
-          listen: 0
-        },
-        renderedSentence: "",
-        renderedTokens: []
-      };
-
-      const els = {
-        sentenceZone: document.getElementById("sentenceZone"),
-        sentenceDisplay: document.getElementById("sentenceDisplay"),
-        roTranslation: document.getElementById("roTranslation"),
-        enTranslation: document.getElementById("enTranslation"),
-        playBtn: document.getElementById("playBtn"),
-        speakBtn: document.getElementById("speakBtn"),
-        status: document.getElementById("status"),
-        builder: document.getElementById("builder"),
-        subjectValue: document.getElementById("subjectValue"),
-        subjectSub: document.getElementById("subjectSub"),
-        timeValue: document.getElementById("timeValue"),
-        timeSub: document.getElementById("timeSub"),
-        placeValue: document.getElementById("placeValue"),
-        placeSub: document.getElementById("placeSub"),
-        objectValue: document.getElementById("objectValue"),
-        objectSub: document.getElementById("objectSub"),
-        verbValue: document.getElementById("verbValue"),
-        verbSub: document.getElementById("verbSub")
-      };
-
-      const Grammar = {
-        hasBatchim(word) {
-          if (!word) return false;
-          const last = word[word.length - 1];
-          const code = last.charCodeAt(0);
-          if (code < 0xac00 || code > 0xd7a3) return false;
-          return ((code - 0xac00) % 28) !== 0;
-        },
-        topic(word) {
-          return word + (this.hasBatchim(word) ? "은" : "는");
-        },
-        object(word) {
-          return word + (this.hasBatchim(word) ? "을" : "를");
-        },
-        place(word, particle) {
-          return word + particle;
-        }
-      };
-
-      const AudioEngine = (() => {
-        let voices = [];
-        let activeUtterance = null;
-        let fallbackTimer = null;
-        let onWord = () => {};
-        let onEnd = () => {};
-
-        const loadVoices = () => {
-          voices = window.speechSynthesis.getVoices();
-        };
-
-        const getKoreanVoice = () =>
-          voices.find(v => v.lang === "ko-KR") ||
-          voices.find(v => v.lang && v.lang.startsWith("ko")) ||
-          null;
-
-        const clearFallback = () => {
-          if (fallbackTimer) {
-            clearInterval(fallbackTimer);
-            fallbackTimer = null;
-          }
-        };
-
-        const stop = () => {
-          clearFallback();
-          if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-            window.speechSynthesis.cancel();
-          }
-          activeUtterance = null;
-          onWord(-1);
-        };
-
-        const speak = ({ text, tokens }) => {
-          if (!("speechSynthesis" in window) || !text) return;
-
-          stop();
-
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = "ko-KR";
-          utterance.rate = 0.92;
-          utterance.pitch = 1.0;
-          utterance.volume = 1.0;
-
-          const voice = getKoreanVoice();
-          if (voice) utterance.voice = voice;
-
-          const ranges = [];
-          let cursor = 0;
-          tokens.forEach((token, index) => {
-            ranges.push({ index, start: cursor, end: cursor + token.length });
-            cursor += token.length + 1;
-          });
-
-          const setIndexFromChar = (charIndex) => {
-            const current = ranges.find(r => charIndex >= r.start && charIndex < r.end);
-            onWord(current ? current.index : -1);
-          };
-
-          utterance.onstart = () => {
-            onWord(0);
-          };
-
-          utterance.onboundary = (event) => {
-            if (typeof event.charIndex === "number") {
-              setIndexFromChar(event.charIndex);
-            }
-          };
-
-          utterance.onend = () => {
-            clearFallback();
-            activeUtterance = null;
-            onWord(-1);
-            onEnd();
-          };
-
-          utterance.onerror = () => {
-            clearFallback();
-            activeUtterance = null;
-            onWord(-1);
-            onEnd();
-          };
-
-          activeUtterance = utterance;
-          window.speechSynthesis.speak(utterance);
-
-          // Fallback highlighting for browsers with weak onboundary support
-          const totalDuration = Math.max(1600, text.replace(/\s+/g, "").length * 110);
-          const step = Math.max(220, Math.floor(totalDuration / Math.max(tokens.length, 1)));
-          let i = 0;
-          fallbackTimer = setInterval(() => {
-            if (!activeUtterance) {
-              clearFallback();
-              return;
-            }
-            onWord(Math.min(i, tokens.length - 1));
-            i += 1;
-            if (i >= tokens.length) clearFallback();
-          }, step);
-        };
-
-        if ("speechSynthesis" in window) {
-          loadVoices();
-          window.speechSynthesis.onvoiceschanged = loadVoices;
-        }
-
-        return {
-          speak,
-          stop,
-          onWordChange(cb) { onWord = cb; },
-          onSpeechEnd(cb) { onEnd = cb; }
-        };
-      })();
-
-      const RecognitionEngine = (() => {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition = null;
-        let listening = false;
-
-        if (SR) {
-          recognition = new SR();
-          recognition.lang = "ko-KR";
-          recognition.continuous = false;
-          recognition.interimResults = false;
-          recognition.maxAlternatives = 1;
-        }
-
-        return {
-          isSupported() {
-            return !!recognition;
-          },
-          isListening() {
-            return listening;
-          },
-          start({ onStart, onResult, onError, onEnd }) {
-            if (!recognition || listening) return;
-            recognition.onstart = () => {
-              listening = true;
-              onStart && onStart();
-            };
-            recognition.onresult = (event) => {
-              const transcript = event.results?.[0]?.[0]?.transcript?.trim() || "";
-              onResult && onResult(transcript);
-            };
-            recognition.onerror = (event) => {
-              onError && onError(event.error || "speech error");
-            };
-            recognition.onend = () => {
-              listening = false;
-              onEnd && onEnd();
-            };
-            recognition.start();
-          },
-          stop() {
-            if (recognition && listening) recognition.stop();
-          }
-        };
-      })();
-
-      const getCurrent = {
-        subject: () => data.subject[state.subject],
-        time: () => data.time[state.time],
-        place: () => data.place[state.place],
-        verb: () => data.verb[state.verb],
-        objectOptions() {
-          const verb = this.verb();
-          if (!verb.usesObject || !verb.group) return [];
-          return data.object.filter(item => item.groups.includes(verb.group));
-        },
-        object() {
-          const verb = this.verb();
-          if (!verb.usesObject || !verb.group) return null;
-          const options = this.objectOptions();
-          const index = state.objectByGroup[verb.group] % options.length;
-          return options[index];
-        }
-      };
-
-      function normalizeKorean(text) {
-        return (text || "")
-          .replace(/[\s\.,!?~'"“”‘’\-]/g, "")
-          .toLowerCase()
-          .trim();
-      }
-
-      function buildSentenceData() {
-        const subject = getCurrent.subject();
-        const time = getCurrent.time();
-        const place = getCurrent.place();
-        const verb = getCurrent.verb();
-        const object = getCurrent.object();
-
-        const tokens = [
-          time.ko,
-          Grammar.topic(subject.ko),
-          Grammar.place(place.ko, verb.placeParticle)
-        ];
-
-        if (verb.usesObject && object) {
-          tokens.push(Grammar.object(object.ko));
-        }
-
-        tokens.push(verb.polite);
-
-        const sentence = tokens.join(" ");
-
-        const en = verb.usesObject && object
-          ? `${time.en}, ${subject.en} ${verb.en} ${object.en} ${place.enPhrase}.`
-          : `${time.en}, ${subject.en} ${verb.en} ${place.enPhrase}.`;
-
-        const ro = verb.usesObject && object
-          ? `${time.ro}, ${subject.ro} ${verb.ro} ${object.ro} ${place.roPhrase}.`
-          : `${time.ro}, ${subject.ro} ${verb.ro} ${place.roPhrase}.`;
-
-        return { sentence, tokens, en, ro };
-      }
-
-      function renderSentence(tokens) {
-        const frag = document.createDocumentFragment();
-        tokens.forEach((token, index) => {
-          const span = document.createElement("span");
-          span.className = "word";
-          span.textContent = token;
-          span.dataset.index = String(index);
-          frag.appendChild(span);
-          if (index < tokens.length - 1) frag.appendChild(document.createTextNode(" "));
-        });
-        els.sentenceDisplay.innerHTML = "";
-        els.sentenceDisplay.appendChild(frag);
-      }
-
-      function highlightWord(index) {
-        const words = els.sentenceDisplay.querySelectorAll(".word");
-        words.forEach((node, i) => {
-          node.classList.toggle("active", i === index);
-        });
-      }
-
-      function setStatus(message, type = "info") {
-        els.status.textContent = message;
-        els.status.className = `status ${type}`;
-      }
-
-      function render() {
-        const subject = getCurrent.subject();
-        const time = getCurrent.time();
-        const place = getCurrent.place();
-        const verb = getCurrent.verb();
-        const object = getCurrent.object();
-        const objectOptions = getCurrent.objectOptions();
-
-        const built = buildSentenceData();
-        state.renderedSentence = built.sentence;
-        state.renderedTokens = built.tokens;
-
-        renderSentence(built.tokens);
-        els.roTranslation.textContent = built.ro;
-        els.enTranslation.textContent = built.en;
-
-        els.subjectValue.textContent = subject.ko;
-        els.subjectSub.textContent = subject.en;
-
-        els.timeValue.textContent = time.ko;
-        els.timeSub.textContent = time.en;
-
-        els.placeValue.textContent = place.ko;
-        els.placeSub.textContent = `${place.enPhrase} · ${verb.placeParticle}`;
-
-        els.verbValue.textContent = verb.polite;
-        els.verbSub.textContent = verb.ko;
-
-        els.objectValue.textContent = verb.usesObject && object ? object.ko : "—";
-        els.objectSub.textContent = verb.usesObject && object
-          ? `${object.en} · ${objectOptions.length} option${objectOptions.length > 1 ? "s" : ""}`
-          : "Not used for this verb";
-
-        const objectButton = els.builder.querySelector('[data-key="object"]');
-        objectButton.classList.toggle("disabled", !verb.usesObject);
-
-        highlightWord(-1);
-      }
-
-      function cycle(key) {
-        switch (key) {
-          case "subject":
-            state.subject = (state.subject + 1) % data.subject.length;
-            break;
-          case "time":
-            state.time = (state.time + 1) % data.time.length;
-            break;
-          case "place":
-            state.place = (state.place + 1) % data.place.length;
-            break;
-          case "verb":
-            state.verb = (state.verb + 1) % data.verb.length;
-            break;
-          case "object": {
-            const verb = getCurrent.verb();
-            if (!verb.usesObject || !verb.group) return;
-            const options = getCurrent.objectOptions();
-            state.objectByGroup[verb.group] = (state.objectByGroup[verb.group] + 1) % options.length;
-            break;
-          }
-        }
-        render();
-        setStatus("Sentence updated.", "info");
-      }
-
-      function playSentence() {
-        AudioEngine.speak({
-          text: state.renderedSentence,
-          tokens: state.renderedTokens
-        });
-        setStatus("Playing Korean audio…", "info");
-      }
-
-      function startVoiceTraining() {
-        if (!RecognitionEngine.isSupported()) {
-          setStatus("Speech recognition is not supported in this browser.", "error");
-          return;
-        }
-
-        if (RecognitionEngine.isListening()) return;
-
-        AudioEngine.stop();
-
-        RecognitionEngine.start({
-          onStart: () => {
-            els.speakBtn.classList.add("listening");
-            els.speakBtn.querySelector("span:last-child").textContent = "Listening...";
-            setStatus("Speak the Korean sentence now.", "info");
-          },
-          onResult: (transcript) => {
-            const expected = normalizeKorean(state.renderedSentence);
-            const received = normalizeKorean(transcript);
-            const ok = expected === received;
-
-            setStatus(
-              ok
-                ? `✅ Correct — You said: ${transcript}`
-                : `❌ Incorrect — You said: ${transcript}`,
-              ok ? "success" : "error"
-            );
-          },
-          onError: (error) => {
-            const friendly = error === "not-allowed"
-              ? "Microphone permission was denied."
-              : error === "no-speech"
-              ? "No speech detected. Try again."
-              : "Voice recognition could not complete.";
-            setStatus(friendly, "error");
-          },
-          onEnd: () => {
-            els.speakBtn.classList.remove("listening");
-            els.speakBtn.querySelector("span:last-child").textContent = "Speak";
-          }
-        });
-      }
-
-      AudioEngine.onWordChange((index) => {
-        highlightWord(index);
-      });
-
-      AudioEngine.onSpeechEnd(() => {
-        setStatus("Audio finished. Tap again to replay.", "info");
-      });
-
-      els.builder.addEventListener("click", (event) => {
-        const button = event.target.closest(".builder-item");
-        if (!button) return;
-        const key = button.dataset.key;
-        if (!key) return;
-        if (button.classList.contains("disabled")) return;
-        cycle(key);
-      });
-
-      els.playBtn.addEventListener("click", playSentence);
-      els.speakBtn.addEventListener("click", startVoiceTraining);
-      els.sentenceZone.addEventListener("click", playSentence);
-      els.sentenceZone.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          playSentence();
-        }
-      });
-
-      render();
-    })();
-  </script>
+  <script src="./js/focus-builder.js"></script>
 </body>
 </html>
