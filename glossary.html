@@ -104,127 +104,363 @@ button{
 </div>
 
 </div>
-
 <script>
-/* ================= DATA ================= */
-const WORDS = [
-  {ko:"가다", ro:"a merge"},
-  {ko:"오다", ro:"a veni"},
-  {ko:"먹다", ro:"a mânca"},
-  {ko:"마시다", ro:"a bea"},
-  {ko:"공부하다", ro:"a studia"},
-  {ko:"회사", ro:"companie"},
-  {ko:"집", ro:"casă"},
-  {ko:"시간", ro:"timp"},
-  {ko:"친구", ro:"prieten"},
-  {ko:"오늘", ro:"astăzi"}
-];
+const pageTitleEl = document.getElementById("pageTitle");
+const pageSubtitleEl = document.getElementById("pageSubtitle");
+const langRoBtn = document.getElementById("langRo");
+const langEnBtn = document.getElementById("langEn");
+const dailyCard = document.getElementById("dailyCard");
+const searchInput = document.getElementById("search");
+const countEl = document.getElementById("count");
+const listEl = document.getElementById("list");
 
-/* ================= FAVORITE ================= */
-const getFavs = ()=>JSON.parse(localStorage.getItem("FAV_WORDS")||"[]");
-const isFav = ko=>getFavs().includes(ko);
+let WORDS = [];
+let daily = [];
+let dailyIndex = 0;
+let dailyHTML = "";
+let currentLang = localStorage.getItem("RK_LANG") || "ro";
+
+const CATEGORY_LABELS = {
+  subjects: { ro: "Subiect", en: "Subject" },
+  objects: { ro: "Obiect", en: "Object" },
+  verbs: { ro: "Verb", en: "Verb" },
+  times: { ro: "Timp", en: "Time" },
+  places: { ro: "Loc", en: "Place" },
+  modifiers: { ro: "Modificator", en: "Modifier" },
+  conjugations: { ro: "Conjugare", en: "Conjugation" }
+};
+
+const UI_TEXT = {
+  ro: {
+    title: "Glosar Korean",
+    subtitle: "Pronunție · Favorite · Context real",
+    searchPlaceholder: "Caută (KO / RO / EN)",
+    countWords: "cuvinte",
+    noWords: "Nu există cuvinte.",
+    dailyTitle: "📅 3 cuvinte pe zi",
+    speak: "🔊 Pronunție",
+    practice: "🧠 Exersează",
+    refresh: "🔁 Alte cuvinte",
+    quizQuestion: "🧠 Ce înseamnă:",
+    done: "🎉 Gata!",
+    back: "⬅ Înapoi",
+    tryAgain: "❌ Mai încearcă",
+    loadError: "Nu am putut încărca vocab-korean.json",
+    category: "Categorie"
+  },
+  en: {
+    title: "Korean Glossary",
+    subtitle: "Pronunciation · Favorites · Real context",
+    searchPlaceholder: "Search (KO / RO / EN)",
+    countWords: "words",
+    noWords: "No words found.",
+    dailyTitle: "📅 3 words a day",
+    speak: "🔊 Pronunciation",
+    practice: "🧠 Practice",
+    refresh: "🔁 New words",
+    quizQuestion: "🧠 What does it mean:",
+    done: "🎉 Done!",
+    back: "⬅ Back",
+    tryAgain: "❌ Try again",
+    loadError: "Could not load vocab-korean.json",
+    category: "Category"
+  }
+};
+
+function t(key){
+  return UI_TEXT[currentLang][key];
+}
+
+function updateLanguageButtons(){
+  const activeStyle = "linear-gradient(135deg,#22d3ee,#7c3aed)";
+  const inactiveStyle = "rgba(10,8,28,.55)";
+
+  if(currentLang === "ro"){
+    langRoBtn.style.background = activeStyle;
+    langRoBtn.style.color = "#000";
+    langEnBtn.style.background = inactiveStyle;
+    langEnBtn.style.color = "var(--text)";
+  } else {
+    langEnBtn.style.background = activeStyle;
+    langEnBtn.style.color = "#000";
+    langRoBtn.style.background = inactiveStyle;
+    langRoBtn.style.color = "var(--text)";
+  }
+}
+
+function updateStaticTexts(){
+  pageTitleEl.textContent = t("title");
+  pageSubtitleEl.textContent = t("subtitle");
+  searchInput.placeholder = t("searchPlaceholder");
+}
+
+function setLanguage(lang){
+  currentLang = lang;
+  localStorage.setItem("RK_LANG", lang);
+  updateStaticTexts();
+  updateLanguageButtons();
+  renderDailyView();
+  render();
+}
+
+function getMeaning(word){
+  return currentLang === "ro" ? word.ro : word.en;
+}
+
+function getCategories(word){
+  return currentLang === "ro" ? word.categoriesRo : word.categoriesEn;
+}
+
+function shuffle(array){
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
+function getFavs(){
+  return JSON.parse(localStorage.getItem("FAV_WORDS") || "[]");
+}
+
+function isFav(ko){
+  return getFavs().includes(ko);
+}
+
 function toggleFav(ko){
-  const f = getFavs();
-  localStorage.setItem("FAV_WORDS",
-    JSON.stringify(f.includes(ko)?f.filter(x=>x!==ko):[...f,ko])
-  );
+  const favs = getFavs();
+  const nextFavs = favs.includes(ko)
+    ? favs.filter(item => item !== ko)
+    : [...favs, ko];
+
+  localStorage.setItem("FAV_WORDS", JSON.stringify(nextFavs));
   render();
   renderDailyView();
 }
 
-/* ================= TTS ================= */
 function speakKO(text){
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang="ko-KR"; u.rate=0.9;
-  speechSynthesis.cancel(); speechSynthesis.speak(u);
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "ko-KR";
+  utterance.rate = 0.9;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utterance);
 }
 
-/* ================= YOUGLISH ================= */
-const openYouGlish=w=>window.open(
-  `https://youglish.com/pronounce/${encodeURIComponent(w)}/korean`,"_blank");
+function openYouGlish(word){
+  window.open(
+    `https://youglish.com/pronounce/${encodeURIComponent(word)}/korean`,
+    "_blank"
+  );
+}
 
-/* ================= 3 CUVINTE ================= */
-let daily=[], dailyIndex=0, dailyHTML="";
+function normalizeWordEntry(entry){
+  return {
+    ko: entry.ko || "",
+    ro: entry.ro || "",
+    en: entry.en || ""
+  };
+}
+
+function buildWordsFromVocabulary(vocab){
+  const map = new Map();
+
+  Object.keys(CATEGORY_LABELS).forEach(categoryKey => {
+    const items = Array.isArray(vocab[categoryKey]) ? vocab[categoryKey] : [];
+
+    items.forEach(rawEntry => {
+      const entry = normalizeWordEntry(rawEntry);
+      const ko = entry.ko.trim();
+
+      if(!ko) return;
+
+      if(!map.has(ko)){
+        map.set(ko, {
+          ko,
+          ro: entry.ro || "",
+          en: entry.en || "",
+          categoriesRo: new Set(),
+          categoriesEn: new Set()
+        });
+      }
+
+      const current = map.get(ko);
+
+      if(!current.ro && entry.ro) current.ro = entry.ro;
+      if(!current.en && entry.en) current.en = entry.en;
+
+      current.categoriesRo.add(CATEGORY_LABELS[categoryKey].ro);
+      current.categoriesEn.add(CATEGORY_LABELS[categoryKey].en);
+    });
+  });
+
+  return Array.from(map.values())
+    .map(word => ({
+      ko: word.ko,
+      ro: word.ro,
+      en: word.en,
+      categoriesRo: [...word.categoriesRo],
+      categoriesEn: [...word.categoriesEn]
+    }))
+    .sort((a, b) => a.ko.localeCompare(b.ko, "ko"));
+}
+
+async function loadVocabulary(){
+  try {
+    const response = await fetch("./data/vocab-korean.json");
+    const vocab = await response.json();
+
+    WORDS = buildWordsFromVocabulary(vocab);
+
+    pickDaily();
+    renderDailyView();
+    render();
+  } catch (error) {
+    console.error("Vocabulary load error:", error);
+    dailyCard.innerHTML = `<div class="sub">${t("loadError")}</div>`;
+    countEl.textContent = t("loadError");
+    listEl.innerHTML = "";
+  }
+}
 
 function pickDaily(){
-  daily=[...WORDS].sort(()=>0.5-Math.random()).slice(0,3);
+  if(WORDS.length === 0){
+    daily = [];
+    return;
+  }
+
+  daily = shuffle(WORDS).slice(0, Math.min(3, WORDS.length));
 }
 
 function renderDailyView(){
-  const c=document.getElementById("dailyCard");
-  c.innerHTML=`
-    <h3>📅 3 cuvinte pe zi</h3>
-    ${daily.map(w=>`
+  if(daily.length === 0){
+    dailyCard.innerHTML = `<div class="sub">${t("noWords")}</div>`;
+    return;
+  }
+
+  dailyCard.innerHTML = `
+    <h3>${t("dailyTitle")}</h3>
+    ${daily.map(word => `
       <div class="word">
-        <div><div class="ko">${w.ko}</div><div class="ro">${w.ro}</div></div>
-        <div class="actions">
-          <span class="icon" onclick="speakKO('${w.ko}')">🔈</span>
-          <span class="icon" onclick="openYouGlish('${w.ko}')">🎥</span>
-          <span class="icon star ${isFav(w.ko)?'active':''}"
-            onclick="toggleFav('${w.ko}')">⭐</span>
+        <div>
+          <div class="ko">${word.ko}</div>
+          <div class="ro">${getMeaning(word)}</div>
+          <div class="ro">${t("category")}: ${getCategories(word).join(" • ")}</div>
         </div>
-      </div>`).join("")}
+        <div class="actions">
+          <span class="icon" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">🔈</span>
+          <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
+          <span class="icon star ${isFav(word.ko) ? 'active' : ''}" onclick="toggleFav('${word.ko.replace(/'/g, "\\'")}')">⭐</span>
+        </div>
+      </div>
+    `).join("")}
+
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button onclick="playDaily()">🔊 Pronunție</button>
-      <button onclick="startQuiz()">🧠 Exersează</button>
-      <button onclick="refreshDaily()">🔁 Alte cuvinte</button>
-    </div>`;
-  dailyHTML=c.innerHTML;
+      <button type="button" onclick="playDaily()">${t("speak")}</button>
+      <button type="button" onclick="startQuiz()">${t("practice")}</button>
+      <button type="button" onclick="refreshDaily()">${t("refresh")}</button>
+    </div>
+  `;
+
+  dailyHTML = dailyCard.innerHTML;
 }
 
 function playDaily(){
-  daily.forEach((w,i)=>setTimeout(()=>speakKO(w.ko),i*1200));
+  daily.forEach((word, index) => {
+    setTimeout(() => speakKO(word.ko), index * 1200);
+  });
 }
 
-function startQuiz(){ dailyIndex=0; showQ(); }
+function startQuiz(){
+  dailyIndex = 0;
+  showQuizQuestion();
+}
 
-function showQ(){
-  const c=document.getElementById("dailyCard");
-  if(dailyIndex>=daily.length){
-    c.innerHTML=`<h3>🎉 Gata!</h3><button onclick="exitQuiz()">⬅ Înapoi</button>`;
+function showQuizQuestion(){
+  if(dailyIndex >= daily.length){
+    dailyCard.innerHTML = `
+      <h3>${t("done")}</h3>
+      <button type="button" onclick="exitQuiz()">${t("back")}</button>
+    `;
     return;
   }
-  const w=daily[dailyIndex];
-  let opts=[w.ro,...WORDS.map(x=>x.ro)].sort(()=>0.5-Math.random()).slice(0,3);
-  c.innerHTML=`
-    <h3>🧠 Ce înseamnă:</h3>
-    <div class="ko">${w.ko}</div>
-    ${opts.map(o=>`<button onclick="checkQ('${o}','${w.ro}')">${o}</button>`).join("")}
-    <br><button onclick="exitQuiz()">⬅ Înapoi</button>`;
+
+  const currentWord = daily[dailyIndex];
+  const correctMeaning = getMeaning(currentWord);
+
+  const wrongPool = WORDS
+    .map(word => getMeaning(word))
+    .filter(meaning => meaning && meaning !== correctMeaning);
+
+  const wrongOptions = shuffle([...new Set(wrongPool)]).slice(0, 2);
+  const options = shuffle([correctMeaning, ...wrongOptions]);
+
+  dailyCard.innerHTML = `
+    <h3>${t("quizQuestion")}</h3>
+    <div class="ko">${currentWord.ko}</div>
+    ${options.map(option => `
+      <button type="button" onclick="checkQuizAnswer('${option.replace(/'/g, "\\'")}', '${correctMeaning.replace(/'/g, "\\'")}')">${option}</button>
+    `).join("")}
+    <br>
+    <button type="button" onclick="exitQuiz()">${t("back")}</button>
+  `;
 }
 
-function checkQ(a,b){ a===b?(dailyIndex++,showQ()):alert("❌ Mai încearcă"); }
-const exitQuiz=()=>document.getElementById("dailyCard").innerHTML=dailyHTML;
-const refreshDaily=()=>{pickDaily();renderDailyView();};
+function checkQuizAnswer(selectedAnswer, correctAnswer){
+  if(selectedAnswer === correctAnswer){
+    dailyIndex++;
+    showQuizQuestion();
+  } else {
+    alert(t("tryAgain"));
+  }
+}
 
-/* ================= LIST ================= */
-const list=document.getElementById("list");
-const count=document.getElementById("count");
-const search=document.getElementById("search");
+function exitQuiz(){
+  dailyCard.innerHTML = dailyHTML;
+}
+
+function refreshDaily(){
+  pickDaily();
+  renderDailyView();
+}
 
 function render(){
-  const q=search.value.toLowerCase();
-  const f=WORDS.filter(w=>w.ko.includes(q)||w.ro.includes(q));
-  count.textContent=`${f.length} cuvinte`;
-  list.innerHTML=f.map(w=>`
+  const query = searchInput.value.trim().toLowerCase();
+
+  const filtered = WORDS.filter(word => {
+    return (
+      word.ko.toLowerCase().includes(query) ||
+      (word.ro || "").toLowerCase().includes(query) ||
+      (word.en || "").toLowerCase().includes(query)
+    );
+  });
+
+  countEl.textContent = `${filtered.length} ${t("countWords")}`;
+
+  if(filtered.length === 0){
+    listEl.innerHTML = `<div class="sub">${t("noWords")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(word => `
     <div class="word">
-      <div><div class="ko">${w.ko}</div><div class="ro">${w.ro}</div></div>
-      <div class="actions">
-        <span class="icon" onclick="speakKO('${w.ko}')">🔈</span>
-        <span class="icon" onclick="openYouGlish('${w.ko}')">🎥</span>
-        <span class="icon star ${isFav(w.ko)?'active':''}"
-          onclick="toggleFav('${w.ko}')">⭐</span>
+      <div>
+        <div class="ko">${word.ko}</div>
+        <div class="ro">${getMeaning(word)}</div>
+        <div class="ro">${t("category")}: ${getCategories(word).join(" • ")}</div>
       </div>
-    </div>`).join("");
+
+      <div class="actions">
+        <span class="icon" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">🔈</span>
+        <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
+        <span class="icon star ${isFav(word.ko) ? 'active' : ''}" onclick="toggleFav('${word.ko.replace(/'/g, "\\'")}')">⭐</span>
+      </div>
+    </div>
+  `).join("");
 }
 
-search.oninput=render;
+searchInput.addEventListener("input", render);
+langRoBtn.addEventListener("click", () => setLanguage("ro"));
+langEnBtn.addEventListener("click", () => setLanguage("en"));
 
-/* INIT */
-pickDaily();
-renderDailyView();
-render();
-
+updateStaticTexts();
+updateLanguageButtons();
+loadVocabulary();
 </script>
 </body>
 </html>
