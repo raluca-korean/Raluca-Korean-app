@@ -15,7 +15,7 @@
       --line2:rgba(15,23,42,.16);
       --primary:#6d5efc;
       --primary2:#8b5cf6;
-      --blue:#3b82f6;
+      --blue:#2563eb;
       --shadow:0 18px 50px rgba(15,23,42,.08);
       --shadow-sm:0 8px 24px rgba(15,23,42,.06);
       --radius-xl:24px;
@@ -90,7 +90,7 @@
       flex-wrap:wrap;
     }
 
-    .chip,.action,.topBtn,.topicOption,.miniSwitch,.slotValueBtn{
+    .chip,.action,.topBtn,.topicOption,.miniSwitch{
       font:inherit;
       appearance:none;
       border:none;
@@ -104,7 +104,7 @@
         color var(--transition);
     }
 
-    .chip:hover,.action:hover,.topBtn:hover,.topicOption:hover,.miniSwitch:hover,.slotValueBtn:hover{
+    .chip:hover,.action:hover,.topBtn:hover,.topicOption:hover,.miniSwitch:hover{
       transform:translateY(-1px);
     }
 
@@ -208,6 +208,10 @@
       letter-spacing:.14em;
     }
 
+    textarea, input, select{
+      font-family:inherit;
+    }
+
     textarea{
       width:100%;
       min-height:132px;
@@ -222,10 +226,9 @@
       font-size:18px;
       font-weight:700;
       line-height:1.5;
-      font-family:inherit;
     }
 
-    textarea:focus{
+    textarea:focus, input:focus, select:focus{
       outline:none;
       border-color:rgba(109,94,252,.42);
       box-shadow:0 0 0 4px rgba(109,94,252,.08);
@@ -357,7 +360,7 @@
     }
 
     .slotCard{
-      min-height:150px;
+      min-height:154px;
       border-radius:18px;
       border:1px solid rgba(15,23,42,.08);
       background:#fff;
@@ -428,9 +431,9 @@
       min-height:18px;
     }
 
-    .slotValueBtn{
+    .slotInput, .slotSelect{
       width:100%;
-      min-height:52px;
+      min-height:50px;
       border-radius:14px;
       border:1px solid rgba(15,23,42,.14);
       background:rgba(255,255,255,.92);
@@ -439,10 +442,9 @@
       font-size:18px;
       font-weight:800;
       box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
-      text-align:left;
     }
 
-    .slotValueBtn.placeholder{
+    .slotInput::placeholder{
       color:#94a3b8;
       font-weight:700;
     }
@@ -509,7 +511,7 @@
 
     <section class="panel">
       <div class="topHead">
-        <h1 class="title">Raluca Korean — Clause Builder</h1>
+        <h1 class="title">Raluca Korean — Builder</h1>
 
         <div class="row">
           <a href="./index.html" class="topBtn">← Index</a>
@@ -522,7 +524,7 @@
               <button type="button" class="topicOption" data-level="3">TOPIK 3</button>
               <button type="button" class="topicOption" data-level="4">TOPIK 4</button>
               <button type="button" class="topicOption" data-level="5">TOPIK 5</button>
-              <button type="button" class="topicOption active" data-level="6">TOPIK 6</button>
+              <button type="button" class="topicOption" data-level="6">TOPIK 6</button>
             </div>
           </details>
 
@@ -571,6 +573,14 @@
 
   <div id="toast" class="toast" aria-live="polite"></div>
 
+  <datalist id="dl-relative"></datalist>
+  <datalist id="dl-subject"></datalist>
+  <datalist id="dl-time"></datalist>
+  <datalist id="dl-location"></datalist>
+  <datalist id="dl-objects"></datalist>
+  <datalist id="dl-description"></datalist>
+  <datalist id="dl-verb"></datalist>
+
   <script>
     const UI = {
       ro: {
@@ -606,6 +616,16 @@
           description: "cum?",
           verb: "acțiunea",
           connector: "leagă mai departe"
+        },
+        placeholders: {
+          relative: "",
+          subject: "",
+          time: "",
+          location: "",
+          objects: "",
+          description: "",
+          verb: "",
+          connector: ""
         },
         hints: {
           relative: "ex: 내가 어제 만난 사람",
@@ -660,6 +680,16 @@
           description: "how?",
           verb: "action",
           connector: "links forward"
+        },
+        placeholders: {
+          relative: "",
+          subject: "",
+          time: "",
+          location: "",
+          objects: "",
+          description: "",
+          verb: "",
+          connector: ""
         },
         hints: {
           relative: "ex: 내가 어제 만난 사람",
@@ -781,6 +811,7 @@
     };
 
     let toastTimer = null;
+    let speechHighlightTimer = null;
 
     function t(){
       return UI[state.lang];
@@ -819,6 +850,7 @@
 
     function splitItems(str=""){
       return str
+        .replace(/\+/g, " + ")
         .split(/\s*(?:,|\/|&|\+| și | si | and | 그리고 )\s*/i)
         .map(s => s.trim())
         .filter(Boolean);
@@ -927,7 +959,7 @@
     }
 
     function objectsToKo(raw=""){
-      const parts = splitItems(raw.replace(/\+/g, " + "));
+      const parts = splitItems(raw);
       if(!parts.length) return "";
       return parts.map((part, idx) => {
         const ko = toKo(part, SUGGESTIONS.objects);
@@ -978,7 +1010,7 @@
         return lang === "ro" ? (entry.ro[0] || entry.ko) : (entry.en[0] || entry.ko);
       }
       if(slot === "objects"){
-        const cleaned = v.replace(/[+]/g, " ").replace(/[을를와과]/g, " ");
+        const cleaned = v.replace(/\+/g, " ").replace(/[을를와과]/g, " ");
         const parts = cleaned.split(/\s+/).filter(Boolean);
         const translated = parts.map(p => reverseLookup(SUGGESTIONS.objects, p, lang)).filter(Boolean);
         return translated.join(lang === "ro" ? " și " : " and ");
@@ -1030,30 +1062,20 @@
       }
     }
 
-    function cycleListForSlot(slotKey){
-      if(slotKey === "relative") return [""].concat(SUGGESTIONS.relative);
-      if(slotKey === "subject") return SUGGESTIONS.subjects.map(v => v.ko);
-      if(slotKey === "time") return [""].concat(SUGGESTIONS.times.map(v => v.ko));
-      if(slotKey === "location") return [""].concat(SUGGESTIONS.locations.map(v => v.ko));
-      if(slotKey === "objects") return [""].concat(SUGGESTIONS.objects.map(v => v.ko));
-      if(slotKey === "description") return [""].concat(SUGGESTIONS.descriptions.map(v => v.ko));
-      if(slotKey === "verb") return SUGGESTIONS.verbs.map(v => v.ko);
-      if(slotKey === "connector") return SUGGESTIONS.connectors;
-      return [""];
+    function renderTopicMenu(){
+      els.topicSummary.textContent = `TOPIK ${state.level} ▾`;
+      [...els.topicDropdown.querySelectorAll(".topicOption")].forEach(btn => {
+        btn.classList.toggle("active", Number(btn.dataset.level) === state.level);
+      });
     }
 
-    function ensureNextClauseChain(){
-      for(let i = 0; i < state.clauses.length; i++){
-        const current = state.clauses[i];
-        if(current.slots.connector.active && current.slots.connector.value){
-          if(i === state.clauses.length - 1){
-            const next = createClause(state.clauses.length);
-            next.slots.subject.active = false;
-            next.slots.subject.value = current.slots.subject.value;
-            state.clauses.push(next);
-          }
-        }
-      }
+    function renderLanguageButtons(){
+      els.btnRo.classList.toggle("active", state.lang === "ro");
+      els.btnEn.classList.toggle("active", state.lang === "en");
+      els.playBtn.textContent = t().playBtn;
+      els.speakBtn.textContent = t().speakBtn;
+      els.textLabel.textContent = t().textLabel;
+      els.freeText.value = state.freeText[state.lang] || "";
     }
 
     function buildKorean(){
@@ -1148,35 +1170,61 @@
       });
     }
 
-    function renderTopicMenu(){
-      els.topicSummary.textContent = `TOPIK ${state.level} ▾`;
-      [...els.topicDropdown.querySelectorAll(".topicOption")].forEach(btn => {
-        btn.classList.toggle("active", Number(btn.dataset.level) === state.level);
-      });
+    function renderPreview(){
+      const ko = buildKorean();
+      const tr = buildTranslation(state.lang);
+      renderSentence(ko || "—");
+      els.translationText.textContent = tr || t().translationEmpty;
     }
 
-    function renderLanguageButtons(){
-      els.btnRo.classList.toggle("active", state.lang === "ro");
-      els.btnEn.classList.toggle("active", state.lang === "en");
-      els.playBtn.textContent = t().playBtn;
-      els.speakBtn.textContent = t().speakBtn;
-      els.textLabel.textContent = t().textLabel;
-      els.freeText.value = state.freeText[state.lang] || "";
-    }
-
-    function getDisplayedValue(slotKey, rawValue){
+    function slotField(slotKey, clauseIndex, value, active){
       if(slotKey === "connector"){
-        return t().connectors[rawValue] || "—";
+        const options = Object.entries(t().connectors).map(([val, label]) => {
+          const selected = value === val ? "selected" : "";
+          return `<option value="${val}" ${selected}>${label}</option>`;
+        }).join("");
+
+        return `
+          <select
+            class="slotSelect"
+            data-action="input"
+            data-clause="${clauseIndex}"
+            data-slot="${slotKey}"
+            ${active ? "" : "disabled"}
+          >
+            ${options}
+          </select>
+        `;
       }
-      return rawValue && rawValue.trim() ? rawValue : "—";
+
+      const datalistMap = {
+        relative: "dl-relative",
+        subject: "dl-subject",
+        time: "dl-time",
+        location: "dl-location",
+        objects: "dl-objects",
+        description: "dl-description",
+        verb: "dl-verb"
+      };
+
+      return `
+        <input
+          class="slotInput"
+          list="${datalistMap[slotKey] || ""}"
+          data-action="input"
+          data-clause="${clauseIndex}"
+          data-slot="${slotKey}"
+          value="${escapeHtml(value)}"
+          placeholder="${escapeHtml(t().placeholders[slotKey] || "")}"
+          ${active ? "" : "disabled"}
+        />
+      `;
     }
 
     function slotCardTemplate({ clauseIndex, slotKey, active, value }){
       const label = t().slots[slotKey];
       const question = t().questions[slotKey] || "";
       const hint = t().hints[slotKey] || "";
-      const displayValue = getDisplayedValue(slotKey, value);
-      const placeholderClass = displayValue === "—" ? "placeholder" : "";
 
       return `
         <div class="slotCard ${active ? "" : "off"}" data-slot="${slotKey}">
@@ -1187,9 +1235,7 @@
             </button>
           </div>
           <div class="slotQuestion">${question}</div>
-          <button class="slotValueBtn ${placeholderClass}" type="button" data-action="cycle" data-clause="${clauseIndex}" data-slot="${slotKey}" ${active ? "" : "disabled"}>
-            ${displayValue}
-          </button>
+          ${slotField(slotKey, clauseIndex, value, active)}
           <div class="slotHint">${hint}</div>
         </div>
       `;
@@ -1220,13 +1266,6 @@
       });
     }
 
-    function renderPreview(){
-      const ko = buildKorean();
-      const tr = buildTranslation(state.lang);
-      renderSentence(ko || "—");
-      els.translationText.textContent = tr || t().translationEmpty;
-    }
-
     function renderAll(){
       ensureInitialClause();
       renderLanguageButtons();
@@ -1248,6 +1287,20 @@
       }
     }
 
+    function ensureNextClauseChain(){
+      for(let i = 0; i < state.clauses.length; i++){
+        const current = state.clauses[i];
+        if(current.slots.connector.active && current.slots.connector.value){
+          if(i === state.clauses.length - 1){
+            const next = createClause(state.clauses.length);
+            next.slots.subject.active = false;
+            next.slots.subject.value = current.slots.subject.value;
+            state.clauses.push(next);
+          }
+        }
+      }
+    }
+
     function handleToggle(clauseIndex, slotKey){
       const slot = state.clauses[clauseIndex].slots[slotKey];
       slot.active = !slot.active;
@@ -1258,21 +1311,16 @@
       renderAll();
     }
 
-    function handleCycle(clauseIndex, slotKey){
+    function handleFieldChange(clauseIndex, slotKey, value){
       const slot = state.clauses[clauseIndex].slots[slotKey];
-      const list = cycleListForSlot(slotKey);
-      let currentIndex = list.findIndex(v => v === slot.value);
-      if(currentIndex === -1) currentIndex = 0;
-      const nextIndex = (currentIndex + 1) % list.length;
-      slot.value = list[nextIndex];
+      slot.value = value;
 
+      if(slotKey === "verb") slot.active = true;
       if(slotKey === "connector"){
-        slot.active = slot.value !== "";
-      } else if(slotKey === "verb"){
-        slot.active = true;
+        slot.active = value !== "";
+        ensureNextClauseChain();
       }
 
-      ensureNextClauseChain();
       renderAll();
     }
 
@@ -1326,7 +1374,7 @@
         const objMatches = findAllInText(piece, SUGGESTIONS.objects);
         if(objMatches.length){
           clause.slots.objects.active = true;
-          clause.slots.objects.value = objMatches.map((item) => item.ko).join(" + ");
+          clause.slots.objects.value = objMatches.map(item => item.ko).join(" + ");
         }
 
         const verb = findFirstInText(piece, SUGGESTIONS.verbs);
@@ -1347,7 +1395,14 @@
 
       state.clauses = clauses.length ? clauses : [createClause(0)];
       ensureNextClauseChain();
-      renderAll();
+      renderClauses();
+      renderPreview();
+      savePrefs();
+    }
+
+    function clearWordHighlights(){
+      clearInterval(speechHighlightTimer);
+      [...els.sentenceWords.querySelectorAll(".word")].forEach(w => w.classList.remove("active"));
     }
 
     function playSentence(){
@@ -1360,15 +1415,28 @@
       }
 
       window.speechSynthesis.cancel();
+      clearWordHighlights();
+
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = "ko-KR";
       utter.rate = 0.9;
       utter.pitch = 1;
 
       const words = [...els.sentenceWords.querySelectorAll(".word")];
-      words.forEach(w => w.classList.remove("active"));
-
       let idx = 0;
+
+      utter.onstart = () => {
+        clearWordHighlights();
+        speechHighlightTimer = setInterval(() => {
+          words.forEach(w => w.classList.remove("active"));
+          if(words[idx]) words[idx].classList.add("active");
+          idx++;
+          if(idx > words.length - 1){
+            clearInterval(speechHighlightTimer);
+          }
+        }, 320);
+      };
+
       utter.onboundary = (event) => {
         if(event.name === "word"){
           words.forEach(w => w.classList.remove("active"));
@@ -1376,7 +1444,14 @@
           idx++;
         }
       };
-      utter.onend = () => words.forEach(w => w.classList.remove("active"));
+
+      utter.onend = () => {
+        setTimeout(clearWordHighlights, 180);
+      };
+
+      utter.onerror = () => {
+        clearWordHighlights();
+      };
 
       window.speechSynthesis.speak(utter);
     }
@@ -1429,6 +1504,34 @@
       rec.start();
     }
 
+    function populateDatalist(id, items){
+      const dl = document.getElementById(id);
+      if(!dl) return;
+      dl.innerHTML = "";
+      items.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item.ko;
+        dl.appendChild(option);
+      });
+    }
+
+    function initDatalists(){
+      const rel = document.getElementById("dl-relative");
+      rel.innerHTML = "";
+      SUGGESTIONS.relative.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item;
+        rel.appendChild(option);
+      });
+
+      populateDatalist("dl-subject", SUGGESTIONS.subjects);
+      populateDatalist("dl-time", SUGGESTIONS.times);
+      populateDatalist("dl-location", SUGGESTIONS.locations);
+      populateDatalist("dl-objects", SUGGESTIONS.objects);
+      populateDatalist("dl-description", SUGGESTIONS.descriptions);
+      populateDatalist("dl-verb", SUGGESTIONS.verbs);
+    }
+
     function bindEvents(){
       els.btnRo.addEventListener("click", () => {
         state.lang = "ro";
@@ -1438,3 +1541,62 @@
       els.btnEn.addEventListener("click", () => {
         state.lang = "en";
         renderAll();
+      });
+
+      els.topicDropdown.addEventListener("click", (e) => {
+        const btn = e.target.closest(".topicOption");
+        if(!btn) return;
+        state.level = Number(btn.dataset.level);
+        renderTopicMenu();
+        savePrefs();
+        els.topicMenu.open = false;
+      });
+
+      document.addEventListener("click", (e) => {
+        if(!els.topicMenu.contains(e.target)){
+          els.topicMenu.open = false;
+        }
+      });
+
+      els.freeText.addEventListener("input", parseFreeText);
+
+      els.addClauseBtn.addEventListener("click", addClause);
+      els.removeClauseBtn.addEventListener("click", removeClause);
+
+      els.clauseList.addEventListener("click", (e) => {
+        const toggle = e.target.closest("[data-action='toggle']");
+        if(toggle){
+          handleToggle(Number(toggle.dataset.clause), toggle.dataset.slot);
+        }
+      });
+
+      els.clauseList.addEventListener("change", (e) => {
+        const field = e.target.closest("[data-action='input']");
+        if(!field) return;
+        handleFieldChange(Number(field.dataset.clause), field.dataset.slot, field.value);
+      });
+
+      els.playBtn.addEventListener("click", playSentence);
+      els.sentenceBtn.addEventListener("click", playSentence);
+      els.speakBtn.addEventListener("click", startSpeakingPractice);
+    }
+
+    function seedInitialContent(){
+      ensureInitialClause();
+      if(!state.freeText.ro && !state.freeText.en){
+        state.clauses[0].slots.subject.active = true;
+        state.clauses[0].slots.subject.value = "저";
+        state.clauses[0].slots.verb.active = true;
+        state.clauses[0].slots.verb.value = "가다";
+      }
+    }
+
+    function init(){
+      initDatalists();
+      seedInitialContent();
+      bindEvents();
+      renderAll();
+      showToast("info", t().toastReady);
+    }
+
+    function escapeHtml(str
