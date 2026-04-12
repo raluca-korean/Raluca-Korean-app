@@ -575,7 +575,235 @@
       if(key === 'connector') return connectorTextByKey(itemOf(clause, key).key, state.lang);
       return itemOf(clause, key)[state.lang] || '';
     }
-    function escapeHtml(str){ return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+        function escapeHtml(str){ return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+    function uniqueNonEmpty(list){
+      var out = [];
+      for(var i=0;i<list.length;i++){
+        var val = String(list[i] || '').trim();
+        if(!val || val === '—') continue;
+        var fold = normalizeLatin(val), exists = false;
+        for(var j=0;j<out.length;j++){ if(normalizeLatin(out[j]) === fold){ exists = true; break; } }
+        if(!exists) out.push(val);
+      }
+      return out;
+    }
+    function normalizeLoose(str){ return String(str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim(); }
+    function hasAny(text, terms){
+      var n = normalizeLoose(text);
+      for(var i=0;i<terms.length;i++){ if(n.indexOf(normalizeLoose(terms[i])) !== -1) return true; }
+      return false;
+    }
+    function detectGlobalSubject(text){
+      var src = String(text || '').trim();
+      if(!src) return '';
+      var firstChunk = src.split(',')[0].trim();
+      if(/^(eu|tu|el|ea|noi|voi|ei|ele)\b/i.test(firstChunk)) return firstChunk;
+      if(/^[A-ZĂÂÎȘȚ][^,.!?]+$/.test(firstChunk) && !/(am|ai|a|au|este|sunt|era|fost)/i.test(firstChunk)) return firstChunk;
+      if(hasAny(src,['eu si','eu și'])) return 'eu și ...';
+      if(hasAny(src,['noi'])) return 'noi';
+      if(hasAny(src,['voi'])) return 'voi';
+      if(hasAny(src,['ei'])) return 'ei';
+      if(hasAny(src,['ele'])) return 'ele';
+      if(hasAny(src,['eu'])) return 'eu';
+      if(hasAny(src,['tu'])) return 'tu';
+      if(hasAny(src,['ea'])) return 'ea';
+      if(hasAny(src,['el'])) return 'el';
+      return '(subiect implicit)';
+    }
+    function inferGender(subject, segment){
+      var s = normalizeLoose(subject + ' ' + segment);
+      if(s.indexOf('maria') !== -1 && (s.indexOf('eu') !== -1 || s.indexOf('si') !== -1)) return 'mixt / coordonat';
+      if(/\bea\b/.test(s)) return 'feminin';
+      if(/\bel\b/.test(s)) return 'masculin';
+      if(/\bele\b/.test(s)) return 'feminin plural';
+      if(/\bei\b/.test(s)) return 'masculin / mixt plural';
+      if(s.indexOf('timpul') !== -1) return 'neutru lexical (sg. cu acord masculin)';
+      if(s.indexOf('plouat') !== -1) return 'impersonal / fără gen lexical';
+      return 'de verificat în context';
+    }
+    function inferNumber(subject, segment){
+      var s = normalizeLoose(subject + ' ' + segment);
+      if(s.indexOf('eu si') !== -1 || s.indexOf('eu si ') !== -1 || s.indexOf('noi') !== -1 || s.indexOf('voi') !== -1 || s.indexOf('ei') !== -1 || s.indexOf('ele') !== -1) return 'plural';
+      if(s.indexOf('plouat') !== -1) return 'singular impersonal';
+      if(s.indexOf('timpul') !== -1 || /\beu\b|\btu\b|\bel\b|\bea\b/.test(s)) return 'singular';
+      return 'de verificat';
+    }
+    function inferConjugation(segment, subject){
+      var n = normalizeLoose(segment);
+      if(!n) return '—';
+      if(/^ca sa\b|^pentru a\b/.test(n)) return 'infinitiv / structură finală non-finită';
+      if(n.indexOf('am ') !== -1) return 'indicativ perfect compus, persoana I';
+      if(n.indexOf('a fost') !== -1) return 'indicativ perfect compus, persoana a III-a singular';
+      if(n.indexOf('a plouat') !== -1) return 'indicativ perfect compus, persoana a III-a singular impersonal';
+      if(n.indexOf('trebuit') !== -1) return 'perfect compus impersonal + verb dependent';
+      if(n.indexOf('putut') !== -1) return 'perfect compus + modalitate / verb dependent';
+      if(/\bvoi\b/.test(normalizeLoose(subject))) return 'de urmărit: persoana a II-a plural';
+      if(/\bnoi\b|eu si/.test(normalizeLoose(subject))) return 'de urmărit: persoana I plural';
+      if(/\beu\b/.test(normalizeLoose(subject))) return 'de urmărit: persoana I singular';
+      return 'de verificat: timp / mod / persoană';
+    }
+    function inferQuantifiers(segment, fullText){
+      var src = String(segment || '');
+      var n = normalizeLoose(src + ' ' + (fullText || ''));
+      var hits = [];
+      var digitMatches = src.match(/\b\d+[\d.,]*\b/g);
+      if(digitMatches) hits.push('numeral(e): ' + digitMatches.join(', '));
+      var numeralWords = ['un','o','doi','doua','două','trei','patru','cinci','sase','șase','sapte','șapte','opt','noua','nouă','zece'];
+      for(var i=0;i<numeralWords.length;i++){ if(hasAny(src,[numeralWords[i]])) hits.push('numeral: ' + numeralWords[i]); }
+      var markers = [
+        ['mult','cuantificator: mult'],
+        ['mai putin','cuantificator comparativ: mai puțin'],
+        ['putin','cuantificator: puțin'],
+        ['nici','operator negativ / scalar: nici'],
+        ['din nou','iterativ: din nou'],
+        ['abia','focalizator scalar: abia'],
+        ['iarasi','iterativ: iarăși'],
+        ['foarte','intensificator: foarte']
+      ];
+      for(var j=0;j<markers.length;j++){ if(n.indexOf(normalizeLoose(markers[j][0])) !== -1) hits.push(markers[j][1]); }
+      var units = ['ora','ore','zi','zile','saptamana','săptămâna','saptamani','săptămâni','luna','lună','luni','an','ani','metru','metri','kilometru','kilometri','kilogram','kilograme','litru','litri','procent','procente','leu','lei'];
+      for(var k=0;k<units.length;k++){ if(n.indexOf(normalizeLoose(units[k])) !== -1) hits.push('unitate: ' + units[k]); }
+      hits = uniqueNonEmpty(hits);
+      return hits.length ? hits.join('; ') : '—';
+    }
+    function inferCase(segment, subject){
+      var n = normalizeLoose(segment), notes = [];
+      if(subject && subject !== '(subiect implicit)') notes.push('nominativ pentru subiect');
+      if(n.indexOf('promisiunea') !== -1 || n.indexOf('cartea') !== -1 || n.indexOf('proiectul') !== -1) notes.push('acuzativ pentru obiect direct');
+      if(n.indexOf('a plouat') !== -1) notes.push('impersonal; fără centru nominal stabil');
+      return notes.length ? notes.join('; ') : 'de verificat';
+    }
+    function inferArticle(segment){
+      var n = normalizeLoose(segment), notes = [];
+      if(/\b(un|o)\b/.test(n)) notes.push('articol nehotărât');
+      if(/\b(timpul|promisiunea|cartea|filmul|proiectul|pranzul|prânzul)\b/.test(n)) notes.push('articol hotărât enclitic');
+      return notes.length ? notes.join('; ') : 'fără articol relevant / de verificat';
+    }
+    function inferAdjectiveAgreement(segment){
+      var n = normalizeLoose(segment);
+      if(n.indexOf('mai putin') !== -1 || n.indexOf('mult') !== -1 || n.indexOf('bine') !== -1) return 'nu apare adjectiv acordat; funcție adverbială / cantitativă';
+      return 'fără adjectiv acordat explicit';
+    }
+    function inferVerbType(segment){
+      var n = normalizeLoose(segment);
+      if(n.indexOf('plouat') !== -1) return 'verb impersonal intranzitiv';
+      if(n.indexOf('a fost') !== -1) return 'verb copulativ / de stare';
+      if(n.indexOf('putut') !== -1 || n.indexOf('trebuit') !== -1) return 'verb modal + verb dependent';
+      if(n.indexOf('respecta promisiunea') !== -1 || n.indexOf('citesc') !== -1 || n.indexOf('vazut') !== -1) return 'verb tranzitiv';
+      if(n.indexOf('lucrat') !== -1 || n.indexOf('muncim') !== -1 || n.indexOf('odihnim') !== -1) return 'verb intranzitiv';
+      return 'de verificat';
+    }
+    function inferSubordinateType(segment, connectorKey){
+      var n = normalizeLoose(segment);
+      if(/^desi\b/.test(n)) return 'subordonată concesivă';
+      if(/^ca sa\b|^pentru a\b/.test(n) || connectorKey === 'purpose') return 'subordonată finală';
+      if(connectorKey === 'cause1' || connectorKey === 'cause2') return 'subordonată cauzală';
+      if(connectorKey === 'condition') return 'subordonată condițională';
+      if(connectorKey === 'contrast1' || connectorKey === 'contrast2') return 'coordonare adversativă / contrastivă';
+      if(connectorKey === 'seq') return 'coordonare secvențială';
+      return 'propoziție principală / de verificat';
+    }
+    function inferTopikNotes(segment, connectorKey){
+      var n = normalizeLoose(segment);
+      if(/^desi\b/.test(n) || connectorKey === 'contrast1') return '-지만 / contrast';
+      if(/^ca sa\b|^pentru a\b/.test(n) || connectorKey === 'purpose') return '-기 위해(서) / scop';
+      if(connectorKey === 'cause1' || connectorKey === 'cause2') return '-아/어서 / -(으)니까 / cauză';
+      if(n.indexOf('putut') !== -1) return '-지 못하다 / imposibilitate';
+      if(n.indexOf('trebuit') !== -1) return '-아/어야 하다 / obligație';
+      if(connectorKey === 'seq') return '-고 / secvență';
+      return 'structură de bază + verificare contextuală';
+    }
+    function buildGrammarRows(){
+      var raw = String(state.text || '').trim();
+      var globalSubject = detectGlobalSubject(raw);
+      var rows = [];
+      var segments = splitIntoSegments(raw || buildFullOutput().translation || '');
+      if(!segments.length) segments = [{ text:'', connector:'none' }];
+      var inheritedQuant = inferQuantifiers(raw, raw);
+      for(var i=0;i<segments.length;i++){
+        var seg = segments[i];
+        var clause = state.clauses[i] || state.clauses[state.clauses.length - 1] || makeClause();
+        var subjectItem = itemOf(clause, 'subject');
+        var localSubject = clause.subject && clause.subject.enabled && subjectItem && subjectItem.ro ? subjectItem.ro : globalSubject;
+        var fragment = String(seg.text || '').trim() || buildClauseSurface(clause, i > 0 ? state.clauses[i-1] : null).tr || '—';
+        rows.push({
+          index: i + 1,
+          exact: fragment,
+          subject: localSubject || '(subiect implicit)',
+          conjugation: inferConjugation(fragment, localSubject),
+          gender: inferGender(localSubject, fragment),
+          gramNumber: inferNumber(localSubject, fragment),
+          quantifiers: uniqueNonEmpty([inferQuantifiers(fragment, raw), inheritedQuant]).join('; ') || '—',
+          gramCase: inferCase(fragment, localSubject),
+          article: inferArticle(fragment),
+          adjectiveAgreement: inferAdjectiveAgreement(fragment),
+          verbType: inferVerbType(fragment),
+          subordinateType: inferSubordinateType(fragment, seg.connector),
+          connector: connectorTextByKey(seg.connector, 'ro') || '—',
+          topik: inferTopikNotes(fragment, seg.connector)
+        });
+      }
+      state.grammarRows = rows;
+      return rows;
+    }
+    function renderGrammarSummary(){
+      if(!els.grammarSummary) return;
+      var rows = buildGrammarRows();
+      var summary = [
+        ['Subiect global', detectGlobalSubject(state.text || '') || '(subiect implicit)'],
+        ['Conjugare', uniqueNonEmpty(rows.map(function(r){ return r.conjugation; })).slice(0,3).join(' · ') || currentUI().grammarDefault],
+        ['Gen și număr', uniqueNonEmpty(rows.map(function(r){ return r.gender + ' / ' + r.gramNumber; })).slice(0,3).join(' · ') || currentUI().grammarDefault],
+        ['Cuantificare', uniqueNonEmpty(rows.map(function(r){ return r.quantifiers; })).slice(0,3).join(' · ') || currentUI().grammarDefault]
+      ];
+      var html = '';
+      for(var i=0;i<summary.length;i++) html += '<div class="summaryItem"><strong>' + escapeHtml(summary[i][0]) + '</strong><span>' + escapeHtml(summary[i][1]) + '</span></div>';
+      els.grammarSummary.innerHTML = html;
+    }
+    function renderGrammarChecklist(){
+      if(!els.grammarChecklist) return;
+      var rows = state.grammarRows && state.grammarRows.length ? state.grammarRows : buildGrammarRows();
+      function ok(field){ for(var i=0;i<rows.length;i++){ var v = String(rows[i][field] || '').trim(); if(v && v !== '—' && v !== 'de verificat') return true; } return false; }
+      var checks = [
+        ['Subiect global detectat', detectGlobalSubject(state.text || '') && detectGlobalSubject(state.text || '') !== '(subiect implicit)'],
+        ['Conjugare verbală completată', ok('conjugation')],
+        ['Gen și număr completate', ok('gender') && ok('gramNumber')],
+        ['Numerale / cuantificatori / unități', ok('quantifiers')],
+        ['Caz gramatical și articol', ok('gramCase') && ok('article')],
+        ['Acord adjectival', ok('adjectiveAgreement')],
+        ['Tip verbal', ok('verbType')],
+        ['Tip subordonată fin', ok('subordinateType')]
+      ];
+      var html = '';
+      for(var i=0;i<checks.length;i++) html += '<div class="checkItem"><b>' + escapeHtml(checks[i][0]) + '</b><span class="' + (checks[i][1] ? 'ok' : 'miss') + '">' + (checks[i][1] ? 'OK' : '—') + '</span></div>';
+      els.grammarChecklist.innerHTML = html;
+    }
+    function renderGrammarTable(){
+      if(!els.grammarTableBody) return;
+      var rows = state.grammarRows && state.grammarRows.length ? state.grammarRows : buildGrammarRows();
+      var html = '';
+      for(var i=0;i<rows.length;i++){
+        var r = rows[i];
+        html += '<tr>' +
+          '<td>' + r.index + '</td>' +
+          '<td>' + escapeHtml(r.exact) + '</td>' +
+          '<td>' + escapeHtml(r.subject) + '</td>' +
+          '<td>' + escapeHtml(r.conjugation) + '</td>' +
+          '<td>' + escapeHtml(r.gender) + '</td>' +
+          '<td>' + escapeHtml(r.gramNumber) + '</td>' +
+          '<td>' + escapeHtml(r.quantifiers) + '</td>' +
+          '<td>' + escapeHtml(r.gramCase) + '</td>' +
+          '<td>' + escapeHtml(r.article) + '</td>' +
+          '<td>' + escapeHtml(r.adjectiveAgreement) + '</td>' +
+          '<td>' + escapeHtml(r.verbType) + '</td>' +
+          '<td>' + escapeHtml(r.subordinateType) + '</td>' +
+          '<td>' + escapeHtml(r.connector) + '</td>' +
+          '<td>' + escapeHtml(r.topik) + '</td>' +
+        '</tr>';
+      }
+      els.grammarTableBody.innerHTML = html;
+    }
+
 
     function renderPreview(){
       var built = buildFullOutput(), words = built.korean ? built.korean.split(/\s+/) : ['저는','공부해요'], html = '';
