@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Raluca Korean — Clause Builder</title>
+  <title>Raluca Korean — Builder</title>
   <style>
     :root{
       --bg:#f6f7fd;
@@ -37,7 +37,7 @@
     html,body{margin:0;padding:0}
     body{
       min-height:100vh;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
       color:var(--text);
       background:
         radial-gradient(circle at top left, rgba(109,94,252,.14), transparent 24%),
@@ -71,17 +71,10 @@
 
     .title{
       margin:0;
-      font-size:clamp(28px, 4vw, 44px);
-      line-height:1.02;
-      letter-spacing:-.03em;
-    }
-
-    .subtitle{
-      margin:10px 0 0;
-      color:var(--muted);
-      font-size:15px;
-      line-height:1.65;
-      max-width:920px;
+      font-size:clamp(18px, 2.2vw, 28px);
+      line-height:1.1;
+      letter-spacing:-.02em;
+      font-weight:900;
     }
 
     .row{
@@ -91,18 +84,40 @@
       flex-wrap:wrap;
     }
 
-    .chip,.action,.toggleBtn{
+    .chip,.action,.miniSwitch,.topBtn,.topicOption{
       font:inherit;
       appearance:none;
       border:none;
       cursor:pointer;
-      transition:transform var(--transition), box-shadow var(--transition), background var(--transition), border-color var(--transition), opacity var(--transition);
+      transition:
+        transform var(--transition),
+        box-shadow var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        opacity var(--transition);
     }
 
-    .chip:hover,.action:hover,.toggleBtn:hover{ transform:translateY(-1px); }
+    .chip:hover,.action:hover,.miniSwitch:hover,.topBtn:hover,.topicOption:hover{
+      transform:translateY(-1px);
+    }
+
+    .topBtn{
+      padding:10px 14px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid var(--line);
+      color:var(--text);
+      font-weight:800;
+      font-size:14px;
+      box-shadow:0 8px 18px rgba(15,23,42,.04);
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
 
     .chip{
-      padding:11px 16px;
+      padding:10px 15px;
       border-radius:999px;
       background:#fff;
       border:1px solid var(--line);
@@ -119,6 +134,63 @@
       box-shadow:0 14px 24px rgba(109,94,252,.24);
     }
 
+    .topicMenu{
+      position:relative;
+    }
+
+    .topicMenu summary{
+      list-style:none;
+    }
+    .topicMenu summary::-webkit-details-marker{
+      display:none;
+    }
+
+    .topicBubble{
+      padding:10px 16px;
+      border-radius:999px;
+      background:linear-gradient(135deg,var(--primary),var(--primary-2));
+      color:#fff;
+      font-weight:900;
+      font-size:14px;
+      box-shadow:0 14px 24px rgba(109,94,252,.24);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+      cursor:pointer;
+    }
+
+    .topicDropdown{
+      position:absolute;
+      top:calc(100% + 10px);
+      right:0;
+      z-index:20;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow-sm);
+      padding:10px;
+      min-width:170px;
+      display:grid;
+      gap:8px;
+    }
+
+    .topicOption{
+      padding:11px 12px;
+      border-radius:12px;
+      background:#fff;
+      border:1px solid var(--line);
+      text-align:left;
+      font-weight:800;
+      color:var(--text);
+    }
+
+    .topicOption.active{
+      color:#fff;
+      border-color:transparent;
+      background:linear-gradient(135deg,var(--primary),var(--primary-2));
+    }
+
     .sectionLabel{
       margin:0 0 10px;
       font-size:12px;
@@ -128,19 +200,13 @@
       letter-spacing:.14em;
     }
 
-    .help{
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.6;
-    }
-
-    textarea, input, select{
+    textarea,input,select{
       font:inherit;
     }
 
     textarea{
       width:100%;
-      min-height:128px;
+      min-height:130px;
       resize:vertical;
       border:1px solid var(--line-2);
       border-radius:16px;
@@ -149,9 +215,12 @@
       padding:16px;
       outline:none;
       box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+      font-size:18px;
+      font-weight:700;
+      line-height:1.5;
     }
 
-    textarea:focus, input:focus, select:focus{
+    textarea:focus,input:focus,select:focus{
       outline:none;
       border-color:rgba(109,94,252,.42);
       box-shadow:0 0 0 4px rgba(109,94,252,.08);
@@ -177,20 +246,11 @@
       box-shadow:var(--shadow-sm);
     }
 
-    .sentenceLabel{
-      font-size:12px;
-      font-weight:900;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.12em;
-      margin-bottom:10px;
-    }
-
     .sentenceWords{
       display:flex;
       flex-wrap:wrap;
       gap:8px 10px;
-      min-height:60px;
+      min-height:58px;
       align-items:center;
     }
 
@@ -201,6 +261,7 @@
       letter-spacing:-.02em;
       padding:2px 4px;
       border-radius:10px;
+      color:#2563eb;
       transition:background var(--transition), box-shadow var(--transition), transform var(--transition);
     }
 
@@ -216,23 +277,16 @@
       border-radius:16px;
       padding:16px;
       background:#fff;
-      min-height:82px;
+      min-height:78px;
       box-shadow:0 8px 20px rgba(15,23,42,.04);
-    }
-
-    .translationLabel{
-      font-size:12px;
-      font-weight:900;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.12em;
-      margin-bottom:8px;
+      display:flex;
+      align-items:center;
     }
 
     .translationText{
-      font-size:18px;
-      line-height:1.65;
-      font-weight:700;
+      font-size:20px;
+      line-height:1.5;
+      font-weight:800;
     }
 
     .actionBar{
@@ -259,37 +313,16 @@
       box-shadow:0 14px 24px rgba(109,94,252,.24);
     }
 
-    .status{
-      margin-top:12px;
-      border-radius:14px;
-      padding:14px 16px;
-      font-size:14px;
-      line-height:1.55;
-      font-weight:700;
-      border:1px solid var(--line);
-      background:#fff;
-      color:#334155;
-    }
-
-    .status.info{
-      background:rgba(109,94,252,.08);
-      border-color:rgba(109,94,252,.16);
-      color:#4338ca;
-    }
-    .status.good{
-      background:rgba(22,163,74,.08);
-      border-color:rgba(22,163,74,.18);
-      color:#166534;
-    }
-    .status.bad{
-      background:rgba(220,38,38,.08);
-      border-color:rgba(220,38,38,.18);
-      color:#991b1b;
-    }
-    .status.warn{
-      background:rgba(217,119,6,.08);
-      border-color:rgba(217,119,6,.18);
-      color:#92400e;
+    .visuallyHidden{
+      position:absolute !important;
+      width:1px !important;
+      height:1px !important;
+      padding:0 !important;
+      margin:-1px !important;
+      overflow:hidden !important;
+      clip:rect(0,0,0,0) !important;
+      white-space:nowrap !important;
+      border:0 !important;
     }
 
     .clauseList{
@@ -310,9 +343,8 @@
     .clauseHead{
       display:flex;
       justify-content:space-between;
+      align-items:center;
       gap:10px;
-      align-items:flex-start;
-      flex-wrap:wrap;
       margin-bottom:12px;
     }
 
@@ -321,13 +353,6 @@
       font-size:16px;
       font-weight:900;
       letter-spacing:-.01em;
-    }
-
-    .clauseSub{
-      margin:4px 0 0;
-      color:#475569;
-      font-size:13px;
-      line-height:1.5;
     }
 
     .slotGrid{
@@ -339,7 +364,7 @@
     }
 
     .slotCard{
-      min-height:148px;
+      min-height:154px;
       border-radius:18px;
       border:1px solid rgba(15,23,42,.08);
       background:#fff;
@@ -347,7 +372,7 @@
       padding:12px;
       display:flex;
       flex-direction:column;
-      gap:10px;
+      gap:8px;
       min-width:150px;
     }
 
@@ -361,8 +386,8 @@
     .slotCard[data-slot="connector"]{ background:linear-gradient(180deg,var(--c-conn),#fff); }
 
     .slotCard.off{
-      opacity:.48;
-      filter:grayscale(.12);
+      opacity:.55;
+      filter:grayscale(.10);
     }
 
     .slotTop{
@@ -381,46 +406,54 @@
       line-height:1.35;
     }
 
-    .toggleBtn{
-      padding:7px 9px;
-      border-radius:10px;
+    .miniSwitch{
+      width:28px;
+      height:28px;
+      border-radius:999px;
       background:#fff;
-      border:1px solid rgba(15,23,42,.10);
-      color:#334155;
-      font-size:11px;
+      border:1px solid rgba(15,23,42,.12);
+      color:#475569;
+      font-size:14px;
       font-weight:900;
-      white-space:nowrap;
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      box-shadow:0 6px 14px rgba(15,23,42,.05);
     }
 
-    .toggleBtn.active{
+    .miniSwitch.active{
+      background:linear-gradient(135deg,var(--primary),var(--primary-2));
       color:#fff;
       border-color:transparent;
-      background:linear-gradient(135deg,var(--primary),var(--primary-2));
     }
 
-    .slotInput, .slotSelect{
+    .slotQuestion{
+      font-size:13px;
+      color:#64748b;
+      line-height:1.35;
+      font-weight:700;
+      min-height:18px;
+    }
+
+    .slotInput,.slotSelect{
       width:100%;
-      min-height:42px;
-      border-radius:12px;
+      min-height:50px;
+      border-radius:14px;
       border:1px solid rgba(15,23,42,.14);
       background:rgba(255,255,255,.92);
       color:var(--text);
-      padding:10px 11px;
+      padding:11px 12px;
+      font-size:18px;
+      font-weight:800;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
     }
 
     .slotHint{
-      color:#64748b;
+      color:#94a3b8;
       font-size:12px;
-      line-height:1.45;
+      line-height:1.35;
       margin-top:auto;
-    }
-
-    .footerNote{
-      text-align:center;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.6;
-      padding:6px 0 10px;
+      font-weight:700;
     }
 
     @media (max-width: 900px){
@@ -445,83 +478,66 @@
 
     <section class="panel">
       <div class="topHead">
-        <div>
-          <h1 class="title" id="pageTitle">Raluca Korean — Clause Builder</h1>
-          <p class="subtitle" id="pageSubtitle">
-            Construiește propoziții coreene modulare cu clauze, verbe, conectori și lanțuri de propoziții.
-          </p>
-        </div>
+        <h1 class="title">Raluca Korean — Clause Builder</h1>
 
         <div class="row">
+          <a href="./index.html" class="topBtn">← Index</a>
+
+          <details class="topicMenu" id="topicMenu">
+            <summary class="topicBubble" id="topicSummary">TOPIK 6 ▾</summary>
+            <div class="topicDropdown" id="topicDropdown">
+              <button type="button" class="topicOption" data-level="1">TOPIK 1</button>
+              <button type="button" class="topicOption" data-level="2">TOPIK 2</button>
+              <button type="button" class="topicOption" data-level="3">TOPIK 3</button>
+              <button type="button" class="topicOption" data-level="4">TOPIK 4</button>
+              <button type="button" class="topicOption" data-level="5">TOPIK 5</button>
+              <button type="button" class="topicOption active" data-level="6">TOPIK 6</button>
+            </div>
+          </details>
+
           <button class="chip active" id="btnRo" type="button">Română</button>
           <button class="chip" id="btnEn" type="button">English</button>
         </div>
       </div>
-
-      <div class="row" style="margin-top:14px" id="levelBar">
-        <button class="chip" data-level="1" type="button">TOPIK 1</button>
-        <button class="chip" data-level="2" type="button">TOPIK 2</button>
-        <button class="chip" data-level="3" type="button">TOPIK 3</button>
-        <button class="chip" data-level="4" type="button">TOPIK 4</button>
-        <button class="chip" data-level="5" type="button">TOPIK 5</button>
-        <button class="chip active" data-level="6" type="button">TOPIK 6</button>
-      </div>
     </section>
 
     <section class="panel">
-      <h2 class="sectionLabel" id="inputTitle">Text de lucru</h2>
-      <div class="help" id="inputHelp" style="margin-bottom:10px">
-        Scrie în română sau în engleză. Aplicația încearcă să recunoască automat elementele și să le pună în tabel.
-      </div>
-      <textarea id="freeText" placeholder="Scrie aici o propoziție sau un mic lanț de propoziții..."></textarea>
-      <div class="help" id="inputExample" style="margin-top:10px">
-        Exemplu: „eu ieri acasă mănânc prânzul repede, dar merg”.
-      </div>
+      <h2 class="sectionLabel">Text de lucru</h2>
+      <textarea
+        id="freeText"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      ></textarea>
     </section>
 
     <section class="panel">
-      <h2 class="sectionLabel" id="previewTitle">Previzualizare</h2>
-
       <div class="previewCard">
-        <button class="sentenceBtn" id="sentenceBtn" type="button">
-          <div class="sentenceLabel" id="sentenceLabel">Propoziție în coreeană</div>
+        <button class="sentenceBtn" id="sentenceBtn" type="button" aria-label="Play Korean sentence">
           <div class="sentenceWords" id="sentenceWords"></div>
         </button>
 
         <div class="translationBox">
-          <div class="translationLabel" id="translationLabel">Traducere curentă</div>
           <div class="translationText" id="translationText"></div>
         </div>
       </div>
     </section>
 
     <section class="panel">
-      <h2 class="sectionLabel" id="actionsTitle">Acțiuni</h2>
-
       <div class="actionBar">
         <button class="action primary" id="playBtn" type="button">🔊 Pronunție</button>
         <button class="action" id="speakBtn" type="button">🎤 Exersează vorbirea</button>
         <button class="action" id="addClauseBtn" type="button">＋ Add Clause</button>
         <button class="action" id="removeClauseBtn" type="button">－ Remove Last Clause</button>
       </div>
-
-      <div class="status info" id="statusBox">
-        Tabelul este modular. Dacă alegi un conector într-o clauză, aplicația deschide automat următoarea clauză.
-      </div>
     </section>
 
     <section class="panel">
-      <h2 class="sectionLabel" id="tableTitle">Lanț de clauze</h2>
-      <div class="help" id="tableHelp" style="margin-bottom:12px">
-        Ordine: Clauză relativă → Subiect → Timp → Locație → Obiecte → Adjective / Descriere → Verb → Conector
-      </div>
-
       <div class="clauseList" id="clauseList"></div>
     </section>
 
-    <div class="footerNote" id="footerNote">
-      Structură locală, fără librării externe. Gândită pentru propoziții modulare și clauze în lanț.
-    </div>
+    <div id="statusBox" class="visuallyHidden" aria-live="polite"></div>
 
     <datalist id="dl-relative"></datalist>
     <datalist id="dl-subject"></datalist>
@@ -535,128 +551,108 @@
   <script>
     const UI = {
       ro: {
-        pageTitle: "Raluca Korean — Clause Builder",
-        pageSubtitle: "Construiește propoziții coreene modulare cu clauze, verbe, conectori și lanțuri de propoziții.",
-        inputTitle: "Text de lucru",
-        inputHelp: "Scrie în română sau în engleză. Aplicația încearcă să recunoască automat elementele și să le pună în tabel.",
-        inputPlaceholder: "Scrie aici o propoziție sau un mic lanț de propoziții...",
-        inputExample: "Exemplu: „eu ieri acasă mănânc prânzul repede, dar merg”.",
-        previewTitle: "Previzualizare",
-        sentenceLabel: "Propoziție în coreeană",
-        translationLabel: "Traducere curentă",
-        actionsTitle: "Acțiuni",
         playBtn: "🔊 Pronunție",
         speakBtn: "🎤 Exersează vorbirea",
         speakListening: "🎤 Ascult...",
-        addClauseBtn: "＋ Add Clause",
-        removeClauseBtn: "－ Remove Last Clause",
-        tableTitle: "Lanț de clauze",
-        tableHelp: "Ordine: Clauză relativă → Subiect → Timp → Locație → Obiecte → Adjective / Descriere → Verb → Conector",
-        footerNote: "Structură locală, fără librării externe. Gândită pentru propoziții modulare și clauze în lanț.",
         clause: "Clauza",
-        clauseSub: "Verbul este ultimul, iar conectorul se lipește de verb.",
-        on: "Activ",
-        off: "Oprit",
-        statusReady: "Tabelul este modular. Dacă alegi un conector într-o clauză, aplicația deschide automat următoarea clauză.",
-        statusParsed: "Textul a fost analizat automat. Dacă ceva nu este exact, poți corecta direct în tabel.",
-        statusSpeaking: "🔊 Se redă propoziția în coreeană.",
-        statusListening: "🎤 Vorbește acum în coreeană.",
-        statusCorrect: "✅ Corect. Ai spus propoziția generată.",
+        statusReady: "Builder ready.",
+        statusCorrect: "✅ Corect.",
         statusMic: "Recunoașterea vocală nu este disponibilă în acest browser.",
         statusAudio: "Redarea vocală nu este disponibilă în acest browser.",
-        statusNoSpeech: "Nu s-a detectat clar vocea. Încearcă din nou.",
+        statusNoSpeech: "Nu s-a detectat clar vocea.",
         statusVoiceError: "A apărut o problemă la recunoașterea vocală.",
-        statusIncorrect: (heard, expected) => `❌ Incorect. Tu ai spus: „${heard}”. Corect era: „${expected}”.`,
+        statusIncorrect: (heard, expected) => `❌ Tu ai spus: „${heard}”. Corect era: „${expected}”.`,
+        translationEmpty: "—",
         slots: {
-          relative: "Relative Clause",
-          subject: "Subiect",
-          time: "Timp",
-          location: "Locație",
-          objects: "Obiecte",
-          description: "Adj / Descriere",
-          verb: "Verb",
-          connector: "Conector"
+          relative: "🧩 RELATIVE CLAUSE",
+          subject: "👤 SUBJECT (주어)",
+          time: "⏰ TIME (시간)",
+          location: "📍 PLACE (장소)",
+          objects: "📦 OBJECT (목적어)",
+          description: "✨ MOD / DESC",
+          verb: "🌀 VERB",
+          connector: "🔗 CONNECTOR"
         },
-        hints: {
-          relative: "ex: 내가 어제 만난 사람",
+        questions: {
+          relative: "",
           subject: "cine?",
           time: "când?",
           location: "unde?",
           objects: "ce?",
           description: "cum?",
           verb: "acțiunea",
-          connector: "leagă cu clauza următoare"
+          connector: "leagă mai departe"
+        },
+        hints: {
+          relative: "ex: 내가 어제 만난 사람",
+          subject: "",
+          time: "",
+          location: "",
+          objects: "",
+          description: "",
+          verb: "",
+          connector: ""
         },
         connectors: {
-          "": "fără conector",
+          "": "—",
           and: "și apoi",
           cause: "cauză",
           condition: "condiție",
           contrast: "contrast",
-          intention: "scop / intenție",
+          intention: "intenție",
           result: "rezultat"
         }
       },
       en: {
-        pageTitle: "Raluca Korean — Clause Builder",
-        pageSubtitle: "Build modular Korean sentences with clauses, verbs, connectors, and sentence chains.",
-        inputTitle: "Working text",
-        inputHelp: "Write in Romanian or English. The app tries to detect the elements automatically and place them into the table.",
-        inputPlaceholder: "Write a sentence or a short sentence chain here...",
-        inputExample: 'Example: "I eat lunch at home yesterday quickly, but I go."',
-        previewTitle: "Preview",
-        sentenceLabel: "Korean sentence",
-        translationLabel: "Current translation",
-        actionsTitle: "Actions",
         playBtn: "🔊 Play pronunciation",
         speakBtn: "🎤 Practice speaking",
         speakListening: "🎤 Listening...",
-        addClauseBtn: "＋ Add Clause",
-        removeClauseBtn: "－ Remove Last Clause",
-        tableTitle: "Clause chain",
-        tableHelp: "Order: Relative clause → Subject → Time → Location → Objects → Adjective / Description → Verb → Connector",
-        footerNote: "Local structure, no external libraries. Designed for modular sentences and clause chains.",
         clause: "Clause",
-        clauseSub: "The verb is last, and the connector attaches to the verb.",
-        on: "Active",
-        off: "Off",
-        statusReady: "The table is modular. If you choose a connector in a clause, the next clause opens automatically.",
-        statusParsed: "The text was analyzed automatically. If something is not exact, you can correct it directly in the table.",
-        statusSpeaking: "🔊 Playing the Korean sentence.",
-        statusListening: "🎤 Speak now in Korean.",
-        statusCorrect: "✅ Correct. You said the generated sentence.",
+        statusReady: "Builder ready.",
+        statusCorrect: "✅ Correct.",
         statusMic: "Speech recognition is not available in this browser.",
         statusAudio: "Speech playback is not available in this browser.",
-        statusNoSpeech: "No clear speech detected. Please try again.",
+        statusNoSpeech: "No clear speech detected.",
         statusVoiceError: "There was a speech recognition problem.",
-        statusIncorrect: (heard, expected) => `❌ Incorrect. You said: “${heard}”. Expected: “${expected}”.`,
+        statusIncorrect: (heard, expected) => `❌ You said: “${heard}”. Expected: “${expected}”.`,
+        translationEmpty: "—",
         slots: {
-          relative: "Relative Clause",
-          subject: "Subject",
-          time: "Time",
-          location: "Location",
-          objects: "Objects",
-          description: "Adj / Description",
-          verb: "Verb",
-          connector: "Connector"
+          relative: "🧩 RELATIVE CLAUSE",
+          subject: "👤 SUBJECT (주어)",
+          time: "⏰ TIME (시간)",
+          location: "📍 PLACE (장소)",
+          objects: "📦 OBJECT (목적어)",
+          description: "✨ MOD / DESC",
+          verb: "🌀 VERB",
+          connector: "🔗 CONNECTOR"
         },
-        hints: {
-          relative: "ex: 내가 어제 만난 사람",
+        questions: {
+          relative: "",
           subject: "who?",
           time: "when?",
           location: "where?",
           objects: "what?",
           description: "how?",
           verb: "action",
-          connector: "links to next clause"
+          connector: "links forward"
+        },
+        hints: {
+          relative: "ex: 내가 어제 만난 사람",
+          subject: "",
+          time: "",
+          location: "",
+          objects: "",
+          description: "",
+          verb: "",
+          connector: ""
         },
         connectors: {
-          "": "no connector",
+          "": "—",
           and: "and then",
           cause: "cause",
           condition: "condition",
           contrast: "contrast",
-          intention: "purpose / intention",
+          intention: "intention",
           result: "result"
         }
       }
@@ -688,11 +684,12 @@
       ],
       locations: [
         { ko:"집", ro:["acasă","acasa"], en:["home","at home"] },
-        { ko:"도서관", ro:["bibliotecă","biblioteca","la bibliotecă","la biblioteca"], en:["library","at the library"] },
         { ko:"학교", ro:["școală","scoala","la școală","la scoala"], en:["school","at school"] },
+        { ko:"도서관", ro:["bibliotecă","biblioteca","la bibliotecă","la biblioteca"], en:["library","at the library"] },
         { ko:"회사", ro:["companie","la companie"], en:["company","at the company"] },
         { ko:"카페", ro:["cafenea","la cafenea"], en:["cafe","at the cafe"] },
-        { ko:"공원", ro:["parc","în parc","in parc"], en:["park","in the park"] }
+        { ko:"공원", ro:["parc","în parc","in parc"], en:["park","in the park"] },
+        { ko:"시장", ro:["piață","piata","la piață","la piata"], en:["market","at the market"] }
       ],
       objects: [
         { ko:"밥", ro:["mâncare","mancare","orez"], en:["food","rice","meal"] },
@@ -713,7 +710,7 @@
         { ko:"결국", ro:["în cele din urmă","in cele din urma","până la urmă","pana la urma"], en:["eventually","in the end"] }
       ],
       verbs: [
-        { ko:"가다", ro:["merg","a merge"], en:["go","to go"], final:"가요", and:"가고", cause:"가서", condition:"가면", contrast:"가지만", intention:"가려고", result:"가게 돼요" },
+        { ko:"가다", ro:["merg","a merge","plec"], en:["go","to go"], final:"가요", and:"가고", cause:"가서", condition:"가면", contrast:"가지만", intention:"가려고", result:"가게 돼요" },
         { ko:"오다", ro:["vin","a veni"], en:["come","to come"], final:"와요", and:"오고", cause:"와서", condition:"오면", contrast:"오지만", intention:"오려고", result:"오게 돼요" },
         { ko:"먹다", ro:["mănânc","mananc","a mânca","a manca"], en:["eat","to eat"], final:"먹어요", and:"먹고", cause:"먹어서", condition:"먹으면", contrast:"먹지만", intention:"먹으려고", result:"먹게 돼요" },
         { ko:"마시다", ro:["beau","a bea"], en:["drink","to drink"], final:"마셔요", and:"마시고", cause:"마셔서", condition:"마시면", contrast:"마시지만", intention:"마시려고", result:"마시게 돼요" },
@@ -723,14 +720,13 @@
         { ko:"만나다", ro:["întâlnesc","intalnesc","a întâlni","a intalni"], en:["meet","to meet"], final:"만나요", and:"만나고", cause:"만나서", condition:"만나면", contrast:"만나지만", intention:"만나려고", result:"만나게 돼요" },
         { ko:"쉬다", ro:["mă odihnesc","ma odihnesc","a se odihni"], en:["rest","to rest"], final:"쉬어요", and:"쉬고", cause:"쉬어서", condition:"쉬면", contrast:"쉬지만", intention:"쉬려고", result:"쉬게 돼요" },
         { ko:"자다", ro:["dorm","a dormi"], en:["sleep","to sleep"], final:"자요", and:"자고", cause:"자서", condition:"자면", contrast:"자지만", intention:"자려고", result:"자게 돼요" },
-        { ko:"아프다", ro:["doare","a durea","sunt bolnav"], en:["hurt","be sick","to hurt"], final:"아파요", and:"아프고", cause:"아파서", condition:"아프면", contrast:"아프지만", intention:"아프려고", result:"아프게 돼요" },
-        { ko:"하다", ro:["fac","a face"], en:["do","to do"], final:"해요", and:"하고", cause:"해서", condition:"하면", contrast:"하지만", intention:"하려고", result:"하게 돼요" }
+        { ko:"아프다", ro:["doare","a durea","sunt bolnav"], en:["hurt","be sick","to hurt"], final:"아파요", and:"아프고", cause:"아파서", condition:"아프면", contrast:"아프지만", intention:"아프려고", result:"아프게 돼요" }
       ]
     };
 
     const state = {
       lang: localStorage.getItem("RK_BUILDER_LANG") || "ro",
-      level: 6,
+      level: Number(localStorage.getItem("RK_BUILDER_LEVEL") || 6),
       freeText: {
         ro: localStorage.getItem("RK_BUILDER_TEXT_RO") || "",
         en: localStorage.getItem("RK_BUILDER_TEXT_EN") || ""
@@ -741,30 +737,31 @@
     const els = {
       btnRo: document.getElementById("btnRo"),
       btnEn: document.getElementById("btnEn"),
-      levelBar: document.getElementById("levelBar"),
-      pageTitle: document.getElementById("pageTitle"),
-      pageSubtitle: document.getElementById("pageSubtitle"),
-      inputTitle: document.getElementById("inputTitle"),
-      inputHelp: document.getElementById("inputHelp"),
-      inputExample: document.getElementById("inputExample"),
+      topicMenu: document.getElementById("topicMenu"),
+      topicSummary: document.getElementById("topicSummary"),
+      topicDropdown: document.getElementById("topicDropdown"),
       freeText: document.getElementById("freeText"),
-      previewTitle: document.getElementById("previewTitle"),
-      sentenceLabel: document.getElementById("sentenceLabel"),
-      sentenceWords: document.getElementById("sentenceWords"),
       sentenceBtn: document.getElementById("sentenceBtn"),
-      translationLabel: document.getElementById("translationLabel"),
+      sentenceWords: document.getElementById("sentenceWords"),
       translationText: document.getElementById("translationText"),
-      actionsTitle: document.getElementById("actionsTitle"),
       playBtn: document.getElementById("playBtn"),
       speakBtn: document.getElementById("speakBtn"),
       addClauseBtn: document.getElementById("addClauseBtn"),
       removeClauseBtn: document.getElementById("removeClauseBtn"),
-      statusBox: document.getElementById("statusBox"),
-      tableTitle: document.getElementById("tableTitle"),
-      tableHelp: document.getElementById("tableHelp"),
       clauseList: document.getElementById("clauseList"),
-      footerNote: document.getElementById("footerNote")
+      statusBox: document.getElementById("statusBox")
     };
+
+    function t(){
+      return UI[state.lang];
+    }
+
+    function savePrefs(){
+      localStorage.setItem("RK_BUILDER_LANG", state.lang);
+      localStorage.setItem("RK_BUILDER_LEVEL", String(state.level));
+      localStorage.setItem("RK_BUILDER_TEXT_RO", state.freeText.ro);
+      localStorage.setItem("RK_BUILDER_TEXT_EN", state.freeText.en);
+    }
 
     function normalize(str=""){
       return str.toLowerCase()
@@ -775,8 +772,17 @@
         .trim();
     }
 
+    function autoSpaceCamelCase(str=""){
+      return str
+        .replace(/([a-zăâîșț])([A-Z])/g, "$1 $2")
+        .replace(/\s+/g, " ");
+    }
+
     function splitItems(str=""){
-      return str.split(/\s*(?:,|\/|&|\+| și | si | and | 그리고 )\s*/i).map(s=>s.trim()).filter(Boolean);
+      return str
+        .split(/\s*(?:,|\/|&|\+| și | si | and | 그리고 )\s*/i)
+        .map(s => s.trim())
+        .filter(Boolean);
     }
 
     function hasBatchim(word=""){
@@ -839,6 +845,31 @@
       return null;
     }
 
+    function findFirstInText(text, list){
+      const n = normalize(text);
+      for(const item of list){
+        const pool = [item.ko].concat(item.ro || [], item.en || []);
+        if(pool.some(v => {
+          const nv = normalize(v);
+          return nv && n.includes(nv);
+        })) return item;
+      }
+      return null;
+    }
+
+    function findAllInText(text, list){
+      const n = normalize(text);
+      const out = [];
+      for(const item of list){
+        const pool = [item.ko].concat(item.ro || [], item.en || []);
+        if(pool.some(v => {
+          const nv = normalize(v);
+          return nv && n.includes(nv);
+        })) out.push(item);
+      }
+      return out;
+    }
+
     function toKo(raw="", list){
       const v = raw.trim();
       if(!v) return "";
@@ -878,7 +909,7 @@
 
     function conjugateVerb(raw="", connector=""){
       const entry = getVerbEntry(raw);
-      if(!entry) {
+      if(!entry){
         if(looksKorean(raw)) return raw;
         return raw;
       }
@@ -942,14 +973,14 @@
       return {
         id: Date.now() + Math.random() + index,
         slots: {
-          relative:   { active:false, value:"" },
-          subject:    { active:index === 0, value:index === 0 ? "저" : "" },
-          time:       { active:false, value:"" },
-          location:   { active:false, value:"" },
-          objects:    { active:false, value:"" },
-          description:{ active:false, value:"" },
-          verb:       { active:true, value:"가다" },
-          connector:  { active:false, value:"" }
+          relative:    { active:false, value:"" },
+          subject:     { active:index === 0, value:index === 0 ? "저" : "" },
+          time:        { active:false, value:"" },
+          location:    { active:false, value:"" },
+          objects:     { active:false, value:"" },
+          description: { active:false, value:"" },
+          verb:        { active:true, value:"가다" },
+          connector:   { active:false, value:"" }
         }
       };
     }
@@ -960,39 +991,39 @@
       }
     }
 
-    function saveStateText(){
-      localStorage.setItem("RK_BUILDER_LANG", state.lang);
-      localStorage.setItem("RK_BUILDER_TEXT_RO", state.freeText.ro);
-      localStorage.setItem("RK_BUILDER_TEXT_EN", state.freeText.en);
-    }
-
-    function setStatus(type, text){
-      els.statusBox.className = "status " + type;
-      els.statusBox.textContent = text;
+    function escapeHtml(str=""){
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     }
 
     function parseFreeText(){
-      const txt = els.freeText.value.trim();
-      state.freeText[state.lang] = txt;
-      saveStateText();
+      let txt = els.freeText.value;
+      txt = autoSpaceCamelCase(txt);
+      if(txt !== els.freeText.value){
+        els.freeText.value = txt;
+      }
 
-      if(!txt){
-        renderAll();
+      state.freeText[state.lang] = txt;
+      savePrefs();
+
+      if(!txt.trim()){
         return;
       }
 
-      const pieces = txt.split(/\s*(?:,|;|\.|\s+dar\s+|\s+but\s+|\s+그리고\s+)\s*/i).filter(Boolean);
+      const pieces = txt.split(/\s*(?:,|;|\.)\s*/).filter(Boolean);
       const clauses = pieces.map((piece, idx) => createClause(idx));
 
       pieces.forEach((piece, idx) => {
         const clause = clauses[idx];
-        const n = normalize(piece);
 
         const subj = findFirstInText(piece, SUGGESTIONS.subjects);
         if(subj){
           clause.slots.subject.active = idx === 0 || clause.slots.subject.active;
           clause.slots.subject.value = subj.ko;
-        } else if(idx > 0) {
+        } else if(idx > 0){
           clause.slots.subject.active = false;
           clause.slots.subject.value = "";
         }
@@ -1018,52 +1049,44 @@
         const objMatches = findAllInText(piece, SUGGESTIONS.objects);
         if(objMatches.length){
           clause.slots.objects.active = true;
-          clause.slots.objects.value = objMatches.map((item, i) => i < objMatches.length - 1 ? withAnd(item.ko) : withObject(item.ko)).join(" ");
+          clause.slots.objects.value = objMatches.map((item, i) =>
+            i < objMatches.length - 1 ? withAnd(item.ko) : withObject(item.ko)
+          ).join(" ");
         }
 
         const verb = findFirstInText(piece, SUGGESTIONS.verbs);
         if(verb){
           clause.slots.verb.value = verb.ko;
+        } else if(/\bplec\b/i.test(piece) || /\bgo\b/i.test(piece)){
+          clause.slots.verb.value = "가다";
         }
 
         if(idx < pieces.length - 1){
           clause.slots.connector.active = true;
-          if(/pentru că|deoarece|because/i.test(piece)) clause.slots.connector.value = "cause";
-          else if(/dacă|if/i.test(piece)) clause.slots.connector.value = "condition";
-          else if(/ca să|pentru a|in order to/i.test(piece)) clause.slots.connector.value = "intention";
-          else if(/dar|however|but/i.test(txt) && idx === 0) clause.slots.connector.value = "contrast";
+          if(/\bdar\b|\bbut\b/i.test(txt) && idx === 0) clause.slots.connector.value = "contrast";
+          else if(/\bpentru că\b|\bbecause\b/i.test(txt) && idx === 0) clause.slots.connector.value = "cause";
+          else if(/\bdacă\b|\bif\b/i.test(txt) && idx === 0) clause.slots.connector.value = "condition";
           else clause.slots.connector.value = "and";
         }
       });
 
       state.clauses = clauses.length ? clauses : [createClause(0)];
-      setStatus("info", textUI().statusParsed);
+      ensureNextClauseChain();
       renderAll();
     }
 
-    function findFirstInText(text, list){
-      const n = normalize(text);
-      for(const item of list){
-        const pool = [item.ko].concat(item.ro || [], item.en || []);
-        if(pool.some(v => {
-          const nv = normalize(v);
-          return nv && n.includes(nv);
-        })) return item;
+    function ensureNextClauseChain(){
+      for(let i = 0; i < state.clauses.length; i++){
+        const current = state.clauses[i];
+        if(current.slots.connector.active && current.slots.connector.value){
+          if(i === state.clauses.length - 1){
+            const next = createClause(state.clauses.length);
+            next.slots.subject.active = false;
+            next.slots.subject.value = current.slots.subject.value;
+            state.clauses.push(next);
+          }
+        }
       }
-      return null;
-    }
-
-    function findAllInText(text, list){
-      const n = normalize(text);
-      const out = [];
-      for(const item of list){
-        const pool = [item.ko].concat(item.ro || [], item.en || []);
-        if(pool.some(v => {
-          const nv = normalize(v);
-          return nv && n.includes(nv);
-        })) out.push(item);
-      }
-      return out;
     }
 
     function buildKorean(){
@@ -1101,8 +1124,9 @@
         if(verb) parts.push(verb);
 
         if(subject) prevSubject = subject;
-        const text = parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
-        if(text) clauses.push(text);
+
+        const line = parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+        if(line) clauses.push(line);
       });
 
       return clauses.join(" ");
@@ -1150,7 +1174,7 @@
       return chunks.join(". ");
     }
 
-    function renderSentenceWords(text){
+    function renderSentence(text){
       els.sentenceWords.innerHTML = "";
       const tokens = text.trim() ? text.trim().split(/\s+/) : ["—"];
       tokens.forEach(token => {
@@ -1161,90 +1185,31 @@
       });
     }
 
-    function populateDatalist(id, items, key="ko"){
-      const dl = document.getElementById(id);
-      if(!dl) return;
-      dl.innerHTML = "";
-      items.forEach(item => {
-        const option = document.createElement("option");
-        option.value = typeof item === "string" ? item : item[key];
-        dl.appendChild(option);
-      });
-    }
-
-    function textUI(){
-      return UI[state.lang];
-    }
-
-    function renderTexts(){
-      const t = textUI();
-      els.pageTitle.textContent = t.pageTitle;
-      els.pageSubtitle.textContent = t.pageSubtitle;
-      els.inputTitle.textContent = t.inputTitle;
-      els.inputHelp.textContent = t.inputHelp;
-      els.freeText.placeholder = t.inputPlaceholder;
-      els.inputExample.textContent = t.inputExample;
-      els.previewTitle.textContent = t.previewTitle;
-      els.sentenceLabel.textContent = t.sentenceLabel;
-      els.translationLabel.textContent = t.translationLabel;
-      els.actionsTitle.textContent = t.actionsTitle;
-      els.playBtn.textContent = t.playBtn;
-      els.speakBtn.textContent = t.speakBtn;
-      els.addClauseBtn.textContent = t.addClauseBtn;
-      els.removeClauseBtn.textContent = t.removeClauseBtn;
-      els.tableTitle.textContent = t.tableTitle;
-      els.tableHelp.textContent = t.tableHelp;
-      els.footerNote.textContent = t.footerNote;
-
-      els.btnRo.classList.toggle("active", state.lang === "ro");
-      els.btnEn.classList.toggle("active", state.lang === "en");
-
-      [...els.levelBar.querySelectorAll(".chip")].forEach(btn => {
-        btn.classList.toggle("active", Number(btn.dataset.level) === state.level);
-      });
-
-      els.freeText.value = state.freeText[state.lang] || "";
-    }
-
     function slotCardTemplate({ clauseIndex, slotKey, active, value }){
-      const t = textUI();
-      const label = t.slots[slotKey];
-      const hint = t.hints[slotKey];
+      const labels = t().slots;
+      const questions = t().questions;
+      const hints = t().hints;
       const isConnector = slotKey === "connector";
       const isVerb = slotKey === "verb";
 
       if(isConnector){
-        const options = Object.entries(t.connectors).map(([val, txt]) =>
+        const options = Object.entries(t().connectors).map(([val, txt]) =>
           `<option value="${val}" ${value === val ? "selected" : ""}>${txt}</option>`
         ).join("");
 
         return `
           <div class="slotCard ${active ? "" : "off"}" data-slot="${slotKey}">
             <div class="slotTop">
-              <div class="slotLabel">${label}</div>
-              <button class="toggleBtn ${active ? "active" : ""}" type="button" data-action="toggle" data-clause="${clauseIndex}" data-slot="${slotKey}">
-                ${active ? t.on : t.off}
+              <div class="slotLabel">${labels[slotKey]}</div>
+              <button class="miniSwitch ${active ? "active" : ""}" type="button" data-action="toggle" data-clause="${clauseIndex}" data-slot="${slotKey}">
+                ${active ? "✓" : "○"}
               </button>
             </div>
+            <div class="slotQuestion">${questions[slotKey] || ""}</div>
             <select class="slotSelect" data-action="input" data-clause="${clauseIndex}" data-slot="${slotKey}" ${active ? "" : "disabled"}>
               ${options}
             </select>
-            <div class="slotHint">${hint}</div>
-          </div>
-        `;
-      }
-
-      if(isVerb){
-        return `
-          <div class="slotCard ${active ? "" : "off"}" data-slot="${slotKey}">
-            <div class="slotTop">
-              <div class="slotLabel">${label}</div>
-              <button class="toggleBtn ${active ? "active" : ""}" type="button" data-action="toggle" data-clause="${clauseIndex}" data-slot="${slotKey}">
-                ${active ? t.on : t.off}
-              </button>
-            </div>
-            <input class="slotInput" list="dl-verb" data-action="input" data-clause="${clauseIndex}" data-slot="${slotKey}" value="${escapeHtml(value)}" ${active ? "" : "disabled"} />
-            <div class="slotHint">${hint}</div>
+            <div class="slotHint">${hints[slotKey] || ""}</div>
           </div>
         `;
       }
@@ -1252,30 +1217,33 @@
       return `
         <div class="slotCard ${active ? "" : "off"}" data-slot="${slotKey}">
           <div class="slotTop">
-            <div class="slotLabel">${label}</div>
-            <button class="toggleBtn ${active ? "active" : ""}" type="button" data-action="toggle" data-clause="${clauseIndex}" data-slot="${slotKey}">
-              ${active ? t.on : t.off}
+            <div class="slotLabel">${labels[slotKey]}</div>
+            <button class="miniSwitch ${active ? "active" : ""}" type="button" data-action="toggle" data-clause="${clauseIndex}" data-slot="${slotKey}">
+              ${active ? "✓" : "○"}
             </button>
           </div>
-          <input class="slotInput"
+          <div class="slotQuestion">${questions[slotKey] || ""}</div>
+          <input
+            class="slotInput"
             ${slotKey === "relative" ? 'list="dl-relative"' : ""}
             ${slotKey === "subject" ? 'list="dl-subject"' : ""}
             ${slotKey === "time" ? 'list="dl-time"' : ""}
             ${slotKey === "location" ? 'list="dl-location"' : ""}
             ${slotKey === "objects" ? 'list="dl-objects"' : ""}
             ${slotKey === "description" ? 'list="dl-description"' : ""}
+            ${slotKey === "verb" ? 'list="dl-verb"' : ""}
             data-action="input"
             data-clause="${clauseIndex}"
             data-slot="${slotKey}"
             value="${escapeHtml(value)}"
-            ${active ? "" : "disabled"} />
-          <div class="slotHint">${hint}</div>
+            ${active ? "" : "disabled"}
+          />
+          <div class="slotHint">${hints[slotKey] || ""}</div>
         </div>
       `;
     }
 
     function renderClauses(){
-      const t = textUI();
       els.clauseList.innerHTML = "";
 
       state.clauses.forEach((clause, index) => {
@@ -1284,10 +1252,7 @@
 
         card.innerHTML = `
           <div class="clauseHead">
-            <div>
-              <h3 class="clauseTitle">${t.clause} ${index + 1}</h3>
-              <p class="clauseSub">${t.clauseSub}</p>
-            </div>
+            <h3 class="clauseTitle">${t().clause} ${index + 1}</h3>
           </div>
 
           <div class="slotGrid">
@@ -1306,29 +1271,36 @@
       });
     }
 
-    function escapeHtml(str=""){
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+    function renderTopicMenu(){
+      els.topicSummary.textContent = `TOPIK ${state.level} ▾`;
+      [...els.topicDropdown.querySelectorAll(".topicOption")].forEach(btn => {
+        btn.classList.toggle("active", Number(btn.dataset.level) === state.level);
+      });
     }
 
-    function buildAll(){
+    function renderLanguageButtons(){
+      els.btnRo.classList.toggle("active", state.lang === "ro");
+      els.btnEn.classList.toggle("active", state.lang === "en");
+      els.playBtn.textContent = t().playBtn;
+      els.speakBtn.textContent = t().speakBtn;
+      els.freeText.value = state.freeText[state.lang] || "";
+    }
+
+    function renderPreview(){
       const ko = buildKorean();
       const tr = buildTranslation(state.lang);
-      renderSentenceWords(ko || "—");
-      els.translationText.textContent = tr || "—";
+
+      renderSentence(ko || "—");
+      els.translationText.textContent = tr || t().translationEmpty;
     }
 
     function renderAll(){
       ensureInitialClause();
-      renderTexts();
+      renderLanguageButtons();
+      renderTopicMenu();
       renderClauses();
-      buildAll();
-      if(!els.statusBox.textContent.trim()){
-        setStatus("info", textUI().statusReady);
-      }
+      renderPreview();
+      savePrefs();
     }
 
     function addClause(){
@@ -1356,174 +1328,16 @@
       renderAll();
     }
 
-    function ensureNextClauseForConnector(index){
-      const current = state.clauses[index];
-      if(current.slots.connector.active && current.slots.connector.value){
-        if(index === state.clauses.length - 1){
-          const next = createClause(state.clauses.length);
-          next.slots.subject.active = false;
-          next.slots.subject.value = current.slots.subject.value;
-          state.clauses.push(next);
-        }
-      }
-    }
-
     function handleInput(clauseIndex, slotKey, value){
       const slot = state.clauses[clauseIndex].slots[slotKey];
       slot.value = value;
 
       if(slotKey === "connector"){
         slot.active = value !== "";
-        ensureNextClauseForConnector(clauseIndex);
+        ensureNextClauseChain();
       }
 
       renderAll();
-    }
-
-    function applyUIEvents(){
-      els.btnRo.addEventListener("click", () => {
-        state.lang = "ro";
-        saveStateText();
-        renderAll();
-      });
-
-      els.btnEn.addEventListener("click", () => {
-        state.lang = "en";
-        saveStateText();
-        renderAll();
-      });
-
-      els.levelBar.addEventListener("click", (e) => {
-        const btn = e.target.closest("[data-level]");
-        if(!btn) return;
-        state.level = Number(btn.dataset.level);
-        renderAll();
-      });
-
-      els.freeText.addEventListener("input", parseFreeText);
-
-      els.addClauseBtn.addEventListener("click", addClause);
-      els.removeClauseBtn.addEventListener("click", removeClause);
-
-      els.clauseList.addEventListener("click", (e) => {
-        const btn = e.target.closest("[data-action='toggle']");
-        if(!btn) return;
-        const clauseIndex = Number(btn.dataset.clause);
-        const slotKey = btn.dataset.slot;
-        handleToggle(clauseIndex, slotKey);
-      });
-
-      els.clauseList.addEventListener("input", (e) => {
-        const field = e.target.closest("[data-action='input']");
-        if(!field) return;
-        const clauseIndex = Number(field.dataset.clause);
-        const slotKey = field.dataset.slot;
-        handleInput(clauseIndex, slotKey, field.value);
-      });
-
-      els.playBtn.addEventListener("click", playSentence);
-      els.sentenceBtn.addEventListener("click", playSentence);
-      els.speakBtn.addEventListener("click", startSpeakingPractice);
-    }
-
-    function playSentence(){
-      const text = buildKorean();
-      if(!text){
-        setStatus("warn", textUI().statusReady);
-        return;
-      }
-      if(!("speechSynthesis" in window)){
-        setStatus("warn", textUI().statusAudio);
-        return;
-      }
-
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = "ko-KR";
-      utter.rate = 0.88;
-      utter.pitch = 1;
-
-      const words = [...els.sentenceWords.querySelectorAll(".word")];
-      words.forEach(w => w.classList.remove("active"));
-
-      let idx = 0;
-      utter.onstart = () => {
-        setStatus("info", textUI().statusSpeaking);
-      };
-      utter.onboundary = (event) => {
-        if(event.name === "word"){
-          words.forEach(w => w.classList.remove("active"));
-          if(words[idx]) words[idx].classList.add("active");
-          idx++;
-        }
-      };
-      utter.onend = () => {
-        words.forEach(w => w.classList.remove("active"));
-      };
-
-      window.speechSynthesis.speak(utter);
-    }
-
-    function normalizeSpeechCompare(str=""){
-      return str.replace(/\s+/g,"").trim();
-    }
-
-    function startSpeakingPractice(){
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if(!SpeechRecognition){
-        setStatus("warn", textUI().statusMic);
-        return;
-      }
-
-      const expected = buildKorean().trim();
-      if(!expected){
-        setStatus("warn", textUI().statusReady);
-        return;
-      }
-
-      const rec = new SpeechRecognition();
-      rec.lang = "ko-KR";
-      rec.interimResults = false;
-      rec.maxAlternatives = 1;
-
-      els.speakBtn.textContent = textUI().speakListening;
-      setStatus("info", textUI().statusListening);
-
-      rec.onresult = (event) => {
-        const heard = (event.results[0] && event.results[0][0] && event.results[0][0].transcript || "").trim();
-        const a = normalizeSpeechCompare(heard);
-        const b = normalizeSpeechCompare(expected);
-
-        if(a && a === b){
-          setStatus("good", textUI().statusCorrect);
-        } else {
-          setStatus("bad", textUI().statusIncorrect(heard || "—", expected));
-        }
-      };
-
-      rec.onerror = (event) => {
-        if(event.error === "no-speech"){
-          setStatus("warn", textUI().statusNoSpeech);
-        } else {
-          setStatus("warn", textUI().statusVoiceError);
-        }
-      };
-
-      rec.onend = () => {
-        els.speakBtn.textContent = textUI().speakBtn;
-      };
-
-      rec.start();
-    }
-
-    function initDatalists(){
-      populateDatalist("dl-relative", SUGGESTIONS.relative.map(v => ({ ko:v })));
-      populateDatalist("dl-subject", SUGGESTIONS.subjects);
-      populateDatalist("dl-time", SUGGESTIONS.times);
-      populateDatalist("dl-location", SUGGESTIONS.locations);
-      populateDatalist("dl-objects", SUGGESTIONS.objects);
-      populateDatalist("dl-description", SUGGESTIONS.descriptions);
-      populateDatalist("dl-verb", SUGGESTIONS.verbs);
     }
 
     function populateDatalist(id, items){
@@ -1537,40 +1351,28 @@
       });
     }
 
-    function init(){
-      initDatalists();
-      ensureInitialClause();
-      els.freeText.value = state.freeText[state.lang] || "";
+    function initDatalists(){
+      const rel = document.getElementById("dl-relative");
+      rel.innerHTML = "";
+      SUGGESTIONS.relative.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item;
+        rel.appendChild(option);
+      });
 
-      if(!els.freeText.value.trim()){
-        state.clauses[0].slots.subject.active = true;
-        state.clauses[0].slots.subject.value = "저";
-        state.clauses[0].slots.time.active = true;
-        state.clauses[0].slots.time.value = "어제";
-        state.clauses[0].slots.location.active = true;
-        state.clauses[0].slots.location.value = "집";
-        state.clauses[0].slots.objects.active = true;
-        state.clauses[0].slots.objects.value = "점심";
-        state.clauses[0].slots.description.active = true;
-        state.clauses[0].slots.description.value = "빨리";
-        state.clauses[0].slots.verb.active = true;
-        state.clauses[0].slots.verb.value = "먹다";
-        state.clauses[0].slots.connector.active = true;
-        state.clauses[0].slots.connector.value = "contrast";
-        ensureNextClauseForConnector(0);
-
-        if(state.clauses[1]){
-          state.clauses[1].slots.subject.active = false;
-          state.clauses[1].slots.verb.value = "가다";
-        }
-      }
-
-      applyUIEvents();
-      setStatus("info", textUI().statusReady);
-      renderAll();
+      populateDatalist("dl-subject", SUGGESTIONS.subjects);
+      populateDatalist("dl-time", SUGGESTIONS.times);
+      populateDatalist("dl-location", SUGGESTIONS.locations);
+      populateDatalist("dl-objects", SUGGESTIONS.objects);
+      populateDatalist("dl-description", SUGGESTIONS.descriptions);
+      populateDatalist("dl-verb", SUGGESTIONS.verbs);
     }
 
-    init();
-  </script>
-</body>
-</html>
+    function playSentence(){
+      const text = buildKorean().trim();
+      if(!text){
+        return;
+      }
+
+      if(!("speechSynthesis" in window)){
+        els.statusBox.textContent =
