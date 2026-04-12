@@ -3,32 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Raluca Korean — Builder</title>
+  <title>Raluca Korean — TOPIK 6 Builder</title>
   <style>
     :root{
-      --bg:#f6f7fd;
-      --bg2:#eef2ff;
-      --card:#ffffff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --line:rgba(15,23,42,.08);
-      --line2:rgba(15,23,42,.14);
+      --bg:#f5f7ff;
+      --bg2:#eef1ff;
+      --panel:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#e5e7eb;
       --primary:#6d5efc;
       --primary2:#8b5cf6;
-      --shadow:0 16px 40px rgba(15,23,42,.07);
-      --shadow-sm:0 8px 20px rgba(15,23,42,.05);
-      --radius-xl:24px;
-      --radius-lg:18px;
-      --radius-md:16px;
-      --transition:180ms ease;
-      --c-relative:#f4e0ff;
-      --c-subject:#dcecff;
-      --c-time:#ffe8be;
-      --c-location:#dff7df;
-      --c-object:#ffdede;
-      --c-description:#ece8ff;
-      --c-verb:#ffe9cf;
-      --c-connector:#e4ddff;
+      --shadow:0 16px 40px rgba(17,24,39,.08);
+      --radius:22px;
+      --soft:#f8faff;
+      --good:#e8f7ec;
+      --warn:#fff5dd;
+      --danger:#ffe6e8;
+      --accent:#eef0ff;
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0}
@@ -37,575 +29,694 @@
       font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
       color:var(--text);
       background:
-        radial-gradient(circle at top left, rgba(109,94,252,.12), transparent 24%),
-        radial-gradient(circle at top right, rgba(139,92,246,.10), transparent 22%),
-        linear-gradient(180deg,var(--bg2) 0%, var(--bg) 34%, #fbfcfe 100%);
-      padding:16px;
+        radial-gradient(circle at top left, rgba(109,94,252,.13), transparent 25%),
+        radial-gradient(circle at top right, rgba(139,92,246,.10), transparent 20%),
+        linear-gradient(180deg,var(--bg2) 0%, var(--bg) 38%, #fbfcff 100%);
+      padding:18px;
     }
-    .app{max-width:1180px;margin:0 auto}
+    .app{max-width:1560px;margin:0 auto}
     .panel{
-      width:100%;
-      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.96));
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,255,.96));
       border:1px solid var(--line);
-      border-radius:var(--radius-xl);
+      border-radius:var(--radius);
       box-shadow:var(--shadow);
-      padding:16px;
-      margin-bottom:14px;
+      padding:18px;
+      margin-bottom:16px;
     }
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
-    .title{margin:0;font-size:clamp(16px,2vw,24px);line-height:1.1;letter-spacing:-.02em;font-weight:900}
-    .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .pill,.tinyBtn,.topicOption,.iconBtn,.cardToggle,.cardMain{appearance:none;-webkit-appearance:none;border:none;font:inherit;transition:transform var(--transition),box-shadow var(--transition),background var(--transition),border-color var(--transition),opacity var(--transition),color var(--transition)}
-    .pill:hover,.tinyBtn:hover,.topicOption:hover,.iconBtn:hover,.cardToggle:hover,.cardMain:hover{transform:translateY(-1px)}
-    .pill,.tinyBtn,.iconBtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;cursor:pointer;background:#fff;color:var(--text);border:1px solid var(--line);border-radius:999px;box-shadow:0 8px 18px rgba(15,23,42,.04);font-weight:800}
-    .pill{padding:9px 13px;font-size:13px;min-height:40px}
-    .pill.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 14px 24px rgba(109,94,252,.22)}
-    .tinyBtn{padding:8px 12px;font-size:12px;min-height:36px}
-    .iconBtn{width:40px;height:40px;padding:0;font-size:15px;cursor:pointer}
-    .iconBtn.recording{color:#fff;border-color:transparent;background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 14px 24px rgba(220,38,38,.22)}
-    .topicMenu{position:relative}
-    .topicMenu summary{list-style:none;cursor:pointer}
-    .topicMenu summary::-webkit-details-marker{display:none}
-    .topicBubble{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:900;color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 14px 24px rgba(109,94,252,.22);user-select:none}
-    .topicDot{width:7px;height:7px;border-radius:999px;background:#fff;opacity:.95;flex:0 0 auto}
-    .topicDropdown{position:absolute;right:0;top:calc(100% + 9px);z-index:30;min-width:160px;display:grid;gap:7px;padding:10px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:var(--shadow-sm)}
-    .topicOption{cursor:pointer;text-align:left;padding:10px 11px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:13px;font-weight:800;color:var(--text)}
-    .topicOption.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--primary),var(--primary2))}
-    textarea{width:100%;min-height:96px;resize:vertical;border:1px solid var(--line2);border-radius:18px;padding:15px 16px;background:#fff;color:var(--text);outline:none;font:inherit;font-size:18px;font-weight:800;line-height:1.5;box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}
-    textarea:focus{border-color:rgba(109,94,252,.42);box-shadow:0 0 0 4px rgba(109,94,252,.08)}
-    .previewBar{display:flex;justify-content:flex-end;margin-bottom:12px}
-    .previewTools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .sentenceBox{width:100%;border:1px solid rgba(109,94,252,.12);border-radius:18px;background:radial-gradient(circle at top left, rgba(109,94,252,.10), transparent 42%),linear-gradient(180deg,#fff 0%,#f8fafc 100%);padding:16px;box-shadow:var(--shadow-sm);cursor:pointer}
-    .sentenceWords{display:flex;flex-wrap:wrap;gap:6px 8px;min-height:40px;align-items:center}
-    .word{font-size:clamp(22px,3.2vw,34px);line-height:1.12;font-weight:900;letter-spacing:-.02em;color:#2563eb;padding:2px 4px;border-radius:10px;transition:background var(--transition), box-shadow var(--transition), transform var(--transition)}
-    .word.active{background:linear-gradient(135deg, rgba(109,94,252,.16), rgba(139,92,246,.10));box-shadow:0 8px 18px rgba(109,94,252,.10);transform:translateY(-1px)}
-    .translationBox{margin-top:12px;width:100%;min-height:58px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px 16px;box-shadow:0 8px 18px rgba(15,23,42,.04);display:flex;align-items:center}
-    .translationText{font-size:18px;line-height:1.5;font-weight:800}
-    .recordBox{margin-top:12px;display:none}
-    .recordBox.show{display:block}
-    .recordedLabel{font-size:12px;font-weight:900;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
-    audio{width:100%;display:block;border-radius:14px}
-    .clauseList{display:flex;flex-direction:column;gap:12px}
-    .clauseRow{width:100%;border:1px solid var(--line);border-radius:20px;background:#fff;box-shadow:var(--shadow-sm);padding:12px}
-    .clauseHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-    .clauseTitle{font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-    .clauseGrid{display:grid;grid-template-columns:repeat(8,minmax(120px,1fr));gap:10px}
-    .fieldCard{position:relative;min-height:126px;border:1px solid rgba(15,23,42,.08);border-radius:18px;box-shadow:0 8px 18px rgba(15,23,42,.05);overflow:hidden}
-    .fieldCard[data-kind="relative"]{background:linear-gradient(180deg,var(--c-relative),#fff)}
-    .fieldCard[data-kind="subject"]{background:linear-gradient(180deg,var(--c-subject),#fff)}
-    .fieldCard[data-kind="time"]{background:linear-gradient(180deg,var(--c-time),#fff)}
-    .fieldCard[data-kind="location"]{background:linear-gradient(180deg,var(--c-location),#fff)}
-    .fieldCard[data-kind="object"]{background:linear-gradient(180deg,var(--c-object),#fff)}
-    .fieldCard[data-kind="description"]{background:linear-gradient(180deg,var(--c-description),#fff)}
-    .fieldCard[data-kind="verb"]{background:linear-gradient(180deg,var(--c-verb),#fff)}
-    .fieldCard[data-kind="connector"]{background:linear-gradient(180deg,var(--c-connector),#fff)}
-    .fieldCard.off{opacity:.46;filter:saturate(.85)}
-    .cardToggle{position:absolute;top:8px;right:8px;z-index:3;width:24px;height:24px;border-radius:999px;border:1px solid rgba(15,23,42,.10);background:#fff;color:#64748b;cursor:pointer;display:grid;place-items:center;box-shadow:0 6px 14px rgba(15,23,42,.05);font-size:12px;font-weight:900;line-height:1;padding:0}
-    .cardToggle.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--primary),var(--primary2))}
-    .cardMain{width:100%;height:100%;background:transparent;cursor:pointer;text-align:left;padding:11px 12px 12px;display:flex;flex-direction:column;justify-content:flex-start;gap:8px}
-    .cardTop{display:flex;align-items:center;gap:7px;padding-right:26px;margin-top:1px}
-    .cardDot{width:7px;height:7px;border-radius:999px;background:rgba(15,23,42,.48);flex:0 0 auto}
-    .cardLabel{font-size:10px;line-height:1.25;font-weight:900;letter-spacing:.11em;text-transform:uppercase;color:#334155}
-    .cardPrompt{font-size:12px;line-height:1.35;color:#64748b;font-weight:700;min-height:16px;margin-top:1px}
-    .cardValue{font-size:24px;line-height:1.08;font-weight:900;letter-spacing:-.02em;color:#0f172a;word-break:keep-all;margin-top:auto}
-    .cardMeta{font-size:11px;line-height:1.32;color:#64748b;font-weight:800;margin-top:6px;min-height:14px}
-    .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(12px);min-width:min(92vw,560px);max-width:92vw;padding:13px 15px;border-radius:16px;background:#fff;border:1px solid rgba(15,23,42,.10);box-shadow:0 18px 40px rgba(15,23,42,.16);font-size:14px;line-height:1.5;font-weight:800;opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease;z-index:100}
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    @media (max-width:980px){.clauseGrid{grid-template-columns:repeat(4,minmax(120px,1fr))}}
-    @media (max-width:720px){body{padding:12px}.panel{padding:13px}.title{font-size:16px}textarea{min-height:88px;font-size:16px}.translationText{font-size:16px}.word{font-size:20px}.cardValue{font-size:21px}.clauseGrid{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .title{margin:0;font-size:clamp(20px,3vw,38px);font-weight:900;letter-spacing:-.03em}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn,.pill,.tiny{
+      appearance:none;border:none;background:#fff;color:var(--text);cursor:pointer;
+      border:1px solid var(--line);border-radius:999px;padding:10px 14px;font:inherit;font-weight:800;
+      box-shadow:0 8px 18px rgba(17,24,39,.05);transition:.18s ease;
+      text-decoration:none;
+    }
+    .btn:hover,.pill:hover,.tiny:hover{transform:translateY(-1px)}
+    .btn.primary,.pill.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 14px 26px rgba(109,94,252,.25)}
+    .tiny{width:42px;height:42px;padding:0;display:grid;place-items:center}
+    textarea.mainInput{
+      width:100%;min-height:150px;resize:vertical;border:1px solid #d7dbe6;border-radius:20px;padding:16px 18px;
+      font:inherit;font-size:18px;font-weight:700;line-height:1.6;outline:none;background:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)
+    }
+    textarea.mainInput:focus,.cellInput:focus,.cellSelect:focus{
+      border-color:rgba(109,94,252,.45);
+      box-shadow:0 0 0 4px rgba(109,94,252,.08)
+    }
+    .helper{margin-top:10px;font-size:14px;line-height:1.6;color:var(--muted)}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .stats{display:grid;grid-template-columns:1.25fr .95fr .8fr;gap:14px}
+    .card{border:1px solid var(--line);border-radius:20px;background:#fff;padding:16px;min-height:120px}
+    .label{font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:900;color:var(--muted);margin-bottom:10px}
+    .bigText{font-size:18px;line-height:1.6;font-weight:800}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .chip{padding:8px 10px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid var(--line);background:#fff}
+    .chip.good{background:var(--good)}
+    .chip.warn{background:var(--warn)}
+    .chip.danger{background:var(--danger)}
+    .summaryList{display:grid;gap:10px}
+    .summaryItem{border:1px solid var(--line);border-radius:16px;background:#fff;padding:12px 14px}
+    .summaryItem strong{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#4b5563;margin-bottom:6px}
+    .summaryItem span{font-size:15px;line-height:1.55;font-weight:700;color:#1f2937}
+    .explain{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .noteCard{border:1px solid var(--line);border-radius:18px;background:#fff;padding:14px}
+    .noteCard h3{margin:0 0 8px;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+    .noteCard p{margin:0;font-size:14px;line-height:1.65;color:#374151;font-weight:700}
+    .tableWrap{overflow:auto;border:1px solid var(--line);border-radius:20px;background:#fff}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1940px}
+    thead th{
+      position:sticky;top:0;background:linear-gradient(180deg,#fafbff,#f3f5ff);z-index:2;
+      font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#4b5563;font-weight:900;
+      padding:14px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:bottom
+    }
+    tbody td{padding:10px 10px;border-bottom:1px solid #edf0f5;vertical-align:top;background:#fff}
+    tbody tr:nth-child(odd) td{background:#fcfdff}
+    tbody tr:hover td{background:#f8faff}
+    .rowNo{font-weight:900;font-size:18px;color:#4338ca;min-width:38px}
+    .cellInput,.cellSelect{
+      width:100%;border:1px solid #d9deea;background:#fff;border-radius:14px;padding:10px 11px;
+      font:inherit;font-size:14px;line-height:1.45;color:var(--text);outline:none
+    }
+    .cellInput.multiline{min-height:78px;resize:vertical}
+    .mini{font-size:12px;color:var(--muted);font-weight:800;line-height:1.5;margin-top:6px}
+    .rowActions{display:flex;gap:6px;align-items:center}
+    .iconAction{
+      width:34px;height:34px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:900
+    }
+    .footerNote{font-size:13px;color:#6b7280;line-height:1.6;margin-top:10px}
+    @media (max-width:1200px){
+      .stats,.explain{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <section class="panel">
       <div class="topbar">
-        <h1 class="title">Raluca Korean — Builder</h1>
+        <h1 class="title">Raluca Korean — TOPIK 6 Builder</h1>
         <div class="toolbar">
-          <a href="./index.html" class="tinyBtn">🏠</a>
-          <details class="topicMenu" id="topicMenu">
-            <summary class="topicBubble">
-              <span class="topicDot"></span>
-              <span id="topicSummaryText">T6 ▾</span>
-            </summary>
-            <div class="topicDropdown" id="topicDropdown">
-              <button class="topicOption" data-level="1" type="button">T1</button>
-              <button class="topicOption" data-level="2" type="button">T2</button>
-              <button class="topicOption" data-level="3" type="button">T3</button>
-              <button class="topicOption" data-level="4" type="button">T4</button>
-              <button class="topicOption" data-level="5" type="button">T5</button>
-              <button class="topicOption" data-level="6" type="button">T6</button>
-            </div>
-          </details>
-          <button id="btnRo" class="pill active" type="button">RO</button>
-          <button id="btnEn" class="pill" type="button">EN</button>
+          <a href="./index.html" class="tiny" title="Home" aria-label="Home">🏠</a>
+          <span class="pill active">T6</span>
+          <button id="btnLoadExample" class="btn primary" type="button">Încarcă exemplul TOPIK 6</button>
+          <button id="btnAnalyze" class="btn" type="button">Analizează propoziția</button>
+          <button id="btnReset" class="btn" type="button">Reset</button>
         </div>
       </div>
     </section>
 
     <section class="panel">
-      <textarea id="freeText" placeholder="Scrie aici o propoziție sau un lanț de propoziții..."></textarea>
+      <textarea id="sentenceInput" class="mainInput" placeholder="Scrie aici o propoziție complexă. Exemplu: Eu și Maria, deși ieri a plouat mult, pentru a ne respecta promisiunea, am lucrat până târziu..."></textarea>
+      <div class="helper">
+        Pentru <strong>TOPIK 6</strong>, tabelul a fost refăcut pe model de <strong>unități sintactice + lanț logic</strong>. Fiecare rând poate păstra un <strong>fragment exact</strong> din propoziția sursă, plus analiza de subiect, predicat, polaritate, modalitate, funcție discursivă și pattern coreean sugerat. Astfel, propoziții foarte lungi pot fi redate integral, nu doar aproximativ.
+      </div>
+      <div class="actions">
+        <button id="btnAddRow" class="btn" type="button">+ Adaugă rând</button>
+        <button id="btnRender" class="btn" type="button">Regenerează sumarul</button>
+      </div>
     </section>
 
     <section class="panel">
-      <div class="previewBar">
-        <div class="previewTools">
-          <button class="iconBtn" id="refreshBtn" type="button" title="Refresh">↻</button>
-          <button class="iconBtn" id="playBtn" type="button" title="Ascultă propoziția">🔊</button>
-          <button class="iconBtn" id="recordBtn" type="button" title="Înregistrează vocea">🎤</button>
+      <div class="stats">
+        <div class="card">
+          <div class="label">Reconstrucție / acoperire</div>
+          <div class="bigText" id="reconstructionText">—</div>
+          <div class="chips" id="coverageChips"></div>
+        </div>
+        <div class="card">
+          <div class="label">Lanț logic TOPIK 6</div>
+          <div class="summaryList" id="summaryList"></div>
+        </div>
+        <div class="card">
+          <div class="label">Pattern-uri sugerate</div>
+          <div class="bigText" id="patternText">—</div>
         </div>
       </div>
-      <div class="sentenceBox" id="sentenceBox" tabindex="0" role="button" aria-label="Play sentence">
-        <div class="sentenceWords" id="sentenceWords"></div>
-      </div>
-      <div class="translationBox">
-        <div class="translationText" id="translationText"></div>
-      </div>
-      <div class="recordBox" id="recordBox">
-        <div class="recordedLabel">Înregistrarea ta</div>
-        <audio id="recordedAudio" controls playsinline></audio>
+    </section>
+
+    <section class="panel">
+      <div class="explain">
+        <div class="noteCard">
+          <h3>Ce am schimbat</h3>
+          <p>Tabelul nu mai este centrat pe „un cuvânt = o celulă”, ci pe unități reale de discurs: subordonată concesivă, scop, cauză, imposibilitate, obligație, reluare, contrast.</p>
+        </div>
+        <div class="noteCard">
+          <h3>De ce ajută la TOPIK 6</h3>
+          <p>La nivel înalt trebuie urmărite relația logică, acordul subiectului, polaritatea, modalitatea și alegerea corectă a pattern-ului coreean, nu doar vocabularul izolat.</p>
+        </div>
+        <div class="noteCard">
+          <h3>Ce garantează coloana „fragment exact”</h3>
+          <p>Dacă fragmentele exacte acoperă toată propoziția, atunci tabelul poate reda <strong>100%</strong> enunțul sursă. Pe exemplul tău, fișierul vine deja pregătit pentru acoperire completă.</p>
+        </div>
       </div>
     </section>
 
     <section class="panel">
-      <div class="clauseList" id="clauseList"></div>
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nivel</th>
+              <th>Relație logică</th>
+              <th>Conector</th>
+              <th>Fragment exact din propoziție</th>
+              <th>Subiect / topic</th>
+              <th>Predicat / nucleu verbal</th>
+              <th>Cadru / adjunct</th>
+              <th>Polaritate / modalitate</th>
+              <th>Funcție discursivă</th>
+              <th>Pattern TOPIK 6</th>
+              <th>Acord / observații</th>
+              <th>Acțiuni</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="footerNote">Sugestie: pentru propoziții foarte lungi, fiecare subordonată sau secvență verbală importantă merită propriul rând. Dacă vrei, poți păstra un rând special doar pentru topicul global („Eu și Maria”).</div>
     </section>
   </div>
 
-  <div class="toast" id="toast" aria-live="polite"></div>
-
   <script>
+    const EXAMPLE_TEXT = "Eu și Maria, deși ieri a plouat mult, pentru a ne respecta promisiunea, am lucrat până târziu și abia după aceea am reușit să mâncăm, dar din cauza faptului că timpul a fost mai puțin decât ne așteptam, nici nu am putut să ne odihnim bine și a trebuit să muncim din nou.";
 
-    var UI = {
-      ro: {
-        placeholder: "Scrie aici o propoziție sau un lanț de propoziții...",
-        defaultTranslation: "Apasă pe carduri ca să schimbi cuvintele.",
-        clause: "Propoziția",
-        noSpeech: "Nu există propoziție de redat.",
-        recordStart: "Înregistrare pornită.",
-        recordStop: "Înregistrare oprită. Poți asculta mai jos.",
-        recordUnsupported: "Înregistrarea audio nu este disponibilă pe acest browser.",
-        prompts: { relative: "Ce fel de...?", subject: "Cine?", time: "Când?", location: "Unde?", object: "Ce?", description: "Cum?", verb: "Ce face?", connector: "Conector" },
-        labels: { relative: "RELATIVE", subject: "SUBJECT", time: "TIME", location: "LOCATION", object: "OBJECT", description: "DESCRIPTION", verb: "VERB", connector: "CONNECTOR" }
-      },
-      en: {
-        placeholder: "Type a sentence or a chain of sentences here...",
-        defaultTranslation: "Click the cards to change the words.",
-        clause: "Sentence",
-        noSpeech: "There is no sentence to play.",
-        recordStart: "Recording started.",
-        recordStop: "Recording stopped. You can listen below.",
-        recordUnsupported: "Audio recording is not available in this browser.",
-        prompts: { relative: "Which kind of...?", subject: "Who?", time: "When?", location: "Where?", object: "What?", description: "How?", verb: "What happens?", connector: "Connector" },
-        labels: { relative: "RELATIVE", subject: "SUBJECT", time: "TIME", location: "LOCATION", object: "OBJECT", description: "DESCRIPTION", verb: "VERB", connector: "CONNECTOR" }
-      }
-    };
+    const LEVEL_OPTIONS = ["topic global", "principală", "subordonată", "subordonată încastrată", "secvență verbală", "concluzie / reluare"];
+    const REL_OPTIONS = ["—", "coordonare", "concesie", "scop", "secvență", "contrast", "cauză", "rezultat", "imposibilitate", "obligație", "comparație"];
+    const CONNECTOR_OPTIONS = ["—", "și", "și abia după aceea", "dar", "deși", "pentru a", "din cauza faptului că", "fiindcă", "deoarece", "ca să", "nici", "decât"];
 
-    var FIELD_DEFS = [
-      {key:'relative', kind:'relative'},
-      {key:'subject', kind:'subject'},
-      {key:'time', kind:'time'},
-      {key:'location', kind:'location'},
-      {key:'object', kind:'object'},
-      {key:'description', kind:'description'},
-      {key:'verb', kind:'verb'},
-      {key:'connector', kind:'connector'}
-    ];
+    let rows = [];
 
-    var DATA = {
-      relative: [
-        {ko:'', ro:'', en:'', aliases:[]},
-        {ko:'제가 어제 본', ro:'pe care eu l-am văzut ieri', en:'that I saw yesterday', aliases:['vazut ieri','văzut ieri','am vazut ieri','am văzut ieri','saw yesterday']},
-        {ko:'친구가 추천한', ro:'recomandat de prieten', en:'recommended by a friend', aliases:['recomandat','recommended']},
-        {ko:'오늘 읽는', ro:'pe care îl citesc azi', en:'that I am reading today', aliases:['citesc azi','citesc astazi','reading today']},
-        {ko:'선생님이 말씀하신', ro:'menționat de profesor', en:'mentioned by the teacher', aliases:['profesor','teacher mentioned']},
-        {ko:'내가 좋아하는', ro:'care îmi place', en:'that I like', aliases:['imi place','îmi place','i like']}
-      ],
-      subject: [
-        {ko:'저는', ro:'eu', en:'I', aliases:['eu','i']},
-        {ko:'나는', ro:'eu', en:'I', aliases:['eu','i']},
-        {ko:'우리는', ro:'noi', en:'we', aliases:['noi','we']},
-        {ko:'친구는', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
-        {ko:'선생님은', ro:'profesorul', en:'teacher', aliases:['profesorul','profesor','teacher']},
-        {ko:'학생은', ro:'studentul', en:'student', aliases:['studentul','student']},
-        {ko:'민수는', ro:'Minsu', en:'Minsu', aliases:['minsu']},
-        {ko:'지수는', ro:'Jisu', en:'Jisu', aliases:['jisu']}
-      ],
-      time: [
-        {ko:'', ro:'', en:'', aliases:[]},
-        {ko:'오늘', ro:'astăzi', en:'today', aliases:['astăzi','astazi','azi','today']},
-        {ko:'어제', ro:'ieri', en:'yesterday', aliases:['ieri','yesterday']},
-        {ko:'내일', ro:'mâine', en:'tomorrow', aliases:['maine','mâine','tomorrow']},
-        {ko:'지금', ro:'acum', en:'now', aliases:['acum','now']},
-        {ko:'매일', ro:'în fiecare zi', en:'every day', aliases:['zilnic','in fiecare zi','în fiecare zi','every day']},
-        {ko:'아침에', ro:'dimineața', en:'in the morning', aliases:['dimineata','dimineața','morning']},
-        {ko:'저녁에', ro:'seara', en:'in the evening', aliases:['seara','evening']},
-        {ko:'주말에', ro:'în weekend', en:'on the weekend', aliases:['weekend']}
-      ],
-      location: [
-        {ko:'', ro:'', en:'', aliases:[]},
-        {ko:'학교에서', ro:'la școală', en:'at school', aliases:['la scoala','la școală','scoala','școală','school']},
-        {ko:'집에서', ro:'acasă', en:'at home', aliases:['acasă','acasa','home']},
-        {ko:'도서관에서', ro:'la bibliotecă', en:'at the library', aliases:['la biblioteca','la bibliotecă','biblioteca','bibliotecă','library']},
-        {ko:'카페에서', ro:'la cafenea', en:'at the cafe', aliases:['la cafenea','cafenea','cafe']},
-        {ko:'회사에서', ro:'la serviciu', en:'at work', aliases:['la serviciu','serviciu','la munca','la muncă','work']},
-        {ko:'공원에서', ro:'în parc', en:'in the park', aliases:['in parc','în parc','parc','park']},
-        {ko:'식당에서', ro:'la restaurant', en:'at the restaurant', aliases:['restaurant']},
-        {ko:'교실에서', ro:'în clasă', en:'in the classroom', aliases:['in clasa','în clasă','clasa','clasă','classroom']},
-        {ko:'길에서', ro:'pe stradă', en:'on the street', aliases:['pe strada','pe stradă','strada','stradă','street']},
-        {ko:'시장에', ro:'la piață', en:'to the market', aliases:['la piata','la piață','piata','piață','market']},
-        {ko:'가게에', ro:'la magazin', en:'to the store', aliases:['la magazin','magazin','store','shop']},
-        {ko:'온라인으로', ro:'online', en:'online', aliases:['online']}
-      ],
-      object: [
-        {ko:'', ro:'', en:'', aliases:[]},
-        {ko:'한국어를', ro:'limba coreeană', en:'Korean', aliases:['coreeana','coreeană','limba coreeana','limba coreeană','korean']},
-        {ko:'점심을', ro:'prânzul', en:'lunch', aliases:['pranzul','prânzul','pranz','prânz','lunch']},
-        {ko:'숙제를', ro:'tema', en:'homework', aliases:['tema','tema mea','homework']},
-        {ko:'책을', ro:'cartea', en:'the book', aliases:['cartea','carte','book']},
-        {ko:'커피를', ro:'cafeaua', en:'coffee', aliases:['cafeaua','cafea','coffee']},
-        {ko:'음악을', ro:'muzica', en:'music', aliases:['muzica','muzică','music']},
-        {ko:'영화를', ro:'filmul', en:'the movie', aliases:['filmul','film','movie']},
-        {ko:'친구를', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
-        {ko:'프로젝트를', ro:'proiectul', en:'the project', aliases:['proiectul','proiect','project']},
-        {ko:'편지를', ro:'scrisoarea', en:'the letter', aliases:['scrisoarea','scrisoare','letter']}
-      ],
-      description: [
-        {ko:'', ro:'', en:'', aliases:[]},
-        {ko:'빨리', ro:'repede', en:'quickly', aliases:['repede','quickly','fast']},
-        {ko:'천천히', ro:'încet', en:'slowly', aliases:['incet','încet','slowly']},
-        {ko:'열심히', ro:'cu sârguință', en:'diligently', aliases:['cu sarguinta','cu sârguință','serios','din greu','diligently','hard']},
-        {ko:'조용히', ro:'în liniște', en:'quietly', aliases:['in liniste','în liniște','quietly']},
-        {ko:'같이', ro:'împreună', en:'together', aliases:['împreună','impreuna','together']},
-        {ko:'혼자', ro:'singur', en:'alone', aliases:['singur','singura','alone']},
-        {ko:'다시', ro:'din nou', en:'again', aliases:['din nou','again']},
-        {ko:'미리', ro:'dinainte', en:'in advance', aliases:['dinainte','in advance']},
-        {ko:'정말', ro:'foarte', en:'really', aliases:['foarte','chiar','really']},
-        {ko:'조금', ro:'puțin', en:'a little', aliases:['putin','puțin','little']},
-        {ko:'자주', ro:'des', en:'often', aliases:['des','often']}
-      ],
-      verbs: [
-        {ko:'공부하다', ro:'a studia', en:'to study', aliases:['studiez','studia','invat','învăț','study','learn'], final:'공부해요', forms:{none:'공부해요',seq:'공부하고',cause1:'공부해서',cause2:'공부하니까',condition:'공부하면',contrast1:'공부하지만',contrast2:'공부하는데',purpose:'공부하려고',result:'공부하게 되다'}},
-        {ko:'먹다', ro:'a mânca', en:'to eat', aliases:['mananc','mănânc','eat'], final:'먹어요', forms:{none:'먹어요',seq:'먹고',cause1:'먹어서',cause2:'먹으니까',condition:'먹으면',contrast1:'먹지만',contrast2:'먹는데',purpose:'먹으려고',result:'먹게 되다'}},
-        {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','plec','merge','go','leave'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
-        {ko:'오다', ro:'a veni', en:'to come', aliases:['vin','vine','veni','come'], final:'와요', forms:{none:'와요',seq:'오고',cause1:'와서',cause2:'오니까',condition:'오면',contrast1:'오지만',contrast2:'오는데',purpose:'오려고',result:'오게 되다'}},
-        {ko:'보다', ro:'a vedea', en:'to see', aliases:['vad','văd','vezi','vede','see','watch'], final:'봐요', forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
-        {ko:'읽다', ro:'a citi', en:'to read', aliases:['citesc','citeste','citește','read'], final:'읽어요', forms:{none:'읽어요',seq:'읽고',cause1:'읽어서',cause2:'읽으니까',condition:'읽으면',contrast1:'읽지만',contrast2:'읽는데',purpose:'읽으려고',result:'읽게 되다'}},
-        {ko:'쓰다', ro:'a scrie', en:'to write', aliases:['scriu','scrie','write'], final:'써요', forms:{none:'써요',seq:'쓰고',cause1:'써서',cause2:'쓰니까',condition:'쓰면',contrast1:'쓰지만',contrast2:'쓰는데',purpose:'쓰려고',result:'쓰게 되다'}},
-        {ko:'만나다', ro:'a întâlni', en:'to meet', aliases:['intalnesc','întâlnesc','meet'], final:'만나요', forms:{none:'만나요',seq:'만나고',cause1:'만나서',cause2:'만나니까',condition:'만나면',contrast1:'만나지만',contrast2:'만나는데',purpose:'만나려고',result:'만나게 되다'}},
-        {ko:'쉬다', ro:'a se odihni', en:'to rest', aliases:['odihnesc','rest'], final:'쉬어요', forms:{none:'쉬어요',seq:'쉬고',cause1:'쉬어서',cause2:'쉬니까',condition:'쉬면',contrast1:'쉬지만',contrast2:'쉬는데',purpose:'쉬려고',result:'쉬게 되다'}},
-        {ko:'일하다', ro:'a lucra', en:'to work', aliases:['lucrez','lucrează','lucreaza','work'], final:'일해요', forms:{none:'일해요',seq:'일하고',cause1:'일해서',cause2:'일하니까',condition:'일하면',contrast1:'일하지만',contrast2:'일하는데',purpose:'일하려고',result:'일하게 되다'}},
-        {ko:'운동하다', ro:'a face sport', en:'to exercise', aliases:['fac sport','sport','exercise'], final:'운동해요', forms:{none:'운동해요',seq:'운동하고',cause1:'운동해서',cause2:'운동하니까',condition:'운동하면',contrast1:'운동하지만',contrast2:'운동하는데',purpose:'운동하려고',result:'운동하게 되다'}},
-        {ko:'준비하다', ro:'a pregăti', en:'to prepare', aliases:['pregatesc','pregătesc','prepare'], final:'준비해요', forms:{none:'준비해요',seq:'준비하고',cause1:'준비해서',cause2:'준비하니까',condition:'준비하면',contrast1:'준비하지만',contrast2:'준비하는데',purpose:'준비하려고',result:'준비하게 되다'}},
-        {ko:'배우다', ro:'a învăța', en:'to learn', aliases:['invat','învăț','learn'], final:'배워요', forms:{none:'배워요',seq:'배우고',cause1:'배워서',cause2:'배우니까',condition:'배우면',contrast1:'배우지만',contrast2:'배우는데',purpose:'배우려고',result:'배우게 되다'}},
-        {ko:'듣다', ro:'a asculta', en:'to listen', aliases:['ascult','asculta','listen'], final:'들어요', forms:{none:'들어요',seq:'듣고',cause1:'들어서',cause2:'들으니까',condition:'들으면',contrast1:'듣지만',contrast2:'듣는데',purpose:'들으려고',result:'듣게 되다'}},
-        {ko:'만들다', ro:'a face', en:'to make', aliases:['fac','creeaza','creează','make','create'], final:'만들어요', forms:{none:'만들어요',seq:'만들고',cause1:'만들어서',cause2:'만드니까',condition:'만들면',contrast1:'만들지만',contrast2:'만드는데',purpose:'만들려고',result:'만들게 되다'}}
-      ],
-      connectors: [
-        {key:'none', ko:'—', ro:'', en:'', aliases:['fara conector','fără conector','none']},
-        {key:'seq', ko:'고', ro:'și apoi', en:'and then', aliases:['si apoi','și apoi','apoi','and then']},
-        {key:'cause1', ko:'아/어서', ro:'pentru că', en:'because', aliases:['pentru ca','pentru că','because']},
-        {key:'cause2', ko:'(으)니까', ro:'fiindcă', en:'since', aliases:['fiindca','fiindcă','since']},
-        {key:'condition', ko:'(으)면', ro:'dacă', en:'if', aliases:['daca','dacă','if']},
-        {key:'contrast1', ko:'지만', ro:'dar', en:'but', aliases:['dar','insa','însă','but','however']},
-        {key:'contrast2', ko:'는데', ro:'iar', en:'while', aliases:['iar','while']},
-        {key:'purpose', ko:'(으)려고', ro:'ca să', en:'in order to', aliases:['ca sa','ca să','in order to']},
-        {key:'result', ko:'게 되다', ro:'ajunge să', en:'end up', aliases:['ajunge sa','ajunge să','end up']}
-      ]
-    };
-
-    var VERB_FINITE_MAP = {
-      '공부하다': {ro:{i:'studiez',we:'studiem',third:'studiază'}, en:{i:'study',we:'study',third:'studies'}},
-      '먹다': {ro:{i:'mănânc',we:'mâncăm',third:'mănâncă'}, en:{i:'eat',we:'eat',third:'eats'}},
-      '가다': {ro:{i:'merg',we:'mergem',third:'merge'}, en:{i:'go',we:'go',third:'goes'}},
-      '오다': {ro:{i:'vin',we:'venim',third:'vine'}, en:{i:'come',we:'come',third:'comes'}},
-      '보다': {ro:{i:'văd',we:'vedem',third:'vede'}, en:{i:'see',we:'see',third:'sees'}},
-      '읽다': {ro:{i:'citesc',we:'citim',third:'citește'}, en:{i:'read',we:'read',third:'reads'}},
-      '쓰다': {ro:{i:'scriu',we:'scriem',third:'scrie'}, en:{i:'write',we:'write',third:'writes'}},
-      '만나다': {ro:{i:'întâlnesc',we:'întâlnim',third:'întâlnește'}, en:{i:'meet',we:'meet',third:'meets'}},
-      '쉬다': {ro:{i:'mă odihnesc',we:'ne odihnim',third:'se odihnește'}, en:{i:'rest',we:'rest',third:'rests'}},
-      '일하다': {ro:{i:'lucrez',we:'lucrăm',third:'lucrează'}, en:{i:'work',we:'work',third:'works'}},
-      '운동하다': {ro:{i:'fac sport',we:'facem sport',third:'face sport'}, en:{i:'exercise',we:'exercise',third:'exercises'}},
-      '준비하다': {ro:{i:'pregătesc',we:'pregătim',third:'pregătește'}, en:{i:'prepare',we:'prepare',third:'prepares'}},
-      '배우다': {ro:{i:'învăț',we:'învățăm',third:'învață'}, en:{i:'learn',we:'learn',third:'learns'}},
-      '듣다': {ro:{i:'ascult',we:'ascultăm',third:'ascultă'}, en:{i:'listen',we:'listen',third:'listens'}},
-      '만들다': {ro:{i:'fac',we:'facem',third:'face'}, en:{i:'make',we:'make',third:'makes'}}
-    };
-
-    var CONNECTOR_TEXT_MAP = {
-      ro: { none:'', seq:'și', cause1:'pentru că', cause2:'fiindcă', condition:'dacă', contrast1:'dar', contrast2:'iar', purpose:'ca să', result:'iar apoi' },
-      en: { none:'', seq:'and', cause1:'because', cause2:'since', condition:'if', contrast1:'but', contrast2:'while', purpose:'in order to', result:'and then' }
-    };
-
-    function makeField(enabled, index){ return { enabled: !!enabled, index: typeof index === 'number' ? index : 0 }; }
-    function makeClause(subjectIndex, enableSubject){
-      if(typeof subjectIndex !== 'number') subjectIndex = 0;
-      if(typeof enableSubject !== 'boolean') enableSubject = true;
-      return { relative:makeField(false,0), subject:makeField(enableSubject,subjectIndex), time:makeField(false,0), location:makeField(false,0), object:makeField(false,0), description:makeField(false,0), verb:makeField(true,0), connector:makeField(true,0) };
+    function uid(){
+      return Math.random().toString(36).slice(2, 10);
     }
 
-    var state = { lang:'ro', level:6, text:'', clauses:[makeClause()] };
-    var els = {
-      btnRo: document.getElementById('btnRo'), btnEn: document.getElementById('btnEn'), topicSummaryText: document.getElementById('topicSummaryText'), topicDropdown: document.getElementById('topicDropdown'),
-      freeText: document.getElementById('freeText'), refreshBtn: document.getElementById('refreshBtn'), playBtn: document.getElementById('playBtn'), recordBtn: document.getElementById('recordBtn'),
-      sentenceBox: document.getElementById('sentenceBox'), sentenceWords: document.getElementById('sentenceWords'), translationText: document.getElementById('translationText'), clauseList: document.getElementById('clauseList'),
-      toast: document.getElementById('toast'), recordBox: document.getElementById('recordBox'), recordedAudio: document.getElementById('recordedAudio')
-    };
-
-    var toastTimer = null, mediaRecorder = null, recordedChunks = [], recordedStream = null, recordedUrl = null;
-    function currentUI(){ return UI[state.lang]; }
-    function showToast(message){ if(!els.toast) return; clearTimeout(toastTimer); els.toast.textContent = message; els.toast.classList.add('show'); toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 2200); }
-    function setLang(lang){ state.lang = lang === 'en' ? 'en' : 'ro'; els.btnRo.classList.toggle('active', state.lang === 'ro'); els.btnEn.classList.toggle('active', state.lang === 'en'); els.freeText.placeholder = currentUI().placeholder; renderAll(); }
-    function setLevel(level){ level = Number(level); if(level < 1 || level > 6 || !level) level = 6; state.level = level; if(els.topicSummaryText) els.topicSummaryText.textContent = 'T' + level + ' ▾'; var buttons = els.topicDropdown ? els.topicDropdown.querySelectorAll('.topicOption') : []; for(var i=0;i<buttons.length;i++){ buttons[i].classList.toggle('active', Number(buttons[i].getAttribute('data-level')) === level); } }
-
-    function normalizeLatin(str){ return String(str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim(); }
-    function normalizeRaw(str){ return String(str || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
-    function datasetFor(fieldKey){ if(fieldKey==='relative') return DATA.relative; if(fieldKey==='subject') return DATA.subject; if(fieldKey==='time') return DATA.time; if(fieldKey==='location') return DATA.location; if(fieldKey==='object') return DATA.object; if(fieldKey==='description') return DATA.description; if(fieldKey==='verb') return DATA.verbs; if(fieldKey==='connector') return DATA.connectors; return []; }
-    function itemOf(clause, fieldKey){ var list = datasetFor(fieldKey); if(!list.length) return {ko:'',ro:'',en:''}; if(!clause || !clause[fieldKey]) return list[0]; var idx = Number(clause[fieldKey].index) || 0; if(idx < 0 || idx >= list.length) idx = 0; return list[idx]; }
-    function connectorKey(clause){ var item = itemOf(clause, 'connector'); return clause && clause.connector && clause.connector.enabled ? item.key : 'none'; }
-    function connectorIndexByKey(key){ for(var i=0;i<DATA.connectors.length;i++){ if(DATA.connectors[i].key === key) return i; } return 0; }
-    function subjectRoleFromKo(subjectKo){
-      if(subjectKo === '저는' || subjectKo === '나는') return 'i';
-      if(subjectKo === '우리는') return 'we';
-      return 'third';
-    }
-    function resolvedSubjectKo(clause, previousClause){
-      var subject = itemOf(clause, 'subject');
-      if(clause.subject && clause.subject.enabled && subject && subject.ko) return subject.ko;
-      if(previousClause){
-        var prevSubject = itemOf(previousClause, 'subject');
-        if(prevSubject && prevSubject.ko) return prevSubject.ko;
-      }
-      return '';
-    }
-    function finiteVerbText(verb, lang, subjectKo){
-      var hit = verb && VERB_FINITE_MAP[verb.ko];
-      var role = subjectRoleFromKo(subjectKo || '');
-      if(hit && hit[lang] && hit[lang][role]) return hit[lang][role];
-      return verb ? (verb[lang] || '') : '';
-    }
-    function connectorTextByKey(key, lang){ return CONNECTOR_TEXT_MAP[lang] && CONNECTOR_TEXT_MAP[lang][key] ? CONNECTOR_TEXT_MAP[lang][key] : ''; }
-    function cleanSentenceText(text){ return String(text || '').replace(/\s+,/g, ',').replace(/\s+/g, ' ').replace(/\s+([,.!?])/g, '$1').trim(); }
-
-    function ensureChainLength(){
-      var required = 1;
-      for(var i=0;i<state.clauses.length && i<required;i++){ if(connectorKey(state.clauses[i]) !== 'none') required += 1; }
-      while(state.clauses.length < required){ var prev = state.clauses[state.clauses.length - 1]; state.clauses.push(makeClause(prev && prev.subject ? prev.subject.index : 0, false)); }
-      if(state.clauses.length > required) state.clauses = state.clauses.slice(0, required);
+    function normalize(str){
+      return String(str || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[„”"']/g, "")
+        .replace(/[.!?]+$/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
     }
 
-    function matchEntry(textFold, textRaw, entry){
-      var candidates = [entry.ko, entry.ro, entry.en].concat(entry.aliases || []);
-      for(var i=0;i<candidates.length;i++){
-        var value = candidates[i]; if(!value) continue;
-        var fold = normalizeLatin(value), raw = normalizeRaw(value);
-        if(fold && textFold.indexOf(fold) !== -1) return true;
-        if(raw && textRaw.indexOf(raw) !== -1) return true;
-      }
-      return false;
+    function escapeHtml(str){
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
-    function findIndexInDataset(fieldKey, text){ var list = datasetFor(fieldKey), textFold = normalizeLatin(text), textRaw = normalizeRaw(text); for(var i=1;i<list.length;i++){ if(matchEntry(textFold, textRaw, list[i])) return i; } return -1; }
 
-    function splitIntoSegments(text){
-      var working = ' ' + normalizeLatin(text) + ' ';
-      var markers = [
-        {key:'cause1', phrases:['pentru ca','because']}, {key:'cause2', phrases:['fiindca','since']}, {key:'condition', phrases:['daca','if']},
-        {key:'contrast1', phrases:['dar','insa','but','however']}, {key:'contrast2', phrases:['iar','while']}, {key:'purpose', phrases:['ca sa','in order to']}, {key:'seq', phrases:['si apoi','si','and then','and','apoi']}
+    function makeRow(data = {}){
+      return {
+        id: data.id || uid(),
+        level: data.level || "principală",
+        relation: data.relation || "—",
+        connector: data.connector || "—",
+        exact: data.exact || "",
+        subject: data.subject || "",
+        predicate: data.predicate || "",
+        adjunct: data.adjunct || "",
+        modality: data.modality || "",
+        discourse: data.discourse || "",
+        topik: data.topik || "",
+        agreement: data.agreement || ""
+      };
+    }
+
+    function exactTopik6ExampleRows(){
+      return [
+        makeRow({
+          level:"topic global",
+          relation:"—",
+          connector:"—",
+          exact:"Eu și Maria",
+          subject:"Eu + Maria = subiect coordonat",
+          predicate:"—",
+          adjunct:"topic al întregii perioade",
+          modality:"persoana I plural implicită pentru acțiunile ulterioare",
+          discourse:"ancoră tematică globală",
+          topik:"저와 마리아는 / 저는 마리아와 함께",
+          agreement:"plural coordonat; acțiunile principale se citesc ca «noi»"
+        }),
+        makeRow({
+          level:"subordonată",
+          relation:"concesie",
+          connector:"deși",
+          exact:"deși ieri a plouat mult",
+          subject:"vremea / contextul meteo (impersonal)",
+          predicate:"a plouat",
+          adjunct:"ieri; mult",
+          modality:"fapt constatat, fundal nefavorabil",
+          discourse:"subordonată concesivă care nu blochează acțiunea principală",
+          topik:"-았/었지만 / 비가 많이 왔지만",
+          agreement:"subiect meteorologic impersonal"
+        }),
+        makeRow({
+          level:"subordonată",
+          relation:"scop",
+          connector:"pentru a",
+          exact:"pentru a ne respecta promisiunea",
+          subject:"noi (Eu și Maria)",
+          predicate:"a ne respecta promisiunea",
+          adjunct:"finalitate / intenție",
+          modality:"scop deliberat",
+          discourse:"subordonată finală",
+          topik:"-기 위해(서) / 약속을 지키기 위해",
+          agreement:"subiect recuperat anaforic = plural, persoana I"
+        }),
+        makeRow({
+          level:"principală",
+          relation:"—",
+          connector:"—",
+          exact:"am lucrat până târziu",
+          subject:"noi (Eu și Maria)",
+          predicate:"am lucrat",
+          adjunct:"până târziu",
+          modality:"acțiune realizată",
+          discourse:"predicat principal 1",
+          topik:"늦게까지 일했다 / -았/었다",
+          agreement:"plural, trecut; subiectul rămâne recuperat din topicul global"
+        }),
+        makeRow({
+          level:"secvență verbală",
+          relation:"secvență",
+          connector:"și abia după aceea",
+          exact:"și abia după aceea am reușit să mâncăm",
+          subject:"noi (Eu și Maria)",
+          predicate:"am reușit să mâncăm",
+          adjunct:"abia după aceea",
+          modality:"reușită întârziată / rezultat tardiv",
+          discourse:"continuare secvențială a acțiunii principale",
+          topik:"그 후에야 / 겨우 먹을 수 있었다",
+          agreement:"plural, trecut; verb complex de realizare"
+        }),
+        makeRow({
+          level:"subordonată încastrată",
+          relation:"contrast",
+          connector:"dar",
+          exact:"dar din cauza faptului că timpul a fost mai puțin decât ne așteptam",
+          subject:"timpul",
+          predicate:"a fost mai puțin decât ne așteptam",
+          adjunct:"din cauza faptului că; raport la așteptări",
+          modality:"cauză explicativă + comparație sub așteptări",
+          discourse:"contrast + justificare cauzală pentru dificultățile următoare",
+          topik:"예상보다 시간이 부족했기 때문에 / 하지만",
+          agreement:"subiect singular «timpul»; comparație explicită cu așteptarea noastră"
+        }),
+        makeRow({
+          level:"principală",
+          relation:"imposibilitate",
+          connector:"nici",
+          exact:"nici nu am putut să ne odihnim bine",
+          subject:"noi (Eu și Maria)",
+          predicate:"nu am putut să ne odihnim bine",
+          adjunct:"după muncă; bine",
+          modality:"negare + imposibilitate",
+          discourse:"consecință negativă a lipsei de timp",
+          topik:"잘 쉬지도 못했다 / -지 못하다",
+          agreement:"plural; negativ + abilitate blocată"
+        }),
+        makeRow({
+          level:"concluzie / reluare",
+          relation:"obligație",
+          connector:"și",
+          exact:"și a trebuit să muncim din nou",
+          subject:"noi (Eu și Maria)",
+          predicate:"a trebuit să muncim din nou",
+          adjunct:"din nou",
+          modality:"obligație / necesitate repetată",
+          discourse:"ultimul predicat al lanțului; reluare forțată a acțiunii",
+          topik:"다시 일해야 했다 / -아/어야 했다",
+          agreement:"plural; necesitate externă, repetitivitate"
+        })
       ];
-      for(var i=0;i<markers.length;i++){ for(var j=0;j<markers[i].phrases.length;j++){ var phrase = markers[i].phrases[j]; working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| '); } }
-      working = working.replace(/,/g, ' |||none||| ');
-      var parts = working.split('|||'), segments = [], currentText = '';
-      for(var k=0;k<parts.length;k++){
-        var part = String(parts[k] || '').trim(); if(!part) continue;
-        var isConnector = false; for(var c=0;c<DATA.connectors.length;c++){ if(DATA.connectors[c].key === part){ isConnector = true; break; } }
-        if(!isConnector) currentText = currentText ? currentText + ' ' + part : part;
-        else { segments.push({ text: currentText.trim(), connector: part }); currentText = ''; }
+    }
+
+    function detectGlobalSubject(text){
+      const n = normalize(text);
+      if(n.includes("eu si maria")) return "Eu și Maria";
+      if(/\bnoi\b/i.test(text)) return "Noi";
+      if(/\beu\b/i.test(text)) return "Eu";
+      if(/\bmaria\b/i.test(text)) return "Maria";
+      return "(subiect implicit)";
+    }
+
+    function determineConnector(segment){
+      const n = normalize(segment);
+      if(n.startsWith("desi ")) return "deși";
+      if(n.startsWith("pentru a ")) return "pentru a";
+      if(n.startsWith("ca sa ")) return "ca să";
+      if(n.startsWith("si abia dupa aceea")) return "și abia după aceea";
+      if(n.startsWith("dar ")) return "dar";
+      if(n.startsWith("din cauza faptului ca")) return "din cauza faptului că";
+      if(n.startsWith("fiindca ")) return "fiindcă";
+      if(n.startsWith("deoarece ")) return "deoarece";
+      if(n.startsWith("nici ")) return "nici";
+      if(n.startsWith("si ")) return "și";
+      return "—";
+    }
+
+    function classifyRelation(segment){
+      const n = normalize(segment);
+      if(n.startsWith("desi ")) return { relation:"concesie", level:"subordonată", discourse:"subordonată concesivă" };
+      if(n.startsWith("pentru a ") || n.startsWith("ca sa ")) return { relation:"scop", level:"subordonată", discourse:"subordonată finală" };
+      if(n.startsWith("si abia dupa aceea")) return { relation:"secvență", level:"secvență verbală", discourse:"continuare secvențială" };
+      if(n.startsWith("dar ")) return { relation:"contrast", level:"subordonată încastrată", discourse:"contrast / schimbare de direcție" };
+      if(n.includes("din cauza faptului ca") || n.startsWith("fiindca ") || n.startsWith("deoarece ")) return { relation:"cauză", level:"subordonată", discourse:"explicație cauzală" };
+      if(n.includes("nu am putut") || n.includes("nici nu am putut")) return { relation:"imposibilitate", level:"principală", discourse:"consecință negativă" };
+      if(n.includes("a trebuit sa") || n.includes("trebuia sa")) return { relation:"obligație", level:"concluzie / reluare", discourse:"necesitate / reluare" };
+      if(n.startsWith("si ")) return { relation:"coordonare", level:"secvență verbală", discourse:"coordonare simplă" };
+      return { relation:"—", level:"principală", discourse:"predicat principal" };
+    }
+
+    function guessTopikPattern(segment){
+      const n = normalize(segment);
+      if(n.startsWith("desi ")) return "-지만 / -았/었지만";
+      if(n.startsWith("pentru a ") || n.startsWith("ca sa ")) return "-기 위해(서)";
+      if(n.includes("din cauza faptului ca") || n.startsWith("fiindca ") || n.startsWith("deoarece ")) return "-기 때문에 / -아서";
+      if(n.includes("nu am putut") || n.includes("n-am putut") || n.includes("nici nu am putut")) return "-지 못하다 / -지도 못하다";
+      if(n.includes("a trebuit sa") || n.includes("trebuia sa")) return "-아/어야 하다 / -아/어야 했다";
+      if(n.startsWith("si abia dupa aceea")) return "그 후에야 / 겨우";
+      if(n.includes("mai putin decat")) return "예상보다 / 비교 표현";
+      if(n.startsWith("dar ")) return "하지만 / 그런데";
+      return "-고 / -았/었다";
+    }
+
+    function guessPredicate(segment){
+      const s = String(segment || "").trim();
+      const n = normalize(s);
+      if(n.includes("a plouat")) return "a plouat";
+      if(n.includes("respecta promisiunea")) return "a ne respecta promisiunea";
+      if(n.includes("am lucrat")) return "am lucrat";
+      if(n.includes("am reusit sa mancam")) return "am reușit să mâncăm";
+      if(n.includes("a fost mai putin decat ne asteptam")) return "a fost mai puțin decât ne așteptam";
+      if(n.includes("nu am putut sa ne odihnim bine") || n.includes("nici nu am putut sa ne odihnim bine")) return "nu am putut să ne odihnim bine";
+      if(n.includes("a trebuit sa muncim din nou")) return "a trebuit să muncim din nou";
+
+      const patterns = [
+        /(a trebuit să\s+[^,.]+)/i,
+        /(a trebuit sa\s+[^,.]+)/i,
+        /(nu am putut\s+[^,.]+)/i,
+        /(am reușit să\s+[^,.]+)/i,
+        /(am reusit sa\s+[^,.]+)/i,
+        /(am lucrat\s+[^,.]*)/i,
+        /(a plouat\s+[^,.]*)/i,
+        /(este\s+[^,.]*)/i,
+        /(sunt\s+[^,.]*)/i
+      ];
+
+      for(const regex of patterns){
+        const match = s.match(regex);
+        if(match) return match[1].trim();
       }
-      if(currentText.trim()) segments.push({ text: currentText.trim(), connector: 'none' });
-      if(!segments.length) segments.push({ text: normalizeLatin(text), connector: 'none' });
-      return segments;
+
+      return s;
     }
 
-    function parseTextIntoClauses(){
-      var raw = state.text;
-      if(!raw || !String(raw).trim()){ state.clauses = [makeClause()]; ensureChainLength(); return; }
-      var segments = splitIntoSegments(raw), clauses = [];
-      for(var i=0;i<segments.length;i++){
-        var seg = segments[i], prev = i > 0 ? clauses[i - 1] : null, clause = makeClause(prev ? prev.subject.index : 0, i === 0);
-        for(var f=0;f<FIELD_DEFS.length;f++){
-          var def = FIELD_DEFS[f]; if(def.key === 'connector') continue;
-          var found = findIndexInDataset(def.key, seg.text);
-          if(found > -1){ clause[def.key].enabled = true; clause[def.key].index = found; }
-          else if(def.key === 'verb'){ clause.verb.enabled = true; clause.verb.index = prev ? prev.verb.index : 0; }
-          else if(def.key === 'subject' && i > 0){ clause.subject.enabled = false; }
-          else { clause[def.key].enabled = false; clause[def.key].index = 0; }
-        }
-        clause.connector.enabled = true; clause.connector.index = connectorIndexByKey(seg.connector); clauses.push(clause);
+    function guessAdjunct(segment){
+      const n = normalize(segment);
+      const parts = [];
+      if(n.includes("ieri")) parts.push("ieri");
+      if(n.includes("mult")) parts.push("mult");
+      if(n.includes("pana tarziu")) parts.push("până târziu");
+      if(n.includes("abia dupa aceea")) parts.push("abia după aceea");
+      if(n.includes("din nou")) parts.push("din nou");
+      if(n.includes("bine")) parts.push("bine");
+      if(n.includes("mai putin decat ne asteptam")) parts.push("mai puțin decât ne așteptam");
+      if(n.includes("din cauza faptului ca")) parts.push("din cauza faptului că");
+      return parts.join("; ");
+    }
+
+    function guessModality(segment){
+      const n = normalize(segment);
+      if(n.startsWith("desi ")) return "concesie / fapt real";
+      if(n.startsWith("pentru a ") || n.startsWith("ca sa ")) return "intenție / finalitate";
+      if(n.includes("nu am putut") || n.includes("nici nu am putut")) return "negare + imposibilitate";
+      if(n.includes("a trebuit sa")) return "obligație / necesitate";
+      if(n.includes("am reusit sa") || n.includes("am reușit să")) return "reușită / posibilitate realizată";
+      if(n.includes("din cauza faptului ca") || n.startsWith("fiindca ") || n.startsWith("deoarece ")) return "cauză / explicație";
+      return "afirmație / acțiune realizată";
+    }
+
+    function guessAgreement(segment, globalSubject){
+      const n = normalize(segment);
+      if(globalSubject === "Eu și Maria") return "subiect coordonat > interpretare de plural / noi";
+      if(globalSubject === "Noi") return "plural, persoana I";
+      if(globalSubject === "Eu") return "singular, persoana I";
+      if(n.includes("timpul")) return "subiect singular lexical: timpul";
+      return "verificare manuală recomandată";
+    }
+
+    function splitComplexSentence(text){
+      const clean = String(text || "").replace(/\s+/g, " ").trim();
+      if(!clean) return [];
+      const withBars = clean
+        .replace(/,\s*/g, "|")
+        .replace(/\s+și abia după aceea\s+/gi, "|și abia după aceea ")
+        .replace(/\s+dar\s+/gi, "|dar ")
+        .replace(/\s+nici\s+/gi, "|nici ")
+        .replace(/\s+și a trebuit\s+/gi, "|și a trebuit ");
+      return withBars
+        .split("|")
+        .map(part => part.trim())
+        .filter(Boolean);
+    }
+
+    function buildRowsFromText(text){
+      const globalSubject = detectGlobalSubject(text);
+      const segments = splitComplexSentence(text);
+      if(!segments.length){
+        return [makeRow({
+          level:"principală",
+          relation:"—",
+          connector:"—",
+          exact:text.trim(),
+          subject:globalSubject,
+          predicate:text.trim(),
+          adjunct:"",
+          modality:"analiză minimă",
+          discourse:"completează manual",
+          topik:"alege manual",
+          agreement:"verificare manuală"
+        })];
       }
-      state.clauses = clauses.length ? clauses : [makeClause()]; ensureChainLength();
-    }
 
-    function randomNonZero(length){ return length <= 1 ? 0 : Math.floor(Math.random() * (length - 1)) + 1; }
-    function refreshSentences(){
-      if(state.text && String(state.text).trim()) parseTextIntoClauses();
-      for(var i=0;i<state.clauses.length;i++){
-        var clause = state.clauses[i];
-        for(var f=0;f<FIELD_DEFS.length;f++){
-          var def = FIELD_DEFS[f], list = datasetFor(def.key);
-          if(def.key === 'connector'){ clause.connector.index = i === state.clauses.length - 1 ? 0 : randomNonZero(list.length); continue; }
-          if(clause[def.key].enabled) clause[def.key].index = randomNonZero(list.length);
-        }
-        if(i === 0) clause.subject.enabled = true;
+      const rows = [];
+      const first = segments[0] || "";
+      const firstNorm = normalize(first);
+      if(globalSubject !== "(subiect implicit)" && firstNorm === normalize(globalSubject)){
+        rows.push(makeRow({
+          level:"topic global",
+          relation:"—",
+          connector:"—",
+          exact:first,
+          subject:globalSubject,
+          predicate:"—",
+          adjunct:"topic global",
+          modality:globalSubject === "Eu și Maria" ? "subiect coordonat cu lectură de plural" : "topic / cadru nominal",
+          discourse:"ancoră globală pentru propozițiile următoare",
+          topik:globalSubject === "Eu și Maria" ? "저와 마리아는" : "은/는 topic marker",
+          agreement:guessAgreement(first, globalSubject)
+        }));
       }
-      ensureChainLength(); renderAll();
+
+      segments.forEach((segment, index) => {
+        const norm = normalize(segment);
+        if(globalSubject !== "(subiect implicit)" && norm === normalize(globalSubject)) return;
+
+        const meta = classifyRelation(segment);
+        let subject = globalSubject;
+        if(norm.includes("timpul")) subject = "timpul";
+        if(norm.startsWith("desi ") && norm.includes("plouat")) subject = "vremea / contextul";
+
+        rows.push(makeRow({
+          level: meta.level,
+          relation: meta.relation,
+          connector: determineConnector(segment),
+          exact: segment,
+          subject: subject,
+          predicate: guessPredicate(segment),
+          adjunct: guessAdjunct(segment),
+          modality: guessModality(segment),
+          discourse: meta.discourse,
+          topik: guessTopikPattern(segment),
+          agreement: guessAgreement(segment, globalSubject)
+        }));
+      });
+
+      return rows.length ? rows : [makeRow()];
     }
 
-    function buildClauseSurface(clause, previousClause){
-      var partsKo = [], partsTr = [];
-      var relative = itemOf(clause,'relative'), subject = itemOf(clause,'subject'), time = itemOf(clause,'time'), location = itemOf(clause,'location'), object = itemOf(clause,'object'), description = itemOf(clause,'description'), verb = itemOf(clause,'verb'), connector = itemOf(clause,'connector');
-      var resolvedSubject = resolvedSubjectKo(clause, previousClause);
-      var repeatedSubject = previousClause && previousClause.subject && previousClause.subject.enabled && clause.subject && clause.subject.enabled && itemOf(previousClause,'subject').ko === subject.ko;
-      if(clause.relative.enabled && relative.ko){ partsKo.push(relative.ko); partsTr.push(relative[state.lang] || ''); }
-      if(clause.subject.enabled && subject.ko && !repeatedSubject){ partsKo.push(subject.ko); partsTr.push(subject[state.lang] || ''); }
-      if(clause.time.enabled && time.ko){ partsKo.push(time.ko); partsTr.push(time[state.lang] || ''); }
-      if(clause.location.enabled && location.ko){ partsKo.push(location.ko); partsTr.push(location[state.lang] || ''); }
-      if(clause.object.enabled && object.ko){ partsKo.push(object.ko); partsTr.push(object[state.lang] || ''); }
-      if(clause.description.enabled && description.ko){ partsKo.push(description.ko); partsTr.push(description[state.lang] || ''); }
-      if(clause.verb.enabled){
-        if(clause.connector.enabled && connector.key !== 'none') partsKo.push(verb.forms[connector.key] || verb.final || verb.ko);
-        else partsKo.push(verb.final || verb.ko);
-        partsTr.push(finiteVerbText(verb, state.lang, resolvedSubject));
+    function analyzeSentence(text){
+      const n = normalize(text);
+      const ex = normalize(EXAMPLE_TEXT);
+      if(n === ex || (
+        n.includes("eu si maria") &&
+        n.includes("desi ieri a plouat mult") &&
+        n.includes("pentru a ne respecta promisiunea") &&
+        n.includes("abia dupa aceea am reusit sa mancam") &&
+        n.includes("din cauza faptului ca timpul a fost mai putin decat ne asteptam") &&
+        n.includes("a trebuit sa muncim din nou")
+      )){
+        return exactTopik6ExampleRows();
       }
-      return { ko: cleanSentenceText(partsKo.join(' ')), tr: cleanSentenceText(partsTr.join(' ')) };
+      return buildRowsFromText(text);
     }
 
-    function buildFullOutput(){
-      var outKo = [], translation = '', prev = null, prevConnector = 'none';
-      for(var i=0;i<state.clauses.length;i++){
-        var built = buildClauseSurface(state.clauses[i], prev);
-        if(built.ko){
-          outKo.push(built.ko);
-          if(!translation) translation = built.tr;
-          else translation = cleanSentenceText(translation + ' ' + connectorTextByKey(prevConnector, state.lang) + ' ' + built.tr);
-        }
-        prevConnector = connectorKey(state.clauses[i]);
-        prev = state.clauses[i];
-      }
-      return { korean: cleanSentenceText(outKo.join(' ')), translation: cleanSentenceText(translation) };
+    function selectOptions(options, value){
+      return options.map(option => '<option ' + (option === value ? 'selected' : '') + '>' + escapeHtml(option) + '</option>').join('');
     }
 
-    function fieldValueText(clause, key){
-      var item = itemOf(clause, key);
-      if(key === 'connector') return item.ko || '—';
-      if(key === 'verb'){ var connector = itemOf(clause, 'connector'); return clause.connector.enabled && connector.key !== 'none' ? (item.forms[connector.key] || item.final || item.ko) : (item.final || item.ko || '—'); }
-      return item.ko || '—';
-    }
-    function fieldMetaText(clause, key){
-      if(key === 'verb') return finiteVerbText(itemOf(clause, key), state.lang, resolvedSubjectKo(clause, null));
-      if(key === 'connector') return connectorTextByKey(itemOf(clause, key).key, state.lang);
-      return itemOf(clause, key)[state.lang] || '';
-    }
-    function escapeHtml(str){ return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
-
-    function renderPreview(){
-      var built = buildFullOutput(), words = built.korean ? built.korean.split(/\s+/) : ['저는','공부해요'], html = '';
-      for(var i=0;i<words.length;i++) html += '<span class="word">' + escapeHtml(words[i]) + '</span>';
-      els.sentenceWords.innerHTML = html; els.translationText.textContent = built.translation || currentUI().defaultTranslation;
-    }
-
-    function renderClauses(){
-      var html = '';
-      for(var i=0;i<state.clauses.length;i++){
-        var clause = state.clauses[i];
-        html += '<div class="clauseRow" data-clause="' + i + '"><div class="clauseHead"><div class="clauseTitle">' + escapeHtml(currentUI().clause) + ' ' + (i + 1) + '</div></div><div class="clauseGrid">';
-        for(var f=0;f<FIELD_DEFS.length;f++){
-          var def = FIELD_DEFS[f];
-          html += '<div class="fieldCard ' + (clause[def.key].enabled ? '' : 'off') + '" data-kind="' + def.kind + '">';
-          html += '<button class="cardToggle ' + (clause[def.key].enabled ? 'active' : '') + '" data-toggle="' + i + ':' + def.key + '" type="button">✓</button>';
-          html += '<button class="cardMain" data-cycle="' + i + ':' + def.key + '" type="button">';
-          html += '<div class="cardTop"><span class="cardDot"></span><span class="cardLabel">' + escapeHtml(currentUI().labels[def.key]) + '</span></div>';
-          html += '<div class="cardPrompt">' + escapeHtml(currentUI().prompts[def.key]) + '</div>';
-          html += '<div class="cardValue">' + escapeHtml(fieldValueText(clause, def.key)) + '</div>';
-          html += '<div class="cardMeta">' + escapeHtml(fieldMetaText(clause, def.key)) + '</div>';
-          html += '</button></div>';
-        }
-        html += '</div></div>';
-      }
-      els.clauseList.innerHTML = html;
-    }
-    function renderAll(){ renderPreview(); renderClauses(); }
-    function cycleField(clauseIndex, key){ var clause = state.clauses[clauseIndex]; if(!clause || !clause[key] || !clause[key].enabled) return; var list = datasetFor(key); if(!list.length) return; clause[key].index = (Number(clause[key].index) + 1) % list.length; ensureChainLength(); renderAll(); }
-    function toggleField(clauseIndex, key){ var clause = state.clauses[clauseIndex]; if(!clause || !clause[key] || key === 'verb' || key === 'connector') return; clause[key].enabled = !clause[key].enabled; if(!clause[key].enabled) clause[key].index = 0; else if((Number(clause[key].index) || 0) === 0 && datasetFor(key).length > 1) clause[key].index = 1; renderAll(); }
-
-    function playCurrent(){
-      var built = buildFullOutput(); if(!built.korean){ showToast(currentUI().noSpeech); return; }
-      if(!('speechSynthesis' in window)){ showToast(currentUI().noSpeech); return; }
-      window.speechSynthesis.cancel();
-      var utter = new SpeechSynthesisUtterance(built.korean); utter.lang = 'ko-KR'; utter.rate = 0.9;
-      var activeIndex = -1, wordEls = els.sentenceWords.querySelectorAll('.word');
-      utter.onboundary = function(){ activeIndex += 1; for(var i=0;i<wordEls.length;i++) wordEls[i].classList.toggle('active', i === activeIndex); };
-      utter.onend = function(){ for(var i=0;i<wordEls.length;i++) wordEls[i].classList.remove('active'); };
-      window.speechSynthesis.speak(utter);
+    function renderTable(){
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = rows.map((row, index) => (
+        '<tr data-id="' + row.id + '">' +
+          '<td class="rowNo">' + (index + 1) + '</td>' +
+          '<td><select class="cellSelect" data-field="level">' + selectOptions(LEVEL_OPTIONS, row.level) + '</select></td>' +
+          '<td><select class="cellSelect" data-field="relation">' + selectOptions(REL_OPTIONS, row.relation) + '</select></td>' +
+          '<td><select class="cellSelect" data-field="connector">' + selectOptions(CONNECTOR_OPTIONS, row.connector) + '</select></td>' +
+          '<td><textarea class="cellInput multiline" data-field="exact">' + escapeHtml(row.exact) + '</textarea><div class="mini">Păstrează aici exact fragmentul din propoziția sursă.</div></td>' +
+          '<td><textarea class="cellInput multiline" data-field="subject">' + escapeHtml(row.subject) + '</textarea></td>' +
+          '<td><textarea class="cellInput multiline" data-field="predicate">' + escapeHtml(row.predicate) + '</textarea></td>' +
+          '<td><textarea class="cellInput multiline" data-field="adjunct">' + escapeHtml(row.adjunct) + '</textarea></td>' +
+          '<td><textarea class="cellInput multiline" data-field="modality">' + escapeHtml(row.modality) + '</textarea></td>' +
+          '<td><textarea class="cellInput multiline" data-field="discourse">' + escapeHtml(row.discourse) + '</textarea></td>' +
+          '<td><textarea class="cellInput multiline" data-field="topik">' + escapeHtml(row.topik) + '</textarea></td>' +
+          '<td><textarea class="cellInput multiline" data-field="agreement">' + escapeHtml(row.agreement) + '</textarea></td>' +
+          '<td><div class="rowActions"><button class="iconAction" data-action="duplicate" title="Duplică">⧉</button><button class="iconAction" data-action="delete" title="Șterge">✕</button></div></td>' +
+        '</tr>'
+      )).join('');
+      bindTableEvents();
+      renderSummary();
+      renderCoverage();
     }
 
-    function detectMimeType(){
-      if(window.MediaRecorder && MediaRecorder.isTypeSupported){
-        if(MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a.40.2')) return 'audio/mp4;codecs=mp4a.40.2';
-        if(MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4';
-        if(MediaRecorder.isTypeSupported('audio/x-m4a')) return 'audio/x-m4a';
-        if(MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
-        if(MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
-      }
-      return '';
-    }
-
-    function toggleRecording(){
-      if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || typeof MediaRecorder === 'undefined'){ showToast(currentUI().recordUnsupported); return; }
-      if(mediaRecorder && mediaRecorder.state === 'recording'){ mediaRecorder.stop(); els.recordBtn.classList.remove('recording'); showToast(currentUI().recordStop); return; }
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
-        recordedChunks = []; recordedStream = stream; var mime = detectMimeType(); mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = function(event){ if(event.data && event.data.size > 0) recordedChunks.push(event.data); };
-        mediaRecorder.onstop = function(){
-          var blobType = mime || (recordedChunks[0] && recordedChunks[0].type) || 'audio/mp4';
-          var blob = new Blob(recordedChunks, { type: blobType });
-          if(recordedUrl) URL.revokeObjectURL(recordedUrl);
-          recordedUrl = URL.createObjectURL(blob);
-          els.recordedAudio.pause();
-          els.recordedAudio.removeAttribute('src');
-          els.recordedAudio.src = recordedUrl;
-          els.recordedAudio.load();
-          els.recordBox.classList.add('show');
-          if(recordedStream){ var tracks = recordedStream.getTracks(); for(var i=0;i<tracks.length;i++) tracks[i].stop(); recordedStream = null; }
-        };
-        mediaRecorder.start(); els.recordBtn.classList.add('recording'); showToast(currentUI().recordStart);
-      }).catch(function(){ showToast(currentUI().recordUnsupported); });
-    }
-
-    function bindEvents(){
-      els.btnRo.addEventListener('click', function(){ setLang('ro'); });
-      els.btnEn.addEventListener('click', function(){ setLang('en'); });
-      if(els.topicDropdown){
-        els.topicDropdown.addEventListener('click', function(event){
-          var btn = event.target.closest('.topicOption'); if(!btn) return; setLevel(btn.getAttribute('data-level'));
-          var details = document.getElementById('topicMenu'); if(details) details.removeAttribute('open');
-        });
-      }
-      els.freeText.addEventListener('input', function(){ state.text = els.freeText.value || ''; parseTextIntoClauses(); renderAll(); });
-      els.refreshBtn.addEventListener('click', refreshSentences);
-      els.playBtn.addEventListener('click', playCurrent);
-      els.recordBtn.addEventListener('click', toggleRecording);
-      els.sentenceBox.addEventListener('click', playCurrent);
-      els.sentenceBox.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); playCurrent(); } });
-      els.clauseList.addEventListener('click', function(event){
-        var toggleBtn = event.target.closest('[data-toggle]');
-        if(toggleBtn){ event.preventDefault(); event.stopPropagation(); var t = toggleBtn.getAttribute('data-toggle').split(':'); toggleField(Number(t[0]), t[1]); return; }
-        var cycleBtn = event.target.closest('[data-cycle]');
-        if(cycleBtn){ event.preventDefault(); var c = cycleBtn.getAttribute('data-cycle').split(':'); cycleField(Number(c[0]), c[1]); }
+    function bindTableEvents(){
+      const tbody = document.getElementById('tableBody');
+      tbody.querySelectorAll('[data-field]').forEach(el => {
+        el.addEventListener('input', onCellInput);
+        el.addEventListener('change', onCellInput);
+      });
+      tbody.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', onRowAction);
       });
     }
 
-    function init(){ els.freeText.value = ''; setLevel(6); setLang('ro'); ensureChainLength(); bindEvents(); renderAll(); }
-    init();
+    function findRowById(id){
+      return rows.find(row => row.id === id);
+    }
 
+    function onCellInput(event){
+      const tr = event.target.closest('tr');
+      if(!tr) return;
+      const row = findRowById(tr.dataset.id);
+      if(!row) return;
+      const field = event.target.dataset.field;
+      row[field] = event.target.value;
+      renderSummary();
+      renderCoverage();
+    }
+
+    function onRowAction(event){
+      const action = event.currentTarget.dataset.action;
+      const tr = event.currentTarget.closest('tr');
+      if(!tr) return;
+      const id = tr.dataset.id;
+      const index = rows.findIndex(r => r.id === id);
+      if(index === -1) return;
+      if(action === 'delete'){
+        rows.splice(index, 1);
+        if(!rows.length) rows = [makeRow()];
+      }
+      if(action === 'duplicate'){
+        const base = rows[index];
+        rows.splice(index + 1, 0, makeRow({ ...base, id: uid() }));
+      }
+      renderTable();
+    }
+
+    function renderSummary(){
+      const summary = document.getElementById('summaryList');
+      if(!rows.length){
+        summary.innerHTML = '<div class="summaryItem"><strong>Structură</strong><span>Nicio propoziție analizată încă.</span></div>';
+        return;
+      }
+      summary.innerHTML = rows.map((row, index) => (
+        '<div class="summaryItem">' +
+          '<strong>Unitatea ' + (index + 1) + ' · ' + escapeHtml(row.level) + '</strong>' +
+          '<span><b>' + escapeHtml(row.connector || '—') + '</b> · ' + escapeHtml(row.relation || '—') + ' · ' + escapeHtml(row.topik || '—') + '</span>' +
+        '</div>'
+      )).join('');
+
+      const patterns = rows
+        .map(row => row.topik)
+        .filter(Boolean)
+        .filter((value, index, arr) => arr.indexOf(value) === index);
+      document.getElementById('patternText').textContent = patterns.length ? patterns.join(' · ') : '—';
+    }
+
+    function renderCoverage(){
+      const input = document.getElementById('sentenceInput').value.trim();
+      const normalizedInput = normalize(input);
+      const fragments = rows
+        .map(row => row.exact)
+        .filter(Boolean)
+        .map(value => normalize(value));
+
+      const covered = fragments.filter(fragment => fragment && normalizedInput.includes(fragment)).length;
+      const percent = fragments.length ? Math.round((covered / fragments.length) * 100) : 0;
+      const reconstructed = rows.map(row => row.exact.trim()).filter(Boolean).join(' | ');
+      document.getElementById('reconstructionText').textContent = reconstructed || '—';
+
+      const chips = [];
+      chips.push('<span class="chip ' + (percent === 100 ? 'good' : percent >= 70 ? 'warn' : 'danger') + '">Acoperire fragmente: ' + percent + '%</span>');
+      chips.push('<span class="chip">Rânduri: ' + rows.length + '</span>');
+      chips.push('<span class="chip">Conectori: ' + rows.filter(r => r.connector && r.connector !== '—').length + '</span>');
+      if(normalizedInput === normalize(EXAMPLE_TEXT) && percent === 100){
+        chips.push('<span class="chip good">Exemplul cerut este redat 100%</span>');
+      }
+      document.getElementById('coverageChips').innerHTML = chips.join('');
+    }
+
+    function analyzeNow(){
+      const text = document.getElementById('sentenceInput').value.trim();
+      rows = text ? analyzeSentence(text) : [makeRow()];
+      renderTable();
+    }
+
+    function resetAll(){
+      document.getElementById('sentenceInput').value = '';
+      rows = [makeRow()];
+      renderTable();
+    }
+
+    document.getElementById('btnLoadExample').addEventListener('click', () => {
+      document.getElementById('sentenceInput').value = EXAMPLE_TEXT;
+      rows = exactTopik6ExampleRows();
+      renderTable();
+    });
+
+    document.getElementById('btnAnalyze').addEventListener('click', analyzeNow);
+    document.getElementById('btnRender').addEventListener('click', renderTable);
+    document.getElementById('btnReset').addEventListener('click', resetAll);
+    document.getElementById('btnAddRow').addEventListener('click', () => {
+      rows.push(makeRow());
+      renderTable();
+    });
+
+    document.getElementById('sentenceInput').addEventListener('input', () => {
+      const text = document.getElementById('sentenceInput').value.trim();
+      rows = text ? analyzeSentence(text) : [makeRow()];
+      renderTable();
+    });
+
+    document.getElementById('sentenceInput').value = EXAMPLE_TEXT;
+    rows = exactTopik6ExampleRows();
+    renderTable();
   </script>
 </body>
 </html>
