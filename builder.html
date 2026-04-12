@@ -12,7 +12,7 @@
       --text:#0f172a;
       --muted:#64748b;
       --line:rgba(15,23,42,.08);
-      --line-strong:rgba(15,23,42,.14);
+      --line-2:rgba(15,23,42,.14);
       --primary:#6d5efc;
       --primary2:#8b5cf6;
       --shadow:0 16px 40px rgba(15,23,42,.07);
@@ -23,17 +23,14 @@
       --radius-sm:14px;
       --transition:180ms ease;
 
-      --c-relative:#f4e0ff;
+      --c-relative:#f3dfff;
       --c-subject:#dcecff;
-      --c-time:#ffe8be;
+      --c-time:#ffe8bd;
       --c-location:#dff7df;
       --c-object:#ffdede;
-      --c-description:#ece8ff;
-      --c-verb:#ffe9cf;
+      --c-description:#ece7ff;
+      --c-verb:#ffe8cf;
       --c-connector:#e4ddff;
-
-      --toast-bg:#ffffff;
-      --toast-border:rgba(15,23,42,.10);
     }
 
     *{box-sizing:border-box}
@@ -156,20 +153,15 @@
       height:38px;
       padding:0;
       font-size:15px;
+      cursor:pointer;
     }
 
-    .topicMenu{
-      position:relative;
-    }
-
+    .topicMenu{position:relative}
     .topicMenu summary{
       list-style:none;
       cursor:pointer;
     }
-
-    .topicMenu summary::-webkit-details-marker{
-      display:none;
-    }
+    .topicMenu summary::-webkit-details-marker{display:none}
 
     .topicBubble{
       display:inline-flex;
@@ -191,7 +183,7 @@
       height:7px;
       border-radius:999px;
       background:#fff;
-      opacity:.92;
+      opacity:.95;
       flex:0 0 auto;
     }
 
@@ -228,15 +220,11 @@
       background:linear-gradient(135deg,var(--primary),var(--primary2));
     }
 
-    .inputWrap{
-      display:block;
-    }
-
     textarea{
       width:100%;
-      min-height:100px;
+      min-height:96px;
       resize:vertical;
-      border:1px solid var(--line-strong);
+      border:1px solid var(--line-2);
       border-radius:18px;
       padding:15px 16px;
       background:#fff;
@@ -246,7 +234,7 @@
       font-size:18px;
       font-weight:800;
       line-height:1.5;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
     }
 
     textarea:focus{
@@ -256,11 +244,8 @@
 
     .previewBar{
       display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
+      justify-content:flex-end;
       margin-bottom:12px;
-      flex-wrap:wrap;
     }
 
     .previewTools{
@@ -364,7 +349,7 @@
     }
 
     .builderCard.hiddenAuto{
-      opacity:.22;
+      opacity:.24;
     }
 
     .cardToggle{
@@ -469,8 +454,8 @@
       max-width:92vw;
       padding:13px 15px;
       border-radius:16px;
-      background:var(--toast-bg);
-      border:1px solid var(--toast-border);
+      background:#fff;
+      border:1px solid rgba(15,23,42,.10);
       box-shadow:0 18px 40px rgba(15,23,42,.16);
       font-size:14px;
       line-height:1.5;
@@ -486,7 +471,7 @@
       transform:translateX(-50%) translateY(0);
     }
 
-    @media (max-width: 720px){
+    @media (max-width:720px){
       body{padding:12px}
       .panel{padding:13px}
       .title{font-size:16px}
@@ -495,15 +480,9 @@
         min-height:126px;
         border-radius:16px;
       }
-      .cardValue{
-        font-size:22px;
-      }
-      .translationText{
-        font-size:16px;
-      }
-      .word{
-        font-size:20px;
-      }
+      .cardValue{font-size:22px}
+      .translationText{font-size:16px}
+      .word{font-size:20px}
       textarea{
         min-height:88px;
         font-size:16px;
@@ -542,14 +521,11 @@
     </section>
 
     <section class="panel">
-      <div class="inputWrap">
-        <textarea id="freeText" placeholder="Scrie aici o propoziție sau un lanț de propoziții..."></textarea>
-      </div>
+      <textarea id="freeText" placeholder="Scrie aici o propoziție sau un lanț de propoziții..."></textarea>
     </section>
 
     <section class="panel">
       <div class="previewBar">
-        <div></div>
         <div class="previewTools">
           <button class="iconBtn" id="playBtn" type="button" title="Pronunție">🔊</button>
           <button class="iconBtn" id="speakBtn" type="button" title="Exersează vorbirea">🎤</button>
@@ -572,19 +548,19 @@
     </section>
   </div>
 
-  <div class="toast" id="toast" aria-live="polite"></div>
+  <div id="toast" class="toast" aria-live="polite"></div>
 
   <script>
     const UI = {
       ro: {
         placeholder: "Scrie aici o propoziție sau un lanț de propoziții...",
-        heard: "Am auzit",
+        defaultTranslation: "Apasă pe carduri ca să schimbi cuvintele.",
         noSpeech: "Browserul tău nu suportă recunoașterea vocală.",
-        speaking: "Ascult...",
+        listening: "Ascult...",
+        heard: "Am auzit",
         speakOk: "Bine! Pronunția seamănă cu propoziția curentă.",
-        speakTry: "Am înțeles altceva. Mai încearcă o dată.",
+        speakTry: "Am înțeles altceva. Mai încearcă.",
         playMissing: "Nu există propoziție de redat.",
-        defaultTranslation: "Apasă pe căsuțe ca să schimbi cuvintele.",
         prompts: {
           relative: "Ce fel de...?",
           subject: "Cine?",
@@ -593,11 +569,11 @@
           object: "Ce?",
           description: "Cum?",
           verb1: "Acțiunea 1?",
-          connector1: "Leagă mai departe?",
+          connector1: "Conector?",
           verb2: "Acțiunea 2?",
-          connector2: "Încă o legătură?",
+          connector2: "Conector?",
           verb3: "Acțiunea 3?",
-          connector3: "Ultima legătură?",
+          connector3: "Conector?",
           finalVerb: "Final?"
         },
         labels: {
@@ -618,26 +594,26 @@
       },
       en: {
         placeholder: "Type a sentence or a chain of sentences here...",
-        heard: "I heard",
+        defaultTranslation: "Click the cards to change the words.",
         noSpeech: "Your browser does not support speech recognition.",
-        speaking: "Listening...",
+        listening: "Listening...",
+        heard: "I heard",
         speakOk: "Good! Your pronunciation is close to the current sentence.",
         speakTry: "I heard something different. Try again.",
         playMissing: "There is no sentence to play.",
-        defaultTranslation: "Click the cards to change the words.",
         prompts: {
-          relative: "Which / what kind of...?",
+          relative: "Which kind of...?",
           subject: "Who?",
           time: "When?",
           location: "Where?",
           object: "What?",
           description: "How?",
           verb1: "Action 1?",
-          connector1: "Connect forward?",
+          connector1: "Connector?",
           verb2: "Action 2?",
-          connector2: "Another link?",
+          connector2: "Connector?",
           verb3: "Action 3?",
-          connector3: "Final link?",
+          connector3: "Connector?",
           finalVerb: "Ending?"
         },
         labels: {
@@ -661,15 +637,14 @@
     const DATA = {
       relative: [
         {ko:"", ro:"", en:"", aliases:[]},
-        {ko:"제가 어제 본", ro:"pe care eu l-am văzut ieri", en:"that I saw yesterday", aliases:["văzut ieri","saw yesterday"]},
-        {ko:"친구가 추천한", ro:"pe care l-a recomandat prietenul", en:"that my friend recommended", aliases:["recomandat","recommended"]},
+        {ko:"제가 어제 본", ro:"pe care eu l-am văzut ieri", en:"that I saw yesterday", aliases:["văzut ieri","vazut ieri","saw yesterday"]},
+        {ko:"친구가 추천한", ro:"recomandat de prieten", en:"recommended by a friend", aliases:["recomandat","recommended"]},
         {ko:"오늘 읽는", ro:"pe care îl citesc azi", en:"that I am reading today", aliases:["citesc azi","reading today"]},
-        {ko:"선생님이 말씀하신", ro:"despre care a vorbit profesorul", en:"that the teacher mentioned", aliases:["profesorul a spus","teacher mentioned"]},
-        {ko:"어머니가 만든", ro:"făcut de mama", en:"made by my mother", aliases:["mama a făcut","made by my mother"]},
+        {ko:"선생님이 말씀하신", ro:"menționat de profesor", en:"mentioned by the teacher", aliases:["profesorul a spus","teacher mentioned"]},
+        {ko:"어머니가 만든", ro:"făcut de mama", en:"made by my mother", aliases:["mama a făcut","mama a facut","made by my mother"]},
         {ko:"자주 가는", ro:"la care merg des", en:"that I often go to", aliases:["merg des","often go"]},
         {ko:"지금 듣고 있는", ro:"pe care îl ascult acum", en:"that I am listening to now", aliases:["ascult acum","listening now"]},
-        {ko:"내가 좋아하는", ro:"care îmi place", en:"that I like", aliases:["îmi place","i like"]},
-        {ko:"아까 산", ro:"pe care l-am cumpărat mai devreme", en:"that I bought earlier", aliases:["am cumpărat","bought earlier"]}
+        {ko:"내가 좋아하는", ro:"care îmi place", en:"that I like", aliases:["îmi place","imi place","i like"]}
       ],
 
       subject: [
@@ -677,10 +652,8 @@
         {ko:"나는", ro:"eu", en:"I", aliases:["eu","i"]},
         {ko:"우리는", ro:"noi", en:"we", aliases:["noi","we"]},
         {ko:"친구는", ro:"prietenul", en:"my friend", aliases:["prieten","friend"]},
-        {ko:"언니는", ro:"sora mai mare", en:"older sister", aliases:["sora","sister"]},
-        {ko:"동생은", ro:"fratele / sora mai mică", en:"younger sibling", aliases:["fratele","sora mică","younger sibling"]},
         {ko:"선생님은", ro:"profesorul", en:"teacher", aliases:["profesor","teacher"]},
-        {ko:"학생은", ro:"studentul", en:"student", aliases:["student","studentul"]},
+        {ko:"학생은", ro:"studentul", en:"student", aliases:["student"]},
         {ko:"민수는", ro:"Minsu", en:"Minsu", aliases:["minsu"]},
         {ko:"지수는", ro:"Jisu", en:"Jisu", aliases:["jisu"]}
       ],
@@ -689,32 +662,31 @@
         {ko:"", ro:"", en:"", aliases:[]},
         {ko:"오늘", ro:"astăzi", en:"today", aliases:["astăzi","azi","today"]},
         {ko:"어제", ro:"ieri", en:"yesterday", aliases:["ieri","yesterday"]},
-        {ko:"내일", ro:"mâine", en:"tomorrow", aliases:["mâine","tomorrow"]},
+        {ko:"내일", ro:"mâine", en:"tomorrow", aliases:["maine","mâine","tomorrow"]},
         {ko:"지금", ro:"acum", en:"now", aliases:["acum","now"]},
-        {ko:"매일", ro:"în fiecare zi", en:"every day", aliases:["în fiecare zi","zilnic","every day","daily"]},
-        {ko:"아침에", ro:"dimineața", en:"in the morning", aliases:["dimineața","morning"]},
+        {ko:"매일", ro:"în fiecare zi", en:"every day", aliases:["zilnic","în fiecare zi","in fiecare zi","every day"]},
+        {ko:"아침에", ro:"dimineața", en:"in the morning", aliases:["dimineața","dimineata","morning"]},
         {ko:"저녁에", ro:"seara", en:"in the evening", aliases:["seara","evening"]},
-        {ko:"주말에", ro:"în weekend", en:"on the weekend", aliases:["weekend","în weekend","on the weekend"]},
-        {ko:"방금", ro:"tocmai", en:"just now", aliases:["tocmai","just now"]}
+        {ko:"주말에", ro:"în weekend", en:"on the weekend", aliases:["weekend","în weekend","in weekend","on the weekend"]}
       ],
 
       location: [
         {ko:"", ro:"", en:"", aliases:[]},
-        {ko:"학교에서", ro:"la școală", en:"at school", aliases:["școală","la școală","school","at school"]},
-        {ko:"집에서", ro:"acasă", en:"at home", aliases:["acasă","acasa","home","at home"]},
-        {ko:"도서관에서", ro:"la bibliotecă", en:"at the library", aliases:["bibliotecă","library"]},
+        {ko:"학교에서", ro:"la școală", en:"at school", aliases:["școală","scoala","school"]},
+        {ko:"집에서", ro:"acasă", en:"at home", aliases:["acasă","acasa","home"]},
+        {ko:"도서관에서", ro:"la bibliotecă", en:"at the library", aliases:["bibliotecă","biblioteca","library"]},
         {ko:"카페에서", ro:"la cafenea", en:"at the cafe", aliases:["cafenea","cafe"]},
-        {ko:"회사에서", ro:"la serviciu", en:"at work", aliases:["serviciu","work","at work"]},
+        {ko:"회사에서", ro:"la serviciu", en:"at work", aliases:["serviciu","work"]},
         {ko:"공원에서", ro:"în parc", en:"in the park", aliases:["parc","park"]},
-        {ko:"식당에서", ro:"la restaurant", en:"at the restaurant", aliases:["restaurant","at the restaurant"]},
+        {ko:"식당에서", ro:"la restaurant", en:"at the restaurant", aliases:["restaurant"]},
         {ko:"교실에서", ro:"în clasă", en:"in the classroom", aliases:["clasă","clasa","classroom"]},
-        {ko:"길에서", ro:"pe stradă", en:"on the street", aliases:["stradă","street"]},
+        {ko:"길에서", ro:"pe stradă", en:"on the street", aliases:["stradă","strada","street"]},
         {ko:"온라인으로", ro:"online", en:"online", aliases:["online"]}
       ],
 
       object: [
         {ko:"", ro:"", en:"", aliases:[]},
-        {ko:"한국어를", ro:"limba coreeană", en:"Korean", aliases:["coreeană","korean"]},
+        {ko:"한국어를", ro:"limba coreeană", en:"Korean", aliases:["coreeană","coreeana","korean"]},
         {ko:"점심을", ro:"prânzul", en:"lunch", aliases:["prânz","pranz","lunch"]},
         {ko:"숙제를", ro:"tema", en:"homework", aliases:["temă","tema","homework"]},
         {ko:"책을", ro:"cartea", en:"the book", aliases:["carte","book"]},
@@ -722,7 +694,6 @@
         {ko:"음악을", ro:"muzica", en:"music", aliases:["muzică","muzica","music"]},
         {ko:"영화를", ro:"filmul", en:"the movie", aliases:["film","movie"]},
         {ko:"친구를", ro:"prietenul", en:"friend", aliases:["prietenul","friend"]},
-        {ko:"이 문제를", ro:"această problemă", en:"this problem", aliases:["problemă","problema","problem"]},
         {ko:"프로젝트를", ro:"proiectul", en:"the project", aliases:["proiect","project"]},
         {ko:"편지를", ro:"scrisoarea", en:"the letter", aliases:["scrisoare","letter"]}
       ],
@@ -731,243 +702,33 @@
         {ko:"", ro:"", en:"", aliases:[]},
         {ko:"빨리", ro:"repede", en:"quickly", aliases:["repede","quickly","fast"]},
         {ko:"천천히", ro:"încet", en:"slowly", aliases:["încet","incet","slowly"]},
-        {ko:"열심히", ro:"cu sârguință", en:"diligently", aliases:["cu sârguință","serios","diligently","hard"]},
-        {ko:"조용히", ro:"în liniște", en:"quietly", aliases:["în liniște","quietly","silently"]},
+        {ko:"열심히", ro:"cu sârguință", en:"diligently", aliases:["serios","din greu","diligently","hard"]},
+        {ko:"조용히", ro:"în liniște", en:"quietly", aliases:["liniște","liniste","quietly"]},
         {ko:"같이", ro:"împreună", en:"together", aliases:["împreună","impreuna","together"]},
         {ko:"혼자", ro:"singur", en:"alone", aliases:["singur","alone"]},
         {ko:"다시", ro:"din nou", en:"again", aliases:["din nou","again"]},
         {ko:"미리", ro:"dinainte", en:"in advance", aliases:["dinainte","in advance"]},
         {ko:"정말", ro:"foarte / chiar", en:"really", aliases:["foarte","chiar","really"]},
-        {ko:"조금", ro:"puțin", en:"a little", aliases:["puțin","putin","a little"]},
+        {ko:"조금", ro:"puțin", en:"a little", aliases:["puțin","putin","little"]},
         {ko:"자주", ro:"des", en:"often", aliases:["des","often"]}
       ],
 
       verbs: [
-        {
-          ko:"공부하다", ro:"a studia", en:"to study", aliases:["studiez","studia","study","learn"],
-          final:"공부해요",
-          forms:{
-            none:"공부해요",
-            seq:"공부하고",
-            cause1:"공부해서",
-            cause2:"공부하니까",
-            condition:"공부하면",
-            contrast1:"공부하지만",
-            contrast2:"공부하는데",
-            purpose:"공부하려고",
-            result:"공부하게 되다"
-          }
-        },
-        {
-          ko:"먹다", ro:"a mânca", en:"to eat", aliases:["mănânc","mananc","mânca","eat"],
-          final:"먹어요",
-          forms:{
-            none:"먹어요",
-            seq:"먹고",
-            cause1:"먹어서",
-            cause2:"먹으니까",
-            condition:"먹으면",
-            contrast1:"먹지만",
-            contrast2:"먹는데",
-            purpose:"먹으려고",
-            result:"먹게 되다"
-          }
-        },
-        {
-          ko:"가다", ro:"a merge", en:"to go", aliases:["merg","merge","go"],
-          final:"가요",
-          forms:{
-            none:"가요",
-            seq:"가고",
-            cause1:"가서",
-            cause2:"가니까",
-            condition:"가면",
-            contrast1:"가지만",
-            contrast2:"가는데",
-            purpose:"가려고",
-            result:"가게 되다"
-          }
-        },
-        {
-          ko:"오다", ro:"a veni", en:"to come", aliases:["vin","veni","come"],
-          final:"와요",
-          forms:{
-            none:"와요",
-            seq:"오고",
-            cause1:"와서",
-            cause2:"오니까",
-            condition:"오면",
-            contrast1:"오지만",
-            contrast2:"오는데",
-            purpose:"오려고",
-            result:"오게 되다"
-          }
-        },
-        {
-          ko:"보다", ro:"a vedea", en:"to see", aliases:["văd","vad","vedea","see","watch"],
-          final:"봐요",
-          forms:{
-            none:"봐요",
-            seq:"보고",
-            cause1:"봐서",
-            cause2:"보니까",
-            condition:"보면",
-            contrast1:"보지만",
-            contrast2:"보는데",
-            purpose:"보려고",
-            result:"보게 되다"
-          }
-        },
-        {
-          ko:"읽다", ro:"a citi", en:"to read", aliases:["citesc","citi","read"],
-          final:"읽어요",
-          forms:{
-            none:"읽어요",
-            seq:"읽고",
-            cause1:"읽어서",
-            cause2:"읽으니까",
-            condition:"읽으면",
-            contrast1:"읽지만",
-            contrast2:"읽는데",
-            purpose:"읽으려고",
-            result:"읽게 되다"
-          }
-        },
-        {
-          ko:"쓰다", ro:"a scrie", en:"to write", aliases:["scriu","scrie","write"],
-          final:"써요",
-          forms:{
-            none:"써요",
-            seq:"쓰고",
-            cause1:"써서",
-            cause2:"쓰니까",
-            condition:"쓰면",
-            contrast1:"쓰지만",
-            contrast2:"쓰는데",
-            purpose:"쓰려고",
-            result:"쓰게 되다"
-          }
-        },
-        {
-          ko:"만나다", ro:"a întâlni", en:"to meet", aliases:["întâlnesc","intalnesc","întâlni","meet"],
-          final:"만나요",
-          forms:{
-            none:"만나요",
-            seq:"만나고",
-            cause1:"만나서",
-            cause2:"만나니까",
-            condition:"만나면",
-            contrast1:"만나지만",
-            contrast2:"만나는데",
-            purpose:"만나려고",
-            result:"만나게 되다"
-          }
-        },
-        {
-          ko:"쉬다", ro:"a se odihni", en:"to rest", aliases:["mă odihnesc","odihni","rest"],
-          final:"쉬어요",
-          forms:{
-            none:"쉬어요",
-            seq:"쉬고",
-            cause1:"쉬어서",
-            cause2:"쉬니까",
-            condition:"쉬면",
-            contrast1:"쉬지만",
-            contrast2:"쉬는데",
-            purpose:"쉬려고",
-            result:"쉬게 되다"
-          }
-        },
-        {
-          ko:"일하다", ro:"a lucra", en:"to work", aliases:["lucrez","lucra","work"],
-          final:"일해요",
-          forms:{
-            none:"일해요",
-            seq:"일하고",
-            cause1:"일해서",
-            cause2:"일하니까",
-            condition:"일하면",
-            contrast1:"일하지만",
-            contrast2:"일하는데",
-            purpose:"일하려고",
-            result:"일하게 되다"
-          }
-        },
-        {
-          ko:"운동하다", ro:"a face sport", en:"to exercise", aliases:["fac sport","exercise","work out"],
-          final:"운동해요",
-          forms:{
-            none:"운동해요",
-            seq:"운동하고",
-            cause1:"운동해서",
-            cause2:"운동하니까",
-            condition:"운동하면",
-            contrast1:"운동하지만",
-            contrast2:"운동하는데",
-            purpose:"운동하려고",
-            result:"운동하게 되다"
-          }
-        },
-        {
-          ko:"준비하다", ro:"a pregăti", en:"to prepare", aliases:["pregătesc","pregatesc","prepare"],
-          final:"준비해요",
-          forms:{
-            none:"준비해요",
-            seq:"준비하고",
-            cause1:"준비해서",
-            cause2:"준비하니까",
-            condition:"준비하면",
-            contrast1:"준비하지만",
-            contrast2:"준비하는데",
-            purpose:"준비하려고",
-            result:"준비하게 되다"
-          }
-        },
-        {
-          ko:"배우다", ro:"a învăța", en:"to learn", aliases:["învăț","invat","learn"],
-          final:"배워요",
-          forms:{
-            none:"배워요",
-            seq:"배우고",
-            cause1:"배워서",
-            cause2:"배우니까",
-            condition:"배우면",
-            contrast1:"배우지만",
-            contrast2:"배우는데",
-            purpose:"배우려고",
-            result:"배우게 되다"
-          }
-        },
-        {
-          ko:"듣다", ro:"a asculta", en:"to listen", aliases:["ascult","listen"],
-          final:"들어요",
-          forms:{
-            none:"들어요",
-            seq:"듣고",
-            cause1:"들어서",
-            cause2:"들으니까",
-            condition:"들으면",
-            contrast1:"듣지만",
-            contrast2:"듣는데",
-            purpose:"들으려고",
-            result:"듣게 되다"
-          }
-        },
-        {
-          ko:"만들다", ro:"a face / a crea", en:"to make", aliases:["fac","creează","create","make"],
-          final:"만들어요",
-          forms:{
-            none:"만들어요",
-            seq:"만들고",
-            cause1:"만들어서",
-            cause2:"만드니까",
-            condition:"만들면",
-            contrast1:"만들지만",
-            contrast2:"만드는데",
-            purpose:"만들려고",
-            result:"만들게 되다"
-          }
-        }
+        {ko:"공부하다", ro:"a studia", en:"to study", aliases:["studiez","studia","study","learn"], final:"공부해요", forms:{none:"공부해요",seq:"공부하고",cause1:"공부해서",cause2:"공부하니까",condition:"공부하면",contrast1:"공부하지만",contrast2:"공부하는데",purpose:"공부하려고",result:"공부하게 되다"}},
+        {ko:"먹다", ro:"a mânca", en:"to eat", aliases:["mănânc","mananc","eat"], final:"먹어요", forms:{none:"먹어요",seq:"먹고",cause1:"먹어서",cause2:"먹으니까",condition:"먹으면",contrast1:"먹지만",contrast2:"먹는데",purpose:"먹으려고",result:"먹게 되다"}},
+        {ko:"가다", ro:"a merge", en:"to go", aliases:["merg","merge","go"], final:"가요", forms:{none:"가요",seq:"가고",cause1:"가서",cause2:"가니까",condition:"가면",contrast1:"가지만",contrast2:"가는데",purpose:"가려고",result:"가게 되다"}},
+        {ko:"오다", ro:"a veni", en:"to come", aliases:["vin","veni","come"], final:"와요", forms:{none:"와요",seq:"오고",cause1:"와서",cause2:"오니까",condition:"오면",contrast1:"오지만",contrast2:"오는데",purpose:"오려고",result:"오게 되다"}},
+        {ko:"보다", ro:"a vedea", en:"to see", aliases:["văd","vad","see","watch"], final:"봐요", forms:{none:"봐요",seq:"보고",cause1:"봐서",cause2:"보니까",condition:"보면",contrast1:"보지만",contrast2:"보는데",purpose:"보려고",result:"보게 되다"}},
+        {ko:"읽다", ro:"a citi", en:"to read", aliases:["citesc","read"], final:"읽어요", forms:{none:"읽어요",seq:"읽고",cause1:"읽어서",cause2:"읽으니까",condition:"읽으면",contrast1:"읽지만",contrast2:"읽는데",purpose:"읽으려고",result:"읽게 되다"}},
+        {ko:"쓰다", ro:"a scrie", en:"to write", aliases:["scriu","write"], final:"써요", forms:{none:"써요",seq:"쓰고",cause1:"써서",cause2:"쓰니까",condition:"쓰면",contrast1:"쓰지만",contrast2:"쓰는데",purpose:"쓰려고",result:"쓰게 되다"}},
+        {ko:"만나다", ro:"a întâlni", en:"to meet", aliases:["întâlnesc","intalnesc","meet"], final:"만나요", forms:{none:"만나요",seq:"만나고",cause1:"만나서",cause2:"만나니까",condition:"만나면",contrast1:"만나지만",contrast2:"만나는데",purpose:"만나려고",result:"만나게 되다"}},
+        {ko:"쉬다", ro:"a se odihni", en:"to rest", aliases:["odihnesc","rest"], final:"쉬어요", forms:{none:"쉬어요",seq:"쉬고",cause1:"쉬어서",cause2:"쉬니까",condition:"쉬면",contrast1:"쉬지만",contrast2:"쉬는데",purpose:"쉬려고",result:"쉬게 되다"}},
+        {ko:"일하다", ro:"a lucra", en:"to work", aliases:["lucrez","work"], final:"일해요", forms:{none:"일해요",seq:"일하고",cause1:"일해서",cause2:"일하니까",condition:"일하면",contrast1:"일하지만",contrast2:"일하는데",purpose:"일하려고",result:"일하게 되다"}},
+        {ko:"운동하다", ro:"a face sport", en:"to exercise", aliases:["exercise","sport"], final:"운동해요", forms:{none:"운동해요",seq:"운동하고",cause1:"운동해서",cause2:"운동하니까",condition:"운동하면",contrast1:"운동하지만",contrast2:"운동하는데",purpose:"운동하려고",result:"운동하게 되다"}},
+        {ko:"준비하다", ro:"a pregăti", en:"to prepare", aliases:["pregătesc","pregatesc","prepare"], final:"준비해요", forms:{none:"준비해요",seq:"준비하고",cause1:"준비해서",cause2:"준비하니까",condition:"준비하면",contrast1:"준비하지만",contrast2:"준비하는데",purpose:"준비하려고",result:"준비하게 되다"}},
+        {ko:"배우다", ro:"a învăța", en:"to learn", aliases:["învăț","invat","learn"], final:"배워요", forms:{none:"배워요",seq:"배우고",cause1:"배워서",cause2:"배우니까",condition:"배우면",contrast1:"배우지만",contrast2:"배우는데",purpose:"배우려고",result:"배우게 되다"}},
+        {ko:"듣다", ro:"a asculta", en:"to listen", aliases:["ascult","listen"], final:"들어요", forms:{none:"들어요",seq:"듣고",cause1:"들어서",cause2:"들으니까",condition:"들으면",contrast1:"듣지만",contrast2:"듣는데",purpose:"들으려고",result:"듣게 되다"}},
+        {ko:"만들다", ro:"a face / a crea", en:"to make", aliases:["fac","creează","creeaza","make","create"], final:"만들어요", forms:{none:"만들어요",seq:"만들고",cause1:"만들어서",cause2:"만드니까",condition:"만들면",contrast1:"만들지만",contrast2:"만드는데",purpose:"만들려고",result:"만들게 되다"}}
       ],
 
       connectors: [
@@ -979,24 +740,24 @@
         {key:"contrast1", ko:"지만", ro:"dar", en:"but", aliases:["dar","însă","insa","but","however"]},
         {key:"contrast2", ko:"는데", ro:"iar / însă", en:"while / but", aliases:["iar","while"]},
         {key:"purpose", ko:"(으)려고", ro:"ca să", en:"in order to", aliases:["ca să","ca sa","in order to","to"]},
-        {key:"result", ko:"게 되다", ro:"ajunge să", en:"end up / come to", aliases:["ajunge să","ajunge sa","become","end up"]}
+        {key:"result", ko:"게 되다", ro:"ajunge să", en:"end up / come to", aliases:["ajunge să","ajunge sa","end up","become"]}
       ]
     };
 
     const CARD_ORDER = [
-      {key:"relative", kind:"relative", dataset:"relative", optional:true},
-      {key:"subject", kind:"subject", dataset:"subject", optional:true},
-      {key:"time", kind:"time", dataset:"time", optional:true},
-      {key:"location", kind:"location", dataset:"location", optional:true},
-      {key:"object", kind:"object", dataset:"object", optional:true},
-      {key:"description", kind:"description", dataset:"description", optional:true},
-      {key:"verb1", kind:"verb", dataset:"verbs", optional:false},
-      {key:"connector1", kind:"connector", dataset:"connectors", optional:false},
-      {key:"verb2", kind:"verb", dataset:"verbs", optional:false},
-      {key:"connector2", kind:"connector", dataset:"connectors", optional:false},
-      {key:"verb3", kind:"verb", dataset:"verbs", optional:false},
-      {key:"connector3", kind:"connector", dataset:"connectors", optional:false},
-      {key:"finalVerb", kind:"verb", dataset:"verbs", optional:false}
+      {key:"relative", kind:"relative"},
+      {key:"subject", kind:"subject"},
+      {key:"time", kind:"time"},
+      {key:"location", kind:"location"},
+      {key:"object", kind:"object"},
+      {key:"description", kind:"description"},
+      {key:"verb1", kind:"verb"},
+      {key:"connector1", kind:"connector"},
+      {key:"verb2", kind:"verb"},
+      {key:"connector2", kind:"connector"},
+      {key:"verb3", kind:"verb"},
+      {key:"connector3", kind:"connector"},
+      {key:"finalVerb", kind:"verb"}
     ];
 
     const state = {
@@ -1027,17 +788,21 @@
       topicSummaryText: document.getElementById("topicSummaryText"),
       topicDropdown: document.getElementById("topicDropdown"),
       freeText: document.getElementById("freeText"),
-      sentenceWords: document.getElementById("sentenceWords"),
-      translationText: document.getElementById("translationText"),
       playBtn: document.getElementById("playBtn"),
       speakBtn: document.getElementById("speakBtn"),
       sentenceBox: document.getElementById("sentenceBox"),
+      sentenceWords: document.getElementById("sentenceWords"),
+      translationText: document.getElementById("translationText"),
       board: document.getElementById("board"),
       toast: document.getElementById("toast")
     };
 
     let toastTimer = null;
     let currentUtterance = null;
+
+    function ui(){
+      return UI[state.lang];
+    }
 
     function saveState(){
       localStorage.setItem("rk_builder_lang", state.lang);
@@ -1054,17 +819,13 @@
       }, 2400);
     }
 
-    function currentUI(){
-      return UI[state.lang];
-    }
-
     function setLang(lang){
       state.lang = lang;
       els.btnRo.classList.toggle("active", lang === "ro");
       els.btnEn.classList.toggle("active", lang === "en");
-      els.freeText.placeholder = currentUI().placeholder;
+      els.freeText.placeholder = ui().placeholder;
       saveState();
-      render();
+      renderAll();
     }
 
     function setLevel(level){
@@ -1076,61 +837,43 @@
       saveState();
     }
 
-    function getDataForCard(cardKey){
-      const def = CARD_ORDER.find(x => x.key === cardKey);
-      return DATA[def.dataset];
+    function datasetName(cardKey){
+      if(cardKey === "relative") return "relative";
+      if(cardKey === "subject") return "subject";
+      if(cardKey === "time") return "time";
+      if(cardKey === "location") return "location";
+      if(cardKey === "object") return "object";
+      if(cardKey === "description") return "description";
+      if(cardKey.startsWith("verb") || cardKey === "finalVerb") return "verbs";
+      if(cardKey.startsWith("connector")) return "connectors";
+      return null;
     }
 
-    function getCardItem(cardKey){
-      const list = getDataForCard(cardKey);
+    function listFor(cardKey){
+      return DATA[datasetName(cardKey)] || [];
+    }
+
+    function cardItem(cardKey){
+      const list = listFor(cardKey);
       const idx = state.cards[cardKey].index % list.length;
       return list[idx];
     }
 
-    function cycleCard(cardKey){
-      const slot = state.cards[cardKey];
-      if(!slot.enabled && CARD_ORDER.find(c => c.key === cardKey).optional) return;
-      if(isAutoHidden(cardKey)) return;
-      const list = getDataForCard(cardKey);
-      slot.index = (slot.index + 1) % list.length;
-      autoExpandFromConnectors();
-      buildFromTextSoftSync();
-      render();
-    }
+    function isDependentDimmed(cardKey){
+      const c1 = cardItem("connector1").key;
+      const c2 = cardItem("connector2").key;
+      const c3 = cardItem("connector3").key;
 
-    function toggleCard(cardKey){
-      const def = CARD_ORDER.find(c => c.key === cardKey);
-      if(!def.optional) return;
-      state.cards[cardKey].enabled = !state.cards[cardKey].enabled;
-      if(!state.cards[cardKey].enabled){
-        state.cards[cardKey].index = 0;
-      } else if(state.cards[cardKey].index === 0 && getDataForCard(cardKey).length > 1){
-        state.cards[cardKey].index = 1;
-      }
-      render();
-    }
-
-    function isAutoHidden(cardKey){
-      const c1 = getCardItem("connector1").key;
-      const c2 = getCardItem("connector2").key;
-      const c3 = getCardItem("connector3").key;
-
-      if(cardKey === "verb2" || cardKey === "connector2"){
-        return c1 === "none";
-      }
-      if(cardKey === "verb3" || cardKey === "connector3"){
-        return c1 === "none" || c2 === "none";
-      }
-      if(cardKey === "finalVerb"){
-        return c1 === "none" || c2 === "none" || c3 === "none";
-      }
+      if(cardKey === "verb2" || cardKey === "connector2") return c1 === "none";
+      if(cardKey === "verb3" || cardKey === "connector3") return c1 === "none" || c2 === "none";
+      if(cardKey === "finalVerb") return c1 === "none" || c2 === "none" || c3 === "none";
       return false;
     }
 
-    function autoExpandFromConnectors(){
-      const c1 = getCardItem("connector1").key;
-      const c2 = getCardItem("connector2").key;
-      const c3 = getCardItem("connector3").key;
+    function syncConnectorDependencies(){
+      const c1 = cardItem("connector1").key;
+      const c2 = cardItem("connector2").key;
+      const c3 = cardItem("connector3").key;
 
       if(c1 !== "none"){
         state.cards.verb2.enabled = true;
@@ -1162,64 +905,318 @@
       }
     }
 
-    function displayValue(cardKey){
-      const item = getCardItem(cardKey);
-      if(cardKey.startsWith("connector")){
-        return item.ko || "—";
-      }
-      if(cardKey === "verb1" || cardKey === "verb2" || cardKey === "verb3" || cardKey === "finalVerb"){
-        return item.final;
-      }
+    function displayCardValue(cardKey){
+      const item = cardItem(cardKey);
+      if(cardKey.startsWith("connector")) return item.ko || "—";
+      if(cardKey.startsWith("verb") || cardKey === "finalVerb") return item.final || item.ko || "—";
       return item.ko || "—";
     }
 
-    function displayMeta(cardKey){
-      const item = getCardItem(cardKey);
-      const lang = state.lang;
-      if(cardKey.startsWith("connector")){
-        return item[lang] || "";
+    function displayCardMeta(cardKey){
+      const item = cardItem(cardKey);
+      return item[state.lang] || "";
+    }
+
+    function cycleCard(cardKey){
+      if(isDependentDimmed(cardKey)) return;
+      const slot = state.cards[cardKey];
+      if(!slot.enabled) return;
+
+      const list = listFor(cardKey);
+      if(!list.length) return;
+      slot.index = (slot.index + 1) % list.length;
+
+      syncConnectorDependencies();
+      saveState();
+      renderAll();
+    }
+
+    function toggleCard(cardKey){
+      state.cards[cardKey].enabled = !state.cards[cardKey].enabled;
+
+      if(!state.cards[cardKey].enabled){
+        if(listFor(cardKey).length) state.cards[cardKey].index = 0;
+      } else {
+        if(state.cards[cardKey].index === 0 && listFor(cardKey).length > 1){
+          state.cards[cardKey].index = 1;
+        }
       }
-      return item[lang] || "";
+
+      if(cardKey.startsWith("connector")){
+        syncConnectorDependencies();
+      }
+      saveState();
+      renderAll();
+    }
+
+    function normalize(str){
+      return (str || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"")
+        .replace(/[^\p{L}\p{N}\s]/gu," ")
+        .replace(/\s+/g," ")
+        .trim();
+    }
+
+    function findIndexByText(cardKey, text){
+      const list = listFor(cardKey);
+      const n = normalize(text);
+      for(let i=1;i<list.length;i++){
+        const item = list[i];
+        const bag = [item.ro, item.en, item.ko, ...(item.aliases || [])]
+          .filter(Boolean)
+          .map(normalize);
+        if(bag.some(x => x && n.includes(x))) return i;
+      }
+      return -1;
+    }
+
+    function parseFreeText(){
+      const text = state.text;
+      if(!text.trim()) return;
+
+      ["relative","subject","time","location","object","description","verb1","connector1","verb2","connector2","verb3","connector3","finalVerb"].forEach(key => {
+        const idx = findIndexByText(key, text);
+        if(idx > -1){
+          state.cards[key].enabled = true;
+          state.cards[key].index = idx;
+        }
+      });
+
+      syncConnectorDependencies();
     }
 
     function buildSentenceData(){
-      const relative = getCardItem("relative");
-      const subject = getCardItem("subject");
-      const time = getCardItem("time");
-      const location = getCardItem("location");
-      const object = getCardItem("object");
-      const description = getCardItem("description");
-      const v1 = getCardItem("verb1");
-      const v2 = getCardItem("verb2");
-      const v3 = getCardItem("verb3");
-      const vf = getCardItem("finalVerb");
-      const c1 = getCardItem("connector1");
-      const c2 = getCardItem("connector2");
-      const c3 = getCardItem("connector3");
+      const partsKo = [];
+      const partsTr = [];
 
-      const prefixPartsKo = [];
-      const prefixPartsRo = [];
-      const prefixPartsEn = [];
+      function pushCard(key){
+        if(!state.cards[key].enabled) return;
+        if(isDependentDimmed(key)) return;
+        const item = cardItem(key);
+        if(!item) return;
 
-      if(state.cards.relative.enabled && relative.ko){
-        prefixPartsKo.push(relative.ko);
-        prefixPartsRo.push(relative.ro);
-        prefixPartsEn.push(relative.en);
+        if(key.startsWith("connector")){
+          if(item.key === "none") return;
+          partsKo.push(item.ko);
+          partsTr.push(item[state.lang] || "");
+          return;
+        }
+
+        if(key.startsWith("verb") || key === "finalVerb"){
+          const nextConnectorKey =
+            key === "verb1" ? "connector1" :
+            key === "verb2" ? "connector2" :
+            key === "verb3" ? "connector3" : null;
+
+          if(nextConnectorKey && state.cards[nextConnectorKey].enabled && !isDependentDimmed(nextConnectorKey)){
+            const conn = cardItem(nextConnectorKey);
+            if(conn && conn.key !== "none"){
+              partsKo.push(item.forms[conn.key] || item.final || item.ko);
+              partsTr.push(`${item[state.lang] || ""} ${conn[state.lang] || ""}`.trim());
+              return;
+            }
+          }
+
+          partsKo.push(item.final || item.ko);
+          partsTr.push(item[state.lang] || "");
+          return;
+        }
+
+        if(item.ko){
+          partsKo.push(item.ko);
+          partsTr.push(item[state.lang] || "");
+        }
       }
-      if(state.cards.subject.enabled && subject.ko){
-        prefixPartsKo.push(subject.ko);
-        prefixPartsRo.push(subject.ro);
-        prefixPartsEn.push(subject.en);
+
+      pushCard("relative");
+      pushCard("subject");
+      pushCard("time");
+      pushCard("location");
+      pushCard("object");
+      pushCard("description");
+      pushCard("verb1");
+
+      if(cardItem("connector1").key !== "none"){
+        pushCard("verb2");
       }
-      if(state.cards.time.enabled && time.ko){
-        prefixPartsKo.push(time.ko);
-        prefixPartsRo.push(time.ro);
-        prefixPartsEn.push(time.en);
+      if(cardItem("connector1").key !== "none" && cardItem("connector2").key !== "none"){
+        pushCard("verb3");
       }
-      if(state.cards.location.enabled && location.ko){
-        prefixPartsKo.push(location.ko);
-        prefixPartsRo.push(location.ro);
-        prefixPartsEn.push(location.en);
+      if(cardItem("connector1").key !== "none" && cardItem("connector2").key !== "none" && cardItem("connector3").key !== "none"){
+        pushCard("finalVerb");
       }
-      if(state.cards.object.enabled && object.ko){
-        prefixPartsKo.push(object
+
+      return {
+        korean: partsKo.join(" ").replace(/\s+/g," ").trim(),
+        translation: partsTr.join(" ").replace(/\s+/g," ").trim()
+      };
+    }
+
+    function renderPreview(){
+      const built = buildSentenceData();
+      const words = built.korean ? built.korean.split(/\s+/) : ["한국어를","공부해요"];
+
+      els.sentenceWords.innerHTML = words.map(w => `<span class="word">${escapeHtml(w)}</span>`).join("");
+      els.translationText.textContent = built.translation || ui().defaultTranslation;
+    }
+
+    function renderBoard(){
+      els.board.innerHTML = CARD_ORDER.map(def => {
+        const enabled = state.cards[def.key].enabled;
+        const dimmed = isDependentDimmed(def.key);
+        return `
+          <div class="builderCard ${enabled ? "" : "off"} ${dimmed ? "hiddenAuto" : ""}" data-kind="${def.kind}">
+            <button class="cardToggle ${enabled ? "active" : ""}" type="button" data-toggle="${def.key}" aria-label="toggle ${def.key}">
+              ✓
+            </button>
+            <button class="cardMain" type="button" data-cycle="${def.key}">
+              <div class="cardTop">
+                <span class="cardDot"></span>
+                <span class="cardLabel">${escapeHtml(ui().labels[def.key])}</span>
+              </div>
+              <div class="cardPrompt">${escapeHtml(ui().prompts[def.key])}</div>
+              <div class="cardValue">${escapeHtml(displayCardValue(def.key))}</div>
+              <div class="cardMeta">${escapeHtml(displayCardMeta(def.key))}</div>
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      els.board.querySelectorAll("[data-cycle]").forEach(btn => {
+        btn.addEventListener("click", () => cycleCard(btn.dataset.cycle));
+      });
+
+      els.board.querySelectorAll("[data-toggle]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleCard(btn.dataset.toggle);
+        });
+      });
+    }
+
+    function renderAll(){
+      renderPreview();
+      renderBoard();
+    }
+
+    function speakText(text){
+      if(!("speechSynthesis" in window)){
+        showToast(ui().playMissing);
+        return;
+      }
+      if(!text.trim()){
+        showToast(ui().playMissing);
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "ko-KR";
+      utter.rate = 0.9;
+      currentUtterance = utter;
+
+      const wordEls = [...els.sentenceWords.querySelectorAll(".word")];
+      let activeIndex = -1;
+
+      utter.onboundary = (event) => {
+        if(event.name === "word" || typeof event.charIndex === "number"){
+          activeIndex++;
+          wordEls.forEach((el, idx) => el.classList.toggle("active", idx === activeIndex));
+        }
+      };
+
+      utter.onend = () => {
+        wordEls.forEach(el => el.classList.remove("active"));
+      };
+
+      window.speechSynthesis.speak(utter);
+    }
+
+    function playCurrent(){
+      const built = buildSentenceData();
+      speakText(built.korean);
+    }
+
+    function startSpeechPractice(){
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if(!SR){
+        showToast(ui().noSpeech);
+        return;
+      }
+
+      const recognition = new SR();
+      recognition.lang = "ko-KR";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      showToast(ui().listening);
+
+      recognition.onresult = (event) => {
+        const heard = event.results[0][0].transcript || "";
+        const target = buildSentenceData().korean;
+        const ok = normalize(heard).replace(/\s/g,"") === normalize(target).replace(/\s/g,"");
+        showToast(`${ui().heard}: ${heard}${ok ? " — " + ui().speakOk : " — " + ui().speakTry}`);
+      };
+
+      recognition.onerror = () => {
+        showToast(ui().speakTry);
+      };
+
+      recognition.start();
+    }
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+    }
+
+    function bindEvents(){
+      els.btnRo.addEventListener("click", () => setLang("ro"));
+      els.btnEn.addEventListener("click", () => setLang("en"));
+
+      [...els.topicDropdown.querySelectorAll(".topicOption")].forEach(btn => {
+        btn.addEventListener("click", () => {
+          setLevel(Number(btn.dataset.level));
+          els.topicMenu.removeAttribute("open");
+        });
+      });
+
+      els.freeText.addEventListener("input", () => {
+        state.text = els.freeText.value;
+        parseFreeText();
+        saveState();
+        renderAll();
+      });
+
+      els.playBtn.addEventListener("click", playCurrent);
+      els.speakBtn.addEventListener("click", startSpeechPractice);
+      els.sentenceBox.addEventListener("click", playCurrent);
+      els.sentenceBox.addEventListener("keydown", (e) => {
+        if(e.key === "Enter" || e.key === " "){
+          e.preventDefault();
+          playCurrent();
+        }
+      });
+    }
+
+    function init(){
+      els.freeText.value = state.text;
+      els.freeText.placeholder = ui().placeholder;
+      setLevel(state.level);
+      setLang(state.lang);
+      parseFreeText();
+      syncConnectorDependencies();
+      bindEvents();
+      renderAll();
+    }
+
+    init();
+  </script>
+</body>
+</html>
