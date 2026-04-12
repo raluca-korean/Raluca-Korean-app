@@ -314,16 +314,26 @@
     };
 
     var VERB_FINITE_MAP = {
-      '공부하다': {ro:'studiez', en:'study'}, '먹다': {ro:'mănânc', en:'eat'}, '가다': {ro:'merg', en:'go'},
-      '오다': {ro:'vin', en:'come'}, '보다': {ro:'văd', en:'see'}, '읽다': {ro:'citesc', en:'read'},
-      '쓰다': {ro:'scriu', en:'write'}, '만나다': {ro:'întâlnesc', en:'meet'}, '쉬다': {ro:'mă odihnesc', en:'rest'},
-      '일하다': {ro:'lucrez', en:'work'}, '운동하다': {ro:'fac sport', en:'exercise'}, '준비하다': {ro:'pregătesc', en:'prepare'},
-      '배우다': {ro:'învăț', en:'learn'}, '듣다': {ro:'ascult', en:'listen'}, '만들다': {ro:'fac', en:'make'}
+      '공부하다': {ro:{i:'studiez',we:'studiem',third:'studiază'}, en:{i:'study',we:'study',third:'studies'}},
+      '먹다': {ro:{i:'mănânc',we:'mâncăm',third:'mănâncă'}, en:{i:'eat',we:'eat',third:'eats'}},
+      '가다': {ro:{i:'merg',we:'mergem',third:'merge'}, en:{i:'go',we:'go',third:'goes'}},
+      '오다': {ro:{i:'vin',we:'venim',third:'vine'}, en:{i:'come',we:'come',third:'comes'}},
+      '보다': {ro:{i:'văd',we:'vedem',third:'vede'}, en:{i:'see',we:'see',third:'sees'}},
+      '읽다': {ro:{i:'citesc',we:'citim',third:'citește'}, en:{i:'read',we:'read',third:'reads'}},
+      '쓰다': {ro:{i:'scriu',we:'scriem',third:'scrie'}, en:{i:'write',we:'write',third:'writes'}},
+      '만나다': {ro:{i:'întâlnesc',we:'întâlnim',third:'întâlnește'}, en:{i:'meet',we:'meet',third:'meets'}},
+      '쉬다': {ro:{i:'mă odihnesc',we:'ne odihnim',third:'se odihnește'}, en:{i:'rest',we:'rest',third:'rests'}},
+      '일하다': {ro:{i:'lucrez',we:'lucrăm',third:'lucrează'}, en:{i:'work',we:'work',third:'works'}},
+      '운동하다': {ro:{i:'fac sport',we:'facem sport',third:'face sport'}, en:{i:'exercise',we:'exercise',third:'exercises'}},
+      '준비하다': {ro:{i:'pregătesc',we:'pregătim',third:'pregătește'}, en:{i:'prepare',we:'prepare',third:'prepares'}},
+      '배우다': {ro:{i:'învăț',we:'învățăm',third:'învață'}, en:{i:'learn',we:'learn',third:'learns'}},
+      '듣다': {ro:{i:'ascult',we:'ascultăm',third:'ascultă'}, en:{i:'listen',we:'listen',third:'listens'}},
+      '만들다': {ro:{i:'fac',we:'facem',third:'face'}, en:{i:'make',we:'make',third:'makes'}}
     };
 
     var CONNECTOR_TEXT_MAP = {
-      ro: { none:'', seq:'și apoi', cause1:'pentru că', cause2:'fiindcă', condition:'dacă', contrast1:'dar', contrast2:'iar', purpose:'ca să', result:'ajunge să' },
-      en: { none:'', seq:'and then', cause1:'because', cause2:'since', condition:'if', contrast1:'but', contrast2:'while', purpose:'in order to', result:'end up' }
+      ro: { none:'', seq:'și', cause1:'pentru că', cause2:'fiindcă', condition:'dacă', contrast1:'dar', contrast2:'iar', purpose:'ca să', result:'iar apoi' },
+      en: { none:'', seq:'and', cause1:'because', cause2:'since', condition:'if', contrast1:'but', contrast2:'while', purpose:'in order to', result:'and then' }
     };
 
     function makeField(enabled, index){ return { enabled: !!enabled, index: typeof index === 'number' ? index : 0 }; }
@@ -353,7 +363,26 @@
     function itemOf(clause, fieldKey){ var list = datasetFor(fieldKey); if(!list.length) return {ko:'',ro:'',en:''}; if(!clause || !clause[fieldKey]) return list[0]; var idx = Number(clause[fieldKey].index) || 0; if(idx < 0 || idx >= list.length) idx = 0; return list[idx]; }
     function connectorKey(clause){ var item = itemOf(clause, 'connector'); return clause && clause.connector && clause.connector.enabled ? item.key : 'none'; }
     function connectorIndexByKey(key){ for(var i=0;i<DATA.connectors.length;i++){ if(DATA.connectors[i].key === key) return i; } return 0; }
-    function finiteVerbText(verb, lang){ var hit = verb && VERB_FINITE_MAP[verb.ko]; return hit && hit[lang] ? hit[lang] : (verb ? (verb[lang] || '') : ''); }
+    function subjectRoleFromKo(subjectKo){
+      if(subjectKo === '저는' || subjectKo === '나는') return 'i';
+      if(subjectKo === '우리는') return 'we';
+      return 'third';
+    }
+    function resolvedSubjectKo(clause, previousClause){
+      var subject = itemOf(clause, 'subject');
+      if(clause.subject && clause.subject.enabled && subject && subject.ko) return subject.ko;
+      if(previousClause){
+        var prevSubject = itemOf(previousClause, 'subject');
+        if(prevSubject && prevSubject.ko) return prevSubject.ko;
+      }
+      return '';
+    }
+    function finiteVerbText(verb, lang, subjectKo){
+      var hit = verb && VERB_FINITE_MAP[verb.ko];
+      var role = subjectRoleFromKo(subjectKo || '');
+      if(hit && hit[lang] && hit[lang][role]) return hit[lang][role];
+      return verb ? (verb[lang] || '') : '';
+    }
     function connectorTextByKey(key, lang){ return CONNECTOR_TEXT_MAP[lang] && CONNECTOR_TEXT_MAP[lang][key] ? CONNECTOR_TEXT_MAP[lang][key] : ''; }
     function cleanSentenceText(text){ return String(text || '').replace(/\s+,/g, ',').replace(/\s+/g, ' ').replace(/\s+([,.!?])/g, '$1').trim(); }
 
@@ -380,7 +409,7 @@
       var working = ' ' + normalizeLatin(text) + ' ';
       var markers = [
         {key:'cause1', phrases:['pentru ca','because']}, {key:'cause2', phrases:['fiindca','since']}, {key:'condition', phrases:['daca','if']},
-        {key:'contrast1', phrases:['dar','insa','but','however']}, {key:'contrast2', phrases:['iar','while']}, {key:'purpose', phrases:['ca sa','in order to']}, {key:'seq', phrases:['si apoi','and then','apoi']}
+        {key:'contrast1', phrases:['dar','insa','but','however']}, {key:'contrast2', phrases:['iar','while']}, {key:'purpose', phrases:['ca sa','in order to']}, {key:'seq', phrases:['si apoi','si','and then','and','apoi']}
       ];
       for(var i=0;i<markers.length;i++){ for(var j=0;j<markers[i].phrases.length;j++){ var phrase = markers[i].phrases[j]; working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| '); } }
       working = working.replace(/,/g, ' |||none||| ');
@@ -431,8 +460,10 @@
     }
 
     function buildClauseSurface(clause, previousClause){
-      var partsKo = [], partsTr = [], relative = itemOf(clause,'relative'), subject = itemOf(clause,'subject'), time = itemOf(clause,'time'), location = itemOf(clause,'location'), object = itemOf(clause,'object'), description = itemOf(clause,'description'), verb = itemOf(clause,'verb'), connector = itemOf(clause,'connector');
-      var repeatedSubject = previousClause && previousClause.subject.enabled && clause.subject.enabled && itemOf(previousClause,'subject').ko === subject.ko;
+      var partsKo = [], partsTr = [];
+      var relative = itemOf(clause,'relative'), subject = itemOf(clause,'subject'), time = itemOf(clause,'time'), location = itemOf(clause,'location'), object = itemOf(clause,'object'), description = itemOf(clause,'description'), verb = itemOf(clause,'verb'), connector = itemOf(clause,'connector');
+      var resolvedSubject = resolvedSubjectKo(clause, previousClause);
+      var repeatedSubject = previousClause && previousClause.subject && previousClause.subject.enabled && clause.subject && clause.subject.enabled && itemOf(previousClause,'subject').ko === subject.ko;
       if(clause.relative.enabled && relative.ko){ partsKo.push(relative.ko); partsTr.push(relative[state.lang] || ''); }
       if(clause.subject.enabled && subject.ko && !repeatedSubject){ partsKo.push(subject.ko); partsTr.push(subject[state.lang] || ''); }
       if(clause.time.enabled && time.ko){ partsKo.push(time.ko); partsTr.push(time[state.lang] || ''); }
@@ -440,20 +471,26 @@
       if(clause.object.enabled && object.ko){ partsKo.push(object.ko); partsTr.push(object[state.lang] || ''); }
       if(clause.description.enabled && description.ko){ partsKo.push(description.ko); partsTr.push(description[state.lang] || ''); }
       if(clause.verb.enabled){
-        if(clause.connector.enabled && connector.key !== 'none'){ partsKo.push(verb.forms[connector.key] || verb.final || verb.ko); partsTr.push(cleanSentenceText((finiteVerbText(verb, state.lang) + ' ' + connectorTextByKey(connector.key, state.lang)).trim())); }
-        else { partsKo.push(verb.final || verb.ko); partsTr.push(finiteVerbText(verb, state.lang)); }
+        if(clause.connector.enabled && connector.key !== 'none') partsKo.push(verb.forms[connector.key] || verb.final || verb.ko);
+        else partsKo.push(verb.final || verb.ko);
+        partsTr.push(finiteVerbText(verb, state.lang, resolvedSubject));
       }
       return { ko: cleanSentenceText(partsKo.join(' ')), tr: cleanSentenceText(partsTr.join(' ')) };
     }
 
     function buildFullOutput(){
-      var outKo = [], outTr = [], prev = null;
+      var outKo = [], translation = '', prev = null, prevConnector = 'none';
       for(var i=0;i<state.clauses.length;i++){
         var built = buildClauseSurface(state.clauses[i], prev);
-        if(built.ko){ outKo.push(built.ko); outTr.push(built.tr); }
+        if(built.ko){
+          outKo.push(built.ko);
+          if(!translation) translation = built.tr;
+          else translation = cleanSentenceText(translation + ' ' + connectorTextByKey(prevConnector, state.lang) + ' ' + built.tr);
+        }
+        prevConnector = connectorKey(state.clauses[i]);
         prev = state.clauses[i];
       }
-      return { korean: cleanSentenceText(outKo.join(' ')), translation: cleanSentenceText(outTr.join(', ')) };
+      return { korean: cleanSentenceText(outKo.join(' ')), translation: cleanSentenceText(translation) };
     }
 
     function fieldValueText(clause, key){
@@ -462,7 +499,11 @@
       if(key === 'verb'){ var connector = itemOf(clause, 'connector'); return clause.connector.enabled && connector.key !== 'none' ? (item.forms[connector.key] || item.final || item.ko) : (item.final || item.ko || '—'); }
       return item.ko || '—';
     }
-    function fieldMetaText(clause, key){ if(key === 'verb') return finiteVerbText(itemOf(clause, key), state.lang); if(key === 'connector') return connectorTextByKey(itemOf(clause, key).key, state.lang); return itemOf(clause, key)[state.lang] || ''; }
+    function fieldMetaText(clause, key){
+      if(key === 'verb') return finiteVerbText(itemOf(clause, key), state.lang, resolvedSubjectKo(clause, null));
+      if(key === 'connector') return connectorTextByKey(itemOf(clause, key).key, state.lang);
+      return itemOf(clause, key)[state.lang] || '';
+    }
     function escapeHtml(str){ return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 
     function renderPreview(){
@@ -508,7 +549,9 @@
 
     function detectMimeType(){
       if(window.MediaRecorder && MediaRecorder.isTypeSupported){
+        if(MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a.40.2')) return 'audio/mp4;codecs=mp4a.40.2';
         if(MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4';
+        if(MediaRecorder.isTypeSupported('audio/x-m4a')) return 'audio/x-m4a';
         if(MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
         if(MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
       }
@@ -522,9 +565,15 @@
         recordedChunks = []; recordedStream = stream; var mime = detectMimeType(); mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
         mediaRecorder.ondataavailable = function(event){ if(event.data && event.data.size > 0) recordedChunks.push(event.data); };
         mediaRecorder.onstop = function(){
-          var blobType = mime || (recordedChunks[0] && recordedChunks[0].type) || 'audio/webm';
+          var blobType = mime || (recordedChunks[0] && recordedChunks[0].type) || 'audio/mp4';
           var blob = new Blob(recordedChunks, { type: blobType });
-          if(recordedUrl) URL.revokeObjectURL(recordedUrl); recordedUrl = URL.createObjectURL(blob); els.recordedAudio.src = recordedUrl; els.recordedAudio.load(); els.recordBox.classList.add('show');
+          if(recordedUrl) URL.revokeObjectURL(recordedUrl);
+          recordedUrl = URL.createObjectURL(blob);
+          els.recordedAudio.pause();
+          els.recordedAudio.removeAttribute('src');
+          els.recordedAudio.src = recordedUrl;
+          els.recordedAudio.load();
+          els.recordBox.classList.add('show');
           if(recordedStream){ var tracks = recordedStream.getTracks(); for(var i=0;i<tracks.length;i++) tracks[i].stop(); recordedStream = null; }
         };
         mediaRecorder.start(); els.recordBtn.classList.add('recording'); showToast(currentUI().recordStart);
