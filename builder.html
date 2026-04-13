@@ -505,27 +505,54 @@
       return false;
     }
     function findIndexInDataset(fieldKey, text){ var list = datasetFor(fieldKey), textFold = normalizeLatin(text), textRaw = normalizeRaw(text); for(var i=1;i<list.length;i++){ if(matchEntry(textFold, textRaw, list[i])) return i; } return -1; }
-
     function splitIntoSegments(text){
-      var working = ' ' + normalizeLatin(text) + ' ';
+      var working = ' ' + cleanSentenceText(String(text || '')) + ' ';
       var markers = [
-        {key:'cause1', phrases:['pentru ca','because']}, {key:'cause2', phrases:['fiindca','since']}, {key:'condition', phrases:['daca','if']},
-        {key:'contrast1', phrases:['dar','insa','but','however']}, {key:'contrast2', phrases:['iar','while']}, {key:'purpose', phrases:['ca sa','in order to']}, {key:'seq', phrases:['si apoi','si','and then','and','apoi']}
+        {key:'purpose', re:/\bca să\b|\bca sa\b|\bin order to\b/gi},
+        {key:'cause1', re:/\bpentru că\b|\bpentru ca\b|\bbecause\b/gi},
+        {key:'cause2', re:/\bfiindcă\b|\bfiindca\b|\bsince\b/gi},
+        {key:'condition', re:/\bdacă\b|\bdaca\b|\bif\b/gi},
+        {key:'contrast1', re:/\bdar\b|\bînsă\b|\binsa\b|\bbut\b|\bhowever\b/gi},
+        {key:'contrast2', re:/\biar\b|\bwhile\b/gi},
+        {key:'seq', re:/\bși apoi\b|\bsi apoi\b|\band then\b|\bapoi\b|\bși\b|\bsi\b|\band\b/gi}
       ];
-      for(var i=0;i<markers.length;i++){ for(var j=0;j<markers[i].phrases.length;j++){ var phrase = markers[i].phrases[j]; working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| '); } }
-      working = working.replace(/,/g, ' |||none||| ');
-      var parts = working.split('|||'), segments = [], currentText = '';
-      for(var k=0;k<parts.length;k++){
-        var part = String(parts[k] || '').trim(); if(!part) continue;
-        var isConnector = false; for(var c=0;c<DATA.connectors.length;c++){ if(DATA.connectors[c].key === part){ isConnector = true; break; } }
-        if(!isConnector) currentText = currentText ? currentText + ' ' + part : part;
-        else { segments.push({ text: currentText.trim(), connector: part }); currentText = ''; }
+
+      for(var i=0;i<markers.length;i++){
+        working = working.replace(markers[i].re, ' |||' + markers[i].key + '||| ');
       }
+
+      working = working.replace(/,/g, ' |||none||| ');
+
+      var parts = working.split('|||');
+      var segments = [];
+      var currentText = '';
+
+      for(var k=0;k<parts.length;k++){
+        var part = cleanSentenceText(parts[k] || '');
+        if(!part) continue;
+
+        var isConnector = false;
+        for(var c=0;c<DATA.connectors.length;c++){
+          if(DATA.connectors[c].key === part){
+            isConnector = true;
+            break;
+          }
+        }
+
+        if(!isConnector){
+          currentText = currentText ? cleanSentenceText(currentText + ' ' + part) : part;
+        } else {
+          segments.push({ text: currentText.trim(), connector: part });
+          currentText = '';
+        }
+      }
+
       if(currentText.trim()) segments.push({ text: currentText.trim(), connector: 'none' });
-      if(!segments.length) segments.push({ text: normalizeLatin(text), connector: 'none' });
+      if(!segments.length) segments.push({ text: cleanSentenceText(String(text || '')), connector: 'none' });
+
       return segments;
     }
-
+    
     function parseTextIntoClauses(){
       var raw = state.text;
       if(!raw || !String(raw).trim()){ state.clauses = [makeClause()]; ensureChainLength(); return; }
