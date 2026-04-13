@@ -552,25 +552,52 @@
 
       return segments;
     }
-    
-    function parseTextIntoClauses(){
+        function parseTextIntoClauses(){
       var raw = state.text;
-      if(!raw || !String(raw).trim()){ state.clauses = [makeClause()]; ensureChainLength(); return; }
-      var segments = splitIntoSegments(raw), clauses = [];
-      for(var i=0;i<segments.length;i++){
-        var seg = segments[i], prev = i > 0 ? clauses[i - 1] : null, clause = makeClause(prev ? prev.subject.index : 0, i === 0);
-        for(var f=0;f<FIELD_DEFS.length;f++){
-          var def = FIELD_DEFS[f]; if(def.key === 'connector') continue;
-          var found = findIndexInDataset(def.key, seg.text);
-          if(found > -1){ clause[def.key].enabled = true; clause[def.key].index = found; }
-          else if(def.key === 'verb'){ clause.verb.enabled = true; clause.verb.index = prev ? prev.verb.index : 0; }
-          else if(def.key === 'subject' && i > 0){ clause.subject.enabled = false; }
-          else { clause[def.key].enabled = false; clause[def.key].index = 0; }
-        }
-        clause.connector.enabled = true; clause.connector.index = connectorIndexByKey(seg.connector); clauses.push(clause);
+      if(!raw || !String(raw).trim()){
+        state.clauses = [makeClause()];
+        ensureChainLength();
+        return;
       }
-      state.clauses = clauses.length ? clauses : [makeClause()]; ensureChainLength();
+
+      var segments = splitIntoSegments(raw);
+      var clauses = [];
+
+      for(var i=0;i<segments.length;i++){
+        var seg = segments[i];
+        var prev = i > 0 ? clauses[i - 1] : null;
+        var clause = makeClause(prev ? prev.subject.index : 0, i === 0);
+
+        clause.sourceText = seg.text || '';
+
+        for(var f=0;f<FIELD_DEFS.length;f++){
+          var def = FIELD_DEFS[f];
+          if(def.key === 'connector') continue;
+
+          var found = findIndexInDataset(def.key, seg.text);
+          if(found > -1){
+            clause[def.key].enabled = true;
+            clause[def.key].index = found;
+          } else if(def.key === 'verb'){
+            clause.verb.enabled = true;
+            clause.verb.index = prev ? prev.verb.index : 0;
+          } else if(def.key === 'subject' && i > 0){
+            clause.subject.enabled = false;
+          } else {
+            clause[def.key].enabled = false;
+            clause[def.key].index = 0;
+          }
+        }
+
+        clause.connector.enabled = true;
+        clause.connector.index = connectorIndexByKey(seg.connector);
+        clauses.push(clause);
+      }
+
+      state.clauses = clauses.length ? clauses : [makeClause()];
+      ensureChainLength();
     }
+   
 
     function randomNonZero(length){ return length <= 1 ? 0 : Math.floor(Math.random() * (length - 1)) + 1; }
     function refreshSentences(){
