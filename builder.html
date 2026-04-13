@@ -1723,63 +1723,56 @@ function renderClauses(){
 
     return segments;
   }
+function parseTextIntoClauses(){
+  var raw = state.text || '';
 
-  function parseTextIntoClauses(){
-    var raw = state.text || '';
-
-    if(!String(raw).trim()){
-      state.clauses = [defaultClause()];
-      renderAll();
-      return;
-    }
-
-    var segments = splitIntoSegments(raw);
-    var clauses = [];
-
-    for(var i=0;i<segments.length;i++){
-      var seg = segments[i];
-      var clause = makeClause(0, i === 0);
-      clause.sourceText = seg.text || '';
-
-      var topic = findBestMatch('topic', seg.text);
-      var time = findBestMatch('time', seg.text);
-      var object1 = findBestMatch('object1', seg.text);
-      var adverb = findBestMatch('adverb', seg.text);
-      var associate = findBestMatch('associate', seg.text);
-      var departure = findBestMatch('departure', seg.text);
-      var transit = findBestMatch('transit', seg.text);
-      var beneficiary = findBestMatch('beneficiary', seg.text);
-      var numeral = findBestMatch('numeral', seg.text);
-      var quantifier = findBestMatch('quantifier', seg.text);
-      var object2 = findBestMatch('object2', seg.text);
-      var verb = findBestMatch('verb', seg.text);
-      var connector = normalizeItem((DATA.connector.filter(function(item){ return item.key === seg.connector; })[0] || DATA.connector[0]), 'connector', 0);
-
-      if(topic) setFieldItem(clause, 'topic', topic);
-      else if(i === 0) setFieldItem(clause, 'topic', normalizeItem(DATA.subject[0], 'subject', 0));
-
-      if(time) setFieldItem(clause, 'time', time);
-      if(object1) setFieldItem(clause, 'object1', object1);
-      if(adverb) setFieldItem(clause, 'adverb', adverb);
-      if(associate) setFieldItem(clause, 'associate', associate);
-      if(departure) setFieldItem(clause, 'departure', departure);
-      if(transit) setFieldItem(clause, 'transit', transit);
-      if(beneficiary) setFieldItem(clause, 'beneficiary', beneficiary);
-      if(numeral) setFieldItem(clause, 'numeral', numeral);
-      if(quantifier) setFieldItem(clause, 'quantifier', quantifier);
-      if(object2) setFieldItem(clause, 'object2', object2);
-
-      if(verb) setFieldItem(clause, 'verb', verb);
-      else setFieldItem(clause, 'verb', normalizeItem(DATA.verb[0], 'verb', 0));
-
-      setFieldItem(clause, 'connector', connector);
-      clauses.push(clause);
-    }
-
-    state.clauses = clauses.length ? clauses : [defaultClause()];
-    ensureChainLength();
+  if(!String(raw).trim()){
+    state.clauses = [defaultClause()];
     renderAll();
+    return;
   }
+
+  var segments = splitIntoSegments(raw);
+  var clauses = [];
+
+  for(var i=0;i<segments.length;i++){
+    var seg = segments[i];
+    var clause = makeClause(0, i === 0);
+    clause.sourceText = seg.text || '';
+
+    var topic = findBestMatch('topic', seg.text);
+    var time = findBestMatch('time', seg.text);
+    var departure = findBestMatch('departure', seg.text);
+    var object1 = findBestMatch('object1', seg.text);
+    var adverb = findBestMatch('adverb', seg.text);
+    var verb = findBestMatch('verb', seg.text);
+    var connector = normalizeItem(
+      (DATA.connector.filter(function(item){ return item.key === seg.connector; })[0] || DATA.connector[0]),
+      'connector',
+      0
+    );
+
+    if(topic) setFieldItem(clause, 'topic', topic);
+    else if(i === 0) setFieldItem(clause, 'topic', normalizeItem(DATA.subject[0], 'subject', 0));
+
+    if(time) setFieldItem(clause, 'time', time);
+    if(departure) setFieldItem(clause, 'departure', departure);
+    if(object1) setFieldItem(clause, 'object1', object1);
+    if(adverb) setFieldItem(clause, 'adverb', adverb);
+
+    if(verb) setFieldItem(clause, 'verb', verb);
+    else setFieldItem(clause, 'verb', normalizeItem(DATA.verb[0], 'verb', 0));
+
+    setFieldItem(clause, 'connector', connector);
+
+    clauses.push(clause);
+  }
+
+  state.clauses = clauses.length ? clauses : [defaultClause()];
+  ensureChainLength();
+  renderAll();
+}
+
 
   function ensureVocabSheet(){
     if(document.getElementById('vocabSheet')) return;
