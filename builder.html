@@ -660,7 +660,237 @@
       return itemOf(clause, key)[state.lang] || '';
     }
     function escapeHtml(str){ return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+    function getVisibleColumns(level){
+      level = Number(level) || 1;
+      var cols = [
+        {key:'index', label:'#'},
+        {key:'relative', label:'RELATIVE'},
+        {key:'subject', label:'SUBJECT'},
+        {key:'time', label:'TIME'},
+        {key:'location', label:'LOCATION'},
+        {key:'object', label:'OBJECT'},
+        {key:'description', label:'DESCRIPTION'},
+        {key:'verb', label:'VERB'},
+        {key:'connector', label:'CONNECTOR'},
+        {key:'exact', label:'Fragment exact'}
+      ];
 
+      if(level >= 2) cols.push({key:'predicate', label:'Predicat'});
+      if(level >= 3){
+        cols.push({key:'conjugation', label:'Conjugare verbală'});
+        cols.push({key:'gramNumber', label:'Număr'});
+      }
+      if(level >= 4){
+        cols.push({key:'quantifiers', label:'Numerale / clasificatori / unități / cuantificatori'});
+        cols.push({key:'verbType', label:'Tip verbal'});
+      }
+      if(level >= 5){
+        cols.push({key:'gender', label:'Gen'});
+        cols.push({key:'gramCase', label:'Caz gramatical'});
+        cols.push({key:'article', label:'Articol'});
+      }
+      if(level >= 6){
+        cols.push({key:'adjectiveAgreement', label:'Acord adjectival'});
+        cols.push({key:'subordinateType', label:'Tip subordonată'});
+      }
+
+      return cols;
+    }
+
+    function detectGlobalSubject(){
+      var raw = String(state.text || '').trim();
+      var fold = normalizeLatin(raw);
+
+      if(/\beu\b/.test(fold)) return 'eu';
+      if(/\bnoi\b/.test(fold)) return 'noi';
+      if(/\btu\b/.test(fold)) return 'tu';
+      if(/\bvoi\b/.test(fold)) return 'voi';
+      if(/\bea\b/.test(fold)) return 'ea';
+      if(/\bel\b/.test(fold)) return 'el';
+      if(/\bei\b/.test(fold)) return 'ei';
+      if(/\bele\b/.test(fold)) return 'ele';
+
+      if(state.clauses.length){
+        var first = itemOf(state.clauses[0], 'subject');
+        if(first && first.ro) return first.ro;
+      }
+
+      return '';
+    }
+
+    function guessConjugation(clause, prev){
+      var src = normalizeLatin(clause.sourceText || '');
+      var subjectKo = resolvedSubjectKo(clause, prev);
+      var role = subjectRoleFromKo(subjectKo);
+
+      if(/^ca sa\b|^ca să\b/.test(src)) return 'non-finit / final';
+      if(/\bam\b/.test(src)) return 'indicativ, perfect compus, persoana I singular';
+      if(/\ba fost\b/.test(src)) return 'indicativ, perfect compus, persoana a III-a singular';
+      if(/\ba plouat\b/.test(src)) return 'indicativ, perfect compus, impersonal';
+
+      if(role === 'i') return 'indicativ, prezent, persoana I singular';
+      if(role === 'we') return 'indicativ, prezent, persoana I plural';
+      return 'indicativ, prezent, persoana a III-a';
+    }
+
+    function guessGender(clause, prev){
+      var subjectRo = '';
+      if(clause.subject && clause.subject.enabled){
+        subjectRo = itemOf(clause, 'subject').ro || '';
+      } else if(prev) {
+        subjectRo = itemOf(prev, 'subject').ro || '';
+      } else {
+        subjectRo = detectGlobalSubject();
+      }
+
+      var s = normalizeLatin(subjectRo);
+      if(s === 'ea') return 'feminin';
+      if(s === 'el') return 'masculin';
+      if(s === 'ele') return 'feminin plural';
+      if(s === 'ei') return 'masculin / mixt plural';
+      if(s === 'eu' || s === 'noi' || s === 'tu' || s === 'voi') return 'după vorbitor / context';
+      if(s.indexOf('profesor') !== -1) return 'masculin';
+      if(s.indexOf('prieten') !== -1) return 'masculin';
+      return 'de verificat';
+    }
+
+    function guessNumber(clause, prev){
+      var subjectKo = resolvedSubjectKo(clause, prev);
+      var role = subjectRoleFromKo(subjectKo);
+
+      if(role === 'we') return 'plural';
+      if(role === 'i') return 'singular';
+      if(subjectKo === '선생님은' || subjectKo === '친구는' || subjectKo === '학생은' || subjectKo === '민수는' || subjectKo === '지수는') return 'singular';
+      return 'de verificat';
+    }
+
+    function guessQuantifiers(clause){
+      var src = normalizeLatin(clause.sourceText || '');
+      var desc = normalizeLatin(itemOf(clause, 'description').ro || '');
+      var hits = [];
+
+      var digits = String(clause.sourceText || '').match(/\b\d+[\d.,]*\b/g);
+      if(digits) hits.push('numeral: ' + digits.join(', '));
+
+      if(/\bun\b|\bo\b|\bdoi\b|\bdoua\b|\bdouă\b|\btrei\b|\bpatru\b|\bcinci\b/.test(src)) hits.push('numeral lexical');
+      if(src.indexOf('mult') !== -1) hits.push('cuantificator: mult');
+      if(src.indexOf('putin') !== -1 || src.indexOf('puțin') !== -1 || desc.indexOf('putin') !== -1) hits.push('cuantificator: puțin');
+      if(src.indexOf('foarte') !== -1 || desc.indexOf('foarte') !== -1) hits.push('intensificator: foarte');
+      if(src.indexOf('din nou') !== -1 || desc.indexOf('din nou') !== -1) hits.push('iterativ: din nou');
+      if(/\bora\b|\bore\b|\bzi\b|\bzile\b|\bmetru\b|\bmetri\b|\bkilogram\b|\bkilograme\b|\blitru\b|\blitri\b/.test(src)) hits.push('unitate de măsură');
+
+      return hits.length ? hits.join('; ') : '—';
+    }
+
+    function guessCase(clause){
+      var notes = [];
+      if(clause.subject && clause.subject.enabled && itemOf(clause, 'subject').ro) notes.push('nominativ');
+      if(clause.object && clause.object.enabled && itemOf(clause, 'object').ro) notes.push('acuzativ direct');
+      return notes.length ? notes.join(' + ') : 'de verificat';
+    }
+
+    function guessArticle(clause){
+      var src = normalizeLatin(clause.sourceText || '');
+      var subjectRo = itemOf(clause, 'subject').ro || '';
+      var objectRo = itemOf(clause, 'object').ro || '';
+      var sample = normalizeLatin(subjectRo + ' ' + objectRo);
+
+      if(/\bun\b|\bo\b/.test(src)) return 'nehotărât';
+      if(/\bul\b|\bea\b|\bului\b/.test(sample) || /(ul|ea|ului|ile|lor)$/.test(sample.trim())) return 'hotărât enclitic';
+      return '—';
+    }
+
+    function guessAdjectiveAgreement(clause){
+      var desc = normalizeLatin(itemOf(clause, 'description').ro || '');
+      if(!desc) return '—';
+      if(desc.indexOf('repede') !== -1 || desc.indexOf('incet') !== -1 || desc.indexOf('în liniște') !== -1 || desc.indexOf('foarte') !== -1 || desc.indexOf('putin') !== -1) return 'nu apare adjectiv acordat explicit';
+      return 'de verificat';
+    }
+
+    function guessVerbType(clause){
+      var verbRo = normalizeLatin(itemOf(clause, 'verb').ro || '');
+
+      if(verbRo.indexOf('a vedea') !== -1) return 'tranzitiv';
+      if(verbRo.indexOf('a citi') !== -1) return 'tranzitiv';
+      if(verbRo.indexOf('a scrie') !== -1) return 'tranzitiv';
+      if(verbRo.indexOf('a intalni') !== -1 || verbRo.indexOf('a întâlni') !== -1) return 'tranzitiv';
+      if(verbRo.indexOf('a pregati') !== -1 || verbRo.indexOf('a pregăti') !== -1) return 'tranzitiv';
+      if(verbRo.indexOf('a face') !== -1) return 'tranzitiv / flexibil';
+      if(verbRo.indexOf('a merge') !== -1) return 'intranzitiv';
+      if(verbRo.indexOf('a veni') !== -1) return 'intranzitiv';
+      if(verbRo.indexOf('a se odihni') !== -1) return 'intranzitiv';
+      if(verbRo.indexOf('a lucra') !== -1) return 'intranzitiv';
+      if(verbRo.indexOf('a studia') !== -1 || verbRo.indexOf('a invata') !== -1 || verbRo.indexOf('a învăța') !== -1) return 'tranzitiv / intranzitiv';
+      return 'de verificat';
+    }
+
+    function guessSubordinateType(clause){
+      var key = connectorKey(clause);
+
+      if(key === 'purpose') return 'finală';
+      if(key === 'cause1' || key === 'cause2') return 'cauzală';
+      if(key === 'condition') return 'condițională';
+      if(key === 'contrast1' || key === 'contrast2') return 'adversativă / contrastivă';
+      if(key === 'seq') return 'coordonare secvențială';
+      return 'principală';
+    }
+
+    function buildClauseAnalysisRow(clause, prev, index){
+      var built = buildClauseSurface(clause, prev);
+      var subjectRo = '';
+
+      if(clause.subject && clause.subject.enabled){
+        subjectRo = itemOf(clause, 'subject').ro || '';
+      } else if(prev) {
+        subjectRo = itemOf(prev, 'subject').ro || '';
+      } else {
+        subjectRo = detectGlobalSubject();
+      }
+
+      var connectorRo = connectorTextByKey(connectorKey(clause), 'ro') || '—';
+      var predicateRo = clause.verb && clause.verb.enabled ? finiteVerbText(itemOf(clause, 'verb'), 'ro', resolvedSubjectKo(clause, prev)) : '—';
+
+      return {
+        index: index + 1,
+        exact: clause.sourceText || built.tr || '—',
+        predicate: predicateRo || '—',
+        conjugation: guessConjugation(clause, prev),
+        gender: guessGender(clause, prev),
+        gramNumber: guessNumber(clause, prev),
+        quantifiers: guessQuantifiers(clause),
+        gramCase: guessCase(clause),
+        article: guessArticle(clause),
+        adjectiveAgreement: guessAdjectiveAgreement(clause),
+        verbType: guessVerbType(clause),
+        subordinateType: guessSubordinateType(clause),
+        subjectResolved: subjectRo || '—',
+        connectorResolved: connectorRo || '—'
+      };
+    }
+
+    function renderFieldCell(clause, index, key){
+      var enabled = clause[key] && clause[key].enabled;
+      var canToggle = key !== 'verb' && key !== 'connector';
+      var html = '<div class="cellField ' + (enabled ? '' : 'off') + '">';
+
+      if(canToggle){
+        html += '<button class="cellToggle ' + (enabled ? 'active' : '') + '" data-toggle="' + index + ':' + key + '" type="button">✓</button>';
+      }
+
+      html += '<button class="cellCycle" data-cycle="' + index + ':' + key + '" type="button">' + escapeHtml(fieldValueText(clause, key)) + '</button>';
+
+      var meta = fieldMetaText(clause, key);
+      if(meta) html += '<div class="cellMeta">' + escapeHtml(meta) + '</div>';
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderStaticCell(value){
+      return value && String(value).trim()
+        ? escapeHtml(value)
+        : '<span class="mutedDash">—</span>';
+    }
     function renderPreview(){
       var built = buildFullOutput(), words = built.korean ? built.korean.split(/\s+/) : ['저는','공부해요'], html = '';
       for(var i=0;i<words.length;i++) html += '<span class="word">' + escapeHtml(words[i]) + '</span>';
