@@ -1987,90 +1987,150 @@ function parseTextIntoClauses(){
     }
     renderAll();
   }
+function bindEvents(){
+  if(els.btnRo){
+    els.btnRo.addEventListener('click', function(){ setLang('ro'); });
+  }
 
-  function bindEvents(){
-    if(els.btnRo){
-      els.btnRo.addEventListener('click', function(){ setLang('ro'); });
-    }
+  if(els.btnEn){
+    els.btnEn.addEventListener('click', function(){ setLang('en'); });
+  }
 
-    if(els.btnEn){
-      els.btnEn.addEventListener('click', function(){ setLang('en'); });
-    }
-
-    if(els.topicDropdown){
-      els.topicDropdown.addEventListener('click', function(event){
-        var btn = event.target.closest('.topicOption');
-        if(!btn) return;
-        setLevel(btn.getAttribute('data-level'));
-        var details = document.getElementById('topicMenu');
-        if(details) details.removeAttribute('open');
-      });
-    }
-
-    if(els.freeText){
-      els.freeText.addEventListener('input', function(){
-        state.text = els.freeText.value || '';
-        parseTextIntoClauses();
-      });
-    }
-
-    if(els.refreshBtn){
-      els.refreshBtn.addEventListener('click', resetBuilder);
-    }
-
-    if(els.playBtn){
-      els.playBtn.addEventListener('click', playCurrent);
-    }
-
-    if(els.recordBtn){
-      els.recordBtn.addEventListener('click', toggleRecording);
-    }
-
-    if(els.sentenceBox){
-      els.sentenceBox.addEventListener('click', playCurrent);
-      els.sentenceBox.addEventListener('keydown', function(e){
-        if(e.key === 'Enter' || e.key === ' '){
-          e.preventDefault();
-          playCurrent();
-        }
-      });
-    }
-
-    if(els.clauseList){
-      els.clauseList.addEventListener('click', function(event){
-        var btn = event.target.closest('[data-open-picker]');
-        if(!btn) return;
-        event.preventDefault();
-        var parts = btn.getAttribute('data-open-picker').split(':');
-        openVocabSheet(Number(parts[0]), parts[1]);
-      });
-    }
-
-    document.addEventListener('click', function(event){
-      var closeBtn = event.target.closest('#vocabSheetClose, [data-close-vocab]');
-      if(closeBtn){
-        closeVocabSheet();
-        return;
-      }
-
-      var pickBtn = event.target.closest('[data-vocab-index]');
-      if(pickBtn){
-        pickVocabItem(Number(pickBtn.getAttribute('data-vocab-index')));
-      }
+  if(els.topicDropdown){
+    els.topicDropdown.addEventListener('click', function(event){
+      var btn = event.target.closest('.topicOption');
+      if(!btn) return;
+      setLevel(btn.getAttribute('data-level'));
+      var details = document.getElementById('topicMenu');
+      if(details) details.removeAttribute('open');
     });
+  }
 
-    document.addEventListener('input', function(event){
-      if(event.target && event.target.id === 'vocabSheetSearch'){
-        filterVocabSheet(event.target.value || '');
-      }
+  if(els.freeText){
+    els.freeText.addEventListener('input', function(){
+      state.text = els.freeText.value || '';
+      parseTextIntoClauses();
     });
+  }
 
-    document.addEventListener('keydown', function(event){
-      if(event.key === 'Escape'){
-        closeVocabSheet();
+  if(els.refreshBtn){
+    els.refreshBtn.addEventListener('click', resetBuilder);
+  }
+
+  if(els.playBtn){
+    els.playBtn.addEventListener('click', playCurrent);
+  }
+
+  if(els.recordBtn){
+    els.recordBtn.addEventListener('click', toggleRecording);
+  }
+
+  if(els.sentenceBox){
+    els.sentenceBox.addEventListener('click', playCurrent);
+    els.sentenceBox.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        playCurrent();
       }
     });
   }
+
+  if(els.clauseList){
+    els.clauseList.addEventListener('click', function(event){
+      var toggleBtn = event.target.closest('[data-toggle-cell]');
+      if(toggleBtn){
+        event.preventDefault();
+        event.stopPropagation();
+        var toggleParts = toggleBtn.getAttribute('data-toggle-cell').split(':');
+        toggleFieldActive(Number(toggleParts[0]), toggleParts[1]);
+        return;
+      }
+
+      var pressBtn = event.target.closest('[data-press-field]');
+      if(pressBtn){
+        event.preventDefault();
+
+        if(pressBtn.getAttribute('data-long-press-opened') === '1'){
+          pressBtn.removeAttribute('data-long-press-opened');
+          return;
+        }
+
+        var parts = pressBtn.getAttribute('data-press-field').split(':');
+        cycleFieldValue(Number(parts[0]), parts[1]);
+      }
+    });
+
+    els.clauseList.addEventListener('pointerdown', function(event){
+      var btn = event.target.closest('[data-press-field]');
+      if(!btn) return;
+
+      longPressTarget = btn;
+      longPressTriggered = false;
+      clearTimeout(longPressTimer);
+
+      longPressTimer = setTimeout(function(){
+        if(!longPressTarget) return;
+        longPressTriggered = true;
+        longPressTarget.setAttribute('data-long-press-opened', '1');
+
+        var parts = longPressTarget.getAttribute('data-press-field').split(':');
+        openVocabSheet(Number(parts[0]), parts[1]);
+      }, LONG_PRESS_MS);
+    });
+
+    els.clauseList.addEventListener('pointerup', function(){
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      longPressTarget = null;
+    });
+
+    els.clauseList.addEventListener('pointerleave', function(){
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      longPressTarget = null;
+    });
+
+    els.clauseList.addEventListener('pointercancel', function(){
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      longPressTarget = null;
+    });
+
+    els.clauseList.addEventListener('contextmenu', function(event){
+      var btn = event.target.closest('[data-press-field]');
+      if(btn){
+        event.preventDefault();
+      }
+    });
+  }
+
+  document.addEventListener('click', function(event){
+    var closeBtn = event.target.closest('#vocabSheetClose, [data-close-vocab]');
+    if(closeBtn){
+      closeVocabSheet();
+      return;
+    }
+
+    var pickBtn = event.target.closest('[data-vocab-index]');
+    if(pickBtn){
+      pickVocabItem(Number(pickBtn.getAttribute('data-vocab-index')));
+    }
+  });
+
+  document.addEventListener('input', function(event){
+    if(event.target && event.target.id === 'vocabSheetSearch'){
+      filterVocabSheet(event.target.value || '');
+    }
+  });
+
+  document.addEventListener('keydown', function(event){
+    if(event.key === 'Escape'){
+      closeVocabSheet();
+    }
+  });
+}
+  
+
 
   function init(){
     ensureVocabSheet();
