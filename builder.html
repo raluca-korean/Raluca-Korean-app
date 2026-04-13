@@ -1241,7 +1241,105 @@ function itemOf(clause, fieldKey){
 
   return null;
 }
-  
+  function isFieldActive(clause, fieldKey){
+  if(!clause) return false;
+
+  if(FIELD_BINDINGS[fieldKey]){
+    var nativeKey = FIELD_BINDINGS[fieldKey];
+    return !!(clause[nativeKey] && clause[nativeKey].enabled);
+  }
+
+  return !!(clause.extras && clause.extras[fieldKey]);
+}
+
+function getFirstUsableItem(fieldKey){
+  var options = getOptionsForField(fieldKey);
+  if(!options.length) return null;
+
+  if(fieldKey === 'connector') return options[0] || null;
+
+  for(var i=0;i<options.length;i++){
+    if(options[i] && options[i].ko) return options[i];
+  }
+  return options[0] || null;
+}
+
+function toggleFieldActive(clauseIndex, fieldKey){
+  var clause = state.clauses[clauseIndex];
+  if(!clause) return;
+
+  var active = isFieldActive(clause, fieldKey);
+
+  if(active){
+    setFieldItem(clause, fieldKey, null);
+
+    if(FIELD_BINDINGS[fieldKey]){
+      var nativeKey = FIELD_BINDINGS[fieldKey];
+      clause[nativeKey].enabled = false;
+      clause[nativeKey].index = 0;
+    }else if(clause.extras){
+      clause.extras[fieldKey] = null;
+    }
+  }else{
+    var firstItem = getFirstUsableItem(fieldKey);
+    if(firstItem){
+      setFieldItem(clause, fieldKey, firstItem);
+
+      if(FIELD_BINDINGS[fieldKey]){
+        clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+      }
+    }
+  }
+
+  ensureChainLength();
+  renderAll();
+}
+
+function cycleFieldValue(clauseIndex, fieldKey){
+  var clause = state.clauses[clauseIndex];
+  if(!clause) return;
+
+  var options = getOptionsForField(fieldKey);
+  if(!options.length) return;
+
+  if(!isFieldActive(clause, fieldKey)){
+    var firstItem = getFirstUsableItem(fieldKey);
+    if(firstItem){
+      setFieldItem(clause, fieldKey, firstItem);
+      if(FIELD_BINDINGS[fieldKey]){
+        clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+      }
+      ensureChainLength();
+      renderAll();
+    }
+    return;
+  }
+
+  var current = itemOf(clause, fieldKey);
+  var currentIndex = -1;
+
+  for(var i=0;i<options.length;i++){
+    if(current && options[i] && options[i].id === current.id && options[i].ko === current.ko){
+      currentIndex = i;
+      break;
+    }
+  }
+
+  var nextIndex = currentIndex + 1;
+  if(nextIndex >= options.length) nextIndex = 0;
+
+  if(fieldKey !== 'connector'){
+    while(options[nextIndex] && !options[nextIndex].ko){
+      nextIndex += 1;
+      if(nextIndex >= options.length) nextIndex = 0;
+      if(nextIndex === currentIndex) break;
+    }
+  }
+
+  setFieldItem(clause, fieldKey, options[nextIndex] || null);
+  ensureChainLength();
+  renderAll();
+}
 
   function setFieldItem(clause, fieldKey, item){
     if(!clause.__picked) clause.__picked = {};
