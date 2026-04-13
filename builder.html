@@ -1541,23 +1541,24 @@ function cycleFieldValue(clauseIndex, fieldKey){
       return state.level >= col.level;
     });
   }
+function renderCell(clauseIndex, col){
+  var clause = state.clauses[clauseIndex];
+  var active = isFieldActive(clause, col.key);
+  var item = active ? itemOf(clause, col.key) : null;
+  var value = item && item.ko ? item.ko : TABLE_PLACEHOLDERS_KO[col.key];
+  var meta = item ? (translationOf(item) || '') : 'click pentru selectare';
 
-  function renderCell(clauseIndex, col){
-    var clause = state.clauses[clauseIndex];
-    var item = itemOf(clause, col.key);
-    var value = item && item.ko ? item.ko : TABLE_PLACEHOLDERS_KO[col.key];
-    var meta = item ? (translationOf(item) || '') : '클릭하여 선택';
+  return '' +
+    '<div class="tableField ' + (active ? '' : 'off') + '">' +
+      '<button class="tableToggle ' + (active ? 'active' : '') + '" data-toggle-cell="' + clauseIndex + ':' + col.key + '" type="button">✓</button>' +
+      '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + '" data-press-field="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind) + '" type="button">' +
+        '<div class="tableMeta">' + escapeHtml(fieldLabel(col.key)) + '</div>' +
+        '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
+        '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
+      '</button>' +
+    '</div>';
+}
 
-    return '' +
-      '<div class="tableField">' +
-        '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + '" data-open-picker="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind) + '" type="button">' +
-          '<div class="tableMeta">' + escapeHtml(TABLE_HEADERS_KO[col.key]) + '</div>' +
-          '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
-          '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
-          (item && item.ko ? '<div class="tablePickedDot">✓</div>' : '') +
-        '</button>' +
-      '</div>';
-  }
 
   function renderClauses(){
     if(!els.clauseList) return;
