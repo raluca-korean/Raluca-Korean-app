@@ -818,7 +818,87 @@
   }
 
   var state = { lang:'ro', level:1, text:'', clauses:[makeClause(0, true)] };
+function getAppVocab(){
+  return window.VOCAB
+    || window.APP_VOCAB
+    || window.vocabulary
+    || window.__VOCAB__
+    || {};
+}
 
+const VOCAB_BUCKET_MAP = {
+  topic: ['subjects', 'subject', 'topics', 'topic'],
+  associate: ['participants', 'participant', 'relatives', 'relative', 'people', 'persons'],
+  time: ['times', 'time'],
+  departure: ['locations', 'location', 'places', 'place', 'departure'],
+  transit: ['locations', 'location', 'places', 'place', 'transit'],
+  numeral: ['numerals', 'numeral', 'numbers', 'number'],
+  quantifier: ['quantifiers', 'quantifier', 'classifiers', 'classifier', 'units', 'unit'],
+  object1: ['objects', 'object', 'object1'],
+  beneficiary: ['beneficiaries', 'beneficiary', 'people', 'persons'],
+  object2: ['objects', 'object', 'object2'],
+  adverb: ['adverbs', 'adverb', 'descriptions', 'description'],
+  verb: ['verbs', 'verb'],
+  connector: ['connectors', 'connector']
+};
+
+function firstExistingBucket(source, keys){
+  for(let i=0;i<keys.length;i++){
+    const key = keys[i];
+    if(source && source[key]) return source[key];
+  }
+  return [];
+}
+
+function normalizeVocabList(raw){
+  const list = Array.isArray(raw)
+    ? raw
+    : (raw && Array.isArray(raw.items) ? raw.items : []);
+
+  return list.map((item, index) => {
+    if(typeof item === 'string'){
+      return {
+        id: item,
+        ko: item,
+        ro: '',
+        en: '',
+        raw: item
+      };
+    }
+
+    return {
+      id: item.id || item.key || item.value || item.ko || item.kr || item.korean || item.text || ('item-' + index),
+      ko: item.ko || item.kr || item.korean || item.surface || item.text || '',
+      ro: item.ro || item.romanian || item.meaningRo || item.meaning || '',
+      en: item.en || item.english || item.meaningEn || '',
+      raw: item
+    };
+  });
+}
+
+function getVocabOptionsForField(fieldKey){
+  const vocab = getAppVocab();
+  const bucketKeys = VOCAB_BUCKET_MAP[fieldKey] || [fieldKey];
+  const rawBucket = firstExistingBucket(vocab, bucketKeys);
+  return normalizeVocabList(rawBucket);
+}
+
+function ensureClauseMetaObject(clause, fieldKey){
+  if(!clause.__picked) clause.__picked = {};
+  if(!clause.__picked[fieldKey]) clause.__picked[fieldKey] = null;
+}
+
+function setClausePickedValue(clauseIndex, fieldKey, item){
+  const clause = state.clauses[clauseIndex];
+  if(!clause) return;
+
+  ensureClauseMetaObject(clause, fieldKey);
+  clause.__picked[fieldKey] = item;
+
+  clause[fieldKey] = item.id || item.ko || item.ro || item.en || '';
+
+  renderAll();
+}
   var els = {
     btnRo: document.getElementById('btnRo'),
     btnEn: document.getElementById('btnEn'),
