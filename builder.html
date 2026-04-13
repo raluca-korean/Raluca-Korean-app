@@ -420,7 +420,280 @@
 (function(){
   'use strict';
 
-  const TABLE_KO = {
+  if (window.__RALUCA_BUILDER_SCRIPT_V3__) return;
+  window.__RALUCA_BUILDER_SCRIPT_V3__ = true;
+
+  function injectBuilderStyles(){
+    if(document.getElementById('raluca-builder-runtime-styles')) return;
+
+    var style = document.createElement('style');
+    style.id = 'raluca-builder-runtime-styles';
+    style.textContent = `
+      .clauseList{display:block;width:100%}
+      .builderTableWrap{
+        width:100%;
+        overflow:auto;
+        border:1px solid rgba(15,23,42,.08);
+        border-radius:24px;
+        background:#fff;
+        box-shadow:0 10px 24px rgba(15,23,42,.06);
+      }
+      .builderTable{
+        width:100%;
+        min-width:2210px;
+        border-collapse:separate;
+        border-spacing:0;
+        table-layout:fixed;
+      }
+      .builderTable th,.builderTable td{
+        width:170px;
+        min-width:170px;
+        max-width:170px;
+      }
+      .builderTable thead th{
+        position:sticky;
+        top:0;
+        z-index:2;
+        height:58px;
+        padding:14px 12px;
+        text-align:left;
+        vertical-align:middle;
+        background:linear-gradient(180deg,#ffffff,#f8fafc);
+        border-bottom:1px solid rgba(15,23,42,.08);
+        color:#334155;
+        font-size:12px;
+        font-weight:900;
+        letter-spacing:.16em;
+        text-transform:uppercase;
+        white-space:normal;
+        word-break:keep-all;
+      }
+      .builderTable tbody td{
+        padding:12px;
+        vertical-align:top;
+        border-bottom:1px solid rgba(15,23,42,.06);
+        background:#fff;
+      }
+      .builderTable tbody tr:last-child td{border-bottom:none}
+      .tableField{
+        width:100%;
+        min-height:132px;
+        height:132px;
+        display:flex;
+      }
+      .tableMainBtn{
+        position:relative;
+        width:100%;
+        min-height:132px;
+        height:132px;
+        box-sizing:border-box;
+        border-radius:20px;
+        border:1px solid rgba(15,23,42,.08);
+        box-shadow:0 8px 18px rgba(15,23,42,.04);
+        padding:13px 13px 12px;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
+        align-items:flex-start;
+        text-align:left;
+        cursor:pointer;
+        transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+        background:linear-gradient(180deg,#fff,#f8fafc);
+        color:#0f172a;
+      }
+      .tableMainBtn:hover{
+        transform:translateY(-1px);
+        box-shadow:0 12px 22px rgba(15,23,42,.07);
+        border-color:rgba(15,23,42,.12);
+      }
+      .tableMainBtn.is-empty .tableValue{color:#94a3b8}
+      .tableMainBtn[data-kind="topic"]{background:linear-gradient(180deg,#eef4ff,#fff)}
+      .tableMainBtn[data-kind="associate"]{background:linear-gradient(180deg,#f6f0ff,#fff)}
+      .tableMainBtn[data-kind="time"]{background:linear-gradient(180deg,#fff8ea,#fff)}
+      .tableMainBtn[data-kind="departure"]{background:linear-gradient(180deg,#eefbf5,#fff)}
+      .tableMainBtn[data-kind="transit"]{background:linear-gradient(180deg,#f2fbff,#fff)}
+      .tableMainBtn[data-kind="numeral"]{background:linear-gradient(180deg,#fff4ef,#fff)}
+      .tableMainBtn[data-kind="quantifier"]{background:linear-gradient(180deg,#fdf7e9,#fff)}
+      .tableMainBtn[data-kind="object1"]{background:linear-gradient(180deg,#fff1f6,#fff)}
+      .tableMainBtn[data-kind="beneficiary"]{background:linear-gradient(180deg,#f7f3ff,#fff)}
+      .tableMainBtn[data-kind="object2"]{background:linear-gradient(180deg,#f5f7fb,#fff)}
+      .tableMainBtn[data-kind="adverb"]{background:linear-gradient(180deg,#f8fafc,#fff)}
+      .tableMainBtn[data-kind="verb"]{background:linear-gradient(180deg,#fff2d9,#fff)}
+      .tableMainBtn[data-kind="connector"]{background:linear-gradient(180deg,#efe7ff,#fff)}
+      .tableMeta{
+        font-size:12px;
+        line-height:1.1;
+        font-weight:900;
+        letter-spacing:.08em;
+        text-transform:uppercase;
+        color:#64748b;
+      }
+      .tableValue{
+        width:100%;
+        font-size:18px;
+        line-height:1.08;
+        font-weight:900;
+        color:#0f172a;
+        word-break:keep-all;
+        overflow-wrap:anywhere;
+      }
+      .tableSub{
+        font-size:12px;
+        line-height:1.2;
+        font-weight:800;
+        color:#64748b;
+      }
+      .tablePickedDot{
+        position:absolute;
+        top:12px;
+        right:12px;
+        width:26px;
+        height:26px;
+        border-radius:999px;
+        display:grid;
+        place-items:center;
+        background:linear-gradient(135deg,#7c5cff,#5b7cff);
+        color:#fff;
+        font-size:13px;
+        font-weight:900;
+        box-shadow:0 8px 16px rgba(109,94,252,.20);
+      }
+      .is-active-level{
+        box-shadow:0 0 0 2px rgba(109,94,252,.16) inset !important;
+        border-color:rgba(109,94,252,.34) !important;
+      }
+      .vocabSheet{
+        position:fixed;
+        inset:0;
+        z-index:9999;
+        display:none;
+      }
+      .vocabSheet.open{display:block}
+      .vocabSheetBackdrop{
+        position:absolute;
+        inset:0;
+        background:rgba(15,23,42,.42);
+      }
+      .vocabSheetPanel{
+        position:absolute;
+        left:50%;
+        bottom:0;
+        transform:translateX(-50%);
+        width:min(960px,100%);
+        max-height:80vh;
+        background:#fff;
+        border-radius:28px 28px 0 0;
+        box-shadow:0 -24px 60px rgba(15,23,42,.22);
+        padding:18px;
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+      }
+      .vocabSheetHead{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+      }
+      .vocabSheetTitle{
+        font-size:18px;
+        font-weight:900;
+        color:#0f172a;
+      }
+      .vocabSheetClose{
+        width:42px;
+        height:42px;
+        border-radius:999px;
+        border:1px solid rgba(15,23,42,.08);
+        background:#fff;
+        color:#0f172a;
+        cursor:pointer;
+        font-size:18px;
+        font-weight:900;
+        box-shadow:0 6px 14px rgba(15,23,42,.05);
+      }
+      .vocabSheetSearch{
+        width:100%;
+        height:48px;
+        border-radius:14px;
+        border:1px solid rgba(15,23,42,.10);
+        padding:0 14px;
+        font:inherit;
+        font-size:15px;
+        font-weight:800;
+        color:#0f172a;
+        outline:none;
+        background:#fff;
+      }
+      .vocabSheetSearch:focus{
+        border-color:rgba(109,94,252,.38);
+        box-shadow:0 0 0 4px rgba(109,94,252,.08);
+      }
+      .vocabSheetList{
+        overflow:auto;
+        display:grid;
+        gap:10px;
+        padding-bottom:6px;
+      }
+      .vocabItem{
+        width:100%;
+        border:1px solid rgba(15,23,42,.08);
+        border-radius:18px;
+        background:#fff;
+        padding:14px 16px;
+        text-align:left;
+        cursor:pointer;
+        transition:background .16s ease, transform .16s ease, border-color .16s ease;
+      }
+      .vocabItem:hover{
+        background:#f8fafc;
+        transform:translateY(-1px);
+        border-color:rgba(15,23,42,.12);
+      }
+      .vocabItemKo{
+        font-size:18px;
+        line-height:1.12;
+        font-weight:900;
+        color:#0f172a;
+        margin-bottom:4px;
+      }
+      .vocabItemMeta{
+        font-size:13px;
+        line-height:1.3;
+        color:#64748b;
+        font-weight:700;
+      }
+      .vocabEmpty{
+        padding:18px;
+        border:1px dashed rgba(15,23,42,.14);
+        border-radius:16px;
+        color:#64748b;
+        font-weight:800;
+        background:#fff;
+      }
+      .recordInlineAudio{
+        width:100%;
+        margin-top:8px;
+      }
+      @media (max-width:860px){
+        .builderTable th,.builderTable td{
+          width:160px;
+          min-width:160px;
+          max-width:160px;
+        }
+        .tableField,.tableMainBtn{
+          min-height:124px;
+          height:124px;
+        }
+        .tableValue{font-size:17px}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  injectBuilderStyles();
+
+  var TABLE_KO = {
     topic: '주제',
     associate: '관련 인물',
     time: '시간',
@@ -436,7 +709,7 @@
     connector: '연결어'
   };
 
-  const TABLE_PLACEHOLDER_KO = {
+  var TABLE_PLACEHOLDER_KO = {
     topic: '선택',
     associate: '선택',
     time: '선택',
@@ -452,55 +725,7 @@
     connector: '선택'
   };
 
-  const FIELD_ALIASES = {
-    topic: ['topic', 'subject'],
-    associate: ['associate', 'participant', 'relative', 'associatedParticipant'],
-    time: ['time'],
-    departure: ['departure', 'location', 'place', 'from'],
-    transit: ['transit', 'via', 'through'],
-    numeral: ['numeral', 'number'],
-    quantifier: ['quantifier', 'classifier', 'unit'],
-    object1: ['object1', 'object', 'primaryObject'],
-    beneficiary: ['beneficiary'],
-    object2: ['object2', 'secondaryObject'],
-    adverb: ['adverb', 'description', 'manner'],
-    verb: ['verb'],
-    connector: ['connector']
-  };
-
-  const VOCAB_BUCKET_MAP = {
-    topic: ['subjects', 'subject', 'topics', 'topic', 'people', 'persons'],
-    associate: ['participants', 'participant', 'relatives', 'relative', 'people', 'persons', 'subjects'],
-    time: ['times', 'time'],
-    departure: ['locations', 'location', 'places', 'place', 'departures', 'departure'],
-    transit: ['locations', 'location', 'places', 'place', 'transit'],
-    numeral: ['numerals', 'numeral', 'numbers', 'number'],
-    quantifier: ['quantifiers', 'quantifier', 'classifiers', 'classifier', 'units', 'unit'],
-    object1: ['objects', 'object', 'object1'],
-    beneficiary: ['beneficiaries', 'beneficiary', 'people', 'persons', 'subjects'],
-    object2: ['objects', 'object', 'object2'],
-    adverb: ['adverbs', 'adverb', 'descriptions', 'description', 'manners'],
-    verb: ['verbs', 'verb'],
-    connector: ['connectors', 'connector']
-  };
-
-  const TABLE_COLUMNS = [
-    { key: 'topic', level: 1 },
-    { key: 'verb', level: 1 },
-    { key: 'associate', level: 2 },
-    { key: 'time', level: 2 },
-    { key: 'departure', level: 3 },
-    { key: 'transit', level: 3 },
-    { key: 'numeral', level: 4 },
-    { key: 'quantifier', level: 4 },
-    { key: 'object1', level: 4 },
-    { key: 'beneficiary', level: 5 },
-    { key: 'object2', level: 5 },
-    { key: 'adverb', level: 5 },
-    { key: 'connector', level: 6 }
-  ];
-
-  const FIELD_ORDER = [
+  var FIELD_ORDER = [
     'topic',
     'associate',
     'time',
@@ -516,24 +741,71 @@
     'connector'
   ];
 
-  const DOM = {};
-  const state = (window.state && typeof window.state === 'object') ? window.state : (window.state = {});
+  var TABLE_COLUMNS = [
+    { key:'topic', level:1 },
+    { key:'associate', level:2 },
+    { key:'time', level:2 },
+    { key:'departure', level:3 },
+    { key:'transit', level:3 },
+    { key:'numeral', level:4 },
+    { key:'quantifier', level:4 },
+    { key:'object1', level:4 },
+    { key:'beneficiary', level:5 },
+    { key:'object2', level:5 },
+    { key:'adverb', level:5 },
+    { key:'verb', level:1 },
+    { key:'connector', level:6 }
+  ];
 
-  if(typeof state.lang !== 'string') state.lang = 'ro';
-  if(typeof state.level !== 'number') state.level = 1;
-  if(!Array.isArray(state.clauses) || !state.clauses.length) state.clauses = [makeClause()];
+  var FIELD_ALIASES = {
+    topic: ['topic','subject'],
+    associate: ['associate','participant','relative','associatedParticipant'],
+    time: ['time'],
+    departure: ['departure','location','place','from'],
+    transit: ['transit','via','through'],
+    numeral: ['numeral','number'],
+    quantifier: ['quantifier','classifier','unit'],
+    object1: ['object1','object','primaryObject'],
+    beneficiary: ['beneficiary'],
+    object2: ['object2','secondaryObject'],
+    adverb: ['adverb','description','manner'],
+    verb: ['verb'],
+    connector: ['connector']
+  };
 
-  const vocabPickerState = {
+  var VOCAB_BUCKET_MAP = {
+    topic: ['subjects','subject','topics','topic','people','persons'],
+    associate: ['participants','participant','relatives','relative','people','persons','subjects'],
+    time: ['times','time'],
+    departure: ['locations','location','places','place','departures','departure'],
+    transit: ['locations','location','places','place','transit'],
+    numeral: ['numerals','numeral','numbers','number'],
+    quantifier: ['quantifiers','quantifier','classifiers','classifier','units','unit'],
+    object1: ['objects','object','object1'],
+    beneficiary: ['beneficiaries','beneficiary','people','persons','subjects'],
+    object2: ['objects','object','object2'],
+    adverb: ['adverbs','adverb','descriptions','description','manners'],
+    verb: ['verbs','verb'],
+    connector: ['connectors','connector']
+  };
+
+  var DOM = {};
+  var state = (window.state && typeof window.state === 'object') ? window.state : (window.state = {});
+  var vocabPickerState = {
     rowIndex: 0,
     fieldKey: 'topic',
     items: [],
     filteredItems: []
   };
 
-  let mediaRecorder = null;
-  let mediaStream = null;
-  let mediaChunks = [];
-  let isRecording = false;
+  var mediaRecorder = null;
+  var mediaStream = null;
+  var mediaChunks = [];
+  var isRecording = false;
+
+  if(typeof state.lang !== 'string') state.lang = 'ro';
+  if(typeof state.level !== 'number') state.level = 1;
+  if(!Array.isArray(state.clauses) || !state.clauses.length) state.clauses = [makeClause()];
 
   function makeClause(){
     return {
@@ -589,21 +861,20 @@
   }
 
   function ensureClauseShape(clause){
-    if(!clause || typeof clause !== 'object') return makeClause();
+    if(!clause || typeof clause !== 'object') clause = makeClause();
     if(!clause.__picked || typeof clause.__picked !== 'object') clause.__picked = {};
 
     FIELD_ORDER.forEach(function(fieldKey){
-      const aliases = FIELD_ALIASES[fieldKey] || [fieldKey];
+      var aliases = FIELD_ALIASES[fieldKey] || [fieldKey];
+      if(typeof clause[fieldKey] !== 'string') clause[fieldKey] = clause[fieldKey] ? String(clause[fieldKey]) : '';
       if(!clause[fieldKey]){
-        for(let i=0;i<aliases.length;i++){
-          const alias = aliases[i];
-          if(clause[alias]){
-            clause[fieldKey] = clause[alias];
+        for(var i=0;i<aliases.length;i++){
+          if(clause[aliases[i]]){
+            clause[fieldKey] = String(clause[aliases[i]]);
             break;
           }
         }
       }
-      if(typeof clause[fieldKey] !== 'string') clause[fieldKey] = clause[fieldKey] ? String(clause[fieldKey]) : '';
     });
 
     return clause;
@@ -612,7 +883,7 @@
   state.clauses = state.clauses.map(ensureClauseShape);
 
   function getVisibleColumns(){
-    const level = Math.max(1, Math.min(6, Number(state.level) || 1));
+    var level = Math.max(1, Math.min(6, Number(state.level) || 1));
     return TABLE_COLUMNS.filter(function(col){
       return col.level <= level;
     });
@@ -625,6 +896,7 @@
       window.VOCAB ||
       window.vocabulary ||
       window.__VOCAB__ ||
+      window.KOREAN_VOCAB ||
       window.DATA ||
       {}
     );
@@ -650,10 +922,10 @@
       };
     }
 
-    const ko = item.ko || item.kr || item.korean || item.surface || item.text || item.value || '';
-    const ro = item.ro || item.romanian || item.meaningRo || item.meaning_ro || item.translationRo || item.translation_ro || item.meaning || '';
-    const en = item.en || item.english || item.meaningEn || item.meaning_en || item.translationEn || item.translation_en || '';
-    const id = item.id || item.key || item.value || ko || ro || en || ('item-' + index);
+    var ko = item.ko || item.kr || item.korean || item.surface || item.text || item.value || '';
+    var ro = item.ro || item.romanian || item.meaningRo || item.meaning_ro || item.translationRo || item.translation_ro || item.meaning || '';
+    var en = item.en || item.english || item.meaningEn || item.meaning_en || item.translationEn || item.translation_en || '';
+    var id = item.id || item.key || item.value || ko || ro || en || ('item-' + index);
 
     return {
       id: String(id),
@@ -665,9 +937,9 @@
   }
 
   function uniqItems(items){
-    const seen = new Set();
+    var seen = new Set();
     return items.filter(function(item){
-      const key = [item.id, item.ko, item.ro, item.en].join('|');
+      var key = [item.id, item.ko, item.ro, item.en].join('|');
       if(seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -675,7 +947,7 @@
   }
 
   function getFallbackBucket(fieldKey){
-    const DATA = window.DATA || {};
+    var DATA = window.DATA || {};
     switch(fieldKey){
       case 'topic': return extractBucket(DATA, 'subjects').length ? extractBucket(DATA, 'subjects') : extractBucket(DATA, 'subject');
       case 'associate': return extractBucket(DATA, 'relatives').length ? extractBucket(DATA, 'relatives') : extractBucket(DATA, 'subjects');
@@ -695,11 +967,11 @@
   }
 
   function getVocabOptionsForField(fieldKey){
-    const source = getAppVocab();
-    const candidates = VOCAB_BUCKET_MAP[fieldKey] || [fieldKey];
-    let raw = [];
+    var source = getAppVocab();
+    var candidates = VOCAB_BUCKET_MAP[fieldKey] || [fieldKey];
+    var raw = [];
 
-    for(let i=0;i<candidates.length;i++){
+    for(var i=0;i<candidates.length;i++){
       raw = extractBucket(source, candidates[i]);
       if(raw && raw.length) break;
     }
@@ -708,19 +980,18 @@
       raw = getFallbackBucket(fieldKey);
     }
 
-    const normalized = (Array.isArray(raw) ? raw : []).map(normalizeItem).filter(function(item){
-      return item && item.ko;
-    });
+    var normalized = (Array.isArray(raw) ? raw : [])
+      .map(normalizeItem)
+      .filter(function(item){ return item && item.ko; });
 
     return uniqItems(normalized);
   }
 
   function getClauseValue(clause, fieldKey){
     if(!clause) return '';
-    const aliases = FIELD_ALIASES[fieldKey] || [fieldKey];
-    for(let i=0;i<aliases.length;i++){
-      const key = aliases[i];
-      if(clause[key]) return String(clause[key]);
+    var aliases = FIELD_ALIASES[fieldKey] || [fieldKey];
+    for(var i=0;i<aliases.length;i++){
+      if(clause[aliases[i]]) return String(clause[aliases[i]]);
     }
     return '';
   }
@@ -729,10 +1000,13 @@
     if(!clause.__picked || typeof clause.__picked !== 'object') clause.__picked = {};
     clause.__picked[fieldKey] = item;
 
-    const value = item && (item.id || item.ko || item.ro || item.en) ? String(item.id || item.ko || item.ro || item.en) : '';
+    var value = item && (item.id || item.ko || item.ro || item.en)
+      ? String(item.id || item.ko || item.ro || item.en)
+      : '';
+
     clause[fieldKey] = value;
 
-    const aliases = FIELD_ALIASES[fieldKey] || [];
+    var aliases = FIELD_ALIASES[fieldKey] || [];
     aliases.forEach(function(alias){
       clause[alias] = value;
     });
@@ -741,19 +1015,14 @@
   function getPickedDisplay(clause, fieldKey){
     if(clause && clause.__picked && clause.__picked[fieldKey]) return clause.__picked[fieldKey];
 
-    const raw = getClauseValue(clause, fieldKey);
+    var raw = getClauseValue(clause, fieldKey);
     if(!raw) return null;
 
-    const options = getVocabOptionsForField(fieldKey);
-    const rawNorm = normalizeLoose(raw);
+    var options = getVocabOptionsForField(fieldKey);
+    var rawNorm = normalizeLoose(raw);
 
-    const matched = options.find(function(opt){
-      return [
-        opt.id,
-        opt.ko,
-        opt.ro,
-        opt.en
-      ].some(function(part){
+    var matched = options.find(function(opt){
+      return [opt.id, opt.ko, opt.ro, opt.en].some(function(part){
         return normalizeLoose(part) === rawNorm;
       });
     });
@@ -770,45 +1039,38 @@
   }
 
   function buildSentenceKo(clause){
-    const pieces = [];
-
+    var pieces = [];
     FIELD_ORDER.forEach(function(fieldKey){
-      const picked = getPickedDisplay(clause, fieldKey);
-      if(!picked || !picked.ko) return;
-      pieces.push(String(picked.ko).trim());
+      var picked = getPickedDisplay(clause, fieldKey);
+      if(picked && picked.ko) pieces.push(String(picked.ko).trim());
     });
-
     return pieces.join(' ').replace(/\s+/g, ' ').trim() || '—';
   }
 
   function buildTranslation(clause){
-    const pieces = [];
-
+    var pieces = [];
     FIELD_ORDER.forEach(function(fieldKey){
-      const picked = getPickedDisplay(clause, fieldKey);
+      var picked = getPickedDisplay(clause, fieldKey);
       if(!picked) return;
-
-      const part = state.lang === 'en'
+      var part = state.lang === 'en'
         ? (picked.en || picked.ro || picked.ko)
         : (picked.ro || picked.en || picked.ko);
-
       if(part) pieces.push(String(part).trim());
     });
-
     return pieces.join(' ').replace(/\s+/g, ' ').trim() || '—';
   }
 
   function renderPreview(){
-    const clause = state.clauses[0] || makeClause();
+    var clause = state.clauses[0] || makeClause();
     if(DOM.sentenceText) DOM.sentenceText.textContent = buildSentenceKo(clause);
     if(DOM.translationText) DOM.translationText.textContent = buildTranslation(clause);
   }
 
   function renderCell(rowIndex, fieldKey, clause){
-    const picked = getPickedDisplay(clause, fieldKey);
-    const mainValue = picked ? (picked.ko || '—') : (TABLE_PLACEHOLDER_KO[fieldKey] || '선택');
-    const subText = picked ? '클릭하여 변경' : '클릭하여 선택';
-    const hasValue = !!picked;
+    var picked = getPickedDisplay(clause, fieldKey);
+    var mainValue = picked ? (picked.ko || '—') : (TABLE_PLACEHOLDER_KO[fieldKey] || '선택');
+    var subText = picked ? '클릭하여 변경' : '클릭하여 선택';
+    var hasValue = !!picked;
 
     return `
       <div class="tableField">
@@ -831,10 +1093,10 @@
   function renderClauses(){
     if(!DOM.clauseList) return;
 
-    const visibleCols = getVisibleColumns();
-    const rows = Array.isArray(state.clauses) && state.clauses.length ? state.clauses : [makeClause()];
+    var visibleCols = getVisibleColumns();
+    var rows = Array.isArray(state.clauses) && state.clauses.length ? state.clauses : [makeClause()];
 
-    const thead = `
+    var thead = `
       <thead>
         <tr>
           ${visibleCols.map(function(col){
@@ -844,7 +1106,7 @@
       </thead>
     `;
 
-    const tbody = `
+    var tbody = `
       <tbody>
         ${rows.map(function(clause, rowIndex){
           ensureClauseShape(clause);
@@ -876,8 +1138,8 @@
   }
 
   function renderLevelButtons(){
-    for(let i=1;i<=6;i++){
-      const btn = document.getElementById('btnT' + i);
+    for(var i=1;i<=6;i++){
+      var btn = document.getElementById('btnT' + i);
       if(btn){
         btn.classList.toggle('is-active-level', i === state.level);
         btn.setAttribute('aria-pressed', i === state.level ? 'true' : 'false');
@@ -885,7 +1147,7 @@
     }
 
     document.querySelectorAll('[data-level]').forEach(function(btn){
-      const level = Number(btn.getAttribute('data-level'));
+      var level = Number(btn.getAttribute('data-level'));
       btn.classList.toggle('is-active-level', level === state.level);
       btn.setAttribute('aria-pressed', level === state.level ? 'true' : 'false');
     });
@@ -905,15 +1167,14 @@
   }
 
   function setLevel(level){
-    const next = Math.max(1, Math.min(6, Number(level) || 1));
-    state.level = next;
+    state.level = Math.max(1, Math.min(6, Number(level) || 1));
     renderAll();
   }
 
   function ensureVocabSheet(){
     if(document.getElementById('vocabSheet')) return;
 
-    const el = document.createElement('div');
+    var el = document.createElement('div');
     el.id = 'vocabSheet';
     el.className = 'vocabSheet';
     el.innerHTML = `
@@ -931,7 +1192,7 @@
   }
 
   function renderVocabSheetList(items){
-    const list = document.getElementById('vocabSheetList');
+    var list = document.getElementById('vocabSheetList');
     if(!list) return;
 
     vocabPickerState.filteredItems = items.slice();
@@ -942,13 +1203,9 @@
     }
 
     list.innerHTML = items.map(function(item, index){
-      const meta = [item.ro, item.en].filter(Boolean).join(' · ');
+      var meta = [item.ro, item.en].filter(Boolean).join(' · ');
       return `
-        <button
-          type="button"
-          class="vocabItem"
-          data-vocab-index="${index}"
-        >
+        <button type="button" class="vocabItem" data-vocab-index="${index}">
           <div class="vocabItemKo">${escapeHtml(item.ko || '—')}</div>
           <div class="vocabItemMeta">${escapeHtml(meta)}</div>
         </button>
@@ -957,19 +1214,14 @@
   }
 
   function filterVocabSheet(keyword){
-    const q = normalizeLoose(keyword);
+    var q = normalizeLoose(keyword);
     if(!q){
       renderVocabSheetList(vocabPickerState.items);
       return;
     }
 
-    const filtered = vocabPickerState.items.filter(function(item){
-      const hay = [
-        item.ko || '',
-        item.ro || '',
-        item.en || '',
-        item.id || ''
-      ].join(' ');
+    var filtered = vocabPickerState.items.filter(function(item){
+      var hay = [item.ko || '', item.ro || '', item.en || '', item.id || ''].join(' ');
       return normalizeLoose(hay).includes(q);
     });
 
@@ -983,9 +1235,9 @@
     vocabPickerState.fieldKey = fieldKey;
     vocabPickerState.items = getVocabOptionsForField(fieldKey);
 
-    const root = document.getElementById('vocabSheet');
-    const title = document.getElementById('vocabSheetTitle');
-    const search = document.getElementById('vocabSheetSearch');
+    var root = document.getElementById('vocabSheet');
+    var title = document.getElementById('vocabSheetTitle');
+    var search = document.getElementById('vocabSheetSearch');
 
     if(title) title.textContent = TABLE_KO[fieldKey] || '선택';
     if(search) search.value = '';
@@ -997,15 +1249,15 @@
   }
 
   function closeVocabSheet(){
-    const root = document.getElementById('vocabSheet');
+    var root = document.getElementById('vocabSheet');
     if(root) root.classList.remove('open');
   }
 
   function pickVocabItem(index){
-    const item = vocabPickerState.filteredItems[index];
+    var item = vocabPickerState.filteredItems[index];
     if(!item) return;
 
-    const clause = state.clauses[vocabPickerState.rowIndex];
+    var clause = state.clauses[vocabPickerState.rowIndex];
     if(!clause) return;
 
     setClauseValue(clause, vocabPickerState.fieldKey, item);
@@ -1014,8 +1266,8 @@
   }
 
   function parseTextToClause(text){
-    const clause = makeClause();
-    const normalizedText = normalizeLoose(text);
+    var clause = makeClause();
+    var normalizedText = normalizeLoose(text);
 
     if(!normalizedText){
       state.clauses = [clause];
@@ -1024,23 +1276,18 @@
     }
 
     FIELD_ORDER.forEach(function(fieldKey){
-      const options = getVocabOptionsForField(fieldKey);
-      const found = options.find(function(item){
-        const variants = [
-          item.ko || '',
-          item.ro || '',
-          item.en || '',
-          item.id || ''
-        ].map(normalizeLoose).filter(Boolean);
+      var options = getVocabOptionsForField(fieldKey);
+      var found = options.find(function(item){
+        var variants = [item.ko || '', item.ro || '', item.en || '', item.id || '']
+          .map(normalizeLoose)
+          .filter(Boolean);
 
         return variants.some(function(v){
           return v && normalizedText.includes(v);
         });
       });
 
-      if(found){
-        setClauseValue(clause, fieldKey, found);
-      }
+      if(found) setClauseValue(clause, fieldKey, found);
     });
 
     state.clauses = [clause];
@@ -1048,13 +1295,13 @@
   }
 
   function speakSentence(){
-    const clause = state.clauses[0] || makeClause();
-    const text = buildSentenceKo(clause);
+    var clause = state.clauses[0] || makeClause();
+    var text = buildSentenceKo(clause);
     if(!text || text === '—') return;
 
     if('speechSynthesis' in window){
       window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
+      var utter = new SpeechSynthesisUtterance(text);
       utter.lang = 'ko-KR';
       utter.rate = 0.95;
       window.speechSynthesis.speak(utter);
@@ -1065,7 +1312,7 @@
     if(DOM.recordAudio) return DOM.recordAudio;
 
     if(DOM.recordBox){
-      const audio = document.createElement('audio');
+      var audio = document.createElement('audio');
       audio.id = 'recordAudio';
       audio.className = 'recordInlineAudio';
       audio.controls = true;
@@ -1090,9 +1337,9 @@
     };
 
     mediaRecorder.onstop = function(){
-      const blob = new Blob(mediaChunks, { type: 'audio/webm' });
-      const url = URL.createObjectURL(blob);
-      const audioEl = ensureRecordAudioEl();
+      var blob = new Blob(mediaChunks, { type: 'audio/webm' });
+      var url = URL.createObjectURL(blob);
+      var audioEl = ensureRecordAudioEl();
       if(audioEl){
         audioEl.src = url;
         audioEl.load();
@@ -1115,18 +1362,13 @@
   }
 
   function stopRecording(){
-    if(mediaRecorder && isRecording){
-      mediaRecorder.stop();
-    }
+    if(mediaRecorder && isRecording) mediaRecorder.stop();
   }
 
   async function toggleRecording(){
     try{
-      if(isRecording){
-        stopRecording();
-      }else{
-        await startRecording();
-      }
+      if(isRecording) stopRecording();
+      else await startRecording();
     }catch(err){
       console.error(err);
     }
@@ -1167,13 +1409,15 @@
       });
     }
 
-    for(let i=1;i<=6;i++){
-      const btn = document.getElementById('btnT' + i);
-      if(btn){
-        btn.addEventListener('click', function(){
-          setLevel(i);
-        });
-      }
+    for(var i=1;i<=6;i++){
+      (function(level){
+        var btn = document.getElementById('btnT' + level);
+        if(btn){
+          btn.addEventListener('click', function(){
+            setLevel(level);
+          });
+        }
+      })(i);
     }
 
     document.querySelectorAll('[data-level]').forEach(function(btn){
@@ -1191,10 +1435,10 @@
 
   function bindDelegatedEvents(){
     document.addEventListener('click', function(e){
-      const openBtn = e.target.closest('.vocabOpenBtn');
+      var openBtn = e.target.closest('.vocabOpenBtn');
       if(openBtn){
-        const rowIndex = Number(openBtn.getAttribute('data-row-index'));
-        const fieldKey = openBtn.getAttribute('data-field-key');
+        var rowIndex = Number(openBtn.getAttribute('data-row-index'));
+        var fieldKey = openBtn.getAttribute('data-field-key');
         openVocabSheet(rowIndex, fieldKey);
         return;
       }
@@ -1204,9 +1448,9 @@
         return;
       }
 
-      const vocabItem = e.target.closest('.vocabItem');
+      var vocabItem = e.target.closest('.vocabItem');
       if(vocabItem){
-        const index = Number(vocabItem.getAttribute('data-vocab-index'));
+        var index = Number(vocabItem.getAttribute('data-vocab-index'));
         pickVocabItem(index);
       }
     });
@@ -1218,9 +1462,7 @@
     });
 
     document.addEventListener('keydown', function(e){
-      if(e.key === 'Escape'){
-        closeVocabSheet();
-      }
+      if(e.key === 'Escape') closeVocabSheet();
     });
   }
 
@@ -1240,8 +1482,8 @@
     initFromExistingInput();
 
     window.setLevel = setLevel;
-    window.renderClauses = renderClauses;
     window.renderAll = renderAll;
+    window.renderClauses = renderClauses;
   }
 
   if(document.readyState === 'loading'){
@@ -1251,8 +1493,6 @@
   }
 })();
 </script>
-
- 
 </body>
 </html>
 
