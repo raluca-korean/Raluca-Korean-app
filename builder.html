@@ -1494,7 +1494,101 @@ function setClausePickedValue(clauseIndex, fieldKey, item){
 
     renderAll();
   }
+function ensureVocabSheet(){
+  if(document.getElementById('vocabSheet')) return;
 
+  const el = document.createElement('div');
+  el.id = 'vocabSheet';
+  el.className = 'vocabSheet';
+  el.innerHTML = `
+    <div class="vocabSheetBackdrop" data-close-vocab="1"></div>
+    <div class="vocabSheetPanel">
+      <div class="vocabSheetHead">
+        <div class="vocabSheetTitle" id="vocabSheetTitle">선택</div>
+        <button type="button" class="vocabSheetClose" id="vocabSheetClose">✕</button>
+      </div>
+      <div class="vocabSheetSearchWrap">
+        <input id="vocabSheetSearch" class="vocabSheetSearch" type="text" placeholder="검색">
+      </div>
+      <div id="vocabSheetList" class="vocabSheetList"></div>
+    </div>
+  `;
+  document.body.appendChild(el);
+}
+
+const vocabPickerState = {
+  rowIndex: null,
+  fieldKey: null,
+  items: []
+};
+
+function openVocabSheet(rowIndex, fieldKey){
+  ensureVocabSheet();
+
+  vocabPickerState.rowIndex = rowIndex;
+  vocabPickerState.fieldKey = fieldKey;
+  vocabPickerState.items = getVocabOptionsForField(fieldKey);
+
+  const root = document.getElementById('vocabSheet');
+  const title = document.getElementById('vocabSheetTitle');
+  const search = document.getElementById('vocabSheetSearch');
+
+  title.textContent = TABLE_KO[fieldKey] || '선택';
+  search.value = '';
+
+  renderVocabSheetList(vocabPickerState.items);
+
+  root.classList.add('open');
+  document.body.classList.add('vocabSheetOpen');
+  search.focus();
+}
+
+function closeVocabSheet(){
+  const root = document.getElementById('vocabSheet');
+  if(root) root.classList.remove('open');
+  document.body.classList.remove('vocabSheetOpen');
+}
+
+function renderVocabSheetList(items){
+  const list = document.getElementById('vocabSheetList');
+  if(!list) return;
+
+  if(!items.length){
+    list.innerHTML = `<div class="vocabEmpty">항목이 없습니다</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map((item, index) => `
+    <button
+      type="button"
+      class="vocabItem"
+      data-vocab-index="${index}"
+    >
+      <div class="vocabItemKo">${escapeHtml(item.ko || '—')}</div>
+      <div class="vocabItemMeta">${escapeHtml([item.ro, item.en].filter(Boolean).join(' · '))}</div>
+    </button>
+  `).join('');
+}
+
+function filterVocabSheet(keyword){
+  const q = (keyword || '').trim().toLowerCase();
+
+  if(!q){
+    renderVocabSheetList(vocabPickerState.items);
+    return;
+  }
+
+  const filtered = vocabPickerState.items.filter(item => {
+    return [
+      item.ko || '',
+      item.ro || '',
+      item.en || '',
+      item.id || ''
+    ].join(' ').toLowerCase().includes(q);
+  });
+
+  renderVocabSheetList(filtered);
+}
   function updateExtraField(clauseIndex, extraKey, value){
     var clause = state.clauses[clauseIndex];
     if(!clause || !clause.extras) return;
