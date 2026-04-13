@@ -370,1021 +370,1136 @@
   </div>
 
   <div class="toast" id="toast" aria-live="polite"></div>
+<script>
+(function(){
+  function injectAdvancedTableStyles(){
+    if(document.getElementById('advanced-builder-table-styles')) return;
+    var style = document.createElement('style');
+    style.id = 'advanced-builder-table-styles';
+    style.textContent = `
+      .clauseList{display:block}
+      .builderTableWrap{
+        width:100%;
+        overflow:auto;
+        border:1px solid var(--line);
+        border-radius:20px;
+        background:#fff;
+        box-shadow:var(--shadow-sm);
+      }
+      .builderTable{
+        width:100%;
+        min-width:1600px;
+        border-collapse:separate;
+        border-spacing:0;
+      }
+      .builderTable thead th{
+        position:sticky;
+        top:0;
+        z-index:2;
+        padding:12px;
+        text-align:left;
+        font-size:11px;
+        line-height:1.25;
+        letter-spacing:.11em;
+        text-transform:uppercase;
+        font-weight:900;
+        color:#475569;
+        background:linear-gradient(180deg,#fafbff,#f3f5ff);
+        border-bottom:1px solid rgba(15,23,42,.08);
+        white-space:nowrap;
+      }
+      .builderTable tbody td{
+        padding:10px;
+        vertical-align:top;
+        border-bottom:1px solid rgba(15,23,42,.06);
+        background:#fff;
+        min-width:120px;
+      }
+      .builderTable tbody tr:nth-child(odd) td{background:#fcfdff}
+      .builderTable tbody tr:last-child td{border-bottom:none}
 
-  <script>
-    var UI = {
-      ro: {
-        placeholder: "Scrie aici o propoziție sau un lanț de propoziții...",
-        defaultTranslation: "Configurează coloanele tabelului pentru a genera propoziția.",
-        clause: "Propoziția",
-        noSpeech: "Nu există propoziție de redat.",
-        recordStart: "Înregistrare pornită.",
-        recordStop: "Înregistrare oprită. Poți asculta mai jos.",
-        recordUnsupported: "Înregistrarea audio nu este disponibilă pe acest browser.",
-        prompts: {
-          relative: "Ce fel de...?",
-          subject: "Cine?",
-          time: "Când?",
-          location: "Unde?",
-          object: "Ce?",
-          description: "Cum?",
-          verb: "Ce face?",
-          connector: "Conector"
-        },
-        labels: {
-          subject: "TOPIC",
-          time: "TIME",
-          location: "DEPARTURE",
-          object: "OBJECT 1",
-          description: "ADVERB",
-          verb: "VERB",
-          connector: "CONNECTOR"
-        },
-        columns: {
-          topic: "Topic",
-          associate: "Participant asociat",
-          time: "Timp",
-          departure: "Loc plecare",
-          transit: "Loc trecere",
-          numeral: "Numeral",
-          quantifier: "Cuantificator / clasificator / unitate",
-          object1: "Obiect 1",
-          beneficiary: "Beneficiar",
-          object2: "Obiect 2",
-          adverb: "Adverb",
-          verb: "Verb",
-          connector: "Conector"
-        },
-        editable: "editabil",
-        inferred: "inferat din text",
-        placeAssociate: "participant",
-        placeTransit: "loc trecere",
-        placeNumeral: "numeral",
-        placeQuantifier: "cuantificator",
-        placeBeneficiary: "beneficiar",
-        placeObject2: "obiect 2"
+      .tableField{
+        position:relative;
+        min-height:104px;
+        display:grid;
+        gap:7px;
+      }
+      .tableField.off{opacity:.42;filter:saturate(.86)}
+
+      .tableToggle{
+        position:absolute;
+        top:0;
+        right:0;
+        width:25px;
+        height:25px;
+        border-radius:999px;
+        border:1px solid rgba(15,23,42,.10);
+        background:#fff;
+        color:#64748b;
+        cursor:pointer;
+        display:grid;
+        place-items:center;
+        box-shadow:0 6px 14px rgba(15,23,42,.05);
+        font-size:12px;
+        font-weight:900;
+        line-height:1;
+        padding:0;
+        z-index:2;
+      }
+      .tableToggle.active{
+        color:#fff;
+        border-color:transparent;
+        background:linear-gradient(135deg,var(--primary),var(--primary2));
+      }
+      .tableToggle.ghost{
+        cursor:default;
+        opacity:.28;
+        border-style:dashed;
+        box-shadow:none;
+        pointer-events:none;
+      }
+
+      .tableMainBtn{
+        width:100%;
+        min-height:104px;
+        border:1px solid rgba(15,23,42,.08);
+        border-radius:18px;
+        background:linear-gradient(180deg,#fff,#f8fafc);
+        box-shadow:0 8px 18px rgba(15,23,42,.04);
+        text-align:left;
+        padding:11px 12px;
+        display:grid;
+        gap:7px;
+        cursor:pointer;
+      }
+      .tableMainBtn[data-kind="subject"]{background:linear-gradient(180deg,var(--c-subject),#fff)}
+      .tableMainBtn[data-kind="time"]{background:linear-gradient(180deg,var(--c-time),#fff)}
+      .tableMainBtn[data-kind="location"]{background:linear-gradient(180deg,var(--c-location),#fff)}
+      .tableMainBtn[data-kind="object"]{background:linear-gradient(180deg,var(--c-object),#fff)}
+      .tableMainBtn[data-kind="description"]{background:linear-gradient(180deg,var(--c-description),#fff)}
+      .tableMainBtn[data-kind="verb"]{background:linear-gradient(180deg,var(--c-verb),#fff)}
+      .tableMainBtn[data-kind="connector"]{background:linear-gradient(180deg,var(--c-connector),#fff)}
+
+      .tableValue{
+        font-size:21px;
+        line-height:1.06;
+        font-weight:900;
+        letter-spacing:-.02em;
+        color:#0f172a;
+        word-break:keep-all;
+        margin-top:auto;
+      }
+      .tableMeta{
+        font-size:11px;
+        line-height:1.35;
+        color:#64748b;
+        font-weight:800;
+        min-height:14px;
+      }
+
+      .tableInputWrap{
+        min-height:104px;
+        border:1px solid rgba(15,23,42,.08);
+        border-radius:18px;
+        background:linear-gradient(180deg,#fff,#f8fafc);
+        box-shadow:0 8px 18px rgba(15,23,42,.04);
+        padding:11px 12px;
+        display:grid;
+        gap:8px;
+      }
+      .tableInput{
+        width:100%;
+        border:1px solid rgba(15,23,42,.10);
+        border-radius:12px;
+        background:#fff;
+        padding:10px 11px;
+        font:inherit;
+        font-size:15px;
+        font-weight:800;
+        color:var(--text);
+        outline:none;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+      }
+      .tableInput:focus{
+        border-color:rgba(109,94,252,.42);
+        box-shadow:0 0 0 4px rgba(109,94,252,.08);
+      }
+      .tableInputMeta{
+        font-size:11px;
+        line-height:1.35;
+        color:#64748b;
+        font-weight:800;
+        min-height:14px;
+      }
+
+      @media (max-width:980px){
+        .builderTable{min-width:1460px}
+      }
+      @media (max-width:720px){
+        .builderTable thead th,.builderTable tbody td{padding:9px}
+        .builderTable{min-width:1340px}
+        .tableValue{font-size:18px}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  injectAdvancedTableStyles();
+
+  var UI = {
+    ro: {
+      placeholder: "Scrie aici o propoziție sau un lanț de propoziții...",
+      defaultTranslation: "Configurează coloanele tabelului pentru a genera propoziția.",
+      clause: "Propoziția",
+      noSpeech: "Nu există propoziție de redat.",
+      recordStart: "Înregistrare pornită.",
+      recordStop: "Înregistrare oprită. Poți asculta mai jos.",
+      recordUnsupported: "Înregistrarea audio nu este disponibilă pe acest browser.",
+      prompts: {
+        subject: "Cine?",
+        time: "Când?",
+        location: "Unde?",
+        object: "Ce?",
+        description: "Cum?",
+        verb: "Ce face?",
+        connector: "Conector"
       },
-      en: {
-        placeholder: "Type a sentence or a chain of sentences here...",
-        defaultTranslation: "Configure the table columns to generate the sentence.",
-        clause: "Sentence",
-        noSpeech: "There is no sentence to play.",
-        recordStart: "Recording started.",
-        recordStop: "Recording stopped. You can listen below.",
-        recordUnsupported: "Audio recording is not available in this browser.",
-        prompts: {
-          relative: "Which kind of...?",
-          subject: "Who?",
-          time: "When?",
-          location: "Where?",
-          object: "What?",
-          description: "How?",
-          verb: "What happens?",
-          connector: "Connector"
-        },
-        labels: {
-          subject: "TOPIC",
-          time: "TIME",
-          location: "DEPARTURE",
-          object: "OBJECT 1",
-          description: "ADVERB",
-          verb: "VERB",
-          connector: "CONNECTOR"
-        },
-        columns: {
-          topic: "Topic",
-          associate: "Associated participant",
-          time: "Time",
-          departure: "Departure place",
-          transit: "Transit place",
-          numeral: "Numeral",
-          quantifier: "Quantifier / classifier / unit",
-          object1: "Object 1",
-          beneficiary: "Beneficiary",
-          object2: "Object 2",
-          adverb: "Adverb",
-          verb: "Verb",
-          connector: "Connector"
-        },
-        editable: "editable",
-        inferred: "inferred from text",
-        placeAssociate: "participant",
-        placeTransit: "transit place",
-        placeNumeral: "numeral",
-        placeQuantifier: "quantifier",
-        placeBeneficiary: "beneficiary",
-        placeObject2: "object 2"
+      labels: {
+        subject: "TOPIC",
+        time: "TIME",
+        location: "DEPARTURE",
+        object: "OBJECT 1",
+        description: "ADVERB",
+        verb: "VERB",
+        connector: "CONNECTOR"
+      },
+      columns: {
+        topic: "Topic",
+        associate: "Participant asociat",
+        time: "Timp",
+        departure: "Loc plecare",
+        transit: "Loc trecere",
+        numeral: "Numeral",
+        quantifier: "Cuantificator / clasificator / unitate",
+        object1: "Obiect 1",
+        beneficiary: "Beneficiar",
+        object2: "Obiect 2",
+        adverb: "Adverb",
+        verb: "Verb",
+        connector: "Conector"
+      },
+      editable: "editabil",
+      inferred: "inferat din text",
+      placeAssociate: "participant",
+      placeTransit: "loc trecere",
+      placeNumeral: "numeral",
+      placeQuantifier: "cuantificator",
+      placeBeneficiary: "beneficiar",
+      placeObject2: "obiect 2"
+    },
+    en: {
+      placeholder: "Type a sentence or a chain of sentences here...",
+      defaultTranslation: "Configure the table columns to generate the sentence.",
+      clause: "Sentence",
+      noSpeech: "There is no sentence to play.",
+      recordStart: "Recording started.",
+      recordStop: "Recording stopped. You can listen below.",
+      recordUnsupported: "Audio recording is not available in this browser.",
+      prompts: {
+        subject: "Who?",
+        time: "When?",
+        location: "Where?",
+        object: "What?",
+        description: "How?",
+        verb: "What happens?",
+        connector: "Connector"
+      },
+      labels: {
+        subject: "TOPIC",
+        time: "TIME",
+        location: "DEPARTURE",
+        object: "OBJECT 1",
+        description: "ADVERB",
+        verb: "VERB",
+        connector: "CONNECTOR"
+      },
+      columns: {
+        topic: "Topic",
+        associate: "Associated participant",
+        time: "Time",
+        departure: "Departure place",
+        transit: "Transit place",
+        numeral: "Numeral",
+        quantifier: "Quantifier / classifier / unit",
+        object1: "Object 1",
+        beneficiary: "Beneficiary",
+        object2: "Object 2",
+        adverb: "Adverb",
+        verb: "Verb",
+        connector: "Connector"
+      },
+      editable: "editable",
+      inferred: "inferred from text",
+      placeAssociate: "participant",
+      placeTransit: "transit place",
+      placeNumeral: "numeral",
+      placeQuantifier: "quantifier",
+      placeBeneficiary: "beneficiary",
+      placeObject2: "object 2"
+    }
+  };
+
+  var COLUMN_DEFS = [
+    {key:'topic', level:1, mode:'dataset', fieldKey:'subject', kind:'subject', toggleable:true},
+    {key:'associate', level:3, mode:'extra', extraKey:'associate', placeholderKey:'placeAssociate'},
+    {key:'time', level:1, mode:'dataset', fieldKey:'time', kind:'time', toggleable:true},
+    {key:'departure', level:3, mode:'dataset', fieldKey:'location', kind:'location', toggleable:true},
+    {key:'transit', level:4, mode:'extra', extraKey:'transit', placeholderKey:'placeTransit'},
+    {key:'numeral', level:5, mode:'extra', extraKey:'numeral', placeholderKey:'placeNumeral'},
+    {key:'quantifier', level:5, mode:'extra', extraKey:'quantifier', placeholderKey:'placeQuantifier'},
+    {key:'object1', level:1, mode:'dataset', fieldKey:'object', kind:'object', toggleable:true},
+    {key:'beneficiary', level:4, mode:'extra', extraKey:'beneficiary', placeholderKey:'placeBeneficiary'},
+    {key:'object2', level:6, mode:'extra', extraKey:'object2', placeholderKey:'placeObject2'},
+    {key:'adverb', level:2, mode:'dataset', fieldKey:'description', kind:'description', toggleable:true},
+    {key:'verb', level:1, mode:'dataset', fieldKey:'verb', kind:'verb', toggleable:false},
+    {key:'connector', level:2, mode:'dataset', fieldKey:'connector', kind:'connector', toggleable:false}
+  ];
+
+  var DATA = {
+    subject: [
+      {ko:'저는', ro:'eu', en:'I', aliases:['eu','i']},
+      {ko:'나는', ro:'eu', en:'I', aliases:['eu','i']},
+      {ko:'우리는', ro:'noi', en:'we', aliases:['noi','we']},
+      {ko:'친구는', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
+      {ko:'선생님은', ro:'profesorul', en:'teacher', aliases:['profesorul','profesor','teacher']},
+      {ko:'학생은', ro:'studentul', en:'student', aliases:['studentul','student']},
+      {ko:'민수는', ro:'Minsu', en:'Minsu', aliases:['minsu']},
+      {ko:'지수는', ro:'Jisu', en:'Jisu', aliases:['jisu']}
+    ],
+    time: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'오늘', ro:'astăzi', en:'today', aliases:['astăzi','astazi','azi','today']},
+      {ko:'어제', ro:'ieri', en:'yesterday', aliases:['ieri','yesterday']},
+      {ko:'내일', ro:'mâine', en:'tomorrow', aliases:['maine','mâine','tomorrow']},
+      {ko:'지금', ro:'acum', en:'now', aliases:['acum','now']},
+      {ko:'매일', ro:'în fiecare zi', en:'every day', aliases:['zilnic','in fiecare zi','în fiecare zi','every day']},
+      {ko:'아침에', ro:'dimineața', en:'in the morning', aliases:['dimineata','dimineața','morning']},
+      {ko:'저녁에', ro:'seara', en:'in the evening', aliases:['seara','evening']},
+      {ko:'주말에', ro:'în weekend', en:'on the weekend', aliases:['weekend']}
+    ],
+    location: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'학교에서', ro:'la școală', en:'at school', aliases:['la scoala','la școală','scoala','școală','school']},
+      {ko:'집에서', ro:'acasă', en:'at home', aliases:['acasă','acasa','home']},
+      {ko:'도서관에서', ro:'la bibliotecă', en:'at the library', aliases:['la biblioteca','la bibliotecă','biblioteca','bibliotecă','library']},
+      {ko:'카페에서', ro:'la cafenea', en:'at the cafe', aliases:['la cafenea','cafenea','cafe']},
+      {ko:'회사에서', ro:'la serviciu', en:'at work', aliases:['la serviciu','serviciu','la munca','la muncă','work']},
+      {ko:'공원에서', ro:'în parc', en:'in the park', aliases:['in parc','în parc','parc','park']},
+      {ko:'식당에서', ro:'la restaurant', en:'at the restaurant', aliases:['restaurant']},
+      {ko:'교실에서', ro:'în clasă', en:'in the classroom', aliases:['in clasa','în clasă','clasa','clasă','classroom']},
+      {ko:'길에서', ro:'pe stradă', en:'on the street', aliases:['pe strada','pe stradă','strada','stradă','street']},
+      {ko:'시장에서', ro:'la piață', en:'at the market', aliases:['la piata','la piață','piata','piață','market']},
+      {ko:'가게에서', ro:'la magazin', en:'at the store', aliases:['la magazin','magazin','store','shop']},
+      {ko:'온라인으로', ro:'online', en:'online', aliases:['online']}
+    ],
+    object: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'한국어를', ro:'limba coreeană', en:'Korean', aliases:['coreeana','coreeană','limba coreeana','limba coreeană','korean']},
+      {ko:'점심을', ro:'prânzul', en:'lunch', aliases:['pranzul','prânzul','pranz','prânz','lunch']},
+      {ko:'숙제를', ro:'tema', en:'homework', aliases:['tema','homework']},
+      {ko:'책을', ro:'cartea', en:'the book', aliases:['cartea','carte','book']},
+      {ko:'커피를', ro:'cafeaua', en:'coffee', aliases:['cafeaua','cafea','coffee']},
+      {ko:'음악을', ro:'muzica', en:'music', aliases:['muzica','muzică','music']},
+      {ko:'영화를', ro:'filmul', en:'the movie', aliases:['filmul','film','movie']},
+      {ko:'친구를', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
+      {ko:'프로젝트를', ro:'proiectul', en:'the project', aliases:['proiectul','proiect','project']},
+      {ko:'편지를', ro:'scrisoarea', en:'the letter', aliases:['scrisoarea','scrisoare','letter']},
+      {ko:'초콜릿을', ro:'ciocolata', en:'chocolate', aliases:['ciocolata','ciocolată','chocolate']},
+      {ko:'음식을', ro:'mâncarea', en:'food', aliases:['mancarea','mâncarea','mancare','mâncare','food']}
+    ],
+    description: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'빨리', ro:'repede', en:'quickly', aliases:['repede','quickly','fast']},
+      {ko:'천천히', ro:'încet', en:'slowly', aliases:['incet','încet','slowly']},
+      {ko:'열심히', ro:'cu sârguință', en:'diligently', aliases:['cu sarguinta','cu sârguință','serios','din greu','diligently','hard']},
+      {ko:'조용히', ro:'în liniște', en:'quietly', aliases:['in liniste','în liniște','quietly']},
+      {ko:'같이', ro:'împreună', en:'together', aliases:['împreună','impreuna','together']},
+      {ko:'혼자', ro:'singur', en:'alone', aliases:['singur','singura','alone']},
+      {ko:'다시', ro:'din nou', en:'again', aliases:['din nou','again']},
+      {ko:'미리', ro:'dinainte', en:'in advance', aliases:['dinainte','in advance']},
+      {ko:'정말', ro:'foarte', en:'really', aliases:['foarte','really']},
+      {ko:'조금', ro:'puțin', en:'a little', aliases:['putin','puțin','little']},
+      {ko:'자주', ro:'des', en:'often', aliases:['des','often']}
+    ],
+    verb: [
+      {ko:'공부하다', ro:'a studia', en:'to study', aliases:['studiez','studia','invat','învăț','study','learn'], final:'공부해요', forms:{none:'공부해요',seq:'공부하고',cause1:'공부해서',cause2:'공부하니까',condition:'공부하면',contrast1:'공부하지만',contrast2:'공부하는데',purpose:'공부하려고',result:'공부하게 되다'}},
+      {ko:'먹다', ro:'a mânca', en:'to eat', aliases:['mananc','mănânc','eat'], final:'먹어요', forms:{none:'먹어요',seq:'먹고',cause1:'먹어서',cause2:'먹으니까',condition:'먹으면',contrast1:'먹지만',contrast2:'먹는데',purpose:'먹으려고',result:'먹게 되다'}},
+      {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','plec','merge','go','leave'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
+      {ko:'오다', ro:'a veni', en:'to come', aliases:['vin','vine','veni','come'], final:'와요', forms:{none:'와요',seq:'오고',cause1:'와서',cause2:'오니까',condition:'오면',contrast1:'오지만',contrast2:'오는데',purpose:'오려고',result:'오게 되다'}},
+      {ko:'보다', ro:'a vedea', en:'to see', aliases:['vad','văd','vezi','vede','see','watch'], final:'봐요', forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
+      {ko:'읽다', ro:'a citi', en:'to read', aliases:['citesc','citeste','citește','read'], final:'읽어요', forms:{none:'읽어요',seq:'읽고',cause1:'읽어서',cause2:'읽으니까',condition:'읽으면',contrast1:'읽지만',contrast2:'읽는데',purpose:'읽으려고',result:'읽게 되다'}},
+      {ko:'쓰다', ro:'a scrie', en:'to write', aliases:['scriu','scrie','write'], final:'써요', forms:{none:'써요',seq:'쓰고',cause1:'써서',cause2:'쓰니까',condition:'쓰면',contrast1:'쓰지만',contrast2:'쓰는데',purpose:'쓰려고',result:'쓰게 되다'}},
+      {ko:'만나다', ro:'a întâlni', en:'to meet', aliases:['intalnesc','întâlnesc','meet'], final:'만나요', forms:{none:'만나요',seq:'만나고',cause1:'만나서',cause2:'만나니까',condition:'만나면',contrast1:'만나지만',contrast2:'만나는데',purpose:'만나려고',result:'만나게 되다'}},
+      {ko:'쉬다', ro:'a se odihni', en:'to rest', aliases:['odihnesc','rest'], final:'쉬어요', forms:{none:'쉬어요',seq:'쉬고',cause1:'쉬어서',cause2:'쉬니까',condition:'쉬면',contrast1:'쉬지만',contrast2:'쉬는데',purpose:'쉬려고',result:'쉬게 되다'}},
+      {ko:'일하다', ro:'a lucra', en:'to work', aliases:['lucrez','lucrează','lucreaza','work'], final:'일해요', forms:{none:'일해요',seq:'일하고',cause1:'일해서',cause2:'일하니까',condition:'일하면',contrast1:'일하지만',contrast2:'일하는데',purpose:'일하려고',result:'일하게 되다'}},
+      {ko:'운동하다', ro:'a face sport', en:'to exercise', aliases:['fac sport','sport','exercise'], final:'운동해요', forms:{none:'운동해요',seq:'운동하고',cause1:'운동해서',cause2:'운동하니까',condition:'운동하면',contrast1:'운동하지만',contrast2:'운동하는데',purpose:'운동하려고',result:'운동하게 되다'}},
+      {ko:'준비하다', ro:'a pregăti', en:'to prepare', aliases:['pregatesc','pregătesc','prepare'], final:'준비해요', forms:{none:'준비해요',seq:'준비하고',cause1:'준비해서',cause2:'준비하니까',condition:'준비하면',contrast1:'준비하지만',contrast2:'준비하는데',purpose:'준비하려고',result:'준비하게 되다'}},
+      {ko:'배우다', ro:'a învăța', en:'to learn', aliases:['invat','învăț','learn'], final:'배워요', forms:{none:'배워요',seq:'배우고',cause1:'배워서',cause2:'배우니까',condition:'배우면',contrast1:'배우지만',contrast2:'배우는데',purpose:'배우려고',result:'배우게 되다'}},
+      {ko:'듣다', ro:'a asculta', en:'to listen', aliases:['ascult','asculta','listen'], final:'들어요', forms:{none:'들어요',seq:'듣고',cause1:'들어서',cause2:'들으니까',condition:'들으면',contrast1:'듣지만',contrast2:'듣는데',purpose:'들으려고',result:'듣게 되다'}},
+      {ko:'만들다', ro:'a face', en:'to make', aliases:['fac','creeaza','creează','make','create'], final:'만들어요', forms:{none:'만들어요',seq:'만들고',cause1:'만들어서',cause2:'만드니까',condition:'만들면',contrast1:'만들지만',contrast2:'만드는데',purpose:'만들려고',result:'만들게 되다'}},
+      {ko:'사다', ro:'a cumpăra', en:'to buy', aliases:['cumpar','cumpăr','cumpăra','buy'], final:'사요', forms:{none:'사요',seq:'사고',cause1:'사서',cause2:'사니까',condition:'사면',contrast1:'사지만',contrast2:'사는데',purpose:'사려고',result:'사게 되다'}},
+      {ko:'주다', ro:'a da', en:'to give', aliases:['dau','da','give'], final:'줘요', forms:{none:'줘요',seq:'주고',cause1:'줘서',cause2:'주니까',condition:'주면',contrast1:'주지만',contrast2:'주는데',purpose:'주려고',result:'주게 되다'}}
+    ],
+    connector: [
+      {key:'none', ko:'—', ro:'', en:'', aliases:['fara conector','fără conector','none']},
+      {key:'seq', ko:'고', ro:'și apoi', en:'and then', aliases:['si apoi','și apoi','apoi','and then','and']},
+      {key:'cause1', ko:'아/어서', ro:'pentru că', en:'because', aliases:['pentru ca','pentru că','because']},
+      {key:'cause2', ko:'(으)니까', ro:'fiindcă', en:'since', aliases:['fiindca','fiindcă','since']},
+      {key:'condition', ko:'(으)면', ro:'dacă', en:'if', aliases:['daca','dacă','if']},
+      {key:'contrast1', ko:'지만', ro:'dar', en:'but', aliases:['dar','insa','însă','but','however']},
+      {key:'contrast2', ko:'는데', ro:'iar', en:'while', aliases:['iar','while']},
+      {key:'purpose', ko:'(으)려고', ro:'ca să', en:'in order to', aliases:['ca sa','ca să','in order to']},
+      {key:'result', ko:'게 되다', ro:'ajunge să', en:'end up', aliases:['ajunge sa','ajunge să','end up']}
+    ]
+  };
+
+  var VERB_FINITE_MAP = {
+    '공부하다': {ro:{i:'studiez',we:'studiem',third:'studiază'}, en:{i:'study',we:'study',third:'studies'}},
+    '먹다': {ro:{i:'mănânc',we:'mâncăm',third:'mănâncă'}, en:{i:'eat',we:'eat',third:'eats'}},
+    '가다': {ro:{i:'merg',we:'mergem',third:'merge'}, en:{i:'go',we:'go',third:'goes'}},
+    '오다': {ro:{i:'vin',we:'venim',third:'vine'}, en:{i:'come',we:'come',third:'comes'}},
+    '보다': {ro:{i:'văd',we:'vedem',third:'vede'}, en:{i:'see',we:'see',third:'sees'}},
+    '읽다': {ro:{i:'citesc',we:'citim',third:'citește'}, en:{i:'read',we:'read',third:'reads'}},
+    '쓰다': {ro:{i:'scriu',we:'scriem',third:'scrie'}, en:{i:'write',we:'write',third:'writes'}},
+    '만나다': {ro:{i:'întâlnesc',we:'întâlnim',third:'întâlnește'}, en:{i:'meet',we:'meet',third:'meets'}},
+    '쉬다': {ro:{i:'mă odihnesc',we:'ne odihnim',third:'se odihnește'}, en:{i:'rest',we:'rest',third:'rests'}},
+    '일하다': {ro:{i:'lucrez',we:'lucrăm',third:'lucrează'}, en:{i:'work',we:'work',third:'works'}},
+    '운동하다': {ro:{i:'fac sport',we:'facem sport',third:'face sport'}, en:{i:'exercise',we:'exercise',third:'exercises'}},
+    '준비하다': {ro:{i:'pregătesc',we:'pregătim',third:'pregătește'}, en:{i:'prepare',we:'prepare',third:'prepares'}},
+    '배우다': {ro:{i:'învăț',we:'învățăm',third:'învață'}, en:{i:'learn',we:'learn',third:'learns'}},
+    '듣다': {ro:{i:'ascult',we:'ascultăm',third:'ascultă'}, en:{i:'listen',we:'listen',third:'listens'}},
+    '만들다': {ro:{i:'fac',we:'facem',third:'face'}, en:{i:'make',we:'make',third:'makes'}},
+    '사다': {ro:{i:'cumpăr',we:'cumpărăm',third:'cumpără'}, en:{i:'buy',we:'buy',third:'buys'}},
+    '주다': {ro:{i:'dau',we:'dăm',third:'dă'}, en:{i:'give',we:'give',third:'gives'}}
+  };
+
+  var CONNECTOR_TEXT_MAP = {
+    ro: { none:'', seq:'și apoi', cause1:'pentru că', cause2:'fiindcă', condition:'dacă', contrast1:'dar', contrast2:'iar', purpose:'ca să', result:'iar apoi' },
+    en: { none:'', seq:'and then', cause1:'because', cause2:'since', condition:'if', contrast1:'but', contrast2:'while', purpose:'in order to', result:'and then' }
+  };
+
+  function makeField(enabled, index){
+    return { enabled: !!enabled, index: typeof index === 'number' ? index : 0 };
+  }
+
+  function makeClause(subjectIndex, enableSubject){
+    if(typeof subjectIndex !== 'number') subjectIndex = 0;
+    if(typeof enableSubject !== 'boolean') enableSubject = true;
+    return {
+      subject: makeField(enableSubject, subjectIndex),
+      time: makeField(false, 0),
+      location: makeField(false, 0),
+      object: makeField(false, 0),
+      description: makeField(false, 0),
+      verb: makeField(true, 0),
+      connector: makeField(true, 0),
+      sourceText: '',
+      extras: {
+        associate: '',
+        transit: '',
+        numeral: '',
+        quantifier: '',
+        beneficiary: '',
+        object2: ''
       }
     };
+  }
 
-    var FIELD_DEFS = [
-      {key:'subject', kind:'subject'},
-      {key:'time', kind:'time'},
-      {key:'location', kind:'location'},
-      {key:'object', kind:'object'},
-      {key:'description', kind:'description'},
-      {key:'verb', kind:'verb'},
-      {key:'connector', kind:'connector'}
+  var state = { lang:'ro', level:1, text:'', clauses:[makeClause(0, true)] };
+
+  var els = {
+    btnRo: document.getElementById('btnRo'),
+    btnEn: document.getElementById('btnEn'),
+    topicSummaryText: document.getElementById('topicSummaryText'),
+    topicDropdown: document.getElementById('topicDropdown'),
+    freeText: document.getElementById('freeText'),
+    refreshBtn: document.getElementById('refreshBtn'),
+    playBtn: document.getElementById('playBtn'),
+    recordBtn: document.getElementById('recordBtn'),
+    sentenceBox: document.getElementById('sentenceBox'),
+    sentenceWords: document.getElementById('sentenceWords'),
+    translationText: document.getElementById('translationText'),
+    clauseList: document.getElementById('clauseList'),
+    toast: document.getElementById('toast'),
+    recordBox: document.getElementById('recordBox'),
+    recordedAudio: document.getElementById('recordedAudio')
+  };
+
+  var toastTimer = null;
+  var mediaRecorder = null;
+  var recordedChunks = [];
+  var recordedStream = null;
+  var recordedUrl = null;
+
+  function currentUI(){ return UI[state.lang]; }
+
+  function showToast(message){
+    if(!els.toast) return;
+    clearTimeout(toastTimer);
+    els.toast.textContent = message;
+    els.toast.classList.add('show');
+    toastTimer = setTimeout(function(){
+      els.toast.classList.remove('show');
+    }, 2200);
+  }
+
+  function normalizeLatin(str){
+    return String(str || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function cleanSentenceText(text){
+    return String(text || '')
+      .replace(/\s+,/g, ',')
+      .replace(/\s+/g, ' ')
+      .replace(/\s+([,.!?])/g, '$1')
+      .trim();
+  }
+
+  function hasHangul(str){
+    return /[\u3131-\u318E\uAC00-\uD7A3]/.test(String(str || ''));
+  }
+
+  function localizedItemText(item){
+    if(!item) return '';
+    return state.lang === 'en'
+      ? (item.en || item.ro || item.ko || '')
+      : (item.ro || item.en || item.ko || '');
+  }
+
+  function datasetFor(fieldKey){
+    return DATA[fieldKey] || [];
+  }
+
+  function itemOf(clause, fieldKey){
+    var list = datasetFor(fieldKey);
+    if(!list.length) return {ko:'',ro:'',en:''};
+    if(!clause || !clause[fieldKey]) return list[0];
+    var idx = Number(clause[fieldKey].index) || 0;
+    if(idx < 0 || idx >= list.length) idx = 0;
+    return list[idx];
+  }
+
+  function connectorKey(clause){
+    var item = itemOf(clause, 'connector');
+    return clause && clause.connector && clause.connector.enabled ? item.key : 'none';
+  }
+
+  function connectorIndexByKey(key){
+    var list = DATA.connector;
+    for(var i=0;i<list.length;i++){
+      if(list[i].key === key) return i;
+    }
+    return 0;
+  }
+
+  function matchEntry(textFold, entry){
+    var candidates = [entry.ko, entry.ro, entry.en].concat(entry.aliases || []);
+    for(var i=0;i<candidates.length;i++){
+      var value = candidates[i];
+      if(!value) continue;
+      if(textFold.indexOf(normalizeLatin(value)) !== -1) return true;
+    }
+    return false;
+  }
+
+  function findIndexInDataset(fieldKey, text){
+    var list = datasetFor(fieldKey);
+    var norm = normalizeLatin(text);
+    for(var i=1;i<list.length;i++){
+      if(matchEntry(norm, list[i])) return i;
+    }
+    return -1;
+  }
+
+  function findEntryInDataset(fieldKey, text){
+    var idx = findIndexInDataset(fieldKey, text);
+    return idx > -1 ? datasetFor(fieldKey)[idx] : null;
+  }
+
+  function inferNumeral(text){
+    var raw = normalizeLatin(text);
+    var m = raw.match(/\b(\d+)\b/);
+    if(m) return m[1];
+    var words = ['un','o','unu','una','doi','doua','trei','patru','cinci','sase','sapte','opt','noua','zece'];
+    for(var i=0;i<words.length;i++){
+      if(raw.indexOf(words[i]) !== -1) return words[i];
+    }
+    return '';
+  }
+
+  function inferQuantifier(text){
+    var raw = normalizeLatin(text);
+    var qs = ['bucati','bucata','sticle','sticla','pachete','pachet','cutii','cutie','felii','felie','cani','cana','pahare','pahar','kilograme','kilogram','grame','gram','portii','portie'];
+    for(var i=0;i<qs.length;i++){
+      if(raw.indexOf(qs[i]) !== -1) return qs[i];
+    }
+    return '';
+  }
+
+  function inferAssociate(text){
+    var raw = normalizeLatin(text);
+    var m = raw.match(/\b(?:cu|impreuna cu)\s+([a-z0-9\s]+?)(?=\b(?:azi|astazi|ieri|maine|la|in|pe|pentru|ca sa|si|iar|dar)\b|$)/);
+    return m ? m[1].trim() : '';
+  }
+
+  function inferTransit(text){
+    var raw = normalizeLatin(text);
+    var m = raw.match(/\b(?:prin|pe la|via)\s+([a-z0-9\s]+?)(?=\b(?:si|iar|dar|pentru|ca sa|apoi)\b|$)/);
+    return m ? m[1].trim() : '';
+  }
+
+  function inferBeneficiary(text){
+    var raw = normalizeLatin(text);
+    var m = raw.match(/\b(?:pentru)\s+([a-z0-9\s]+?)(?=\b(?:si|iar|dar|ca sa|apoi)\b|$)/);
+    return m ? m[1].trim() : '';
+  }
+
+  function inferObject2(text){
+    var raw = normalizeLatin(text);
+    var list = DATA.object;
+    var found = [];
+    for(var i=1;i<list.length;i++){
+      if(matchEntry(raw, list[i])) found.push(list[i]);
+    }
+    if(found.length > 1){
+      return state.lang === 'en' ? (found[1].en || found[1].ro || '') : (found[1].ro || found[1].en || '');
+    }
+    return '';
+  }
+
+  function splitIntoSegments(text){
+    var working = ' ' + normalizeLatin(text) + ' ';
+    var markers = [
+      {key:'cause1', phrases:['pentru ca','because']},
+      {key:'cause2', phrases:['fiindca','since']},
+      {key:'condition', phrases:['daca','if']},
+      {key:'contrast1', phrases:['dar','insa','but','however']},
+      {key:'contrast2', phrases:['iar','while']},
+      {key:'purpose', phrases:['ca sa','in order to']},
+      {key:'seq', phrases:['si apoi','and then','si','and','apoi']}
     ];
-
-    var COLUMN_DEFS = [
-      {key:'topic', level:1, mode:'dataset', fieldKey:'subject', kind:'subject', toggleable:true},
-      {key:'associate', level:3, mode:'extra', extraKey:'associate', placeholderKey:'placeAssociate'},
-      {key:'time', level:1, mode:'dataset', fieldKey:'time', kind:'time', toggleable:true},
-      {key:'departure', level:3, mode:'dataset', fieldKey:'location', kind:'location', toggleable:true},
-      {key:'transit', level:4, mode:'extra', extraKey:'transit', placeholderKey:'placeTransit'},
-      {key:'numeral', level:5, mode:'extra', extraKey:'numeral', placeholderKey:'placeNumeral'},
-      {key:'quantifier', level:5, mode:'extra', extraKey:'quantifier', placeholderKey:'placeQuantifier'},
-      {key:'object1', level:1, mode:'dataset', fieldKey:'object', kind:'object', toggleable:true},
-      {key:'beneficiary', level:4, mode:'extra', extraKey:'beneficiary', placeholderKey:'placeBeneficiary'},
-      {key:'object2', level:6, mode:'extra', extraKey:'object2', placeholderKey:'placeObject2'},
-      {key:'adverb', level:2, mode:'dataset', fieldKey:'description', kind:'description', toggleable:true},
-      {key:'verb', level:1, mode:'dataset', fieldKey:'verb', kind:'verb', toggleable:false},
-      {key:'connector', level:2, mode:'dataset', fieldKey:'connector', kind:'connector', toggleable:false}
-    ];
-
-    var DATA = {
-      subject: [
-        {ko:'저는', ro:'eu', en:'I', aliases:['eu','i']},
-        {ko:'나는', ro:'eu', en:'I', aliases:['eu','i']},
-        {ko:'우리는', ro:'noi', en:'we', aliases:['noi','we']},
-        {ko:'친구는', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
-        {ko:'선생님은', ro:'profesorul', en:'teacher', aliases:['profesorul','profesor','teacher']},
-        {ko:'학생은', ro:'studentul', en:'student', aliases:['studentul','student']},
-        {ko:'민수는', ro:'Minsu', en:'Minsu', aliases:['minsu']},
-        {ko:'지수는', ro:'Jisu', en:'Jisu', aliases:['jisu']}
-      ],
-      time: [
-        {ko:'', ro:'', en:'', aliases:[]},
-        {ko:'오늘', ro:'astăzi', en:'today', aliases:['astăzi','astazi','azi','today']},
-        {ko:'어제', ro:'ieri', en:'yesterday', aliases:['ieri','yesterday']},
-        {ko:'내일', ro:'mâine', en:'tomorrow', aliases:['maine','mâine','tomorrow']},
-        {ko:'지금', ro:'acum', en:'now', aliases:['acum','now']},
-        {ko:'매일', ro:'în fiecare zi', en:'every day', aliases:['zilnic','in fiecare zi','în fiecare zi','every day']},
-        {ko:'아침에', ro:'dimineața', en:'in the morning', aliases:['dimineata','dimineața','morning']},
-        {ko:'저녁에', ro:'seara', en:'in the evening', aliases:['seara','evening']},
-        {ko:'주말에', ro:'în weekend', en:'on the weekend', aliases:['weekend']}
-      ],
-      location: [
-        {ko:'', ro:'', en:'', aliases:[]},
-        {ko:'학교에서', ro:'la școală', en:'at school', aliases:['la scoala','la școală','scoala','școală','school']},
-        {ko:'집에서', ro:'acasă', en:'at home', aliases:['acasă','acasa','home']},
-        {ko:'도서관에서', ro:'la bibliotecă', en:'at the library', aliases:['la biblioteca','la bibliotecă','biblioteca','bibliotecă','library']},
-        {ko:'카페에서', ro:'la cafenea', en:'at the cafe', aliases:['la cafenea','cafenea','cafe']},
-        {ko:'회사에서', ro:'la serviciu', en:'at work', aliases:['la serviciu','serviciu','la munca','la muncă','work']},
-        {ko:'공원에서', ro:'în parc', en:'in the park', aliases:['in parc','în parc','parc','park']},
-        {ko:'식당에서', ro:'la restaurant', en:'at the restaurant', aliases:['restaurant']},
-        {ko:'교실에서', ro:'în clasă', en:'in the classroom', aliases:['in clasa','în clasă','clasa','clasă','classroom']},
-        {ko:'길에서', ro:'pe stradă', en:'on the street', aliases:['pe strada','pe stradă','strada','stradă','street']},
-        {ko:'시장에서', ro:'la piață', en:'at the market', aliases:['la piata','la piață','piata','piață','market']},
-        {ko:'가게에서', ro:'la magazin', en:'at the store', aliases:['la magazin','magazin','store','shop']},
-        {ko:'온라인으로', ro:'online', en:'online', aliases:['online']}
-      ],
-      object: [
-        {ko:'', ro:'', en:'', aliases:[]},
-        {ko:'한국어를', ro:'limba coreeană', en:'Korean', aliases:['coreeana','coreeană','limba coreeana','limba coreeană','korean']},
-        {ko:'점심을', ro:'prânzul', en:'lunch', aliases:['pranzul','prânzul','pranz','prânz','lunch']},
-        {ko:'숙제를', ro:'tema', en:'homework', aliases:['tema','homework']},
-        {ko:'책을', ro:'cartea', en:'the book', aliases:['cartea','carte','book']},
-        {ko:'커피를', ro:'cafeaua', en:'coffee', aliases:['cafeaua','cafea','coffee']},
-        {ko:'음악을', ro:'muzica', en:'music', aliases:['muzica','muzică','music']},
-        {ko:'영화를', ro:'filmul', en:'the movie', aliases:['filmul','film','movie']},
-        {ko:'친구를', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
-        {ko:'프로젝트를', ro:'proiectul', en:'the project', aliases:['proiectul','proiect','project']},
-        {ko:'편지를', ro:'scrisoarea', en:'the letter', aliases:['scrisoarea','scrisoare','letter']},
-        {ko:'초콜릿을', ro:'ciocolata', en:'chocolate', aliases:['ciocolata','ciocolată','chocolate']},
-        {ko:'음식을', ro:'mâncarea', en:'food', aliases:['mancarea','mâncarea','mancare','mâncare','food']}
-      ],
-      description: [
-        {ko:'', ro:'', en:'', aliases:[]},
-        {ko:'빨리', ro:'repede', en:'quickly', aliases:['repede','quickly','fast']},
-        {ko:'천천히', ro:'încet', en:'slowly', aliases:['incet','încet','slowly']},
-        {ko:'열심히', ro:'cu sârguință', en:'diligently', aliases:['cu sarguinta','cu sârguință','serios','din greu','diligently','hard']},
-        {ko:'조용히', ro:'în liniște', en:'quietly', aliases:['in liniste','în liniște','quietly']},
-        {ko:'같이', ro:'împreună', en:'together', aliases:['împreună','impreuna','together']},
-        {ko:'혼자', ro:'singur', en:'alone', aliases:['singur','singura','alone']},
-        {ko:'다시', ro:'din nou', en:'again', aliases:['din nou','again']},
-        {ko:'미리', ro:'dinainte', en:'in advance', aliases:['dinainte','in advance']},
-        {ko:'정말', ro:'foarte', en:'really', aliases:['foarte','really']},
-        {ko:'조금', ro:'puțin', en:'a little', aliases:['putin','puțin','little']},
-        {ko:'자주', ro:'des', en:'often', aliases:['des','often']}
-      ],
-      verbs: [
-        {ko:'공부하다', ro:'a studia', en:'to study', aliases:['studiez','studia','invat','învăț','study','learn'], final:'공부해요', forms:{none:'공부해요',seq:'공부하고',cause1:'공부해서',cause2:'공부하니까',condition:'공부하면',contrast1:'공부하지만',contrast2:'공부하는데',purpose:'공부하려고',result:'공부하게 되다'}},
-        {ko:'먹다', ro:'a mânca', en:'to eat', aliases:['mananc','mănânc','eat'], final:'먹어요', forms:{none:'먹어요',seq:'먹고',cause1:'먹어서',cause2:'먹으니까',condition:'먹으면',contrast1:'먹지만',contrast2:'먹는데',purpose:'먹으려고',result:'먹게 되다'}},
-        {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','plec','merge','go','leave'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
-        {ko:'오다', ro:'a veni', en:'to come', aliases:['vin','vine','veni','come'], final:'와요', forms:{none:'와요',seq:'오고',cause1:'와서',cause2:'오니까',condition:'오면',contrast1:'오지만',contrast2:'오는데',purpose:'오려고',result:'오게 되다'}},
-        {ko:'보다', ro:'a vedea', en:'to see', aliases:['vad','văd','vezi','vede','see','watch'], final:'봐요', forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
-        {ko:'읽다', ro:'a citi', en:'to read', aliases:['citesc','citeste','citește','read'], final:'읽어요', forms:{none:'읽어요',seq:'읽고',cause1:'읽어서',cause2:'읽으니까',condition:'읽으면',contrast1:'읽지만',contrast2:'읽는데',purpose:'읽으려고',result:'읽게 되다'}},
-        {ko:'쓰다', ro:'a scrie', en:'to write', aliases:['scriu','scrie','write'], final:'써요', forms:{none:'써요',seq:'쓰고',cause1:'써서',cause2:'쓰니까',condition:'쓰면',contrast1:'쓰지만',contrast2:'쓰는데',purpose:'쓰려고',result:'쓰게 되다'}},
-        {ko:'만나다', ro:'a întâlni', en:'to meet', aliases:['intalnesc','întâlnesc','meet'], final:'만나요', forms:{none:'만나요',seq:'만나고,cause1:'만나서',cause2:'만나니까',condition:'만나면',contrast1:'만나지만',contrast2:'만나는데',purpose:'만나려고',result:'만나게 되다'}},
-        {ko:'쉬다', ro:'a se odihni', en:'to rest', aliases:['odihnesc','rest'], final:'쉬어요', forms:{none:'쉬어요',seq:'쉬고',cause1:'쉬어서',cause2:'쉬니까',condition:'쉬면',contrast1:'쉬지만',contrast2:'쉬는데',purpose:'쉬려고',result:'쉬게 되다'}},
-        {ko:'일하다', ro:'a lucra', en:'to work', aliases:['lucrez','lucrează','lucreaza','work'], final:'일해요', forms:{none:'일해요',seq:'일하고',cause1:'일해서',cause2:'일하니까',condition:'일하면',contrast1:'일하지만',contrast2:'일하는데',purpose:'일하려고',result:'일하게 되다'}},
-        {ko:'운동하다', ro:'a face sport', en:'to exercise', aliases:['fac sport','sport','exercise'], final:'운동해요', forms:{none:'운동해요',seq:'운동하고',cause1:'운동해서',cause2:'운동하니까',condition:'운동하면',contrast1:'운동하지만',contrast2:'운동하는데',purpose:'운동하려고',result:'운동하게 되다'}},
-        {ko:'준비하다', ro:'a pregăti', en:'to prepare', aliases:['pregatesc','pregătesc','prepare'], final:'준비해요', forms:{none:'준비해요',seq:'준비하고',cause1:'준비해서',cause2:'준비하니까',condition:'준비하면',contrast1:'준비하지만',contrast2:'준비하는데',purpose:'준비하려고',result:'준비하게 되다'}},
-        {ko:'배우다', ro:'a învăța', en:'to learn', aliases:['invat','învăț','learn'], final:'배워요', forms:{none:'배워요',seq:'배우고',cause1:'배워서',cause2:'배우니까',condition:'배우면',contrast1:'배우지만',contrast2:'배우는데',purpose:'배우려고',result:'배우게 되다'}},
-        {ko:'듣다', ro:'a asculta', en:'to listen', aliases:['ascult','asculta','listen'], final:'들어요', forms:{none:'들어요',seq:'듣고',cause1:'들어서',cause2:'들으니까',condition:'들으면',contrast1:'듣지만',contrast2:'듣는데',purpose:'들으려고',result:'듣게 되다'}},
-        {ko:'만들다', ro:'a face', en:'to make', aliases:['fac','creeaza','creează','make','create'], final:'만들어요', forms:{none:'만들어요',seq:'만들고',cause1:'만들어서',cause2:'만드니까',condition:'만들면',contrast1:'만들지만',contrast2:'만드는데',purpose:'만들려고',result:'만들게 되다'}},
-        {ko:'사다', ro:'a cumpăra', en:'to buy', aliases:['cumpar','cumpăr','cumpăra','buy'], final:'사요', forms:{none:'사요',seq:'사고',cause1:'사서',cause2:'사니까',condition:'사면',contrast1:'사지만',contrast2:'사는데',purpose:'사려고',result:'사게 되다'}},
-        {ko:'주다', ro:'a da', en:'to give', aliases:['dau','da','give'], final:'줘요', forms:{none:'줘요',seq:'주고',cause1:'줘서',cause2:'주니까',condition:'주면',contrast1:'주지만',contrast2:'주는데',purpose:'주려고',result:'주게 되다'}}
-      ],
-      connectors: [
-        {key:'none', ko:'—', ro:'', en:'', aliases:['fara conector','fără conector','none']},
-        {key:'seq', ko:'고', ro:'și apoi', en:'and then', aliases:['si apoi','și apoi','apoi','and then','and']},
-        {key:'cause1', ko:'아/어서', ro:'pentru că', en:'because', aliases:['pentru ca','pentru că','because']},
-        {key:'cause2', ko:'(으)니까', ro:'fiindcă', en:'since', aliases:['fiindca','fiindcă','since']},
-        {key:'condition', ko:'(으)면', ro:'dacă', en:'if', aliases:['daca','dacă','if']},
-        {key:'contrast1', ko:'지만', ro:'dar', en:'but', aliases:['dar','insa','însă','but','however']},
-        {key:'contrast2', ko:'는데', ro:'iar', en:'while', aliases:['iar','while']},
-        {key:'purpose', ko:'(으)려고', ro:'ca să', en:'in order to', aliases:['ca sa','ca să','in order to']},
-        {key:'result', ko:'게 되다', ro:'ajunge să', en:'end up', aliases:['ajunge sa','ajunge să','end up']}
-      ]
-    };
-
-    var VERB_FINITE_MAP = {
-      '공부하다': {ro:{i:'studiez',we:'studiem',third:'studiază'}, en:{i:'study',we:'study',third:'studies'}},
-      '먹다': {ro:{i:'mănânc',we:'mâncăm',third:'mănâncă'}, en:{i:'eat',we:'eat',third:'eats'}},
-      '가다': {ro:{i:'merg',we:'mergem',third:'merge'}, en:{i:'go',we:'go',third:'goes'}},
-      '오다': {ro:{i:'vin',we:'venim',third:'vine'}, en:{i:'come',we:'come',third:'comes'}},
-      '보다': {ro:{i:'văd',we:'vedem',third:'vede'}, en:{i:'see',we:'see',third:'sees'}},
-      '읽다': {ro:{i:'citesc',we:'citim',third:'citește'}, en:{i:'read',we:'read',third:'reads'}},
-      '쓰다': {ro:{i:'scriu',we:'scriem',third:'scrie'}, en:{i:'write',we:'write',third:'writes'}},
-      '만나다': {ro:{i:'întâlnesc',we:'întâlnim',third:'întâlnește'}, en:{i:'meet',we:'meet',third:'meets'}},
-      '쉬다': {ro:{i:'mă odihnesc',we:'ne odihnim',third:'se odihnește'}, en:{i:'rest',we:'rest',third:'rests'}},
-      '일하다': {ro:{i:'lucrez',we:'lucrăm',third:'lucrează'}, en:{i:'work',we:'work',third:'works'}},
-      '운동하다': {ro:{i:'fac sport',we:'facem sport',third:'face sport'}, en:{i:'exercise',we:'exercise',third:'exercises'}},
-      '준비하다': {ro:{i:'pregătesc',we:'pregătim',third:'pregătește'}, en:{i:'prepare',we:'prepare',third:'prepares'}},
-      '배우다': {ro:{i:'învăț',we:'învățăm',third:'învață'}, en:{i:'learn',we:'learn',third:'learns'}},
-      '듣다': {ro:{i:'ascult',we:'ascultăm',third:'ascultă'}, en:{i:'listen',we:'listen',third:'listens'}},
-      '만들다': {ro:{i:'fac',we:'facem',third:'face'}, en:{i:'make',we:'make',third:'makes'}},
-      '사다': {ro:{i:'cumpăr',we:'cumpărăm',third:'cumpără'}, en:{i:'buy',we:'buy',third:'buys'}},
-      '주다': {ro:{i:'dau',we:'dăm',third:'dă'}, en:{i:'give',we:'give',third:'gives'}}
-    };
-
-    var CONNECTOR_TEXT_MAP = {
-      ro: { none:'', seq:'și apoi', cause1:'pentru că', cause2:'fiindcă', condition:'dacă', contrast1:'dar', contrast2:'iar', purpose:'ca să', result:'iar apoi' },
-      en: { none:'', seq:'and then', cause1:'because', cause2:'since', condition:'if', contrast1:'but', contrast2:'while', purpose:'in order to', result:'and then' }
-    };
-
-    function makeField(enabled, index){
-      return { enabled: !!enabled, index: typeof index === 'number' ? index : 0 };
-    }
-
-    function makeClause(subjectIndex, enableSubject){
-      if(typeof subjectIndex !== 'number') subjectIndex = 0;
-      if(typeof enableSubject !== 'boolean') enableSubject = true;
-      return {
-        subject: makeField(enableSubject, subjectIndex),
-        time: makeField(false, 0),
-        location: makeField(false, 0),
-        object: makeField(false, 0),
-        description: makeField(false, 0),
-        verb: makeField(true, 0),
-        connector: makeField(true, 0),
-        sourceText: '',
-        extras: {
-          associate: '',
-          transit: '',
-          numeral: '',
-          quantifier: '',
-          beneficiary: '',
-          object2: ''
-        }
-      };
-    }
-
-    var state = { lang:'ro', level:6, text:'', clauses:[makeClause()] };
-
-    var els = {
-      btnRo: document.getElementById('btnRo'),
-      btnEn: document.getElementById('btnEn'),
-      topicSummaryText: document.getElementById('topicSummaryText'),
-      topicDropdown: document.getElementById('topicDropdown'),
-      freeText: document.getElementById('freeText'),
-      refreshBtn: document.getElementById('refreshBtn'),
-      playBtn: document.getElementById('playBtn'),
-      recordBtn: document.getElementById('recordBtn'),
-      sentenceBox: document.getElementById('sentenceBox'),
-      sentenceWords: document.getElementById('sentenceWords'),
-      translationText: document.getElementById('translationText'),
-      clauseList: document.getElementById('clauseList'),
-      toast: document.getElementById('toast'),
-      recordBox: document.getElementById('recordBox'),
-      recordedAudio: document.getElementById('recordedAudio')
-    };
-
-    var toastTimer = null, mediaRecorder = null, recordedChunks = [], recordedStream = null, recordedUrl = null;
-
-    function currentUI(){ return UI[state.lang]; }
-
-    function showToast(message){
-      if(!els.toast) return;
-      clearTimeout(toastTimer);
-      els.toast.textContent = message;
-      els.toast.classList.add('show');
-      toastTimer = setTimeout(function(){ els.toast.classList.remove('show'); }, 2200);
-    }
-
-    function setLang(lang){
-      state.lang = lang === 'en' ? 'en' : 'ro';
-      els.btnRo.classList.toggle('active', state.lang === 'ro');
-      els.btnEn.classList.toggle('active', state.lang === 'en');
-      els.freeText.placeholder = currentUI().placeholder;
-      renderAll();
-    }
-
-    function setLevel(level){
-      level = Number(level);
-      if(level < 1 || level > 6 || !level) level = 6;
-      state.level = level;
-      if(els.topicSummaryText) els.topicSummaryText.textContent = 'T' + level + ' ▾';
-      var buttons = els.topicDropdown ? els.topicDropdown.querySelectorAll('.topicOption') : [];
-      for(var i=0;i<buttons.length;i++){
-        buttons[i].classList.toggle('active', Number(buttons[i].getAttribute('data-level')) === level);
+    for(var i=0;i<markers.length;i++){
+      for(var j=0;j<markers[i].phrases.length;j++){
+        var phrase = markers[i].phrases[j];
+        working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| ');
       }
-      renderAll();
     }
-
-    function normalizeLatin(str){
-      return String(str || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    function normalizeRaw(str){
-      return String(str || '').toLowerCase().replace(/\s+/g, ' ').trim();
-    }
-
-    function hasHangul(str){
-      return /[\u3131-\u318E\uAC00-\uD7A3]/.test(String(str || ''));
-    }
-
-    function cleanSentenceText(text){
-      return String(text || '')
-        .replace(/\s+,/g, ',')
-        .replace(/\s+/g, ' ')
-        .replace(/\s+([,.!?])/g, '$1')
-        .trim();
-    }
-
-    function escapeHtml(str){
-      return String(str || '')
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;')
-        .replace(/'/g,'&#039;');
-    }
-
-    function datasetFor(fieldKey){
-      if(fieldKey === 'subject') return DATA.subject;
-      if(fieldKey === 'time') return DATA.time;
-      if(fieldKey === 'location') return DATA.location;
-      if(fieldKey === 'object') return DATA.object;
-      if(fieldKey === 'description') return DATA.description;
-      if(fieldKey === 'verb') return DATA.verbs;
-      if(fieldKey === 'connector') return DATA.connectors;
-      return [];
-    }
-
-    function itemOf(clause, fieldKey){
-      var list = datasetFor(fieldKey);
-      if(!list.length) return {ko:'',ro:'',en:''};
-      if(!clause || !clause[fieldKey]) return list[0];
-      var idx = Number(clause[fieldKey].index) || 0;
-      if(idx < 0 || idx >= list.length) idx = 0;
-      return list[idx];
-    }
-
-    function connectorKey(clause){
-      var item = itemOf(clause, 'connector');
-      return clause && clause.connector && clause.connector.enabled ? item.key : 'none';
-    }
-
-    function connectorIndexByKey(key){
-      for(var i=0;i<DATA.connectors.length;i++){
-        if(DATA.connectors[i].key === key) return i;
+    working = working.replace(/,/g, ' |||none||| ');
+    var parts = working.split('|||');
+    var segments = [];
+    var currentText = '';
+    for(var k=0;k<parts.length;k++){
+      var part = String(parts[k] || '').trim();
+      if(!part) continue;
+      var isConnector = false;
+      for(var c=0;c<DATA.connector.length;c++){
+        if(DATA.connector[c].key === part){ isConnector = true; break; }
       }
-      return 0;
-    }
-
-    function localizedItemText(item){
-      if(!item) return '';
-      return state.lang === 'en' ? (item.en || item.ro || item.ko || '') : (item.ro || item.en || item.ko || '');
-    }
-
-    function matchEntry(textFold, textRaw, entry){
-      var candidates = [entry.ko, entry.ro, entry.en].concat(entry.aliases || []);
-      for(var i=0;i<candidates.length;i++){
-        var value = candidates[i];
-        if(!value) continue;
-        var fold = normalizeLatin(value), raw = normalizeRaw(value);
-        if(fold && textFold.indexOf(fold) !== -1) return true;
-        if(raw && textRaw.indexOf(raw) !== -1) return true;
+      if(!isConnector){
+        currentText = currentText ? currentText + ' ' + part : part;
+      }else{
+        segments.push({ text: currentText.trim(), connector: part });
+        currentText = '';
       }
-      return false;
+    }
+    if(currentText.trim()) segments.push({ text: currentText.trim(), connector: 'none' });
+    if(!segments.length) segments.push({ text: normalizeLatin(text), connector: 'none' });
+    return segments;
+  }
+
+  function ensureChainLength(){
+    var required = 1;
+    for(var i=0;i<state.clauses.length && i<required;i++){
+      if(connectorKey(state.clauses[i]) !== 'none') required += 1;
+    }
+    while(state.clauses.length < required){
+      var prev = state.clauses[state.clauses.length - 1];
+      state.clauses.push(makeClause(prev && prev.subject ? prev.subject.index : 0, false));
+    }
+    if(state.clauses.length > required) state.clauses = state.clauses.slice(0, required);
+  }
+
+  function parseTextIntoClauses(){
+    var raw = state.text;
+    if(!raw || !String(raw).trim()){
+      state.clauses = [makeClause(0, true)];
+      ensureChainLength();
+      return;
     }
 
-    function findIndexInDataset(fieldKey, text){
-      var list = datasetFor(fieldKey), textFold = normalizeLatin(text), textRaw = normalizeRaw(text);
-      for(var i=1;i<list.length;i++){
-        if(matchEntry(textFold, textRaw, list[i])) return i;
-      }
-      return -1;
-    }
+    var segments = splitIntoSegments(raw);
+    var clauses = [];
 
-    function findEntryInDataset(fieldKey, text){
-      var idx = findIndexInDataset(fieldKey, text);
-      return idx > -1 ? datasetFor(fieldKey)[idx] : null;
-    }
+    for(var i=0;i<segments.length;i++){
+      var seg = segments[i];
+      var prev = i > 0 ? clauses[i - 1] : null;
+      var clause = makeClause(prev ? prev.subject.index : 0, i === 0);
+      clause.sourceText = seg.text || '';
+      clause.extras.associate = inferAssociate(seg.text);
+      clause.extras.transit = inferTransit(seg.text);
+      clause.extras.numeral = inferNumeral(seg.text);
+      clause.extras.quantifier = inferQuantifier(seg.text);
+      clause.extras.beneficiary = inferBeneficiary(seg.text);
+      clause.extras.object2 = inferObject2(seg.text);
 
-    function splitIntoSegments(text){
-      var working = ' ' + normalizeLatin(text) + ' ';
-      var markers = [
-        {key:'cause1', phrases:['pentru ca','because']},
-        {key:'cause2', phrases:['fiindca','since']},
-        {key:'condition', phrases:['daca','if']},
-        {key:'contrast1', phrases:['dar','insa','but','however']},
-        {key:'contrast2', phrases:['iar','while']},
-        {key:'purpose', phrases:['ca sa','in order to']},
-        {key:'seq', phrases:['si apoi','and then','si','and','apoi']}
-      ];
-      for(var i=0;i<markers.length;i++){
-        for(var j=0;j<markers[i].phrases.length;j++){
-          var phrase = markers[i].phrases[j];
-          working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| ');
-        }
-      }
-      working = working.replace(/,/g, ' |||none||| ');
-      var parts = working.split('|||'), segments = [], currentText = '';
-      for(var k=0;k<parts.length;k++){
-        var part = String(parts[k] || '').trim();
-        if(!part) continue;
-        var isConnector = false;
-        for(var c=0;c<DATA.connectors.length;c++){
-          if(DATA.connectors[c].key === part){ isConnector = true; break; }
-        }
-        if(!isConnector){
-          currentText = currentText ? currentText + ' ' + part : part;
+      var keys = ['subject','time','location','object','description','verb'];
+      for(var f=0;f<keys.length;f++){
+        var key = keys[f];
+        var found = findIndexInDataset(key, seg.text);
+        if(found > -1){
+          clause[key].enabled = true;
+          clause[key].index = found;
+        }else if(key === 'verb'){
+          clause.verb.enabled = true;
+          clause.verb.index = prev ? prev.verb.index : 0;
+        }else if(key === 'subject' && i > 0){
+          clause.subject.enabled = false;
         }else{
-          segments.push({ text: currentText.trim(), connector: part });
-          currentText = '';
+          clause[key].enabled = false;
+          clause[key].index = 0;
         }
       }
-      if(currentText.trim()) segments.push({ text: currentText.trim(), connector: 'none' });
-      if(!segments.length) segments.push({ text: normalizeLatin(text), connector: 'none' });
-      return segments;
+
+      clause.connector.enabled = true;
+      clause.connector.index = connectorIndexByKey(seg.connector);
+      clauses.push(clause);
     }
 
-    function ensureChainLength(){
-      var required = 1;
-      for(var i=0;i<state.clauses.length && i<required;i++){
-        if(connectorKey(state.clauses[i]) !== 'none') required += 1;
-      }
-      while(state.clauses.length < required){
-        var prev = state.clauses[state.clauses.length - 1];
-        state.clauses.push(makeClause(prev && prev.subject ? prev.subject.index : 0, false));
-      }
-      if(state.clauses.length > required) state.clauses = state.clauses.slice(0, required);
-    }
+    state.clauses = clauses.length ? clauses : [makeClause(0, true)];
+    ensureChainLength();
+  }
 
-    function inferNumeral(text){
-      var raw = normalizeLatin(text);
-      var m = raw.match(/\b(\d+)\b/);
-      if(m) return m[1];
-      var words = ['un','o','unu','una','doi','doua','trei','patru','cinci','sase','sapte','opt','noua','zece'];
-      for(var i=0;i<words.length;i++){
-        if(raw.indexOf(words[i]) !== -1) return words[i];
-      }
-      return '';
-    }
+  function randomNonZero(length){
+    return length <= 1 ? 0 : Math.floor(Math.random() * (length - 1)) + 1;
+  }
 
-    function inferQuantifier(text){
-      var raw = normalizeLatin(text);
-      var qs = ['bucati','bucata','sticle','sticla','pachete','pachet','cutii','cutie','felii','felie','cani','cana','pahare','pahar','kilograme','kilogram','grame','gram','portii','portie'];
-      for(var i=0;i<qs.length;i++){
-        if(raw.indexOf(qs[i]) !== -1) return qs[i];
-      }
-      return '';
-    }
-
-    function inferAssociate(text){
-      var raw = normalizeLatin(text);
-      var m = raw.match(/\b(?:cu|impreuna cu)\s+([a-z0-9\s]+?)(?=\b(?:azi|astazi|ieri|maine|la|in|pe|pentru|ca sa|si|iar|dar)\b|$)/);
-      return m ? m[1].trim() : '';
-    }
-
-    function inferTransit(text){
-      var raw = normalizeLatin(text);
-      var m = raw.match(/\b(?:prin|pe la|via)\s+([a-z0-9\s]+?)(?=\b(?:si|iar|dar|pentru|ca sa|apoi)\b|$)/);
-      return m ? m[1].trim() : '';
-    }
-
-    function inferBeneficiary(text){
-      var raw = normalizeLatin(text);
-      var m = raw.match(/\b(?:pentru)\s+([a-z0-9\s]+?)(?=\b(?:si|iar|dar|ca sa|apoi)\b|$)/);
-      return m ? m[1].trim() : '';
-    }
-
-    function inferObject2(text){
-      var raw = normalizeLatin(text);
-      var objects = DATA.object;
-      var found = [];
-      for(var i=1;i<objects.length;i++){
-        if(matchEntry(raw, raw, objects[i])) found.push(objects[i]);
-      }
-      if(found.length > 1){
-        return state.lang === 'en' ? (found[1].en || found[1].ro || '') : (found[1].ro || found[1].en || '');
-      }
-      return '';
-    }
-
-    function parseTextIntoClauses(){
-      var raw = state.text;
-      if(!raw || !String(raw).trim()){
-        state.clauses = [makeClause()];
-        ensureChainLength();
-        return;
-      }
-      var segments = splitIntoSegments(raw), clauses = [];
-      for(var i=0;i<segments.length;i++){
-        var seg = segments[i];
-        var prev = i > 0 ? clauses[i - 1] : null;
-        var clause = makeClause(prev ? prev.subject.index : 0, i === 0);
-        clause.sourceText = seg.text || '';
-        clause.extras.associate = inferAssociate(seg.text);
-        clause.extras.transit = inferTransit(seg.text);
-        clause.extras.numeral = inferNumeral(seg.text);
-        clause.extras.quantifier = inferQuantifier(seg.text);
-        clause.extras.beneficiary = inferBeneficiary(seg.text);
-        clause.extras.object2 = inferObject2(seg.text);
-
-        for(var f=0;f<FIELD_DEFS.length;f++){
-          var def = FIELD_DEFS[f];
-          if(def.key === 'connector') continue;
-          var found = findIndexInDataset(def.key, seg.text);
-          if(found > -1){
-            clause[def.key].enabled = true;
-            clause[def.key].index = found;
-          }else if(def.key === 'verb'){
-            clause.verb.enabled = true;
-            clause.verb.index = prev ? prev.verb.index : 0;
-          }else if(def.key === 'subject' && i > 0){
-            clause.subject.enabled = false;
-          }else{
-            clause[def.key].enabled = false;
-            clause[def.key].index = 0;
-          }
-        }
-
-        clause.connector.enabled = true;
-        clause.connector.index = connectorIndexByKey(seg.connector);
-        clauses.push(clause);
-      }
-      state.clauses = clauses.length ? clauses : [makeClause()];
-      ensureChainLength();
-    }
-
-    function randomNonZero(length){
-      return length <= 1 ? 0 : Math.floor(Math.random() * (length - 1)) + 1;
-    }
-
-    function refreshSentences(){
-      if(state.text && String(state.text).trim()) parseTextIntoClauses();
-      for(var i=0;i<state.clauses.length;i++){
-        var clause = state.clauses[i];
-        for(var f=0;f<FIELD_DEFS.length;f++){
-          var def = FIELD_DEFS[f], list = datasetFor(def.key);
-          if(def.key === 'connector'){
-            clause.connector.index = i === state.clauses.length - 1 ? 0 : randomNonZero(list.length);
-            continue;
-          }
-          if(clause[def.key].enabled) clause[def.key].index = randomNonZero(list.length);
-        }
-        if(i === 0) clause.subject.enabled = true;
-      }
-      ensureChainLength();
-      renderAll();
-    }
-
-    function subjectRoleFromKo(subjectKo){
-      if(subjectKo === '저는' || subjectKo === '나는') return 'i';
-      if(subjectKo === '우리는') return 'we';
-      return 'third';
-    }
-
-    function finiteVerbText(verb, lang, subjectKo){
-      var hit = verb && VERB_FINITE_MAP[verb.ko];
-      var role = subjectRoleFromKo(subjectKo || '');
-      if(hit && hit[lang] && hit[lang][role]) return hit[lang][role];
-      return verb ? (verb[lang] || '') : '';
-    }
-
-    function connectorTextByKey(key, lang){
-      return CONNECTOR_TEXT_MAP[lang] && CONNECTOR_TEXT_MAP[lang][key] ? CONNECTOR_TEXT_MAP[lang][key] : '';
-    }
-
-    function fieldValueText(clause, key){
-      var item = itemOf(clause, key);
-      if(key === 'connector') return item.ko || '—';
-      if(key === 'verb'){
-        var connector = itemOf(clause, 'connector');
-        return clause.connector.enabled && connector.key !== 'none'
-          ? (item.forms[connector.key] || item.final || item.ko)
-          : (item.final || item.ko || '—');
-      }
-      return item.ko || '—';
-    }
-
-    function fieldMetaText(clause, key, previousClause){
-      if(key === 'verb'){
-        return finiteVerbText(itemOf(clause, key), state.lang, resolvedSubjectKo(clause, previousClause));
-      }
-      if(key === 'connector'){
-        return connectorTextByKey(itemOf(clause, key).key, state.lang);
-      }
-      return localizedItemText(itemOf(clause, key)) || '';
-    }
-
-    function resolvedSubjectKo(clause, previousClause){
-      var subject = itemOf(clause, 'subject');
-      if(clause.subject && clause.subject.enabled && subject && subject.ko) return subject.ko;
-      if(previousClause){
-        var prevSubject = itemOf(previousClause, 'subject');
-        if(prevSubject && prevSubject.ko) return prevSubject.ko;
-      }
-      return '';
-    }
-
-    function buildRomanianRow(row){
-      var parts = [];
-      if(row.topicTr) parts.push(row.topicTr);
-      if(row.associate) parts.push('cu ' + row.associate);
-      if(row.timeTr) parts.push(row.timeTr);
-      if(row.departureTr) parts.push(row.departureTr);
-      if(row.transit) parts.push('prin ' + row.transit);
-      if(row.numeral) parts.push(row.numeral);
-      if(row.quantifier) parts.push(row.quantifier);
-      if(row.object1Tr) parts.push(row.object1Tr);
-      if(row.beneficiary) parts.push('pentru ' + row.beneficiary);
-      if(row.object2) parts.push(row.object2);
-      if(row.adverbTr) parts.push(row.adverbTr);
-      if(row.verbTr) parts.push(row.verbTr);
-      return cleanSentenceText(parts.join(' '));
-    }
-
-    function convertNumeralToKorean(value){
-      var raw = normalizeLatin(value);
-      var map = {
-        '1':'한','2':'두','3':'세','4':'네','5':'다섯',
-        'un':'한','o':'한','unu':'한','una':'한',
-        'doi':'두','doua':'두',
-        'trei':'세','patru':'네','cinci':'다섯','sase':'여섯','sapte':'일곱','opt':'여덟','noua':'아홉','zece':'열'
-      };
-      return map[raw] || '';
-    }
-
-    function convertQuantifierToKorean(value){
-      var raw = normalizeLatin(value);
-      if(raw.indexOf('bucat') !== -1) return '개';
-      if(raw.indexOf('sticl') !== -1) return '병';
-      if(raw.indexOf('pahar') !== -1 || raw.indexOf('can') !== -1) return '잔';
-      if(raw.indexOf('port') !== -1) return '인분';
-      if(raw.indexOf('gram') !== -1 || raw.indexOf('kilogram') !== -1) return '';
-      return '';
-    }
-
-    function extraTextToKo(value, type){
-      var raw = String(value || '').trim();
-      if(!raw) return '';
-      if(hasHangul(raw)) return raw;
-      var subjectHit = findEntryInDataset('subject', raw);
-      var objectHit = findEntryInDataset('object', raw);
-      var locationHit = findEntryInDataset('location', raw);
-      if(type === 'associate' && subjectHit) return subjectHit.ko.replace(/(는|은)$/,'') + '하고';
-      if(type === 'beneficiary' && subjectHit) return subjectHit.ko.replace(/(는|은)$/,'') + '에게';
-      if(type === 'transit' && locationHit) return locationHit.ko;
-      if(type === 'object2' && objectHit) return objectHit.ko;
-      return '';
-    }
-
-    function buildClauseRow(clause, previousClause){
-      var subject = itemOf(clause,'subject');
-      var time = itemOf(clause,'time');
-      var location = itemOf(clause,'location');
-      var object = itemOf(clause,'object');
-      var description = itemOf(clause,'description');
-      var verb = itemOf(clause,'verb');
-      var connector = itemOf(clause,'connector');
-
-      var row = {
-        topicKo: clause.subject.enabled ? (subject.ko || '') : '',
-        topicTr: clause.subject.enabled ? localizedItemText(subject) : '',
-        timeKo: clause.time.enabled ? (time.ko || '') : '',
-        timeTr: clause.time.enabled ? localizedItemText(time) : '',
-        departureKo: clause.location.enabled ? (location.ko || '') : '',
-        departureTr: clause.location.enabled ? localizedItemText(location) : '',
-        transit: clause.extras.transit || '',
-        numeral: clause.extras.numeral || '',
-        quantifier: clause.extras.quantifier || '',
-        object1Ko: clause.object.enabled ? (object.ko || '') : '',
-        object1Tr: clause.object.enabled ? localizedItemText(object) : '',
-        beneficiary: clause.extras.beneficiary || '',
-        object2: clause.extras.object2 || '',
-        adverbKo: clause.description.enabled ? (description.ko || '') : '',
-        adverbTr: clause.description.enabled ? localizedItemText(description) : '',
-        associate: clause.extras.associate || '',
-        verbKo: clause.verb.enabled ? (fieldValueText(clause,'verb') || '') : '',
-        verbTr: clause.verb.enabled ? finiteVerbText(verb, state.lang, resolvedSubjectKo(clause, previousClause)) : '',
-        connectorKo: clause.connector.enabled ? (connector.ko || '') : '',
-        connectorTr: clause.connector.enabled ? connectorTextByKey(connector.key, state.lang) : ''
-      };
-
-      return row;
-    }
-
-    function buildFullOutput(){
-      var outKo = [], outTr = [], prev = null;
-      for(var i=0;i<state.clauses.length;i++){
-        var clause = state.clauses[i];
-        var row = buildClauseRow(clause, prev);
-        var koParts = [];
-        if(row.topicKo) koParts.push(row.topicKo);
-        if(row.timeKo) koParts.push(row.timeKo);
-        if(row.departureKo) koParts.push(row.departureKo);
-        var associateKo = extraTextToKo(row.associate, 'associate');
-        if(associateKo) koParts.push(associateKo);
-        var transitKo = extraTextToKo(row.transit, 'transit');
-        if(transitKo) koParts.push(transitKo);
-        if(row.object1Ko) koParts.push(row.object1Ko);
-        var numKo = convertNumeralToKorean(row.numeral);
-        var quantKo = convertQuantifierToKorean(row.quantifier);
-        if(numKo) koParts.push(numKo);
-        if(quantKo) koParts.push(quantKo);
-        var beneficiaryKo = extraTextToKo(row.beneficiary, 'beneficiary');
-        if(beneficiaryKo) koParts.push(beneficiaryKo);
-        var object2Ko = extraTextToKo(row.object2, 'object2');
-        if(object2Ko) koParts.push(object2Ko);
-        if(row.adverbKo) koParts.push(row.adverbKo);
-        if(row.verbKo) koParts.push(row.verbKo);
-
-        var trLine = buildRomanianRow(row);
-        if(koParts.length) outKo.push(cleanSentenceText(koParts.join(' ')));
-        if(trLine) outTr.push(trLine);
-        prev = clause;
-      }
-      return {
-        korean: cleanSentenceText(outKo.join(' ')),
-        translation: cleanSentenceText(outTr.join(', '))
-      };
-    }
-
-    function renderPreview(){
-      var built = buildFullOutput();
-      var words = built.korean ? built.korean.split(/\s+/) : ['저는','공부해요'];
-      var html = '';
-      for(var i=0;i<words.length;i++) html += '<span class="word">' + escapeHtml(words[i]) + '</span>';
-      els.sentenceWords.innerHTML = html;
-      els.translationText.textContent = built.translation || currentUI().defaultTranslation;
-    }
-
-    function getVisibleColumns(){
-      var visible = [];
-      for(var i=0;i<COLUMN_DEFS.length;i++){
-        if(state.level >= COLUMN_DEFS[i].level) visible.push(COLUMN_DEFS[i]);
-      }
-      return visible;
-    }
-
-    function renderDatasetCell(clauseIndex, col, previousClause){
-      var clause = state.clauses[clauseIndex];
-      var enabled = col.toggleable === false ? true : !!clause[col.fieldKey].enabled;
-      var value = fieldValueText(clause, col.fieldKey);
-      var meta = fieldMetaText(clause, col.fieldKey, previousClause);
-      var toggleHtml = col.toggleable === false
-        ? '<button class="tableToggle ghost" type="button">•</button>'
-        : '<button class="tableToggle ' + (enabled ? 'active' : '') + '" data-toggle="' + clauseIndex + ':' + col.fieldKey + '" type="button">✓</button>';
-
-      return '' +
-        '<div class="tableField ' + (enabled ? '' : 'off') + '">' +
-          toggleHtml +
-          '<button class="tableMainBtn" data-kind="' + escapeHtml(col.kind || col.fieldKey) + '" data-cycle="' + clauseIndex + ':' + col.fieldKey + '" type="button">' +
-            '<div class="tableMeta">' + escapeHtml(currentUI().labels[col.fieldKey] || col.fieldKey) + '</div>' +
-            '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
-            '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
-          '</button>' +
-        '</div>';
-    }
-
-    function renderExtraCell(clauseIndex, col){
-      var clause = state.clauses[clauseIndex];
-      var value = clause.extras[col.extraKey] || '';
-      return '' +
-        '<div class="tableInputWrap">' +
-          '<div class="tableMeta">' + escapeHtml(currentUI().editable) + '</div>' +
-          '<input class="tableInput" data-extra-input="' + clauseIndex + ':' + col.extraKey + '" value="' + escapeHtml(value) + '" placeholder="' + escapeHtml(currentUI()[col.placeholderKey] || '') + '" />' +
-          '<div class="tableInputMeta">' + escapeHtml(value ? currentUI().editable : currentUI().inferred) + '</div>' +
-        '</div>';
-    }
-
-    function renderClauses(){
-      var cols = getVisibleColumns();
-      var html = '<div class="builderTableWrap"><table class="builderTable"><thead><tr>';
-      for(var c=0;c<cols.length;c++){
-        html += '<th>' + escapeHtml(currentUI().columns[cols[c].key] || cols[c].key) + '</th>';
-      }
-      html += '</tr></thead><tbody>';
-
-      for(var i=0;i<state.clauses.length;i++){
-        var prev = i > 0 ? state.clauses[i-1] : null;
-        html += '<tr>';
-        for(var j=0;j<cols.length;j++){
-          var col = cols[j];
-          html += '<td>';
-          if(col.mode === 'dataset') html += renderDatasetCell(i, col, prev);
-          else html += renderExtraCell(i, col);
-          html += '</td>';
-        }
-        html += '</tr>';
-      }
-
-      html += '</tbody></table></div>';
-      els.clauseList.innerHTML = html;
-    }
-
-    function renderAll(){
-      renderPreview();
-      renderClauses();
-    }
-
-    function cycleField(clauseIndex, key){
-      var clause = state.clauses[clauseIndex];
-      if(!clause || !clause[key]) return;
-      if(key === 'verb' || key === 'connector'){
+  function refreshSentences(){
+    if(state.text && String(state.text).trim()) parseTextIntoClauses();
+    for(var i=0;i<state.clauses.length;i++){
+      var clause = state.clauses[i];
+      var keys = ['subject','time','location','object','description','verb','connector'];
+      for(var f=0;f<keys.length;f++){
+        var key = keys[f];
         var list = datasetFor(key);
-        if(!list.length) return;
-        clause[key].index = (Number(clause[key].index) + 1) % list.length;
-        ensureChainLength();
-        renderAll();
-        return;
+        if(key === 'connector'){
+          clause.connector.index = i === state.clauses.length - 1 ? 0 : randomNonZero(list.length);
+          continue;
+        }
+        if(clause[key].enabled) clause[key].index = randomNonZero(list.length);
       }
-      if(!clause[key].enabled) return;
-      var ds = datasetFor(key);
-      if(!ds.length) return;
-      clause[key].index = (Number(clause[key].index) + 1) % ds.length;
-      ensureChainLength();
-      renderAll();
+      if(i === 0) clause.subject.enabled = true;
+    }
+    ensureChainLength();
+    renderAll();
+  }
+
+  function subjectRoleFromKo(subjectKo){
+    if(subjectKo === '저는' || subjectKo === '나는') return 'i';
+    if(subjectKo === '우리는') return 'we';
+    return 'third';
+  }
+
+  function resolvedSubjectKo(clause, previousClause){
+    var subject = itemOf(clause, 'subject');
+    if(clause.subject && clause.subject.enabled && subject && subject.ko) return subject.ko;
+    if(previousClause){
+      var prevSubject = itemOf(previousClause, 'subject');
+      if(prevSubject && prevSubject.ko) return prevSubject.ko;
+    }
+    return '';
+  }
+
+  function finiteVerbText(verb, lang, subjectKo){
+    var hit = verb && VERB_FINITE_MAP[verb.ko];
+    var role = subjectRoleFromKo(subjectKo || '');
+    if(hit && hit[lang] && hit[lang][role]) return hit[lang][role];
+    return verb ? (verb[lang] || '') : '';
+  }
+
+  function connectorTextByKey(key, lang){
+    return CONNECTOR_TEXT_MAP[lang] && CONNECTOR_TEXT_MAP[lang][key] ? CONNECTOR_TEXT_MAP[lang][key] : '';
+  }
+
+  function fieldValueMain(clause, key, previousClause){
+    var item = itemOf(clause, key);
+    if(key === 'connector') return connectorTextByKey(item.key, state.lang) || '—';
+    if(key === 'verb') return finiteVerbText(item, state.lang, resolvedSubjectKo(clause, previousClause)) || localizedItemText(item);
+    return localizedItemText(item) || '—';
+  }
+
+  function fieldValueMeta(clause, key){
+    var item = itemOf(clause, key);
+    if(key === 'connector') return item.ko || '';
+    if(key === 'verb'){
+      var connector = itemOf(clause, 'connector');
+      return clause.connector.enabled && connector.key !== 'none'
+        ? (item.forms[connector.key] || item.final || item.ko)
+        : (item.final || item.ko || '');
+    }
+    return item.ko || '';
+  }
+
+  function buildClauseRow(clause, previousClause){
+    return {
+      topicTr: clause.subject.enabled ? fieldValueMain(clause,'subject',previousClause) : '',
+      topicKo: clause.subject.enabled ? fieldValueMeta(clause,'subject') : '',
+      timeTr: clause.time.enabled ? fieldValueMain(clause,'time',previousClause) : '',
+      timeKo: clause.time.enabled ? fieldValueMeta(clause,'time') : '',
+      departureTr: clause.location.enabled ? fieldValueMain(clause,'location',previousClause) : '',
+      departureKo: clause.location.enabled ? fieldValueMeta(clause,'location') : '',
+      object1Tr: clause.object.enabled ? fieldValueMain(clause,'object',previousClause) : '',
+      object1Ko: clause.object.enabled ? fieldValueMeta(clause,'object') : '',
+      adverbTr: clause.description.enabled ? fieldValueMain(clause,'description',previousClause) : '',
+      adverbKo: clause.description.enabled ? fieldValueMeta(clause,'description') : '',
+      verbTr: clause.verb.enabled ? fieldValueMain(clause,'verb',previousClause) : '',
+      verbKo: clause.verb.enabled ? fieldValueMeta(clause,'verb') : '',
+      connectorTr: clause.connector.enabled ? fieldValueMain(clause,'connector',previousClause) : '',
+      connectorKo: clause.connector.enabled ? fieldValueMeta(clause,'connector') : '',
+      associate: clause.extras.associate || '',
+      transit: clause.extras.transit || '',
+      numeral: clause.extras.numeral || '',
+      quantifier: clause.extras.quantifier || '',
+      beneficiary: clause.extras.beneficiary || '',
+      object2: clause.extras.object2 || ''
+    };
+  }
+
+  function buildRomanianLine(row){
+    var parts = [];
+    if(row.topicTr) parts.push(row.topicTr);
+    if(row.associate) parts.push('cu ' + row.associate);
+    if(row.timeTr) parts.push(row.timeTr);
+    if(row.departureTr) parts.push(row.departureTr);
+    if(row.transit) parts.push('prin ' + row.transit);
+    if(row.numeral) parts.push(row.numeral);
+    if(row.quantifier) parts.push(row.quantifier);
+    if(row.object1Tr) parts.push(row.object1Tr);
+    if(row.beneficiary) parts.push('pentru ' + row.beneficiary);
+    if(row.object2) parts.push(row.object2);
+    if(row.adverbTr) parts.push(row.adverbTr);
+    if(row.verbTr) parts.push(row.verbTr);
+    return cleanSentenceText(parts.join(' '));
+  }
+
+  function convertNumeralToKorean(value){
+    var raw = normalizeLatin(value);
+    var map = {
+      '1':'한','2':'두','3':'세','4':'네','5':'다섯',
+      'un':'한','o':'한','unu':'한','una':'한',
+      'doi':'두','doua':'두',
+      'trei':'세','patru':'네','cinci':'다섯','sase':'여섯','sapte':'일곱','opt':'여덟','noua':'아홉','zece':'열'
+    };
+    return map[raw] || '';
+  }
+
+  function convertQuantifierToKorean(value){
+    var raw = normalizeLatin(value);
+    if(raw.indexOf('bucat') !== -1) return '개';
+    if(raw.indexOf('sticl') !== -1) return '병';
+    if(raw.indexOf('pahar') !== -1 || raw.indexOf('can') !== -1) return '잔';
+    if(raw.indexOf('port') !== -1) return '인분';
+    return '';
+  }
+
+  function extraTextToKo(value, type){
+    var raw = String(value || '').trim();
+    if(!raw) return '';
+    if(hasHangul(raw)) return raw;
+
+    var subjectHit = findEntryInDataset('subject', raw);
+    var objectHit = findEntryInDataset('object', raw);
+    var locationHit = findEntryInDataset('location', raw);
+
+    if(type === 'associate' && subjectHit) return subjectHit.ko.replace(/(는|은)$/,'') + '하고';
+    if(type === 'beneficiary' && subjectHit) return subjectHit.ko.replace(/(는|은)$/,'') + '에게';
+    if(type === 'transit' && locationHit) return locationHit.ko;
+    if(type === 'object2' && objectHit) return objectHit.ko;
+    return '';
+  }
+
+  function buildFullOutput(){
+    var outKo = [], outTr = [], prev = null;
+    for(var i=0;i<state.clauses.length;i++){
+      var clause = state.clauses[i];
+      var row = buildClauseRow(clause, prev);
+
+      var koParts = [];
+      if(row.topicKo) koParts.push(row.topicKo);
+      var associateKo = extraTextToKo(row.associate, 'associate');
+      if(associateKo) koParts.push(associateKo);
+      if(row.timeKo) koParts.push(row.timeKo);
+      if(row.departureKo) koParts.push(row.departureKo);
+      var transitKo = extraTextToKo(row.transit, 'transit');
+      if(transitKo) koParts.push(transitKo);
+      if(row.object1Ko) koParts.push(row.object1Ko);
+      var numKo = convertNumeralToKorean(row.numeral);
+      var quantKo = convertQuantifierToKorean(row.quantifier);
+      if(numKo) koParts.push(numKo);
+      if(quantKo) koParts.push(quantKo);
+      var beneficiaryKo = extraTextToKo(row.beneficiary, 'beneficiary');
+      if(beneficiaryKo) koParts.push(beneficiaryKo);
+      var object2Ko = extraTextToKo(row.object2, 'object2');
+      if(object2Ko) koParts.push(object2Ko);
+      if(row.adverbKo) koParts.push(row.adverbKo);
+      if(row.verbKo) koParts.push(row.verbKo);
+
+      var roLine = buildRomanianLine(row);
+      if(koParts.length) outKo.push(cleanSentenceText(koParts.join(' ')));
+      if(roLine) outTr.push(roLine);
+
+      prev = clause;
     }
 
-    function toggleField(clauseIndex, key){
-      var clause = state.clauses[clauseIndex];
-      if(!clause || !clause[key] || key === 'verb' || key === 'connector') return;
-      clause[key].enabled = !clause[key].enabled;
-      if(!clause[key].enabled){
-        clause[key].index = 0;
-      }else if((Number(clause[key].index) || 0) === 0 && datasetFor(key).length > 1){
-        clause[key].index = 1;
+    return {
+      korean: cleanSentenceText(outKo.join(' ')),
+      translation: cleanSentenceText(outTr.join(', '))
+    };
+  }
+
+  function renderPreview(){
+    var built = buildFullOutput();
+    var words = built.korean ? built.korean.split(/\s+/) : ['저는','공부해요'];
+    var html = '';
+    for(var i=0;i<words.length;i++){
+      html += '<span class="word">' + escapeHtml(words[i]) + '</span>';
+    }
+    els.sentenceWords.innerHTML = html;
+    els.translationText.textContent = built.translation || currentUI().defaultTranslation;
+  }
+
+  function getVisibleColumns(){
+    var visible = [];
+    for(var i=0;i<COLUMN_DEFS.length;i++){
+      if(state.level >= COLUMN_DEFS[i].level) visible.push(COLUMN_DEFS[i]);
+    }
+    return visible;
+  }
+
+  function renderDatasetCell(clauseIndex, col, previousClause){
+    var clause = state.clauses[clauseIndex];
+    var enabled = col.toggleable === false ? true : !!clause[col.fieldKey].enabled;
+    var value = fieldValueMain(clause, col.fieldKey, previousClause);
+    var meta = fieldValueMeta(clause, col.fieldKey);
+
+    var toggleHtml = col.toggleable === false
+      ? '<button class="tableToggle ghost" type="button">•</button>'
+      : '<button class="tableToggle ' + (enabled ? 'active' : '') + '" data-toggle="' + clauseIndex + ':' + col.fieldKey + '" type="button">✓</button>';
+
+    return '' +
+      '<div class="tableField ' + (enabled ? '' : 'off') + '">' +
+        toggleHtml +
+        '<button class="tableMainBtn" data-kind="' + escapeHtml(col.kind || col.fieldKey) + '" data-cycle="' + clauseIndex + ':' + col.fieldKey + '" type="button">' +
+          '<div class="tableMeta">' + escapeHtml(currentUI().labels[col.fieldKey] || col.fieldKey) + '</div>' +
+          '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
+          '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
+        '</button>' +
+      '</div>';
+  }
+
+  function renderExtraCell(clauseIndex, col){
+    var clause = state.clauses[clauseIndex];
+    var value = clause.extras[col.extraKey] || '';
+    return '' +
+      '<div class="tableInputWrap">' +
+        '<div class="tableMeta">' + escapeHtml(currentUI().editable) + '</div>' +
+        '<input class="tableInput" data-extra-input="' + clauseIndex + ':' + col.extraKey + '" value="' + escapeHtml(value) + '" placeholder="' + escapeHtml(currentUI()[col.placeholderKey] || '') + '" />' +
+        '<div class="tableInputMeta">' + escapeHtml(value ? currentUI().editable : currentUI().inferred) + '</div>' +
+      '</div>';
+  }
+
+  function renderClauses(){
+    var cols = getVisibleColumns();
+    var html = '<div class="builderTableWrap"><table class="builderTable"><thead><tr>';
+    for(var c=0;c<cols.length;c++){
+      html += '<th>' + escapeHtml(currentUI().columns[cols[c].key] || cols[c].key) + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+
+    for(var i=0;i<state.clauses.length;i++){
+      var prev = i > 0 ? state.clauses[i-1] : null;
+      html += '<tr>';
+      for(var j=0;j<cols.length;j++){
+        var col = cols[j];
+        html += '<td>';
+        if(col.mode === 'dataset') html += renderDatasetCell(i, col, prev);
+        else html += renderExtraCell(i, col);
+        html += '</td>';
       }
-      renderAll();
+      html += '</tr>';
     }
 
-    function updateExtraField(clauseIndex, extraKey, value){
-      var clause = state.clauses[clauseIndex];
-      if(!clause || !clause.extras) return;
-      clause.extras[extraKey] = value;
-      renderPreview();
-    }
+    html += '</tbody></table></div>';
+    els.clauseList.innerHTML = html;
+  }
 
-    function playCurrent(){
-      var built = buildFullOutput();
-      if(!built.korean){
-        showToast(currentUI().noSpeech);
-        return;
-      }
-      if(!('speechSynthesis' in window)){
-        showToast(currentUI().noSpeech);
-        return;
-      }
-      window.speechSynthesis.cancel();
-      var utter = new SpeechSynthesisUtterance(built.korean);
-      utter.lang = 'ko-KR';
-      utter.rate = 0.9;
-      var activeIndex = -1, wordEls = els.sentenceWords.querySelectorAll('.word');
-      utter.onboundary = function(){
-        activeIndex += 1;
-        for(var i=0;i<wordEls.length;i++) wordEls[i].classList.toggle('active', i === activeIndex);
+  function renderAll(){
+    renderPreview();
+    renderClauses();
+  }
+
+  function cycleField(clauseIndex, key){
+    var clause = state.clauses[clauseIndex];
+    if(!clause || !clause[key]) return;
+    var list = datasetFor(key);
+    if(!list.length) return;
+
+    if(key !== 'verb' && key !== 'connector' && !clause[key].enabled) return;
+
+    clause[key].index = (Number(clause[key].index) + 1) % list.length;
+    ensureChainLength();
+    renderAll();
+  }
+
+  function toggleField(clauseIndex, key){
+    var clause = state.clauses[clauseIndex];
+    if(!clause || !clause[key] || key === 'verb' || key === 'connector') return;
+    clause[key].enabled = !clause[key].enabled;
+    if(!clause[key].enabled){
+      clause[key].index = 0;
+    }else if((Number(clause[key].index) || 0) === 0 && datasetFor(key).length > 1){
+      clause[key].index = 1;
+    }
+    renderAll();
+  }
+
+  function updateExtraField(clauseIndex, extraKey, value){
+    var clause = state.clauses[clauseIndex];
+    if(!clause || !clause.extras) return;
+    clause.extras[extraKey] = value;
+    renderPreview();
+  }
+
+  function playCurrent(){
+    var built = buildFullOutput();
+    if(!built.korean){
+      showToast(currentUI().noSpeech);
+      return;
+    }
+    if(!('speechSynthesis' in window)){
+      showToast(currentUI().noSpeech);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var utter = new SpeechSynthesisUtterance(built.korean);
+    utter.lang = 'ko-KR';
+    utter.rate = 0.9;
+    var activeIndex = -1;
+    var wordEls = els.sentenceWords.querySelectorAll('.word');
+    utter.onboundary = function(){
+      activeIndex += 1;
+      for(var i=0;i<wordEls.length;i++) wordEls[i].classList.toggle('active', i === activeIndex);
+    };
+    utter.onend = function(){
+      for(var i=0;i<wordEls.length;i++) wordEls[i].classList.remove('active');
+    };
+    window.speechSynthesis.speak(utter);
+  }
+
+  function detectMimeType(){
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported){
+      if(MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a.40.2')) return 'audio/mp4;codecs=mp4a.40.2';
+      if(MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4';
+      if(MediaRecorder.isTypeSupported('audio/x-m4a')) return 'audio/x-m4a';
+      if(MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
+      if(MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
+    }
+    return '';
+  }
+
+  function toggleRecording(){
+    if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || typeof MediaRecorder === 'undefined'){
+      showToast(currentUI().recordUnsupported);
+      return;
+    }
+    if(mediaRecorder && mediaRecorder.state === 'recording'){
+      mediaRecorder.stop();
+      els.recordBtn.classList.remove('recording');
+      showToast(currentUI().recordStop);
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
+      recordedChunks = [];
+      recordedStream = stream;
+      var mime = detectMimeType();
+      mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = function(event){
+        if(event.data && event.data.size > 0) recordedChunks.push(event.data);
       };
-      utter.onend = function(){
-        for(var i=0;i<wordEls.length;i++) wordEls[i].classList.remove('active');
+
+      mediaRecorder.onstop = function(){
+        var blobType = mime || (recordedChunks[0] && recordedChunks[0].type) || 'audio/mp4';
+        var blob = new Blob(recordedChunks, { type: blobType });
+        if(recordedUrl) URL.revokeObjectURL(recordedUrl);
+        recordedUrl = URL.createObjectURL(blob);
+        els.recordedAudio.pause();
+        els.recordedAudio.removeAttribute('src');
+        els.recordedAudio.src = recordedUrl;
+        els.recordedAudio.load();
+        els.recordBox.classList.add('show');
+
+        if(recordedStream){
+          var tracks = recordedStream.getTracks();
+          for(var i=0;i<tracks.length;i++) tracks[i].stop();
+          recordedStream = null;
+        }
       };
-      window.speechSynthesis.speak(utter);
-    }
 
-    function detectMimeType(){
-      if(window.MediaRecorder && MediaRecorder.isTypeSupported){
-        if(MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a.40.2')) return 'audio/mp4;codecs=mp4a.40.2';
-        if(MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4';
-        if(MediaRecorder.isTypeSupported('audio/x-m4a')) return 'audio/x-m4a';
-        if(MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
-        if(MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
-      }
-      return '';
-    }
+      mediaRecorder.start();
+      els.recordBtn.classList.add('recording');
+      showToast(currentUI().recordStart);
+    }).catch(function(){
+      showToast(currentUI().recordUnsupported);
+    });
+  }
 
-    function toggleRecording(){
-      if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || typeof MediaRecorder === 'undefined'){
-        showToast(currentUI().recordUnsupported);
-        return;
-      }
-      if(mediaRecorder && mediaRecorder.state === 'recording'){
-        mediaRecorder.stop();
-        els.recordBtn.classList.remove('recording');
-        showToast(currentUI().recordStop);
-        return;
-      }
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
-        recordedChunks = [];
-        recordedStream = stream;
-        var mime = detectMimeType();
-        mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = function(event){
-          if(event.data && event.data.size > 0) recordedChunks.push(event.data);
-        };
-        mediaRecorder.onstop = function(){
-          var blobType = mime || (recordedChunks[0] && recordedChunks[0].type) || 'audio/mp4';
-          var blob = new Blob(recordedChunks, { type: blobType });
-          if(recordedUrl) URL.revokeObjectURL(recordedUrl);
-          recordedUrl = URL.createObjectURL(blob);
-          els.recordedAudio.pause();
-          els.recordedAudio.removeAttribute('src');
-          els.recordedAudio.src = recordedUrl;
-          els.recordedAudio.load();
-          els.recordBox.classList.add('show');
-          if(recordedStream){
-            var tracks = recordedStream.getTracks();
-            for(var i=0;i<tracks.length;i++) tracks[i].stop();
-            recordedStream = null;
-          }
-        };
-        mediaRecorder.start();
-        els.recordBtn.classList.add('recording');
-        showToast(currentUI().recordStart);
-      }).catch(function(){
-        showToast(currentUI().recordUnsupported);
+  function bindEvents(){
+    els.btnRo.addEventListener('click', function(){ setLang('ro'); });
+    els.btnEn.addEventListener('click', function(){ setLang('en'); });
+
+    if(els.topicDropdown){
+      els.topicDropdown.addEventListener('click', function(event){
+        var btn = event.target.closest('.topicOption');
+        if(!btn) return;
+        setLevel(btn.getAttribute('data-level'));
+        var details = document.getElementById('topicMenu');
+        if(details) details.removeAttribute('open');
       });
     }
 
-    function bindEvents(){
-      els.btnRo.addEventListener('click', function(){ setLang('ro'); });
-      els.btnEn.addEventListener('click', function(){ setLang('en'); });
+    els.freeText.addEventListener('input', function(){
+      state.text = els.freeText.value || '';
+      parseTextIntoClauses();
+      renderAll();
+    });
 
-      if(els.topicDropdown){
-        els.topicDropdown.addEventListener('click', function(event){
-          var btn = event.target.closest('.topicOption');
-          if(!btn) return;
-          setLevel(btn.getAttribute('data-level'));
-          var details = document.getElementById('topicMenu');
-          if(details) details.removeAttribute('open');
-        });
+    els.refreshBtn.addEventListener('click', refreshSentences);
+    els.playBtn.addEventListener('click', playCurrent);
+    els.recordBtn.addEventListener('click', toggleRecording);
+
+    els.sentenceBox.addEventListener('click', playCurrent);
+    els.sentenceBox.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        playCurrent();
       }
-
-      els.freeText.addEventListener('input', function(){
-        state.text = els.freeText.value || '';
-        parseTextIntoClauses();
-        renderAll();
-      });
-
-      els.refreshBtn.addEventListener('click', refreshSentences);
-      els.playBtn.addEventListener('click', playCurrent);
-      els.recordBtn.addEventListener('click', toggleRecording);
-      els.sentenceBox.addEventListener('click', playCurrent);
-      els.sentenceBox.addEventListener('keydown', function(e){
-        if(e.key === 'Enter' || e.key === ' '){
-          e.preventDefault();
-          playCurrent();
-        }
-      });
-
-      els.clauseList.addEventListener('click', function(event){
-        var toggleBtn = event.target.closest('[data-toggle]');
-        if(toggleBtn){
-          event.preventDefault();
-          event.stopPropagation();
-          var t = toggleBtn.getAttribute('data-toggle').split(':');
-          toggleField(Number(t[0]), t[1]);
-          return;
-        }
-        var cycleBtn = event.target.closest('[data-cycle]');
-        if(cycleBtn){
-          event.preventDefault();
-          var c = cycleBtn.getAttribute('data-cycle').split(':');
-          cycleField(Number(c[0]), c[1]);
-        }
-      });
+    });
 
       els.clauseList.addEventListener('input', function(event){
         var input = event.target.closest('[data-extra-input]');
