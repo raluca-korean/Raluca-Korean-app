@@ -896,27 +896,80 @@
       for(var i=0;i<words.length;i++) html += '<span class="word">' + escapeHtml(words[i]) + '</span>';
       els.sentenceWords.innerHTML = html; els.translationText.textContent = built.translation || currentUI().defaultTranslation;
     }
-
     function renderClauses(){
-      var html = '';
+      var cols = getVisibleColumns(state.level);
+      var html = '<div class="clauseTableWrap"><table class="clauseTable"><thead><tr>';
+
+      for(var h=0;h<cols.length;h++){
+        html += '<th>' + escapeHtml(cols[h].label) + '</th>';
+      }
+
+      html += '</tr></thead><tbody>';
+
       for(var i=0;i<state.clauses.length;i++){
         var clause = state.clauses[i];
-        html += '<div class="clauseRow" data-clause="' + i + '"><div class="clauseHead"><div class="clauseTitle">' + escapeHtml(currentUI().clause) + ' ' + (i + 1) + '</div></div><div class="clauseGrid">';
-        for(var f=0;f<FIELD_DEFS.length;f++){
-          var def = FIELD_DEFS[f];
-          html += '<div class="fieldCard ' + (clause[def.key].enabled ? '' : 'off') + '" data-kind="' + def.kind + '">';
-          html += '<button class="cardToggle ' + (clause[def.key].enabled ? 'active' : '') + '" data-toggle="' + i + ':' + def.key + '" type="button">✓</button>';
-          html += '<button class="cardMain" data-cycle="' + i + ':' + def.key + '" type="button">';
-          html += '<div class="cardTop"><span class="cardDot"></span><span class="cardLabel">' + escapeHtml(currentUI().labels[def.key]) + '</span></div>';
-          html += '<div class="cardPrompt">' + escapeHtml(currentUI().prompts[def.key]) + '</div>';
-          html += '<div class="cardValue">' + escapeHtml(fieldValueText(clause, def.key)) + '</div>';
-          html += '<div class="cardMeta">' + escapeHtml(fieldMetaText(clause, def.key)) + '</div>';
-          html += '</button></div>';
+        var prev = i > 0 ? state.clauses[i - 1] : null;
+        var row = buildClauseAnalysisRow(clause, prev, i);
+
+        html += '<tr>';
+
+        for(var c=0;c<cols.length;c++){
+          var key = cols[c].key;
+          html += '<td>';
+
+          if(key === 'index'){
+            html += row.index;
+          }
+          else if(key === 'relative' || key === 'subject' || key === 'time' || key === 'location' || key === 'object' || key === 'description' || key === 'verb' || key === 'connector'){
+            html += renderFieldCell(clause, i, key);
+          }
+          else if(key === 'exact'){
+            html += renderStaticCell(row.exact);
+          }
+          else if(key === 'predicate'){
+            html += renderStaticCell(row.predicate);
+          }
+          else if(key === 'conjugation'){
+            html += renderStaticCell(row.conjugation);
+          }
+          else if(key === 'gender'){
+            html += renderStaticCell(row.gender);
+          }
+          else if(key === 'gramNumber'){
+            html += renderStaticCell(row.gramNumber);
+          }
+          else if(key === 'quantifiers'){
+            html += renderStaticCell(row.quantifiers);
+          }
+          else if(key === 'gramCase'){
+            html += renderStaticCell(row.gramCase);
+          }
+          else if(key === 'article'){
+            html += renderStaticCell(row.article);
+          }
+          else if(key === 'adjectiveAgreement'){
+            html += renderStaticCell(row.adjectiveAgreement);
+          }
+          else if(key === 'verbType'){
+            html += renderStaticCell(row.verbType);
+          }
+          else if(key === 'subordinateType'){
+            html += renderStaticCell(row.subordinateType);
+          }
+          else {
+            html += '<span class="mutedDash">—</span>';
+          }
+
+          html += '</td>';
         }
-        html += '</div></div>';
+
+        html += '</tr>';
       }
+
+      html += '</tbody></table></div>';
       els.clauseList.innerHTML = html;
     }
+    
     function renderAll(){ renderPreview(); renderClauses(); }
     function cycleField(clauseIndex, key){ var clause = state.clauses[clauseIndex]; if(!clause || !clause[key] || !clause[key].enabled) return; var list = datasetFor(key); if(!list.length) return; clause[key].index = (Number(clause[key].index) + 1) % list.length; ensureChainLength(); renderAll(); }
     function toggleField(clauseIndex, key){ var clause = state.clauses[clauseIndex]; if(!clause || !clause[key] || key === 'verb' || key === 'connector') return; clause[key].enabled = !clause[key].enabled; if(!clause[key].enabled) clause[key].index = 0; else if((Number(clause[key].index) || 0) === 0 && datasetFor(key).length > 1) clause[key].index = 1; renderAll(); }
