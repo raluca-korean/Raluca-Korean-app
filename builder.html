@@ -6,360 +6,621 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Raluca Korean — Builder</title>
-<style>
-:root{
-  --builder-line: rgba(15,23,42,.08);
-  --builder-line-soft: rgba(15,23,42,.06);
-  --builder-text: #0f172a;
-  --builder-muted: #64748b;
-  --builder-bg: #ffffff;
-  --builder-shadow: 0 10px 24px rgba(15,23,42,.06);
-  --builder-shadow-soft: 0 6px 14px rgba(15,23,42,.05);
-  --builder-radius: 20px;
-
-  --c-topic: #eef4ff;
-  --c-associate: #f6f0ff;
-  --c-time: #fff8ea;
-  --c-departure: #eefbf5;
-  --c-transit: #f2fbff;
-  --c-numeral: #fff4ef;
-  --c-quantifier: #fdf7e9;
-  --c-object1: #fff1f6;
-  --c-beneficiary: #f7f3ff;
-  --c-object2: #f5f7fb;
-  --c-adverb: #f8fafc;
-  --c-verb: #fff2d9;
-  --c-connector: #efe7ff;
-
-  --picker-backdrop: rgba(15,23,42,.42);
-}
-
-.clauseList{
-  display:block;
-  width:100%;
-}
-
-.builderTableWrap{
-  width:100%;
-  overflow:auto;
-  border:1px solid var(--builder-line);
-  border-radius:24px;
-  background:#fff;
-  box-shadow:var(--builder-shadow);
-}
-
-.builderTable{
-  width:100%;
-  min-width:2210px;
-  border-collapse:separate;
-  border-spacing:0;
-  table-layout:fixed;
-}
-
-.builderTable th,
-.builderTable td{
-  width:170px;
-  min-width:170px;
-  max-width:170px;
-}
-
-.builderTable thead th{
-  position:sticky;
-  top:0;
-  z-index:2;
-  height:58px;
-  padding:14px 12px;
-  text-align:left;
-  vertical-align:middle;
-  background:linear-gradient(180deg,#ffffff,#f8fafc);
-  border-bottom:1px solid var(--builder-line);
-  color:#334155;
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  white-space:normal;
-  word-break:keep-all;
-}
-
-.builderTable tbody td{
-  padding:12px;
-  vertical-align:top;
-  border-bottom:1px solid var(--builder-line-soft);
-  background:#fff;
-}
-
-.builderTable tbody tr:last-child td{
-  border-bottom:none;
-}
-
-.tableField{
-  width:100%;
-  min-height:132px;
-  height:132px;
-  display:flex;
-}
-
-.tableMainBtn{
-  position:relative;
-  width:100%;
-  min-height:132px;
-  height:132px;
-  box-sizing:border-box;
-  border-radius:20px;
-  border:1px solid rgba(15,23,42,.08);
-  box-shadow:0 8px 18px rgba(15,23,42,.04);
-  padding:13px 13px 12px;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  align-items:flex-start;
-  text-align:left;
-  cursor:pointer;
-  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-  background:linear-gradient(180deg,#fff,#f8fafc);
-  color:var(--builder-text);
-}
-
-.tableMainBtn:hover{
-  transform:translateY(-1px);
-  box-shadow:0 12px 22px rgba(15,23,42,.07);
-  border-color:rgba(15,23,42,.12);
-}
-
-.tableMainBtn:active{
-  transform:translateY(0);
-}
-
-.tableMainBtn.is-empty .tableValue{
-  color:#94a3b8;
-}
-
-.tableMainBtn[data-kind="topic"]{background:linear-gradient(180deg,var(--c-topic),#fff);}
-.tableMainBtn[data-kind="associate"]{background:linear-gradient(180deg,var(--c-associate),#fff);}
-.tableMainBtn[data-kind="time"]{background:linear-gradient(180deg,var(--c-time),#fff);}
-.tableMainBtn[data-kind="departure"]{background:linear-gradient(180deg,var(--c-departure),#fff);}
-.tableMainBtn[data-kind="transit"]{background:linear-gradient(180deg,var(--c-transit),#fff);}
-.tableMainBtn[data-kind="numeral"]{background:linear-gradient(180deg,var(--c-numeral),#fff);}
-.tableMainBtn[data-kind="quantifier"]{background:linear-gradient(180deg,var(--c-quantifier),#fff);}
-.tableMainBtn[data-kind="object1"]{background:linear-gradient(180deg,var(--c-object1),#fff);}
-.tableMainBtn[data-kind="beneficiary"]{background:linear-gradient(180deg,var(--c-beneficiary),#fff);}
-.tableMainBtn[data-kind="object2"]{background:linear-gradient(180deg,var(--c-object2),#fff);}
-.tableMainBtn[data-kind="adverb"]{background:linear-gradient(180deg,var(--c-adverb),#fff);}
-.tableMainBtn[data-kind="verb"]{background:linear-gradient(180deg,var(--c-verb),#fff);}
-.tableMainBtn[data-kind="connector"]{background:linear-gradient(180deg,var(--c-connector),#fff);}
-
-.tableMeta{
-  font-size:12px;
-  line-height:1.1;
-  font-weight:900;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:#64748b;
-}
-
-.tableValue{
-  width:100%;
-  font-size:18px;
-  line-height:1.08;
-  font-weight:900;
-  color:#0f172a;
-  word-break:keep-all;
-  overflow-wrap:anywhere;
-}
-
-.tableSub{
-  font-size:12px;
-  line-height:1.2;
-  font-weight:800;
-  color:#64748b;
-}
-
-.tablePickedDot{
-  position:absolute;
-  top:12px;
-  right:12px;
-  width:26px;
-  height:26px;
-  border-radius:999px;
-  display:grid;
-  place-items:center;
-  background:linear-gradient(135deg,#7c5cff,#5b7cff);
-  color:#fff;
-  font-size:13px;
-  font-weight:900;
-  box-shadow:0 8px 16px rgba(109,94,252,.20);
-}
-
-.builderControlsRow{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.is-active-level{
-  box-shadow:0 0 0 2px rgba(109,94,252,.16) inset !important;
-  border-color:rgba(109,94,252,.34) !important;
-}
-
-.vocabSheet{
-  position:fixed;
-  inset:0;
-  z-index:9999;
-  display:none;
-}
-
-.vocabSheet.open{
-  display:block;
-}
-
-.vocabSheetBackdrop{
-  position:absolute;
-  inset:0;
-  background:var(--picker-backdrop);
-}
-
-.vocabSheetPanel{
-  position:absolute;
-  left:50%;
-  bottom:0;
-  transform:translateX(-50%);
-  width:min(960px, 100%);
-  max-height:80vh;
-  background:#fff;
-  border-radius:28px 28px 0 0;
-  box-shadow:0 -24px 60px rgba(15,23,42,.22);
-  padding:18px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
-.vocabSheetHead{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-
-.vocabSheetTitle{
-  font-size:18px;
-  font-weight:900;
-  color:#0f172a;
-}
-
-.vocabSheetClose{
-  width:42px;
-  height:42px;
-  border-radius:999px;
-  border:1px solid rgba(15,23,42,.08);
-  background:#fff;
-  color:#0f172a;
-  cursor:pointer;
-  font-size:18px;
-  font-weight:900;
-  box-shadow:var(--builder-shadow-soft);
-}
-
-.vocabSheetSearch{
-  width:100%;
-  height:48px;
-  border-radius:14px;
-  border:1px solid rgba(15,23,42,.10);
-  padding:0 14px;
-  font:inherit;
-  font-size:15px;
-  font-weight:800;
-  color:#0f172a;
-  outline:none;
-  background:#fff;
-}
-
-.vocabSheetSearch:focus{
-  border-color:rgba(109,94,252,.38);
-  box-shadow:0 0 0 4px rgba(109,94,252,.08);
-}
-
-.vocabSheetList{
-  overflow:auto;
-  display:grid;
-  gap:10px;
-  padding-bottom:6px;
-}
-
-.vocabItem{
-  width:100%;
-  border:1px solid rgba(15,23,42,.08);
-  border-radius:18px;
-  background:#fff;
-  padding:14px 16px;
-  text-align:left;
-  cursor:pointer;
-  transition:background .16s ease, transform .16s ease, border-color .16s ease;
-}
-
-.vocabItem:hover{
-  background:#f8fafc;
-  transform:translateY(-1px);
-  border-color:rgba(15,23,42,.12);
-}
-
-.vocabItemKo{
-  font-size:18px;
-  line-height:1.12;
-  font-weight:900;
-  color:#0f172a;
-  margin-bottom:4px;
-}
-
-.vocabItemMeta{
-  font-size:13px;
-  line-height:1.3;
-  color:#64748b;
-  font-weight:700;
-}
-
-.vocabEmpty{
-  padding:18px;
-  border:1px dashed rgba(15,23,42,.14);
-  border-radius:16px;
-  color:#64748b;
-  font-weight:800;
-  background:#fff;
-}
-
-.recordInlineAudio{
-  width:100%;
-  margin-top:8px;
-}
-
-@media (max-width:1200px){
-  .builderTable{
-    min-width:2210px;
+  <style>
+  :root{
+    --bg:#f6f7fd;
+    --bg2:#eef2ff;
+    --card:#ffffff;
+    --text:#0f172a;
+    --muted:#64748b;
+    --line:rgba(15,23,42,.08);
+    --line2:rgba(15,23,42,.14);
+    --primary:#6d5efc;
+    --primary2:#8b5cf6;
+    --shadow:0 16px 40px rgba(15,23,42,.07);
+    --shadow-sm:0 8px 20px rgba(15,23,42,.05);
+    --radius-xl:24px;
+    --radius-lg:18px;
+    --radius-md:16px;
+    --transition:180ms ease;
+    --c-relative:#f4e0ff;
+    --c-subject:#dcecff;
+    --c-time:#ffe8be;
+    --c-location:#dff7df;
+    --c-object:#ffdede;
+    --c-description:#ece8ff;
+    --c-verb:#ffe9cf;
+    --c-connector:#e4ddff;
   }
-}
 
-@media (max-width:860px){
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+
+  body{
+    min-height:100vh;
+    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at top left, rgba(109,94,252,.12), transparent 24%),
+      radial-gradient(circle at top right, rgba(139,92,246,.10), transparent 22%),
+      linear-gradient(180deg,var(--bg2) 0%, var(--bg) 34%, #fbfcfe 100%);
+    padding:16px;
+  }
+
+  .app{max-width:1180px;margin:0 auto}
+
+  .panel{
+    width:100%;
+    background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.96));
+    border:1px solid var(--line);
+    border-radius:var(--radius-xl);
+    box-shadow:var(--shadow);
+    padding:16px;
+    margin-bottom:14px;
+  }
+
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+
+  .title{
+    margin:0;
+    font-size:clamp(16px,2vw,24px);
+    line-height:1.1;
+    letter-spacing:-.02em;
+    font-weight:900;
+  }
+
+  .toolbar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .pill,.tinyBtn,.topicOption,.iconBtn,.tableMainBtn{
+    appearance:none;
+    -webkit-appearance:none;
+    border:none;
+    font:inherit;
+    transition:
+      transform var(--transition),
+      box-shadow var(--transition),
+      background var(--transition),
+      border-color var(--transition),
+      opacity var(--transition),
+      color var(--transition);
+  }
+
+  .pill:hover,.tinyBtn:hover,.topicOption:hover,.iconBtn:hover,.tableMainBtn:hover{
+    transform:translateY(-1px);
+  }
+
+  .pill,.tinyBtn,.iconBtn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    text-decoration:none;
+    cursor:pointer;
+    background:#fff;
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:999px;
+    box-shadow:0 8px 18px rgba(15,23,42,.04);
+    font-weight:800;
+  }
+
+  .pill{padding:9px 13px;font-size:13px;min-height:40px}
+  .tinyBtn{padding:8px 12px;font-size:12px;min-height:36px}
+  .iconBtn{width:40px;height:40px;padding:0;font-size:15px;cursor:pointer}
+
+  .pill.active{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+    box-shadow:0 14px 24px rgba(109,94,252,.22);
+  }
+
+  .iconBtn.recording{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#ef4444,#dc2626);
+    box-shadow:0 14px 24px rgba(220,38,38,.22);
+  }
+
+  .topicMenu{position:relative}
+  .topicMenu summary{list-style:none;cursor:pointer}
+  .topicMenu summary::-webkit-details-marker{display:none}
+
+  .topicBubble{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    min-height:38px;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+    color:#fff;
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+    box-shadow:0 14px 24px rgba(109,94,252,.22);
+    user-select:none;
+  }
+
+  .topicDot{
+    width:7px;
+    height:7px;
+    border-radius:999px;
+    background:#fff;
+    opacity:.95;
+    flex:0 0 auto;
+  }
+
+  .topicDropdown{
+    position:absolute;
+    right:0;
+    top:calc(100% + 9px);
+    z-index:30;
+    min-width:160px;
+    display:grid;
+    gap:7px;
+    padding:10px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+    box-shadow:var(--shadow-sm);
+  }
+
+  .topicOption{
+    cursor:pointer;
+    text-align:left;
+    padding:10px 11px;
+    border-radius:12px;
+    background:#fff;
+    border:1px solid var(--line);
+    font-size:13px;
+    font-weight:800;
+    color:var(--text);
+  }
+
+  .topicOption.active{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+  }
+
+  textarea{
+    width:100%;
+    min-height:96px;
+    resize:vertical;
+    border:1px solid var(--line2);
+    border-radius:18px;
+    padding:15px 16px;
+    background:#fff;
+    color:var(--text);
+    outline:none;
+    font:inherit;
+    font-size:18px;
+    font-weight:800;
+    line-height:1.5;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.55);
+  }
+
+  textarea:focus{
+    border-color:rgba(109,94,252,.42);
+    box-shadow:0 0 0 4px rgba(109,94,252,.08);
+  }
+
+  .previewBar{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:12px;
+  }
+
+  .previewTools{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .sentenceBox{
+    width:100%;
+    border:1px solid rgba(109,94,252,.12);
+    border-radius:18px;
+    background:
+      radial-gradient(circle at top left, rgba(109,94,252,.10), transparent 42%),
+      linear-gradient(180deg,#fff 0%,#f8fafc 100%);
+    padding:16px;
+    box-shadow:var(--shadow-sm);
+    cursor:pointer;
+  }
+
+  .sentenceWords{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 8px;
+    min-height:40px;
+    align-items:center;
+  }
+
+  .word{
+    font-size:clamp(22px,3.2vw,34px);
+    line-height:1.12;
+    font-weight:900;
+    letter-spacing:-.02em;
+    color:#2563eb;
+    padding:2px 4px;
+    border-radius:10px;
+    transition:background var(--transition), box-shadow var(--transition), transform var(--transition);
+  }
+
+  .word.active{
+    background:linear-gradient(135deg, rgba(109,94,252,.16), rgba(139,92,246,.10));
+    box-shadow:0 8px 18px rgba(109,94,252,.10);
+    transform:translateY(-1px);
+  }
+
+  .translationBox{
+    margin-top:12px;
+    width:100%;
+    min-height:58px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+    padding:14px 16px;
+    box-shadow:0 8px 18px rgba(15,23,42,.04);
+    display:flex;
+    align-items:center;
+  }
+
+  .translationText{
+    font-size:18px;
+    line-height:1.5;
+    font-weight:800;
+  }
+
+  .recordBox{margin-top:12px;display:none}
+  .recordBox.show{display:block}
+
+  .recordedLabel{
+    font-size:12px;
+    font-weight:900;
+    color:var(--muted);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+
+  audio{
+    width:100%;
+    display:block;
+    border-radius:14px;
+  }
+
+  .clauseList{display:block}
+
+  .builderTableWrap{
+    width:100%;
+    overflow:auto;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:#fff;
+    box-shadow:var(--shadow-sm);
+  }
+
+  .builderTable{
+    width:100%;
+    min-width:2210px;
+    border-collapse:separate;
+    border-spacing:0;
+    table-layout:fixed;
+  }
+
   .builderTable th,
   .builderTable td{
-    width:160px;
-    min-width:160px;
-    max-width:160px;
+    width:170px;
+    min-width:170px;
+    max-width:170px;
   }
 
-  .tableField,
+  .builderTable thead th{
+    position:sticky;
+    top:0;
+    z-index:2;
+    padding:12px;
+    text-align:left;
+    font-size:11px;
+    line-height:1.25;
+    letter-spacing:.11em;
+    text-transform:uppercase;
+    font-weight:900;
+    color:#475569;
+    background:linear-gradient(180deg,#fafbff,#f3f5ff);
+    border-bottom:1px solid rgba(15,23,42,.08);
+    white-space:normal;
+    word-break:keep-all;
+  }
+
+  .builderTable tbody td{
+    padding:10px;
+    vertical-align:top;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    background:#fff;
+  }
+
+  .builderTable tbody tr:nth-child(odd) td{background:#fcfdff}
+  .builderTable tbody tr:last-child td{border-bottom:none}
+
+  .tableField{
+    position:relative;
+    min-height:132px;
+    height:132px;
+    display:flex;
+  }
+
   .tableMainBtn{
-    min-height:124px;
-    height:124px;
+    position:relative;
+    width:100%;
+    min-height:132px;
+    height:132px;
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:18px;
+    background:linear-gradient(180deg,#fff,#f8fafc);
+    box-shadow:0 8px 18px rgba(15,23,42,.04);
+    text-align:left;
+    padding:11px 12px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    align-items:flex-start;
+    cursor:pointer;
+  }
+
+  .tableMainBtn[data-kind="subject"]{
+    background:linear-gradient(180deg,var(--c-subject),#fff);
+  }
+  .tableMainBtn[data-kind="time"]{
+    background:linear-gradient(180deg,var(--c-time),#fff);
+  }
+  .tableMainBtn[data-kind="location"]{
+    background:linear-gradient(180deg,var(--c-location),#fff);
+  }
+  .tableMainBtn[data-kind="object"]{
+    background:linear-gradient(180deg,var(--c-object),#fff);
+  }
+  .tableMainBtn[data-kind="description"]{
+    background:linear-gradient(180deg,var(--c-description),#fff);
+  }
+  .tableMainBtn[data-kind="verb"]{
+    background:linear-gradient(180deg,var(--c-verb),#fff);
+  }
+  .tableMainBtn[data-kind="connector"]{
+    background:linear-gradient(180deg,var(--c-connector),#fff);
+  }
+
+  .tableMainBtn.is-empty .tableValue{
+    color:#94a3b8;
   }
 
   .tableValue{
-    font-size:17px;
+    font-size:21px;
+    line-height:1.06;
+    font-weight:900;
+    letter-spacing:-.02em;
+    color:#0f172a;
+    word-break:keep-all;
+    margin-top:auto;
   }
-}
+
+  .tableMeta{
+    font-size:11px;
+    line-height:1.35;
+    color:#64748b;
+    font-weight:800;
+    min-height:14px;
+  }
+
+  .tablePickedDot{
+    position:absolute;
+    top:12px;
+    right:12px;
+    width:26px;
+    height:26px;
+    border-radius:999px;
+    display:grid;
+    place-items:center;
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+    color:#fff;
+    font-size:13px;
+    font-weight:900;
+    box-shadow:0 8px 16px rgba(109,94,252,.20);
+  }
+
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%) translateY(12px);
+    min-width:min(92vw,560px);
+    max-width:92vw;
+    padding:13px 15px;
+    border-radius:16px;
+    background:#fff;
+    border:1px solid rgba(15,23,42,.10);
+    box-shadow:0 18px 40px rgba(15,23,42,.16);
+    font-size:14px;
+    line-height:1.5;
+    font-weight:800;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    z-index:100;
+  }
+
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  .vocabSheet{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:none;
+  }
+
+  .vocabSheet.open{
+    display:block;
+  }
+
+  .vocabSheetBackdrop{
+    position:absolute;
+    inset:0;
+    background:rgba(15,23,42,.38);
+  }
+
+  .vocabSheetPanel{
+    position:absolute;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%);
+    width:min(920px,100%);
+    max-height:78vh;
+    background:#fff;
+    border-radius:24px 24px 0 0;
+    box-shadow:0 -20px 50px rgba(15,23,42,.20);
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .vocabSheetHead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .vocabSheetTitle{
+    font-size:18px;
+    font-weight:900;
+    color:#0f172a;
+  }
+
+  .vocabSheetClose{
+    width:42px;
+    height:42px;
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.08);
+    background:#fff;
+    cursor:pointer;
+    font-size:18px;
+    font-weight:900;
+  }
+
+  .vocabSheetSearchWrap{width:100%}
+
+  .vocabSheetSearch{
+    width:100%;
+    height:48px;
+    border-radius:14px;
+    border:1px solid rgba(15,23,42,.10);
+    padding:0 14px;
+    font:inherit;
+    font-size:15px;
+    font-weight:700;
+    outline:none;
+    background:#fff;
+  }
+
+  .vocabSheetSearch:focus{
+    border-color:rgba(109,94,252,.42);
+    box-shadow:0 0 0 4px rgba(109,94,252,.08);
+  }
+
+  .vocabSheetList{
+    overflow:auto;
+    display:grid;
+    gap:10px;
+    padding-bottom:8px;
+  }
+
+  .vocabItem{
+    width:100%;
+    text-align:left;
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:16px;
+    padding:14px 16px;
+    background:#fff;
+    cursor:pointer;
+  }
+
+  .vocabItem:hover{
+    background:#f8fafc;
+  }
+
+  .vocabItemKo{
+    font-size:18px;
+    font-weight:900;
+    color:#0f172a;
+    margin-bottom:4px;
+  }
+
+  .vocabItemMeta{
+    font-size:13px;
+    line-height:1.3;
+    color:#64748b;
+    font-weight:700;
+  }
+
+  .vocabEmpty{
+    padding:18px;
+    border:1px dashed rgba(15,23,42,.14);
+    border-radius:16px;
+    color:#64748b;
+    font-weight:800;
+  }
+
+  @media (max-width:980px){
+    .builderTable{min-width:2210px}
+  }
+
+  @media (max-width:720px){
+    body{padding:12px}
+    .panel{padding:13px}
+    .title{font-size:16px}
+    textarea{min-height:88px;font-size:16px}
+    .translationText{font-size:16px}
+    .word{font-size:20px}
+
+    .builderTable{
+      min-width:2080px;
+    }
+
+    .builderTable th,
+    .builderTable td{
+      width:160px;
+      min-width:160px;
+      max-width:160px;
+      padding:9px;
+    }
+
+    .tableField,
+    .tableMainBtn{
+      min-height:124px;
+      height:124px;
+    }
+
+    .tableValue{font-size:18px}
+  }
 </style>
-
-
 
 </head>
 <body>
@@ -419,206 +680,11 @@
   </div>
 
   <div class="toast" id="toast" aria-live="polite"></div>
-<script>
+  <script>
 (function(){
   'use strict';
 
-  if (window.__RALUCA_BUILDER_FIXED__) return;
-  window.__RALUCA_BUILDER_FIXED__ = true;
-
-  function injectRuntimePatchStyles(){
-    if(document.getElementById('builder-runtime-patch-styles')) return;
-
-    const style = document.createElement('style');
-    style.id = 'builder-runtime-patch-styles';
-    style.textContent = `
-      .builderTable{
-        table-layout:fixed;
-        min-width:2210px !important;
-      }
-      .builderTable th,
-      .builderTable td{
-        width:170px !important;
-        min-width:170px !important;
-        max-width:170px !important;
-      }
-      .builderTable thead th{
-        white-space:normal !important;
-        word-break:keep-all;
-      }
-      .tableField{
-        min-height:132px !important;
-        height:132px !important;
-        display:flex !important;
-      }
-      .tableMainBtn{
-        min-height:132px !important;
-        height:132px !important;
-        display:flex !important;
-        flex-direction:column !important;
-        justify-content:space-between !important;
-        align-items:flex-start !important;
-      }
-      .tableMainBtn.is-empty .tableValue{
-        color:#94a3b8 !important;
-      }
-      .tablePickedDot{
-        position:absolute;
-        top:12px;
-        right:12px;
-        width:26px;
-        height:26px;
-        border-radius:999px;
-        display:grid;
-        place-items:center;
-        background:linear-gradient(135deg,#7c5cff,#5b7cff);
-        color:#fff;
-        font-size:13px;
-        font-weight:900;
-        box-shadow:0 8px 16px rgba(109,94,252,.20);
-      }
-      .vocabSheet{
-        position:fixed;
-        inset:0;
-        z-index:9999;
-        display:none;
-      }
-      .vocabSheet.open{
-        display:block;
-      }
-      .vocabSheetBackdrop{
-        position:absolute;
-        inset:0;
-        background:rgba(15,23,42,.38);
-      }
-      .vocabSheetPanel{
-        position:absolute;
-        left:50%;
-        bottom:0;
-        transform:translateX(-50%);
-        width:min(920px,100%);
-        max-height:78vh;
-        background:#fff;
-        border-radius:24px 24px 0 0;
-        box-shadow:0 -20px 50px rgba(15,23,42,.20);
-        padding:18px;
-        display:flex;
-        flex-direction:column;
-        gap:14px;
-      }
-      .vocabSheetHead{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:12px;
-      }
-      .vocabSheetTitle{
-        font-size:18px;
-        font-weight:900;
-        color:#0f172a;
-      }
-      .vocabSheetClose{
-        width:42px;
-        height:42px;
-        border-radius:999px;
-        border:1px solid rgba(15,23,42,.08);
-        background:#fff;
-        cursor:pointer;
-        font-size:18px;
-        font-weight:900;
-      }
-      .vocabSheetSearch{
-        width:100%;
-        height:48px;
-        border-radius:14px;
-        border:1px solid rgba(15,23,42,.10);
-        padding:0 14px;
-        font:inherit;
-        font-size:15px;
-        font-weight:700;
-        outline:none;
-      }
-      .vocabSheetList{
-        overflow:auto;
-        display:grid;
-        gap:10px;
-        padding-bottom:8px;
-      }
-      .vocabItem{
-        width:100%;
-        text-align:left;
-        border:1px solid rgba(15,23,42,.08);
-        border-radius:16px;
-        padding:14px 16px;
-        background:#fff;
-        cursor:pointer;
-      }
-      .vocabItem:hover{
-        background:#f8fafc;
-      }
-      .vocabItemKo{
-        font-size:18px;
-        font-weight:900;
-        color:#0f172a;
-        margin-bottom:4px;
-      }
-      .vocabItemMeta{
-        font-size:13px;
-        line-height:1.3;
-        color:#64748b;
-        font-weight:700;
-      }
-      .vocabEmpty{
-        padding:18px;
-        border:1px dashed rgba(15,23,42,.14);
-        border-radius:16px;
-        color:#64748b;
-        font-weight:800;
-      }
-      @media (max-width:720px){
-        .builderTable{
-          min-width:2210px !important;
-        }
-        .builderTable th,
-        .builderTable td{
-          width:160px !important;
-          min-width:160px !important;
-          max-width:160px !important;
-        }
-        .tableField,
-        .tableMainBtn{
-          min-height:124px !important;
-          height:124px !important;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  injectRuntimePatchStyles();
-
-  const UI = {
-    ro: {
-      placeholder: 'Scrie aici o propoziție sau un lanț de propoziții...',
-      defaultTranslation: 'Configurează propoziția din tabel.',
-      noSpeech: 'Nu există propoziție de redat.',
-      recordStart: 'Înregistrare pornită.',
-      recordStop: 'Înregistrare oprită. Poți asculta mai jos.',
-      recordUnsupported: 'Înregistrarea audio nu este disponibilă pe acest browser.',
-      recordedLabel: 'Înregistrarea ta'
-    },
-    en: {
-      placeholder: 'Type a sentence or a sentence chain here...',
-      defaultTranslation: 'Configure the sentence from the table.',
-      noSpeech: 'There is no sentence to play.',
-      recordStart: 'Recording started.',
-      recordStop: 'Recording stopped. You can listen below.',
-      recordUnsupported: 'Audio recording is not available on this browser.',
-      recordedLabel: 'Your recording'
-    }
-  };
-
-  const TABLE_HEADERS_KO = {
+  var TABLE_HEADERS_KO = {
     topic: '주제',
     associate: '관련 인물',
     time: '시간',
@@ -634,7 +700,7 @@
     connector: '연결어'
   };
 
-  const TABLE_PLACEHOLDER_KO = {
+  var TABLE_PLACEHOLDERS_KO = {
     topic: '선택',
     associate: '선택',
     time: '선택',
@@ -650,118 +716,16 @@
     connector: '선택'
   };
 
-  const COLUMN_DEFS = [
-    { key:'topic',       level:1, bucket:'subject',    kind:'subject' },
-    { key:'associate',   level:3, bucket:'associate',  kind:'subject' },
-    { key:'time',        level:1, bucket:'time',       kind:'time' },
-    { key:'departure',   level:3, bucket:'location',   kind:'location' },
-    { key:'transit',     level:4, bucket:'transit',    kind:'location' },
-    { key:'numeral',     level:5, bucket:'numeral',    kind:'object' },
-    { key:'quantifier',  level:5, bucket:'quantifier', kind:'object' },
-    { key:'object1',     level:1, bucket:'object',     kind:'object' },
-    { key:'beneficiary', level:4, bucket:'beneficiary',kind:'subject' },
-    { key:'object2',     level:6, bucket:'object2',    kind:'object' },
-    { key:'adverb',      level:2, bucket:'description',kind:'description' },
-    { key:'verb',        level:1, bucket:'verb',       kind:'verb' },
-    { key:'connector',   level:2, bucket:'connector',  kind:'connector' }
-  ];
+  var EXTRA_BUCKETS = {
+    associate: 'subject',
+    transit: 'location',
+    numeral: 'numeral',
+    quantifier: 'quantifier',
+    beneficiary: 'subject',
+    object2: 'object'
+  };
 
-  const DATA = {
-    subject: [
-      {ko:'저는', ro:'eu', en:'I', aliases:['eu','i']},
-      {ko:'나는', ro:'eu', en:'I', aliases:['eu','i']},
-      {ko:'우리는', ro:'noi', en:'we', aliases:['noi','we']},
-      {ko:'친구는', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
-      {ko:'선생님은', ro:'profesorul', en:'teacher', aliases:['profesorul','profesor','teacher']},
-      {ko:'학생은', ro:'studentul', en:'student', aliases:['studentul','student']},
-      {ko:'민수는', ro:'Minsu', en:'Minsu', aliases:['minsu']},
-      {ko:'지수는', ro:'Jisu', en:'Jisu', aliases:['jisu']}
-    ],
-    time: [
-      {ko:'', ro:'', en:'', aliases:[]},
-      {ko:'오늘', ro:'astăzi', en:'today', aliases:['astăzi','astazi','azi','today']},
-      {ko:'어제', ro:'ieri', en:'yesterday', aliases:['ieri','yesterday']},
-      {ko:'내일', ro:'mâine', en:'tomorrow', aliases:['maine','mâine','tomorrow']},
-      {ko:'지금', ro:'acum', en:'now', aliases:['acum','now']},
-      {ko:'매일', ro:'în fiecare zi', en:'every day', aliases:['zilnic','in fiecare zi','în fiecare zi','every day']},
-      {ko:'아침에', ro:'dimineața', en:'in the morning', aliases:['dimineata','dimineața','morning']},
-      {ko:'저녁에', ro:'seara', en:'in the evening', aliases:['seara','evening']},
-      {ko:'주말에', ro:'în weekend', en:'on the weekend', aliases:['weekend']}
-    ],
-    location: [
-      {ko:'', ro:'', en:'', aliases:[]},
-      {ko:'학교에서', ro:'la școală', en:'at school', aliases:['la scoala','la școală','scoala','școală','school']},
-      {ko:'집에서', ro:'acasă', en:'at home', aliases:['acasă','acasa','home']},
-      {ko:'도서관에서', ro:'la bibliotecă', en:'at the library', aliases:['la biblioteca','la bibliotecă','biblioteca','bibliotecă','library']},
-      {ko:'카페에서', ro:'la cafenea', en:'at the cafe', aliases:['la cafenea','cafenea','cafe']},
-      {ko:'회사에서', ro:'la serviciu', en:'at work', aliases:['la serviciu','serviciu','la munca','la muncă','work']},
-      {ko:'공원에서', ro:'în parc', en:'in the park', aliases:['in parc','în parc','parc','park']},
-      {ko:'식당에서', ro:'la restaurant', en:'at the restaurant', aliases:['restaurant']},
-      {ko:'교실에서', ro:'în clasă', en:'in the classroom', aliases:['in clasa','în clasă','clasa','clasă','classroom']},
-      {ko:'길에서', ro:'pe stradă', en:'on the street', aliases:['pe strada','pe stradă','strada','stradă','street']},
-      {ko:'시장에서', ro:'la piață', en:'at the market', aliases:['la piata','la piață','piata','piață','market']},
-      {ko:'가게에서', ro:'la magazin', en:'at the store', aliases:['la magazin','magazin','store','shop']},
-      {ko:'온라인으로', ro:'online', en:'online', aliases:['online']}
-    ],
-    object: [
-      {ko:'', ro:'', en:'', aliases:[]},
-      {ko:'한국어를', ro:'limba coreeană', en:'Korean', aliases:['coreeana','coreeană','limba coreeana','limba coreeană','korean']},
-      {ko:'점심을', ro:'prânzul', en:'lunch', aliases:['pranzul','prânzul','pranz','prânz','lunch']},
-      {ko:'숙제를', ro:'tema', en:'homework', aliases:['tema','homework']},
-      {ko:'책을', ro:'cartea', en:'the book', aliases:['cartea','carte','book']},
-      {ko:'커피를', ro:'cafeaua', en:'coffee', aliases:['cafeaua','cafea','coffee']},
-      {ko:'음악을', ro:'muzica', en:'music', aliases:['muzica','muzică','music']},
-      {ko:'영화를', ro:'filmul', en:'the movie', aliases:['filmul','film','movie']},
-      {ko:'친구를', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
-      {ko:'프로젝트를', ro:'proiectul', en:'the project', aliases:['proiectul','proiect','project']},
-      {ko:'편지를', ro:'scrisoarea', en:'the letter', aliases:['scrisoarea','scrisoare','letter']},
-      {ko:'초콜릿을', ro:'ciocolata', en:'chocolate', aliases:['ciocolata','ciocolată','chocolate']},
-      {ko:'음식을', ro:'mâncarea', en:'food', aliases:['mancarea','mâncarea','mancare','mâncare','food']}
-    ],
-    description: [
-      {ko:'', ro:'', en:'', aliases:[]},
-      {ko:'빨리', ro:'repede', en:'quickly', aliases:['repede','quickly','fast']},
-      {ko:'천천히', ro:'încet', en:'slowly', aliases:['incet','încet','slowly']},
-      {ko:'열심히', ro:'cu sârguință', en:'diligently', aliases:['cu sarguinta','cu sârguință','serios','din greu','diligently','hard']},
-      {ko:'조용히', ro:'în liniște', en:'quietly', aliases:['in liniste','în liniște','quietly']},
-      {ko:'같이', ro:'împreună', en:'together', aliases:['împreună','impreuna','together']},
-      {ko:'혼자', ro:'singur', en:'alone', aliases:['singur','singura','alone']},
-      {ko:'다시', ro:'din nou', en:'again', aliases:['din nou','again']},
-      {ko:'미리', ro:'dinainte', en:'in advance', aliases:['dinainte','in advance']},
-      {ko:'정말', ro:'foarte', en:'really', aliases:['foarte','really']},
-      {ko:'조금', ro:'puțin', en:'a little', aliases:['putin','puțin','little']},
-      {ko:'자주', ro:'des', en:'often', aliases:['des','often']}
-    ],
-    verb: [
-      {ko:'공부하다', ro:'a studia', en:'to study', aliases:['studiez','studia','invat','învăț','study','learn'], final:'공부해요', forms:{none:'공부해요',seq:'공부하고',cause1:'공부해서',cause2:'공부하니까',condition:'공부하면',contrast1:'공부하지만',contrast2:'공부하는데',purpose:'공부하려고',result:'공부하게 되다'}},
-      {ko:'먹다', ro:'a mânca', en:'to eat', aliases:['mananc','mănânc','eat'], final:'먹어요', forms:{none:'먹어요',seq:'먹고',cause1:'먹어서',cause2:'먹으니까',condition:'먹으면',contrast1:'먹지만',contrast2:'먹는데',purpose:'먹으려고',result:'먹게 되다'}},
-      {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','plec','merge','go','leave'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
-      {ko:'오다', ro:'a veni', en:'to come', aliases:['vin','vine','veni','come'], final:'와요', forms:{none:'와요',seq:'오고',cause1:'와서',cause2:'오니까',condition:'오면',contrast1:'오지만',contrast2:'오는데',purpose:'오려고',result:'오게 되다'}},
-      {ko:'보다', ro:'a vedea', en:'to see', aliases:['vad','văd','vezi','vede','see','watch'], final:'봐요', forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
-      {ko:'읽다', ro:'a citi', en:'to read', aliases:['citesc','citeste','citește','read'], final:'읽어요', forms:{none:'읽어요',seq:'읽고',cause1:'읽어서',cause2:'읽으니까',condition:'읽으면',contrast1:'읽지만',contrast2:'읽는데',purpose:'읽으려고',result:'읽게 되다'}},
-      {ko:'쓰다', ro:'a scrie', en:'to write', aliases:['scriu','scrie','write'], final:'써요', forms:{none:'써요',seq:'쓰고',cause1:'써서',cause2:'쓰니까',condition:'쓰면',contrast1:'쓰지만',contrast2:'쓰는데',purpose:'쓰려고',result:'쓰게 되다'}},
-      {ko:'만나다', ro:'a întâlni', en:'to meet', aliases:['intalnesc','întâlnesc','meet'], final:'만나요', forms:{none:'만나요',seq:'만나고',cause1:'만나서',cause2:'만나니까',condition:'만나면',contrast1:'만나지만',contrast2:'만나는데',purpose:'만나려고',result:'만나게 되다'}},
-      {ko:'쉬다', ro:'a se odihni', en:'to rest', aliases:['odihnesc','rest'], final:'쉬어요', forms:{none:'쉬어요',seq:'쉬고',cause1:'쉬어서',cause2:'쉬니까',condition:'쉬면',contrast1:'쉬지만',contrast2:'쉬는데',purpose:'쉬려고',result:'쉬게 되다'}},
-      {ko:'일하다', ro:'a lucra', en:'to work', aliases:['lucrez','lucrează','lucreaza','work'], final:'일해요', forms:{none:'일해요',seq:'일하고',cause1:'일해서',cause2:'일하니까',condition:'일하면',contrast1:'일하지만',contrast2:'일하는데',purpose:'일하려고',result:'일하게 되다'}},
-      {ko:'운동하다', ro:'a face sport', en:'to exercise', aliases:['fac sport','sport','exercise'], final:'운동해요', forms:{none:'운동해요',seq:'운동하고',cause1:'운동해서',cause2:'운동하니까',condition:'운동하면',contrast1:'운동하지만',contrast2:'운동하는데',purpose:'운동하려고',result:'운동하게 되다'}},
-      {ko:'준비하다', ro:'a pregăti', en:'to prepare', aliases:['pregatesc','pregătesc','prepare'], final:'준비해요', forms:{none:'준비해요',seq:'준비하고',cause1:'준비해서',cause2:'준비하니까',condition:'준비하면',contrast1:'준비하지만',contrast2:'준비하는데',purpose:'준비하려고',result:'준비하게 되다'}},
-      {ko:'배우다', ro:'a învăța', en:'to learn', aliases:['invat','învăț','learn'], final:'배워요', forms:{none:'배워요',seq:'배우고',cause1:'배워서',cause2:'배우니까',condition:'배우면',contrast1:'배우지만',contrast2:'배우는데',purpose:'배우려고',result:'배우게 되다'}},
-      {ko:'듣다', ro:'a asculta', en:'to listen', aliases:['ascult','asculta','listen'], final:'들어요', forms:{none:'들어요',seq:'듣고',cause1:'들어서',cause2:'들으니까',condition:'들으면',contrast1:'듣지만',contrast2:'듣는데',purpose:'들으려고',result:'듣게 되다'}},
-      {ko:'만들다', ro:'a face', en:'to make', aliases:['fac','creeaza','creează','make','create'], final:'만들어요', forms:{none:'만들어요',seq:'만들고',cause1:'만들어서',cause2:'만드니까',condition:'만들면',contrast1:'만들지만',contrast2:'만드는데',purpose:'만들려고',result:'만들게 되다'}},
-      {ko:'사다', ro:'a cumpăra', en:'to buy', aliases:['cumpar','cumpăr','cumpăra','buy'], final:'사요', forms:{none:'사요',seq:'사고',cause1:'사서',cause2:'사니까',condition:'사면',contrast1:'사지만',contrast2:'사는데',purpose:'사려고',result:'사게 되다'}},
-      {ko:'주다', ro:'a da', en:'to give', aliases:['dau','da','give'], final:'줘요', forms:{none:'줘요',seq:'주고',cause1:'줘서',cause2:'주니까',condition:'주면',contrast1:'주지만',contrast2:'주는데',purpose:'주려고',result:'주게 되다'}}
-    ],
-    connector: [
-      {id:'none', key:'none', ko:'—', ro:'', en:'', aliases:['fara conector','fără conector','none']},
-      {id:'seq', key:'seq', ko:'고', ro:'și apoi', en:'and then', aliases:['si apoi','și apoi','apoi','and then','and']},
-      {id:'cause1', key:'cause1', ko:'아/어서', ro:'pentru că', en:'because', aliases:['pentru ca','pentru că','because']},
-      {id:'cause2', key:'cause2', ko:'(으)니까', ro:'fiindcă', en:'since', aliases:['fiindca','fiindcă','since']},
-      {id:'condition', key:'condition', ko:'(으)면', ro:'dacă', en:'if', aliases:['daca','dacă','if']},
-      {id:'contrast1', key:'contrast1', ko:'지만', ro:'dar', en:'but', aliases:['dar','insa','însă','but','however']},
-      {id:'contrast2', key:'contrast2', ko:'는데', ro:'iar', en:'while', aliases:['iar','while']},
-      {id:'purpose', key:'purpose', ko:'(으)려고', ro:'ca să', en:'in order to', aliases:['ca sa','ca să','in order to']},
-      {id:'result', key:'result', ko:'게 되다', ro:'ajunge să', en:'end up', aliases:['ajunge sa','ajunge să','end up']}
-    ],
+  var EXTRA_DATA = {
     numeral: [
       {ko:'', ro:'', en:'', aliases:[]},
       {ko:'한', ro:'unu / o', en:'one', aliases:['1','un','o','unu','una','one']},
@@ -786,27 +750,46 @@
     ]
   };
 
-  const VERB_FINITE_MAP = {
-    '공부하다': {ro:{i:'studiez',we:'studiem',third:'studiază'}, en:{i:'study',we:'study',third:'studies'}},
-    '먹다': {ro:{i:'mănânc',we:'mâncăm',third:'mănâncă'}, en:{i:'eat',we:'eat',third:'eats'}},
-    '가다': {ro:{i:'merg',we:'mergem',third:'merge'}, en:{i:'go',we:'go',third:'goes'}},
-    '오다': {ro:{i:'vin',we:'venim',third:'vine'}, en:{i:'come',we:'come',third:'comes'}},
-    '보다': {ro:{i:'văd',we:'vedem',third:'vede'}, en:{i:'see',we:'see',third:'sees'}},
-    '읽다': {ro:{i:'citesc',we:'citim',third:'citește'}, en:{i:'read',we:'read',third:'reads'}},
-    '쓰다': {ro:{i:'scriu',we:'scriem',third:'scrie'}, en:{i:'write',we:'write',third:'writes'}},
-    '만나다': {ro:{i:'întâlnesc',we:'întâlnim',third:'întâlnește'}, en:{i:'meet',we:'meet',third:'meets'}},
-    '쉬다': {ro:{i:'mă odihnesc',we:'ne odihnim',third:'se odihnește'}, en:{i:'rest',we:'rest',third:'rests'}},
-    '일하다': {ro:{i:'lucrez',we:'lucrăm',third:'lucrează'}, en:{i:'work',we:'work',third:'works'}},
-    '운동하다': {ro:{i:'fac sport',we:'facem sport',third:'face sport'}, en:{i:'exercise',we:'exercise',third:'exercises'}},
-    '준비하다': {ro:{i:'pregătesc',we:'pregătim',third:'pregătește'}, en:{i:'prepare',we:'prepare',third:'prepares'}},
-    '배우다': {ro:{i:'învăț',we:'învățăm',third:'învață'}, en:{i:'learn',we:'learn',third:'learns'}},
-    '듣다': {ro:{i:'ascult',we:'ascultăm',third:'ascultă'}, en:{i:'listen',we:'listen',third:'listens'}},
-    '만들다': {ro:{i:'fac',we:'facem',third:'face'}, en:{i:'make',we:'make',third:'makes'}},
-    '사다': {ro:{i:'cumpăr',we:'cumpărăm',third:'cumpără'}, en:{i:'buy',we:'buy',third:'buys'}},
-    '주다': {ro:{i:'dau',we:'dăm',third:'dă'}, en:{i:'give',we:'give',third:'gives'}}
+  function makeField(enabled, index){
+    return {
+      enabled: !!enabled,
+      index: typeof index === 'number' ? index : 0
+    };
+  }
+
+  function makeClause(subjectIndex, enableSubject){
+    if(typeof subjectIndex !== 'number') subjectIndex = 0;
+    if(typeof enableSubject !== 'boolean') enableSubject = true;
+
+    return {
+      subject: makeField(enableSubject, subjectIndex),
+      time: makeField(false, 0),
+      location: makeField(false, 0),
+      object: makeField(false, 0),
+      description: makeField(false, 0),
+      verb: makeField(true, 0),
+      connector: makeField(true, 0),
+      sourceText: '',
+      extras: {
+        associate: null,
+        transit: null,
+        numeral: null,
+        quantifier: null,
+        beneficiary: null,
+        object2: null
+      },
+      __picked: {}
+    };
+  }
+
+  var state = {
+    lang: 'ro',
+    level: 1,
+    text: '',
+    clauses: [makeClause(0, true)]
   };
 
-  const DOM = {
+  var els = {
     btnRo: document.getElementById('btnRo'),
     btnEn: document.getElementById('btnEn'),
     topicSummaryText: document.getElementById('topicSummaryText'),
@@ -824,37 +807,30 @@
     recordedAudio: document.getElementById('recordedAudio')
   };
 
-  const state = {
-    lang: 'ro',
-    level: 1,
-    text: '',
-    clauses: []
-  };
-
-  const pickerState = {
+  var pickerState = {
     clauseIndex: 0,
     fieldKey: 'topic',
     items: [],
     filteredItems: []
   };
 
-  let toastTimer = null;
-  let mediaRecorder = null;
-  let recordedChunks = [];
-  let recordedStream = null;
-  let recordedUrl = null;
+  var toastTimer = null;
+  var mediaRecorder = null;
+  var recordedChunks = [];
+  var recordedStream = null;
+  var recordedUrl = null;
 
   function currentUI(){
     return UI[state.lang] || UI.ro;
   }
 
   function showToast(message){
-    if(!DOM.toast) return;
+    if(!els.toast) return;
     clearTimeout(toastTimer);
-    DOM.toast.textContent = message;
-    DOM.toast.classList.add('show');
+    els.toast.textContent = message;
+    els.toast.classList.add('show');
     toastTimer = setTimeout(function(){
-      DOM.toast.classList.remove('show');
+      els.toast.classList.remove('show');
     }, 2200);
   }
 
@@ -867,12 +843,12 @@
       .replace(/'/g,'&#039;');
   }
 
-  function normalizeLoose(str){
+  function normalizeLatin(str){
     return String(str || '')
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/[^a-z0-9\u3131-\u318e\uac00-\ud7a3\s]/gi, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -885,47 +861,16 @@
       .trim();
   }
 
-  function getSchema(fieldKey){
-    return COLUMN_DEFS.find(function(col){ return col.key === fieldKey; });
+  function hasHangul(str){
+    return /[\u3131-\u318e\uac00-\ud7a3]/i.test(String(str || ''));
   }
 
-  function makeClause(){
-    return {
-      topic: null,
-      associate: null,
-      time: null,
-      departure: null,
-      transit: null,
-      numeral: null,
-      quantifier: null,
-      object1: null,
-      beneficiary: null,
-      object2: null,
-      adverb: null,
-      verb: null,
-      connector: null,
-      sourceText: ''
-    };
+  function datasetFor(fieldKey){
+    if(EXTRA_DATA[fieldKey]) return EXTRA_DATA[fieldKey];
+    return DATA[fieldKey] || [];
   }
 
-  function makeDefaultClause(){
-    const clause = makeClause();
-    clause.topic = normalizeVocabItem(DATA.subject[0], 'subject', 0);
-    clause.verb = normalizeVocabItem(DATA.verb[0], 'verb', 0);
-    clause.connector = normalizeVocabItem(DATA.connector[0], 'connector', 0);
-    return clause;
-  }
-
-  function ensureClauseShape(clause){
-    if(!clause || typeof clause !== 'object') return makeDefaultClause();
-    COLUMN_DEFS.forEach(function(col){
-      if(typeof clause[col.key] === 'undefined') clause[col.key] = null;
-    });
-    if(typeof clause.sourceText !== 'string') clause.sourceText = '';
-    return clause;
-  }
-
-  function normalizeVocabItem(item, bucket, index){
+  function normalizeItem(item, bucket, index){
     if(!item) return null;
 
     if(typeof item === 'string'){
@@ -946,22 +891,32 @@
       id: item.id || item.key || item.value || item.ko || item.kr || item.korean || (bucket + '-' + index),
       key: item.key || item.id || item.value || '',
       bucket: bucket,
-      index: index,
+      index: typeof index === 'number' ? index : 0,
       ko: item.ko || item.kr || item.korean || item.surface || item.text || item.value || '',
       ro: item.ro || item.romanian || item.meaningRo || item.meaning || '',
       en: item.en || item.english || item.meaningEn || '',
       aliases: Array.isArray(item.aliases) ? item.aliases.slice() : [],
       final: item.final || '',
-      forms: item.forms || null,
+      forms: item.forms || {},
       raw: item
     };
   }
 
-  function bucketToLocalDataKey(bucket){
-    if(bucket === 'associate' || bucket === 'beneficiary') return 'subject';
-    if(bucket === 'transit') return 'location';
-    if(bucket === 'object2') return 'object';
-    return bucket;
+  function normalizeList(list, bucket){
+    return (Array.isArray(list) ? list : []).map(function(item, index){
+      return normalizeItem(item, bucket, index);
+    });
+  }
+
+  function uniqueItems(items){
+    var seen = {};
+    return items.filter(function(item){
+      if(!item) return false;
+      var key = [item.bucket, item.ko, item.ro, item.en, item.key].join('|');
+      if(seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
   }
 
   function getAppVocab(){
@@ -993,8 +948,8 @@
   }
 
   function firstExistingBucket(source, keys){
-    for(let i=0;i<keys.length;i++){
-      const key = keys[i];
+    for(var i=0;i<keys.length;i++){
+      var key = keys[i];
       if(source && Array.isArray(source[key])) return source[key];
       if(source && source[key] && Array.isArray(source[key].items)) return source[key].items;
       if(source && source.data && Array.isArray(source.data[key])) return source.data[key];
@@ -1003,46 +958,144 @@
     return [];
   }
 
-  function uniqueItems(items){
-    const seen = new Set();
-    return items.filter(function(item){
-      if(!item || !item.ko) return false;
-      const key = [item.bucket, item.ko, item.ro, item.en, item.key].join('|');
-      if(seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-
   function getOptionsForField(fieldKey){
-    const globalVocab = getAppVocab();
-    let items = [];
+    var appVocab = getAppVocab();
+    var items = [];
 
-    if(globalVocab){
-      const bucketNames = globalBucketMap(fieldKey);
-      const rawGlobal = firstExistingBucket(globalVocab, bucketNames);
-      if(rawGlobal && rawGlobal.length){
-        items = rawGlobal.map(function(item, index){
-          return normalizeVocabItem(item, fieldKey, index);
-        });
+    if(appVocab){
+      var raw = firstExistingBucket(appVocab, globalBucketMap(fieldKey));
+      if(raw && raw.length){
+        items = normalizeList(raw, fieldKey);
       }
     }
 
     if(!items.length){
-      const localKey = bucketToLocalDataKey(getSchema(fieldKey).bucket);
-      const rawLocal = DATA[localKey] || [];
-      items = rawLocal.map(function(item, index){
-        return normalizeVocabItem(item, localKey, index);
-      });
+      if(fieldKey === 'topic') items = normalizeList(DATA.subject, 'subject');
+      else if(fieldKey === 'associate') items = normalizeList(DATA.subject, 'subject');
+      else if(fieldKey === 'time') items = normalizeList(DATA.time, 'time');
+      else if(fieldKey === 'departure') items = normalizeList(DATA.location, 'location');
+      else if(fieldKey === 'transit') items = normalizeList(DATA.location, 'location');
+      else if(fieldKey === 'numeral') items = normalizeList(EXTRA_DATA.numeral, 'numeral');
+      else if(fieldKey === 'quantifier') items = normalizeList(EXTRA_DATA.quantifier, 'quantifier');
+      else if(fieldKey === 'object1') items = normalizeList(DATA.object, 'object');
+      else if(fieldKey === 'beneficiary') items = normalizeList(DATA.subject, 'subject');
+      else if(fieldKey === 'object2') items = normalizeList(DATA.object, 'object');
+      else if(fieldKey === 'adverb') items = normalizeList(DATA.description, 'description');
+      else if(fieldKey === 'verb') items = normalizeList(DATA.verb, 'verb');
+      else if(fieldKey === 'connector') items = normalizeList(DATA.connector, 'connector');
     }
 
     return uniqueItems(items);
   }
 
-  function getVisibleColumns(){
-    return COLUMN_DEFS.filter(function(col){
-      return state.level >= col.level;
-    });
+  function itemOf(clause, fieldKey){
+    if(!clause) return null;
+
+    if(clause.__picked && clause.__picked[fieldKey]){
+      return clause.__picked[fieldKey];
+    }
+
+    if(fieldKey === 'topic'){
+      var sList = normalizeList(DATA.subject, 'subject');
+      var sIdx = clause.subject && typeof clause.subject.index === 'number' ? clause.subject.index : 0;
+      return sList[sIdx] || null;
+    }
+
+    if(fieldKey === 'time'){
+      var tList = normalizeList(DATA.time, 'time');
+      var tIdx = clause.time && typeof clause.time.index === 'number' ? clause.time.index : 0;
+      if(clause.time && clause.time.enabled) return tList[tIdx] || null;
+      return null;
+    }
+
+    if(fieldKey === 'departure'){
+      var lList = normalizeList(DATA.location, 'location');
+      var lIdx = clause.location && typeof clause.location.index === 'number' ? clause.location.index : 0;
+      if(clause.location && clause.location.enabled) return lList[lIdx] || null;
+      return null;
+    }
+
+    if(fieldKey === 'object1'){
+      var oList = normalizeList(DATA.object, 'object');
+      var oIdx = clause.object && typeof clause.object.index === 'number' ? clause.object.index : 0;
+      if(clause.object && clause.object.enabled) return oList[oIdx] || null;
+      return null;
+    }
+
+    if(fieldKey === 'adverb'){
+      var dList = normalizeList(DATA.description, 'description');
+      var dIdx = clause.description && typeof clause.description.index === 'number' ? clause.description.index : 0;
+      if(clause.description && clause.description.enabled) return dList[dIdx] || null;
+      return null;
+    }
+
+    if(fieldKey === 'verb'){
+      var vList = normalizeList(DATA.verb, 'verb');
+      var vIdx = clause.verb && typeof clause.verb.index === 'number' ? clause.verb.index : 0;
+      return vList[vIdx] || null;
+    }
+
+    if(fieldKey === 'connector'){
+      var cList = normalizeList(DATA.connector, 'connector');
+      var cIdx = clause.connector && typeof clause.connector.index === 'number' ? clause.connector.index : 0;
+      return cList[cIdx] || null;
+    }
+
+    if(clause.extras && clause.extras[fieldKey]){
+      return clause.extras[fieldKey];
+    }
+
+    return null;
+  }
+
+  function setFieldItem(clause, fieldKey, item){
+    if(!clause.__picked) clause.__picked = {};
+    clause.__picked[fieldKey] = item || null;
+
+    if(fieldKey === 'topic'){
+      clause.subject.enabled = !!(item && item.ko);
+      clause.subject.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'time'){
+      clause.time.enabled = !!(item && item.ko);
+      clause.time.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'departure'){
+      clause.location.enabled = !!(item && item.ko);
+      clause.location.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'object1'){
+      clause.object.enabled = !!(item && item.ko);
+      clause.object.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'adverb'){
+      clause.description.enabled = !!(item && item.ko);
+      clause.description.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'verb'){
+      clause.verb.enabled = true;
+      clause.verb.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'connector'){
+      clause.connector.enabled = true;
+      clause.connector.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(!clause.extras) clause.extras = {};
+    clause.extras[fieldKey] = item || null;
   }
 
   function translationOf(item){
@@ -1052,13 +1105,9 @@
       : (item.ro || item.en || item.ko || '');
   }
 
-  function removeTopicParticle(ko){
-    return String(ko || '').replace(/(는|은|이|가)$/,'');
-  }
-
-  function connectorKey(item){
-    if(!item) return 'none';
-    return item.key || item.id || 'none';
+  function connectorKey(clause){
+    var item = itemOf(clause, 'connector');
+    return item ? (item.key || item.id || 'none') : 'none';
   }
 
   function subjectRoleFromKo(subjectKo){
@@ -1067,97 +1116,128 @@
     return 'third';
   }
 
-  function finiteVerbText(verbItem, lang, subjectKo){
-    if(!verbItem) return '';
-    const hit = VERB_FINITE_MAP[verbItem.ko];
-    const role = subjectRoleFromKo(subjectKo || '');
+  function finiteVerbText(verb, lang, subjectKo){
+    if(!verb) return '';
+    var hit = VERB_FINITE_MAP[verb.ko];
+    var role = subjectRoleFromKo(subjectKo || '');
     if(hit && hit[lang] && hit[lang][role]) return hit[lang][role];
     return lang === 'en'
-      ? (verbItem.en || verbItem.ro || verbItem.ko || '')
-      : (verbItem.ro || verbItem.en || verbItem.ko || '');
+      ? (verb.en || verb.ro || verb.ko || '')
+      : (verb.ro || verb.en || verb.ko || '');
+  }
+
+  function removeTopicParticle(ko){
+    return String(ko || '').replace(/(는|은|이|가)$/,'');
+  }
+
+  function extraToKo(item, type){
+    if(!item || !item.ko) return '';
+    if(type === 'associate') return removeTopicParticle(item.ko) + '하고';
+    if(type === 'beneficiary') return removeTopicParticle(item.ko) + '에게';
+    return item.ko;
   }
 
   function renderVerbKo(clause){
-    if(!clause.verb) return '';
-    const cKey = connectorKey(clause.connector);
-    if(clause.verb.forms && clause.verb.forms[cKey]) return clause.verb.forms[cKey];
-    return clause.verb.final || clause.verb.ko || '';
+    var verb = itemOf(clause, 'verb');
+    if(!verb) return '';
+    var cKey = connectorKey(clause);
+    if(verb.forms && verb.forms[cKey]) return verb.forms[cKey];
+    return verb.final || verb.ko || '';
   }
 
-  function buildKoreanClause(clause){
-    const out = [];
+  function buildClauseKorean(clause){
+    var parts = [];
 
-    if(clause.topic && clause.topic.ko) out.push(clause.topic.ko);
+    var topic = itemOf(clause, 'topic');
+    var associate = itemOf(clause, 'associate');
+    var time = itemOf(clause, 'time');
+    var departure = itemOf(clause, 'departure');
+    var transit = itemOf(clause, 'transit');
+    var numeral = itemOf(clause, 'numeral');
+    var quantifier = itemOf(clause, 'quantifier');
+    var object1 = itemOf(clause, 'object1');
+    var beneficiary = itemOf(clause, 'beneficiary');
+    var object2 = itemOf(clause, 'object2');
+    var adverb = itemOf(clause, 'adverb');
 
-    if(clause.associate && clause.associate.ko){
-      out.push(removeTopicParticle(clause.associate.ko) + '하고');
-    }
+    if(topic && topic.ko) parts.push(topic.ko);
+    if(associate && associate.ko) parts.push(extraToKo(associate, 'associate'));
+    if(time && time.ko) parts.push(time.ko);
+    if(departure && departure.ko) parts.push(departure.ko);
+    if(transit && transit.ko) parts.push(transit.ko);
+    if(numeral && numeral.ko) parts.push(numeral.ko);
+    if(quantifier && quantifier.ko) parts.push(quantifier.ko);
+    if(object1 && object1.ko) parts.push(object1.ko);
+    if(beneficiary && beneficiary.ko) parts.push(extraToKo(beneficiary, 'beneficiary'));
+    if(object2 && object2.ko) parts.push(object2.ko);
+    if(adverb && adverb.ko) parts.push(adverb.ko);
 
-    if(clause.time && clause.time.ko) out.push(clause.time.ko);
-    if(clause.departure && clause.departure.ko) out.push(clause.departure.ko);
-    if(clause.transit && clause.transit.ko) out.push(clause.transit.ko);
-    if(clause.numeral && clause.numeral.ko) out.push(clause.numeral.ko);
-    if(clause.quantifier && clause.quantifier.ko) out.push(clause.quantifier.ko);
-    if(clause.object1 && clause.object1.ko) out.push(clause.object1.ko);
+    var verbKo = renderVerbKo(clause);
+    if(verbKo) parts.push(verbKo);
 
-    if(clause.beneficiary && clause.beneficiary.ko){
-      out.push(removeTopicParticle(clause.beneficiary.ko) + '에게');
-    }
-
-    if(clause.object2 && clause.object2.ko) out.push(clause.object2.ko);
-    if(clause.adverb && clause.adverb.ko) out.push(clause.adverb.ko);
-
-    const verbKo = renderVerbKo(clause);
-    if(verbKo) out.push(verbKo);
-
-    return cleanSentenceText(out.join(' '));
+    return cleanSentenceText(parts.join(' '));
   }
 
-  function buildTranslationClause(clause){
-    const out = [];
+  function buildClauseTranslation(clause){
+    var parts = [];
 
-    if(clause.topic) out.push(translationOf(clause.topic));
+    var topic = itemOf(clause, 'topic');
+    var associate = itemOf(clause, 'associate');
+    var time = itemOf(clause, 'time');
+    var departure = itemOf(clause, 'departure');
+    var transit = itemOf(clause, 'transit');
+    var numeral = itemOf(clause, 'numeral');
+    var quantifier = itemOf(clause, 'quantifier');
+    var object1 = itemOf(clause, 'object1');
+    var beneficiary = itemOf(clause, 'beneficiary');
+    var object2 = itemOf(clause, 'object2');
+    var adverb = itemOf(clause, 'adverb');
+    var verb = itemOf(clause, 'verb');
 
-    if(clause.associate){
-      out.push(state.lang === 'en'
-        ? ('with ' + (clause.associate.en || clause.associate.ro || clause.associate.ko))
-        : ('cu ' + (clause.associate.ro || clause.associate.en || clause.associate.ko)));
+    if(topic) parts.push(translationOf(topic));
+
+    if(associate){
+      parts.push(state.lang === 'en'
+        ? ('with ' + (associate.en || associate.ro || associate.ko))
+        : ('cu ' + (associate.ro || associate.en || associate.ko)));
     }
 
-    if(clause.time) out.push(translationOf(clause.time));
-    if(clause.departure) out.push(translationOf(clause.departure));
-    if(clause.transit) out.push(translationOf(clause.transit));
-    if(clause.numeral) out.push(translationOf(clause.numeral));
-    if(clause.quantifier) out.push(translationOf(clause.quantifier));
-    if(clause.object1) out.push(translationOf(clause.object1));
+    if(time) parts.push(translationOf(time));
+    if(departure) parts.push(translationOf(departure));
+    if(transit) parts.push(translationOf(transit));
+    if(numeral) parts.push(translationOf(numeral));
+    if(quantifier) parts.push(translationOf(quantifier));
+    if(object1) parts.push(translationOf(object1));
 
-    if(clause.beneficiary){
-      out.push(state.lang === 'en'
-        ? ('for ' + (clause.beneficiary.en || clause.beneficiary.ro || clause.beneficiary.ko))
-        : ('pentru ' + (clause.beneficiary.ro || clause.beneficiary.en || clause.beneficiary.ko)));
+    if(beneficiary){
+      parts.push(state.lang === 'en'
+        ? ('for ' + (beneficiary.en || beneficiary.ro || beneficiary.ko))
+        : ('pentru ' + (beneficiary.ro || beneficiary.en || beneficiary.ko)));
     }
 
-    if(clause.object2) out.push(translationOf(clause.object2));
-    if(clause.adverb) out.push(translationOf(clause.adverb));
+    if(object2) parts.push(translationOf(object2));
+    if(adverb) parts.push(translationOf(adverb));
 
-    if(clause.verb){
-      const subjectKo = clause.topic ? clause.topic.ko : '';
-      out.push(finiteVerbText(clause.verb, state.lang, subjectKo));
+    if(verb){
+      var topicKo = topic ? topic.ko : '';
+      parts.push(finiteVerbText(verb, state.lang, topicKo));
     }
 
-    return cleanSentenceText(out.join(' '));
+    return cleanSentenceText(parts.join(' '));
   }
 
   function buildFullOutput(){
-    const ko = [];
-    const tr = [];
+    var ko = [];
+    var tr = [];
 
-    state.clauses.forEach(function(clause){
-      const lineKo = buildKoreanClause(clause);
-      const lineTr = buildTranslationClause(clause);
+    for(var i=0;i<state.clauses.length;i++){
+      var clause = state.clauses[i];
+      var lineKo = buildClauseKorean(clause);
+      var lineTr = buildClauseTranslation(clause);
+
       if(lineKo) ko.push(lineKo);
       if(lineTr) tr.push(lineTr);
-    });
+    }
 
     return {
       korean: cleanSentenceText(ko.join(' ')),
@@ -1166,101 +1246,88 @@
   }
 
   function renderPreview(){
-    if(!DOM.sentenceWords || !DOM.translationText) return;
+    var built = buildFullOutput();
+    var korean = built.korean || '저는 공부해요';
+    var words = korean.split(/\s+/).filter(Boolean);
 
-    const built = buildFullOutput();
-    const korean = built.korean || buildKoreanClause(makeDefaultClause());
-    const words = korean.split(/\s+/).filter(Boolean);
-
-    DOM.sentenceWords.innerHTML = words.map(function(word){
+    els.sentenceWords.innerHTML = words.map(function(word){
       return '<span class="word">' + escapeHtml(word) + '</span>';
     }).join('');
 
-    DOM.translationText.textContent = built.translation || currentUI().defaultTranslation;
+    els.translationText.textContent = built.translation || currentUI().defaultTranslation;
   }
 
-  function cellDisplayValue(item, fieldKey){
-    if(!item) return TABLE_PLACEHOLDER_KO[fieldKey] || '선택';
-    return item.ko || TABLE_PLACEHOLDER_KO[fieldKey] || '선택';
-  }
-
-  function cellDisplayMeta(item){
-    if(!item) return '클릭하여 선택';
-    return translationOf(item) || '선택됨';
+  function getVisibleColumns(){
+    return COLUMN_DEFS.filter(function(col){
+      return state.level >= col.level;
+    });
   }
 
   function renderCell(clauseIndex, col){
-    const clause = state.clauses[clauseIndex];
-    const item = clause[col.key];
-    const value = cellDisplayValue(item, col.key);
-    const meta = cellDisplayMeta(item);
+    var clause = state.clauses[clauseIndex];
+    var item = itemOf(clause, col.key);
+    var value = item && item.ko ? item.ko : TABLE_PLACEHOLDERS_KO[col.key];
+    var meta = item ? (translationOf(item) || '') : '클릭하여 선택';
 
-    return `
-      <div class="tableField">
-        <button
-          type="button"
-          class="tableMainBtn ${item ? '' : 'is-empty'}"
-          data-open-picker="${clauseIndex}:${col.key}"
-          data-kind="${escapeHtml(col.kind)}"
-        >
-          <div class="tableMeta">${escapeHtml(TABLE_HEADERS_KO[col.key])}</div>
-          <div class="tableValue">${escapeHtml(value || '—')}</div>
-          <div class="tableMeta">${escapeHtml(meta || '')}</div>
-          ${item ? '<div class="tablePickedDot">✓</div>' : ''}
-        </button>
-      </div>
-    `;
+    return '' +
+      '<div class="tableField">' +
+        '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + '" data-open-picker="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind || 'subject') + '" type="button">' +
+          '<div class="tableMeta">' + escapeHtml(TABLE_HEADERS_KO[col.key]) + '</div>' +
+          '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
+          '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
+          (item && item.ko ? '<div class="tablePickedDot">✓</div>' : '') +
+        '</button>' +
+      '</div>';
   }
 
   function renderClauses(){
-    if(!DOM.clauseList) return;
+    var cols = getVisibleColumns();
+    var html = '<div class="builderTableWrap"><table class="builderTable"><thead><tr>';
 
-    const cols = getVisibleColumns();
-    let html = '<div class="builderTableWrap"><table class="builderTable"><thead><tr>';
-
-    cols.forEach(function(col){
-      html += '<th>' + escapeHtml(TABLE_HEADERS_KO[col.key]) + '</th>';
-    });
+    for(var i=0;i<cols.length;i++){
+      html += '<th>' + escapeHtml(TABLE_HEADERS_KO[cols[i].key] || cols[i].key) + '</th>';
+    }
 
     html += '</tr></thead><tbody>';
 
-    state.clauses.forEach(function(clause, clauseIndex){
+    for(var r=0;r<state.clauses.length;r++){
       html += '<tr>';
-      cols.forEach(function(col){
-        html += '<td>' + renderCell(clauseIndex, col) + '</td>';
-      });
+      for(var c=0;c<cols.length;c++){
+        html += '<td>' + renderCell(r, cols[c]) + '</td>';
+      }
       html += '</tr>';
-    });
+    }
 
     html += '</tbody></table></div>';
-    DOM.clauseList.innerHTML = html;
-  }
-
-  function updateLangButtons(){
-    if(DOM.btnRo) DOM.btnRo.classList.toggle('active', state.lang === 'ro');
-    if(DOM.btnEn) DOM.btnEn.classList.toggle('active', state.lang === 'en');
-    if(DOM.freeText) DOM.freeText.placeholder = currentUI().placeholder;
-    const label = DOM.recordBox && DOM.recordBox.querySelector('.recordedLabel');
-    if(label) label.textContent = currentUI().recordedLabel;
-  }
-
-  function updateLevelButtons(){
-    if(DOM.topicSummaryText){
-      DOM.topicSummaryText.textContent = 'T' + state.level + ' ▾';
-    }
-
-    if(DOM.topicDropdown){
-      DOM.topicDropdown.querySelectorAll('.topicOption').forEach(function(btn){
-        btn.classList.toggle('active', Number(btn.getAttribute('data-level')) === state.level);
-      });
-    }
+    els.clauseList.innerHTML = html;
   }
 
   function renderAll(){
-    updateLangButtons();
-    updateLevelButtons();
     renderPreview();
     renderClauses();
+    updateChrome();
+  }
+
+  function updateChrome(){
+    els.btnRo.classList.toggle('active', state.lang === 'ro');
+    els.btnEn.classList.toggle('active', state.lang === 'en');
+    els.freeText.placeholder = currentUI().placeholder;
+
+    if(els.topicSummaryText){
+      els.topicSummaryText.textContent = 'T' + state.level + ' ▾';
+    }
+
+    if(els.topicDropdown){
+      var buttons = els.topicDropdown.querySelectorAll('.topicOption');
+      for(var i=0;i<buttons.length;i++){
+        buttons[i].classList.toggle('active', Number(buttons[i].getAttribute('data-level')) === state.level);
+      }
+    }
+
+    var label = els.recordBox ? els.recordBox.querySelector('.recordedLabel') : null;
+    if(label){
+      label.textContent = currentUI().recordedLabel;
+    }
   }
 
   function setLang(lang){
@@ -1275,192 +1342,192 @@
     renderAll();
   }
 
-  function syncClauseCount(){
-    let required = 1;
+  function ensureChainLength(){
+    var required = 1;
 
-    state.clauses.forEach(function(clause){
-      if(clause.connector && connectorKey(clause.connector) !== 'none'){
+    for(var i=0;i<state.clauses.length;i++){
+      if(connectorKey(state.clauses[i]) !== 'none'){
         required += 1;
       }
-    });
+    }
 
     while(state.clauses.length < required){
-      const newClause = makeClause();
-      newClause.verb = normalizeVocabItem(DATA.verb[0], 'verb', 0);
-      newClause.connector = normalizeVocabItem(DATA.connector[0], 'connector', 0);
+      var newClause = makeClause(0, false);
+      newClause.verb.index = 0;
+      newClause.connector.index = 0;
       state.clauses.push(newClause);
     }
 
     while(state.clauses.length > required){
       state.clauses.pop();
     }
-
-    if(!state.clauses.length){
-      state.clauses = [makeDefaultClause()];
-    }
-  }
-
-  function matchEntry(text, item){
-    const hay = [
-      item.ko || '',
-      item.ro || '',
-      item.en || '',
-      item.key || '',
-      item.id || ''
-    ].concat(item.aliases || []).join(' ');
-    return normalizeLoose(hay) && normalizeLoose(text).includes(normalizeLoose(hay));
   }
 
   function findBestMatch(fieldKey, text){
-    const options = getOptionsForField(fieldKey).filter(function(item){
-      return item && (item.ko || item.ro || item.en);
-    });
-
-    const normalizedText = normalizeLoose(text);
+    var options = getOptionsForField(fieldKey);
+    var normalizedText = normalizeLatin(text);
     if(!normalizedText) return null;
 
-    let best = null;
-    let bestLength = 0;
+    var best = null;
+    var bestLen = 0;
 
-    options.forEach(function(item){
-      const candidates = [
-        item.ko || '',
-        item.ro || '',
-        item.en || '',
-        item.key || ''
-      ].concat(item.aliases || []);
+    for(var i=0;i<options.length;i++){
+      var item = options[i];
+      var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
 
-      candidates.forEach(function(candidate){
-        const c = normalizeLoose(candidate);
-        if(c && normalizedText.includes(c) && c.length > bestLength){
+      for(var j=0;j<candidates.length;j++){
+        var candidate = normalizeLatin(candidates[j]);
+        if(candidate && normalizedText.indexOf(candidate) !== -1 && candidate.length > bestLen){
           best = item;
-          bestLength = c.length;
+          bestLen = candidate.length;
         }
-      });
-    });
+      }
+    }
 
     return best;
   }
 
   function splitIntoSegments(text){
-    const normalized = normalizeLoose(text);
-    if(!normalized) return [{ text:'', connector:'none' }];
+    var working = ' ' + normalizeLatin(text) + ' ';
+    var markers = [
+      {key:'cause1', phrases:['pentru ca','pentru că','because']},
+      {key:'cause2', phrases:['fiindca','fiindcă','since']},
+      {key:'condition', phrases:['daca','dacă','if']},
+      {key:'contrast1', phrases:['dar','insa','însă','but','however']},
+      {key:'contrast2', phrases:['iar','while']},
+      {key:'purpose', phrases:['ca sa','ca să','in order to']},
+      {key:'seq', phrases:['si apoi','și apoi','and then','si','și','and','apoi']}
+    ];
 
-    let working = ' ' + normalized + ' ';
-    const connectorDefs = DATA.connector.filter(function(item){
-      return item.key !== 'none';
-    });
-
-    connectorDefs.forEach(function(conn){
-      (conn.aliases || []).forEach(function(alias){
-        const clean = normalizeLoose(alias);
-        if(clean){
-          working = working.split(' ' + clean + ' ').join(' |||' + conn.key + '||| ');
+    for(var i=0;i<markers.length;i++){
+      for(var j=0;j<markers[i].phrases.length;j++){
+        var phrase = normalizeLatin(markers[i].phrases[j]);
+        if(phrase){
+          working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| ');
         }
-      });
-    });
+      }
+    }
 
     working = working.replace(/,/g, ' |||none||| ');
 
-    const rawParts = working.split('|||');
-    const segments = [];
-    let currentText = '';
+    var parts = working.split('|||');
+    var segments = [];
+    var currentText = '';
 
-    rawParts.forEach(function(part){
-      const p = String(part || '').trim();
-      if(!p) return;
+    for(var k=0;k<parts.length;k++){
+      var part = String(parts[k] || '').trim();
+      if(!part) continue;
 
-      const isConnector = DATA.connector.some(function(conn){
-        return conn.key === p;
-      });
+      var isConnector = false;
+      for(var c=0;c<DATA.connector.length;c++){
+        if(DATA.connector[c].key === part){
+          isConnector = true;
+          break;
+        }
+      }
 
       if(isConnector){
-        segments.push({ text: currentText.trim(), connector: p });
+        segments.push({ text: currentText.trim(), connector: part });
         currentText = '';
       }else{
-        currentText = currentText ? (currentText + ' ' + p) : p;
+        currentText = currentText ? currentText + ' ' + part : part;
       }
-    });
-
-    if(currentText.trim()){
-      segments.push({ text: currentText.trim(), connector:'none' });
     }
 
-    return segments.length ? segments : [{ text: normalized, connector:'none' }];
+    if(currentText.trim()){
+      segments.push({ text: currentText.trim(), connector: 'none' });
+    }
+
+    if(!segments.length){
+      segments.push({ text: normalizeLatin(text), connector: 'none' });
+    }
+
+    return segments;
   }
 
   function parseTextIntoClauses(){
-    const raw = state.text || '';
+    var raw = state.text || '';
     if(!String(raw).trim()){
-      state.clauses = [makeDefaultClause()];
+      state.clauses = [makeClause(0, true)];
+      state.clauses[0].verb.index = 0;
+      state.clauses[0].connector.index = 0;
       renderAll();
       return;
     }
 
-    const segments = splitIntoSegments(raw);
-    const clauses = segments.map(function(seg, index){
-      const clause = makeClause();
+    var segments = splitIntoSegments(raw);
+    var clauses = [];
+
+    for(var i=0;i<segments.length;i++){
+      var seg = segments[i];
+      var clause = makeClause(0, i === 0);
       clause.sourceText = seg.text || '';
 
-      clause.topic = findBestMatch('topic', seg.text) || (index === 0 ? normalizeVocabItem(DATA.subject[0], 'subject', 0) : null);
-      clause.associate = findBestMatch('associate', seg.text);
-      clause.time = findBestMatch('time', seg.text);
-      clause.departure = findBestMatch('departure', seg.text);
-      clause.transit = findBestMatch('transit', seg.text);
-      clause.numeral = findBestMatch('numeral', seg.text);
-      clause.quantifier = findBestMatch('quantifier', seg.text);
-      clause.object1 = findBestMatch('object1', seg.text);
-      clause.beneficiary = findBestMatch('beneficiary', seg.text);
-      clause.object2 = findBestMatch('object2', seg.text);
-      clause.adverb = findBestMatch('adverb', seg.text);
-      clause.verb = findBestMatch('verb', seg.text) || normalizeVocabItem(DATA.verb[0], 'verb', 0);
+      var topic = findBestMatch('topic', seg.text);
+      var associate = findBestMatch('associate', seg.text);
+      var time = findBestMatch('time', seg.text);
+      var departure = findBestMatch('departure', seg.text);
+      var transit = findBestMatch('transit', seg.text);
+      var numeral = findBestMatch('numeral', seg.text);
+      var quantifier = findBestMatch('quantifier', seg.text);
+      var object1 = findBestMatch('object1', seg.text);
+      var beneficiary = findBestMatch('beneficiary', seg.text);
+      var object2 = findBestMatch('object2', seg.text);
+      var adverb = findBestMatch('adverb', seg.text);
+      var verb = findBestMatch('verb', seg.text);
+      var connector = normalizeItem((DATA.connector.filter(function(item){ return item.key === seg.connector; })[0] || DATA.connector[0]), 'connector', 0);
 
-      const connectorItem = DATA.connector.find(function(item){
-        return item.key === seg.connector;
-      }) || DATA.connector[0];
-      clause.connector = normalizeVocabItem(connectorItem, 'connector', 0);
+      if(topic) setFieldItem(clause, 'topic', topic);
+      else if(i === 0) setFieldItem(clause, 'topic', normalizeItem(DATA.subject[0], 'subject', 0));
 
-      return clause;
-    });
+      if(time) setFieldItem(clause, 'time', time);
+      if(departure) setFieldItem(clause, 'departure', departure);
+      if(object1) setFieldItem(clause, 'object1', object1);
+      if(adverb) setFieldItem(clause, 'adverb', adverb);
+      if(verb) setFieldItem(clause, 'verb', verb);
+      else setFieldItem(clause, 'verb', normalizeItem(DATA.verb[0], 'verb', 0));
 
-    state.clauses = clauses.length ? clauses.map(ensureClauseShape) : [makeDefaultClause()];
-    syncClauseCount();
+      setFieldItem(clause, 'connector', connector);
+
+      if(associate) setFieldItem(clause, 'associate', associate);
+      if(transit) setFieldItem(clause, 'transit', transit);
+      if(numeral) setFieldItem(clause, 'numeral', numeral);
+      if(quantifier) setFieldItem(clause, 'quantifier', quantifier);
+      if(beneficiary) setFieldItem(clause, 'beneficiary', beneficiary);
+      if(object2) setFieldItem(clause, 'object2', object2);
+
+      clauses.push(clause);
+    }
+
+    state.clauses = clauses.length ? clauses : [makeClause(0, true)];
+    ensureChainLength();
     renderAll();
   }
-function ensureVocabSheet(){
-  if (document.getElementById('vocabSheet')) return;
 
-  const el = document.createElement('div');
-  el.id = 'vocabSheet';
-  el.className = 'vocabSheet';
+  function ensureVocabSheet(){
+    if(document.getElementById('vocabSheet')) return;
 
-  el.innerHTML = `
-    <div class="vocabSheetBackdrop" data-close-vocab="1"></div>
-    <div class="vocabSheetPanel">
-      <div class="vocabSheetHead">
-        <div class="vocabSheetTitle" id="vocabSheetTitle">선택</div>
-        <button type="button" class="vocabSheetClose" id="vocabSheetClose" aria-label="Close">✕</button>
+    var el = document.createElement('div');
+    el.id = 'vocabSheet';
+    el.className = 'vocabSheet';
+    el.innerHTML = `
+      <div class="vocabSheetBackdrop" data-close-vocab="1"></div>
+      <div class="vocabSheetPanel">
+        <div class="vocabSheetHead">
+          <div class="vocabSheetTitle" id="vocabSheetTitle">선택</div>
+          <button type="button" class="vocabSheetClose" id="vocabSheetClose">✕</button>
+        </div>
+        <div class="vocabSheetSearchWrap">
+          <input id="vocabSheetSearch" class="vocabSheetSearch" type="text" placeholder="검색">
+        </div>
+        <div id="vocabSheetList" class="vocabSheetList"></div>
       </div>
-      <input
-        id="vocabSheetSearch"
-        class="vocabSheetSearch"
-        type="text"
-        placeholder="검색"
-      >
-      <div id="vocabSheetList" class="vocabSheetList"></div>
-    </div>
-  `;
+    `;
+    document.body.appendChild(el);
+  }
 
-  document.body.appendChild(el);
-}
-
-
-
-
-
-  
   function renderVocabSheetList(items){
-    const list = document.getElementById('vocabSheetList');
+    var list = document.getElementById('vocabSheetList');
     if(!list) return;
 
     pickerState.filteredItems = items.slice();
@@ -1471,32 +1538,25 @@ function ensureVocabSheet(){
     }
 
     list.innerHTML = items.map(function(item, index){
-      const meta = [item.ro, item.en].filter(Boolean).join(' · ');
       return `
-        <button type="button" class="vocabItem" data-pick-index="${index}">
+        <button type="button" class="vocabItem" data-vocab-index="${index}">
           <div class="vocabItemKo">${escapeHtml(item.ko || '—')}</div>
-          <div class="vocabItemMeta">${escapeHtml(meta)}</div>
+          <div class="vocabItemMeta">${escapeHtml([item.ro, item.en].filter(Boolean).join(' · '))}</div>
         </button>
       `;
     }).join('');
   }
 
   function filterVocabSheet(keyword){
-    const q = normalizeLoose(keyword);
+    var q = normalizeLatin(keyword);
     if(!q){
       renderVocabSheetList(pickerState.items);
       return;
     }
 
-    const filtered = pickerState.items.filter(function(item){
-      const hay = [
-        item.ko || '',
-        item.ro || '',
-        item.en || '',
-        item.key || '',
-        item.id || ''
-      ].concat(item.aliases || []).join(' ');
-      return normalizeLoose(hay).includes(q);
+    var filtered = pickerState.items.filter(function(item){
+      var hay = [item.ko || '', item.ro || '', item.en || '', item.key || ''].concat(item.aliases || []).join(' ');
+      return normalizeLatin(hay).indexOf(q) !== -1;
     });
 
     renderVocabSheetList(filtered);
@@ -1509,9 +1569,9 @@ function ensureVocabSheet(){
     pickerState.fieldKey = fieldKey;
     pickerState.items = getOptionsForField(fieldKey);
 
-    const root = document.getElementById('vocabSheet');
-    const title = document.getElementById('vocabSheetTitle');
-    const search = document.getElementById('vocabSheetSearch');
+    var root = document.getElementById('vocabSheet');
+    var title = document.getElementById('vocabSheetTitle');
+    var search = document.getElementById('vocabSheetSearch');
 
     if(title) title.textContent = TABLE_HEADERS_KO[fieldKey] || '선택';
     if(search) search.value = '';
@@ -1520,32 +1580,30 @@ function ensureVocabSheet(){
 
     if(root) root.classList.add('open');
     if(search){
-      setTimeout(function(){
-        search.focus();
-      }, 0);
+      setTimeout(function(){ search.focus(); }, 0);
     }
   }
 
   function closeVocabSheet(){
-    const root = document.getElementById('vocabSheet');
+    var root = document.getElementById('vocabSheet');
     if(root) root.classList.remove('open');
   }
 
-  function pickItem(index){
-    const item = pickerState.filteredItems[index];
+  function pickVocabItem(index){
+    var item = pickerState.filteredItems[index];
     if(!item) return;
 
-    const clause = state.clauses[pickerState.clauseIndex];
+    var clause = state.clauses[pickerState.clauseIndex];
     if(!clause) return;
 
-    clause[pickerState.fieldKey] = item;
-    syncClauseCount();
+    setFieldItem(clause, pickerState.fieldKey, item);
+    ensureChainLength();
     closeVocabSheet();
     renderAll();
   }
 
   function playCurrent(){
-    const built = buildFullOutput();
+    var built = buildFullOutput();
 
     if(!built.korean){
       showToast(currentUI().noSpeech);
@@ -1559,23 +1617,22 @@ function ensureVocabSheet(){
 
     window.speechSynthesis.cancel();
 
-    const utter = new SpeechSynthesisUtterance(built.korean);
+    var utter = new SpeechSynthesisUtterance(built.korean);
     utter.lang = 'ko-KR';
     utter.rate = 0.9;
 
-    let activeIndex = -1;
-    const wordEls = DOM.sentenceWords ? DOM.sentenceWords.querySelectorAll('.word') : [];
+    var activeIndex = -1;
+    var wordEls = els.sentenceWords.querySelectorAll('.word');
 
-    utter.onboundary = function(event){
-      if(typeof event.charIndex !== 'number') return;
+    utter.onboundary = function(){
       activeIndex += 1;
-      for(let i=0;i<wordEls.length;i++){
+      for(var i=0;i<wordEls.length;i++){
         wordEls[i].classList.toggle('active', i === activeIndex);
       }
     };
 
     utter.onend = function(){
-      for(let i=0;i<wordEls.length;i++){
+      for(var i=0;i<wordEls.length;i++){
         wordEls[i].classList.remove('active');
       }
     };
@@ -1587,6 +1644,7 @@ function ensureVocabSheet(){
     if(window.MediaRecorder && MediaRecorder.isTypeSupported){
       if(MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a.40.2')) return 'audio/mp4;codecs=mp4a.40.2';
       if(MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4';
+      if(MediaRecorder.isTypeSupported('audio/x-m4a')) return 'audio/x-m4a';
       if(MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
       if(MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
     }
@@ -1601,47 +1659,43 @@ function ensureVocabSheet(){
 
     if(mediaRecorder && mediaRecorder.state === 'recording'){
       mediaRecorder.stop();
-      if(DOM.recordBtn) DOM.recordBtn.classList.remove('recording');
+      els.recordBtn.classList.remove('recording');
       showToast(currentUI().recordStop);
       return;
     }
 
-    navigator.mediaDevices.getUserMedia({ audio:true }).then(function(stream){
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
       recordedChunks = [];
       recordedStream = stream;
-
-      const mime = detectMimeType();
-      mediaRecorder = mime ? new MediaRecorder(stream, { mimeType:mime }) : new MediaRecorder(stream);
+      var mime = detectMimeType();
+      mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
 
       mediaRecorder.ondataavailable = function(event){
         if(event.data && event.data.size > 0) recordedChunks.push(event.data);
       };
 
       mediaRecorder.onstop = function(){
-        const blobType = mime || (recordedChunks[0] && recordedChunks[0].type) || 'audio/webm';
-        const blob = new Blob(recordedChunks, { type:blobType });
+        var blobType = mime || (recordedChunks[0] && recordedChunks[0].type) || 'audio/mp4';
+        var blob = new Blob(recordedChunks, { type: blobType });
 
         if(recordedUrl) URL.revokeObjectURL(recordedUrl);
         recordedUrl = URL.createObjectURL(blob);
 
-        if(DOM.recordedAudio){
-          DOM.recordedAudio.pause();
-          DOM.recordedAudio.removeAttribute('src');
-          DOM.recordedAudio.src = recordedUrl;
-          DOM.recordedAudio.load();
-        }
-
-        if(DOM.recordBox) DOM.recordBox.classList.add('show');
+        els.recordedAudio.pause();
+        els.recordedAudio.removeAttribute('src');
+        els.recordedAudio.src = recordedUrl;
+        els.recordedAudio.load();
+        els.recordBox.classList.add('show');
 
         if(recordedStream){
-          const tracks = recordedStream.getTracks();
-          for(let i=0;i<tracks.length;i++) tracks[i].stop();
+          var tracks = recordedStream.getTracks();
+          for(var i=0;i<tracks.length;i++) tracks[i].stop();
           recordedStream = null;
         }
       };
 
       mediaRecorder.start();
-      if(DOM.recordBtn) DOM.recordBtn.classList.add('recording');
+      els.recordBtn.classList.add('recording');
       showToast(currentUI().recordStart);
     }).catch(function(){
       showToast(currentUI().recordUnsupported);
@@ -1650,99 +1704,68 @@ function ensureVocabSheet(){
 
   function resetBuilder(){
     state.text = '';
-    if(DOM.freeText) DOM.freeText.value = '';
-    state.clauses = [makeDefaultClause()];
-    if(DOM.recordBox) DOM.recordBox.classList.remove('show');
-    if(DOM.recordedAudio){
-      DOM.recordedAudio.pause();
-      DOM.recordedAudio.removeAttribute('src');
-      DOM.recordedAudio.load();
+    if(els.freeText) els.freeText.value = '';
+    state.clauses = [makeClause(0, true)];
+    state.clauses[0].verb.index = 0;
+    state.clauses[0].connector.index = 0;
+    if(els.recordBox) els.recordBox.classList.remove('show');
+    if(els.recordedAudio){
+      els.recordedAudio.pause();
+      els.recordedAudio.removeAttribute('src');
+      els.recordedAudio.load();
     }
     renderAll();
   }
 
   function bindEvents(){
-    if(DOM.btnRo){
-      DOM.btnRo.addEventListener('click', function(){
-        setLang('ro');
-      });
-    }
+    els.btnRo.addEventListener('click', function(){ setLang('ro'); });
+    els.btnEn.addEventListener('click', function(){ setLang('en'); });
 
-    if(DOM.btnEn){
-      DOM.btnEn.addEventListener('click', function(){
-        setLang('en');
-      });
-    }
-
-    if(DOM.topicDropdown){
-      DOM.topicDropdown.addEventListener('click', function(event){
-        const btn = event.target.closest('.topicOption');
+    if(els.topicDropdown){
+      els.topicDropdown.addEventListener('click', function(event){
+        var btn = event.target.closest('.topicOption');
         if(!btn) return;
         setLevel(btn.getAttribute('data-level'));
-        const details = document.getElementById('topicMenu');
+        var details = document.getElementById('topicMenu');
         if(details) details.removeAttribute('open');
       });
     }
 
-    if(DOM.freeText){
-      DOM.freeText.addEventListener('input', function(){
-        state.text = DOM.freeText.value || '';
-        parseTextIntoClauses();
-      });
-    }
+    els.freeText.addEventListener('input', function(){
+      state.text = els.freeText.value || '';
+      parseTextIntoClauses();
+    });
 
-    if(DOM.refreshBtn){
-      DOM.refreshBtn.addEventListener('click', function(){
-        resetBuilder();
-      });
-    }
+    els.refreshBtn.addEventListener('click', resetBuilder);
+    els.playBtn.addEventListener('click', playCurrent);
+    els.recordBtn.addEventListener('click', toggleRecording);
 
-    if(DOM.playBtn){
-      DOM.playBtn.addEventListener('click', function(){
+    els.sentenceBox.addEventListener('click', playCurrent);
+    els.sentenceBox.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
         playCurrent();
-      });
-    }
+      }
+    });
 
-    if(DOM.recordBtn){
-      DOM.recordBtn.addEventListener('click', function(){
-        toggleRecording();
-      });
-    }
-
-    if(DOM.sentenceBox){
-      DOM.sentenceBox.addEventListener('click', function(){
-        playCurrent();
-      });
-
-      DOM.sentenceBox.addEventListener('keydown', function(e){
-        if(e.key === 'Enter' || e.key === ' '){
-          e.preventDefault();
-          playCurrent();
-        }
-      });
-    }
-
-    if(DOM.clauseList){
-      DOM.clauseList.addEventListener('click', function(event){
-        const openBtn = event.target.closest('[data-open-picker]');
-        if(openBtn){
-          event.preventDefault();
-          const parts = openBtn.getAttribute('data-open-picker').split(':');
-          openVocabSheet(Number(parts[0]), parts[1]);
-        }
-      });
-    }
+    els.clauseList.addEventListener('click', function(event){
+      var btn = event.target.closest('[data-open-picker]');
+      if(!btn) return;
+      event.preventDefault();
+      var parts = btn.getAttribute('data-open-picker').split(':');
+      openVocabSheet(Number(parts[0]), parts[1]);
+    });
 
     document.addEventListener('click', function(event){
-      const closeBtn = event.target.closest('#vocabSheetClose, [data-close-vocab]');
+      var closeBtn = event.target.closest('#vocabSheetClose, [data-close-vocab]');
       if(closeBtn){
         closeVocabSheet();
         return;
       }
 
-      const pickBtn = event.target.closest('[data-pick-index]');
+      var pickBtn = event.target.closest('[data-vocab-index]');
       if(pickBtn){
-        pickItem(Number(pickBtn.getAttribute('data-pick-index')));
+        pickVocabItem(Number(pickBtn.getAttribute('data-vocab-index')));
       }
     });
 
@@ -1761,31 +1784,16 @@ function ensureVocabSheet(){
 
   function init(){
     ensureVocabSheet();
-    state.clauses = [makeDefaultClause()];
-
-    if(DOM.freeText) DOM.freeText.value = '';
-    if(DOM.recordBox) DOM.recordBox.classList.remove('show');
-
     bindEvents();
+    resetBuilder();
     setLevel(1);
     setLang('ro');
-    renderAll();
-
-    window.ralucaBuilderState = state;
-    window.renderBuilderAll = renderAll;
   }
 
   init();
 })();
 </script>
- 
 
-
-
-
-
-
-  
 </body>
 </html>
 
