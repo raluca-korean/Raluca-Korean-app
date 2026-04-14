@@ -2061,28 +2061,39 @@ function setLevel(level){
   ensureChainLength();
   renderAll();
 }
-  function ensureChainLength(){
-  var rows = getTopikRows();
-
-  if(!Array.isArray(state.clauses)){
-    state.clauses = [];
+function ensureChainLength(){
+  if(!Array.isArray(state.clauses) || !state.clauses.length){
+    state.clauses = [makeEmptyLayoutClause()];
   }
 
-  while(state.clauses.length < rows.length){
+  var required = 1;
+
+  if(state.level >= 3){
+    for(var i=0;i<state.clauses.length;i++){
+      var conn = itemOf(state.clauses[i], 'connector');
+      if(conn && conn.key && conn.key !== 'none'){
+        required = i + 2;
+      }else{
+        break;
+      }
+    }
+  }
+
+  while(state.clauses.length < required){
     state.clauses.push(makeEmptyLayoutClause());
   }
 
-  while(state.clauses.length > rows.length){
+  while(state.clauses.length > required){
     state.clauses.pop();
   }
 
-  for(var i=0;i<rows.length;i++){
-    var row = rows[i];
-    var clause = ensureClauseShape(state.clauses[i]);
+  var visible = getLevelFields();
 
-    for(var j=0;j<ALL_FIELD_KEYS.length;j++){
-      var fieldKey = ALL_FIELD_KEYS[j];
-      if(row.fields.indexOf(fieldKey) === -1){
+  for(var r=0;r<state.clauses.length;r++){
+    var clause = ensureClauseShape(state.clauses[r]);
+    for(var k=0;k<ALL_FIELD_KEYS.length;k++){
+      var fieldKey = ALL_FIELD_KEYS[k];
+      if(visible.indexOf(fieldKey) === -1){
         clearFieldFromClause(clause, fieldKey);
       }
     }
