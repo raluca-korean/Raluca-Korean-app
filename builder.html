@@ -840,339 +840,131 @@
       recordedLabel: "Your recording"
     }
   };
-var TABLE_HEADERS_KO = {
-  topic: '주어',
-  topic2: '주어 2',
-  associate: '관련 인물',
-  time: '시간',
-  departure: '장소',
-  transit: '맥락',
-  numeral: '수사',
-  quantifier: '분류사',
-  object1: '목적어 1',
-  beneficiary: '수혜자',
-  object2: '목적어 2',
-  adverb: '부사 / 형용사',
-  adverb2: '부사 / 형용사 2',
-  verb: '동사',
-  connector: '연결어'
-};
 
-var TABLE_PLACEHOLDERS_KO = {
-  topic: '선택',
-  topic2: '선택',
-  associate: '선택',
-  time: '선택',
-  departure: '선택',
-  transit: '선택',
-  numeral: '선택',
-  quantifier: '선택',
-  object1: '선택',
-  beneficiary: '선택',
-  object2: '선택',
-  adverb: '선택',
-  adverb2: '선택',
-  verb: '선택',
-  connector: '선택'
-};
-var FIELD_LABELS = {
-  ro: {
-    topic: 'subiect',
-    topic2: 'subiect 2',
-    associate: 'participant asociat',
-    time: 'timp',
-    departure: 'loc',
-    transit: 'context',
-    numeral: 'numeral',
-    quantifier: 'cuantificator',
-    object1: 'obiect 1',
-    beneficiary: 'beneficiar',
-    object2: 'obiect 2',
-    adverb: 'adjectiv / adverb',
-    adverb2: 'adjectiv / adverb 2',
-    verb: 'verb',
-    connector: 'conector'
-  },
-  en: {
-    topic: 'subject',
-    topic2: 'subject 2',
-    associate: 'associated participant',
-    time: 'time',
-    departure: 'place',
-    transit: 'context',
-    numeral: 'numeral',
-    quantifier: 'quantifier',
-    object1: 'object 1',
-    beneficiary: 'beneficiary',
-    object2: 'object 2',
-    adverb: 'adjective / adverb',
-    adverb2: 'adjective / adverb 2',
-    verb: 'verb',
-    connector: 'connector'
-  }
-};
-var FIELD_LABELS = {
-  ro: {
-    topic: 'subiect',
-    topic2: 'subiect 2',
-    associate: 'participant asociat',
-    time: 'timp',
-    departure: 'loc',
-    transit: 'context',
-    numeral: 'numeral',
-    quantifier: 'cuantificator',
-    object1: 'obiect 1',
-    beneficiary: 'beneficiar',
-    object2: 'obiect 2',
-    adverb: 'adjectiv / adverb',
-    adverb2: 'adjectiv / adverb 2',
-    verb: 'verb',
-    connector: 'conector'
-  },
-  en: {
-    topic: 'subject',
-    topic2: 'subject 2',
-    associate: 'associated participant',
-    time: 'time',
-    departure: 'place',
-    transit: 'context',
-    numeral: 'numeral',
-    quantifier: 'quantifier',
-    object1: 'object 1',
-    beneficiary: 'beneficiary',
-    object2: 'object 2',
-    adverb: 'adjective / adverb',
-    adverb2: 'adjective / adverb 2',
-    verb: 'verb',
-    connector: 'connector'
-  }
-};
+  var TABLE_HEADERS_KO = {
+    topic: '주어',
+    topic2: '주어 2',
+    associate: '관련 인물',
+    time: '시간',
+    departure: '장소',
+    transit: '맥락',
+    numeral: '수사',
+    quantifier: '분류사',
+    object1: '목적어 1',
+    beneficiary: '수혜자',
+    object2: '목적어 2',
+    adverb: '부사 / 형용사',
+    adverb2: '부사 / 형용사 2',
+    verb: '동사',
+    connector: '연결어'
+  };
 
-var FIELD_BINDINGS = {
-  topic: 'subject',
-  time: 'time',
-  departure: 'location',
-  object1: 'object',
-  adverb: 'description',
-  verb: 'verb',
-  connector: 'connector'
-};
+  var TABLE_PLACEHOLDERS_KO = {
+    topic: '선택',
+    topic2: '선택',
+    associate: '선택',
+    time: '선택',
+    departure: '선택',
+    transit: '선택',
+    numeral: '선택',
+    quantifier: '선택',
+    object1: '선택',
+    beneficiary: '선택',
+    object2: '선택',
+    adverb: '선택',
+    adverb2: '선택',
+    verb: '선택',
+    connector: '선택'
+  };
 
-var longPressTimer = null;
-var longPressTarget = null;
-var longPressTriggered = false;
-var LONG_PRESS_MS = 420;
-
-function fieldLabel(fieldKey){
-  var pack = FIELD_LABELS[state.lang] || FIELD_LABELS.ro;
-  return pack[fieldKey] || fieldKey;
-}
-
-var ALL_FIELD_KEYS = [
-  'topic','topic2','associate','time','departure','transit',
-  'numeral','quantifier','object1','beneficiary','object2',
-  'adverb','adverb2','verb','connector'
-];
-
-var FIELD_META = {
-  topic:      { key:'topic', kind:'subject' },
-  topic2:     { key:'topic2', kind:'subject' },
-  associate:  { key:'associate', kind:'subject' },
-  time:       { key:'time', kind:'time' },
-  departure:  { key:'departure', kind:'location' },
-  transit:    { key:'transit', kind:'location' },
-  numeral:    { key:'numeral', kind:'object' },
-  quantifier: { key:'quantifier', kind:'object' },
-  object1:    { key:'object1', kind:'object' },
-  beneficiary:{ key:'beneficiary', kind:'subject' },
-  object2:    { key:'object2', kind:'object' },
-  adverb:     { key:'adverb', kind:'description' },
-  adverb2:    { key:'adverb2', kind:'description' },
-  verb:       { key:'verb', kind:'verb' },
-  connector:  { key:'connector', kind:'connector' }
-};
-
-var LEVEL_FIELDS = {
-  1: ['topic','object1','verb'],
-  2: ['topic','time','departure','object1','verb'],
-  3: ['topic','time','departure','object1','adverb','verb','connector'],
-  4: ['topic','time','departure','object1','adverb','verb','connector'],
-  5: ['topic','time','departure','object1','object2','adverb','verb','connector'],
-  6: ['topic','topic2','time','departure','transit','object1','object2','adverb','adverb2','verb','connector']
-};
-
-function getLevelFields(){
-  return LEVEL_FIELDS[state.level] || LEVEL_FIELDS[1];
-}
-
-function makeField(enabled, index){
-  return { enabled: !!enabled, index: typeof index === 'number' ? index : 0 };
-}
-
-function makeClause(subjectIndex, enableSubject){
-  if(typeof subjectIndex !== 'number') subjectIndex = 0;
-  if(typeof enableSubject !== 'boolean') enableSubject = true;
-
-  return {
-    subject: makeField(enableSubject, subjectIndex),
-    time: makeField(false, 0),
-    location: makeField(false, 0),
-    object: makeField(false, 0),
-    description: makeField(false, 0),
-    verb: makeField(false, 0),
-    connector: makeField(false, 0),
-    sourceText: '',
-    extras: {
-      topic2: null,
-      associate: null,
-      transit: null,
-      numeral: null,
-      quantifier: null,
-      beneficiary: null,
-      object2: null,
-      adverb2: null
+  var FIELD_LABELS = {
+    ro: {
+      topic: 'subiect',
+      topic2: 'subiect 2',
+      associate: 'participant asociat',
+      time: 'timp',
+      departure: 'loc',
+      transit: 'context',
+      numeral: 'numeral',
+      quantifier: 'cuantificator',
+      object1: 'obiect 1',
+      beneficiary: 'beneficiar',
+      object2: 'obiect 2',
+      adverb: 'adjectiv / adverb',
+      adverb2: 'adjectiv / adverb 2',
+      verb: 'verb',
+      connector: 'conector'
     },
-    __picked: {}
+    en: {
+      topic: 'subject',
+      topic2: 'subject 2',
+      associate: 'associated participant',
+      time: 'time',
+      departure: 'place',
+      transit: 'context',
+      numeral: 'numeral',
+      quantifier: 'quantifier',
+      object1: 'object 1',
+      beneficiary: 'beneficiary',
+      object2: 'object 2',
+      adverb: 'adjective / adverb',
+      adverb2: 'adjective / adverb 2',
+      verb: 'verb',
+      connector: 'connector'
+    }
   };
-}
 
-function makeEmptyLayoutClause(){
-  var clause = makeClause(0, false);
-  clause.subject.enabled = false;
-  clause.time.enabled = false;
-  clause.location.enabled = false;
-  clause.object.enabled = false;
-  clause.description.enabled = false;
-  clause.verb.enabled = false;
-  clause.connector.enabled = false;
-
-  clause.subject.index = 0;
-  clause.time.index = 0;
-  clause.location.index = 0;
-  clause.object.index = 0;
-  clause.description.index = 0;
-  clause.verb.index = 0;
-  clause.connector.index = 0;
-
-  clause.sourceText = '';
-  clause.extras = {
-    topic2: null,
-    associate: null,
-    transit: null,
-    numeral: null,
-    quantifier: null,
-    beneficiary: null,
-    object2: null,
-    adverb2: null
+  var FIELD_BINDINGS = {
+    topic: 'subject',
+    time: 'time',
+    departure: 'location',
+    object1: 'object',
+    adverb: 'description',
+    verb: 'verb',
+    connector: 'connector'
   };
-  clause.__picked = {};
-  return clause;
-}
 
-function ensureClauseShape(clause){
-  if(!clause.subject) clause.subject = makeField(false, 0);
-  if(!clause.time) clause.time = makeField(false, 0);
-  if(!clause.location) clause.location = makeField(false, 0);
-  if(!clause.object) clause.object = makeField(false, 0);
-  if(!clause.description) clause.description = makeField(false, 0);
-  if(!clause.verb) clause.verb = makeField(false, 0);
-  if(!clause.connector) clause.connector = makeField(false, 0);
-
-  if(!clause.extras){
-    clause.extras = {
-      topic2: null,
-      associate: null,
-      transit: null,
-      numeral: null,
-      quantifier: null,
-      beneficiary: null,
-      object2: null,
-      adverb2: null
-    };
-  }
-
-  if(!clause.__picked) clause.__picked = {};
-  return clause;
-}
-
-function clearFieldFromClause(clause, fieldKey){
-  clause = ensureClauseShape(clause);
-
-  if(fieldKey === 'topic'){
-    clause.subject.enabled = false;
-    clause.subject.index = 0;
-    clause.__picked.topic = null;
-    return;
-  }
-
-  if(fieldKey === 'time'){
-    clause.time.enabled = false;
-    clause.time.index = 0;
-    clause.__picked.time = null;
-    return;
-  }
-
-  if(fieldKey === 'departure'){
-    clause.location.enabled = false;
-    clause.location.index = 0;
-    clause.__picked.departure = null;
-    return;
-  }
-
-  if(fieldKey === 'object1'){
-    clause.object.enabled = false;
-    clause.object.index = 0;
-    clause.__picked.object1 = null;
-    return;
-  }
-
-  if(fieldKey === 'adverb'){
-    clause.description.enabled = false;
-    clause.description.index = 0;
-    clause.__picked.adverb = null;
-    return;
-  }
-
-  if(fieldKey === 'verb'){
-    clause.verb.enabled = false;
-    clause.verb.index = 0;
-    clause.__picked.verb = null;
-    return;
-  }
-
-  if(fieldKey === 'connector'){
-    clause.connector.enabled = false;
-    clause.connector.index = 0;
-    clause.__picked.connector = null;
-    return;
-  }
-
-  clause.__picked[fieldKey] = null;
-  if(clause.extras && Object.prototype.hasOwnProperty.call(clause.extras, fieldKey)){
-    clause.extras[fieldKey] = null;
-  }
-}
-  var COLUMN_DEFS = [
-    { key:'topic', level:1, bucket:'subject', kind:'subject' },
-    { key:'time', level:1, bucket:'time', kind:'time' },
-    { key:'object1', level:1, bucket:'object', kind:'object' },
-    { key:'verb', level:1, bucket:'verb', kind:'verb' },
-    { key:'adverb', level:2, bucket:'description', kind:'description' },
-    { key:'connector', level:2, bucket:'connector', kind:'connector' },
-    { key:'associate', level:3, bucket:'subject', kind:'subject' },
-    { key:'departure', level:3, bucket:'location', kind:'location' },
-    { key:'transit', level:4, bucket:'location', kind:'location' },
-    { key:'beneficiary', level:4, bucket:'subject', kind:'subject' },
-    { key:'numeral', level:5, bucket:'numeral', kind:'object' },
-    { key:'quantifier', level:5, bucket:'quantifier', kind:'object' },
-    { key:'object2', level:6, bucket:'object', kind:'object' }
+  var ALL_FIELD_KEYS = [
+    'topic','topic2','associate','time','departure','transit',
+    'numeral','quantifier','object1','beneficiary','object2',
+    'adverb','adverb2','verb','connector'
   ];
+
+  var FIELD_META = {
+    topic:      { key:'topic', kind:'subject' },
+    topic2:     { key:'topic2', kind:'subject' },
+    associate:  { key:'associate', kind:'subject' },
+    time:       { key:'time', kind:'time' },
+    departure:  { key:'departure', kind:'location' },
+    transit:    { key:'transit', kind:'location' },
+    numeral:    { key:'numeral', kind:'object' },
+    quantifier: { key:'quantifier', kind:'object' },
+    object1:    { key:'object1', kind:'object' },
+    beneficiary:{ key:'beneficiary', kind:'subject' },
+    object2:    { key:'object2', kind:'object' },
+    adverb:     { key:'adverb', kind:'description' },
+    adverb2:    { key:'adverb2', kind:'description' },
+    verb:       { key:'verb', kind:'verb' },
+    connector:  { key:'connector', kind:'connector' }
+  };
+
+  var LEVEL_FIELDS = {
+    1: ['topic','object1','verb'],
+    2: ['topic','time','departure','object1','verb'],
+    3: ['topic','time','departure','object1','adverb','verb','connector'],
+    4: ['topic','time','departure','object1','adverb','verb','connector'],
+    5: ['topic','time','departure','object1','object2','adverb','verb','connector'],
+    6: ['topic','topic2','time','departure','transit','object1','object2','adverb','adverb2','verb','connector']
+  };
 
   var DATA = {
     subject: [
       {ko:'저는', ro:'eu', en:'I', aliases:['eu','i']},
       {ko:'나는', ro:'eu', en:'I', aliases:['eu','i']},
+      {ko:'너는', ro:'tu', en:'you', aliases:['tu','you']},
       {ko:'우리는', ro:'noi', en:'we', aliases:['noi','we']},
+      {ko:'그는', ro:'el', en:'he', aliases:['el','he']},
+      {ko:'그녀는', ro:'ea', en:'she', aliases:['ea','she']},
       {ko:'친구는', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
       {ko:'선생님은', ro:'profesorul', en:'teacher', aliases:['profesorul','profesor','teacher']},
       {ko:'학생은', ro:'studentul', en:'student', aliases:['studentul','student']},
@@ -1255,7 +1047,7 @@ function clearFieldFromClause(clause, fieldKey){
     ],
     connector: [
       {id:'none', key:'none', ko:'—', ro:'', en:'', aliases:['fara conector','fără conector','none']},
-      {id:'seq', key:'seq', ko:'고', ro:'și apoi', en:'and then', aliases:['si apoi','și apoi','apoi','and then','and']},
+      {id:'seq', key:'seq', ko:'고', ro:'și apoi', en:'and then', aliases:['si apoi','și apoi','apoi','and then']},
       {id:'cause1', key:'cause1', ko:'아/어서', ro:'pentru că', en:'because', aliases:['pentru ca','pentru că','because']},
       {id:'cause2', key:'cause2', ko:'(으)니까', ro:'fiindcă', en:'since', aliases:['fiindca','fiindcă','since']},
       {id:'condition', key:'condition', ko:'(으)면', ro:'dacă', en:'if', aliases:['daca','dacă','if']},
@@ -1345,6 +1137,9 @@ function clearFieldFromClause(clause, fieldKey){
   var recordedChunks = [];
   var recordedStream = null;
   var recordedUrl = null;
+  var longPressTimer = null;
+  var longPressTarget = null;
+  var LONG_PRESS_MS = 420;
 
   function currentUI(){
     return UI[state.lang] || UI.ro;
@@ -1385,6 +1180,15 @@ function clearFieldFromClause(clause, fieldKey){
       .replace(/\s+/g, ' ')
       .replace(/\s+([,.!?])/g, '$1')
       .trim();
+  }
+
+  function fieldLabel(fieldKey){
+    var pack = FIELD_LABELS[state.lang] || FIELD_LABELS.ro;
+    return pack[fieldKey] || fieldKey;
+  }
+
+  function getLevelFields(){
+    return LEVEL_FIELDS[state.level] || LEVEL_FIELDS[1];
   }
 
   function normalizeItem(item, bucket, index){
@@ -1475,46 +1279,45 @@ function clearFieldFromClause(clause, fieldKey){
     return [];
   }
 
-function getOptionsForField(fieldKey){
-  var sourceKey = fieldKey;
+  function getOptionsForField(fieldKey){
+    var sourceKey = fieldKey;
+    if(fieldKey === 'topic2') sourceKey = 'topic';
+    if(fieldKey === 'adverb2') sourceKey = 'adverb';
 
-  if(fieldKey === 'topic2') sourceKey = 'topic';
-  if(fieldKey === 'adverb2') sourceKey = 'adverb';
+    var appVocab = getAppVocab();
+    var items = [];
 
-  var appVocab = getAppVocab();
-  var items = [];
-
-  if(appVocab){
-    var raw = firstExistingBucket(appVocab, globalBucketMap(sourceKey));
-    if(raw && raw.length){
-      items = normalizeList(raw, sourceKey);
+    if(appVocab){
+      var raw = firstExistingBucket(appVocab, globalBucketMap(sourceKey));
+      if(raw && raw.length){
+        items = normalizeList(raw, sourceKey);
+      }
     }
-  }
 
-  if(!items.length){
-    if(sourceKey === 'topic' || sourceKey === 'associate' || sourceKey === 'beneficiary'){
-      items = normalizeList(DATA.subject, 'subject');
-    }else if(sourceKey === 'time'){
-      items = normalizeList(DATA.time, 'time');
-    }else if(sourceKey === 'departure' || sourceKey === 'transit'){
-      items = normalizeList(DATA.location, 'location');
-    }else if(sourceKey === 'object1' || sourceKey === 'object2'){
-      items = normalizeList(DATA.object, 'object');
-    }else if(sourceKey === 'adverb'){
-      items = normalizeList(DATA.description, 'description');
-    }else if(sourceKey === 'verb'){
-      items = normalizeList(DATA.verb, 'verb');
-    }else if(sourceKey === 'connector'){
-      items = normalizeList(DATA.connector, 'connector');
-    }else if(sourceKey === 'numeral'){
-      items = normalizeList(DATA.numeral, 'numeral');
-    }else if(sourceKey === 'quantifier'){
-      items = normalizeList(DATA.quantifier, 'quantifier');
+    if(!items.length){
+      if(sourceKey === 'topic' || sourceKey === 'associate' || sourceKey === 'beneficiary'){
+        items = normalizeList(DATA.subject, 'subject');
+      }else if(sourceKey === 'time'){
+        items = normalizeList(DATA.time, 'time');
+      }else if(sourceKey === 'departure' || sourceKey === 'transit'){
+        items = normalizeList(DATA.location, 'location');
+      }else if(sourceKey === 'object1' || sourceKey === 'object2'){
+        items = normalizeList(DATA.object, 'object');
+      }else if(sourceKey === 'adverb'){
+        items = normalizeList(DATA.description, 'description');
+      }else if(sourceKey === 'verb'){
+        items = normalizeList(DATA.verb, 'verb');
+      }else if(sourceKey === 'connector'){
+        items = normalizeList(DATA.connector, 'connector');
+      }else if(sourceKey === 'numeral'){
+        items = normalizeList(DATA.numeral, 'numeral');
+      }else if(sourceKey === 'quantifier'){
+        items = normalizeList(DATA.quantifier, 'quantifier');
+      }
     }
-  }
 
-  return uniqueItems(items);
-}
+    return uniqueItems(items);
+  }
 
   function makeField(enabled, index){
     return { enabled: !!enabled, index: typeof index === 'number' ? index : 0 };
@@ -1530,30 +1333,109 @@ function getOptionsForField(fieldKey){
       location: makeField(false, 0),
       object: makeField(false, 0),
       description: makeField(false, 0),
-      verb: makeField(true, 0),
-      connector: makeField(true, 0),
+      verb: makeField(false, 0),
+      connector: makeField(false, 0),
       sourceText: '',
       extras: {
+        topic2: null,
         associate: null,
         transit: null,
         numeral: null,
         quantifier: null,
         beneficiary: null,
-        object2: null
+        object2: null,
+        adverb2: null
       },
       __picked: {}
     };
   }
 
-  function defaultClause(){
-    var clause = makeClause(0, true);
-    clause.__picked.topic = normalizeItem(DATA.subject[0], 'subject', 0);
-    clause.__picked.verb = normalizeItem(DATA.verb[0], 'verb', 0);
-    clause.__picked.connector = normalizeItem(DATA.connector[0], 'connector', 0);
-    clause.subject.index = 0;
-    clause.verb.index = 0;
-    clause.connector.index = 0;
+  function makeEmptyLayoutClause(){
+    return makeClause(0, false);
+  }
+
+  function ensureClauseShape(clause){
+    if(!clause.subject) clause.subject = makeField(false, 0);
+    if(!clause.time) clause.time = makeField(false, 0);
+    if(!clause.location) clause.location = makeField(false, 0);
+    if(!clause.object) clause.object = makeField(false, 0);
+    if(!clause.description) clause.description = makeField(false, 0);
+    if(!clause.verb) clause.verb = makeField(false, 0);
+    if(!clause.connector) clause.connector = makeField(false, 0);
+
+    if(!clause.extras){
+      clause.extras = {
+        topic2: null,
+        associate: null,
+        transit: null,
+        numeral: null,
+        quantifier: null,
+        beneficiary: null,
+        object2: null,
+        adverb2: null
+      };
+    }
+
+    if(!clause.__picked) clause.__picked = {};
     return clause;
+  }
+
+  function clearFieldFromClause(clause, fieldKey){
+    clause = ensureClauseShape(clause);
+
+    if(fieldKey === 'topic'){
+      clause.subject.enabled = false;
+      clause.subject.index = 0;
+      clause.__picked.topic = null;
+      return;
+    }
+
+    if(fieldKey === 'time'){
+      clause.time.enabled = false;
+      clause.time.index = 0;
+      clause.__picked.time = null;
+      return;
+    }
+
+    if(fieldKey === 'departure'){
+      clause.location.enabled = false;
+      clause.location.index = 0;
+      clause.__picked.departure = null;
+      return;
+    }
+
+    if(fieldKey === 'object1'){
+      clause.object.enabled = false;
+      clause.object.index = 0;
+      clause.__picked.object1 = null;
+      return;
+    }
+
+    if(fieldKey === 'adverb'){
+      clause.description.enabled = false;
+      clause.description.index = 0;
+      clause.__picked.adverb = null;
+      return;
+    }
+
+    if(fieldKey === 'verb'){
+      clause.verb.enabled = false;
+      clause.verb.index = 0;
+      clause.__picked.verb = null;
+      return;
+    }
+
+    if(fieldKey === 'connector'){
+      clause.connector.enabled = false;
+      clause.connector.index = 0;
+      clause.__picked.connector = null;
+      return;
+    }
+
+    clause.__picked[fieldKey] = null;
+    if(clause.extras && Object.prototype.hasOwnProperty.call(clause.extras, fieldKey)){
+      clause.extras[fieldKey] = null;
+    }
   }
 
   function translationOf(item){
@@ -1562,219 +1444,225 @@ function getOptionsForField(fieldKey){
       ? (item.en || item.ro || item.ko || '')
       : (item.ro || item.en || item.ko || '');
   }
-}
 
+  function itemOf(clause, fieldKey){
+    if(!clause) return null;
+    clause = ensureClauseShape(clause);
 
-function itemOf(clause, fieldKey){
-  if(!clause) return null;
-  clause = ensureClauseShape(clause);
+    if(clause.__picked && clause.__picked[fieldKey]){
+      return clause.__picked[fieldKey];
+    }
 
-  if(clause.__picked && clause.__picked[fieldKey]){
-    return clause.__picked[fieldKey];
+    if(fieldKey === 'topic'){
+      if(!clause.subject || !clause.subject.enabled) return null;
+      return normalizeItem((DATA.subject[clause.subject.index] || DATA.subject[0]), 'subject', clause.subject.index);
+    }
+
+    if(fieldKey === 'time'){
+      if(!clause.time || !clause.time.enabled) return null;
+      return normalizeItem((DATA.time[clause.time.index] || DATA.time[0]), 'time', clause.time.index);
+    }
+
+    if(fieldKey === 'departure'){
+      if(!clause.location || !clause.location.enabled) return null;
+      return normalizeItem((DATA.location[clause.location.index] || DATA.location[0]), 'location', clause.location.index);
+    }
+
+    if(fieldKey === 'object1'){
+      if(!clause.object || !clause.object.enabled) return null;
+      return normalizeItem((DATA.object[clause.object.index] || DATA.object[0]), 'object', clause.object.index);
+    }
+
+    if(fieldKey === 'adverb'){
+      if(!clause.description || !clause.description.enabled) return null;
+      return normalizeItem((DATA.description[clause.description.index] || DATA.description[0]), 'description', clause.description.index);
+    }
+
+    if(fieldKey === 'verb'){
+      if(!clause.verb || !clause.verb.enabled) return null;
+      return normalizeItem((DATA.verb[clause.verb.index] || DATA.verb[0]), 'verb', clause.verb.index);
+    }
+
+    if(fieldKey === 'connector'){
+      if(!clause.connector || !clause.connector.enabled) return null;
+      return normalizeItem((DATA.connector[clause.connector.index] || DATA.connector[0]), 'connector', clause.connector.index);
+    }
+
+    if(clause.extras && clause.extras[fieldKey]){
+      return clause.extras[fieldKey];
+    }
+
+    return null;
   }
 
-  if(fieldKey === 'topic'){
-    if(!clause.subject || !clause.subject.enabled) return null;
-    return normalizeItem((DATA.subject[clause.subject.index] || DATA.subject[0]), 'subject', clause.subject.index);
-  }
+  function isFieldActive(clause, fieldKey){
+    if(!clause) return false;
+    clause = ensureClauseShape(clause);
 
-  if(fieldKey === 'time'){
-    if(!clause.time || !clause.time.enabled) return null;
-    return normalizeItem((DATA.time[clause.time.index] || DATA.time[0]), 'time', clause.time.index);
-  }
-
-  if(fieldKey === 'departure'){
-    if(!clause.location || !clause.location.enabled) return null;
-    return normalizeItem((DATA.location[clause.location.index] || DATA.location[0]), 'location', clause.location.index);
-  }
-
-  if(fieldKey === 'object1'){
-    if(!clause.object || !clause.object.enabled) return null;
-    return normalizeItem((DATA.object[clause.object.index] || DATA.object[0]), 'object', clause.object.index);
-  }
-
-  if(fieldKey === 'adverb'){
-    if(!clause.description || !clause.description.enabled) return null;
-    return normalizeItem((DATA.description[clause.description.index] || DATA.description[0]), 'description', clause.description.index);
-  }
-
-  if(fieldKey === 'verb'){
-    if(!clause.verb || !clause.verb.enabled) return null;
-    return normalizeItem((DATA.verb[clause.verb.index] || DATA.verb[0]), 'verb', clause.verb.index);
-  }
-
-  if(fieldKey === 'connector'){
-    if(!clause.connector || !clause.connector.enabled) return null;
-    return normalizeItem((DATA.connector[clause.connector.index] || DATA.connector[0]), 'connector', clause.connector.index);
-  }
-
-  if(clause.extras && clause.extras[fieldKey]){
-    return clause.extras[fieldKey];
-  }
-
-  return null;
-}
-function isFieldActive(clause, fieldKey){
-  if(!clause) return false;
-  clause = ensureClauseShape(clause);
-
-  if(fieldKey === 'topic2' || fieldKey === 'associate' || fieldKey === 'transit' ||
-     fieldKey === 'numeral' || fieldKey === 'quantifier' || fieldKey === 'beneficiary' ||
-     fieldKey === 'object2' || fieldKey === 'adverb2'){
-    return !!(clause.extras && clause.extras[fieldKey]);
-  }
-
-  if(FIELD_BINDINGS[fieldKey]){
-    var nativeKey = FIELD_BINDINGS[fieldKey];
-    return !!(clause[nativeKey] && clause[nativeKey].enabled);
-  }
-
-  return false;
-}
-function getFirstUsableItem(fieldKey){
-  var options = getOptionsForField(fieldKey);
-  if(!options.length) return null;
-
-  if(fieldKey === 'connector') return options[0] || null;
-
-  for(var i=0;i<options.length;i++){
-    if(options[i] && options[i].ko) return options[i];
-  }
-  return options[0] || null;
-}
-
-function toggleFieldActive(clauseIndex, fieldKey){
-  var clause = state.clauses[clauseIndex];
-  if(!clause) return;
-
-  var active = isFieldActive(clause, fieldKey);
-
-  if(active){
-    setFieldItem(clause, fieldKey, null);
+    if(fieldKey === 'topic2' || fieldKey === 'associate' || fieldKey === 'transit' ||
+       fieldKey === 'numeral' || fieldKey === 'quantifier' || fieldKey === 'beneficiary' ||
+       fieldKey === 'object2' || fieldKey === 'adverb2'){
+      return !!(clause.extras && clause.extras[fieldKey]);
+    }
 
     if(FIELD_BINDINGS[fieldKey]){
       var nativeKey = FIELD_BINDINGS[fieldKey];
-      clause[nativeKey].enabled = false;
-      clause[nativeKey].index = 0;
-    }else if(clause.extras){
-      clause.extras[fieldKey] = null;
+      return !!(clause[nativeKey] && clause[nativeKey].enabled);
     }
-  }else{
-    var firstItem = getFirstUsableItem(fieldKey);
-    if(firstItem){
-      setFieldItem(clause, fieldKey, firstItem);
 
-      if(FIELD_BINDINGS[fieldKey]){
-        clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+    return false;
+  }
+
+  function getFirstUsableItem(fieldKey){
+    var options = getOptionsForField(fieldKey);
+    if(!options.length) return null;
+
+    if(fieldKey === 'connector'){
+      for(var i=0;i<options.length;i++){
+        if(options[i] && options[i].key && options[i].key !== 'none') return options[i];
       }
+      return options[0] || null;
     }
-  }
 
-  ensureChainLength();
-  renderAll();
-}
-
-function cycleFieldValue(clauseIndex, fieldKey){
-  var clause = state.clauses[clauseIndex];
-  if(!clause) return;
-
-  var options = getOptionsForField(fieldKey);
-  if(!options.length) return;
-
-  if(!isFieldActive(clause, fieldKey)){
-    var firstItem = getFirstUsableItem(fieldKey);
-    if(firstItem){
-      setFieldItem(clause, fieldKey, firstItem);
-      if(FIELD_BINDINGS[fieldKey]){
-        clause[FIELD_BINDINGS[fieldKey]].enabled = true;
-      }
-      ensureChainLength();
-      renderAll();
+    for(var j=0;j<options.length;j++){
+      if(options[j] && options[j].ko) return options[j];
     }
-    return;
+
+    return options[0] || null;
   }
 
-  var current = itemOf(clause, fieldKey);
-  var currentIndex = -1;
+  function setFieldItem(clause, fieldKey, item){
+    clause = ensureClauseShape(clause);
 
-  for(var i=0;i<options.length;i++){
-    if(current && options[i] && options[i].id === current.id && options[i].ko === current.ko){
-      currentIndex = i;
-      break;
+    if(!clause.__picked) clause.__picked = {};
+    clause.__picked[fieldKey] = item || null;
+
+    if(fieldKey === 'topic'){
+      clause.subject.enabled = !!(item && item.ko);
+      clause.subject.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
     }
-  }
 
-  var nextIndex = currentIndex + 1;
-  if(nextIndex >= options.length) nextIndex = 0;
-
-  if(fieldKey !== 'connector'){
-    while(options[nextIndex] && !options[nextIndex].ko){
-      nextIndex += 1;
-      if(nextIndex >= options.length) nextIndex = 0;
-      if(nextIndex === currentIndex) break;
+    if(fieldKey === 'time'){
+      clause.time.enabled = !!(item && item.ko);
+      clause.time.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
     }
+
+    if(fieldKey === 'departure'){
+      clause.location.enabled = !!(item && item.ko);
+      clause.location.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'object1'){
+      clause.object.enabled = !!(item && item.ko);
+      clause.object.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'adverb'){
+      clause.description.enabled = !!(item && item.ko);
+      clause.description.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'verb'){
+      clause.verb.enabled = !!(item && item.ko);
+      clause.verb.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'connector'){
+      clause.connector.enabled = !!(item && item.ko);
+      clause.connector.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(!clause.extras) clause.extras = {};
+    clause.extras[fieldKey] = item || null;
   }
 
-  setFieldItem(clause, fieldKey, options[nextIndex] || null);
-  ensureChainLength();
-  renderAll();
-}
-
-  
-function setFieldItem(clause, fieldKey, item){
-  clause = ensureClauseShape(clause);
-
-  if(!clause.__picked) clause.__picked = {};
-  clause.__picked[fieldKey] = item || null;
-
-  if(fieldKey === 'topic'){
-    clause.subject.enabled = !!(item && item.ko);
-    clause.subject.index = item && typeof item.index === 'number' ? item.index : 0;
-    return;
-  }
-
-  if(fieldKey === 'time'){
-    clause.time.enabled = !!(item && item.ko);
-    clause.time.index = item && typeof item.index === 'number' ? item.index : 0;
-    return;
-  }
-
-  if(fieldKey === 'departure'){
-    clause.location.enabled = !!(item && item.ko);
-    clause.location.index = item && typeof item.index === 'number' ? item.index : 0;
-    return;
-  }
-
-  if(fieldKey === 'object1'){
-    clause.object.enabled = !!(item && item.ko);
-    clause.object.index = item && typeof item.index === 'number' ? item.index : 0;
-    return;
-  }
-
-  if(fieldKey === 'adverb'){
-    clause.description.enabled = !!(item && item.ko);
-    clause.description.index = item && typeof item.index === 'number' ? item.index : 0;
-    return;
-  }
-
-  if(fieldKey === 'verb'){
-    clause.verb.enabled = !!(item && item.ko);
-    clause.verb.index = item && typeof item.index === 'number' ? item.index : 0;
-    return;
-  }
-
-  if(fieldKey === 'connector'){
-    clause.connector.enabled = !!(item && item.ko);
-    clause.connector.index = item && typeof item.index === 'number' ? item.index : 0;
-    return;
-  }
-
-  if(!clause.extras) clause.extras = {};
-  clause.extras[fieldKey] = item || null;
-}
   function connectorKey(clause){
     var item = itemOf(clause, 'connector');
     return item ? (item.key || item.id || 'none') : 'none';
+  }
+
+  function toggleFieldActive(clauseIndex, fieldKey){
+    var clause = state.clauses[clauseIndex];
+    if(!clause) return;
+
+    var active = isFieldActive(clause, fieldKey);
+
+    if(active){
+      setFieldItem(clause, fieldKey, null);
+
+      if(FIELD_BINDINGS[fieldKey]){
+        var nativeKey = FIELD_BINDINGS[fieldKey];
+        clause[nativeKey].enabled = false;
+        clause[nativeKey].index = 0;
+      }else if(clause.extras){
+        clause.extras[fieldKey] = null;
+      }
+    }else{
+      var firstItem = getFirstUsableItem(fieldKey);
+      if(firstItem){
+        setFieldItem(clause, fieldKey, firstItem);
+        if(FIELD_BINDINGS[fieldKey]){
+          clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+        }
+      }
+    }
+
+    ensureChainLength();
+    renderAll();
+  }
+
+  function cycleFieldValue(clauseIndex, fieldKey){
+    var clause = state.clauses[clauseIndex];
+    if(!clause) return;
+
+    var options = getOptionsForField(fieldKey);
+    if(!options.length) return;
+
+    if(!isFieldActive(clause, fieldKey)){
+      var firstItem = getFirstUsableItem(fieldKey);
+      if(firstItem){
+        setFieldItem(clause, fieldKey, firstItem);
+        if(FIELD_BINDINGS[fieldKey]){
+          clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+        }
+        ensureChainLength();
+        renderAll();
+      }
+      return;
+    }
+
+    var current = itemOf(clause, fieldKey);
+    var currentIndex = -1;
+
+    for(var i=0;i<options.length;i++){
+      if(current && options[i] && options[i].id === current.id && options[i].ko === current.ko){
+        currentIndex = i;
+        break;
+      }
+    }
+
+    var nextIndex = currentIndex + 1;
+    if(nextIndex >= options.length) nextIndex = 0;
+
+    if(fieldKey !== 'connector'){
+      var guard = 0;
+      while(options[nextIndex] && !options[nextIndex].ko && guard < options.length){
+        nextIndex += 1;
+        if(nextIndex >= options.length) nextIndex = 0;
+        guard += 1;
+      }
+    }
+
+    setFieldItem(clause, fieldKey, options[nextIndex] || null);
+    ensureChainLength();
+    renderAll();
   }
 
   function subjectRoleFromKo(subjectKo){
@@ -1797,83 +1685,80 @@ function setFieldItem(clause, fieldKey, item){
     return String(ko || '').replace(/(는|은|이|가)$/,'');
   }
 
-  function extraToKo(item, type){
-    if(!item || !item.ko) return '';
-    if(type === 'associate') return removeTopicParticle(item.ko) + '하고';
-    if(type === 'beneficiary') return removeTopicParticle(item.ko) + '에게';
-    return item.ko;
-  }
-
   function renderVerbKo(clause){
     var verb = itemOf(clause, 'verb');
     if(!verb) return '';
+
     var cKey = connectorKey(clause);
+
     if(verb.forms && verb.forms[cKey]) return verb.forms[cKey];
     return verb.final || verb.ko || '';
   }
-function buildClauseKorean(clause){
-  var parts = [];
 
-  var topic = itemOf(clause, 'topic');
-  var topic2 = itemOf(clause, 'topic2');
-  var time = itemOf(clause, 'time');
-  var departure = itemOf(clause, 'departure');
-  var transit = itemOf(clause, 'transit');
-  var object1 = itemOf(clause, 'object1');
-  var object2 = itemOf(clause, 'object2');
-  var adverb = itemOf(clause, 'adverb');
-  var adverb2 = itemOf(clause, 'adverb2');
-  var verbKo = renderVerbKo(clause);
+  function buildClauseKorean(clause){
+    var parts = [];
 
-  if(topic && topic.ko) parts.push(topic.ko);
-  if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
-  if(time && time.ko) parts.push(time.ko);
-  if(departure && departure.ko) parts.push(departure.ko);
-  if(transit && transit.ko) parts.push(transit.ko);
-  if(object1 && object1.ko) parts.push(object1.ko);
-  if(object2 && object2.ko) parts.push(object2.ko);
-  if(adverb && adverb.ko) parts.push(adverb.ko);
-  if(adverb2 && adverb2.ko) parts.push(adverb2.ko);
-  if(verbKo) parts.push(verbKo);
+    var topic = itemOf(clause, 'topic');
+    var topic2 = itemOf(clause, 'topic2');
+    var time = itemOf(clause, 'time');
+    var departure = itemOf(clause, 'departure');
+    var transit = itemOf(clause, 'transit');
+    var object1 = itemOf(clause, 'object1');
+    var object2 = itemOf(clause, 'object2');
+    var adverb = itemOf(clause, 'adverb');
+    var adverb2 = itemOf(clause, 'adverb2');
+    var verbKo = renderVerbKo(clause);
 
-  return cleanSentenceText(parts.join(' '));
-}
-  
-function buildClauseTranslation(clause){
-  var parts = [];
+    if(topic && topic.ko) parts.push(topic.ko);
+    if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
+    if(time && time.ko) parts.push(time.ko);
+    if(departure && departure.ko) parts.push(departure.ko);
+    if(transit && transit.ko) parts.push(transit.ko);
+    if(object1 && object1.ko) parts.push(object1.ko);
+    if(object2 && object2.ko) parts.push(object2.ko);
+    if(adverb && adverb.ko) parts.push(adverb.ko);
+    if(adverb2 && adverb2.ko) parts.push(adverb2.ko);
+    if(verbKo) parts.push(verbKo);
 
-  var topic = itemOf(clause, 'topic');
-  var topic2 = itemOf(clause, 'topic2');
-  var time = itemOf(clause, 'time');
-  var departure = itemOf(clause, 'departure');
-  var transit = itemOf(clause, 'transit');
-  var object1 = itemOf(clause, 'object1');
-  var object2 = itemOf(clause, 'object2');
-  var adverb = itemOf(clause, 'adverb');
-  var adverb2 = itemOf(clause, 'adverb2');
-  var verb = itemOf(clause, 'verb');
-
-  if(topic) parts.push(translationOf(topic));
-  if(topic2){
-    parts.push(state.lang === 'en'
-      ? ('and ' + (topic2.en || topic2.ro || topic2.ko))
-      : ('și ' + (topic2.ro || topic2.en || topic2.ko)));
-  }
-  if(time) parts.push(translationOf(time));
-  if(departure) parts.push(translationOf(departure));
-  if(transit) parts.push(translationOf(transit));
-  if(object1) parts.push(translationOf(object1));
-  if(object2) parts.push(translationOf(object2));
-  if(adverb) parts.push(translationOf(adverb));
-  if(adverb2) parts.push(translationOf(adverb2));
-
-  if(verb){
-    var topicKo = topic ? topic.ko : '';
-    parts.push(finiteVerbText(verb, state.lang, topicKo));
+    return cleanSentenceText(parts.join(' '));
   }
 
-  return cleanSentenceText(parts.join(' '));
-}
+  function buildClauseTranslation(clause){
+    var parts = [];
+
+    var topic = itemOf(clause, 'topic');
+    var topic2 = itemOf(clause, 'topic2');
+    var time = itemOf(clause, 'time');
+    var departure = itemOf(clause, 'departure');
+    var transit = itemOf(clause, 'transit');
+    var object1 = itemOf(clause, 'object1');
+    var object2 = itemOf(clause, 'object2');
+    var adverb = itemOf(clause, 'adverb');
+    var adverb2 = itemOf(clause, 'adverb2');
+    var verb = itemOf(clause, 'verb');
+
+    if(topic) parts.push(translationOf(topic));
+    if(topic2){
+      parts.push(state.lang === 'en'
+        ? ('and ' + (topic2.en || topic2.ro || topic2.ko))
+        : ('și ' + (topic2.ro || topic2.en || topic2.ko)));
+    }
+    if(time) parts.push(translationOf(time));
+    if(departure) parts.push(translationOf(departure));
+    if(transit) parts.push(translationOf(transit));
+    if(object1) parts.push(translationOf(object1));
+    if(object2) parts.push(translationOf(object2));
+    if(adverb) parts.push(translationOf(adverb));
+    if(adverb2) parts.push(translationOf(adverb2));
+
+    if(verb){
+      var topicKo = topic ? topic.ko : '';
+      parts.push(finiteVerbText(verb, state.lang, topicKo));
+    }
+
+    return cleanSentenceText(parts.join(' '));
+  }
+
   function buildFullOutput(){
     var ko = [];
     var tr = [];
@@ -1891,67 +1776,67 @@ function buildClauseTranslation(clause){
     };
   }
 
-    function renderPreview(){
-  var built = buildFullOutput();
-  var korean = built.korean || '';
-  var words = korean ? korean.split(/\s+/).filter(Boolean) : [];
+  function renderPreview(){
+    var built = buildFullOutput();
+    var korean = built.korean || '';
+    var words = korean ? korean.split(/\s+/).filter(Boolean) : [];
 
-  if(els.sentenceWords){
-    els.sentenceWords.innerHTML = words.map(function(word){
-      return '<span class="word">' + escapeHtml(word) + '</span>';
-    }).join('');
-    if(!words.length){
-      els.sentenceWords.innerHTML = '';
+    if(els.sentenceWords){
+      els.sentenceWords.innerHTML = words.map(function(word){
+        return '<span class="word">' + escapeHtml(word) + '</span>';
+      }).join('');
+    }
+
+    if(els.translationText){
+      els.translationText.textContent = built.translation || currentUI().defaultTranslation;
     }
   }
 
-  if(els.translationText){
-    els.translationText.textContent = built.translation || currentUI().defaultTranslation;
+  function getVisibleColumns(){
+    var fields = getLevelFields();
+    return fields.map(function(fieldKey){
+      return FIELD_META[fieldKey];
+    }).filter(Boolean);
   }
-}
 
-    function getVisibleColumns(){
-  var fields = getLevelFields();
-  return fields.map(function(fieldKey){
-    return FIELD_META[fieldKey];
-  }).filter(Boolean);
-}
-    function renderCell(clauseIndex, col){
-  var clause = state.clauses[clauseIndex];
-  var active = isFieldActive(clause, col.key);
-  var item = active ? itemOf(clause, col.key) : null;
-  var value = item && item.ko ? item.ko : (TABLE_PLACEHOLDERS_KO[col.key] || '선택');
-  var emptyHint = state.lang === 'en' ? 'click to select' : 'click pentru selectare';
-  var meta = item ? (translationOf(item) || '') : emptyHint;
+  function renderCell(clauseIndex, col){
+    var clause = state.clauses[clauseIndex];
+    var active = isFieldActive(clause, col.key);
+    var item = active ? itemOf(clause, col.key) : null;
+    var value = item && item.ko ? item.ko : (TABLE_PLACEHOLDERS_KO[col.key] || '선택');
+    var emptyHint = state.lang === 'en' ? 'click to select' : 'click pentru selectare';
+    var meta = item ? (translationOf(item) || '') : emptyHint;
 
-  return '' +
-    '<div class="tableField ' + (active ? '' : 'off') + '">' +
-      '<button class="tableToggle ' + (active ? 'active' : '') + '" data-toggle-cell="' + clauseIndex + ':' + col.key + '" type="button">✓</button>' +
-      '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + '" data-press-field="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind) + '" type="button">' +
-        '<div class="tableMeta">' + escapeHtml(fieldLabel(col.key)) + '</div>' +
-        '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
-        '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
-      '</button>' +
-    '</div>';
-}
-   function renderClauses(){
-  ensureChainLength();
-  if(!els.clauseList) return;
+    return '' +
+      '<div class="tableField ' + (active ? '' : 'off') + '">' +
+        '<button class="tableToggle ' + (active ? 'active' : '') + '" data-toggle-cell="' + clauseIndex + ':' + col.key + '" type="button">✓</button>' +
+        '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + '" data-press-field="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind) + '" type="button">' +
+          '<div class="tableMeta">' + escapeHtml(fieldLabel(col.key)) + '</div>' +
+          '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
+          '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
+        '</button>' +
+      '</div>';
+  }
 
-  var cols = getVisibleColumns();
-  var html = '<div class="builderTableWrap"><table class="builderTable builderTableCompact"><tbody>';
+  function renderClauses(){
+    ensureChainLength();
+    if(!els.clauseList) return;
 
-  for(var r=0;r<state.clauses.length;r++){
-    html += '<tr>';
-    for(var c=0;c<cols.length;c++){
-      html += '<td>' + renderCell(r, cols[c]) + '</td>';
+    var cols = getVisibleColumns();
+    var html = '<div class="builderTableWrap"><table class="builderTable builderTableCompact"><tbody>';
+
+    for(var r=0;r<state.clauses.length;r++){
+      html += '<tr>';
+      for(var c=0;c<cols.length;c++){
+        html += '<td>' + renderCell(r, cols[c]) + '</td>';
+      }
+      html += '</tr>';
     }
-    html += '</tr>';
+
+    html += '</tbody></table></div>';
+    els.clauseList.innerHTML = html;
   }
 
-  html += '</tbody></table></div>';
-  els.clauseList.innerHTML = html;
-}
   function updateChrome(){
     if(els.btnRo) els.btnRo.classList.toggle('active', state.lang === 'ro');
     if(els.btnEn) els.btnEn.classList.toggle('active', state.lang === 'en');
@@ -1976,61 +1861,66 @@ function buildClauseTranslation(clause){
       label.textContent = currentUI().recordedLabel;
     }
   }
-function renderAll(){
-  ensureChainLength();
-  updateChrome();
-  renderPreview();
-  renderClauses();
-}
+
+  function renderAll(){
+    ensureChainLength();
+    updateChrome();
+    renderPreview();
+    renderClauses();
+  }
+
   function setLang(lang){
     state.lang = lang === 'en' ? 'en' : 'ro';
     renderAll();
   }
-    function setLevel(level){
-  level = Number(level);
-  if(!level || level < 1 || level > 6) level = 1;
-  state.level = level;
-  ensureChainLength();
-  renderAll();
-}
-function ensureChainLength(){
-  if(!Array.isArray(state.clauses) || !state.clauses.length){
-    state.clauses = [makeEmptyLayoutClause()];
+
+  function setLevel(level){
+    level = Number(level);
+    if(!level || level < 1 || level > 6) level = 1;
+    state.level = level;
+    ensureChainLength();
+    renderAll();
   }
 
-  var required = 1;
+  function ensureChainLength(){
+    if(!Array.isArray(state.clauses) || !state.clauses.length){
+      state.clauses = [makeEmptyLayoutClause()];
+    }
 
-  if(state.level >= 3){
-    for(var i=0;i<state.clauses.length;i++){
-      var conn = itemOf(state.clauses[i], 'connector');
-      if(conn && conn.key && conn.key !== 'none'){
-        required = i + 2;
-      }else{
-        break;
+    var required = 1;
+
+    if(state.level >= 3){
+      for(var i=0;i<state.clauses.length;i++){
+        var conn = itemOf(state.clauses[i], 'connector');
+        if(conn && conn.key && conn.key !== 'none'){
+          required = i + 2;
+        }else{
+          break;
+        }
+      }
+    }
+
+    while(state.clauses.length < required){
+      state.clauses.push(makeEmptyLayoutClause());
+    }
+
+    while(state.clauses.length > required){
+      state.clauses.pop();
+    }
+
+    var visible = getLevelFields();
+
+    for(var r=0;r<state.clauses.length;r++){
+      var clause = ensureClauseShape(state.clauses[r]);
+      for(var k=0;k<ALL_FIELD_KEYS.length;k++){
+        var fieldKey = ALL_FIELD_KEYS[k];
+        if(visible.indexOf(fieldKey) === -1){
+          clearFieldFromClause(clause, fieldKey);
+        }
       }
     }
   }
 
-  while(state.clauses.length < required){
-    state.clauses.push(makeEmptyLayoutClause());
-  }
-
-  while(state.clauses.length > required){
-    state.clauses.pop();
-  }
-
-  var visible = getLevelFields();
-
-  for(var r=0;r<state.clauses.length;r++){
-    var clause = ensureClauseShape(state.clauses[r]);
-    for(var k=0;k<ALL_FIELD_KEYS.length;k++){
-      var fieldKey = ALL_FIELD_KEYS[k];
-      if(visible.indexOf(fieldKey) === -1){
-        clearFieldFromClause(clause, fieldKey);
-      }
-    }
-  }
-}
   function findBestMatch(fieldKey, text){
     var options = getOptionsForField(fieldKey);
     var normalizedText = normalizeLatin(text);
@@ -2054,174 +1944,174 @@ function ensureChainLength(){
 
     return best;
   }
-    function findAllMatches(fieldKey, text, maxCount){
-  var options = getOptionsForField(fieldKey);
-  var normalizedText = ' ' + normalizeLatin(text) + ' ';
-  var hits = [];
 
-  for(var i=0;i<options.length;i++){
-    var item = options[i];
-    if(!item || !item.ko) continue;
+  function findAllMatches(fieldKey, text, maxCount){
+    var options = getOptionsForField(fieldKey);
+    var normalizedText = ' ' + normalizeLatin(text) + ' ';
+    var hits = [];
 
-    var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
-    var bestPos = -1;
-    var bestLen = 0;
+    for(var i=0;i<options.length;i++){
+      var item = options[i];
+      if(!item || !item.ko) continue;
 
-    for(var j=0;j<candidates.length;j++){
-      var candidate = normalizeLatin(candidates[j]);
-      if(!candidate) continue;
+      var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
+      var bestPos = -1;
+      var bestLen = 0;
 
-      var pos = normalizedText.indexOf(' ' + candidate + ' ');
-      if(pos === -1) pos = normalizedText.indexOf(candidate);
+      for(var j=0;j<candidates.length;j++){
+        var candidate = normalizeLatin(candidates[j]);
+        if(!candidate) continue;
 
-      if(pos !== -1 && candidate.length > bestLen){
-        bestPos = pos;
-        bestLen = candidate.length;
+        var pos = normalizedText.indexOf(' ' + candidate + ' ');
+        if(pos === -1) pos = normalizedText.indexOf(candidate);
+
+        if(pos !== -1 && candidate.length > bestLen){
+          bestPos = pos;
+          bestLen = candidate.length;
+        }
+      }
+
+      if(bestPos !== -1){
+        hits.push({
+          item: item,
+          pos: bestPos,
+          len: bestLen
+        });
       }
     }
 
-    if(bestPos !== -1){
-      hits.push({
-        item: item,
-        pos: bestPos,
-        len: bestLen
-      });
+    hits.sort(function(a,b){
+      if(a.pos !== b.pos) return a.pos - b.pos;
+      return b.len - a.len;
+    });
+
+    var out = [];
+    var seen = {};
+
+    for(var h=0; h<hits.length; h++){
+      var key = hits[h].item.id + '|' + hits[h].item.ko;
+      if(seen[key]) continue;
+      seen[key] = true;
+      out.push(hits[h].item);
+      if(out.length >= (maxCount || 10)) break;
     }
+
+    return out;
   }
 
-  hits.sort(function(a,b){
-    if(a.pos !== b.pos) return a.pos - b.pos;
-    return b.len - a.len;
-  });
+  function splitIntoSegments(text){
+    var working = ' ' + normalizeLatin(text) + ' ';
+    var markers = [
+      {key:'cause1', phrases:['pentru ca','pentru că','because']},
+      {key:'cause2', phrases:['fiindca','fiindcă','since']},
+      {key:'condition', phrases:['daca','dacă','if']},
+      {key:'contrast1', phrases:['dar','insa','însă','but','however']},
+      {key:'contrast2', phrases:['iar','while']},
+      {key:'purpose', phrases:['ca sa','ca să','in order to']},
+      {key:'seq', phrases:['si apoi','și apoi','apoi','dupa aceea','după aceea','and then']}
+    ];
 
-  var out = [];
-  var seen = {};
-
-  for(var h=0; h<hits.length; h++){
-    var key = hits[h].item.id + '|' + hits[h].item.ko;
-    if(seen[key]) continue;
-    seen[key] = true;
-    out.push(hits[h].item);
-    if(out.length >= (maxCount || 10)) break;
-  }
-
-  return out;
-}
-function splitIntoSegments(text){
-  var working = ' ' + normalizeLatin(text) + ' ';
-  var markers = [
-    {key:'cause1', phrases:['pentru ca','pentru că','because']},
-    {key:'cause2', phrases:['fiindca','fiindcă','since']},
-    {key:'condition', phrases:['daca','dacă','if']},
-    {key:'contrast1', phrases:['dar','insa','însă','but','however']},
-    {key:'contrast2', phrases:['iar','while']},
-    {key:'purpose', phrases:['ca sa','ca să','in order to']},
-    {key:'seq', phrases:['si apoi','și apoi','apoi','dupa aceea','după aceea','and then']}
-  ];
-
-  for(var i=0;i<markers.length;i++){
-    for(var j=0;j<markers[i].phrases.length;j++){
-      var phrase = normalizeLatin(markers[i].phrases[j]);
-      if(phrase){
-        working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| ');
-      }
-    }
-  }
-
-  working = working.replace(/,/g, ' |||none||| ');
-
-  var parts = working.split('|||');
-  var segments = [];
-  var currentText = '';
-
-  for(var k=0;k<parts.length;k++){
-    var part = String(parts[k] || '').trim();
-    if(!part) continue;
-
-    var isConnector = false;
-    for(var c=0;c<DATA.connector.length;c++){
-      if(DATA.connector[c].key === part){
-        isConnector = true;
-        break;
+    for(var i=0;i<markers.length;i++){
+      for(var j=0;j<markers[i].phrases.length;j++){
+        var phrase = normalizeLatin(markers[i].phrases[j]);
+        if(phrase){
+          working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| ');
+        }
       }
     }
 
-    if(isConnector){
-      segments.push({ text: currentText.trim(), connector: part });
-      currentText = '';
-    }else{
-      currentText = currentText ? (currentText + ' ' + part) : part;
+    working = working.replace(/,/g, ' |||none||| ');
+
+    var parts = working.split('|||');
+    var segments = [];
+    var currentText = '';
+
+    for(var k=0;k<parts.length;k++){
+      var part = String(parts[k] || '').trim();
+      if(!part) continue;
+
+      var isConnector = false;
+      for(var c=0;c<DATA.connector.length;c++){
+        if(DATA.connector[c].key === part){
+          isConnector = true;
+          break;
+        }
+      }
+
+      if(isConnector){
+        segments.push({ text: currentText.trim(), connector: part });
+        currentText = '';
+      }else{
+        currentText = currentText ? (currentText + ' ' + part) : part;
+      }
     }
+
+    if(currentText.trim()){
+      segments.push({ text: currentText.trim(), connector: 'none' });
+    }
+
+    if(!segments.length){
+      segments.push({ text: normalizeLatin(text), connector: 'none' });
+    }
+
+    return segments;
   }
 
-  if(currentText.trim()){
-    segments.push({ text: currentText.trim(), connector: 'none' });
-  }
+  function parseTextIntoClauses(){
+    var raw = state.text || '';
 
-  if(!segments.length){
-    segments.push({ text: normalizeLatin(text), connector: 'none' });
-  }
+    if(!String(raw).trim()){
+      state.clauses = [makeEmptyLayoutClause()];
+      renderAll();
+      return;
+    }
 
-  return segments;
-}
- function parseTextIntoClauses(){
-  var raw = state.text || '';
+    var segments = splitIntoSegments(raw);
+    var clauses = [];
+    for(var i=0;i<segments.length;i++){
+      var seg = segments[i];
+      var clause = makeEmptyLayoutClause();
+      clause.sourceText = seg.text || '';
 
-  if(!String(raw).trim()){
-    state.clauses = [makeEmptyLayoutClause()];
+      var subjects = findAllMatches('topic', seg.text, 2);
+      var times = findAllMatches('time', seg.text, 1);
+      var places = findAllMatches('departure', seg.text, 2);
+      var objects = findAllMatches('object1', seg.text, 2);
+      var descs = findAllMatches('adverb', seg.text, 2);
+      var verb = findBestMatch('verb', seg.text);
+      var connector = normalizeItem(
+        (DATA.connector.filter(function(item){ return item.key === seg.connector; })[0] || DATA.connector[0]),
+        'connector',
+        0
+      );
+
+      if(subjects[0]) setFieldItem(clause, 'topic', subjects[0]);
+      if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
+
+      if(times[0]) setFieldItem(clause, 'time', times[0]);
+
+      if(places[0]) setFieldItem(clause, 'departure', places[0]);
+      if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
+
+      if(objects[0]) setFieldItem(clause, 'object1', objects[0]);
+      if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
+
+      if(descs[0]) setFieldItem(clause, 'adverb', descs[0]);
+      if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
+
+      if(verb) setFieldItem(clause, 'verb', verb);
+
+      if(state.level >= 3){
+        setFieldItem(clause, 'connector', connector);
+      }
+
+      clauses.push(clause);
+    }
+
+    state.clauses = clauses.length ? clauses : [makeEmptyLayoutClause()];
+    ensureChainLength();
     renderAll();
-    return;
   }
-
-  var segments = splitIntoSegments(raw);
-  var clauses = [];
-
-  for(var i=0;i<segments.length;i++){
-    var seg = segments[i];
-    var clause = makeEmptyLayoutClause();
-    clause.sourceText = seg.text || '';
-
-    var subjects = findAllMatches('topic', seg.text, 2);
-    var times = findAllMatches('time', seg.text, 1);
-    var places = findAllMatches('departure', seg.text, 2);
-    var objects = findAllMatches('object1', seg.text, 2);
-    var descs = findAllMatches('adverb', seg.text, 2);
-    var verb = findBestMatch('verb', seg.text);
-    var connector = normalizeItem(
-      (DATA.connector.filter(function(item){ return item.key === seg.connector; })[0] || DATA.connector[0]),
-      'connector',
-      0
-    );
-
-    if(subjects[0]) setFieldItem(clause, 'topic', subjects[0]);
-    if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
-
-    if(times[0]) setFieldItem(clause, 'time', times[0]);
-
-    if(places[0]) setFieldItem(clause, 'departure', places[0]);
-    if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
-
-    if(objects[0]) setFieldItem(clause, 'object1', objects[0]);
-    if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
-
-    if(descs[0]) setFieldItem(clause, 'adverb', descs[0]);
-    if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
-
-    if(verb) setFieldItem(clause, 'verb', verb);
-
-    if(state.level >= 3){
-      setFieldItem(clause, 'connector', connector);
-    }
-
-    clauses.push(clause);
-  }
-
-  state.clauses = clauses.length ? clauses : [makeEmptyLayoutClause()];
-  ensureChainLength();
-  renderAll();
-}
- 
-
 
   function ensureVocabSheet(){
     if(document.getElementById('vocabSheet')) return;
@@ -2274,7 +2164,9 @@ function splitIntoSegments(text){
     }
 
     var filtered = pickerState.items.filter(function(item){
-      var hay = [item.ko || '', item.ro || '', item.en || '', item.key || ''].concat(item.aliases || []).join(' ');
+      var hay = [item.ko || '', item.ro || '', item.en || '', item.key || '']
+        .concat(item.aliases || [])
+        .join(' ');
       return normalizeLatin(hay).indexOf(q) !== -1;
     });
 
@@ -2423,165 +2315,163 @@ function splitIntoSegments(text){
       showToast(currentUI().recordUnsupported);
     });
   }
-   function resetBuilder(){
-  state.text = '';
-  if(els.freeText) els.freeText.value = '';
 
-  state.clauses = [makeEmptyLayoutClause()];
+  function resetBuilder(){
+    state.text = '';
+    if(els.freeText) els.freeText.value = '';
 
-  if(els.recordBox) els.recordBox.classList.remove('show');
-  if(els.recordedAudio){
-    els.recordedAudio.pause();
-    els.recordedAudio.removeAttribute('src');
-    els.recordedAudio.load();
+    state.clauses = [makeEmptyLayoutClause()];
+
+    if(els.recordBox) els.recordBox.classList.remove('show');
+    if(els.recordedAudio){
+      els.recordedAudio.pause();
+      els.recordedAudio.removeAttribute('src');
+      els.recordedAudio.load();
+    }
+
+    renderAll();
   }
 
-  renderAll();
-}
-function bindEvents(){
-  if(els.btnRo){
-    els.btnRo.addEventListener('click', function(){ setLang('ro'); });
-  }
+  function bindEvents(){
+    if(els.btnRo){
+      els.btnRo.addEventListener('click', function(){ setLang('ro'); });
+    }
 
-  if(els.btnEn){
-    els.btnEn.addEventListener('click', function(){ setLang('en'); });
-  }
+    if(els.btnEn){
+      els.btnEn.addEventListener('click', function(){ setLang('en'); });
+    }
 
-  if(els.topicDropdown){
-    els.topicDropdown.addEventListener('click', function(event){
-      var btn = event.target.closest('.topicOption');
-      if(!btn) return;
-      setLevel(btn.getAttribute('data-level'));
-      var details = document.getElementById('topicMenu');
-      if(details) details.removeAttribute('open');
-    });
-  }
+    if(els.topicDropdown){
+      els.topicDropdown.addEventListener('click', function(event){
+        var btn = event.target.closest('.topicOption');
+        if(!btn) return;
+        setLevel(btn.getAttribute('data-level'));
+        var details = document.getElementById('topicMenu');
+        if(details) details.removeAttribute('open');
+      });
+    }
 
-  if(els.freeText){
-    els.freeText.addEventListener('input', function(){
-      state.text = els.freeText.value || '';
-      parseTextIntoClauses();
-    });
-  }
+    if(els.freeText){
+      els.freeText.addEventListener('input', function(){
+        state.text = els.freeText.value || '';
+        parseTextIntoClauses();
+      });
+    }
 
-  if(els.refreshBtn){
-    els.refreshBtn.addEventListener('click', resetBuilder);
-  }
+    if(els.refreshBtn){
+      els.refreshBtn.addEventListener('click', resetBuilder);
+    }
 
-  if(els.playBtn){
-    els.playBtn.addEventListener('click', playCurrent);
-  }
+    if(els.playBtn){
+      els.playBtn.addEventListener('click', playCurrent);
+    }
 
-  if(els.recordBtn){
-    els.recordBtn.addEventListener('click', toggleRecording);
-  }
+    if(els.recordBtn){
+      els.recordBtn.addEventListener('click', toggleRecording);
+    }
 
-  if(els.sentenceBox){
-    els.sentenceBox.addEventListener('click', playCurrent);
-    els.sentenceBox.addEventListener('keydown', function(e){
-      if(e.key === 'Enter' || e.key === ' '){
-        e.preventDefault();
-        playCurrent();
-      }
-    });
-  }
+    if(els.sentenceBox){
+      els.sentenceBox.addEventListener('click', playCurrent);
+      els.sentenceBox.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          playCurrent();
+        }
+      });
+    }
 
-  if(els.clauseList){
-    els.clauseList.addEventListener('click', function(event){
-      var toggleBtn = event.target.closest('[data-toggle-cell]');
-      if(toggleBtn){
-        event.preventDefault();
-        event.stopPropagation();
-        var toggleParts = toggleBtn.getAttribute('data-toggle-cell').split(':');
-        toggleFieldActive(Number(toggleParts[0]), toggleParts[1]);
-        return;
-      }
-
-      var pressBtn = event.target.closest('[data-press-field]');
-      if(pressBtn){
-        event.preventDefault();
-
-        if(pressBtn.getAttribute('data-long-press-opened') === '1'){
-          pressBtn.removeAttribute('data-long-press-opened');
+    if(els.clauseList){
+      els.clauseList.addEventListener('click', function(event){
+        var toggleBtn = event.target.closest('[data-toggle-cell]');
+        if(toggleBtn){
+          event.preventDefault();
+          event.stopPropagation();
+          var toggleParts = toggleBtn.getAttribute('data-toggle-cell').split(':');
+          toggleFieldActive(Number(toggleParts[0]), toggleParts[1]);
           return;
         }
 
-        var parts = pressBtn.getAttribute('data-press-field').split(':');
-        cycleFieldValue(Number(parts[0]), parts[1]);
+        var pressBtn = event.target.closest('[data-press-field]');
+        if(pressBtn){
+          event.preventDefault();
+
+          if(pressBtn.getAttribute('data-long-press-opened') === '1'){
+            pressBtn.removeAttribute('data-long-press-opened');
+            return;
+          }
+
+          var parts = pressBtn.getAttribute('data-press-field').split(':');
+          cycleFieldValue(Number(parts[0]), parts[1]);
+        }
+      });
+
+      els.clauseList.addEventListener('pointerdown', function(event){
+        var btn = event.target.closest('[data-press-field]');
+        if(!btn) return;
+
+        longPressTarget = btn;
+        clearTimeout(longPressTimer);
+
+        longPressTimer = setTimeout(function(){
+          if(!longPressTarget) return;
+          longPressTarget.setAttribute('data-long-press-opened', '1');
+
+          var parts = longPressTarget.getAttribute('data-press-field').split(':');
+          openVocabSheet(Number(parts[0]), parts[1]);
+        }, LONG_PRESS_MS);
+      });
+
+      els.clauseList.addEventListener('pointerup', function(){
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        longPressTarget = null;
+      });
+
+      els.clauseList.addEventListener('pointerleave', function(){
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        longPressTarget = null;
+      });
+
+      els.clauseList.addEventListener('pointercancel', function(){
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        longPressTarget = null;
+      });
+
+      els.clauseList.addEventListener('contextmenu', function(event){
+        var btn = event.target.closest('[data-press-field]');
+        if(btn){
+          event.preventDefault();
+        }
+      });
+    }
+
+    document.addEventListener('click', function(event){
+      var closeBtn = event.target.closest('#vocabSheetClose, [data-close-vocab]');
+      if(closeBtn){
+        closeVocabSheet();
+        return;
+      }
+
+      var pickBtn = event.target.closest('[data-vocab-index]');
+      if(pickBtn){
+        pickVocabItem(Number(pickBtn.getAttribute('data-vocab-index')));
       }
     });
 
-    els.clauseList.addEventListener('pointerdown', function(event){
-      var btn = event.target.closest('[data-press-field]');
-      if(!btn) return;
-
-      longPressTarget = btn;
-      longPressTriggered = false;
-      clearTimeout(longPressTimer);
-
-      longPressTimer = setTimeout(function(){
-        if(!longPressTarget) return;
-        longPressTriggered = true;
-        longPressTarget.setAttribute('data-long-press-opened', '1');
-
-        var parts = longPressTarget.getAttribute('data-press-field').split(':');
-        openVocabSheet(Number(parts[0]), parts[1]);
-      }, LONG_PRESS_MS);
+    document.addEventListener('input', function(event){
+      if(event.target && event.target.id === 'vocabSheetSearch'){
+        filterVocabSheet(event.target.value || '');
+      }
     });
 
-    els.clauseList.addEventListener('pointerup', function(){
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-      longPressTarget = null;
-    });
-
-    els.clauseList.addEventListener('pointerleave', function(){
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-      longPressTarget = null;
-    });
-
-    els.clauseList.addEventListener('pointercancel', function(){
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-      longPressTarget = null;
-    });
-
-    els.clauseList.addEventListener('contextmenu', function(event){
-      var btn = event.target.closest('[data-press-field]');
-      if(btn){
-        event.preventDefault();
+    document.addEventListener('keydown', function(event){
+      if(event.key === 'Escape'){
+        closeVocabSheet();
       }
     });
   }
-
-  document.addEventListener('click', function(event){
-    var closeBtn = event.target.closest('#vocabSheetClose, [data-close-vocab]');
-    if(closeBtn){
-      closeVocabSheet();
-      return;
-    }
-
-    var pickBtn = event.target.closest('[data-vocab-index]');
-    if(pickBtn){
-      pickVocabItem(Number(pickBtn.getAttribute('data-vocab-index')));
-    }
-  });
-
-  document.addEventListener('input', function(event){
-    if(event.target && event.target.id === 'vocabSheetSearch'){
-      filterVocabSheet(event.target.value || '');
-    }
-  });
-
-  document.addEventListener('keydown', function(event){
-    if(event.key === 'Escape'){
-      closeVocabSheet();
-    }
-  });
-}
-  
-
 
   function init(){
     ensureVocabSheet();
@@ -2597,6 +2487,7 @@ function bindEvents(){
   init();
 })();
 </script>
+
 </body>
 </html>
 
