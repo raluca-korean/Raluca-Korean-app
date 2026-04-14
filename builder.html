@@ -1830,28 +1830,32 @@ function renderClauses(){
   }
 
   function ensureChainLength(){
-    var required = 1;
+  var rows = getTopikRows();
 
-    for(var i=0;i<state.clauses.length;i++){
-      if(connectorKey(state.clauses[i]) !== 'none'){
-        required += 1;
-      }
-    }
-
-    while(state.clauses.length < required){
-      var clause = makeClause(0, false);
-      clause.verb.index = 0;
-      clause.connector.index = 0;
-      clause.__picked.verb = normalizeItem(DATA.verb[0], 'verb', 0);
-      clause.__picked.connector = normalizeItem(DATA.connector[0], 'connector', 0);
-      state.clauses.push(clause);
-    }
-
-    while(state.clauses.length > required){
-      state.clauses.pop();
-    }
+  if(!Array.isArray(state.clauses)){
+    state.clauses = [];
   }
 
+  while(state.clauses.length < rows.length){
+    state.clauses.push(makeEmptyLayoutClause());
+  }
+
+  while(state.clauses.length > rows.length){
+    state.clauses.pop();
+  }
+
+  for(var i=0;i<rows.length;i++){
+    var row = rows[i];
+    var clause = ensureClauseShape(state.clauses[i]);
+
+    for(var j=0;j<ALL_FIELD_KEYS.length;j++){
+      var fieldKey = ALL_FIELD_KEYS[j];
+      if(row.fields.indexOf(fieldKey) === -1){
+        clearFieldFromClause(clause, fieldKey);
+      }
+    }
+  }
+}
   function findBestMatch(fieldKey, text){
     var options = getOptionsForField(fieldKey);
     var normalizedText = normalizeLatin(text);
