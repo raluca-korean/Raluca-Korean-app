@@ -2101,6 +2101,59 @@ function ensureChainLength(){
 
     return best;
   }
+    function findAllMatches(fieldKey, text, maxCount){
+  var options = getOptionsForField(fieldKey);
+  var normalizedText = ' ' + normalizeLatin(text) + ' ';
+  var hits = [];
+
+  for(var i=0;i<options.length;i++){
+    var item = options[i];
+    if(!item || !item.ko) continue;
+
+    var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
+    var bestPos = -1;
+    var bestLen = 0;
+
+    for(var j=0;j<candidates.length;j++){
+      var candidate = normalizeLatin(candidates[j]);
+      if(!candidate) continue;
+
+      var pos = normalizedText.indexOf(' ' + candidate + ' ');
+      if(pos === -1) pos = normalizedText.indexOf(candidate);
+
+      if(pos !== -1 && candidate.length > bestLen){
+        bestPos = pos;
+        bestLen = candidate.length;
+      }
+    }
+
+    if(bestPos !== -1){
+      hits.push({
+        item: item,
+        pos: bestPos,
+        len: bestLen
+      });
+    }
+  }
+
+  hits.sort(function(a,b){
+    if(a.pos !== b.pos) return a.pos - b.pos;
+    return b.len - a.len;
+  });
+
+  var out = [];
+  var seen = {};
+
+  for(var h=0; h<hits.length; h++){
+    var key = hits[h].item.id + '|' + hits[h].item.ko;
+    if(seen[key]) continue;
+    seen[key] = true;
+    out.push(hits[h].item);
+    if(out.length >= (maxCount || 10)) break;
+  }
+
+  return out;
+}
 function splitIntoSegments(text){
   var working = ' ' + normalizeLatin(text) + ' ';
   var markers = [
