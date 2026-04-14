@@ -1978,48 +1978,24 @@ function setFieldItem(clause, fieldKey, item){
       '</button>' +
     '</div>';
 }
-function renderClauses(){
+   function renderClauses(){
   ensureChainLength();
   if(!els.clauseList) return;
 
-  var rows = getTopikRows();
-  var lang = state.lang === 'en' ? 'en' : 'ro';
-  var maxFields = 0;
-  var html = '';
+  var cols = getVisibleColumns();
+  var html = '<div class="builderTableWrap"><table class="builderTable builderTableCompact"><tbody>';
 
-  for(var m=0;m<rows.length;m++){
-    if(rows[m].fields.length > maxFields) maxFields = rows[m].fields.length;
-  }
-
-  html += '<div class="builderTableWrap">';
-  html += '<table class="builderTable topikTable">';
-  html += '<tbody>';
-
-  for(var r=0;r<rows.length;r++){
-    var row = rows[r];
-
+  for(var r=0;r<state.clauses.length;r++){
     html += '<tr>';
-    html += '<th class="rowLabelCell">' + escapeHtml(row.label[lang]) + '</th>';
-
-    for(var c=0;c<row.fields.length;c++){
-      var fieldKey = row.fields[c];
-      html += '<td>' + renderCell(r, FIELD_META[fieldKey]) + '</td>';
+    for(var c=0;c<cols.length;c++){
+      html += '<td>' + renderCell(r, cols[c]) + '</td>';
     }
-
-    for(var pad=row.fields.length; pad<maxFields; pad++){
-      html += '<td class="spacerCell"></td>';
-    }
-
     html += '</tr>';
   }
 
-  html += '</tbody>';
-  html += '</table>';
-  html += '</div>';
-
+  html += '</tbody></table></div>';
   els.clauseList.innerHTML = html;
 }
-
   function updateChrome(){
     if(els.btnRo) els.btnRo.classList.toggle('active', state.lang === 'ro');
     if(els.btnEn) els.btnEn.classList.toggle('active', state.lang === 'en');
