@@ -1650,18 +1650,23 @@ function itemOf(clause, fieldKey){
 
   return null;
 }
-
-  function isFieldActive(clause, fieldKey){
+function isFieldActive(clause, fieldKey){
   if(!clause) return false;
+  clause = ensureClauseShape(clause);
+
+  if(fieldKey === 'topic2' || fieldKey === 'associate' || fieldKey === 'transit' ||
+     fieldKey === 'numeral' || fieldKey === 'quantifier' || fieldKey === 'beneficiary' ||
+     fieldKey === 'object2' || fieldKey === 'adverb2'){
+    return !!(clause.extras && clause.extras[fieldKey]);
+  }
 
   if(FIELD_BINDINGS[fieldKey]){
     var nativeKey = FIELD_BINDINGS[fieldKey];
     return !!(clause[nativeKey] && clause[nativeKey].enabled);
   }
 
-  return !!(clause.extras && clause.extras[fieldKey]);
+  return false;
 }
-
 function getFirstUsableItem(fieldKey){
   var options = getOptionsForField(fieldKey);
   if(!options.length) return null;
