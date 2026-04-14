@@ -1789,23 +1789,50 @@ function renderCell(clauseIndex, col){
     '</div>';
 }
 function renderClauses(){
-  if(!els.clauseList) return;
+  ensureTopikClauseCount();
 
-  var cols = getVisibleColumns();
-  var html = '<div class="builderTableWrap"><table class="builderTable"><tbody>';
+  const holder =
+    (typeof els !== 'undefined' && els.clauseList)
+      ? els.clauseList
+      : document.getElementById('clauseList');
 
-  for(var r=0;r<state.clauses.length;r++){
-    html += '<tr>';
-    for(var c=0;c<cols.length;c++){
-      html += '<td>' + renderCell(r, cols[c]) + '</td>';
-    }
-    html += '</tr>';
-  }
+  if (!holder) return;
 
-  html += '</tbody></table></div>';
-  els.clauseList.innerHTML = html;
+  const layout = getTopikLayout(state.level);
+  const lang = state.lang === 'en' ? 'en' : 'ro';
+
+  let html = '';
+  html += renderTopikGuide(layout);
+
+  html += '<div class="topikTableStack">';
+
+  layout.rows.forEach(function(row, rowIndex){
+    html += ''
+      + '<div class="topikBlock">'
+      +   '<div class="topikBlockTitle">'
+      +     escapeHtml(row.title[lang])
+      +   '</div>'
+      +   '<div class="builderTableWrap">'
+      +     '<table class="builderTable builderTable--topik">'
+      +       '<tbody>'
+      +         '<tr>';
+
+    row.cells.forEach(function(fieldKey){
+      html += '<td>' + renderCell(row.clauseIndex, fieldKey) + '</td>';
+    });
+
+    html += ''
+      +         '</tr>'
+      +       '</tbody>'
+      +     '</table>'
+      +   '</div>'
+      + '</div>';
+  });
+
+  html += '</div>';
+
+  holder.innerHTML = html;
 }
-
   function updateChrome(){
     if(els.btnRo) els.btnRo.classList.toggle('active', state.lang === 'ro');
     if(els.btnEn) els.btnEn.classList.toggle('active', state.lang === 'en');
