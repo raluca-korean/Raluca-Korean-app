@@ -1850,24 +1850,42 @@ function cycleFieldValue(clauseIndex, fieldKey){
 
     return cleanSentenceText(parts.join(' '));
   }
+function buildFullOutput(){
+  ensureTopikClauseCount();
 
-  function buildFullOutput(){
-    var ko = [];
-    var tr = [];
+  const partsKo = [];
+  const partsTr = [];
+  const total = state.clauses.length;
 
-    for(var i=0;i<state.clauses.length;i++){
-      var lineKo = buildClauseKorean(state.clauses[i]);
-      var lineTr = buildClauseTranslation(state.clauses[i]);
-      if(lineKo) ko.push(lineKo);
-      if(lineTr) tr.push(lineTr);
+  for (let i = 0; i < total; i++) {
+    const clause = state.clauses[i];
+    const isFinal = i === total - 1;
+
+    if (!clause) continue;
+
+    let koPart = '';
+    let trPart = '';
+
+    if (typeof buildClauseKorean === 'function') {
+      koPart = buildClauseKorean(clause, { isFinal: isFinal, level: state.level, index: i }) || '';
     }
 
-    return {
-      korean: cleanSentenceText(ko.join(' ')),
-      translation: cleanSentenceText(tr.join(', '))
-    };
+    if (typeof buildClauseTranslation === 'function') {
+      trPart = buildClauseTranslation(clause, { isFinal: isFinal, level: state.level, index: i }) || '';
+    }
+
+    koPart = String(koPart || '').trim();
+    trPart = String(trPart || '').trim();
+
+    if (koPart) partsKo.push(koPart);
+    if (trPart) partsTr.push(trPart);
   }
 
+  return {
+    korean: partsKo.join(' ').replace(/\s+/g, ' ').trim(),
+    translation: partsTr.join(' / ').replace(/\s+/g, ' ').trim()
+  };
+}
   function renderPreview(){
     var built = buildFullOutput();
     var korean = built.korean || '저는 공부해요';
