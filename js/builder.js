@@ -2063,3 +2063,114 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 const clausesWrap = document.getElementById("clausesWrap");
+/* ================= XP SYSTEM ================= */
+
+let XP = 0;
+let LEVEL = 1;
+
+function addXP(amount){
+  XP += amount;
+
+  if(XP >= LEVEL * 100){
+    XP = 0;
+    LEVEL++;
+    showToast("🔥 LEVEL UP!");
+  }
+
+  document.getElementById("xpValue").textContent = XP;
+  document.getElementById("xpLevel").textContent = LEVEL;
+
+  document.getElementById("xpFill").style.width =
+    (XP / (LEVEL * 100)) * 100 + "%";
+}
+
+/* trigger XP la play */
+const originalPlay = playCurrent;
+playCurrent = function(){
+  originalPlay();
+  addXP(10);
+};
+
+/* ================= PARTICLES ================= */
+
+function spawnParticles(x,y){
+  for(let i=0;i<8;i++){
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.textContent = "✨";
+
+    p.style.left = x + "px";
+    p.style.top = y + "px";
+
+    p.style.setProperty("--x",(Math.random()*100-50)+"px");
+    p.style.setProperty("--y",(Math.random()*-100)+"px");
+
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),600);
+  }
+}
+
+document.addEventListener("click",(e)=>{
+  spawnParticles(e.clientX,e.clientY);
+});
+
+/* ================= VOICE WAVE ================= */
+
+let audioCtx, analyser, dataArray;
+
+function startVoiceWave(stream){
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser();
+
+  const source = audioCtx.createMediaStreamSource(stream);
+  source.connect(analyser);
+
+  analyser.fftSize = 256;
+  const bufferLength = analyser.frequencyBinCount;
+  dataArray = new Uint8Array(bufferLength);
+
+  drawWave();
+}
+
+function drawWave(){
+  const canvas = document.getElementById("voiceCanvas");
+  if(!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+
+  function draw(){
+    requestAnimationFrame(draw);
+
+    analyser.getByteFrequencyData(dataArray);
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    let barWidth = (canvas.width / dataArray.length) * 2;
+
+    for(let i=0;i<dataArray.length;i++){
+      let barHeight = dataArray[i];
+
+      ctx.fillStyle = `hsl(${barHeight + 200}, 100%, 60%)`;
+
+      ctx.fillRect(
+        i * barWidth,
+        canvas.height - barHeight/2,
+        barWidth - 2,
+        barHeight/2
+      );
+    }
+  }
+
+  draw();
+}
+
+/* hook recording */
+const originalRecord = toggleRecording;
+toggleRecording = function(){
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    startVoiceWave(stream);
+  }).catch(()=>{});
+  originalRecord();
+};
