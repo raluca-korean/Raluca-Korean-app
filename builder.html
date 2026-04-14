@@ -1033,6 +1033,161 @@ function fieldLabel(fieldKey){
   var pack = FIELD_LABELS[state.lang] || FIELD_LABELS.ro;
   return pack[fieldKey] || fieldKey;
 }
+  var ALL_FIELD_KEYS = [
+  'topic','topic2','associate','time','departure','transit',
+  'numeral','quantifier','object1','beneficiary','object2',
+  'adverb','adverb2','verb','connector'
+];
+
+var FIELD_META = {
+  topic:      { key:'topic', kind:'subject' },
+  topic2:     { key:'topic2', kind:'subject' },
+  associate:  { key:'associate', kind:'subject' },
+  time:       { key:'time', kind:'time' },
+  departure:  { key:'departure', kind:'location' },
+  transit:    { key:'transit', kind:'location' },
+  numeral:    { key:'numeral', kind:'object' },
+  quantifier: { key:'quantifier', kind:'object' },
+  object1:    { key:'object1', kind:'object' },
+  beneficiary:{ key:'beneficiary', kind:'subject' },
+  object2:    { key:'object2', kind:'object' },
+  adverb:     { key:'adverb', kind:'description' },
+  adverb2:    { key:'adverb2', kind:'description' },
+  verb:       { key:'verb', kind:'verb' },
+  connector:  { key:'connector', kind:'connector' }
+};
+
+var LEVEL_FIELDS = {
+  1: ['topic','object1','verb'],
+  2: ['topic','time','departure','object1','verb'],
+  3: ['topic','time','departure','object1','adverb','verb','connector'],
+  4: ['topic','time','departure','object1','adverb','verb','connector'],
+  5: ['topic','time','departure','object1','object2','adverb','verb','connector'],
+  6: ['topic','topic2','time','departure','transit','object1','object2','adverb','adverb2','verb','connector']
+};
+
+function getLevelFields(){
+  return LEVEL_FIELDS[state.level] || LEVEL_FIELDS[1];
+}
+
+function makeEmptyLayoutClause(){
+  var clause = makeClause(0, false);
+
+  clause.subject.enabled = false;
+  clause.time.enabled = false;
+  clause.location.enabled = false;
+  clause.object.enabled = false;
+  clause.description.enabled = false;
+  clause.verb.enabled = false;
+  clause.connector.enabled = false;
+
+  clause.subject.index = 0;
+  clause.time.index = 0;
+  clause.location.index = 0;
+  clause.object.index = 0;
+  clause.description.index = 0;
+  clause.verb.index = 0;
+  clause.connector.index = 0;
+
+  clause.extras = {
+    topic2: null,
+    associate: null,
+    transit: null,
+    numeral: null,
+    quantifier: null,
+    beneficiary: null,
+    object2: null,
+    adverb2: null
+  };
+
+  clause.__picked = {};
+  clause.sourceText = '';
+  return clause;
+}
+
+function ensureClauseShape(clause){
+  if(!clause.subject) clause.subject = makeField(false, 0);
+  if(!clause.time) clause.time = makeField(false, 0);
+  if(!clause.location) clause.location = makeField(false, 0);
+  if(!clause.object) clause.object = makeField(false, 0);
+  if(!clause.description) clause.description = makeField(false, 0);
+  if(!clause.verb) clause.verb = makeField(false, 0);
+  if(!clause.connector) clause.connector = makeField(false, 0);
+
+  if(!clause.extras){
+    clause.extras = {
+      topic2: null,
+      associate: null,
+      transit: null,
+      numeral: null,
+      quantifier: null,
+      beneficiary: null,
+      object2: null,
+      adverb2: null
+    };
+  }
+
+  if(!clause.__picked) clause.__picked = {};
+  return clause;
+}
+
+function clearFieldFromClause(clause, fieldKey){
+  clause = ensureClauseShape(clause);
+
+  if(fieldKey === 'topic'){
+    clause.subject.enabled = false;
+    clause.subject.index = 0;
+    clause.__picked.topic = null;
+    return;
+  }
+
+  if(fieldKey === 'time'){
+    clause.time.enabled = false;
+    clause.time.index = 0;
+    clause.__picked.time = null;
+    return;
+  }
+
+  if(fieldKey === 'departure'){
+    clause.location.enabled = false;
+    clause.location.index = 0;
+    clause.__picked.departure = null;
+    return;
+  }
+
+  if(fieldKey === 'object1'){
+    clause.object.enabled = false;
+    clause.object.index = 0;
+    clause.__picked.object1 = null;
+    return;
+  }
+
+  if(fieldKey === 'adverb'){
+    clause.description.enabled = false;
+    clause.description.index = 0;
+    clause.__picked.adverb = null;
+    return;
+  }
+
+  if(fieldKey === 'verb'){
+    clause.verb.enabled = false;
+    clause.verb.index = 0;
+    clause.__picked.verb = null;
+    return;
+  }
+
+  if(fieldKey === 'connector'){
+    clause.connector.enabled = false;
+    clause.connector.index = 0;
+    clause.__picked.connector = null;
+    return;
+  }
+
+  clause.__picked[fieldKey] = null;
+  if(clause.extras && Object.prototype.hasOwnProperty.call(clause.extras, fieldKey)){
+    clause.extras[fieldKey] = null;
+  }
+}
   var COLUMN_DEFS = [
     { key:'topic', level:1, bucket:'subject', kind:'subject' },
     { key:'time', level:1, bucket:'time', kind:'time' },
