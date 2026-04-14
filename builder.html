@@ -1511,41 +1511,46 @@ function clearFieldFromClause(clause, fieldKey){
     return [];
   }
 
-  function getOptionsForField(fieldKey){
-    var appVocab = getAppVocab();
-    var items = [];
+function getOptionsForField(fieldKey){
+  var sourceKey = fieldKey;
 
-    if(appVocab){
-      var raw = firstExistingBucket(appVocab, globalBucketMap(fieldKey));
-      if(raw && raw.length){
-        items = normalizeList(raw, fieldKey);
-      }
+  if(fieldKey === 'topic2') sourceKey = 'topic';
+  if(fieldKey === 'adverb2') sourceKey = 'adverb';
+
+  var appVocab = getAppVocab();
+  var items = [];
+
+  if(appVocab){
+    var raw = firstExistingBucket(appVocab, globalBucketMap(sourceKey));
+    if(raw && raw.length){
+      items = normalizeList(raw, sourceKey);
     }
-
-    if(!items.length){
-      if(fieldKey === 'topic' || fieldKey === 'associate' || fieldKey === 'beneficiary'){
-        items = normalizeList(DATA.subject, 'subject');
-      }else if(fieldKey === 'time'){
-        items = normalizeList(DATA.time, 'time');
-      }else if(fieldKey === 'departure' || fieldKey === 'transit'){
-        items = normalizeList(DATA.location, 'location');
-      }else if(fieldKey === 'object1' || fieldKey === 'object2'){
-        items = normalizeList(DATA.object, 'object');
-      }else if(fieldKey === 'adverb'){
-        items = normalizeList(DATA.description, 'description');
-      }else if(fieldKey === 'verb'){
-        items = normalizeList(DATA.verb, 'verb');
-      }else if(fieldKey === 'connector'){
-        items = normalizeList(DATA.connector, 'connector');
-      }else if(fieldKey === 'numeral'){
-        items = normalizeList(DATA.numeral, 'numeral');
-      }else if(fieldKey === 'quantifier'){
-        items = normalizeList(DATA.quantifier, 'quantifier');
-      }
-    }
-
-    return uniqueItems(items);
   }
+
+  if(!items.length){
+    if(sourceKey === 'topic' || sourceKey === 'associate' || sourceKey === 'beneficiary'){
+      items = normalizeList(DATA.subject, 'subject');
+    }else if(sourceKey === 'time'){
+      items = normalizeList(DATA.time, 'time');
+    }else if(sourceKey === 'departure' || sourceKey === 'transit'){
+      items = normalizeList(DATA.location, 'location');
+    }else if(sourceKey === 'object1' || sourceKey === 'object2'){
+      items = normalizeList(DATA.object, 'object');
+    }else if(sourceKey === 'adverb'){
+      items = normalizeList(DATA.description, 'description');
+    }else if(sourceKey === 'verb'){
+      items = normalizeList(DATA.verb, 'verb');
+    }else if(sourceKey === 'connector'){
+      items = normalizeList(DATA.connector, 'connector');
+    }else if(sourceKey === 'numeral'){
+      items = normalizeList(DATA.numeral, 'numeral');
+    }else if(sourceKey === 'quantifier'){
+      items = normalizeList(DATA.quantifier, 'quantifier');
+    }
+  }
+
+  return uniqueItems(items);
+}
 
   function makeField(enabled, index){
     return { enabled: !!enabled, index: typeof index === 'number' ? index : 0 };
