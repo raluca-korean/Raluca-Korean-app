@@ -2211,12 +2211,11 @@ function splitIntoSegments(text){
 
   return segments;
 }
-  
-function parseTextIntoClauses(){
+ function parseTextIntoClauses(){
   var raw = state.text || '';
 
   if(!String(raw).trim()){
-    state.clauses = [defaultClause()];
+    state.clauses = [makeEmptyLayoutClause()];
     renderAll();
     return;
   }
@@ -2226,14 +2225,14 @@ function parseTextIntoClauses(){
 
   for(var i=0;i<segments.length;i++){
     var seg = segments[i];
-    var clause = makeClause(0, i === 0);
+    var clause = makeEmptyLayoutClause();
     clause.sourceText = seg.text || '';
 
-    var topic = findBestMatch('topic', seg.text);
-    var time = findBestMatch('time', seg.text);
-    var departure = findBestMatch('departure', seg.text);
-    var object1 = findBestMatch('object1', seg.text);
-    var adverb = findBestMatch('adverb', seg.text);
+    var subjects = findAllMatches('topic', seg.text, 2);
+    var times = findAllMatches('time', seg.text, 1);
+    var places = findAllMatches('departure', seg.text, 2);
+    var objects = findAllMatches('object1', seg.text, 2);
+    var descs = findAllMatches('adverb', seg.text, 2);
     var verb = findBestMatch('verb', seg.text);
     var connector = normalizeItem(
       (DATA.connector.filter(function(item){ return item.key === seg.connector; })[0] || DATA.connector[0]),
@@ -2241,26 +2240,34 @@ function parseTextIntoClauses(){
       0
     );
 
-    if(topic) setFieldItem(clause, 'topic', topic);
-    else if(i === 0) setFieldItem(clause, 'topic', normalizeItem(DATA.subject[0], 'subject', 0));
+    if(subjects[0]) setFieldItem(clause, 'topic', subjects[0]);
+    if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
 
-    if(time) setFieldItem(clause, 'time', time);
-    if(departure) setFieldItem(clause, 'departure', departure);
-    if(object1) setFieldItem(clause, 'object1', object1);
-    if(adverb) setFieldItem(clause, 'adverb', adverb);
+    if(times[0]) setFieldItem(clause, 'time', times[0]);
+
+    if(places[0]) setFieldItem(clause, 'departure', places[0]);
+    if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
+
+    if(objects[0]) setFieldItem(clause, 'object1', objects[0]);
+    if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
+
+    if(descs[0]) setFieldItem(clause, 'adverb', descs[0]);
+    if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
 
     if(verb) setFieldItem(clause, 'verb', verb);
-    else setFieldItem(clause, 'verb', normalizeItem(DATA.verb[0], 'verb', 0));
 
-    setFieldItem(clause, 'connector', connector);
+    if(state.level >= 3){
+      setFieldItem(clause, 'connector', connector);
+    }
 
     clauses.push(clause);
   }
 
-  state.clauses = clauses.length ? clauses : [defaultClause()];
+  state.clauses = clauses.length ? clauses : [makeEmptyLayoutClause()];
   ensureChainLength();
   renderAll();
 }
+ 
 
 
   function ensureVocabSheet(){
