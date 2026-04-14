@@ -2101,64 +2101,64 @@ function ensureChainLength(){
 
     return best;
   }
+function splitIntoSegments(text){
+  var working = ' ' + normalizeLatin(text) + ' ';
+  var markers = [
+    {key:'cause1', phrases:['pentru ca','pentru că','because']},
+    {key:'cause2', phrases:['fiindca','fiindcă','since']},
+    {key:'condition', phrases:['daca','dacă','if']},
+    {key:'contrast1', phrases:['dar','insa','însă','but','however']},
+    {key:'contrast2', phrases:['iar','while']},
+    {key:'purpose', phrases:['ca sa','ca să','in order to']},
+    {key:'seq', phrases:['si apoi','și apoi','apoi','dupa aceea','după aceea','and then']}
+  ];
 
-  function splitIntoSegments(text){
-    var working = ' ' + normalizeLatin(text) + ' ';
-    var markers = [
-      {key:'cause1', phrases:['pentru ca','pentru că','because']},
-      {key:'cause2', phrases:['fiindca','fiindcă','since']},
-      {key:'condition', phrases:['daca','dacă','if']},
-      {key:'contrast1', phrases:['dar','insa','însă','but','however']},
-      {key:'contrast2', phrases:['iar','while']},
-      {key:'purpose', phrases:['ca sa','ca să','in order to']},
-      {key:'seq', phrases:['si apoi','și apoi','and then','si','și','and','apoi']}
-    ];
-
-    for(var i=0;i<markers.length;i++){
-      for(var j=0;j<markers[i].phrases.length;j++){
-        var phrase = normalizeLatin(markers[i].phrases[j]);
-        if(phrase){
-          working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| ');
-        }
+  for(var i=0;i<markers.length;i++){
+    for(var j=0;j<markers[i].phrases.length;j++){
+      var phrase = normalizeLatin(markers[i].phrases[j]);
+      if(phrase){
+        working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| ');
       }
     }
-
-    working = working.replace(/,/g, ' |||none||| ');
-
-    var parts = working.split('|||');
-    var segments = [];
-    var currentText = '';
-
-    for(var k=0;k<parts.length;k++){
-      var part = String(parts[k] || '').trim();
-      if(!part) continue;
-
-      var isConnector = false;
-      for(var c=0;c<DATA.connector.length;c++){
-        if(DATA.connector[c].key === part){
-          isConnector = true;
-          break;
-        }
-      }
-
-      if(isConnector){
-        segments.push({ text: currentText.trim(), connector: part });
-        currentText = '';
-      }else{
-        currentText = currentText ? currentText + ' ' + part : part;
-      }
-    }
-
-    if(currentText.trim()){
-      segments.push({ text: currentText.trim(), connector: 'none' });
-    }
-
-    if(!segments.length){
-      segments.push({ text: normalizeLatin(text), connector: 'none' });
-    }
-
-    return segments;
   }
+
+  working = working.replace(/,/g, ' |||none||| ');
+
+  var parts = working.split('|||');
+  var segments = [];
+  var currentText = '';
+
+  for(var k=0;k<parts.length;k++){
+    var part = String(parts[k] || '').trim();
+    if(!part) continue;
+
+    var isConnector = false;
+    for(var c=0;c<DATA.connector.length;c++){
+      if(DATA.connector[c].key === part){
+        isConnector = true;
+        break;
+      }
+    }
+
+    if(isConnector){
+      segments.push({ text: currentText.trim(), connector: part });
+      currentText = '';
+    }else{
+      currentText = currentText ? (currentText + ' ' + part) : part;
+    }
+  }
+
+  if(currentText.trim()){
+    segments.push({ text: currentText.trim(), connector: 'none' });
+  }
+
+  if(!segments.length){
+    segments.push({ text: normalizeLatin(text), connector: 'none' });
+  }
+
+  return segments;
+}
+  
 function parseTextIntoClauses(){
   var raw = state.text || '';
 
