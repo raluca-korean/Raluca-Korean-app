@@ -84,6 +84,35 @@ input:focus{
 .icon{cursor:pointer}
 .star.active{color:#f59e0b}
 
+.pagination{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:18px;
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1.5px solid rgba(219,39,119,.12);
+}
+.pgBtn{
+  width:38px;height:38px;
+  border-radius:999px;
+  border:none;
+  background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1);
+  color:#fff;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(168,85,247,.25);
+  transition:opacity .15s;
+}
+.pgBtn:disabled{opacity:.3;cursor:default}
+.pgInfo{
+  font-size:15px;font-weight:700;
+  color:var(--text);
+  min-width:60px;text-align:center;
+}
+
 button{
   padding:8px 14px;
   border-radius:999px;
@@ -138,6 +167,8 @@ const searchInput = document.getElementById("search");
 const countEl = document.getElementById("count");
 const listEl = document.getElementById("list");
 
+const PAGE_SIZE = 20;
+let currentPage = 1;
 let WORDS = [];
 let daily = [];
 let dailyIndex = 0;
@@ -451,16 +482,19 @@ function refreshDaily(){
   renderDailyView();
 }
 
-function render(){
+function getFiltered(){
   const query = searchInput.value.trim().toLowerCase();
+  return WORDS.filter(word =>
+    word.ko.toLowerCase().includes(query) ||
+    (word.ro || "").toLowerCase().includes(query) ||
+    (word.en || "").toLowerCase().includes(query)
+  );
+}
 
-  const filtered = WORDS.filter(word => {
-    return (
-      word.ko.toLowerCase().includes(query) ||
-      (word.ro || "").toLowerCase().includes(query) ||
-      (word.en || "").toLowerCase().includes(query)
-    );
-  });
+function render(){
+  const filtered = getFiltered();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if(currentPage > totalPages) currentPage = totalPages;
 
   countEl.textContent = `${filtered.length} ${t("countWords")}`;
 
@@ -469,14 +503,16 @@ function render(){
     return;
   }
 
-  listEl.innerHTML = filtered.map(word => `
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageWords = filtered.slice(start, start + PAGE_SIZE);
+
+  const wordsHTML = pageWords.map(word => `
     <div class="word">
       <div>
         <div class="ko">${word.ko}</div>
         <div class="ro">${getMeaning(word)}</div>
         <div class="ro">${t("category")}: ${getCategories(word).join(" • ")}</div>
       </div>
-
       <div class="actions">
         <span class="icon" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">🔈</span>
         <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
@@ -484,9 +520,26 @@ function render(){
       </div>
     </div>
   `).join("");
+
+  const paginationHTML = totalPages > 1 ? `
+    <div class="pagination">
+      <button class="pgBtn" onclick="changePage(-1)" ${currentPage === 1 ? "disabled" : ""}>&#8592;</button>
+      <span class="pgInfo">${currentPage} / ${totalPages}</span>
+      <button class="pgBtn" onclick="changePage(1)" ${currentPage === totalPages ? "disabled" : ""}>&#8594;</button>
+    </div>
+  ` : "";
+
+  listEl.innerHTML = wordsHTML + paginationHTML;
 }
 
-searchInput.addEventListener("input", render);
+function changePage(delta){
+  const totalPages = Math.max(1, Math.ceil(getFiltered().length / PAGE_SIZE));
+  currentPage = Math.max(1, Math.min(totalPages, currentPage + delta));
+  render();
+  listEl.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+searchInput.addEventListener("input", () => { currentPage = 1; render(); });
 langRoBtn.addEventListener("click", () => setLanguage("ro"));
 langEnBtn.addEventListener("click", () => setLanguage("en"));
 
