@@ -1,7 +1,5 @@
 window.Grammar = {
 
-  
-
   // =========================
   // PARTICLES
   // =========================
@@ -11,15 +9,15 @@ window.Grammar = {
     if(word === "나") return "가";
     if(word === "너") return "가";
 
-    return this.hasBatchim(word) ? "이" : "가";
+    return window.Conjugation.hasBatchim(word) ? "이" : "가";
   },
 
   topic(word){
-    return this.hasBatchim(word) ? "은" : "는";
+    return window.Conjugation.hasBatchim(word) ? "은" : "는";
   },
 
   object(word){
-    return this.hasBatchim(word) ? "을" : "를";
+    return window.Conjugation.hasBatchim(word) ? "을" : "를";
   },
 
   place(word){
@@ -68,7 +66,7 @@ window.Grammar = {
 
     if(state.verb){
       parts.push(
-        Conjugation.buildVerbPhrase(
+        window.Conjugation.buildVerbPhrase(
           state.verb,
           state.conjug
         )

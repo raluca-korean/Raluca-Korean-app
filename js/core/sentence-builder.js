@@ -34,15 +34,15 @@ function stripEnding(text){
 ========================= */
 
 function topicParticle(word){
-  return hasBatchim(word) ? "은" : "는";
+  return window.Conjugation.hasBatchim(word) ? "은" : "는";
 }
 
 function subjectParticle(word){
-  return hasBatchim(word) ? "이" : "가";
+  return window.Conjugation.hasBatchim(word) ? "이" : "가";
 }
 
 function objectParticle(word){
-  return hasBatchim(word) ? "을" : "를";
+  return window.Conjugation.hasBatchim(word) ? "을" : "를";
 }
 
 /* =========================
@@ -67,41 +67,8 @@ function getStem(v){
   return v && v.endsWith("다") ? v.slice(0, -1) : (v || "");
 }
 
-function decompose(c){
-  if(!c) return null;
-
-  const code = c.charCodeAt(0);
-  if(code < 44032 || code > 55203) return null;
-
-  const base = code - 44032;
-
-  return {
-    vowel: Math.floor((base % 588) / 28),
-    jong: base % 28
-  };
-}
-
 function presentPolite(v){
-  if(!v) return "";
-
-  if(v === "하다") return "해요";
-  if(v === "가다") return "가요";
-  if(v === "오다") return "와요";
-  if(v === "보다") return "봐요";
-
-  const stem = getStem(v);
-  if(!stem) return "";
-
-  const d = decompose(stem[stem.length - 1]);
-  if(!d) return stem + "어요";
-
-  const A = [0, 2, 8, 9, 10, 11];
-
-  if(d.jong === 0){
-    return stem + (A.includes(d.vowel) ? "아요" : "어요");
-  }
-
-  return stem + "어요";
+  return window.Conjugation.present(v);
 }
 
 /* =========================
