@@ -450,7 +450,7 @@ const meterFill = document.getElementById("meterFill");
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
-let allExercises = { "ko-ro": [], "ro-ko": [] };
+let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [] };
 let currentList = [];
 let currentIndex = 0;
 let selectedAnswer = null;
@@ -471,6 +471,9 @@ const UI_TEXT = {
     chooseAnswer: "Alege un răspuns.",
     chooseCorrectTranslation: "Alege traducerea corectă.",
     chooseCorrectKorean: "Alege propoziția coreeană corectă.",
+    chooseParticle: "Alege particula corectă.",
+    hint: "Indiciu",
+    modeParticle: "Particulă (1)",
     correctAnswer: "✅ Corect",
     wrongAnswer: "❌ Greșit",
     answerFirst: "Alege mai întâi un răspuns.",
@@ -494,6 +497,9 @@ const UI_TEXT = {
     chooseAnswer: "Choose an answer.",
     chooseCorrectTranslation: "Choose the correct translation.",
     chooseCorrectKorean: "Choose the correct Korean sentence.",
+    chooseParticle: "Choose the correct particle.",
+    hint: "Hint",
+    modeParticle: "Particle (1)",
     correctAnswer: "✅ Correct",
     wrongAnswer: "❌ Incorrect",
     answerFirst: "Choose an answer first.",
@@ -537,7 +543,9 @@ function updateLanguageButtons(){
 }
 
 function modeLabel(type){
-  return type === "ko-ro" ? t("modeKoRo") : t("modeRoKo");
+  if(type === "ko-ro") return t("modeKoRo");
+  if(type === "particle") return t("modeParticle");
+  return t("modeRoKo");
 }
 
 function updateStaticTexts(){
@@ -588,7 +596,8 @@ async function loadExercises(){
 
     allExercises = {
       "ko-ro": Array.isArray(data["ko-ro"]) ? data["ko-ro"] : [],
-      "ro-ko": Array.isArray(data["ro-ko"]) ? data["ro-ko"] : []
+      "ro-ko": Array.isArray(data["ro-ko"]) ? data["ro-ko"] : [],
+      "particle": Array.isArray(data["particle"]) ? data["particle"] : []
     };
 
     render();
@@ -671,6 +680,10 @@ function render(){
     questionText = item.q;
     helperText = t("chooseCorrectTranslation");
     options = shuffle(item.answers[currentLang] || []);
+  } else if(typeSelect.value === "particle"){
+    questionText = item.template.replace("___", "【 ___ 】");
+    helperText = (item.hint ? t("hint") + ": " + item.hint[currentLang] + "  •  " : "") + t("chooseParticle");
+    options = shuffle(item.options || []);
   } else {
     questionText = item.prompt[currentLang];
     helperText = t("chooseCorrectKorean");
