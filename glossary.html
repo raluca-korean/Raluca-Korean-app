@@ -123,6 +123,78 @@ button{
   cursor:pointer;
   box-shadow:0 8px 20px rgba(168,85,247,.25);
 }
+
+.filterRow{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.catSelect{
+  padding:8px 12px;
+  border-radius:14px;
+  border:1.5px solid rgba(219,39,119,.18);
+  background:#fff;
+  color:var(--text);
+  font:inherit;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  outline:none;
+  flex:1;
+  min-width:140px;
+}
+
+.catSelect:focus{
+  border-color:rgba(219,39,119,.45);
+  box-shadow:0 0 0 4px rgba(219,39,119,.10);
+}
+
+.favBtn{
+  padding:8px 14px;
+  border-radius:999px;
+  border:1.5px solid rgba(219,39,119,.20);
+  background:#fff;
+  color:var(--text);
+  font-weight:800;
+  font-size:13px;
+  cursor:pointer;
+  transition:background .15s,color .15s;
+  white-space:nowrap;
+}
+
+.favBtn.active{
+  background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1);
+  color:#fff;
+  border-color:transparent;
+}
+
+body.dark-mode{
+  --card:rgba(32,6,55,.95);
+  --stroke:rgba(244,114,182,.18);
+  --text:#f0e8ff;
+  --muted:rgba(210,170,240,.70);
+}
+
+body.dark-mode .catSelect{
+  background:rgba(28,4,50,.92) !important;
+  color:#f0e8ff !important;
+  border-color:rgba(244,114,182,.25) !important;
+}
+
+body.dark-mode .favBtn{
+  background:rgba(28,4,50,.92) !important;
+  color:#f0e8ff !important;
+  border-color:rgba(244,114,182,.25) !important;
+}
+
+body.dark-mode .favBtn.active{
+  background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;
+  color:#fff !important;
+  border-color:transparent !important;
+}
 </style>
 </head>
  <body class="theme-anime glossary-page">
@@ -145,9 +217,13 @@ button{
 </div>
   <div class="card" id="dailyCard"></div>
 
-<!-- SEARCH -->
+<!-- SEARCH + FILTERS -->
 <div class="card">
-  <input id="search" placeholder="Caută (KO / RO)">
+  <input id="search" placeholder="Caută (KO / RO / EN)">
+  <div class="filterRow">
+    <select id="catFilter" class="catSelect"></select>
+    <button type="button" id="favFilterBtn" class="favBtn">⭐ Favorite</button>
+  </div>
 </div>
 
 <!-- LIST -->
@@ -166,6 +242,8 @@ const dailyCard = document.getElementById("dailyCard");
 const searchInput = document.getElementById("search");
 const countEl = document.getElementById("count");
 const listEl = document.getElementById("list");
+const catFilterEl = document.getElementById("catFilter");
+const favFilterBtn = document.getElementById("favFilterBtn");
 
 const PAGE_SIZE = 20;
 let currentPage = 1;
@@ -174,6 +252,8 @@ let daily = [];
 let dailyIndex = 0;
 let dailyHTML = "";
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let filterCategory = "";
+let filterFavsOnly = false;
 
 const CATEGORY_LABELS = {
   subjects:   { ro: "Subiect",     en: "Subject"    },
@@ -203,7 +283,9 @@ const UI_TEXT = {
     back: "⬅ Înapoi",
     tryAgain: "❌ Mai încearcă",
     loadError: "Nu am putut încărca vocab-korean.json",
-    category: "Categorie"
+    category: "Categorie",
+    allCategories: "Toate categoriile",
+    favOnly: "⭐ Favorite"
   },
   en: {
     title: "Korean Glossary",
@@ -220,7 +302,9 @@ const UI_TEXT = {
     back: "⬅ Back",
     tryAgain: "❌ Try again",
     loadError: "Could not load vocab-korean.json",
-    category: "Category"
+    category: "Category",
+    allCategories: "All categories",
+    favOnly: "⭐ Favorites"
   }
 };
 
@@ -255,10 +339,20 @@ function updateStaticTexts(){
   pageTitleEl.textContent = t("title");
   pageSubtitleEl.textContent = t("subtitle");
   searchInput.placeholder = t("searchPlaceholder");
+  favFilterBtn.textContent = t("favOnly") + (filterFavsOnly ? " ✓" : "");
+  buildCatOptions();
+}
+
+function buildCatOptions(){
+  const labels = Object.values(CATEGORY_LABELS).map(l => l[currentLang]);
+  const opts = [`<option value="">${t("allCategories")}</option>`]
+    .concat(labels.map(l => `<option value="${l}" ${filterCategory === l ? "selected" : ""}>${l}</option>`));
+  catFilterEl.innerHTML = opts.join("");
 }
 
 function setLanguage(lang){
   currentLang = lang;
+  filterCategory = "";
   localStorage.setItem("RK_LANG", lang);
   updateStaticTexts();
   updateLanguageButtons();
@@ -444,6 +538,7 @@ function showQuizQuestion(){
   }
 
   const currentWord = daily[dailyIndex];
+  speakKO(currentWord.ko);
   const correctMeaning = getMeaning(currentWord);
 
   const wrongPool = WORDS
@@ -484,11 +579,15 @@ function refreshDaily(){
 
 function getFiltered(){
   const query = searchInput.value.trim().toLowerCase();
-  return WORDS.filter(word =>
-    word.ko.toLowerCase().includes(query) ||
-    (word.ro || "").toLowerCase().includes(query) ||
-    (word.en || "").toLowerCase().includes(query)
-  );
+  return WORDS.filter(word => {
+    const textMatch = word.ko.toLowerCase().includes(query) ||
+      (word.ro || "").toLowerCase().includes(query) ||
+      (word.en || "").toLowerCase().includes(query);
+    const cats = currentLang === "ro" ? word.categoriesRo : word.categoriesEn;
+    const catMatch = !filterCategory || cats.includes(filterCategory);
+    const favMatch = !filterFavsOnly || isFav(word.ko);
+    return textMatch && catMatch && favMatch;
+  });
 }
 
 function render(){
@@ -542,10 +641,23 @@ function changePage(delta){
 searchInput.addEventListener("input", () => { currentPage = 1; render(); });
 langRoBtn.addEventListener("click", () => setLanguage("ro"));
 langEnBtn.addEventListener("click", () => setLanguage("en"));
+catFilterEl.addEventListener("change", () => {
+  filterCategory = catFilterEl.value;
+  currentPage = 1;
+  render();
+});
+favFilterBtn.addEventListener("click", () => {
+  filterFavsOnly = !filterFavsOnly;
+  favFilterBtn.classList.toggle("active", filterFavsOnly);
+  favFilterBtn.textContent = t("favOnly") + (filterFavsOnly ? " ✓" : "");
+  currentPage = 1;
+  render();
+});
 
 updateStaticTexts();
 updateLanguageButtons();
 loadVocabulary();
 </script>
+<script src="./js/core/dark-mode.js"></script>
 </body>
 </html>
