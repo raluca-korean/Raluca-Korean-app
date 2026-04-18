@@ -374,8 +374,8 @@ select:focus, button:focus{
 
   <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
     <a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>
-    <button type="button" id="langRo">Română</button>
-    <button type="button" id="langEn">English</button>
+    <button type="button" id="langRo">ro</button>
+    <button type="button" id="langEn">en</button>
   </div>
 </div>
         <div class="badges">
@@ -716,12 +716,12 @@ function render(){
     options = shuffle(item.answers[currentLang] || []);
   } else if(typeSelect.value === "particle"){
     questionText = item.template.replace("___", "【 ___ 】");
-    helperText = (item.hint ? t("hint") + ": " + item.hint[currentLang] + "  •  " : "") + t("chooseParticle");
+    helperText = t("chooseParticle");
     options = shuffle(item.options || []);
   } else if(typeSelect.value === "particlePlus"){
     let n = 0;
     questionText = item.template.replace(/___/g, () => `【${++n}】`);
-    helperText = (item.hint ? t("hint") + ": " + item.hint[currentLang] + "  •  " : "") + t("chooseParticlePlus");
+    helperText = t("chooseParticlePlus");
     options = shuffle((item.options || []).map(opt => Array.isArray(opt) ? opt.join(" · ") : opt));
   } else if(typeSelect.value === "conjug"){
     questionText = item.prompt[currentLang];
@@ -755,6 +755,10 @@ function render(){
 
   questionEl.textContent = questionText;
   helperEl.textContent = helperText;
+
+  if(typeSelect.value === "ko-ro" || typeSelect.value === "particle" || typeSelect.value === "particlePlus"){
+    speakKorean(questionText);
+  }
 
   options.forEach(option => {
     const el = document.createElement("div");
@@ -897,6 +901,24 @@ checkBtn.addEventListener("click", checkCurrentAnswer);
 nextBtn.addEventListener("click", nextQuestion);
 langRoBtn.addEventListener("click", () => setLanguage("ro"));
 langEnBtn.addEventListener("click", () => setLanguage("en"));
+
+const soundBtn = document.getElementById("soundBtn");
+let soundOn = true;
+
+function speakKorean(text){
+  if(!soundOn || !text || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = "ko-KR";
+  utt.rate = 0.9;
+  speechSynthesis.speak(utt);
+}
+
+soundBtn.addEventListener("click", () => {
+  soundOn = !soundOn;
+  soundBtn.classList.toggle("off", !soundOn);
+  soundBtn.textContent = soundOn ? "🔊" : "🔇";
+});
 
 updateLanguageButtons();
 updateStaticTexts();
