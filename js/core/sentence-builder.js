@@ -29,15 +29,6 @@ function stripEnding(text){
   return (text || "").replace(/요$|니다$|습니다$/, "");
 }
 
-function hasBatchim(word){
-  if(!word) return false;
-
-  const code = word.charCodeAt(word.length - 1);
-  if(code < 44032 || code > 55203) return false;
-
-  return (code - 44032) % 28 !== 0;
-}
-
 /* =========================
    PARTICLES
 ========================= */
