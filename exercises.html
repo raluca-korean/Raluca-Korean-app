@@ -450,7 +450,7 @@ const meterFill = document.getElementById("meterFill");
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
-let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [] };
+let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [], "chain": [] };
 let currentList = [];
 let currentIndex = 0;
 let selectedAnswer = null;
@@ -484,6 +484,9 @@ const UI_TEXT = {
     modeParticlePlus: "Particule multiple",
     modeConjug: "Conjugare",
     modePuzzle: "Puzzle",
+    modeChain: "Chain",
+    arrangeChain: "Aranjează replicile în ordinea corectă.",
+    placeChain: "Plasează cel puțin o replică în linie.",
     correctAnswer: "✅ Corect",
     wrongAnswer: "❌ Greșit",
     answerFirst: "Alege mai întâi un răspuns.",
@@ -517,6 +520,9 @@ const UI_TEXT = {
     modeParticlePlus: "Multiple particles",
     modeConjug: "Conjugation",
     modePuzzle: "Puzzle",
+    modeChain: "Chain",
+    arrangeChain: "Arrange the sentences in the correct order.",
+    placeChain: "Place at least one sentence in the line.",
     correctAnswer: "✅ Correct",
     wrongAnswer: "❌ Incorrect",
     answerFirst: "Choose an answer first.",
@@ -565,6 +571,7 @@ function modeLabel(type){
   if(type === "particlePlus") return t("modeParticlePlus");
   if(type === "conjug") return t("modeConjug");
   if(type === "puzzle") return t("modePuzzle");
+  if(type === "chain") return t("modeChain");
   return t("modeRoKo");
 }
 
@@ -620,7 +627,8 @@ async function loadExercises(){
       "particle": Array.isArray(data["particle"]) ? data["particle"] : [],
       "particlePlus": Array.isArray(data["particlePlus"]) ? data["particlePlus"] : [],
       "conjug": Array.isArray(data["conjug"]) ? data["conjug"] : [],
-      "puzzle": Array.isArray(data["puzzle"]) ? data["puzzle"] : []
+      "puzzle": Array.isArray(data["puzzle"]) ? data["puzzle"] : [],
+      "chain": Array.isArray(data["chain"]) ? data["chain"] : []
     };
 
     render();
@@ -728,6 +736,16 @@ function render(){
     renderPuzzleUI();
     updateBadges();
     return;
+  } else if(typeSelect.value === "chain"){
+    answersEl.style.display = "none";
+    document.getElementById("puzzleUI").style.display = "";
+    questionEl.textContent = item.context ? item.context[currentLang] : "";
+    helperEl.textContent = t("arrangeChain");
+    puzzleLine = [];
+    puzzleBank = shuffle([...item.tiles]);
+    renderPuzzleUI();
+    updateBadges();
+    return;
   } else {
     questionText = item.prompt[currentLang];
     helperText = t("chooseCorrectKorean");
@@ -805,16 +823,18 @@ function getCorrectAnswer(item){
 function checkCurrentAnswer(){
   if(answered) return;
 
-  if(typeSelect.value === "puzzle"){
+  if(typeSelect.value === "puzzle" || typeSelect.value === "chain"){
+    const emptyMsg = typeSelect.value === "chain" ? t("placeChain") : t("placeTiles");
     if(puzzleLine.length === 0){
-      feedbackEl.textContent = t("placeTiles");
+      feedbackEl.textContent = emptyMsg;
       return;
     }
     const item = currentList[currentIndex];
-    const isRight = puzzleLine.join(" ") === item.correct.join(" ");
+    const isRight = JSON.stringify(puzzleLine) === JSON.stringify(item.correct);
+    const sep = typeSelect.value === "chain" ? " → " : " ";
     feedbackEl.textContent = isRight
       ? t("correctAnswer")
-      : `${t("wrongAnswer")} — ${item.correct.join(" ")}`;
+      : `${t("wrongAnswer")} — ${item.correct.join(sep)}`;
     total++;
     if(isRight){ correct++; streak++; } else { streak = 0; }
     answered = true;
