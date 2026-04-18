@@ -450,11 +450,14 @@ const meterFill = document.getElementById("meterFill");
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
-let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [] };
+let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [] };
 let currentList = [];
 let currentIndex = 0;
 let selectedAnswer = null;
 let answered = false;
+
+let puzzleLine = [];
+let puzzleBank = [];
 
 let total = 0;
 let correct = 0;
@@ -474,10 +477,13 @@ const UI_TEXT = {
     chooseParticle: "Alege particula corectă.",
     chooseParticlePlus: "Alege perechea corectă de particule.",
     chooseConjug: "Alege forma corectă de conjugare.",
+    arrangeTiles: "Aranjează cuvintele în ordinea corectă.",
+    placeTiles: "Plasează cel puțin un cuvânt în linie.",
     hint: "Indiciu",
     modeParticle: "Particulă (1)",
     modeParticlePlus: "Particule multiple",
     modeConjug: "Conjugare",
+    modePuzzle: "Puzzle",
     correctAnswer: "✅ Corect",
     wrongAnswer: "❌ Greșit",
     answerFirst: "Alege mai întâi un răspuns.",
@@ -504,10 +510,13 @@ const UI_TEXT = {
     chooseParticle: "Choose the correct particle.",
     chooseParticlePlus: "Choose the correct pair of particles.",
     chooseConjug: "Choose the correct conjugated form.",
+    arrangeTiles: "Arrange the words in the correct order.",
+    placeTiles: "Place at least one word in the line.",
     hint: "Hint",
     modeParticle: "Particle (1)",
     modeParticlePlus: "Multiple particles",
     modeConjug: "Conjugation",
+    modePuzzle: "Puzzle",
     correctAnswer: "✅ Correct",
     wrongAnswer: "❌ Incorrect",
     answerFirst: "Choose an answer first.",
@@ -555,6 +564,7 @@ function modeLabel(type){
   if(type === "particle") return t("modeParticle");
   if(type === "particlePlus") return t("modeParticlePlus");
   if(type === "conjug") return t("modeConjug");
+  if(type === "puzzle") return t("modePuzzle");
   return t("modeRoKo");
 }
 
@@ -609,7 +619,8 @@ async function loadExercises(){
       "ro-ko": Array.isArray(data["ro-ko"]) ? data["ro-ko"] : [],
       "particle": Array.isArray(data["particle"]) ? data["particle"] : [],
       "particlePlus": Array.isArray(data["particlePlus"]) ? data["particlePlus"] : [],
-      "conjug": Array.isArray(data["conjug"]) ? data["conjug"] : []
+      "conjug": Array.isArray(data["conjug"]) ? data["conjug"] : [],
+      "puzzle": Array.isArray(data["puzzle"]) ? data["puzzle"] : []
     };
 
     render();
@@ -666,6 +677,8 @@ function render(){
   answered = false;
   feedbackEl.textContent = "";
   answersEl.innerHTML = "";
+  answersEl.style.display = "";
+  document.getElementById("puzzleUI").style.display = "none";
 
   currentList = getFilteredList();
 
@@ -705,6 +718,16 @@ function render(){
     questionText = item.prompt[currentLang];
     helperText = t("chooseConjug");
     options = shuffle(item.options || []);
+  } else if(typeSelect.value === "puzzle"){
+    answersEl.style.display = "none";
+    document.getElementById("puzzleUI").style.display = "";
+    questionEl.textContent = item.hint ? item.hint[currentLang] : "";
+    helperEl.textContent = t("arrangeTiles");
+    puzzleLine = [];
+    puzzleBank = shuffle([...item.tiles]);
+    renderPuzzleUI();
+    updateBadges();
+    return;
   } else {
     questionText = item.prompt[currentLang];
     helperText = t("chooseCorrectKorean");
@@ -736,6 +759,39 @@ function render(){
   updateBadges();
 }
 
+function renderPuzzleUI(){
+  const bankEl = document.getElementById("bank");
+  const lineEl = document.getElementById("line");
+  bankEl.innerHTML = "";
+  lineEl.innerHTML = "";
+
+  puzzleBank.forEach((tile, idx) => {
+    const el = document.createElement("div");
+    el.className = "chip";
+    el.textContent = tile;
+    el.addEventListener("click", () => {
+      if(answered) return;
+      puzzleBank.splice(idx, 1);
+      puzzleLine.push(tile);
+      renderPuzzleUI();
+    });
+    bankEl.appendChild(el);
+  });
+
+  puzzleLine.forEach((tile, idx) => {
+    const el = document.createElement("div");
+    el.className = "chip";
+    el.textContent = tile;
+    el.addEventListener("click", () => {
+      if(answered) return;
+      puzzleLine.splice(idx, 1);
+      puzzleBank.push(tile);
+      renderPuzzleUI();
+    });
+    lineEl.appendChild(el);
+  });
+}
+
 function getCorrectAnswer(item){
   if(typeSelect.value === "ko-ro"){
     return item.correct[currentLang];
@@ -748,6 +804,23 @@ function getCorrectAnswer(item){
 
 function checkCurrentAnswer(){
   if(answered) return;
+
+  if(typeSelect.value === "puzzle"){
+    if(puzzleLine.length === 0){
+      feedbackEl.textContent = t("placeTiles");
+      return;
+    }
+    const item = currentList[currentIndex];
+    const isRight = puzzleLine.join(" ") === item.correct.join(" ");
+    feedbackEl.textContent = isRight
+      ? t("correctAnswer")
+      : `${t("wrongAnswer")} — ${item.correct.join(" ")}`;
+    total++;
+    if(isRight){ correct++; streak++; } else { streak = 0; }
+    answered = true;
+    updateBadges();
+    return;
+  }
 
   if(!selectedAnswer){
     feedbackEl.textContent = t("answerFirst");
