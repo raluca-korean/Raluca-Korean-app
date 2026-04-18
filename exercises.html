@@ -416,6 +416,7 @@ select:focus, button:focus{
       <button type="button" data-level="5">5</button>
       <button type="button" data-level="6">6</button>
       <button type="button" data-level="test" id="btnTest">TEST</button>
+      <button type="button" data-level="vocab" id="btnVocab">VOCAB</button>
     </div>
   </div>
 </div>
@@ -468,6 +469,8 @@ let currentLang = localStorage.getItem("RK_LANG") || "ro";
 let currentLevel = localStorage.getItem("RK_LEVEL") || "1";
 if(currentLevel === "0") currentLevel = "test";
 let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [], "chain": [] };
+let vocabData = [];
+let vocabCache = {};
 let currentList = [];
 let currentIndex = 0;
 let selectedAnswer = null;
@@ -509,6 +512,7 @@ const UI_TEXT = {
     answerFirst: "Alege mai întâi un răspuns.",
     noExercises: "Nu există exerciții pentru acest mod.",
     noLessonExercises: "Nu există exerciții pentru această lecție.",
+    noVocabType: "Modul VOCAB e disponibil doar pentru KO→RO și RO→KO.",
     next: "Următorul",
     check: "Verifică",
     topik: "TOPIK",
@@ -548,6 +552,7 @@ const UI_TEXT = {
     answerFirst: "Choose an answer first.",
     noExercises: "No exercises available for this mode.",
     noLessonExercises: "No exercises available for this lesson.",
+    noVocabType: "VOCAB mode is only available for KO→RO and RO→KO.",
     next: "Next",
     check: "Check",
     topik: "TOPIK",
@@ -656,8 +661,12 @@ function shuffle(array){
 
 async function loadExercises(){
   try {
-    const response = await fetch("./data/exercises.json");
-    const data = await response.json();
+    const [exResp, vocResp] = await Promise.all([
+      fetch("./data/exercises.json"),
+      fetch("./data/vocab-korean.json")
+    ]);
+    const data = await exResp.json();
+    const vocJson = await vocResp.json();
 
     allExercises = {
       "ko-ro": Array.isArray(data["ko-ro"]) ? data["ko-ro"] : [],
@@ -669,6 +678,9 @@ async function loadExercises(){
       "chain": Array.isArray(data["chain"]) ? data["chain"] : []
     };
 
+    vocabData = Array.isArray(vocJson.subjects) ? vocJson.subjects : [];
+    vocabCache = {};
+
     render();
   } catch (error) {
     console.error("Exercises load error:", error);
@@ -679,8 +691,49 @@ async function loadExercises(){
   }
 }
 
+function buildVocabExercises(type){
+  if(vocabCache[type]) return vocabCache[type];
+  if(!["ko-ro","ro-ko"].includes(type)){ vocabCache[type] = []; return []; }
+
+  const pool = [...vocabData];
+  const result = pool.map((item, idx) => {
+    const others = pool.filter((_, i) => i !== idx);
+    const wrong = shuffle(others).slice(0, 3);
+
+    if(type === "ko-ro"){
+      return {
+        lessonId: "VOCAB",
+        topik: null,
+        q: item.ko,
+        answers: {
+          ro: shuffle([item.ro, ...wrong.map(w => w.ro)]),
+          en: shuffle([item.en, ...wrong.map(w => w.en)])
+        },
+        correct: { ro: item.ro, en: item.en }
+      };
+    } else {
+      return {
+        lessonId: "VOCAB",
+        topik: null,
+        prompt: { ro: item.ro, en: item.en },
+        options: shuffle([item.ko, ...wrong.map(w => w.ko)]),
+        correct: item.ko
+      };
+    }
+  });
+
+  vocabCache[type] = result;
+  return result;
+}
+
 function getFilteredList(){
   const type = typeSelect.value;
+
+  if(currentLevel === "vocab"){
+    if(!["ko-ro","ro-ko"].includes(type)) return [];
+    return shuffle(buildVocabExercises(type));
+  }
+
   let list = allExercises[type] || [];
 
   if(lessonParam){
@@ -725,7 +778,8 @@ function render(){
   currentList = getFilteredList();
 
   if(currentList.length === 0){
-    questionEl.textContent = lessonParam ? t("noLessonExercises") : t("noExercises");
+    const isVocabIncompat = currentLevel === "vocab" && !["ko-ro","ro-ko"].includes(typeSelect.value);
+    questionEl.textContent = lessonParam ? t("noLessonExercises") : isVocabIncompat ? t("noVocabType") : t("noExercises");
     helperEl.textContent = "";
     badgeEl.innerHTML = "";
     answersEl.innerHTML = "";
