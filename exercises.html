@@ -388,10 +388,6 @@ select:focus, button:focus{
       <div class="meter" title="Progres sesiune">
         <div id="meterFill"></div>
       </div>
-
-      <button id="soundBtn" class="soundBtn" type="button" aria-label="Sunet">
-        🔊
-      </button>
     </div>
 <div class="card">
   <label><b id="labelType">Tip exercițiu</b></label>
@@ -415,12 +411,12 @@ select:focus, button:focus{
       <button type="button" data-level="5">5</button>
       <button type="button" data-level="6">6</button>
       <button type="button" data-level="test" id="btnTest">TEST</button>
-      <button type="button" data-level="vocab" id="btnVocab">VOCAB</button>
     </div>
   </div>
 </div>
 
-<div class="card">
+<div class="card" style="position:relative">
+  <button id="soundBtn" class="soundBtn" type="button" aria-label="Sunet">🔊</button>
   <div class="question" id="question"></div>
   <div class="helper" id="helper"></div>
 <div id="badge" style="display:inline-flex;gap:8px;align-items:center;margin-bottom:12px"></div>
@@ -468,8 +464,6 @@ let currentLang = localStorage.getItem("RK_LANG") || "ro";
 let currentLevel = localStorage.getItem("RK_LEVEL") || "1";
 if(currentLevel === "0") currentLevel = "test";
 let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [], "chain": [] };
-let vocabData = [];
-let vocabCache = {};
 let currentList = [];
 let currentIndex = 0;
 let selectedAnswer = null;
@@ -660,12 +654,8 @@ function shuffle(array){
 
 async function loadExercises(){
   try {
-    const [exResp, vocResp] = await Promise.all([
-      fetch("./data/exercises.json"),
-      fetch("./data/vocab-korean.json")
-    ]);
-    const data = await exResp.json();
-    const vocJson = await vocResp.json();
+    const response = await fetch("./data/exercises.json");
+    const data = await response.json();
 
     allExercises = {
       "ko-ro": Array.isArray(data["ko-ro"]) ? data["ko-ro"] : [],
@@ -677,9 +667,6 @@ async function loadExercises(){
       "chain": Array.isArray(data["chain"]) ? data["chain"] : []
     };
 
-    vocabData = Array.isArray(vocJson.subjects) ? vocJson.subjects : [];
-    vocabCache = {};
-
     render();
   } catch (error) {
     console.error("Exercises load error:", error);
@@ -690,49 +677,8 @@ async function loadExercises(){
   }
 }
 
-function buildVocabExercises(type){
-  if(vocabCache[type]) return vocabCache[type];
-  if(!["ko-ro","ro-ko"].includes(type)){ vocabCache[type] = []; return []; }
-
-  const pool = [...vocabData];
-  const result = pool.map((item, idx) => {
-    const others = pool.filter((_, i) => i !== idx);
-    const wrong = shuffle(others).slice(0, 3);
-
-    if(type === "ko-ro"){
-      return {
-        lessonId: "VOCAB",
-        topik: null,
-        q: item.ko,
-        answers: {
-          ro: shuffle([item.ro, ...wrong.map(w => w.ro)]),
-          en: shuffle([item.en, ...wrong.map(w => w.en)])
-        },
-        correct: { ro: item.ro, en: item.en }
-      };
-    } else {
-      return {
-        lessonId: "VOCAB",
-        topik: null,
-        prompt: { ro: item.ro, en: item.en },
-        options: shuffle([item.ko, ...wrong.map(w => w.ko)]),
-        correct: item.ko
-      };
-    }
-  });
-
-  vocabCache[type] = result;
-  return result;
-}
-
 function getFilteredList(){
   const type = typeSelect.value;
-
-  if(currentLevel === "vocab"){
-    if(!["ko-ro","ro-ko"].includes(type)) return [];
-    return shuffle(buildVocabExercises(type));
-  }
-
   let list = allExercises[type] || [];
 
   if(lessonParam){
@@ -766,6 +712,19 @@ function renderInfoBadge(item){
   badgeEl.innerHTML = parts.join("");
 }
 
+function cleanConjugPrompt(prompt){
+  const arrow = prompt.indexOf('→');
+  if(arrow === -1) return prompt;
+  const verb = prompt.slice(0, arrow + 1).trim();
+  const desc = prompt.slice(arrow + 1).trim();
+  // dacă descrierea conține caractere coreene, extrage doar sensul din paranteze
+  if(/[\uAC00-\uD7A3\u3131-\u318E]/.test(desc)){
+    const matches = [...desc.matchAll(/\(([^)]+)\)/g)];
+    if(matches.length) return verb + ' ' + matches[matches.length - 1][1];
+  }
+  return prompt;
+}
+
 function render(){
   selectedAnswer = null;
   answered = false;
@@ -777,8 +736,7 @@ function render(){
   currentList = getFilteredList();
 
   if(currentList.length === 0){
-    const isVocabIncompat = currentLevel === "vocab" && !["ko-ro","ro-ko"].includes(typeSelect.value);
-    questionEl.textContent = lessonParam ? t("noLessonExercises") : isVocabIncompat ? t("noVocabType") : t("noExercises");
+    questionEl.textContent = lessonParam ? t("noLessonExercises") : t("noExercises");
     helperEl.textContent = "";
     badgeEl.innerHTML = "";
     answersEl.innerHTML = "";
@@ -810,7 +768,7 @@ function render(){
     helperText = t("chooseParticlePlus");
     options = shuffle((item.options || []).map(opt => Array.isArray(opt) ? opt.join(" · ") : opt));
   } else if(typeSelect.value === "conjug"){
-    questionText = item.prompt[currentLang];
+    questionText = cleanConjugPrompt(item.prompt[currentLang]);
     helperText = t("chooseConjug");
     options = shuffle(item.options || []);
   } else if(typeSelect.value === "puzzle"){
