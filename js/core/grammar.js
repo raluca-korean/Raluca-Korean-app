@@ -1,18 +1,6 @@
 window.Grammar = {
 
-  // =========================
-  // PHONOLOGY
-  // =========================
-  hasBatchim(word){
-
-    if(!word) return false;
-
-    const lastChar = word.charCodeAt(word.length - 1);
-
-    if(lastChar < 44032 || lastChar > 55203) return false;
-
-    return (lastChar - 44032) % 28 !== 0;
-  },
+  
 
   // =========================
   // PARTICLES
