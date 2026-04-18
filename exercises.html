@@ -450,7 +450,7 @@ const meterFill = document.getElementById("meterFill");
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
-let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [] };
+let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [] };
 let currentList = [];
 let currentIndex = 0;
 let selectedAnswer = null;
@@ -473,9 +473,11 @@ const UI_TEXT = {
     chooseCorrectKorean: "Alege propoziția coreeană corectă.",
     chooseParticle: "Alege particula corectă.",
     chooseParticlePlus: "Alege perechea corectă de particule.",
+    chooseConjug: "Alege forma corectă de conjugare.",
     hint: "Indiciu",
     modeParticle: "Particulă (1)",
     modeParticlePlus: "Particule multiple",
+    modeConjug: "Conjugare",
     correctAnswer: "✅ Corect",
     wrongAnswer: "❌ Greșit",
     answerFirst: "Alege mai întâi un răspuns.",
@@ -501,9 +503,11 @@ const UI_TEXT = {
     chooseCorrectKorean: "Choose the correct Korean sentence.",
     chooseParticle: "Choose the correct particle.",
     chooseParticlePlus: "Choose the correct pair of particles.",
+    chooseConjug: "Choose the correct conjugated form.",
     hint: "Hint",
     modeParticle: "Particle (1)",
     modeParticlePlus: "Multiple particles",
+    modeConjug: "Conjugation",
     correctAnswer: "✅ Correct",
     wrongAnswer: "❌ Incorrect",
     answerFirst: "Choose an answer first.",
@@ -550,6 +554,7 @@ function modeLabel(type){
   if(type === "ko-ro") return t("modeKoRo");
   if(type === "particle") return t("modeParticle");
   if(type === "particlePlus") return t("modeParticlePlus");
+  if(type === "conjug") return t("modeConjug");
   return t("modeRoKo");
 }
 
@@ -603,7 +608,8 @@ async function loadExercises(){
       "ko-ro": Array.isArray(data["ko-ro"]) ? data["ko-ro"] : [],
       "ro-ko": Array.isArray(data["ro-ko"]) ? data["ro-ko"] : [],
       "particle": Array.isArray(data["particle"]) ? data["particle"] : [],
-      "particlePlus": Array.isArray(data["particlePlus"]) ? data["particlePlus"] : []
+      "particlePlus": Array.isArray(data["particlePlus"]) ? data["particlePlus"] : [],
+      "conjug": Array.isArray(data["conjug"]) ? data["conjug"] : []
     };
 
     render();
@@ -695,6 +701,10 @@ function render(){
     questionText = item.template.replace(/___/g, () => `【${++n}】`);
     helperText = (item.hint ? t("hint") + ": " + item.hint[currentLang] + "  •  " : "") + t("chooseParticlePlus");
     options = shuffle((item.options || []).map(opt => Array.isArray(opt) ? opt.join(" · ") : opt));
+  } else if(typeSelect.value === "conjug"){
+    questionText = item.prompt[currentLang];
+    helperText = t("chooseConjug");
+    options = shuffle(item.options || []);
   } else {
     questionText = item.prompt[currentLang];
     helperText = t("chooseCorrectKorean");
