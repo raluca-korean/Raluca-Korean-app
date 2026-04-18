@@ -394,17 +394,31 @@ select:focus, button:focus{
         🔊
       </button>
     </div>
-<div class="card">
-  <label><b>Tip exercițiu</b></label>
-<select id="type">
-  <option value="ko-ro">KO → RO</option>
-  <option value="ro-ko">RO → KO</option>
-  <option value="particle">Particulă (1)</option>
-  <option value="particlePlus">Particule multiple</option>
-  <option value="conjug">Conjugare</option>
-  <option value="puzzle">Puzzle</option>
-  <option value="chain">Chain</option>
-</select>
+<div class="card" style="display:flex;gap:14px;flex-wrap:wrap">
+  <div style="flex:1;min-width:160px">
+    <label><b id="labelType">Tip exercițiu</b></label>
+    <select id="type" style="margin-top:6px">
+      <option value="ko-ro">KO → RO</option>
+      <option value="ro-ko">RO → KO</option>
+      <option value="particle">Particulă (1)</option>
+      <option value="particlePlus">Particule multiple</option>
+      <option value="conjug">Conjugare</option>
+      <option value="puzzle">Puzzle</option>
+      <option value="chain">Chain</option>
+    </select>
+  </div>
+  <div style="flex:1;min-width:120px">
+    <label><b id="labelLevel">Nivel TOPIK</b></label>
+    <select id="level" style="margin-top:6px">
+      <option value="0" id="optAllLevels">Toate nivelele</option>
+      <option value="1">TOPIK 1</option>
+      <option value="2">TOPIK 2</option>
+      <option value="3">TOPIK 3</option>
+      <option value="4">TOPIK 4</option>
+      <option value="5">TOPIK 5</option>
+      <option value="6">TOPIK 6</option>
+    </select>
+  </div>
 </div>
 
 <div class="card">
@@ -434,6 +448,7 @@ const langRoBtn = document.getElementById("langRo");
 const langEnBtn = document.getElementById("langEn");
 
 const typeSelect = document.getElementById("type");
+const levelSelect = document.getElementById("level");
 const questionEl = document.getElementById("question");
 const helperEl = document.getElementById("helper");
 const badgeEl = document.getElementById("badge");
@@ -451,6 +466,7 @@ const meterFill = document.getElementById("meterFill");
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let currentLevel = localStorage.getItem("RK_LEVEL") || "0";
 let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [], "chain": [] };
 let currentList = [];
 let currentIndex = 0;
@@ -499,7 +515,10 @@ const UI_TEXT = {
     lesson: "Lecția",
     modeKoRo: "KO → RO / EN",
     modeRoKo: "RO / EN → KO",
-    loadError: "Nu am putut încărca exercises.json"
+    loadError: "Nu am putut încărca exercises.json",
+    labelType: "Tip exercițiu",
+    labelLevel: "Nivel TOPIK",
+    allLevels: "Toate nivelele"
   },
   en: {
     title: "TOPIK Exercises",
@@ -535,7 +554,10 @@ const UI_TEXT = {
     lesson: "Lesson",
     modeKoRo: "KO → RO / EN",
     modeRoKo: "RO / EN → KO",
-    loadError: "Could not load exercises.json"
+    loadError: "Could not load exercises.json",
+    labelType: "Exercise type",
+    labelLevel: "TOPIK Level",
+    allLevels: "All levels"
   }
 };
 
@@ -582,10 +604,14 @@ function updateStaticTexts(){
   checkBtn.textContent = t("check");
   nextBtn.textContent = t("next");
 
-  const label = document.querySelector('label b');
-  if(label){
-    label.textContent = currentLang === "ro" ? "Tip exercițiu" : "Exercise type";
-  }
+  const labelType = document.getElementById("labelType");
+  if(labelType) labelType.textContent = t("labelType");
+
+  const labelLevel = document.getElementById("labelLevel");
+  if(labelLevel) labelLevel.textContent = t("labelLevel");
+
+  const optAllLevels = document.getElementById("optAllLevels");
+  if(optAllLevels) optAllLevels.textContent = t("allLevels");
 
   const optionKoRo = typeSelect.querySelector('option[value="ko-ro"]');
   const optionRoKo = typeSelect.querySelector('option[value="ro-ko"]');
@@ -648,6 +674,8 @@ function getFilteredList(){
 
   if(lessonParam){
     list = list.filter(item => item.lessonId === lessonParam);
+  } else if(currentLevel !== "0"){
+    list = list.filter(item => String(item.topik) === currentLevel);
   }
 
   return list;
@@ -897,6 +925,13 @@ typeSelect.addEventListener("change", () => {
   render();
 });
 
+levelSelect.addEventListener("change", () => {
+  currentLevel = levelSelect.value;
+  localStorage.setItem("RK_LEVEL", currentLevel);
+  currentIndex = 0;
+  render();
+});
+
 checkBtn.addEventListener("click", checkCurrentAnswer);
 nextBtn.addEventListener("click", nextQuestion);
 langRoBtn.addEventListener("click", () => setLanguage("ro"));
@@ -920,6 +955,7 @@ soundBtn.addEventListener("click", () => {
   soundBtn.textContent = soundOn ? "🔊" : "🔇";
 });
 
+levelSelect.value = currentLevel;
 updateLanguageButtons();
 updateStaticTexts();
 updateBadges();
