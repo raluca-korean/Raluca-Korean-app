@@ -27,8 +27,8 @@
   <div class="grid">
 
     <!-- SIDEBAR -->
-    <div class="card">
-      <h3>TOPIK 1–4</h3>
+    <div class="card" id="sidebarCard">
+      <div class="topik-tabs" id="topikTabs"></div>
       <div class="lesson-list" id="lessonList"></div>
     </div>
 
@@ -40,72 +40,182 @@
   </div>
 </div>
 
+<style>
+.topik-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:14px;
+}
+.topik-tab{
+  padding:10px 6px;
+  border-radius:14px;
+  border:1.5px solid rgba(219,39,119,.20);
+  background:linear-gradient(160deg,#fff,#fdf4ff);
+  font-weight:900;
+  font-size:13px;
+  cursor:pointer;
+  text-align:center;
+  color:#7c3aed;
+  box-shadow:0 4px 12px rgba(219,39,119,.08);
+  transition:transform .12s, box-shadow .12s, background .12s;
+}
+.topik-tab:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 22px rgba(219,39,119,.18);
+}
+.topik-tab.active{
+  background:linear-gradient(135deg,#db2777,#7c3aed);
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 8px 24px rgba(219,39,119,.30);
+}
+.lesson-count{
+  font-size:10px;
+  font-weight:700;
+  opacity:.75;
+  display:block;
+  margin-top:2px;
+}
+</style>
+
 <script>
-const listEl = document.getElementById("lessonList");
-const contentEl = document.getElementById("lessonContent");
+const listEl      = document.getElementById("lessonList");
+const contentEl   = document.getElementById("lessonContent");
 const pageTitleEl = document.getElementById("pageTitle");
 const pageSubtitleEl = document.getElementById("pageSubtitle");
-const langRoBtn = document.getElementById("langRo");
-const langEnBtn = document.getElementById("langEn");
+const langRoBtn   = document.getElementById("langRo");
+const langEnBtn   = document.getElementById("langEn");
+const tabsEl      = document.getElementById("topikTabs");
 
-let lessons = [];
+let lessons        = [];
 let currentLessonId = null;
-let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let currentTopik   = 1;
+let currentLang    = localStorage.getItem("RK_LANG") || "ro";
 
 const UI_TEXT = {
   ro: {
-    pageTitle: "Lecții TOPIK",
+    pageTitle:    "Lecții TOPIK",
     pageSubtitle: "Structurate • Clare • Conectate cu exercițiile",
-    sidebarTitle: "TOPIK 1–6",
     selectLesson: "Selectează o lecție din stânga",
-    lessonMissing: "Lecția nu există.",
-    structure: "Structură",
-    notes: "Note",
-    practice: "Exersează această lecție →",
-    topik: "TOPIK"
+    lessonMissing:"Lecția nu există.",
+    structure:    "Structură",
+    notes:        "Note",
+    practice:     "Exersează această lecție →",
+    topik:        "TOPIK",
+    lessons:      "lecții"
   },
   en: {
-    pageTitle: "TOPIK Lessons",
+    pageTitle:    "TOPIK Lessons",
     pageSubtitle: "Structured • Clear • Connected to exercises",
-    sidebarTitle: "TOPIK 1–6",
     selectLesson: "Select a lesson from the left",
-    lessonMissing: "Lesson not found.",
-    structure: "Structure",
-    notes: "Notes",
-    practice: "Practice this lesson →",
-    topik: "TOPIK"
+    lessonMissing:"Lesson not found.",
+    structure:    "Structure",
+    notes:        "Notes",
+    practice:     "Practice this lesson →",
+    topik:        "TOPIK",
+    lessons:      "lessons"
   }
 };
 
-function t(key){
-  return UI_TEXT[currentLang][key];
-}
+function t(key){ return UI_TEXT[currentLang][key]; }
 
 function updateHeaderTexts(){
-  pageTitleEl.textContent = t("pageTitle");
+  pageTitleEl.textContent    = t("pageTitle");
   pageSubtitleEl.textContent = t("pageSubtitle");
-
-  const sidebarTitle = document.querySelector(".card h3");
-  if(sidebarTitle){
-    sidebarTitle.textContent = t("sidebarTitle");
-  }
 }
 
 function updateLanguageButtons(){
-  const activeStyle = "linear-gradient(135deg,#22d3ee,#7c3aed)";
-  const inactiveStyle = "rgba(10,8,28,.55)";
+  const on  = "linear-gradient(135deg,#22d3ee,#7c3aed)";
+  const off = "rgba(10,8,28,.55)";
+  langRoBtn.style.background = currentLang === "ro" ? on : off;
+  langRoBtn.style.color      = currentLang === "ro" ? "#000" : "var(--text)";
+  langEnBtn.style.background = currentLang === "en" ? on : off;
+  langEnBtn.style.color      = currentLang === "en" ? "#000" : "var(--text)";
+}
 
-  if(currentLang === "ro"){
-    langRoBtn.style.background = activeStyle;
-    langRoBtn.style.color = "#000";
-    langEnBtn.style.background = inactiveStyle;
-    langEnBtn.style.color = "var(--text)";
+function renderTabs(){
+  tabsEl.innerHTML = "";
+  [1,2,3,4,5,6].forEach(level => {
+    const count = lessons.filter(l => l.topik === level).length;
+    const btn   = document.createElement("button");
+    btn.type    = "button";
+    btn.className = "topik-tab" + (level === currentTopik ? " active" : "");
+    btn.innerHTML = `T${level}<span class="lesson-count">${count} ${t("lessons")}</span>`;
+    btn.addEventListener("click", () => setTopik(level));
+    tabsEl.appendChild(btn);
+  });
+}
+
+function setTopik(level){
+  currentTopik = level;
+  renderTabs();
+  renderLessonList();
+
+  const first = lessons.find(l => l.topik === level);
+  if(first){
+    selectLesson(first.id);
   } else {
-    langEnBtn.style.background = activeStyle;
-    langEnBtn.style.color = "#000";
-    langRoBtn.style.background = inactiveStyle;
-    langRoBtn.style.color = "var(--text)";
+    contentEl.innerHTML = `<div class="sub">${t("selectLesson")}</div>`;
   }
+}
+
+function renderLessonList(){
+  listEl.innerHTML = "";
+  const filtered = lessons.filter(l => l.topik === currentTopik);
+
+  filtered.forEach((lesson, idx) => {
+    const el = document.createElement("div");
+    el.className = "lesson-item" + (lesson.id === currentLessonId ? " active" : "");
+    el.dataset.id = lesson.id;
+    el.textContent = `${idx + 1}. ${lesson.title[currentLang]}`;
+    el.addEventListener("click", () => selectLesson(lesson.id));
+    listEl.appendChild(el);
+  });
+}
+
+function selectLesson(id){
+  currentLessonId = id;
+  document.querySelectorAll(".lesson-item").forEach(item => {
+    item.classList.toggle("active", item.dataset.id === id);
+  });
+
+  const lesson = lessons.find(l => l.id === id);
+  if(!lesson){
+    contentEl.innerHTML = `<div class="sub">${t("lessonMissing")}</div>`;
+    return;
+  }
+
+  const notes    = Array.isArray(lesson.notes[currentLang]) ? lesson.notes[currentLang] : [];
+  const examples = Array.isArray(lesson.examples) ? lesson.examples : [];
+
+  contentEl.innerHTML = `
+    <span class="badge">${t("topik")} ${lesson.topik}</span>
+    <h2>${lesson.title[currentLang]}</h2>
+    <p style="margin-top:8px">${lesson.explanation[currentLang]}</p>
+    <div class="sub" style="margin-top:8px"><b>${t("structure")}:</b> ${lesson.structure}</div>
+
+    ${examples.map(ex => `
+      <div class="example">
+        <div class="ko">${ex.ko}</div>
+        <div class="ro">${ex[currentLang]}</div>
+      </div>
+    `).join("")}
+
+    ${notes.length ? `
+      <div class="notes">
+        <b>${t("notes")}:</b>
+        <ul>${notes.map(n => `<li>${n}</li>`).join("")}</ul>
+      </div>
+    ` : ""}
+
+    <button type="button" id="practiceLessonBtn" style="margin-top:14px">${t("practice")}</button>
+  `;
+
+  document.getElementById("practiceLessonBtn")
+    .addEventListener("click", () => {
+      window.location.href = `exercises.html?lesson=${lesson.id}`;
+    });
 }
 
 function setLanguage(lang){
@@ -113,115 +223,25 @@ function setLanguage(lang){
   localStorage.setItem("RK_LANG", lang);
   updateHeaderTexts();
   updateLanguageButtons();
+  renderTabs();
   renderLessonList();
-
-  if(currentLessonId){
-    selectLesson(currentLessonId);
-  } else {
-    contentEl.innerHTML = `<div class="sub">${t("selectLesson")}</div>`;
-  }
+  if(currentLessonId) selectLesson(currentLessonId);
+  else contentEl.innerHTML = `<div class="sub">${t("selectLesson")}</div>`;
 }
 
 async function loadLessons(){
   try {
-    const response = await fetch("./data/lessons.json");
-    const data = await response.json();
-
+    const res  = await fetch("./data/lessons.json");
+    const data = await res.json();
     lessons = Array.isArray(data) ? data : [];
-
-    lessons.sort((a, b) => {
-      if (a.topik !== b.topik) return a.topik - b.topik;
-      return a.id.localeCompare(b.id);
-    });
-
+    lessons.sort((a,b) => a.topik !== b.topik ? a.topik - b.topik : a.id.localeCompare(b.id));
+    renderTabs();
     renderLessonList();
-
-    if(lessons.length > 0){
-      selectLesson(lessons[0].id);
-    } else {
-      contentEl.innerHTML = `<div class="sub">${t("lessonMissing")}</div>`;
-    }
-  } catch (error) {
-    console.error("Lessons load error:", error);
+    const first = lessons.find(l => l.topik === currentTopik);
+    if(first) selectLesson(first.id);
+  } catch(e){
     contentEl.innerHTML = `<div class="sub">Nu am putut încărca lessons.json</div>`;
   }
-}
-
-function renderLessonList(){
-  listEl.innerHTML = "";
-
-  lessons.forEach(lesson => {
-    const el = document.createElement("div");
-    el.className = "lesson-item";
-    el.dataset.id = lesson.id;
-    el.textContent = `${t("topik")} ${lesson.topik} · ${lesson.title[currentLang]}`;
-
-    if(lesson.id === currentLessonId){
-      el.classList.add("active");
-    }
-
-    el.addEventListener("click", () => {
-      selectLesson(lesson.id);
-    });
-
-    listEl.appendChild(el);
-  });
-}
-
-function selectLesson(id){
-  currentLessonId = id;
-
-  document.querySelectorAll(".lesson-item").forEach(item => {
-    item.classList.toggle("active", item.dataset.id === id);
-  });
-
-  const lesson = lessons.find(item => item.id === id);
-
-  if(!lesson){
-    contentEl.innerHTML = `<div class="sub">${t("lessonMissing")}</div>`;
-    return;
-  }
-
-  const title = lesson.title[currentLang];
-  const explanation = lesson.explanation[currentLang];
-  const notes = Array.isArray(lesson.notes[currentLang]) ? lesson.notes[currentLang] : [];
-  const examples = Array.isArray(lesson.examples) ? lesson.examples : [];
-
-  contentEl.innerHTML = `
-    <span class="badge">${t("topik")} ${lesson.topik}</span>
-    <h2>${title}</h2>
-    <p>${explanation}</p>
-    <div class="sub"><b>${t("structure")}:</b> ${lesson.structure}</div>
-
-    ${examples.map(example => `
-      <div class="example">
-        <div class="ko">${example.ko}</div>
-        <div class="ro">${example[currentLang]}</div>
-      </div>
-    `).join("")}
-
-    ${notes.length ? `
-      <div class="notes">
-        <b>${t("notes")}:</b>
-        <ul>
-          ${notes.map(note => `<li>${note}</li>`).join("")}
-        </ul>
-      </div>
-    ` : ""}
-
-    <button type="button" id="practiceLessonBtn">${t("practice")}</button>
-  `;
-
-  const practiceBtn = document.getElementById("practiceLessonBtn");
-  if(practiceBtn){
-    practiceBtn.addEventListener("click", () => {
-      goExercises(lesson.id);
-    });
-  }
-}
-
-function goExercises(lessonId){
-  window.location.href = `exercises.html?lesson=${lessonId}`;
 }
 
 langRoBtn.addEventListener("click", () => setLanguage("ro"));
