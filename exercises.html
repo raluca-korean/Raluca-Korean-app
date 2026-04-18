@@ -394,30 +394,29 @@ select:focus, button:focus{
         🔊
       </button>
     </div>
-<div class="card" style="display:flex;gap:14px;flex-wrap:wrap">
-  <div style="flex:1;min-width:160px">
-    <label><b id="labelType">Tip exercițiu</b></label>
-    <select id="type" style="margin-top:6px">
-      <option value="ko-ro">KO → RO</option>
-      <option value="ro-ko">RO → KO</option>
-      <option value="particle">Particulă (1)</option>
-      <option value="particlePlus">Particule multiple</option>
-      <option value="conjug">Conjugare</option>
-      <option value="puzzle">Puzzle</option>
-      <option value="chain">Chain</option>
-    </select>
-  </div>
-  <div style="flex:1;min-width:120px">
+<div class="card">
+  <label><b id="labelType">Tip exercițiu</b></label>
+  <select id="type" style="margin-top:6px">
+    <option value="ko-ro">KO → RO</option>
+    <option value="ro-ko">RO → KO</option>
+    <option value="particle">Particulă (1)</option>
+    <option value="particlePlus">Particule multiple</option>
+    <option value="conjug">Conjugare</option>
+    <option value="puzzle">Puzzle</option>
+    <option value="chain">Chain</option>
+  </select>
+
+  <div style="margin-top:14px">
     <label><b id="labelLevel">Nivel TOPIK</b></label>
-    <select id="level" style="margin-top:6px">
-      <option value="0" id="optAllLevels">Toate nivelele</option>
-      <option value="1">TOPIK 1</option>
-      <option value="2">TOPIK 2</option>
-      <option value="3">TOPIK 3</option>
-      <option value="4">TOPIK 4</option>
-      <option value="5">TOPIK 5</option>
-      <option value="6">TOPIK 6</option>
-    </select>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="levelBtns">
+      <button type="button" data-level="1">1</button>
+      <button type="button" data-level="2">2</button>
+      <button type="button" data-level="3">3</button>
+      <button type="button" data-level="4">4</button>
+      <button type="button" data-level="5">5</button>
+      <button type="button" data-level="6">6</button>
+      <button type="button" data-level="test" id="btnTest">TEST</button>
+    </div>
   </div>
 </div>
 
@@ -448,7 +447,7 @@ const langRoBtn = document.getElementById("langRo");
 const langEnBtn = document.getElementById("langEn");
 
 const typeSelect = document.getElementById("type");
-const levelSelect = document.getElementById("level");
+const levelBtnsEl = document.getElementById("levelBtns");
 const questionEl = document.getElementById("question");
 const helperEl = document.getElementById("helper");
 const badgeEl = document.getElementById("badge");
@@ -466,7 +465,8 @@ const meterFill = document.getElementById("meterFill");
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
-let currentLevel = localStorage.getItem("RK_LEVEL") || "0";
+let currentLevel = localStorage.getItem("RK_LEVEL") || "1";
+if(currentLevel === "0") currentLevel = "test";
 let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [], "chain": [] };
 let currentList = [];
 let currentIndex = 0;
@@ -565,6 +565,20 @@ function t(key){
   return UI_TEXT[currentLang][key];
 }
 
+function updateLevelButtons(){
+  const activeStyle = "linear-gradient(135deg,#db2777,#7c3aed)";
+  const inactiveStyle = "linear-gradient(160deg,#fff,#fdf4ff)";
+  const activeShadow = "0 8px 20px rgba(219,39,119,.28)";
+  const inactiveShadow = "0 4px 12px rgba(219,39,119,.10)";
+
+  levelBtnsEl.querySelectorAll("button[data-level]").forEach(btn => {
+    const isActive = btn.dataset.level === currentLevel;
+    btn.style.background = isActive ? activeStyle : inactiveStyle;
+    btn.style.color = isActive ? "#fff" : "var(--text)";
+    btn.style.boxShadow = isActive ? activeShadow : inactiveShadow;
+  });
+}
+
 function updateLanguageButtons(){
   const activeStyle = "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)";
   const inactiveStyle = "linear-gradient(160deg,#fff,#fdf4ff)";
@@ -609,9 +623,6 @@ function updateStaticTexts(){
 
   const labelLevel = document.getElementById("labelLevel");
   if(labelLevel) labelLevel.textContent = t("labelLevel");
-
-  const optAllLevels = document.getElementById("optAllLevels");
-  if(optAllLevels) optAllLevels.textContent = t("allLevels");
 
   const optionKoRo = typeSelect.querySelector('option[value="ko-ro"]');
   const optionRoKo = typeSelect.querySelector('option[value="ro-ko"]');
@@ -674,8 +685,10 @@ function getFilteredList(){
 
   if(lessonParam){
     list = list.filter(item => item.lessonId === lessonParam);
-  } else if(currentLevel !== "0"){
+  } else if(currentLevel !== "test"){
     list = list.filter(item => String(item.topik) === currentLevel);
+  } else {
+    list = shuffle(list);
   }
 
   return list;
@@ -925,11 +938,14 @@ typeSelect.addEventListener("change", () => {
   render();
 });
 
-levelSelect.addEventListener("change", () => {
-  currentLevel = levelSelect.value;
-  localStorage.setItem("RK_LEVEL", currentLevel);
-  currentIndex = 0;
-  render();
+levelBtnsEl.querySelectorAll("button[data-level]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentLevel = btn.dataset.level;
+    localStorage.setItem("RK_LEVEL", currentLevel);
+    currentIndex = 0;
+    updateLevelButtons();
+    render();
+  });
 });
 
 checkBtn.addEventListener("click", checkCurrentAnswer);
@@ -955,7 +971,7 @@ soundBtn.addEventListener("click", () => {
   soundBtn.textContent = soundOn ? "🔊" : "🔇";
 });
 
-levelSelect.value = currentLevel;
+updateLevelButtons();
 updateLanguageButtons();
 updateStaticTexts();
 updateBadges();
