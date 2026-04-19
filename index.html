@@ -205,6 +205,17 @@ body.dark-mode .tag {
   border-color: rgba(244,114,182,.20);
   color: #d4b8ff;
 }
+
+.mini-stat {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c3aed;
+  opacity: .80;
+  min-height: 16px;
+}
+
+body.dark-mode .mini-stat { color: #d4b8ff; }
 </style>
 </head>
 
@@ -251,6 +262,7 @@ body.dark-mode .tag {
         <span class="tag">Streak</span>
         <span class="tag">Feedback instant</span>
       </div>
+      <div class="mini-stat" id="statEx"></div>
     </a>
 
     <a class="card" href="lessons.html">
@@ -279,6 +291,34 @@ body.dark-mode .tag {
         <span class="tag">Cuvântul zilei</span>
         <span class="tag">Mini-quiz</span>
       </div>
+      <div class="mini-stat" id="statGl"></div>
+    </a>
+
+    <a class="card" href="flashcards.html">
+      <div class="card-top">
+        <div class="icon">🃏</div>
+        <h2>Flashcards</h2>
+      </div>
+      <div class="desc">Cărți de vocabular cu flip animat. Alegi „Știu" sau „Nu știu" pe rând, cu opțiune de a studia doar cuvintele favorite.</div>
+      <div class="tags">
+        <span class="tag">Flip animat</span>
+        <span class="tag">Toate / Favorite</span>
+        <span class="tag">Audio</span>
+      </div>
+    </a>
+
+    <a class="card" href="stats.html">
+      <div class="card-top">
+        <div class="icon">📊</div>
+        <h2>Statistici</h2>
+      </div>
+      <div class="desc">Progresul tău: exerciții azi, acuratețe totală, best streak și detalii per tip de exercițiu.</div>
+      <div class="tags">
+        <span class="tag">Progres zilnic</span>
+        <span class="tag">Per tip</span>
+        <span class="tag">Streak record</span>
+      </div>
+      <div class="mini-stat" id="statSt"></div>
     </a>
   </main>
 
@@ -289,6 +329,29 @@ body.dark-mode .tag {
 
 </div>
 
+<script>
+(function(){
+  const today = new Date().toISOString().slice(0,10);
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem("RK_STATS") || "null"); } catch(e){}
+  const favCount = (JSON.parse(localStorage.getItem("FAV_WORDS") || "[]")).length;
+
+  const exEl = document.getElementById("statEx");
+  const glEl = document.getElementById("statGl");
+  const stEl = document.getElementById("statSt");
+
+  if(s && s.total > 0){
+    const todayN = s.today === today ? s.todayTotal : 0;
+    const pct = Math.round(s.correct / s.total * 100);
+    if(exEl) exEl.textContent = todayN > 0
+      ? `Azi: ${todayN} ex. · Best streak: ${s.bestStreak}`
+      : `Total: ${s.total} ex. · Acuratețe: ${pct}%`;
+    if(stEl) stEl.textContent = `${s.total} ex. · ${pct}% corecte · Streak: ${s.bestStreak}`;
+  }
+
+  if(glEl && favCount > 0) glEl.textContent = `${favCount} cuvinte în favorite`;
+})();
+</script>
 <script src="./js/core/vocab-widget.js"></script>
 <script src="./js/core/dark-mode.js"></script>
 <script src="./js/core/register-sw.js"></script>

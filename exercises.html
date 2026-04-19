@@ -419,6 +419,7 @@ select:focus, button:focus{
       <div class="meter" title="Progres sesiune">
         <div id="meterFill"></div>
       </div>
+      <button type="button" id="wrongBtn" style="display:none;margin-top:10px;font-size:13px;padding:6px 16px;">❌ Greșeli (0)</button>
     </div>
 <div class="card">
   <label><b id="labelType">Tip exercițiu</b></label>
@@ -488,6 +489,7 @@ const bCorrect = document.getElementById("bCorrect");
 const bTotal = document.getElementById("bTotal");
 const bStreak = document.getElementById("bStreak");
 const meterFill = document.getElementById("meterFill");
+const wrongBtn = document.getElementById("wrongBtn");
 
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
@@ -506,6 +508,10 @@ let puzzleBank = [];
 let total = 0;
 let correct = 0;
 let streak = 0;
+
+let wrongsByType = {};
+let wrongModeItems = [];
+let isWrongMode = false;
 
 const UI_TEXT = {
   ro: {
@@ -539,6 +545,8 @@ const UI_TEXT = {
     noVocabType: "Modul VOCAB e disponibil doar pentru KO→RO și RO→KO.",
     next: "Următorul",
     check: "Verifică",
+    wrongModeBtn: "Greșeli",
+    wrongModeLabel: "Mod Greșeli",
     topik: "TOPIK",
     lesson: "Lecția",
     modeKoRo: "KO → RO / EN",
@@ -586,7 +594,9 @@ const UI_TEXT = {
     loadError: "Could not load exercises.json",
     labelType: "Exercise type",
     labelLevel: "TOPIK Level",
-    allLevels: "All levels"
+    allLevels: "All levels",
+    wrongModeBtn: "Errors",
+    wrongModeLabel: "Error Mode"
   }
 };
 
@@ -661,13 +671,60 @@ function updateStaticTexts(){
 }
 
 function updateBadges(){
-  if(bMode) bMode.querySelector("span:last-child").textContent = `${t("mode")}: ${modeLabel(typeSelect.value)}`;
+  const modeTxt = isWrongMode ? `❌ ${t("wrongModeLabel")}` : `${t("mode")}: ${modeLabel(typeSelect.value)}`;
+  if(bMode) bMode.querySelector("span:last-child").textContent = modeTxt;
   if(bCorrect) bCorrect.querySelector("span:last-child").textContent = `${t("correct")}: ${correct}`;
   if(bTotal) bTotal.querySelector("span:last-child").textContent = `${t("total")}: ${total}`;
   if(bStreak) bStreak.querySelector("span:last-child").textContent = `${t("streak")}: ${streak}`;
 
   const percent = total === 0 ? 0 : Math.round((correct / total) * 100);
   if(meterFill) meterFill.style.width = percent + "%";
+}
+
+function saveStats(isCorrect, type){
+  const today = new Date().toISOString().slice(0, 10);
+  let s;
+  try { s = JSON.parse(localStorage.getItem("RK_STATS") || "null"); } catch(e){ s = null; }
+  if(!s) s = { total:0, correct:0, bestStreak:0, today, todayTotal:0, todayCorrect:0, byType:{} };
+  if(s.today !== today){ s.today = today; s.todayTotal = 0; s.todayCorrect = 0; }
+  s.total++;
+  s.todayTotal++;
+  if(isCorrect){ s.correct++; s.todayCorrect++; }
+  if(streak > s.bestStreak) s.bestStreak = streak;
+  if(!s.byType[type]) s.byType[type] = { total:0, correct:0 };
+  s.byType[type].total++;
+  if(isCorrect) s.byType[type].correct++;
+  localStorage.setItem("RK_STATS", JSON.stringify(s));
+}
+
+function trackWrong(item){
+  const type = typeSelect.value;
+  if(!wrongsByType[type]) wrongsByType[type] = [];
+  if(!wrongsByType[type].includes(item)) wrongsByType[type].push(item);
+}
+
+function updateWrongBtn(){
+  const count = (wrongsByType[typeSelect.value] || []).length;
+  wrongBtn.style.display = (count > 0 && !isWrongMode) ? "" : "none";
+  wrongBtn.textContent = `❌ ${t("wrongModeBtn")} (${count})`;
+}
+
+function enterWrongMode(){
+  const wrongs = wrongsByType[typeSelect.value] || [];
+  if(wrongs.length === 0) return;
+  wrongModeItems = [...wrongs];
+  wrongsByType[typeSelect.value] = [];
+  isWrongMode = true;
+  currentIndex = 0;
+  total = 0; correct = 0; streak = 0;
+  render();
+  updateWrongBtn();
+}
+
+function exitWrongMode(){
+  isWrongMode = false;
+  wrongModeItems = [];
+  currentIndex = 0;
 }
 
 function setLanguage(lang){
@@ -709,9 +766,9 @@ async function loadExercises(){
 }
 
 function getFilteredList(){
+  if(isWrongMode) return wrongModeItems;
   const type = typeSelect.value;
   let list = allExercises[type] || [];
-
   if(lessonParam){
     list = list.filter(item => item.lessonId === lessonParam);
   } else if(currentLevel !== "test"){
@@ -719,7 +776,6 @@ function getFilteredList(){
   } else {
     list = shuffle(list);
   }
-
   return list;
 }
 
@@ -917,9 +973,11 @@ function checkCurrentAnswer(){
       : `${t("wrongAnswer")} — ${item.correct.join(sep)}`;
     total++;
     if(isRight){ correct++; streak++; if(streak >= 2) showHeartFx(); }
-    else { if(streak > 0) launchFireworks(); streak = 0; }
+    else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode) trackWrong(item); }
+    if(!isWrongMode) saveStats(isRight, typeSelect.value);
     answered = true;
     updateBadges();
+    updateWrongBtn();
     return;
   }
 
@@ -933,17 +991,13 @@ function checkCurrentAnswer(){
   const answerNodes = [...document.querySelectorAll("#answers .answer")];
 
   answerNodes.forEach(node => {
-    if(node.textContent === correctAnswer){
-      node.classList.add("correct");
-    }
+    if(node.textContent === correctAnswer) node.classList.add("correct");
   });
 
   const selectedNode = answerNodes.find(node => node.classList.contains("selected"));
   const isCorrect = selectedAnswer === correctAnswer;
 
-  if(selectedNode && !isCorrect){
-    selectedNode.classList.add("wrong");
-  }
+  if(selectedNode && !isCorrect) selectedNode.classList.add("wrong");
 
   feedbackEl.textContent = isCorrect
     ? t("correctAnswer")
@@ -958,10 +1012,13 @@ function checkCurrentAnswer(){
   } else {
     if(streak > 0) launchFireworks();
     streak = 0;
+    if(!isWrongMode) trackWrong(item);
   }
 
+  if(!isWrongMode) saveStats(isCorrect, typeSelect.value);
   answered = true;
   updateBadges();
+  updateWrongBtn();
 }
 
 function showHeartFx(){
@@ -1035,19 +1092,25 @@ function nextQuestion(){
 }
 
 typeSelect.addEventListener("change", () => {
+  exitWrongMode();
   currentIndex = 0;
   render();
+  updateWrongBtn();
 });
 
 levelBtnsEl.querySelectorAll("button[data-level]").forEach(btn => {
   btn.addEventListener("click", () => {
+    exitWrongMode();
     currentLevel = btn.dataset.level;
     localStorage.setItem("RK_LEVEL", currentLevel);
     currentIndex = 0;
     updateLevelButtons();
     render();
+    updateWrongBtn();
   });
 });
+
+wrongBtn.addEventListener("click", enterWrongMode);
 
 checkBtn.addEventListener("click", checkCurrentAnswer);
 nextBtn.addEventListener("click", nextQuestion);
