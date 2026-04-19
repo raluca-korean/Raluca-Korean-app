@@ -752,16 +752,70 @@ function planKoreanSentence(state, active){
 ========================= */
 
 const RO_FORMS = {
-  "a merge":   { "1sg":"merg","2sg":"mergi","3sg":"merge","1pl":"mergem","2pl":"mergeți","3pl":"merg" },
-  "a veni":    { "1sg":"vin","2sg":"vii","3sg":"vine","1pl":"venim","2pl":"veniți","3pl":"vin" },
-  "a mânca":   { "1sg":"mănânc","2sg":"mănânci","3sg":"mănâncă","1pl":"mâncăm","2pl":"mâncați","3pl":"mănâncă" },
-  "a bea":     { "1sg":"beau","2sg":"bei","3sg":"bea","1pl":"bem","2pl":"beți","3pl":"beau" },
-  "a citi":    { "1sg":"citesc","2sg":"citești","3sg":"citește","1pl":"citim","2pl":"citiți","3pl":"citesc" },
-  "a scrie":   { "1sg":"scriu","2sg":"scrii","3sg":"scrie","1pl":"scriem","2pl":"scrieți","3pl":"scriu" },
-  "a merge pe jos": {
-    "1sg":"merg pe jos","2sg":"mergi pe jos","3sg":"merge pe jos",
-    "1pl":"mergem pe jos","2pl":"mergeți pe jos","3pl":"merg pe jos"
-  }
+  "a merge":        {"1sg":"merg",      "2sg":"mergi",      "3sg":"merge",       "1pl":"mergem",      "2pl":"mergeți",      "3pl":"merg"},
+  "a veni":         {"1sg":"vin",       "2sg":"vii",        "3sg":"vine",        "1pl":"venim",       "2pl":"veniți",       "3pl":"vin"},
+  "a mânca":        {"1sg":"mănânc",    "2sg":"mănânci",    "3sg":"mănâncă",     "1pl":"mâncăm",      "2pl":"mâncați",      "3pl":"mănâncă"},
+  "a bea":          {"1sg":"beau",      "2sg":"bei",        "3sg":"bea",         "1pl":"bem",         "2pl":"beți",         "3pl":"beau"},
+  "a citi":         {"1sg":"citesc",    "2sg":"citești",    "3sg":"citește",     "1pl":"citim",       "2pl":"citiți",       "3pl":"citesc"},
+  "a scrie":        {"1sg":"scriu",     "2sg":"scrii",      "3sg":"scrie",       "1pl":"scriem",      "2pl":"scrieți",      "3pl":"scriu"},
+  "a merge pe jos": {"1sg":"merg pe jos","2sg":"mergi pe jos","3sg":"merge pe jos","1pl":"mergem pe jos","2pl":"mergeți pe jos","3pl":"merg pe jos"},
+  "a vedea / a privi":{"1sg":"văd",     "2sg":"vezi",       "3sg":"vede",        "1pl":"vedem",       "2pl":"vedeți",       "3pl":"văd"},
+  "a învăța":       {"1sg":"învăț",     "2sg":"înveți",     "3sg":"învață",      "1pl":"învățăm",     "2pl":"învățați",     "3pl":"învață"},
+  "a cumpăra":      {"1sg":"cumpăr",    "2sg":"cumperi",    "3sg":"cumpără",     "1pl":"cumpărăm",    "2pl":"cumpărați",    "3pl":"cumpără"},
+  "a da":           {"1sg":"dau",       "2sg":"dai",        "3sg":"dă",          "1pl":"dăm",         "2pl":"dați",         "3pl":"dau"},
+  "a primi":        {"1sg":"primesc",   "2sg":"primești",   "3sg":"primește",    "1pl":"primim",      "2pl":"primiți",      "3pl":"primesc"},
+  "a lucra":        {"1sg":"lucrez",    "2sg":"lucrezi",    "3sg":"lucrează",    "1pl":"lucrăm",      "2pl":"lucrați",      "3pl":"lucrează"},
+  "a studia":       {"1sg":"studiez",   "2sg":"studiezi",   "3sg":"studiază",    "1pl":"studiem",     "2pl":"studiați",     "3pl":"studiază"},
+  "a găti":         {"1sg":"gătesc",    "2sg":"gătești",    "3sg":"gătește",     "1pl":"gătim",       "2pl":"gătiți",       "3pl":"gătesc"},
+  "a face curat":   {"1sg":"fac curat", "2sg":"faci curat", "3sg":"face curat",  "1pl":"facem curat", "2pl":"faceți curat", "3pl":"fac curat"},
+  "a pregăti":      {"1sg":"pregătesc", "2sg":"pregătești", "3sg":"pregătește",  "1pl":"pregătim",    "2pl":"pregătiți",    "3pl":"pregătesc"},
+  "a ajuta":        {"1sg":"ajut",      "2sg":"ajuți",      "3sg":"ajută",       "1pl":"ajutăm",      "2pl":"ajutați",      "3pl":"ajută"},
+  "a folosi":       {"1sg":"folosesc",  "2sg":"folosești",  "3sg":"folosește",   "1pl":"folosim",     "2pl":"folosiți",     "3pl":"folosesc"},
+  "a fi necesar":   {"1sg":"am nevoie", "2sg":"ai nevoie",  "3sg":"e necesar",   "1pl":"avem nevoie", "2pl":"aveți nevoie", "3pl":"e necesar"},
+  "a plăcea":       {"1sg":"îmi place", "2sg":"îți place",  "3sg":"îi place",    "1pl":"ne place",    "2pl":"vă place",     "3pl":"le place"},
+  "a nu plăcea":    {"1sg":"nu îmi place","2sg":"nu îți place","3sg":"nu îi place","1pl":"nu ne place","2pl":"nu vă place",  "3pl":"nu le place"},
+  "a aștepta":      {"1sg":"aștept",    "2sg":"aștepți",    "3sg":"așteaptă",    "1pl":"așteptăm",    "2pl":"așteptați",    "3pl":"așteaptă"},
+  "a se odihni":    {"1sg":"mă odihnesc","2sg":"te odihnești","3sg":"se odihnește","1pl":"ne odihnim", "2pl":"vă odihniți",  "3pl":"se odihnesc"},
+  "a se întâlni":   {"1sg":"mă întâlnesc","2sg":"te întâlnești","3sg":"se întâlnește","1pl":"ne întâlnim","2pl":"vă întâlniți","3pl":"se întâlnesc"},
+  "a alerga":       {"1sg":"alerg",     "2sg":"alergi",     "3sg":"aleargă",     "1pl":"alergăm",     "2pl":"alergați",     "3pl":"aleargă"},
+  "a se așeza":     {"1sg":"mă așez",   "2sg":"te așezi",   "3sg":"se așează",   "1pl":"ne așezăm",   "2pl":"vă așezați",   "3pl":"se așează"},
+  "a sta în picioare":{"1sg":"stau",    "2sg":"stai",       "3sg":"stă",         "1pl":"stăm",        "2pl":"stați",        "3pl":"stau"},
+  "a decide":       {"1sg":"decid",     "2sg":"decizi",     "3sg":"decide",      "1pl":"decidem",     "2pl":"decideți",     "3pl":"decid"},
+  "a propune":      {"1sg":"propun",    "2sg":"propui",     "3sg":"propune",     "1pl":"propunem",    "2pl":"propuneți",    "3pl":"propun"},
+  "a transmite":    {"1sg":"transmit",  "2sg":"transmiți",  "3sg":"transmite",   "1pl":"transmitem",  "2pl":"transmiteți",  "3pl":"transmit"},
+  "a menține":      {"1sg":"mențin",    "2sg":"menții",     "3sg":"menține",     "1pl":"menținem",    "2pl":"mențineți",    "3pl":"mențin"},
+  "a se produce":   {"1sg":"se produce","2sg":"se produce", "3sg":"se produce",  "1pl":"se produce",  "2pl":"se produce",   "3pl":"se produc"},
+  "a crește":       {"1sg":"cresc",     "2sg":"crești",     "3sg":"crește",      "1pl":"creștem",     "2pl":"creșteți",     "3pl":"cresc"},
+  "a scădea":       {"1sg":"scad",      "2sg":"scazi",      "3sg":"scade",       "1pl":"scădem",      "2pl":"scădeți",      "3pl":"scad"},
+  "a recunoaște":   {"1sg":"recunosc",  "2sg":"recunoști",  "3sg":"recunoaște",  "1pl":"recunoaștem", "2pl":"recunoașteți", "3pl":"recunosc"},
+  "a analiza":      {"1sg":"analizez",  "2sg":"analizezi",  "3sg":"analizează",  "1pl":"analizăm",    "2pl":"analizați",    "3pl":"analizează"},
+  "a observa":      {"1sg":"observ",    "2sg":"observi",    "3sg":"observă",     "1pl":"observăm",    "2pl":"observați",    "3pl":"observă"},
+  "a rezolva":      {"1sg":"rezolv",    "2sg":"rezolvi",    "3sg":"rezolvă",     "1pl":"rezolvăm",    "2pl":"rezolvați",    "3pl":"rezolvă"},
+  "a cerceta":      {"1sg":"cercetez",  "2sg":"cercetezi",  "3sg":"cercetează",  "1pl":"cercetăm",    "2pl":"cercetați",    "3pl":"cercetează"},
+  "a colabora":     {"1sg":"colaborez", "2sg":"colaborezi", "3sg":"colaborează", "1pl":"colaborăm",   "2pl":"colaborați",   "3pl":"colaborează"},
+  "a solicita":     {"1sg":"solicit",   "2sg":"soliciți",   "3sg":"solicită",    "1pl":"solicităm",   "2pl":"solicitați",   "3pl":"solicită"},
+  "a satisface":    {"1sg":"satisfac",  "2sg":"satisfaci",  "3sg":"satisface",   "1pl":"satisfacem",  "2pl":"satisfaceți",  "3pl":"satisfac"},
+  "a compara":      {"1sg":"compar",    "2sg":"compari",    "3sg":"compară",     "1pl":"comparăm",    "2pl":"comparați",    "3pl":"compară"},
+  "a explica":      {"1sg":"explic",    "2sg":"explici",    "3sg":"explică",     "1pl":"explicăm",    "2pl":"explicați",    "3pl":"explică"},
+  "a anticipa":     {"1sg":"anticipez", "2sg":"anticipezi", "3sg":"anticipează", "1pl":"anticipăm",   "2pl":"anticipați",   "3pl":"anticipează"},
+};
+
+const RO_PARTICIPLES = {
+  "a merge":"mers","a veni":"venit","a mânca":"mâncat","a bea":"băut",
+  "a citi":"citit","a scrie":"scris","a merge pe jos":"mers pe jos",
+  "a vedea / a privi":"văzut","a învăța":"învățat","a cumpăra":"cumpărat",
+  "a da":"dat","a primi":"primit","a lucra":"lucrat","a studia":"studiat",
+  "a găti":"gătit","a face curat":"făcut curat","a pregăti":"pregătit",
+  "a ajuta":"ajutat","a folosi":"folosit","a fi necesar":"fost necesar",
+  "a plăcea":"plăcut","a nu plăcea":"displăcut","a aștepta":"așteptat",
+  "a se odihni":"odihnit","a se întâlni":"întâlnit","a alerga":"alergat",
+  "a se așeza":"așezat","a sta în picioare":"stat în picioare",
+  "a decide":"decis","a propune":"propus","a transmite":"transmis",
+  "a menține":"menținut","a se produce":"produs","a crește":"crescut",
+  "a scădea":"scăzut","a recunoaște":"recunoscut","a analiza":"analizat",
+  "a observa":"observat","a rezolva":"rezolvat","a cerceta":"cercetat",
+  "a colabora":"colaborat","a solicita":"solicitat","a satisface":"satisfăcut",
+  "a compara":"comparat","a explica":"explicat","a anticipa":"anticipat",
 };
 
 function stripInfinitive(roVerb){
@@ -786,33 +840,86 @@ function roAgreeVerb(roVerbInf, subjKo){
   return stripInfinitive(roVerbInf);
 }
 
+function buildCompoundPast(roVerbInf, subjKo){
+  const person = roPersonFromSubjectKo(subjKo);
+  const inf = (roVerbInf || "").trim().toLowerCase();
+  const part = RO_PARTICIPLES[inf] || (stripInfinitive(roVerbInf) + "t");
+  const isRefl = inf.startsWith("a se ");
+  if(isRefl){
+    const ra = {"1sg":"m-am","2sg":"te-ai","3sg":"s-a","1pl":"ne-am","2pl":"v-ați","3pl":"s-au"};
+    return (ra[person] || "s-a") + " " + part;
+  }
+  const aux = {"1sg":"am","2sg":"ai","3sg":"a","1pl":"am","2pl":"ați","3pl":"au"};
+  return (aux[person] || "a") + " " + part;
+}
+
+function buildFuture(roVerbInf, subjKo){
+  const person = roPersonFromSubjectKo(subjKo);
+  const inf = (roVerbInf || "").trim().toLowerCase();
+  const isRefl = inf.startsWith("a se ");
+  const base = stripInfinitive(roVerbInf).replace(/^se\s+/i, "");
+  if(isRefl){
+    const rf = {"1sg":"mă voi","2sg":"te vei","3sg":"se va","1pl":"ne vom","2pl":"vă veți","3pl":"se vor"};
+    return (rf[person] || "se va") + " " + base;
+  }
+  const aux = {"1sg":"voi","2sg":"vei","3sg":"va","1pl":"vom","2pl":"veți","3pl":"vor"};
+  return (aux[person] || "va") + " " + stripInfinitive(roVerbInf);
+}
+
 function buildRoVerbPhrase(roVerbInf, cj, subjKo){
   const v = roAgreeVerb(roVerbInf, subjKo);
+  const inf = (roVerbInf || "").trim().toLowerCase();
 
   if(!cj) return v;
 
   const map = {
-    "-아요/어요": vv => `${vv}`,
-    "-았어요/었어요": vv => `${vv} (în trecut)`,
-    "-고 있어요": vv => `${vv} acum`,
-    "-고 싶어요": vv => `vreau să ${vv}`,
-    "-(으)ㄹ 거예요": vv => `voi ${vv}`,
-    "-지 마세요": vv => `nu ${vv}, te rog`,
-    "-아/어야 돼요": vv => `trebuie să ${vv}`,
-    "-(으)ㄹ 수 있어요": vv => `pot să ${vv}`,
-    "-(으)ㄹ 수 없어요": vv => `nu pot să ${vv}`,
-    "-기 전에": vv => `înainte să ${vv}`,
-    "-고 나서": vv => `după ce ${vv}`,
-    "-(으)면서": vv => `în timp ce ${vv}`,
-    "-(으)ㄹ까요?": vv => `să ${vv}?`,
-    "-고": vv => `${vv} și`
+    "-아요/어요":         ()  => v,
+    "-았어요/었어요":     ()  => buildCompoundPast(roVerbInf, subjKo),
+    "-고 있어요":         ()  => v + " acum",
+    "-고 싶어요":         ()  => "vreau să " + stripInfinitive(roVerbInf),
+    "-(으)ㄹ 거예요":     ()  => buildFuture(roVerbInf, subjKo),
+    "-지 마세요":         ()  => "nu " + stripInfinitive(roVerbInf) + ", te rog",
+    "-아/어야 돼요":      ()  => "trebuie să " + stripInfinitive(roVerbInf),
+    "-(으)ㄹ 수 있어요":  ()  => "pot să " + stripInfinitive(roVerbInf),
+    "-(으)ㄹ 수 없어요":  ()  => "nu pot să " + stripInfinitive(roVerbInf),
+    "-기 전에":           ()  => "înainte să " + stripInfinitive(roVerbInf),
+    "-고 나서":           ()  => "după ce " + v,
+    "-(으)면서":          ()  => "în timp ce " + v,
+    "-(으)ㄹ까요?":       ()  => "să " + stripInfinitive(roVerbInf) + "?",
+    "-고":                ()  => v + " și",
+    "-(으)세요":          ()  => "vă rog " + stripInfinitive(roVerbInf),
+    "-더라고요":          ()  => "am observat că " + v,
+    "-네요":              ()  => "oh, " + v + "!",
+    "-군요":              ()  => "ah, " + v + "!",
+    "-(으)ㄹ게요":        ()  => "o să " + stripInfinitive(roVerbInf),
+    "-(으)ㄹ래요?":       ()  => "vrei să " + stripInfinitive(roVerbInf) + "?",
+    "-는 게 어때요?":     ()  => "ce-ar fi să " + stripInfinitive(roVerbInf) + "?",
+    "-는 중이에요":       ()  => v + " în acest moment",
+    "-아/어도 돼요":      ()  => "poți să " + stripInfinitive(roVerbInf),
+    "-(으)면 안 돼요":    ()  => "nu poți să " + stripInfinitive(roVerbInf),
+    "-(으)나":            ()  => "deși " + v,
+    "-(으)므로":          ()  => "deoarece " + v,
+    "-(으)ㄴ/는 반면에":  ()  => v + ", în schimb",
+    "-게 되다":           ()  => "ajungi să " + stripInfinitive(roVerbInf),
+    "-아/어지다":         ()  => "devine / " + v,
+    "-기 마련이다":       ()  => "e firesc să " + stripInfinitive(roVerbInf),
+    "-(으)ㄹ 뿐이다":     ()  => "doar " + stripInfinitive(roVerbInf),
+    "-(으)ㄹ수록":        ()  => "cu cât " + v + ", cu atât...",
+    "-(으)ㄹ지도 몰라요": ()  => "s-ar putea să " + stripInfinitive(roVerbInf),
+    "-(으)ㄹ지라도":      ()  => "chiar dacă " + v,
+    "-(으)ㄴ/는 만큼":    ()  => v + " în măsura în care",
+    "-(으)ㄴ/는데도":     ()  => "deși " + v,
+    "-도록 하다":         ()  => "fă astfel încât să " + stripInfinitive(roVerbInf),
+    "-고자 하다":         ()  => "intenționez să " + stripInfinitive(roVerbInf),
+    "-고 말다":           ()  => "a ajuns să " + stripInfinitive(roVerbInf),
+    "-길래":              ()  => "văzând că " + v,
+    "-기에":              ()  => "fiindcă " + v,
   };
 
   const fn = map[cj];
-  if(fn) return fn(v || "(verbul)");
+  if(fn) return fn();
 
-  const cjExp = translations.conjug?.[cj] || cj;
-  return (v ? v + " " : "") + `(${cjExp})`;
+  return v + " (" + (translations.conjug?.[cj] || cj) + ")";
 }
 
 
