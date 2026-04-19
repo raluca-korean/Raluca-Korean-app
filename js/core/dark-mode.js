@@ -14,8 +14,8 @@
     btn.textContent = isDark ? '☀️' : '🌙';
     btn.style.cssText = [
       'position:fixed',
-      'top:20px',
-      'right:20px',
+      'bottom:20px',
+      'left:20px',
       'width:44px',
       'height:44px',
       'border-radius:999px',
