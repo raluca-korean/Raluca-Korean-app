@@ -988,10 +988,6 @@
           <button id="btnRo" class="pill active" type="button">RO</button>
           <button id="btnEn" class="pill" type="button">EN</button>
 
-          <span class="pillSep">│</span>
-          <button id="btnTensePresent" class="pill active" type="button">Prez</button>
-          <button id="btnTensePast" class="pill" type="button">Trec</button>
-          <button id="btnTenseFuture" class="pill" type="button">Vii</button>
         </div>
       </div>
     </section>
@@ -1184,8 +1180,8 @@
   };
 
   var LEVEL_FIELDS = {
-    1: ['topic','object1','verb'],
-    2: ['topic','time','departure','object1','verb'],
+    1: ['topic','object1','verb','connector'],
+    2: ['topic','time','departure','object1','verb','connector'],
     3: ['topic','time','departure','object1','adverb','verb','connector'],
     4: ['topic','time','departure','object1','adverb','verb','connector'],
     5: ['topic','time','departure','object1','object2','adverb','verb','connector'],
@@ -1289,7 +1285,10 @@
       {id:'contrast1', key:'contrast1', ko:'지만', ro:'dar', en:'but', aliases:['dar','insa','însă','but','however']},
       {id:'contrast2', key:'contrast2', ko:'는데', ro:'iar', en:'while', aliases:['iar','while']},
       {id:'purpose', key:'purpose', ko:'(으)려고', ro:'ca să', en:'in order to', aliases:['ca sa','ca să','in order to']},
-      {id:'result', key:'result', ko:'게 되다', ro:'ajunge să', en:'end up', aliases:['ajunge sa','ajunge să','end up']}
+      {id:'result', key:'result', ko:'게 되다', ro:'ajunge să', en:'end up', aliases:['ajunge sa','ajunge să','end up']},
+      {id:'tense_pres', key:'tense_pres', ko:'-아요/어요',     ro:'prezent', en:'present', isTense:true, aliases:[]},
+      {id:'tense_past', key:'tense_past', ko:'-았어요/었어요',  ro:'trecut',  en:'past',    isTense:true, aliases:[]},
+      {id:'tense_fut',  key:'tense_fut',  ko:'-(으)ㄹ 거예요', ro:'viitor',  en:'future',  isTense:true, aliases:[]}
     ],
     numeral: [
       {ko:'', ro:'', en:'', aliases:[]},
@@ -1370,16 +1369,12 @@
     clauseList: document.getElementById('clauseList'),
     toast: document.getElementById('toast'),
     recordBox: document.getElementById('recordBox'),
-    recordedAudio: document.getElementById('recordedAudio'),
-    btnTensePresent: document.getElementById('btnTensePresent'),
-    btnTensePast: document.getElementById('btnTensePast'),
-    btnTenseFuture: document.getElementById('btnTenseFuture')
+    recordedAudio: document.getElementById('recordedAudio')
   };
 
   var state = {
     lang: 'ro',
     level: 1,
-    tense: 'present',
     text: '',
     clauses: []
   };
@@ -1538,7 +1533,7 @@
     return [];
   }
 
-  function getOptionsForField(fieldKey){
+  function getOptionsForField(fieldKey, isLast){
     var sourceKey = fieldKey;
     if(fieldKey === 'topic2') sourceKey = 'topic';
     if(fieldKey === 'adverb2') sourceKey = 'adverb';
@@ -1546,7 +1541,7 @@
     var appVocab = getAppVocab();
     var items = [];
 
-    if(appVocab){
+    if(appVocab && sourceKey !== 'connector'){
       var raw = firstExistingBucket(appVocab, globalBucketMap(sourceKey));
       if(raw && raw.length){
         items = normalizeList(raw, sourceKey);
@@ -1567,7 +1562,12 @@
       }else if(sourceKey === 'verb'){
         items = normalizeList(DATA.verb, 'verb');
       }else if(sourceKey === 'connector'){
-        items = normalizeList(DATA.connector, 'connector');
+        var all = normalizeList(DATA.connector, 'connector');
+        if(isLast){
+          items = all.filter(function(it){ return it.raw && it.raw.isTense; });
+        }else{
+          items = all.filter(function(it){ return !it.raw || !it.raw.isTense; });
+        }
       }else if(sourceKey === 'numeral'){
         items = normalizeList(DATA.numeral, 'numeral');
       }else if(sourceKey === 'quantifier'){
@@ -1772,8 +1772,8 @@
     return false;
   }
 
-  function getFirstUsableItem(fieldKey){
-    var options = getOptionsForField(fieldKey);
+  function getFirstUsableItem(fieldKey, isLast){
+    var options = getOptionsForField(fieldKey, isLast);
     if(!options.length) return null;
 
     if(fieldKey === 'connector'){
@@ -1864,7 +1864,8 @@
         clause.extras[fieldKey] = null;
       }
     }else{
-      var firstItem = getFirstUsableItem(fieldKey);
+      var isLastClause = clauseIndex === state.clauses.length - 1;
+      var firstItem = getFirstUsableItem(fieldKey, isLastClause);
       if(firstItem){
         setFieldItem(clause, fieldKey, firstItem);
         if(FIELD_BINDINGS[fieldKey]){
@@ -1881,11 +1882,12 @@
     var clause = state.clauses[clauseIndex];
     if(!clause) return;
 
-    var options = getOptionsForField(fieldKey);
+    var isLastClause = clauseIndex === state.clauses.length - 1;
+    var options = getOptionsForField(fieldKey, isLastClause);
     if(!options.length) return;
 
     if(!isFieldActive(clause, fieldKey)){
-      var firstItem = getFirstUsableItem(fieldKey);
+      var firstItem = getFirstUsableItem(fieldKey, isLastClause);
       if(firstItem){
         setFieldItem(clause, fieldKey, firstItem);
         if(FIELD_BINDINGS[fieldKey]){
@@ -1930,12 +1932,12 @@
     return 'third';
   }
 
-  function finiteVerbText(verb, lang, subjectKo){
+  function finiteVerbText(verb, lang, subjectKo, tense){
     if(!verb) return '';
     var hit = VERB_FINITE_MAP[verb.ko];
     var td  = VERB_TENSE_DATA[verb.ko];
     var role = subjectRoleFromKo(subjectKo || '');
-    var tense = state.tense || 'present';
+    tense = tense || 'present';
 
     if(tense === 'past' && td){
       if(lang === 'en'){
@@ -1978,16 +1980,15 @@
     var verb = itemOf(clause, 'verb');
     if(!verb || !verb.ko) return '';
 
-    var conj = window.Conjugation;
-    if(conj){
-      if(state.tense === 'past')   return conj.past(verb.ko);
-      if(state.tense === 'future') return conj.future(verb.ko);
-      return conj.present(verb.ko);
-    }
-
     var cKey = connectorKey(clause);
+    var conj = window.Conjugation;
+
+    if(cKey === 'tense_past') return conj ? conj.past(verb.ko)   : (verb.final || verb.ko);
+    if(cKey === 'tense_fut')  return conj ? conj.future(verb.ko) : (verb.final || verb.ko);
+    if(cKey === 'tense_pres') return conj ? conj.present(verb.ko): (verb.final || verb.ko);
+
     if(verb.forms && verb.forms[cKey]) return verb.forms[cKey];
-    return verb.final || verb.ko || '';
+    return conj ? conj.present(verb.ko) : (verb.final || verb.ko || '');
   }
 
   function buildClauseKorean(clause){
@@ -2048,7 +2049,9 @@
 
     if(verb){
       var topicKo = topic ? topic.ko : '';
-      parts.push(finiteVerbText(verb, state.lang, topicKo));
+      var cKeyTr = connectorKey(clause);
+      var tenseTr = cKeyTr === 'tense_past' ? 'past' : cKeyTr === 'tense_fut' ? 'future' : 'present';
+      parts.push(finiteVerbText(verb, state.lang, topicKo, tenseTr));
     }
 
     return cleanSentenceText(parts.join(' '));
@@ -2136,10 +2139,6 @@
     if(els.btnRo) els.btnRo.classList.toggle('active', state.lang === 'ro');
     if(els.btnEn) els.btnEn.classList.toggle('active', state.lang === 'en');
 
-    if(els.btnTensePresent) els.btnTensePresent.classList.toggle('active', state.tense === 'present');
-    if(els.btnTensePast)    els.btnTensePast.classList.toggle('active',    state.tense === 'past');
-    if(els.btnTenseFuture)  els.btnTenseFuture.classList.toggle('active',  state.tense === 'future');
-
     if(els.freeText){
       els.freeText.placeholder = currentUI().placeholder;
     }
@@ -2173,11 +2172,6 @@
     renderAll();
   }
 
-  function setTense(tense){
-    state.tense = tense;
-    renderAll();
-  }
-
   function setLevel(level){
     level = Number(level);
     if(!level || level < 1 || level > 6) level = 1;
@@ -2196,7 +2190,8 @@
     if(state.level >= 3){
       for(var i=0;i<state.clauses.length;i++){
         var conn = itemOf(state.clauses[i], 'connector');
-        if(conn && conn.key && conn.key !== 'none'){
+        var connKey3 = conn ? (conn.key || conn.id || '') : '';
+        if(conn && connKey3 && connKey3 !== 'none' && connKey3.indexOf('tense_') !== 0){
           required = i + 2;
         }else{
           break;
@@ -2221,6 +2216,21 @@
         if(visible.indexOf(fieldKey) === -1){
           clearFieldFromClause(clause, fieldKey);
         }
+      }
+    }
+
+    // Auto-set tense_pres on the last clause if connector is missing/none
+    var lastClause = state.clauses[state.clauses.length - 1];
+    var lastConn = itemOf(lastClause, 'connector');
+    var lastConnKey = lastConn ? (lastConn.key || lastConn.id || '') : '';
+    if(!lastConnKey || lastConnKey === 'none'){
+      var tensePres = null;
+      for(var t=0;t<DATA.connector.length;t++){
+        if(DATA.connector[t].id === 'tense_pres'){ tensePres = DATA.connector[t]; break; }
+      }
+      if(tensePres){
+        var tpIdx = DATA.connector.indexOf(tensePres);
+        setFieldItem(lastClause, 'connector', normalizeItem(tensePres, 'connector', tpIdx));
       }
     }
   }
@@ -2399,7 +2409,10 @@
       return;
     }
 
-    state.tense = detectTenseFromText(raw);
+    var detectedTense = detectTenseFromText(raw);
+    var detectedTenseKey = detectedTense === 'past' ? 'tense_past'
+                         : detectedTense === 'future' ? 'tense_fut'
+                         : 'tense_pres';
 
     var segments = splitIntoSegments(raw);
     var clauses = [];
@@ -2444,6 +2457,17 @@
     }
 
     state.clauses = clauses.length ? clauses : [makeEmptyLayoutClause()];
+
+    // Set detected tense on last clause connector
+    var lastParsed = state.clauses[state.clauses.length - 1];
+    var tenseEntry = null;
+    for(var tt=0;tt<DATA.connector.length;tt++){
+      if(DATA.connector[tt].id === detectedTenseKey){ tenseEntry = DATA.connector[tt]; break; }
+    }
+    if(tenseEntry){
+      setFieldItem(lastParsed, 'connector', normalizeItem(tenseEntry, 'connector', DATA.connector.indexOf(tenseEntry)));
+    }
+
     ensureChainLength();
     renderAll();
   }
@@ -2674,18 +2698,6 @@
 
     if(els.btnEn){
       els.btnEn.addEventListener('click', function(){ setLang('en'); });
-    }
-
-    if(els.btnTensePresent){
-      els.btnTensePresent.addEventListener('click', function(){ setTense('present'); });
-    }
-
-    if(els.btnTensePast){
-      els.btnTensePast.addEventListener('click', function(){ setTense('past'); });
-    }
-
-    if(els.btnTenseFuture){
-      els.btnTenseFuture.addEventListener('click', function(){ setTense('future'); });
     }
 
     if(els.topicDropdown){
