@@ -11,7 +11,7 @@
     btn.id = 'darkToggle';
     btn.type = 'button';
     btn.setAttribute('aria-label', 'Toggle dark mode');
-    btn.textContent = isDark ? '☀️' : '🌙';
+    btn.textContent = isDark ? '🌙' : '☀️';
     btn.style.cssText = [
       'position:fixed',
       'bottom:20px',
@@ -35,7 +35,7 @@
     btn.addEventListener('click', function(){
       const nowDark = document.body.classList.toggle('dark-mode');
       localStorage.setItem('RK_THEME', nowDark ? 'dark' : 'light');
-      btn.textContent = nowDark ? '☀️' : '🌙';
+      btn.textContent = nowDark ? '🌙' : '☀️';
       btn.style.background = nowDark ? 'rgba(28,4,50,.95)' : 'rgba(255,255,255,.92)';
     });
 
