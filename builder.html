@@ -2209,15 +2209,13 @@
 
     var required = 1;
 
-    if(state.level >= 3){
-      for(var i=0;i<state.clauses.length;i++){
-        var conn = itemOf(state.clauses[i], 'connector');
-        var connKey3 = conn ? (conn.key || conn.id || '') : '';
-        if(conn && connKey3 && connKey3 !== 'none' && connKey3.indexOf('tense_') !== 0){
-          required = i + 2;
-        }else{
-          break;
-        }
+    for(var i=0;i<state.clauses.length;i++){
+      var conn = itemOf(state.clauses[i], 'connector');
+      var connKey3 = conn ? (conn.key || conn.id || '') : '';
+      if(conn && connKey3 && connKey3 !== 'none' && connKey3.indexOf('tense_') !== 0){
+        required = i + 2;
+      }else{
+        break;
       }
     }
 
@@ -2342,7 +2340,7 @@
       {key:'contrast1', phrases:['dar','insa','însă','but','however']},
       {key:'contrast2', phrases:['iar','while']},
       {key:'purpose', phrases:['ca sa','ca să','in order to']},
-      {key:'seq', phrases:['si apoi','și apoi','apoi','dupa aceea','după aceea','and then']}
+      {key:'seq', phrases:['si apoi','și apoi','dupa aceea','după aceea','and then','si','and']}
     ];
 
     for(var i=0;i<markers.length;i++){
@@ -2434,31 +2432,56 @@
                          : detectedTense === 'future' ? 'tense_fut'
                          : 'tense_pres';
 
-    // Always one clause from text — user adds extra clauses manually via connector column
-    var clause = makeEmptyLayoutClause();
-    clause.sourceText = raw;
+    // Split on connector markers; only create a clause for segments that have a verb
+    var segments = splitIntoSegments(raw);
+    var clauseData = [];
+    for(var s = 0; s < segments.length; s++){
+      var seg = segments[s];
+      var segVerb = findBestMatch('verb', seg.text);
+      if(segVerb) clauseData.push({ text: seg.text, connKey: seg.connector });
+    }
 
-    var subjects = findAllMatches('topic', raw, 2);
-    var times    = findAllMatches('time', raw, 1);
-    var places   = findAllMatches('departure', raw, 2);
-    var objects  = findAllMatches('object1', raw, 2);
-    var descs    = findAllMatches('adverb', raw, 2);
-    var verb     = findBestMatch('verb', raw);
+    // Fallback: treat whole text as one clause
+    if(!clauseData.length) clauseData = [{ text: raw, connKey: 'none' }];
 
-    if(subjects[0]) setFieldItem(clause, 'topic', subjects[0]);
-    if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
-    if(times[0])    setFieldItem(clause, 'time', times[0]);
-    if(places[0])   setFieldItem(clause, 'departure', places[0]);
-    if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
-    if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
-    if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
-    if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
-    if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
-    if(verb)        setFieldItem(clause, 'verb', verb);
+    // Build one clause per detected verb segment
+    var newClauses = [];
+    for(var ci = 0; ci < clauseData.length; ci++){
+      var cd = clauseData[ci];
+      var clause = makeEmptyLayoutClause();
+      clause.sourceText = cd.text;
 
-    // Preserve existing extra clauses (rows 2+) added manually by user
-    var existingExtra = state.clauses.slice(1);
-    state.clauses = [clause].concat(existingExtra);
+      var subjects = findAllMatches('topic', cd.text, 2);
+      var times    = findAllMatches('time', cd.text, 1);
+      var places   = findAllMatches('departure', cd.text, 2);
+      var objects  = findAllMatches('object1', cd.text, 2);
+      var descs    = findAllMatches('adverb', cd.text, 2);
+      var verb     = findBestMatch('verb', cd.text);
+
+      if(subjects[0]) setFieldItem(clause, 'topic', subjects[0]);
+      if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
+      if(times[0])    setFieldItem(clause, 'time', times[0]);
+      if(places[0])   setFieldItem(clause, 'departure', places[0]);
+      if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
+      if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
+      if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
+      if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
+      if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
+      if(verb)        setFieldItem(clause, 'verb', verb);
+
+      // Set clause connector for intermediate clauses (not the last)
+      if(ci < clauseData.length - 1 && cd.connKey && cd.connKey !== 'none'){
+        var connItem = null; var connIdx = 0;
+        for(var k = 0; k < DATA.connector.length; k++){
+          if(DATA.connector[k].key === cd.connKey){ connItem = DATA.connector[k]; connIdx = k; break; }
+        }
+        if(connItem) setFieldItem(clause, 'connector', normalizeItem(connItem, 'connector', connIdx));
+      }
+
+      newClauses.push(clause);
+    }
+
+    state.clauses = newClauses;
 
     // Set detected tense on the last clause
     var lastParsed = state.clauses[state.clauses.length - 1];
