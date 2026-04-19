@@ -2446,6 +2446,7 @@
 
     // Build one clause per detected verb segment
     var newClauses = [];
+    var lastSubjectKo = null;
     for(var ci = 0; ci < clauseData.length; ci++){
       var cd = clauseData[ci];
       var clause = makeEmptyLayoutClause();
@@ -2458,7 +2459,11 @@
       var descs    = findAllMatches('adverb', cd.text, 2);
       var verb     = findBestMatch('verb', cd.text);
 
-      if(subjects[0]) setFieldItem(clause, 'topic', subjects[0]);
+      // Topic drop: only set subject if different from previous clause's subject
+      if(subjects[0] && subjects[0].ko !== lastSubjectKo){
+        setFieldItem(clause, 'topic', subjects[0]);
+        lastSubjectKo = subjects[0].ko;
+      }
       if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
       if(times[0])    setFieldItem(clause, 'time', times[0]);
       if(places[0])   setFieldItem(clause, 'departure', places[0]);
