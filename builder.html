@@ -1564,7 +1564,10 @@
       }else if(sourceKey === 'connector'){
         var all = normalizeList(DATA.connector, 'connector');
         if(isLast){
-          items = all; // last clause: tense endings + clause connectors
+          // Tense endings first (cycling starts here), then clause connectors; exclude 'none'
+          var tenseOpts  = all.filter(function(it){ return it.raw && it.raw.isTense; });
+          var clauseOpts = all.filter(function(it){ return it.key !== 'none' && (!it.raw || !it.raw.isTense); });
+          items = tenseOpts.concat(clauseOpts);
         }else{
           items = all.filter(function(it){ return !it.raw || !it.raw.isTense; });
         }
@@ -1985,7 +1988,20 @@
 
     if(cKey === 'tense_past') return conj ? conj.past(verb.ko)   : (verb.final || verb.ko);
     if(cKey === 'tense_fut')  return conj ? conj.future(verb.ko) : (verb.final || verb.ko);
-    if(cKey === 'tense_pres') return conj ? conj.present(verb.ko): (verb.final || verb.ko);
+    if(cKey === 'tense_pres' || cKey === 'none') return conj ? conj.present(verb.ko) : (verb.final || verb.ko);
+
+    // Clause connectors — return verb in connector form (stem + suffix)
+    if(conj){
+      var stem = conj.stem(verb.ko);
+      if(cKey === 'seq')       return conj.connector(verb.ko, '-고');
+      if(cKey === 'cause1')    return conj.connector(verb.ko, '-아/어서');
+      if(cKey === 'cause2')    return conj.connector(verb.ko, '-(으)니까');
+      if(cKey === 'contrast1') return conj.connector(verb.ko, '-지만');
+      if(cKey === 'contrast2') return conj.connector(verb.ko, '-(으)ㄴ/는데');
+      if(cKey === 'condition') return conj.hasBatchim(stem) ? stem + '으면' : stem + '면';
+      if(cKey === 'purpose')   return conj.hasBatchim(stem) ? stem + '으려고' : stem + '려고';
+      if(cKey === 'result')    return conj.aeo(verb.ko) + '서 그렇게 되다';
+    }
 
     if(verb.forms && verb.forms[cKey]) return verb.forms[cKey];
     return conj ? conj.present(verb.ko) : (verb.final || verb.ko || '');
@@ -2052,6 +2068,12 @@
       var cKeyTr = connectorKey(clause);
       var tenseTr = cKeyTr === 'tense_past' ? 'past' : cKeyTr === 'tense_fut' ? 'future' : 'present';
       parts.push(finiteVerbText(verb, state.lang, topicKo, tenseTr));
+      // For clause connectors, append connector translation word
+      var connItem = itemOf(clause, 'connector');
+      if(connItem && connItem.raw && !connItem.raw.isTense && connItem.key !== 'none'){
+        var connTr = state.lang === 'en' ? (connItem.en || '') : (connItem.ro || '');
+        if(connTr) parts.push(connTr);
+      }
     }
 
     return cleanSentenceText(parts.join(' '));
@@ -2070,7 +2092,7 @@
 
     return {
       korean: cleanSentenceText(ko.join(' ')),
-      translation: cleanSentenceText(tr.join(', '))
+      translation: cleanSentenceText(tr.join(' '))
     };
   }
 
@@ -2219,11 +2241,9 @@
       }
     }
 
-    // Auto-set tense_pres on the last clause if connector is missing/none
+    // Auto-set tense_pres on the last clause only if connector is completely unset
     var lastClause = state.clauses[state.clauses.length - 1];
-    var lastConn = itemOf(lastClause, 'connector');
-    var lastConnKey = lastConn ? (lastConn.key || lastConn.id || '') : '';
-    if(!lastConnKey || lastConnKey === 'none'){
+    if(!lastClause.connector || !lastClause.connector.enabled){
       var tensePres = null;
       for(var t=0;t<DATA.connector.length;t++){
         if(DATA.connector[t].id === 'tense_pres'){ tensePres = DATA.connector[t]; break; }
@@ -2520,7 +2540,8 @@
 
     pickerState.clauseIndex = clauseIndex;
     pickerState.fieldKey = fieldKey;
-    pickerState.items = getOptionsForField(fieldKey);
+    var isLastClause = clauseIndex === state.clauses.length - 1;
+    pickerState.items = getOptionsForField(fieldKey, isLastClause);
 
     var root = document.getElementById('vocabSheet');
     var title = document.getElementById('vocabSheetTitle');
