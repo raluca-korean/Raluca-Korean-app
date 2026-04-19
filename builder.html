@@ -2410,62 +2410,45 @@
     }
 
     var detectedTense = detectTenseFromText(raw);
-    var detectedTenseKey = detectedTense === 'past' ? 'tense_past'
+    var detectedTenseKey = detectedTense === 'past'   ? 'tense_past'
                          : detectedTense === 'future' ? 'tense_fut'
                          : 'tense_pres';
 
-    var segments = splitIntoSegments(raw);
-    var clauses = [];
-    for(var i=0;i<segments.length;i++){
-      var seg = segments[i];
-      var clause = makeEmptyLayoutClause();
-      clause.sourceText = seg.text || '';
+    // Always one clause from text — user adds extra clauses manually via connector column
+    var clause = makeEmptyLayoutClause();
+    clause.sourceText = raw;
 
-      var subjects = findAllMatches('topic', seg.text, 2);
-      var times = findAllMatches('time', seg.text, 1);
-      var places = findAllMatches('departure', seg.text, 2);
-      var objects = findAllMatches('object1', seg.text, 2);
-      var descs = findAllMatches('adverb', seg.text, 2);
-      var verb = findBestMatch('verb', seg.text);
-      var connector = normalizeItem(
-        (DATA.connector.filter(function(item){ return item.key === seg.connector; })[0] || DATA.connector[0]),
-        'connector',
-        0
-      );
+    var subjects = findAllMatches('topic', raw, 2);
+    var times    = findAllMatches('time', raw, 1);
+    var places   = findAllMatches('departure', raw, 2);
+    var objects  = findAllMatches('object1', raw, 2);
+    var descs    = findAllMatches('adverb', raw, 2);
+    var verb     = findBestMatch('verb', raw);
 
-      if(subjects[0]) setFieldItem(clause, 'topic', subjects[0]);
-      if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
+    if(subjects[0]) setFieldItem(clause, 'topic', subjects[0]);
+    if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
+    if(times[0])    setFieldItem(clause, 'time', times[0]);
+    if(places[0])   setFieldItem(clause, 'departure', places[0]);
+    if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
+    if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
+    if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
+    if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
+    if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
+    if(verb)        setFieldItem(clause, 'verb', verb);
 
-      if(times[0]) setFieldItem(clause, 'time', times[0]);
+    // Preserve existing extra clauses (rows 2+) added manually by user
+    var existingExtra = state.clauses.slice(1);
+    state.clauses = [clause].concat(existingExtra);
 
-      if(places[0]) setFieldItem(clause, 'departure', places[0]);
-      if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
-
-      if(objects[0]) setFieldItem(clause, 'object1', objects[0]);
-      if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
-
-      if(descs[0]) setFieldItem(clause, 'adverb', descs[0]);
-      if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
-
-      if(verb) setFieldItem(clause, 'verb', verb);
-
-      if(state.level >= 3){
-        setFieldItem(clause, 'connector', connector);
-      }
-
-      clauses.push(clause);
-    }
-
-    state.clauses = clauses.length ? clauses : [makeEmptyLayoutClause()];
-
-    // Set detected tense on last clause connector
+    // Set detected tense on the last clause
     var lastParsed = state.clauses[state.clauses.length - 1];
     var tenseEntry = null;
-    for(var tt=0;tt<DATA.connector.length;tt++){
+    for(var tt = 0; tt < DATA.connector.length; tt++){
       if(DATA.connector[tt].id === detectedTenseKey){ tenseEntry = DATA.connector[tt]; break; }
     }
     if(tenseEntry){
-      setFieldItem(lastParsed, 'connector', normalizeItem(tenseEntry, 'connector', DATA.connector.indexOf(tenseEntry)));
+      setFieldItem(lastParsed, 'connector',
+        normalizeItem(tenseEntry, 'connector', DATA.connector.indexOf(tenseEntry)));
     }
 
     ensureChainLength();
