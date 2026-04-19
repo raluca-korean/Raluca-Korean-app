@@ -9,32 +9,47 @@ window.Conjugation = {
   },
 
   // =====================
-  // HANGUL
+  // HANGUL DECOMPOSE / BATCHIM
   // =====================
   decompose(char){
     const code = char.charCodeAt(0);
-
     if(code < 44032 || code > 55203) return null;
-
     const base = code - 44032;
-
     return {
       vowel: Math.floor((base % 588) / 28),
-      jong: base % 28
+      jong:  base % 28
     };
   },
 
   hasBatchim(word){
     if(!word) return false;
-
     const code = word.charCodeAt(word.length - 1);
     if(code < 44032 || code > 55203) return false;
-
     return (code - 44032) % 28 !== 0;
   },
 
+  // Fuse ㄹ (jong=8) into last syllable (only when no existing batchim)
+  addBatchimR(word){
+    if(!word) return word;
+    const code = word.charCodeAt(word.length - 1);
+    if(code < 44032 || code > 55203) return word;
+    const base = code - 44032;
+    if(base % 28 !== 0) return word;
+    return word.slice(0, -1) + String.fromCharCode(44032 + base + 8);
+  },
+
+  // Fuse ㅆ (jong=20) into last syllable (only when no existing batchim)
+  addBatchimSS(word){
+    if(!word) return word;
+    const code = word.charCodeAt(word.length - 1);
+    if(code < 44032 || code > 55203) return word;
+    const base = code - 44032;
+    if(base % 28 !== 0) return word;
+    return word.slice(0, -1) + String.fromCharCode(44032 + base + 20);
+  },
+
   // =====================
-  // IRREGULAR SYSTEM (COMPLET)
+  // IRREGULAR MAPS
   // =====================
   irregularPresent: {
     "하다":"해요","가다":"가요","오다":"와요","보다":"봐요","마시다":"마셔요",
@@ -69,24 +84,26 @@ window.Conjugation = {
     "예쁘다":"예뻤어요","아프다":"아팠어요"
   },
 
+  // ㄷ-irregular and other special future forms
+  irregularFuture: {
+    "듣다":"들을 거예요","걷다":"걸을 거예요","묻다":"물을 거예요",
+    "돕다":"도울 거예요","눕다":"누울 거예요"
+  },
+
   // =====================
-  // A/EO ENGINE REAL
+  // A/EO ENGINE
   // =====================
   aeo(verb){
-
     if(verb === "하다") return "해";
-
     const stem = this.stem(verb);
+    // 하다 compounds: 공부하다 → 공부해
+    if(stem.endsWith("하")) return stem.slice(0, -1) + "해";
     const d = this.decompose(stem.at(-1));
-
     if(!d) return stem + "어";
-
-    const bright = [0,1,2,3,8];
-
+    const bright = [0, 1, 2, 3, 8];
     if(d.jong === 0){
       return stem + (bright.includes(d.vowel) ? "아" : "어");
     }
-
     return stem + "어";
   },
 
@@ -94,13 +111,16 @@ window.Conjugation = {
   // PRESENT
   // =====================
   present(verb){
-
     if(!verb) return "";
-
-    if(this.irregularPresent[verb]){
-      return this.irregularPresent[verb];
+    if(this.irregularPresent[verb]) return this.irregularPresent[verb];
+    const stem = this.stem(verb);
+    // 하다 compounds: 공부하다 → 공부해요
+    if(stem.endsWith("하")) return stem.slice(0, -1) + "해요";
+    const d = this.decompose(stem.at(-1));
+    // ㅏ/ㅑ vowel, no batchim: drop duplicate → 만나요, 사요
+    if(d && d.jong === 0 && (d.vowel === 0 || d.vowel === 2)){
+      return stem + "요";
     }
-
     return this.aeo(verb) + "요";
   },
 
@@ -108,76 +128,61 @@ window.Conjugation = {
   // PAST
   // =====================
   past(verb){
-
     if(!verb) return "";
-
-    if(this.irregularPast[verb]){
-      return this.irregularPast[verb];
+    if(this.irregularPast[verb]) return this.irregularPast[verb];
+    const stem = this.stem(verb);
+    // 하다 compounds: 공부하다 → 공부했어요
+    if(stem.endsWith("하")) return stem.slice(0, -1) + "했어요";
+    const d = this.decompose(stem.at(-1));
+    if(!d) return stem + "었어요";
+    // ㅏ/ㅑ vowel, no batchim: fuse ㅆ → 만났어요, 샀어요
+    if(d.jong === 0 && (d.vowel === 0 || d.vowel === 2)){
+      return this.addBatchimSS(stem) + "어요";
     }
-
+    // General case via aeo
     const base = this.aeo(verb);
-
-    if(base.endsWith("아")){
-      return base.slice(0,-1) + "았어요";
-    }
-
-    return base.slice(0,-1) + "었어요";
+    if(base.endsWith("아")) return base.slice(0, -1) + "았어요";
+    return base.slice(0, -1) + "었어요";
   },
 
   // =====================
   // FUTURE
   // =====================
   future(verb){
-
+    if(!verb) return "";
+    if(this.irregularFuture[verb]) return this.irregularFuture[verb];
     const stem = this.stem(verb);
-
-    return this.hasBatchim(stem)
-      ? stem + "을 거예요"
-      : stem + "ㄹ 거예요";
+    // 하다 compounds: 공부하다 → 공부할 거예요
+    if(stem.endsWith("하")) return stem.slice(0, -1) + "할 거예요";
+    const d = this.decompose(stem.at(-1));
+    if(!d) return stem + "을 거예요";
+    // ㄹ batchim (jong=8): already ends in ㄹ → 만들 거예요, 살 거예요
+    if(d.jong === 8) return stem + " 거예요";
+    // other batchim: add 을 → 먹을 거예요, 읽을 거예요
+    if(d.jong !== 0) return stem + "을 거예요";
+    // no batchim: fuse ㄹ into stem → 갈 거예요, 올 거예요, 만날 거예요
+    return this.addBatchimR(stem) + " 거예요";
   },
 
   // =====================
   // CONNECTORS (TOPIK)
   // =====================
   connector(verb, cj){
-
     const stem = this.stem(verb);
-
     switch(cj){
-
-      case "-고": return stem + "고";
-      case "-고 나서": return stem + "고 나서";
-      case "-기 전에": return stem + "기 전에";
-
-      case "-(으)면서":
-        return this.hasBatchim(stem) ? stem + "으면서" : stem + "면서";
-
-      case "-(으)니까":
-        return this.hasBatchim(stem) ? stem + "으니까" : stem + "니까";
-
-      case "-(으)ㄴ/는데":
-        return this.hasBatchim(stem) ? stem + "는데" : stem + "ㄴ데";
-
-      case "-(으)ㄹ수록":
-        return this.hasBatchim(stem) ? stem + "을수록" : stem + "ㄹ수록";
-
-      case "-지만":
-        return stem + "지만";
-
-      case "-아/어도":
-        return this.aeo(verb) + "도";
-
-      case "-아/어서":
-        return this.aeo(verb) + "서";
-
-      case "-기에":
-        return stem + "기에";
-
-      case "-길래":
-        return stem + "길래";
-
-      default:
-        return null;
+      case "-고":         return stem + "고";
+      case "-고 나서":    return stem + "고 나서";
+      case "-기 전에":    return stem + "기 전에";
+      case "-(으)면서":   return this.hasBatchim(stem) ? stem + "으면서" : stem + "면서";
+      case "-(으)니까":   return this.hasBatchim(stem) ? stem + "으니까" : stem + "니까";
+      case "-(으)ㄴ/는데":return this.hasBatchim(stem) ? stem + "는데"   : stem + "ㄴ데";
+      case "-(으)ㄹ수록": return this.hasBatchim(stem) ? stem + "을수록" : stem + "ㄹ수록";
+      case "-지만":       return stem + "지만";
+      case "-아/어도":    return this.aeo(verb) + "도";
+      case "-아/어서":    return this.aeo(verb) + "서";
+      case "-기에":       return stem + "기에";
+      case "-길래":       return stem + "길래";
+      default:            return null;
     }
   },
 
@@ -185,35 +190,21 @@ window.Conjugation = {
   // FINAL ENDINGS
   // =====================
   ending(verb, cj){
-
     const stem = this.stem(verb);
-
     switch(cj){
-
-      case "-아요/어요": return this.present(verb);
-      case "-았어요/었어요": return this.past(verb);
-      case "-(으)ㄹ 거예요": return this.future(verb);
-
-      case "-고 있어요": return stem + "고 있어요";
-      case "-고 싶어요": return stem + "고 싶어요";
-
-      case "-아/어 주세요": return this.aeo(verb) + " 주세요";
-      case "-아/어야 돼요": return this.aeo(verb) + "야 돼요";
-      case "-아/어도 돼요": return this.aeo(verb) + "도 돼요";
-
-      case "-겠어요": return stem + "겠어요";
-
-      case "-(으)ㄹ게요":
-        return this.future(verb).replace(" 거예요","게요");
-
-      case "-(으)ㄹ까요?":
-        return this.future(verb).replace(" 거예요","까요?");
-
-      case "-(으)ㄹ래요?":
-        return this.future(verb).replace(" 거예요","래요?");
-
-      default:
-        return this.present(verb);
+      case "-아요/어요":      return this.present(verb);
+      case "-았어요/었어요":  return this.past(verb);
+      case "-(으)ㄹ 거예요":  return this.future(verb);
+      case "-고 있어요":      return stem + "고 있어요";
+      case "-고 싶어요":      return stem + "고 싶어요";
+      case "-아/어 주세요":   return this.aeo(verb) + " 주세요";
+      case "-아/어야 돼요":   return this.aeo(verb) + "야 돼요";
+      case "-아/어도 돼요":   return this.aeo(verb) + "도 돼요";
+      case "-겠어요":         return stem + "겠어요";
+      case "-(으)ㄹ게요":     return this.future(verb).replace(" 거예요", "게요");
+      case "-(으)ㄹ까요?":    return this.future(verb).replace(" 거예요", "까요?");
+      case "-(으)ㄹ래요?":    return this.future(verb).replace(" 거예요", "래요?");
+      default:                return this.present(verb);
     }
   },
 
@@ -221,14 +212,11 @@ window.Conjugation = {
   // ENGINE FINAL
   // =====================
   buildVerbPhrase(verb, cj, isFinal = true){
-
     if(!verb) return "";
-
     if(!isFinal){
       const link = this.connector(verb, cj);
       if(link) return link;
     }
-
     return this.ending(verb, cj);
   }
 
