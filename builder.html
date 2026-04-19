@@ -164,6 +164,14 @@
     box-shadow:0 10px 24px rgba(219,39,119,.35);
   }
 
+  .pillSep{
+    color:var(--line2);
+    font-size:16px;
+    opacity:.4;
+    margin:0 2px;
+    user-select:none;
+  }
+
   .iconBtn.recording{
     color:#fff;
     border-color:transparent;
@@ -979,6 +987,11 @@
 
           <button id="btnRo" class="pill active" type="button">RO</button>
           <button id="btnEn" class="pill" type="button">EN</button>
+
+          <span class="pillSep">│</span>
+          <button id="btnTensePresent" class="pill active" type="button">Prez</button>
+          <button id="btnTensePast" class="pill" type="button">Trec</button>
+          <button id="btnTenseFuture" class="pill" type="button">Vii</button>
         </div>
       </div>
     </section>
@@ -1322,6 +1335,26 @@
     '주다': {ro:{i:'dau',we:'dăm',third:'dă'}, en:{i:'give',we:'give',third:'gives'}}
   };
 
+  var VERB_TENSE_DATA = {
+    '공부하다': {roPart:'studiat',  roBase:'studia',      enPast:'studied',   refl:false},
+    '먹다':     {roPart:'mâncat',   roBase:'mânca',       enPast:'ate',       refl:false},
+    '가다':     {roPart:'mers',     roBase:'merge',       enPast:'went',      refl:false},
+    '오다':     {roPart:'venit',    roBase:'veni',        enPast:'came',      refl:false},
+    '보다':     {roPart:'văzut',    roBase:'vedea',       enPast:'saw',       refl:false},
+    '읽다':     {roPart:'citit',    roBase:'citi',        enPast:'read',      refl:false},
+    '쓰다':     {roPart:'scris',    roBase:'scrie',       enPast:'wrote',     refl:false},
+    '만나다':   {roPart:'întâlnit', roBase:'întâlni',     enPast:'met',       refl:false},
+    '쉬다':     {roPart:'odihnit',  roBase:'odihni',      enPast:'rested',    refl:true},
+    '일하다':   {roPart:'lucrat',   roBase:'lucra',       enPast:'worked',    refl:false},
+    '운동하다': {roPart:'făcut sport', roBase:'face sport', enPast:'exercised', refl:false},
+    '준비하다': {roPart:'pregătit', roBase:'pregăti',     enPast:'prepared',  refl:false},
+    '배우다':   {roPart:'învățat',  roBase:'învăța',      enPast:'learned',   refl:false},
+    '듣다':     {roPart:'ascultat', roBase:'asculta',     enPast:'listened',  refl:false},
+    '만들다':   {roPart:'făcut',    roBase:'face',        enPast:'made',      refl:false},
+    '사다':     {roPart:'cumpărat', roBase:'cumpăra',     enPast:'bought',    refl:false},
+    '주다':     {roPart:'dat',      roBase:'da',          enPast:'gave',      refl:false}
+  };
+
   var els = {
     btnRo: document.getElementById('btnRo'),
     btnEn: document.getElementById('btnEn'),
@@ -1337,12 +1370,16 @@
     clauseList: document.getElementById('clauseList'),
     toast: document.getElementById('toast'),
     recordBox: document.getElementById('recordBox'),
-    recordedAudio: document.getElementById('recordedAudio')
+    recordedAudio: document.getElementById('recordedAudio'),
+    btnTensePresent: document.getElementById('btnTensePresent'),
+    btnTensePast: document.getElementById('btnTensePast'),
+    btnTenseFuture: document.getElementById('btnTenseFuture')
   };
 
   var state = {
     lang: 'ro',
     level: 1,
+    tense: 'present',
     text: '',
     clauses: []
   };
@@ -1896,7 +1933,37 @@
   function finiteVerbText(verb, lang, subjectKo){
     if(!verb) return '';
     var hit = VERB_FINITE_MAP[verb.ko];
+    var td  = VERB_TENSE_DATA[verb.ko];
     var role = subjectRoleFromKo(subjectKo || '');
+    var tense = state.tense || 'present';
+
+    if(tense === 'past' && td){
+      if(lang === 'en'){
+        return td.enPast || (verb.en || verb.ro || verb.ko || '');
+      }
+      if(td.refl){
+        if(role === 'i')  return 'm-am ' + td.roPart;
+        if(role === 'we') return 'ne-am ' + td.roPart;
+        return 's-a ' + td.roPart;
+      }
+      var auxP = (role === 'we') ? 'am' : (role === 'i') ? 'am' : 'a';
+      return auxP + ' ' + td.roPart;
+    }
+
+    if(tense === 'future' && td){
+      if(lang === 'en'){
+        var enBase = hit && hit.en ? (hit.en.i || hit.en[role] || '') : (verb.en || '');
+        return 'will ' + enBase;
+      }
+      if(td.refl){
+        if(role === 'i')  return 'mă voi ' + td.roBase;
+        if(role === 'we') return 'ne vom ' + td.roBase;
+        return 'se va ' + td.roBase;
+      }
+      var auxF = (role === 'i') ? 'voi' : (role === 'we') ? 'vom' : 'va';
+      return auxF + ' ' + td.roBase;
+    }
+
     if(hit && hit[lang] && hit[lang][role]) return hit[lang][role];
     return lang === 'en'
       ? (verb.en || verb.ro || verb.ko || '')
@@ -1909,10 +1976,16 @@
 
   function renderVerbKo(clause){
     var verb = itemOf(clause, 'verb');
-    if(!verb) return '';
+    if(!verb || !verb.ko) return '';
+
+    var conj = window.Conjugation;
+    if(conj){
+      if(state.tense === 'past')   return conj.past(verb.ko);
+      if(state.tense === 'future') return conj.future(verb.ko);
+      return conj.present(verb.ko);
+    }
 
     var cKey = connectorKey(clause);
-
     if(verb.forms && verb.forms[cKey]) return verb.forms[cKey];
     return verb.final || verb.ko || '';
   }
@@ -2063,6 +2136,10 @@
     if(els.btnRo) els.btnRo.classList.toggle('active', state.lang === 'ro');
     if(els.btnEn) els.btnEn.classList.toggle('active', state.lang === 'en');
 
+    if(els.btnTensePresent) els.btnTensePresent.classList.toggle('active', state.tense === 'present');
+    if(els.btnTensePast)    els.btnTensePast.classList.toggle('active',    state.tense === 'past');
+    if(els.btnTenseFuture)  els.btnTenseFuture.classList.toggle('active',  state.tense === 'future');
+
     if(els.freeText){
       els.freeText.placeholder = currentUI().placeholder;
     }
@@ -2093,6 +2170,11 @@
 
   function setLang(lang){
     state.lang = lang === 'en' ? 'en' : 'ro';
+    renderAll();
+  }
+
+  function setTense(tense){
+    state.tense = tense;
     renderAll();
   }
 
@@ -2561,6 +2643,18 @@
 
     if(els.btnEn){
       els.btnEn.addEventListener('click', function(){ setLang('en'); });
+    }
+
+    if(els.btnTensePresent){
+      els.btnTensePresent.addEventListener('click', function(){ setTense('present'); });
+    }
+
+    if(els.btnTensePast){
+      els.btnTensePast.addEventListener('click', function(){ setTense('past'); });
+    }
+
+    if(els.btnTenseFuture){
+      els.btnTenseFuture.addEventListener('click', function(){ setTense('future'); });
     }
 
     if(els.topicDropdown){
