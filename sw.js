@@ -1,8 +1,9 @@
-const CACHE = 'rk-v9';
+const CACHE = 'rk-v10';
 
 const STATIC = [
   './',
   './index.html',
+  './flag.svg',
   './exercises.html',
   './lessons.html',
   './glossary.html',
