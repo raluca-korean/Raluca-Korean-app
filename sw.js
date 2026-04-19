@@ -1,9 +1,8 @@
-const CACHE = 'rk-v10';
+const CACHE = 'rk-v11';
 
 const STATIC = [
   './',
   './index.html',
-  './flag.svg',
   './exercises.html',
   './lessons.html',
   './glossary.html',
@@ -11,6 +10,7 @@ const STATIC = [
   './flashcards.html',
   './stats.html',
   './theme-anime.css',
+  './flag.svg',
   './manifest.json',
   './icons/icon.svg',
   './js/builder.js',
@@ -48,16 +48,17 @@ self.addEventListener('activate', event => {
   );
 });
 
+/* Network first — mereu încearcă rețeaua, cacheul e doar fallback offline */
 self.addEventListener('fetch', event => {
-  if(event.request.method !== 'GET') return;
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request)
-      .then(cached => cached || fetch(event.request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE).then(cache => cache.put(event.request, clone));
-          return response;
-        })
-      )
+    fetch(event.request)
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE).then(c => c.put(event.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
