@@ -420,6 +420,50 @@ function getVerbStem(verb){
   return verb.endsWith("다") ? verb.slice(0,-1) : verb;
 }
 
+// Apply 아/어 ending with vowel harmony + contraction
+function applyAeo(stem){
+  if(!stem) return "";
+  const last = stem[stem.length - 1];
+  if(last === "하") return stem.slice(0, -1) + "해";
+  const d = decomposeLastSyl(stem);
+  if(!d) return stem + "어";
+  const ae = (d.jung === 0 || d.jung === 8) ? "아" : "어";
+  if(hasBatchim(stem)) return stem + ae;
+  // No batchim — apply contraction rules
+  const DROP = new Set([0, 1, 4, 5, 9, 10, 14, 15]); // ㅏ,ㅐ,ㅓ,ㅔ,ㅘ,ㅙ,ㅝ,ㅞ already contain the vowel
+  if(DROP.has(d.jung)) return stem;
+  if(d.jung === 8)  return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + 9*28  + d.jong); // ㅗ→ㅘ (와)
+  if(d.jung === 13) return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + 14*28 + d.jong); // ㅜ→ㅝ (워)
+  if(d.jung === 20) return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + 6*28  + d.jong); // ㅣ→ㅕ (여)
+  return stem + ae;
+}
+
+// Add ㅆ (double-s) batchim to last syllable — used for past tense
+function addBatchimSS(word){
+  if(!word) return word;
+  const d = decomposeLastSyl(word);
+  if(!d) return word;
+  return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + d.jung*28 + 20);
+}
+
+// Add ㄹ batchim to last syllable of stem (no-batchim only) — used for -(으)ㄹ endings
+function addBatchimR(word){
+  if(!word || hasBatchim(word)) return word;
+  const d = decomposeLastSyl(word);
+  if(!d) return word;
+  return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + d.jung*28 + 8);
+}
+
+// Build -(으)ㄹ form: fuses ㄹ into stem when no batchim, else prefix 을
+function withRieul(stem, suffix){
+  return hasBatchim(stem) ? stem + "을" + suffix : addBatchimR(stem) + suffix;
+}
+
+// Build -(으) form: adds 으 when batchim, else direct
+function withEu(stem, suffix){
+  return hasBatchim(stem) ? stem + "으" + suffix : stem + suffix;
+}
+
 const specialVerbMap = {
   "가다": {present:"가요", past:"갔어요"},
   "오다": {present:"와요", past:"왔어요"},
@@ -437,30 +481,17 @@ const specialVerbMap = {
 function presentPolite(verb){
   if(!verb) return "";
   if(specialVerbMap[verb]?.present) return specialVerbMap[verb].present;
-
   const stem = getVerbStem(verb);
   if(!stem) return "";
-
-  const last = stem[stem.length - 1];
-  if(last === "하") return stem.slice(0,-1) + "해요";
-  if(last === "오") return stem.slice(0,-1) + "와요";
-  if(last === "보") return stem.slice(0,-1) + "봐요";
-
-  return stem + "어요";
+  return applyAeo(stem) + "요";
 }
 
 function pastPolite(verb){
   if(!verb) return "";
   if(specialVerbMap[verb]?.past) return specialVerbMap[verb].past;
-
-  const pres = presentPolite(verb);
-  if(!pres) return "";
-
-  if(pres.endsWith("해요")) return pres.replace(/해요$/, "했어요");
-  if(pres.endsWith("와요")) return pres.replace(/와요$/, "왔어요");
-  if(pres.endsWith("봐요")) return pres.replace(/봐요$/, "봤어요");
-
-  return pres.replace(/요$/, "었어요");
+  const stem = getVerbStem(verb);
+  if(!stem) return "";
+  return addBatchimSS(applyAeo(stem)) + "어요";
 }
 
 function buildVerbPhrase(verb, cj){
@@ -477,9 +508,7 @@ function buildVerbPhrase(verb, cj){
   if(cj === "-고 있어요") return stem + "고 있어요";
   if(cj === "-고 싶어요") return stem + "고 싶어요";
 
-  if(cj === "-(으)ㄹ 거예요"){
-    return hasBatchim(stem) ? stem + "을 거예요" : stem + "ㄹ 거예요";
-  }
+  if(cj === "-(으)ㄹ 거예요")         return withRieul(stem, " 거예요");
 
   if(cj === "-(으)면서"){
     return stem + "면서";
@@ -505,17 +534,35 @@ function buildVerbPhrase(verb, cj){
     return stem + "고자 해요";
   }
 
-  if(cj === "-아/어야 돼요"){
-    return stem + "아/어야 돼요";
-  }
-
-  if(cj === "-(으)ㄹ 수 있어요"){
-    return hasBatchim(stem) ? stem + "을 수 있어요" : stem + "ㄹ 수 있어요";
-  }
-
-  if(cj === "-(으)ㄹ 수 없어요"){
-    return hasBatchim(stem) ? stem + "을 수 없어요" : stem + "ㄹ 수 없어요";
-  }
+  if(cj === "-(으)세요")           return withEu(stem, "세요");
+  if(cj === "-지 마세요")          return stem + "지 마세요";
+  if(cj === "-아/어 주세요")       return applyAeo(stem) + " 주세요";
+  if(cj === "-아/어야 돼요")       return applyAeo(stem) + "야 돼요";
+  if(cj === "-아/어도 돼요")       return applyAeo(stem) + "도 돼요";
+  if(cj === "-(으)면 안 돼요")     return withEu(stem, "면 안 돼요");
+  if(cj === "-더라고요")           return stem + "더라고요";
+  if(cj === "-네요")               return stem + "네요";
+  if(cj === "-군요")               return stem + "군요";
+  if(cj === "-(으)ㄹ게요")         return withRieul(stem, "게요");
+  if(cj === "-(으)ㄹ래요?")        return withRieul(stem, "래요?");
+  if(cj === "-(으)ㄹ까요?")        return withRieul(stem, "까요?");
+  if(cj === "-는 게 어때요?")      return stem + "는 게 어때요?";
+  if(cj === "-는 중이에요")         return stem + "는 중이에요";
+  if(cj === "-(으)ㄹ 수 있어요")   return withRieul(stem, " 수 있어요");
+  if(cj === "-(으)ㄹ 수 없어요")   return withRieul(stem, " 수 없어요");
+  if(cj === "-(으)ㄹ지도 몰라요")  return withRieul(stem, "지도 몰라요");
+  if(cj === "-(으)ㄹ 뿐이다")      return withRieul(stem, " 뿐이에요");
+  if(cj === "-(으)ㄹ수록")         return withRieul(stem, "수록");
+  if(cj === "-(으)ㄹ지라도")       return withRieul(stem, "지라도");
+  if(cj === "-(으)나")             return withEu(stem, "나");
+  if(cj === "-(으)므로")           return withEu(stem, "므로");
+  if(cj === "-(으)ㄴ/는 만큼")     return stem + "는 만큼";
+  if(cj === "-(으)ㄴ/는데도")      return stem + "는데도";
+  if(cj === "-(으)ㄴ/는 반면에")   return stem + "는 반면에";
+  if(cj === "-도록 하다")          return stem + "도록 해요";
+  if(cj === "-게 되다")            return stem + "게 돼요";
+  if(cj === "-아/어지다")          return applyAeo(stem) + "져요";
+  if(cj === "-기 마련이다")        return stem + "기 마련이에요";
 
   return presentPolite(verb);
 }
@@ -1605,9 +1652,17 @@ function transformVerbForConnector(verb, connector){
   if(connector === "-지만") return stem + "지만";
   if(connector === "-기에") return stem + "기에";
   if(connector === "-길래") return stem + "길래";
-  if(connector === "-고자 하다") return stem + "고자";
-  if(connector === "-고 말다") return stem + "고 말고";
-  if(connector === "-(으)면") return stem + "면";
+  if(connector === "-고자 하다")        return stem + "고자";
+  if(connector === "-고 말다")          return stem + "고 말고";
+  if(connector === "-(으)면")           return withEu(stem, "면");
+  if(connector === "-(으)나")           return withEu(stem, "나");
+  if(connector === "-(으)므로")         return withEu(stem, "므로");
+  if(connector === "-(으)ㄴ/는 만큼")   return stem + "는 만큼";
+  if(connector === "-(으)ㄹ수록")       return withRieul(stem, "수록");
+  if(connector === "-(으)ㄴ/는데도")    return stem + "는데도";
+  if(connector === "-(으)ㄹ지라도")     return withRieul(stem, "지라도");
+  if(connector === "-(으)ㄴ/는 반면에") return stem + "는 반면에";
+  if(connector === "-도록 하다")        return stem + "도록";
 
   return stem + "고";
 }
