@@ -93,3 +93,5 @@ git add <fișiere>
 git commit -m "descriere"
 git push -u origin main
 ```
+
+**Regula de deploy:** Aplicația se deployează automat din `main`. Orice modificare vizibilă live trebuie commitată și pushată direct pe `main`. Branch-urile de feature (`claude/...`) sunt create automat de sistem — la finalul oricărei sarcini, confirmă că push-ul a ajuns pe `main`, nu pe un branch separat.
