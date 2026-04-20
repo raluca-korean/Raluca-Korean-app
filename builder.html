@@ -164,6 +164,18 @@
     box-shadow:0 10px 24px rgba(219,39,119,.35);
   }
 
+  .pill.t6-star{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#7c3aed,#db2777);
+    box-shadow:0 10px 24px rgba(124,58,237,.30);
+    letter-spacing:.02em;
+  }
+
+  .pill.t6-star:hover{
+    box-shadow:0 14px 30px rgba(124,58,237,.45);
+  }
+
   .pillSep{
     color:var(--line2);
     font-size:16px;
@@ -988,6 +1000,8 @@
           <button id="btnRo" class="pill active" type="button">RO</button>
           <button id="btnEn" class="pill" type="button">EN</button>
 
+          <button id="btnT6Ex" class="pill t6-star" type="button" title="Încarcă exemplu TOPIK 6 complet">T6 ★</button>
+
         </div>
       </div>
     </section>
@@ -1369,7 +1383,8 @@
     clauseList: document.getElementById('clauseList'),
     toast: document.getElementById('toast'),
     recordBox: document.getElementById('recordBox'),
-    recordedAudio: document.getElementById('recordedAudio')
+    recordedAudio: document.getElementById('recordedAudio'),
+    btnT6Ex: document.getElementById('btnT6Ex')
   };
 
   var state = {
@@ -2723,6 +2738,26 @@
     renderAll();
   }
 
+  function loadTopik6Example(){
+    setLevel(6);
+    var clause = makeEmptyLayoutClause();
+    // Propoziție TOPIK 6: 저는 친구하고 오늘 학교에서 온라인으로 한국어를 프로젝트를 열심히 미리 준비해요
+    setFieldItem(clause, 'topic',     normalizeItem(DATA.subject[0],     'subject',     0));
+    setFieldItem(clause, 'topic2',    normalizeItem(DATA.subject[6],     'subject',     6));
+    setFieldItem(clause, 'time',      normalizeItem(DATA.time[1],        'time',        1));
+    setFieldItem(clause, 'departure', normalizeItem(DATA.location[1],    'location',    1));
+    setFieldItem(clause, 'transit',   normalizeItem(DATA.location[12],   'location',    12));
+    setFieldItem(clause, 'object1',   normalizeItem(DATA.object[1],      'object',      1));
+    setFieldItem(clause, 'object2',   normalizeItem(DATA.object[9],      'object',      9));
+    setFieldItem(clause, 'adverb',    normalizeItem(DATA.description[3], 'description', 3));
+    setFieldItem(clause, 'adverb2',   normalizeItem(DATA.description[8], 'description', 8));
+    setFieldItem(clause, 'verb',      normalizeItem(DATA.verb[11],       'verb',        11));
+    setFieldItem(clause, 'connector', normalizeItem(DATA.connector[9],   'connector',   9));
+    state.clauses = [clause];
+    ensureChainLength();
+    renderAll();
+  }
+
   function bindEvents(){
     if(els.btnRo){
       els.btnRo.addEventListener('click', function(){ setLang('ro'); });
@@ -2747,6 +2782,10 @@
         state.text = els.freeText.value || '';
         parseTextIntoClauses();
       });
+    }
+
+    if(els.btnT6Ex){
+      els.btnT6Ex.addEventListener('click', loadTopik6Example);
     }
 
     if(els.refreshBtn){
