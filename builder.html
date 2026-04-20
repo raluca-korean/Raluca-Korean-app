@@ -1286,9 +1286,19 @@
       {id:'contrast2', key:'contrast2', ko:'는데', ro:'iar', en:'while', aliases:['iar','while']},
       {id:'purpose', key:'purpose', ko:'(으)려고', ro:'ca să', en:'in order to', aliases:['ca sa','ca să','in order to']},
       {id:'result', key:'result', ko:'게 되다', ro:'ajunge să', en:'end up', aliases:['ajunge sa','ajunge să','end up']},
-      {id:'tense_pres', key:'tense_pres', ko:'-아요/어요',     ro:'prezent', en:'present', isTense:true, aliases:[]},
-      {id:'tense_past', key:'tense_past', ko:'-았어요/었어요',  ro:'trecut',  en:'past',    isTense:true, aliases:[]},
-      {id:'tense_fut',  key:'tense_fut',  ko:'-(으)ㄹ 거예요', ro:'viitor',  en:'future',  isTense:true, aliases:[]}
+      {id:'tense_pres',        key:'tense_pres',        ko:'-아요/어요',       ro:'prezent',         en:'present',        isTense:true,  aliases:[]},
+      {id:'tense_past',        key:'tense_past',        ko:'-았어요/었어요',    ro:'trecut',           en:'past',           isTense:true,  aliases:[]},
+      {id:'tense_fut',         key:'tense_fut',         ko:'-(으)ㄹ 거예요',   ro:'viitor',           en:'future',         isTense:true,  aliases:[]},
+      {id:'tense_progressive', key:'tense_progressive', ko:'-고 있어요',        ro:'în curs de',       en:'is doing',       isTense:true,  aliases:[]},
+      {id:'tense_wish',        key:'tense_wish',        ko:'-고 싶어요',        ro:'vreau să',         en:'want to',        isTense:true,  aliases:[]},
+      {id:'tense_intention',   key:'tense_intention',   ko:'-(으)려고 해요',    ro:'intenționez să',   en:'intend to',      isTense:true,  aliases:[]},
+      {id:'while',         key:'while',         ko:'-(으)면서',    ro:'în timp ce',       en:'while doing',    aliases:['in timp ce','while doing','while']},
+      {id:'concede',       key:'concede',       ko:'-아/어도',     ro:'chiar dacă',       en:'even if',        aliases:['chiar daca','chiar dacă','even if']},
+      {id:'after',         key:'after',         ko:'-고 나서',     ro:'după ce',          en:'after',          aliases:['dupa ce','după ce','after']},
+      {id:'before',        key:'before',        ko:'-기 전에',     ro:'înainte să',       en:'before',         aliases:['inainte sa','înainte să','before']},
+      {id:'proportion',    key:'proportion',    ko:'-(으)ㄹ수록',  ro:'cu cât... cu atât',en:'the more',       aliases:['cu cat','cu cât','the more']},
+      {id:'formal_cause',  key:'formal_cause',  ko:'-기에',        ro:'deoarece',         en:'given that',     aliases:['deoarece','given that']},
+      {id:'informal_cause',key:'informal_cause',ko:'-길래',        ro:'văzând că',        en:'seeing that',    aliases:['vazand ca','văzând că','seeing that']}
     ],
     numeral: [
       {ko:'', ro:'', en:'', aliases:[]},
@@ -1999,8 +2009,22 @@
       if(cKey === 'contrast1') return conj.connector(verb.ko, '-지만');
       if(cKey === 'contrast2') return conj.connector(verb.ko, '-(으)ㄴ/는데');
       if(cKey === 'condition') return conj.hasBatchim(stem) ? stem + '으면' : stem + '면';
-      if(cKey === 'purpose')   return conj.hasBatchim(stem) ? stem + '으려고' : stem + '려고';
-      if(cKey === 'result')    return conj.aeo(verb.ko) + '서 그렇게 되다';
+      if(cKey === 'purpose')        return conj.hasBatchim(stem) ? stem + '으려고' : stem + '려고';
+      if(cKey === 'result')         return conj.aeo(verb.ko) + '서 그렇게 되다';
+      if(cKey === 'while')          return conj.connector(verb.ko, '-(으)면서');
+      if(cKey === 'concede')        return conj.connector(verb.ko, '-아/어도');
+      if(cKey === 'after')          return conj.connector(verb.ko, '-고 나서');
+      if(cKey === 'before')         return conj.connector(verb.ko, '-기 전에');
+      if(cKey === 'proportion')     return conj.connector(verb.ko, '-(으)ㄹ수록');
+      if(cKey === 'formal_cause')   return conj.connector(verb.ko, '-기에');
+      if(cKey === 'informal_cause') return conj.connector(verb.ko, '-길래');
+    }
+
+    if(cKey === 'tense_progressive') return conj ? conj.stem(verb.ko) + '고 있어요' : (verb.final || verb.ko);
+    if(cKey === 'tense_wish')        return conj ? conj.stem(verb.ko) + '고 싶어요' : (verb.final || verb.ko);
+    if(cKey === 'tense_intention'){
+      var s2 = conj ? conj.stem(verb.ko) : '';
+      return s2 ? (conj.hasBatchim(s2) ? s2 + '으려고 해요' : s2 + '려고 해요') : (verb.final || verb.ko);
     }
 
     if(verb.forms && verb.forms[cKey]) return verb.forms[cKey];
