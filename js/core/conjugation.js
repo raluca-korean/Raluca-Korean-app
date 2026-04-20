@@ -172,19 +172,52 @@ window.Conjugation = {
   connector(verb, cj){
     const stem = this.stem(verb);
     switch(cj){
-      case "-고":         return stem + "고";
-      case "-고 나서":    return stem + "고 나서";
-      case "-기 전에":    return stem + "기 전에";
-      case "-(으)면서":   return this.hasBatchim(stem) ? stem + "으면서" : stem + "면서";
-      case "-(으)니까":   return this.hasBatchim(stem) ? stem + "으니까" : stem + "니까";
-      case "-(으)ㄴ/는데":return this.hasBatchim(stem) ? stem + "는데"   : stem + "ㄴ데";
-      case "-(으)ㄹ수록": return this.hasBatchim(stem) ? stem + "을수록" : stem + "ㄹ수록";
-      case "-지만":       return stem + "지만";
-      case "-아/어도":    return this.aeo(verb) + "도";
-      case "-아/어서":    return this.aeo(verb) + "서";
-      case "-기에":       return stem + "기에";
-      case "-길래":       return stem + "길래";
-      default:            return null;
+      // TOPIK 1
+      case "-고":                    return stem + "고";
+      case "-고 나서":               return stem + "고 나서";
+      case "-기 전에":               return stem + "기 전에";
+      case "-(으)면서":              return this.hasBatchim(stem) ? stem + "으면서" : stem + "면서";
+      case "-(으)니까":              return this.hasBatchim(stem) ? stem + "으니까" : stem + "니까";
+      case "-(으)ㄴ/는데":           return this.hasBatchim(stem) ? stem + "는데"   : stem + "ㄴ데";
+      case "-지만":                  return stem + "지만";
+      case "-아/어도":               return this.aeo(verb) + "도";
+      case "-아/어서":               return this.aeo(verb) + "서";
+      // TOPIK 2
+      case "-거나":                  return stem + "거나";
+      case "-(으)ㄹ 때": {
+        const d2 = this.decompose(stem.at(-1));
+        if(!d2 || d2.jong === 0)  return this.addBatchimR(stem) + " 때";
+        if(d2.jong === 8)          return stem + " 때";
+        return stem + "을 때";
+      }
+      case "-기 위해서":             return stem + "기 위해서";
+      // TOPIK 3
+      case "-자마자":               return stem + "자마자";
+      case "-다가":                 return stem + "다가";
+      case "-는 동안":              return stem + "는 동안";
+      case "-는 대신에":            return stem + "는 대신에";
+      case "-(으)ㄴ/는데도":        return stem + "는데도";
+      case "-(으)ㄹ수록":           return this.hasBatchim(stem) ? stem + "을수록" : stem + "ㄹ수록";
+      case "-기에":                 return stem + "기에";
+      case "-길래":                 return stem + "길래";
+      // TOPIK 4-5
+      case "-(으)므로": {
+        const d3 = this.decompose(stem.at(-1));
+        if(d3 && d3.jong !== 0 && d3.jong !== 8) return stem + "으므로";
+        return stem + "므로";
+      }
+      case "-(으)ㄴ/는 반면에":     return stem + "는 반면에";
+      case "-도록":                 return stem + "도록";
+      // TOPIK 5-6
+      case "-(으)ㄹ 뿐만 아니라": {
+        const d4 = this.decompose(stem.at(-1));
+        if(!d4 || d4.jong === 0)  return this.addBatchimR(stem) + " 뿐만 아니라";
+        if(d4.jong === 8)          return stem + " 뿐만 아니라";
+        return stem + "을 뿐만 아니라";
+      }
+      case "-(으)ㄴ/는 한":        return stem + "는 한";
+      case "-(으)ㄴ/는 탓에":      return stem + "는 탓에";
+      default:                      return null;
     }
   },
 
