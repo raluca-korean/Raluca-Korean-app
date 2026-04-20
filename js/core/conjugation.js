@@ -102,6 +102,8 @@ window.Conjugation = {
     if(!d) return stem + "어";
     const bright = [0, 1, 2, 3, 8];
     if(d.jong === 0){
+      // ㅏ/ㅑ no batchim: vowel contracts (가아→가, 만나아→만나)
+      if(d.vowel === 0 || d.vowel === 2) return stem;
       return stem + (bright.includes(d.vowel) ? "아" : "어");
     }
     return stem + "어";
