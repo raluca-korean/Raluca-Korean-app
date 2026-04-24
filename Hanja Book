@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<title>Hanja Book</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: serif;
+  background: #f5f1e8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* HEADER */
+.header {
+  width: 100%;
+  padding: 15px;
+  background: #2c2c2c;
+  color: white;
+  text-align: center;
+  font-size: 18px;
+}
+
+/* PROGRESS BAR */
+.progress-container {
+  width: 80%;
+  background: #ddd;
+  border-radius: 20px;
+  margin: 15px 0;
+}
+
+.progress-bar {
+  height: 20px;
+  width: 0%;
+  background: #6a8caf;
+  border-radius: 20px;
+  transition: 0.3s;
+}
+
+/* BOOK */
+.book {
+  width: 320px;
+  height: 480px;
+  perspective: 1000px;
+  position: relative;
+}
+
+.page {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 20px;
+  box-sizing: border-box;
+  backface-visibility: hidden;
+  transform-origin: left;
+  transition: transform 0.6s;
+}
+
+.page.flipped {
+  transform: rotateY(-180deg);
+}
+
+/* CONTENT */
+.hanja {
+  font-size: 80px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.reading {
+  text-align: center;
+  font-size: 18px;
+  color: #555;
+}
+
+.meaning {
+  text-align: center;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.words {
+  margin-top: 20px;
+}
+
+.words div {
+  margin-bottom: 8px;
+}
+
+/* BUTTONS */
+.controls {
+  margin-top: 20px;
+}
+
+button {
+  padding: 10px 15px;
+  margin: 5px;
+  border: none;
+  background: #2c2c2c;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #444;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  📖 Hanja Book — Progres: <span id="progressText">0%</span>
+</div>
+
+<div class="progress-container">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div class="book" id="book"></div>
+
+<div class="controls">
+  <button onclick="prevPage()">◀</button>
+  <button onclick="markLearned()">✔ Învațat</button>
+  <button onclick="nextPage()">▶</button>
+</div>
+
+<script>
+const data = [
+  {
+    hanja: "水",
+    reading: "수 (su)",
+    meaning: "apă",
+    words: ["수영 (înot)", "수도 (apă curentă)", "수분 (hidratare)", "음수 (apă de băut)"]
+  },
+  {
+    hanja: "火",
+    reading: "화 (hwa)",
+    meaning: "foc",
+    words: ["화재 (incendiu)", "화산 (vulcan)", "화력 (putere de foc)", "발화 (aprindere)"]
+  },
+  {
+    hanja: "人",
+    reading: "인 (in)",
+    meaning: "persoană",
+    words: ["인간 (om)", "인구 (populație)", "인기 (popularitate)", "인생 (viață)"]
+  },
+  {
+    hanja: "心",
+    reading: "심 (sim)",
+    meaning: "inimă / minte",
+    words: ["관심 (interes)", "중심 (centru)", "심리 (psihologie)", "안심 (liniște)"]
+  },
+  {
+    hanja: "学",
+    reading: "학 (hak)",
+    meaning: "învățare",
+    words: ["학교 (școală)", "학생 (elev)", "학문 (studiu)", "학습 (învățare)"]
+  }
+];
+
+let currentPage = 0;
+let learned = JSON.parse(localStorage.getItem("learned")) || [];
+
+/* GENERATE PAGES */
+const book = document.getElementById("book");
+
+data.forEach((item, index) => {
+  const page = document.createElement("div");
+  page.className = "page";
+
+  page.innerHTML = `
+    <div class="hanja">${item.hanja}</div>
+    <div class="reading">${item.reading}</div>
+    <div class="meaning">${item.meaning}</div>
+    <div class="words">
+      ${item.words.map(w => `<div>${w}</div>`).join("")}
+    </div>
+  `;
+
+  page.style.zIndex = data.length - index;
+  book.appendChild(page);
+});
+
+/* NAVIGATION */
+function updatePages() {
+  const pages = document.querySelectorAll(".page");
+  pages.forEach((p, i) => {
+    p.classList.toggle("flipped", i < currentPage);
+  });
+}
+
+function nextPage() {
+  if (currentPage < data.length) {
+    currentPage++;
+    updatePages();
+  }
+}
+
+function prevPage() {
+  if (currentPage > 0) {
+    currentPage--;
+    updatePages();
+  }
+}
+
+/* PROGRESS */
+function updateProgress() {
+  const percent = Math.round((learned.length / data.length) * 100);
+  document.getElementById("progressBar").style.width = percent + "%";
+  document.getElementById("progressText").innerText = percent + "%";
+}
+
+function markLearned() {
+  if (!learned.includes(currentPage)) {
+    learned.push(currentPage);
+    localStorage.setItem("learned", JSON.stringify(learned));
+    updateProgress();
+  }
+}
+
+/* INIT */
+updatePages();
+updateProgress();
+</script>
+
+</body>
+</html>
