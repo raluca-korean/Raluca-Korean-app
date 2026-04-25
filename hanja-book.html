@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Hanja Book</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#db2777">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+:root{
+  --card:rgba(255,255,255,.97);
+  --stroke:rgba(219,39,119,.13);
+  --text:#1a0533;
+  --muted:rgba(126,58,110,.80);
+  --radius:22px;
+  --shadow:0 16px 40px rgba(219,39,119,.13);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:
+    radial-gradient(ellipse at 0% 0%,   rgba(219,39,119,.22) 0%, transparent 45%),
+    radial-gradient(ellipse at 100% 0%,  rgba(14,165,233,.18)  0%, transparent 45%),
+    radial-gradient(ellipse at 50% 100%, rgba(124,58,237,.16)  0%, transparent 45%),
+    linear-gradient(180deg,#fce7f3 0%,#fdf4ff 40%,#eff6ff 100%);
+  color:var(--text);
+  min-height:100vh;
+  padding-bottom:40px;
+}
+.app{max-width:620px;margin:0 auto;padding:20px}
+.card{
+  background:var(--card);
+  border:1.5px solid var(--stroke);
+  border-radius:var(--radius);
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:var(--shadow);
+}
+h1{margin:0 0 4px;font-size:22px}
+.sub{font-size:13px;color:var(--muted)}
+
+/* Progress bar */
+.prog-bar{height:8px;border-radius:999px;background:rgba(219,39,119,.10);margin-top:12px;overflow:hidden}
+.prog-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#f472b6,#a855f7);transition:width .4s ease}
+.prog-text{font-size:12px;color:var(--muted);margin-top:4px;text-align:right}
+
+/* Book / page flip */
+.book-wrap{
+  perspective:1200px;
+  width:100%;
+  height:340px;
+  position:relative;
+  margin-bottom:16px;
+}
+.page{
+  width:100%;
+  height:100%;
+  position:absolute;
+  border-radius:var(--radius);
+  padding:28px 24px;
+  box-sizing:border-box;
+  backface-visibility:hidden;
+  transform-origin:left center;
+  transition:transform .55s cubic-bezier(.4,0,.2,1);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border:1.5px solid rgba(219,39,119,.14);
+  box-shadow:0 12px 32px rgba(219,39,119,.10);
+}
+.page.front{
+  background:linear-gradient(160deg,#fff8fc,#f5f0ff);
+  z-index:2;
+}
+.page.front.flipped{
+  transform:rotateY(-180deg);
+}
+.page.back{
+  background:linear-gradient(160deg,#f0f8ff,#faf5ff);
+  transform:rotateY(180deg);
+  z-index:1;
+}
+.page.back.flipped{
+  transform:rotateY(0deg);
+}
+.hanja-char{
+  font-size:96px;
+  line-height:1;
+  margin-bottom:8px;
+  background:linear-gradient(135deg,#db2777,#7c3aed);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  user-select:none;
+}
+.hanja-reading{
+  font-size:20px;
+  color:var(--muted);
+  font-weight:700;
+  margin-bottom:6px;
+}
+.hanja-meaning{
+  font-size:15px;
+  font-weight:900;
+  color:var(--text);
+}
+.hanja-words{
+  margin-top:18px;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.hanja-word{
+  background:linear-gradient(160deg,#fff,#fdf4ff);
+  border:1.5px solid rgba(219,39,119,.12);
+  border-radius:12px;
+  padding:8px 14px;
+  font-size:14px;
+  font-weight:700;
+}
+.hanja-word .ko{
+  font-size:16px;
+  font-weight:900;
+  background:linear-gradient(135deg,#db2777,#7c3aed);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hanja-word .tr{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:1px;
+}
+.back-hint{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:8px;
+  font-style:italic;
+}
+
+/* Page indicator */
+.page-indicator{
+  text-align:center;
+  font-size:13px;
+  color:var(--muted);
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+/* Controls */
+.controls{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.btn-nav{
+  padding:10px 20px;
+  border-radius:999px;
+  border:1.5px solid rgba(219,39,119,.20);
+  background:#fff;
+  color:var(--text);
+  font-weight:900;
+  font-size:14px;
+  cursor:pointer;
+  transition:transform .1s,box-shadow .1s;
+}
+.btn-nav:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(219,39,119,.12)}
+.btn-nav:disabled{opacity:.35;cursor:default;transform:none;box-shadow:none}
+.btn-learned{
+  padding:10px 20px;
+  border-radius:999px;
+  border:none;
+  background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1);
+  color:#fff;
+  font-weight:900;
+  font-size:14px;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(168,85,247,.28);
+  transition:transform .1s;
+}
+.btn-learned:hover{transform:translateY(-1px)}
+.btn-learned.done{
+  background:linear-gradient(135deg,#10b981,#059669);
+  box-shadow:0 8px 20px rgba(16,185,129,.28);
+}
+.flip-hint{
+  text-align:center;
+  font-size:12px;
+  color:rgba(126,58,110,.50);
+  margin-top:8px;
+}
+
+/* Dark mode overrides */
+body.dark-mode{
+  --card:rgba(32,6,55,.95);
+  --stroke:rgba(244,114,182,.18);
+  --text:#f0e8ff;
+  --muted:rgba(210,170,240,.70);
+}
+body.dark-mode .page.front{
+  background:linear-gradient(160deg,rgba(40,10,65,.95),rgba(28,3,52,.98)) !important;
+  border-color:rgba(244,114,182,.20) !important;
+}
+body.dark-mode .page.back{
+  background:linear-gradient(160deg,rgba(10,30,65,.95),rgba(28,3,52,.98)) !important;
+  border-color:rgba(244,114,182,.20) !important;
+}
+body.dark-mode .hanja-char{
+  -webkit-text-fill-color:transparent;
+}
+body.dark-mode .hanja-meaning{color:#f0e8ff}
+body.dark-mode .hanja-word{
+  background:linear-gradient(160deg,rgba(32,6,55,.88),rgba(20,2,40,.92)) !important;
+  border-color:rgba(244,114,182,.15) !important;
+}
+body.dark-mode .hanja-word .ko{-webkit-text-fill-color:transparent}
+body.dark-mode .btn-nav{
+  background:rgba(28,4,50,.92) !important;
+  color:#f0e8ff !important;
+  border-color:rgba(244,114,182,.25) !important;
+}
+body.dark-mode .prog-bar{background:rgba(244,114,182,.12)}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER CARD -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h1 id="pageTitle">📖 Hanja Book</h1>
+        <div class="sub" id="pageSubtitle">Caractere Hanja pentru coreeană</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <a href="./index.html" class="homeBtn">🏠</a>
+        <button type="button" id="langRo">ro</button>
+        <button type="button" id="langEn">en</button>
+      </div>
+    </div>
+    <div class="prog-bar" style="margin-top:14px">
+      <div class="prog-fill" id="progFill" style="width:0%"></div>
+    </div>
+    <div class="prog-text">
+      <span id="learnedCount">0</span> / <span id="totalCount">0</span> <span id="learnedLabel">învățate</span>
+    </div>
+  </div>
+
+  <!-- BOOK -->
+  <div class="page-indicator" id="pageIndicator">1 / 1</div>
+
+  <div class="book-wrap" id="bookWrap" onclick="flipPage()">
+    <div class="page front" id="pageFront"></div>
+    <div class="page back" id="pageBack"></div>
+  </div>
+
+  <div class="flip-hint" id="flipHint">Apasă pe carte să o întorci</div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="btn-nav" id="btnPrev" onclick="navigate(-1)">◀ Înapoi</button>
+    <button class="btn-learned" id="btnLearned" onclick="markLearned()">✔ Învățat</button>
+    <button class="btn-nav" id="btnNext" onclick="navigate(1)">Înainte ▶</button>
+  </div>
+
+</div><!-- end .app -->
+
+<script>
+const DATA = [
+  {
+    hanja: "水",
+    reading: { ro: "수 (su)", en: "수 (su)" },
+    meaning: { ro: "apă", en: "water" },
+    words: [
+      { ko: "수영", ro: "înot", en: "swimming" },
+      { ko: "수도", ro: "apă curentă", en: "running water" },
+      { ko: "수분", ro: "hidratare", en: "moisture" },
+      { ko: "음수", ro: "apă de băut", en: "drinking water" }
+    ]
+  },
+  {
+    hanja: "火",
+    reading: { ro: "화 (hwa)", en: "화 (hwa)" },
+    meaning: { ro: "foc", en: "fire" },
+    words: [
+      { ko: "화재", ro: "incendiu", en: "fire / blaze" },
+      { ko: "화산", ro: "vulcan", en: "volcano" },
+      { ko: "화력", ro: "putere de foc", en: "firepower" },
+      { ko: "발화", ro: "aprindere", en: "ignition" }
+    ]
+  },
+  {
+    hanja: "人",
+    reading: { ro: "인 (in)", en: "인 (in)" },
+    meaning: { ro: "persoană", en: "person" },
+    words: [
+      { ko: "인간", ro: "om", en: "human being" },
+      { ko: "인구", ro: "populație", en: "population" },
+      { ko: "인기", ro: "popularitate", en: "popularity" },
+      { ko: "인생", ro: "viață", en: "life" }
+    ]
+  },
+  {
+    hanja: "心",
+    reading: { ro: "심 (sim)", en: "심 (sim)" },
+    meaning: { ro: "inimă / minte", en: "heart / mind" },
+    words: [
+      { ko: "관심", ro: "interes", en: "interest" },
+      { ko: "중심", ro: "centru", en: "center" },
+      { ko: "심리", ro: "psihologie", en: "psychology" },
+      { ko: "안심", ro: "liniște", en: "relief / peace of mind" }
+    ]
+  },
+  {
+    hanja: "学",
+    reading: { ro: "학 (hak)", en: "학 (hak)" },
+    meaning: { ro: "învățare", en: "learning" },
+    words: [
+      { ko: "학교", ro: "școală", en: "school" },
+      { ko: "학생", ro: "elev", en: "student" },
+      { ko: "학문", ro: "studiu", en: "scholarship" },
+      { ko: "학습", ro: "învățare", en: "studying" }
+    ]
+  },
+  {
+    hanja: "山",
+    reading: { ro: "산 (san)", en: "산 (san)" },
+    meaning: { ro: "munte", en: "mountain" },
+    words: [
+      { ko: "산악", ro: "munte / alpinism", en: "mountainous" },
+      { ko: "등산", ro: "alpinism", en: "hiking" },
+      { ko: "산속", ro: "în munte", en: "inside the mountain" },
+      { ko: "산길", ro: "potecă de munte", en: "mountain path" }
+    ]
+  },
+  {
+    hanja: "大",
+    reading: { ro: "대 (dae)", en: "대 (dae)" },
+    meaning: { ro: "mare", en: "big / great" },
+    words: [
+      { ko: "대학", ro: "universitate", en: "university" },
+      { ko: "대형", ro: "mare ca format", en: "large-scale" },
+      { ko: "대화", ro: "dialog", en: "conversation" },
+      { ko: "위대", ro: "măreț", en: "great / magnificent" }
+    ]
+  },
+  {
+    hanja: "國",
+    reading: { ro: "국 (guk)", en: "국 (guk)" },
+    meaning: { ro: "țară", en: "country" },
+    words: [
+      { ko: "국가", ro: "stat / națiune", en: "nation / state" },
+      { ko: "외국", ro: "țară străină", en: "foreign country" },
+      { ko: "한국", ro: "Coreea", en: "Korea" },
+      { ko: "국어", ro: "limbă națională", en: "national language" }
+    ]
+  },
+  {
+    hanja: "語",
+    reading: { ro: "어 (eo)", en: "어 (eo)" },
+    meaning: { ro: "limbă / cuvânt", en: "language / word" },
+    words: [
+      { ko: "영어", ro: "engleză", en: "English" },
+      { ko: "한국어", ro: "coreeană", en: "Korean" },
+      { ko: "단어", ro: "cuvânt", en: "word / vocabulary" },
+      { ko: "언어", ro: "limbaj", en: "language" }
+    ]
+  },
+  {
+    hanja: "時",
+    reading: { ro: "시 (si)", en: "시 (si)" },
+    meaning: { ro: "timp / oră", en: "time / hour" },
+    words: [
+      { ko: "시간", ro: "timp / oră", en: "time / hour" },
+      { ko: "시대", ro: "epocă", en: "era / age" },
+      { ko: "시작", ro: "început", en: "start / beginning" },
+      { ko: "당시", ro: "la acea vreme", en: "at that time" }
+    ]
+  }
+];
+
+let currentIndex = 0;
+let isFlipped = false;
+let learned = JSON.parse(localStorage.getItem("HJ_LEARNED") || "[]");
+let currentLang = localStorage.getItem("RK_LANG") || "ro";
+
+const UI = {
+  ro:{
+    title:"📖 Hanja Book", subtitle:"Caractere Hanja pentru coreeană",
+    learnedLabel:"învățate", flipHint:"Apasă pe carte să o întorci",
+    learnedBtn:"✔ Învățat", learnedDone:"✔ Învățat ✓",
+    prev:"◀ Înapoi", next:"Înainte ▶"
+  },
+  en:{
+    title:"📖 Hanja Book", subtitle:"Hanja characters for Korean",
+    learnedLabel:"learned", flipHint:"Tap the card to flip it",
+    learnedBtn:"✔ Learned", learnedDone:"✔ Learned ✓",
+    prev:"◀ Back", next:"Next ▶"
+  }
+};
+
+function t(k){ return UI[currentLang][k]; }
+
+function renderCard(){
+  const item = DATA[currentIndex];
+  const front = document.getElementById("pageFront");
+  const back  = document.getElementById("pageBack");
+
+  front.innerHTML = `
+    <div class="hanja-char">${item.hanja}</div>
+    <div class="hanja-reading">${item.reading[currentLang]}</div>
+    <div class="hanja-meaning">${item.meaning[currentLang]}</div>`;
+
+  back.innerHTML = `
+    <div class="back-hint">${item.hanja} — ${item.reading[currentLang]}</div>
+    <div class="hanja-words">
+      ${item.words.map(w => `
+        <div class="hanja-word">
+          <div class="ko">${w.ko}</div>
+          <div class="tr">${w[currentLang]}</div>
+        </div>`).join("")}
+    </div>`;
+
+  isFlipped = false;
+  front.classList.remove("flipped");
+  back.classList.remove("flipped");
+
+  document.getElementById("pageIndicator").textContent =
+    `${currentIndex + 1} / ${DATA.length}`;
+
+  const isLearned = learned.includes(currentIndex);
+  const btn = document.getElementById("btnLearned");
+  btn.textContent = isLearned ? t("learnedDone") : t("learnedBtn");
+  btn.classList.toggle("done", isLearned);
+
+  document.getElementById("btnPrev").disabled = currentIndex === 0;
+  document.getElementById("btnNext").disabled = currentIndex === DATA.length - 1;
+}
+
+function flipPage(){
+  isFlipped = !isFlipped;
+  document.getElementById("pageFront").classList.toggle("flipped", isFlipped);
+  document.getElementById("pageBack").classList.toggle("flipped", isFlipped);
+}
+
+function navigate(dir){
+  const next = currentIndex + dir;
+  if(next < 0 || next >= DATA.length) return;
+  currentIndex = next;
+  renderCard();
+}
+
+function markLearned(){
+  if(!learned.includes(currentIndex)){
+    learned.push(currentIndex);
+    localStorage.setItem("HJ_LEARNED", JSON.stringify(learned));
+  }
+  updateProgress();
+  renderCard();
+}
+
+function updateProgress(){
+  const pct = DATA.length === 0 ? 0 : Math.round(learned.length / DATA.length * 100);
+  document.getElementById("progFill").style.width = pct + "%";
+  document.getElementById("learnedCount").textContent = learned.length;
+  document.getElementById("totalCount").textContent = DATA.length;
+  document.getElementById("learnedLabel").textContent = t("learnedLabel");
+}
+
+function setLang(lang){
+  currentLang = lang;
+  localStorage.setItem("RK_LANG", lang);
+  document.getElementById("pageTitle").textContent = t("title");
+  document.getElementById("pageSubtitle").textContent = t("subtitle");
+  document.getElementById("flipHint").textContent = t("flipHint");
+  document.getElementById("btnPrev").textContent = t("prev");
+  document.getElementById("btnNext").textContent = t("next");
+  updateLangBtns();
+  updateProgress();
+  renderCard();
+}
+
+function updateLangBtns(){
+  const on  = "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)";
+  const off = "linear-gradient(160deg,#fff,#fdf4ff)";
+  const btnRo = document.getElementById("langRo");
+  const btnEn = document.getElementById("langEn");
+  btnRo.style.background = currentLang === "ro" ? on : off;
+  btnRo.style.color = currentLang === "ro" ? "#fff" : "var(--text)";
+  btnEn.style.background = currentLang === "en" ? on : off;
+  btnEn.style.color = currentLang === "en" ? "#fff" : "var(--text)";
+}
+
+document.getElementById("langRo").addEventListener("click", () => setLang("ro"));
+document.getElementById("langEn").addEventListener("click", () => setLang("en"));
+
+updateLangBtns();
+updateProgress();
+renderCard();
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+</body>
+</html>
