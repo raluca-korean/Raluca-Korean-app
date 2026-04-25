@@ -404,24 +404,51 @@ body.dark-mode .prog-bar{background:rgba(244,114,182,.12)}
 }
 
 /* ── ETYMOLOGY ───────────────────────────── */
+.etym-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+  color:var(--muted);
+  background:none;
+  border:1px solid var(--divider);
+  border-radius:999px;
+  padding:4px 12px;
+  cursor:pointer;
+  margin-bottom:10px;
+  transition:background .18s,color .18s,border-color .18s;
+  user-select:none;
+}
+.etym-toggle:hover{
+  background:rgba(124,58,237,.08);
+  border-color:rgba(124,58,237,.30);
+  color:var(--text);
+}
+.etym-toggle .etym-arrow{
+  font-style:normal;
+  transition:transform .22s;
+  font-size:9px;
+}
+.etym-toggle.open .etym-arrow{transform:rotate(180deg)}
 .etymology-box{
   background:rgba(124,58,237,.05);
   border:1px solid var(--divider);
   border-radius:12px;
-  padding:10px 14px;
+  padding:0 14px;
   margin-bottom:12px;
+  overflow:hidden;
+  max-height:0;
+  transition:max-height .3s ease,padding .3s ease;
+}
+.etymology-box.open{
+  max-height:200px;
+  padding:10px 14px;
 }
 body.dark-mode .etymology-box{
   background:rgba(168,85,247,.07);
-}
-.etym-label{
-  font-size:10px;
-  font-weight:900;
-  color:var(--muted);
-  text-transform:uppercase;
-  letter-spacing:.8px;
-  margin-bottom:5px;
-  display:block;
 }
 .etym-text{
   font-size:12px;
@@ -1196,7 +1223,13 @@ function renderPage(animate){
       <div class="hanja-meaning">${item.meaning[lang]}</div>
     </div>
     <hr class="divider">
-    ${item.etymology ? `<div class="etymology-box"><span class="etym-label">📜 ${lang==='ro'?'Etimologie':'Etymology'}</span><p class="etym-text">${item.etymology[lang]}</p></div>` : ''}
+    ${item.etymology ? `
+    <button class="etym-toggle" id="etym-btn" onclick="toggleEtym()">
+      📜 ${lang==='ro'?'Etimologie':'Etymology'} <i class="etym-arrow">▾</i>
+    </button>
+    <div class="etymology-box" id="etym-box">
+      <p class="etym-text">${item.etymology[lang]}</p>
+    </div>` : ''}
     <div class="words">
       ${item.words.map((w, wi) => `
         <div class="word-row" id="row-w${wi}" onclick="speakWord(${wi})">
@@ -1265,6 +1298,14 @@ function _play(text, badgeId, rowId){
     if(_activeRow   === row)   _activeRow   = null;
   };
   window.speechSynthesis.speak(utter);
+}
+
+function toggleEtym(){
+  const btn = document.getElementById("etym-btn");
+  const box = document.getElementById("etym-box");
+  if(!btn || !box) return;
+  btn.classList.toggle("open");
+  box.classList.toggle("open");
 }
 
 function speakChar(){
