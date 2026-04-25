@@ -351,36 +351,48 @@ body.dark-mode .btn-nav{
 body.dark-mode .prog-bar{background:rgba(244,114,182,.12)}
 
 /* ── AUDIO TRACKS ─────────────────────────── */
-.hanja-area{cursor:pointer}
-.word-row{cursor:pointer;align-items:flex-start}
+.hanja-area{cursor:pointer;transition:filter .2s}
+.hanja-area:hover .hanja-char{filter:drop-shadow(0 4px 18px rgba(168,85,247,.35))}
+.hanja-area.playing .hanja-char{filter:drop-shadow(0 4px 22px rgba(168,85,247,.55))}
+
 .hanja-track,.track-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  font-size:10px;
-  font-weight:800;
-  background:rgba(124,58,237,.08);
-  border:1px solid var(--word-border);
-  border-radius:999px;
-  padding:3px 9px;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.6px;
+  text-transform:uppercase;
   color:var(--muted);
+  opacity:.45;
   white-space:nowrap;
   flex-shrink:0;
-  transition:all .2s;
   user-select:none;
   pointer-events:none;
+  transition:opacity .2s,color .2s;
 }
-.hanja-track{
-  margin-bottom:10px;
-  font-size:11px;
-  padding:4px 12px;
+.hanja-track{margin-bottom:10px}
+
+@keyframes trackPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hanja-area.playing .hanja-track,
+.word-row.playing .track-badge{
+  animation:trackPulse 1.3s ease infinite;
+  color:#a855f7;
+  opacity:1;
 }
-.hanja-track.playing,.track-badge.playing{
-  background:linear-gradient(135deg,#f472b6,#a855f7);
-  color:#fff;
-  border-color:transparent;
-  box-shadow:0 2px 8px rgba(168,85,247,.30);
+
+.word-row{
+  cursor:pointer;
+  align-items:flex-start;
+  transition:background .18s,border-color .18s,box-shadow .18s;
 }
+.word-row:hover{
+  background:rgba(219,39,119,.10);
+  border-color:rgba(219,39,119,.25);
+}
+.word-row.playing{
+  background:linear-gradient(135deg,rgba(244,114,182,.10),rgba(168,85,247,.08));
+  border-color:rgba(168,85,247,.38);
+  box-shadow:0 2px 10px rgba(168,85,247,.12);
+}
+
 .word-body{flex:1;display:flex;flex-direction:column;gap:3px}
 .word-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .word-sentence{
@@ -1178,8 +1190,8 @@ function renderPage(animate){
   const trackBase = idx * 5 + 1;
 
   const html = `
-    <div class="hanja-area" onclick="speakChar()">
-      <span class="hanja-track" id="badge-char">🔊 Track ${trackBase}</span>
+    <div class="hanja-area" id="area-char" onclick="speakChar()">
+      <span class="hanja-track" id="badge-char">Track ${trackBase}</span>
       <div class="hanja-char">${item.hanja}</div>
       <div class="hanja-reading">${item.reading[lang]}</div>
       <div class="hanja-meaning">${item.meaning[lang]}</div>
@@ -1188,8 +1200,8 @@ function renderPage(animate){
     ${item.etymology ? `<div class="etymology-box"><span class="etym-label">📜 ${lang==='ro'?'Etimologie':'Etymology'}</span><p class="etym-text">${item.etymology[lang]}</p></div>` : ''}
     <div class="words">
       ${item.words.map((w, wi) => `
-        <div class="word-row" onclick="speakWord(${wi})">
-          <span class="track-badge" id="badge-w${wi}">🔊 Track ${trackBase + 1 + wi}</span>
+        <div class="word-row" id="row-w${wi}" onclick="speakWord(${wi})">
+          <span class="track-badge" id="badge-w${wi}">Track ${trackBase + 1 + wi}</span>
           <div class="word-body">
             <div class="word-top">
               <span class="word-ko">${w.ko}</span>
@@ -1231,33 +1243,42 @@ function renderPage(animate){
 
 /* ── AUDIO ───────────────────────────────── */
 let _activeBadge = null;
+let _activeRow   = null;
 
 function _stopSpeech(){
   window.speechSynthesis.cancel();
   if(_activeBadge){ _activeBadge.classList.remove("playing"); _activeBadge = null; }
+  if(_activeRow){   _activeRow.classList.remove("playing");   _activeRow   = null; }
 }
 
-function _play(text, badgeId){
+function _play(text, badgeId, rowId){
   _stopSpeech();
   const badge = document.getElementById(badgeId);
+  const row   = rowId ? document.getElementById(rowId) : null;
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = "ko-KR";
   utter.rate = 0.85;
   if(badge){ badge.classList.add("playing"); _activeBadge = badge; }
-  utter.onend = () => { if(badge) badge.classList.remove("playing"); if(_activeBadge===badge) _activeBadge=null; };
+  if(row){   row.classList.add("playing");   _activeRow   = row;   }
+  utter.onend = () => {
+    if(badge) badge.classList.remove("playing");
+    if(row)   row.classList.remove("playing");
+    if(_activeBadge === badge) _activeBadge = null;
+    if(_activeRow   === row)   _activeRow   = null;
+  };
   window.speechSynthesis.speak(utter);
 }
 
 function speakChar(){
   const item = DATA[idx];
   const reading = item.ko_reading || item.reading[lang].split(" ")[0];
-  _play(reading, "badge-char");
+  _play(reading, "badge-char", "area-char");
 }
 
 function speakWord(wi){
   const w = DATA[idx].words[wi];
   const text = w.sentence ? w.ko + ". " + w.sentence : w.ko;
-  _play(text, "badge-w" + wi);
+  _play(text, "badge-w" + wi, "row-w" + wi);
 }
 
 function navigate(dir){
