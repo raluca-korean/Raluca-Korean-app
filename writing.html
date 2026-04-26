@@ -205,6 +205,63 @@
   font-style: italic;
 }
 
+/* ── SYLLABLE BOXES (words mode) ───────────────────── */
+.syl-boxes {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.syl-box {
+  font-size: 56px;
+  font-weight: 900;
+  color: #7c3aed;
+  line-height: 1;
+  background: linear-gradient(160deg,#fce7f3,#ede9fe);
+  border: 1.5px solid rgba(244,114,182,.28);
+  border-radius: 14px;
+  padding: 8px 14px;
+  min-width: 72px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform .12s;
+}
+.syl-box:hover { transform: scale(1.06); }
+
+/* ── BOARD DIVIDERS ────────────────────────────────── */
+.board-dividers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.div-line {
+  position: absolute;
+  top: 5%;
+  bottom: 5%;
+  width: 0;
+  border-left: 1.5px dashed rgba(219,39,119,.28);
+}
+
+/* multi-char trace */
+.board-trace.multi {
+  flex-direction: row;
+  align-items: center;
+}
+.trace-span {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.dark-mode .syl-box {
+  background: rgba(40,10,70,.80);
+  border-color: rgba(244,114,182,.22);
+}
+
 /* ── CARD SPACING ──────────────────────────────────── */
 .card { margin-bottom: 14px; }
 
@@ -257,6 +314,7 @@ body.dark-mode .fb-cv { background: rgba(32,6,55,.90); }
     <div class="prog-lbl" id="progLbl">1 / 26</div>
   </div>
   <div class="target-wrap">
+    <div class="syl-boxes" id="sylBoxes"></div>
     <div class="target-char" id="targetChar" onclick="speakTarget()">ㄱ</div>
     <div class="target-row">
       <span class="target-rom"  id="targetRom">g/k</span>
@@ -274,6 +332,7 @@ body.dark-mode .fb-cv { background: rgba(32,6,55,.90); }
   </label>
   <div class="board-wrap">
     <div class="board-trace" id="boardTrace">ㄱ</div>
+    <div class="board-dividers" id="boardDividers"></div>
     <canvas id="wCanvas" width="320" height="320"></canvas>
   </div>
   <div id="wordHint" class="word-hint" style="display:none;"></div>
@@ -429,25 +488,66 @@ document.querySelectorAll(".mode-tab").forEach(btn => {
 
 // ── TARGET ────────────────────────────────────────────────────
 function updateTarget() {
-  const item = pool[idx];
-  document.getElementById("targetChar").textContent = item.char;
+  const item  = pool[idx];
+  const chars = [...item.char]; // split corect unicode
+
   document.getElementById("targetRom").textContent  = item.rom;
   document.getElementById("targetMeta").textContent = item.meta ? item.meta[lang] : "";
-  document.getElementById("boardTrace").textContent = item.char;
   document.getElementById("progFill").style.width   = `${((idx+1)/pool.length)*100}%`;
   document.getElementById("progLbl").textContent    = `${idx+1} / ${pool.length}`;
 
-  const wHint = document.getElementById("wordHint");
-  if (mode === "words") {
-    wHint.textContent = T[lang].wordHint;
-    wHint.style.display = "";
+  const tc      = document.getElementById("targetChar");
+  const sylBoxes= document.getElementById("sylBoxes");
+  const trace   = document.getElementById("boardTrace");
+  const dividers= document.getElementById("boardDividers");
+
+  dividers.innerHTML = "";
+
+  if (mode === "words" && chars.length > 1) {
+    // Target: silabe individuale
+    tc.style.display    = "none";
+    sylBoxes.style.display = "flex";
+    const fs = chars.length > 2 ? 44 : 56;
+    sylBoxes.innerHTML  = chars.map(c =>
+      `<div class="syl-box" style="font-size:${fs}px" onclick="speakKo('${c}')">${c}</div>`
+    ).join('');
+
+    // Trace: câte un span per silabă, font dinamic
+    const traceFontSize = Math.min(170, Math.floor(195 / chars.length));
+    trace.classList.add("multi");
+    trace.style.fontSize = `${traceFontSize}px`;
+    trace.innerHTML = chars.map(c => `<span class="trace-span">${c}</span>`).join('');
+
+    // Linii de separare pe canvas
+    for (let i = 1; i < chars.length; i++) {
+      const line = document.createElement("div");
+      line.className  = "div-line";
+      line.style.left = `${(i / chars.length) * 100}%`;
+      dividers.appendChild(line);
+    }
   } else {
-    wHint.style.display = "none";
+    tc.style.display       = "";
+    tc.textContent         = item.char;
+    sylBoxes.style.display = "none";
+    trace.classList.remove("multi");
+    trace.style.fontSize   = "";
+    trace.textContent      = item.char;
   }
+
+  document.getElementById("wordHint").style.display =
+    mode === "words" ? "" : "none";
+  document.getElementById("wordHint").textContent =
+    mode === "words" ? T[lang].wordHint : "";
 
   checked = false;
   document.getElementById("btnCheck").disabled = false;
   document.getElementById("btnNext").disabled  = true;
+}
+
+function speakKo(char) {
+  if (!("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(char);
+  u.lang = "ko-KR"; speechSynthesis.cancel(); speechSynthesis.speak(u);
 }
 
 function speakTarget() {
@@ -569,12 +669,38 @@ function paintFbCanvas(id, src, color) {
   dc.drawImage(tmp,0,0);
 }
 
+// ── SECTION EXTRACTION (pentru cuvinte) ───────────────────────
+function extractSection(canvas, i, n) {
+  const sw = Math.floor(canvas.width / n);
+  const sec = document.createElement("canvas");
+  sec.width  = sw;
+  sec.height = canvas.height;
+  sec.getContext("2d").drawImage(canvas, -(i * sw), 0);
+  return sec;
+}
+
 // ── CHECK ─────────────────────────────────────────────────────
 function doCheck() {
   if (checked) return;
-  const t=T[lang];
-  const {score,empty,nu,nr}=compare(cvs,pool[idx].char);
-  if (empty) { alert(t.empty); return; }
+  const t     = T[lang];
+  const item  = pool[idx];
+  const chars = [...item.char];
+
+  let result;
+  if (mode === "words" && chars.length > 1) {
+    // Compară fiecare secțiune a canvas-ului cu silaba corespunzătoare
+    const sectionResults = chars.map((c, i) => compare(extractSection(cvs, i, chars.length), c));
+    if (sectionResults.every(r => r.empty)) { alert(t.empty); return; }
+    const avgScore = sectionResults.reduce((s, r) => s + r.score, 0) / chars.length;
+    // Referința se face pe cuvântul întreg (pentru comparația vizuală)
+    result = { score: avgScore, ...compare(cvs, item.char) };
+    if (result.empty) result.score = avgScore; // păstrează scorul corect
+  } else {
+    result = compare(cvs, item.char);
+    if (result.empty) { alert(t.empty); return; }
+  }
+
+  const {score, nu, nr} = result;
 
   checked=true;
   document.getElementById("btnCheck").disabled=true;
