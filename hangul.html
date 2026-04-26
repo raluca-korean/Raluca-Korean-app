@@ -1,264 +1,227 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ro">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Learning Hangul</title>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Hangul</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#db2777">
+<link rel="stylesheet" href="./theme-anime.css">
 <style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  margin: 0;
-  background: #f5f6fa;
-  color: #222;
-}
-
-/* HEADER */
-.header {
-  background: #8e7cc3;
-  color: white;
-  padding: 20px;
-  font-size: 22px;
-  font-weight: bold;
-}
-
-/* CONTAINER */
-.container {
-  padding: 16px;
-}
-
-/* CARD */
-.card {
-  background: white;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
-/* SECTION TITLE */
-.section-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-/* BUTTON */
-.btn {
-  background: #8e7cc3;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: none;
+/* ── SECTION COLLAPSIBLE ─────────────────────────── */
+.sec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   cursor: pointer;
-  font-size: 14px;
+  user-select: none;
+  padding: 2px 0;
 }
-
-/* GRID */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+.sec-header h2 { margin: 0; font-size: 17px; }
+.sec-arrow {
+  font-size: 16px;
+  color: #7c3aed;
+  transition: transform .2s;
 }
-
-/* LETTER CARD */
-.letter {
-  background: #fafafa;
-  border-radius: 10px;
-  padding: 12px;
-  text-align: center;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.letter:hover {
-  background: #eae6ff;
-}
-
-/* HANGUL */
-.hangul {
-  font-size: 26px;
-  font-weight: bold;
-}
-
-/* SOUND */
-.sound {
-  font-size: 12px;
-  color: gray;
-}
-
-/* COLLAPSIBLE */
-.collapsible {
-  cursor: pointer;
-}
-
-.content {
+.sec-arrow.open { transform: rotate(180deg); }
+.sec-body {
   display: none;
+  margin-top: 14px;
+}
+.sec-body.open { display: block; }
+
+/* ── LETTER GRID ─────────────────────────────────── */
+.letter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 10px;
   margin-top: 10px;
 }
-
-/* ACTIVE */
-.active + .content {
-  display: block;
-}
-
-/* QUIZ */
-.quiz {
+.lcard {
+  background: linear-gradient(160deg, #fff8fc, #f5f0ff);
+  border: 1.5px solid rgba(219,39,119,.14);
+  border-radius: 14px;
+  padding: 12px 6px;
   text-align: center;
-}
-
-.quiz-letter {
-  font-size: 40px;
-  margin: 20px 0;
-}
-
-.option {
-  display: block;
-  margin: 8px auto;
-  width: 80%;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: #eee;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(219,39,119,.07);
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.lcard:hover {
+  transform: translateY(-3px) scale(1.06);
+  box-shadow: 0 10px 22px rgba(168,85,247,.20);
+  border-color: rgba(168,85,247,.38);
+}
+.lcard.played {
+  border-color: #f472b6;
+  background: linear-gradient(160deg, #fce7f3, #ede9fe);
+}
+.lchar { font-size: 30px; font-weight: 900; color: #1a0533; line-height: 1; }
+.lrom  { font-size: 11px; color: #7c3aed; font-weight: 800; margin-top: 4px; }
+
+/* ── INFO BOX ────────────────────────────────────── */
+.info-box {
+  background: linear-gradient(160deg, #fce7f3, #ede9fe);
+  border: 1.5px solid rgba(244,114,182,.22);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 4px;
+}
+.info-box strong { color: #7c3aed; }
+
+/* ── CARD MARGIN ─────────────────────────────────── */
+.card { margin-bottom: 14px; }
+
+/* ── DARK MODE ───────────────────────────────────── */
+body.dark-mode .lcard {
+  background: rgba(32,6,55,.90);
+  border-color: rgba(244,114,182,.18);
+}
+body.dark-mode .lcard:hover { border-color: rgba(168,85,247,.50); }
+body.dark-mode .lchar { color: #f0e8ff; }
+body.dark-mode .info-box {
+  background: rgba(40,10,70,.65);
+  border-color: rgba(244,114,182,.20);
 }
 
-.option:hover {
-  background: #ddd;
-}
-
-/* RESULT */
-.correct {
-  background: #c8f7c5 !important;
-}
-
-.wrong {
-  background: #f7c5c5 !important;
+@media (max-width: 520px) {
+  .letter-grid { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); }
 }
 </style>
 </head>
+<body class="theme-anime">
+<div class="app">
 
-<body>
+<!-- ══════════════════ HEADER ══════════════════════ -->
+<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px;">
+  <div>
+    <h1 id="pageTitle">Alfabet Hangul</h1>
+    <div class="sub" id="pageSub">Consoane · Vocale · Reguli de citire</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+    <a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>
+    <button type="button" id="langRo">ro</button>
+    <button type="button" id="langEn">en</button>
+  </div>
+</div>
 
-<div class="header">Learning Hangul</div>
-
-<div class="container">
-
-<!-- INTRO -->
+<!-- ══════════════════ INTRO ═══════════════════════ -->
 <div class="card">
-<div class="section-title">What is Hangul?</div>
-<p>Hangul is the Korean alphabet. Letters combine into syllable blocks.</p>
-<p><strong>Example:</strong> ㅎ + ㅏ + ㄴ → 한</p>
+  <div class="info-box" id="introBox">
+    <strong>Hangul</strong> este alfabetul coreean, creat în 1443 de regele Sejong cel Mare.<br>
+    Literele se combină în blocuri silabice: <strong>ㅎ + ㅏ + ㄴ → 한</strong><br>
+    Fiecare bloc are o consoanǎ inițialǎ, o vocalǎ și, opțional, o consoanǎ finalǎ.
+  </div>
 </div>
 
-<!-- CONSONANTS -->
+<!-- ══════════════════ BASIC CONSONANTS ════════════ -->
 <div class="card">
-<div class="section-title collapsible">Basic Consonants</div>
-<div class="content">
-<div class="grid">
-<div class="letter" onclick="playSound('g')"><div class="hangul">ㄱ</div><div class="sound">g/k</div></div>
-<div class="letter" onclick="playSound('n')"><div class="hangul">ㄴ</div><div class="sound">n</div></div>
-<div class="letter" onclick="playSound('d')"><div class="hangul">ㄷ</div><div class="sound">d/t</div></div>
-<div class="letter" onclick="playSound('r')"><div class="hangul">ㄹ</div><div class="sound">r/l</div></div>
-</div>
-</div>
+  <div class="sec-header" data-target="cons-basic">
+    <h2 id="consBasicTitle">Consoane de bază (14)</h2>
+    <span class="sec-arrow">▼</span>
+  </div>
+  <div class="sec-body open" id="cons-basic">
+    <div class="letter-grid" id="grid-cons-basic"></div>
+  </div>
 </div>
 
-<!-- VOWELS -->
-<div class="card">
-<div class="section-title collapsible">Basic Vowels</div>
-<div class="content">
-<div class="grid">
-<div class="letter" onclick="playSound('a')"><div class="hangul">ㅏ</div><div class="sound">a</div></div>
-<div class="letter" onclick="playSound('eo')"><div class="hangul">ㅓ</div><div class="sound">eo</div></div>
-<div class="letter" onclick="playSound('o')"><div class="hangul">ㅗ</div><div class="sound">o</div></div>
-<div class="letter" onclick="playSound('u')"><div class="hangul">ㅜ</div><div class="sound">u</div></div>
-</div>
-</div>
-</div>
+<!-- ══ mai multe secțiuni urmează în pașii următori ══ -->
 
-<!-- BATCHIM -->
-<div class="card">
-<div class="section-title collapsible">Final Consonant (Batchim)</div>
-<div class="content">
-<p><strong>박</strong> = ㅂ + ㅏ + ㄱ</p>
-<p>Final sounds are shorter and clipped.</p>
-<p>ㄱ, ㅋ → k | ㄷ, ㅅ → t | ㅂ → p</p>
-</div>
-</div>
+</div><!-- /app -->
 
-<!-- READING RULES -->
-<div class="card">
-<div class="section-title collapsible">Reading Rules</div>
-<div class="content">
-<ul>
-<li>Stop sound → 박 = ba(k)</li>
-<li>Liaison → 한국어 = han-gu-geo</li>
-<li>ㅇ silent at start, “ng” at end</li>
-</ul>
-</div>
-</div>
-
-<!-- QUIZ -->
-<div class="card quiz">
-<div class="section-title">Quick Practice</div>
-
-<div id="quiz-letter" class="quiz-letter">ㄱ</div>
-
-<button class="option" onclick="checkAnswer(this,'g')">g</button>
-<button class="option" onclick="checkAnswer(this,'n')">n</button>
-<button class="option" onclick="checkAnswer(this,'b')">b</button>
-
-<button class="btn" onclick="nextQuestion()">Next</button>
-</div>
-
-</div>
-
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
 <script>
+// ── DATE ──────────────────────────────────────────────────────
+const CONS_BASIC = [
+  { char:"ㄱ", rom:"g/k",  speak:"가" },
+  { char:"ㄴ", rom:"n",    speak:"나" },
+  { char:"ㄷ", rom:"d/t",  speak:"다" },
+  { char:"ㄹ", rom:"r/l",  speak:"라" },
+  { char:"ㅁ", rom:"m",    speak:"마" },
+  { char:"ㅂ", rom:"b/p",  speak:"바" },
+  { char:"ㅅ", rom:"s",    speak:"사" },
+  { char:"ㅇ", rom:"–/ng", speak:"아" },
+  { char:"ㅈ", rom:"j",    speak:"자" },
+  { char:"ㅊ", rom:"ch",   speak:"차" },
+  { char:"ㅋ", rom:"k",    speak:"카" },
+  { char:"ㅌ", rom:"t",    speak:"타" },
+  { char:"ㅍ", rom:"p",    speak:"파" },
+  { char:"ㅎ", rom:"h",    speak:"하" },
+];
 
-/* COLLAPSIBLE */
-document.querySelectorAll(".collapsible").forEach(btn => {
-  btn.addEventListener("click", () => {
-    btn.classList.toggle("active");
+// ── LIMBĂ ─────────────────────────────────────────────────────
+let lang = localStorage.getItem("RK_LANG") || "ro";
+const T = {
+  ro: {
+    title:          "Alfabet Hangul",
+    sub:            "Consoane · Vocale · Reguli de citire",
+    intro:          "<strong>Hangul</strong> este alfabetul coreean, creat în 1443 de regele Sejong cel Mare.<br>Literele se combină în blocuri silabice: <strong>ㅎ + ㅏ + ㄴ → 한</strong><br>Fiecare bloc are o consoanǎ inițialǎ, o vocalǎ și, opțional, o consoanǎ finalǎ.",
+    consBasicTitle: "Consoane de bază (14)",
+  },
+  en: {
+    title:          "Hangul Alphabet",
+    sub:            "Consonants · Vowels · Reading Rules",
+    intro:          "<strong>Hangul</strong> is the Korean alphabet, created in 1443 by King Sejong the Great.<br>Letters combine into syllable blocks: <strong>ㅎ + ㅏ + ㄴ → 한</strong><br>Each block has an initial consonant, a vowel, and an optional final consonant.",
+    consBasicTitle: "Basic Consonants (14)",
+  }
+};
+
+function applyLang() {
+  const t = T[lang];
+  document.getElementById("pageTitle").textContent      = t.title;
+  document.getElementById("pageSub").textContent        = t.sub;
+  document.getElementById("introBox").innerHTML         = t.intro;
+  document.getElementById("consBasicTitle").textContent = t.consBasicTitle;
+  document.getElementById("langRo").style.background    = lang === "ro"
+    ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
+  document.getElementById("langEn").style.background    = lang === "en"
+    ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
+}
+
+document.getElementById("langRo").onclick = () => { lang="ro"; localStorage.setItem("RK_LANG","ro"); applyLang(); };
+document.getElementById("langEn").onclick = () => { lang="en"; localStorage.setItem("RK_LANG","en"); applyLang(); };
+
+// ── AUDIO ─────────────────────────────────────────────────────
+function speakKo(text) {
+  if (!("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ko-KR";
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+// ── GRID ──────────────────────────────────────────────────────
+function buildGrid(data, containerId) {
+  const grid = document.getElementById(containerId);
+  data.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "lcard";
+    div.innerHTML = `<div class="lchar">${item.char}</div><div class="lrom">${item.rom}</div>`;
+    div.onclick = () => {
+      speakKo(item.speak);
+      div.classList.add("played");
+      setTimeout(() => div.classList.remove("played"), 600);
+    };
+    grid.appendChild(div);
+  });
+}
+
+buildGrid(CONS_BASIC, "grid-cons-basic");
+
+// ── COLLAPSIBLE ───────────────────────────────────────────────
+document.querySelectorAll(".sec-header").forEach(hdr => {
+  hdr.addEventListener("click", () => {
+    const body  = document.getElementById(hdr.dataset.target);
+    const arrow = hdr.querySelector(".sec-arrow");
+    const isOpen = body.classList.toggle("open");
+    arrow.classList.toggle("open", isOpen);
   });
 });
 
-/* AUDIO PLACEHOLDER */
-function playSound(sound) {
-  console.log("Play sound:", sound);
-}
-
-/* QUIZ DATA */
-const quizData = [
-  {letter: "ㄱ", correct: "g"},
-  {letter: "ㄴ", correct: "n"},
-  {letter: "ㅏ", correct: "a"}
-];
-
-let current = 0;
-
-/* CHECK */
-function checkAnswer(btn, answer) {
-  let correct = quizData[current].correct;
-
-  if (answer === correct) {
-    btn.classList.add("correct");
-  } else {
-    btn.classList.add("wrong");
-  }
-}
-
-/* NEXT */
-function nextQuestion() {
-  current = (current + 1) % quizData.length;
-  document.getElementById("quiz-letter").innerText = quizData[current].letter;
-
-  document.querySelectorAll(".option").forEach(btn => {
-    btn.classList.remove("correct", "wrong");
-  });
-}
-
+applyLang();
 </script>
-
 </body>
 </html>
