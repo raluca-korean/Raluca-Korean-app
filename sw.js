@@ -1,4 +1,4 @@
-const CACHE = 'rk-v13';
+const CACHE = 'rk-v14';
 
 const STATIC = [
   './',
@@ -30,6 +30,7 @@ const STATIC = [
   './js/core/vocab-widget.js',
   './js/core/vocabulary.js',
   './js/core/bottom-nav.js',
+  './js/core/offline.js',
   './data/exercises.json',
   './data/lessons.json',
   './data/vocab-korean.json'
