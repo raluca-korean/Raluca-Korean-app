@@ -1,4 +1,4 @@
-const CACHE = 'rk-v11';
+const CACHE = 'rk-v12';
 
 const STATIC = [
   './',
@@ -8,6 +8,10 @@ const STATIC = [
   './glossary.html',
   './builder.html',
   './flashcards.html',
+  './drill.html',
+  './hangul.html',
+  './hanja-book.html',
+  './writing.html',
   './stats.html',
   './theme-anime.css',
   './flag.svg',
@@ -48,7 +52,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-/* Network first — mereu încearcă rețeaua, cacheul e doar fallback offline */
+/* Network first — încearcă rețeaua, cacheul e fallback offline */
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
