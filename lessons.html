@@ -7,7 +7,11 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#db2777">
 <link rel="stylesheet" href="./theme-anime.css">
-
+<style>
+.ko-speak { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
+.ko-speak:hover { opacity: 0.8; }
+.speak-icon { font-size: 14px; opacity: 0.6; flex-shrink: 0; }
+</style>
 </head>
   <body class="theme-anime">
     
@@ -192,7 +196,7 @@ function selectLesson(id){
 
     ${examples.map(ex => `
       <div class="example">
-        <div class="ko">${ex.ko}</div>
+        <div class="ko ko-speak" data-ko="${ex.ko.replace(/"/g,'&quot;')}">${ex.ko} <span class="speak-icon">🔊</span></div>
         <div class="ro">${ex[currentLang]}</div>
       </div>
     `).join("")}
@@ -211,6 +215,10 @@ function selectLesson(id){
     .addEventListener("click", () => {
       window.location.href = `exercises.html?lesson=${lesson.id}`;
     });
+
+  contentEl.querySelectorAll(".ko-speak").forEach(el => {
+    el.addEventListener("click", () => speakKorean(el.dataset.ko));
+  });
 }
 
 function setLanguage(lang){
@@ -237,6 +245,18 @@ async function loadLessons(){
   } catch(e){
     contentEl.innerHTML = `<div class="sub">Nu am putut încărca lessons.json</div>`;
   }
+}
+
+function speakKorean(text){
+  if(!text || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = "ko-KR";
+  utt.rate = 0.9;
+  const voices = speechSynthesis.getVoices();
+  const koVoice = voices.find(v => v.lang && v.lang.includes("ko"));
+  if(koVoice) utt.voice = koVoice;
+  speechSynthesis.speak(utt);
 }
 
 langRoBtn.addEventListener("click", () => setLanguage("ro"));
