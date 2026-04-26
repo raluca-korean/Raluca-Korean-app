@@ -204,9 +204,95 @@ body.dark-mode .rule-list li {
   border-color: rgba(244,114,182,.18);
 }
 
+/* ── QUIZ ────────────────────────────────────────── */
+.quiz-scores {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.q-bar {
+  height: 6px;
+  border-radius: 6px;
+  background: rgba(219,39,119,.12);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.q-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f472b6, #a855f7);
+  transition: width .35s ease;
+  width: 0%;
+}
+.q-letter {
+  font-size: 72px;
+  font-weight: 900;
+  color: #7c3aed;
+  line-height: 1;
+  margin: 4px 0;
+  cursor: pointer;
+}
+.q-mode {
+  font-size: 13px;
+  color: #7e3a6e;
+  margin-bottom: 16px;
+  min-height: 18px;
+}
+.q-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.q-opt {
+  background: linear-gradient(160deg, #fff8fc, #f5f0ff);
+  color: #1a0533;
+  border: 1.5px solid rgba(219,39,119,.20);
+  border-radius: 14px;
+  padding: 14px 8px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(219,39,119,.07);
+  transition: transform .12s, box-shadow .12s;
+}
+.q-opt:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(168,85,247,.18);
+}
+.q-opt:disabled { cursor: default; }
+.q-correct {
+  background: linear-gradient(135deg, #bbf7d0, #d1fae5) !important;
+  border-color: #22c55e !important;
+  color: #166534 !important;
+}
+.q-wrong {
+  background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
+  border-color: #ef4444 !important;
+  color: #991b1b !important;
+}
+.q-result {
+  font-size: 15px;
+  font-weight: 800;
+  min-height: 22px;
+  margin-bottom: 10px;
+}
+.q-btns { display: flex; gap: 10px; justify-content: center; }
+
+body.dark-mode .q-opt {
+  background: rgba(32,6,55,.90);
+  color: #f0e8ff;
+  border-color: rgba(244,114,182,.22);
+}
+body.dark-mode .q-result { color: #f0e8ff; }
+
 @media (max-width: 520px) {
   .letter-grid { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); }
   .btable th, .btable td { padding: 7px 8px; }
+  .q-options { grid-template-columns: 1fr; }
+  .q-letter  { font-size: 56px; }
 }
 </style>
 </head>
@@ -383,7 +469,29 @@ body.dark-mode .rule-list li {
   </div>
 </div>
 
-<!-- ══ quiz urmează în partea 4 ══ -->
+<!-- ══════════════════ QUIZ ════════════════════════ -->
+<div class="card" style="text-align:center;">
+  <h2 id="quizTitle" style="margin-bottom:14px;">Quiz rapid</h2>
+
+  <div class="quiz-scores">
+    <span class="badge" id="qScoreC">✅ 0</span>
+    <span class="badge" id="qScoreT">📝 0</span>
+    <span class="badge" id="qScoreS">🔥 0</span>
+  </div>
+
+  <div class="q-bar"><div class="q-bar-fill" id="qProgress"></div></div>
+
+  <div class="q-letter" id="qLetter" title="apasă pentru audio">?</div>
+  <div class="q-mode"   id="qMode"></div>
+
+  <div class="q-options" id="qOptions"></div>
+  <div class="q-result"  id="qResult"></div>
+
+  <div class="q-btns">
+    <button id="btnNext"  disabled>→</button>
+    <button id="btnSpeak" onclick="speakCurrent()">🔊</button>
+  </div>
+</div>
 
 </div><!-- /app -->
 
@@ -523,6 +631,13 @@ const T = {
     batchimInfo:     "Batchim este consoana de la baza blocului silabic. Sunetul e scurt și tǎiat — nu se deschide ca la început de silabǎ.",
     bth1:"Litere", bth2:"Sunet", bth3:"Exemplu",
     rulesTitle:      "Reguli de citire",
+    quizTitle:       "Quiz rapid",
+    qMode:           "Ce sunet face această literă?",
+    qCorrect:        "✅ Corect!",
+    qWrong:          ans => `❌ Greșit — răspuns corect: ${ans}`,
+    qNext:           "Următor →",
+    qRestart:        "Restart 🔄",
+    qDone:           (c, t) => `Terminat! ${c} din ${t} corecte`,
   },
   en: {
     title:           "Hangul Alphabet",
@@ -540,6 +655,13 @@ const T = {
     batchimInfo:     "Batchim is the consonant at the bottom of a syllable block. The sound is short and clipped — it doesn't open like at the start of a syllable.",
     bth1:"Letters", bth2:"Sound", bth3:"Example",
     rulesTitle:      "Reading Rules",
+    quizTitle:       "Quick Quiz",
+    qMode:           "What sound does this letter make?",
+    qCorrect:        "✅ Correct!",
+    qWrong:          ans => `❌ Wrong — correct answer: ${ans}`,
+    qNext:           "Next →",
+    qRestart:        "Restart 🔄",
+    qDone:           (c, t) => `Done! ${c} out of ${t} correct`,
   }
 };
 
@@ -568,6 +690,9 @@ function applyLang() {
   });
   buildBatchim(lang);
   buildRules(lang);
+  document.getElementById("quizTitle").textContent = t.quizTitle;
+  document.getElementById("qMode").textContent     = t.qMode;
+  document.getElementById("btnNext").textContent   = t.qNext;
   document.getElementById("langRo").style.background     = lang === "ro"
     ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
   document.getElementById("langEn").style.background     = lang === "en"
@@ -617,7 +742,120 @@ document.querySelectorAll(".sec-header").forEach(hdr => {
   });
 });
 
+// ── QUIZ ─────────────────────────────────────────────────────
+const QUIZ_POOL = [...CONS_BASIC, ...CONS_TENSED, ...VOWELS_BASIC, ...VOWELS_COMP];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let qDeck = [], qIdx = 0, qCorrect = 0, qTotal = 0, qStreak = 0, qAnswered = false;
+
+function initQuiz() {
+  qDeck     = shuffle(QUIZ_POOL);
+  qIdx      = 0;
+  qCorrect  = 0;
+  qTotal    = 0;
+  qStreak   = 0;
+  qAnswered = false;
+  renderQ();
+  updateScore();
+}
+
+function renderQ() {
+  const q   = qDeck[qIdx];
+  const t   = T[lang];
+
+  document.getElementById("qLetter").textContent = q.char;
+  document.getElementById("qMode").textContent   = t.qMode;
+  document.getElementById("qResult").textContent = "";
+  document.getElementById("btnNext").disabled    = true;
+  document.getElementById("btnNext").textContent = t.qNext;
+  document.getElementById("qProgress").style.width =
+    `${(qIdx / qDeck.length) * 100}%`;
+
+  const wrongs  = shuffle(QUIZ_POOL.filter(x => x.rom !== q.rom)).slice(0, 3).map(x => x.rom);
+  const options = shuffle([q.rom, ...wrongs]);
+
+  const grid = document.getElementById("qOptions");
+  grid.innerHTML = "";
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className    = "q-opt";
+    btn.textContent  = opt;
+    btn.onclick      = () => checkQ(btn, opt, q.rom, q.speak);
+    grid.appendChild(btn);
+  });
+
+  qAnswered = false;
+}
+
+function checkQ(btn, chosen, correct, speak) {
+  if (qAnswered) return;
+  qAnswered = true;
+  qTotal++;
+
+  document.querySelectorAll(".q-opt").forEach(b => b.disabled = true);
+
+  if (chosen === correct) {
+    btn.classList.add("q-correct");
+    qCorrect++;
+    qStreak++;
+    document.getElementById("qResult").textContent = T[lang].qCorrect;
+    speakKo(speak);
+  } else {
+    btn.classList.add("q-wrong");
+    document.querySelectorAll(".q-opt").forEach(b => {
+      if (b.textContent === correct) b.classList.add("q-correct");
+    });
+    qStreak = 0;
+    document.getElementById("qResult").textContent = T[lang].qWrong(correct);
+  }
+
+  updateScore();
+  document.getElementById("btnNext").disabled = false;
+}
+
+function nextQ() {
+  qIdx++;
+  if (qIdx >= qDeck.length) { showSummary(); return; }
+  renderQ();
+}
+
+function showSummary() {
+  const t = T[lang];
+  document.getElementById("qLetter").textContent = "🎉";
+  document.getElementById("qMode").textContent   = t.qDone(qCorrect, qDeck.length);
+  document.getElementById("qOptions").innerHTML  = "";
+  document.getElementById("qResult").textContent = "";
+  document.getElementById("qProgress").style.width = "100%";
+  const btn = document.getElementById("btnNext");
+  btn.textContent = t.qRestart;
+  btn.disabled    = false;
+  btn.onclick     = () => { btn.onclick = nextQ; initQuiz(); };
+}
+
+function updateScore() {
+  document.getElementById("qScoreC").textContent = `✅ ${qCorrect}`;
+  document.getElementById("qScoreT").textContent = `📝 ${qTotal}`;
+  document.getElementById("qScoreS").textContent = `🔥 ${qStreak}`;
+}
+
+function speakCurrent() {
+  const q = qDeck[qIdx];
+  if (q) speakKo(q.speak);
+}
+
+document.getElementById("qLetter").onclick = speakCurrent;
+document.getElementById("btnNext").onclick = nextQ;
+
 applyLang();
+initQuiz();
 </script>
 </body>
 </html>
