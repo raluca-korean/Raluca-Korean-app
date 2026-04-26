@@ -194,9 +194,9 @@ function selectLesson(id){
     <p style="margin-top:8px">${lesson.explanation[currentLang]}</p>
     <div class="sub" style="margin-top:8px"><b>${t("structure")}:</b> ${lesson.structure}</div>
 
-    ${examples.map(ex => `
+    ${examples.map((ex, i) => `
       <div class="example">
-        <div class="ko ko-speak" data-ko="${ex.ko.replace(/"/g,'&quot;')}">${ex.ko} <span class="speak-icon">🔊</span></div>
+        <div class="ko ko-speak" data-idx="${i}">${ex.ko} <span class="speak-icon" style="-webkit-text-fill-color:initial">🔊</span></div>
         <div class="ro">${ex[currentLang]}</div>
       </div>
     `).join("")}
@@ -217,7 +217,8 @@ function selectLesson(id){
     });
 
   contentEl.querySelectorAll(".ko-speak").forEach(el => {
-    el.addEventListener("click", () => speakKorean(el.dataset.ko));
+    const idx = parseInt(el.dataset.idx, 10);
+    el.addEventListener("click", () => speakKorean(examples[idx].ko));
   });
 }
 
@@ -249,14 +250,11 @@ async function loadLessons(){
 
 function speakKorean(text){
   if(!text || !window.speechSynthesis) return;
-  speechSynthesis.cancel();
+  window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = "ko-KR";
   utt.rate = 0.9;
-  const voices = speechSynthesis.getVoices();
-  const koVoice = voices.find(v => v.lang && v.lang.includes("ko"));
-  if(koVoice) utt.voice = koVoice;
-  speechSynthesis.speak(utt);
+  window.speechSynthesis.speak(utt);
 }
 
 langRoBtn.addEventListener("click", () => setLanguage("ro"));
