@@ -1191,7 +1191,7 @@
   var DATA = {
     subject: [
       {ko:'저는', ro:'eu', en:'I', aliases:['eu','i']},
-      {ko:'나는', ro:'eu', en:'I', aliases:['eu','i']},
+      {ko:'나는', ro:'eu', en:'I', aliases:[]},
       {ko:'너는', ro:'tu', en:'you', aliases:['tu','you']},
       {ko:'여러분은', ro:'voi', en:'you (all)', aliases:['voi','you all','you guys','voi toti','voi toți']},
       {ko:'우리는', ro:'noi', en:'we', aliases:['noi','we']},
@@ -2484,6 +2484,27 @@
 
     if(!segments.length){
       segments.push({ text: normalizeLatin(text), connector: 'none' });
+    }
+
+    // Absorb empty segments: transfer their connector to the preceding segment.
+    // This fixes "studiez, dar" → comma creates {text:'', connector:'contrast1'};
+    // the contrast connector moves to the real segment before it.
+    for(var ei = segments.length - 1; ei >= 1; ei--){
+      if(segments[ei].text === ''){
+        segments[ei - 1].connector = segments[ei].connector;
+        segments.splice(ei, 1);
+      }
+    }
+
+    // Swap purpose pairs: Romanian "X ca să Y" puts the purpose verb AFTER "ca să",
+    // but Korean needs [purpose verb]-으려고 BEFORE the main verb.
+    // Fix: swap the texts so the purpose verb gets the -으려고 connector.
+    for(var pi = 0; pi < segments.length - 1; pi++){
+      if(segments[pi].connector === 'purpose' || segments[pi].connector === 'purpose2'){
+        var tmp = segments[pi].text;
+        segments[pi].text     = segments[pi + 1].text;
+        segments[pi + 1].text = tmp;
+      }
     }
 
     return segments;
