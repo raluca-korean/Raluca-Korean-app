@@ -2383,7 +2383,13 @@
         if(!candidate) continue;
 
         var pos = normalizedText.indexOf(' ' + candidate + ' ');
-        if(pos === -1) pos = normalizedText.indexOf(candidate);
+        if(pos === -1){
+          // Strip punctuation and retry — handles end-of-sentence (seara.) without
+          // falling back to arbitrary substring matching that causes false positives
+          // (e.g. alias 'tu' found inside 'studiat').
+          var stripped = normalizedText.replace(/[.,!?;:'"()]/g,' ').replace(/ {2,}/g,' ');
+          pos = stripped.indexOf(' ' + candidate + ' ');
+        }
 
         if(pos !== -1 && candidate.length > bestLen){
           bestPos = pos;
