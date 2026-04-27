@@ -1292,7 +1292,11 @@
       {ko:'주다', ro:'a da', en:'to give', aliases:['dau','da','give','dat','am dat','a dat','voi da','gave','will give'], final:'줘요', forms:{none:'줘요',seq:'주고',cause1:'줘서',cause2:'주니까',condition:'주면',contrast1:'주지만',contrast2:'주는데',purpose:'주려고',result:'주게 되다'}},
       {ko:'기다리다', ro:'a aștepta', en:'to wait', aliases:['astept','aștept','asteapta','așteaptă','asteptam','așteptăm','wait','asteptat','așteptat','am asteptat','am așteptat','a asteptat','a așteptat','voi astepta','voi aștepta','waited','will wait'], final:'기다려요', forms:{none:'기다려요',seq:'기다리고',cause1:'기다려서',cause2:'기다리니까',condition:'기다리면',contrast1:'기다리지만',contrast2:'기다리는데',purpose:'기다리려고',result:'기다리게 되다'}},
       {ko:'감사하다', ro:'a mulțumi', en:'to thank', aliases:['multumesc','mulțumesc','multumim','mulțumim','multumesti','mulțumești','thank','multumit','mulțumit','am multumit','am mulțumit','a multumit','a mulțumit','voi multumi','voi mulțumi','thanked','will thank'], final:'감사해요', forms:{none:'감사해요',seq:'감사하고',cause1:'감사해서',cause2:'감사하니까',condition:'감사하면',contrast1:'감사하지만',contrast2:'감사하는데',purpose:'감사하려고',result:'감사하게 되다'}},
-      {ko:'남기다', ro:'a lăsa', en:'to leave', aliases:['las','lași','lasati','lăsați','lasa','lăsa','leave','lasat','lăsat','am lasat','am lăsat','a lasat','a lăsat','voi lasa','voi lăsa','left','will leave'], final:'남겨요', forms:{none:'남겨요',seq:'남기고',cause1:'남겨서',cause2:'남기니까',condition:'남기면',contrast1:'남기지만',contrast2:'남기는데',purpose:'남기려고',result:'남기게 되다'}}
+      {ko:'남기다', ro:'a lăsa', en:'to leave', aliases:['las','lași','lasati','lăsați','lasa','lăsa','leave','lasat','lăsat','am lasat','am lăsat','a lasat','a lăsat','voi lasa','voi lăsa','left','will leave'], final:'남겨요', forms:{none:'남겨요',seq:'남기고',cause1:'남겨서',cause2:'남기니까',condition:'남기면',contrast1:'남기지만',contrast2:'남기는데',purpose:'남기려고',result:'남기게 되다'}},
+      {ko:'안녕하세요', ro:'Bună ziua', en:'Hello', isPhrase:true, aliases:['buna ziua','salut','hello','hi','buna'], final:'안녕하세요', forms:{none:'안녕하세요',seq:'안녕하세요',cause1:'안녕하세요',cause2:'안녕하세요',condition:'안녕하세요',contrast1:'안녕하세요',contrast2:'안녕하세요',purpose:'안녕하세요',result:'안녕하세요'}},
+      {ko:'좋은 아침이에요', ro:'Bună dimineața', en:'Good morning', isPhrase:true, aliases:['buna dimineata','buna dimineața','good morning'], final:'좋은 아침이에요', forms:{none:'좋은 아침이에요',seq:'좋은 아침이에요',cause1:'좋은 아침이에요',cause2:'좋은 아침이에요',condition:'좋은 아침이에요',contrast1:'좋은 아침이에요',contrast2:'좋은 아침이에요',purpose:'좋은 아침이에요',result:'좋은 아침이에요'}},
+      {ko:'좋은 저녁이에요', ro:'Bună seara', en:'Good evening', isPhrase:true, aliases:['buna seara','good evening'], final:'좋은 저녁이에요', forms:{none:'좋은 저녁이에요',seq:'좋은 저녁이에요',cause1:'좋은 저녁이에요',cause2:'좋은 저녁이에요',condition:'좋은 저녁이에요',contrast1:'좋은 저녁이에요',contrast2:'좋은 저녁이에요',purpose:'좋은 저녁이에요',result:'좋은 저녁이에요'}},
+      {ko:'안녕히 가세요', ro:'La revedere', en:'Goodbye', isPhrase:true, aliases:['la revedere','bye','goodbye','pa','pa pa'], final:'안녕히 가세요', forms:{none:'안녕히 가세요',seq:'안녕히 가세요',cause1:'안녕히 가세요',cause2:'안녕히 가세요',condition:'안녕히 가세요',contrast1:'안녕히 가세요',contrast2:'안녕히 가세요',purpose:'안녕히 가세요',result:'안녕히 가세요'}}
     ],
     connector: [
       {id:'none', key:'none', ko:'—', ro:'', en:'', aliases:['fara conector','fără conector','none']},
@@ -1993,6 +1997,7 @@
 
   function finiteVerbText(verb, lang, subjectKo, tense){
     if(!verb) return '';
+    if(verb.isPhrase) return lang === 'en' ? (verb.en || verb.ro || '') : (verb.ro || verb.en || '');
     var hit = VERB_FINITE_MAP[verb.ko];
     var td  = VERB_TENSE_DATA[verb.ko];
     var role = subjectRoleFromKo(subjectKo || '');
@@ -2053,6 +2058,8 @@
   function renderVerbKo(clause){
     var verb = itemOf(clause, 'verb');
     if(!verb || !verb.ko) return '';
+
+    if(verb.isPhrase) return verb.final || verb.ko;
 
     var cKey = connectorKey(clause);
     var conj = window.Conjugation;
@@ -2609,13 +2616,16 @@
         lastSubjectKo = subjects[0].ko;
       }
       if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
-      if(times[0])    setFieldItem(clause, 'time', times[0]);
-      if(places[0])   setFieldItem(clause, 'departure', places[0]);
-      if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
-      if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
-      if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
-      if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
-      if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
+      // Greeting phrases are standalone — skip time/place/object/adverb to avoid noise
+      if(!verb || !verb.isPhrase){
+        if(times[0])    setFieldItem(clause, 'time', times[0]);
+        if(places[0])   setFieldItem(clause, 'departure', places[0]);
+        if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
+        if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
+        if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
+        if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
+        if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
+      }
       if(verb)        setFieldItem(clause, 'verb', verb);
 
       // Set clause connector for intermediate clauses (not the last)
