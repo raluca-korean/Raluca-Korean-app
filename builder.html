@@ -1273,8 +1273,10 @@
       {ko:'깨끗이', ro:'curat', en:'cleanly', aliases:['curat','curata','curată','clean','cleanly','neat','ingrijit','îngrijit']},
       {ko:'예쁘게', ro:'frumos', en:'beautifully', aliases:['frumos','frumoasa','frumoasă','beautiful','beautifully','pretty','prettily','dragut','drăguț']},
       {ko:'많이', ro:'mult', en:'a lot', aliases:['mult','multa','multă','a lot','very much','much','lots']},
-      {ko:'큰 눈으로', ro:'cu ochii mari', en:'with big eyes', aliases:['cu ochii mari','cu ochi mari','ochii mari','ochi mari','with big eyes','big eyes','big-eyed']},
-      {ko:'긴 머리로', ro:'cu părul lung', en:'with long hair', aliases:['cu parul lung','cu părul lung','parul lung','părul lung','with long hair','long hair']},
+      {ko:'눈이 큰', ro:'cu ochii mari', en:'with big eyes', modifiesSubject:true, aliases:['cu ochii mari','cu ochi mari','ochii mari','ochi mari','with big eyes','big eyes','big-eyed']},
+      {ko:'머리가 긴', ro:'cu părul lung', en:'with long hair', modifiesSubject:true, aliases:['cu parul lung','cu părul lung','parul lung','părul lung','with long hair','long hair']},
+      {ko:'키가 큰', ro:'înalt', en:'tall', modifiesSubject:true, aliases:['inalt','înalt','inalta','înaltă','tall']},
+      {ko:'키가 작은', ro:'scund', en:'short', modifiesSubject:true, aliases:['scund','scunda','scundă','short','mic','mica','mică']},
       {ko:'큰 목소리로', ro:'cu voce tare', en:'with a loud voice', aliases:['cu voce tare','voce tare','with loud voice','with a loud voice','loudly']}
 
     ],
@@ -1540,6 +1542,7 @@
       final: item.final || '',
       forms: item.forms || {},
       isPhrase: item.isPhrase || false,
+      modifiesSubject: item.modifiesSubject || false,
       raw: item
     };
   }
@@ -2147,15 +2150,33 @@
     var adverb2 = itemOf(clause, 'adverb2');
     var verbKo = renderVerbKo(clause);
 
-    if(topic && topic.ko) parts.push(topic.ko);
+    // Adverbs that describe a physical/permanent attribute of the subject
+    // go BEFORE the subject as Korean relative clause modifiers (눈이 큰 소녀는).
+    // Regular manner adverbs stay after the object, before the verb.
+    var subjectAttrs = [];
+    var mannerAdvs = [];
+    [adverb, adverb2].forEach(function(adv){
+      if(!adv || !adv.ko) return;
+      if(adv.modifiesSubject) subjectAttrs.push(adv.ko);
+      else mannerAdvs.push(adv.ko);
+    });
+
+    if(topic && topic.ko){
+      if(subjectAttrs.length){
+        var base = removeTopicParticle(topic.ko);
+        var ptcl = topic.ko.slice(base.length);
+        parts.push(subjectAttrs.join(' ') + ' ' + base + ptcl);
+      } else {
+        parts.push(topic.ko);
+      }
+    }
     if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
     if(time && time.ko) parts.push(time.ko);
     if(departure && departure.ko) parts.push(departure.ko);
     if(transit && transit.ko) parts.push(transit.ko);
     if(object1 && object1.ko) parts.push(object1.ko);
     if(object2 && object2.ko) parts.push(object2.ko);
-    if(adverb && adverb.ko) parts.push(adverb.ko);
-    if(adverb2 && adverb2.ko) parts.push(adverb2.ko);
+    mannerAdvs.forEach(function(ko){ parts.push(ko); });
     if(verbKo) parts.push(verbKo);
 
     return cleanSentenceText(parts.join(' '));
