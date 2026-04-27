@@ -2440,11 +2440,23 @@
 
     var out = [];
     var seen = {};
+    var usedPos = [];
 
     for(var h=0; h<hits.length; h++){
       var key = hits[h].item.id + '|' + hits[h].item.ko;
       if(seen[key]) continue;
+
+      // Skip if a different item already claimed this text position
+      var overlaps = false;
+      for(var u=0; u<usedPos.length; u++){
+        if(hits[h].pos < usedPos[u].end && hits[h].pos + hits[h].len > usedPos[u].start){
+          overlaps = true; break;
+        }
+      }
+      if(overlaps) continue;
+
       seen[key] = true;
+      usedPos.push({ start: hits[h].pos, end: hits[h].pos + hits[h].len });
       out.push(hits[h].item);
       if(out.length >= (maxCount || 10)) break;
     }
