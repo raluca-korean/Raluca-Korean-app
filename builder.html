@@ -1193,7 +1193,7 @@
       {ko:'저는', ro:'eu', en:'I', aliases:['eu','i']},
       {ko:'나는', ro:'eu', en:'I', aliases:[]},
       {ko:'너는', ro:'tu', en:'you', aliases:['tu','you']},
-      {ko:'여러분은', ro:'voi', en:'you (all)', aliases:['voi','you all','you guys','voi toti','voi toți']},
+      {ko:'여러분은', ro:'voi', en:'you (all)', aliases:['voi','you all','you guys','voi toti','voi toți','ati','ați']},
       {ko:'우리는', ro:'noi', en:'we', aliases:['noi','we']},
       {ko:'그는', ro:'el', en:'he', aliases:['el','he']},
       {ko:'그녀는', ro:'ea', en:'she', aliases:['ea','she']},
@@ -1253,7 +1253,9 @@
       {ko:'프로젝트를', ro:'proiectul', en:'the project', aliases:['proiectul','proiect','project']},
       {ko:'편지를', ro:'scrisoarea', en:'the letter', aliases:['scrisoarea','scrisoare','letter']},
       {ko:'초콜릿을', ro:'ciocolata', en:'chocolate', aliases:['ciocolata','ciocolată','chocolate']},
-      {ko:'음식을', ro:'mâncarea', en:'food', aliases:['mancarea','mâncarea','mancare','mâncare','food']}
+      {ko:'음식을', ro:'mâncarea', en:'food', aliases:['mancarea','mâncarea','mancare','mâncare','food']},
+      {ko:'테이블을', ro:'masa', en:'the table', aliases:['masa','table','the table','mesele','mesele']},
+      {ko:'손님들을 위해', ro:'pentru clienți', en:'for the customers', aliases:['pentru clienti','pentru clienți','pentru clientii','pentru clienții','pentru clientilor','pentru clienților','for customers','for clients','for guests']}
     ],
     description: [
       {ko:'', ro:'', en:'', aliases:[]},
@@ -1267,7 +1269,8 @@
       {ko:'미리', ro:'dinainte', en:'in advance', aliases:['dinainte','in advance']},
       {ko:'정말', ro:'foarte', en:'really', aliases:['foarte','really']},
       {ko:'조금', ro:'puțin', en:'a little', aliases:['putin','puțin','little']},
-      {ko:'자주', ro:'des', en:'often', aliases:['des','often']}
+      {ko:'자주', ro:'des', en:'often', aliases:['des','often']},
+      {ko:'깨끗이', ro:'curat', en:'cleanly', aliases:['curat','curata','curată','clean','cleanly','neat','ingrijit','îngrijit']}
     ],
     verb: [
       {ko:'공부하다', ro:'a studia', en:'to study', aliases:['studiez','studia','invat','învăț','study','learn','studiat','am studiat','a studiat','voi studia','studied','will study'], final:'공부해요', forms:{none:'공부해요',seq:'공부하고',cause1:'공부해서',cause2:'공부하니까',condition:'공부하면',contrast1:'공부하지만',contrast2:'공부하는데',purpose:'공부하려고',result:'공부하게 되다'}},
@@ -2447,13 +2450,13 @@
   function splitIntoSegments(text){
     var working = ' ' + normalizeLatin(text) + ' ';
     var markers = [
-      {key:'cause1', phrases:['pentru ca','pentru că','because']},
-      {key:'cause2', phrases:['fiindca','fiindcă','since']},
+      {key:'purpose',   phrases:['ca sa','ca să','in order to']},
+      {key:'cause1',    phrases:['pentru ca','pentru că','because','ca']},
+      {key:'cause2',    phrases:['fiindca','fiindcă','since']},
       {key:'condition', phrases:['daca','dacă','if']},
       {key:'contrast1', phrases:['dar','insa','însă','but','however']},
       {key:'contrast2', phrases:['iar','while']},
-      {key:'purpose', phrases:['ca sa','ca să','in order to']},
-      {key:'seq', phrases:['si apoi','și apoi','dupa aceea','după aceea','and then','si','and']}
+      {key:'seq',       phrases:['si apoi','și apoi','dupa aceea','după aceea','and then','si','and']}
     ];
 
     for(var i=0;i<markers.length;i++){
@@ -2513,7 +2516,9 @@
     // but Korean needs [purpose verb]-으려고 BEFORE the main verb.
     // Fix: swap the texts so the purpose verb gets the -으려고 connector.
     for(var pi = 0; pi < segments.length - 1; pi++){
-      if(segments[pi].connector === 'purpose' || segments[pi].connector === 'purpose2'){
+      if(segments[pi].connector === 'purpose'  ||
+         segments[pi].connector === 'purpose2' ||
+         segments[pi].connector === 'cause1'){
         var tmp = segments[pi].text;
         segments[pi].text     = segments[pi + 1].text;
         segments[pi + 1].text = tmp;
@@ -2573,8 +2578,11 @@
     var clauseData = [];
     for(var s = 0; s < segments.length; s++){
       var seg = segments[s];
-      var segVerb = findBestMatch('verb', seg.text);
-      if(segVerb) clauseData.push({ text: seg.text, connKey: seg.connector });
+      // Strip relative sub-clauses ("care/which/who ...") — the builder can't parse
+      // them and their verb would shadow the main clause verb.
+      var cleanText = seg.text.replace(/\s+(?:care|which|who)\s+\S+.*/, '').trim();
+      var segVerb = findBestMatch('verb', cleanText || seg.text);
+      if(segVerb) clauseData.push({ text: cleanText || seg.text, connKey: seg.connector });
     }
 
     // Fallback: treat whole text as one clause
