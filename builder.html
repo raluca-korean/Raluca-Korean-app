@@ -2460,22 +2460,24 @@
   function detectTenseFromText(text){
     var n = normalizeLatin(text);
 
-    // Future Romanian: voi/vei/va/vom/veți/vor
+    // Past Romanian: participii cunoscute (normalizate, fără diacritice)
+    var roParts = ['mers','mancat','venit','vazut','citit','scris','intalnit',
+                   'odihnit','lucrat','studiat','pregatit','invatat','ascultat',
+                   'facut','cumparat','dat'];
+    for(var i=0;i<roParts.length;i++){
+      if(n.indexOf(roParts[i]) !== -1) return 'past';
+    }
+    // Past Romanian: auxiliare de perfect compus — forme cu cratimă și "ați"
+    // "ati" (normalizat din "ați") = aux pl.2 distinctiv românesc, nu apare în engleză
+    if(/\b(ati|ne-am|m-am|te-ai|s-a|s-au|v-ati)\b/.test(n)) return 'past';
+
+    // Future Romanian: voi/vei/va/vom/veți/vor — DUPĂ detecția trecutului
+    // (evitând confuzia cu pronumele "voi" din "voi ați mâncat")
     if(/\b(voi|vei|va|vom|veti|vor)\b/.test(n)) return 'future';
     // Future English
     if(/\bwill\b/.test(n)) return 'future';
 
-    // Past Romanian: known participles (normalized, diacritics stripped)
-    var roParts = ['mers','mancat','venit','vazut','citit','scris','intalnit',
-                   'odihnit','lucrat','studiat','pregatit','invatat','ascultat',
-                   'facut','cumparat'];
-    for(var i=0;i<roParts.length;i++){
-      if(n.indexOf(roParts[i]) !== -1) return 'past';
-    }
-    // Past Romanian: reflexive aux markers
-    if(/\b(ne-am|m-am|te-ai|s-a|s-au|v-ati)\b/.test(n)) return 'past';
-
-    // Past English: known irregular/regular past forms
+    // Past English: forme neregulate/regulate cunoscute
     var enPast = ['went','ate','came','saw','wrote','met','rested','worked',
                   'exercised','prepared','learned','listened','made','bought',
                   'gave','studied','read ','read,','read.'];
