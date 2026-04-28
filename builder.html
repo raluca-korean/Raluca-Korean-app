@@ -1350,6 +1350,9 @@
       {id:'tense_intention',   key:'tense_intention',   ko:'-(으)려고 해요',     ro:'intenționez să',    en:'intend to',         isTense:true, aliases:[]},
       {id:'tense_can',         key:'tense_can',         ko:'-(으)ㄹ 수 있어요',  ro:'pot să',            en:'can',               isTense:true, aliases:[]},
       {id:'tense_cannot',      key:'tense_cannot',      ko:'-(으)ㄹ 수 없어요',  ro:'nu pot să',         en:'cannot',            isTense:true, aliases:[]},
+      {id:'tense_neg',         key:'tense_neg',         ko:'-지 않아요',         ro:'nu',                en:'don\'t',            isTense:true, aliases:[]},
+      {id:'tense_notwish',     key:'tense_notwish',     ko:'-고 싶지 않아요',    ro:'nu vreau să',       en:'don\'t want to',    isTense:true, aliases:[]},
+      {id:'tense_mustnot',     key:'tense_mustnot',     ko:'-면 안 돼요',        ro:'nu trebuie să',     en:'must not',          isTense:true, aliases:[]},
       {id:'tense_must',        key:'tense_must',        ko:'-아/어야 해요',      ro:'trebuie să',        en:'must',              isTense:true, aliases:[]},
       {id:'tense_polite',      key:'tense_polite',      ko:'-겠어요',            ro:'voi / cred că',     en:'will / I think',    isTense:true, aliases:[]},
       {id:'tense_promise',     key:'tense_promise',     ko:'-(으)ㄹ게요',        ro:'voi (promit)',      en:'will (promise)',     isTense:true, aliases:[]},
@@ -2103,6 +2106,46 @@
       return auxF + ' ' + td.roBase;
     }
 
+    if(tense === 'neg'){
+      if(lang === 'en'){
+        var negAux = (role === 'third' || role === 'third_pl') ? "doesn't" : "don't";
+        var negBase = hit && hit.en ? (hit.en[role] || '') : '';
+        return negBase ? negAux + ' ' + negBase : (verb.en || '');
+      }
+      return 'nu ' + (hit && hit.ro ? (hit.ro[role] || '') : (verb.ro || ''));
+    }
+
+    if(tense === 'notwish'){
+      var roWantNeg = {i:'nu vreau să', you_sg:'nu vrei să', you_pl:'nu vreți să', we:'nu vrem să', third:'nu vrea să', third_pl:'nu vor să'};
+      if(lang === 'en'){
+        var ntWishAux = (role === 'third' || role === 'third_pl') ? "doesn't want to" : "don't want to";
+        return ntWishAux + ' ' + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      }
+      return (roWantNeg[role] || 'nu vrea să') + ' ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(tense === 'mustnot'){
+      if(lang === 'en') return 'must not ' + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      return 'nu trebuie să ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(tense === 'cannot'){
+      var roCanNeg = {i:'nu pot să', you_sg:'nu poți să', you_pl:'nu puteți să', we:'nu putem să', third:'nu poate să', third_pl:'nu pot să'};
+      if(lang === 'en') return "can't " + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      return (roCanNeg[role] || 'nu poate să') + ' ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(tense === 'wish'){
+      var roWant = {i:'vreau să', you_sg:'vrei să', you_pl:'vreți să', we:'vrem să', third:'vrea să', third_pl:'vor să'};
+      if(lang === 'en') return 'want to ' + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      return (roWant[role] || 'vrea să') + ' ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(tense === 'must'){
+      if(lang === 'en') return 'must ' + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      return 'trebuie să ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
     if(hit && hit[lang] && hit[lang][role]) return hit[lang][role];
     return lang === 'en'
       ? (verb.en || verb.ro || verb.ko || '')
@@ -2167,6 +2210,13 @@
 
     if(cKey === 'tense_progressive') return conj ? conj.stem(verb.ko) + '고 있어요' : (verb.final || verb.ko);
     if(cKey === 'tense_wish')        return conj ? conj.stem(verb.ko) + '고 싶어요' : (verb.final || verb.ko);
+    if(cKey === 'tense_neg')         return conj ? conj.stem(verb.ko) + '지 않아요' : (verb.final || verb.ko);
+    if(cKey === 'tense_notwish')     return conj ? conj.stem(verb.ko) + '고 싶지 않아요' : (verb.final || verb.ko);
+    if(cKey === 'tense_mustnot'){
+      if(!conj) return verb.final || verb.ko;
+      var sm = conj.stem(verb.ko);
+      return (conj.hasBatchim(sm) ? sm + '으면' : sm + '면') + ' 안 돼요';
+    }
     if(cKey === 'tense_intention'){
       var s2 = conj ? conj.stem(verb.ko) : '';
       return s2 ? (conj.hasBatchim(s2) ? s2 + '으려고 해요' : s2 + '려고 해요') : (verb.final || verb.ko);
@@ -2258,7 +2308,15 @@
     if(verb){
       var topicKo = topic ? topic.ko : '';
       var cKeyTr = connectorKey(clause);
-      var tenseTr = cKeyTr === 'tense_past' ? 'past' : cKeyTr === 'tense_fut' ? 'future' : 'present';
+      var tenseTr = cKeyTr === 'tense_past'    ? 'past'
+                 : cKeyTr === 'tense_fut'     ? 'future'
+                 : cKeyTr === 'tense_neg'     ? 'neg'
+                 : cKeyTr === 'tense_notwish' ? 'notwish'
+                 : cKeyTr === 'tense_mustnot' ? 'mustnot'
+                 : cKeyTr === 'tense_cannot'  ? 'cannot'
+                 : cKeyTr === 'tense_wish'    ? 'wish'
+                 : cKeyTr === 'tense_must'    ? 'must'
+                 : 'present';
       parts.push(finiteVerbText(verb, state.lang, topicKo, tenseTr));
       // For clause connectors, append connector translation word
       var connItem = itemOf(clause, 'connector');
@@ -2626,6 +2684,12 @@
   function detectTenseFromText(text){
     var n = normalizeLatin(text);
 
+    // Negation — checked before past/future
+    if(/\b(nu pot|nu pot sa|cannot|can't|cant)\b/.test(n)) return 'cannot';
+    if(/\b(nu vreau|nu doresc|nu vrei|don't want|do not want|dont want)\b/.test(n)) return 'notwish';
+    if(/\b(nu trebuie|nu ar trebui|must not|mustn't|mustnt)\b/.test(n)) return 'mustnot';
+    if(/\bnu\b/.test(n) || /\b(don't|doesn't|do not|does not|dont|doesnt)\b/.test(n)) return 'neg';
+
     // Past Romanian: participii cunoscute (normalizate, fără diacritice)
     var roParts = ['mers','mancat','venit','vazut','citit','scris','intalnit',
                    'odihnit','lucrat','studiat','pregatit','invatat','ascultat',
@@ -2664,8 +2728,12 @@
     }
 
     var detectedTense = detectTenseFromText(raw);
-    var detectedTenseKey = detectedTense === 'past'   ? 'tense_past'
-                         : detectedTense === 'future' ? 'tense_fut'
+    var detectedTenseKey = detectedTense === 'past'     ? 'tense_past'
+                         : detectedTense === 'future'   ? 'tense_fut'
+                         : detectedTense === 'cannot'   ? 'tense_cannot'
+                         : detectedTense === 'notwish'  ? 'tense_notwish'
+                         : detectedTense === 'mustnot'  ? 'tense_mustnot'
+                         : detectedTense === 'neg'      ? 'tense_neg'
                          : 'tense_pres';
 
     // Split on connector markers; only create a clause for segments that have a verb
