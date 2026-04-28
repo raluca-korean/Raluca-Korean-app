@@ -1,0 +1,230 @@
+"use client";
+
+import { useState } from "react";
+
+/* =========================
+   DATA (poți muta separat)
+========================= */
+const sentences = [
+  {
+    id: 1,
+    text: "저는 한국어를 공부해요",
+    romanization: "jeoneun hangugeoreul gongbuhaeyo"
+  },
+  {
+    id: 2,
+    text: "오늘 날씨가 좋아요",
+    romanization: "oneul nalssiga joayo"
+  }
+];
+
+/* =========================
+   COMPONENT
+========================= */
+function SentenceCard({ sentence }) {
+  const [recording, setRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  /* 🔊 TTS */
+  function playTTS(rate = 1) {
+    const utterance = new SpeechSynthesisUtterance(sentence.text);
+    utterance.lang = "ko-KR";
+    utterance.rate = rate;
+    speechSynthesis.speak(utterance);
+  }
+
+  /* 🎙 START RECORD */
+  async function startRecording() {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    const recorder = new MediaRecorder(stream);
+    let chunks = [];
+
+    recorder.ondataavailable = e => chunks.push(e.data);
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: "audio/webm" });
+      setAudioBlob(blob);
+    };
+
+    recorder.start();
+    setMediaRecorder(recorder);
+    setRecording(true);
+  }
+
+  /* ⏹ STOP */
+  function stopRecording() {
+    mediaRecorder.stop();
+    setRecording(false);
+  }
+
+  /* ▶️ PLAY USER AUDIO */
+  function playUserAudio() {
+    const audio = new Audio(URL.createObjectURL(audioBlob));
+    audio.play();
+  }
+
+  /* 📡 CHECK PRONUNCIATION */
+  async function checkPronunciation() {
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("audio", audioBlob);
+    formData.append("expectedText", sentence.text);
+
+    const res = await fetch("/api/pronunciation-check", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    setResult(data);
+    setLoading(false);
+  }
+
+  /* 🎯 SHADOWING */
+  function shadowing() {
+    playTTS(0.8);
+    setTimeout(() => startRecording(), 900);
+  }
+
+  /* 🔴 HIGHLIGHT GREȘELI */
+  function highlight(text, errors = []) {
+    return text.split("").map((char, i) => {
+      const err = errors.find(e => e.index === i);
+
+      return (
+        <span
+          key={i}
+          style={{
+            color: err ? "#ff4d4f" : "#111",
+            fontWeight: err ? "600" : "400"
+          }}
+        >
+          {char}
+        </span>
+      );
+    });
+  }
+
+  /* 🎨 SCORE COLOR */
+  function getScoreColor(score) {
+    if (!score) return "#999";
+    if (score > 0.9) return "#22c55e";
+    if (score > 0.7) return "#eab308";
+    return "#ef4444";
+  }
+
+  return (
+    <div style={styles.card}>
+      {/* TEXT */}
+      <div style={styles.text}>
+        {result ? highlight(sentence.text, result.errors) : sentence.text}
+      </div>
+
+      {/* ROMANIZATION */}
+      <div style={styles.roman}>{sentence.romanization}</div>
+
+      {/* BUTTONS */}
+      <div style={styles.buttons}>
+        <button onClick={() => playTTS()}>🔊</button>
+
+        {!recording ? (
+          <button onClick={startRecording}>🎙</button>
+        ) : (
+          <button onClick={stopRecording}>⏹</button>
+        )}
+
+        {audioBlob && (
+          <>
+            <button onClick={playUserAudio}>▶️</button>
+            <button onClick={checkPronunciation}>✔️</button>
+          </>
+        )}
+
+        <button onClick={shadowing}>⚡ Shadow</button>
+      </div>
+
+      {/* RESULT */}
+      {loading && <p>Se analizează...</p>}
+
+      {result && (
+        <div style={styles.result}>
+          <div style={{ color: getScoreColor(result.score) }}>
+            Scor: {(result.score * 100).toFixed(0)}%
+          </div>
+
+          <div>AI a înțeles: {result.userText}</div>
+
+          {result.feedback && (
+            <ul>
+              {result.feedback.map((f, i) => (
+                <li key={i}>{f}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================
+   PAGE
+========================= */
+export default function SpeakingPage() {
+  return (
+    <div style={styles.container}>
+      <h1 style={styles.title}>Speaking Practice</h1>
+
+      {sentences.map(s => (
+        <SentenceCard key={s.id} sentence={s} />
+      ))}
+    </div>
+  );
+}
+
+/* =========================
+   STYLES (clean, app-like)
+========================= */
+const styles = {
+  container: {
+    maxWidth: 600,
+    margin: "0 auto",
+    padding: 20,
+    fontFamily: "sans-serif"
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 700,
+    marginBottom: 20
+  },
+  card: {
+    padding: 20,
+    borderRadius: 16,
+    background: "#fff",
+    marginBottom: 20,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+  },
+  text: {
+    fontSize: 24,
+    marginBottom: 6
+  },
+  roman: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 12
+  },
+  buttons: {
+    display: "flex",
+    gap: 10,
+    marginBottom: 10
+  },
+  result: {
+    marginTop: 10,
+    fontSize: 14
+  }
+};
