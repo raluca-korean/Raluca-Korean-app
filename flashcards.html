@@ -235,6 +235,10 @@ const UI = {
 
 function t(k){ return UI[currentLang][k]; }
 
+function escapeAttr(str){
+  return String(str).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
 function getMeaning(w){ return currentLang === "ro" ? w.ro : w.en; }
 function getCat(w){ return currentLang === "ro" ? (w.categoriesRo||[])[0] : (w.categoriesEn||[])[0]; }
 
@@ -296,7 +300,7 @@ function renderFC(){
           <div class="fc-back">
             <div class="fc-meaning">${getMeaning(word) || "—"}</div>
             ${getCat(word) ? `<div class="fc-cat">${getCat(word)}</div>` : ""}
-            <button class="fc-speak" onclick="event.stopPropagation();speakKO('${word.ko.replace(/'/g,"\\'")}')">🔈 ${word.ko}</button>
+            <button class="fc-speak" data-speak="${escapeAttr(word.ko)}">🔈 ${word.ko}</button>
           </div>
         </div>
       </div>
@@ -372,6 +376,7 @@ document.getElementById("filterFav").addEventListener("click", () => {
 async function loadVocab(){
   try{
     const resp = await fetch("./data/vocab-korean.json");
+    if(!resp.ok) throw new Error(resp.status);
     const vocab = await resp.json();
     const map = new Map();
     const cats = ["subjects","nouns","objects","verbs","adjectives","adverbs","modifiers","connectors","grammar"];
@@ -398,6 +403,11 @@ async function loadVocab(){
     document.getElementById("fcArea").innerHTML = `<div class="card"><div style="text-align:center;color:var(--muted);padding:20px">${t("loadError")}</div></div>`;
   }
 }
+
+document.getElementById("fcArea").addEventListener("click", function(e){
+  const btn = e.target.closest("[data-speak]");
+  if(btn){ e.stopPropagation(); speakKO(btn.dataset.speak); }
+});
 
 document.getElementById("pageTitle").textContent = t("title");
 document.getElementById("pageSubtitle").textContent = t("subtitle");

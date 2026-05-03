@@ -456,6 +456,7 @@ body.dark-mode .board-actions button { background: #16213e !important; border-co
 
 </div><!-- /app -->
 
+<script src="./js/core/lang.js"></script>
 <script src="./js/core/dark-mode.js"></script>
 <script src="./js/core/register-sw.js"></script>
 <script>
@@ -595,7 +596,7 @@ let mode    = "letters";
 let pool    = LETTERS;
 let idx     = 0;
 let checked = false;
-let lang    = localStorage.getItem("RK_LANG") || "ro";
+let lang    = RKLang.current;
 
 // ── TRADUCERI ─────────────────────────────────────────────────
 const T = {
@@ -639,15 +640,10 @@ function applyLang() {
   document.getElementById("checkLbl").textContent        = t.check;
   document.getElementById("fbYourLbl").textContent       = t.yourLbl;
   document.getElementById("fbRefLbl").textContent        = t.refLbl;
-  document.getElementById("langRo").style.background   = lang==="ro"
-    ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
-  document.getElementById("langEn").style.background   = lang==="en"
-    ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
   updateTarget();
 }
 
-document.getElementById("langRo").onclick = () => { lang="ro"; localStorage.setItem("RK_LANG","ro"); applyLang(); };
-document.getElementById("langEn").onclick = () => { lang="en"; localStorage.setItem("RK_LANG","en"); applyLang(); };
+RKLang.init(l => { lang = l; applyLang(); });
 
 // ── MODE TABS ─────────────────────────────────────────────────
 document.querySelectorAll(".mode-tab").forEach(btn => {
@@ -700,7 +696,7 @@ function updateTarget() {
       ? (chars.length > 4 ? 34 : chars.length > 3 ? 38 : 44)
       : (chars.length > 2 ? 44 : 56);
     sylBoxes.innerHTML  = chars.map(c =>
-      `<div class="syl-box" style="font-size:${fs}px" onclick="speakKo('${c}')">${c}</div>`
+      `<div class="syl-box" style="font-size:${fs}px" data-speak-ko="${c}">${c}</div>`
     ).join('');
 
     // Trace: câte un span per silabă, font proporțional cu înălțimea tablei
@@ -936,6 +932,11 @@ function nextItem() {
 }
 
 // ── INIT ──────────────────────────────────────────────────────
+document.getElementById("sylBoxes").addEventListener("click", function(e){
+  const el = e.target.closest("[data-speak-ko]");
+  if(el) speakKo(el.dataset.speakKo);
+});
+
 applyLang();
 </script>
 </body>
