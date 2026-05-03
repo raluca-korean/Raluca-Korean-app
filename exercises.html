@@ -464,6 +464,7 @@ select:focus, button:focus{
 </div>
 
 </div>
+<script src="./js/core/lang.js"></script>
   <script>
 const pageTitleEl = document.getElementById("pageTitle");
 const pageSubtitleEl = document.getElementById("pageSubtitle");
@@ -488,7 +489,7 @@ const wrongBtn = document.getElementById("wrongBtn");
 
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
-let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let currentLang = RKLang.current;
 let currentLevel = localStorage.getItem("RK_LEVEL") || "1";
 if(currentLevel === "0") currentLevel = "test";
 let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [], "chain": [] };
@@ -611,28 +612,6 @@ function updateLevelButtons(){
   });
 }
 
-function updateLanguageButtons(){
-  const activeStyle = "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)";
-  const inactiveStyle = "linear-gradient(160deg,#fff,#fdf4ff)";
-  const activeShadow = "0 8px 20px rgba(168,85,247,.25)";
-  const inactiveShadow = "0 4px 12px rgba(219,39,119,.10)";
-
-  if(currentLang === "ro"){
-    langRoBtn.style.background = activeStyle;
-    langRoBtn.style.color = "#fff";
-    langRoBtn.style.boxShadow = activeShadow;
-    langEnBtn.style.background = inactiveStyle;
-    langEnBtn.style.color = "var(--text)";
-    langEnBtn.style.boxShadow = inactiveShadow;
-  } else {
-    langEnBtn.style.background = activeStyle;
-    langEnBtn.style.color = "#fff";
-    langEnBtn.style.boxShadow = activeShadow;
-    langRoBtn.style.background = inactiveStyle;
-    langRoBtn.style.color = "var(--text)";
-    langRoBtn.style.boxShadow = inactiveShadow;
-  }
-}
 
 function modeLabel(type){
   if(type === "ko-ro") return t("modeKoRo");
@@ -730,8 +709,7 @@ function exitWrongMode(){
 
 function setLanguage(lang){
   currentLang = lang;
-  localStorage.setItem("RK_LANG", lang);
-  updateLanguageButtons();
+  RKLang.set(lang);
   updateStaticTexts();
   updateBadges();
   render();
@@ -1115,8 +1093,7 @@ wrongBtn.addEventListener("click", enterWrongMode);
 
 checkBtn.addEventListener("click", checkCurrentAnswer);
 nextBtn.addEventListener("click", nextQuestion);
-langRoBtn.addEventListener("click", () => setLanguage("ro"));
-langEnBtn.addEventListener("click", () => setLanguage("en"));
+RKLang.init(setLanguage);
 
 const soundBtn = document.getElementById("soundBtn");
 let soundOn = true;
@@ -1137,7 +1114,6 @@ soundBtn.addEventListener("click", () => {
 });
 
 updateLevelButtons();
-updateLanguageButtons();
 updateStaticTexts();
 updateBadges();
 loadExercises();

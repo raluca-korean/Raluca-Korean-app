@@ -236,6 +236,7 @@ body.dark-mode .favBtn.active{ background:var(--yellow) !important; color:#3c3c3
 </div>
 
 </div>
+<script src="./js/core/lang.js"></script>
 <script>
 const pageTitleEl = document.getElementById("pageTitle");
 const pageSubtitleEl = document.getElementById("pageSubtitle");
@@ -254,7 +255,7 @@ let WORDS = [];
 let daily = [];
 let dailyIndex = 0;
 let dailyHTML = "";
-let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let currentLang = RKLang.current;
 let filterCategory = "";
 let filterFavsOnly = false;
 
@@ -315,28 +316,6 @@ function t(key){
   return UI_TEXT[currentLang][key];
 }
 
-function updateLanguageButtons(){
-  const activeStyle = "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)";
-  const inactiveStyle = "linear-gradient(160deg,#fff,#fdf4ff)";
-  const activeShadow = "0 8px 20px rgba(168,85,247,.25)";
-  const inactiveShadow = "0 4px 12px rgba(219,39,119,.10)";
-
-  if(currentLang === "ro"){
-    langRoBtn.style.background = activeStyle;
-    langRoBtn.style.color = "#fff";
-    langRoBtn.style.boxShadow = activeShadow;
-    langEnBtn.style.background = inactiveStyle;
-    langEnBtn.style.color = "var(--text)";
-    langEnBtn.style.boxShadow = inactiveShadow;
-  } else {
-    langEnBtn.style.background = activeStyle;
-    langEnBtn.style.color = "#fff";
-    langEnBtn.style.boxShadow = activeShadow;
-    langRoBtn.style.background = inactiveStyle;
-    langRoBtn.style.color = "var(--text)";
-    langRoBtn.style.boxShadow = inactiveShadow;
-  }
-}
 
 function updateStaticTexts(){
   pageTitleEl.textContent = t("title");
@@ -356,9 +335,8 @@ function buildCatOptions(){
 function setLanguage(lang){
   currentLang = lang;
   filterCategory = "";
-  localStorage.setItem("RK_LANG", lang);
+  RKLang.set(lang);
   updateStaticTexts();
-  updateLanguageButtons();
   renderDailyView();
   render();
 }
@@ -642,8 +620,7 @@ function changePage(delta){
 }
 
 searchInput.addEventListener("input", () => { currentPage = 1; render(); });
-langRoBtn.addEventListener("click", () => setLanguage("ro"));
-langEnBtn.addEventListener("click", () => setLanguage("en"));
+RKLang.init(setLanguage);
 catFilterEl.addEventListener("change", () => {
   filterCategory = catFilterEl.value;
   currentPage = 1;
@@ -658,7 +635,6 @@ favFilterBtn.addEventListener("click", () => {
 });
 
 updateStaticTexts();
-updateLanguageButtons();
 loadVocabulary();
 </script>
 <script src="./js/core/dark-mode.js"></script>

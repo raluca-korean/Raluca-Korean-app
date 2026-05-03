@@ -217,6 +217,7 @@ body.dark-mode button { background: #16213e !important; border-color: #2a2a4a !i
 }
 </style>
 
+<script src="./js/core/lang.js"></script>
 <script>
 const listEl      = document.getElementById("lessonList");
 const contentEl   = document.getElementById("lessonContent");
@@ -229,7 +230,7 @@ const tabsEl      = document.getElementById("topikTabs");
 let lessons        = [];
 let currentLessonId = null;
 let currentTopik   = 1;
-let currentLang    = localStorage.getItem("RK_LANG") || "ro";
+let currentLang    = RKLang.current;
 
 const UI_TEXT = {
   ro: {
@@ -263,14 +264,6 @@ function updateHeaderTexts(){
   pageSubtitleEl.textContent = t("pageSubtitle");
 }
 
-function updateLanguageButtons(){
-  const on  = "linear-gradient(135deg,#22d3ee,#7c3aed)";
-  const off = "rgba(10,8,28,.55)";
-  langRoBtn.style.background = currentLang === "ro" ? on : off;
-  langRoBtn.style.color      = currentLang === "ro" ? "#000" : "var(--text)";
-  langEnBtn.style.background = currentLang === "en" ? on : off;
-  langEnBtn.style.color      = currentLang === "en" ? "#000" : "var(--text)";
-}
 
 function renderTabs(){
   tabsEl.innerHTML = "";
@@ -363,9 +356,8 @@ function selectLesson(id){
 
 function setLanguage(lang){
   currentLang = lang;
-  localStorage.setItem("RK_LANG", lang);
+  RKLang.set(lang);
   updateHeaderTexts();
-  updateLanguageButtons();
   renderTabs();
   renderLessonList();
   if(currentLessonId) selectLesson(currentLessonId);
@@ -396,11 +388,9 @@ function speakKorean(text){
   window.speechSynthesis.speak(utt);
 }
 
-langRoBtn.addEventListener("click", () => setLanguage("ro"));
-langEnBtn.addEventListener("click", () => setLanguage("en"));
+RKLang.init(setLanguage);
 
 updateHeaderTexts();
-updateLanguageButtons();
 contentEl.innerHTML = `<div class="sub">${t("selectLesson")}</div>`;
 loadLessons();
 </script>

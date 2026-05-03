@@ -195,8 +195,9 @@ body.dark-mode button:not(.btn-know):not(.btn-dontknow):not(.filter-btn){ backgr
 <div id="fcArea"></div>
 
 </div>
+<script src="./js/core/lang.js"></script>
 <script>
-let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let currentLang = RKLang.current;
 let WORDS = [];
 let deck = [];
 let cardIndex = 0;
@@ -344,8 +345,7 @@ function renderSummary(){
 
 function setLang(lang){
   currentLang = lang;
-  localStorage.setItem("RK_LANG", lang);
-  updateLangBtns();
+  RKLang.set(lang);
   updateFilterBtns();
   document.getElementById("pageTitle").textContent = t("title");
   document.getElementById("pageSubtitle").textContent = t("subtitle");
@@ -355,22 +355,13 @@ function setLang(lang){
   renderFC();
 }
 
-function updateLangBtns(){
-  const on = "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)";
-  const off = "linear-gradient(160deg,#fff,#fdf4ff)";
-  document.getElementById("langRo").style.background = currentLang==="ro"?on:off;
-  document.getElementById("langRo").style.color = currentLang==="ro"?"#fff":"var(--text)";
-  document.getElementById("langEn").style.background = currentLang==="en"?on:off;
-  document.getElementById("langEn").style.color = currentLang==="en"?"#fff":"var(--text)";
-}
 
 function updateFilterBtns(){
   document.getElementById("filterAll").classList.toggle("active", !filterFav);
   document.getElementById("filterFav").classList.toggle("active", filterFav);
 }
 
-document.getElementById("langRo").addEventListener("click", () => setLang("ro"));
-document.getElementById("langEn").addEventListener("click", () => setLang("en"));
+RKLang.init(setLang);
 document.getElementById("filterAll").addEventListener("click", () => {
   filterFav = false; updateFilterBtns(); buildDeck(); renderFC();
 });
@@ -408,7 +399,6 @@ async function loadVocab(){
   }
 }
 
-updateLangBtns();
 document.getElementById("pageTitle").textContent = t("title");
 document.getElementById("pageSubtitle").textContent = t("subtitle");
 document.getElementById("filterAll").textContent = t("filterAll");
