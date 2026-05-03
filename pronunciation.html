@@ -288,7 +288,8 @@ var I18N = {
     listen:    'Ascultă',
     slow:      'Lent',
     record:    'Înregistrează',
-    recording: 'Înregistrare... (apasă pentru oprire)',
+    stop:      'Oprește',
+    recording: 'Înregistrare...',
     playback:  'Redă',
     check:     'Verifică',
     shadow:    'Shadow',
@@ -302,7 +303,8 @@ var I18N = {
     listen:    'Listen',
     slow:      'Slow',
     record:    'Record',
-    recording: 'Recording... (tap to stop)',
+    stop:      'Stop',
+    recording: 'Recording...',
     playback:  'Play back',
     check:     'Check',
     shadow:    'Shadow',
@@ -371,6 +373,7 @@ function buildCard(s) {
     mr:         null,
     blob:       null,
     url:        null,
+    audio:      null,
     recognized: null,
     stopTimer:  null
   };
@@ -423,27 +426,35 @@ function buildCard(s) {
   btnListen.onclick = function() { playTTS(s.text, 1); };
   btnSlow.onclick   = function() { playTTS(s.text, 0.6); };
 
+  function stopRec() {
+    if (state.recording && state.mr) state.mr.stop();
+  }
+
   /* Start recording */
   function startRec() {
-    if (state.recording) return;
+    if (state.recording) { stopRec(); return; }
     navigator.mediaDevices.getUserMedia({audio: true}).then(function(stream) {
       var chunks = [];
       state.mr = new MediaRecorder(stream);
-      state.mr.ondataavailable = function(e) { chunks.push(e.data); };
+      state.mr.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
       state.mr.onstop = function() {
-        state.blob = new Blob(chunks, {type: 'audio/webm'});
-        state.url  = URL.createObjectURL(state.blob);
-        stream.getTracks().forEach(function(t) { t.stop(); });
+        var mimeType = (chunks[0] && chunks[0].type) ? chunks[0].type : 'audio/webm';
+        state.blob = new Blob(chunks, {type: mimeType});
+        if (state.url) URL.revokeObjectURL(state.url);
+        state.url = URL.createObjectURL(state.blob);
+        stream.getTracks().forEach(function(tr) { tr.stop(); });
         state.recording = false;
         clearTimeout(state.stopTimer);
         recInd.classList.remove('on');
-        btnRec.style.display = '';
+        btnRec.innerHTML = '🎙 ' + t('record');
+        btnRec.className = 's-btn btn-red b-rec';
         postRow.style.display = 'flex';
       };
       state.mr.start();
       state.recording = true;
       recInd.classList.add('on');
-      btnRec.style.display = 'none';
+      btnRec.innerHTML = '⏹ ' + t('stop');
+      btnRec.className = 's-btn btn-grey b-rec';
 
       /* Run SpeechRecognition in parallel for scoring */
       var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -454,7 +465,7 @@ function buildCard(s) {
         recog.onresult = function(e) {
           state.recognized = e.results[0][0].transcript;
         };
-        try { recog.start(); } catch(e) { /* ignore if mic already in use */ }
+        try { recog.start(); } catch(err) { /* ignore if mic already in use */ }
       }
 
       /* Auto-stop after 6 s */
@@ -467,12 +478,19 @@ function buildCard(s) {
     });
   }
 
-  btnRec.onclick   = startRec;
-  recInd.onclick   = function() { if (state.recording && state.mr) state.mr.stop(); };
+  btnRec.onclick = function() {
+    if (state.recording) { stopRec(); } else { startRec(); }
+  };
+  recInd.onclick = stopRec;
 
   /* Playback */
   btnPlayback.onclick = function() {
-    if (state.url) new Audio(state.url).play();
+    if (!state.url) return;
+    if (state.audio) { state.audio.pause(); state.audio.currentTime = 0; }
+    state.audio = new Audio(state.url);
+    state.audio.play().catch(function() {
+      alert(LANG === 'ro' ? 'Redarea a eșuat. Încearcă din nou.' : 'Playback failed. Try again.');
+    });
   };
 
   /* Check */
