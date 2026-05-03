@@ -250,6 +250,29 @@ const catFilterEl = document.getElementById("catFilter");
 const favFilterBtn = document.getElementById("favFilterBtn");
 
 const PAGE_SIZE = 20;
+
+dailyCard.addEventListener("click", function(e){
+  const el = e.target.closest("[data-action]");
+  if(!el) return;
+  const ko = el.dataset.ko;
+  switch(el.dataset.action){
+    case "speak":      speakKO(ko); break;
+    case "youglish":   openYouGlish(ko); break;
+    case "fav":        toggleFav(ko); break;
+    case "quiz-check": checkQuizAnswer(el.dataset.answer, el.dataset.correct); break;
+  }
+});
+
+listEl.addEventListener("click", function(e){
+  const el = e.target.closest("[data-action]");
+  if(!el) return;
+  const ko = el.dataset.ko;
+  switch(el.dataset.action){
+    case "speak":    speakKO(ko); break;
+    case "youglish": openYouGlish(ko); break;
+    case "fav":      toggleFav(ko); break;
+  }
+});
 let currentPage = 1;
 let WORDS = [];
 let daily = [];
@@ -314,6 +337,14 @@ const UI_TEXT = {
 
 function t(key){
   return UI_TEXT[currentLang][key];
+}
+
+function escapeAttr(str){
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 
@@ -481,9 +512,9 @@ function renderDailyView(){
           <div class="ro">${getCategories(word).join(" • ")}</div>
         </div>
         <div class="actions">
-          <span class="icon" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">🔈</span>
-          <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
-          <span class="icon star ${isFav(word.ko) ? 'active' : ''}" onclick="toggleFav('${word.ko.replace(/'/g, "\\'")}')">⭐</span>
+          <span class="icon" data-action="speak" data-ko="${escapeAttr(word.ko)}">🔈</span>
+          <span class="icon" data-action="youglish" data-ko="${escapeAttr(word.ko)}">🎥</span>
+          <span class="icon star ${isFav(word.ko) ? 'active' : ''}" data-action="fav" data-ko="${escapeAttr(word.ko)}">⭐</span>
         </div>
       </div>
     `).join("")}
@@ -533,7 +564,7 @@ function showQuizQuestion(){
     <h3>${t("quizQuestion")}</h3>
     <div class="ko">${currentWord.ko}</div>
     ${options.map(option => `
-      <button type="button" onclick="checkQuizAnswer('${option.replace(/'/g, "\\'")}', '${correctMeaning.replace(/'/g, "\\'")}')">${option}</button>
+      <button type="button" data-action="quiz-check" data-answer="${escapeAttr(option)}" data-correct="${escapeAttr(correctMeaning)}">${escapeAttr(option)}</button>
     `).join("")}
     <br>
     <button type="button" onclick="exitQuiz()">${t("back")}</button>
@@ -594,9 +625,9 @@ function render(){
         <div class="ro">${getCategories(word).join(" • ")}</div>
       </div>
       <div class="actions">
-        <span class="icon" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">🔈</span>
-        <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
-        <span class="icon star ${isFav(word.ko) ? 'active' : ''}" onclick="toggleFav('${word.ko.replace(/'/g, "\\'")}')">⭐</span>
+        <span class="icon" data-action="speak" data-ko="${escapeAttr(word.ko)}">🔈</span>
+        <span class="icon" data-action="youglish" data-ko="${escapeAttr(word.ko)}">🎥</span>
+        <span class="icon star ${isFav(word.ko) ? 'active' : ''}" data-action="fav" data-ko="${escapeAttr(word.ko)}">⭐</span>
       </div>
     </div>
   `).join("");
