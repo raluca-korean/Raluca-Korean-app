@@ -11,7 +11,7 @@
 /* ── MODE TABS ─────────────────────────────────────── */
 .mode-tabs {
   display: grid;
-  grid-template-columns: repeat(3,1fr);
+  grid-template-columns: repeat(4,1fr);
   gap: 8px;
 }
 .mode-tab {
@@ -382,9 +382,10 @@ body.dark-mode .board-actions button { background: #16213e !important; border-co
 <!-- ══ MODE TABS ════════════════════════════════════ -->
 <div class="card">
   <div class="mode-tabs">
-    <button class="mode-tab active" data-mode="letters"   id="tab-letters">Litere</button>
-    <button class="mode-tab"        data-mode="syllables" id="tab-syllables">Silabe</button>
-    <button class="mode-tab"        data-mode="words"     id="tab-words">Cuvinte</button>
+    <button class="mode-tab active" data-mode="letters"    id="tab-letters">Litere</button>
+    <button class="mode-tab"        data-mode="syllables"  id="tab-syllables">Silabe</button>
+    <button class="mode-tab"        data-mode="words"      id="tab-words">Cuvinte</button>
+    <button class="mode-tab"        data-mode="sentences"  id="tab-sentences">Propoziții</button>
   </div>
 </div>
 
@@ -551,6 +552,34 @@ const WORDS = [
   {char:"사랑해",rom:"sa-rang-hae",meta:{ro:"te iubesc",       en:"I love you"}},
 ];
 
+const SENTENCES = [
+  {char:"감사합니다", rom:"gam-sa-ham-ni-da",   meta:{ro:"Mulțumesc",          en:"Thank you"}},
+  {char:"안녕하세요", rom:"an-nyeong-ha-se-yo", meta:{ro:"Bună ziua",           en:"Hello (formal)"}},
+  {char:"괜찮아요",   rom:"gwaen-chan-a-yo",     meta:{ro:"E bine",             en:"It's okay"}},
+  {char:"맛있어요",   rom:"mas-iss-eo-yo",       meta:{ro:"E delicios",         en:"It's delicious"}},
+  {char:"미안해요",   rom:"mi-an-hae-yo",        meta:{ro:"Îmi pare rău",       en:"I'm sorry"}},
+  {char:"좋아해요",   rom:"jo-a-hae-yo",         meta:{ro:"Îmi place",          en:"I like it"}},
+  {char:"알겠어요",   rom:"al-gess-eo-yo",       meta:{ro:"Am înțeles",         en:"I understand"}},
+  {char:"배고파요",   rom:"bae-go-pa-yo",        meta:{ro:"Mi-e foame",         en:"I'm hungry"}},
+  {char:"피곤해요",   rom:"pi-gon-hae-yo",       meta:{ro:"Sunt obosit(ă)",     en:"I'm tired"}},
+  {char:"어디예요",   rom:"eo-di-ye-yo",         meta:{ro:"Unde este?",         en:"Where is it?"}},
+  {char:"얼마예요",   rom:"eol-ma-ye-yo",        meta:{ro:"Cât costă?",         en:"How much?"}},
+  {char:"맞아요",     rom:"maj-a-yo",            meta:{ro:"Corect",             en:"That's right"}},
+  {char:"아니에요",   rom:"a-ni-e-yo",           meta:{ro:"Nu este",            en:"It isn't"}},
+  {char:"몰라요",     rom:"mol-la-yo",           meta:{ro:"Nu știu",            en:"I don't know"}},
+  {char:"싫어요",     rom:"sil-eo-yo",           meta:{ro:"Nu îmi place",       en:"I don't like it"}},
+  {char:"행복해요",   rom:"haeng-bok-hae-yo",    meta:{ro:"Sunt fericit(ă)",    en:"I'm happy"}},
+  {char:"어려워요",   rom:"eo-ryeo-wo-yo",       meta:{ro:"E dificil",          en:"It's difficult"}},
+  {char:"쉬워요",     rom:"swi-wo-yo",           meta:{ro:"E ușor",             en:"It's easy"}},
+  {char:"재미있어요", rom:"jae-mi-iss-eo-yo",    meta:{ro:"E interesant",       en:"It's interesting"}},
+  {char:"보고싶어요", rom:"bo-go-sip-eo-yo",     meta:{ro:"Îmi ești dor/dori",  en:"I miss you"}},
+  {char:"사랑해요",   rom:"sa-rang-hae-yo",      meta:{ro:"Te iubesc",          en:"I love you"}},
+  {char:"잘자요",     rom:"jal-ja-yo",           meta:{ro:"Noapte bună",        en:"Good night"}},
+  {char:"잘있어요",   rom:"jal-iss-eo-yo",       meta:{ro:"Rămâi bine",         en:"Take care"}},
+  {char:"반가워요",   rom:"ban-ga-wo-yo",        meta:{ro:"Îmi pare bine",      en:"Nice to meet you"}},
+  {char:"모르겠어요", rom:"mo-reu-gess-eo-yo",   meta:{ro:"Nu știu sigur",      en:"I'm not sure"}},
+];
+
 // ── STATE ─────────────────────────────────────────────────────
 let mode    = "letters";
 let pool    = LETTERS;
@@ -561,8 +590,8 @@ let lang    = localStorage.getItem("RK_LANG") || "ro";
 // ── TRADUCERI ─────────────────────────────────────────────────
 const T = {
   ro:{
-    title:"Practică Scrisul", sub:"Litere · Silabe · Cuvinte",
-    tabL:"Litere", tabS:"Silabe", tabW:"Cuvinte",
+    title:"Practică Scrisul", sub:"Litere · Silabe · Cuvinte · Propoziții",
+    tabL:"Litere", tabS:"Silabe", tabW:"Cuvinte", tabP:"Propoziții",
     trace:"Afișează litera fantomă",
     check:"Verifică",
     yourLbl:"Ce ai scris", refLbl:"Referință",
@@ -570,11 +599,12 @@ const T = {
     excellent:"Excelent! ✨", good:"Bine! 👍",
     tryAgain:"Mai încearcă 🔄", wrong:"Greșit ❌",
     wordHint:"Scrie cuvântul în spațiul alb de mai sus",
+    sentHint:"Scrie propoziția în spațiul alb de mai sus",
     selfCheck:"Compară cu referința de mai jos",
   },
   en:{
-    title:"Practice Writing", sub:"Letters · Syllables · Words",
-    tabL:"Letters", tabS:"Syllables", tabW:"Words",
+    title:"Practice Writing", sub:"Letters · Syllables · Words · Sentences",
+    tabL:"Letters", tabS:"Syllables", tabW:"Words", tabP:"Sentences",
     trace:"Show ghost letter",
     check:"Check",
     yourLbl:"Your writing", refLbl:"Reference",
@@ -582,21 +612,23 @@ const T = {
     excellent:"Excellent! ✨", good:"Good! 👍",
     tryAgain:"Try again 🔄", wrong:"Wrong ❌",
     wordHint:"Write the word in the white space above",
+    sentHint:"Write the sentence in the white space above",
     selfCheck:"Compare with the reference below",
   },
 };
 
 function applyLang() {
   const t = T[lang];
-  document.getElementById("pageTitle").textContent     = t.title;
-  document.getElementById("pageSub").textContent       = t.sub;
-  document.getElementById("tab-letters").textContent   = t.tabL;
-  document.getElementById("tab-syllables").textContent = t.tabS;
-  document.getElementById("tab-words").textContent     = t.tabW;
-  document.getElementById("traceLbl").textContent      = t.trace;
-  document.getElementById("checkLbl").textContent      = t.check;
-  document.getElementById("fbYourLbl").textContent     = t.yourLbl;
-  document.getElementById("fbRefLbl").textContent      = t.refLbl;
+  document.getElementById("pageTitle").textContent       = t.title;
+  document.getElementById("pageSub").textContent         = t.sub;
+  document.getElementById("tab-letters").textContent     = t.tabL;
+  document.getElementById("tab-syllables").textContent   = t.tabS;
+  document.getElementById("tab-words").textContent       = t.tabW;
+  document.getElementById("tab-sentences").textContent   = t.tabP;
+  document.getElementById("traceLbl").textContent        = t.trace;
+  document.getElementById("checkLbl").textContent        = t.check;
+  document.getElementById("fbYourLbl").textContent       = t.yourLbl;
+  document.getElementById("fbRefLbl").textContent        = t.refLbl;
   document.getElementById("langRo").style.background   = lang==="ro"
     ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
   document.getElementById("langEn").style.background   = lang==="en"
@@ -613,7 +645,7 @@ document.querySelectorAll(".mode-tab").forEach(btn => {
     document.querySelectorAll(".mode-tab").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     mode  = btn.dataset.mode;
-    pool  = mode==="letters" ? LETTERS : mode==="syllables" ? SYLLABLES : WORDS;
+    pool  = mode==="letters" ? LETTERS : mode==="syllables" ? SYLLABLES : mode==="words" ? WORDS : SENTENCES;
     idx   = 0;
     clearBoard();
     hideFb();
@@ -669,10 +701,11 @@ function updateTarget() {
     trace.textContent      = item.char;
   }
 
-  document.getElementById("wordHint").style.display =
-    mode === "words" ? "" : "none";
-  document.getElementById("wordHint").textContent =
-    mode === "words" ? T[lang].wordHint : "";
+  const showHint = mode === "words" || mode === "sentences";
+  document.getElementById("wordHint").style.display = showHint ? "" : "none";
+  document.getElementById("wordHint").textContent   =
+    mode === "sentences" ? T[lang].sentHint :
+    mode === "words"     ? T[lang].wordHint : "";
 
   checked = false;
   document.getElementById("btnCheck").disabled = false;
@@ -822,7 +855,7 @@ function doCheck() {
   const chars = [...item.char];
 
   let result;
-  if (mode === "words" && chars.length > 1) {
+  if ((mode === "words" || mode === "sentences") && chars.length > 1) {
     // Compară fiecare secțiune a canvas-ului cu silaba corespunzătoare
     const sectionResults = chars.map((c, i) => compare(extractSection(cvs, i, chars.length), c));
     if (sectionResults.every(r => r.empty)) { alert(t.empty); return; }
