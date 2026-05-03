@@ -169,12 +169,12 @@ input:focus{
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
       <a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>
-      <button type="button" id="langRo">ro</button>
-      <button type="button" id="langEn">en</button>
+      <button type="button" id="langRo" aria-label="Română" aria-pressed="true">ro</button>
+      <button type="button" id="langEn" aria-label="English" aria-pressed="false">en</button>
     </div>
   </div>
 </div>
-  <div class="card" id="dailyCard"></div>
+  <div class="card" id="dailyCard" aria-live="polite" aria-atomic="true"></div>
 
 <!-- SEARCH + FILTERS -->
 <div class="card">
@@ -207,9 +207,7 @@ const favFilterBtn = document.getElementById("favFilterBtn");
 
 const PAGE_SIZE = 20;
 
-dailyCard.addEventListener("click", function(e){
-  const el = e.target.closest("[data-action]");
-  if(!el) return;
+function handleAction(el){
   const ko = el.dataset.ko;
   switch(el.dataset.action){
     case "speak":      speakKO(ko); break;
@@ -217,18 +215,20 @@ dailyCard.addEventListener("click", function(e){
     case "fav":        toggleFav(ko); break;
     case "quiz-check": checkQuizAnswer(el.dataset.answer, el.dataset.correct); break;
   }
-});
+}
 
-listEl.addEventListener("click", function(e){
+function actionListener(e){
   const el = e.target.closest("[data-action]");
   if(!el) return;
-  const ko = el.dataset.ko;
-  switch(el.dataset.action){
-    case "speak":    speakKO(ko); break;
-    case "youglish": openYouGlish(ko); break;
-    case "fav":      toggleFav(ko); break;
-  }
-});
+  if(e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return;
+  if(e.type === "keydown") e.preventDefault();
+  handleAction(el);
+}
+
+dailyCard.addEventListener("click", actionListener);
+dailyCard.addEventListener("keydown", actionListener);
+listEl.addEventListener("click", actionListener);
+listEl.addEventListener("keydown", actionListener);
 let currentPage = 1;
 let WORDS = [];
 let daily = [];
@@ -468,9 +468,9 @@ function renderDailyView(){
           <div class="ro">${getCategories(word).join(" • ")}</div>
         </div>
         <div class="actions">
-          <span class="icon" data-action="speak" data-ko="${escapeAttr(word.ko)}">🔈</span>
-          <span class="icon" data-action="youglish" data-ko="${escapeAttr(word.ko)}">🎥</span>
-          <span class="icon star ${isFav(word.ko) ? 'active' : ''}" data-action="fav" data-ko="${escapeAttr(word.ko)}">⭐</span>
+          <span class="icon" role="button" tabindex="0" data-action="speak" data-ko="${escapeAttr(word.ko)}" aria-label="Pronunță ${escapeAttr(word.ko)}">🔈</span>
+          <span class="icon" role="button" tabindex="0" data-action="youglish" data-ko="${escapeAttr(word.ko)}" aria-label="YouGlish ${escapeAttr(word.ko)}">🎥</span>
+          <span class="icon star ${isFav(word.ko) ? 'active' : ''}" role="button" tabindex="0" data-action="fav" data-ko="${escapeAttr(word.ko)}" aria-label="${isFav(word.ko) ? 'Elimină din favorite' : 'Adaugă la favorite'} ${escapeAttr(word.ko)}">⭐</span>
         </div>
       </div>
     `).join("")}
@@ -581,9 +581,9 @@ function render(){
         <div class="ro">${getCategories(word).join(" • ")}</div>
       </div>
       <div class="actions">
-        <span class="icon" data-action="speak" data-ko="${escapeAttr(word.ko)}">🔈</span>
-        <span class="icon" data-action="youglish" data-ko="${escapeAttr(word.ko)}">🎥</span>
-        <span class="icon star ${isFav(word.ko) ? 'active' : ''}" data-action="fav" data-ko="${escapeAttr(word.ko)}">⭐</span>
+        <span class="icon" role="button" tabindex="0" data-action="speak" data-ko="${escapeAttr(word.ko)}" aria-label="Pronunță ${escapeAttr(word.ko)}">🔈</span>
+        <span class="icon" role="button" tabindex="0" data-action="youglish" data-ko="${escapeAttr(word.ko)}" aria-label="YouGlish ${escapeAttr(word.ko)}">🎥</span>
+        <span class="icon star ${isFav(word.ko) ? 'active' : ''}" role="button" tabindex="0" data-action="fav" data-ko="${escapeAttr(word.ko)}" aria-label="${isFav(word.ko) ? 'Elimină din favorite' : 'Adaugă la favorite'} ${escapeAttr(word.ko)}">⭐</span>
       </div>
     </div>
   `).join("");

@@ -18,15 +18,19 @@
       en.style.background  = isRo ? INACTIVE_BG : ACTIVE_BG;
       en.style.color       = isRo ? "var(--text)": "#fff";
       en.style.boxShadow   = isRo ? INACTIVE_SH  : ACTIVE_SH;
+      ro.setAttribute("aria-pressed", isRo ? "true" : "false");
+      en.setAttribute("aria-pressed", isRo ? "false" : "true");
     },
 
     set: function(lang){
       this.current = lang;
       localStorage.setItem("RK_LANG", lang);
+      document.documentElement.lang = lang;
       this.updateButtons();
     },
 
     init: function(onChange){
+      document.documentElement.lang = this.current;
       this.updateButtons();
       const self = this;
       const ro = document.getElementById("langRo");
