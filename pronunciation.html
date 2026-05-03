@@ -262,6 +262,44 @@ body.dark-mode #langEn:not(.active) {
 var LANG = localStorage.getItem('RK_LANG') || 'ro';
 var FILTER = 0;
 
+/* ── WHISPER fallback (Safari / Firefox) ────────────────── */
+var _whisperPipe = null;
+var _whisperLoad = null;
+
+function getWhisper() {
+  if (_whisperPipe) return Promise.resolve(_whisperPipe);
+  if (_whisperLoad)  return _whisperLoad;
+  _whisperLoad = import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2')
+    .then(function(m) {
+      return m.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny', {quantized: true});
+    })
+    .then(function(pipe) { _whisperPipe = pipe; _whisperLoad = null; return pipe; })
+    .catch(function(e)   { _whisperLoad = null; throw e; });
+  return _whisperLoad;
+}
+
+function runWhisper(blob, onDone, onFail) {
+  getWhisper()
+    .then(function(pipe) {
+      return blob.arrayBuffer()
+        .then(function(ab) {
+          var ctx = new (window.AudioContext || window.webkitAudioContext)();
+          return ctx.decodeAudioData(ab);
+        })
+        .then(function(buf) {
+          if (buf.sampleRate === 16000) return buf.getChannelData(0);
+          var len = Math.round(buf.duration * 16000);
+          var off = new OfflineAudioContext(1, len, 16000);
+          var src = off.createBufferSource();
+          src.buffer = buf; src.connect(off.destination); src.start();
+          return off.startRendering().then(function(r) { return r.getChannelData(0); });
+        })
+        .then(function(data) { return pipe(data, {language: 'korean', task: 'transcribe'}); });
+    })
+    .then(function(r)  { onDone((r.text || '').trim()); })
+    .catch(function(e) { onFail(e); });
+}
+
 var SENTENCES = [
   // TOPIK 1
   {id:1,  topik:1, text:'안녕하세요',                       rom:'annyeonghaseyo',                          ro:'Bună ziua',                          en:'Hello'},
@@ -430,9 +468,13 @@ function buildCard(s) {
   /* Start recording */
   function startRec() {
     if (state.recording) { stopRec(); return; }
+    getWhisper(); /* preîncarcă modelul în fundal */
     navigator.mediaDevices.getUserMedia({audio: true}).then(function(stream) {
       var chunks = [];
-      state.mr = new MediaRecorder(stream);
+      var mt = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+             : MediaRecorder.isTypeSupported('audio/mp4')              ? 'audio/mp4'
+             : '';
+      state.mr = new MediaRecorder(stream, mt ? {mimeType: mt} : {});
       state.mr.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
       state.mr.onstop = function() {
         var mimeType = (chunks[0] && chunks[0].type) ? chunks[0].type : 'audio/webm';
@@ -491,16 +533,14 @@ function buildCard(s) {
   };
 
   /* Check */
-  btnCheck.onclick = function() {
+  function showScore() {
     var score = calcScore(s.text, state.recognized);
     var pct   = Math.round(score * 100);
     var color = scoreColor(score);
-
     scorePct.textContent  = pct + '%';
     scorePct.style.color  = color;
     scoreFill.style.width = pct + '%';
     scoreFill.style.background = color;
-
     if (state.recognized) {
       recogTxt.textContent = t('yousaid') + state.recognized;
       highlight.innerHTML  = highlightText(s.text, state.recognized);
@@ -509,6 +549,29 @@ function buildCard(s) {
       highlight.innerHTML  = '';
     }
     resDiv.classList.add('on');
+  }
+
+  btnCheck.onclick = function() {
+    if (!state.recognized && state.blob) {
+      var isLoaded = !!_whisperPipe;
+      scorePct.textContent = '...';
+      recogTxt.textContent = isLoaded
+        ? (LANG === 'ro' ? 'Se procesează...' : 'Processing...')
+        : (LANG === 'ro' ? 'Se încarcă modelul (~75MB, o singură dată)...' : 'Loading model (~75MB, once)...');
+      highlight.innerHTML = '';
+      resDiv.classList.add('on');
+      btnCheck.disabled = true;
+      runWhisper(state.blob, function(text) {
+        state.recognized = text;
+        btnCheck.disabled = false;
+        showScore();
+      }, function() {
+        btnCheck.disabled = false;
+        recogTxt.textContent = t('unavail');
+      });
+      return;
+    }
+    showScore();
   };
 
   /* Shadow: TTS slow → auto-record after audio ends */
