@@ -43,15 +43,21 @@
   ].sort(function (a, b) { return b.length - a.length; });
 
   var COLORS = {
-    subject:   '#e74c3c', // roșu     – subiect
-    object:    '#2980b9', // albastru – complement direct
-    verb:      '#27ae60', // verde    – verb / predicat
-    connector: '#8e44ad', // mov      – conector / timp verbal / comparație
-    location:  '#e67e22', // portocaliu – loc / timp / direcție
+    subject:   '#e74c3c',
+    object:    '#2980b9',
+    verb:      '#27ae60',
+    connector: '#8e44ad',
+    location:  '#e67e22',
   };
 
-  // Stem color uses a CSS variable so dark-mode can override it.
-  var STEM_COLOR = 'var(--gk-stem,#2d3748)';
+  // Stem gets a lighter tint of the same hue so stem+ending read as one unit.
+  var STEM_COLORS = {
+    subject:   '#f1948a',
+    object:    '#7fb3d3',
+    verb:      '#76d7a0',
+    connector: '#c39bd3',
+    location:  '#f0b27a',
+  };
 
   // Returns { role: String, endLen: Number } or null.
   // endLen = how many chars from the END of the clean token are the particle/ending.
@@ -138,15 +144,16 @@
       var stem   = clean.slice(0, clean.length - result.endLen);
       var ending = part.slice(stem.length); // ending syllables + any trailing punctuation
 
-      return (stem ? mkSpan(stem, STEM_COLOR, 'gk-stem') : '') +
+      var sc = STEM_COLORS[result.role] || '#8899aa';
+      return (stem ? mkSpan(stem, sc, 'gk-stem') : '') +
              mkSpan(ending, COLORS[result.role], 'gk-' + result.role);
     }).join('');
   }
 
   global.GrammarColor = {
-    colorize:   colorize,
-    detectRole: detectRole,
-    COLORS:     COLORS,
-    STEM_COLOR: STEM_COLOR,
+    colorize:    colorize,
+    detectRole:  detectRole,
+    COLORS:      COLORS,
+    STEM_COLORS: STEM_COLORS,
   };
 })(window);
