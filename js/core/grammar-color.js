@@ -144,9 +144,10 @@
       var stem   = clean.slice(0, clean.length - result.endLen);
       var ending = part.slice(stem.length); // ending syllables + any trailing punctuation
 
-      var sc = STEM_COLORS[result.role] || '#8899aa';
+      var sc = COLORS[result.role];
+      var ec = STEM_COLORS[result.role] || '#8899aa';
       return (stem ? mkSpan(stem, sc, 'gk-stem') : '') +
-             mkSpan(ending, COLORS[result.role], 'gk-' + result.role);
+             mkSpan(ending, ec, 'gk-' + result.role);
     }).join('');
   }
 
