@@ -139,6 +139,8 @@ const UI = {
     exercises:"Exerciții", correct:"Corecte", accuracy:"Acuratețe",
     bestStreak:"Cel mai lung streak", favorites:"Favorite",
     byType:"Per tip de exercițiu",
+    byLesson:"Per lecție",
+    practiceLesson:"Exersează →",
     noData:"Nu există date încă. Fă câteva exerciții mai întâi!",
     goExercise:"Mergi la exerciții →",
     types:{ "ko-ro":"KO→RO","ro-ko":"RO→KO","particle":"Particulă (1)","particlePlus":"Particule multiple","conjug":"Conjugare","puzzle":"Puzzle","chain":"Chain" }
@@ -149,6 +151,8 @@ const UI = {
     exercises:"Exercises", correct:"Correct", accuracy:"Accuracy",
     bestStreak:"Best Streak", favorites:"Favorites",
     byType:"Per exercise type",
+    byLesson:"Per lesson",
+    practiceLesson:"Practice →",
     noData:"No data yet. Do some exercises first!",
     goExercise:"Go to exercises →",
     types:{ "ko-ro":"KO→RO","ro-ko":"RO→KO","particle":"Particle (1)","particlePlus":"Multiple particles","conjug":"Conjugation","puzzle":"Puzzle","chain":"Chain" }
@@ -233,7 +237,26 @@ function render(){
           </div>
         </div>
       `).join("")}
-    </div>`;
+    </div>
+
+    ${Object.keys(s.byLesson || {}).length ? `
+    <div class="card">
+      <h2>${t("byLesson")}</h2>
+      ${Object.entries(s.byLesson).sort((a,b)=>a[0].localeCompare(b[0])).map(([lessonId, d]) => `
+        <div class="bar-wrap">
+          <div class="bar-label">
+            <span><a href="./exercises.html?lesson=${lessonId}" style="color:inherit;text-decoration:none;font-weight:700">${lessonId}</a></span>
+            <span style="display:flex;align-items:center;gap:8px">
+              ${d.correct}/${d.total} (${pct(d.correct,d.total)}%)
+              <a href="./exercises.html?lesson=${lessonId}" style="font-size:11px;color:#db2777;font-weight:900;text-decoration:none">${t("practiceLesson")}</a>
+            </span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct(d.correct,d.total)}%;background:${pct(d.correct,d.total)>=80?"var(--green)":"var(--blue)"}"></div>
+          </div>
+        </div>
+      `).join("")}
+    </div>` : ""}`);
 }
 
 function setLang(lang){

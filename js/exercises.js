@@ -193,11 +193,12 @@ function updateBadges(){
   if(meterFill) meterFill.style.width = percent + "%";
 }
 
-function saveStats(isCorrect, type){
+function saveStats(isCorrect, type, lessonId){
   const today = new Date().toISOString().slice(0, 10);
   let s;
   try { s = JSON.parse(localStorage.getItem("RK_STATS") || "null"); } catch(e){ s = null; }
-  if(!s) s = { total:0, correct:0, bestStreak:0, today, todayTotal:0, todayCorrect:0, byType:{} };
+  if(!s) s = { total:0, correct:0, bestStreak:0, today, todayTotal:0, todayCorrect:0, byType:{}, byLesson:{} };
+  if(!s.byLesson) s.byLesson = {};
   if(s.today !== today){ s.today = today; s.todayTotal = 0; s.todayCorrect = 0; }
   s.total++;
   s.todayTotal++;
@@ -206,6 +207,11 @@ function saveStats(isCorrect, type){
   if(!s.byType[type]) s.byType[type] = { total:0, correct:0 };
   s.byType[type].total++;
   if(isCorrect) s.byType[type].correct++;
+  if(lessonId){
+    if(!s.byLesson[lessonId]) s.byLesson[lessonId] = { total:0, correct:0 };
+    s.byLesson[lessonId].total++;
+    if(isCorrect) s.byLesson[lessonId].correct++;
+  }
   localStorage.setItem("RK_STATS", JSON.stringify(s));
 }
 
@@ -485,7 +491,7 @@ function checkCurrentAnswer(){
     total++;
     if(isRight){ correct++; streak++; if(streak >= 2) showHeartFx(); }
     else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode) trackWrong(item); }
-    if(!isWrongMode) saveStats(isRight, typeSelect.value);
+    if(!isWrongMode) saveStats(isRight, typeSelect.value, item.lessonId || null);
     answered = true;
     updateBadges();
     updateWrongBtn();
@@ -526,7 +532,7 @@ function checkCurrentAnswer(){
     if(!isWrongMode) trackWrong(item);
   }
 
-  if(!isWrongMode) saveStats(isCorrect, typeSelect.value);
+  if(!isWrongMode) saveStats(isCorrect, typeSelect.value, item.lessonId || null);
   answered = true;
   updateBadges();
   updateWrongBtn();

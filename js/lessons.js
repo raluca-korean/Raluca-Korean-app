@@ -69,15 +69,27 @@ function setTopik(level){
   }
 }
 
+function getLessonStats(){
+  try { return (JSON.parse(localStorage.getItem("RK_STATS") || "null") || {}).byLesson || {}; }
+  catch(e){ return {}; }
+}
+
 function renderLessonList(){
   listEl.innerHTML = "";
   const filtered = lessons.filter(l => l.topik === currentTopik);
+  const byLesson = getLessonStats();
 
   filtered.forEach((lesson, idx) => {
     const el = document.createElement("div");
     el.className = "lesson-item" + (lesson.id === currentLessonId ? " active" : "");
     el.dataset.id = lesson.id;
-    el.textContent = `${idx + 1}. ${lesson.title[currentLang]}`;
+
+    const d = byLesson[lesson.id];
+    const badge = d
+      ? ` <span style="font-size:11px;opacity:.7">(${Math.round(d.correct/d.total*100)}%)</span>`
+      : "";
+
+    el.innerHTML = `${idx + 1}. ${lesson.title[currentLang]}${badge}`;
     el.addEventListener("click", () => selectLesson(lesson.id));
     listEl.appendChild(el);
   });
