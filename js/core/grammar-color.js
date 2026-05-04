@@ -82,6 +82,11 @@
     // 이랑 – after consonant-final noun (informal): 책이랑, 음식이랑
     if (clean.endsWith('이랑') && clean.length > 2) return 'connector';
 
+    // 3c. Comparison / manner particles (decât / la fel ca / precum)
+    if (clean.endsWith('보다') && clean.length > 2) return 'connector'; // than:  생각보다, 나보다
+    if (clean.endsWith('만큼') && clean.length > 2) return 'connector'; // as much as: 너만큼, 기대만큼
+    if (clean.endsWith('처럼') && clean.length > 2) return 'connector'; // like/as: 어른처럼, 나처럼
+
     if (!prevKo) return null;
 
     // 4. Contracted-form fallbacks
