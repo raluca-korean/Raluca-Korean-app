@@ -78,6 +78,10 @@
       if (clean.endsWith(LOC[k]) && clean.length > LOC[k].length) return 'location';
     }
 
+    // 3b. Coordinating / comitative particles (și / cu)
+    // 이랑 – after consonant-final noun (informal): 책이랑, 음식이랑
+    if (clean.endsWith('이랑') && clean.length > 2) return 'connector';
+
     if (!prevKo) return null;
 
     // 4. Contracted-form fallbacks
@@ -95,6 +99,10 @@
     // Location / direction
     if (last === '에') return 'location';
     if (last === '로' && !hasBatchim(prev)) return 'location';
+
+    // Coordinating / comitative particle 와 (and / with) – after vowel-final noun:
+    // 사과와, 친구와, 나라와  (형식: 와 after no-받침)
+    if (last === '와' && !hasBatchim(prev)) return 'connector';
 
     // Subject / topic markers
     if (last === '가' && !hasBatchim(prev)) return 'subject';
