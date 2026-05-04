@@ -2775,16 +2775,35 @@
                          : detectedTense === 'should'   ? 'tense_should'
                          : 'tense_pres';
 
-    // Split on connector markers; only create a clause for segments that have a verb
+    // Split on connector markers; create a clause for each segment that has a verb.
+    // Verb-less segments (e.g. "la magazin" or "mâine eu" split off by "și") are merged
+    // into the adjacent clause so their content (locations, time, subjects) is preserved.
     var segments = splitIntoSegments(raw);
     var clauseData = [];
+    var pendingText = '';
     for(var s = 0; s < segments.length; s++){
       var seg = segments[s];
       // Strip relative sub-clauses ("care/which/who ...") — the builder can't parse
       // them and their verb would shadow the main clause verb.
       var cleanText = seg.text.replace(/\s+(?:care|which|who)\s+\S+.*/, '').trim();
-      var segVerb = findBestMatch('verb', cleanText || seg.text);
-      if(segVerb) clauseData.push({ text: cleanText || seg.text, connKey: seg.connector });
+      var segText = pendingText ? (pendingText + ' ' + (cleanText || seg.text)) : (cleanText || seg.text);
+      pendingText = '';
+      var segVerb = findBestMatch('verb', segText);
+      if(segVerb){
+        clauseData.push({ text: segText, connKey: seg.connector });
+      } else if(clauseData.length > 0 && segText){
+        // Merge backward: attach verb-less text to the preceding clause so that
+        // extra locations / subjects in it are picked up (e.g. "și la magazin").
+        clauseData[clauseData.length - 1].text += ' ' + segText;
+      } else if(segText){
+        // Merge forward: no clause yet (e.g. "mâine eu" before "și el mergem").
+        pendingText = segText;
+      }
+    }
+    if(pendingText && clauseData.length > 0){
+      clauseData[clauseData.length - 1].text += ' ' + pendingText;
+    } else if(pendingText){
+      clauseData = [{ text: pendingText, connKey: 'none' }];
     }
 
     // Fallback: treat whole text as one clause
