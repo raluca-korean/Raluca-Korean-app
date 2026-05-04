@@ -957,21 +957,13 @@
     border-color:rgba(244,114,182,.22) !important;
   }
 
-  /* Grammar-colored words: strip gradient, use role color */
-  #sentenceWords .word.gk-colored {
+  /* Grammar-split words: strip gradient so inner stem/ending spans show their own colors */
+  #sentenceWords .word.gk-split,
+  body.dark-mode #sentenceWords .word.gk-split {
     background: none !important;
     -webkit-background-clip: unset !important;
     background-clip: unset !important;
-    color: var(--gk-clr) !important;
-    -webkit-text-fill-color: var(--gk-clr) !important;
-    filter: none !important;
-  }
-  body.dark-mode #sentenceWords .word.gk-colored {
-    background: none !important;
-    -webkit-background-clip: unset !important;
-    background-clip: unset !important;
-    color: var(--gk-clr) !important;
-    -webkit-text-fill-color: var(--gk-clr) !important;
+    -webkit-text-fill-color: initial !important;
     filter: none !important;
   }
 </style>
@@ -2382,10 +2374,17 @@
 
     if(els.sentenceWords){
       els.sentenceWords.innerHTML = words.map(function(word){
-        var role = (typeof GrammarColor !== 'undefined') ? GrammarColor.detectRole(word) : null;
-        if(role){
-          var c = GrammarColor.COLORS[role];
-          return '<span class="word gk-colored" style="--gk-clr:' + c + '">' + escapeHtml(word) + '</span>';
+        var result = (typeof GrammarColor !== 'undefined') ? GrammarColor.detectRole(word) : null;
+        if(result){
+          var clean  = word.replace(/[.,!?。、…~※「」]+$/, '');
+          var stem   = clean.slice(0, clean.length - result.endLen);
+          var ending = word.slice(stem.length);
+          var sc = GrammarColor.STEM_COLOR;
+          var rc = GrammarColor.COLORS[result.role];
+          return '<span class="word gk-split">' +
+            (stem ? '<span style="color:'+sc+';-webkit-text-fill-color:'+sc+'">'+escapeHtml(stem)+'</span>' : '') +
+            '<span style="color:'+rc+';-webkit-text-fill-color:'+rc+'">'+escapeHtml(ending)+'</span>' +
+            '</span>';
         }
         return '<span class="word">' + escapeHtml(word) + '</span>';
       }).join('');
