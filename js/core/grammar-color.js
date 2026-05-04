@@ -24,6 +24,7 @@
   // Connector / conjunction endings (verb + linking form).
   var CONN = [
     '으면서', '면서',
+    '으면',               // conditional: 먹으면, 읽으면
     '아서', '어서', '여서',
     '지만',
     '으니까', '니까',
@@ -79,7 +80,17 @@
 
     if (!prevKo) return null;
 
-    // 4. Single-char particles (batchim-sensitive)
+    // 4. Contracted-form fallbacks
+    // Verb/adj stems without 받침 contract 아/어 into the preceding syllable,
+    // leaving only 요 visible. E.g.: 봐요(보+아요), 예뻐요(예쁘+어요), 봤어요(보+았+어요)
+    if (last === '요') return 'verb';
+
+    // 아서/어서 connectors also contract → 봐서(보+아서), 예뻐서(예쁘+어서).
+    // Note: 에서 tokens are already caught above as location, so lone 서 here
+    // means the preceding syllable absorbed the 아/어.
+    if (last === '서') return 'connector';
+
+    // 5. Single-char particles (batchim-sensitive)
 
     // Location / direction
     if (last === '에') return 'location';
