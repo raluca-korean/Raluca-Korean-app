@@ -45,24 +45,25 @@
   // Invariant (neutral) particles — form never changes based on batchim.
   var NEUTRAL = ['마다', '도', '의', '만'].sort(function (a, b) { return b.length - a.length; });
 
+  // Bright color for the grammatical marker (particle / ending).
   var COLORS = {
     subject:   '#e74c3c',
     object:    '#2980b9',
     verb:      '#27ae60',
     connector: '#8e44ad',
     location:  '#e67e22',
-    neutral:   '#e74c3c', // noun stem shares subject color
+    neutral:   '#1abc9c', // invariant particle → teal
   };
 
-  // Stem gets a lighter tint of the same hue so stem+ending read as one unit.
-  // For neutral: stem = subject color, particle = teal.
+  // Light tint for the stem (noun / verb base).
+  // neutral stem shares the subject light-red so it reads as a noun.
   var STEM_COLORS = {
     subject:   '#f1948a',
     object:    '#7fb3d3',
     verb:      '#76d7a0',
     connector: '#c39bd3',
     location:  '#f0b27a',
-    neutral:   '#1abc9c', // invariant particle → teal
+    neutral:   '#e74c3c', // noun stem → subject color
   };
 
   // Returns { role: String, endLen: Number } or null.
@@ -156,8 +157,8 @@
       var stem   = clean.slice(0, clean.length - result.endLen);
       var ending = part.slice(stem.length); // ending syllables + any trailing punctuation
 
-      var sc = COLORS[result.role];
-      var ec = STEM_COLORS[result.role] || '#8899aa';
+      var sc = STEM_COLORS[result.role] || '#8899aa'; // stem → light tint
+      var ec = COLORS[result.role];                   // ending/particle → vivid
       return (stem ? mkSpan(stem, sc, 'gk-stem') : '') +
              mkSpan(ending, ec, 'gk-' + result.role);
     }).join('');
