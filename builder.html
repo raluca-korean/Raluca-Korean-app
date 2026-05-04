@@ -956,6 +956,24 @@
     color:rgba(210,170,240,.70) !important;
     border-color:rgba(244,114,182,.22) !important;
   }
+
+  /* Grammar-colored words: strip gradient, use role color */
+  #sentenceWords .word.gk-colored {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    color: var(--gk-clr) !important;
+    -webkit-text-fill-color: var(--gk-clr) !important;
+    filter: none !important;
+  }
+  body.dark-mode #sentenceWords .word.gk-colored {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    color: var(--gk-clr) !important;
+    -webkit-text-fill-color: var(--gk-clr) !important;
+    filter: none !important;
+  }
 </style>
 
 </head><body>
@@ -1044,6 +1062,7 @@
   <script src="./js/core/translations.js"></script>
   <script src="./js/core/sentence-builder.js"></script>
   <script src="./js/core/parser.js"></script>
+  <script src="./js/core/grammar-color.js"></script>
 
   <script>
 (function(){
@@ -2363,6 +2382,11 @@
 
     if(els.sentenceWords){
       els.sentenceWords.innerHTML = words.map(function(word){
+        var role = (typeof GrammarColor !== 'undefined') ? GrammarColor.detectRole(word) : null;
+        if(role){
+          var c = GrammarColor.COLORS[role];
+          return '<span class="word gk-colored" style="--gk-clr:' + c + '">' + escapeHtml(word) + '</span>';
+        }
         return '<span class="word">' + escapeHtml(word) + '</span>';
       }).join('');
     }
