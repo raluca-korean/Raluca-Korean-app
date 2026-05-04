@@ -42,21 +42,27 @@
     '까지',   '부터',   '으로',
   ].sort(function (a, b) { return b.length - a.length; });
 
+  // Invariant (neutral) particles — form never changes based on batchim.
+  var NEUTRAL = ['마다', '도', '의', '만'].sort(function (a, b) { return b.length - a.length; });
+
   var COLORS = {
     subject:   '#e74c3c',
     object:    '#2980b9',
     verb:      '#27ae60',
     connector: '#8e44ad',
     location:  '#e67e22',
+    neutral:   '#e74c3c', // noun stem shares subject color
   };
 
   // Stem gets a lighter tint of the same hue so stem+ending read as one unit.
+  // For neutral: stem = subject color, particle = teal.
   var STEM_COLORS = {
     subject:   '#f1948a',
     object:    '#7fb3d3',
     verb:      '#76d7a0',
     connector: '#c39bd3',
     location:  '#f0b27a',
+    neutral:   '#1abc9c', // invariant particle → teal
   };
 
   // Returns { role: String, endLen: Number } or null.
@@ -90,23 +96,29 @@
         return { role: 'location', endLen: LOC[k].length };
     }
 
-    // 4. Coordinating / comitative particles
+    // 4. Invariant (neutral) particles
+    for (var n = 0; n < NEUTRAL.length; n++) {
+      if (clean.endsWith(NEUTRAL[n]) && clean.length > NEUTRAL[n].length && prevKo)
+        return { role: 'neutral', endLen: NEUTRAL[n].length };
+    }
+
+    // 5. Coordinating / comitative particles
     if (clean.endsWith('이랑') && clean.length > 2) return { role: 'connector', endLen: 2 };
 
-    // 5. Comparison / manner particles
+    // 6. Comparison / manner particles
     if (clean.endsWith('보다') && clean.length > 2) return { role: 'connector', endLen: 2 };
     if (clean.endsWith('만큼') && clean.length > 2) return { role: 'connector', endLen: 2 };
     if (clean.endsWith('처럼') && clean.length > 2) return { role: 'connector', endLen: 2 };
 
     if (!prevKo) return null;
 
-    // 6. Contracted-form fallbacks (vowel-final stems absorb 아/어)
+    // 7. Contracted-form fallbacks (vowel-final stems absorb 아/어)
     //    봐요 (보+아요), 예뻐요 (예쁘+어요) → last char 요 = verb ending
     if (last === '요') return { role: 'verb',      endLen: 1 };
     //    봐서 (보+아서), 예뻐서 (예쁘+어서) → last char 서 = connector
     if (last === '서') return { role: 'connector', endLen: 1 };
 
-    // 7. Single-char particles (batchim-sensitive)
+    // 8. Single-char particles (batchim-sensitive)
     if (last === '에')                         return { role: 'location', endLen: 1 };
     if (last === '로' && !hasBatchim(prev))    return { role: 'location', endLen: 1 };
     if (last === '와' && !hasBatchim(prev))    return { role: 'connector', endLen: 1 }; // and/with
