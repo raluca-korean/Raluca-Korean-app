@@ -381,6 +381,24 @@ function getFavs(){
   return JSON.parse(localStorage.getItem("FAV_WORDS") || "[]");
 }
 
+function getLearned(){
+  return JSON.parse(localStorage.getItem("RK_LEARNED") || "[]");
+}
+
+function isLearned(ko){
+  return getLearned().includes(ko);
+}
+
+function toggleLearned(ko){
+  const learned = getLearned();
+  const next = learned.includes(ko)
+    ? learned.filter(k => k !== ko)
+    : [...learned, ko];
+  localStorage.setItem("RK_LEARNED", JSON.stringify(next));
+  render();
+  renderDailyView();
+}
+
 function isFav(ko){
   return getFavs().includes(ko);
 }
@@ -510,6 +528,7 @@ function renderDailyView(){
         <div class="actions">
           <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
           <span class="icon star ${isFav(word.ko) ? 'active' : ''}" onclick="toggleFav('${word.ko.replace(/'/g, "\\'")}')">⭐</span>
+          <span class="icon" style="color:${isLearned(word.ko) ? '#22c55e' : 'inherit'}" onclick="toggleLearned('${word.ko.replace(/'/g, "\\'")}')">✓</span>
         </div>
       </div>
     `).join("")}
@@ -531,7 +550,10 @@ function playDaily(){
 }
 
 function startQuiz(){
-  quizPool = shuffle([...WORDS]);
+  const learned = getLearned();
+  const unlearned = shuffle(WORDS.filter(w => !learned.includes(w.ko)));
+  const learnedWords = shuffle(WORDS.filter(w => learned.includes(w.ko)));
+  quizPool = [...unlearned, ...learnedWords];
   quizIndex = 0;
   showQuizQuestion();
 }
@@ -549,6 +571,8 @@ function showQuizQuestion(){
   const currentWord = quizPool[quizIndex];
   speakKO(currentWord.ko);
   const correctMeaning = getMeaning(currentWord);
+  const learned = getLearned();
+  const unlearnedCount = quizPool.filter(w => !learned.includes(w.ko)).length;
 
   const wrongPool = WORDS
     .map(word => getMeaning(word))
@@ -556,10 +580,26 @@ function showQuizQuestion(){
 
   const wrongOptions = shuffle([...new Set(wrongPool)]).slice(0, 2);
   const options = shuffle([correctMeaning, ...wrongOptions]);
+  const learnedNow = isLearned(currentWord.ko);
+  const koEsc = currentWord.ko.replace(/'/g, "\\'");
 
   dailyCard.innerHTML = `
-    <h3>${t("quizQuestion")} <span style="font-size:.8em;opacity:.6">${quizIndex + 1}/${quizPool.length}</span></h3>
-    <div class="ko" style="cursor:pointer" onclick="speakKO('${currentWord.ko.replace(/'/g, "\\'")}')">${currentWord.ko}</div>
+    <h3>${t("quizQuestion")}
+      <span style="font-size:.8em;opacity:.6">${quizIndex + 1}/${quizPool.length}
+        ${unlearnedCount < quizPool.length ? ` · ✓ ${quizPool.length - unlearnedCount}` : ''}
+      </span>
+    </h3>
+    <div style="display:flex;align-items:center;gap:12px;margin:8px 0">
+      <div class="ko" style="cursor:pointer" onclick="speakKO('${koEsc}')">${currentWord.ko}</div>
+      <button type="button"
+        onclick="toggleLearned('${koEsc}');showQuizQuestion()"
+        style="padding:4px 12px;border-radius:999px;font-size:.85em;
+               background:${learnedNow ? '#22c55e' : 'rgba(255,255,255,.1)'};
+               border:1px solid ${learnedNow ? '#22c55e' : 'rgba(255,255,255,.3)'};
+               color:${learnedNow ? '#fff' : 'inherit'};cursor:pointer">
+        ${learnedNow ? '✓ Învățat' : '○ Marchează'}
+      </button>
+    </div>
     ${options.map(option => `
       <button type="button" onclick="checkQuizAnswer('${option.replace(/'/g, "\\'")}', '${correctMeaning.replace(/'/g, "\\'")}')">${option}</button>
     `).join("")}
@@ -624,6 +664,7 @@ function render(){
       <div class="actions">
         <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
         <span class="icon star ${isFav(word.ko) ? 'active' : ''}" onclick="toggleFav('${word.ko.replace(/'/g, "\\'")}')">⭐</span>
+        <span class="icon" style="color:${isLearned(word.ko) ? '#22c55e' : 'inherit'}" onclick="toggleLearned('${word.ko.replace(/'/g, "\\'")}')">✓</span>
       </div>
     </div>
   `).join("");
