@@ -395,11 +395,14 @@ function toggleFav(ko){
 }
 
 function speakKO(text){
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "ko-KR";
-  utterance.rate = 0.9;
+  if(!text || !window.speechSynthesis) return;
   speechSynthesis.cancel();
-  speechSynthesis.speak(utterance);
+  setTimeout(function(){
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "ko-KR";
+    utterance.rate = 0.9;
+    speechSynthesis.speak(utterance);
+  }, 50);
 }
 
 function openYouGlish(word){
@@ -498,12 +501,11 @@ function renderDailyView(){
     ${daily.map(word => `
       <div class="word">
         <div>
-          <div class="ko">${word.ko}</div>
+          <div class="ko" style="cursor:pointer" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">🔊 ${word.ko}</div>
           <div class="ro">${getMeaning(word)}</div>
           <div class="ro">${getCategories(word).join(" • ")}</div>
         </div>
         <div class="actions">
-          <span class="icon" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">🔈</span>
           <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
           <span class="icon star ${isFav(word.ko) ? 'active' : ''}" onclick="toggleFav('${word.ko.replace(/'/g, "\\'")}')">⭐</span>
         </div>
@@ -611,12 +613,11 @@ function render(){
   const wordsHTML = pageWords.map(word => `
     <div class="word">
       <div>
-        <div class="ko">${word.ko}</div>
+        <div class="ko" style="cursor:pointer" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">🔊 ${word.ko}</div>
         <div class="ro">${getMeaning(word)}</div>
         <div class="ro">${getCategories(word).join(" • ")}</div>
       </div>
       <div class="actions">
-        <span class="icon" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">🔈</span>
         <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
         <span class="icon star ${isFav(word.ko) ? 'active' : ''}" onclick="toggleFav('${word.ko.replace(/'/g, "\\'")}')">⭐</span>
       </div>
