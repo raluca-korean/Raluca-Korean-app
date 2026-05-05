@@ -75,6 +75,10 @@
     var clean  = token.replace(/[.,!?。、…~※「」]+$/, '');
     if (clean.length < 2) return null;
 
+    // Fixed passive/agent marker — color entire token as location so that
+    // "작가에 의해서" reads as one consistent color unit.
+    if (clean === '의해서' || clean === '의해') return { role: 'location', endLen: clean.length };
+
     var last   = clean[clean.length - 1];
     var prev   = clean[clean.length - 2];
     var prevKo = /[가-힣]/.test(prev);
