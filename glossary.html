@@ -254,6 +254,8 @@ let WORDS = [];
 let daily = [];
 let dailyIndex = 0;
 let dailyHTML = "";
+let quizPool = [];
+let quizIndex = 0;
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
 let filterCategory = "";
 let filterFavsOnly = false;
@@ -529,20 +531,22 @@ function playDaily(){
 }
 
 function startQuiz(){
-  dailyIndex = 0;
+  quizPool = shuffle([...WORDS]);
+  quizIndex = 0;
   showQuizQuestion();
 }
 
 function showQuizQuestion(){
-  if(dailyIndex >= daily.length){
+  if(quizIndex >= quizPool.length){
     dailyCard.innerHTML = `
       <h3>${t("done")}</h3>
+      <button type="button" onclick="startQuiz()" style="margin-right:8px">${t("practice")}</button>
       <button type="button" onclick="exitQuiz()">${t("back")}</button>
     `;
     return;
   }
 
-  const currentWord = daily[dailyIndex];
+  const currentWord = quizPool[quizIndex];
   speakKO(currentWord.ko);
   const correctMeaning = getMeaning(currentWord);
 
@@ -554,8 +558,8 @@ function showQuizQuestion(){
   const options = shuffle([correctMeaning, ...wrongOptions]);
 
   dailyCard.innerHTML = `
-    <h3>${t("quizQuestion")}</h3>
-    <div class="ko">${currentWord.ko}</div>
+    <h3>${t("quizQuestion")} <span style="font-size:.8em;opacity:.6">${quizIndex + 1}/${quizPool.length}</span></h3>
+    <div class="ko" style="cursor:pointer" onclick="speakKO('${currentWord.ko.replace(/'/g, "\\'")}')">${currentWord.ko}</div>
     ${options.map(option => `
       <button type="button" onclick="checkQuizAnswer('${option.replace(/'/g, "\\'")}', '${correctMeaning.replace(/'/g, "\\'")}')">${option}</button>
     `).join("")}
@@ -566,7 +570,7 @@ function showQuizQuestion(){
 
 function checkQuizAnswer(selectedAnswer, correctAnswer){
   if(selectedAnswer === correctAnswer){
-    dailyIndex++;
+    quizIndex++;
     showQuizQuestion();
   } else {
     alert(t("tryAgain"));
