@@ -54,7 +54,7 @@ h1{margin:0 0 4px;font-size:22px;font-weight:900;color:var(--text)}
 button:hover{ transform:translateY(-1px); }
 button:active{ transform:translateY(2px); border-bottom-width:2px !important; }
 
-/* Filter buttons */
+/* Filter / sort buttons */
 .filter-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .filter-btn{
   padding:8px 16px;border-radius:12px;
@@ -69,6 +69,7 @@ button:active{ transform:translateY(2px); border-bottom-width:2px !important; }
   border-bottom-color:var(--blue-dk) !important;
   color:#fff !important;
 }
+.sort-label{font-size:11px;color:var(--muted);font-weight:700;align-self:center;margin-right:2px}
 
 /* Progress bar */
 .prog-bar{height:12px;border-radius:999px;background:#e5e5e5;margin-top:12px;overflow:hidden}
@@ -132,6 +133,16 @@ button:active{ transform:translateY(2px); border-bottom-width:2px !important; }
   padding:6px 14px;
 }
 
+/* Difficulty dot */
+.diff-dot{
+  position:absolute;top:12px;right:14px;
+  font-size:14px;line-height:1;
+  border-radius:50%;
+}
+.diff-hard{ color:#FF4B4B; }
+.diff-med{ color:#FFA500; }
+.diff-easy{ color:#58CC02; }
+
 /* Action buttons */
 .action-row{display:flex;gap:12px}
 .btn-know{
@@ -190,6 +201,12 @@ body.dark-mode button:not(.btn-know):not(.btn-dontknow):not(.filter-btn){ backgr
     <button type="button" class="filter-btn active" id="filterAll">Toate</button>
     <button type="button" class="filter-btn" id="filterFav">⭐ Favorite</button>
   </div>
+  <div class="filter-row" id="sortRow">
+    <span class="sort-label" id="sortLabel">Dificultate:</span>
+    <button type="button" class="filter-btn active" id="sortRandom">🔀 Aleatoriu</button>
+    <button type="button" class="filter-btn" id="sortHard">🔴 Greu întâi</button>
+    <button type="button" class="filter-btn" id="sortEasy">🟢 Ușor întâi</button>
+  </div>
 </div>
 
 <div id="fcArea"></div>
@@ -197,6 +214,8 @@ body.dark-mode button:not(.btn-know):not(.btn-dontknow):not(.filter-btn){ backgr
 </div>
 <script>
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let sortMode = localStorage.getItem("FC_SORT") || "random";
+let FC_STATS = JSON.parse(localStorage.getItem("FC_STATS") || "{}");
 let WORDS = [];
 let deck = [];
 let cardIndex = 0;
@@ -211,6 +230,8 @@ const UI = {
     tapToFlip:"Atinge ca să vezi răspunsul",
     know:"✓ Știu", dontKnow:"✗ Nu știu",
     filterAll:"Toate", filterFav:"⭐ Favorite",
+    sortLabel:"Dificultate:",
+    sortRandom:"🔀 Aleatoriu", sortHard:"🔴 Greu întâi", sortEasy:"🟢 Ușor întâi",
     progress:"Progres",
     summaryTitle:"Sesiune completă!",
     know2:"Știu", dontKnow2:"Nu știu",
@@ -223,6 +244,8 @@ const UI = {
     tapToFlip:"Tap to see the answer",
     know:"✓ I know", dontKnow:"✗ Don't know",
     filterAll:"All", filterFav:"⭐ Favorites",
+    sortLabel:"Difficulty:",
+    sortRandom:"🔀 Random", sortHard:"🔴 Hard first", sortEasy:"🟢 Easy first",
     progress:"Progress",
     summaryTitle:"Session complete!",
     know2:"Know", dontKnow2:"Don't know",
@@ -239,13 +262,36 @@ function getCat(w){ return currentLang === "ro" ? (w.categoriesRo||[])[0] : (w.c
 
 function getFavs(){ return JSON.parse(localStorage.getItem("FAV_WORDS") || "[]"); }
 
+// Returns difficulty ratio (0=easy, 1=hard). Returns 0.5 for unknown words.
+function diffScore(ko){
+  const s = FC_STATS[ko];
+  if(!s || (s.c + s.w) < 2) return 0.5;
+  return s.w / (s.c + s.w);
+}
+
+// Returns a colored dot based on performance history, or "" if not enough data.
+function getDiffDot(ko){
+  const s = FC_STATS[ko];
+  if(!s || (s.c + s.w) < 3) return "";
+  const ratio = s.w / (s.c + s.w);
+  if(ratio > 0.5) return `<span class="diff-dot diff-hard">●</span>`;
+  if(ratio > 0.2) return `<span class="diff-dot diff-med">●</span>`;
+  return `<span class="diff-dot diff-easy">●</span>`;
+}
+
 function buildDeck(){
   let pool = WORDS;
   if(filterFav){
     const favs = getFavs();
     pool = WORDS.filter(w => favs.includes(w.ko));
   }
-  deck = [...pool].sort(() => Math.random() - 0.5);
+  if(sortMode === "hard"){
+    deck = [...pool].sort((a,b) => diffScore(b.ko) - diffScore(a.ko));
+  } else if(sortMode === "easy"){
+    deck = [...pool].sort((a,b) => diffScore(a.ko) - diffScore(b.ko));
+  } else {
+    deck = [...pool].sort(() => Math.random() - 0.5);
+  }
   cardIndex = 0;
   knowCount = 0;
   dontCount = 0;
@@ -289,6 +335,7 @@ function renderFC(){
       <div class="fc-scene" id="fcScene" onclick="flipCard()">
         <div class="fc-card" id="fcCard">
           <div class="fc-front">
+            ${getDiffDot(word.ko)}
             <div class="fc-ko">${word.ko}</div>
             <div class="fc-hint">${t("tapToFlip")}</div>
           </div>
@@ -317,6 +364,12 @@ function flipCard(){
 }
 
 function answer(knows){
+  const word = deck[cardIndex];
+  if(word){
+    if(!FC_STATS[word.ko]) FC_STATS[word.ko] = {c:0, w:0};
+    if(knows) FC_STATS[word.ko].c++; else FC_STATS[word.ko].w++;
+    localStorage.setItem("FC_STATS", JSON.stringify(FC_STATS));
+  }
   if(knows) knowCount++; else dontCount++;
   cardIndex++;
   flipped = false;
@@ -347,10 +400,15 @@ function setLang(lang){
   localStorage.setItem("RK_LANG", lang);
   updateLangBtns();
   updateFilterBtns();
+  updateSortBtns();
   document.getElementById("pageTitle").textContent = t("title");
   document.getElementById("pageSubtitle").textContent = t("subtitle");
   document.getElementById("filterAll").textContent = t("filterAll");
   document.getElementById("filterFav").textContent = t("filterFav");
+  document.getElementById("sortLabel").textContent = t("sortLabel");
+  document.getElementById("sortRandom").textContent = t("sortRandom");
+  document.getElementById("sortHard").textContent = t("sortHard");
+  document.getElementById("sortEasy").textContent = t("sortEasy");
   buildDeck();
   renderFC();
 }
@@ -369,6 +427,20 @@ function updateFilterBtns(){
   document.getElementById("filterFav").classList.toggle("active", filterFav);
 }
 
+function updateSortBtns(){
+  document.getElementById("sortRandom").classList.toggle("active", sortMode==="random");
+  document.getElementById("sortHard").classList.toggle("active", sortMode==="hard");
+  document.getElementById("sortEasy").classList.toggle("active", sortMode==="easy");
+}
+
+function setSortMode(mode){
+  sortMode = mode;
+  localStorage.setItem("FC_SORT", mode);
+  updateSortBtns();
+  buildDeck();
+  renderFC();
+}
+
 document.getElementById("langRo").addEventListener("click", () => setLang("ro"));
 document.getElementById("langEn").addEventListener("click", () => setLang("en"));
 document.getElementById("filterAll").addEventListener("click", () => {
@@ -377,6 +449,9 @@ document.getElementById("filterAll").addEventListener("click", () => {
 document.getElementById("filterFav").addEventListener("click", () => {
   filterFav = true; updateFilterBtns(); buildDeck(); renderFC();
 });
+document.getElementById("sortRandom").addEventListener("click", () => setSortMode("random"));
+document.getElementById("sortHard").addEventListener("click", () => setSortMode("hard"));
+document.getElementById("sortEasy").addEventListener("click", () => setSortMode("easy"));
 
 async function loadVocab(){
   try{
@@ -409,10 +484,15 @@ async function loadVocab(){
 }
 
 updateLangBtns();
+updateSortBtns();
 document.getElementById("pageTitle").textContent = t("title");
 document.getElementById("pageSubtitle").textContent = t("subtitle");
 document.getElementById("filterAll").textContent = t("filterAll");
 document.getElementById("filterFav").textContent = t("filterFav");
+document.getElementById("sortLabel").textContent = t("sortLabel");
+document.getElementById("sortRandom").textContent = t("sortRandom");
+document.getElementById("sortHard").textContent = t("sortHard");
+document.getElementById("sortEasy").textContent = t("sortEasy");
 loadVocab();
 </script>
 <script src="./js/core/dark-mode.js"></script>
