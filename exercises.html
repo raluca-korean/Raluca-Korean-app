@@ -468,6 +468,10 @@ select:focus, button:focus{
   <div class="controls">
     <button class="primary" id="check">Verifică</button>
     <button id="next">Următorul</button>
+    <button id="learnBtn" onclick="toggleLearnedEx(typeSelect.value, currentList[currentIndex])"
+      style="display:none;padding:6px 14px;border-radius:999px;font-size:.85em;
+             background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);
+             cursor:pointer;transition:background .2s">○ Marchează</button>
   </div>
 </div>
 
@@ -783,10 +787,10 @@ function getFilteredList(){
     list = list.filter(item => item.lessonId === lessonParam);
   } else if(currentLevel !== "test"){
     list = list.filter(item => String(item.topik) === currentLevel);
-  } else {
-    list = shuffle(list);
   }
-  return list;
+  const unlearned = shuffle(list.filter(item => !isLearnedEx(type, item)));
+  const learned   = shuffle(list.filter(item =>  isLearnedEx(type, item)));
+  return [...unlearned, ...learned];
 }
 
 function renderInfoBadge(item){
@@ -829,6 +833,8 @@ function render(){
   answersEl.innerHTML = "";
   answersEl.style.display = "";
   document.getElementById("puzzleUI").style.display = "none";
+  const lb = document.getElementById("learnBtn");
+  if(lb) lb.style.display = "none";
 
   currentList = getFilteredList();
 
@@ -996,6 +1002,8 @@ function checkCurrentAnswer(){
     answered = true;
     updateBadges();
     updateWrongBtn();
+    const lb = document.getElementById("learnBtn");
+    if(lb){ lb.style.display = ""; updateLearnBtn(); }
     return;
   }
 
@@ -1037,6 +1045,8 @@ function checkCurrentAnswer(){
   answered = true;
   updateBadges();
   updateWrongBtn();
+  const lb = document.getElementById("learnBtn");
+  if(lb){ lb.style.display = ""; updateLearnBtn(); }
 }
 
 function showHeartFx(){
@@ -1147,6 +1157,42 @@ function speakKorean(text){
     utt.rate = 0.9;
     speechSynthesis.speak(utt);
   }, 50);
+}
+
+function getLearnedEx(){
+  return JSON.parse(localStorage.getItem("RK_LEARNED_EX") || "[]");
+}
+function getExerciseKey(type, item){
+  if(type === "ko-ro")      return "ko-ro||" + (item.q || "");
+  if(type === "ro-ko")      return "ro-ko||" + (item.correct || "");
+  if(type === "particle")   return "particle||" + (item.template || "") + "|" + (item.correct || "");
+  if(type === "particlePlus") return "pp||" + (item.template || "") + "|" + (Array.isArray(item.correct) ? item.correct.join() : item.correct || "");
+  if(type === "conjug")     return "conjug||" + (item.correct || "");
+  if(type === "puzzle")     return "puzzle||" + (Array.isArray(item.correct) ? item.correct[0] : "");
+  if(type === "chain")      return "chain||" + (Array.isArray(item.correct) ? item.correct[0] : "");
+  return type + "||" + JSON.stringify(item.correct);
+}
+function isLearnedEx(type, item){
+  return getLearnedEx().includes(getExerciseKey(type, item));
+}
+function toggleLearnedEx(type, item){
+  const key = getExerciseKey(type, item);
+  const list = getLearnedEx();
+  const next = list.includes(key) ? list.filter(k => k !== key) : [...list, key];
+  localStorage.setItem("RK_LEARNED_EX", JSON.stringify(next));
+  updateLearnBtn();
+}
+function updateLearnBtn(){
+  const btn = document.getElementById("learnBtn");
+  if(!btn) return;
+  const type = typeSelect.value;
+  const item = currentList[currentIndex];
+  if(!item) return;
+  const learned = isLearnedEx(type, item);
+  btn.textContent = learned ? "✓ Învățat" : "○ Marchează";
+  btn.style.background = learned ? "#22c55e" : "rgba(255,255,255,.1)";
+  btn.style.borderColor = learned ? "#22c55e" : "rgba(255,255,255,.3)";
+  btn.style.color = learned ? "#fff" : "";
 }
 
 soundBtn.addEventListener("click", () => {
