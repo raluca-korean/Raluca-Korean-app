@@ -1417,6 +1417,7 @@ function normalizeVerbForms(text){
 
   const RO_MAP = {
     "merg":"merge","mergi":"merge","mergeam":"merge","mergeai":"merge","mergea":"merge","mergeau":"merge","mergem":"merge","mergeti":"merge","mergeți":"merge",
+    "duc":"merge","duci":"merge","duce":"merge","ducem":"merge","duceti":"merge","duceți":"merge",
     "vin":"veni","vii":"veni","vine":"veni","veneam":"veni","venea":"veni","veneau":"veni","venim":"veni","veniti":"veni","veniți":"veni",
     "mananc":"manca","mănânc":"manca","mananci":"manca","mănânci":"manca","manca":"manca","mancam":"manca","mâncam":"manca","mancati":"manca","mâncați":"manca",
     "beau":"bea","bei":"bea","bea":"bea","beam":"bea","beti":"bea","beți":"bea",
