@@ -53,47 +53,61 @@
   // 기 위해서, 기 전에 …) → color it as connector.
   var COMPOUND_CONN_FOLLOWERS = ['때문에', '위해서', '위해', '위한', '전에', '후에'];
 
+  // Negation adverbs — single syllable, checked before the length guard.
+  var NEGATION_LIST = ['안', '못'];
+
   // Pure standalone adverbs used without a trailing particle.
   // Checked before particle detection to prevent false positives like
   // 같이 → subject (이 after batchim) or 바로 → location (로 after open syllable).
   var ADVERBS_LIST = [
+    // degree / intensity
+    '아무리', '특히', '반드시', '물론', '아마',
+    '많이',   '조금', '아주',   '너무', '정말', '진짜', '꽤',
     // frequency
-    '매일', '매주', '항상', '언제나', '자주', '가끔', '때때로',
+    '매일', '매주', '항상', '언제나', '자주', '가끔', '때때로', '보통', '주로',
     // time point
     '오늘', '어제', '내일', '모레',
     // manner
-    '빨리', '천천히', '열심히', '조용히', '갑자기',
+    '빨리', '천천히', '열심히', '조용히', '갑자기', '소홀히',
     // together / alone
     '같이', '함께', '혼자',
     // sequence / discourse
-    '먼저', '드디어', '계속', '다시', '바로',
+    '먼저', '드디어', '계속', '다시', '바로', '따라서',
     // brief time
     '잠깐', '잠시', '금방', '방금', '이미', '아직',
-    // degree
-    '많이', '조금', '아주', '너무', '정말', '진짜',
   ];
 
-  // Bright color for the grammatical marker (particle / ending).
+  // ─── Color palette (matches rainbow grammar diagram) ─────────────────────
+  //  subject   → RED    (강한 주격 마커)
+  //  object    → BLUE   (목적격 마커)
+  //  verb      → PINK   (서술어 어미)
+  //  connector → ORANGE (연결어미 / 접속사)
+  //  location  → TEAL   (장소·방향 조사)
+  //  neutral   → GREEN  (관형격 의 / 보조사 도·만·마다)
+  //  adverb    → PURPLE (부사)
+  //  negation  → BROWN  (부정 부사 안·못)
+  // ─────────────────────────────────────────────────────────────────────────
   var COLORS = {
-    subject:   '#e74c3c',
-    object:    '#2980b9',
-    verb:      '#27ae60',
-    connector: '#8e44ad',
-    location:  '#e67e22',
-    neutral:   '#1abc9c',
-    adverb:    '#f39c12',  // amber — time / manner adverbs
+    subject:   '#e74c3c',  // red
+    object:    '#2980b9',  // blue
+    verb:      '#e91e63',  // pink / magenta
+    connector: '#e67e22',  // orange
+    location:  '#1abc9c',  // teal
+    neutral:   '#27ae60',  // green
+    adverb:    '#8e44ad',  // purple
+    negation:  '#795548',  // brown
   };
 
   // Light tint for the stem (noun / verb base).
-  // neutral stem shares the subject light-red so it reads as a noun.
   var STEM_COLORS = {
-    subject:   '#f1948a',
-    object:    '#7fb3d3',
-    verb:      '#76d7a0',
-    connector: '#c39bd3',
-    location:  '#f0b27a',
-    neutral:   '#e74c3c', // noun stem → subject color
-    adverb:    '#fad7a0', // light amber
+    subject:   '#f1948a',  // light red
+    object:    '#7fb3d3',  // light blue
+    verb:      '#f48fb1',  // light pink
+    connector: '#f0b27a',  // light orange
+    location:  '#76d7c4',  // light teal
+    neutral:   '#a9dfbf',  // light green
+    adverb:    '#c39bd3',  // light purple
+    negation:  '#d7ccc8',  // light brown
   };
 
   // Returns { role: String, endLen: Number } or null.
@@ -104,12 +118,17 @@
 
     var clean  = token.replace(/[.,!?。、…~※「」]+$/, '');
 
-    // 0a. Standalone compound-connector words (whole token = connector ending).
+    // 0a. Negation adverbs — single syllable, must come before length guard.
+    if (NEGATION_LIST.indexOf(clean) !== -1) {
+      return { role: 'negation', endLen: clean.length };
+    }
+
+    // 0b. Standalone compound-connector words (whole token = connector).
     if (STANDALONE_CONN_TOKENS.indexOf(clean) !== -1) {
       return { role: 'connector', endLen: clean.length };
     }
 
-    // 0b. Known standalone adverbs — checked before particle rules to prevent
+    // 0c. Known standalone adverbs — checked before particle rules to prevent
     //     false positives (e.g. 같이 → subject, 많이 → subject, 바로 → location).
     if (ADVERBS_LIST.indexOf(clean) !== -1) {
       return { role: 'adverb', endLen: clean.length };
@@ -149,8 +168,11 @@
         return { role: 'neutral', endLen: NEUTRAL[n].length };
     }
 
-    // 5. Coordinating / comitative particles
+    // 5. Comitative particles 와/과 (and/with), 이랑/랑
     if (clean.endsWith('이랑') && clean.length > 2) return { role: 'connector', endLen: 2 };
+    if (last === '와' && !hasBatchim(prev))          return { role: 'connector', endLen: 1 };
+    if (last === '과' &&  hasBatchim(prev))          return { role: 'connector', endLen: 1 };
+    if (last === '랑' && !hasBatchim(prev))          return { role: 'connector', endLen: 1 };
 
     // 6. Comparison / manner particles
     if (clean.endsWith('보다') && clean.length > 2) return { role: 'connector', endLen: 2 };
@@ -168,7 +190,6 @@
     // 8. Single-char particles (batchim-sensitive)
     if (last === '에')                         return { role: 'location', endLen: 1 };
     if (last === '로' && !hasBatchim(prev))    return { role: 'location', endLen: 1 };
-    if (last === '와' && !hasBatchim(prev))    return { role: 'connector', endLen: 1 }; // and/with
 
     if (last === '가' && !hasBatchim(prev))    return { role: 'subject',  endLen: 1 };
     if (last === '이' &&  hasBatchim(prev))    return { role: 'subject',  endLen: 1 };
@@ -213,7 +234,7 @@
       var result = detectRole(part);
 
       // Forward: V기 때문에 / V기 위해서 / V기 전에 …
-      // Verb stem → verb color (light green); 기 nominalizer → connector color (purple).
+      // Verb stem → verb color (light pink); 기 nominalizer → connector color (orange).
       if (cleanPart.endsWith('기') && COMPOUND_CONN_FOLLOWERS.indexOf(nextClean) !== -1) {
         var vStem = cleanPart.slice(0, cleanPart.length - 1); // everything except 기
         var kgi   = part.slice(vStem.length);                 // 기 + any trailing punctuation
