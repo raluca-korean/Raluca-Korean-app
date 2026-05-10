@@ -404,6 +404,11 @@ select:focus, button:focus{
 .drill-sent-tr{font-size:.75rem;color:var(--muted);margin-top:4px;}
 .drill-conn-tag{display:block;text-align:center;padding:6px 16px;border-radius:20px;background:#ddf4ff;color:#1CB0F6;font-weight:800;font-size:.85rem;}
 @media(max-width:480px){.drill-sent-pair{grid-template-columns:1fr;}}
+.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid var(--stroke);border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+.lang-picker.open{display:flex}
+.lang-picker button{padding:6px 14px;font-size:13px}
+.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
+body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
  
 </head>
@@ -420,8 +425,13 @@ select:focus, button:focus{
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
           <a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>
-          <button type="button" id="langRo">ro</button>
-          <button type="button" id="langEn">en</button>
+          <div style="position:relative">
+            <button type="button" id="langBtn">ro</button>
+            <div id="langPicker" class="lang-picker">
+              <button type="button" id="pickRo">ro</button>
+              <button type="button" id="pickEn">en</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="badges" style="margin-top:10px;">
@@ -494,8 +504,7 @@ select:focus, button:focus{
   <script>
 const pageTitleEl = document.getElementById("pageTitle");
 const pageSubtitleEl = document.getElementById("pageSubtitle");
-const langRoBtn = document.getElementById("langRo");
-const langEnBtn = document.getElementById("langEn");
+const langBtn = document.getElementById("langBtn");
 
 const typeSelect = document.getElementById("type");
 const levelBtnsEl = document.getElementById("levelBtns");
@@ -755,27 +764,12 @@ function updateLevelButtons(){
   });
 }
 
-function updateLanguageButtons(){
-  const activeStyle = "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)";
-  const inactiveStyle = "linear-gradient(160deg,#fff,#fdf4ff)";
-  const activeShadow = "0 8px 20px rgba(168,85,247,.25)";
-  const inactiveShadow = "0 4px 12px rgba(219,39,119,.10)";
-
-  if(currentLang === "ro"){
-    langRoBtn.style.background = activeStyle;
-    langRoBtn.style.color = "#fff";
-    langRoBtn.style.boxShadow = activeShadow;
-    langEnBtn.style.background = inactiveStyle;
-    langEnBtn.style.color = "var(--text)";
-    langEnBtn.style.boxShadow = inactiveShadow;
-  } else {
-    langEnBtn.style.background = activeStyle;
-    langEnBtn.style.color = "#fff";
-    langEnBtn.style.boxShadow = activeShadow;
-    langRoBtn.style.background = inactiveStyle;
-    langRoBtn.style.color = "var(--text)";
-    langRoBtn.style.boxShadow = inactiveShadow;
-  }
+function updateLangBtn(){
+  if(langBtn) langBtn.textContent = currentLang;
+  const pickRo = document.getElementById("pickRo");
+  const pickEn = document.getElementById("pickEn");
+  if(pickRo) pickRo.classList.toggle("active", currentLang === "ro");
+  if(pickEn) pickEn.classList.toggle("active", currentLang === "en");
 }
 
 function modeLabel(type){
@@ -883,11 +877,12 @@ function exitWrongMode(){
 function setLanguage(lang){
   currentLang = lang;
   localStorage.setItem("RK_LANG", lang);
-  updateLanguageButtons();
+  updateLangBtn();
   updateStaticTexts();
   updateBadges();
   render();
 }
+
 
 function shuffle(array){
   return [...array].sort(() => Math.random() - 0.5);
@@ -1347,8 +1342,15 @@ wrongBtn.addEventListener("click", enterWrongMode);
 
 checkBtn.addEventListener("click", checkCurrentAnswer);
 nextBtn.addEventListener("click", nextQuestion);
-langRoBtn.addEventListener("click", () => setLanguage("ro"));
-langEnBtn.addEventListener("click", () => setLanguage("en"));
+let _langTimer = null;
+function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
+function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
+langBtn.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
+langBtn.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
+langBtn.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
+document.getElementById("pickRo").addEventListener("click", () => { setLanguage("ro"); closeLangPicker(); });
+document.getElementById("pickEn").addEventListener("click", () => { setLanguage("en"); closeLangPicker(); });
+document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
 
 const soundBtn = document.getElementById("soundBtn");
 let soundOn = true;
@@ -1407,7 +1409,7 @@ soundBtn.addEventListener("click", () => {
 });
 
 updateLevelButtons();
-updateLanguageButtons();
+updateLangBtn();
 updateStaticTexts();
 updateBadges();
 loadExercises();
