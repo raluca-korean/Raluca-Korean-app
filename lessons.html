@@ -173,8 +173,13 @@ body.dark-mode button { background: #16213e !important; border-color: #2a2a4a !i
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
       <a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>
-      <button type="button" id="langRo">ro</button>
-      <button type="button" id="langEn">en</button>
+      <div style="position:relative">
+        <button type="button" id="langBtn">ro</button>
+        <div id="langPicker" class="lang-picker">
+          <button type="button" id="pickRo">ro</button>
+          <button type="button" id="pickEn">en</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -222,6 +227,11 @@ body.dark-mode button { background: #16213e !important; border-color: #2a2a4a !i
   border-color:transparent;
   box-shadow:0 8px 24px rgba(219,39,119,.30);
 }
+.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid var(--stroke);border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+.lang-picker.open{display:flex}
+.lang-picker button{padding:6px 14px;font-size:13px}
+.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
+body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 
 <script src="./js/core/grammar-color.js?v=18"></script>
@@ -230,8 +240,7 @@ const listEl      = document.getElementById("lessonList");
 const contentEl   = document.getElementById("lessonContent");
 const pageTitleEl = document.getElementById("pageTitle");
 const pageSubtitleEl = document.getElementById("pageSubtitle");
-const langRoBtn   = document.getElementById("langRo");
-const langEnBtn   = document.getElementById("langEn");
+const langBtn     = document.getElementById("langBtn");
 const tabsEl      = document.getElementById("topikTabs");
 
 let lessons        = [];
@@ -271,13 +280,12 @@ function updateHeaderTexts(){
   pageSubtitleEl.textContent = t("pageSubtitle");
 }
 
-function updateLanguageButtons(){
-  const on  = "linear-gradient(135deg,#22d3ee,#7c3aed)";
-  const off = "rgba(10,8,28,.55)";
-  langRoBtn.style.background = currentLang === "ro" ? on : off;
-  langRoBtn.style.color      = currentLang === "ro" ? "#000" : "var(--text)";
-  langEnBtn.style.background = currentLang === "en" ? on : off;
-  langEnBtn.style.color      = currentLang === "en" ? "#000" : "var(--text)";
+function updateLangBtn(){
+  if(langBtn) langBtn.textContent = currentLang;
+  const pickRo = document.getElementById("pickRo");
+  const pickEn = document.getElementById("pickEn");
+  if(pickRo) pickRo.classList.toggle("active", currentLang === "ro");
+  if(pickEn) pickEn.classList.toggle("active", currentLang === "en");
 }
 
 function renderTabs(){
@@ -374,8 +382,8 @@ function selectLesson(id){
 function setLanguage(lang){
   currentLang = lang;
   localStorage.setItem("RK_LANG", lang);
+  updateLangBtn();
   updateHeaderTexts();
-  updateLanguageButtons();
   renderTabs();
   renderLessonList();
   if(currentLessonId) selectLesson(currentLessonId);
@@ -406,11 +414,18 @@ function speakKorean(text){
   window.speechSynthesis.speak(utt);
 }
 
-langRoBtn.addEventListener("click", () => setLanguage("ro"));
-langEnBtn.addEventListener("click", () => setLanguage("en"));
+let _langTimer = null;
+function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
+function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
+langBtn.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
+langBtn.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
+langBtn.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
+document.getElementById("pickRo").addEventListener("click", () => { setLanguage("ro"); closeLangPicker(); });
+document.getElementById("pickEn").addEventListener("click", () => { setLanguage("en"); closeLangPicker(); });
+document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
 
 updateHeaderTexts();
-updateLanguageButtons();
+updateLangBtn();
 contentEl.innerHTML = `<div class="sub">${t("selectLesson")}</div>`;
 loadLessons();
 </script>
