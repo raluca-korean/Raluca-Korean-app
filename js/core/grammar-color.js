@@ -71,8 +71,8 @@
   // Entire token coloured as neutral (green); checked before the length guard
   // so that single-syllable forms (것, 수, 때, 적, 뿐) are not discarded.
   var BOUND_NOUN_LIST = [
-    '만큼', '정도',                   // 2-syllable bound nouns
-    '것', '수', '때', '적', '하나',   // 1-syllable + common numerals caught before 나-particle rule
+    '만큼', '정도',                         // 2-syllable bound nouns
+    '것', '수', '때', '적', '하나', '한',   // 한: bound noun in -는 한 (as long as) + numeral "one"
   ];
 
   // Location pronouns (장소 대명사) — 여기, 거기, 저기, 어디 etc.
