@@ -210,11 +210,13 @@
 
       var result = detectRole(part);
 
-      // Compound-connector override: V기 때문에 / V기 위해서 / V기 전에 …
-      // When the current token ends in 기 and the next is a known compound-connector
-      // follower, the 기 is the nominalizer of the compound structure → connector.
+      // Compound-connector: V기 때문에 / V기 위해서 / V기 전에 …
+      // Verb stem → verb color (light green); 기 nominalizer → connector color (purple).
       if (cleanPart.endsWith('기') && COMPOUND_CONN_FOLLOWERS.indexOf(nextClean) !== -1) {
-        result = { role: 'connector', endLen: 1 };
+        var vStem = cleanPart.slice(0, cleanPart.length - 1); // everything except 기
+        var kgi   = part.slice(vStem.length);                 // 기 + any trailing punctuation
+        return (vStem ? mkSpan(vStem, STEM_COLORS.verb, 'gk-stem') : '') +
+               mkSpan(kgi, COLORS.connector, 'gk-connector');
       }
 
       if (!result) return '<span class="gk gk-n">' + esc(part) + '</span>';
