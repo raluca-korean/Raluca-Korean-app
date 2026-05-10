@@ -34,6 +34,7 @@
     '아도',   '어도',
     '고도',   '고서',
     '거나',                     // alternation: 먹거나, 가거나 (eat or, go or)
+    '이나',                     // alternation after batchim: 빵이나, 음식이나
     '든지',   '든가',            // whether…or: 먹든지, 가든가
     '느라고', '느라',            // because of -ing: 공부하느라고, 자느라
   ].sort(function (a, b) { return b.length - a.length; });
@@ -70,8 +71,8 @@
   // Entire token coloured as neutral (green); checked before the length guard
   // so that single-syllable forms (것, 수, 때, 적, 뿐) are not discarded.
   var BOUND_NOUN_LIST = [
-    '만큼', '정도',          // 2-syllable bound nouns
-    '것', '수', '때', '적', // 1-syllable bound nouns
+    '만큼', '정도',                   // 2-syllable bound nouns
+    '것', '수', '때', '적', '하나',   // 1-syllable + common numerals caught before 나-particle rule
   ];
 
   // Adjective/verb attributive (관형사형) forms — checked before particle rules
@@ -109,6 +110,7 @@
     '아무리', '특히', '반드시', '물론', '아마',
     '많이',   '조금', '아주',   '너무', '정말', '진짜', '꽤',
     '전혀',   '거의', '겨우',   '별로', '꼭',   '더',   '덜',
+    '얼마나', '얼마',                      // interrogative degree adverbs
     // frequency
     '매일', '매주', '항상', '언제나', '자주', '가끔', '때때로', '보통', '주로',
     // time point / manner of time
@@ -254,11 +256,13 @@
         return { role: 'neutral', endLen: NEUTRAL[n].length };
     }
 
-    // 5. Comitative particles 와/과 (and/with), 이랑/랑
+    // 5. Comitative / alternation particles
     if (clean.endsWith('이랑') && clean.length > 2) return { role: 'connector', endLen: 2 };
     if (last === '와' && !hasBatchim(prev))          return { role: 'connector', endLen: 1 };
     if (last === '과' &&  hasBatchim(prev))          return { role: 'connector', endLen: 1 };
     if (last === '랑' && !hasBatchim(prev))          return { role: 'connector', endLen: 1 };
+    // 나 / 이나 — alternation particle (영화나, 과자나; 이나 covered by CONN above)
+    if (last === '나' && !hasBatchim(prev))          return { role: 'connector', endLen: 1 };
 
     // 6. Comparison / manner particles
     if (clean.endsWith('보다') && clean.length > 2) return { role: 'connector', endLen: 2 };
