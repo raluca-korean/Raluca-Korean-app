@@ -79,6 +79,10 @@
   // Entire token coloured as location (teal); same colour family as 에/에서/까지.
   var LOCATION_PRONOUNS = ['여기', '거기', '저기', '어디', '이쪽', '그쪽', '저쪽'];
 
+  // Common single-syllable standalone nouns — checked before the length guard.
+  // Only unambiguous nouns that never serve as particles or verb endings.
+  var NOUN_1CHAR = ['밥', '집', '책', '물', '옷', '산', '뭐', '형', '나', '너'];
+
   // Adjective/verb attributive (관형사형) forms — checked before particle rules
   // to prevent -은/-는-ending modifiers being coloured as subject particles.
   var MODIFIER_LIST = [
@@ -147,6 +151,8 @@
   //  neutral   → GREEN  (관형격 의 / 보조사 도·만·마다)
   //  adverb    → PURPLE (부사)
   //  negation  → BROWN  (부정 부사 안·못)
+  //  modifier  → GOLD   (관형사형 / 관형사)
+  //  noun      → SLATE  (일반 명사 — bare noun without particle)
   // ─────────────────────────────────────────────────────────────────────────
   var COLORS = {
     subject:   '#e74c3c',  // red
@@ -158,6 +164,7 @@
     adverb:    '#8e44ad',  // purple
     negation:  '#795548',  // brown
     modifier:  '#d4ac0d',  // golden yellow (adjective/verb attributive form)
+    noun:      '#607d8b',  // slate blue-gray (bare noun / pronoun without particle)
   };
 
   // Light tint for the stem (noun / verb base).
@@ -171,6 +178,7 @@
     adverb:    '#c39bd3',  // light purple
     negation:  '#d7ccc8',  // light brown
     modifier:  '#f9e79f',  // light yellow (adjective/verb attributive stem)
+    noun:      '#b0bec5',  // light slate (bare noun — whole token is vivid color so stem unused)
   };
 
   // Returns { role: String, endLen: Number } or null.
@@ -217,6 +225,11 @@
     // 0g. Location pronouns (장소 대명사) — whole token location (teal).
     if (LOCATION_PRONOUNS.indexOf(clean) !== -1) {
       return { role: 'location', endLen: clean.length };
+    }
+
+    // 0h. Common single-syllable nouns — whole token noun (slate).
+    if (NOUN_1CHAR.indexOf(clean) !== -1) {
+      return { role: 'noun', endLen: clean.length };
     }
 
     if (clean.length < 2) return null;
@@ -306,7 +319,10 @@
     if (last === '를' && !hasBatchim(prev))    return { role: 'object',   endLen: 1 };
     if (last === '을' &&  hasBatchim(prev))    return { role: 'object',   endLen: 1 };
 
-    return null;
+    // Fallback: unrecognised 2+ char Korean token → bare noun (slate blue-gray).
+    // Covers 가족, 건강, 경제, 음식, 사람, 방법, 문화, 사회 etc. that appear
+    // without a trailing particle (topic-dropped, vocative, or headlinese style).
+    return { role: 'noun', endLen: clean.length };
   }
 
   function esc(s) {
