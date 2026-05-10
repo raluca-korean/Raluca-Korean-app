@@ -1,0 +1,900 @@
+
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Exercises</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#db2777">
+  <link rel="stylesheet" href="./theme-anime.css">
+  <style>
+:root{
+  --bg:#f0f4f8;
+  --bg2:#e8f0fe;
+
+  --card: #ffffff;
+  --stroke: rgba(0,0,0,.08);
+
+  --text:#3c3c3c;
+  --muted:#afafaf;
+
+  --green:#58CC02;
+  --green-dk:#45A800;
+  --blue:#1CB0F6;
+  --blue-dk:#009AC7;
+  --red:#FF4B4B;
+  --red-dk:#CC0000;
+  --yellow:#FFC800;
+  --purple:#CE82FF;
+
+  --ok:#58CC02;
+  --bad:#FF4B4B;
+
+  --shadow: 0 4px 0 rgba(0,0,0,.12);
+  --shadow2: 0 2px 8px rgba(0,0,0,.08);
+  --radius: 16px;
+}
+
+*{box-sizing:border-box}
+html, body { height: 100%; }
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  color:var(--text);
+  background: var(--bg);
+  overflow-x:hidden;
+}
+
+.app{
+  width:100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding-left: 18px;
+  padding-right: 18px;
+  padding-top: calc(22px + env(safe-area-inset-top));
+  padding-bottom: calc(22px + env(safe-area-inset-bottom));
+}
+
+.card{
+  position:relative;
+  margin: 14px 0;
+  border-radius: var(--radius);
+  padding: 18px;
+  background: var(--card);
+  border: 2px solid #e5e5e5;
+  border-bottom: 4px solid #d0d0d0;
+  box-shadow: none;
+}
+
+.card::before{ display:none; }
+.card::after{ display:none; }
+
+h1{
+  margin:0;
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:.3px;
+  color:var(--text);
+}
+.sub{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+label b{
+  font-size:13px;
+  color:var(--text);
+}
+
+select{
+  width:100%;
+  padding:12px 14px;
+  border-radius: 12px;
+  border: 2px solid #e5e5e5;
+  border-bottom: 4px solid #d0d0d0;
+  background: #fff;
+  color: var(--text);
+  font-size:15px;
+  font-weight:700;
+  outline:none;
+}
+
+.question{
+  font-size:26px;
+  font-weight:900;
+  margin-bottom:6px;
+  letter-spacing:.3px;
+  color: var(--text);
+}
+
+.helper{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:14px;
+  min-height:18px;
+}
+
+.options{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+button{
+  width:100%;
+  padding:14px 18px;
+  border-radius:12px;
+  border:2px solid #e5e5e5;
+  border-bottom:3px solid #d0d0d0;
+  background:#fff;
+  font-size:17px;
+  font-weight:700;
+  cursor:pointer;
+  text-align:left;
+  color: var(--text);
+  transition: border-color .10s ease, background .10s ease, transform .08s ease;
+}
+
+button:active{ transform: translateY(1px); }
+
+button.correct{
+  border-color: var(--green);
+  border-bottom-color: var(--green-dk);
+  background: #e8f9d9;
+  color: var(--green-dk);
+}
+button.wrong{
+  border-color: var(--red);
+  border-bottom-color: var(--red-dk);
+  background: #ffdfe0;
+  color: var(--red-dk);
+}
+
+/* When an answer flips to a feedback state, let the state color win over grammar spans */
+button.correct .gk,
+button.wrong   .gk {
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+}
+
+.feedback{
+  margin-top:12px;
+  padding:14px;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:600;
+  display:none;
+  background:#f7f7f7;
+  color:var(--text);
+}
+
+.feedback.show{ display:block; }
+
+.nextBtn{
+  margin-top:14px;
+  padding:16px;
+  border-radius:12px;
+  border:2px solid #e5e5e5;
+  border-bottom:3px solid #d0d0d0;
+  background:#fff;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+  width:100%;
+  text-align:center;
+  color: var(--text);
+  transition: transform .08s ease, border-color .10s ease;
+}
+button:hover{ border-color: #b0b0b0; transform: translateY(-1px); }
+
+.primary{
+  background: #58CC02;
+  border-color: #58CC02;
+  border-bottom-color: var(--green-dk);
+  color:#fff;
+  text-align:center;
+}
+.primary:hover{ background: #61e002; border-color: #61e002; border-bottom-color: var(--green-dk); }
+
+.meter{
+  height:8px;
+  background:#e5e5e5;
+  border-radius:99px;
+  overflow:hidden;
+  margin-top:10px;
+}
+.meterBar{
+  height:100%;
+  background: var(--green);
+  border-radius:99px;
+  transition: width .3s ease;
+  width:0%;
+}
+
+.badges{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.badge{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding:5px 10px;
+  border-radius:99px;
+  background:#f0f0f0;
+  font-size:12px;
+  font-weight:700;
+  color:var(--text);
+}
+.badge.ok{ background:#e8f9d9; color:var(--green-dk); }
+.dot{
+  width:7px;height:7px;border-radius:50%;background:currentColor;
+}
+
+.soundBtn{
+  position:absolute;
+  top:14px; right:14px;
+  background:none;
+  border:none;
+  font-size:20px;
+  cursor:pointer;
+  width:auto;
+  padding:4px 8px;
+  border-radius:8px;
+  border:2px solid transparent;
+}
+.soundBtn:hover{ border-color:#e5e5e5; }
+
+/* puzzle / chain tiles */
+.tileZone{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  min-height:44px;
+  padding:8px;
+  border-radius:12px;
+  border:2px dashed #d0d0d0;
+  background:#fafafa;
+  margin-bottom:8px;
+}
+.tile{
+  padding:10px 14px;
+  border-radius:10px;
+  border:2px solid #e5e5e5;
+  border-bottom:3px solid #d0d0d0;
+  background:#fff;
+  font-size:17px;
+  font-weight:700;
+  cursor:pointer;
+  color:var(--text);
+  transition: border-color .10s ease, transform .08s ease;
+}
+.tile:hover{ border-color:#b0b0b0; transform:translateY(-1px); }
+.tileZone.line .tile{ background:#e8f0fe; border-color:#aac4f0; }
+
+.headerCard{ padding:14px 18px; }
+.headerRow{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.titleWrap{ flex:1; min-width:0; }
+.homeBtn{
+  font-size:20px;
+  text-decoration:none;
+  padding:6px 10px;
+  border-radius:10px;
+  border:2px solid #e5e5e5;
+  border-bottom:3px solid #d0d0d0;
+  background:#fff;
+  line-height:1;
+  flex-shrink:0;
+}
+
+/* ── DRILL ── */
+.tenseTag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-top:6px;}
+.tenseTag.pres,.tenseTag.past,.tenseTag.fut{background:#fce4ec;color:#e91e63;}
+.drill-sent-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.drill-sent-box{padding:12px;border-radius:11px;background:#fff;border:2px solid #e5e5e5;border-bottom:3px solid #d0d0d0;text-align:center;}
+.drill-sent-ko{font-size:.95rem;font-weight:700;color:var(--text);}
+.drill-sent-tr{font-size:.75rem;color:var(--muted);margin-top:4px;}
+.drill-conn-tag{display:block;text-align:center;padding:6px 16px;border-radius:20px;background:#ddf4ff;color:#1CB0F6;font-weight:800;font-size:.85rem;}
+@media(max-width:480px){.drill-sent-pair{grid-template-columns:1fr;}}
+</style>
+ 
+</head>
+  <body class="theme-anime exercise-page">
+  <div class="heartFx" id="heartFx" aria-hidden="true">❤️</div>
+  <canvas id="fxCanvas"></canvas>
+  <div class="app">
+
+    <div class="card headerCard">
+      <div class="headerRow">
+        <div class="titleWrap">
+          <h1 id="pageTitle">Exerciții TOPIK</h1>
+          <div class="sub" id="pageSubtitle">Quiz bilingv • Lecții TOPIK • Română / English</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>
+          <button type="button" id="langRo">ro</button>
+          <button type="button" id="langEn">en</button>
+        </div>
+      </div>
+      <div class="badges" style="margin-top:10px;">
+        <div class="badge ok" id="bCorrect"><span class="dot"></span><span>Corecte: 0</span></div>
+        <div class="badge" id="bTotal"><span class="dot"></span><span>Total: 0</span></div>
+        <div class="badge" id="bStreak"><span class="dot"></span><span>Streak: 0</span></div>
+      </div>
+      <div class="meter" title="Progres sesiune">
+        <div class="meterBar" id="meterBar"></div>
+      </div>
+    </div>
+
+<div class="card">
+  <label><b id="labelType">Tip exercițiu</b>
+    <select id="typeSelect">
+      <option value="ko-ro">KO → RO</option>
+      <option value="ro-ko">RO → KO</option>
+      <option value="particle">Particulă (1)</option>
+      <option value="particlePlus">Particule multiple</option>
+      <option value="conjug">Conjugare</option>
+      <option value="puzzle">Puzzle</option>
+      <option value="chain">Chain</option>
+      <option value="drill">Drill conjugare</option>
+    </select>
+  </label>
+</div>
+
+<div class="card" style="position:relative">
+  <button id="soundBtn" class="soundBtn" type="button" aria-label="Sunet">🔊</button>
+  <div class="question" id="question"></div>
+  <div class="helper" id="helper"></div>
+  <div class="options" id="options"></div>
+  <div class="tileZone" id="puzzleLine" style="display:none"></div>
+  <div class="tileZone bank" id="puzzleBank" style="display:none"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="nextBtn primary" id="nextBtn" style="display:none">Continuă →</button>
+</div>
+
+  </div><!-- /app -->
+
+<script src="./js/core/grammar-color.js?v=5"></script>
+<script>
+'use strict';
+
+// ── i18n ──────────────────────────────────────────────────────────────────
+const i18n = {
+  ro: {
+    pageTitle:    "Exerciții TOPIK",
+    pageSubtitle: "Quiz bilingv • Lecții TOPIK • Română / English",
+    labelType:    "Tip exercițiu",
+    correct:      "Corecte",
+    total:        "Total",
+    streak:       "Streak",
+    hint:         "Indiciu",
+    next:         "Continuă →",
+    correct_msg:  "✅ Corect!",
+    wrong_msg:    "❌ Greșit. Răspuns corect:",
+    chooseParticle:     "Alege particula corectă.",
+    chooseParticlePlus: "Alege perechea corectă de particule.",
+    chooseConjug:       "Alege forma conjugată corectă.",
+    arrangeTiles:       "Aranjează cuvintele în ordinea corectă.",
+    arrangeChain:       "Aranjează propozițiile în ordinea corectă.",
+    modeKoRo:      "KO → RO",
+    modeRoKo:      "RO → KO",
+    modeParticle:  "Particulă (1)",
+    modeConjug:    "Conjugare",
+    modePuzzle:    "Puzzle",
+    modeParticlePlus: "Particule multiple",
+    modeChain:     "Chain",
+    modeDrill:     "Drill conjugare",
+    pres: {ro:'PREZENT', en:'PRESENT'},
+    past: {ro:'TRECUT',  en:'PAST'},
+    fut:  {ro:'VIITOR',  en:'FUTURE'},
+  },
+  en: {
+    pageTitle:    "TOPIK Exercises",
+    pageSubtitle: "Bilingual quiz • TOPIK Lessons • Romanian / English",
+    labelType:    "Exercise type",
+    correct:      "Correct",
+    total:        "Total",
+    streak:       "Streak",
+    hint:         "Hint",
+    next:         "Continue →",
+    correct_msg:  "✅ Correct!",
+    wrong_msg:    "❌ Wrong. Correct answer:",
+    chooseParticle:     "Choose the correct particle.",
+    chooseParticlePlus: "Choose the correct pair of particles.",
+    chooseConjug:       "Choose the correct conjugated form.",
+    arrangeTiles:       "Arrange the words in the correct order.",
+    arrangeChain:       "Arrange the sentences in the correct order.",
+    modeKoRo:      "KO → RO",
+    modeRoKo:      "RO → KO",
+    modeParticle:  "Particle (1)",
+    modeConjug:    "Conjugation",
+    modePuzzle:    "Puzzle",
+    modeParticlePlus: "Multiple particles",
+    modeChain:     "Chain",
+    modeDrill:     "Conjugation drill",
+    pres: {ro:'PREZENT', en:'PRESENT'},
+    past: {ro:'TRECUT',  en:'PAST'},
+    fut:  {ro:'VIITOR',  en:'FUTURE'},
+  }
+};
+
+function t(key){ return (i18n[currentLang]||i18n.ro)[key] || key; }
+
+// ── State ──────────────────────────────────────────────────────────────────
+let currentLang   = localStorage.getItem('RK_LANG') || 'ro';
+let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [], "chain": [] };
+let queue         = [];
+let current       = null;
+let score         = { correct:0, total:0, streak:0 };
+let answered      = false;
+let puzzleLine    = [];
+let puzzleBank    = [];
+
+// ── DOM refs ───────────────────────────────────────────────────────────────
+const typeSelect  = document.getElementById('typeSelect');
+const questionEl  = document.getElementById('question');
+const helperEl    = document.getElementById('helper');
+const optionsEl   = document.getElementById('options');
+const feedbackEl  = document.getElementById('feedback');
+const nextBtn     = document.getElementById('nextBtn');
+const puzzleLineEl= document.getElementById('puzzleLine');
+const puzzleBankEl= document.getElementById('puzzleBank');
+const soundBtn    = document.getElementById('soundBtn');
+const meterBar    = document.getElementById('meterBar');
+const langRoBtn   = document.getElementById('langRo');
+const langEnBtn   = document.getElementById('langEn');
+
+// ── Header update ──────────────────────────────────────────────────────────
+function updateHeaderTexts(){
+  document.getElementById('pageTitle').textContent    = t('pageTitle');
+  document.getElementById('pageSubtitle').textContent = t('pageSubtitle');
+  document.getElementById('labelType').textContent    = t('labelType');
+  document.getElementById('bCorrect').querySelector('span:last-child').textContent = t('correct')+': '+score.correct;
+  document.getElementById('bTotal').querySelector('span:last-child').textContent   = t('total')  +': '+score.total;
+  document.getElementById('bStreak').querySelector('span:last-child').textContent  = t('streak') +': '+score.streak;
+  nextBtn.textContent = t('next');
+  const optionKoRo   = typeSelect.querySelector('option[value="ko-ro"]');
+  const optionRoKo   = typeSelect.querySelector('option[value="ro-ko"]');
+  const optionConjug = typeSelect.querySelector('option[value="conjug"]');
+  const optionPuzzle = typeSelect.querySelector('option[value="puzzle"]');
+  const optionChain  = typeSelect.querySelector('option[value="chain"]');
+  const optionParticle   = typeSelect.querySelector('option[value="particle"]');
+  const optionParticlePl = typeSelect.querySelector('option[value="particlePlus"]');
+  const optionDrill  = typeSelect.querySelector('option[value="drill"]');
+  if(optionKoRo)      optionKoRo.textContent      = t('modeKoRo');
+  if(optionRoKo)      optionRoKo.textContent      = t('modeRoKo');
+  if(optionConjug)    optionConjug.textContent    = t('modeConjug');
+  if(optionPuzzle)    optionPuzzle.textContent    = t('modePuzzle');
+  if(optionChain)     optionChain.textContent     = t('modeChain');
+  if(optionParticle)  optionParticle.textContent  = t('modeParticle');
+  if(optionParticlePl)optionParticlePl.textContent= t('modeParticlePlus');
+  if(optionDrill)     optionDrill.textContent     = t('modeDrill');
+}
+
+function updateLanguageButtons(){
+  langRoBtn.style.fontWeight = currentLang==='ro' ? '900' : '600';
+  langEnBtn.style.fontWeight = currentLang==='en' ? '900' : '600';
+  langRoBtn.style.borderColor= currentLang==='ro' ? 'var(--blue)' : '';
+  langEnBtn.style.borderColor= currentLang==='en' ? 'var(--blue)' : '';
+}
+
+// ── Score update ───────────────────────────────────────────────────────────
+function updateScore(correct){
+  score.total++;
+  if(correct){
+    score.correct++;
+    score.streak++;
+  } else {
+    score.streak=0;
+  }
+  document.getElementById('bCorrect').querySelector('span:last-child').textContent = t('correct')+': '+score.correct;
+  document.getElementById('bTotal').querySelector('span:last-child').textContent   = t('total')  +': '+score.total;
+  document.getElementById('bStreak').querySelector('span:last-child').textContent  = t('streak') +': '+score.streak;
+  if(score.correct>0) document.getElementById('bCorrect').classList.add('ok');
+  const pct = score.total>0 ? (score.correct/score.total)*100 : 0;
+  meterBar.style.width = pct+'%';
+}
+
+// ── Queue ──────────────────────────────────────────────────────────────────
+function refillQueue(){
+  const type = typeSelect.value;
+  if(type === 'drill') { refillDrillQueue(); return; }
+  const src = allExercises[type] || [];
+  queue = [...src].sort(()=>Math.random()-.5);
+  if(!queue.length) queue=[{_empty:true}];
+}
+
+// ── Render question ────────────────────────────────────────────────────────
+function showQuestion(){
+  if(typeSelect.value === 'drill'){ showDrill(); return; }
+  if(!queue.length) refillQueue();
+  current  = queue.shift();
+  answered = false;
+  feedbackEl.className='feedback';
+  nextBtn.style.display='none';
+  optionsEl.innerHTML='';
+  puzzleLineEl.style.display='none';
+  puzzleBankEl.style.display='none';
+  soundBtn.style.display='';
+
+  if(current._empty){
+    questionEl.innerHTML='<span style="font-size:16px;color:var(--muted)">Nu există exerciții pentru acest tip.</span>';
+    helperEl.textContent='';
+    return;
+  }
+
+  const type = typeSelect.value;
+
+  if(type==='ko-ro'){
+    const questionText = current.q;
+    questionEl.innerHTML = GrammarColor.colorize(questionText);
+    helperEl.textContent='';
+    speakKorean(current.q);
+    const answers = current.answers[currentLang];
+    const correct = current.correct[currentLang];
+    renderOptions(answers, correct);
+
+  } else if(type==='ro-ko'){
+    const prompt = current.prompt[currentLang];
+    questionEl.textContent = prompt;
+    helperEl.textContent='';
+    const opts = [...current.options].sort(()=>Math.random()-.5);
+    renderOptionsKo(opts, current.correct);
+
+  } else if(type==='particle'){
+    const tpl   = current.template;
+    const blank = '___';
+    const idx   = tpl.indexOf(blank);
+    const before= idx>=0 ? tpl.slice(0,idx) : tpl;
+    const after = idx>=0 ? tpl.slice(idx+blank.length) : '';
+    const beforeHtml = GrammarColor.colorize(before);
+    const afterHtml  = GrammarColor.colorize(after);
+    questionEl.innerHTML = beforeHtml
+      + '<span style="color:var(--blue);font-size:1.1em"> ___ </span>'
+      + afterHtml;
+    helperEl.textContent='';
+    speakKorean(tpl.replace(blank,''));
+    renderOptions(current.options, current.correct);
+
+  } else if(type==='particlePlus'){
+    const tpl   = current.template;
+    const blanks= [];
+    let tmp=tpl, search='___', pos;
+    while((pos=tmp.indexOf(search))!==-1){ blanks.push(pos); tmp=tmp.slice(0,pos)+'   '+tmp.slice(pos+search.length); }
+    questionEl.innerHTML=GrammarColor.colorize(tpl.replace(/___/g,' ___ '));
+    helperEl.textContent='';
+    speakKorean(tpl.replace(/___/g,''));
+    const opts=current.options.map(pair=>pair.join(' · ')).sort(()=>Math.random()-.5);
+    const correctStr=current.correct.join(' · ');
+    renderOptions(opts,correctStr);
+
+  } else if(type==='conjug'){
+    const prompt=current.prompt[currentLang];
+    questionEl.textContent=prompt;
+    helperEl.textContent='';
+    const opts=[...current.options].sort(()=>Math.random()-.5);
+    renderOptionsKo(opts,current.correct);
+
+  } else if(type==='puzzle'){
+    renderPuzzle(current.tiles, current.correct, current.hint?current.hint[currentLang]:'');
+  } else if(type==='chain'){
+    renderPuzzle(current.tiles, current.correct, current.context?current.context[currentLang]:'', true);
+  }
+}
+
+// ── Options renderers ──────────────────────────────────────────────────────
+function renderOptions(opts, correct){
+  optionsEl.innerHTML='';
+  const shuffled=[...opts].sort(()=>Math.random()-.5);
+  shuffled.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.textContent=opt;
+    btn.addEventListener('click',()=>{ if(!answered) checkAnswer(btn,opt,correct,false); });
+    optionsEl.appendChild(btn);
+  });
+}
+
+function renderOptionsKo(opts, correct){
+  optionsEl.innerHTML='';
+  const shuffled=[...opts].sort(()=>Math.random()-.5);
+  shuffled.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.innerHTML=GrammarColor.colorize(opt);
+    btn.addEventListener('click',()=>{ if(!answered) checkAnswer(btn,opt,correct,true); });
+    optionsEl.appendChild(btn);
+  });
+}
+
+// ── Puzzle / Chain ─────────────────────────────────────────────────────────
+function renderPuzzle(tiles, correct, hintText, isChain){
+  soundBtn.style.display='none';
+  puzzleLine=[]; puzzleBank=[...tiles].sort(()=>Math.random()-.5);
+  puzzleLineEl.style.display='flex';
+  puzzleBankEl.style.display='flex';
+  puzzleLineEl.classList.add('line');
+  helperEl.textContent = hintText||'';
+  questionEl.textContent='';
+
+  function renderTiles(){
+    puzzleLineEl.innerHTML='';
+    puzzleBankEl.innerHTML='';
+    puzzleLine.forEach((tile,i)=>{
+      const el=document.createElement('div');
+      el.className='tile';
+      el.innerHTML=GrammarColor.colorize(tile);
+      el.addEventListener('click',()=>{
+        if(answered)return;
+        puzzleBank.push(puzzleLine.splice(i,1)[0]);
+        renderTiles();
+      });
+      puzzleLineEl.appendChild(el);
+    });
+    puzzleBank.forEach((tile,i)=>{
+      const el=document.createElement('div');
+      el.className='tile';
+      el.innerHTML=GrammarColor.colorize(tile);
+      el.addEventListener('click',()=>{
+        if(answered)return;
+        puzzleLine.push(puzzleBank.splice(i,1)[0]);
+        renderTiles();
+      });
+      puzzleBankEl.appendChild(el);
+    });
+  }
+  renderTiles();
+
+  nextBtn.style.display='block';
+  nextBtn.textContent='Verifică ✓';
+  nextBtn.onclick=()=>{
+    if(answered){ nextBtn.onclick=null; nextBtn.textContent=t('next'); showQuestion(); return; }
+    const ans=puzzleLine.join(' ');
+    const ok=Array.isArray(correct) ? ans===correct.join(' ') : ans===correct;
+    answered=true;
+    updateScore(ok);
+    feedbackEl.className='feedback show';
+    if(ok){
+      feedbackEl.innerHTML=t('correct_msg');
+      triggerHeart();
+    } else {
+      const corrStr=Array.isArray(correct)?correct.join(' '):correct;
+      feedbackEl.innerHTML=t('wrong_msg')+' <b>'+corrStr+'</b>';
+    }
+    nextBtn.textContent=t('next');
+    nextBtn.onclick=null;
+  };
+}
+
+// ── Check answer ───────────────────────────────────────────────────────────
+function checkAnswer(btn, chosen, correct, isKo){
+  answered=true;
+  const ok = chosen===correct;
+  updateScore(ok);
+  optionsEl.querySelectorAll('button').forEach(b=>{
+    const bVal = isKo ? b.textContent : b.textContent;
+    if(b===btn){
+      b.classList.add(ok?'correct':'wrong');
+    }
+    if(!ok && b.textContent===correct) b.classList.add('correct');
+    if(!ok && isKo){
+      optionsEl.querySelectorAll('button').forEach(bb=>{
+        if(bb.innerHTML===GrammarColor.colorize(correct)||bb.textContent===correct) bb.classList.add('correct');
+      });
+    }
+  });
+  feedbackEl.className='feedback show';
+  if(ok){
+    feedbackEl.innerHTML=t('correct_msg');
+    triggerHeart();
+  } else {
+    feedbackEl.innerHTML=t('wrong_msg')+' <b>'+(isKo?correct:correct)+'</b>';
+  }
+  nextBtn.style.display='block';
+  if(typeSelect.value==='ko-ro'||typeSelect.value==='particle'||typeSelect.value==='particlePlus'){
+    speakKorean(current.q || (current.template||'').replace(/___/g,''));
+  }
+}
+
+// ── Heart FX ───────────────────────────────────────────────────────────────
+function triggerHeart(){
+  const el=document.getElementById('heartFx');
+  el.style.display='block';
+  el.style.opacity='1';
+  el.style.transform='translateY(0) scale(1)';
+  el.style.transition='none';
+  requestAnimationFrame(()=>{
+    el.style.transition='opacity .7s ease, transform .7s ease';
+    el.style.opacity='0';
+    el.style.transform='translateY(-40px) scale(1.5)';
+  });
+  setTimeout(()=>{ el.style.display='none'; },750);
+}
+
+// ── Speech ─────────────────────────────────────────────────────────────────
+function speakKorean(text){
+  if(!text || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt=new SpeechSynthesisUtterance(text);
+  utt.lang='ko-KR'; utt.rate=0.9;
+  window.speechSynthesis.speak(utt);
+}
+
+soundBtn.addEventListener('click',()=>{
+  if(!current) return;
+  const type=typeSelect.value;
+  if(type==='ko-ro') speakKorean(current.q);
+  else if(type==='particle'||type==='particlePlus') speakKorean((current.template||'').replace(/___/g,''));
+});
+
+// ── Type change ────────────────────────────────────────────────────────────
+typeSelect.addEventListener('change',()=>{ refillQueue(); showQuestion(); });
+
+// ── Lang switch ────────────────────────────────────────────────────────────
+langRoBtn.addEventListener('click',()=>{ currentLang='ro'; localStorage.setItem('RK_LANG','ro'); updateHeaderTexts(); updateLanguageButtons(); showQuestion(); });
+langEnBtn.addEventListener('click',()=>{ currentLang='en'; localStorage.setItem('RK_LANG','en'); updateHeaderTexts(); updateLanguageButtons(); showQuestion(); });
+
+// ── Next ───────────────────────────────────────────────────────────────────
+nextBtn.addEventListener('click',()=>{ if(typeSelect.value!=='puzzle'&&typeSelect.value!=='chain'){ showQuestion(); } });
+
+// ── Lesson filter ──────────────────────────────────────────────────────────
+const urlParams = new URLSearchParams(window.location.search);
+const lessonFilter = urlParams.get('lesson');
+
+// ── Load data ──────────────────────────────────────────────────────────────
+async function loadExercises(){
+  try {
+    const res  = await fetch('./data/exercises.json');
+    const data = await res.json();
+    allExercises = {
+      "ko-ro":      Array.isArray(data["ko-ro"])      ? data["ko-ro"]      : [],
+      "ro-ko":      Array.isArray(data["ro-ko"])      ? data["ro-ko"]      : [],
+      "particle":   Array.isArray(data["particle"])   ? data["particle"]   : [],
+      "particlePlus":Array.isArray(data["particlePlus"])?data["particlePlus"]:[],
+      "conjug":     Array.isArray(data["conjug"])     ? data["conjug"]     : [],
+      "puzzle":     Array.isArray(data["puzzle"])     ? data["puzzle"]     : [],
+      "chain":      Array.isArray(data["chain"])      ? data["chain"]      : [],
+    };
+    if(lessonFilter){
+      Object.keys(allExercises).forEach(k=>{
+        allExercises[k]=allExercises[k].filter(ex=>ex.lessonId===lessonFilter);
+      });
+    }
+    refillQueue();
+    showQuestion();
+  } catch(e){
+    questionEl.textContent='Eroare la încărcarea exercițiilor.';
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// DRILL — conjugation drill
+// ────────────────────────────────────────────────────────────────────────────
+
+const DRILL_VERBS = [
+  {ko:'가다',  ro:'a merge',  en:'to go',   final:'가요',  forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
+  {ko:'오다',  ro:'a veni',   en:'to come', final:'와요',  forms:{none:'와요',seq:'오고',cause1:'와서',cause2:'오니까',condition:'오면',contrast1:'오지만',contrast2:'오는데',purpose:'오려고',result:'오게 되다'}},
+  {ko:'먹다',  ro:'a mânca',  en:'to eat',  final:'먹어요',forms:{none:'먹어요',seq:'먹고',cause1:'먹어서',cause2:'먹으니까',condition:'먹으면',contrast1:'먹지만',contrast2:'먹는데',purpose:'먹으려고',result:'먹게 되다'}},
+  {ko:'마시다',ro:'a bea',    en:'to drink',final:'마셔요',forms:{none:'마셔요',seq:'마시고',cause1:'마셔서',cause2:'마시니까',condition:'마시면',contrast1:'마시지만',contrast2:'마시는데',purpose:'마시려고',result:'마시게 되다'}},
+  {ko:'자다',  ro:'a dormi',  en:'to sleep',final:'자요',  forms:{none:'자요',seq:'자고',cause1:'자서',cause2:'자니까',condition:'자면',contrast1:'자지만',contrast2:'자는데',purpose:'자려고',result:'자게 되다'}},
+  {ko:'읽다',  ro:'a citi',   en:'to read', final:'읽어요',forms:{none:'읽어요',seq:'읽고',cause1:'읽어서',cause2:'읽으니까',condition:'읽으면',contrast1:'읽지만',contrast2:'읽는데',purpose:'읽으려고',result:'읽게 되다'}},
+  {ko:'쓰다',  ro:'a scrie',  en:'to write',final:'써요',  forms:{none:'써요',seq:'쓰고',cause1:'써서',cause2:'쓰니까',condition:'쓰면',contrast1:'쓰지만',contrast2:'쓰는데',purpose:'쓰려고',result:'쓰게 되다'}},
+  {ko:'보다',  ro:'a vedea',  en:'to see',  final:'봐요',  forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
+  {ko:'듣다',  ro:'a asculta',en:'to listen',final:'들어요',forms:{none:'들어요',seq:'듣고',cause1:'들어서',cause2:'들으니까',condition:'들으면',contrast1:'듣지만',contrast2:'듣는데',purpose:'들으려고',result:'들게 되다'}},
+  {ko:'말하다',ro:'a vorbi',  en:'to speak',final:'말해요',forms:{none:'말해요',seq:'말하고',cause1:'말해서',cause2:'말하니까',condition:'말하면',contrast1:'말하지만',contrast2:'말하는데',purpose:'말하려고',result:'말하게 되다'}},
+  {ko:'공부하다',ro:'a studia',en:'to study',final:'공부해요',forms:{none:'공부해요',seq:'공부하고',cause1:'공부해서',cause2:'공부하니까',condition:'공부하면',contrast1:'공부하지만',contrast2:'공부하는데',purpose:'공부하려고',result:'공부하게 되다'}},
+  {ko:'일하다',ro:'a lucra',  en:'to work', final:'일해요',forms:{none:'일해요',seq:'일하고',cause1:'일해서',cause2:'일하니까',condition:'일하면',contrast1:'일하지만',contrast2:'일하는데',purpose:'일하려고',result:'일하게 되다'}},
+  {ko:'운동하다',ro:'a face sport',en:'to exercise',final:'운동해요',forms:{none:'운동해요',seq:'운동하고',cause1:'운동해서',cause2:'운동하니까',condition:'운동하면',contrast1:'운동하지만',contrast2:'운동하는데',purpose:'운동하려고',result:'운동하게 되다'}},
+  {ko:'요리하다',ro:'a găti',  en:'to cook', final:'요리해요',forms:{none:'요리해요',seq:'요리하고',cause1:'요리해서',cause2:'요리하니까',condition:'요리하면',contrast1:'요리하지만',contrast2:'요리하는데',purpose:'요리하려고',result:'요리하게 되다'}},
+  {ko:'사다',  ro:'a cumpăra',en:'to buy',  final:'사요',  forms:{none:'사요',seq:'사고',cause1:'사서',cause2:'사니까',condition:'사면',contrast1:'사지만',contrast2:'사는데',purpose:'사려고',result:'사게 되다'}},
+  {ko:'팔다',  ro:'a vinde',  en:'to sell', final:'팔아요',forms:{none:'팔아요',seq:'팔고',cause1:'팔아서',cause2:'파니까',condition:'팔면',contrast1:'팔지만',contrast2:'파는데',purpose:'팔려고',result:'팔게 되다'}},
+  {ko:'만들다',ro:'a face/crea',en:'to make',final:'만들어요',forms:{none:'만들어요',seq:'만들고',cause1:'만들어서',cause2:'만드니까',condition:'만들면',contrast1:'만들지만',contrast2:'만드는데',purpose:'만들려고',result:'만들게 되다'}},
+  {ko:'살다',  ro:'a trăi',   en:'to live', final:'살아요',forms:{none:'살아요',seq:'살고',cause1:'살아서',cause2:'사니까',condition:'살면',contrast1:'살지만',contrast2:'사는데',purpose:'살려고',result:'살게 되다'}},
+  {ko:'앉다',  ro:'a sta jos',en:'to sit',  final:'앉아요',forms:{none:'앉아요',seq:'앉고',cause1:'앉아서',cause2:'앉으니까',condition:'앉으면',contrast1:'앉지만',contrast2:'앉는데',purpose:'앉으려고',result:'앉게 되다'}},
+  {ko:'웃다',  ro:'a râde',   en:'to laugh',final:'웃어요',forms:{none:'웃어요',seq:'웃고',cause1:'웃어서',cause2:'웃으니까',condition:'웃으면',contrast1:'웃지만',contrast2:'웃는데',purpose:'웃으려고',result:'웃게 되다'}},
+];
+
+const Conjugator = {
+  present(verb){ return DRILL_VERBS.find(v=>v.ko===verb)?.final || verb+'아요/어요'; },
+  past(verb){
+    const v=DRILL_VERBS.find(v=>v.ko===verb);
+    if(!v) return verb+'았어요/었어요';
+    const base=v.final;
+    if(base.endsWith('아요')) return base.slice(0,-3)+'았어요';
+    if(base.endsWith('어요')) return base.slice(0,-3)+'었어요';
+    if(base.endsWith('해요')) return base.slice(0,-3)+'했어요';
+    if(base.endsWith('와요')) return base.slice(0,-3)+'왔어요';
+    if(base.endsWith('봐요')) return base.slice(0,-3)+'봤어요';
+    return base.slice(0,-2)+'았어요';
+  },
+  future(verb){
+    const v=DRILL_VERBS.find(v=>v.ko===verb);
+    if(!v) return verb+'(으)ㄹ 거예요';
+    const stem=v.ko.slice(0,-1);
+    const lastSyl=stem[stem.length-1];
+    const code=lastSyl.charCodeAt(0);
+    const hasBatchim = code>=0xAC00&&code<=0xD7A3&&(code-0xAC00)%28!==0;
+    return stem+(hasBatchim?'을':'ㄹ')+' 거예요';
+  }
+};
+
+let drillQueue=[];
+let drillCurrent=null;
+
+function refillDrillQueue(){
+  drillQueue=[];
+  DRILL_VERBS.forEach(v=>['pres','past','fut'].forEach(t=>drillQueue.push({verb:v,tense:t})));
+  drillQueue.sort(()=>Math.random()-.5);
+}
+
+function drillGetForm(verbKo,tense){
+  const c=Conjugator;
+  if(tense==='pres') return c.present(verbKo);
+  if(tense==='past') return c.past(verbKo);
+  return c.future(verbKo);
+}
+
+function showDrill(){
+  soundBtn.style.display='none';
+  puzzleLineEl.style.display='none';
+  puzzleBankEl.style.display='none';
+  feedbackEl.className='feedback';
+  nextBtn.style.display='none';
+  optionsEl.innerHTML='';
+  answered=false;
+
+  if(!drillQueue.length) refillDrillQueue();
+  drillCurrent=drillQueue.shift();
+
+  const {verb,tense}=drillCurrent;
+  const verbLabel=currentLang==='ro'?verb.ro:verb.en;
+  const tLabel=i18n.ro[tense]?.[currentLang]||tense;
+
+  const correctForm=drillGetForm(verb.ko,tense);
+  const other1  = drillGetForm(verb.ko, tense==='pres'?'past':tense==='past'?'fut':'pres');
+  const other2  = drillGetForm(verb.ko, tense==='pres'?'fut':tense==='past'?'pres':'past');
+
+  questionEl.innerHTML=
+    `<span style="font-size:.9em;font-weight:700">${verb.ko}</span> `+
+    `<span style="font-size:.75em;color:var(--muted)">(${verbLabel})</span>`+
+    `<br><span class="tenseTag ${tense}">${tLabel}</span>`;
+
+  helperEl.textContent='';
+
+  const options=[correctForm,other1,other2].sort(()=>Math.random()-.5);
+  options.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.innerHTML=GrammarColor.colorize(opt);
+    btn.addEventListener('click',()=>{
+      if(answered)return;
+      answered=true;
+      const ok=opt===correctForm;
+      updateScore(ok);
+      options.forEach(o=>{
+        const b=optionsEl.querySelector(`button:nth-child(${options.indexOf(o)+1})`);
+      });
+      optionsEl.querySelectorAll('button').forEach((b,i)=>{
+        if(options[i]===opt) b.classList.add(ok?'correct':'wrong');
+        if(!ok&&options[i]===correctForm) b.classList.add('correct');
+      });
+      feedbackEl.className='feedback show';
+      feedbackEl.innerHTML=ok?t('correct_msg'):t('wrong_msg')+' <b>'+correctForm+'</b>';
+      if(ok) triggerHeart();
+      nextBtn.style.display='block';
+    });
+    optionsEl.appendChild(btn);
+  });
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+updateHeaderTexts();
+updateLanguageButtons();
+loadExercises();
+</script>
+
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+</body>
+</html>
