@@ -59,6 +59,21 @@
   // Negation adverbs — single syllable, checked before the length guard.
   var NEGATION_LIST = ['안', '못'];
 
+  // Demonstrative determiners (관형사) — 이/그/저 and their extended forms.
+  // Entire token coloured as modifier (golden); checked before particle rules.
+  var DETERMINER_LIST = [
+    '이런', '그런', '저런', '어떤', '무슨', '어느', '아무', '모든',
+    '이', '그', '저', '각',
+  ].sort(function (a, b) { return b.length - a.length; });
+
+  // Bound nouns (의존 명사) — 것, 수, 때 etc.
+  // Entire token coloured as neutral (green); checked before the length guard
+  // so that single-syllable forms (것, 수, 때, 적, 뿐) are not discarded.
+  var BOUND_NOUN_LIST = [
+    '만큼', '정도',          // 2-syllable bound nouns
+    '것', '수', '때', '적', // 1-syllable bound nouns
+  ];
+
   // Adjective/verb attributive (관형사형) forms — checked before particle rules
   // to prevent -은/-는-ending modifiers being coloured as subject particles.
   var MODIFIER_LIST = [
@@ -180,6 +195,16 @@
     //     endLen=1 splits the attributive ending (은/한/운/는) from the stem.
     if (MODIFIER_LIST.indexOf(clean) !== -1) {
       return { role: 'modifier', endLen: 1 };
+    }
+
+    // 0e. Demonstrative determiners (관형사) — whole token golden (modifier role).
+    if (DETERMINER_LIST.indexOf(clean) !== -1) {
+      return { role: 'modifier', endLen: clean.length };
+    }
+
+    // 0f. Bound nouns (의존 명사) — whole token neutral (green).
+    if (BOUND_NOUN_LIST.indexOf(clean) !== -1) {
+      return { role: 'neutral', endLen: clean.length };
     }
 
     if (clean.length < 2) return null;
