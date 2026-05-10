@@ -394,6 +394,18 @@ select:focus, button:focus{
   pointer-events:none;
   z-index:9999;
 }
+
+/* ── DRILL ── */
+.tenseTag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-top:6px;}
+.tenseTag.pres{background:#e8f9d9;color:#45A800;}
+.tenseTag.past{background:#ffdfe0;color:#CC0000;}
+.tenseTag.fut {background:#ddf4ff;color:#009AC7;}
+.drill-sent-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.drill-sent-box{padding:12px;border-radius:11px;background:#fff;border:2px solid #e5e5e5;border-bottom:3px solid #d0d0d0;text-align:center;}
+.drill-sent-ko{font-size:.95rem;font-weight:700;color:var(--text);}
+.drill-sent-tr{font-size:.75rem;color:var(--muted);margin-top:4px;}
+.drill-conn-tag{display:block;text-align:center;padding:6px 16px;border-radius:20px;background:#ddf4ff;color:#1CB0F6;font-weight:800;font-size:.85rem;}
+@media(max-width:480px){.drill-sent-pair{grid-template-columns:1fr;}}
 </style>
  
 </head>
@@ -435,9 +447,11 @@ select:focus, button:focus{
     <option value="conjug">Conjugare</option>
     <option value="puzzle">Puzzle</option>
     <option value="chain">Chain</option>
+    <option value="drill-conjug">🔤 Drill Conjugare</option>
+    <option value="drill-ext">🔗 Drill Extindere</option>
   </select>
 
-  <div style="margin-top:14px">
+  <div id="levelRow" style="margin-top:14px">
     <label><b id="labelLevel">Nivel TOPIK</b></label>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="levelBtns">
       <button type="button" data-level="1">1</button>
@@ -455,6 +469,7 @@ select:focus, button:focus{
   <button id="soundBtn" class="soundBtn" type="button" aria-label="Sunet">🔊</button>
   <div class="question" id="question"></div>
   <div class="helper" id="helper"></div>
+  <div id="drillContext" style="display:none;margin-bottom:12px"></div>
 <div id="badge" style="display:inline-flex;gap:8px;align-items:center;margin-bottom:12px"></div>
   <div class="answers" id="answers"></div>
 
@@ -476,6 +491,7 @@ select:focus, button:focus{
 </div>
 
 </div>
+<script src="./js/core/conjugation.js"></script>
 <script src="./js/core/grammar-color.js?v=3"></script>
   <script>
 const pageTitleEl = document.getElementById("pageTitle");
@@ -521,6 +537,115 @@ let wrongsByType = {};
 let wrongModeItems = [];
 let isWrongMode = false;
 
+// ── DRILL DATA ──────────────────────────────────────────────────────────
+const DRILL_VERBS = [
+  {ko:'가다',     ro:'a merge',       en:'to go'},
+  {ko:'오다',     ro:'a veni',        en:'to come'},
+  {ko:'먹다',     ro:'a mânca',       en:'to eat'},
+  {ko:'마시다',   ro:'a bea',         en:'to drink'},
+  {ko:'공부하다', ro:'a studia',      en:'to study'},
+  {ko:'자다',     ro:'a dormi',       en:'to sleep'},
+  {ko:'읽다',     ro:'a citi',        en:'to read'},
+  {ko:'쓰다',     ro:'a scrie',       en:'to write'},
+  {ko:'보다',     ro:'a vedea',       en:'to see'},
+  {ko:'듣다',     ro:'a asculta',     en:'to listen'},
+  {ko:'말하다',   ro:'a vorbi',       en:'to speak'},
+  {ko:'만나다',   ro:'a întâlni',     en:'to meet'},
+  {ko:'쉬다',     ro:'a se odihni',   en:'to rest'},
+  {ko:'운동하다', ro:'a face sport',  en:'to exercise'},
+  {ko:'사다',     ro:'a cumpăra',     en:'to buy'},
+  {ko:'주다',     ro:'a da',          en:'to give'},
+];
+
+const DRILL_EXT = [
+  {s1_ko:'밥을 먹어요', s1_ro:'Mănânc.',       s1_en:'I eat.',
+   s2_ko:'물을 마셔요', s2_ro:'Beau apă.',      s2_en:'I drink water.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'밥을 먹고 물을 마셔요',
+   wrongs:['밥을 먹어서 물을 마셔요','물을 마시고 밥을 먹어요','밥을 먹지만 물을 마셔요']},
+  {s1_ko:'공부해요',    s1_ro:'Studiez.',        s1_en:'I study.',
+   s2_ko:'쉬어요',      s2_ro:'Mă odihnesc.',   s2_en:'I rest.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'공부하고 쉬어요',
+   wrongs:['공부해서 쉬어요','쉬고 공부해요','공부하지만 쉬어요']},
+  {s1_ko:'책을 읽어요', s1_ro:'Citesc o carte.', s1_en:'I read a book.',
+   s2_ko:'자요',        s2_ro:'Dorm.',           s2_en:'I sleep.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'책을 읽고 자요',
+   wrongs:['책을 읽어서 자요','자고 책을 읽어요','책을 읽지만 자요']},
+  {s1_ko:'운동해요',    s1_ro:'Fac sport.',      s1_en:'I exercise.',
+   s2_ko:'물을 마셔요', s2_ro:'Beau apă.',      s2_en:'I drink water.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'운동하고 물을 마셔요',
+   wrongs:['운동해서 물을 마셔요','물을 마시고 운동해요','운동하지만 물을 마셔요']},
+  {s1_ko:'음악을 들어요', s1_ro:'Ascult muzică.',  s1_en:'I listen to music.',
+   s2_ko:'공부해요',      s2_ro:'Studiez.',        s2_en:'I study.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'음악을 듣고 공부해요',
+   wrongs:['음악을 들어서 공부해요','공부하고 음악을 들어요','음악을 듣지만 공부해요']},
+  {s1_ko:'학교에 가요', s1_ro:'Merg la școală.',  s1_en:'I go to school.',
+   s2_ko:'공부해요',    s2_ro:'Studiez.',          s2_en:'I study.',
+   conn:'-아/어서', conn_ro:'deci (cauzal)', conn_en:'so (causal)',
+   correct:'학교에 가서 공부해요',
+   wrongs:['학교에 가고 공부해요','공부해서 학교에 가요','학교에 가지만 공부해요']},
+  {s1_ko:'카페에 가요',   s1_ro:'Merg la cafenea.', s1_en:'I go to the café.',
+   s2_ko:'커피를 마셔요', s2_ro:'Beau cafea.',       s2_en:'I drink coffee.',
+   conn:'-아/어서', conn_ro:'deci (cauzal)', conn_en:'so (causal)',
+   correct:'카페에 가서 커피를 마셔요',
+   wrongs:['카페에 가고 커피를 마셔요','커피를 마셔서 카페에 가요','카페에 가지만 커피를 마셔요']},
+  {s1_ko:'책을 사요',  s1_ro:'Cumpăr cartea.',   s1_en:'I buy the book.',
+   s2_ko:'읽어요',     s2_ro:'Citesc.',           s2_en:'I read it.',
+   conn:'-아/어서', conn_ro:'deci (cauzal)', conn_en:'so (causal)',
+   correct:'책을 사서 읽어요',
+   wrongs:['책을 사고 읽어요','읽어서 책을 사요','책을 사지만 읽어요']},
+  {s1_ko:'음악을 들어요', s1_ro:'Ascult muzică.',  s1_en:'I listen to music.',
+   s2_ko:'공부해요',      s2_ro:'Studiez.',        s2_en:'I study.',
+   conn:'-지만', conn_ro:'dar (contrast)', conn_en:'but (contrast)',
+   correct:'음악을 듣지만 공부해요',
+   wrongs:['음악을 들어서 공부해요','음악을 듣고 공부해요','공부하지만 음악을 들어요']},
+  {s1_ko:'말해요',     s1_ro:'Vorbesc.',           s1_en:'I speak.',
+   s2_ko:'잘 들어요', s2_ro:'Ascult atent.',       s2_en:'I listen carefully.',
+   conn:'-지만', conn_ro:'dar (contrast)', conn_en:'but (contrast)',
+   correct:'말하지만 잘 들어요',
+   wrongs:['말해서 잘 들어요','말하고 잘 들어요','잘 들어서 말해요']},
+];
+
+let drillConjQueue = [];
+let drillExtQueue  = [];
+
+const DRILL_TENSE_LABELS = {
+  pres: {ro:'PREZENT', en:'PRESENT'},
+  past: {ro:'TRECUT',  en:'PAST'},
+  fut:  {ro:'VIITOR',  en:'FUTURE'},
+};
+
+function buildDrillConjQueue(){
+  const q = [];
+  DRILL_VERBS.forEach(v => ['pres','past','fut'].forEach(t => q.push({verb:v, tense:t})));
+  return shuffle(q);
+}
+
+function drillGetForm(verbKo, tense){
+  const c = window.Conjugation;
+  if(!c) return verbKo;
+  if(tense === 'pres') return c.present(verbKo);
+  if(tense === 'past') return c.past(verbKo);
+  return c.future(verbKo);
+}
+
+function buildDrillConjOptions(verbKo, tense){
+  const correct = drillGetForm(verbKo, tense);
+  const other1  = drillGetForm(verbKo, tense==='pres'?'past':tense==='past'?'fut':'pres');
+  const other2  = drillGetForm(verbKo, tense==='pres'?'fut':tense==='past'?'pres':'past');
+  const pool = [correct, other1, other2];
+  const others = shuffle(DRILL_VERBS.filter(v => v.ko !== verbKo));
+  for(let i = 0; i < others.length && pool.length < 4; i++){
+    const f = drillGetForm(others[i].ko, tense);
+    if(!pool.includes(f)) pool.push(f);
+  }
+  return {correct, options: shuffle(pool.slice(0, 4))};
+}
+
 const UI_TEXT = {
   ro: {
     title: "Exerciții TOPIK",
@@ -561,7 +686,11 @@ const UI_TEXT = {
     loadError: "Nu am putut încărca exercises.json",
     labelType: "Tip exercițiu",
     labelLevel: "Nivel TOPIK",
-    allLevels: "Toate nivelele"
+    allLevels: "Toate nivelele",
+    modeDrillConjug: "🔤 Drill Conjugare",
+    modeDrillExt: "🔗 Drill Extindere",
+    chooseDrillConjug: "Alege forma conjugată:",
+    chooseDrillExt: "Combină propozițiile cu conectorul:",
   },
   en: {
     title: "TOPIK Exercises",
@@ -602,7 +731,11 @@ const UI_TEXT = {
     labelLevel: "TOPIK Level",
     allLevels: "All levels",
     wrongModeBtn: "Mistakes",
-    wrongModeLabel: "Mistakes Mode"
+    wrongModeLabel: "Mistakes Mode",
+    modeDrillConjug: "🔤 Drill Conjugation",
+    modeDrillExt: "🔗 Drill Extension",
+    chooseDrillConjug: "Choose the conjugated form:",
+    chooseDrillExt: "Combine the sentences using the connector:",
   }
 };
 
@@ -648,12 +781,14 @@ function updateLanguageButtons(){
 }
 
 function modeLabel(type){
-  if(type === "ko-ro") return t("modeKoRo");
-  if(type === "particle") return t("modeParticle");
+  if(type === "ko-ro")        return t("modeKoRo");
+  if(type === "particle")     return t("modeParticle");
   if(type === "particlePlus") return t("modeParticlePlus");
-  if(type === "conjug") return t("modeConjug");
-  if(type === "puzzle") return t("modePuzzle");
-  if(type === "chain") return t("modeChain");
+  if(type === "conjug")       return t("modeConjug");
+  if(type === "puzzle")       return t("modePuzzle");
+  if(type === "chain")        return t("modeChain");
+  if(type === "drill-conjug") return t("modeDrillConjug");
+  if(type === "drill-ext")    return t("modeDrillExt");
   return t("modeRoKo");
 }
 
@@ -684,6 +819,10 @@ function updateStaticTexts(){
   if(optionConjug)     optionConjug.textContent     = t("modeConjug");
   if(optionPuzzle)     optionPuzzle.textContent     = t("modePuzzle");
   if(optionChain)      optionChain.textContent      = t("modeChain");
+  const optDrillConjug = typeSelect.querySelector('option[value="drill-conjug"]');
+  const optDrillExt    = typeSelect.querySelector('option[value="drill-ext"]');
+  if(optDrillConjug) optDrillConjug.textContent = t("modeDrillConjug");
+  if(optDrillExt)    optDrillExt.textContent    = t("modeDrillExt");
 }
 
 function updateBadges(){
@@ -718,6 +857,8 @@ function trackWrong(item){
 }
 
 function updateWrongBtn(){
+  const isDrill = typeSelect.value.startsWith('drill-');
+  if(isDrill){ wrongBtn.style.display = 'none'; return; }
   const count = (wrongsByType[typeSelect.value] || []).length;
   wrongBtn.style.display = (count > 0 && !isWrongMode) ? "" : "none";
   wrongBtn.textContent = `❌ ${t("wrongModeBtn")} (${count})`;
@@ -782,6 +923,14 @@ async function loadExercises(){
 function getFilteredList(){
   if(isWrongMode) return wrongModeItems;
   const type = typeSelect.value;
+  if(type === 'drill-conjug'){
+    if(!drillConjQueue.length) drillConjQueue = buildDrillConjQueue();
+    return drillConjQueue;
+  }
+  if(type === 'drill-ext'){
+    if(!drillExtQueue.length) drillExtQueue = shuffle([...DRILL_EXT]);
+    return drillExtQueue;
+  }
   let list = allExercises[type] || [];
   if(lessonParam){
     list = list.filter(item => item.lessonId === lessonParam);
@@ -856,6 +1005,62 @@ function render(){
   let questionText = "";
   let helperText = "";
   let options = [];
+
+  if(typeSelect.value === "drill-conjug"){
+    const q = item;
+    const data = buildDrillConjOptions(q.verb.ko, q.tense);
+    const tLabel = DRILL_TENSE_LABELS[q.tense][currentLang];
+    questionEl.innerHTML =
+      `<span style="font-size:1.05em;font-weight:900">${q.verb.ko}</span>` +
+      `<br><span style="font-size:.62em;color:var(--muted);font-weight:600">${q.verb[currentLang]}</span>` +
+      `<br><span class="tenseTag ${q.tense}">${tLabel}</span>`;
+    helperEl.textContent = t("chooseDrillConjug");
+    document.getElementById("drillContext").style.display = "none";
+    data.options.forEach(opt => {
+      const el = document.createElement("div");
+      el.className = "answer";
+      el.textContent = opt;
+      el.addEventListener("click", () => {
+        if(answered) return;
+        document.querySelectorAll("#answers .answer").forEach(n => n.classList.remove("selected"));
+        el.classList.add("selected");
+        selectedAnswer = opt;
+      });
+      answersEl.appendChild(el);
+    });
+    updateBadges();
+    return;
+  }
+
+  if(typeSelect.value === "drill-ext"){
+    const ex = item;
+    const extOpts = shuffle([ex.correct, ...ex.wrongs]);
+    questionEl.textContent = t("chooseDrillExt");
+    helperEl.textContent = "";
+    document.getElementById("drillContext").style.display = "";
+    document.getElementById("drillContext").innerHTML =
+      `<div class="drill-sent-pair">` +
+        `<div class="drill-sent-box"><div class="drill-sent-ko">${ex.s1_ko}</div><div class="drill-sent-tr">${ex['s1_'+currentLang]}</div></div>` +
+        `<div class="drill-sent-box"><div class="drill-sent-ko">${ex.s2_ko}</div><div class="drill-sent-tr">${ex['s2_'+currentLang]}</div></div>` +
+      `</div>` +
+      `<span class="drill-conn-tag">${ex.conn} — ${ex['conn_'+currentLang]}</span>`;
+    extOpts.forEach(opt => {
+      const el = document.createElement("div");
+      el.className = "answer";
+      el.textContent = opt;
+      el.addEventListener("click", () => {
+        if(answered) return;
+        document.querySelectorAll("#answers .answer").forEach(n => n.classList.remove("selected"));
+        el.classList.add("selected");
+        selectedAnswer = opt;
+      });
+      answersEl.appendChild(el);
+    });
+    updateBadges();
+    return;
+  }
+
+  document.getElementById("drillContext").style.display = "none";
 
   if(typeSelect.value === "ko-ro"){
     questionText = item.q;
@@ -971,12 +1176,10 @@ function renderPuzzleUI(){
 }
 
 function getCorrectAnswer(item){
-  if(typeSelect.value === "ko-ro"){
-    return item.correct[currentLang];
-  }
-  if(typeSelect.value === "particlePlus"){
-    return Array.isArray(item.correct) ? item.correct.join(" · ") : item.correct;
-  }
+  if(typeSelect.value === "ko-ro")        return item.correct[currentLang];
+  if(typeSelect.value === "particlePlus") return Array.isArray(item.correct) ? item.correct.join(" · ") : item.correct;
+  if(typeSelect.value === "drill-conjug") return drillGetForm(item.verb.ko, item.tense);
+  if(typeSelect.value === "drill-ext")    return item.correct;
   return item.correct;
 }
 
@@ -997,7 +1200,7 @@ function checkCurrentAnswer(){
       : `${t("wrongAnswer")} — ${item.correct.join(sep)}`;
     total++;
     if(isRight){ correct++; streak++; if(streak >= 2) showHeartFx(); }
-    else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode) trackWrong(item); }
+    else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item); }
     if(!isWrongMode) saveStats(isRight, typeSelect.value);
     answered = true;
     updateBadges();
@@ -1122,6 +1325,10 @@ function nextQuestion(){
 typeSelect.addEventListener("change", () => {
   exitWrongMode();
   currentIndex = 0;
+  if(typeSelect.value === 'drill-conjug') drillConjQueue = [];
+  if(typeSelect.value === 'drill-ext')    drillExtQueue  = [];
+  const isDrill = typeSelect.value.startsWith('drill-');
+  document.getElementById('levelRow').style.display = isDrill ? 'none' : '';
   render();
   updateWrongBtn();
 });

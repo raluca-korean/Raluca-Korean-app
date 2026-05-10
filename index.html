@@ -194,6 +194,33 @@ body.dark-mode {
   color: #f0e8ff;
 }
 
+/* ── MINI STATS ──────────────────────── */
+#miniStats{
+  position:relative;
+  z-index:1;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.mini-stat{
+  padding:5px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(6px);
+  font-size:11px;
+  font-weight:700;
+  color:#7c3aed;
+  border:1.5px solid rgba(139,92,246,.18);
+  user-select:none;
+}
+body.dark-mode .mini-stat{
+  background:rgba(32,6,55,.75);
+  color:#d8b4fe;
+  border-color:rgba(167,139,250,.25);
+}
+
 /* ── MOBILE ───────────────────────────── */
 @media (max-width: 840px) {
   body { align-items: flex-start; justify-content: flex-start; padding: 16px 14px 48px; }
@@ -292,10 +319,6 @@ body.dark-mode {
         <span class="b-link-icon">📝</span>
         <span class="b-link-name">Exercises</span>
       </a>
-      <a href="drill.html" class="b-link">
-        <span class="b-link-icon">🎯</span>
-        <span class="b-link-name">Drill</span>
-      </a>
       <a href="builder.html" class="b-link">
         <span class="b-link-icon">🏗️</span>
         <span class="b-link-name">Builder</span>
@@ -317,17 +340,38 @@ body.dark-mode {
         <span class="b-link-icon">✏️</span>
         <span class="b-link-name">Writing</span>
       </a>
-      <a href="stats.html" class="b-link">
-        <span class="b-link-icon">📊</span>
-        <span class="b-link-name">Stats</span>
-      </a>
     </div>
   </div>
 
 </div>
 
+<div id="miniStats"></div>
+
 <script>
 var currentLang = localStorage.getItem('RK_LANG') || 'ro';
+
+var STATS_LABELS = {
+  ro: {today:'Azi', acc:'Acuratețe', streak:'Streak', favs:'Favorite'},
+  en: {today:'Today', acc:'Accuracy', streak:'Streak', favs:'Favorites'}
+};
+
+function renderMiniStats(lang) {
+  var el = document.getElementById('miniStats');
+  if(!el) return;
+  var s;
+  try { s = JSON.parse(localStorage.getItem('RK_STATS') || 'null'); } catch(e){ s = null; }
+  if(!s || s.total === 0){ el.innerHTML = ''; return; }
+  var favCount = (JSON.parse(localStorage.getItem('FAV_WORDS') || '[]')).length;
+  var today = new Date().toISOString().slice(0, 10);
+  var todayEx = s.today === today ? s.todayTotal : 0;
+  var pct = s.total ? Math.round(s.correct / s.total * 100) : 0;
+  var L = STATS_LABELS[lang];
+  el.innerHTML =
+    '<span class="mini-stat">' + L.today + ': <b>' + todayEx + '</b></span>' +
+    '<span class="mini-stat">' + L.acc   + ': <b>' + pct + '%</b></span>' +
+    '<span class="mini-stat">' + L.streak+ ': <b>🔥' + (s.bestStreak||0) + '</b></span>' +
+    '<span class="mini-stat">' + L.favs  + ': <b>⭐' + favCount + '</b></span>';
+}
 
 function applyLang(lang) {
   currentLang = lang;
@@ -338,6 +382,7 @@ function applyLang(lang) {
   document.getElementById('langRo').classList.toggle('active', lang === 'ro');
   document.getElementById('langEn').classList.toggle('active', lang === 'en');
   document.documentElement.lang = lang;
+  renderMiniStats(lang);
 }
 
 document.getElementById('langRo').addEventListener('click', function() { applyLang('ro'); });
