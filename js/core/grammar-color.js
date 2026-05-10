@@ -136,6 +136,15 @@
 
     if (clean.length < 2) return null;
 
+    // 0d. Negation verb forms starting with 않 (e.g. 않아요, 않았어요, 않고, 않으면).
+    if (clean.startsWith('않')) {
+      return { role: 'negation', endLen: clean.length };
+    }
+    // 0e. Compound negation forms starting with 못 and ≥ 2 chars (e.g. 못해요, 못했어요, 못한).
+    if (clean.startsWith('못') && clean.length >= 2) {
+      return { role: 'negation', endLen: clean.length };
+    }
+
     // Fixed passive/agent marker — color entire token as location so that
     // "작가에 의해서" reads as one consistent color unit.
     if (clean === '의해서' || clean === '의해') return { role: 'location', endLen: clean.length };
@@ -245,6 +254,12 @@
       // Backward: 전에 / 후에 following a 기-ending token → connector, not location.
       if ((cleanPart === '전에' || cleanPart === '후에') && prevClean.endsWith('기')) {
         result = { role: 'connector', endLen: cleanPart.length };
+      }
+
+      // V지 before 않.../못... negation → color 지 as connector ending.
+      if (cleanPart.endsWith('지') &&
+          (nextClean.startsWith('않') || nextClean.startsWith('못'))) {
+        result = { role: 'connector', endLen: 1 };
       }
 
       if (!result) return '<span class="gk gk-n">' + esc(part) + '</span>';
