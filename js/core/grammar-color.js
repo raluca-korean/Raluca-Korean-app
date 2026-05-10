@@ -56,6 +56,33 @@
   // Negation adverbs — single syllable, checked before the length guard.
   var NEGATION_LIST = ['안', '못'];
 
+  // Adjective/verb attributive (관형사형) forms — checked before particle rules
+  // to prevent -은/-는-ending modifiers being coloured as subject particles.
+  var MODIFIER_LIST = [
+    // -한 : descriptive adjectives ending in 하다
+    '가능한', '급격한', '긴장한', '다양한', '단순한', '따뜻한', '안전한',
+    '유명한', '중요한', '진지한', '편리한', '필요한', '특별한', '깨끗한',
+    '복잡한', '조용한', '위험한', '신기한', '행복한', '건강한', '피곤한',
+    '심각한', '솔직한',
+    // -한 : past-tense attributive forms of action verbs
+    '결정한', '공부한', '구매한', '노력한', '도착한', '배운', '변한',
+    '비롯한', '시작한', '약속한', '연습한', '참석한', '초월한', '활용한',
+    '맡은', '먹은',
+    // -운 : irregular (ㅂ-stem) adjective modifiers
+    '매운', '새로운', '쉬운', '어려운', '귀여운', '아름다운',
+    '무거운', '가벼운', '더운', '추운', '가까운',
+    // -은 / ㄴ : pure adjective modifiers (prevent false subject coloring)
+    '많은', '작은', '좋은', '예쁜', '나쁜', '밝은', '넓은', '좁은',
+    '높은', '낮은', '빠른', '느린', '비싼', '큰',
+    // -는 : present-tense action-verb modifiers (prevent false subject coloring)
+    '가르치는', '공부하는', '기다리는', '나오는', '노력하는', '도착하는',
+    '드리는', '마시는', '만나는', '만드는', '맛있는', '맛없는',
+    '재미있는', '재미없는', '모르는', '배우는', '생기는', '시행하는',
+    '예상되는', '요리하는', '위임하는', '이동하는', '잃어버리는',
+    '정의하는', '좋아하는', '준비하는', '지키는', '추구하는',
+    '읽는', '쓰는', '하는', '오는', '가는',
+  ].sort(function (a, b) { return b.length - a.length; });
+
   // Pure standalone adverbs used without a trailing particle.
   // Checked before particle detection to prevent false positives like
   // 같이 → subject (이 after batchim) or 바로 → location (로 after open syllable).
@@ -96,6 +123,7 @@
     neutral:   '#27ae60',  // green
     adverb:    '#8e44ad',  // purple
     negation:  '#795548',  // brown
+    modifier:  '#d4ac0d',  // golden yellow (adjective/verb attributive form)
   };
 
   // Light tint for the stem (noun / verb base).
@@ -108,6 +136,7 @@
     neutral:   '#a9dfbf',  // light green
     adverb:    '#c39bd3',  // light purple
     negation:  '#d7ccc8',  // light brown
+    modifier:  '#f9e79f',  // light yellow (adjective/verb attributive stem)
   };
 
   // Returns { role: String, endLen: Number } or null.
@@ -132,6 +161,13 @@
     //     false positives (e.g. 같이 → subject, 많이 → subject, 바로 → location).
     if (ADVERBS_LIST.indexOf(clean) !== -1) {
       return { role: 'adverb', endLen: clean.length };
+    }
+
+    // 0d. Known adjective/verb modifier forms — checked before particle rules
+    //     to prevent e.g. 좋은/많은 → subject, 공부하는 → subject.
+    //     endLen=1 splits the attributive ending (은/한/운/는) from the stem.
+    if (MODIFIER_LIST.indexOf(clean) !== -1) {
+      return { role: 'modifier', endLen: 1 };
     }
 
     if (clean.length < 2) return null;
