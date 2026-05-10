@@ -208,6 +208,11 @@ body.dark-mode button,body.dark-mode .pgBtn,body.dark-mode .catSelect,body.dark-
   background:#16213e !important; border-color:#2a2a4a !important; color:#e0e0e0 !important;
 }
 body.dark-mode .favBtn.active{ background:var(--yellow) !important; color:#3c3c3c !important; }
+.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid var(--stroke);border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+.lang-picker.open{display:flex}
+.lang-picker button{padding:6px 14px;font-size:13px}
+.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
+body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 </head>
  <body class="theme-anime glossary-page">
@@ -223,8 +228,13 @@ body.dark-mode .favBtn.active{ background:var(--yellow) !important; color:#3c3c3
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
       <a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>
-      <button type="button" id="langRo">ro</button>
-      <button type="button" id="langEn">en</button>
+      <div style="position:relative">
+        <button type="button" id="langBtn">ro</button>
+        <div id="langPicker" class="lang-picker">
+          <button type="button" id="pickRo">ro</button>
+          <button type="button" id="pickEn">en</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -249,8 +259,7 @@ body.dark-mode .favBtn.active{ background:var(--yellow) !important; color:#3c3c3
 <script>
 const pageTitleEl = document.getElementById("pageTitle");
 const pageSubtitleEl = document.getElementById("pageSubtitle");
-const langRoBtn = document.getElementById("langRo");
-const langEnBtn = document.getElementById("langEn");
+const langBtn = document.getElementById("langBtn");
 const dailyCard = document.getElementById("dailyCard");
 const searchInput = document.getElementById("search");
 const countEl = document.getElementById("count");
@@ -352,27 +361,12 @@ function t(key){
   return UI_TEXT[currentLang][key];
 }
 
-function updateLanguageButtons(){
-  const activeStyle = "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)";
-  const inactiveStyle = "linear-gradient(160deg,#fff,#fdf4ff)";
-  const activeShadow = "0 8px 20px rgba(168,85,247,.25)";
-  const inactiveShadow = "0 4px 12px rgba(219,39,119,.10)";
-
-  if(currentLang === "ro"){
-    langRoBtn.style.background = activeStyle;
-    langRoBtn.style.color = "#fff";
-    langRoBtn.style.boxShadow = activeShadow;
-    langEnBtn.style.background = inactiveStyle;
-    langEnBtn.style.color = "var(--text)";
-    langEnBtn.style.boxShadow = inactiveShadow;
-  } else {
-    langEnBtn.style.background = activeStyle;
-    langEnBtn.style.color = "#fff";
-    langEnBtn.style.boxShadow = activeShadow;
-    langRoBtn.style.background = inactiveStyle;
-    langRoBtn.style.color = "var(--text)";
-    langRoBtn.style.boxShadow = inactiveShadow;
-  }
+function updateLangBtn(){
+  if(langBtn) langBtn.textContent = currentLang;
+  const pickRo = document.getElementById("pickRo");
+  const pickEn = document.getElementById("pickEn");
+  if(pickRo) pickRo.classList.toggle("active", currentLang === "ro");
+  if(pickEn) pickEn.classList.toggle("active", currentLang === "en");
 }
 
 function updateStaticTexts(){
@@ -395,7 +389,7 @@ function setLanguage(lang){
   filterCategory = "";
   localStorage.setItem("RK_LANG", lang);
   updateStaticTexts();
-  updateLanguageButtons();
+  updateLangBtn();
   renderDailyView();
   render();
 }
@@ -656,8 +650,15 @@ function changePage(delta){
 }
 
 searchInput.addEventListener("input", () => { currentPage = 1; render(); });
-langRoBtn.addEventListener("click", () => setLanguage("ro"));
-langEnBtn.addEventListener("click", () => setLanguage("en"));
+let _langTimer = null;
+function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
+function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
+langBtn.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
+langBtn.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
+langBtn.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
+document.getElementById("pickRo").addEventListener("click", () => { setLanguage("ro"); closeLangPicker(); });
+document.getElementById("pickEn").addEventListener("click", () => { setLanguage("en"); closeLangPicker(); });
+document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
 catFilterEl.addEventListener("change", () => {
   filterCategory = catFilterEl.value;
   currentPage = 1;
@@ -672,7 +673,7 @@ favFilterBtn.addEventListener("click", () => {
 });
 
 updateStaticTexts();
-updateLanguageButtons();
+updateLangBtn();
 loadVocabulary();
 </script>
 <script src="./js/core/dark-mode.js"></script>
