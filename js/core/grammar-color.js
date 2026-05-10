@@ -103,8 +103,10 @@
     '높은', '낮은', '빠른', '느린', '비싼', '큰',
     // -ㄴ : 1-char adjective modifiers (vowel-stem + ㄴ); caught before length guard
     '짠', '찬',
+    // -ㄴ : past attributive of 보다 used as auxiliary (V-아/어 본 적이 있다)
+    '본',
     // -ㄹ : prospective attributive 1-char forms (standalone, before length guard)
-    '할', '올', '될',
+    '할', '올', '될', '볼',
     // -는 : present-tense action-verb modifiers (prevent false subject coloring)
     '가르치는', '공부하는', '기다리는', '나오는', '노력하는', '도착하는',
     '드리는', '마시는', '만나는', '만드는', '맛있는', '맛없는',
@@ -234,6 +236,13 @@
     // 0h. Common single-syllable nouns — whole token noun (slate).
     if (NOUN_1CHAR.indexOf(clean) !== -1) {
       return { role: 'noun', endLen: clean.length };
+    }
+
+    // 0i. Single-char V-아/어 connective forms — the absorbed 아/어 ending makes
+    //     these standalone connector tokens that precede auxiliaries like 보다/주다.
+    //     해 (하여→해 of 하다), 가 (ㅏ-stem of 가다 absorbs 아), 봐 (보+아→봐).
+    if (clean === '해' || clean === '가' || clean === '봐') {
+      return { role: 'connector', endLen: clean.length };
     }
 
     if (clean.length < 2) return null;
