@@ -33,6 +33,9 @@
     '으려고', '려고',
     '아도',   '어도',
     '고도',   '고서',
+    '거나',                     // alternation: 먹거나, 가거나 (eat or, go or)
+    '든지',   '든가',            // whether…or: 먹든지, 가든가
+    '느라고', '느라',            // because of -ing: 공부하느라고, 자느라
   ].sort(function (a, b) { return b.length - a.length; });
 
   // Multi-syllable location / time / direction particles.
@@ -46,7 +49,7 @@
   var NEUTRAL = ['마다', '도', '의', '만'].sort(function (a, b) { return b.length - a.length; });
 
   // Standalone connector words: always mark the entire token as connector.
-  var STANDALONE_CONN_TOKENS = ['때문에', '위해서', '위해', '위한'];
+  var STANDALONE_CONN_TOKENS = ['때문에', '위해서', '위해', '위한', '아니라'];
 
   // When the current token ends in 기 AND the next non-whitespace token is
   // one of these, the 기 suffix is a compound-connector nominalizer (기 때문에,
@@ -216,6 +219,10 @@
         return { role: 'location', endLen: LOC[k].length };
     }
 
+    // 3b. 뿐만 connector pattern (뿐만 아니라) — must come before NEUTRAL so
+    //     that the trailing 만 is not caught by the neutral-particle rule.
+    if (clean.endsWith('뿐만') && clean.length >= 2) return { role: 'connector', endLen: 2 };
+
     // 4. Invariant (neutral) particles
     for (var n = 0; n < NEUTRAL.length; n++) {
       if (clean.endsWith(NEUTRAL[n]) && clean.length > NEUTRAL[n].length && prevKo)
@@ -240,6 +247,9 @@
     if (last === '요') return { role: 'verb',      endLen: 1 };
     //    봐서 (보+아서), 예뻐서 (예쁘+어서) → last char 서 = connector
     if (last === '서') return { role: 'connector', endLen: 1 };
+    // 7b. Prospective attributive -할 (하다 + prospective ㄹ → 할)
+    //     Covers: 친절할, 공부할, 해결할, 이해할, 피곤할 etc.
+    if (last === '할') return { role: 'modifier',  endLen: 1 };
 
     // 8. Single-char particles (batchim-sensitive)
     if (last === '에')                         return { role: 'location', endLen: 1 };
