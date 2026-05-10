@@ -109,7 +109,7 @@
     // -ㄴ : past attributive of 보다 used as auxiliary (V-아/어 본 적이 있다)
     '본',
     // -ㄹ : prospective attributive 1-char forms (standalone, before length guard)
-    '할', '올', '될', '볼',
+    '할', '올', '될', '볼', '클',
     // -는 : present-tense action-verb modifiers (prevent false subject coloring)
     '가르치는', '공부하는', '기다리는', '나오는', '노력하는', '도착하는',
     '드리는', '마시는', '만나는', '만드는', '맛있는', '맛없는',
