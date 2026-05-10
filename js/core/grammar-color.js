@@ -101,6 +101,10 @@
     // -은 / ㄴ : pure adjective modifiers (prevent false subject coloring)
     '많은', '작은', '좋은', '예쁜', '나쁜', '밝은', '넓은', '좁은',
     '높은', '낮은', '빠른', '느린', '비싼', '큰',
+    // -ㄴ : 1-char adjective modifiers (vowel-stem + ㄴ); caught before length guard
+    '짠', '찬',
+    // -ㄹ : prospective attributive 1-char forms (standalone, before length guard)
+    '할', '올', '될',
     // -는 : present-tense action-verb modifiers (prevent false subject coloring)
     '가르치는', '공부하는', '기다리는', '나오는', '노력하는', '도착하는',
     '드리는', '마시는', '만나는', '만드는', '맛있는', '맛없는',
@@ -116,8 +120,8 @@
   var ADVERBS_LIST = [
     // degree / intensity
     '아무리', '특히', '반드시', '물론', '아마',
-    '많이',   '조금', '아주',   '너무', '정말', '진짜', '꽤',
-    '전혀',   '거의', '겨우',   '별로', '꼭',   '더',   '덜',
+    '많이',   '조금', '좀',     '아주',   '너무', '정말', '진짜', '꽤',
+    '전혀',   '거의', '겨우',   '별로',   '꼭',   '더',   '덜',
     '얼마나', '얼마',                      // interrogative degree adverbs
     // frequency
     '매일', '매주', '항상', '언제나', '자주', '가끔', '때때로', '보통', '주로',
@@ -299,9 +303,10 @@
     if (last === '요') return { role: 'verb',      endLen: 1 };
     //    봐서 (보+아서), 예뻐서 (예쁘+어서) → last char 서 = connector
     if (last === '서') return { role: 'connector', endLen: 1 };
-    // 7b. Prospective attributive -할 (하다 + prospective ㄹ → 할)
-    //     Covers: 친절할, 공부할, 해결할, 이해할, 피곤할 etc.
+    // 7b. Prospective attributive -할 / -될 (하다/되다 + ㄹ)
+    //     Covers: 친절할, 공부할, 해결할; 해결될, 완성될, 가능할 etc.
     if (last === '할') return { role: 'modifier',  endLen: 1 };
+    if (last === '될') return { role: 'modifier',  endLen: 1 };
     // 7c. V-해 (하여 contracted): informal / V-아어 connector form of 하다 verbs
     //     Covers: 말씀해, 말해, 공부해, 생각해, 이야기해, 설명해, 추천해 etc.
     //     올해 (this year) guarded by ADVERBS_LIST above; 위해/의해 by earlier rules.
