@@ -195,8 +195,8 @@
     if (!text) return '';
     var parts = text.split(/(\s+)/);
 
-    // Build a flat list of non-whitespace tokens for lookahead (compound connectors
-    // like 기 때문에 span two space-separated tokens and need forward context).
+    // Build a flat list of non-whitespace tokens for lookahead and lookbehind.
+    // Compound connectors like 기 때문에 / 기 전에 span two space-separated tokens.
     var nonWs = parts.filter(function (p) { return !/^\s+$/.test(p); });
     var nonWsIdx = 0;
 
@@ -204,19 +204,26 @@
       if (/^\s+$/.test(part)) return part;
 
       var myIdx     = nonWsIdx++;
+      var prevTok   = nonWs[myIdx - 1] || '';
       var nextTok   = nonWs[myIdx + 1] || '';
       var cleanPart = part.replace(/[.,!?。、…~※「」]+$/, '');
+      var prevClean = prevTok.replace(/[.,!?。、…~※「」]+$/, '');
       var nextClean = nextTok.replace(/[.,!?。、…~※「」]+$/, '');
 
       var result = detectRole(part);
 
-      // Compound-connector: V기 때문에 / V기 위해서 / V기 전에 …
+      // Forward: V기 때문에 / V기 위해서 / V기 전에 …
       // Verb stem → verb color (light green); 기 nominalizer → connector color (purple).
       if (cleanPart.endsWith('기') && COMPOUND_CONN_FOLLOWERS.indexOf(nextClean) !== -1) {
         var vStem = cleanPart.slice(0, cleanPart.length - 1); // everything except 기
         var kgi   = part.slice(vStem.length);                 // 기 + any trailing punctuation
         return (vStem ? mkSpan(vStem, STEM_COLORS.verb, 'gk-stem') : '') +
                mkSpan(kgi, COLORS.connector, 'gk-connector');
+      }
+
+      // Backward: 전에 / 후에 following a 기-ending token → connector, not location.
+      if ((cleanPart === '전에' || cleanPart === '후에') && prevClean.endsWith('기')) {
+        result = { role: 'connector', endLen: cleanPart.length };
       }
 
       if (!result) return '<span class="gk gk-n">' + esc(part) + '</span>';
