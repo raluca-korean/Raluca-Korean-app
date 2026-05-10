@@ -45,6 +45,34 @@
   // Invariant (neutral) particles — form never changes based on batchim.
   var NEUTRAL = ['마다', '도', '의', '만'].sort(function (a, b) { return b.length - a.length; });
 
+  // Standalone connector words: always mark the entire token as connector.
+  var STANDALONE_CONN_TOKENS = ['때문에', '위해서', '위해', '위한'];
+
+  // When the current token ends in 기 AND the next non-whitespace token is
+  // one of these, the 기 suffix is a compound-connector nominalizer (기 때문에,
+  // 기 위해서, 기 전에 …) → color it as connector.
+  var COMPOUND_CONN_FOLLOWERS = ['때문에', '위해서', '위해', '위한', '전에', '후에'];
+
+  // Pure standalone adverbs used without a trailing particle.
+  // Checked before particle detection to prevent false positives like
+  // 같이 → subject (이 after batchim) or 바로 → location (로 after open syllable).
+  var ADVERBS_LIST = [
+    // frequency
+    '매일', '매주', '항상', '언제나', '자주', '가끔', '때때로',
+    // time point
+    '오늘', '어제', '내일', '모레',
+    // manner
+    '빨리', '천천히', '열심히', '조용히', '갑자기',
+    // together / alone
+    '같이', '함께', '혼자',
+    // sequence / discourse
+    '먼저', '드디어', '계속', '다시', '바로',
+    // brief time
+    '잠깐', '잠시', '금방', '방금', '이미', '아직',
+    // degree
+    '많이', '조금', '아주', '너무', '정말', '진짜',
+  ];
+
   // Bright color for the grammatical marker (particle / ending).
   var COLORS = {
     subject:   '#e74c3c',
@@ -52,7 +80,8 @@
     verb:      '#27ae60',
     connector: '#8e44ad',
     location:  '#e67e22',
-    neutral:   '#1abc9c', // invariant particle → teal
+    neutral:   '#1abc9c',
+    adverb:    '#f39c12',  // amber — time / manner adverbs
   };
 
   // Light tint for the stem (noun / verb base).
@@ -64,6 +93,7 @@
     connector: '#c39bd3',
     location:  '#f0b27a',
     neutral:   '#e74c3c', // noun stem → subject color
+    adverb:    '#fad7a0', // light amber
   };
 
   // Returns { role: String, endLen: Number } or null.
@@ -73,6 +103,18 @@
     if (!token || !/[가-힣]/.test(token)) return null;
 
     var clean  = token.replace(/[.,!?。、…~※「」]+$/, '');
+
+    // 0a. Standalone compound-connector words (whole token = connector ending).
+    if (STANDALONE_CONN_TOKENS.indexOf(clean) !== -1) {
+      return { role: 'connector', endLen: clean.length };
+    }
+
+    // 0b. Known standalone adverbs — checked before particle rules to prevent
+    //     false positives (e.g. 같이 → subject, 많이 → subject, 바로 → location).
+    if (ADVERBS_LIST.indexOf(clean) !== -1) {
+      return { role: 'adverb', endLen: clean.length };
+    }
+
     if (clean.length < 2) return null;
 
     // Fixed passive/agent marker — color entire token as location so that
@@ -151,13 +193,33 @@
   // Returns HTML with each token split into [stem][ending] colored spans.
   function colorize(text) {
     if (!text) return '';
-    return text.split(/(\s+)/).map(function (part) {
+    var parts = text.split(/(\s+)/);
+
+    // Build a flat list of non-whitespace tokens for lookahead (compound connectors
+    // like 기 때문에 span two space-separated tokens and need forward context).
+    var nonWs = parts.filter(function (p) { return !/^\s+$/.test(p); });
+    var nonWsIdx = 0;
+
+    return parts.map(function (part) {
       if (/^\s+$/.test(part)) return part;
 
+      var myIdx     = nonWsIdx++;
+      var nextTok   = nonWs[myIdx + 1] || '';
+      var cleanPart = part.replace(/[.,!?。、…~※「」]+$/, '');
+      var nextClean = nextTok.replace(/[.,!?。、…~※「」]+$/, '');
+
       var result = detectRole(part);
+
+      // Compound-connector override: V기 때문에 / V기 위해서 / V기 전에 …
+      // When the current token ends in 기 and the next is a known compound-connector
+      // follower, the 기 is the nominalizer of the compound structure → connector.
+      if (cleanPart.endsWith('기') && COMPOUND_CONN_FOLLOWERS.indexOf(nextClean) !== -1) {
+        result = { role: 'connector', endLen: 1 };
+      }
+
       if (!result) return '<span class="gk gk-n">' + esc(part) + '</span>';
 
-      var clean  = part.replace(/[.,!?。、…~※「」]+$/, '');
+      var clean  = cleanPart;
       var stem   = clean.slice(0, clean.length - result.endLen);
       var ending = part.slice(stem.length); // ending syllables + any trailing punctuation
 
