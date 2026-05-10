@@ -135,7 +135,6 @@ button:active{ transform:translateY(2px); border-bottom-width:2px !important; }
 .fc-ko{
   font-size:46px;font-weight:900;
   color:var(--text);
-  -webkit-text-fill-color:var(--text);
   text-align:center;line-height:1.2;
 }
 .fc-hint{font-size:13px;color:var(--muted);margin-top:6px}
@@ -147,6 +146,22 @@ button:active{ transform:translateY(2px); border-bottom-width:2px !important; }
   font-size:12px;color:var(--muted);margin-top:8px;
   padding:4px 12px;border-radius:999px;
   background:#e5e5e5;
+}
+.fc-role-badge{
+  font-size:11px;font-weight:800;
+  padding:3px 10px;border-radius:999px;
+  margin-bottom:8px;letter-spacing:.4px;
+  text-transform:uppercase;
+}
+.legend-row{
+  display:flex;gap:6px;flex-wrap:wrap;
+  margin-top:10px;align-items:center;
+}
+.legend-label{font-size:11px;color:var(--muted);font-weight:700;align-self:center}
+.legend-item{
+  font-size:11px;font-weight:800;
+  padding:2px 8px;border-radius:999px;
+  letter-spacing:.3px;
 }
 .fc-speak{
   margin-top:14px;font-size:13px;cursor:pointer;
@@ -185,7 +200,7 @@ body.dark-mode .card{background:#16213e !important;border-color:#2a2a4a !importa
 body.dark-mode h1{color:#e0e0e0 !important}
 body.dark-mode .fc-front{background:#16213e !important;border-color:#2a2a4a !important}
 body.dark-mode .fc-back{background:#0a2040 !important;border-color:var(--blue) !important}
-body.dark-mode .fc-ko{color:#e0e0e0 !important;-webkit-text-fill-color:#e0e0e0 !important}
+body.dark-mode .fc-ko{color:#e0e0e0}
 body.dark-mode .filter-btn{background:#16213e !important;border-color:#2a2a4a !important;color:#e0e0e0 !important}
 body.dark-mode .filter-btn.active{background:var(--blue) !important;border-color:var(--blue) !important;color:#fff !important}
 body.dark-mode button:not(.btn-know):not(.btn-dontknow):not(.filter-btn){background:#16213e !important;border-color:#2a2a4a !important;color:#e0e0e0 !important}
@@ -217,12 +232,46 @@ body.dark-mode .fc-img-ph{background:linear-gradient(90deg,#2a2a4a 25%,#1e1e3a 5
     <button type="button" class="filter-btn" id="sortHard">🔴 Greu întâi</button>
     <button type="button" class="filter-btn" id="sortEasy">🟢 Ușor întâi</button>
   </div>
+  <div class="legend-row" id="legendRow"></div>
 </div>
 
 <div id="fcArea"></div>
 
 </div>
 <script>
+// Grammar role → color (same palette as grammar-color.js)
+const ROLE_COLORS = {
+  "Subiect":"#607d8b","Substantiv":"#607d8b","Obiect":"#607d8b",
+  "Verb":"#e91e63",
+  "Adjectiv":"#d4ac0d",
+  "Adverb":"#8e44ad",
+  "Modificator":"#e67e22","Conector":"#e67e22",
+  "Gramatică":"#1abc9c",
+  "Subject":"#607d8b","Noun":"#607d8b","Object":"#607d8b",
+  "Adjective":"#d4ac0d",
+  "Modifier":"#e67e22","Connector":"#e67e22",
+  "Grammar":"#1abc9c"
+};
+
+const LEGEND_DEFS = {
+  ro:[
+    {label:"Substantiv",color:"#607d8b"},
+    {label:"Verb",color:"#e91e63"},
+    {label:"Adjectiv",color:"#d4ac0d"},
+    {label:"Adverb",color:"#8e44ad"},
+    {label:"Conector",color:"#e67e22"},
+    {label:"Gramatică",color:"#1abc9c"}
+  ],
+  en:[
+    {label:"Noun",color:"#607d8b"},
+    {label:"Verb",color:"#e91e63"},
+    {label:"Adjective",color:"#d4ac0d"},
+    {label:"Adverb",color:"#8e44ad"},
+    {label:"Connector",color:"#e67e22"},
+    {label:"Grammar",color:"#1abc9c"}
+  ]
+};
+
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
 let sortMode = localStorage.getItem("FC_SORT") || "random";
 let FC_STATS = JSON.parse(localStorage.getItem("FC_STATS") || "{}");
@@ -271,7 +320,19 @@ const UI = {
 function t(k){ return UI[currentLang][k]; }
 function getMeaning(w){ return currentLang === "ro" ? w.ro : w.en; }
 function getCat(w){ return currentLang === "ro" ? (w.categoriesRo||[])[0] : (w.categoriesEn||[])[0]; }
+function getWordColor(w){ const c = getCat(w); return c ? (ROLE_COLORS[c] || null) : null; }
 function getFavs(){ return JSON.parse(localStorage.getItem("FAV_WORDS") || "[]"); }
+
+function renderLegend(){
+  const row = document.getElementById("legendRow");
+  if(!row) return;
+  const defs = LEGEND_DEFS[currentLang] || LEGEND_DEFS.ro;
+  const labelText = currentLang === "ro" ? "Roluri:" : "Roles:";
+  row.innerHTML = `<span class="legend-label">${labelText}</span>` +
+    defs.map(d =>
+      `<span class="legend-item" style="background:${d.color}22;color:${d.color};border:1.5px solid ${d.color}55">${d.label}</span>`
+    ).join("");
+}
 
 function diffScore(ko){
   const s = FC_STATS[ko];
@@ -372,6 +433,12 @@ function renderFC(){
   const word = deck[cardIndex];
   const done = knowCount + dontCount;
   const progPct = deck.length === 0 ? 0 : Math.round(done / deck.length * 100);
+  const wColor = getWordColor(word);
+  const cat = getCat(word);
+  const roleBadge = cat && wColor
+    ? `<div class="fc-role-badge" style="background:${wColor}22;color:${wColor};border:1.5px solid ${wColor}55">${cat}</div>`
+    : "";
+  const koStyle = wColor ? `color:${wColor}` : "";
 
   el.innerHTML = `
     <div class="card" style="padding-bottom:12px">
@@ -382,16 +449,17 @@ function renderFC(){
         <div class="fc-card" id="fcCard">
           <div class="fc-front">
             ${getDiffDot(word.ko)}
+            ${roleBadge}
             <div class="fc-img-wrap" id="fcImgWrap">
               <div class="fc-img-ph" id="fcImgPh"></div>
               <img id="fcImgEl" class="fc-img" alt="">
             </div>
-            <div class="fc-ko">${word.ko}</div>
+            <div class="fc-ko" style="${koStyle}">${word.ko}</div>
             <div class="fc-hint">${t("tapToFlip")}</div>
           </div>
           <div class="fc-back">
             <div class="fc-meaning">${getMeaning(word) || "—"}</div>
-            ${getCat(word) ? `<div class="fc-cat">${getCat(word)}</div>` : ""}
+            ${cat ? `<div class="fc-cat" style="${wColor ? `background:${wColor}22;color:${wColor}` : ""}">${cat}</div>` : ""}
             <button class="fc-speak" onclick="event.stopPropagation();speakKO('${word.ko.replace(/'/g,"\\'")}')">🔈 ${word.ko}</button>
           </div>
         </div>
@@ -459,6 +527,7 @@ function setLang(lang){
   document.getElementById("sortRandom").textContent = t("sortRandom");
   document.getElementById("sortHard").textContent = t("sortHard");
   document.getElementById("sortEasy").textContent = t("sortEasy");
+  renderLegend();
   buildDeck(); renderFC();
 }
 
@@ -530,7 +599,7 @@ async function loadVocab(){
   }
 }
 
-updateLangBtns(); updateSortBtns();
+updateLangBtns(); updateSortBtns(); renderLegend();
 document.getElementById("pageTitle").textContent = t("title");
 document.getElementById("pageSubtitle").textContent = t("subtitle");
 document.getElementById("filterAll").textContent = t("filterAll");
