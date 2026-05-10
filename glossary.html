@@ -252,10 +252,6 @@ const PAGE_SIZE = 20;
 let currentPage = 1;
 let WORDS = [];
 let daily = [];
-let dailyIndex = 0;
-let dailyHTML = "";
-let quizPool = [];
-let quizIndex = 0;
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
 let filterCategory = "";
 let filterFavsOnly = false;
@@ -281,12 +277,7 @@ const UI_TEXT = {
     noWords: "Nu există cuvinte.",
     dailyTitle: "📅 3 cuvinte pe zi",
     speak: "🔊 Pronunție",
-    practice: "🧠 Exersează",
     refresh: "🔁 Alte cuvinte",
-    quizQuestion: "🧠 Ce înseamnă:",
-    done: "🎉 Gata!",
-    back: "⬅ Înapoi",
-    tryAgain: "❌ Mai încearcă",
     loadError: "Nu am putut încărca vocab-korean.json",
     category: "Categorie",
     allCategories: "Toate categoriile",
@@ -300,12 +291,7 @@ const UI_TEXT = {
     noWords: "No words found.",
     dailyTitle: "📅 3 words a day",
     speak: "🔊 Pronunciation",
-    practice: "🧠 Practice",
     refresh: "🔁 More words",
-    quizQuestion: "🧠 What does it mean:",
-    done: "🎉 Done!",
-    back: "⬅ Back",
-    tryAgain: "❌ Try again",
     loadError: "Could not load vocab-korean.json",
     category: "Category",
     allCategories: "All categories",
@@ -535,90 +521,15 @@ function renderDailyView(){
 
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button type="button" onclick="playDaily()">${t("speak")}</button>
-      <button type="button" onclick="startQuiz()">${t("practice")}</button>
       <button type="button" onclick="refreshDaily()">${t("refresh")}</button>
     </div>
   `;
-
-  dailyHTML = dailyCard.innerHTML;
 }
 
 function playDaily(){
   daily.forEach((word, index) => {
     setTimeout(() => speakKO(word.ko), index * 1200);
   });
-}
-
-function startQuiz(){
-  const learned = getLearned();
-  const unlearned = shuffle(WORDS.filter(w => !learned.includes(w.ko)));
-  const learnedWords = shuffle(WORDS.filter(w => learned.includes(w.ko)));
-  quizPool = [...unlearned, ...learnedWords];
-  quizIndex = 0;
-  showQuizQuestion();
-}
-
-function showQuizQuestion(){
-  if(quizIndex >= quizPool.length){
-    dailyCard.innerHTML = `
-      <h3>${t("done")}</h3>
-      <button type="button" onclick="startQuiz()" style="margin-right:8px">${t("practice")}</button>
-      <button type="button" onclick="exitQuiz()">${t("back")}</button>
-    `;
-    return;
-  }
-
-  const currentWord = quizPool[quizIndex];
-  speakKO(currentWord.ko);
-  const correctMeaning = getMeaning(currentWord);
-  const learned = getLearned();
-  const unlearnedCount = quizPool.filter(w => !learned.includes(w.ko)).length;
-
-  const wrongPool = WORDS
-    .map(word => getMeaning(word))
-    .filter(meaning => meaning && meaning !== correctMeaning);
-
-  const wrongOptions = shuffle([...new Set(wrongPool)]).slice(0, 2);
-  const options = shuffle([correctMeaning, ...wrongOptions]);
-  const learnedNow = isLearned(currentWord.ko);
-  const koEsc = currentWord.ko.replace(/'/g, "\\'");
-
-  dailyCard.innerHTML = `
-    <h3>${t("quizQuestion")}
-      <span style="font-size:.8em;opacity:.6">${quizIndex + 1}/${quizPool.length}
-        ${unlearnedCount < quizPool.length ? ` · ✓ ${quizPool.length - unlearnedCount}` : ''}
-      </span>
-    </h3>
-    <div style="display:flex;align-items:center;gap:12px;margin:8px 0">
-      <div class="ko" style="cursor:pointer" onclick="speakKO('${koEsc}')">${currentWord.ko}</div>
-      <button type="button"
-        onclick="toggleLearned('${koEsc}');showQuizQuestion()"
-        style="padding:4px 12px;border-radius:999px;font-size:.85em;
-               background:${learnedNow ? '#22c55e' : 'rgba(255,255,255,.1)'};
-               border:1px solid ${learnedNow ? '#22c55e' : 'rgba(255,255,255,.3)'};
-               color:${learnedNow ? '#fff' : 'inherit'};cursor:pointer">
-        ${learnedNow ? '✓ Învățat' : '○ Marchează'}
-      </button>
-    </div>
-    ${options.map(option => `
-      <button type="button" onclick="checkQuizAnswer('${option.replace(/'/g, "\\'")}', '${correctMeaning.replace(/'/g, "\\'")}')">${option}</button>
-    `).join("")}
-    <br>
-    <button type="button" onclick="exitQuiz()">${t("back")}</button>
-  `;
-}
-
-function checkQuizAnswer(selectedAnswer, correctAnswer){
-  if(selectedAnswer === correctAnswer){
-    quizIndex++;
-    showQuizQuestion();
-  } else {
-    alert(t("tryAgain"));
-  }
-}
-
-function exitQuiz(){
-  dailyCard.innerHTML = dailyHTML;
 }
 
 function refreshDaily(){
