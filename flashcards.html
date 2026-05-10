@@ -153,16 +153,6 @@ button:active{ transform:translateY(2px); border-bottom-width:2px !important; }
   margin-bottom:8px;letter-spacing:.4px;
   text-transform:uppercase;
 }
-.legend-row{
-  display:flex;gap:6px;flex-wrap:wrap;
-  margin-top:10px;align-items:center;
-}
-.legend-label{font-size:11px;color:var(--muted);font-weight:700;align-self:center}
-.legend-item{
-  font-size:11px;font-weight:800;
-  padding:2px 8px;border-radius:999px;
-  letter-spacing:.3px;
-}
 .fc-speak{
   margin-top:14px;font-size:13px;cursor:pointer;
   color:var(--blue);font-weight:700;
@@ -214,7 +204,6 @@ body.dark-mode .fc-img-ph{background:linear-gradient(90deg,#2a2a4a 25%,#1e1e3a 5
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
     <div>
       <h1 id="pageTitle">🃏 Flashcards</h1>
-      <div class="sub" id="pageSubtitle">Apasă pe card ca să-l întorci</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <a href="./index.html" class="homeBtn">🏠</a>
@@ -223,16 +212,13 @@ body.dark-mode .fc-img-ph{background:linear-gradient(90deg,#2a2a4a 25%,#1e1e3a 5
     </div>
   </div>
   <div class="filter-row">
-    <button type="button" class="filter-btn active" id="filterAll">Toate</button>
     <button type="button" class="filter-btn" id="filterFav">⭐ Favorite</button>
   </div>
   <div class="filter-row" id="sortRow">
-    <span class="sort-label" id="sortLabel">Dificultate:</span>
     <button type="button" class="filter-btn active" id="sortRandom">🔀 Aleatoriu</button>
     <button type="button" class="filter-btn" id="sortHard">🔴 Greu întâi</button>
     <button type="button" class="filter-btn" id="sortEasy">🟢 Ușor întâi</button>
   </div>
-  <div class="legend-row" id="legendRow"></div>
 </div>
 
 <div id="fcArea"></div>
@@ -253,28 +239,6 @@ const ROLE_COLORS = {
   "Gramatică":"#1abc9c","Grammar":"#1abc9c"
 };
 
-const LEGEND_DEFS = {
-  ro:[
-    {label:"Subiect",   color:"#e74c3c"},
-    {label:"Obiect",    color:"#2980b9"},
-    {label:"Substantiv",color:"#607d8b"},
-    {label:"Verb",      color:"#e91e63"},
-    {label:"Adjectiv",  color:"#d4ac0d"},
-    {label:"Adverb",    color:"#8e44ad"},
-    {label:"Conector",  color:"#e67e22"},
-    {label:"Gramatică", color:"#1abc9c"}
-  ],
-  en:[
-    {label:"Subject",  color:"#e74c3c"},
-    {label:"Object",   color:"#2980b9"},
-    {label:"Noun",     color:"#607d8b"},
-    {label:"Verb",     color:"#e91e63"},
-    {label:"Adjective",color:"#d4ac0d"},
-    {label:"Adverb",   color:"#8e44ad"},
-    {label:"Connector",color:"#e67e22"},
-    {label:"Grammar",  color:"#1abc9c"}
-  ]
-};
 
 let currentLang = localStorage.getItem("RK_LANG") || "ro";
 let sortMode = localStorage.getItem("FC_SORT") || "random";
@@ -294,11 +258,10 @@ const imgCache = (() => {
 
 const UI = {
   ro:{
-    title:"🃏 Flashcards", subtitle:"Apasă pe card ca să-l întorci",
+    title:"🃏 Flashcards",
     tapToFlip:"Atinge ca să vezi răspunsul",
     know:"✓ Știu", dontKnow:"✗ Nu știu",
-    filterAll:"Toate", filterFav:"⭐ Favorite",
-    sortLabel:"Dificultate:",
+    filterFav:"⭐ Favorite",
     sortRandom:"🔀 Aleatoriu", sortHard:"🔴 Greu întâi", sortEasy:"🟢 Ușor întâi",
     summaryTitle:"Sesiune completă!",
     know2:"Știu", dontKnow2:"Nu știu",
@@ -307,11 +270,10 @@ const UI = {
     loadError:"Nu am putut încărca vocab-korean.json"
   },
   en:{
-    title:"🃏 Flashcards", subtitle:"Tap the card to flip it",
+    title:"🃏 Flashcards",
     tapToFlip:"Tap to see the answer",
     know:"✓ I know", dontKnow:"✗ Don't know",
-    filterAll:"All", filterFav:"⭐ Favorites",
-    sortLabel:"Difficulty:",
+    filterFav:"⭐ Favorites",
     sortRandom:"🔀 Random", sortHard:"🔴 Hard first", sortEasy:"🟢 Easy first",
     summaryTitle:"Session complete!",
     know2:"Know", dontKnow2:"Don't know",
@@ -327,16 +289,6 @@ function getCat(w){ return currentLang === "ro" ? (w.categoriesRo||[])[0] : (w.c
 function getWordColor(w){ const c = getCat(w); return c ? (ROLE_COLORS[c] || null) : null; }
 function getFavs(){ return JSON.parse(localStorage.getItem("FAV_WORDS") || "[]"); }
 
-function renderLegend(){
-  const row = document.getElementById("legendRow");
-  if(!row) return;
-  const defs = LEGEND_DEFS[currentLang] || LEGEND_DEFS.ro;
-  const labelText = currentLang === "ro" ? "Roluri:" : "Roles:";
-  row.innerHTML = `<span class="legend-label">${labelText}</span>` +
-    defs.map(d =>
-      `<span class="legend-item" style="background:${d.color}22;color:${d.color};border:1.5px solid ${d.color}55">${d.label}</span>`
-    ).join("");
-}
 
 function diffScore(ko){
   const s = FC_STATS[ko];
@@ -524,14 +476,10 @@ function setLang(lang){
   localStorage.setItem("RK_LANG", lang);
   updateLangBtns(); updateFilterBtns(); updateSortBtns();
   document.getElementById("pageTitle").textContent = t("title");
-  document.getElementById("pageSubtitle").textContent = t("subtitle");
-  document.getElementById("filterAll").textContent = t("filterAll");
   document.getElementById("filterFav").textContent = t("filterFav");
-  document.getElementById("sortLabel").textContent = t("sortLabel");
   document.getElementById("sortRandom").textContent = t("sortRandom");
   document.getElementById("sortHard").textContent = t("sortHard");
   document.getElementById("sortEasy").textContent = t("sortEasy");
-  renderLegend();
   buildDeck(); renderFC();
 }
 
@@ -545,7 +493,6 @@ function updateLangBtns(){
 }
 
 function updateFilterBtns(){
-  document.getElementById("filterAll").classList.toggle("active", !filterFav);
   document.getElementById("filterFav").classList.toggle("active", filterFav);
 }
 
@@ -563,11 +510,8 @@ function setSortMode(mode){
 
 document.getElementById("langRo").addEventListener("click", () => setLang("ro"));
 document.getElementById("langEn").addEventListener("click", () => setLang("en"));
-document.getElementById("filterAll").addEventListener("click", () => {
-  filterFav = false; updateFilterBtns(); buildDeck(); renderFC();
-});
 document.getElementById("filterFav").addEventListener("click", () => {
-  filterFav = true; updateFilterBtns(); buildDeck(); renderFC();
+  filterFav = !filterFav; updateFilterBtns(); buildDeck(); renderFC();
 });
 document.getElementById("sortRandom").addEventListener("click", () => setSortMode("random"));
 document.getElementById("sortHard").addEventListener("click", () => setSortMode("hard"));
@@ -603,12 +547,9 @@ async function loadVocab(){
   }
 }
 
-updateLangBtns(); updateSortBtns(); renderLegend();
+updateLangBtns(); updateSortBtns();
 document.getElementById("pageTitle").textContent = t("title");
-document.getElementById("pageSubtitle").textContent = t("subtitle");
-document.getElementById("filterAll").textContent = t("filterAll");
 document.getElementById("filterFav").textContent = t("filterFav");
-document.getElementById("sortLabel").textContent = t("sortLabel");
 document.getElementById("sortRandom").textContent = t("sortRandom");
 document.getElementById("sortHard").textContent = t("sortHard");
 document.getElementById("sortEasy").textContent = t("sortEasy");
