@@ -88,6 +88,16 @@ input:focus{
 .icon{cursor:pointer;font-size:18px;}
 .star.active{color: var(--yellow)}
 
+.cat-pill{
+  display:inline-block;
+  font-size:11px;
+  font-weight:700;
+  padding:2px 7px;
+  border-radius:20px;
+  border:1.5px solid;
+  line-height:1.4;
+}
+
 .pagination{
   display:flex;
   justify-content:center;
@@ -192,7 +202,7 @@ body.dark-mode h1{ color:#e0e0e0 !important; }
 body.dark-mode .sub{ color:#7a7a9a !important; }
 body.dark-mode .word{ background:#16213e !important; border-color:#2a2a4a !important; }
 body.dark-mode .word:hover{ border-color:#1CB0F6 !important; background:#0a2040 !important; }
-body.dark-mode .ko{ color:#e0e0e0 !important; -webkit-text-fill-color:#e0e0e0 !important; }
+body.dark-mode .ko{ color:#e0e0e0; -webkit-text-fill-color:#e0e0e0; }
 body.dark-mode input{ background:#16213e !important; color:#e0e0e0 !important; border-color:#2a2a4a !important; }
 body.dark-mode button,body.dark-mode .pgBtn,body.dark-mode .catSelect,body.dark-mode .favBtn{
   background:#16213e !important; border-color:#2a2a4a !important; color:#e0e0e0 !important;
@@ -256,6 +266,18 @@ let currentLang = localStorage.getItem("RK_LANG") || "ro";
 let filterCategory = "";
 let filterFavsOnly = false;
 
+const CATEGORY_COLORS = {
+  verbs:      "#1CB0F6",
+  nouns:      "#58CC02",
+  subjects:   "#22c55e",
+  objects:    "#f59e0b",
+  adjectives: "#f97316",
+  adverbs:    "#8b5cf6",
+  modifiers:  "#ec4899",
+  connectors: "#06b6d4",
+  grammar:    "#ef4444"
+};
+
 const CATEGORY_LABELS = {
   subjects:   { ro: "Subiect",     en: "Subject"    },
   nouns:      { ro: "Substantiv",  en: "Noun"        },
@@ -267,6 +289,12 @@ const CATEGORY_LABELS = {
   connectors: { ro: "Conector",    en: "Connector"   },
   grammar:    { ro: "Gramatică",   en: "Grammar"     }
 };
+
+const LABEL_TO_KEY = {};
+Object.keys(CATEGORY_LABELS).forEach(key => {
+  LABEL_TO_KEY[CATEGORY_LABELS[key].ro] = key;
+  LABEL_TO_KEY[CATEGORY_LABELS[key].en] = key;
+});
 
 const UI_TEXT = {
   ro: {
@@ -298,6 +326,27 @@ const UI_TEXT = {
     favOnly: "⭐ Favorites"
   }
 };
+
+function getCategoryColor(word){
+  const cats = currentLang === "ro" ? word.categoriesRo : word.categoriesEn;
+  for(const cat of cats){
+    const key = LABEL_TO_KEY[cat];
+    if(key && CATEGORY_COLORS[key]) return CATEGORY_COLORS[key];
+  }
+  return null;
+}
+
+function getCatColor(label){
+  const key = LABEL_TO_KEY[label];
+  return (key && CATEGORY_COLORS[key]) || "#afafaf";
+}
+
+function categoryPills(word){
+  return getCategories(word).map(cat => {
+    const c = getCatColor(cat);
+    return `<span class="cat-pill" style="color:${c};border-color:${c};background:${c}1a">${cat}</span>`;
+  }).join(" ");
+}
 
 function t(key){
   return UI_TEXT[currentLang][key];
@@ -504,12 +553,15 @@ function renderDailyView(){
 
   dailyCard.innerHTML = `
     <h3>${t("dailyTitle")}</h3>
-    ${daily.map(word => `
+    ${daily.map(word => {
+      const koColor = getCategoryColor(word);
+      const koStyle = koColor ? `cursor:pointer;color:${koColor};-webkit-text-fill-color:${koColor}` : `cursor:pointer`;
+      return `
       <div class="word">
         <div>
-          <div class="ko" style="cursor:pointer" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">${word.ko}</div>
+          <div class="ko" style="${koStyle}" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">${word.ko}</div>
           <div class="ro">${getMeaning(word)}</div>
-          <div class="ro">${getCategories(word).join(" • ")}</div>
+          <div style="margin-top:3px">${categoryPills(word)}</div>
         </div>
         <div class="actions">
           <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
@@ -517,7 +569,8 @@ function renderDailyView(){
           <span class="icon" style="color:${isLearned(word.ko) ? '#22c55e' : 'inherit'}" onclick="toggleLearned('${word.ko.replace(/'/g, "\\'")}')">✓</span>
         </div>
       </div>
-    `).join("")}
+      `;
+    }).join("")}
 
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button type="button" onclick="playDaily()">${t("speak")}</button>
@@ -565,12 +618,15 @@ function render(){
   const start = (currentPage - 1) * PAGE_SIZE;
   const pageWords = filtered.slice(start, start + PAGE_SIZE);
 
-  const wordsHTML = pageWords.map(word => `
+  const wordsHTML = pageWords.map(word => {
+    const koColor = getCategoryColor(word);
+    const koStyle = koColor ? `cursor:pointer;color:${koColor};-webkit-text-fill-color:${koColor}` : `cursor:pointer`;
+    return `
     <div class="word">
       <div>
-        <div class="ko" style="cursor:pointer" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">${word.ko}</div>
+        <div class="ko" style="${koStyle}" onclick="speakKO('${word.ko.replace(/'/g, "\\'")}')">${word.ko}</div>
         <div class="ro">${getMeaning(word)}</div>
-        <div class="ro">${getCategories(word).join(" • ")}</div>
+        <div style="margin-top:3px">${categoryPills(word)}</div>
       </div>
       <div class="actions">
         <span class="icon" onclick="openYouGlish('${word.ko.replace(/'/g, "\\'")}')">🎥</span>
@@ -578,7 +634,8 @@ function render(){
         <span class="icon" style="color:${isLearned(word.ko) ? '#22c55e' : 'inherit'}" onclick="toggleLearned('${word.ko.replace(/'/g, "\\'")}')">✓</span>
       </div>
     </div>
-  `).join("");
+    `;
+  }).join("");
 
   const paginationHTML = totalPages > 1 ? `
     <div class="pagination">
