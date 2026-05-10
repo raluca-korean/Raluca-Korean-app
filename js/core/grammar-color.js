@@ -75,6 +75,10 @@
     '것', '수', '때', '적', '하나',   // 1-syllable + common numerals caught before 나-particle rule
   ];
 
+  // Location pronouns (장소 대명사) — 여기, 거기, 저기, 어디 etc.
+  // Entire token coloured as location (teal); same colour family as 에/에서/까지.
+  var LOCATION_PRONOUNS = ['여기', '거기', '저기', '어디', '이쪽', '그쪽', '저쪽'];
+
   // Adjective/verb attributive (관형사형) forms — checked before particle rules
   // to prevent -은/-는-ending modifiers being coloured as subject particles.
   var MODIFIER_LIST = [
@@ -114,7 +118,8 @@
     // frequency
     '매일', '매주', '항상', '언제나', '자주', '가끔', '때때로', '보통', '주로',
     // time point / manner of time
-    '오늘', '어제', '내일', '모레', '일찍', '늦게', '지금', '결국',
+    '오늘', '어제', '내일', '모레', '올해', '작년', '내년',
+    '일찍', '늦게', '지금', '결국',
     // manner — simple
     '빨리', '천천히', '열심히', '조용히', '갑자기', '소홀히',
     '잘',   '왜',    '또',     '직접',
@@ -209,6 +214,11 @@
       return { role: 'neutral', endLen: clean.length };
     }
 
+    // 0g. Location pronouns (장소 대명사) — whole token location (teal).
+    if (LOCATION_PRONOUNS.indexOf(clean) !== -1) {
+      return { role: 'location', endLen: clean.length };
+    }
+
     if (clean.length < 2) return null;
 
     // 0d. Negation verb forms starting with 않 (e.g. 않아요, 않았어요, 않고, 않으면).
@@ -279,6 +289,10 @@
     // 7b. Prospective attributive -할 (하다 + prospective ㄹ → 할)
     //     Covers: 친절할, 공부할, 해결할, 이해할, 피곤할 etc.
     if (last === '할') return { role: 'modifier',  endLen: 1 };
+    // 7c. V-해 (하여 contracted): informal / V-아어 connector form of 하다 verbs
+    //     Covers: 말씀해, 말해, 공부해, 생각해, 이야기해, 설명해, 추천해 etc.
+    //     올해 (this year) guarded by ADVERBS_LIST above; 위해/의해 by earlier rules.
+    if (last === '해') return { role: 'verb',      endLen: 1 };
 
     // 8. Single-char particles (batchim-sensitive)
     if (last === '에')                         return { role: 'location', endLen: 1 };
