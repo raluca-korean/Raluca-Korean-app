@@ -73,7 +73,6 @@ button:active{ transform:translateY(2px); border-bottom-width:2px !important; }
 .prog-fill{height:100%;border-radius:999px;background:var(--green);transition:width .3s ease}
 .prog-text{font-size:12px;color:var(--muted);margin-top:4px;text-align:right;font-weight:700}
 
-/* Flashcard — taller to fit image */
 .fc-scene{
   perspective:1000px;
   height:300px;
@@ -107,7 +106,6 @@ button:active{ transform:translateY(2px); border-bottom-width:2px !important; }
   transform:rotateY(180deg);
 }
 
-/* Word image */
 .fc-img-wrap{
   width:96px;height:72px;
   border-radius:10px;
@@ -195,6 +193,22 @@ body.dark-mode .filter-btn{background:#16213e !important;border-color:#2a2a4a !i
 body.dark-mode .filter-btn.active{background:var(--blue) !important;border-color:var(--blue) !important;color:#fff !important}
 body.dark-mode button:not(.btn-know):not(.btn-dontknow):not(.filter-btn){background:#16213e !important;border-color:#2a2a4a !important;color:#e0e0e0 !important}
 body.dark-mode .fc-img-ph{background:linear-gradient(90deg,#2a2a4a 25%,#1e1e3a 50%,#2a2a4a 75%);background-size:200% 100%}
+
+.lang-picker{
+  position:absolute;top:calc(100% + 6px);right:0;
+  background:#fff;border:2px solid var(--stroke);
+  border-bottom:4px solid #d0d0d0;border-radius:12px;
+  padding:6px;gap:6px;display:none;z-index:200;
+  box-shadow:0 8px 24px rgba(0,0,0,.15);
+}
+.lang-picker.open{display:flex}
+.lang-picker button{padding:6px 14px;font-size:13px}
+.lang-picker button.active{
+  background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;
+  color:#fff !important;border-color:#a855f7 !important;
+  border-bottom-color:#6366f1 !important;
+}
+body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 </head>
 <body class="theme-anime">
@@ -207,8 +221,13 @@ body.dark-mode .fc-img-ph{background:linear-gradient(90deg,#2a2a4a 25%,#1e1e3a 5
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <a href="./index.html" class="homeBtn">🏠</a>
-      <button type="button" id="langRo">ro</button>
-      <button type="button" id="langEn">en</button>
+      <div style="position:relative">
+        <button type="button" id="langBtn">ro</button>
+        <div id="langPicker" class="lang-picker">
+          <button type="button" id="pickRo">ro</button>
+          <button type="button" id="pickEn">en</button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="filter-row" id="sortRow">
@@ -223,7 +242,6 @@ body.dark-mode .fc-img-ph{background:linear-gradient(90deg,#2a2a4a 25%,#1e1e3a 5
 
 </div>
 <script>
-// Same palette as grammar-color.js COLORS
 const ROLE_COLORS = {
   "Subiect":"#e74c3c","Subject":"#e74c3c",
   "Obiect":"#2980b9","Object":"#2980b9",
@@ -247,7 +265,6 @@ let dontCount = 0;
 let flipped = false;
 let filterFav = false;
 
-// Image cache: en_key → URL string | null
 const imgCache = (() => {
   try { return JSON.parse(sessionStorage.getItem("FC_IMG") || "{}"); } catch { return {}; }
 })();
@@ -296,7 +313,6 @@ function getDiffDot(ko){
   return `<span class="diff-dot diff-easy">●</span>`;
 }
 
-// Extract a clean English keyword for image search
 function imgKey(word){
   return word.en.split(/[,;/(]/)[0].trim().replace(/^to\s+/i,"").toLowerCase();
 }
@@ -464,18 +480,24 @@ function renderSummary(){
 function setLang(lang){
   currentLang = lang;
   localStorage.setItem("RK_LANG", lang);
-  updateLangBtns(); updateFilterBtns(); updateSortBtns();
+  updateLangBtn(); updateFilterBtns(); updateSortBtns();
   document.getElementById("pageTitle").textContent = t("title");
   buildDeck(); renderFC();
 }
 
-function updateLangBtns(){
-  const on = "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)";
-  const off = "linear-gradient(160deg,#fff,#fdf4ff)";
-  document.getElementById("langRo").style.background = currentLang==="ro"?on:off;
-  document.getElementById("langRo").style.color = currentLang==="ro"?"#fff":"var(--text)";
-  document.getElementById("langEn").style.background = currentLang==="en"?on:off;
-  document.getElementById("langEn").style.color = currentLang==="en"?"#fff":"var(--text)";
+function updateLangBtn(){
+  document.getElementById("langBtn").textContent = currentLang;
+}
+
+let _langTimer = null;
+function openLangPicker(){
+  const p = document.getElementById("langPicker");
+  p.classList.add("open");
+  document.getElementById("pickRo").classList.toggle("active", currentLang === "ro");
+  document.getElementById("pickEn").classList.toggle("active", currentLang === "en");
+}
+function closeLangPicker(){
+  document.getElementById("langPicker").classList.remove("open");
 }
 
 function updateFilterBtns(){
@@ -494,8 +516,13 @@ function setSortMode(mode){
   updateSortBtns(); buildDeck(); renderFC();
 }
 
-document.getElementById("langRo").addEventListener("click", () => setLang("ro"));
-document.getElementById("langEn").addEventListener("click", () => setLang("en"));
+const _lb = document.getElementById("langBtn");
+_lb.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
+_lb.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
+_lb.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
+document.getElementById("pickRo").addEventListener("click", () => { setLang("ro"); closeLangPicker(); });
+document.getElementById("pickEn").addEventListener("click", () => { setLang("en"); closeLangPicker(); });
+document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
 document.getElementById("filterFav").addEventListener("click", () => {
   filterFav = !filterFav; updateFilterBtns(); buildDeck(); renderFC();
 });
@@ -533,7 +560,7 @@ async function loadVocab(){
   }
 }
 
-updateLangBtns(); updateSortBtns();
+updateLangBtn(); updateSortBtns();
 document.getElementById("pageTitle").textContent = t("title");
 loadVocab();
 </script>
