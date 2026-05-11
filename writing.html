@@ -370,6 +370,11 @@ body.dark-mode .board-wrap.wide-mode { background: #0d1b2e !important; border-co
 body.dark-mode .syl-box { background: #16213e !important; border-color: #2a2a4a !important; color: #e0e0e0 !important; }
 body.dark-mode .fb-cv { background: #16213e !important; border-color: #2a2a4a !important; }
 body.dark-mode .board-actions button { background: #16213e !important; border-color: #2a2a4a !important; color: #e0e0e0 !important; }
+.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid #e5e5e5;border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+.lang-picker.open{display:flex}
+.lang-picker button{padding:6px 14px;font-size:13px}
+.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
+body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 </head>
 <body class="theme-anime">
@@ -384,8 +389,13 @@ body.dark-mode .board-actions button { background: #16213e !important; border-co
   <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
     <a href="./hangul.html" class="homeBtn" title="Hangul">가</a>
     <a href="./index.html"  class="homeBtn" aria-label="Acasă">🏠</a>
-    <button type="button" id="langRo">ro</button>
-    <button type="button" id="langEn">en</button>
+    <div style="position:relative">
+      <button type="button" id="langBtn">ro</button>
+      <div id="langPicker" class="lang-picker">
+        <button type="button" id="pickRo">ro</button>
+        <button type="button" id="pickEn">en</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -639,15 +649,25 @@ function applyLang() {
   document.getElementById("checkLbl").textContent        = t.check;
   document.getElementById("fbYourLbl").textContent       = t.yourLbl;
   document.getElementById("fbRefLbl").textContent        = t.refLbl;
-  document.getElementById("langRo").style.background   = lang==="ro"
-    ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
-  document.getElementById("langEn").style.background   = lang==="en"
-    ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
+  const _lbW = document.getElementById("langBtn");
+  if(_lbW) _lbW.textContent = lang;
+  const _pRo = document.getElementById("pickRo");
+  const _pEn = document.getElementById("pickEn");
+  if(_pRo) _pRo.classList.toggle("active", lang === "ro");
+  if(_pEn) _pEn.classList.toggle("active", lang === "en");
   updateTarget();
 }
 
-document.getElementById("langRo").onclick = () => { lang="ro"; localStorage.setItem("RK_LANG","ro"); applyLang(); };
-document.getElementById("langEn").onclick = () => { lang="en"; localStorage.setItem("RK_LANG","en"); applyLang(); };
+let _langTimer = null;
+function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
+function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
+const _lb = document.getElementById("langBtn");
+_lb.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
+_lb.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
+_lb.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
+document.getElementById("pickRo").addEventListener("click", () => { lang="ro"; localStorage.setItem("RK_LANG","ro"); applyLang(); closeLangPicker(); });
+document.getElementById("pickEn").addEventListener("click", () => { lang="en"; localStorage.setItem("RK_LANG","en"); applyLang(); closeLangPicker(); });
+document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
 
 // ── MODE TABS ─────────────────────────────────────────────────
 document.querySelectorAll(".mode-tab").forEach(btn => {
