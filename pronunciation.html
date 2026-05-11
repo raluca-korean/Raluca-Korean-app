@@ -47,23 +47,6 @@ body.theme-anime {
 .hdr-left .sub { font-size: 12px; color: #afafaf; font-weight: 700; margin-top: 2px; }
 .hdr-right { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
 
-#langRo, #langEn {
-  padding: 6px 12px;
-  border-radius: 10px;
-  border: 2px solid #e5e5e5;
-  border-bottom: 3px solid #d0d0d0;
-  background: #fff;
-  color: #3c3c3c;
-  font-weight: 800;
-  font-size: 12px;
-  cursor: pointer;
-}
-#langRo.active, #langEn.active {
-  background: var(--blue);
-  border-color: var(--blue);
-  border-bottom-color: var(--blue-dk);
-  color: #fff;
-}
 
 /* ── FILTER ──────────────────────────────────────────── */
 .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -226,12 +209,11 @@ body.dark-mode .s-meaning { color: #b0b0d0; }
 body.dark-mode .recog-txt { color: #8080a0; }
 body.dark-mode .score-bar { background: #2a2a4a; }
 
-body.dark-mode #langRo:not(.active),
-body.dark-mode #langEn:not(.active) {
-  background: #16213e;
-  border-color: #2a2a4a;
-  color: #e0e0e0;
-}
+body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
+.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid #e5e5e5;border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+.lang-picker.open{display:flex}
+.lang-picker button{padding:6px 14px;font-size:13px}
+.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
 </style>
 </head>
 <body class="theme-anime">
@@ -245,8 +227,13 @@ body.dark-mode #langEn:not(.active) {
   </div>
   <div class="hdr-right">
     <a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>
-    <button id="langRo">ro</button>
-    <button id="langEn">en</button>
+    <div style="position:relative">
+      <button id="langBtn" type="button">ro</button>
+      <div id="langPicker" class="lang-picker">
+        <button type="button" id="pickRo">ro</button>
+        <button type="button" id="pickEn">en</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -623,16 +610,28 @@ function applyLang(lang) {
   LANG = lang;
   localStorage.setItem('RK_LANG', lang);
   document.documentElement.lang = lang;
-  document.getElementById('langRo').classList.toggle('active', lang === 'ro');
-  document.getElementById('langEn').classList.toggle('active', lang === 'en');
+  var lb = document.getElementById('langBtn');
+  if(lb) lb.textContent = lang;
+  var pRo = document.getElementById('pickRo');
+  var pEn = document.getElementById('pickEn');
+  if(pRo) pRo.classList.toggle('active', lang === 'ro');
+  if(pEn) pEn.classList.toggle('active', lang === 'en');
   document.getElementById('pageTitle').textContent = t('title');
   document.getElementById('pageSub').textContent   = t('sub');
   renderFilter();
   renderCards();
 }
 
-document.getElementById('langRo').onclick = function() { applyLang('ro'); };
-document.getElementById('langEn').onclick = function() { applyLang('en'); };
+var _langTimer = null;
+function openLangPicker(){ document.getElementById('langPicker').classList.add('open'); }
+function closeLangPicker(){ document.getElementById('langPicker').classList.remove('open'); }
+var _lb = document.getElementById('langBtn');
+_lb.addEventListener('pointerdown', function(){ _langTimer = setTimeout(function(){ _langTimer = null; openLangPicker(); }, 450); });
+_lb.addEventListener('pointerup',   function(){ clearTimeout(_langTimer); _langTimer = null; });
+_lb.addEventListener('pointerleave',function(){ clearTimeout(_langTimer); _langTimer = null; });
+document.getElementById('pickRo').addEventListener('click', function(){ applyLang('ro'); closeLangPicker(); });
+document.getElementById('pickEn').addEventListener('click', function(){ applyLang('en'); closeLangPicker(); });
+document.addEventListener('pointerdown', function(e){ if(!e.target.closest('#langBtn,#langPicker')) closeLangPicker(); });
 
 applyLang(LANG);
 </script>
