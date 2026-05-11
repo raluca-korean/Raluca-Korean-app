@@ -106,6 +106,11 @@ body.dark-mode h1,body.dark-mode h2{ color:#e0e0e0 !important; }
 body.dark-mode .stat-num{ color:#e0e0e0 !important; }
 body.dark-mode .bar-track{ background:#2a2a4a !important; }
 body.dark-mode button{ background:#16213e !important; border-color:#2a2a4a !important; color:#e0e0e0 !important; }
+.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid #e5e5e5;border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+.lang-picker.open{display:flex}
+.lang-picker button{padding:6px 14px;font-size:13px}
+.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
+body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 </head>
 <body class="theme-anime">
@@ -119,8 +124,13 @@ body.dark-mode button{ background:#16213e !important; border-color:#2a2a4a !impo
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <a href="./index.html" class="homeBtn">🏠</a>
-      <button type="button" id="langRo">ro</button>
-      <button type="button" id="langEn">en</button>
+      <div style="position:relative">
+        <button type="button" id="langBtn">ro</button>
+        <div id="langPicker" class="lang-picker">
+          <button type="button" id="pickRo">ro</button>
+          <button type="button" id="pickEn">en</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -243,16 +253,24 @@ function setLang(lang){
 }
 
 function updateLangBtns(){
-  const on = "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)";
-  const off = "linear-gradient(160deg,#fff,#fdf4ff)";
-  document.getElementById("langRo").style.background = currentLang==="ro" ? on : off;
-  document.getElementById("langRo").style.color = currentLang==="ro" ? "#fff" : "var(--text)";
-  document.getElementById("langEn").style.background = currentLang==="en" ? on : off;
-  document.getElementById("langEn").style.color = currentLang==="en" ? "#fff" : "var(--text)";
+  const lb = document.getElementById("langBtn");
+  if(lb) lb.textContent = currentLang;
+  const pickRo = document.getElementById("pickRo");
+  const pickEn = document.getElementById("pickEn");
+  if(pickRo) pickRo.classList.toggle("active", currentLang === "ro");
+  if(pickEn) pickEn.classList.toggle("active", currentLang === "en");
 }
 
-document.getElementById("langRo").addEventListener("click", () => setLang("ro"));
-document.getElementById("langEn").addEventListener("click", () => setLang("en"));
+let _langTimer = null;
+function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
+function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
+const _lb = document.getElementById("langBtn");
+_lb.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
+_lb.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
+_lb.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
+document.getElementById("pickRo").addEventListener("click", () => { setLang("ro"); closeLangPicker(); });
+document.getElementById("pickEn").addEventListener("click", () => { setLang("en"); closeLangPicker(); });
+document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
 updateLangBtns();
 render();
 </script>
