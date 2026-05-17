@@ -120,6 +120,7 @@ select{
 
 .answer{
   padding:14px 16px;
+  padding-right:42px;
   border-radius: 12px;
   border: 2px solid #e5e5e5;
   border-bottom: 4px solid #d0d0d0;
@@ -131,6 +132,30 @@ select{
   transition: border-color .10s ease, background .10s ease, transform .08s ease;
   user-select:none;
   text-align:left;
+  position:relative;
+}
+
+/* keyboard shortcut hints — CSS counter, invisible to JS textContent */
+#answers{ counter-reset:ans; }
+#answers .answer{ counter-increment:ans; }
+#answers .answer::after{
+  content:counter(ans);
+  position:absolute;
+  top:50%; right:12px;
+  transform:translateY(-50%);
+  width:20px; height:20px;
+  border-radius:5px;
+  background:rgba(0,0,0,.07);
+  font-size:11px; font-weight:900;
+  color:rgba(0,0,0,.28);
+  display:flex; align-items:center; justify-content:center;
+  line-height:20px; text-align:center;
+  pointer-events:none;
+}
+#answers.done .answer::after{ display:none; }
+body.dark-mode #answers .answer::after{
+  background:rgba(255,255,255,.10);
+  color:rgba(255,255,255,.30);
 }
 
 .answer:hover{
@@ -967,6 +992,7 @@ function cleanConjugPrompt(prompt){
 function render(){
   selectedAnswer = null;
   answered = false;
+  document.getElementById("answers").classList.remove("done");
   feedbackEl.textContent = "";
   answersEl.innerHTML = "";
   answersEl.style.display = "";
@@ -1192,6 +1218,7 @@ function checkCurrentAnswer(){
     else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item); }
     if(!isWrongMode) saveStats(isRight, typeSelect.value);
     answered = true;
+    document.getElementById("answers").classList.add("done");
     updateBadges();
     updateWrongBtn();
     const lb = document.getElementById("learnBtn");
@@ -1235,6 +1262,7 @@ function checkCurrentAnswer(){
 
   if(!isWrongMode) saveStats(isCorrect, typeSelect.value);
   answered = true;
+  document.getElementById("answers").classList.add("done");
   updateBadges();
   updateWrongBtn();
   const lb = document.getElementById("learnBtn");
@@ -1407,6 +1435,29 @@ soundBtn.addEventListener("click", () => {
 updateLevelButtons();
 updateLangBtn();
 updateStaticTexts();
+document.addEventListener("keydown", function(e){
+  if(e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA") return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if(document.getElementById("langPicker").classList.contains("open")) return;
+
+  const type = typeSelect.value;
+  const isPuzzleChain = type === "puzzle" || type === "chain";
+
+  if(e.key === "Enter"){
+    e.preventDefault();
+    if(!answered){ checkCurrentAnswer(); } else { nextQuestion(); }
+    return;
+  }
+
+  if(!isPuzzleChain && !answered){
+    const n = parseInt(e.key);
+    if(n >= 1 && n <= 4){
+      const opts = document.querySelectorAll("#answers .answer");
+      if(opts[n - 1]){ opts[n - 1].click(); e.preventDefault(); }
+    }
+  }
+});
+
 updateBadges();
 loadExercises();
 </script>
