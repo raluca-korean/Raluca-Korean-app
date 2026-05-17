@@ -256,11 +256,6 @@ body.dark-mode .mini-stat{
     animation: none;
   }
 }
-.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid rgba(219,39,119,.25);border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
-.lang-picker.open{display:flex}
-.lang-picker button{padding:6px 14px;font-size:13px}
-.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:transparent !important;}
-body.dark-mode .lang-picker{background:rgba(32,6,55,.95) !important;border-color:rgba(244,114,182,.25) !important}
 </style>
 </head>
 
@@ -361,8 +356,9 @@ body.dark-mode .lang-picker{background:rgba(32,6,55,.95) !important;border-color
 
 <div id="miniStats"></div>
 
+<script src="./js/core/lang-picker.js"></script>
 <script>
-var currentLang = localStorage.getItem('RK_LANG') || 'ro';
+var currentLang = RKLang.get();
 
 var STATS_LABELS = {
   ro: {today:'Azi', acc:'Acuratețe', streak:'Streak', favs:'Favorite'},
@@ -389,32 +385,15 @@ function renderMiniStats(lang) {
 
 function applyLang(lang) {
   currentLang = lang;
-  localStorage.setItem('RK_LANG', lang);
   document.querySelectorAll('[data-ro][data-en]').forEach(function(el) {
     el.textContent = el.dataset[lang];
   });
-  var lb = document.getElementById('langBtn');
-  if(lb) lb.textContent = lang;
-  var pickRo = document.getElementById('pickRo');
-  var pickEn = document.getElementById('pickEn');
-  if(pickRo) pickRo.classList.toggle('active', lang === 'ro');
-  if(pickEn) pickEn.classList.toggle('active', lang === 'en');
   document.documentElement.lang = lang;
   renderMiniStats(lang);
 }
 
-var _langTimer = null;
-function openLangPicker(){ document.getElementById('langPicker').classList.add('open'); }
-function closeLangPicker(){ document.getElementById('langPicker').classList.remove('open'); }
-var _lb = document.getElementById('langBtn');
-_lb.addEventListener('pointerdown', function(){ _langTimer = setTimeout(function(){ _langTimer = null; openLangPicker(); }, 450); });
-_lb.addEventListener('pointerup',   function(){ clearTimeout(_langTimer); _langTimer = null; });
-_lb.addEventListener('pointerleave',function(){ clearTimeout(_langTimer); _langTimer = null; });
-document.getElementById('pickRo').addEventListener('click', function(){ applyLang('ro'); closeLangPicker(); });
-document.getElementById('pickEn').addEventListener('click', function(){ applyLang('en'); closeLangPicker(); });
-document.addEventListener('pointerdown', function(e){ if(!e.target.closest('#langBtn,#langPicker')) closeLangPicker(); });
-
 applyLang(currentLang);
+RKLang.init(applyLang);
 </script>
 
 <script src="./js/core/dark-mode.js"></script>

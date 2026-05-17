@@ -425,11 +425,6 @@ select:focus, button:focus{
 .drill-sent-tr{font-size:.75rem;color:var(--muted);margin-top:4px;}
 .drill-conn-tag{display:block;text-align:center;padding:6px 16px;border-radius:20px;background:#ddf4ff;color:#1CB0F6;font-weight:800;font-size:.85rem;}
 @media(max-width:480px){.drill-sent-pair{grid-template-columns:1fr;}}
-.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid var(--stroke);border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
-.lang-picker.open{display:flex}
-.lang-picker button{padding:6px 14px;font-size:13px}
-.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
-body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
  
 </head>
@@ -522,6 +517,7 @@ body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !
 </div>
 <script src="./js/core/conjugation.js"></script>
 <script src="./js/core/grammar-color.js?v=18"></script>
+<script src="./js/core/lang-picker.js"></script>
   <script>
 const pageTitleEl = document.getElementById("pageTitle");
 const pageSubtitleEl = document.getElementById("pageSubtitle");
@@ -545,7 +541,7 @@ const wrongBtn = document.getElementById("wrongBtn");
 
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
-let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let currentLang = RKLang.get();
 let currentLevel = localStorage.getItem("RK_LEVEL") || "1";
 if(currentLevel === "0") currentLevel = "test";
 let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [], "chain": [] };
@@ -785,13 +781,6 @@ function updateLevelButtons(){
   });
 }
 
-function updateLangBtn(){
-  if(langBtn) langBtn.textContent = currentLang;
-  const pickRo = document.getElementById("pickRo");
-  const pickEn = document.getElementById("pickEn");
-  if(pickRo) pickRo.classList.toggle("active", currentLang === "ro");
-  if(pickEn) pickEn.classList.toggle("active", currentLang === "en");
-}
 
 function modeLabel(type){
   if(type === "ko-ro")        return t("modeKoRo");
@@ -897,8 +886,6 @@ function exitWrongMode(){
 
 function setLanguage(lang){
   currentLang = lang;
-  localStorage.setItem("RK_LANG", lang);
-  updateLangBtn();
   updateStaticTexts();
   updateBadges();
   render();
@@ -1366,15 +1353,7 @@ wrongBtn.addEventListener("click", enterWrongMode);
 
 checkBtn.addEventListener("click", checkCurrentAnswer);
 nextBtn.addEventListener("click", nextQuestion);
-let _langTimer = null;
-function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
-function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
-langBtn.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
-langBtn.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
-langBtn.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
-document.getElementById("pickRo").addEventListener("click", () => { setLanguage("ro"); closeLangPicker(); });
-document.getElementById("pickEn").addEventListener("click", () => { setLanguage("en"); closeLangPicker(); });
-document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
+RKLang.init(setLanguage);
 
 const soundBtn = document.getElementById("soundBtn");
 let soundOn = true;
@@ -1433,7 +1412,6 @@ soundBtn.addEventListener("click", () => {
 });
 
 updateLevelButtons();
-updateLangBtn();
 updateStaticTexts();
 document.addEventListener("keydown", function(e){
   if(e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA") return;

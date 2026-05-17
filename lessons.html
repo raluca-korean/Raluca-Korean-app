@@ -207,14 +207,10 @@ body.dark-mode .example .ko .gk-n{ color:var(--rk-text); -webkit-text-fill-color
   border-color:transparent;
   box-shadow:0 8px 24px rgba(219,39,119,.30);
 }
-.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid var(--stroke);border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
-.lang-picker.open{display:flex}
-.lang-picker button{padding:6px 14px;font-size:13px}
-.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
-body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 
 <script src="./js/core/grammar-color.js?v=18"></script>
+<script src="./js/core/lang-picker.js"></script>
 <script>
 const listEl      = document.getElementById("lessonList");
 const contentEl   = document.getElementById("lessonContent");
@@ -226,7 +222,7 @@ const tabsEl      = document.getElementById("topikTabs");
 let lessons        = [];
 let currentLessonId = null;
 let currentTopik   = 1;
-let currentLang    = localStorage.getItem("RK_LANG") || "ro";
+let currentLang    = RKLang.get();
 
 const UI_TEXT = {
   ro: {
@@ -260,13 +256,6 @@ function updateHeaderTexts(){
   pageSubtitleEl.textContent = t("pageSubtitle");
 }
 
-function updateLangBtn(){
-  if(langBtn) langBtn.textContent = currentLang;
-  const pickRo = document.getElementById("pickRo");
-  const pickEn = document.getElementById("pickEn");
-  if(pickRo) pickRo.classList.toggle("active", currentLang === "ro");
-  if(pickEn) pickEn.classList.toggle("active", currentLang === "en");
-}
 
 function renderTabs(){
   tabsEl.innerHTML = "";
@@ -361,8 +350,6 @@ function selectLesson(id){
 
 function setLanguage(lang){
   currentLang = lang;
-  localStorage.setItem("RK_LANG", lang);
-  updateLangBtn();
   updateHeaderTexts();
   renderTabs();
   renderLessonList();
@@ -394,18 +381,8 @@ function speakKorean(text){
   window.speechSynthesis.speak(utt);
 }
 
-let _langTimer = null;
-function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
-function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
-langBtn.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
-langBtn.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
-langBtn.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
-document.getElementById("pickRo").addEventListener("click", () => { setLanguage("ro"); closeLangPicker(); });
-document.getElementById("pickEn").addEventListener("click", () => { setLanguage("en"); closeLangPicker(); });
-document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
-
+RKLang.init(setLanguage);
 updateHeaderTexts();
-updateLangBtn();
 contentEl.innerHTML = `<div class="sub">${t("selectLesson")}</div>`;
 loadLessons();
 </script>

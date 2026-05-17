@@ -201,11 +201,6 @@ body.dark-mode button,body.dark-mode .pgBtn,body.dark-mode .catSelect,body.dark-
   background:#16213e !important; border-color:#2a2a4a !important; color:#e0e0e0 !important;
 }
 body.dark-mode .favBtn.active{ background:var(--yellow) !important; color:#3c3c3c !important; }
-.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid var(--stroke);border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
-.lang-picker.open{display:flex}
-.lang-picker button{padding:6px 14px;font-size:13px}
-.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
-body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 </head>
  <body class="theme-anime glossary-page">
@@ -249,6 +244,7 @@ body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !
 </div>
 
 </div>
+<script src="./js/core/lang-picker.js"></script>
 <script>
 const pageTitleEl = document.getElementById("pageTitle");
 const pageSubtitleEl = document.getElementById("pageSubtitle");
@@ -264,7 +260,7 @@ const PAGE_SIZE = 20;
 let currentPage = 1;
 let WORDS = [];
 let daily = [];
-let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let currentLang = RKLang.get();
 let filterCategory = "";
 let filterFavsOnly = false;
 
@@ -354,13 +350,6 @@ function t(key){
   return UI_TEXT[currentLang][key];
 }
 
-function updateLangBtn(){
-  if(langBtn) langBtn.textContent = currentLang;
-  const pickRo = document.getElementById("pickRo");
-  const pickEn = document.getElementById("pickEn");
-  if(pickRo) pickRo.classList.toggle("active", currentLang === "ro");
-  if(pickEn) pickEn.classList.toggle("active", currentLang === "en");
-}
 
 function updateStaticTexts(){
   pageTitleEl.textContent = t("title");
@@ -380,9 +369,7 @@ function buildCatOptions(){
 function setLanguage(lang){
   currentLang = lang;
   filterCategory = "";
-  localStorage.setItem("RK_LANG", lang);
   updateStaticTexts();
-  updateLangBtn();
   renderDailyView();
   render();
 }
@@ -643,15 +630,7 @@ function changePage(delta){
 }
 
 searchInput.addEventListener("input", () => { currentPage = 1; render(); });
-let _langTimer = null;
-function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
-function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
-langBtn.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
-langBtn.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
-langBtn.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
-document.getElementById("pickRo").addEventListener("click", () => { setLanguage("ro"); closeLangPicker(); });
-document.getElementById("pickEn").addEventListener("click", () => { setLanguage("en"); closeLangPicker(); });
-document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
+RKLang.init(setLanguage);
 catFilterEl.addEventListener("change", () => {
   filterCategory = catFilterEl.value;
   currentPage = 1;
@@ -666,7 +645,6 @@ favFilterBtn.addEventListener("click", () => {
 });
 
 updateStaticTexts();
-updateLangBtn();
 loadVocabulary();
 </script>
 <script src="./js/core/dark-mode.js"></script>

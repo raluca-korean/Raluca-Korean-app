@@ -186,21 +186,6 @@ body.dark-mode .filter-btn.active{background:var(--blue) !important;border-color
 body.dark-mode button:not(.btn-know):not(.btn-dontknow):not(.filter-btn){background:#16213e !important;border-color:#2a2a4a !important;color:#e0e0e0 !important}
 body.dark-mode .fc-img-ph{background:linear-gradient(90deg,#2a2a4a 25%,#1e1e3a 50%,#2a2a4a 75%);background-size:200% 100%}
 
-.lang-picker{
-  position:absolute;top:calc(100% + 6px);right:0;
-  background:#fff;border:2px solid var(--stroke);
-  border-bottom:4px solid #d0d0d0;border-radius:12px;
-  padding:6px;gap:6px;display:none;z-index:200;
-  box-shadow:0 8px 24px rgba(0,0,0,.15);
-}
-.lang-picker.open{display:flex}
-.lang-picker button{padding:6px 14px;font-size:13px}
-.lang-picker button.active{
-  background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;
-  color:#fff !important;border-color:#a855f7 !important;
-  border-bottom-color:#6366f1 !important;
-}
-body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 </head>
 <body class="theme-anime">
@@ -233,6 +218,7 @@ body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !
 <div id="fcArea"></div>
 
 </div>
+<script src="./js/core/lang-picker.js"></script>
 <script>
 const ROLE_COLORS = {
   "Subiect":"#e74c3c","Subject":"#e74c3c",
@@ -246,7 +232,7 @@ const ROLE_COLORS = {
   "Gramatică":"#1abc9c","Grammar":"#1abc9c"
 };
 
-let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let currentLang = RKLang.get();
 let sortMode = localStorage.getItem("FC_SORT") || "random";
 let FC_STATS = JSON.parse(localStorage.getItem("FC_STATS") || "{}");
 let WORDS = [];
@@ -471,25 +457,9 @@ function renderSummary(){
 
 function setLang(lang){
   currentLang = lang;
-  localStorage.setItem("RK_LANG", lang);
-  updateLangBtn(); updateFilterBtns(); updateSortBtns();
+  updateFilterBtns(); updateSortBtns();
   document.getElementById("pageTitle").textContent = t("title");
   buildDeck(); renderFC();
-}
-
-function updateLangBtn(){
-  document.getElementById("langBtn").textContent = currentLang;
-}
-
-let _langTimer = null;
-function openLangPicker(){
-  const p = document.getElementById("langPicker");
-  p.classList.add("open");
-  document.getElementById("pickRo").classList.toggle("active", currentLang === "ro");
-  document.getElementById("pickEn").classList.toggle("active", currentLang === "en");
-}
-function closeLangPicker(){
-  document.getElementById("langPicker").classList.remove("open");
 }
 
 function updateFilterBtns(){
@@ -508,13 +478,7 @@ function setSortMode(mode){
   updateSortBtns(); buildDeck(); renderFC();
 }
 
-const _lb = document.getElementById("langBtn");
-_lb.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
-_lb.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
-_lb.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
-document.getElementById("pickRo").addEventListener("click", () => { setLang("ro"); closeLangPicker(); });
-document.getElementById("pickEn").addEventListener("click", () => { setLang("en"); closeLangPicker(); });
-document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
+RKLang.init(setLang);
 document.getElementById("filterFav").addEventListener("click", () => {
   filterFav = !filterFav; updateFilterBtns(); buildDeck(); renderFC();
 });
@@ -552,7 +516,7 @@ async function loadVocab(){
   }
 }
 
-updateLangBtn(); updateSortBtns();
+updateSortBtns();
 document.getElementById("pageTitle").textContent = t("title");
 loadVocab();
 </script>

@@ -92,11 +92,6 @@ button:hover{ border-color:#b0b0b0 !important; }
 
 body.dark-mode .stat-box{ background:rgba(32,6,55,.90) !important; border-color:rgba(167,139,250,.22) !important; }
 body.dark-mode .bar-track{ background:rgba(167,139,250,.18) !important; }
-.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid #e5e5e5;border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
-.lang-picker.open{display:flex}
-.lang-picker button{padding:6px 14px;font-size:13px}
-.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;border-color:#a855f7 !important;border-bottom-color:#6366f1 !important;}
-body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 </head>
 <body class="theme-anime">
@@ -124,8 +119,9 @@ body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !
 <div id="mainStats"></div>
 
 </div>
+<script src="./js/core/lang-picker.js"></script>
 <script>
-let currentLang = localStorage.getItem("RK_LANG") || "ro";
+let currentLang = RKLang.get();
 
 const UI = {
   ro:{
@@ -231,33 +227,10 @@ function render(){
     </div>`;
 }
 
-function setLang(lang){
+RKLang.init(function(lang){
   currentLang = lang;
-  localStorage.setItem("RK_LANG", lang);
-  updateLangBtns();
   render();
-}
-
-function updateLangBtns(){
-  const lb = document.getElementById("langBtn");
-  if(lb) lb.textContent = currentLang;
-  const pickRo = document.getElementById("pickRo");
-  const pickEn = document.getElementById("pickEn");
-  if(pickRo) pickRo.classList.toggle("active", currentLang === "ro");
-  if(pickEn) pickEn.classList.toggle("active", currentLang === "en");
-}
-
-let _langTimer = null;
-function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
-function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
-const _lb = document.getElementById("langBtn");
-_lb.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
-_lb.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
-_lb.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
-document.getElementById("pickRo").addEventListener("click", () => { setLang("ro"); closeLangPicker(); });
-document.getElementById("pickEn").addEventListener("click", () => { setLang("en"); closeLangPicker(); });
-document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
-updateLangBtns();
+});
 render();
 </script>
 <script src="./js/core/dark-mode.js"></script>
