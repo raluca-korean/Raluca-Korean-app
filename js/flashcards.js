@@ -265,6 +265,9 @@ document.getElementById("sortHard").addEventListener("click", () => setSortMode(
 document.getElementById("sortEasy").addEventListener("click", () => setSortMode("easy"));
 
 async function loadVocab(){
+  document.getElementById("fcArea").innerHTML =
+    `<div class="card"><div class="rk-spinner">${currentLang==="ro"?"Se încarcă flashcard-urile…":"Loading flashcards…"}</div></div>`;
+
   try{
     const resp = await fetch("./data/vocab-korean.json");
     const vocab = await resp.json();

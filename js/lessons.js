@@ -144,6 +144,9 @@ function setLanguage(lang){
 }
 
 async function loadLessons(){
+  listEl.innerHTML = `<div class="rk-spinner"></div>`;
+  contentEl.innerHTML = `<div class="rk-spinner">${currentLang==="ro"?"Se încarcă lecțiile…":"Loading lessons…"}</div>`;
+
   try {
     const res  = await fetch("./data/lessons.json");
     const data = await res.json();

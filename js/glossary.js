@@ -244,7 +244,20 @@ function buildWordsFromVocabulary(vocab){
     .sort((a, b) => a.ko.localeCompare(b.ko, "ko"));
 }
 
+function skeletonWords(n){
+  return Array.from({length:n}, () =>
+    `<div class="word" style="pointer-events:none;cursor:default;gap:8px">
+      <div class="rk-skeleton" style="height:17px;width:55%;margin-bottom:7px"></div>
+      <div class="rk-skeleton" style="height:12px;width:38%"></div>
+    </div>`
+  ).join('');
+}
+
 async function loadVocabulary(){
+  dailyCard.innerHTML = `<div class="rk-spinner">${currentLang==="ro"?"Se încarcă…":"Loading…"}</div>`;
+  listEl.innerHTML = skeletonWords(8);
+  countEl.textContent = "";
+
   try {
     const response = await fetch("./data/vocab-korean.json");
     const vocab = await response.json();

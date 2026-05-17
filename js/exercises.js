@@ -376,6 +376,10 @@ function shuffle(array){
 }
 
 async function loadExercises(){
+  questionEl.innerHTML = `<div class="rk-spinner">${currentLang==="ro"?"Se încarcă exercițiile…":"Loading exercises…"}</div>`;
+  answersEl.innerHTML = "";
+  feedbackEl.textContent = "";
+
   try {
     const response = await fetch("./data/exercises.json");
     const data = await response.json();
