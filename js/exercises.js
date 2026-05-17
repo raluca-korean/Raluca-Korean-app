@@ -31,6 +31,8 @@ let answered = false;
 
 let puzzleLine = [];
 let puzzleBank = [];
+let hintCount = 0;
+let hintUsed  = false;
 
 let total = 0;
 let correct = 0;
@@ -165,6 +167,7 @@ const UI_TEXT = {
     arrangeTiles: "Aranjează cuvintele în ordinea corectă.",
     placeTiles: "Plasează cel puțin un cuvânt în linie.",
     hint: "Indiciu",
+    hintAssisted: "💡 Asistat — răspuns corect, dar nu contează la streak",
     modeParticle: "Particulă (1)",
     modeParticlePlus: "Particule multiple",
     modeConjug: "Conjugare",
@@ -210,6 +213,7 @@ const UI_TEXT = {
     arrangeTiles: "Arrange the words in the correct order.",
     placeTiles: "Place at least one word in the line.",
     hint: "Hint",
+    hintAssisted: "💡 Assisted — correct, but streak not counted",
     modeParticle: "Particle (1)",
     modeParticlePlus: "Multiple particles",
     modeConjug: "Conjugation",
@@ -477,6 +481,8 @@ function render(){
   answersEl.innerHTML = "";
   answersEl.style.display = "";
   document.getElementById("puzzleUI").style.display = "none";
+  const hb = document.getElementById("hintBtn");
+  if(hb) hb.style.display = "none";
   const lb = document.getElementById("learnBtn");
   if(lb) lb.style.display = "none";
 
@@ -579,9 +585,11 @@ function render(){
     document.getElementById("puzzleUI").style.display = "";
     questionEl.textContent = item.hint ? item.hint[currentLang] : "";
     helperEl.textContent = t("arrangeTiles");
+    hintCount = 0; hintUsed = false;
     puzzleLine = [];
     puzzleBank = shuffle([...item.tiles]);
     renderPuzzleUI();
+    updateHintBtn(item);
     updateBadges();
     return;
   } else if(typeSelect.value === "chain"){
@@ -589,9 +597,11 @@ function render(){
     document.getElementById("puzzleUI").style.display = "";
     questionEl.textContent = item.context ? item.context[currentLang] : "";
     helperEl.textContent = t("arrangeChain");
+    hintCount = 0; hintUsed = false;
     puzzleLine = [];
     puzzleBank = shuffle([...item.tiles]);
     renderPuzzleUI();
+    updateHintBtn(item);
     updateBadges();
     return;
   } else {
@@ -658,10 +668,11 @@ function renderPuzzleUI(){
 
   puzzleLine.forEach((tile, idx) => {
     const el = document.createElement("div");
-    el.className = "chip";
+    const isHintTile = idx < hintCount;
+    el.className = "chip" + (isHintTile ? " chip-hint" : "");
     el.innerHTML = GrammarColor.colorize(tile);
     el.addEventListener("click", () => {
-      if(answered) return;
+      if(answered || isHintTile) return;
       puzzleLine.splice(idx, 1);
       puzzleBank.push(tile);
       renderPuzzleUI();
@@ -669,6 +680,31 @@ function renderPuzzleUI(){
     lineEl.appendChild(el);
   });
 }
+
+function updateHintBtn(item){
+  const btn = document.getElementById("hintBtn");
+  if(!btn) return;
+  const total = item ? item.correct.length : 0;
+  const allRevealed = hintCount >= total;
+  btn.style.display = (answered || total === 0) ? "none" : "";
+  btn.disabled = allRevealed;
+  btn.textContent = hintCount === 0 ? `💡 ${t("hint")}` : `💡 ${t("hint")} · ${hintCount}`;
+}
+
+function showHint(){
+  const item = currentList[currentIndex];
+  if(!item || answered) return;
+  const correct = item.correct;
+  if(hintCount >= correct.length) return;
+  hintCount++;
+  hintUsed = true;
+  puzzleLine = correct.slice(0, hintCount);
+  puzzleBank = shuffle(correct.slice(hintCount));
+  renderPuzzleUI();
+  updateHintBtn(item);
+}
+
+document.getElementById("hintBtn").addEventListener("click", showHint);
 
 function getCorrectAnswer(item){
   if(typeSelect.value === "ko-ro")        return item.correct[currentLang];
@@ -690,14 +726,21 @@ function checkCurrentAnswer(){
     const item = currentList[currentIndex];
     const isRight = JSON.stringify(puzzleLine) === JSON.stringify(item.correct);
     const sep = typeSelect.value === "chain" ? " → " : " ";
-    feedbackEl.textContent = isRight
-      ? t("correctAnswer")
-      : `${t("wrongAnswer")} — ${item.correct.join(sep)}`;
+    const effectiveRight = isRight && !hintUsed;
+    if(isRight && hintUsed){
+      feedbackEl.textContent = t("hintAssisted");
+    } else {
+      feedbackEl.textContent = isRight
+        ? t("correctAnswer")
+        : `${t("wrongAnswer")} — ${item.correct.join(sep)}`;
+    }
     total++;
-    if(isRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
+    if(effectiveRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
     else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item); }
-    if(!isWrongMode) saveStats(isRight, typeSelect.value);
+    if(!isWrongMode) saveStats(effectiveRight, typeSelect.value);
     answered = true;
+    const hb = document.getElementById("hintBtn");
+    if(hb) hb.style.display = "none";
     document.getElementById("answers").classList.add("done");
     updateBadges();
     updateWrongBtn();
