@@ -966,6 +966,12 @@
     -webkit-text-fill-color: initial !important;
     filter: none !important;
   }
+
+  .lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid var(--stroke,#e5e5e5);border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+  .lang-picker.open{display:flex}
+  .lang-picker button{padding:6px 14px;font-size:13px;border-radius:8px;border:none;font-weight:800;cursor:pointer;background:transparent;color:var(--text);}
+  .lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;}
+  body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 
 </head><body>
@@ -993,8 +999,13 @@
             </div>
           </details>
 
-          <button id="btnRo" class="pill active" type="button">RO</button>
-          <button id="btnEn" class="pill" type="button">EN</button>
+          <div style="position:relative">
+            <button type="button" id="langBtn" class="pill">ro</button>
+            <div id="langPicker" class="lang-picker">
+              <button type="button" id="pickRo">ro</button>
+              <button type="button" id="pickEn">en</button>
+            </div>
+          </div>
 
         </div>
       </div>
@@ -1527,8 +1538,9 @@
   };
 
   var els = {
-    btnRo: document.getElementById('btnRo'),
-    btnEn: document.getElementById('btnEn'),
+    langBtn: document.getElementById('langBtn'),
+    pickRo: document.getElementById('pickRo'),
+    pickEn: document.getElementById('pickEn'),
     topicSummaryText: document.getElementById('topicSummaryText'),
     topicDropdown: document.getElementById('topicDropdown'),
     freeText: document.getElementById('freeText'),
@@ -2485,8 +2497,9 @@
   }
 
   function updateChrome(){
-    if(els.btnRo) els.btnRo.classList.toggle('active', state.lang === 'ro');
-    if(els.btnEn) els.btnEn.classList.toggle('active', state.lang === 'en');
+    if(els.langBtn) els.langBtn.textContent = state.lang;
+    if(els.pickRo) els.pickRo.classList.toggle('active', state.lang === 'ro');
+    if(els.pickEn) els.pickEn.classList.toggle('active', state.lang === 'en');
 
     if(els.freeText){
       els.freeText.placeholder = currentUI().placeholder;
@@ -3160,13 +3173,17 @@
   }
 
   function bindEvents(){
-    if(els.btnRo){
-      els.btnRo.addEventListener('click', function(){ setLang('ro'); });
+    var _langTimer = null;
+    function openLangPicker(){ document.getElementById('langPicker').classList.add('open'); }
+    function closeLangPicker(){ document.getElementById('langPicker').classList.remove('open'); }
+    if(els.langBtn){
+      els.langBtn.addEventListener('pointerdown', function(){ _langTimer = setTimeout(function(){ _langTimer = null; openLangPicker(); }, 450); });
+      els.langBtn.addEventListener('pointerup',   function(){ clearTimeout(_langTimer); _langTimer = null; });
+      els.langBtn.addEventListener('pointerleave',function(){ clearTimeout(_langTimer); _langTimer = null; });
     }
-
-    if(els.btnEn){
-      els.btnEn.addEventListener('click', function(){ setLang('en'); });
-    }
+    if(els.pickRo){ els.pickRo.addEventListener('click', function(){ setLang('ro'); closeLangPicker(); }); }
+    if(els.pickEn){ els.pickEn.addEventListener('click', function(){ setLang('en'); closeLangPicker(); }); }
+    document.addEventListener('pointerdown', function(e){ if(!e.target.closest('#langBtn,#langPicker')) closeLangPicker(); });
 
     if(els.topicDropdown){
       els.topicDropdown.addEventListener('click', function(event){
