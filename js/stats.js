@@ -7,6 +7,9 @@ const UI = {
     exercises:"Exerciții", correct:"Corecte", accuracy:"Acuratețe",
     bestStreak:"Cel mai lung streak", favorites:"Favorite",
     byType:"Per tip de exercițiu",
+    weakTitle:"⚠ Puncte slabe",
+    weakSub:"Tipuri cu acuratețe sub 65% (min. 5 exerciții). Concentrează-te pe acestea!",
+    weakLink:"Practică →",
     noData:"Nu există date încă. Fă câteva exerciții mai întâi!",
     goExercise:"Mergi la exerciții →",
     types:{ "ko-ro":"KO→RO","ro-ko":"RO→KO","particle":"Particulă (1)","particlePlus":"Particule multiple","conjug":"Conjugare","puzzle":"Puzzle","chain":"Chain" },
@@ -24,6 +27,9 @@ const UI = {
     exercises:"Exercises", correct:"Correct", accuracy:"Accuracy",
     bestStreak:"Best Streak", favorites:"Favorites",
     byType:"Per exercise type",
+    weakTitle:"⚠ Weak spots",
+    weakSub:"Types with accuracy below 65% (min. 5 exercises). Focus on these!",
+    weakLink:"Practice →",
     noData:"No data yet. Do some exercises first!",
     goExercise:"Go to exercises →",
     types:{ "ko-ro":"KO→RO","ro-ko":"RO→KO","particle":"Particle (1)","particlePlus":"Multiple particles","conjug":"Conjugation","puzzle":"Puzzle","chain":"Chain" },
@@ -156,18 +162,49 @@ function render(){
 
       <div class="card">
         <h2>${t("byType")}</h2>
-        ${Object.entries(s.byType || {}).map(([type, d]) => `
-          <div class="bar-wrap">
+        ${Object.entries(s.byType || {}).map(([type, d]) => {
+          const p = pct(d.correct, d.total);
+          const fillColor = p >= 75 ? 'var(--rk-green)' : p >= 55 ? '#f59e0b' : 'var(--rk-red)';
+          const isWeak = p < 65 && d.total >= 5;
+          return `<div class="bar-wrap">
             <div class="bar-label">
-              <span>${t("types")[type] || type}</span>
-              <span>${d.correct}/${d.total} (${pct(d.correct,d.total)}%)</span>
+              <span>${isWeak ? '⚠ ' : ''}${t("types")[type] || type}</span>
+              <span style="color:${fillColor};font-weight:900">${d.correct}/${d.total} (${p}%)</span>
             </div>
             <div class="bar-track">
-              <div class="bar-fill" style="width:${pct(d.correct,d.total)}%"></div>
+              <div class="bar-fill" style="width:${p}%;background:${fillColor}"></div>
             </div>
-          </div>
-        `).join("")}
-      </div>`;
+          </div>`;
+        }).join("")}
+      </div>
+
+      ${(() => {
+        const WEAK_THRESHOLD = 65;
+        const WEAK_MIN = 5;
+        const weakTypes = Object.entries(s.byType || {})
+          .filter(([, d]) => d.total >= WEAK_MIN && pct(d.correct, d.total) < WEAK_THRESHOLD)
+          .sort(([,a],[,b]) => pct(a.correct,a.total) - pct(b.correct,b.total))
+          .slice(0, 3);
+        if (!weakTypes.length) return '';
+        return `<div class="card weak-card">
+          <h2>${t("weakTitle")}</h2>
+          <p class="sub" style="margin:0 0 14px">${t("weakSub")}</p>
+          ${weakTypes.map(([type, d]) => {
+            const p = pct(d.correct, d.total);
+            return `<div class="weak-spot">
+              <div class="weak-spot-icon">⚠️</div>
+              <div class="weak-spot-info">
+                <div class="weak-spot-name">${t("types")[type] || type}</div>
+                <div class="weak-spot-acc">${p}% ${t("accuracy").toLowerCase()} · ${d.total} ${t("exercises").toLowerCase()}</div>
+              </div>
+              <div class="weak-spot-bar-wrap">
+                <div class="weak-spot-bar-fill" style="width:${p}%"></div>
+              </div>
+              <a href="exercises.html" class="weak-spot-link">${t("weakLink")}</a>
+            </div>`;
+          }).join("")}
+        </div>`;
+      })()}`;
   }
 
   el.innerHTML = statsHtml + `

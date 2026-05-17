@@ -42,6 +42,10 @@ let wrongsByType = {};
 let wrongModeItems = [];
 let isWrongMode = false;
 
+let levelStreak = 0;
+let levelSuggestDismissed = false;
+const LEVEL_SUGGEST_THRESHOLD = 3;
+
 // ── EXERCISE SRS (SM-2) ─────────────────────────────────────────────────
 const EX_SRS_KEY = 'RK_EX_SRS';
 const EX_SRS_NEW_CAP = 10;
@@ -518,6 +522,55 @@ function exitWrongMode(){
   currentIndex = 0;
 }
 
+// ── DIFFICULTY ADAPTIVĂ ──────────────────────────────────────────────────
+
+function checkLevelSuggestion(isCorrect) {
+  if (isWrongMode || typeSelect.value.startsWith('drill-')) return;
+  const lvl = parseInt(currentLevel);
+  if (isNaN(lvl) || lvl >= 6) return;
+  if (isCorrect) {
+    levelStreak++;
+    if (levelStreak >= LEVEL_SUGGEST_THRESHOLD && !levelSuggestDismissed) {
+      showLevelSuggestion();
+    }
+  } else {
+    levelStreak = 0;
+    const banner = document.getElementById('lvlBanner');
+    if (banner && banner.classList.contains('show')) banner.classList.remove('show');
+  }
+}
+
+function showLevelSuggestion() {
+  const banner = document.getElementById('lvlBanner');
+  if (!banner || banner.classList.contains('show')) return;
+  const nextLevel = parseInt(currentLevel) + 1;
+  const ro = currentLang === 'ro';
+  banner.innerHTML =
+    '<div class="lvl-banner-body">' +
+    '<div class="lvl-banner-text">🎉 ' + (ro
+      ? 'Ești pregătit pentru TOPIK ' + nextLevel + '!'
+      : 'Ready for TOPIK ' + nextLevel + '!') + '</div>' +
+    '<div class="lvl-banner-btns">' +
+    '<button class="lvl-banner-yes" onclick="switchToLevel(' + nextLevel + ')">TOPIK ' + nextLevel + ' →</button>' +
+    '<button class="lvl-banner-no" onclick="dismissLevelSuggestion()">' +
+    (ro ? 'Rămân la ' + currentLevel : 'Stay at ' + currentLevel) + '</button>' +
+    '</div></div>';
+  banner.classList.add('show');
+}
+
+function dismissLevelSuggestion() {
+  levelSuggestDismissed = true;
+  const banner = document.getElementById('lvlBanner');
+  if (banner) banner.classList.remove('show');
+}
+
+function switchToLevel(level) {
+  const banner = document.getElementById('lvlBanner');
+  if (banner) banner.classList.remove('show');
+  const btn = levelBtnsEl.querySelector('button[data-level="' + level + '"]');
+  if (btn) btn.click();
+}
+
 function setLanguage(lang){
   currentLang = lang;
   updateStaticTexts();
@@ -902,6 +955,7 @@ function checkCurrentAnswer(){
     updateExSrs(typeSelect.value, item, isRight, hintUsed);
     appendSrsInfo(typeSelect.value, item, effectiveRight);
     processGamification(effectiveRight);
+    if(!isWrongMode) checkLevelSuggestion(effectiveRight);
     answered = true;
     const hb = document.getElementById("hintBtn");
     if(hb) hb.style.display = "none";
@@ -952,6 +1006,7 @@ function checkCurrentAnswer(){
   updateExSrs(typeSelect.value, item, isCorrect, false);
   appendSrsInfo(typeSelect.value, item, isCorrect);
   processGamification(isCorrect);
+  if(!isWrongMode) checkLevelSuggestion(isCorrect);
   answered = true;
   document.getElementById("answers").classList.add("done");
   updateBadges();
@@ -1032,6 +1087,8 @@ function nextQuestion(){
 
 typeSelect.addEventListener("change", () => {
   exitWrongMode();
+  levelStreak = 0;
+  dismissLevelSuggestion();
   currentIndex = 0;
   if(typeSelect.value === 'drill-conjug') drillConjQueue = [];
   if(typeSelect.value === 'drill-ext')    drillExtQueue  = [];
@@ -1044,6 +1101,10 @@ typeSelect.addEventListener("change", () => {
 levelBtnsEl.querySelectorAll("button[data-level]").forEach(btn => {
   btn.addEventListener("click", () => {
     exitWrongMode();
+    levelStreak = 0;
+    levelSuggestDismissed = false;
+    const lvlBannerEl = document.getElementById('lvlBanner');
+    if(lvlBannerEl) lvlBannerEl.classList.remove('show');
     currentLevel = btn.dataset.level;
     localStorage.setItem("RK_LEVEL", currentLevel);
     currentIndex = 0;
