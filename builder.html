@@ -1423,7 +1423,6 @@
           <button class="iconBtn" id="refreshBtn" type="button" title="Refresh" aria-label="Refresh">↻</button>
           <button class="iconBtn" id="playBtn" type="button" title="Ascultă propoziția" aria-label="Ascultă propoziția">🔊</button>
           <button class="iconBtn" id="recordBtn" type="button" title="Înregistrează vocea" aria-label="Înregistrează vocea">🎤</button>
-          <button class="iconBtn" id="autoSpeakBtn" type="button" title="Auto-pronunție: OFF" aria-label="Auto-pronunție">🔈</button>
           <button class="iconBtn" id="saveBtn" type="button" title="Salvează propoziția" aria-label="Salvează propoziția">💾</button>
           <button class="iconBtn" id="quizBtn" type="button" title="Mod Quiz" aria-label="Mod Quiz">🎯</button>
         </div>
@@ -2050,7 +2049,6 @@
     toast: document.getElementById('toast'),
     recordBox: document.getElementById('recordBox'),
     recordedAudio: document.getElementById('recordedAudio'),
-    autoSpeakBtn: document.getElementById('autoSpeakBtn'),
     saveBtn: document.getElementById('saveBtn'),
     templateMenu: document.getElementById('templateMenu'),
     templateDropdown: document.getElementById('templateDropdown'),
@@ -2064,7 +2062,6 @@
     clauses: []
   };
 
-  var autoSpeak = localStorage.getItem('RK_AUTO_SPEAK') === 'on';
   var _wordSpeakTimer = null;
   var _sentenceSpeakTimer = null;
 
@@ -2078,40 +2075,16 @@
   }
 
   function autoSpeakWord(ko){
-    if(!autoSpeak || !ko) return;
+    if(!ko) return;
     clearTimeout(_wordSpeakTimer);
     clearTimeout(_sentenceSpeakTimer);
     _wordSpeakTimer = setTimeout(function(){ speakText(ko, 0.85); }, 320);
   }
 
   function autoSpeakSentence(ko){
-    if(!autoSpeak || !ko) return;
+    if(!ko) return;
     clearTimeout(_sentenceSpeakTimer);
     _sentenceSpeakTimer = setTimeout(function(){ speakText(ko, 0.9); }, 1500);
-  }
-
-  function updateAutoSpeakBtn(){
-    if(!els.autoSpeakBtn) return;
-    if(autoSpeak){
-      els.autoSpeakBtn.classList.add('autoActive');
-      els.autoSpeakBtn.textContent = '🔊';
-      els.autoSpeakBtn.title = 'Auto-pronunție: ON';
-    }else{
-      els.autoSpeakBtn.classList.remove('autoActive');
-      els.autoSpeakBtn.textContent = '🔈';
-      els.autoSpeakBtn.title = 'Auto-pronunție: OFF';
-    }
-  }
-
-  function toggleAutoSpeak(){
-    autoSpeak = !autoSpeak;
-    localStorage.setItem('RK_AUTO_SPEAK', autoSpeak ? 'on' : 'off');
-    updateAutoSpeakBtn();
-    if(!autoSpeak){
-      window.speechSynthesis.cancel();
-      clearTimeout(_wordSpeakTimer);
-      clearTimeout(_sentenceSpeakTimer);
-    }
   }
 
   /* ============================================================
@@ -4078,9 +4051,6 @@
       els.recordBtn.addEventListener('click', toggleRecording);
     }
 
-    if(els.autoSpeakBtn){
-      els.autoSpeakBtn.addEventListener('click', toggleAutoSpeak);
-    }
 
     var _saveBtn = document.getElementById('saveBtn');
     if(_saveBtn) _saveBtn.addEventListener('click', addCurrentSentence);
@@ -4227,7 +4197,6 @@
     resetBuilder();
     setLevel(1);
     setLang(localStorage.getItem('RK_LANG') || 'ro');
-    updateAutoSpeakBtn();
     renderTemplateMenu();
     renderSavedPanel();
 
