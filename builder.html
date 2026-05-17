@@ -3978,6 +3978,17 @@
     state.text = '';
     if(els.freeText) els.freeText.value = '';
 
+    // Ensure state.level is high enough so ensureChainLength doesn't clear template fields
+    for(var lv = 1; lv <= 6; lv++){
+      var lf = LEVEL_FIELDS[lv] || [];
+      var lvOk = true;
+      for(var fi = 0; fi < tpl.fields.length; fi++){
+        var tf = tpl.fields[fi];
+        if(ALL_FIELD_KEYS.indexOf(tf) !== -1 && lf.indexOf(tf) === -1){ lvOk = false; break; }
+      }
+      if(lvOk){ if(state.level < lv) state.level = lv; break; }
+    }
+
     var clause = state.clauses[0];
 
     tpl.fields.forEach(function(fieldKey){
