@@ -90,6 +90,7 @@
   .tinyBtn,
   .topicOption,
   .iconBtn,
+  .tableCycleBtn,
   .tableMainBtn,
   .tableToggle,
   .vocabSheetClose,
@@ -505,10 +506,7 @@
     flex-direction:column;
     justify-content:space-between;
     align-items:flex-start;
-    cursor:pointer;
-    user-select:none;
-    -webkit-user-select:none;
-    -webkit-touch-callout:none;
+    cursor:text;
   }
 
   .tableMainBtn[data-kind="subject"]{
@@ -639,6 +637,67 @@
     color:#fff;
     border-color:#58CC02;
     background:#58CC02;
+  }
+
+  .tableKoInput{
+    background:transparent;
+    border:none;
+    outline:none;
+    font-size:16px;
+    font-weight:900;
+    letter-spacing:-.02em;
+    color:#0f172a;
+    width:100%;
+    padding:0;
+    margin:auto 0;
+    min-width:0;
+    font-family:inherit;
+    caret-color:#0f172a;
+    display:block;
+  }
+  .tableKoInput::placeholder{
+    color:#94a3b8;
+    font-weight:700;
+  }
+  .tableKoInput:focus{
+    outline:none;
+  }
+
+  .tableCycleBtn{
+    position:absolute;
+    bottom:6px;
+    right:6px;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    border:1px solid rgba(15,23,42,.14);
+    background:rgba(255,255,255,.85);
+    color:#64748b;
+    cursor:pointer;
+    display:grid;
+    place-items:center;
+    font-size:12px;
+    font-weight:900;
+    padding:0;
+    z-index:3;
+    line-height:1;
+    transition:background .12s, color .12s;
+  }
+  .tableCycleBtn:hover{
+    background:#fff;
+    color:#0f172a;
+  }
+  .tableCycleBtn:active{
+    transform:rotate(45deg);
+  }
+
+  .translationText[contenteditable]:empty:before{
+    content:attr(data-placeholder);
+    color:#94a3b8;
+    pointer-events:none;
+  }
+  .translationText[contenteditable]:focus{
+    outline:none;
   }
 
   .toast{
@@ -806,7 +865,7 @@
       height:92px;
     }
 
-    .tableValue{
+    .tableValue, .tableKoInput{
       font-size:15px;
     }
   }
@@ -854,7 +913,7 @@
       padding:8px 9px;
     }
 
-    .tableValue{
+    .tableValue, .tableKoInput{
       font-size:14px;
     }
 
@@ -884,7 +943,7 @@
       height:84px;
     }
 
-    .tableValue{
+    .tableValue, .tableKoInput{
       font-size:13px;
     }
   }
@@ -984,6 +1043,19 @@
   }
   body.dark-mode .tableMainBtn.is-conjugated .tableValue{
     color:#fed7aa;
+  }
+  body.dark-mode .tableKoInput{
+    color:#f1f5f9;
+    caret-color:#f1f5f9;
+  }
+  body.dark-mode .tableCycleBtn{
+    background:rgba(255,255,255,.10);
+    border-color:rgba(255,255,255,.18);
+    color:#94a3b8;
+  }
+  body.dark-mode .tableCycleBtn:hover{
+    background:rgba(255,255,255,.20);
+    color:#f1f5f9;
   }
   body.dark-mode .tableMainBtn[data-kind="connector"]{
     border-color:rgba(14,165,233,.35) !important;
@@ -1449,7 +1521,7 @@
       </div>
 
       <div class="translationBox">
-        <div class="translationText" id="translationText"></div>
+        <div class="translationText" id="translationText" contenteditable="true" spellcheck="false" data-placeholder="traducere..."></div>
       </div>
 
       <div class="recordBox" id="recordBox">
@@ -3168,7 +3240,7 @@
       }).join('');
     }
 
-    if(els.translationText){
+    if(els.translationText && document.activeElement !== els.translationText){
       els.translationText.textContent = built.translation || currentUI().defaultTranslation;
     }
 
@@ -3186,9 +3258,8 @@
     var clause = state.clauses[clauseIndex];
     var active = isFieldActive(clause, col.key);
     var item = active ? itemOf(clause, col.key) : null;
-    var value = item && item.ko ? item.ko : (TABLE_PLACEHOLDERS_KO[col.key] || '선택');
-    var emptyHint = state.lang === 'en' ? 'click to select' : 'click pentru selectare';
-    var meta = item ? (translationOf(item) || '') : emptyHint;
+    var value = item && item.ko ? item.ko : '';
+    var meta = item ? (translationOf(item) || '') : '';
     var conjugated = false;
     var isNew = false;
 
@@ -3207,12 +3278,78 @@
     return '' +
       '<div class="tableField ' + (active ? '' : 'off') + '">' +
         '<button class="tableToggle ' + (active ? 'active' : '') + '" data-toggle-cell="' + clauseIndex + ':' + col.key + '" type="button">✓</button>' +
-        '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + (conjugated ? ' is-conjugated' : '') + (isNew ? ' is-new' : '') + '" data-press-field="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind) + '" type="button">' +
+        '<div class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + (conjugated ? ' is-conjugated' : '') + (isNew ? ' is-new' : '') + '" data-kind="' + escapeHtml(col.kind) + '">' +
           '<div class="tableMeta">' + escapeHtml(fieldLabel(col.key)) + '</div>' +
-          '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
-          '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
-        '</button>' +
+          '<input class="tableKoInput" type="text"' +
+            ' data-field-input="' + clauseIndex + ':' + col.key + '"' +
+            ' placeholder="한국어..."' +
+            ' value="' + escapeHtml(value) + '"' +
+            ' autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"' +
+          ' />' +
+          '<div class="tableMeta tableMetaTr">' + escapeHtml(meta) + '</div>' +
+          '<button class="tableCycleBtn" data-cycle-field="' + clauseIndex + ':' + col.key + '" type="button" title="Următor">↻</button>' +
+        '</div>' +
       '</div>';
+  }
+
+  function handleCellInput(clauseIndex, fieldKey, value){
+    var clause = state.clauses[clauseIndex];
+    if(!clause) return;
+
+    var koText = value.trim();
+
+    if(!koText){
+      clearFieldFromClause(clause, fieldKey);
+      ensureChainLength();
+      renderPreview();
+      return;
+    }
+
+    // Look for a predefined match (gets translation)
+    var isLast = clauseIndex === state.clauses.length - 1;
+    var options = getOptionsForField(fieldKey, isLast);
+    var match = null;
+    for(var i = 0; i < options.length; i++){
+      if(options[i] && options[i].ko === koText){ match = options[i]; break; }
+    }
+
+    var item = match || {
+      id: 'custom-' + fieldKey,
+      key: 'custom',
+      bucket: fieldKey,
+      index: -1,
+      ko: koText,
+      ro: '',
+      en: '',
+      aliases: [],
+      final: '',
+      forms: {},
+      raw: null
+    };
+
+    if(!clause.__picked) clause.__picked = {};
+    clause.__picked[fieldKey] = item;
+
+    if(FIELD_BINDINGS[fieldKey]){
+      clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+    } else if(clause.extras){
+      clause.extras[fieldKey] = item;
+    }
+
+    // Patch only the translation meta in the cell to avoid losing focus
+    var inputEl = els.clauseList
+      ? els.clauseList.querySelector('[data-field-input="' + clauseIndex + ':' + fieldKey + '"]')
+      : null;
+    if(inputEl){
+      var cellDiv = inputEl.closest('.tableMainBtn');
+      if(cellDiv){
+        var metaTr = cellDiv.querySelector('.tableMetaTr');
+        if(metaTr) metaTr.textContent = match ? translationOf(match) : '';
+        cellDiv.classList.toggle('is-empty', !koText);
+      }
+    }
+
+    renderPreview();
   }
 
   function renderClauses(){
@@ -4101,22 +4238,37 @@
           return;
         }
 
-        var pressBtn = event.target.closest('[data-press-field]');
-        if(pressBtn){
+        var cycleBtn = event.target.closest('[data-cycle-field]');
+        if(cycleBtn){
           event.preventDefault();
 
-          if(pressBtn.getAttribute('data-long-press-opened') === '1'){
-            pressBtn.removeAttribute('data-long-press-opened');
+          if(cycleBtn.getAttribute('data-long-press-opened') === '1'){
+            cycleBtn.removeAttribute('data-long-press-opened');
             return;
           }
 
-          var parts = pressBtn.getAttribute('data-press-field').split(':');
+          var parts = cycleBtn.getAttribute('data-cycle-field').split(':');
           cycleFieldValue(Number(parts[0]), parts[1]);
+          return;
+        }
+
+        // Click anywhere on the cell body → focus its input
+        var cellBody = event.target.closest('.tableMainBtn');
+        if(cellBody && !event.target.closest('.tableKoInput')){
+          var inp = cellBody.querySelector('.tableKoInput');
+          if(inp){ inp.focus(); inp.select(); }
         }
       });
 
+      els.clauseList.addEventListener('input', function(event){
+        var input = event.target.closest('[data-field-input]');
+        if(!input) return;
+        var parts = input.getAttribute('data-field-input').split(':');
+        handleCellInput(Number(parts[0]), parts[1], input.value);
+      });
+
       els.clauseList.addEventListener('pointerdown', function(event){
-        var btn = event.target.closest('[data-press-field]');
+        var btn = event.target.closest('[data-cycle-field]');
         if(!btn) return;
 
         longPressTarget = btn;
@@ -4126,7 +4278,7 @@
           if(!longPressTarget) return;
           longPressTarget.setAttribute('data-long-press-opened', '1');
 
-          var parts = longPressTarget.getAttribute('data-press-field').split(':');
+          var parts = longPressTarget.getAttribute('data-cycle-field').split(':');
           openVocabSheet(Number(parts[0]), parts[1]);
         }, LONG_PRESS_MS);
       });
@@ -4150,7 +4302,7 @@
       });
 
       els.clauseList.addEventListener('contextmenu', function(event){
-        var btn = event.target.closest('[data-press-field]');
+        var btn = event.target.closest('[data-cycle-field]');
         if(btn){
           event.preventDefault();
         }
