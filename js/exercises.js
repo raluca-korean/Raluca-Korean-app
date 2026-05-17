@@ -474,6 +474,10 @@ function markLessonDone(lessonId){
   }
 }
 
+function syncStudyToSW(currentStreak) {
+  if (window.RKNotifications) RKNotifications.syncStudy(currentStreak);
+}
+
 function saveStats(isCorrect, type){
   const today = new Date().toISOString().slice(0, 10);
   let s;
@@ -488,6 +492,7 @@ function saveStats(isCorrect, type){
   s.byType[type].total++;
   if(isCorrect) s.byType[type].correct++;
   localStorage.setItem("RK_STATS", JSON.stringify(s));
+  if(isCorrect) syncStudyToSW(streak);
 }
 
 function trackWrong(item){
