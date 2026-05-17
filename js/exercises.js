@@ -42,6 +42,62 @@ let wrongsByType = {};
 let wrongModeItems = [];
 let isWrongMode = false;
 
+// ── EXERCISE SRS (SM-2) ─────────────────────────────────────────────────
+const EX_SRS_KEY = 'RK_EX_SRS';
+const EX_SRS_NEW_CAP = 10;
+
+function exSrsLoad() {
+  try { return JSON.parse(localStorage.getItem(EX_SRS_KEY) || '{}'); } catch { return {}; }
+}
+function exSrsSave(s) {
+  try { localStorage.setItem(EX_SRS_KEY, JSON.stringify(s)); } catch {}
+}
+
+function exSrsUpdate(exerciseKey, quality) {
+  // quality: 1=wrong, 2=hint-assisted, 4=correct (SM-2 adapted)
+  const s = exSrsLoad();
+  const c = s[exerciseKey] || { n:0, I:1, EF:2.5, due:0 };
+  if (quality >= 3) {
+    if      (c.n === 0) c.I = 1;
+    else if (c.n === 1) c.I = 6;
+    else                c.I = Math.round(c.I * c.EF);
+    c.n++;
+  } else {
+    c.n = 0;
+    c.I = 1;
+  }
+  c.EF  = Math.max(1.3, c.EF + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+  c.due = Date.now() + c.I * 86400000;
+  s[exerciseKey] = c;
+  exSrsSave(s);
+  return c;
+}
+
+function exSrsStatus(exerciseKey) {
+  const c = exSrsLoad()[exerciseKey];
+  if (!c) return 'new';
+  return c.due <= Date.now() ? 'due' : 'learning';
+}
+
+// Called after each answer — skips drills and wrongMode
+function updateExSrs(type, item, isRight, wasHintUsed) {
+  if (isWrongMode || type.startsWith('drill-')) return;
+  const quality = !isRight ? 1 : wasHintUsed ? 2 : 4;
+  return exSrsUpdate(getExerciseKey(type, item), quality);
+}
+
+// Appends "· în N zile" to feedback after a correct answer
+function appendSrsInfo(type, item, isRight) {
+  if (isWrongMode || type.startsWith('drill-') || !isRight) return;
+  const card = exSrsLoad()[getExerciseKey(type, item)];
+  if (!card) return;
+  const days = Math.round((card.due - Date.now()) / 86400000);
+  const label = days <= 1
+    ? (currentLang === 'ro' ? 'mâine' : 'tomorrow')
+    : (currentLang === 'ro' ? `în ${days} zile` : `in ${days} days`);
+  feedbackEl.textContent += '  ·  📅 ' + label;
+}
+
 // ── DRILL DATA ──────────────────────────────────────────────────────────
 const DRILL_VERBS = [
   {ko:'가다',     ro:'a merge',       en:'to go'},
@@ -527,29 +583,42 @@ function getFilteredList(){
   } else if(currentLevel !== "test"){
     list = list.filter(item => String(item.topik) === currentLevel);
   }
-  const unlearned = shuffle(list.filter(item => !isLearnedEx(type, item)));
-  const learned   = shuffle(list.filter(item =>  isLearnedEx(type, item)));
-  return [...unlearned, ...learned];
+  // SRS ordering: due → new (capped) → learning → manually-learned
+  const srs = exSrsLoad();
+  const now = Date.now();
+  const key = item => getExerciseKey(type, item);
+
+  const active  = list.filter(item => !isLearnedEx(type, item));
+  const learned = shuffle(list.filter(item =>  isLearnedEx(type, item)));
+
+  const due      = shuffle(active.filter(item => { const c = srs[key(item)]; return c && c.due <= now; }));
+  const newEx    = shuffle(active.filter(item => !srs[key(item)])).slice(0, EX_SRS_NEW_CAP);
+  const learning = shuffle(active.filter(item => { const c = srs[key(item)]; return c && c.due > now; }));
+
+  return [...due, ...newEx, ...learning, ...learned];
 }
 
 function renderInfoBadge(item){
   const parts = [];
 
-  if(item.lessonId){
-    parts.push(`
-      <span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">
-        ${t("lesson")}: ${item.lessonId}
-      </span>
-    `);
+  // SRS status badge
+  const type = typeSelect.value;
+  if (!type.startsWith('drill-') && !isWrongMode) {
+    const status = exSrsStatus(getExerciseKey(type, item));
+    if (status === 'new') {
+      parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.28);font-weight:900;font-size:11px;color:#7c3aed">✨ ${currentLang === 'ro' ? 'NOU' : 'NEW'}</span>`);
+    } else if (status === 'due') {
+      parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.28);font-weight:900;font-size:11px;color:#b45309">📅 ${currentLang === 'ro' ? 'DE AZI' : 'DUE'}</span>`);
+    }
   }
 
-  parts.push(`
-    <span style="padding:6px 10px;border-radius:999px;background:rgba(34,211,238,.10);border:1px solid rgba(34,211,238,.20);font-weight:900">
-      #${currentIndex + 1}/${currentList.length}
-    </span>
-  `);
+  if(item.lessonId){
+    parts.push(`<span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">${t("lesson")}: ${item.lessonId}</span>`);
+  }
 
-  badgeEl.innerHTML = parts.join("");
+  parts.push(`<span style="padding:6px 10px;border-radius:999px;background:rgba(34,211,238,.10);border:1px solid rgba(34,211,238,.20);font-weight:900">#${currentIndex + 1}/${currentList.length}</span>`);
+
+  badgeEl.innerHTML = parts.join(" ");
 }
 
 function cleanConjugPrompt(prompt){
@@ -830,6 +899,8 @@ function checkCurrentAnswer(){
     if(effectiveRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
     else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item); }
     if(!isWrongMode) saveStats(effectiveRight, typeSelect.value);
+    updateExSrs(typeSelect.value, item, isRight, hintUsed);
+    appendSrsInfo(typeSelect.value, item, effectiveRight);
     processGamification(effectiveRight);
     answered = true;
     const hb = document.getElementById("hintBtn");
@@ -878,6 +949,8 @@ function checkCurrentAnswer(){
   }
 
   if(!isWrongMode) saveStats(isCorrect, typeSelect.value);
+  updateExSrs(typeSelect.value, item, isCorrect, false);
+  appendSrsInfo(typeSelect.value, item, isCorrect);
   processGamification(isCorrect);
   answered = true;
   document.getElementById("answers").classList.add("done");
