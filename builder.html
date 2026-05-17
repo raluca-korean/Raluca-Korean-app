@@ -1084,6 +1084,96 @@
   .lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;}
   body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 
+  /* ---- MOBILE UI ---- */
+
+  /* Textarea collapse toggle — hidden on desktop */
+  .txtBar{ display:none }
+  .txtCollapsible{ display:block }
+
+  /* Table outer wrapper pentru fade */
+  .tableOuter{
+    position:relative;
+  }
+
+  .tableFadeRight{
+    position:absolute;
+    top:0;
+    right:0;
+    bottom:0;
+    width:36px;
+    background:linear-gradient(to right, transparent, rgba(255,255,255,.92));
+    pointer-events:none;
+    border-radius:0 14px 14px 0;
+    transition:opacity .2s;
+    opacity:0;
+  }
+
+  /* Scroll dots */
+  .tableScrollDots{
+    display:none;
+    justify-content:center;
+    gap:5px;
+    padding-top:10px;
+  }
+
+  .tDot{
+    display:inline-block;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#d0d0d0;
+    transition:background .15s, transform .15s;
+  }
+
+  .tDot.active{
+    background:#1CB0F6;
+    transform:scale(1.35);
+  }
+
+  @media (max-width: 640px){
+    /* Toolbar no-wrap — scroll orizontal în loc de wrap */
+    .toolbar{
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      padding-bottom:2px;
+      scrollbar-width:none;
+    }
+    .toolbar::-webkit-scrollbar{ display:none }
+
+    /* Scroll snap pe celulele tabelului */
+    .builderTableWrap{
+      scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;
+    }
+    .builderTableCompact td{
+      scroll-snap-align:start;
+    }
+
+    /* Fade dreapta vizibil */
+    .tableFadeRight{ opacity:1 }
+
+    /* Dots vizibile */
+    .tableScrollDots{ display:flex }
+
+    /* Textarea collapse */
+    .txtBar{
+      display:flex;
+      justify-content:flex-end;
+    }
+    .txtCollapsible{
+      display:none;
+      margin-top:10px;
+    }
+    .txtCollapsible.open{
+      display:block;
+    }
+  }
+
+  body.dark-mode .tableFadeRight{
+    background:linear-gradient(to right, transparent, rgba(10,2,20,.88));
+  }
+
   /* ---- QUIZ BAR ---- */
   .quizBar{
     display:none;
@@ -1313,13 +1403,18 @@
     </section>
 
     <section class="panel">
-      <textarea
-        id="freeText"
-        placeholder="Scrie aici o propoziție sau un lanț de propoziții..."
-        autocomplete="off"
-        autocapitalize="sentences"
-        spellcheck="false"
-      ></textarea>
+      <div class="txtBar">
+        <button class="tinyBtn txtToggleBtn" id="txtToggleBtn" type="button">▼ Text</button>
+      </div>
+      <div class="txtCollapsible" id="txtCollapsible">
+        <textarea
+          id="freeText"
+          placeholder="Scrie aici o propoziție sau un lanț de propoziții..."
+          autocomplete="off"
+          autocapitalize="sentences"
+          spellcheck="false"
+        ></textarea>
+      </div>
     </section>
 
     <section class="panel">
@@ -1375,7 +1470,10 @@
     </section>
 
     <section class="panel">
-      <div class="clauseList" id="clauseList"></div>
+      <div class="tableOuter">
+        <div class="clauseList" id="clauseList"></div>
+        <div class="tableFadeRight" id="tableFadeRight"></div>
+      </div>
     </section>
   </div>
 
@@ -3149,18 +3247,49 @@
     if(!els.clauseList) return;
 
     var cols = getVisibleColumns();
+    var colCount = cols.length;
     var html = '<div class="builderTableWrap"><table class="builderTable builderTableCompact"><tbody>';
 
     for(var r=0;r<state.clauses.length;r++){
       html += '<tr>';
-      for(var c=0;c<cols.length;c++){
+      for(var c=0;c<colCount;c++){
         html += '<td>' + renderCell(r, cols[c]) + '</td>';
       }
       html += '</tr>';
     }
 
     html += '</tbody></table></div>';
+    if(colCount > 1){
+      html += '<div class="tableScrollDots" id="tableScrollDots"></div>';
+    }
     els.clauseList.innerHTML = html;
+
+    var wrap = els.clauseList.querySelector('.builderTableWrap');
+    if(wrap){
+      updateScrollIndicators(wrap, colCount);
+      wrap.addEventListener('scroll', function(){
+        updateScrollIndicators(wrap, colCount);
+      }, { passive: true });
+    }
+  }
+
+  function updateScrollIndicators(wrap, colCount){
+    var maxScroll = wrap.scrollWidth - wrap.clientWidth;
+    var scrollLeft = wrap.scrollLeft;
+
+    var fadeEl = document.getElementById('tableFadeRight');
+    if(fadeEl){
+      var atEnd = maxScroll <= 0 || scrollLeft >= maxScroll - 4;
+      fadeEl.style.opacity = atEnd ? '0' : '';
+    }
+
+    var dotsEl = document.getElementById('tableScrollDots');
+    if(dotsEl && colCount > 1 && maxScroll > 0){
+      var current = Math.min(colCount - 1, Math.round((scrollLeft / maxScroll) * (colCount - 1)));
+      dotsEl.innerHTML = Array.from({ length: colCount }, function(_, i){
+        return '<span class="tDot' + (i === current ? ' active' : '') + '"></span>';
+      }).join('');
+    }
   }
 
   function updateChrome(){
@@ -3958,6 +4087,17 @@
 
     var _quizExitBtn = document.getElementById('quizExitBtn');
     if(_quizExitBtn) _quizExitBtn.addEventListener('click', exitQuizMode);
+
+    var _txtToggleBtn = document.getElementById('txtToggleBtn');
+    var _txtCollapsible = document.getElementById('txtCollapsible');
+    if(_txtToggleBtn && _txtCollapsible){
+      var _txtOpen = false;
+      _txtToggleBtn.addEventListener('click', function(){
+        _txtOpen = !_txtOpen;
+        _txtCollapsible.classList.toggle('open', _txtOpen);
+        _txtToggleBtn.textContent = _txtOpen ? '▲ Text' : '▼ Text';
+      });
+    }
 
     if(els.sentenceBox){
       els.sentenceBox.addEventListener('click', playCurrent);
