@@ -1,0 +1,413 @@
+/* ══════════════════════════════════════
+   DATA
+══════════════════════════════════════ */
+var DRILL_VERBS = [
+  {ko:'가다',     ro:'a merge',       en:'to go'},
+  {ko:'오다',     ro:'a veni',        en:'to come'},
+  {ko:'먹다',     ro:'a mânca',       en:'to eat'},
+  {ko:'마시다',   ro:'a bea',         en:'to drink'},
+  {ko:'공부하다', ro:'a studia',      en:'to study'},
+  {ko:'자다',     ro:'a dormi',       en:'to sleep'},
+  {ko:'읽다',     ro:'a citi',        en:'to read'},
+  {ko:'쓰다',     ro:'a scrie',       en:'to write'},
+  {ko:'보다',     ro:'a vedea',       en:'to see'},
+  {ko:'듣다',     ro:'a asculta',     en:'to listen'},
+  {ko:'말하다',   ro:'a vorbi',       en:'to speak'},
+  {ko:'만나다',   ro:'a întâlni',     en:'to meet'},
+  {ko:'쉬다',     ro:'a se odihni',   en:'to rest'},
+  {ko:'운동하다', ro:'a face sport',  en:'to exercise'},
+  {ko:'사다',     ro:'a cumpăra',     en:'to buy'},
+  {ko:'주다',     ro:'a da',          en:'to give'},
+];
+
+var EXT = [
+  {s1_ko:'밥을 먹어요', s1_ro:'Mănânc.',       s1_en:'I eat.',
+   s2_ko:'물을 마셔요', s2_ro:'Beau apă.',     s2_en:'I drink water.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'밥을 먹고 물을 마셔요',
+   wrongs:['밥을 먹어서 물을 마셔요','물을 마시고 밥을 먹어요','밥을 먹지만 물을 마셔요']},
+
+  {s1_ko:'공부해요',    s1_ro:'Studiez.',       s1_en:'I study.',
+   s2_ko:'쉬어요',      s2_ro:'Mă odihnesc.',  s2_en:'I rest.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'공부하고 쉬어요',
+   wrongs:['공부해서 쉬어요','쉬고 공부해요','공부하지만 쉬어요']},
+
+  {s1_ko:'책을 읽어요', s1_ro:'Citesc o carte.',  s1_en:'I read a book.',
+   s2_ko:'자요',        s2_ro:'Dorm.',            s2_en:'I sleep.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'책을 읽고 자요',
+   wrongs:['책을 읽어서 자요','자고 책을 읽어요','책을 읽지만 자요']},
+
+  {s1_ko:'운동해요',    s1_ro:'Fac sport.',        s1_en:'I exercise.',
+   s2_ko:'물을 마셔요', s2_ro:'Beau apă.',         s2_en:'I drink water.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'운동하고 물을 마셔요',
+   wrongs:['운동해서 물을 마셔요','물을 마시고 운동해요','운동하지만 물을 마셔요']},
+
+  {s1_ko:'음악을 들어요', s1_ro:'Ascult muzică.',   s1_en:'I listen to music.',
+   s2_ko:'공부해요',      s2_ro:'Studiez.',          s2_en:'I study.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'음악을 듣고 공부해요',
+   wrongs:['음악을 들어서 공부해요','공부하고 음악을 들어요','음악을 듣지만 공부해요']},
+
+  {s1_ko:'학교에 가요', s1_ro:'Merg la școală.',   s1_en:'I go to school.',
+   s2_ko:'공부해요',    s2_ro:'Studiez.',            s2_en:'I study.',
+   conn:'-아/어서', conn_ro:'deci (cauzal)', conn_en:'so (causal)',
+   correct:'학교에 가서 공부해요',
+   wrongs:['학교에 가고 공부해요','공부해서 학교에 가요','학교에 가지만 공부해요']},
+
+  {s1_ko:'카페에 가요',   s1_ro:'Merg la cafenea.',  s1_en:'I go to the café.',
+   s2_ko:'커피를 마셔요', s2_ro:'Beau cafea.',        s2_en:'I drink coffee.',
+   conn:'-아/어서', conn_ro:'deci (cauzal)', conn_en:'so (causal)',
+   correct:'카페에 가서 커피를 마셔요',
+   wrongs:['카페에 가고 커피를 마셔요','커피를 마셔서 카페에 가요','카페에 가지만 커피를 마셔요']},
+
+  {s1_ko:'책을 사요',  s1_ro:'Cumpăr cartea.',     s1_en:'I buy the book.',
+   s2_ko:'읽어요',     s2_ro:'Citesc.',             s2_en:'I read it.',
+   conn:'-아/어서', conn_ro:'deci (cauzal)', conn_en:'so (causal)',
+   correct:'책을 사서 읽어요',
+   wrongs:['책을 사고 읽어요','읽어서 책을 사요','책을 사지만 읽어요']},
+
+  {s1_ko:'음악을 들어요', s1_ro:'Ascult muzică.',   s1_en:'I listen to music.',
+   s2_ko:'공부해요',      s2_ro:'Studiez.',          s2_en:'I study.',
+   conn:'-지만', conn_ro:'dar (contrast)', conn_en:'but (contrast)',
+   correct:'음악을 듣지만 공부해요',
+   wrongs:['음악을 들어서 공부해요','음악을 듣고 공부해요','공부하지만 음악을 들어요']},
+
+  {s1_ko:'말해요',  s1_ro:'Vorbesc.',              s1_en:'I speak.',
+   s2_ko:'잘 들어요', s2_ro:'Ascult atent.',       s2_en:'I listen carefully.',
+   conn:'-지만', conn_ro:'dar (contrast)', conn_en:'but (contrast)',
+   correct:'말하지만 잘 들어요',
+   wrongs:['말해서 잘 들어요','말하고 잘 들어요','잘 들어서 말해요']},
+];
+
+var UI = {
+  ro:{
+    title:'Antrenament',
+    tabConjug:'🔤 Conjugare',
+    tabExt:'🔗 Extindere',
+    question:'Alege forma corectă:',
+    extInstruct:'Combină propozițiile cu conectorul:',
+    correct:'✅ Corect!',
+    wrong:'❌ Greșit! Răspunsul corect:',
+    next:'Următorul →',
+    endTitle:'Secțiune completă!',
+    endSub:'răspunsuri corecte din',
+    endStreak:'Cel mai lung streak: 🔥',
+    restart:'Reia secțiunea',
+    tense:{pres:'PREZENT',past:'TRECUT',fut:'VIITOR'},
+  },
+  en:{
+    title:'Drill',
+    tabConjug:'🔤 Conjugation',
+    tabExt:'🔗 Extension',
+    question:'Choose the correct form:',
+    extInstruct:'Combine the sentences using the connector:',
+    correct:'✅ Correct!',
+    wrong:'❌ Wrong! Correct answer:',
+    next:'Next →',
+    endTitle:'Section complete!',
+    endSub:'correct answers out of',
+    endStreak:'Best streak: 🔥',
+    restart:'Restart section',
+    tense:{pres:'PRESENT',past:'PAST',fut:'FUTURE'},
+  }
+};
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+var state = {
+  lang: 'ro',
+  section: 'conjug',
+  conjQueue: [],
+  conjIdx: 0,
+  extQueue: [],
+  extIdx: 0,
+  answered: false,
+  correct: 0,
+  wrong: 0,
+  streak: 0,
+  maxStreak: 0,
+};
+
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+
+function getForm(verbKo, tense){
+  var c = window.Conjugation;
+  if(!c) return verbKo;
+  if(tense==='pres') return c.present(verbKo);
+  if(tense==='past') return c.past(verbKo);
+  return c.future(verbKo);
+}
+
+function buildConjOptions(verbKo, tense){
+  var correct = getForm(verbKo, tense);
+  var other1  = getForm(verbKo, tense==='pres'?'past':tense==='past'?'fut':'pres');
+  var other2  = getForm(verbKo, tense==='pres'?'fut':tense==='past'?'pres':'past');
+  var pool = [correct, other1, other2];
+  var others = shuffle(DRILL_VERBS.filter(function(v){return v.ko!==verbKo;}));
+  for(var i=0;i<others.length&&pool.length<4;i++){
+    var f = getForm(others[i].ko, tense);
+    if(pool.indexOf(f)===-1) pool.push(f);
+  }
+  return {correct:correct, options:shuffle(pool.slice(0,4))};
+}
+
+function buildConjQueue(){
+  var q=[];
+  DRILL_VERBS.forEach(function(v){
+    ['pres','past','fut'].forEach(function(t){ q.push({verb:v,tense:t}); });
+  });
+  return shuffle(q);
+}
+
+function cur(){return UI[state.lang];}
+
+/* ══════════════════════════════════════
+   SCORE UI
+══════════════════════════════════════ */
+function updateScore(){
+  document.getElementById('scoreCorrect').textContent = state.correct;
+  document.getElementById('scoreWrong').textContent   = state.wrong;
+  document.getElementById('scoreStreak').textContent  = state.streak;
+}
+
+function updateProgress(){
+  var total, idx;
+  if(state.section==='conjug'){
+    total = state.conjQueue.length; idx = state.conjIdx;
+  } else {
+    total = state.extQueue.length; idx = state.extIdx;
+  }
+  var pct = total ? Math.round(idx/total*100) : 0;
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressLabel').textContent = idx+' / '+total;
+}
+
+/* ══════════════════════════════════════
+   RENDER — CONJUGATION
+══════════════════════════════════════ */
+function renderConjCard(){
+  var area = document.getElementById('cardArea');
+  var q = state.conjQueue[state.conjIdx];
+  if(!q){ renderSummary(); return; }
+
+  var ui = cur();
+  var lang = state.lang;
+  var data = buildConjOptions(q.verb.ko, q.tense);
+  var tenseClass = q.tense;
+  var tenseLabel = ui.tense[q.tense];
+
+  var optHtml = data.options.map(function(opt){
+    return '<button class="optBtn" data-val="'+escH(opt)+'" data-correct="'+escH(data.correct)+'">' + escH(opt) + '</button>';
+  }).join('');
+
+  area.innerHTML =
+    '<div class="drillCard">' +
+      '<div class="verbBlock">' +
+        '<div class="verbKo">'+escH(q.verb.ko)+'</div>' +
+        '<div class="verbTr">'+escH(q.verb[lang])+'</div>' +
+      '</div>' +
+      '<div style="text-align:center"><span class="tenseTag '+tenseClass+'">'+escH(tenseLabel)+'</span></div>' +
+      '<div class="questionText">'+escH(ui.question)+'</div>' +
+      '<div class="optGrid">'+optHtml+'</div>' +
+      '<div class="feedbackRow"><span class="feedbackTxt" id="feedbackTxt"></span></div>' +
+      '<button class="nextBtn" id="nextBtn">'+escH(ui.next)+'</button>' +
+    '</div>';
+
+  area.querySelectorAll('.optBtn').forEach(function(btn){
+    btn.addEventListener('click', function(){ handleConjAnswer(btn, data.correct); });
+  });
+  document.getElementById('nextBtn').addEventListener('click', function(){
+    state.conjIdx++;
+    state.answered = false;
+    renderConjCard();
+    updateProgress();
+  });
+  updateProgress();
+}
+
+function handleConjAnswer(btn, correct){
+  if(state.answered) return;
+  state.answered = true;
+  var chose = btn.getAttribute('data-val');
+  var isOk = chose === correct;
+
+  if(isOk){ state.correct++; state.streak++; if(state.streak>state.maxStreak) state.maxStreak=state.streak; }
+  else     { state.wrong++;  state.streak=0; }
+
+  document.querySelectorAll('.optBtn').forEach(function(b){
+    b.disabled = true;
+    if(b.getAttribute('data-val')===correct) b.classList.add('reveal');
+  });
+  if(isOk) btn.classList.add('correct');
+  else     btn.classList.add('wrong');
+
+  var fb = document.getElementById('feedbackTxt');
+  if(isOk){ fb.textContent=cur().correct; fb.className='feedbackTxt ok'; }
+  else     { fb.textContent=cur().wrong+' '+correct; fb.className='feedbackTxt ko'; }
+
+  document.getElementById('nextBtn').classList.add('visible');
+  updateScore();
+}
+
+/* ══════════════════════════════════════
+   RENDER — EXTENSION
+══════════════════════════════════════ */
+function renderExtCard(){
+  var area = document.getElementById('cardArea');
+  var ex = state.extQueue[state.extIdx];
+  if(!ex){ renderSummary(); return; }
+
+  var ui = cur();
+  var lang = state.lang;
+  var opts = shuffle([ex.correct].concat(ex.wrongs));
+
+  var optHtml = opts.map(function(opt){
+    return '<button class="extOptBtn" data-val="'+escH(opt)+'" data-correct="'+escH(ex.correct)+'">'+escH(opt)+'</button>';
+  }).join('');
+
+  area.innerHTML =
+    '<div class="drillCard">' +
+      '<div class="extHeader">'+escH(ui.extInstruct)+'</div>' +
+      '<div class="sentencePair">' +
+        '<div class="sentBox"><div class="sentKo">'+escH(ex.s1_ko)+'</div><div class="sentTr">'+escH(ex['s1_'+lang])+'</div></div>' +
+        '<div class="sentBox"><div class="sentKo">'+escH(ex.s2_ko)+'</div><div class="sentTr">'+escH(ex['s2_'+lang])+'</div></div>' +
+      '</div>' +
+      '<span class="connTag">'+escH(ex.conn)+' — '+escH(ex['conn_'+lang])+'</span>' +
+      '<div class="extOptGrid">'+optHtml+'</div>' +
+      '<div class="feedbackRow"><span class="feedbackTxt" id="feedbackTxt"></span></div>' +
+      '<button class="nextBtn" id="nextBtn">'+escH(ui.next)+'</button>' +
+    '</div>';
+
+  area.querySelectorAll('.extOptBtn').forEach(function(btn){
+    btn.addEventListener('click', function(){ handleExtAnswer(btn, ex.correct); });
+  });
+  document.getElementById('nextBtn').addEventListener('click', function(){
+    state.extIdx++;
+    state.answered = false;
+    renderExtCard();
+    updateProgress();
+  });
+  updateProgress();
+}
+
+function handleExtAnswer(btn, correct){
+  if(state.answered) return;
+  state.answered = true;
+  var chose = btn.getAttribute('data-val');
+  var isOk = chose === correct;
+
+  if(isOk){ state.correct++; state.streak++; if(state.streak>state.maxStreak) state.maxStreak=state.streak; }
+  else     { state.wrong++;  state.streak=0; }
+
+  document.querySelectorAll('.extOptBtn').forEach(function(b){
+    b.disabled = true;
+    if(b.getAttribute('data-val')===correct) b.classList.add('reveal');
+  });
+  if(isOk) btn.classList.add('correct');
+  else     btn.classList.add('wrong');
+
+  var fb = document.getElementById('feedbackTxt');
+  if(isOk){ fb.textContent=cur().correct; fb.className='feedbackTxt ok'; }
+  else     { fb.textContent=cur().wrong+' '+correct; fb.className='feedbackTxt ko'; }
+
+  document.getElementById('nextBtn').classList.add('visible');
+  updateScore();
+}
+
+/* ══════════════════════════════════════
+   RENDER — SUMMARY
+══════════════════════════════════════ */
+function renderSummary(){
+  var area = document.getElementById('cardArea');
+  var ui = cur();
+  var total = state.correct + state.wrong;
+  var pct = total ? Math.round(state.correct/total*100) : 0;
+  var emoji = pct>=90?'🏆':pct>=70?'⭐':pct>=50?'👍':'💪';
+
+  area.innerHTML =
+    '<div class="summaryCard">' +
+      '<div class="summaryEmoji">'+emoji+'</div>' +
+      '<div style="font-size:1.1rem;font-weight:800;margin-bottom:6px">'+escH(ui.endTitle)+'</div>' +
+      '<div class="summaryScore">'+state.correct+' / '+total+'</div>' +
+      '<div class="summaryTotal">'+escH(ui.endSub)+' '+total+' ('+pct+'%)</div>' +
+      '<div class="summaryStreak">'+escH(ui.endStreak)+' '+state.maxStreak+'</div>' +
+      '<button class="restartBtn" id="restartBtn">'+escH(ui.restart)+'</button>' +
+    '</div>';
+
+  document.getElementById('restartBtn').addEventListener('click', function(){
+    restartSection();
+  });
+  document.getElementById('progressFill').style.width='100%';
+}
+
+/* ══════════════════════════════════════
+   SECTION SWITCH
+══════════════════════════════════════ */
+function restartSection(){
+  state.correct=0; state.wrong=0; state.streak=0; state.maxStreak=0; state.answered=false;
+  if(state.section==='conjug'){ state.conjQueue=buildConjQueue(); state.conjIdx=0; renderConjCard(); }
+  else { state.extQueue=shuffle(EXT.slice()); state.extIdx=0; renderExtCard(); }
+  updateScore(); updateProgress();
+}
+
+function setSection(sec){
+  state.section = sec;
+  document.getElementById('tabConjug').classList.toggle('active', sec==='conjug');
+  document.getElementById('tabExt').classList.toggle('active', sec==='ext');
+  restartSection();
+}
+
+/* ══════════════════════════════════════
+   LANG
+══════════════════════════════════════ */
+function setLang(lang){
+  state.lang = lang;
+  localStorage.setItem('RK_LANG', lang);
+  document.getElementById('btnRo').classList.toggle('active', lang==='ro');
+  document.getElementById('btnEn').classList.toggle('active', lang==='en');
+  document.getElementById('pageTitle').textContent = cur().title;
+  document.getElementById('tabConjug').textContent = cur().tabConjug;
+  document.getElementById('tabExt').textContent    = cur().tabExt;
+  if(state.section==='conjug') renderConjCard();
+  else renderExtCard();
+}
+
+function escH(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+function init(){
+  state.lang = localStorage.getItem('RK_LANG') || 'ro';
+  state.conjQueue = buildConjQueue();
+  state.extQueue  = shuffle(EXT.slice());
+
+  document.getElementById('btnRo').classList.toggle('active', state.lang==='ro');
+  document.getElementById('btnEn').classList.toggle('active', state.lang==='en');
+  document.getElementById('pageTitle').textContent = cur().title;
+  document.getElementById('tabConjug').textContent = cur().tabConjug;
+  document.getElementById('tabExt').textContent    = cur().tabExt;
+
+  document.getElementById('btnRo').addEventListener('click', function(){ setLang('ro'); });
+  document.getElementById('btnEn').addEventListener('click', function(){ setLang('en'); });
+  document.getElementById('tabConjug').addEventListener('click', function(){ setSection('conjug'); });
+  document.getElementById('tabExt').addEventListener('click', function(){ setSection('ext'); });
+
+  renderConjCard();
+  updateScore();
+}
+
+init();
