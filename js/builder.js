@@ -1,2227 +1,2779 @@
-console.log("🔥 builder.js loaded");
-
-/* ============================================================
-   builder.js CLEAN FINAL
-   - o singură arhitectură
-   - sentences[] + actives[]
-   - parser RO/EN -> KO
-   - multi-clause builder
-   - panel + long press
-   - custom words + localStorage
-   - vocab extern din data/vocab-korean.json
-============================================================ */
-
-/* =========================
-   0) SAFE DOM HELPERS
-========================= */
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
-const text = (el, v) => { if (el) el.textContent = v; };
-const show = (el) => el && el.classList.remove("hidden");
-const hide = (el) => el && el.classList.add("hidden");
-
-/* =========================
-   1) BASE DATA
-========================= */
-const subjects = [
-  "저","나","너","우리","너희","사람","학생","선생님","직원","전문가","지원자","관리자",
-  "부모님","아이","어른","시민","고객","의사","간호사","연구자","관계자","대표","회장",
-  "사용자","참가자","운전자","주민","환자"
-];
-
-const subjectAdjectives = [
-  "예쁜","착한","똑똑한","키가 큰","젊은","늙은"
-];
-
-const times = [
-  "오늘","어제","내일","지금","방금","조금 후에","곧","최근에","요즘","마침내","결국",
-  "이전에","이후에","당시에","한동안","계속","가끔","항상","자주","점점","차츰","일찍","늦게"
-];
-
-const places = [
-  "집","학교","회사","식당","카페","도서관","병원","시장","백화점","공항","기차역",
-  "버스정류장","연구소","기관","지역사회","환경","대기업","회의실","법원","경찰서",
-  "해변","산","공원","은행"
-];
-
-const mods = [
-  "잘","열심히","조용히","천천히","빨리","정말","아주","너무","많이","조금","갑자기","미리",
-  "벌써","아까","방금","금방","곧","항상","자주","가끔","드물게","상당히","꽤","도대체","절대로",
-  "적극적으로","충분히","특히","오히려","점점","차츰","계속"
-];
-
-const objectAdjectives = [
-  "예쁜","맛있는","큰","작은","새로운","오래된"
-];
-
-const objects = [
-  "책","커피","물","음식","영화","가방","전화","옷","자료","데이터","계획","조건","상황","문제",
-  "해결책","요약","보고서","문서","컴퓨터","노트북","편지","선물","의견","정보","관계","결과",
-  "원인","방법","제품","서비스","정책","문화","채소","견과류"
-];
-
-const numerals = new Array(60).fill("");
-
-const counters = [
-  "개","명","권","장","대","병","잔","마리","번","살","송이","줄","점","건","회","가지","쪽"
-];
-
-const verbs = [
-  "가다","오다","먹다","마시다","보다","읽다","쓰다","배우다","사다","주다","받다","일하다",
-  "공부하다","요리하다","청소하다","준비하다","도와주다","사용하다","필요하다","좋아하다",
-  "싫어하다","기다리다","쉬다","만나다","걷다","달리다","앉다","서다","결정하다","제안하다",
-  "전달하다","유지하다","발생하다","증가하다","감소하다","인정하다","분석하다","관찰하다",
-  "해결하다","연구하다","협력하다","요청하다","충족하다","비교하다","설명하다","예상하다"
-];
-
-const conjugations = [
-  "-아요/어요","-았어요/었어요","-고 있어요","-고 싶어요","-(으)세요","-(으)ㄹ 거예요",
-  "-고","-지 마세요","-아/어 주세요","-아/어야 돼요","-(으)ㄹ 수 있어요","-(으)ㄹ 수 없어요",
-  "-더라고요","-네요","-군요","-고 나서","-기 전에","-(으)면서","-(으)며",
-  "-(으)ㄹ지도 몰라요","-(으)ㄹ게요","-(으)ㄹ래요?","-(으)ㄹ까요?","-는 게 어때요?",
-  "-는 중이에요","-아/어도 돼요","-(으)면 안 돼요","-(으)나","-(으)므로","-(으)ㄴ/는 만큼",
-  "-(으)ㄹ수록","-(으)ㄴ/는데도","-(으)ㄹ지라도","-(으)ㄴ/는 반면에","-도록 하다",
-  "-게 되다","-아/어지다","-기 마련이다","-기에","-길래","-고 말다","-고자 하다","-(으)ㄹ 뿐이다"
-];
-
-/* =========================
-   2) TRANSLATIONS
-========================= */
-const translations = {
-  subject: {
-    "저":"eu (formal)","나":"eu (informal)","너":"tu","우리":"noi","너희":"voi",
-    "사람":"persoană","학생":"student/ă","선생님":"profesor","직원":"angajat",
-    "전문가":"expert","지원자":"candidat","관리자":"administrator","부모님":"părinți",
-    "아이":"copil","어른":"adult","시민":"cetățean","고객":"client","의사":"medic",
-    "간호사":"asistentă","연구자":"cercetător","관계자":"persoană implicată","대표":"reprezentant",
-    "회장":"președinte","사용자":"utilizator","참가자":"participant","운전자":"șofer","주민":"locuitor","환자":"pacient"
-  },
-  time: {
-    "오늘":"astăzi","어제":"ieri","내일":"mâine","지금":"acum","방금":"tocmai acum",
-    "조금 후에":"puțin mai târziu","곧":"în curând","최근에":"recent","요즘":"în ultima vreme",
-    "마침내":"în cele din urmă","결국":"până la urmă","이전에":"înainte","이후에":"după",
-    "당시에":"atunci","한동안":"o perioadă","계속":"continuu","가끔":"din când în când",
-    "항상":"întotdeauna","자주":"des","점점":"din ce în ce","차츰":"treptat","일찍":"devreme","늦게":"târziu"
-  },
-  place: {
-    "집":"acasă","학교":"școală","회사":"companie","식당":"restaurant","카페":"cafenea",
-    "도서관":"bibliotecă","병원":"spital","시장":"piață","백화점":"magazin universal",
-    "공항":"aeroport","기차역":"gară","버스정류장":"stație de autobuz","연구소":"laborator",
-    "기관":"instituție","지역사회":"comunitate","환경":"mediu","대기업":"mare corporație",
-    "회의실":"sală de ședințe","법원":"instanță","경찰서":"secție de poliție",
-    "해변":"plajă","산":"munte","공원":"parc","은행":"bancă"
-  },
-  mod: {
-    "잘":"bine","열심히":"cu sârguință","조용히":"în liniște","천천히":"încet","빨리":"repede",
-    "정말":"cu adevărat","아주":"foarte","너무":"prea / foarte","많이":"mult","조금":"puțin",
-    "갑자기":"brusc","미리":"dinainte","벌써":"deja","아까":"mai devreme","방금":"chiar acum",
-    "금방":"imediat","곧":"în curând","항상":"mereu","자주":"des","가끔":"din când în când",
-    "드물게":"rar","상당히":"destul de","꽤":"binișor","도대체":"oare / deloc","절대로":"niciodată",
-    "적극적으로":"activ","충분히":"suficient","특히":"în special","오히려":"mai degrabă","점점":"din ce în ce",
-    "차츰":"treptat","계속":"continuu"
-  },
-  object: {
-    "책":"carte","커피":"cafea","물":"apă","음식":"mâncare","영화":"film","가방":"geantă",
-    "전화":"telefon","옷":"haine","자료":"materiale","데이터":"date","계획":"plan","조건":"condiție",
-    "상황":"situație","문제":"problemă","해결책":"soluție","요약":"rezumat","보고서":"raport",
-    "문서":"document","컴퓨터":"calculator","노트북":"laptop","편지":"scrisoare","선물":"cadou",
-    "의견":"opinie","정보":"informație","관계":"relație","결과":"rezultat","원인":"cauză",
-    "방법":"metodă","제품":"produs","서비스":"serviciu","정책":"politică","문화":"cultură",
-    "채소":"legume","견과류":"nuci"
-  },
-  verb: {
-    "가다":"a merge","오다":"a veni","먹다":"a mânca","마시다":"a bea","보다":"a vedea / a privi",
-    "읽다":"a citi","쓰다":"a scrie","배우다":"a învăța","사다":"a cumpăra","주다":"a da",
-    "받다":"a primi","일하다":"a lucra","공부하다":"a studia","요리하다":"a găti","청소하다":"a face curat",
-    "준비하다":"a pregăti","도와주다":"a ajuta","사용하다":"a folosi","필요하다":"a fi necesar",
-    "좋아하다":"a plăcea","싫어하다":"a nu plăcea","기다리다":"a aștepta","쉬다":"a se odihni",
-    "만나다":"a se întâlni","걷다":"a merge pe jos","달리다":"a alerga","앉다":"a se așeza",
-    "서다":"a sta în picioare","결정하다":"a decide","제안하다":"a propune","전달하다":"a transmite",
-    "유지하다":"a menține","발생하다":"a se produce","증가하다":"a crește","감소하다":"a scădea",
-    "인정하다":"a recunoaște","분석하다":"a analiza","관찰하다":"a observa","해결하다":"a rezolva",
-    "연구하다":"a cerceta","협력하다":"a colabora","요청하다":"a solicita","충족하다":"a satisface",
-    "비교하다":"a compara","설명하다":"a explica","예상하다":"a anticipa"
-  },
-  conjug: {
-    "-아요/어요":"prezent politicos",
-    "-았어요/었어요":"trecut politicos",
-    "-고 있어요":"acțiune în desfășurare",
-    "-고 싶어요":"vreau să...",
-    "-(으)세요":"imperativ / onorific",
-    "-(으)ㄹ 거예요":"viitor",
-    "-고":"și",
-    "-지 마세요":"nu faceți..., vă rog",
-    "-아/어 주세요":"vă rog să...",
-    "-아/어야 돼요":"trebuie să...",
-    "-(으)ㄹ 수 있어요":"pot să...",
-    "-(으)ㄹ 수 없어요":"nu pot să...",
-    "-더라고요":"am observat că...",
-    "-네요":"exclamativ",
-    "-군요":"constatare",
-    "-고 나서":"după ce...",
-    "-기 전에":"înainte să...",
-    "-(으)면서":"în timp ce...",
-    "-(으)며":"și (în timp ce)",
-    "-(으)ㄹ지도 몰라요":"s-ar putea să...",
-    "-(으)ㄹ게요":"voi face",
-    "-(으)ㄹ래요?":"vrei? / vreau să...",
-    "-(으)ㄹ까요?":"să facem...?",
-    "-는 게 어때요?":"ce-ar fi să...?",
-    "-는 중이에요":"sunt în curs de...",
-    "-아/어도 돼요":"e în regulă să...",
-    "-(으)면 안 돼요":"nu ai voie să...",
-    "-도록 하다":"să faci astfel încât...",
-    "-게 되다":"ajungi să...",
-    "-아/어지다":"a deveni...",
-    "-기에":"pentru că...",
-    "-길래":"pentru că (am observat)",
-    "-고 말다":"ajunge până la urmă să...",
-    "-고자 하다":"intenționez să...",
-    "-(으)ㄹ 뿐이다":"doar..."
-  },
-  subjectAdj: {},
-  objectAdj: {},
-  numeral: {},
-  counter: {
-    "개":"bucată","명":"persoană","권":"volum","장":"foaie","대":"aparat / vehicul","병":"sticlă",
-    "잔":"pahar","마리":"animal","번":"dată","살":"ani","송이":"buchet","줄":"șir","점":"punct",
-    "건":"caz","회":"ocazie","가지":"fel","쪽":"pagină / direcție"
-  }
-};
-
-/* =========================
-   3) STORAGE
-========================= */
-const STORAGE_KEY = "ralucaKoreanCustomWords_v2";
-const customData = {
-  subject:[], time:[], place:[], mod:[], object:[],
-  numeral:[], counter:[], verb:[], conjug:[],
-  subjectAdj:[], objectAdj:[]
-};
-
-function loadCustomData(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return;
-    const saved = JSON.parse(raw);
-
-    Object.keys(customData).forEach(k=>{
-      if(Array.isArray(saved[k])) customData[k] = saved[k];
-    });
-
-    const listMap = {
-      subject: subjects,
-      subjectAdj: subjectAdjectives,
-      time: times,
-      place: places,
-      mod: mods,
-      object: objects,
-      objectAdj: objectAdjectives,
-      numeral: numerals,
-      counter: counters,
-      verb: verbs,
-      conjug: conjugations
-    };
-
-    Object.entries(customData).forEach(([key,arr])=>{
-      arr.forEach(entry=>{
-        if(!entry || !entry.word) return;
-        const w = entry.word;
-        const ro = entry.ro || "";
-
-        const list = listMap[key];
-        if(list && !list.includes(w)) list.push(w);
-
-        if(!translations[key]) translations[key] = {};
-        if(ro) translations[key][w] = ro;
-      });
-    });
-  }catch(err){
-    console.error("loadCustomData error:", err);
-  }
-}
-
-function saveCustomData(){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(customData));
-  }catch(err){
-    console.error("saveCustomData error:", err);
-  }
-}
-
-loadCustomData();
-
-/* =========================
-   4) COLUMNS
-========================= */
-const columns = [
-  {key:"subject", title:"SUBJECT", ko:"주어", data:subjects, hint:"Cine?", allowCustom:true},
-  {key:"subjectAdj", title:"ADJ (SUBJECT)", ko:"형용사", data:subjectAdjectives, hint:"Cum este subiectul?", allowCustom:true},
-  {key:"time", title:"TIME", ko:"시간", data:times, hint:"Când?", allowCustom:true},
-  {key:"place", title:"PLACE", ko:"장소", data:places, hint:"Unde?", allowCustom:true},
-  {key:"mod", title:"MOD", ko:"부사", data:mods, hint:"Cum?", allowCustom:true},
-  {key:"object", title:"OBJECT", ko:"목적어", data:objects, hint:"Ce?", allowCustom:true},
-  {key:"objectAdj", title:"ADJ (OBJECT)", ko:"형용사", data:objectAdjectives, hint:"Cum este obiectul?", allowCustom:true},
-  {key:"numeral", title:"NUMERAL", ko:"수", data:numerals, hint:"Număr", allowCustom:true},
-  {key:"counter", title:"COUNTER", ko:"수량사", data:counters, hint:"Clasificator", allowCustom:true},
-  {key:"verb", title:"VERB", ko:"동사", data:verbs, hint:"Acțiune", allowCustom:true},
-  {key:"conjug", title:"CONJUGĂRI", ko:"활용", data:conjugations, hint:"Formă verbală", allowCustom:true}
-];
-
-const maxLen = Math.max(...columns.map(c => c.data.length));
-
-/* =========================
-   5) DOM
-========================= */
-const DOM = {
-  tableP1: $("#tableP1"),
-  tableP2: $("#tableP2"),
-  titleP2: $("#titleP2"),
-  enableP2: $("#enableP2"),
-
-  togglesP1: $("#togglesP1"),
-  togglesP2: $("#togglesP2"),
-
-  prevBtn: $("#prevBtn"),
-  nextBtn: $("#nextBtn"),
-  resetBtn: $("#resetBtn"),
-  pageInfoEl: $("#pageInfo"),
-
-  previewKo: $("#previewKo"),
-  previewRo: $("#previewRo"),
-  naturalHint: $("#naturalHint"),
-  toggleRoBtn: $("#toggleRoBtn"),
-
-  randomBtn: $("#randomBtn"),
-  speakBtn: $("#speakBtn"),
-  favBtn: $("#favBtn"),
-  favoritesListEl: $("#favoritesList"),
-
-  overlay: $("#overlay"),
-  panelTitle: $("#panelTitle"),
-  panelSub: $("#panelSub"),
-  panelList: $("#panelList"),
-  extraClauses: $("#extra-clauses"),
-  closePanelBtn: $("#closePanelBtn"),
-  panelSearchInput: $("#panelSearchInput"),
-  newWordInput: $("#newWordInput"),
-  newWordTransInput: $("#newWordTransInput"),
-  addWordBtn: $("#addWordBtn"),
-
-  roInput: $("#roInput"),
-  roTranslateBtn: $("#roTranslateBtn"),
-  roToKoResult: $("#roToKoResult"),
-  roCorrected: $("#roCorrected"),
-
-  inputLangRadio: $$('input[name="inputLang"]'),
-  modeButtons: $$(".small-mode-btn"),
-  refreshBtn: $("#refreshBtn"),
-  homeBtn: $("#homeBtn")
-};
-
-if(!window.visibility){
-  window.visibility = {};
-}
-
-/* =========================
-   6) APP STATE
-========================= */
-let indexModelRow = 0;
-let sentences = [makeEmptySentence()];
-let actives = [makeAllActive()];
-let VOCAB_INDEX = {};
-let vocabJson = {};
-let showRo = true;
-let showExtraClauses = false;
-let currentMode = "topik";
-const simpleColumnsSet = {subject:true,time:true,object:true,verb:true,conjug:true};
-
-function makeEmptySentence(){
-  return {
-    subject:"",
-    subjects:[],
-
-    subjectAdjs:[],
-
-    time:"",
-    times:[],
-
-    place:"",
-    places:[],
-
-    mod:"",
-    mods:[],
-
-    object:"",
-    objects:[],
-
-    objectAdjs:[],
-
-    numeral:"",
-    counter:"",
-
-    verb:"",
-    verbs:[],
-
-    conjug:"",
-
-    hideSubject:false,
-    reason:false,
-    contrast:false,
-    condition:false,
-    sequence:false
-  };
-}
-
-function makeAllActive(){
-  const a = {};
-  columns.forEach(col => a[col.key] = true);
-  return a;
-}
-
-/* =========================
-   7) MODE / VISIBILITY
-========================= */
-function isColumnVisible(key){
-  if(currentMode === "simple"){
-    return !!simpleColumnsSet[key];
-  }
-  return window.visibility?.[key] !== false;
-}
-
-/* =========================
-   8) KOREAN HELPERS
-========================= */
-const H_BASE = 0xAC00;
-
-function decomposeLastSyl(word){
-  if(!word) return null;
-  const ch = word.charCodeAt(word.length - 1);
-  const code = ch - H_BASE;
-  if(code < 0 || code > 11171) return null;
-
-  const jong = code % 28;
-  const jung = ((code - jong) / 28) % 21;
-  const cho = Math.floor((code - jong) / 28 / 21);
-
-  return { cho, jung, jong, prefix: word.slice(0,-1) };
-}
-
-function hasBatchim(word){
-  if(!word) return false;
-  const code = word.charCodeAt(word.length - 1) - H_BASE;
-  if(code < 0 || code > 11171) return false;
-  return (code % 28) !== 0;
-}
-
-function getVerbStem(verb){
-  if(!verb) return "";
-  return verb.endsWith("다") ? verb.slice(0,-1) : verb;
-}
-
-// Apply 아/어 ending with vowel harmony + contraction
-function applyAeo(stem){
-  if(!stem) return "";
-  const last = stem[stem.length - 1];
-  if(last === "하") return stem.slice(0, -1) + "해";
-  const d = decomposeLastSyl(stem);
-  if(!d) return stem + "어";
-  const ae = (d.jung === 0 || d.jung === 8) ? "아" : "어";
-  if(hasBatchim(stem)) return stem + ae;
-  // No batchim — apply contraction rules
-  const DROP = new Set([0, 1, 4, 5, 9, 10, 14, 15]); // ㅏ,ㅐ,ㅓ,ㅔ,ㅘ,ㅙ,ㅝ,ㅞ already contain the vowel
-  if(DROP.has(d.jung)) return stem;
-  if(d.jung === 8)  return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + 9*28  + d.jong); // ㅗ→ㅘ (와)
-  if(d.jung === 13) return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + 14*28 + d.jong); // ㅜ→ㅝ (워)
-  if(d.jung === 20) return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + 6*28  + d.jong); // ㅣ→ㅕ (여)
-  return stem + ae;
-}
-
-// Add ㅆ (double-s) batchim to last syllable — used for past tense
-function addBatchimSS(word){
-  if(!word) return word;
-  const d = decomposeLastSyl(word);
-  if(!d) return word;
-  return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + d.jung*28 + 20);
-}
-
-// Add ㄹ batchim to last syllable of stem (no-batchim only) — used for -(으)ㄹ endings
-function addBatchimR(word){
-  if(!word || hasBatchim(word)) return word;
-  const d = decomposeLastSyl(word);
-  if(!d) return word;
-  return d.prefix + String.fromCharCode(H_BASE + d.cho*21*28 + d.jung*28 + 8);
-}
-
-// Build -(으)ㄹ form: fuses ㄹ into stem when no batchim, else prefix 을
-function withRieul(stem, suffix){
-  return hasBatchim(stem) ? stem + "을" + suffix : addBatchimR(stem) + suffix;
-}
-
-// Build -(으) form: adds 으 when batchim, else direct
-function withEu(stem, suffix){
-  return hasBatchim(stem) ? stem + "으" + suffix : stem + suffix;
-}
-
-const specialVerbMap = {
-  "가다": {present:"가요", past:"갔어요"},
-  "오다": {present:"와요", past:"왔어요"},
-  "보다": {present:"봐요", past:"봤어요"},
-  "하다": {present:"해요", past:"했어요"},
-  "먹다": {present:"먹어요", past:"먹었어요"},
-  "읽다": {present:"읽어요", past:"읽었어요"},
-  "마시다": {present:"마셔요", past:"마셨어요"},
-  "쓰다": {present:"써요", past:"썼어요"},
-  "사다": {present:"사요", past:"샀어요"},
-  "걷다": {present:"걸어요", past:"걸었어요"},
-  "달리다": {present:"달려요", past:"달렸어요"}
-};
-
-function presentPolite(verb){
-  if(!verb) return "";
-  if(specialVerbMap[verb]?.present) return specialVerbMap[verb].present;
-  const stem = getVerbStem(verb);
-  if(!stem) return "";
-  return applyAeo(stem) + "요";
-}
-
-function pastPolite(verb){
-  if(!verb) return "";
-  if(specialVerbMap[verb]?.past) return specialVerbMap[verb].past;
-  const stem = getVerbStem(verb);
-  if(!stem) return "";
-  return addBatchimSS(applyAeo(stem)) + "어요";
-}
-
-function buildVerbPhrase(verb, cj){
-  if(!verb && !cj) return "";
-
-  const stem = getVerbStem(verb);
-
-  if(!cj) return presentPolite(verb);
-  if(cj === "-아요/어요") return presentPolite(verb);
-  if(cj === "-았어요/었어요") return pastPolite(verb);
-  if(cj === "-고") return stem + "고";
-  if(cj === "-고 나서") return stem + "고 나서";
-  if(cj === "-기 전에") return stem + "기 전에";
-  if(cj === "-고 있어요") return stem + "고 있어요";
-  if(cj === "-고 싶어요") return stem + "고 싶어요";
-
-  if(cj === "-(으)ㄹ 거예요")         return withRieul(stem, " 거예요");
-
-  if(cj === "-(으)면서"){
-    return stem + "면서";
-  }
-
-  if(cj === "-(으)며"){
-    return stem + "며";
-  }
-
-  if(cj === "-기에"){
-    return stem + "기에";
-  }
-
-  if(cj === "-길래"){
-    return stem + "길래";
-  }
-
-  if(cj === "-고 말다"){
-    return stem + "고 말아요";
-  }
-
-  if(cj === "-고자 하다"){
-    return stem + "고자 해요";
-  }
-
-  if(cj === "-(으)세요")           return withEu(stem, "세요");
-  if(cj === "-지 마세요")          return stem + "지 마세요";
-  if(cj === "-아/어 주세요")       return applyAeo(stem) + " 주세요";
-  if(cj === "-아/어야 돼요")       return applyAeo(stem) + "야 돼요";
-  if(cj === "-아/어도 돼요")       return applyAeo(stem) + "도 돼요";
-  if(cj === "-(으)면 안 돼요")     return withEu(stem, "면 안 돼요");
-  if(cj === "-더라고요")           return stem + "더라고요";
-  if(cj === "-네요")               return stem + "네요";
-  if(cj === "-군요")               return stem + "군요";
-  if(cj === "-(으)ㄹ게요")         return withRieul(stem, "게요");
-  if(cj === "-(으)ㄹ래요?")        return withRieul(stem, "래요?");
-  if(cj === "-(으)ㄹ까요?")        return withRieul(stem, "까요?");
-  if(cj === "-는 게 어때요?")      return stem + "는 게 어때요?";
-  if(cj === "-는 중이에요")         return stem + "는 중이에요";
-  if(cj === "-(으)ㄹ 수 있어요")   return withRieul(stem, " 수 있어요");
-  if(cj === "-(으)ㄹ 수 없어요")   return withRieul(stem, " 수 없어요");
-  if(cj === "-(으)ㄹ지도 몰라요")  return withRieul(stem, "지도 몰라요");
-  if(cj === "-(으)ㄹ 뿐이다")      return withRieul(stem, " 뿐이에요");
-  if(cj === "-(으)ㄹ수록")         return withRieul(stem, "수록");
-  if(cj === "-(으)ㄹ지라도")       return withRieul(stem, "지라도");
-  if(cj === "-(으)나")             return withEu(stem, "나");
-  if(cj === "-(으)므로")           return withEu(stem, "므로");
-  if(cj === "-(으)ㄴ/는 만큼")     return stem + "는 만큼";
-  if(cj === "-(으)ㄴ/는데도")      return stem + "는데도";
-  if(cj === "-(으)ㄴ/는 반면에")   return stem + "는 반면에";
-  if(cj === "-도록 하다")          return stem + "도록 해요";
-  if(cj === "-게 되다")            return stem + "게 돼요";
-  if(cj === "-아/어지다")          return applyAeo(stem) + "져요";
-  if(cj === "-기 마련이다")        return stem + "기 마련이에요";
-
-  return presentPolite(verb);
-}
-
-/* =========================
-   9) PARTICLES
-========================= */
-function chooseSubjectParticle(word, state){
-  const batchim = hasBatchim(word);
-  const topicParticle = batchim ? "은" : "는";
-  const subjectParticle = batchim ? "이" : "가";
-
-  const hasTime = !!state.time;
-  const hasPlace = !!state.place;
-  const hasObject = !!state.object;
-
-  if(hasTime || hasPlace) return topicParticle;
-  if(!hasObject) return topicParticle;
-
-  return subjectParticle;
-}
-
-function addSubjectWithParticle(word, state){
-  if(!word) return "";
-  return word + chooseSubjectParticle(word, state);
-}
-
-function chooseObjectParticle(word){
-  return hasBatchim(word) ? "을" : "를";
-}
-
-function addObjectWithParticle(word){
-  if(!word) return "";
-  return word + chooseObjectParticle(word);
-}
-
-function addPlaceWithParticle(word, verb){
-  if(!word) return "";
-  const motion = new Set(["가다","오다","들어가다","나가다","돌아가다"]);
-  if(verb && motion.has(verb)) return word + "에";
-  return word + "에서";
-}
-
-function addTimeWithParticle(word){
-  if(!word) return "";
-  const noParticle = new Set([
-    "오늘","어제","내일","지금","방금","요즘","항상","자주","가끔","계속","점점","차츰"
-  ]);
-  if(noParticle.has(word)) return word;
-  return word + "에";
-}
-
-/* =========================
-   10) JOIN / ENUMERATION
-========================= */
-function buildEnumeration(list, single){
-  if(Array.isArray(list) && list.length){
-    return list.filter(Boolean).join(" 하고 ");
-  }
-  if(single) return single;
-  return "";
-}
-
-function joinVerbs(list){
-  if(!Array.isArray(list) || !list.length) return "";
-  if(list.length === 1) return presentPolite(list[0]);
-
-  let out = "";
-  list.forEach((v,i)=>{
-    if(i === list.length - 1){
-      out += presentPolite(v);
-    }else{
-      out += getVerbStem(v) + "고 ";
+(function(){
+  'use strict';
+
+  var UI = {
+    ro: {
+      placeholder: "Scrie aici o propoziție sau un lanț de propoziții...",
+      defaultTranslation: "Configurează propoziția din tabel.",
+      noSpeech: "Nu există propoziție de redat.",
+      recordStart: "Înregistrare pornită.",
+      recordStop: "Înregistrare oprită. Poți asculta mai jos.",
+      recordUnsupported: "Înregistrarea audio nu este disponibilă pe acest browser.",
+      recordedLabel: "Înregistrarea ta",
+      noSentenceToSave: "Nicio propoziție de salvat.",
+      alreadySaved: "Deja salvat ✓",
+      saved: "Salvat ✓",
+      savedTitle: "Propoziții salvate",
+      quizLabel: "🎯 Quiz — reconstruiește în coreeană:",
+      quizCheck: "✓ Verifică",
+      quizExit: "✕ Ieși",
+      quizCorrect: "🎉 Corect!",
+      quizWrong: "✗ Greșit",
+      quizAnswer: "Răspuns corect:",
+      quizNoBuild: "Construiește mai întâi o propoziție."
+    },
+    en: {
+      placeholder: "Type a sentence or a chain of sentences here...",
+      defaultTranslation: "Configure the sentence from the table.",
+      noSpeech: "There is no sentence to play.",
+      recordStart: "Recording started.",
+      recordStop: "Recording stopped. You can listen below.",
+      recordUnsupported: "Audio recording is not available on this browser.",
+      recordedLabel: "Your recording",
+      noSentenceToSave: "No sentence to save.",
+      alreadySaved: "Already saved ✓",
+      saved: "Saved ✓",
+      savedTitle: "Saved sentences",
+      quizLabel: "🎯 Quiz — reconstruct in Korean:",
+      quizCheck: "✓ Check",
+      quizExit: "✕ Exit",
+      quizCorrect: "🎉 Correct!",
+      quizWrong: "✗ Wrong",
+      quizAnswer: "Correct answer:",
+      quizNoBuild: "Build a sentence first."
     }
-  });
-  return out.trim();
-}
-
-function joinPlaces(list){
-  if(!Array.isArray(list) || !list.length) return "";
-  if(list.length === 1) return list[0] + "에서";
-
-  let out = "";
-  list.forEach((p,i)=>{
-    if(i === list.length - 1){
-      out += p + "에서";
-    }else{
-      out += p + "하고 ";
-    }
-  });
-  return out.trim();
-}
-
-function normalizeSubjects(){
-  let last = null;
-  sentences.forEach((s,i)=>{
-    if(!s) return;
-    if(i === 0){
-      s.hideSubject = false;
-      last = s.subject;
-      return;
-    }
-    s.hideSubject = !!(s.subject && s.subject === last);
-    last = s.subject;
-  });
-}
-
-/* =========================
-   11) KOREAN CLAUSE PLANNER
-========================= */
-function planKoreanSentence(state, active){
-  const use = (k) =>
-    active?.[k] !== false &&
-    (typeof isColumnVisible === "function" ? isColumnVisible(k) : true);
-
-  const slots = {
-    time:[],
-    subject:[],
-    place:[],
-    manner:[],
-    object:[],
-    verb:[]
   };
 
-  const v = state.verb || "";
-  const cj = state.conjug || "";
-
-  if(use("time")){
-    const t = buildEnumeration(state.times, state.time);
-    if(t) slots.time.push(addTimeWithParticle(t));
-  }
-
-  if(!state.hideSubject && use("subject")){
-    let s = buildEnumeration(state.subjects, state.subject);
-    if(state.subjectAdjs?.length){
-      s = state.subjectAdjs.join(" ") + " " + s;
-    }
-    if(s) slots.subject.push(addSubjectWithParticle(s, state));
-  }
-
-  if(use("place")){
-    const p = buildEnumeration(state.places, state.place);
-    if(p) slots.place.push(addPlaceWithParticle(p, v));
-  }
-
-  if(use("mod")){
-    const m = buildEnumeration(state.mods, state.mod);
-    if(m) slots.manner.push(m);
-  }
-
-  if(use("object")){
-    let o = buildEnumeration(state.objects, state.object);
-
-    if(state.objectAdjs?.length){
-      o = state.objectAdjs.join(" ") + " " + o;
-    }
-
-    if(o){
-      if(use("numeral") && state.numeral) slots.object.push(state.numeral);
-      if(use("counter") && state.counter) slots.object.push(state.counter);
-      slots.object.push(addObjectWithParticle(o));
-    }
-  }
-
-  if(use("verb") || use("conjug")){
-    let vp = "";
-    if(state.verbs?.length){
-      vp = joinVerbs(state.verbs);
-    }else{
-      vp = buildVerbPhrase(v, cj);
-    }
-    if(vp) slots.verb.push(vp);
-  }
-
-  return [
-    ...slots.time,
-    ...slots.subject,
-    ...slots.place,
-    ...slots.object,
-    ...slots.manner,
-    ...slots.verb
-  ].join(" ").replace(/\s+/g," ").trim();
-}
-
-/* =========================
-   12) ROMANIAN BUILD (PARTEA 1)
-========================= */
-
-const RO_FORMS = {
-  "a merge":        {"1sg":"merg",      "2sg":"mergi",      "3sg":"merge",       "1pl":"mergem",      "2pl":"mergeți",      "3pl":"merg"},
-  "a veni":         {"1sg":"vin",       "2sg":"vii",        "3sg":"vine",        "1pl":"venim",       "2pl":"veniți",       "3pl":"vin"},
-  "a mânca":        {"1sg":"mănânc",    "2sg":"mănânci",    "3sg":"mănâncă",     "1pl":"mâncăm",      "2pl":"mâncați",      "3pl":"mănâncă"},
-  "a bea":          {"1sg":"beau",      "2sg":"bei",        "3sg":"bea",         "1pl":"bem",         "2pl":"beți",         "3pl":"beau"},
-  "a citi":         {"1sg":"citesc",    "2sg":"citești",    "3sg":"citește",     "1pl":"citim",       "2pl":"citiți",       "3pl":"citesc"},
-  "a scrie":        {"1sg":"scriu",     "2sg":"scrii",      "3sg":"scrie",       "1pl":"scriem",      "2pl":"scrieți",      "3pl":"scriu"},
-  "a merge pe jos": {"1sg":"merg pe jos","2sg":"mergi pe jos","3sg":"merge pe jos","1pl":"mergem pe jos","2pl":"mergeți pe jos","3pl":"merg pe jos"},
-  "a vedea / a privi":{"1sg":"văd",     "2sg":"vezi",       "3sg":"vede",        "1pl":"vedem",       "2pl":"vedeți",       "3pl":"văd"},
-  "a învăța":       {"1sg":"învăț",     "2sg":"înveți",     "3sg":"învață",      "1pl":"învățăm",     "2pl":"învățați",     "3pl":"învață"},
-  "a cumpăra":      {"1sg":"cumpăr",    "2sg":"cumperi",    "3sg":"cumpără",     "1pl":"cumpărăm",    "2pl":"cumpărați",    "3pl":"cumpără"},
-  "a da":           {"1sg":"dau",       "2sg":"dai",        "3sg":"dă",          "1pl":"dăm",         "2pl":"dați",         "3pl":"dau"},
-  "a primi":        {"1sg":"primesc",   "2sg":"primești",   "3sg":"primește",    "1pl":"primim",      "2pl":"primiți",      "3pl":"primesc"},
-  "a lucra":        {"1sg":"lucrez",    "2sg":"lucrezi",    "3sg":"lucrează",    "1pl":"lucrăm",      "2pl":"lucrați",      "3pl":"lucrează"},
-  "a studia":       {"1sg":"studiez",   "2sg":"studiezi",   "3sg":"studiază",    "1pl":"studiem",     "2pl":"studiați",     "3pl":"studiază"},
-  "a găti":         {"1sg":"gătesc",    "2sg":"gătești",    "3sg":"gătește",     "1pl":"gătim",       "2pl":"gătiți",       "3pl":"gătesc"},
-  "a face curat":   {"1sg":"fac curat", "2sg":"faci curat", "3sg":"face curat",  "1pl":"facem curat", "2pl":"faceți curat", "3pl":"fac curat"},
-  "a pregăti":      {"1sg":"pregătesc", "2sg":"pregătești", "3sg":"pregătește",  "1pl":"pregătim",    "2pl":"pregătiți",    "3pl":"pregătesc"},
-  "a ajuta":        {"1sg":"ajut",      "2sg":"ajuți",      "3sg":"ajută",       "1pl":"ajutăm",      "2pl":"ajutați",      "3pl":"ajută"},
-  "a folosi":       {"1sg":"folosesc",  "2sg":"folosești",  "3sg":"folosește",   "1pl":"folosim",     "2pl":"folosiți",     "3pl":"folosesc"},
-  "a fi necesar":   {"1sg":"am nevoie", "2sg":"ai nevoie",  "3sg":"e necesar",   "1pl":"avem nevoie", "2pl":"aveți nevoie", "3pl":"e necesar"},
-  "a plăcea":       {"1sg":"îmi place", "2sg":"îți place",  "3sg":"îi place",    "1pl":"ne place",    "2pl":"vă place",     "3pl":"le place"},
-  "a nu plăcea":    {"1sg":"nu îmi place","2sg":"nu îți place","3sg":"nu îi place","1pl":"nu ne place","2pl":"nu vă place",  "3pl":"nu le place"},
-  "a aștepta":      {"1sg":"aștept",    "2sg":"aștepți",    "3sg":"așteaptă",    "1pl":"așteptăm",    "2pl":"așteptați",    "3pl":"așteaptă"},
-  "a se odihni":    {"1sg":"mă odihnesc","2sg":"te odihnești","3sg":"se odihnește","1pl":"ne odihnim", "2pl":"vă odihniți",  "3pl":"se odihnesc"},
-  "a se întâlni":   {"1sg":"mă întâlnesc","2sg":"te întâlnești","3sg":"se întâlnește","1pl":"ne întâlnim","2pl":"vă întâlniți","3pl":"se întâlnesc"},
-  "a alerga":       {"1sg":"alerg",     "2sg":"alergi",     "3sg":"aleargă",     "1pl":"alergăm",     "2pl":"alergați",     "3pl":"aleargă"},
-  "a se așeza":     {"1sg":"mă așez",   "2sg":"te așezi",   "3sg":"se așează",   "1pl":"ne așezăm",   "2pl":"vă așezați",   "3pl":"se așează"},
-  "a sta în picioare":{"1sg":"stau",    "2sg":"stai",       "3sg":"stă",         "1pl":"stăm",        "2pl":"stați",        "3pl":"stau"},
-  "a decide":       {"1sg":"decid",     "2sg":"decizi",     "3sg":"decide",      "1pl":"decidem",     "2pl":"decideți",     "3pl":"decid"},
-  "a propune":      {"1sg":"propun",    "2sg":"propui",     "3sg":"propune",     "1pl":"propunem",    "2pl":"propuneți",    "3pl":"propun"},
-  "a transmite":    {"1sg":"transmit",  "2sg":"transmiți",  "3sg":"transmite",   "1pl":"transmitem",  "2pl":"transmiteți",  "3pl":"transmit"},
-  "a menține":      {"1sg":"mențin",    "2sg":"menții",     "3sg":"menține",     "1pl":"menținem",    "2pl":"mențineți",    "3pl":"mențin"},
-  "a se produce":   {"1sg":"se produce","2sg":"se produce", "3sg":"se produce",  "1pl":"se produce",  "2pl":"se produce",   "3pl":"se produc"},
-  "a crește":       {"1sg":"cresc",     "2sg":"crești",     "3sg":"crește",      "1pl":"creștem",     "2pl":"creșteți",     "3pl":"cresc"},
-  "a scădea":       {"1sg":"scad",      "2sg":"scazi",      "3sg":"scade",       "1pl":"scădem",      "2pl":"scădeți",      "3pl":"scad"},
-  "a recunoaște":   {"1sg":"recunosc",  "2sg":"recunoști",  "3sg":"recunoaște",  "1pl":"recunoaștem", "2pl":"recunoașteți", "3pl":"recunosc"},
-  "a analiza":      {"1sg":"analizez",  "2sg":"analizezi",  "3sg":"analizează",  "1pl":"analizăm",    "2pl":"analizați",    "3pl":"analizează"},
-  "a observa":      {"1sg":"observ",    "2sg":"observi",    "3sg":"observă",     "1pl":"observăm",    "2pl":"observați",    "3pl":"observă"},
-  "a rezolva":      {"1sg":"rezolv",    "2sg":"rezolvi",    "3sg":"rezolvă",     "1pl":"rezolvăm",    "2pl":"rezolvați",    "3pl":"rezolvă"},
-  "a cerceta":      {"1sg":"cercetez",  "2sg":"cercetezi",  "3sg":"cercetează",  "1pl":"cercetăm",    "2pl":"cercetați",    "3pl":"cercetează"},
-  "a colabora":     {"1sg":"colaborez", "2sg":"colaborezi", "3sg":"colaborează", "1pl":"colaborăm",   "2pl":"colaborați",   "3pl":"colaborează"},
-  "a solicita":     {"1sg":"solicit",   "2sg":"soliciți",   "3sg":"solicită",    "1pl":"solicităm",   "2pl":"solicitați",   "3pl":"solicită"},
-  "a satisface":    {"1sg":"satisfac",  "2sg":"satisfaci",  "3sg":"satisface",   "1pl":"satisfacem",  "2pl":"satisfaceți",  "3pl":"satisfac"},
-  "a compara":      {"1sg":"compar",    "2sg":"compari",    "3sg":"compară",     "1pl":"comparăm",    "2pl":"comparați",    "3pl":"compară"},
-  "a explica":      {"1sg":"explic",    "2sg":"explici",    "3sg":"explică",     "1pl":"explicăm",    "2pl":"explicați",    "3pl":"explică"},
-  "a anticipa":     {"1sg":"anticipez", "2sg":"anticipezi", "3sg":"anticipează", "1pl":"anticipăm",   "2pl":"anticipați",   "3pl":"anticipează"},
-};
-
-const RO_PARTICIPLES = {
-  "a merge":"mers","a veni":"venit","a mânca":"mâncat","a bea":"băut",
-  "a citi":"citit","a scrie":"scris","a merge pe jos":"mers pe jos",
-  "a vedea / a privi":"văzut","a învăța":"învățat","a cumpăra":"cumpărat",
-  "a da":"dat","a primi":"primit","a lucra":"lucrat","a studia":"studiat",
-  "a găti":"gătit","a face curat":"făcut curat","a pregăti":"pregătit",
-  "a ajuta":"ajutat","a folosi":"folosit","a fi necesar":"fost necesar",
-  "a plăcea":"plăcut","a nu plăcea":"displăcut","a aștepta":"așteptat",
-  "a se odihni":"odihnit","a se întâlni":"întâlnit","a alerga":"alergat",
-  "a se așeza":"așezat","a sta în picioare":"stat în picioare",
-  "a decide":"decis","a propune":"propus","a transmite":"transmis",
-  "a menține":"menținut","a se produce":"produs","a crește":"crescut",
-  "a scădea":"scăzut","a recunoaște":"recunoscut","a analiza":"analizat",
-  "a observa":"observat","a rezolva":"rezolvat","a cerceta":"cercetat",
-  "a colabora":"colaborat","a solicita":"solicitat","a satisface":"satisfăcut",
-  "a compara":"comparat","a explica":"explicat","a anticipa":"anticipat",
-};
-
-function stripInfinitive(roVerb){
-  return (roVerb || "").replace(/^\s*a\s+/i, "").trim();
-}
-
-function roPersonFromSubjectKo(subjKo){
-  if(subjKo === "저" || subjKo === "나") return "1sg";
-  if(subjKo === "너") return "2sg";
-  if(subjKo === "우리") return "1pl";
-  if(subjKo === "너희") return "2pl";
-  return "3sg";
-}
-
-function roAgreeVerb(roVerbInf, subjKo){
-  const inf = (roVerbInf || "").trim().toLowerCase();
-  const person = roPersonFromSubjectKo(subjKo);
-  const forms = RO_FORMS[inf];
-
-  if(forms && forms[person]) return forms[person];
-
-  return stripInfinitive(roVerbInf);
-}
-
-function buildCompoundPast(roVerbInf, subjKo){
-  const person = roPersonFromSubjectKo(subjKo);
-  const inf = (roVerbInf || "").trim().toLowerCase();
-  const part = RO_PARTICIPLES[inf] || (stripInfinitive(roVerbInf) + "t");
-  const isRefl = inf.startsWith("a se ");
-  if(isRefl){
-    const ra = {"1sg":"m-am","2sg":"te-ai","3sg":"s-a","1pl":"ne-am","2pl":"v-ați","3pl":"s-au"};
-    return (ra[person] || "s-a") + " " + part;
-  }
-  const aux = {"1sg":"am","2sg":"ai","3sg":"a","1pl":"am","2pl":"ați","3pl":"au"};
-  return (aux[person] || "a") + " " + part;
-}
-
-function buildFuture(roVerbInf, subjKo){
-  const person = roPersonFromSubjectKo(subjKo);
-  const inf = (roVerbInf || "").trim().toLowerCase();
-  const isRefl = inf.startsWith("a se ");
-  const base = stripInfinitive(roVerbInf).replace(/^se\s+/i, "");
-  if(isRefl){
-    const rf = {"1sg":"mă voi","2sg":"te vei","3sg":"se va","1pl":"ne vom","2pl":"vă veți","3pl":"se vor"};
-    return (rf[person] || "se va") + " " + base;
-  }
-  const aux = {"1sg":"voi","2sg":"vei","3sg":"va","1pl":"vom","2pl":"veți","3pl":"vor"};
-  return (aux[person] || "va") + " " + stripInfinitive(roVerbInf);
-}
-
-function buildRoVerbPhrase(roVerbInf, cj, subjKo){
-  const v = roAgreeVerb(roVerbInf, subjKo);
-  const inf = (roVerbInf || "").trim().toLowerCase();
-
-  if(!cj) return v;
-
-  const map = {
-    "-아요/어요":         ()  => v,
-    "-았어요/었어요":     ()  => buildCompoundPast(roVerbInf, subjKo),
-    "-고 있어요":         ()  => v + " acum",
-    "-고 싶어요":         ()  => "vreau să " + stripInfinitive(roVerbInf),
-    "-(으)ㄹ 거예요":     ()  => buildFuture(roVerbInf, subjKo),
-    "-지 마세요":         ()  => "nu " + stripInfinitive(roVerbInf) + ", te rog",
-    "-아/어야 돼요":      ()  => "trebuie să " + stripInfinitive(roVerbInf),
-    "-(으)ㄹ 수 있어요":  ()  => "pot să " + stripInfinitive(roVerbInf),
-    "-(으)ㄹ 수 없어요":  ()  => "nu pot să " + stripInfinitive(roVerbInf),
-    "-기 전에":           ()  => "înainte să " + stripInfinitive(roVerbInf),
-    "-고 나서":           ()  => "după ce " + v,
-    "-(으)면서":          ()  => "în timp ce " + v,
-    "-(으)ㄹ까요?":       ()  => "să " + stripInfinitive(roVerbInf) + "?",
-    "-고":                ()  => v + " și",
-    "-(으)세요":          ()  => "vă rog " + stripInfinitive(roVerbInf),
-    "-더라고요":          ()  => "am observat că " + v,
-    "-네요":              ()  => "oh, " + v + "!",
-    "-군요":              ()  => "ah, " + v + "!",
-    "-(으)ㄹ게요":        ()  => "o să " + stripInfinitive(roVerbInf),
-    "-(으)ㄹ래요?":       ()  => "vrei să " + stripInfinitive(roVerbInf) + "?",
-    "-는 게 어때요?":     ()  => "ce-ar fi să " + stripInfinitive(roVerbInf) + "?",
-    "-는 중이에요":       ()  => v + " în acest moment",
-    "-아/어도 돼요":      ()  => "poți să " + stripInfinitive(roVerbInf),
-    "-(으)면 안 돼요":    ()  => "nu poți să " + stripInfinitive(roVerbInf),
-    "-(으)나":            ()  => "deși " + v,
-    "-(으)므로":          ()  => "deoarece " + v,
-    "-(으)ㄴ/는 반면에":  ()  => v + ", în schimb",
-    "-게 되다":           ()  => "ajungi să " + stripInfinitive(roVerbInf),
-    "-아/어지다":         ()  => "devine / " + v,
-    "-기 마련이다":       ()  => "e firesc să " + stripInfinitive(roVerbInf),
-    "-(으)ㄹ 뿐이다":     ()  => "doar " + stripInfinitive(roVerbInf),
-    "-(으)ㄹ수록":        ()  => "cu cât " + v + ", cu atât...",
-    "-(으)ㄹ지도 몰라요": ()  => "s-ar putea să " + stripInfinitive(roVerbInf),
-    "-(으)ㄹ지라도":      ()  => "chiar dacă " + v,
-    "-(으)ㄴ/는 만큼":    ()  => v + " în măsura în care",
-    "-(으)ㄴ/는데도":     ()  => "deși " + v,
-    "-도록 하다":         ()  => "fă astfel încât să " + stripInfinitive(roVerbInf),
-    "-고자 하다":         ()  => "intenționez să " + stripInfinitive(roVerbInf),
-    "-고 말다":           ()  => "a ajuns să " + stripInfinitive(roVerbInf),
-    "-길래":              ()  => "văzând că " + v,
-    "-기에":              ()  => "fiindcă " + v,
+  var TABLE_HEADERS_KO = {
+    topic: '주어',
+    topic2: '주어 2',
+    associate: '관련 인물',
+    time: '시간',
+    departure: '장소',
+    transit: '맥락',
+    numeral: '수사',
+    quantifier: '분류사',
+    object1: '목적어 1',
+    beneficiary: '수혜자',
+    object2: '목적어 2',
+    adverb: '부사 / 형용사',
+    adverb2: '부사 / 형용사 2',
+    verb: '동사',
+    connector: '연결어'
   };
 
-  const fn = map[cj];
-  if(fn) return fn();
-
-  return v + " (" + (translations.conjug?.[cj] || cj) + ")";
-}
-
-
-function buildNaturalRomanian(state, active){
-  const use = (k) =>
-    active?.[k] !== false &&
-    (typeof isColumnVisible === "function" ? isColumnVisible(k) : true);
-
-  const parts = [];
-
-  const subjectKo = state.subject || "";
-  const subjectRo = translations.subject?.[subjectKo] || "";
-
-  let subjectText = subjectRo;
-  if(state.subjectAdjs?.length && subjectText){
-    subjectText = state.subjectAdjs.map(x => translations.subjectAdj?.[x] || x).join(" ") + " " + subjectText;
-  }
-
-  const timeRo = state.time ? (translations.time?.[state.time] || state.time) : "";
-  const placeRo = state.place ? (translations.place?.[state.place] || state.place) : "";
- const modRo = state.mod ? (translations.mod?.[state.mod] || state.mod) : "";
-  const objectRoBase = state.object ? (translations.object?.[state.object] || state.object) : "";
-  const verbRoInf = state.verb ? (translations.verb?.[state.verb] || state.verb) : "";
-
-  let objectText = objectRoBase;
-  if(state.objectAdjs?.length && objectText){
-    objectText = state.objectAdjs.map(x => translations.objectAdj?.[x] || x).join(" ") + " " + objectText;
-  }
-
-  if(use("time") && timeRo) parts.push(timeRo);
-  if(use("subject") && subjectText && !state.hideSubject) parts.push(subjectText);
-  if(use("place") && placeRo) parts.push(placeRo);
-  if(use("object") && objectText) parts.push(objectText);
-  if(use("mod") && modRo) parts.push(modRo);
-
-  if(use("verb") || use("conjug")){
-    const verbText = buildRoVerbPhrase(verbRoInf, state.conjug, subjectKo);
-    if(verbText) parts.push(verbText);
-  }
-
-  return parts.join(" ").replace(/\s+/g, " ").trim();
-}
-
-/* =========================
-   13) COLUMN UI
-========================= */
-function getColumnDisplayValue(state, key){
-  if(key === "subject") return state.subject || "";
-  if(key === "time") return state.time || "";
-  if(key === "place") return state.place || "";
-  if(key === "mod") return state.mod || "";
-  if(key === "object") return state.object || "";
-  if(key === "subjectAdj") return (state.subjectAdjs || []).join(", ");
-  if(key === "objectAdj") return (state.objectAdjs || []).join(", ");
-  if(key === "verb") return state.verb || "";
-  if(key === "conjug") return state.conjug || "";
-  if(key === "numeral") return state.numeral || "";
-  if(key === "counter") return state.counter || "";
-  return "";
-}
-
-function renderClauseRow(container, activeMap, state, clauseIndex){
-  if(!container) return;
-
-  container.innerHTML = "";
-
-  columns.forEach(col => {
-    if(isColumnVisible(col.key) === false) return;
-
-    const colDiv = document.createElement("div");
-    colDiv.className = "col";
-    colDiv.dataset.key = col.key;
-    colDiv.dataset.clauseIndex = clauseIndex;
-
-    if(activeMap[col.key] === false){
-      colDiv.classList.add("dimmed");
-    }
-
-    const header = document.createElement("div");
-    header.className = "col-header";
-
-    const title = document.createElement("span");
-    title.textContent = col.title + (col.ko ? " (" + col.ko + ")" : "");
-    header.appendChild(title);
-
-    const toggle = document.createElement("input");
-    toggle.type = "checkbox";
-    toggle.className = "col-toggle";
-    toggle.checked = activeMap[col.key] !== false;
-    toggle.addEventListener("change", () => {
-      activeMap[col.key] = toggle.checked;
-      renderAll();
-    });
-
-    header.appendChild(toggle);
-    colDiv.appendChild(header);
-
-    const label = document.createElement("div");
-    label.className = "col-body-label";
-    label.textContent = col.hint || "";
-    colDiv.appendChild(label);
-
-    const main = document.createElement("div");
-    main.className = "col-body-main";
-    main.textContent = getColumnDisplayValue(state, col.key);
-    colDiv.appendChild(main);
-
-    const extra = document.createElement("div");
-    extra.className = "col-body-extra";
-
-    if(col.key === "conjug" && state?.[col.key] && isLinkingConj(state[col.key])){
-      extra.textContent = "⭐ cere propoziția următoare";
-    }
-
-    colDiv.appendChild(extra);
-    container.appendChild(colDiv);
-  });
-}
-
-/* =========================
-   14) TOGGLES
-========================= */
-function createToggleChips(){
-  if(!DOM.togglesP1 || !DOM.togglesP2) return;
-
-  DOM.togglesP1.innerHTML = "";
-  DOM.togglesP2.innerHTML = "";
-
-  const createFor = (wrapper, clauseIndex) => {
-    columns.forEach(col => {
-      const chip = document.createElement("label");
-      chip.className = "chip";
-
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = actives[clauseIndex]?.[col.key] !== false;
-      cb.dataset.key = col.key;
-      cb.dataset.clauseIndex = String(clauseIndex);
-
-      chip.appendChild(cb);
-      chip.append(col.title);
-      wrapper.appendChild(chip);
-    });
-
-    wrapper.addEventListener("change", (e) => {
-      const cb = e.target;
-      if(!cb || cb.tagName !== "INPUT") return;
-
-      const key = cb.dataset.key;
-      const idx = Number(cb.dataset.clauseIndex);
-
-      if(!actives[idx]) return;
-
-      actives[idx][key] = cb.checked;
-      cb.parentElement.classList.toggle("chip-off", !cb.checked);
-      renderAll();
-    });
-
-    $$("input[type='checkbox']", wrapper).forEach(cb => {
-      cb.parentElement.classList.toggle("chip-off", !cb.checked);
-    });
+  var TABLE_PLACEHOLDERS_KO = {
+    topic: '선택',
+    topic2: '선택',
+    associate: '선택',
+    time: '선택',
+    departure: '선택',
+    transit: '선택',
+    numeral: '선택',
+    quantifier: '선택',
+    object1: '선택',
+    beneficiary: '선택',
+    object2: '선택',
+    adverb: '선택',
+    adverb2: '선택',
+    verb: '선택',
+    connector: '선택'
   };
 
-  createFor(DOM.togglesP1, 0);
-  createFor(DOM.togglesP2, 1);
-}
+  var FIELD_LABELS = {
+    ro: {
+      topic: 'subiect',
+      topic2: 'subiect 2',
+      associate: 'participant asociat',
+      time: 'timp',
+      departure: 'loc',
+      transit: 'context',
+      numeral: 'numeral',
+      quantifier: 'cuantificator',
+      object1: 'obiect 1',
+      beneficiary: 'beneficiar',
+      object2: 'obiect 2',
+      adverb: 'adjectiv / adverb',
+      adverb2: 'adjectiv / adverb 2',
+      verb: 'verb',
+      connector: 'conector'
+    },
+    en: {
+      topic: 'subject',
+      topic2: 'subject 2',
+      associate: 'associated participant',
+      time: 'time',
+      departure: 'place',
+      transit: 'context',
+      numeral: 'numeral',
+      quantifier: 'quantifier',
+      object1: 'object 1',
+      beneficiary: 'beneficiary',
+      object2: 'object 2',
+      adverb: 'adjective / adverb',
+      adverb2: 'adjective / adverb 2',
+      verb: 'verb',
+      connector: 'connector'
+    }
+  };
 
-/* =========================
-   15) PANEL
-========================= */
-let panelClauseIndex = 0;
-let panelKey = "subject";
+  var FIELD_BINDINGS = {
+    topic: 'subject',
+    time: 'time',
+    departure: 'location',
+    object1: 'object',
+    adverb: 'description',
+    verb: 'verb',
+    connector: 'connector'
+  };
 
-function renderPanelList(col){
-  if(!DOM.panelList) return;
+  var ALL_FIELD_KEYS = [
+    'topic','topic2','associate','time','departure','transit',
+    'numeral','quantifier','object1','beneficiary','object2',
+    'adverb','adverb2','verb','connector'
+  ];
 
-  DOM.panelList.innerHTML = "";
+  var FIELD_META = {
+    topic:      { key:'topic', kind:'subject' },
+    topic2:     { key:'topic2', kind:'subject' },
+    associate:  { key:'associate', kind:'subject' },
+    time:       { key:'time', kind:'time' },
+    departure:  { key:'departure', kind:'location' },
+    transit:    { key:'transit', kind:'location' },
+    numeral:    { key:'numeral', kind:'object' },
+    quantifier: { key:'quantifier', kind:'object' },
+    object1:    { key:'object1', kind:'object' },
+    beneficiary:{ key:'beneficiary', kind:'subject' },
+    object2:    { key:'object2', kind:'object' },
+    adverb:     { key:'adverb', kind:'description' },
+    adverb2:    { key:'adverb2', kind:'description' },
+    verb:       { key:'verb', kind:'verb' },
+    connector:  { key:'connector', kind:'connector' }
+  };
 
-  const key = col.key;
-  const map = translations[key] || {};
-  const filter = (DOM.panelSearchInput?.value || "").trim().toLowerCase();
+  var LEVEL_FIELDS = {
+    1: ['topic','object1','verb','connector'],
+    2: ['topic','time','departure','object1','verb','connector'],
+    3: ['topic','time','departure','object1','adverb','verb','connector'],
+    4: ['topic','time','departure','object1','adverb','verb','connector'],
+    5: ['topic','time','departure','object1','object2','adverb','verb','connector'],
+    6: ['topic','topic2','time','departure','transit','object1','object2','adverb','adverb2','verb','connector']
+  };
 
-  const words = col.data.filter(w => {
-    if(!w) return false;
-    if(!filter) return true;
-    return w.toLowerCase().startsWith(filter);
-  });
+  var TEMPLATES = [
+    {
+      id:'sv',
+      code:'S + V',
+      ro:'Subiect + Verb',
+      en:'Subject + Verb',
+      fields:['topic','verb']
+    },
+    {
+      id:'sov',
+      code:'S + O + V',
+      ro:'Subiect + Obiect + Verb',
+      en:'Subject + Object + Verb',
+      fields:['topic','object1','verb']
+    },
+    {
+      id:'tsv',
+      code:'T + S + V',
+      ro:'Timp + Subiect + Verb',
+      en:'Time + Subject + Verb',
+      fields:['time','topic','verb']
+    },
+    {
+      id:'slv',
+      code:'S + L + V',
+      ro:'Subiect + Loc + Verb',
+      en:'Subject + Place + Verb',
+      fields:['topic','departure','verb']
+    },
+    {
+      id:'tsov',
+      code:'T + S + O + V',
+      ro:'Timp + Subiect + Obiect + Verb',
+      en:'Time + Subject + Object + Verb',
+      fields:['time','topic','object1','verb']
+    },
+    {
+      id:'slov',
+      code:'S + L + O + V',
+      ro:'Subiect + Loc + Obiect + Verb',
+      en:'Subject + Place + Object + Verb',
+      fields:['topic','departure','object1','verb']
+    },
+    {
+      id:'full',
+      code:'T + S + L + O + A + V',
+      ro:'Timp + Sub. + Loc + Obiect + Adverb + Verb',
+      en:'Time + Sub. + Place + Object + Adverb + Verb',
+      fields:['time','topic','departure','object1','adverb','verb']
+    }
+  ];
 
-  if(!words.length){
-    const empty = document.createElement("div");
-    empty.className = "panel-item";
-    empty.textContent = "Nu există cuvinte pentru filtrul introdus.";
-    DOM.panelList.appendChild(empty);
-    return;
+  var DATA = {
+    subject: [
+      {ko:'저는', ro:'eu', en:'I', aliases:['eu','i']},
+      {ko:'나는', ro:'eu', en:'I', aliases:[]},
+      {ko:'너는', ro:'tu', en:'you', aliases:['tu','you']},
+      {ko:'여러분은', ro:'voi', en:'you (all)', aliases:['voi','you all','you guys','voi toti','voi toți','ati','ați']},
+      {ko:'우리는', ro:'noi', en:'we', aliases:['noi','we']},
+      {ko:'그는', ro:'el', en:'he', aliases:['el','he']},
+      {ko:'그녀는', ro:'ea', en:'she', aliases:['ea','she']},
+      {ko:'그들은', ro:'ei/ele', en:'they', aliases:['ei','ele','they','ei/ele']},
+      {ko:'친구는', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
+      {ko:'선생님은', ro:'profesorul', en:'teacher', aliases:['profesorul','profesor','teacher']},
+      {ko:'학생은', ro:'studentul', en:'student', aliases:['studentul','student']},
+      {ko:'소녀는', ro:'fată', en:'girl', aliases:['fata','fată','girl','the girl']},
+      {ko:'소년은', ro:'băiat', en:'boy', aliases:['baiat','băiat','boy','the boy']},
+      {ko:'민수는', ro:'Minsu', en:'Minsu', aliases:['minsu']},
+      {ko:'지수는', ro:'Jisu', en:'Jisu', aliases:['jisu']}
+    ],
+    time: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'오늘', ro:'astăzi', en:'today', aliases:['astăzi','astazi','azi','today']},
+      {ko:'어제', ro:'ieri', en:'yesterday', aliases:['ieri','yesterday']},
+      {ko:'내일', ro:'mâine', en:'tomorrow', aliases:['maine','mâine','tomorrow']},
+      {ko:'지금', ro:'acum', en:'now', aliases:['acum','now']},
+      {ko:'매일', ro:'în fiecare zi', en:'every day', aliases:['zilnic','in fiecare zi','în fiecare zi','every day']},
+      {ko:'아침에', ro:'dimineața', en:'in the morning', aliases:['dimineata','dimineața','morning']},
+      {ko:'오후에', ro:'după-amiază', en:'in the afternoon', aliases:['dupa-amiaza','după-amiază','dupa amiaza','după amiază','afternoon']},
+      {ko:'저녁에', ro:'seara', en:'in the evening', aliases:['seara','evening']},
+      {ko:'주말에', ro:'în weekend', en:'on the weekend', aliases:['weekend']},
+      {ko:'오늘 아침에', ro:'azi dimineața', en:'this morning', aliases:['azi dimineata','azi dimineața','today morning','this morning']},
+      {ko:'오늘 오후에', ro:'azi după-amiază', en:'this afternoon', aliases:['azi dupa-amiaza','azi după-amiază','azi dupa amiaza','azi după amiază','today afternoon','this afternoon']},
+      {ko:'오늘 저녁에', ro:'azi seara', en:'this evening', aliases:['azi seara','today evening','this evening']},
+      {ko:'내일 아침에', ro:'mâine dimineața', en:'tomorrow morning', aliases:['maine dimineata','mâine dimineața','tomorrow morning']},
+      {ko:'내일 오후에', ro:'mâine după-amiază', en:'tomorrow afternoon', aliases:['maine dupa-amiaza','mâine după-amiază','maine dupa amiaza','mâine după amiază','tomorrow afternoon']},
+      {ko:'내일 저녁에', ro:'mâine seara', en:'tomorrow evening', aliases:['maine seara','mâine seara','tomorrow evening']},
+      {ko:'어제 아침에', ro:'ieri dimineața', en:'yesterday morning', aliases:['ieri dimineata','ieri dimineața','yesterday morning']},
+      {ko:'어제 오후에', ro:'ieri după-amiază', en:'yesterday afternoon', aliases:['ieri dupa-amiaza','ieri după-amiază','ieri dupa amiaza','ieri după amiază','yesterday afternoon']},
+      {ko:'어제 저녁에', ro:'ieri seara', en:'yesterday evening', aliases:['ieri seara','yesterday evening']},
+      {ko:'밤에', ro:'noaptea', en:'at night', aliases:['noaptea','la noapte','noaptea tarziu','noaptea târziu','at night','night']},
+      {ko:'낮에', ro:'ziua', en:'during the day', aliases:['ziua','in timpul zilei','în timpul zilei','during the day','daytime']},
+      {ko:'în fiecare săptămână', ro:'în fiecare săptămână', en:'every week', aliases:['in fiecare saptamana','în fiecare săptămână','saptamanal','săptămânal','every week','weekly']}
+    ],
+    location: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'학교에서', ro:'la școală', en:'at school', aliases:['la scoala','la școală','scoala','școală','school']},
+      {ko:'집에서', ro:'acasă', en:'at home', aliases:['acasă','acasa','home']},
+      {ko:'도서관에서', ro:'la bibliotecă', en:'at the library', aliases:['la biblioteca','la bibliotecă','biblioteca','bibliotecă','library']},
+      {ko:'카페에서', ro:'la cafenea', en:'at the cafe', aliases:['la cafenea','cafenea','cafe']},
+      {ko:'회사에서', ro:'la serviciu', en:'at work', aliases:['la serviciu','serviciu','la munca','la muncă','work']},
+      {ko:'공원에서', ro:'în parc', en:'in the park', aliases:['in parc','în parc','parc','park']},
+      {ko:'식당에서', ro:'la restaurant', en:'at the restaurant', aliases:['restaurant']},
+      {ko:'교실에서', ro:'în clasă', en:'in the classroom', aliases:['in clasa','în clasă','clasa','clasă','classroom']},
+      {ko:'길에서', ro:'pe stradă', en:'on the street', aliases:['pe strada','pe stradă','strada','stradă','street']},
+      {ko:'시장에서', ro:'la piață', en:'at the market', aliases:['la piata','la piață','piata','piață','market']},
+      {ko:'가게에서', ro:'la magazin', en:'at the store', aliases:['la magazin','magazin','store','shop']},
+      {ko:'온라인으로', ro:'online', en:'online', aliases:['online']},
+      {ko:'병원에서', ro:'la spital', en:'at the hospital', aliases:['la spital','spital','hospital']},
+      {ko:'바다에서', ro:'la mare', en:'at the sea', aliases:['la mare','mare','sea','beach']},
+      {ko:'산에서', ro:'la munte', en:'in the mountains', aliases:['la munte','munte','mountain','mountains']},
+      {ko:'기차역에서', ro:'la gară', en:'at the train station', aliases:['la gara','la gară','gara','gară','train station','railway station']},
+      {ko:'공항에서', ro:'la aeroport', en:'at the airport', aliases:['la aeroport','aeroport','airport']},
+      {ko:'박물관에서', ro:'la muzeu', en:'at the museum', aliases:['la muzeu','muzeu','museum']},
+      {ko:'영화관에서', ro:'la cinema', en:'at the cinema', aliases:['la cinema','cinema','cinematograf','movie theater','film theater']},
+      {ko:'극장에서', ro:'la teatru', en:'at the theater', aliases:['la teatru','teatru','theater','theatre']},
+      {ko:'수영장에서', ro:'la piscină', en:'at the pool', aliases:['la piscina','la piscină','piscina','piscină','pool','swimming pool']},
+      {ko:'헬스장에서', ro:'la sală', en:'at the gym', aliases:['la sala','la sală','la sala de sport','sala de sport','sală de sport','sala','sală','gym','fitness']},
+      {ko:'정류장에서', ro:'la stație', en:'at the bus stop', aliases:['la statie','la stație','statie','stație','bus stop','station','autobuz']},
+      {ko:'호텔에서', ro:'la hotel', en:'at the hotel', aliases:['la hotel','hotel']},
+      {ko:'해변에서', ro:'la plajă', en:'at the beach', aliases:['la plaja','la plajă','plaja','plajă','beach']}
+    ],
+    object: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'한국어를', ro:'limba coreeană', en:'Korean', aliases:['coreeana','coreeană','limba coreeana','limba coreeană','korean']},
+      {ko:'점심을', ro:'prânzul', en:'lunch', aliases:['pranzul','prânzul','pranz','prânz','lunch']},
+      {ko:'숙제를', ro:'tema', en:'homework', aliases:['tema','homework']},
+      {ko:'책을', ro:'cartea', en:'the book', aliases:['cartea','carte','book']},
+      {ko:'커피를', ro:'cafeaua', en:'coffee', aliases:['cafeaua','cafea','coffee']},
+      {ko:'음악을', ro:'muzica', en:'music', aliases:['muzica','muzică','music']},
+      {ko:'영화를', ro:'filmul', en:'the movie', aliases:['filmul','film','movie']},
+      {ko:'친구를', ro:'prietenul', en:'friend', aliases:['prietenul','prieten','friend']},
+      {ko:'프로젝트를', ro:'proiectul', en:'the project', aliases:['proiectul','proiect','project']},
+      {ko:'편지를', ro:'scrisoarea', en:'the letter', aliases:['scrisoarea','scrisoare','letter']},
+      {ko:'초콜릿을', ro:'ciocolata', en:'chocolate', aliases:['ciocolata','ciocolată','chocolate']},
+      {ko:'음식을', ro:'mâncarea', en:'food', aliases:['mancarea','mâncarea','mancare','mâncare','food']},
+      {ko:'테이블을', ro:'masa', en:'the table', aliases:['masa','table','the table','mesele','mesele']},
+      {ko:'손님들을 위해', ro:'pentru clienți', en:'for the customers', aliases:['pentru clienti','pentru clienți','pentru clientii','pentru clienții','pentru clientilor','pentru clienților','for customers','for clients','for guests']},
+      {ko:'시간이', ro:'timp', en:'time', aliases:['timp','time','timul','un timp']},
+      {ko:'차를', ro:'ceaiul', en:'tea', aliases:['ceaiul','ceai','tea']},
+      {ko:'주스를', ro:'sucul', en:'juice', aliases:['sucul','suc','juice']},
+      {ko:'맥주를', ro:'berea', en:'beer', aliases:['berea','bere','beer']},
+      {ko:'돈이', ro:'bani', en:'money', aliases:['bani','money','banul','banii','ban']},
+      {ko:'물을', ro:'apă', en:'water', aliases:['apa','apă','water']},
+      {ko:'이름을', ro:'numele', en:'name', aliases:['numele','nume','name','my name','my name is']},
+      {ko:'전화를', ro:'telefonul', en:'phone', aliases:['telefonul','telefon','phone','call']}
+    ],
+    description: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'빨리', ro:'repede', en:'quickly', aliases:['repede','quickly','fast']},
+      {ko:'천천히', ro:'încet', en:'slowly', aliases:['incet','încet','slowly']},
+      {ko:'열심히', ro:'cu sârguință', en:'diligently', aliases:['cu sarguinta','cu sârguință','serios','din greu','diligently','hard']},
+      {ko:'조용히', ro:'în liniște', en:'quietly', aliases:['in liniste','în liniște','quietly']},
+      {ko:'같이', ro:'împreună', en:'together', aliases:['împreună','impreuna','together']},
+      {ko:'혼자', ro:'singur', en:'alone', aliases:['singur','singura','alone']},
+      {ko:'다시', ro:'din nou', en:'again', aliases:['din nou','again']},
+      {ko:'미리', ro:'dinainte', en:'in advance', aliases:['dinainte','in advance']},
+      {ko:'정말', ro:'foarte', en:'really', aliases:['foarte','really']},
+      {ko:'조금', ro:'puțin', en:'a little', aliases:['putin','puțin','little']},
+      {ko:'자주', ro:'des', en:'often', aliases:['des','often']},
+      {ko:'깨끗이', ro:'curat', en:'cleanly', aliases:['curat','curata','curată','clean','cleanly','neat','ingrijit','îngrijit']},
+      {ko:'예쁘게', ro:'frumos', en:'beautifully', aliases:['frumos','frumoasa','frumoasă','beautiful','beautifully','pretty','prettily','dragut','drăguț']},
+      {ko:'많이', ro:'mult', en:'a lot', aliases:['mult','multa','multă','a lot','very much','much','lots']},
+      {ko:'행복하게', ro:'fericit', en:'happily', aliases:['fericit','fericita','fericită','happy','happily','bucuros','bucuroasa','bucuroasă']},
+      {ko:'슬프게', ro:'trist', en:'sadly', aliases:['trist','trista','tristă','sad','sadly','suparat','suparata','supărată']},
+      {ko:'화나게', ro:'supărat', en:'angrily', aliases:['suparat','supărată','supărat','angry','angrily','furios','furioasa','furioasă']},
+      {ko:'피곤하게', ro:'obosit', en:'tiredly', aliases:['obosit','obosita','obosită','tired','tiredly','exhausted']},
+      {ko:'눈이 큰', ro:'cu ochii mari', en:'with big eyes', modifiesSubject:true, aliases:['cu ochii mari','cu ochi mari','ochii mari','ochi mari','with big eyes','big eyes','big-eyed']},
+      {ko:'머리가 긴', ro:'cu părul lung', en:'with long hair', modifiesSubject:true, aliases:['cu parul lung','cu părul lung','parul lung','părul lung','with long hair','long hair']},
+      {ko:'키가 큰', ro:'înalt', en:'tall', modifiesSubject:true, aliases:['inalt','înalt','inalta','înaltă','tall']},
+      {ko:'키가 작은', ro:'scund', en:'short', modifiesSubject:true, aliases:['scund','scunda','scundă','short','mic','mica','mică']},
+      {ko:'큰 목소리로', ro:'cu voce tare', en:'with a loud voice', aliases:['cu voce tare','voce tare','with loud voice','with a loud voice','loudly']},
+      {ko:'항상', ro:'întotdeauna', en:'always', aliases:['intotdeauna','întotdeauna','mereu','always','tot timpul']},
+      {ko:'절대', ro:'niciodată', en:'never', aliases:['niciodata','niciodată','deloc','never','in niciun caz','în niciun caz']},
+      {ko:'가끔', ro:'uneori', en:'sometimes', aliases:['uneori','cateodata','câteodată','cateodată','sometimes','din cand in cand','din când în când']},
+      {ko:'드물게', ro:'rar', en:'rarely', aliases:['rar','rareori','rarely','seldom','arareori']},
+      {ko:'즉시', ro:'imediat', en:'immediately', aliases:['imediat','imediat dupa','imediat după','immediately','right away','instant']},
+      {ko:'실수로', ro:'din greșeală', en:'by mistake', aliases:['din greseala','din greșeală','accidental','accidentally','by mistake','by accident','gresit','greșit']},
+      {ko:'의도적으로', ro:'intenționat', en:'intentionally', aliases:['intentionat','intenționat','deliberately','on purpose','intentionally','dinadins']}
+
+    ],
+    verb: [
+      {ko:'공부하다', ro:'a studia', en:'to study', aliases:['studiez','studia','invat','învăț','study','learn','studiat','am studiat','a studiat','voi studia','studied','will study'], final:'공부해요', forms:{none:'공부해요',seq:'공부하고',cause1:'공부해서',cause2:'공부하니까',condition:'공부하면',contrast1:'공부하지만',contrast2:'공부하는데',purpose:'공부하려고',result:'공부하게 되다'}},
+      {ko:'먹다', ro:'a mânca', en:'to eat', aliases:['mananc','mănânc','eat','manca','mânca','mancat','mâncat','am mancat','am mâncat','a mancat','a mâncat','voi manca','voi mânca','ate','will eat'], final:'먹어요', forms:{none:'먹어요',seq:'먹고',cause1:'먹어서',cause2:'먹으니까',condition:'먹으면',contrast1:'먹지만',contrast2:'먹는데',purpose:'먹으려고',result:'먹게 되다'}},
+      {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','plec','merge','go','leave','mers','am mers','a mers','voi merge','went','will go'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
+      {ko:'오다', ro:'a veni', en:'to come', aliases:['vin','vine','veni','come','venit','am venit','a venit','voi veni','came','will come'], final:'와요', forms:{none:'와요',seq:'오고',cause1:'와서',cause2:'오니까',condition:'오면',contrast1:'오지만',contrast2:'오는데',purpose:'오려고',result:'오게 되다'}},
+      {ko:'보다', ro:'a vedea', en:'to see', aliases:['vad','văd','vezi','vede','vedea','see','watch','vazut','văzut','am vazut','am văzut','a vazut','a văzut','voi vedea','saw','will see'], final:'봐요', forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
+      {ko:'읽다', ro:'a citi', en:'to read', aliases:['citesc','citeste','citește','citi','read','citit','am citit','a citit','voi citi','will read'], final:'읽어요', forms:{none:'읽어요',seq:'읽고',cause1:'읽어서',cause2:'읽으니까',condition:'읽으면',contrast1:'읽지만',contrast2:'읽는데',purpose:'읽으려고',result:'읽게 되다'}},
+      {ko:'쓰다', ro:'a scrie', en:'to write', aliases:['scriu','scrie','write','scris','am scris','a scris','voi scrie','scriem','scrieți','wrote','will write'], final:'써요', forms:{none:'써요',seq:'쓰고',cause1:'써서',cause2:'쓰니까',condition:'쓰면',contrast1:'쓰지만',contrast2:'쓰는데',purpose:'쓰려고',result:'쓰게 되다'}},
+      {ko:'만나다', ro:'a întâlni', en:'to meet', aliases:['intalnesc','întâlnesc','meet','intalni','întâlni','intalnit','întâlnit','am intalnit','am întâlnit','a intalnit','a întâlnit','voi intalni','voi întâlni','met','will meet'], final:'만나요', forms:{none:'만나요',seq:'만나고',cause1:'만나서',cause2:'만나니까',condition:'만나면',contrast1:'만나지만',contrast2:'만나는데',purpose:'만나려고',result:'만나게 되다'}},
+      {ko:'쉬다', ro:'a se odihni', en:'to rest', aliases:['odihnesc','rest','odihni','odihnit','m-am odihnit','s-a odihnit','ne-am odihnit','ma voi odihni','rested','will rest'], final:'쉬어요', forms:{none:'쉬어요',seq:'쉬고',cause1:'쉬어서',cause2:'쉬니까',condition:'쉬면',contrast1:'쉬지만',contrast2:'쉬는데',purpose:'쉬려고',result:'쉬게 되다'}},
+      {ko:'일하다', ro:'a lucra', en:'to work', aliases:['lucrez','lucrează','lucreaza','lucra','work','lucrat','am lucrat','a lucrat','voi lucra','worked','will work'], final:'일해요', forms:{none:'일해요',seq:'일하고',cause1:'일해서',cause2:'일하니까',condition:'일하면',contrast1:'일하지만',contrast2:'일하는데',purpose:'일하려고',result:'일하게 되다'}},
+      {ko:'운동하다', ro:'a face sport', en:'to exercise', aliases:['fac sport','sport','exercise','facut sport','am facut sport','a facut sport','voi face sport','exercised','will exercise'], final:'운동해요', forms:{none:'운동해요',seq:'운동하고',cause1:'운동해서',cause2:'운동하니까',condition:'운동하면',contrast1:'운동하지만',contrast2:'운동하는데',purpose:'운동하려고',result:'운동하게 되다'}},
+      {ko:'준비하다', ro:'a pregăti', en:'to prepare', aliases:['pregatesc','pregătesc','prepare','pregati','pregăti','pregatit','pregătit','am pregatit','am pregătit','a pregatit','a pregătit','voi pregati','voi pregăti','prepared','will prepare'], final:'준비해요', forms:{none:'준비해요',seq:'준비하고',cause1:'준비해서',cause2:'준비하니까',condition:'준비하면',contrast1:'준비하지만',contrast2:'준비하는데',purpose:'준비하려고',result:'준비하게 되다'}},
+      {ko:'배우다', ro:'a învăța', en:'to learn', aliases:['invat','învăț','learn','invatat','învățat','am invatat','am învățat','a invatat','a învățat','voi invata','voi învăța','learned','will learn'], final:'배워요', forms:{none:'배워요',seq:'배우고',cause1:'배워서',cause2:'배우니까',condition:'배우면',contrast1:'배우지만',contrast2:'배우는데',purpose:'배우려고',result:'배우게 되다'}},
+      {ko:'듣다', ro:'a asculta', en:'to listen', aliases:['ascult','asculta','listen','ascultat','am ascultat','a ascultat','voi asculta','listened','will listen'], final:'들어요', forms:{none:'들어요',seq:'듣고',cause1:'들어서',cause2:'들으니까',condition:'들으면',contrast1:'듣지만',contrast2:'듣는데',purpose:'들으려고',result:'듣게 되다'}},
+      {ko:'만들다', ro:'a face', en:'to make', aliases:['fac','creeaza','creează','make','create','facut','am facut','a facut','voi face','made','will make'], final:'만들어요', forms:{none:'만들어요',seq:'만들고',cause1:'만들어서',cause2:'만드니까',condition:'만들면',contrast1:'만들지만',contrast2:'만드는데',purpose:'만들려고',result:'만들게 되다'}},
+      {ko:'사다', ro:'a cumpăra', en:'to buy', aliases:['cumpar','cumpăr','cumpăra','buy','cumparat','cumpărat','am cumparat','a cumparat','voi cumpara','bought','will buy'], final:'사요', forms:{none:'사요',seq:'사고',cause1:'사서',cause2:'사니까',condition:'사면',contrast1:'사지만',contrast2:'사는데',purpose:'사려고',result:'사게 되다'}},
+      {ko:'주다', ro:'a da', en:'to give', aliases:['dau','da','give','dat','am dat','a dat','voi da','gave','will give'], final:'줘요', forms:{none:'줘요',seq:'주고',cause1:'줘서',cause2:'주니까',condition:'주면',contrast1:'주지만',contrast2:'주는데',purpose:'주려고',result:'주게 되다'}},
+      {ko:'기다리다', ro:'a aștepta', en:'to wait', aliases:['astept','aștept','asteapta','așteaptă','asteptam','așteptăm','wait','asteptat','așteptat','am asteptat','am așteptat','a asteptat','a așteptat','voi astepta','voi aștepta','waited','will wait'], final:'기다려요', forms:{none:'기다려요',seq:'기다리고',cause1:'기다려서',cause2:'기다리니까',condition:'기다리면',contrast1:'기다리지만',contrast2:'기다리는데',purpose:'기다리려고',result:'기다리게 되다'}},
+      {ko:'감사하다', ro:'a mulțumi', en:'to thank', aliases:['multumesc','mulțumesc','multumim','mulțumim','multumesti','mulțumești','thank','multumit','mulțumit','am multumit','am mulțumit','a multumit','a mulțumit','voi multumi','voi mulțumi','thanked','will thank'], final:'감사해요', forms:{none:'감사해요',seq:'감사하고',cause1:'감사해서',cause2:'감사하니까',condition:'감사하면',contrast1:'감사하지만',contrast2:'감사하는데',purpose:'감사하려고',result:'감사하게 되다'}},
+      {ko:'웃다', ro:'a zâmbi', en:'to smile', aliases:['zambesc','zâmbesc','zambesti','zâmbești','zambeste','zâmbește','zambi','zâmbi','smile','smiles','zambit','zâmbit','am zambit','am zâmbit','a zambit','a zâmbit','voi zambi','voi zâmbi','smiled','will smile'], final:'웃어요', forms:{none:'웃어요',seq:'웃고',cause1:'웃어서',cause2:'웃으니까',condition:'웃으면',contrast1:'웃지만',contrast2:'웃는데',purpose:'웃으려고',result:'웃게 되다'}},
+      {ko:'남기다', ro:'a lăsa', en:'to leave', aliases:['las','lași','lasati','lăsați','lasa','lăsa','leave','lasat','lăsat','am lasat','am lăsat','a lasat','a lăsat','voi lasa','voi lăsa','left','will leave'], final:'남겨요', forms:{none:'남겨요',seq:'남기고',cause1:'남겨서',cause2:'남기니까',condition:'남기면',contrast1:'남기지만',contrast2:'남기는데',purpose:'남기려고',result:'남기게 되다'}},
+      {ko:'마시다', ro:'a bea', en:'to drink', aliases:['beau','bei','bea','bem','beti','beți','baut','băut','am baut','am băut','a baut','a băut','voi bea','drink','drinks','drank','drinking','will drink'], final:'마셔요', forms:{none:'마셔요',seq:'마시고',cause1:'마셔서',cause2:'마시니까',condition:'마시면',contrast1:'마시지만',contrast2:'마시는데',purpose:'마시려고',result:'마시게 되다'}},
+      {ko:'자다', ro:'a dormi', en:'to sleep', aliases:['dorm','dormi','doarme','dormim','dormiti','dormiți','dormit','am dormit','a dormit','voi dormi','sleep','sleeps','slept','sleeping','will sleep'], final:'자요', forms:{none:'자요',seq:'자고',cause1:'자서',cause2:'자니까',condition:'자면',contrast1:'자지만',contrast2:'자는데',purpose:'자려고',result:'자게 되다'}},
+      {ko:'노래하다', ro:'a cânta', en:'to sing', aliases:['cant','cânt','canti','cânți','canta','cântă','cantam','cântăm','cantat','cântat','am cantat','am cântat','a cantat','a cântat','voi canta','voi cânta','sing','sings','sang','singing','will sing'], final:'노래해요', forms:{none:'노래해요',seq:'노래하고',cause1:'노래해서',cause2:'노래하니까',condition:'노래하면',contrast1:'노래하지만',contrast2:'노래하는데',purpose:'노래하려고',result:'노래하게 되다'}},
+      {ko:'울다', ro:'a plânge', en:'to cry', aliases:['plang','plâng','plangi','plângi','plange','plânge','plangem','plângem','plans','plâns','am plans','am plâns','a plans','a plâns','voi plange','voi plânge','cry','cries','cried','crying','will cry'], final:'울어요', forms:{none:'울어요',seq:'울고',cause1:'울어서',cause2:'우니까',condition:'울면',contrast1:'울지만',contrast2:'우는데',purpose:'울려고',result:'울게 되다'}},
+      {ko:'있다', ro:'a avea', en:'to have', aliases:['am','ai','are','avem','aveti','aveți','au','am avut','ai avut','a avut','voi aves','vom aveo','a-vea','have','has','had','i have','you have','we have','he has','she has','they have'], final:'있어요', forms:{none:'있어요',seq:'있고',cause1:'있어서',cause2:'있으니까',condition:'있으면',contrast1:'있지만',contrast2:'있는데',purpose:'있으려고',result:'있게 되다'}},
+      {ko:'사랑하다', ro:'a iubi', en:'to love', aliases:['iubesc','iubesti','iubești','iubeste','iubește','iubim','iubiti','iubiți','iubit','am iubit','a iubit','voi iubi','love','loves','loved','will love'], final:'사랑해요', forms:{none:'사랑해요',seq:'사랑하고',cause1:'사랑해서',cause2:'사랑하니까',condition:'사랑하면',contrast1:'사랑하지만',contrast2:'사랑하는데',purpose:'사랑하려고',result:'사랑하게 되다'}},
+      {ko:'말하다', ro:'a vorbi', en:'to speak', aliases:['vorbesc','vorbesti','vorbești','vorbeste','vorbește','vorbim','vorbiti','vorbiți','vorbit','am vorbit','a vorbit','voi vorbi','speak','talk','speaks','talks','spoke','talked','will speak'], final:'말해요', forms:{none:'말해요',seq:'말하고',cause1:'말해서',cause2:'말하니까',condition:'말하면',contrast1:'말하지만',contrast2:'말하는데',purpose:'말하려고',result:'말하게 되다'}},
+      {ko:'원하다', ro:'a vrea', en:'to want', aliases:['vreau','vrei','vrea','vrem','vreti','vreți','vor','voi vrea','am vrut','a vrut','want','wants','wanted','will want','wish','wishes'], final:'원해요', forms:{none:'원해요',seq:'원하고',cause1:'원해서',cause2:'원하니까',condition:'원하면',contrast1:'원하지만',contrast2:'원하는데',purpose:'원하려고',result:'원하게 되다'}},
+      {ko:'알다', ro:'a ști', en:'to know', aliases:['stiu','știu','stie','știe','stim','știm','stiti','știți','stiut','știut','am stiut','am știut','a stiut','a știut','voi sti','voi ști','know','knows','knew','will know'], final:'알아요', forms:{none:'알아요',seq:'알고',cause1:'알아서',cause2:'아니까',condition:'알면',contrast1:'알지만',contrast2:'아는데',purpose:'알려고',result:'알게 되다'}},
+      {ko:'돕다', ro:'a ajuta', en:'to help', aliases:['ajut','ajuti','ajuți','ajuta','ajută','ajutam','ajutăm','ajutat','am ajutat','a ajutat','voi ajuta','help','helps','helped','will help'], final:'도와요', forms:{none:'도와요',seq:'돕고',cause1:'도와서',cause2:'도우니까',condition:'도우면',contrast1:'돕지만',contrast2:'돕는데',purpose:'도우려고',result:'돕게 되다'}},
+      {ko:'남다', ro:'a rămâne', en:'to stay', aliases:['raman','rămân','ramai','rămâi','ramane','rămâne','ramanem','rămânem','ramas','rămas','am ramas','am rămas','a ramas','a rămas','voi ramane','voi rămâne','stay','stays','stayed','remain','remained','will stay'], final:'남아요', forms:{none:'남아요',seq:'남고',cause1:'남아서',cause2:'남으니까',condition:'남으면',contrast1:'남지만',contrast2:'남는데',purpose:'남으려고',result:'남게 되다'}},
+      {ko:'도착하다', ro:'a ajunge', en:'to arrive', aliases:['ajung','ajungi','ajunge','ajungem','ajuns','am ajuns','a ajuns','voi ajunge','arrive','arrives','arrived','get there','will arrive'], final:'도착해요', forms:{none:'도착해요',seq:'도착하고',cause1:'도착해서',cause2:'도착하니까',condition:'도착하면',contrast1:'도착하지만',contrast2:'도착하는데',purpose:'도착하려고',result:'도착하게 되다'}},
+      {ko:'돌아오다', ro:'a se întoarce', en:'to return', aliases:['ma intorc','mă întorc','te intorci','te întorci','se intoarce','se întoarce','intors','întors','m-am intors','m-am întors','s-a intors','s-a întors','ma voi intoarce','mă voi întoarce','return','returns','returned','come back','came back','will return'], final:'돌아와요', forms:{none:'돌아와요',seq:'돌아오고',cause1:'돌아와서',cause2:'돌아오니까',condition:'돌아오면',contrast1:'돌아오지만',contrast2:'돌아오는데',purpose:'돌아오려고',result:'돌아오게 되다'}},
+      {ko:'요리하다', ro:'a găti', en:'to cook', aliases:['gatesc','gătesc','gatesti','gătești','gateste','gătește','gatim','gătim','gatit','gătit','am gatit','am gătit','a gatit','a gătit','voi gati','voi găti','cook','cooks','cooked','cooking','will cook'], final:'요리해요', forms:{none:'요리해요',seq:'요리하고',cause1:'요리해서',cause2:'요리하니까',condition:'요리하면',contrast1:'요리하지만',contrast2:'요리하는데',purpose:'요리하려고',result:'요리하게 되다'}},
+      {ko:'씻다', ro:'a (se) spăla', en:'to wash', aliases:['ma spal','mă spăl','spala','spală','spalat','spălat','am spalat','am spălat','a spalat','a spălat','voi spala','voi spăla','wash','washes','washed','washing','will wash'], final:'씻어요', forms:{none:'씻어요',seq:'씻고',cause1:'씻어서',cause2:'씻으니까',condition:'씻으면',contrast1:'씻지만',contrast2:'씻는데',purpose:'씻으려고',result:'씻게 되다'}},
+      {ko:'찾다', ro:'a căuta', en:'to search', aliases:['caut','cauti','cauți','cauta','caută','cautat','căutat','am cautat','am căutat','a cautat','a căutat','voi cauta','voi căuta','gasesc','găsesc','gasit','găsit','am gasit','am găsit','search','searches','searched','find','finds','found','look for','will search','will find'], final:'찾아요', forms:{none:'찾아요',seq:'찾고',cause1:'찾아서',cause2:'찾으니까',condition:'찾으면',contrast1:'찾지만',contrast2:'찾는데',purpose:'찾으려고',result:'찾게 되다'}},
+      {ko:'열다', ro:'a deschide', en:'to open', aliases:['deschid','deschizi','deschide','deschidem','deschis','am deschis','a deschis','voi deschide','open','opens','opened','opening','will open'], final:'열어요', forms:{none:'열어요',seq:'열고',cause1:'열어서',cause2:'여니까',condition:'열면',contrast1:'열지만',contrast2:'여는데',purpose:'열려고',result:'열게 되다'}},
+      {ko:'닫다', ro:'a închide', en:'to close', aliases:['inchid','închid','inchizi','închidem','inchis','închis','am inchis','am închis','a inchis','a închis','voi inchide','voi închide','close','closes','closed','closing','will close'], final:'닫아요', forms:{none:'닫아요',seq:'닫고',cause1:'닫아서',cause2:'닫으니까',condition:'닫으면',contrast1:'닫지만',contrast2:'닫는데',purpose:'닫으려고',result:'닫게 되다'}},
+      {ko:'받다', ro:'a primi', en:'to receive', aliases:['primesc','primesti','primești','primeste','primește','primim','primit','am primit','a primit','voi primi','receive','receives','received','get','gets','got','will receive','will get'], final:'받아요', forms:{none:'받아요',seq:'받고',cause1:'받아서',cause2:'받으니까',condition:'받으면',contrast1:'받지만',contrast2:'받는데',purpose:'받으려고',result:'받게 되다'}},
+      {ko:'놓다', ro:'a pune', en:'to put', aliases:['pun','pui','pune','punem','puneti','puneți','pus','am pus','a pus','voi pune','put','puts','placing','place','will put'], final:'놓아요', forms:{none:'놓아요',seq:'놓고',cause1:'놓아서',cause2:'놓으니까',condition:'놓으면',contrast1:'놓지만',contrast2:'놓는데',purpose:'놓으려고',result:'놓게 되다'}},
+      {ko:'생각하다', ro:'a (se) gândi', en:'to think', aliases:['ma gandesc','mă gândesc','gandesc','gândesc','te gandesti','te gândești','se gandeste','se gândește','gandit','gândit','m-am gandit','m-am gândit','s-a gandit','s-a gândit','ma voi gandi','mă voi gândi','think','thinks','thought','thinking','will think'], final:'생각해요', forms:{none:'생각해요',seq:'생각하고',cause1:'생각해서',cause2:'생각하니까',condition:'생각하면',contrast1:'생각하지만',contrast2:'생각하는데',purpose:'생각하려고',result:'생각하게 되다'}},
+      {ko:'멈추다', ro:'a opri', en:'to stop', aliases:['opresc','opresti','oprești','opreste','oprește','oprim','oprit','am oprit','a oprit','voi opri','stop','stops','stopped','stopping','halt','will stop'], final:'멈춰요', forms:{none:'멈춰요',seq:'멈추고',cause1:'멈춰서',cause2:'멈추니까',condition:'멈추면',contrast1:'멈추지만',contrast2:'멈추는데',purpose:'멈추려고',result:'멈추게 되다'}},
+      {ko:'계속하다', ro:'a continua', en:'to continue', aliases:['continui','continua','continuă','continuam','continuați','continuat','am continuat','a continuat','voi continua','continue','continues','continued','continuing','will continue','keep going'], final:'계속해요', forms:{none:'계속해요',seq:'계속하고',cause1:'계속해서',cause2:'계속하니까',condition:'계속하면',contrast1:'계속하지만',contrast2:'계속하는데',purpose:'계속하려고',result:'계속하게 되다'}},
+      {ko:'선택하다', ro:'a alege', en:'to choose', aliases:['aleg','alegi','alege','alegem','ales','am ales','a ales','voi alege','choose','chooses','chose','chosen','pick','picks','picked','will choose','select'], final:'선택해요', forms:{none:'선택해요',seq:'선택하고',cause1:'선택해서',cause2:'선택하니까',condition:'선택하면',contrast1:'선택하지만',contrast2:'선택하는데',purpose:'선택하려고',result:'선택하게 되다'}},
+      {ko:'잃다', ro:'a pierde', en:'to lose', aliases:['pierd','pierzi','pierde','pierdem','pierdut','am pierdut','a pierdut','voi pierde','lose','loses','lost','losing','will lose'], final:'잃어요', forms:{none:'잃어요',seq:'잃고',cause1:'잃어서',cause2:'잃으니까',condition:'잃으면',contrast1:'잃지만',contrast2:'잃는데',purpose:'잃으려고',result:'잃게 되다'}},
+      {ko:'보내다', ro:'a trimite', en:'to send', aliases:['trimit','trimiti','trimiți','trimite','trimitem','trimis','am trimis','a trimis','voi trimite','send','sends','sent','sending','will send'], final:'보내요', forms:{none:'보내요',seq:'보내고',cause1:'보내서',cause2:'보내니까',condition:'보내면',contrast1:'보내지만',contrast2:'보내는데',purpose:'보내려고',result:'보내게 되다'}},
+      {ko:'사용하다', ro:'a folosi', en:'to use', aliases:['folosesc','folosesti','folosești','foloseste','folosește','folosim','folosit','am folosit','a folosit','voi folosi','use','uses','used','using','will use'], final:'사용해요', forms:{none:'사용해요',seq:'사용하고',cause1:'사용해서',cause2:'사용하니까',condition:'사용하면',contrast1:'사용하지만',contrast2:'사용하는데',purpose:'사용하려고',result:'사용하게 되다'}},
+      {ko:'여행하다', ro:'a călători', en:'to travel', aliases:['calatoresc','călătoresc','calatoresti','călătorești','calatorit','călătorit','am calatorit','am călătorit','a calatorit','a călătorit','voi calatori','voi călători','travel','travels','traveled','travelling','will travel'], final:'여행해요', forms:{none:'여행해요',seq:'여행하고',cause1:'여행해서',cause2:'여행하니까',condition:'여행하면',contrast1:'여행하지만',contrast2:'여행하는데',purpose:'여행하려고',result:'여행하게 되다'}},
+      {ko:'설명하다', ro:'a explica', en:'to explain', aliases:['explic','explici','explica','explicam','explicat','am explicat','a explicat','voi explica','explain','explains','explained','explaining','will explain'], final:'설명해요', forms:{none:'설명해요',seq:'설명하고',cause1:'설명해서',cause2:'설명하니까',condition:'설명하면',contrast1:'설명하지만',contrast2:'설명하는데',purpose:'설명하려고',result:'설명하게 되다'}},
+      {ko:'묻다', ro:'a întreba', en:'to ask', aliases:['intreb','întreb','intrebi','întrebi','intreaba','întreabă','intrebam','întrebăm','intrebat','întrebat','am intrebat','am întrebat','a intrebat','a întrebat','voi intreba','voi întreba','ask','asks','asked','asking','will ask'], final:'물어요', forms:{none:'물어요',seq:'묻고',cause1:'물어서',cause2:'물으니까',condition:'물으면',contrast1:'묻지만',contrast2:'묻는데',purpose:'물으려고',result:'묻게 되다'}},
+      {ko:'달리다', ro:'a alerga', en:'to run', aliases:['alerg','alergi','alearga','aleargă','alergam','alergăm','alergat','am alergat','a alergat','voi alerga','run','runs','ran','running','will run'], final:'달려요', forms:{none:'달려요',seq:'달리고',cause1:'달려서',cause2:'달리니까',condition:'달리면',contrast1:'달리지만',contrast2:'달리는데',purpose:'달리려고',result:'달리게 되다'}},
+      {ko:'가져오다', ro:'a aduce', en:'to bring', aliases:['aduc','aduci','aduce','aducem','adus','am adus','a adus','voi aduce','bring','brings','brought','bringing','will bring'], final:'가져와요', forms:{none:'가져와요',seq:'가져오고',cause1:'가져와서',cause2:'가져오니까',condition:'가져오면',contrast1:'가져오지만',contrast2:'가져오는데',purpose:'가져오려고',result:'가져오게 되다'}},
+      {ko:'산책하다', ro:'a se plimba', en:'to walk', aliases:['ma plimb','mă plimb','te plimbi','se plimba','se plimbă','plimbam','plimbăm','plimbat','m-am plimbat','s-a plimbat','ne-am plimbat','ma voi plimba','mă voi plimba','walk','walks','walked','stroll','strolling','will walk'], final:'산책해요', forms:{none:'산책해요',seq:'산책하고',cause1:'산책해서',cause2:'산책하니까',condition:'산책하면',contrast1:'산책하지만',contrast2:'산책하는데',purpose:'산책하려고',result:'산책하게 되다'}},
+      {ko:'떠나다', ro:'a pleca', en:'to leave', aliases:['pleci','pleaca','pleacă','plecam','plecăm','plecat','am plecat','a plecat','voi pleca','leave','leaves','left','leaving','depart','departed','will leave'], final:'떠나요', forms:{none:'떠나요',seq:'떠나고',cause1:'떠나서',cause2:'떠나니까',condition:'떠나면',contrast1:'떠나지만',contrast2:'떠나는데',purpose:'떠나려고',result:'떠나게 되다'}},
+      {ko:'안녕하세요', ro:'Bună ziua', en:'Hello', isPhrase:true, aliases:['buna ziua','salut','hello','buna','good afternoon','good day'], final:'안녕하세요', forms:{none:'안녕하세요',seq:'안녕하세요',cause1:'안녕하세요',cause2:'안녕하세요',condition:'안녕하세요',contrast1:'안녕하세요',contrast2:'안녕하세요',purpose:'안녕하세요',result:'안녕하세요'}},
+      {ko:'좋은 아침이에요', ro:'Bună dimineața', en:'Good morning', isPhrase:true, aliases:['buna dimineata','buna dimineața','good morning'], final:'좋은 아침이에요', forms:{none:'좋은 아침이에요',seq:'좋은 아침이에요',cause1:'좋은 아침이에요',cause2:'좋은 아침이에요',condition:'좋은 아침이에요',contrast1:'좋은 아침이에요',contrast2:'좋은 아침이에요',purpose:'좋은 아침이에요',result:'좋은 아침이에요'}},
+      {ko:'좋은 저녁이에요', ro:'Bună seara', en:'Good evening', isPhrase:true, aliases:['buna seara','good evening'], final:'좋은 저녁이에요', forms:{none:'좋은 저녁이에요',seq:'좋은 저녁이에요',cause1:'좋은 저녁이에요',cause2:'좋은 저녁이에요',condition:'좋은 저녁이에요',contrast1:'좋은 저녁이에요',contrast2:'좋은 저녁이에요',purpose:'좋은 저녁이에요',result:'좋은 저녁이에요'}},
+      {ko:'안녕히 가세요', ro:'La revedere', en:'Goodbye', isPhrase:true, aliases:['la revedere','bye','goodbye','pa','pa pa'], final:'안녕히 가세요', forms:{none:'안녕히 가세요',seq:'안녕히 가세요',cause1:'안녕히 가세요',cause2:'안녕히 가세요',condition:'안녕히 가세요',contrast1:'안녕히 가세요',contrast2:'안녕히 가세요',purpose:'안녕히 가세요',result:'안녕히 가세요'}}
+    ],
+    connector: [
+      {id:'none', key:'none', ko:'—', ro:'', en:'', aliases:['fara conector','fără conector','none']},
+      {id:'seq', key:'seq', ko:'고', ro:'și apoi', en:'and then', aliases:['si apoi','și apoi','apoi','and then']},
+      {id:'cause1', key:'cause1', ko:'아/어서', ro:'pentru că', en:'because', aliases:['pentru ca','pentru că','because']},
+      {id:'cause2', key:'cause2', ko:'(으)니까', ro:'fiindcă', en:'since', aliases:['fiindca','fiindcă','since']},
+      {id:'condition', key:'condition', ko:'(으)면', ro:'dacă', en:'if', aliases:['daca','dacă','if']},
+      {id:'contrast1', key:'contrast1', ko:'지만', ro:'dar', en:'but', aliases:['dar','insa','însă','but','however']},
+      {id:'contrast2', key:'contrast2', ko:'는데', ro:'iar', en:'while', aliases:['iar','while']},
+      {id:'purpose', key:'purpose', ko:'(으)려고', ro:'ca să', en:'in order to', aliases:['ca sa','ca să','in order to']},
+      {id:'result', key:'result', ko:'게 되다', ro:'ajunge să', en:'end up', aliases:['ajunge sa','ajunge să','end up']},
+      {id:'tense_pres',        key:'tense_pres',        ko:'-아요/어요',       ro:'prezent',         en:'present',        isTense:true,  aliases:[]},
+      {id:'tense_past',        key:'tense_past',        ko:'-았어요/었어요',    ro:'trecut',           en:'past',           isTense:true,  aliases:[]},
+      {id:'tense_fut',         key:'tense_fut',         ko:'-(으)ㄹ 거예요',   ro:'viitor',           en:'future',         isTense:true,  aliases:[]},
+      {id:'tense_progressive', key:'tense_progressive', ko:'-고 있어요',         ro:'în curs de',        en:'is doing',          isTense:true, aliases:[]},
+      {id:'tense_wish',        key:'tense_wish',        ko:'-고 싶어요',         ro:'vreau să',          en:'want to',           isTense:true, aliases:[]},
+      {id:'tense_intention',   key:'tense_intention',   ko:'-(으)려고 해요',     ro:'intenționez să',    en:'intend to',         isTense:true, aliases:[]},
+      {id:'tense_can',         key:'tense_can',         ko:'-(으)ㄹ 수 있어요',  ro:'pot să',            en:'can',               isTense:true, aliases:[]},
+      {id:'tense_cannot',      key:'tense_cannot',      ko:'-(으)ㄹ 수 없어요',  ro:'nu pot să',         en:'cannot',            isTense:true, aliases:[]},
+      {id:'tense_neg',         key:'tense_neg',         ko:'-지 않아요',         ro:'nu',                en:'don\'t',            isTense:true, aliases:[]},
+      {id:'tense_notwish',     key:'tense_notwish',     ko:'-고 싶지 않아요',    ro:'nu vreau să',       en:'don\'t want to',    isTense:true, aliases:[]},
+      {id:'tense_mustnot',     key:'tense_mustnot',     ko:'-면 안 돼요',        ro:'nu trebuie să',     en:'must not',          isTense:true, aliases:[]},
+      {id:'tense_must',        key:'tense_must',        ko:'-아/어야 해요',      ro:'trebuie să',        en:'must / have to',    isTense:true, aliases:[]},
+      {id:'tense_should',      key:'tense_should',      ko:'-는 게 좋아요',       ro:'ar trebui să',      en:'should',            isTense:true, aliases:[]},
+      {id:'tense_polite',      key:'tense_polite',      ko:'-겠어요',            ro:'voi / cred că',     en:'will / I think',    isTense:true, aliases:[]},
+      {id:'tense_promise',     key:'tense_promise',     ko:'-(으)ㄹ게요',        ro:'voi (promit)',      en:'will (promise)',     isTense:true, aliases:[]},
+      {id:'while',         key:'while',         ko:'-(으)면서',          ro:'în timp ce',        en:'while doing',        aliases:['in timp ce','while doing','while']},
+      {id:'concede',       key:'concede',       ko:'-아/어도',           ro:'chiar dacă',        en:'even if',            aliases:['chiar daca','chiar dacă','even if']},
+      {id:'after',         key:'after',         ko:'-고 나서',           ro:'după ce',           en:'after',              aliases:['dupa ce','după ce','after']},
+      {id:'before',        key:'before',        ko:'-기 전에',           ro:'înainte să',        en:'before',             aliases:['inainte sa','înainte să','before']},
+      {id:'or',            key:'or',            ko:'-거나',              ro:'sau',               en:'or',                 aliases:['sau','or']},
+      {id:'when',          key:'when',          ko:'-(으)ㄹ 때',         ro:'când',              en:'when',               aliases:['cand','când','when']},
+      {id:'purpose2',      key:'purpose2',      ko:'-기 위해서',         ro:'pentru a',          en:'in order to do',     aliases:['pentru a','in order to do']},
+      {id:'asap',          key:'asap',          ko:'-자마자',            ro:'imediat ce',        en:'as soon as',         aliases:['imediat ce','as soon as']},
+      {id:'switch',        key:'switch',        ko:'-다가',              ro:'și la un moment',   en:'then suddenly',      aliases:['si brusc','then suddenly']},
+      {id:'during',        key:'during',        ko:'-는 동안',           ro:'pe durata',         en:'while / during',     aliases:['pe durata','pe parcurs','during']},
+      {id:'instead',       key:'instead',       ko:'-는 대신에',         ro:'în locul',          en:'instead of',         aliases:['in locul','în locul','instead of']},
+      {id:'concede2',      key:'concede2',      ko:'-(으)ㄴ/는데도',     ro:'cu toate că',       en:'even though',        aliases:['cu toate ca','cu toate că','even though','desi','deși']},
+      {id:'proportion',    key:'proportion',    ko:'-(으)ㄹ수록',        ro:'cu cât... cu atât', en:'the more',           aliases:['cu cat','cu cât','the more']},
+      {id:'formal_cause',  key:'formal_cause',  ko:'-기에',              ro:'deoarece',          en:'given that',         aliases:['deoarece','given that']},
+      {id:'informal_cause',key:'informal_cause',ko:'-길래',              ro:'văzând că',         en:'seeing that',        aliases:['vazand ca','văzând că','seeing that']},
+      {id:'formal_result', key:'formal_result', ko:'-(으)므로',          ro:'prin urmare',       en:'therefore',          aliases:['prin urmare','therefore','deoarece formal']},
+      {id:'contrast3',     key:'contrast3',     ko:'-(으)ㄴ/는 반면에',  ro:'pe de altă parte',  en:'whereas',            aliases:['pe de alta parte','pe de altă parte','whereas']},
+      {id:'extent',        key:'extent',        ko:'-도록',              ro:'astfel încât',      en:'so that / until',    aliases:['astfel incat','astfel încât','so that','until']},
+      {id:'notonly',       key:'notonly',       ko:'-(으)ㄹ 뿐만 아니라',ro:'nu numai ci și',    en:'not only but also',  aliases:['nu numai','not only','nu numai ci si']},
+      {id:'aslong',        key:'aslong',        ko:'-(으)ㄴ/는 한',      ro:'atât timp cât',     en:'as long as',         aliases:['atat timp cat','atât timp cât','as long as']},
+      {id:'because_of',    key:'because_of',    ko:'-(으)ㄴ/는 탓에',    ro:'din cauza că',      en:'due to',             aliases:['din cauza ca','din cauza că','due to']}
+    ],
+    numeral: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'한', ro:'unu / o', en:'one', aliases:['1','un','o','unu','una','one']},
+      {ko:'두', ro:'doi / două', en:'two', aliases:['2','doi','doua','două','two']},
+      {ko:'세', ro:'trei', en:'three', aliases:['3','trei','three']},
+      {ko:'네', ro:'patru', en:'four', aliases:['4','patru','four']},
+      {ko:'다섯', ro:'cinci', en:'five', aliases:['5','cinci','five']},
+      {ko:'여섯', ro:'șase', en:'six', aliases:['6','sase','șase','six']},
+      {ko:'일곱', ro:'șapte', en:'seven', aliases:['7','sapte','șapte','seven']},
+      {ko:'여덟', ro:'opt', en:'eight', aliases:['8','opt','eight']},
+      {ko:'아홉', ro:'nouă', en:'nine', aliases:['9','noua','nouă','nine']},
+      {ko:'열', ro:'zece', en:'ten', aliases:['10','zece','ten']}
+    ],
+    quantifier: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'개', ro:'bucată / bucăți', en:'piece(s)', aliases:['bucata','bucată','bucati','bucăți','piece','pieces']},
+      {ko:'병', ro:'sticlă / sticle', en:'bottle(s)', aliases:['sticla','sticlă','sticle','bottle','bottles']},
+      {ko:'잔', ro:'pahar / cană', en:'glass / cup', aliases:['pahar','pahare','cana','cană','cani','glass','cup']},
+      {ko:'인분', ro:'porție', en:'portion', aliases:['portie','porție','portii','porții','portion']},
+      {ko:'권', ro:'volum', en:'volume', aliases:['volum','volume']},
+      {ko:'명', ro:'persoană', en:'person', aliases:['persoana','persoană','persoane','person']}
+    ]
+  };
+
+  var VERB_FINITE_MAP = {
+    '공부하다': {ro:{i:'studiez',you_sg:'studiezi',you_pl:'studiați',we:'studiem',third:'studiază',third_pl:'studiază'}, en:{i:'study',you_sg:'study',you_pl:'study',we:'study',third:'studies',third_pl:'study'}},
+    '먹다':     {ro:{i:'mănânc',you_sg:'mănânci',you_pl:'mâncați',we:'mâncăm',third:'mănâncă',third_pl:'mănâncă'}, en:{i:'eat',you_sg:'eat',you_pl:'eat',we:'eat',third:'eats',third_pl:'eat'}},
+    '가다':     {ro:{i:'merg',you_sg:'mergi',you_pl:'mergeți',we:'mergem',third:'merge',third_pl:'merg'}, en:{i:'go',you_sg:'go',you_pl:'go',we:'go',third:'goes',third_pl:'go'}},
+    '오다':     {ro:{i:'vin',you_sg:'vii',you_pl:'veniți',we:'venim',third:'vine',third_pl:'vin'}, en:{i:'come',you_sg:'come',you_pl:'come',we:'come',third:'comes',third_pl:'come'}},
+    '보다':     {ro:{i:'văd',you_sg:'vezi',you_pl:'vedeți',we:'vedem',third:'vede',third_pl:'văd'}, en:{i:'see',you_sg:'see',you_pl:'see',we:'see',third:'sees',third_pl:'see'}},
+    '읽다':     {ro:{i:'citesc',you_sg:'citești',you_pl:'citiți',we:'citim',third:'citește',third_pl:'citesc'}, en:{i:'read',you_sg:'read',you_pl:'read',we:'read',third:'reads',third_pl:'read'}},
+    '쓰다':     {ro:{i:'scriu',you_sg:'scrii',you_pl:'scrieți',we:'scriem',third:'scrie',third_pl:'scriu'}, en:{i:'write',you_sg:'write',you_pl:'write',we:'write',third:'writes',third_pl:'write'}},
+    '만나다':   {ro:{i:'întâlnesc',you_sg:'întâlnești',you_pl:'întâlniți',we:'întâlnim',third:'întâlnește',third_pl:'întâlnesc'}, en:{i:'meet',you_sg:'meet',you_pl:'meet',we:'meet',third:'meets',third_pl:'meet'}},
+    '쉬다':     {ro:{i:'mă odihnesc',you_sg:'te odihnești',you_pl:'vă odihniți',we:'ne odihnim',third:'se odihnește',third_pl:'se odihnesc'}, en:{i:'rest',you_sg:'rest',you_pl:'rest',we:'rest',third:'rests',third_pl:'rest'}},
+    '일하다':   {ro:{i:'lucrez',you_sg:'lucrezi',you_pl:'lucrați',we:'lucrăm',third:'lucrează',third_pl:'lucrează'}, en:{i:'work',you_sg:'work',you_pl:'work',we:'work',third:'works',third_pl:'work'}},
+    '운동하다': {ro:{i:'fac sport',you_sg:'faci sport',you_pl:'faceți sport',we:'facem sport',third:'face sport',third_pl:'fac sport'}, en:{i:'exercise',you_sg:'exercise',you_pl:'exercise',we:'exercise',third:'exercises',third_pl:'exercise'}},
+    '준비하다': {ro:{i:'pregătesc',you_sg:'pregătești',you_pl:'pregătiți',we:'pregătim',third:'pregătește',third_pl:'pregătesc'}, en:{i:'prepare',you_sg:'prepare',you_pl:'prepare',we:'prepare',third:'prepares',third_pl:'prepare'}},
+    '배우다':   {ro:{i:'învăț',you_sg:'înveți',you_pl:'învățați',we:'învățăm',third:'învață',third_pl:'învață'}, en:{i:'learn',you_sg:'learn',you_pl:'learn',we:'learn',third:'learns',third_pl:'learn'}},
+    '듣다':     {ro:{i:'ascult',you_sg:'asculți',you_pl:'ascultați',we:'ascultăm',third:'ascultă',third_pl:'ascultă'}, en:{i:'listen',you_sg:'listen',you_pl:'listen',we:'listen',third:'listens',third_pl:'listen'}},
+    '만들다':   {ro:{i:'fac',you_sg:'faci',you_pl:'faceți',we:'facem',third:'face',third_pl:'fac'}, en:{i:'make',you_sg:'make',you_pl:'make',we:'make',third:'makes',third_pl:'make'}},
+    '사다':     {ro:{i:'cumpăr',you_sg:'cumperi',you_pl:'cumpărați',we:'cumpărăm',third:'cumpără',third_pl:'cumpără'}, en:{i:'buy',you_sg:'buy',you_pl:'buy',we:'buy',third:'buys',third_pl:'buy'}},
+    '주다':     {ro:{i:'dau',you_sg:'dai',you_pl:'dați',we:'dăm',third:'dă',third_pl:'dau'}, en:{i:'give',you_sg:'give',you_pl:'give',we:'give',third:'gives',third_pl:'give'}},
+    '기다리다': {ro:{i:'aștept',you_sg:'aștepți',you_pl:'așteptați',we:'așteptăm',third:'așteaptă',third_pl:'așteaptă'}, en:{i:'wait',you_sg:'wait',you_pl:'wait',we:'wait',third:'waits',third_pl:'wait'}},
+    '감사하다': {ro:{i:'mulțumesc',you_sg:'mulțumești',you_pl:'mulțumiți',we:'mulțumim',third:'mulțumește',third_pl:'mulțumesc'}, en:{i:'thank',you_sg:'thank',you_pl:'thank',we:'thank',third:'thanks',third_pl:'thank'}},
+    '남기다':   {ro:{i:'las',you_sg:'lași',you_pl:'lăsați',we:'lăsăm',third:'lasă',third_pl:'lasă'}, en:{i:'leave',you_sg:'leave',you_pl:'leave',we:'leave',third:'leaves',third_pl:'leave'}},
+    '웃다':     {ro:{i:'zâmbesc',you_sg:'zâmbești',you_pl:'zâmbiți',we:'zâmbim',third:'zâmbește',third_pl:'zâmbesc'}, en:{i:'smile',you_sg:'smile',you_pl:'smile',we:'smile',third:'smiles',third_pl:'smile'}},
+    '마시다':   {ro:{i:'beau',you_sg:'bei',you_pl:'beți',we:'bem',third:'bea',third_pl:'beau'}, en:{i:'drink',you_sg:'drink',you_pl:'drink',we:'drink',third:'drinks',third_pl:'drink'}},
+    '자다':     {ro:{i:'dorm',you_sg:'dormi',you_pl:'dormiți',we:'dormim',third:'doarme',third_pl:'dorm'}, en:{i:'sleep',you_sg:'sleep',you_pl:'sleep',we:'sleep',third:'sleeps',third_pl:'sleep'}},
+    '노래하다': {ro:{i:'cânt',you_sg:'cânți',you_pl:'cântați',we:'cântăm',third:'cântă',third_pl:'cântă'}, en:{i:'sing',you_sg:'sing',you_pl:'sing',we:'sing',third:'sings',third_pl:'sing'}},
+    '울다':     {ro:{i:'plâng',you_sg:'plângi',you_pl:'plângeți',we:'plângem',third:'plânge',third_pl:'plâng'}, en:{i:'cry',you_sg:'cry',you_pl:'cry',we:'cry',third:'cries',third_pl:'cry'}},
+    '있다':     {ro:{i:'am',you_sg:'ai',you_pl:'aveți',we:'avem',third:'are',third_pl:'au'}, en:{i:'have',you_sg:'have',you_pl:'have',we:'have',third:'has',third_pl:'have'}},
+    '사랑하다': {ro:{i:'iubesc',you_sg:'iubești',you_pl:'iubiți',we:'iubim',third:'iubește',third_pl:'iubesc'}, en:{i:'love',you_sg:'love',you_pl:'love',we:'love',third:'loves',third_pl:'love'}},
+    '말하다':   {ro:{i:'vorbesc',you_sg:'vorbești',you_pl:'vorbiți',we:'vorbim',third:'vorbește',third_pl:'vorbesc'}, en:{i:'speak',you_sg:'speak',you_pl:'speak',we:'speak',third:'speaks',third_pl:'speak'}},
+    '원하다':   {ro:{i:'vreau',you_sg:'vrei',you_pl:'vreți',we:'vrem',third:'vrea',third_pl:'vor'}, en:{i:'want',you_sg:'want',you_pl:'want',we:'want',third:'wants',third_pl:'want'}},
+    '알다':     {ro:{i:'știu',you_sg:'știi',you_pl:'știți',we:'știm',third:'știe',third_pl:'știu'}, en:{i:'know',you_sg:'know',you_pl:'know',we:'know',third:'knows',third_pl:'know'}},
+    '돕다':     {ro:{i:'ajut',you_sg:'ajuți',you_pl:'ajutați',we:'ajutăm',third:'ajută',third_pl:'ajută'}, en:{i:'help',you_sg:'help',you_pl:'help',we:'help',third:'helps',third_pl:'help'}}
+  };
+
+  var VERB_TENSE_DATA = {
+    '공부하다': {roPart:'studiat',  roBase:'studia',      enPast:'studied',   refl:false},
+    '먹다':     {roPart:'mâncat',   roBase:'mânca',       enPast:'ate',       refl:false},
+    '가다':     {roPart:'mers',     roBase:'merge',       enPast:'went',      refl:false},
+    '오다':     {roPart:'venit',    roBase:'veni',        enPast:'came',      refl:false},
+    '보다':     {roPart:'văzut',    roBase:'vedea',       enPast:'saw',       refl:false},
+    '읽다':     {roPart:'citit',    roBase:'citi',        enPast:'read',      refl:false},
+    '쓰다':     {roPart:'scris',    roBase:'scrie',       enPast:'wrote',     refl:false},
+    '만나다':   {roPart:'întâlnit', roBase:'întâlni',     enPast:'met',       refl:false},
+    '쉬다':     {roPart:'odihnit',  roBase:'odihni',      enPast:'rested',    refl:true},
+    '일하다':   {roPart:'lucrat',   roBase:'lucra',       enPast:'worked',    refl:false},
+    '운동하다': {roPart:'făcut sport', roBase:'face sport', enPast:'exercised', refl:false},
+    '준비하다': {roPart:'pregătit', roBase:'pregăti',     enPast:'prepared',  refl:false},
+    '배우다':   {roPart:'învățat',  roBase:'învăța',      enPast:'learned',   refl:false},
+    '듣다':     {roPart:'ascultat', roBase:'asculta',     enPast:'listened',  refl:false},
+    '만들다':   {roPart:'făcut',    roBase:'face',        enPast:'made',      refl:false},
+    '사다':     {roPart:'cumpărat', roBase:'cumpăra',     enPast:'bought',    refl:false},
+    '주다':     {roPart:'dat',      roBase:'da',          enPast:'gave',      refl:false},
+    '기다리다': {roPart:'așteptat', roBase:'aștepta',     enPast:'waited',    refl:false},
+    '감사하다': {roPart:'mulțumit', roBase:'mulțumi',     enPast:'thanked',   refl:false},
+    '남기다':   {roPart:'lăsat',    roBase:'lăsa',        enPast:'left',      refl:false},
+    '웃다':     {roPart:'zâmbit',   roBase:'zâmbi',       enPast:'smiled',    refl:false},
+    '마시다':   {roPart:'băut',     roBase:'bea',         enPast:'drank',     refl:false},
+    '자다':     {roPart:'dormit',   roBase:'dormi',       enPast:'slept',     refl:false},
+    '노래하다': {roPart:'cântat',   roBase:'cânta',       enPast:'sang',      refl:false},
+    '울다':     {roPart:'plâns',    roBase:'plânge',      enPast:'cried',     refl:false},
+    '있다':     {roPart:'avut',     roBase:'avea',        enPast:'had',       refl:false},
+    '사랑하다': {roPart:'iubit',    roBase:'iubi',        enPast:'loved',     refl:false},
+    '말하다':   {roPart:'vorbit',   roBase:'vorbi',       enPast:'spoke',     refl:false},
+    '원하다':   {roPart:'vrut',     roBase:'vrea',        enPast:'wanted',    refl:false},
+    '알다':     {roPart:'știut',    roBase:'ști',         enPast:'knew',      refl:false},
+    '돕다':     {roPart:'ajutat',   roBase:'ajuta',       enPast:'helped',    refl:false}
+  };
+
+  var els = {
+    topicSummaryText: document.getElementById('topicSummaryText'),
+    topicDropdown: document.getElementById('topicDropdown'),
+    freeText: document.getElementById('freeText'),
+    refreshBtn: document.getElementById('refreshBtn'),
+    playBtn: document.getElementById('playBtn'),
+    recordBtn: document.getElementById('recordBtn'),
+    sentenceBox: document.getElementById('sentenceBox'),
+    sentenceWords: document.getElementById('sentenceWords'),
+    translationText: document.getElementById('translationText'),
+    clauseList: document.getElementById('clauseList'),
+    toast: document.getElementById('toast'),
+    recordBox: document.getElementById('recordBox'),
+    recordedAudio: document.getElementById('recordedAudio'),
+    saveBtn: document.getElementById('saveBtn'),
+    templateMenu: document.getElementById('templateMenu'),
+    templateDropdown: document.getElementById('templateDropdown'),
+    templateSummaryText: document.getElementById('templateSummaryText')
+  };
+
+  var state = {
+    lang: 'ro',
+    level: 1,
+    text: '',
+    clauses: []
+  };
+
+  var _wordSpeakTimer = null;
+  var _sentenceSpeakTimer = null;
+
+  function speakText(text, rate){
+    if(!('speechSynthesis' in window) || !text) return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    u.rate = rate || 0.9;
+    window.speechSynthesis.speak(u);
   }
 
-  words.forEach(word => {
-    const item = document.createElement("div");
-    item.className = "panel-item";
-
-    const main = document.createElement("div");
-    main.className = "panel-item-main";
-    main.textContent = word;
-    item.appendChild(main);
-
-    const extra = document.createElement("div");
-    extra.className = "panel-item-extra";
-
-    const ro = map[word];
-    if(ro){
-      const tag = document.createElement("div");
-      tag.className = "panel-item-tag";
-      tag.textContent = ro;
-      extra.appendChild(tag);
-    }
-
-    if(key === "conjug" && isLinkingConj(word)){
-      const star = document.createElement("div");
-      star.className = "panel-item-tag";
-      star.textContent = "⭐ P2";
-      extra.appendChild(star);
-    }
-
-    item.appendChild(extra);
-
-    if(key === "subject"){
-      const addBtn = document.createElement("button");
-      addBtn.textContent = "➕";
-      addBtn.className = "panel-add-btn";
-      addBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if(!sentences[panelClauseIndex].subjects){
-          sentences[panelClauseIndex].subjects = [];
-        }
-        if(!sentences[panelClauseIndex].subjects.includes(word)){
-          sentences[panelClauseIndex].subjects.push(word);
-        }
-        hide(DOM.overlay);
-        renderAll();
-      });
-      item.appendChild(addBtn);
-    }
-
-    if(key === "subjectAdj"){
-      const addBtn = document.createElement("button");
-      addBtn.textContent = "➕";
-      addBtn.className = "panel-add-btn";
-      addBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if(!sentences[panelClauseIndex].subjectAdjs){
-          sentences[panelClauseIndex].subjectAdjs = [];
-        }
-        if(!sentences[panelClauseIndex].subjectAdjs.includes(word)){
-          sentences[panelClauseIndex].subjectAdjs.push(word);
-        }
-        hide(DOM.overlay);
-        renderAll();
-      });
-      item.appendChild(addBtn);
-    }
-
-    if(key === "objectAdj"){
-      const addBtn = document.createElement("button");
-      addBtn.textContent = "➕";
-      addBtn.className = "panel-add-btn";
-      addBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if(!sentences[panelClauseIndex].objectAdjs){
-          sentences[panelClauseIndex].objectAdjs = [];
-        }
-        if(!sentences[panelClauseIndex].objectAdjs.includes(word)){
-          sentences[panelClauseIndex].objectAdjs.push(word);
-        }
-        hide(DOM.overlay);
-        renderAll();
-      });
-      item.appendChild(addBtn);
-    }
-
-    item.addEventListener("click", () => {
-      if(!sentences[panelClauseIndex]){
-        sentences[panelClauseIndex] = makeEmptySentence();
-        actives[panelClauseIndex] = makeAllActive();
-      }
-
-      sentences[panelClauseIndex][key] = word;
-
-      if(key === "conjug" && isLinkingConj(word)){
-        showExtraClauses = true;
-        ensureLinkedSentences();
-      }
-
-      hide(DOM.overlay);
-      renderAll();
-    });
-
-    DOM.panelList.appendChild(item);
-  });
-}
-
-function openPanel(clauseIndex, key){
-  panelClauseIndex = clauseIndex;
-  panelKey = key;
-
-  const col = columns.find(c => c.key === key);
-  if(!col) return;
-
-  if(DOM.panelTitle) DOM.panelTitle.textContent = `Propoziția ${clauseIndex + 1} – ${col.title}`;
-  if(DOM.panelSub) DOM.panelSub.textContent = col.hint || "";
-  if(DOM.panelSearchInput) DOM.panelSearchInput.value = "";
-  if(DOM.newWordInput) DOM.newWordInput.value = "";
-  if(DOM.newWordTransInput) DOM.newWordTransInput.value = "";
-
-  renderPanelList(col);
-  show(DOM.overlay);
-  DOM.panelSearchInput?.focus();
-}
-
-/* =========================
-   16) PRESS HANDLERS
-========================= */
-function cycleColumnValue(clauseIndex, key){
-  const col = columns.find(c => c.key === key);
-  if(!col) return;
-
-  const arr = col.data;
-  const state = sentences[clauseIndex];
-  if(!state) return;
-
-  const cur = state[key];
-  let idx = arr.indexOf(cur);
-  if(idx === -1) idx = 0;
-
-  const nextIdx = (idx + 1) % arr.length;
-  state[key] = arr[nextIdx] || "";
-
-  if(key === "conjug" && isLinkingConj(state[key])){
-    ensureLinkedSentences();
-    if(DOM.enableP2){
-      DOM.enableP2.checked = true;
-      DOM.enableP2.dispatchEvent(new Event("change"));
-    }
+  function autoSpeakWord(ko){
+    if(!ko) return;
+    clearTimeout(_wordSpeakTimer);
+    clearTimeout(_sentenceSpeakTimer);
+    _wordSpeakTimer = setTimeout(function(){ speakText(ko, 0.85); }, 320);
   }
 
-  renderAll();
-}
+  function autoSpeakSentence(ko){
+    if(!ko) return;
+    clearTimeout(_sentenceSpeakTimer);
+    _sentenceSpeakTimer = setTimeout(function(){ speakText(ko, 0.9); }, 1500);
+  }
 
-function attachPressHandlers(tableEl, clauseIndex){
-  if(!tableEl) return;
+  /* ============================================================
+     SAVED SENTENCES
+  ============================================================ */
+  var SAVED_KEY = 'RK_SAVED_SENTENCES';
+  var savedSentences = [];
 
-  let longPressTimer = null;
-  let pressTarget = null;
+  function loadSavedSentences(){
+    try{
+      var raw = localStorage.getItem(SAVED_KEY);
+      if(raw) savedSentences = JSON.parse(raw);
+    }catch(e){ savedSentences = []; }
+  }
 
-  tableEl.addEventListener("pointerdown", (e) => {
-    const colDiv = e.target.closest(".col");
-    if(!colDiv) return;
-    if(e.target && e.target.matches("input.col-toggle")) return;
+  function persistSaved(){
+    try{ localStorage.setItem(SAVED_KEY, JSON.stringify(savedSentences)); }catch(e){}
+  }
 
-    e.preventDefault();
-    pressTarget = colDiv;
+  function renderSavedPanel(){
+    var panel = document.getElementById('savedPanel');
+    var list  = document.getElementById('savedList');
+    var title = document.getElementById('savedTitle');
+    if(!panel || !list) return;
 
-    longPressTimer = setTimeout(() => {
-      if(pressTarget === colDiv){
-        openPanel(clauseIndex, colDiv.dataset.key);
-        pressTarget = null;
-      }
-    }, 450);
-  });
-
-  tableEl.addEventListener("pointerup", (e) => {
-    const colDiv = e.target.closest(".col");
-
-    if(e.target && e.target.matches("input.col-toggle")){
-      if(longPressTimer) clearTimeout(longPressTimer);
-      longPressTimer = null;
-      pressTarget = null;
+    if(!savedSentences.length){
+      panel.classList.remove('has-items');
       return;
     }
 
-    if(longPressTimer) clearTimeout(longPressTimer);
-    longPressTimer = null;
+    panel.classList.add('has-items');
+    if(title) title.textContent = currentUI().savedTitle + ' (' + savedSentences.length + ')';
 
-    if(pressTarget && colDiv === pressTarget){
-      cycleColumnValue(clauseIndex, colDiv.dataset.key);
-    }
-
-    pressTarget = null;
-  });
-
-  tableEl.addEventListener("pointerleave", () => {
-    if(longPressTimer) clearTimeout(longPressTimer);
-    longPressTimer = null;
-    pressTarget = null;
-  });
-}
-
-/* =========================
-   17) FAVORITES / AUDIO
-========================= */
-const favorites = [];
-
-function renderFavorites(){
-  if(!DOM.favoritesListEl) return;
-
-  DOM.favoritesListEl.innerHTML = "";
-
-  if(!favorites.length){
-    const div = document.createElement("div");
-    div.className = "small-label";
-    div.textContent = "Nu ai salvat încă nicio propoziție.";
-    DOM.favoritesListEl.appendChild(div);
-    return;
+    list.innerHTML = savedSentences.map(function(s, i){
+      return '<div class="savedItem">' +
+        '<div class="savedItemText">' +
+          '<div class="savedItemKo">' + escapeHtml(s.ko) + '</div>' +
+          (s.tr ? '<div class="savedItemTr">' + escapeHtml(s.tr) + '</div>' : '') +
+        '</div>' +
+        '<button class="savedItemDel" type="button" data-del-idx="' + i + '" title="Șterge">×</button>' +
+      '</div>';
+    }).join('');
   }
 
-  favorites.forEach(f => {
-    const item = document.createElement("div");
-    item.className = "fav-item";
-
-    const ko = document.createElement("div");
-    ko.className = "fav-ko";
-    ko.textContent = f.ko;
-
-    const ro = document.createElement("div");
-    ro.className = "fav-ro";
-    ro.textContent = f.ro;
-
-    item.appendChild(ko);
-    item.appendChild(ro);
-    DOM.favoritesListEl.appendChild(item);
-  });
-}
-
-function speakKorean(textToSpeak){
-  if(!("speechSynthesis" in window)) return;
-
-  const t = (textToSpeak || "").trim();
-  if(!t) return;
-
-  const u = new SpeechSynthesisUtterance(t);
-  u.lang = "ko-KR";
-
-  const voices = window.speechSynthesis.getVoices();
-  const koVoices = voices.filter(v => (v.lang || "").toLowerCase().startsWith("ko"));
-  if(koVoices.length) u.voice = koVoices[0];
-
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
-}
-
-/* =========================
-   18) PARSER RO / EN
-========================= */
-function stripDiacritics(s){
-  return (s || "")
-    .replace(/ă/g, "a").replace(/â/g, "a").replace(/î/g, "i")
-    .replace(/ș/g, "s").replace(/ş/g, "s")
-    .replace(/ț/g, "t").replace(/ţ/g, "t");
-}
-
-function normRo(s){
-  return stripDiacritics(
-    (s || "")
-      .toLowerCase()
-      .replace(/[.,!?;:()[\]"]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-  );
-}
-
-const SEMANTIC_MAP = {
-  "consume":"먹다","drink":"마시다","study":"공부하다","learn":"배우다","buy":"사다",
-  "walk":"걷다","run":"달리다","go":"가다","come":"오다","read":"읽다","write":"쓰다",
-  "eat":"먹다","merge":"가다","veni":"오다","citi":"읽다","scrie":"쓰다","bea":"마시다","manca":"먹다"
-};
-
-function normalizeVerbForms(text){
-  let t = normRo(text);
-
-  const EN_MAP = {
-    "going":"go","went":"go","gone":"go",
-    "comes":"come","coming":"come","came":"come",
-    "eating":"eat","ate":"eat",
-    "drinking":"drink","drank":"drink",
-    "reading":"read","writing":"write","wrote":"write",
-    "studying":"study","studied":"study",
-    "learning":"learn","learned":"learn",
-    "bought":"buy","buying":"buy",
-    "walking":"walk","walked":"walk",
-    "running":"run","ran":"run"
-  };
-
-  Object.entries(EN_MAP).forEach(([k,v])=>{
-    t = t.replace(new RegExp(`\\b${k}\\b`, "g"), v);
-  });
-
-  const RO_MAP = {
-    "merg":"merge","mergi":"merge","mergeam":"merge","mergeai":"merge","mergea":"merge","mergeau":"merge","mergem":"merge","mergeti":"merge","mergeți":"merge",
-    "vin":"veni","vii":"veni","vine":"veni","veneam":"veni","venea":"veni","veneau":"veni","venim":"veni","veniti":"veni","veniți":"veni",
-    "mananc":"manca","mănânc":"manca","mananci":"manca","mănânci":"manca","manca":"manca","mancam":"manca","mâncam":"manca","mancati":"manca","mâncați":"manca",
-    "beau":"bea","bei":"bea","bea":"bea","beam":"bea","beti":"bea","beți":"bea",
-    "citesc":"citi","citesti":"citi","citești":"citi","citeste":"citi","citește":"citi","citeam":"citi","citea":"citi","citim":"citi","cititi":"citi","citiți":"citi",
-    "scriu":"scrie","scrii":"scrie","scrie":"scrie","scriam":"scrie","scria":"scrie","scriem":"scrie","scrieti":"scrie","scrieți":"scrie"
-  };
-
-  Object.entries(RO_MAP).forEach(([k,v])=>{
-    t = t.replace(new RegExp(`\\b${k}\\b`, "g"), v);
-  });
-
-  return t;
-}
-
-function detectImplicitSubject(text){
-  const t = normalizeVerbForms(text);
-
-  if(/\bmerg\b|\bfac\b|\bmanca\b|\bbea\b|\bciti\b|\bscrie\b|\bvreau\b|\bpot\b/.test(t)) return "저";
-  if(/\bmergi\b|\bfaci\b/.test(t)) return "너";
-  if(/\bmergem\b|\bfacem\b/.test(t)) return "우리";
-
-  return "";
-}
-
-function detectTense(text){
-  const t = normalizeVerbForms(text);
-
-  if(/\bieri\b|\byesterday\b|\bmergeam\b|\bveneam\b|\bciteam\b|\bscriam\b|\bmancam\b|\bbeam\b/.test(t)) return "past";
-  if(/\bmaine\b|\bmâine\b|\btomorrow\b|\bvoi\b|\bwill\b/.test(t)) return "future";
-
-  return "present";
-}
-
-function detectInputLang(text){
-  const t = normRo(text);
-
-  const enHints = [" and "," but "," because "," after "," before "," while "," i "," we "," you "," they "," he "," she "];
-  const roHints = [" si "," și "," dar "," pentru ca "," pentru că "," dupa "," după "," eu "," noi "," tu "," ei "," ea "];
-
-  let enScore = 0;
-  let roScore = 0;
-
-  enHints.forEach(x => {
-    if((" " + t + " ").includes(normRo(x))) enScore++;
-  });
-
-  roHints.forEach(x => {
-    if((" " + t + " ").includes(normRo(x))) roScore++;
-  });
-
-  return enScore > roScore ? "en" : "ro";
-}
-
-function buildVocabIndex(vocab){
-  const index = {};
-
-  const KEY_MAP = {
-    subjects:"subject",
-    objects:"object",
-    verbs:"verb",
-    times:"time",
-    time:"time",
-    places:"place",
-    modifiers:"mod",
-    subjectAdjectives:"subjectAdj",
-    objectAdjectives:"objectAdj",
-    adjectives:"objectAdj",
-    adverbs:"mod",
-    grammar:"conjug",
-    conjugations:"conjug",
-    connectors:"conjug",
-    nouns:"object"
-  };
-
-  Object.entries(vocab || {}).forEach(([category, list])=>{
-    if(!Array.isArray(list)) return;
-
-    const normalized = KEY_MAP[category] || category;
-
-    if(!index[normalized]) index[normalized] = {};
-
-    list.forEach(entry=>{
-      if(!entry || !entry.ko) return;
-
-      const ko = entry.ko.trim();
-
-      if(entry.ro){
-        const ro = normRo(entry.ro);
-        if(ro) index[normalized][ro] = ko;
+  function addCurrentSentence(){
+    var built = buildFullOutput();
+    if(!built.korean){
+      showToast(currentUI().noSentenceToSave);
+      return;
+    }
+    for(var i=0; i<savedSentences.length; i++){
+      if(savedSentences[i].ko === built.korean){
+        showToast(currentUI().alreadySaved);
+        return;
       }
-
-      if(entry.en){
-        const en = normRo(entry.en);
-        if(en) index[normalized][en] = ko;
-      }
-    });
-  });
-
-  Object.entries(SEMANTIC_MAP).forEach(([k,v])=>{
-    if(!index.verb) index.verb = {};
-    index.verb[normRo(k)] = v;
-  });
-
-  return index;
-}
-
-function findMatchesAdvanced(text, category){
-  const results = [];
-  const dict = VOCAB_INDEX[category] || {};
-  const clean = normalizeVerbForms(text);
-
-  Object.entries(dict)
-    .sort((a,b) => b[0].length - a[0].length)
-    .forEach(([key,ko])=>{
-      const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(`\\b${safeKey}\\b`, "g");
-
-      if(regex.test(clean) && !results.includes(ko)){
-        results.push(ko);
-      }
-    });
-
-  return results;
-}
-
-function splitInputClauses(text){
-  const clean = normRo(text);
-
-  return clean
-    .split(/\b(dupa ce|după ce|inainte|înainte|pentru ca|pentru că|ca sa|ca să|si|și|dar|apoi|and|but|then|after|before|because|while)\b/)
-    .map(s => normRo(s))
-    .filter(Boolean)
-    .filter(s => ![
-      "si","și","dar","apoi","dupa ce","după ce","inainte","înainte",
-      "pentru ca","pentru că","ca sa","ca să",
-      "and","but","then","after","before","because","while"
-    ].includes(s));
-}
-
-function detectConjFromText(chunk){
-  const t = normalizeVerbForms(chunk);
-
-  if(/\bdupa ce\b|\bdupă ce\b|\bafter\b/.test(t)) return "-고 나서";
-  if(/\binainte\b|\bînainte\b|\bbefore\b/.test(t)) return "-기 전에";
-  if(/\bin timp ce\b|\bwhile\b/.test(t)) return "-(으)면서";
-  if(/\bpentru ca\b|\bpentru că\b|\bbecause\b/.test(t)) return "-기 때문에";
-  if(/\bca sa\b|\bca să\b|\bin order to\b/.test(t)) return "-고자 하다";
-  if(/\bvreau sa\b|\bvreau să\b/.test(t)) return "-고 싶어요";
-  if(/\btrebuie sa\b|\btrebuie să\b|\bmust\b/.test(t)) return "-아/어야 돼요";
-  if(/\bnu pot sa\b|\bnu pot să\b|\bcannot\b|\bcan't\b/.test(t)) return "-(으)ㄹ 수 없어요";
-  if(/\bpot sa\b|\bpot să\b|\bcan\b/.test(t)) return "-(으)ㄹ 수 있어요";
-
-  const tense = detectTense(t);
-  if(tense === "past") return "-았어요/었어요";
-  if(tense === "future") return "-(으)ㄹ 거예요";
-
-  return "-아요/어요";
-}
-
-function buildSentenceFromChunk(chunk){
-  const s = makeEmptySentence();
-  const clean = normalizeVerbForms(chunk);
-
-  const subjectMatches = findMatchesAdvanced(clean, "subject");
-  if(subjectMatches.length){
-    s.subject = subjectMatches[0];
-    s.subjects = [...subjectMatches];
-  } else {
-    const implicit = detectImplicitSubject(clean);
-    if(implicit){
-      s.subject = implicit;
-      s.subjects = [implicit];
     }
+    savedSentences.unshift({ ko: built.korean, tr: built.translation || '', ts: Date.now() });
+    persistSaved();
+    renderSavedPanel();
+    showToast(currentUI().saved);
   }
 
-  const timeMatches = findMatchesAdvanced(clean, "time");
-  if(timeMatches.length){
-    s.time = timeMatches[0];
-    s.times = [...timeMatches];
+  function deleteSavedSentence(idx){
+    savedSentences.splice(idx, 1);
+    persistSaved();
+    renderSavedPanel();
   }
 
-  const placeMatches = findMatchesAdvanced(clean, "place");
-  if(placeMatches.length){
-    s.place = placeMatches[0];
-    s.places = [...placeMatches];
+  function exportSentencesAsTxt(){
+    if(!savedSentences.length) return;
+    var lines = savedSentences.map(function(s, i){
+      return (i + 1) + '. ' + s.ko + (s.tr ? '\n   ' + s.tr : '');
+    }).join('\n\n');
+    var blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'raluca-korean.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
-  const objectMatches = findMatchesAdvanced(clean, "object");
-  if(objectMatches.length){
-    s.object = objectMatches[0];
-    s.objects = [...objectMatches];
-  }
+  /* ============================================================
+     QUIZ MODE
+  ============================================================ */
+  var quizMode   = false;
+  var quizTarget = null;
 
-  const objectAdjMatches = findMatchesAdvanced(clean, "objectAdj");
-  if(objectAdjMatches.length){
-    s.objectAdjs = [...objectAdjMatches];
-  }
+  function updateQuizBar(){
+    var bar      = document.getElementById('quizBar');
+    var labelEl  = document.getElementById('quizLabelEl');
+    var targetEl = document.getElementById('quizTargetTr');
+    var checkBtn = document.getElementById('quizCheckBtn');
+    var exitBtn  = document.getElementById('quizExitBtn');
+    var resultEl = document.getElementById('quizResultEl');
+    var quizBtn  = document.getElementById('quizBtn');
 
-  const subjectAdjMatches = findMatchesAdvanced(clean, "subjectAdj");
-  if(subjectAdjMatches.length){
-    s.subjectAdjs = [...subjectAdjMatches];
-  }
+    if(!bar) return;
 
-  const modMatches = findMatchesAdvanced(clean, "mod");
-  if(modMatches.length){
-    s.mod = modMatches[0];
-    s.mods = [...modMatches];
-  }
-
-  const verbMatches = findMatchesAdvanced(clean, "verb");
-  if(verbMatches.length){
-    s.verb = verbMatches[0];
-    s.verbs = [...verbMatches];
-  }
-
-  const grammarMatches = findMatchesAdvanced(clean, "conjug");
-  if(grammarMatches.length){
-    s.conjug = grammarMatches[0];
-  } else {
-    s.conjug = detectConjFromText(clean);
-  }
-
-  if(s.conjug === "-기 때문에" || /\bpentru ca\b|\bpentru că\b|\bbecause\b/.test(clean)){
-    s.reason = true;
-  }
-
-  if(s.conjug === "-면" || /\bdaca\b|\bdacă\b|\bif\b/.test(clean)){
-    s.condition = true;
-  }
-
-  if(/\bdar\b|\bbut\b/.test(clean)){
-    s.contrast = true;
-  }
-
-  if(/\bdupa\b|\bdupă\b|\bafter\b/.test(clean)){
-    s.sequence = true;
-  }
-
-  return s;
-}
-
-function translateRoToKo(text){
-  const lang = detectInputLang(text);
-  const parts = splitInputClauses(text);
-
-  sentences = [];
-  actives = [];
-
-  parts.forEach(chunk=>{
-    const s = buildSentenceFromChunk(chunk);
-    sentences.push(s);
-    actives.push(makeAllActive());
-  });
-
-  if(!sentences.length){
-    sentences = [makeEmptySentence()];
-    actives = [makeAllActive()];
-  }
-
-  showExtraClauses = sentences.length > 1;
-
-  renderAll();
-
-  return {
-    lang,
-    ko: buildComplexSentence(),
-    roFixed: buildFullRomanian()
-  };
-}
-
-/* =========================
-   19) LINKING / COMPLEX SENTENCES
-========================= */
-const linkingConjugations = new Set([
-  "-고","-고 나서","-기 전에","-(으)면서","-(으)며",
-  "-(으)나","-(으)므로","-(으)ㄴ/는 만큼","-(으)ㄹ수록",
-  "-(으)ㄴ/는데도","-(으)ㄹ지라도","-(으)ㄴ/는 반면에",
-  "-도록 하다","-기에","-길래","-고 말다","-고자 하다"
-]);
-
-function isLinkingConj(v){
-  return linkingConjugations.has(v);
-}
-
-function ensureLinkedSentences(){
-  if(!Array.isArray(sentences)) sentences = [makeEmptySentence()];
-  if(!Array.isArray(actives)) actives = [makeAllActive()];
-
-  let requiredLength = 1;
-
-  for(let i = 0; i < sentences.length; i++){
-    const conj = sentences[i]?.conjug || "";
-    if(isLinkingConj(conj)){
-      requiredLength = Math.max(requiredLength, i + 2);
-    }
-  }
-
-  while(sentences.length < requiredLength){
-    sentences.push(makeEmptySentence());
-  }
-
-  while(actives.length < requiredLength){
-    actives.push(makeAllActive());
-  }
-
-  showExtraClauses = requiredLength > 1;
-}
-
-function detectRelation(a,b){
-  if(a.time && b.time) return "sequence";
-  if(a.object && b.object && a.verb !== b.verb) return "contrast";
-  if(a.reason) return "cause";
-  if(a.condition) return "condition";
-  if(a.verb === b.verb) return "parallel";
-  return "background";
-}
-
-function pickAdvancedConnector(a,b){
-  if(a.conjug && isLinkingConj(a.conjug)) return a.conjug;
-
-  const relation = detectRelation(a,b);
-
-  if(relation === "sequence") return "-고 나서";
-  if(relation === "contrast") return "-지만";
-  if(relation === "cause") return "-기에";
-  if(relation === "parallel") return "-(으)면서";
-  if(relation === "condition") return "-(으)면";
-  return "-고";
-}
-
-function transformVerbForConnector(verb, connector){
-  if(!verb) return "";
-  const stem = getVerbStem(verb);
-
-  if(connector === "-고") return stem + "고";
-  if(connector === "-고 나서") return stem + "고 나서";
-  if(connector === "-기 전에") return stem + "기 전에";
-  if(connector === "-(으)면서") return stem + "면서";
-  if(connector === "-(으)며") return stem + "며";
-  if(connector === "-지만") return stem + "지만";
-  if(connector === "-기에") return stem + "기에";
-  if(connector === "-길래") return stem + "길래";
-  if(connector === "-고자 하다")        return stem + "고자";
-  if(connector === "-고 말다")          return stem + "고 말고";
-  if(connector === "-(으)면")           return withEu(stem, "면");
-  if(connector === "-(으)나")           return withEu(stem, "나");
-  if(connector === "-(으)므로")         return withEu(stem, "므로");
-  if(connector === "-(으)ㄴ/는 만큼")   return stem + "는 만큼";
-  if(connector === "-(으)ㄹ수록")       return withRieul(stem, "수록");
-  if(connector === "-(으)ㄴ/는데도")    return stem + "는데도";
-  if(connector === "-(으)ㄹ지라도")     return withRieul(stem, "지라도");
-  if(connector === "-(으)ㄴ/는 반면에") return stem + "는 반면에";
-  if(connector === "-도록 하다")        return stem + "도록";
-
-  return stem + "고";
-}
-
-function applyConnector(sentence, connector){
-  if(!sentence) return "";
-
-  const match = sentence.match(/([가-힣]+(?:요|다))$/);
-  if(!match) return sentence;
-
-  const verbPart = match[0];
-  const base = sentence.slice(0, -verbPart.length).trim();
-
-  let sourceVerb = "";
-
-  for(let i = verbs.length - 1; i >= 0; i--){
-    const vb = verbs[i];
-    if(
-      verbPart === presentPolite(vb) ||
-      verbPart === pastPolite(vb) ||
-      verbPart === getVerbStem(vb) + "고 있어요" ||
-      verbPart === getVerbStem(vb) + "고 싶어요"
-    ){
-      sourceVerb = vb;
-      break;
-    }
-  }
-
-  if(!sourceVerb){
-    sourceVerb = verbPart.endsWith("요") ? verbPart.replace(/요$/, "다") : verbPart;
-  }
-
-  const transformed = transformVerbForConnector(sourceVerb, connector);
-  return (base + " " + transformed).trim();
-}
-
-function buildComplexSentence(){
-  if(!sentences.length) return "";
-
-  let result = "";
-
-  for(let i = 0; i < sentences.length; i++){
-    const s = sentences[i];
-    if(!s) continue;
-
-    let clause = planKoreanSentence(s, actives[i]);
-    if(!clause) continue;
-
-    if(i < sentences.length - 1){
-      const next = sentences[i + 1];
-      const connector = pickAdvancedConnector(s, next);
-      clause = applyConnector(clause, connector);
-      result += clause + " ";
+    if(quizMode && quizTarget){
+      bar.classList.add('active');
+      if(labelEl)  labelEl.textContent  = currentUI().quizLabel;
+      if(targetEl) targetEl.textContent = quizTarget.tr || quizTarget.ko;
+      if(checkBtn) checkBtn.textContent = currentUI().quizCheck;
+      if(exitBtn)  exitBtn.textContent  = currentUI().quizExit;
+      if(resultEl){ resultEl.textContent = ''; resultEl.className = 'quizResultEl'; }
+      if(quizBtn)  quizBtn.classList.add('quizActive');
     } else {
-      result += clause;
+      bar.classList.remove('active');
+      if(quizBtn) quizBtn.classList.remove('quizActive');
     }
   }
 
-  return result.replace(/\s+/g," ").trim();
-}
-
-/* =========================
-   20) PREVIEW / EXTRA
-========================= */
-function updateNaturalHint(textValue){
-  if(!DOM.naturalHint) return;
-  if(!textValue){
-    DOM.naturalHint.textContent = "";
-    return;
-  }
-  DOM.naturalHint.textContent = textValue.includes("고") ? "⭐ propoziție compusă" : "";
-}
-
-function updatePreviewCardState(){
-  const card = document.querySelector(".preview-card");
-  if(!card) return;
-
-  const txt = DOM.previewKo?.textContent || "";
-  if(txt && !txt.includes("alege")){
-    card.classList.add("has-content");
-  }else{
-    card.classList.remove("has-content");
-  }
-}
-
-function updatePreview(){
-  if(!DOM.previewKo) return;
-
-  normalizeSubjects();
-
-  let ko = "";
-  try{
-    ko = buildComplexSentence();
-  }catch(err){
-    console.error("buildComplexSentence error:", err);
-    ko = "";
-  }
-
-  DOM.previewKo.textContent = ko || "(alege cuvinte din tabel)";
-
-  if(DOM.previewRo && showRo){
-    DOM.previewRo.textContent = buildFullRomanian();
-  }
-
-  if(DOM.roInput){
-    DOM.roInput.value = buildFullRomanian();
-  }
-
-  updateNaturalHint(ko);
-  updatePreviewCardState();
-}
-
-function renderExtraClauses(){
-  if(!DOM.extraClauses) return;
-
-  DOM.extraClauses.innerHTML = "";
-
-  for(let i = 2; i < sentences.length; i++){
-    const wrapper = document.createElement("div");
-    wrapper.className = "table-block";
-
-    const title = document.createElement("div");
-    title.className = "table-title";
-    title.innerHTML = `<span>Propoziția ${i + 1}</span>`;
-    wrapper.appendChild(title);
-
-    const table = document.createElement("div");
-    table.className = "table-horizontal";
-    wrapper.appendChild(table);
-
-    DOM.extraClauses.appendChild(wrapper);
-
-    renderClauseRow(table, actives[i], sentences[i], i);
-    attachPressHandlers(table, i);
-  }
-}
-
-function buildFullRomanian(){
-  const parts = [];
-
-  let prevSubject = null;
-  let prevTime = null;
-  let prevPlace = null;
-
-  for(let i = 0; i < sentences.length; i++){
-    const s = sentences[i];
-    if(!s) continue;
-
-    const sameSubject = s.subject === prevSubject;
-    const sameTime = s.time === prevTime;
-    const samePlace = s.place === prevPlace;
-
-    const hideSubject = i > 0 && sameSubject && sameTime && samePlace;
-
-    let ro = buildNaturalRomanian(
-      {...s, hideSubject},
-      actives[i]
-    );
-
-    if(!ro) continue;
-
-    if(isLinkingConj(s.conjug || "")){
-      ro = ro.replace(/[.]$/, "");
+  function enterQuizMode(){
+    var built = buildFullOutput();
+    if(!built.korean){
+      showToast(currentUI().quizNoBuild);
+      return;
     }
 
-    parts.push(ro);
+    quizTarget = { ko: built.korean, tr: built.translation || built.korean };
+    quizMode   = true;
 
-    prevSubject = s.subject || null;
-    prevTime = s.time || null;
-    prevPlace = s.place || null;
-  }
-
-  return parts.join(" ").replace(/\s+/g," ").replace(/și\s+și/g,"și").trim();
-}
-
-/* =========================
-   21) MODEL NAV
-========================= */
-function loadModelRow(i){
-  sentences.forEach(s=>{
-    columns.forEach(col=>{
-      if(!col.data.length) return;
-      const value = col.data[i % col.data.length] || "";
-      s[col.key] = value;
+    // Scramble: reset each active field to its first available option
+    state.clauses.forEach(function(clause, ci){
+      var isLast = ci === state.clauses.length - 1;
+      ALL_FIELD_KEYS.forEach(function(fieldKey){
+        if(!isFieldActive(clause, fieldKey)) return;
+        var opts = getOptionsForField(fieldKey, isLast);
+        if(opts.length) setFieldItem(clause, fieldKey, opts[0]);
+      });
     });
-  });
-}
 
-function updateModelNav(){
-  if(DOM.pageInfoEl) DOM.pageInfoEl.textContent = `Rând model: ${indexModelRow + 1} / ${maxLen}`;
-  if(DOM.prevBtn) DOM.prevBtn.disabled = indexModelRow === 0;
-  if(DOM.nextBtn) DOM.nextBtn.disabled = indexModelRow === maxLen - 1;
-}
+    updateQuizBar();
+    renderAll();
+  }
 
-/* =========================
-   22) VOCAB LOADER
-========================= */
-async function loadVocabulary(){
-  try{
-    const res = await fetch("./data/vocab-korean.json");
-    vocabJson = await res.json();
+  function exitQuizMode(){
+    quizMode   = false;
+    quizTarget = null;
+    updateQuizBar();
+    renderAll();
+  }
 
-    VOCAB_INDEX = buildVocabIndex(vocabJson);
+  function checkQuiz(){
+    if(!quizTarget) return;
+    var current = (buildFullOutput().korean || '').trim();
+    var target  = quizTarget.ko.trim();
+    var correct = current === target;
 
-    const map = {
-      subject:"subjects",
-      object:"objects",
-      verb:"verbs",
-      time:"times",
-      place:"places",
-      mod:"modifiers",
-      conjug:Array.isArray(vocabJson.conjugations) ? "conjugations" : "grammar",
-      subjectAdj:"subjectAdjectives",
-      objectAdj:"objectAdjectives"
+    var resultEl = document.getElementById('quizResultEl');
+    if(resultEl){
+      if(correct){
+        resultEl.innerHTML = currentUI().quizCorrect;
+        resultEl.className = 'quizResultEl visible correct';
+      } else {
+        resultEl.innerHTML =
+          currentUI().quizWrong +
+          '<div class="quizAnswerLine">' + currentUI().quizAnswer +
+          ' <strong>' + escapeHtml(target) + '</strong></div>';
+        resultEl.className = 'quizResultEl visible wrong';
+      }
+    }
+
+    if(correct) showToast(currentUI().quizCorrect);
+  }
+
+  var pickerState = {
+    clauseIndex: 0,
+    fieldKey: 'topic',
+    items: [],
+    filteredItems: []
+  };
+
+  var USAGE_KEY = 'RK_WORD_USAGE';
+  var wordUsage = {};
+
+  function loadWordUsage(){
+    try{
+      var raw = localStorage.getItem(USAGE_KEY);
+      if(raw) wordUsage = JSON.parse(raw);
+    }catch(e){ wordUsage = {}; }
+  }
+
+  function saveWordUsage(){
+    try{ localStorage.setItem(USAGE_KEY, JSON.stringify(wordUsage)); }catch(e){}
+  }
+
+  function markWordUsed(fieldKey, item){
+    if(!item || !item.ko) return;
+    var k = fieldKey + ':' + item.ko;
+    wordUsage[k] = (wordUsage[k] || 0) + 1;
+    saveWordUsage();
+  }
+
+  function isWordNew(fieldKey, item){
+    if(!item || !item.ko) return false;
+    return !wordUsage[fieldKey + ':' + item.ko];
+  }
+
+  var toastTimer = null;
+  var mediaRecorder = null;
+  var recordedChunks = [];
+  var recordedStream = null;
+  var recordedUrl = null;
+  var longPressTimer = null;
+  var longPressTarget = null;
+  var LONG_PRESS_MS = 420;
+
+  function currentUI(){
+    return UI[state.lang] || UI.ro;
+  }
+
+  function showToast(message){
+    if(!els.toast) return;
+    clearTimeout(toastTimer);
+    els.toast.textContent = message;
+    els.toast.classList.add('show');
+    toastTimer = setTimeout(function(){
+      els.toast.classList.remove('show');
+    }, 2200);
+  }
+
+  function escapeHtml(str){
+    return String(str || '')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+  }
+
+  function normalizeLatin(str){
+    return String(str || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\u3131-\u318e\uac00-\ud7a3\s]/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function cleanSentenceText(text){
+    return String(text || '')
+      .replace(/\s+,/g, ',')
+      .replace(/\s+/g, ' ')
+      .replace(/\s+([,.!?])/g, '$1')
+      .trim();
+  }
+
+  function fieldLabel(fieldKey){
+    var pack = FIELD_LABELS[state.lang] || FIELD_LABELS.ro;
+    return pack[fieldKey] || fieldKey;
+  }
+
+  function getLevelFields(){
+    return LEVEL_FIELDS[state.level] || LEVEL_FIELDS[1];
+  }
+
+  function normalizeItem(item, bucket, index){
+    if(!item) return null;
+    if(typeof item === 'string'){
+      return {
+        id: bucket + '-' + index + '-' + item,
+        key: item,
+        bucket: bucket,
+        index: index,
+        ko: item,
+        ro: '',
+        en: '',
+        aliases: [],
+        final: '',
+        forms: {},
+        raw: item
+      };
+    }
+    return {
+      id: item.id || item.key || item.value || item.ko || (bucket + '-' + index),
+      key: item.key || item.id || item.value || '',
+      bucket: bucket,
+      index: typeof index === 'number' ? index : 0,
+      ko: item.ko || item.kr || item.korean || item.surface || item.text || item.value || '',
+      ro: item.ro || item.romanian || item.meaningRo || item.meaning || '',
+      en: item.en || item.english || item.meaningEn || '',
+      aliases: Array.isArray(item.aliases) ? item.aliases.slice() : [],
+      final: item.final || '',
+      forms: item.forms || {},
+      isPhrase: item.isPhrase || false,
+      modifiesSubject: item.modifiesSubject || false,
+      raw: item
+    };
+  }
+
+  function normalizeList(list, bucket){
+    return (Array.isArray(list) ? list : []).map(function(item, index){
+      return normalizeItem(item, bucket, index);
+    });
+  }
+
+  function uniqueItems(items){
+    var seen = {};
+    return items.filter(function(item){
+      if(!item) return false;
+      var key = [item.bucket, item.ko, item.ro, item.en, item.key].join('|');
+      if(seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function getAppVocab(){
+    return window.RALUCA_VOCAB
+      || window.APP_VOCAB
+      || window.VOCAB
+      || window.vocabulary
+      || window.__VOCAB__
+      || window.KOREAN_VOCAB
+      || null;
+  }
+
+  function globalBucketMap(fieldKey){
+    return {
+      topic: ['subjects','subject','topics','topic','people','persons'],
+      associate: ['participants','participant','relatives','relative','people','persons','subjects','subject'],
+      time: ['times','time'],
+      departure: ['locations','location','places','place','departures','departure'],
+      transit: ['locations','location','places','place','transit'],
+      numeral: ['numerals','numeral','numbers','number'],
+      quantifier: ['quantifiers','quantifier','classifiers','classifier','units','unit'],
+      object1: ['objects','object','object1'],
+      beneficiary: ['beneficiaries','beneficiary','people','persons','subjects','subject'],
+      object2: ['objects','object','object2'],
+      adverb: ['adverbs','adverb','descriptions','description'],
+      verb: ['verbs','verb'],
+      connector: ['connectors','connector']
+    }[fieldKey] || [fieldKey];
+  }
+
+  function firstExistingBucket(source, keys){
+    for(var i=0;i<keys.length;i++){
+      var key = keys[i];
+      if(source && Array.isArray(source[key])) return source[key];
+      if(source && source[key] && Array.isArray(source[key].items)) return source[key].items;
+      if(source && source.data && Array.isArray(source.data[key])) return source.data[key];
+      if(source && source.data && source.data[key] && Array.isArray(source.data[key].items)) return source.data[key].items;
+    }
+    return [];
+  }
+
+  function getOptionsForField(fieldKey, isLast){
+    var sourceKey = fieldKey;
+    if(fieldKey === 'topic2') sourceKey = 'topic';
+    if(fieldKey === 'adverb2') sourceKey = 'adverb';
+
+    var appVocab = getAppVocab();
+    var items = [];
+
+    if(appVocab && sourceKey !== 'connector'){
+      var raw = firstExistingBucket(appVocab, globalBucketMap(sourceKey));
+      if(raw && raw.length){
+        items = normalizeList(raw, sourceKey);
+      }
+    }
+
+    if(!items.length){
+      if(sourceKey === 'topic' || sourceKey === 'associate' || sourceKey === 'beneficiary'){
+        items = normalizeList(DATA.subject, 'subject');
+      }else if(sourceKey === 'time'){
+        items = normalizeList(DATA.time, 'time');
+      }else if(sourceKey === 'departure' || sourceKey === 'transit'){
+        items = normalizeList(DATA.location, 'location');
+      }else if(sourceKey === 'object1' || sourceKey === 'object2'){
+        items = normalizeList(DATA.object, 'object');
+      }else if(sourceKey === 'adverb'){
+        items = normalizeList(DATA.description, 'description');
+      }else if(sourceKey === 'verb'){
+        items = normalizeList(DATA.verb, 'verb');
+      }else if(sourceKey === 'connector'){
+        var all = normalizeList(DATA.connector, 'connector');
+        if(isLast){
+          // Tense endings first (cycling starts here), then clause connectors; exclude 'none'
+          var tenseOpts  = all.filter(function(it){ return it.raw && it.raw.isTense; });
+          var clauseOpts = all.filter(function(it){ return it.key !== 'none' && (!it.raw || !it.raw.isTense); });
+          items = tenseOpts.concat(clauseOpts);
+        }else{
+          items = all.filter(function(it){ return !it.raw || !it.raw.isTense; });
+        }
+      }else if(sourceKey === 'numeral'){
+        items = normalizeList(DATA.numeral, 'numeral');
+      }else if(sourceKey === 'quantifier'){
+        items = normalizeList(DATA.quantifier, 'quantifier');
+      }
+    }
+
+    return uniqueItems(items);
+  }
+
+  function makeField(enabled, index){
+    return { enabled: !!enabled, index: typeof index === 'number' ? index : 0 };
+  }
+
+  function makeClause(subjectIndex, enableSubject){
+    if(typeof subjectIndex !== 'number') subjectIndex = 0;
+    if(typeof enableSubject !== 'boolean') enableSubject = true;
+
+    return {
+      subject: makeField(enableSubject, subjectIndex),
+      time: makeField(false, 0),
+      location: makeField(false, 0),
+      object: makeField(false, 0),
+      description: makeField(false, 0),
+      verb: makeField(false, 0),
+      connector: makeField(false, 0),
+      sourceText: '',
+      extras: {
+        topic2: null,
+        associate: null,
+        transit: null,
+        numeral: null,
+        quantifier: null,
+        beneficiary: null,
+        object2: null,
+        adverb2: null
+      },
+      __picked: {}
+    };
+  }
+
+  function makeEmptyLayoutClause(){
+    return makeClause(0, false);
+  }
+
+  function ensureClauseShape(clause){
+    if(!clause.subject) clause.subject = makeField(false, 0);
+    if(!clause.time) clause.time = makeField(false, 0);
+    if(!clause.location) clause.location = makeField(false, 0);
+    if(!clause.object) clause.object = makeField(false, 0);
+    if(!clause.description) clause.description = makeField(false, 0);
+    if(!clause.verb) clause.verb = makeField(false, 0);
+    if(!clause.connector) clause.connector = makeField(false, 0);
+
+    if(!clause.extras){
+      clause.extras = {
+        topic2: null,
+        associate: null,
+        transit: null,
+        numeral: null,
+        quantifier: null,
+        beneficiary: null,
+        object2: null,
+        adverb2: null
+      };
+    }
+
+    if(!clause.__picked) clause.__picked = {};
+    return clause;
+  }
+
+  function clearFieldFromClause(clause, fieldKey){
+    clause = ensureClauseShape(clause);
+
+    if(fieldKey === 'topic'){
+      clause.subject.enabled = false;
+      clause.subject.index = 0;
+      clause.__picked.topic = null;
+      return;
+    }
+
+    if(fieldKey === 'time'){
+      clause.time.enabled = false;
+      clause.time.index = 0;
+      clause.__picked.time = null;
+      return;
+    }
+
+    if(fieldKey === 'departure'){
+      clause.location.enabled = false;
+      clause.location.index = 0;
+      clause.__picked.departure = null;
+      return;
+    }
+
+    if(fieldKey === 'object1'){
+      clause.object.enabled = false;
+      clause.object.index = 0;
+      clause.__picked.object1 = null;
+      return;
+    }
+
+    if(fieldKey === 'adverb'){
+      clause.description.enabled = false;
+      clause.description.index = 0;
+      clause.__picked.adverb = null;
+      return;
+    }
+
+    if(fieldKey === 'verb'){
+      clause.verb.enabled = false;
+      clause.verb.index = 0;
+      clause.__picked.verb = null;
+      return;
+    }
+
+    if(fieldKey === 'connector'){
+      clause.connector.enabled = false;
+      clause.connector.index = 0;
+      clause.__picked.connector = null;
+      return;
+    }
+
+    clause.__picked[fieldKey] = null;
+    if(clause.extras && Object.prototype.hasOwnProperty.call(clause.extras, fieldKey)){
+      clause.extras[fieldKey] = null;
+    }
+  }
+
+  function translationOf(item){
+    if(!item) return '';
+    return state.lang === 'en'
+      ? (item.en || item.ro || item.ko || '')
+      : (item.ro || item.en || item.ko || '');
+  }
+
+  function itemOf(clause, fieldKey){
+    if(!clause) return null;
+    clause = ensureClauseShape(clause);
+
+    if(clause.__picked && clause.__picked[fieldKey]){
+      return clause.__picked[fieldKey];
+    }
+
+    if(fieldKey === 'topic'){
+      if(!clause.subject || !clause.subject.enabled) return null;
+      return normalizeItem((DATA.subject[clause.subject.index] || DATA.subject[0]), 'subject', clause.subject.index);
+    }
+
+    if(fieldKey === 'time'){
+      if(!clause.time || !clause.time.enabled) return null;
+      return normalizeItem((DATA.time[clause.time.index] || DATA.time[0]), 'time', clause.time.index);
+    }
+
+    if(fieldKey === 'departure'){
+      if(!clause.location || !clause.location.enabled) return null;
+      return normalizeItem((DATA.location[clause.location.index] || DATA.location[0]), 'location', clause.location.index);
+    }
+
+    if(fieldKey === 'object1'){
+      if(!clause.object || !clause.object.enabled) return null;
+      return normalizeItem((DATA.object[clause.object.index] || DATA.object[0]), 'object', clause.object.index);
+    }
+
+    if(fieldKey === 'adverb'){
+      if(!clause.description || !clause.description.enabled) return null;
+      return normalizeItem((DATA.description[clause.description.index] || DATA.description[0]), 'description', clause.description.index);
+    }
+
+    if(fieldKey === 'verb'){
+      if(!clause.verb || !clause.verb.enabled) return null;
+      return normalizeItem((DATA.verb[clause.verb.index] || DATA.verb[0]), 'verb', clause.verb.index);
+    }
+
+    if(fieldKey === 'connector'){
+      if(!clause.connector || !clause.connector.enabled) return null;
+      return normalizeItem((DATA.connector[clause.connector.index] || DATA.connector[0]), 'connector', clause.connector.index);
+    }
+
+    if(clause.extras && clause.extras[fieldKey]){
+      return clause.extras[fieldKey];
+    }
+
+    return null;
+  }
+
+  function isFieldActive(clause, fieldKey){
+    if(!clause) return false;
+    clause = ensureClauseShape(clause);
+
+    if(fieldKey === 'topic2' || fieldKey === 'associate' || fieldKey === 'transit' ||
+       fieldKey === 'numeral' || fieldKey === 'quantifier' || fieldKey === 'beneficiary' ||
+       fieldKey === 'object2' || fieldKey === 'adverb2'){
+      return !!(clause.extras && clause.extras[fieldKey]);
+    }
+
+    if(FIELD_BINDINGS[fieldKey]){
+      var nativeKey = FIELD_BINDINGS[fieldKey];
+      return !!(clause[nativeKey] && clause[nativeKey].enabled);
+    }
+
+    return false;
+  }
+
+  function getFirstUsableItem(fieldKey, isLast){
+    var options = getOptionsForField(fieldKey, isLast);
+    if(!options.length) return null;
+
+    if(fieldKey === 'connector'){
+      for(var i=0;i<options.length;i++){
+        if(options[i] && options[i].key && options[i].key !== 'none') return options[i];
+      }
+      return options[0] || null;
+    }
+
+    for(var j=0;j<options.length;j++){
+      if(options[j] && options[j].ko) return options[j];
+    }
+
+    return options[0] || null;
+  }
+
+  function setFieldItem(clause, fieldKey, item){
+    clause = ensureClauseShape(clause);
+
+    if(!clause.__picked) clause.__picked = {};
+    clause.__picked[fieldKey] = item || null;
+
+    if(fieldKey === 'topic'){
+      clause.subject.enabled = !!(item && item.ko);
+      clause.subject.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'time'){
+      clause.time.enabled = !!(item && item.ko);
+      clause.time.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'departure'){
+      clause.location.enabled = !!(item && item.ko);
+      clause.location.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'object1'){
+      clause.object.enabled = !!(item && item.ko);
+      clause.object.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'adverb'){
+      clause.description.enabled = !!(item && item.ko);
+      clause.description.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'verb'){
+      clause.verb.enabled = !!(item && item.ko);
+      clause.verb.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(fieldKey === 'connector'){
+      clause.connector.enabled = !!(item && item.ko);
+      clause.connector.index = item && typeof item.index === 'number' ? item.index : 0;
+      return;
+    }
+
+    if(!clause.extras) clause.extras = {};
+    clause.extras[fieldKey] = item || null;
+  }
+
+  function connectorKey(clause){
+    var item = itemOf(clause, 'connector');
+    return item ? (item.key || item.id || 'none') : 'none';
+  }
+
+  function toggleFieldActive(clauseIndex, fieldKey){
+    var clause = state.clauses[clauseIndex];
+    if(!clause) return;
+
+    var active = isFieldActive(clause, fieldKey);
+
+    if(active){
+      setFieldItem(clause, fieldKey, null);
+
+      if(FIELD_BINDINGS[fieldKey]){
+        var nativeKey = FIELD_BINDINGS[fieldKey];
+        clause[nativeKey].enabled = false;
+        clause[nativeKey].index = 0;
+      }else if(clause.extras){
+        clause.extras[fieldKey] = null;
+      }
+    }else{
+      var isLastClause = clauseIndex === state.clauses.length - 1;
+      var firstItem = getFirstUsableItem(fieldKey, isLastClause);
+      if(firstItem){
+        setFieldItem(clause, fieldKey, firstItem);
+        if(FIELD_BINDINGS[fieldKey]){
+          clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+        }
+      }
+    }
+
+    ensureChainLength();
+    renderAll();
+  }
+
+  function cycleFieldValue(clauseIndex, fieldKey){
+    var clause = state.clauses[clauseIndex];
+    if(!clause) return;
+
+    var isLastClause = clauseIndex === state.clauses.length - 1;
+    var options = getOptionsForField(fieldKey, isLastClause);
+    if(!options.length) return;
+
+    if(!isFieldActive(clause, fieldKey)){
+      var firstItem = getFirstUsableItem(fieldKey, isLastClause);
+      if(firstItem){
+        setFieldItem(clause, fieldKey, firstItem);
+        if(FIELD_BINDINGS[fieldKey]){
+          clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+        }
+        markWordUsed(fieldKey, firstItem);
+        ensureChainLength();
+        renderAll();
+        if(firstItem.ko) autoSpeakWord(firstItem.ko);
+      }
+      return;
+    }
+
+    var current = itemOf(clause, fieldKey);
+    var currentIndex = -1;
+
+    for(var i=0;i<options.length;i++){
+      if(current && options[i] && options[i].id === current.id && options[i].ko === current.ko){
+        currentIndex = i;
+        break;
+      }
+    }
+
+    var nextIndex = currentIndex + 1;
+    if(nextIndex >= options.length) nextIndex = 0;
+
+    if(fieldKey !== 'connector'){
+      var guard = 0;
+      while(options[nextIndex] && !options[nextIndex].ko && guard < options.length){
+        nextIndex += 1;
+        if(nextIndex >= options.length) nextIndex = 0;
+        guard += 1;
+      }
+    }
+
+    var nextItem = options[nextIndex] || null;
+    setFieldItem(clause, fieldKey, nextItem);
+    if(nextItem) markWordUsed(fieldKey, nextItem);
+    ensureChainLength();
+    renderAll();
+    if(nextItem && nextItem.ko) autoSpeakWord(nextItem.ko);
+  }
+
+  function subjectRoleFromKo(subjectKo){
+    if(subjectKo === '저는' || subjectKo === '나는') return 'i';
+    if(subjectKo === '우리는') return 'we';
+    if(subjectKo === '너는') return 'you_sg';
+    if(subjectKo === '여러분은') return 'you_pl';
+    if(subjectKo === '그들은') return 'third_pl';
+    return 'third';
+  }
+
+  function finiteVerbText(verb, lang, subjectKo, tense){
+    if(!verb) return '';
+    if(verb.isPhrase) return lang === 'en' ? (verb.en || verb.ro || '') : (verb.ro || verb.en || '');
+    var hit = VERB_FINITE_MAP[verb.ko];
+    var td  = VERB_TENSE_DATA[verb.ko];
+    var role = subjectRoleFromKo(subjectKo || '');
+    tense = tense || 'present';
+
+    if(tense === 'past' && td){
+      if(lang === 'en'){
+        return td.enPast || (verb.en || verb.ro || verb.ko || '');
+      }
+      if(td.refl){
+        if(role === 'i')        return 'm-am '  + td.roPart;
+        if(role === 'you_sg')   return 'te-ai ' + td.roPart;
+        if(role === 'you_pl')   return 'v-ați ' + td.roPart;
+        if(role === 'we')       return 'ne-am ' + td.roPart;
+        if(role === 'third_pl') return 's-au '  + td.roPart;
+        return 's-a ' + td.roPart;
+      }
+      var auxP = role === 'i' || role === 'we' ? 'am'
+               : role === 'you_sg'             ? 'ai'
+               : role === 'you_pl'             ? 'ați'
+               : role === 'third_pl'           ? 'au'
+               : 'a';
+      return auxP + ' ' + td.roPart;
+    }
+
+    if(tense === 'future' && td){
+      if(lang === 'en'){
+        var enBase = hit && hit.en ? (hit.en.i || hit.en[role] || '') : (verb.en || '');
+        return 'will ' + enBase;
+      }
+      if(td.refl){
+        if(role === 'i')        return 'mă voi '  + td.roBase;
+        if(role === 'you_sg')   return 'te vei '  + td.roBase;
+        if(role === 'you_pl')   return 'vă veți ' + td.roBase;
+        if(role === 'we')       return 'ne vom '  + td.roBase;
+        if(role === 'third_pl') return 'se vor '  + td.roBase;
+        return 'se va ' + td.roBase;
+      }
+      var auxF = role === 'i'        ? 'voi'
+               : role === 'you_sg'   ? 'vei'
+               : role === 'you_pl'   ? 'veți'
+               : role === 'we'       ? 'vom'
+               : role === 'third_pl' ? 'vor'
+               : 'va';
+      return auxF + ' ' + td.roBase;
+    }
+
+    if(tense === 'neg'){
+      if(lang === 'en'){
+        var negAux = (role === 'third' || role === 'third_pl') ? "doesn't" : "don't";
+        var negBase = hit && hit.en ? (hit.en[role] || '') : '';
+        return negBase ? negAux + ' ' + negBase : (verb.en || '');
+      }
+      return 'nu ' + (hit && hit.ro ? (hit.ro[role] || '') : (verb.ro || ''));
+    }
+
+    if(tense === 'notwish'){
+      var roWantNeg = {i:'nu vreau să', you_sg:'nu vrei să', you_pl:'nu vreți să', we:'nu vrem să', third:'nu vrea să', third_pl:'nu vor să'};
+      if(lang === 'en'){
+        var ntWishAux = (role === 'third' || role === 'third_pl') ? "doesn't want to" : "don't want to";
+        return ntWishAux + ' ' + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      }
+      return (roWantNeg[role] || 'nu vrea să') + ' ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(tense === 'mustnot'){
+      if(lang === 'en') return 'must not ' + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      return 'nu trebuie să ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(tense === 'cannot'){
+      var roCanNeg = {i:'nu pot să', you_sg:'nu poți să', you_pl:'nu puteți să', we:'nu putem să', third:'nu poate să', third_pl:'nu pot să'};
+      if(lang === 'en') return "can't " + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      return (roCanNeg[role] || 'nu poate să') + ' ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(tense === 'wish'){
+      var roWant = {i:'vreau să', you_sg:'vrei să', you_pl:'vreți să', we:'vrem să', third:'vrea să', third_pl:'vor să'};
+      if(lang === 'en') return 'want to ' + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      return (roWant[role] || 'vrea să') + ' ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(tense === 'must'){
+      var roMust = {i:'trebuie să', you_sg:'trebuie să', you_pl:'trebuie să', we:'trebuie să', third:'trebuie să', third_pl:'trebuie să'};
+      if(lang === 'en') return 'must ' + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      return roMust[role] + ' ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(tense === 'should'){
+      var roShould = {i:'ar trebui să', you_sg:'ar trebui să', you_pl:'ar trebui să', we:'ar trebui să', third:'ar trebui să', third_pl:'ar trebui să'};
+      if(lang === 'en') return 'should ' + (verb.en ? verb.en.replace(/^to\s+/,'') : '');
+      return roShould[role] + ' ' + (td ? td.roBase : (verb.ro || ''));
+    }
+
+    if(hit && hit[lang] && hit[lang][role]) return hit[lang][role];
+    return lang === 'en'
+      ? (verb.en || verb.ro || verb.ko || '')
+      : (verb.ro || verb.en || verb.ko || '');
+  }
+
+  function removeTopicParticle(ko){
+    return String(ko || '').replace(/(는|은|이|가)$/,'');
+  }
+
+  function renderVerbKo(clause){
+    var verb = itemOf(clause, 'verb');
+    if(!verb || !verb.ko) return '';
+
+    if(verb.isPhrase) return verb.final || verb.ko;
+
+    var cKey = connectorKey(clause);
+    var conj = window.Conjugation;
+
+    if(cKey === 'tense_past') return conj ? conj.past(verb.ko)   : (verb.final || verb.ko);
+    if(cKey === 'tense_fut')  return conj ? conj.future(verb.ko) : (verb.final || verb.ko);
+    if(cKey === 'tense_pres' || cKey === 'none') return conj ? conj.present(verb.ko) : (verb.final || verb.ko);
+
+    // Clause connectors — return verb in connector form (stem + suffix)
+    if(conj){
+      var stem = conj.stem(verb.ko);
+      if(cKey === 'seq')       return conj.connector(verb.ko, '-고');
+      if(cKey === 'cause1')    return conj.connector(verb.ko, '-아/어서');
+      if(cKey === 'cause2')    return conj.connector(verb.ko, '-(으)니까');
+      if(cKey === 'contrast1') return conj.connector(verb.ko, '-지만');
+      if(cKey === 'contrast2') return conj.connector(verb.ko, '-(으)ㄴ/는데');
+      if(cKey === 'condition') return conj.hasBatchim(stem) ? stem + '으면' : stem + '면';
+      if(cKey === 'purpose')        return conj.hasBatchim(stem) ? stem + '으려고' : stem + '려고';
+      if(cKey === 'result')         return conj.aeo(verb.ko) + '서 그렇게 되다';
+      // TOPIK 1
+      if(cKey === 'while')          return conj.connector(verb.ko, '-(으)면서');
+      if(cKey === 'concede')        return conj.connector(verb.ko, '-아/어도');
+      if(cKey === 'after')          return conj.connector(verb.ko, '-고 나서');
+      if(cKey === 'before')         return conj.connector(verb.ko, '-기 전에');
+      // TOPIK 2
+      if(cKey === 'or')             return conj.connector(verb.ko, '-거나');
+      if(cKey === 'when')           return conj.connector(verb.ko, '-(으)ㄹ 때');
+      if(cKey === 'purpose2')       return conj.connector(verb.ko, '-기 위해서');
+      // TOPIK 3
+      if(cKey === 'asap')           return conj.connector(verb.ko, '-자마자');
+      if(cKey === 'switch')         return conj.connector(verb.ko, '-다가');
+      if(cKey === 'during')         return conj.connector(verb.ko, '-는 동안');
+      if(cKey === 'instead')        return conj.connector(verb.ko, '-는 대신에');
+      if(cKey === 'concede2')       return conj.connector(verb.ko, '-(으)ㄴ/는데도');
+      if(cKey === 'proportion')     return conj.connector(verb.ko, '-(으)ㄹ수록');
+      if(cKey === 'formal_cause')   return conj.connector(verb.ko, '-기에');
+      if(cKey === 'informal_cause') return conj.connector(verb.ko, '-길래');
+      // TOPIK 4-5
+      if(cKey === 'formal_result')  return conj.connector(verb.ko, '-(으)므로');
+      if(cKey === 'contrast3')      return conj.connector(verb.ko, '-(으)ㄴ/는 반면에');
+      if(cKey === 'extent')         return conj.connector(verb.ko, '-도록');
+      // TOPIK 5-6
+      if(cKey === 'notonly')        return conj.connector(verb.ko, '-(으)ㄹ 뿐만 아니라');
+      if(cKey === 'aslong')         return conj.connector(verb.ko, '-(으)ㄴ/는 한');
+      if(cKey === 'because_of')     return conj.connector(verb.ko, '-(으)ㄴ/는 탓에');
+    }
+
+    if(cKey === 'tense_progressive') return conj ? conj.stem(verb.ko) + '고 있어요' : (verb.final || verb.ko);
+    if(cKey === 'tense_wish')        return conj ? conj.stem(verb.ko) + '고 싶어요' : (verb.final || verb.ko);
+    if(cKey === 'tense_neg')         return conj ? conj.stem(verb.ko) + '지 않아요' : (verb.final || verb.ko);
+    if(cKey === 'tense_notwish')     return conj ? conj.stem(verb.ko) + '고 싶지 않아요' : (verb.final || verb.ko);
+    if(cKey === 'tense_mustnot'){
+      if(!conj) return verb.final || verb.ko;
+      var sm = conj.stem(verb.ko);
+      return (conj.hasBatchim(sm) ? sm + '으면' : sm + '면') + ' 안 돼요';
+    }
+    if(cKey === 'tense_intention'){
+      var s2 = conj ? conj.stem(verb.ko) : '';
+      return s2 ? (conj.hasBatchim(s2) ? s2 + '으려고 해요' : s2 + '려고 해요') : (verb.final || verb.ko);
+    }
+    if(cKey === 'tense_can')     return conj ? conj.future(verb.ko).replace('거예요', '수 있어요') : (verb.final || verb.ko);
+    if(cKey === 'tense_cannot')  return conj ? conj.future(verb.ko).replace('거예요', '수 없어요') : (verb.final || verb.ko);
+    if(cKey === 'tense_must')    return conj ? conj.aeo(verb.ko) + '야 해요' : (verb.final || verb.ko);
+    if(cKey === 'tense_should')  return conj ? conj.stem(verb.ko) + '는 게 좋아요' : (verb.final || verb.ko);
+    if(cKey === 'tense_polite')  return conj ? conj.stem(verb.ko) + '겠어요' : (verb.final || verb.ko);
+    if(cKey === 'tense_promise') return conj ? conj.future(verb.ko).replace('거예요', '게요').replace(' 게요', '게요') : (verb.final || verb.ko);
+
+    if(verb.forms && verb.forms[cKey]) return verb.forms[cKey];
+    return conj ? conj.present(verb.ko) : (verb.final || verb.ko || '');
+  }
+
+  function buildClauseKorean(clause){
+    var parts = [];
+
+    var topic = itemOf(clause, 'topic');
+    var topic2 = itemOf(clause, 'topic2');
+    var time = itemOf(clause, 'time');
+    var departure = itemOf(clause, 'departure');
+    var transit = itemOf(clause, 'transit');
+    var object1 = itemOf(clause, 'object1');
+    var object2 = itemOf(clause, 'object2');
+    var adverb = itemOf(clause, 'adverb');
+    var adverb2 = itemOf(clause, 'adverb2');
+    var verbKo = renderVerbKo(clause);
+
+    // Adverbs that describe a physical/permanent attribute of the subject
+    // go BEFORE the subject as Korean relative clause modifiers (눈이 큰 소녀는).
+    // Regular manner adverbs stay after the object, before the verb.
+    var subjectAttrs = [];
+    var mannerAdvs = [];
+    [adverb, adverb2].forEach(function(adv){
+      if(!adv || !adv.ko) return;
+      if(adv.modifiesSubject) subjectAttrs.push(adv.ko);
+      else mannerAdvs.push(adv.ko);
+    });
+
+    if(topic && topic.ko){
+      if(subjectAttrs.length){
+        var base = removeTopicParticle(topic.ko);
+        var ptcl = topic.ko.slice(base.length);
+        parts.push(subjectAttrs.join(' ') + ' ' + base + ptcl);
+      } else {
+        parts.push(topic.ko);
+      }
+    }
+    if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
+    if(time && time.ko) parts.push(time.ko);
+    if(departure && departure.ko) parts.push(departure.ko);
+    if(transit && transit.ko) parts.push(transit.ko);
+    if(object1 && object1.ko) parts.push(object1.ko);
+    if(object2 && object2.ko) parts.push(object2.ko);
+    mannerAdvs.forEach(function(ko){ parts.push(ko); });
+    if(verbKo) parts.push(verbKo);
+
+    return cleanSentenceText(parts.join(' '));
+  }
+
+  function buildClauseTranslation(clause){
+    var parts = [];
+
+    var topic = itemOf(clause, 'topic');
+    var topic2 = itemOf(clause, 'topic2');
+    var time = itemOf(clause, 'time');
+    var departure = itemOf(clause, 'departure');
+    var transit = itemOf(clause, 'transit');
+    var object1 = itemOf(clause, 'object1');
+    var object2 = itemOf(clause, 'object2');
+    var adverb = itemOf(clause, 'adverb');
+    var adverb2 = itemOf(clause, 'adverb2');
+    var verb = itemOf(clause, 'verb');
+
+    if(topic) parts.push(translationOf(topic));
+    if(topic2){
+      parts.push(state.lang === 'en'
+        ? ('and ' + (topic2.en || topic2.ro || topic2.ko))
+        : ('și ' + (topic2.ro || topic2.en || topic2.ko)));
+    }
+    if(time) parts.push(translationOf(time));
+    if(departure) parts.push(translationOf(departure));
+    if(transit) parts.push(translationOf(transit));
+    if(object1) parts.push(translationOf(object1));
+    if(object2) parts.push(translationOf(object2));
+    if(adverb) parts.push(translationOf(adverb));
+    if(adverb2) parts.push(translationOf(adverb2));
+
+    if(verb){
+      var topicKo = topic ? topic.ko : '';
+      var cKeyTr = connectorKey(clause);
+      var tenseTr = cKeyTr === 'tense_past'    ? 'past'
+                 : cKeyTr === 'tense_fut'     ? 'future'
+                 : cKeyTr === 'tense_neg'     ? 'neg'
+                 : cKeyTr === 'tense_notwish' ? 'notwish'
+                 : cKeyTr === 'tense_mustnot' ? 'mustnot'
+                 : cKeyTr === 'tense_cannot'  ? 'cannot'
+                 : cKeyTr === 'tense_wish'    ? 'wish'
+                 : cKeyTr === 'tense_must'    ? 'must'
+                 : cKeyTr === 'tense_should'  ? 'should'
+                 : 'present';
+      parts.push(finiteVerbText(verb, state.lang, topicKo, tenseTr));
+      // For clause connectors, append connector translation word
+      var connItem = itemOf(clause, 'connector');
+      if(connItem && connItem.raw && !connItem.raw.isTense && connItem.key !== 'none'){
+        var connTr = state.lang === 'en' ? (connItem.en || '') : (connItem.ro || '');
+        if(connTr) parts.push(connTr);
+      }
+    }
+
+    return cleanSentenceText(parts.join(' '));
+  }
+
+  function buildFullOutput(){
+    var ko = [];
+    var tr = [];
+
+    for(var i=0;i<state.clauses.length;i++){
+      var lineKo = buildClauseKorean(state.clauses[i]);
+      var lineTr = buildClauseTranslation(state.clauses[i]);
+      if(lineKo) ko.push(lineKo);
+      if(lineTr) tr.push(lineTr);
+    }
+
+    return {
+      korean: cleanSentenceText(ko.join(' ')),
+      translation: cleanSentenceText(tr.join(' '))
+    };
+  }
+
+  function renderPreview(){
+    var built = buildFullOutput();
+    var korean = built.korean || '';
+    var words = korean ? korean.split(/\s+/).filter(Boolean) : [];
+
+    if(els.sentenceWords){
+      els.sentenceWords.innerHTML = words.map(function(word){
+        var result = (typeof GrammarColor !== 'undefined') ? GrammarColor.detectRole(word) : null;
+        if(result){
+          var clean  = word.replace(/[.,!?。、…~※「」]+$/, '');
+          var stem   = clean.slice(0, clean.length - result.endLen);
+          var ending = word.slice(stem.length);
+          var sc = GrammarColor.COLORS[result.role];
+          var rc = (GrammarColor.STEM_COLORS && GrammarColor.STEM_COLORS[result.role]) || '#8899aa';
+          return '<span class="word gk-split">' +
+            (stem ? '<span style="color:'+sc+';-webkit-text-fill-color:'+sc+'">'+escapeHtml(stem)+'</span>' : '') +
+            '<span style="color:'+rc+';-webkit-text-fill-color:'+rc+'">'+escapeHtml(ending)+'</span>' +
+            '</span>';
+        }
+        return '<span class="word">' + escapeHtml(word) + '</span>';
+      }).join('');
+    }
+
+    if(els.translationText && document.activeElement !== els.translationText){
+      els.translationText.textContent = built.translation || currentUI().defaultTranslation;
+    }
+
+    if(korean) autoSpeakSentence(korean);
+  }
+
+  function getVisibleColumns(){
+    var fields = getLevelFields();
+    return fields.map(function(fieldKey){
+      return FIELD_META[fieldKey];
+    }).filter(Boolean);
+  }
+
+  function renderCell(clauseIndex, col){
+    var clause = state.clauses[clauseIndex];
+    var active = isFieldActive(clause, col.key);
+    var item = active ? itemOf(clause, col.key) : null;
+    var value = item && item.ko ? item.ko : '';
+    var meta = item ? (translationOf(item) || '') : '';
+    var conjugated = false;
+    var isNew = false;
+
+    if(col.key === 'verb' && active && item && item.ko){
+      var conjForm = renderVerbKo(clause);
+      if(conjForm){
+        value = conjForm;
+        var tr = translationOf(item) || '';
+        meta = item.ko + (tr ? ' · ' + tr : '');
+        conjugated = true;
+      }
+    }
+
+    if(active && item && item.ko) isNew = isWordNew(col.key, item);
+
+    return '' +
+      '<div class="tableField ' + (active ? '' : 'off') + '">' +
+        '<button class="tableToggle ' + (active ? 'active' : '') + '" data-toggle-cell="' + clauseIndex + ':' + col.key + '" type="button">✓</button>' +
+        '<div class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + (conjugated ? ' is-conjugated' : '') + (isNew ? ' is-new' : '') + '" data-kind="' + escapeHtml(col.kind) + '">' +
+          '<div class="tableMeta">' + escapeHtml(fieldLabel(col.key)) + '</div>' +
+          '<input class="tableKoInput" type="text"' +
+            ' data-field-input="' + clauseIndex + ':' + col.key + '"' +
+            ' placeholder="한국어..."' +
+            ' value="' + escapeHtml(value) + '"' +
+            ' autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"' +
+          ' />' +
+          '<div class="tableMeta tableMetaTr">' + escapeHtml(meta) + '</div>' +
+          '<button class="tableCycleBtn" data-cycle-field="' + clauseIndex + ':' + col.key + '" type="button" title="Următor">↻</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function handleCellInput(clauseIndex, fieldKey, value){
+    var clause = state.clauses[clauseIndex];
+    if(!clause) return;
+
+    var koText = value.trim();
+
+    if(!koText){
+      clearFieldFromClause(clause, fieldKey);
+      ensureChainLength();
+      renderPreview();
+      return;
+    }
+
+    // Look for a predefined match (gets translation)
+    var isLast = clauseIndex === state.clauses.length - 1;
+    var options = getOptionsForField(fieldKey, isLast);
+    var match = null;
+    for(var i = 0; i < options.length; i++){
+      if(options[i] && options[i].ko === koText){ match = options[i]; break; }
+    }
+
+    var item = match || {
+      id: 'custom-' + fieldKey,
+      key: 'custom',
+      bucket: fieldKey,
+      index: -1,
+      ko: koText,
+      ro: '',
+      en: '',
+      aliases: [],
+      final: '',
+      forms: {},
+      raw: null
     };
 
-    Object.entries(map).forEach(([colKey, jsonKey])=>{
-      const col = columns.find(c => c.key === colKey);
-      const list = vocabJson[jsonKey];
-      if(!col || !Array.isArray(list)) return;
+    if(!clause.__picked) clause.__picked = {};
+    clause.__picked[fieldKey] = item;
 
-      list.forEach(entry=>{
-        if(!entry || !entry.ko) return;
+    if(FIELD_BINDINGS[fieldKey]){
+      clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+    } else if(clause.extras){
+      clause.extras[fieldKey] = item;
+    }
 
-        const word = entry.ko.trim();
-        if(!word) return;
+    // Patch only the translation meta in the cell to avoid losing focus
+    var inputEl = els.clauseList
+      ? els.clauseList.querySelector('[data-field-input="' + clauseIndex + ':' + fieldKey + '"]')
+      : null;
+    if(inputEl){
+      var cellDiv = inputEl.closest('.tableMainBtn');
+      if(cellDiv){
+        var metaTr = cellDiv.querySelector('.tableMetaTr');
+        if(metaTr) metaTr.textContent = match ? translationOf(match) : '';
+        cellDiv.classList.toggle('is-empty', !koText);
+      }
+    }
 
-        if(!col.data.includes(word)){
-          col.data.push(word);
+    renderPreview();
+  }
+
+  function renderClauses(){
+    ensureChainLength();
+    if(!els.clauseList) return;
+
+    var cols = getVisibleColumns();
+    var colCount = cols.length;
+    var html = '<div class="builderTableWrap"><table class="builderTable builderTableCompact"><tbody>';
+
+    for(var r=0;r<state.clauses.length;r++){
+      html += '<tr>';
+      for(var c=0;c<colCount;c++){
+        html += '<td>' + renderCell(r, cols[c]) + '</td>';
+      }
+      html += '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+    if(colCount > 1){
+      html += '<div class="tableScrollDots" id="tableScrollDots"></div>';
+    }
+    els.clauseList.innerHTML = html;
+
+    var wrap = els.clauseList.querySelector('.builderTableWrap');
+    if(wrap){
+      updateScrollIndicators(wrap, colCount);
+      wrap.addEventListener('scroll', function(){
+        updateScrollIndicators(wrap, colCount);
+      }, { passive: true });
+    }
+  }
+
+  function updateScrollIndicators(wrap, colCount){
+    var maxScroll = wrap.scrollWidth - wrap.clientWidth;
+    var scrollLeft = wrap.scrollLeft;
+
+    var fadeEl = document.getElementById('tableFadeRight');
+    if(fadeEl){
+      var atEnd = maxScroll <= 0 || scrollLeft >= maxScroll - 4;
+      fadeEl.style.opacity = atEnd ? '0' : '';
+    }
+
+    var dotsEl = document.getElementById('tableScrollDots');
+    if(dotsEl && colCount > 1 && maxScroll > 0){
+      var current = Math.min(colCount - 1, Math.round((scrollLeft / maxScroll) * (colCount - 1)));
+      dotsEl.innerHTML = Array.from({ length: colCount }, function(_, i){
+        return '<span class="tDot' + (i === current ? ' active' : '') + '"></span>';
+      }).join('');
+    }
+  }
+
+  function updateChrome(){
+    if(els.freeText){
+      els.freeText.placeholder = currentUI().placeholder;
+    }
+
+    if(els.topicSummaryText){
+      els.topicSummaryText.textContent = 'T' + state.level + ' ▾';
+    }
+
+    if(els.topicDropdown){
+      var buttons = els.topicDropdown.querySelectorAll('.topicOption');
+      for(var i=0;i<buttons.length;i++){
+        buttons[i].classList.toggle('active', Number(buttons[i].getAttribute('data-level')) === state.level);
+      }
+    }
+
+    var label = els.recordBox ? els.recordBox.querySelector('.recordedLabel') : null;
+    if(label){
+      label.textContent = currentUI().recordedLabel;
+    }
+
+    updateQuizBar();
+  }
+
+  function renderAll(){
+    ensureChainLength();
+    updateChrome();
+    renderPreview();
+    renderClauses();
+  }
+
+  function setLang(lang){
+    state.lang = lang === 'en' ? 'en' : 'ro';
+    renderTemplateMenu();
+    renderSavedPanel();
+    renderAll();
+  }
+
+  function setLevel(level){
+    level = Number(level);
+    if(!level || level < 1 || level > 6) level = 1;
+    state.level = level;
+    ensureChainLength();
+    renderAll();
+  }
+
+  function ensureChainLength(){
+    if(!Array.isArray(state.clauses) || !state.clauses.length){
+      state.clauses = [makeEmptyLayoutClause()];
+    }
+
+    var required = 1;
+
+    for(var i=0;i<state.clauses.length;i++){
+      var conn = itemOf(state.clauses[i], 'connector');
+      var connKey3 = conn ? (conn.key || conn.id || '') : '';
+      if(conn && connKey3 && connKey3 !== 'none' && connKey3.indexOf('tense_') !== 0){
+        required = i + 2;
+      }else{
+        break;
+      }
+    }
+
+    while(state.clauses.length < required){
+      state.clauses.push(makeEmptyLayoutClause());
+    }
+
+    while(state.clauses.length > required){
+      state.clauses.pop();
+    }
+
+    var visible = getLevelFields();
+
+    for(var r=0;r<state.clauses.length;r++){
+      var clause = ensureClauseShape(state.clauses[r]);
+      for(var k=0;k<ALL_FIELD_KEYS.length;k++){
+        var fieldKey = ALL_FIELD_KEYS[k];
+        if(visible.indexOf(fieldKey) === -1){
+          clearFieldFromClause(clause, fieldKey);
+        }
+      }
+    }
+
+    // Auto-set tense_pres on the last clause only if connector is completely unset
+    var lastClause = state.clauses[state.clauses.length - 1];
+    if(!lastClause.connector || !lastClause.connector.enabled){
+      var tensePres = null;
+      for(var t=0;t<DATA.connector.length;t++){
+        if(DATA.connector[t].id === 'tense_pres'){ tensePres = DATA.connector[t]; break; }
+      }
+      if(tensePres){
+        var tpIdx = DATA.connector.indexOf(tensePres);
+        setFieldItem(lastClause, 'connector', normalizeItem(tensePres, 'connector', tpIdx));
+      }
+    }
+  }
+
+  function findBestMatch(fieldKey, text){
+    var options = getOptionsForField(fieldKey);
+    var normalizedText = normalizeLatin(text);
+    if(!normalizedText) return null;
+
+    var best = null;
+    var bestLen = 0;
+
+    for(var i=0;i<options.length;i++){
+      var item = options[i];
+      var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
+
+      for(var j=0;j<candidates.length;j++){
+        var candidate = normalizeLatin(candidates[j]);
+        if(candidate && normalizedText.indexOf(candidate) !== -1 && candidate.length > bestLen){
+          best = item;
+          bestLen = candidate.length;
+        }
+      }
+    }
+
+    return best;
+  }
+
+  function findAllMatches(fieldKey, text, maxCount){
+    var options = getOptionsForField(fieldKey);
+    var normalizedText = ' ' + normalizeLatin(text) + ' ';
+    var hits = [];
+
+    for(var i=0;i<options.length;i++){
+      var item = options[i];
+      if(!item || !item.ko) continue;
+
+      var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
+      var bestPos = -1;
+      var bestLen = 0;
+
+      for(var j=0;j<candidates.length;j++){
+        var candidate = normalizeLatin(candidates[j]);
+        if(!candidate) continue;
+
+        var pos = normalizedText.indexOf(' ' + candidate + ' ');
+        if(pos === -1){
+          // Strip punctuation and retry — handles end-of-sentence (seara.) without
+          // falling back to arbitrary substring matching that causes false positives
+          // (e.g. alias 'tu' found inside 'studiat').
+          var stripped = normalizedText.replace(/[.,!?;:'"()]/g,' ').replace(/ {2,}/g,' ');
+          pos = stripped.indexOf(' ' + candidate + ' ');
         }
 
-        if(!translations[colKey]) translations[colKey] = {};
-        translations[colKey][word] = entry.ro || entry.en || "";
-      });
+        if(pos !== -1 && candidate.length > bestLen){
+          bestPos = pos;
+          bestLen = candidate.length;
+        }
+      }
+
+      if(bestPos !== -1){
+        hits.push({
+          item: item,
+          pos: bestPos,
+          len: bestLen
+        });
+      }
+    }
+
+    hits.sort(function(a,b){
+      if(a.pos !== b.pos) return a.pos - b.pos;
+      return b.len - a.len;
     });
 
-    console.log("VOCAB OK");
-  }catch(err){
-    console.error("Vocabulary load error:", err);
+    var out = [];
+    var seen = {};
+    var usedPos = [];
+
+    for(var h=0; h<hits.length; h++){
+      var key = hits[h].item.id + '|' + hits[h].item.ko;
+      if(seen[key]) continue;
+
+      // Skip if a different item already claimed this text position
+      var overlaps = false;
+      for(var u=0; u<usedPos.length; u++){
+        if(hits[h].pos < usedPos[u].end && hits[h].pos + hits[h].len > usedPos[u].start){
+          overlaps = true; break;
+        }
+      }
+      if(overlaps) continue;
+
+      seen[key] = true;
+      usedPos.push({ start: hits[h].pos, end: hits[h].pos + hits[h].len });
+      out.push(hits[h].item);
+      if(out.length >= (maxCount || 10)) break;
+    }
+
+    return out;
   }
-}
 
-/* =========================
-   23) UI EVENTS
-========================= */
-function setupUI(){
-  DOM.modeButtons.forEach(btn=>{
-    on(btn, "click", ()=>{
-      currentMode = btn.dataset.mode || "topik";
-      DOM.modeButtons.forEach(b => b.classList.toggle("active", b === btn));
+  function splitIntoSegments(text){
+    var working = ' ' + normalizeLatin(text) + ' ';
+    // Multi-word / specific markers must come BEFORE short single-word markers
+    // to avoid partial matches (e.g. 'ca' in 'cu toate că' must not be eaten first).
+    var markers = [
+      {key:'purpose',      phrases:['ca sa','ca să','in order to']},
+      {key:'concede2',     phrases:['cu toate ca','cu toate că','desi','deși','even though']},
+      {key:'concede',      phrases:['chiar daca','chiar dacă','even if']},
+      {key:'purpose2',     phrases:['pentru a','in order to do']},
+      {key:'while',        phrases:['in timp ce','pe cand','pe când','while doing']},
+      {key:'after',        phrases:['dupa ce','după ce','after doing']},
+      {key:'before',       phrases:['inainte sa','înainte să','inainte de a','înainte de a','before doing']},
+      {key:'asap',         phrases:['imediat ce','as soon as']},
+      {key:'aslong',       phrases:['atat timp cat','atât timp cât','as long as']},
+      {key:'because_of',   phrases:['din cauza ca','din cauza că','due to']},
+      {key:'formal_cause', phrases:['deoarece','given that']},
+      {key:'cause1',       phrases:['pentru ca','pentru că','because','ca']},
+      {key:'cause2',       phrases:['fiindca','fiindcă','since']},
+      {key:'condition',    phrases:['daca','dacă','if']},
+      {key:'contrast1',    phrases:['dar','insa','însă','but','however']},
+      {key:'contrast2',    phrases:['iar']},
+      {key:'or',           phrases:['sau','or']},
+      {key:'seq',          phrases:['si apoi','și apoi','dupa aceea','după aceea','and then','si','and']}
+    ];
+
+    for(var i=0;i<markers.length;i++){
+      for(var j=0;j<markers[i].phrases.length;j++){
+        var phrase = normalizeLatin(markers[i].phrases[j]);
+        if(phrase){
+          working = working.split(' ' + phrase + ' ').join(' |||' + markers[i].key + '||| ');
+        }
+      }
+    }
+
+    working = working.replace(/,/g, ' |||none||| ');
+
+    var parts = working.split('|||');
+    var segments = [];
+    var currentText = '';
+
+    for(var k=0;k<parts.length;k++){
+      var part = String(parts[k] || '').trim();
+      if(!part) continue;
+
+      var isConnector = false;
+      for(var c=0;c<DATA.connector.length;c++){
+        if(DATA.connector[c].key === part){
+          isConnector = true;
+          break;
+        }
+      }
+
+      if(isConnector){
+        segments.push({ text: currentText.trim(), connector: part });
+        currentText = '';
+      }else{
+        currentText = currentText ? (currentText + ' ' + part) : part;
+      }
+    }
+
+    if(currentText.trim()){
+      segments.push({ text: currentText.trim(), connector: 'none' });
+    }
+
+    if(!segments.length){
+      segments.push({ text: normalizeLatin(text), connector: 'none' });
+    }
+
+    // Absorb empty segments: transfer their connector to the preceding segment.
+    // This fixes "studiez, dar" → comma creates {text:'', connector:'contrast1'};
+    // the contrast connector moves to the real segment before it.
+    for(var ei = segments.length - 1; ei >= 1; ei--){
+      if(segments[ei].text === ''){
+        segments[ei - 1].connector = segments[ei].connector;
+        segments.splice(ei, 1);
+      }
+    }
+
+    // In Romanian, many connectors follow the pattern "result CONNECTOR reason",
+    // but Korean needs "reason CONNECTOR result". Swap the clause texts so the
+    // reason/precondition verb gets the connector suffix, and the main result follows.
+    var SWAP_KEYS = {
+      purpose:true, purpose2:true, cause1:true, cause2:true,
+      after:true, before:true, concede:true, concede2:true, while:true, asap:true
+    };
+    for(var pi = 0; pi < segments.length - 1; pi++){
+      if(SWAP_KEYS[segments[pi].connector]){
+        var tmp = segments[pi].text;
+        segments[pi].text     = segments[pi + 1].text;
+        segments[pi + 1].text = tmp;
+      }
+    }
+
+    return segments;
+  }
+
+  function detectTenseFromText(text){
+    var n = normalizeLatin(text);
+
+    // Negation — checked before past/future
+    if(/\b(nu pot|nu pot sa|cannot|can't|cant)\b/.test(n)) return 'cannot';
+    if(/\b(nu vreau|nu doresc|nu vrei|don't want|do not want|dont want)\b/.test(n)) return 'notwish';
+    if(/\b(nu trebuie|nu ar trebui|must not|mustn't|mustnt)\b/.test(n)) return 'mustnot';
+    if(/\bnu\b/.test(n) || /\b(don't|doesn't|do not|does not|dont|doesnt)\b/.test(n)) return 'neg';
+
+    // Obligations
+    if(/\b(ar trebui|should|ought to)\b/.test(n)) return 'should';
+    if(/\b(trebuie|must|have to|has to|need to|needs to)\b/.test(n)) return 'must';
+
+    // Past Romanian: participii cunoscute (normalizate, fără diacritice)
+    var roParts = ['mers','mancat','venit','vazut','citit','scris','intalnit',
+                   'odihnit','lucrat','studiat','pregatit','invatat','ascultat',
+                   'facut','cumparat','dat',
+                   // verbe existente — participii lipsă anterior
+                   'asteptat','multumit','zambit','lasat','baut','dormit','cantat',
+                   'plans','avut','iubit','vorbit','vrut','stiut','ajutat',
+                   // verbe noi
+                   'ramas','ajuns','intors','gatit','spalat','gasit','pierdut','ales',
+                   'deschis','inchis','primit','pus','gandit','oprit','continuat',
+                   'trimis','folosit','calatorit','explicat','intrebat','alergat',
+                   'adus','plimbat','plecat'];
+    for(var i=0;i<roParts.length;i++){
+      if(n.indexOf(roParts[i]) !== -1) return 'past';
+    }
+    // Past Romanian: auxiliare de perfect compus — forme cu cratimă și "ați"
+    // "ati" (normalizat din "ați") = aux pl.2 distinctiv românesc, nu apare în engleză
+    if(/\b(ati|ne-am|m-am|te-ai|s-a|s-au|v-ati)\b/.test(n)) return 'past';
+
+    // Future Romanian: voi/vei/va/vom/veți/vor
+    // "voi" singur poate fi pronume (voi = you all); excludem "voi ați/toți"
+    if(/\b(vei|va|vom|veti|vor)\b/.test(n)) return 'future';
+    if(/\bvoi\b/.test(n) && !/\bvoi\s*(ati|toti)\b/.test(n)) return 'future';
+    // Future English
+    if(/\bwill\b/.test(n)) return 'future';
+
+    // Past English: forme neregulate/regulate cunoscute
+    var enPast = ['went','ate','came','saw','wrote','met','rested','worked',
+                  'exercised','prepared','learned','listened','made','bought',
+                  'gave','studied','read ','read,','read.'];
+    for(var j=0;j<enPast.length;j++){
+      if(n.indexOf(enPast[j].trim()) !== -1) return 'past';
+    }
+
+    return 'present';
+  }
+
+  function parseTextIntoClauses(){
+    var raw = state.text || '';
+
+    if(!String(raw).trim()){
+      state.clauses = [makeEmptyLayoutClause()];
       renderAll();
+      return;
+    }
+
+    var detectedTense = detectTenseFromText(raw);
+    var detectedTenseKey = detectedTense === 'past'     ? 'tense_past'
+                         : detectedTense === 'future'   ? 'tense_fut'
+                         : detectedTense === 'cannot'   ? 'tense_cannot'
+                         : detectedTense === 'notwish'  ? 'tense_notwish'
+                         : detectedTense === 'mustnot'  ? 'tense_mustnot'
+                         : detectedTense === 'neg'      ? 'tense_neg'
+                         : detectedTense === 'must'     ? 'tense_must'
+                         : detectedTense === 'should'   ? 'tense_should'
+                         : 'tense_pres';
+
+    // Split on connector markers; create a clause for each segment that has a verb.
+    // Verb-less segments (e.g. "la magazin" or "mâine eu" split off by "și") are merged
+    // into the adjacent clause so their content (locations, time, subjects) is preserved.
+    var segments = splitIntoSegments(raw);
+    var clauseData = [];
+    var pendingText = '';
+    for(var s = 0; s < segments.length; s++){
+      var seg = segments[s];
+      // Strip relative sub-clauses ("care/which/who ...") — the builder can't parse
+      // them and their verb would shadow the main clause verb.
+      var cleanText = seg.text.replace(/\s+(?:care|which|who)\s+\S+.*/, '').trim();
+      var segText = pendingText ? (pendingText + ' ' + (cleanText || seg.text)) : (cleanText || seg.text);
+      pendingText = '';
+      var segVerb = findBestMatch('verb', segText);
+      if(segVerb){
+        clauseData.push({ text: segText, connKey: seg.connector });
+      } else if(clauseData.length > 0 && segText){
+        // Merge backward: attach verb-less text to the preceding clause so that
+        // extra locations / subjects in it are picked up (e.g. "și la magazin").
+        clauseData[clauseData.length - 1].text += ' ' + segText;
+      } else if(segText){
+        // Merge forward: no clause yet (e.g. "mâine eu" before "și el mergem").
+        pendingText = segText;
+      }
+    }
+    if(pendingText && clauseData.length > 0){
+      clauseData[clauseData.length - 1].text += ' ' + pendingText;
+    } else if(pendingText){
+      clauseData = [{ text: pendingText, connKey: 'none' }];
+    }
+
+    // Fallback: treat whole text as one clause
+    if(!clauseData.length) clauseData = [{ text: raw, connKey: 'none' }];
+
+    // Build one clause per detected verb segment
+    var newClauses = [];
+    var lastSubjectKo = null;
+    for(var ci = 0; ci < clauseData.length; ci++){
+      var cd = clauseData[ci];
+      var clause = makeEmptyLayoutClause();
+      clause.sourceText = cd.text;
+
+      var subjects = findAllMatches('topic', cd.text, 2);
+      var times    = findAllMatches('time', cd.text, 1);
+      var places   = findAllMatches('departure', cd.text, 2);
+      var objects  = findAllMatches('object1', cd.text, 2);
+      var descs    = findAllMatches('adverb', cd.text, 2);
+      var verb     = findBestMatch('verb', cd.text);
+
+      // Topic drop: only set subject if different from previous clause's subject
+      if(subjects[0] && subjects[0].ko !== lastSubjectKo){
+        setFieldItem(clause, 'topic', subjects[0]);
+        lastSubjectKo = subjects[0].ko;
+      }
+      if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
+      // Greeting phrases are standalone — skip time/place/object/adverb to avoid noise
+      if(!verb || !verb.isPhrase){
+        if(times[0])    setFieldItem(clause, 'time', times[0]);
+        if(places[0])   setFieldItem(clause, 'departure', places[0]);
+        if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
+        if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
+        if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
+        if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
+        if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
+      }
+      if(verb)        setFieldItem(clause, 'verb', verb);
+
+      // Set clause connector for intermediate clauses (not the last)
+      if(ci < clauseData.length - 1 && cd.connKey && cd.connKey !== 'none'){
+        var connItem = null; var connIdx = 0;
+        for(var k = 0; k < DATA.connector.length; k++){
+          if(DATA.connector[k].key === cd.connKey){ connItem = DATA.connector[k]; connIdx = k; break; }
+        }
+        if(connItem) setFieldItem(clause, 'connector', normalizeItem(connItem, 'connector', connIdx));
+      }
+
+      newClauses.push(clause);
+    }
+
+    state.clauses = newClauses;
+
+    // Set detected tense on the last clause
+    var lastParsed = state.clauses[state.clauses.length - 1];
+    var tenseEntry = null;
+    for(var tt = 0; tt < DATA.connector.length; tt++){
+      if(DATA.connector[tt].id === detectedTenseKey){ tenseEntry = DATA.connector[tt]; break; }
+    }
+    if(tenseEntry){
+      setFieldItem(lastParsed, 'connector',
+        normalizeItem(tenseEntry, 'connector', DATA.connector.indexOf(tenseEntry)));
+    }
+
+    ensureChainLength();
+    renderAll();
+  }
+
+  function ensureVocabSheet(){
+    if(document.getElementById('vocabSheet')) return;
+
+    var el = document.createElement('div');
+    el.id = 'vocabSheet';
+    el.className = 'vocabSheet';
+    el.innerHTML = `
+      <div class="vocabSheetBackdrop" data-close-vocab="1"></div>
+      <div class="vocabSheetPanel">
+        <div class="vocabSheetHead">
+          <div class="vocabSheetTitle" id="vocabSheetTitle">선택</div>
+          <button type="button" class="vocabSheetClose" id="vocabSheetClose">✕</button>
+        </div>
+        <div class="vocabSheetSearchWrap">
+          <input id="vocabSheetSearch" class="vocabSheetSearch" type="text" placeholder="검색">
+        </div>
+        <div id="vocabSheetList" class="vocabSheetList"></div>
+      </div>
+    `;
+    document.body.appendChild(el);
+  }
+
+  function renderVocabSheetList(items){
+    var list = document.getElementById('vocabSheetList');
+    if(!list) return;
+
+    pickerState.filteredItems = items.slice();
+
+    if(!items.length){
+      list.innerHTML = '<div class="vocabEmpty">항목이 없습니다</div>';
+      return;
+    }
+
+    list.innerHTML = items.map(function(item, index){
+      var fresh = isWordNew(pickerState.fieldKey, item);
+      var dot = fresh ? '<span class="vocabNewDot"></span>' : '';
+      return '<button type="button" class="vocabItem' + (fresh ? ' is-new' : '') + '" data-vocab-index="' + index + '">' +
+        '<div class="vocabItemKo">' + dot + escapeHtml(item.ko || '—') + '</div>' +
+        '<div class="vocabItemMeta">' + escapeHtml([item.ro, item.en].filter(Boolean).join(' · ')) + '</div>' +
+        '</button>';
+    }).join('');
+  }
+
+  function filterVocabSheet(keyword){
+    var q = normalizeLatin(keyword);
+    if(!q){
+      renderVocabSheetList(pickerState.items);
+      return;
+    }
+
+    var filtered = pickerState.items.filter(function(item){
+      var hay = [item.ko || '', item.ro || '', item.en || '', item.key || '']
+        .concat(item.aliases || [])
+        .join(' ');
+      return normalizeLatin(hay).indexOf(q) !== -1;
     });
-  });
 
-  on(DOM.prevBtn, "click", ()=>{
-    if(indexModelRow > 0){
-      indexModelRow--;
-      loadModelRow(indexModelRow);
-      renderAll();
+    renderVocabSheetList(filtered);
+  }
+
+  function openVocabSheet(clauseIndex, fieldKey){
+    ensureVocabSheet();
+
+    pickerState.clauseIndex = clauseIndex;
+    pickerState.fieldKey = fieldKey;
+    var isLastClause = clauseIndex === state.clauses.length - 1;
+    pickerState.items = getOptionsForField(fieldKey, isLastClause);
+
+    var root = document.getElementById('vocabSheet');
+    var title = document.getElementById('vocabSheetTitle');
+    var search = document.getElementById('vocabSheetSearch');
+
+    if(title) title.textContent = TABLE_HEADERS_KO[fieldKey] || '선택';
+    if(search) search.value = '';
+
+    renderVocabSheetList(pickerState.items);
+
+    if(root) root.classList.add('open');
+    if(search){
+      setTimeout(function(){ search.focus(); }, 0);
     }
-  });
+  }
 
-  on(DOM.nextBtn, "click", ()=>{
-    if(indexModelRow < maxLen - 1){
-      indexModelRow++;
-      loadModelRow(indexModelRow);
-      renderAll();
-    }
-  });
+  function closeVocabSheet(){
+    var root = document.getElementById('vocabSheet');
+    if(root) root.classList.remove('open');
+  }
 
-  on(DOM.resetBtn, "click", ()=>{
-    actives = actives.map(() => makeAllActive());
-    createToggleChips();
+  function pickVocabItem(index){
+    var item = pickerState.filteredItems[index];
+    if(!item) return;
+
+    var clause = state.clauses[pickerState.clauseIndex];
+    if(!clause) return;
+
+    markWordUsed(pickerState.fieldKey, item);
+    setFieldItem(clause, pickerState.fieldKey, item);
+    ensureChainLength();
+    closeVocabSheet();
     renderAll();
-  });
+  }
 
-  on(DOM.toggleRoBtn, "click", ()=>{
-    showRo = !showRo;
-    if(DOM.toggleRoBtn){
-      DOM.toggleRoBtn.textContent = showRo ? "Ascunde traducerea" : "Arată traducerea";
+  function playCurrent(){
+    var built = buildFullOutput();
+
+    if(!built.korean){
+      showToast(currentUI().noSpeech);
+      return;
     }
-    updatePreview();
-  });
 
-  on(DOM.randomBtn, "click", ()=>{
-    const s = sentences[0];
-    const a = actives[0];
+    if(!('speechSynthesis' in window)){
+      showToast(currentUI().noSpeech);
+      return;
+    }
 
-    columns.forEach(col=>{
-      if(!isColumnVisible(col.key)) return;
-      if(a[col.key] === false) return;
+    window.speechSynthesis.cancel();
 
-      const arr = col.data.filter(Boolean);
-      if(!arr.length) return;
+    var utter = new SpeechSynthesisUtterance(built.korean);
+    utter.lang = 'ko-KR';
+    utter.rate = 0.9;
 
-      s[col.key] = arr[Math.floor(Math.random() * arr.length)];
+    var activeIndex = -1;
+    var wordEls = els.sentenceWords ? els.sentenceWords.querySelectorAll('.word') : [];
+
+    utter.onboundary = function(){
+      activeIndex += 1;
+      for(var i=0;i<wordEls.length;i++){
+        wordEls[i].classList.toggle('active', i === activeIndex);
+      }
+    };
+
+    utter.onend = function(){
+      for(var i=0;i<wordEls.length;i++){
+        wordEls[i].classList.remove('active');
+      }
+    };
+
+    window.speechSynthesis.speak(utter);
+  }
+
+  function detectMimeType(){
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported){
+      if(MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a.40.2')) return 'audio/mp4;codecs=mp4a.40.2';
+      if(MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4';
+      if(MediaRecorder.isTypeSupported('audio/x-m4a')) return 'audio/x-m4a';
+      if(MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
+      if(MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
+    }
+    return '';
+  }
+
+  function toggleRecording(){
+    if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || typeof MediaRecorder === 'undefined'){
+      showToast(currentUI().recordUnsupported);
+      return;
+    }
+
+    if(mediaRecorder && mediaRecorder.state === 'recording'){
+      mediaRecorder.stop();
+      if(els.recordBtn) els.recordBtn.classList.remove('recording');
+      showToast(currentUI().recordStop);
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
+      recordedChunks = [];
+      recordedStream = stream;
+      var mime = detectMimeType();
+      mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = function(event){
+        if(event.data && event.data.size > 0) recordedChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = function(){
+        var blobType = mime || (recordedChunks[0] && recordedChunks[0].type) || 'audio/mp4';
+        var blob = new Blob(recordedChunks, { type: blobType });
+
+        if(recordedUrl) URL.revokeObjectURL(recordedUrl);
+        recordedUrl = URL.createObjectURL(blob);
+
+        if(els.recordedAudio){
+          els.recordedAudio.pause();
+          els.recordedAudio.removeAttribute('src');
+          els.recordedAudio.src = recordedUrl;
+          els.recordedAudio.load();
+        }
+
+        if(els.recordBox) els.recordBox.classList.add('show');
+
+        if(recordedStream){
+          var tracks = recordedStream.getTracks();
+          for(var i=0;i<tracks.length;i++) tracks[i].stop();
+          recordedStream = null;
+        }
+      };
+
+      mediaRecorder.start();
+      if(els.recordBtn) els.recordBtn.classList.add('recording');
+      showToast(currentUI().recordStart);
+    }).catch(function(){
+      showToast(currentUI().recordUnsupported);
+    });
+  }
+
+  function resetBuilder(){
+    state.text = '';
+    if(els.freeText) els.freeText.value = '';
+
+    state.clauses = [makeEmptyLayoutClause()];
+
+    if(els.recordBox) els.recordBox.classList.remove('show');
+    if(els.recordedAudio){
+      els.recordedAudio.pause();
+      els.recordedAudio.removeAttribute('src');
+      els.recordedAudio.load();
+    }
+
+    renderAll();
+  }
+
+  function applyTemplate(tpl){
+    state.clauses = [makeEmptyLayoutClause()];
+    state.text = '';
+    if(els.freeText) els.freeText.value = '';
+
+    // Ensure state.level is high enough so ensureChainLength doesn't clear template fields
+    for(var lv = 1; lv <= 6; lv++){
+      var lf = LEVEL_FIELDS[lv] || [];
+      var lvOk = true;
+      for(var fi = 0; fi < tpl.fields.length; fi++){
+        var tf = tpl.fields[fi];
+        if(ALL_FIELD_KEYS.indexOf(tf) !== -1 && lf.indexOf(tf) === -1){ lvOk = false; break; }
+      }
+      if(lvOk){ if(state.level < lv) state.level = lv; break; }
+    }
+
+    var clause = state.clauses[0];
+
+    tpl.fields.forEach(function(fieldKey){
+      var firstItem = getFirstUsableItem(fieldKey, true);
+      if(!firstItem) return;
+      setFieldItem(clause, fieldKey, firstItem);
+      if(FIELD_BINDINGS[fieldKey]){
+        clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+      }
     });
 
-    renderAll();
-  });
-
-  on(DOM.speakBtn, "click", ()=>{
-    const ko = (DOM.previewKo?.textContent || "").trim();
-    if(!ko || ko.includes("alege")) return;
-    speakKorean(ko);
-  });
-
-  on(DOM.favBtn, "click", ()=>{
-    const ko = (DOM.previewKo?.textContent || "").trim();
-    const ro = (DOM.previewRo?.textContent || "").trim();
-
-    if(!ko || ko.includes("alege")) return;
-
-    const exists = favorites.some(f => f.ko === ko);
-    if(!exists) favorites.push({ko, ro});
-
-    renderFavorites();
-  });
-
-  on(DOM.closePanelBtn, "click", ()=> hide(DOM.overlay));
-  on(DOM.overlay, "click", (e)=>{
-    if(e.target === DOM.overlay) hide(DOM.overlay);
-  });
-
-  on(DOM.panelSearchInput, "input", ()=>{
-    const col = columns.find(c => c.key === panelKey);
-    if(col) renderPanelList(col);
-  });
-
-  on(DOM.addWordBtn, "click", ()=>{
-    const txt = (DOM.newWordInput?.value || "").trim();
-    if(!txt) return;
-
-    const roTxt = (DOM.newWordTransInput?.value || "").trim();
-    const col = columns.find(c => c.key === panelKey);
-    if(!col || !col.allowCustom) return;
-
-    if(!col.data.includes(txt)) col.data.push(txt);
-    if(!translations[panelKey]) translations[panelKey] = {};
-    if(roTxt) translations[panelKey][txt] = roTxt;
-
-    if(customData[panelKey]){
-      customData[panelKey].push({word:txt, ro:roTxt});
-      saveCustomData();
+    if(els.templateSummaryText){
+      els.templateSummaryText.textContent = tpl.code + ' ▾';
     }
 
-    DOM.newWordInput.value = "";
-    DOM.newWordTransInput.value = "";
+    if(els.recordBox) els.recordBox.classList.remove('show');
+    ensureChainLength();
+    renderAll();
+  }
 
-    renderPanelList(col);
-  });
+  function renderTemplateMenu(){
+    if(!els.templateDropdown) return;
+    var lang = state.lang || 'ro';
 
-  on(DOM.enableP2, "change", ()=>{
-    const onOff = DOM.enableP2.checked;
+    els.templateDropdown.innerHTML = TEMPLATES.map(function(tpl){
+      var desc = lang === 'en' ? tpl.en : tpl.ro;
+      return '<button class="tplOption" type="button" data-tpl="' + tpl.id + '">' +
+        '<span class="tpl-code">' + tpl.code + '</span>' +
+        '<span class="tpl-desc">' + desc + '</span>' +
+        '</button>';
+    }).join('');
+  }
 
-    if(onOff && !sentences[1]){
-      sentences[1] = makeEmptySentence();
-      actives[1] = makeAllActive();
+  function bindEvents(){
+    RKLang.init(setLang);
+
+    if(els.topicDropdown){
+      els.topicDropdown.addEventListener('click', function(event){
+        var btn = event.target.closest('.topicOption');
+        if(!btn) return;
+        setLevel(btn.getAttribute('data-level'));
+        var details = document.getElementById('topicMenu');
+        if(details) details.removeAttribute('open');
+      });
     }
 
-    if(DOM.tableP2) onOff ? show(DOM.tableP2) : hide(DOM.tableP2);
-    if(DOM.titleP2) onOff ? show(DOM.titleP2) : hide(DOM.titleP2);
+    if(els.templateDropdown){
+      els.templateDropdown.addEventListener('click', function(event){
+        var btn = event.target.closest('[data-tpl]');
+        if(!btn) return;
+        var tplId = btn.getAttribute('data-tpl');
+        var tpl = null;
+        for(var i=0;i<TEMPLATES.length;i++){
+          if(TEMPLATES[i].id === tplId){ tpl = TEMPLATES[i]; break; }
+        }
+        if(tpl) applyTemplate(tpl);
+        if(els.templateMenu) els.templateMenu.removeAttribute('open');
+      });
+    }
 
-    renderAll();
-  });
+    if(els.freeText){
+      els.freeText.addEventListener('input', function(){
+        state.text = els.freeText.value || '';
+        parseTextIntoClauses();
+      });
+    }
 
-  on(DOM.roTranslateBtn, "click", ()=>{
-    const txt = (DOM.roInput?.value || "").trim();
-    if(!txt) return;
-    translateRoToKo(txt);
-    updatePreview();
-    if(DOM.roInput) DOM.roInput.value = buildFullRomanian();
-  });
+    if(els.refreshBtn){
+      els.refreshBtn.addEventListener('click', resetBuilder);
+    }
 
-  on(DOM.refreshBtn, "click", ()=> location.reload());
-  on(DOM.homeBtn, "click", ()=> { window.location.href = "index.html"; });
-}
+    if(els.playBtn){
+      els.playBtn.addEventListener('click', playCurrent);
+    }
 
-/* =========================
-   24) RENDER ALL
-========================= */
-function renderAll(){
-  ensureLinkedSentences();
+    if(els.recordBtn){
+      els.recordBtn.addEventListener('click', toggleRecording);
+    }
 
-  if(!clausesWrap) return;
 
-  clausesWrap.innerHTML = "";
+    var _saveBtn = document.getElementById('saveBtn');
+    if(_saveBtn) _saveBtn.addEventListener('click', addCurrentSentence);
 
-  sentences.forEach((state, i) => {
+    var _exportBtn = document.getElementById('exportBtn');
+    if(_exportBtn) _exportBtn.addEventListener('click', exportSentencesAsTxt);
 
-    const card = document.createElement("div");
-    card.className = "clause-card";
+    var _quizBtn = document.getElementById('quizBtn');
+    if(_quizBtn) _quizBtn.addEventListener('click', function(){
+      if(quizMode) exitQuizMode(); else enterQuizMode();
+    });
 
-    const head = document.createElement("div");
-    head.className = "clause-head";
+    var _quizCheckBtn = document.getElementById('quizCheckBtn');
+    if(_quizCheckBtn) _quizCheckBtn.addEventListener('click', checkQuiz);
 
-    const title = document.createElement("div");
-    title.className = "clause-title";
-    title.textContent = `Propoziția ${i+1}`;
+    var _quizExitBtn = document.getElementById('quizExitBtn');
+    if(_quizExitBtn) _quizExitBtn.addEventListener('click', exitQuizMode);
 
-    head.appendChild(title);
-    card.appendChild(head);
+    var _txtToggleBtn = document.getElementById('txtToggleBtn');
+    var _txtCollapsible = document.getElementById('txtCollapsible');
+    if(_txtToggleBtn && _txtCollapsible){
+      var _txtOpen = false;
+      _txtToggleBtn.addEventListener('click', function(){
+        _txtOpen = !_txtOpen;
+        _txtCollapsible.classList.toggle('open', _txtOpen);
+        _txtToggleBtn.textContent = _txtOpen ? '▲ Text' : '▼ Text';
+      });
+    }
 
-    const table = document.createElement("div");
-    table.className = "table";
+    if(els.sentenceBox){
+      els.sentenceBox.addEventListener('click', playCurrent);
+      els.sentenceBox.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          playCurrent();
+        }
+      });
+    }
 
-    columns.forEach(col => {
+    if(els.clauseList){
+      els.clauseList.addEventListener('click', function(event){
+        var toggleBtn = event.target.closest('[data-toggle-cell]');
+        if(toggleBtn){
+          event.preventDefault();
+          event.stopPropagation();
+          var toggleParts = toggleBtn.getAttribute('data-toggle-cell').split(':');
+          toggleFieldActive(Number(toggleParts[0]), toggleParts[1]);
+          return;
+        }
 
-      if(!isColumnVisible(col.key)) return;
+        var cycleBtn = event.target.closest('[data-cycle-field]');
+        if(cycleBtn){
+          event.preventDefault();
 
-      const colDiv = document.createElement("div");
-      colDiv.className = "col";
+          if(cycleBtn.getAttribute('data-long-press-opened') === '1'){
+            cycleBtn.removeAttribute('data-long-press-opened');
+            return;
+          }
 
-      colDiv.innerHTML = `
-        <div class="col-header">${col.title}</div>
-        <div class="col-body-main">${getColumnDisplayValue(state, col.key) || "-"}</div>
-        <div class="col-body-sub">${translations[col.key]?.[state[col.key]] || ""}</div>
-      `;
+          var parts = cycleBtn.getAttribute('data-cycle-field').split(':');
+          cycleFieldValue(Number(parts[0]), parts[1]);
+          return;
+        }
 
-      colDiv.addEventListener("click", () => {
-        cycleColumnValue(i, col.key);
+        // Click anywhere on the cell body → focus its input
+        var cellBody = event.target.closest('.tableMainBtn');
+        if(cellBody && !event.target.closest('.tableKoInput')){
+          var inp = cellBody.querySelector('.tableKoInput');
+          if(inp){ inp.focus(); inp.select(); }
+        }
       });
 
-      table.appendChild(colDiv);
+      els.clauseList.addEventListener('input', function(event){
+        var input = event.target.closest('[data-field-input]');
+        if(!input) return;
+        var parts = input.getAttribute('data-field-input').split(':');
+        handleCellInput(Number(parts[0]), parts[1], input.value);
+      });
+
+      els.clauseList.addEventListener('pointerdown', function(event){
+        var btn = event.target.closest('[data-cycle-field]');
+        if(!btn) return;
+
+        longPressTarget = btn;
+        clearTimeout(longPressTimer);
+
+        longPressTimer = setTimeout(function(){
+          if(!longPressTarget) return;
+          longPressTarget.setAttribute('data-long-press-opened', '1');
+
+          var parts = longPressTarget.getAttribute('data-cycle-field').split(':');
+          openVocabSheet(Number(parts[0]), parts[1]);
+        }, LONG_PRESS_MS);
+      });
+
+      els.clauseList.addEventListener('pointerup', function(){
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        longPressTarget = null;
+      });
+
+      els.clauseList.addEventListener('pointerleave', function(){
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        longPressTarget = null;
+      });
+
+      els.clauseList.addEventListener('pointercancel', function(){
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        longPressTarget = null;
+      });
+
+      els.clauseList.addEventListener('contextmenu', function(event){
+        var btn = event.target.closest('[data-cycle-field]');
+        if(btn){
+          event.preventDefault();
+        }
+      });
+    }
+
+    document.addEventListener('click', function(event){
+      var closeBtn = event.target.closest('#vocabSheetClose, [data-close-vocab]');
+      if(closeBtn){
+        closeVocabSheet();
+        return;
+      }
+
+      var pickBtn = event.target.closest('[data-vocab-index]');
+      if(pickBtn){
+        pickVocabItem(Number(pickBtn.getAttribute('data-vocab-index')));
+        return;
+      }
+
+      var delBtn = event.target.closest('[data-del-idx]');
+      if(delBtn){
+        deleteSavedSentence(Number(delBtn.getAttribute('data-del-idx')));
+      }
     });
 
-    card.appendChild(table);
-    clausesWrap.appendChild(card);
-  });
+    document.addEventListener('input', function(event){
+      if(event.target && event.target.id === 'vocabSheetSearch'){
+        filterVocabSheet(event.target.value || '');
+      }
+    });
 
-  updatePreview();
-}
-/* =========================
-   25) BOOTSTRAP
-========================= */
-document.addEventListener("DOMContentLoaded", async () => {
-  try{
-    await loadVocabulary();
-
-    sentences = [makeEmptySentence()];
-    actives = [makeAllActive()];
-
-    loadModelRow(indexModelRow);
-    setupUI();
-    createToggleChips();
-
-    attachPressHandlers(DOM.tableP1, 0);
-    attachPressHandlers(DOM.tableP2, 1);
-
-    renderAll();
-  }catch(err){
-    console.error("APP BOOT ERROR", err);
+    document.addEventListener('keydown', function(event){
+      if(event.key === 'Escape'){
+        closeVocabSheet();
+      }
+    });
   }
-});
-const clausesWrap = document.getElementById("clausesWrap");
+
+  function init(){
+    loadWordUsage();
+    loadSavedSentences();
+    ensureVocabSheet();
+    bindEvents();
+    resetBuilder();
+    setLevel(1);
+    setLang(RKLang.get());
+    renderTemplateMenu();
+    renderSavedPanel();
+
+    window.ralucaBuilderState = state;
+    window.ralucaBuilderRender = renderAll;
+  }
+
+  init();
+})();

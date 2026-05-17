@@ -10,6 +10,7 @@ const STATIC = [
   './flashcards.html',
   './stats.html',
   './theme-anime.css',
+  './builder.css',
   './flag.svg',
   './manifest.json',
   './icons/icon.svg',
