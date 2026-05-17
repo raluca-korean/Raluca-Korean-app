@@ -200,6 +200,62 @@ body.dark-mode .header-controls .homeBtn{
   color:#f5f5f7 !important;
 }
 
+/* ── NOTIFICATION BUTTON ──────────────── */
+.rk-notif-btn{
+  font-size:12px; font-weight:700;
+  padding:6px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:background .1s;
+}
+.rk-notif-btn[data-state="granted"]{
+  background:#d1fae5 !important;
+  border-color:#6ee7b7 !important;
+  color:#065f46 !important;
+}
+.rk-notif-btn[data-state="denied"]{
+  background:#fef2f2 !important;
+  border-color:#fca5a5 !important;
+  color:#991b1b !important;
+}
+body.dark-mode .rk-notif-btn[data-state="granted"]{
+  background:rgba(6,95,70,.35) !important;
+  border-color:rgba(110,231,183,.3) !important;
+  color:#6ee7b7 !important;
+}
+body.dark-mode .rk-notif-btn[data-state="denied"]{
+  background:rgba(153,27,27,.3) !important;
+  border-color:rgba(252,165,165,.3) !important;
+  color:#fca5a5 !important;
+}
+
+/* ── STREAK REMINDER BANNER ───────────── */
+.streak-banner{
+  display:flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg,#fef3c7,#fde68a);
+  border:1px solid #fbbf24;
+  border-radius:12px;
+  padding:12px 14px;
+  margin-bottom:14px;
+  font-size:13px; font-weight:700;
+  color:#92400e;
+}
+.streak-banner-icon{ font-size:20px; flex-shrink:0; }
+.streak-banner-text{ flex:1; }
+.streak-banner-close{
+  background:none !important; border:none !important;
+  font-size:16px; cursor:pointer; color:#92400e !important;
+  padding:0 2px; line-height:1; flex-shrink:0;
+  box-shadow:none !important;
+}
+body.dark-mode .streak-banner{
+  background:linear-gradient(135deg,rgba(120,53,15,.5),rgba(146,64,14,.4));
+  border-color:#92400e;
+  color:#fde68a;
+}
+body.dark-mode .streak-banner-close{ color:#fde68a !important; }
+
 /* ── MOBILE ───────────────────────────── */
 @media(max-width:460px){
   .page{ padding:20px 14px 36px; }
@@ -221,8 +277,17 @@ body.dark-mode .header-controls .homeBtn{
         <p data-ro="Aplicație de studiu · TOPIK I–VI" data-en="Study App · TOPIK I–VI">Aplicație de studiu · TOPIK I–VI</p>
       </div>
     </div>
-    <div class="header-controls" id="pageControls" data-no-home></div>
+    <div class="header-controls" id="pageControls" data-no-home>
+      <div id="notifBtnWrap"></div>
+    </div>
   </header>
+
+  <!-- STREAK REMINDER (shown if not studied today and has streak) -->
+  <div class="streak-banner" id="streakBanner" style="display:none">
+    <span class="streak-banner-icon">🔥</span>
+    <span class="streak-banner-text" id="streakBannerText"></span>
+    <button class="streak-banner-close" id="streakBannerClose" aria-label="Închide">✕</button>
+  </div>
 
   <!-- DAILY QUEST -->
   <div class="quest-widget" id="questWidget" style="display:none">
@@ -304,9 +369,9 @@ body.dark-mode .header-controls .homeBtn{
           <span class="nav-link-name">Builder</span>
           <span class="nav-link-arrow">›</span>
         </a>
-        <a href="drill.html" class="nav-link">
-          <span class="nav-link-icon">🔥</span>
-          <span class="nav-link-name">Drill</span>
+        <a href="stories.html" class="nav-link">
+          <span class="nav-link-icon">📖</span>
+          <span class="nav-link-name">Stories</span>
           <span class="nav-link-arrow">›</span>
         </a>
       </div>
@@ -346,6 +411,7 @@ body.dark-mode .header-controls .homeBtn{
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/gamification.js"></script>
+<script src="./js/core/notifications.js"></script>
 <script src="./js/core/lang-picker.js"></script>
 <script>
 var currentLang = RKLang.get();
@@ -416,6 +482,36 @@ function applyLang(lang) {
 applyLang(currentLang);
 renderQuestWidget(currentLang);
 RKLang.init(applyLang);
+
+// Notification toggle button
+if (window.RKNotifications) RKNotifications.renderToggle('notifBtnWrap');
+
+// In-app streak reminder — shown if not studied today and user has a streak
+(function() {
+  var banner = document.getElementById('streakBanner');
+  var bannerText = document.getElementById('streakBannerText');
+  var closeBtn = document.getElementById('streakBannerClose');
+  if (!banner || !bannerText) return;
+  var dismissed = sessionStorage.getItem('RK_STREAK_BANNER_DISMISSED');
+  if (dismissed) return;
+  var s;
+  try { s = JSON.parse(localStorage.getItem('RK_STATS') || 'null'); } catch(e){ s = null; }
+  if (!s || !s.bestStreak) return;
+  var today = new Date().toISOString().slice(0, 10);
+  if (s.today === today && s.todayTotal > 0) return; // already studied today
+  var streak = s.bestStreak || 0;
+  var lang = localStorage.getItem('RK_LANG') || 'ro';
+  bannerText.textContent = streak > 0
+    ? (lang === 'ro'
+        ? 'Streakul tău de ' + streak + (streak === 1 ? ' zi' : ' zile') + ' e în pericol! Studiază acum 🔥'
+        : 'Your ' + streak + '-day streak is at risk! Study now 🔥')
+    : (lang === 'ro' ? 'Nu ai studiat azi. Continuă! 💪' : "You haven't studied today. Keep going! 💪");
+  banner.style.display = '';
+  closeBtn.addEventListener('click', function() {
+    banner.style.display = 'none';
+    sessionStorage.setItem('RK_STREAK_BANNER_DISMISSED', '1');
+  });
+})();
 </script>
 
 <script src="./js/core/dark-mode.js"></script>
