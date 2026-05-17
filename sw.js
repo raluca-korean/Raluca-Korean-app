@@ -1,4 +1,4 @@
-const CACHE = 'rk-v17';
+const CACHE = 'rk-v18';
 
 const STATIC = [
   './',
@@ -61,25 +61,35 @@ const STATIC = [
   './data/vocab-korean.json'
 ];
 
+/* ── Install: cache each file individually so one slow/missing file
+   can't abort the whole installation (addAll is atomic and would
+   leave the user with zero cache on a flaky mobile connection). ── */
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE)
-      .then(cache => cache.addAll(STATIC))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE).then(cache =>
+      Promise.allSettled(
+        STATIC.map(url =>
+          cache.add(url).catch(() => {}) // non-fatal per-file
+        )
+      )
+    ).then(() => self.skipWaiting())
   );
 });
 
+/* ── Activate: clean up old caches, but keep the study-meta cache
+   so push-notification data survives SW updates. ── */
 self.addEventListener('activate', event => {
+  const KEEP = new Set([CACHE, 'rk-study-meta']);
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
+        keys.filter(k => !KEEP.has(k)).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );
 });
 
-/* ── Study metadata (Cache API — accessible from SW context) ── */
+/* ── Study metadata (Cache API — localStorage is SW-inaccessible) ── */
 async function getStudyMeta() {
   const cache = await caches.open('rk-study-meta');
   const resp  = await cache.match('/rk-study-meta');
@@ -107,7 +117,7 @@ self.addEventListener('message', event => {
 async function checkAndRemind() {
   const meta  = await getStudyMeta();
   const today = new Date().toISOString().slice(0, 10);
-  if (!meta || meta.date === today) return;   // studied today — no nudge
+  if (!meta || meta.date === today) return;
 
   const lang   = meta.lang || 'ro';
   const streak = meta.streak || 0;
@@ -119,11 +129,11 @@ async function checkAndRemind() {
 
   await self.registration.showNotification('Raluca Korean', {
     body,
-    icon:  './icons/icon.svg',
-    badge: './icons/icon.svg',
-    tag:   'rk-daily',
+    icon:     './icons/icon.svg',
+    badge:    './icons/icon.svg',
+    tag:      'rk-daily',
     renotify: false,
-    data:  { url: './exercises.html' }
+    data:     { url: './exercises.html' }
   });
 }
 
@@ -145,17 +155,51 @@ self.addEventListener('notificationclick', event => {
   );
 });
 
-/* Network first — mereu încearcă rețeaua, cacheul e doar fallback offline */
+/* ── Fetch strategy ─────────────────────────────────────────────────
+   Cross-origin (fonts, CDN): let browser handle it — no SW interception.
+   data/ JSON files: cache-first — they're large and pre-cached; only
+     refresh when the SW installs a new version.
+   Everything else: stale-while-revalidate — serve cached copy
+     instantly, update cache in background from network.
+   ────────────────────────────────────────────────────────────────── */
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  const { request } = event;
+  if (request.method !== 'GET') return;
 
+  // Skip cross-origin requests (Google Fonts, etc.)
+  if (!request.url.startsWith(self.location.origin)) return;
+
+  const path = new URL(request.url).pathname;
+
+  // Cache-first for data JSON (256 KB exercises.json must not block on network)
+  if (path.includes('/data/')) {
+    event.respondWith(
+      caches.match(request).then(cached =>
+        cached || fetch(request).then(resp => {
+          if (resp.ok) caches.open(CACHE).then(c => c.put(request, resp.clone()));
+          return resp;
+        })
+      )
+    );
+    return;
+  }
+
+  // Stale-while-revalidate for HTML, CSS, JS
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const clone = response.clone();
-        caches.open(CACHE).then(c => c.put(event.request, clone));
-        return response;
+    caches.open(CACHE).then(cache =>
+      cache.match(request).then(cached => {
+        const networkFetch = fetch(request).then(resp => {
+          if (resp.ok) cache.put(request, resp.clone());
+          return resp;
+        }).catch(() => undefined);
+
+        // Return cached copy immediately; update cache in background
+        if (cached) { networkFetch.catch(() => {}); return cached; }
+        // Nothing cached yet — wait for network, 503 if that also fails
+        return networkFetch.then(r =>
+          r || new Response('Offline', { status: 503, statusText: 'Offline' })
+        );
       })
-      .catch(() => caches.match(event.request))
+    )
   );
 });
