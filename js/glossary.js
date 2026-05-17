@@ -140,39 +140,30 @@ function shuffle(array){
   return [...array].sort(() => Math.random() - 0.5);
 }
 
-function getFavs(){
-  return JSON.parse(localStorage.getItem("RK_FAV_WORDS") || "[]");
-}
+// ── Cached Sets — avoids JSON.parse(localStorage) per-word during filter ──
+let _favsSet    = null;
+let _learnedSet = null;
 
-function getLearned(){
-  return JSON.parse(localStorage.getItem("RK_LEARNED") || "[]");
-}
+function _favs()    { if (!_favsSet)    _favsSet    = new Set(JSON.parse(localStorage.getItem("RK_FAV_WORDS") || "[]")); return _favsSet; }
+function _learned() { if (!_learnedSet) _learnedSet = new Set(JSON.parse(localStorage.getItem("RK_LEARNED")   || "[]")); return _learnedSet; }
 
-function isLearned(ko){
-  return getLearned().includes(ko);
-}
+function getFavs()      { return [..._favs()]; }
+function isFav(ko)      { return _favs().has(ko); }
+function getLearned()   { return [..._learned()]; }
+function isLearned(ko)  { return _learned().has(ko); }
 
-function toggleLearned(ko){
-  const learned = getLearned();
-  const next = learned.includes(ko)
-    ? learned.filter(k => k !== ko)
-    : [...learned, ko];
-  localStorage.setItem("RK_LEARNED", JSON.stringify(next));
+function toggleFav(ko){
+  const s = _favs();
+  s.has(ko) ? s.delete(ko) : s.add(ko);
+  localStorage.setItem("RK_FAV_WORDS", JSON.stringify([...s]));
   render();
   renderDailyView();
 }
 
-function isFav(ko){
-  return getFavs().includes(ko);
-}
-
-function toggleFav(ko){
-  const favs = getFavs();
-  const nextFavs = favs.includes(ko)
-    ? favs.filter(item => item !== ko)
-    : [...favs, ko];
-
-  localStorage.setItem("RK_FAV_WORDS", JSON.stringify(nextFavs));
+function toggleLearned(ko){
+  const s = _learned();
+  s.has(ko) ? s.delete(ko) : s.add(ko);
+  localStorage.setItem("RK_LEARNED", JSON.stringify([...s]));
   render();
   renderDailyView();
 }
@@ -403,7 +394,11 @@ function changePage(delta){
   listEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-searchInput.addEventListener("input", () => { currentPage = 1; render(); });
+let _searchTimer = null;
+searchInput.addEventListener("input", () => {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => { currentPage = 1; render(); }, 150);
+});
 RKLang.init(setLanguage);
 catFilterEl.addEventListener("change", () => {
   filterCategory = catFilterEl.value;
