@@ -547,6 +547,14 @@
     border-bottom-color:#fb923c;
   }
 
+  .tableMainBtn.is-conjugated{
+    background:linear-gradient(180deg,#fff7ed 0%,#ffedd5 100%);
+  }
+
+  .tableMainBtn.is-conjugated .tableValue{
+    color:#9a3412;
+  }
+
   .tableMainBtn[data-kind="connector"]{
     background:#cffafe;
     border-color:#67e8f9;
@@ -944,6 +952,9 @@
   }
   body.dark-mode .tableMainBtn[data-kind="verb"]{
     border-color:rgba(249,115,22,.35) !important;
+  }
+  body.dark-mode .tableMainBtn.is-conjugated .tableValue{
+    color:#fed7aa;
   }
   body.dark-mode .tableMainBtn[data-kind="connector"]{
     border-color:rgba(14,165,233,.35) !important;
@@ -2655,11 +2666,22 @@
     var value = item && item.ko ? item.ko : (TABLE_PLACEHOLDERS_KO[col.key] || '선택');
     var emptyHint = state.lang === 'en' ? 'click to select' : 'click pentru selectare';
     var meta = item ? (translationOf(item) || '') : emptyHint;
+    var conjugated = false;
+
+    if(col.key === 'verb' && active && item && item.ko){
+      var conjForm = renderVerbKo(clause);
+      if(conjForm){
+        value = conjForm;
+        var tr = translationOf(item) || '';
+        meta = item.ko + (tr ? ' · ' + tr : '');
+        conjugated = true;
+      }
+    }
 
     return '' +
       '<div class="tableField ' + (active ? '' : 'off') + '">' +
         '<button class="tableToggle ' + (active ? 'active' : '') + '" data-toggle-cell="' + clauseIndex + ':' + col.key + '" type="button">✓</button>' +
-        '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + '" data-press-field="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind) + '" type="button">' +
+        '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + (conjugated ? ' is-conjugated' : '') + '" data-press-field="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind) + '" type="button">' +
           '<div class="tableMeta">' + escapeHtml(fieldLabel(col.key)) + '</div>' +
           '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
           '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
