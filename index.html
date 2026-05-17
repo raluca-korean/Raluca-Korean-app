@@ -224,6 +224,21 @@ body.dark-mode .header-controls .homeBtn{
     <div class="header-controls" id="pageControls" data-no-home></div>
   </header>
 
+  <!-- DAILY QUEST -->
+  <div class="quest-widget" id="questWidget" style="display:none">
+    <div class="quest-widget-head">
+      <span class="quest-widget-icon">🎯</span>
+      <div class="quest-widget-info">
+        <div class="quest-widget-label" id="questWidgetLabel">Misiunea zilei</div>
+        <div class="quest-widget-goal" id="questWidgetGoal">0 / 10</div>
+      </div>
+      <div class="quest-widget-xp" id="questWidgetXP">+50 XP</div>
+    </div>
+    <div class="quest-widget-bar-wrap">
+      <div class="quest-widget-bar" id="questWidgetBar" style="width:0%"></div>
+    </div>
+  </div>
+
   <!-- NAV GRID -->
   <div class="nav-grid">
 
@@ -330,6 +345,7 @@ body.dark-mode .header-controls .homeBtn{
 </div>
 
 <script src="./js/core/storage.js"></script>
+<script src="./js/core/gamification.js"></script>
 <script src="./js/core/lang-picker.js"></script>
 <script>
 var currentLang = RKLang.get();
@@ -350,12 +366,41 @@ function renderMiniStats(lang) {
   var todayEx = s.today === today ? s.todayTotal : 0;
   var pct = s.total ? Math.round(s.correct / s.total * 100) : 0;
   var L = STATS_LABELS[lang];
+  var xpStr = '';
+  if(window.RKGamification){
+    var xpData = RKGamification.getXPData();
+    var lvl = RKGamification.getLevelInfo(xpData.total);
+    xpStr = '<span class="mini-stat">XP: <b>' + xpData.total + ' · Lv.' + lvl.current.level + '</b></span>';
+  }
   el.style.display = '';
   el.innerHTML =
     '<span class="mini-stat">' + L.today + ': <b>' + todayEx + '</b></span>' +
     '<span class="mini-stat">' + L.acc   + ': <b>' + pct + '%</b></span>' +
     '<span class="mini-stat">' + L.streak+ ': <b>🔥' + (s.bestStreak||0) + '</b></span>' +
-    '<span class="mini-stat">' + L.favs  + ': <b>⭐' + favCount + '</b></span>';
+    '<span class="mini-stat">' + L.favs  + ': <b>⭐' + favCount + '</b></span>' +
+    xpStr;
+}
+
+function renderQuestWidget(lang) {
+  var el = document.getElementById('questWidget');
+  if(!el || !window.RKGamification) return;
+  var q = RKGamification.getQuestData();
+  var GOAL = RKGamification.DAILY_GOAL;
+  var pct = Math.min(100, Math.round(q.done / GOAL * 100));
+  var done = q.done >= GOAL;
+  el.style.display = '';
+  el.classList.toggle('done', done);
+  var labelEl = document.getElementById('questWidgetLabel');
+  var goalEl  = document.getElementById('questWidgetGoal');
+  var xpEl    = document.getElementById('questWidgetXP');
+  var barEl   = document.getElementById('questWidgetBar');
+  if(labelEl) labelEl.textContent = done
+    ? (lang === 'ro' ? '✅ Misiunea zilei' : '✅ Daily Quest')
+    : (lang === 'ro' ? 'Misiunea zilei'    : 'Daily Quest');
+  if(goalEl) goalEl.textContent = q.done + ' / ' + GOAL +
+    (done ? (lang === 'ro' ? ' — Completată!' : ' — Done!') : '');
+  if(xpEl) xpEl.textContent = done ? '✓ +50 XP' : '+50 XP';
+  if(barEl) barEl.style.width = pct + '%';
 }
 
 function applyLang(lang) {
@@ -365,9 +410,11 @@ function applyLang(lang) {
   });
   document.documentElement.lang = lang;
   renderMiniStats(lang);
+  renderQuestWidget(lang);
 }
 
 applyLang(currentLang);
+renderQuestWidget(currentLang);
 RKLang.init(applyLang);
 </script>
 

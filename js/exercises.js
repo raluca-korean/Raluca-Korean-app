@@ -317,8 +317,91 @@ function updateBadges(){
   if(bTotal) bTotal.querySelector("span:last-child").textContent = `${t("total")}: ${total}`;
   if(bStreak) bStreak.querySelector("span:last-child").textContent = `${t("streak")}: ${streak}`;
 
+  const bXP = document.getElementById('bXP');
+  if(bXP && window.RKGamification){
+    const xpData = RKGamification.getXPData();
+    const lvl = RKGamification.getLevelInfo(xpData.total);
+    bXP.querySelector('span:last-child').textContent = '⭐ ' + xpData.total + ' XP · Lv.' + lvl.current.level;
+  }
+
   const percent = total === 0 ? 0 : Math.round((correct / total) * 100);
   if(meterFill) meterFill.style.width = percent + "%";
+}
+
+function showXPToast(amount){
+  const el = document.getElementById('xpToast');
+  if(!el) return;
+  el.textContent = '+' + amount + ' XP' + (amount >= 20 ? ' ⚡' : '');
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+function showBadgeNotif(badge){
+  const el = document.getElementById('badgeNotif');
+  if(!el) return;
+  document.getElementById('badgeNotifIcon').textContent = badge.icon;
+  document.getElementById('badgeNotifLabel').textContent = currentLang === 'ro' ? '🏅 Badge obținut!' : '🏅 Badge unlocked!';
+  document.getElementById('badgeNotifTitle').textContent = badge['title_' + currentLang] || badge.title_ro;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.remove('show'), 3400);
+}
+
+function showLevelUp(newLevel, levelInfo){
+  const el = document.getElementById('levelupOverlay');
+  if(!el) return;
+  document.getElementById('levelupNum').textContent = newLevel;
+  document.getElementById('levelupTitle').textContent = levelInfo ? (levelInfo['title_' + currentLang] || levelInfo.title_ro) : '';
+  document.getElementById('levelupLabel').textContent = currentLang === 'ro' ? 'NIVEL NOU!' : 'LEVEL UP!';
+  el.classList.add('show');
+  launchFireworks();
+}
+
+function showQuestComplete(){
+  const el = document.getElementById('questCompleteToast');
+  if(!el) return;
+  el.textContent = currentLang === 'ro' ? '🎯 Misiunea zilei completată! +50 XP bonus' : '🎯 Daily quest done! +50 XP bonus';
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.remove('show'), 4500);
+  if(window.RKGamification){
+    RKGamification.addXPBonus(50);
+    updateBadges();
+  }
+  launchFireworks();
+}
+
+function processGamification(wasCorrect){
+  if(!wasCorrect || isWrongMode || !window.RKGamification) return;
+  const G = RKGamification;
+
+  const xpResult = G.addXP(streak, function(newLevel, levelInfo){
+    showLevelUp(newLevel, levelInfo);
+  });
+
+  const bXP = document.getElementById('bXP');
+  if(bXP){
+    const lvl = G.getLevelInfo(xpResult.total);
+    bXP.querySelector('span:last-child').textContent = '⭐ ' + xpResult.total + ' XP · Lv.' + lvl.current.level;
+  }
+
+  showXPToast(xpResult.xpGained);
+
+  const quest = G.incrementQuest();
+  if(quest.completed) setTimeout(showQuestComplete, 500);
+
+  let stats;
+  try { stats = JSON.parse(localStorage.getItem('RK_STATS') || '{}'); } catch(e){ stats = {}; }
+  const newBadges = G.checkBadges(stats, xpResult.total, quest.total);
+  const badgeDelay = quest.completed ? 2000 : (xpResult.levelUp ? 3200 : 800);
+  newBadges.forEach((badge, i) => {
+    setTimeout(() => showBadgeNotif(badge), badgeDelay + i * 2800);
+  });
 }
 
 function markLessonDone(lessonId){
@@ -747,6 +830,7 @@ function checkCurrentAnswer(){
     if(effectiveRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
     else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item); }
     if(!isWrongMode) saveStats(effectiveRight, typeSelect.value);
+    processGamification(effectiveRight);
     answered = true;
     const hb = document.getElementById("hintBtn");
     if(hb) hb.style.display = "none";
@@ -794,6 +878,7 @@ function checkCurrentAnswer(){
   }
 
   if(!isWrongMode) saveStats(isCorrect, typeSelect.value);
+  processGamification(isCorrect);
   answered = true;
   document.getElementById("answers").classList.add("done");
   updateBadges();
