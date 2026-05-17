@@ -178,6 +178,13 @@
     box-shadow:0 10px 24px rgba(244,63,94,.35);
   }
 
+  .iconBtn.autoActive{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#1CB0F6,#0090d0);
+    box-shadow:0 6px 16px rgba(28,176,246,.35);
+  }
+
   .topicMenu{position:relative}
   .topicMenu summary{list-style:none;cursor:pointer}
   .topicMenu summary::-webkit-details-marker{display:none}
@@ -239,6 +246,70 @@
     color:#fff;
     border-color:transparent;
     background:linear-gradient(135deg,#f472b6,#a855f7);
+  }
+
+  .tplBubble{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    min-height:38px;
+    padding:8px 14px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:900;
+    color:#fff;
+    background:#34d399;
+    border:2px solid #34d399;
+    border-bottom:4px solid #10b981;
+    box-shadow:none;
+    user-select:none;
+    cursor:pointer;
+  }
+
+  .tplDropdown{
+    position:absolute;
+    left:0;
+    top:calc(100% + 9px);
+    z-index:30;
+    min-width:230px;
+    display:grid;
+    gap:6px;
+    padding:10px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:#fff;
+    box-shadow:var(--shadow-sm);
+  }
+
+  .tplOption{
+    cursor:pointer;
+    text-align:left;
+    padding:9px 12px;
+    border-radius:12px;
+    background:#fff;
+    border:1px solid var(--line);
+    font:inherit;
+  }
+
+  .tplOption:hover{
+    background:#f0fdf4;
+    border-color:#34d399;
+  }
+
+  .tpl-code{
+    display:block;
+    font-size:12px;
+    font-weight:900;
+    color:#065f46;
+    letter-spacing:.03em;
+  }
+
+  .tpl-desc{
+    display:block;
+    font-size:11px;
+    font-weight:600;
+    color:var(--muted);
+    margin-top:2px;
   }
 
   textarea{
@@ -983,6 +1054,13 @@
         <div class="toolbar">
           <a href="./index.html" class="tinyBtn" aria-label="Acasă">🏠</a>
 
+          <details class="topicMenu" id="templateMenu">
+            <summary class="tplBubble">
+              <span id="templateSummaryText">Șablon ▾</span>
+            </summary>
+            <div class="tplDropdown" id="templateDropdown"></div>
+          </details>
+
           <details class="topicMenu" id="topicMenu">
             <summary class="topicBubble">
               <span class="topicDot"></span>
@@ -1027,6 +1105,7 @@
           <button class="iconBtn" id="refreshBtn" type="button" title="Refresh" aria-label="Refresh">↻</button>
           <button class="iconBtn" id="playBtn" type="button" title="Ascultă propoziția" aria-label="Ascultă propoziția">🔊</button>
           <button class="iconBtn" id="recordBtn" type="button" title="Înregistrează vocea" aria-label="Înregistrează vocea">🎤</button>
+          <button class="iconBtn" id="autoSpeakBtn" type="button" title="Auto-pronunție: OFF" aria-label="Auto-pronunție">🔈</button>
         </div>
       </div>
 
@@ -1207,6 +1286,58 @@
     5: ['topic','time','departure','object1','object2','adverb','verb','connector'],
     6: ['topic','topic2','time','departure','transit','object1','object2','adverb','adverb2','verb','connector']
   };
+
+  var TEMPLATES = [
+    {
+      id:'sv',
+      code:'S + V',
+      ro:'Subiect + Verb',
+      en:'Subject + Verb',
+      fields:['topic','verb']
+    },
+    {
+      id:'sov',
+      code:'S + O + V',
+      ro:'Subiect + Obiect + Verb',
+      en:'Subject + Object + Verb',
+      fields:['topic','object1','verb']
+    },
+    {
+      id:'tsv',
+      code:'T + S + V',
+      ro:'Timp + Subiect + Verb',
+      en:'Time + Subject + Verb',
+      fields:['time','topic','verb']
+    },
+    {
+      id:'slv',
+      code:'S + L + V',
+      ro:'Subiect + Loc + Verb',
+      en:'Subject + Place + Verb',
+      fields:['topic','departure','verb']
+    },
+    {
+      id:'tsov',
+      code:'T + S + O + V',
+      ro:'Timp + Subiect + Obiect + Verb',
+      en:'Time + Subject + Object + Verb',
+      fields:['time','topic','object1','verb']
+    },
+    {
+      id:'slov',
+      code:'S + L + O + V',
+      ro:'Subiect + Loc + Obiect + Verb',
+      en:'Subject + Place + Object + Verb',
+      fields:['topic','departure','object1','verb']
+    },
+    {
+      id:'full',
+      code:'T + S + L + O + A + V',
+      ro:'Timp + Sub. + Loc + Obiect + Adverb + Verb',
+      en:'Time + Sub. + Place + Object + Adverb + Verb',
+      fields:['time','topic','departure','object1','adverb','verb']
+    }
+  ];
 
   var DATA = {
     subject: [
@@ -1553,7 +1684,11 @@
     clauseList: document.getElementById('clauseList'),
     toast: document.getElementById('toast'),
     recordBox: document.getElementById('recordBox'),
-    recordedAudio: document.getElementById('recordedAudio')
+    recordedAudio: document.getElementById('recordedAudio'),
+    autoSpeakBtn: document.getElementById('autoSpeakBtn'),
+    templateMenu: document.getElementById('templateMenu'),
+    templateDropdown: document.getElementById('templateDropdown'),
+    templateSummaryText: document.getElementById('templateSummaryText')
   };
 
   var state = {
@@ -1562,6 +1697,56 @@
     text: '',
     clauses: []
   };
+
+  var autoSpeak = localStorage.getItem('RK_AUTO_SPEAK') === 'on';
+  var _wordSpeakTimer = null;
+  var _sentenceSpeakTimer = null;
+
+  function speakText(text, rate){
+    if(!('speechSynthesis' in window) || !text) return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    u.rate = rate || 0.9;
+    window.speechSynthesis.speak(u);
+  }
+
+  function autoSpeakWord(ko){
+    if(!autoSpeak || !ko) return;
+    clearTimeout(_wordSpeakTimer);
+    clearTimeout(_sentenceSpeakTimer);
+    _wordSpeakTimer = setTimeout(function(){ speakText(ko, 0.85); }, 320);
+  }
+
+  function autoSpeakSentence(ko){
+    if(!autoSpeak || !ko) return;
+    clearTimeout(_sentenceSpeakTimer);
+    _sentenceSpeakTimer = setTimeout(function(){ speakText(ko, 0.9); }, 1500);
+  }
+
+  function updateAutoSpeakBtn(){
+    if(!els.autoSpeakBtn) return;
+    if(autoSpeak){
+      els.autoSpeakBtn.classList.add('autoActive');
+      els.autoSpeakBtn.textContent = '🔊';
+      els.autoSpeakBtn.title = 'Auto-pronunție: ON';
+    }else{
+      els.autoSpeakBtn.classList.remove('autoActive');
+      els.autoSpeakBtn.textContent = '🔈';
+      els.autoSpeakBtn.title = 'Auto-pronunție: OFF';
+    }
+  }
+
+  function toggleAutoSpeak(){
+    autoSpeak = !autoSpeak;
+    localStorage.setItem('RK_AUTO_SPEAK', autoSpeak ? 'on' : 'off');
+    updateAutoSpeakBtn();
+    if(!autoSpeak){
+      window.speechSynthesis.cancel();
+      clearTimeout(_wordSpeakTimer);
+      clearTimeout(_sentenceSpeakTimer);
+    }
+  }
 
   var pickerState = {
     clauseIndex: 0,
@@ -2084,6 +2269,7 @@
         }
         ensureChainLength();
         renderAll();
+        if(firstItem.ko) autoSpeakWord(firstItem.ko);
       }
       return;
     }
@@ -2110,9 +2296,11 @@
       }
     }
 
-    setFieldItem(clause, fieldKey, options[nextIndex] || null);
+    var nextItem = options[nextIndex] || null;
+    setFieldItem(clause, fieldKey, nextItem);
     ensureChainLength();
     renderAll();
+    if(nextItem && nextItem.ko) autoSpeakWord(nextItem.ko);
   }
 
   function subjectRoleFromKo(subjectKo){
@@ -2449,6 +2637,8 @@
     if(els.translationText){
       els.translationText.textContent = built.translation || currentUI().defaultTranslation;
     }
+
+    if(korean) autoSpeakSentence(korean);
   }
 
   function getVisibleColumns(){
@@ -2532,6 +2722,7 @@
   function setLang(lang){
     state.lang = lang === 'en' ? 'en' : 'ro';
     localStorage.setItem('RK_LANG', state.lang);
+    renderTemplateMenu();
     renderAll();
   }
 
@@ -3172,6 +3363,44 @@
     renderAll();
   }
 
+  function applyTemplate(tpl){
+    state.clauses = [makeEmptyLayoutClause()];
+    state.text = '';
+    if(els.freeText) els.freeText.value = '';
+
+    var clause = state.clauses[0];
+
+    tpl.fields.forEach(function(fieldKey){
+      var firstItem = getFirstUsableItem(fieldKey, true);
+      if(!firstItem) return;
+      setFieldItem(clause, fieldKey, firstItem);
+      if(FIELD_BINDINGS[fieldKey]){
+        clause[FIELD_BINDINGS[fieldKey]].enabled = true;
+      }
+    });
+
+    if(els.templateSummaryText){
+      els.templateSummaryText.textContent = tpl.code + ' ▾';
+    }
+
+    if(els.recordBox) els.recordBox.classList.remove('show');
+    ensureChainLength();
+    renderAll();
+  }
+
+  function renderTemplateMenu(){
+    if(!els.templateDropdown) return;
+    var lang = state.lang || 'ro';
+
+    els.templateDropdown.innerHTML = TEMPLATES.map(function(tpl){
+      var desc = lang === 'en' ? tpl.en : tpl.ro;
+      return '<button class="tplOption" type="button" data-tpl="' + tpl.id + '">' +
+        '<span class="tpl-code">' + tpl.code + '</span>' +
+        '<span class="tpl-desc">' + desc + '</span>' +
+        '</button>';
+    }).join('');
+  }
+
   function bindEvents(){
     var _langTimer = null;
     function openLangPicker(){ document.getElementById('langPicker').classList.add('open'); }
@@ -3195,6 +3424,20 @@
       });
     }
 
+    if(els.templateDropdown){
+      els.templateDropdown.addEventListener('click', function(event){
+        var btn = event.target.closest('[data-tpl]');
+        if(!btn) return;
+        var tplId = btn.getAttribute('data-tpl');
+        var tpl = null;
+        for(var i=0;i<TEMPLATES.length;i++){
+          if(TEMPLATES[i].id === tplId){ tpl = TEMPLATES[i]; break; }
+        }
+        if(tpl) applyTemplate(tpl);
+        if(els.templateMenu) els.templateMenu.removeAttribute('open');
+      });
+    }
+
     if(els.freeText){
       els.freeText.addEventListener('input', function(){
         state.text = els.freeText.value || '';
@@ -3212,6 +3455,10 @@
 
     if(els.recordBtn){
       els.recordBtn.addEventListener('click', toggleRecording);
+    }
+
+    if(els.autoSpeakBtn){
+      els.autoSpeakBtn.addEventListener('click', toggleAutoSpeak);
     }
 
     if(els.sentenceBox){
@@ -3323,6 +3570,8 @@
     resetBuilder();
     setLevel(1);
     setLang(localStorage.getItem('RK_LANG') || 'ro');
+    updateAutoSpeakBtn();
+    renderTemplateMenu();
 
     window.ralucaBuilderState = state;
     window.ralucaBuilderRender = renderAll;
