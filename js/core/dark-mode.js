@@ -33,10 +33,12 @@
     btn.style.background = isDark ? 'rgba(28,4,50,.95)' : 'rgba(255,255,255,.92)';
 
     btn.addEventListener('click', function(){
+      document.documentElement.style.setProperty('--rk-transition-dur','0.25s');
       const nowDark = document.body.classList.toggle('dark-mode');
       localStorage.setItem('RK_THEME', nowDark ? 'dark' : 'light');
       btn.textContent = nowDark ? '🌙' : '☀️';
       btn.style.background = nowDark ? 'rgba(28,4,50,.95)' : 'rgba(255,255,255,.92)';
+      setTimeout(function(){ document.documentElement.style.removeProperty('--rk-transition-dur'); }, 300);
     });
 
     document.body.appendChild(btn);
