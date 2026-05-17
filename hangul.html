@@ -594,6 +594,11 @@ body.dark-mode .group-hdr.open { background: #0a2040 !important; }
 body.dark-mode .group-ttl-main { color: #e0e0e0 !important; }
 body.dark-mode .write-box { background: #16213e !important; border-color: #2a2a4a !important; }
 body.dark-mode .write-board { background: #0d1b2e !important; border-color: #2a2a4a !important; }
+.lang-picker{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:2px solid #e5e5e5;border-bottom:4px solid #d0d0d0;border-radius:12px;padding:6px;gap:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+.lang-picker.open{display:flex}
+.lang-picker button{padding:6px 14px;font-size:13px;border-radius:8px;border:none;font-weight:800;cursor:pointer;background:transparent;color:#1a0533;}
+.lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;}
+body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
 </style>
 </head>
 <body class="theme-anime">
@@ -607,8 +612,13 @@ body.dark-mode .write-board { background: #0d1b2e !important; border-color: #2a2
   </div>
   <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
     <a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>
-    <button type="button" id="langRo">ro</button>
-    <button type="button" id="langEn">en</button>
+    <div style="position:relative">
+      <button type="button" id="langBtn">ro</button>
+      <div id="langPicker" class="lang-picker">
+        <button type="button" id="pickRo">ro</button>
+        <button type="button" id="pickEn">en</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1263,14 +1273,24 @@ function applyLang() {
   document.getElementById("writeLinkTitle").textContent = t.writeLinkTitle;
   document.getElementById("writeLinkSub").textContent   = t.writeLinkSub;
   document.getElementById("btnNext").textContent   = t.qNext;
-  document.getElementById("langRo").style.background     = lang === "ro"
-    ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
-  document.getElementById("langEn").style.background     = lang === "en"
-    ? "linear-gradient(135deg,#f472b6,#a855f7,#6366f1)" : "";
+  const _lb = document.getElementById("langBtn");
+  if(_lb) _lb.textContent = lang;
+  const _pr = document.getElementById("pickRo");
+  const _pe = document.getElementById("pickEn");
+  if(_pr) _pr.classList.toggle("active", lang === "ro");
+  if(_pe) _pe.classList.toggle("active", lang === "en");
 }
 
-document.getElementById("langRo").onclick = () => { lang="ro"; localStorage.setItem("RK_LANG","ro"); applyLang(); };
-document.getElementById("langEn").onclick = () => { lang="en"; localStorage.setItem("RK_LANG","en"); applyLang(); };
+let _langTimer = null;
+function openLangPicker(){ document.getElementById("langPicker").classList.add("open"); }
+function closeLangPicker(){ document.getElementById("langPicker").classList.remove("open"); }
+const langBtn = document.getElementById("langBtn");
+langBtn.addEventListener("pointerdown", () => { _langTimer = setTimeout(() => { _langTimer = null; openLangPicker(); }, 450); });
+langBtn.addEventListener("pointerup",   () => { clearTimeout(_langTimer); _langTimer = null; });
+langBtn.addEventListener("pointerleave",() => { clearTimeout(_langTimer); _langTimer = null; });
+document.getElementById("pickRo").addEventListener("click", () => { lang="ro"; localStorage.setItem("RK_LANG","ro"); applyLang(); closeLangPicker(); });
+document.getElementById("pickEn").addEventListener("click", () => { lang="en"; localStorage.setItem("RK_LANG","en"); applyLang(); closeLangPicker(); });
+document.addEventListener("pointerdown", e => { if(!e.target.closest("#langBtn,#langPicker")) closeLangPicker(); });
 
 // ── AUDIO ─────────────────────────────────────────────────────
 function speakKo(text) {
