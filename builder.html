@@ -178,6 +178,13 @@
     box-shadow:0 10px 24px rgba(244,63,94,.35);
   }
 
+  .iconBtn.autoActive{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#1CB0F6,#0090d0);
+    box-shadow:0 6px 16px rgba(28,176,246,.35);
+  }
+
   .topicMenu{position:relative}
   .topicMenu summary{list-style:none;cursor:pointer}
   .topicMenu summary::-webkit-details-marker{display:none}
@@ -1027,6 +1034,7 @@
           <button class="iconBtn" id="refreshBtn" type="button" title="Refresh" aria-label="Refresh">↻</button>
           <button class="iconBtn" id="playBtn" type="button" title="Ascultă propoziția" aria-label="Ascultă propoziția">🔊</button>
           <button class="iconBtn" id="recordBtn" type="button" title="Înregistrează vocea" aria-label="Înregistrează vocea">🎤</button>
+          <button class="iconBtn" id="autoSpeakBtn" type="button" title="Auto-pronunție: OFF" aria-label="Auto-pronunție">🔈</button>
         </div>
       </div>
 
@@ -1553,7 +1561,8 @@
     clauseList: document.getElementById('clauseList'),
     toast: document.getElementById('toast'),
     recordBox: document.getElementById('recordBox'),
-    recordedAudio: document.getElementById('recordedAudio')
+    recordedAudio: document.getElementById('recordedAudio'),
+    autoSpeakBtn: document.getElementById('autoSpeakBtn')
   };
 
   var state = {
@@ -1562,6 +1571,56 @@
     text: '',
     clauses: []
   };
+
+  var autoSpeak = localStorage.getItem('RK_AUTO_SPEAK') === 'on';
+  var _wordSpeakTimer = null;
+  var _sentenceSpeakTimer = null;
+
+  function speakText(text, rate){
+    if(!('speechSynthesis' in window) || !text) return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    u.rate = rate || 0.9;
+    window.speechSynthesis.speak(u);
+  }
+
+  function autoSpeakWord(ko){
+    if(!autoSpeak || !ko) return;
+    clearTimeout(_wordSpeakTimer);
+    clearTimeout(_sentenceSpeakTimer);
+    _wordSpeakTimer = setTimeout(function(){ speakText(ko, 0.85); }, 320);
+  }
+
+  function autoSpeakSentence(ko){
+    if(!autoSpeak || !ko) return;
+    clearTimeout(_sentenceSpeakTimer);
+    _sentenceSpeakTimer = setTimeout(function(){ speakText(ko, 0.9); }, 1500);
+  }
+
+  function updateAutoSpeakBtn(){
+    if(!els.autoSpeakBtn) return;
+    if(autoSpeak){
+      els.autoSpeakBtn.classList.add('autoActive');
+      els.autoSpeakBtn.textContent = '🔊';
+      els.autoSpeakBtn.title = 'Auto-pronunție: ON';
+    }else{
+      els.autoSpeakBtn.classList.remove('autoActive');
+      els.autoSpeakBtn.textContent = '🔈';
+      els.autoSpeakBtn.title = 'Auto-pronunție: OFF';
+    }
+  }
+
+  function toggleAutoSpeak(){
+    autoSpeak = !autoSpeak;
+    localStorage.setItem('RK_AUTO_SPEAK', autoSpeak ? 'on' : 'off');
+    updateAutoSpeakBtn();
+    if(!autoSpeak){
+      window.speechSynthesis.cancel();
+      clearTimeout(_wordSpeakTimer);
+      clearTimeout(_sentenceSpeakTimer);
+    }
+  }
 
   var pickerState = {
     clauseIndex: 0,
@@ -2084,6 +2143,7 @@
         }
         ensureChainLength();
         renderAll();
+        if(firstItem.ko) autoSpeakWord(firstItem.ko);
       }
       return;
     }
@@ -2110,9 +2170,11 @@
       }
     }
 
-    setFieldItem(clause, fieldKey, options[nextIndex] || null);
+    var nextItem = options[nextIndex] || null;
+    setFieldItem(clause, fieldKey, nextItem);
     ensureChainLength();
     renderAll();
+    if(nextItem && nextItem.ko) autoSpeakWord(nextItem.ko);
   }
 
   function subjectRoleFromKo(subjectKo){
@@ -2449,6 +2511,8 @@
     if(els.translationText){
       els.translationText.textContent = built.translation || currentUI().defaultTranslation;
     }
+
+    if(korean) autoSpeakSentence(korean);
   }
 
   function getVisibleColumns(){
@@ -3214,6 +3278,10 @@
       els.recordBtn.addEventListener('click', toggleRecording);
     }
 
+    if(els.autoSpeakBtn){
+      els.autoSpeakBtn.addEventListener('click', toggleAutoSpeak);
+    }
+
     if(els.sentenceBox){
       els.sentenceBox.addEventListener('click', playCurrent);
       els.sentenceBox.addEventListener('keydown', function(e){
@@ -3323,6 +3391,7 @@
     resetBuilder();
     setLevel(1);
     setLang(localStorage.getItem('RK_LANG') || 'ro');
+    updateAutoSpeakBtn();
 
     window.ralucaBuilderState = state;
     window.ralucaBuilderRender = renderAll;
