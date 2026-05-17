@@ -69,15 +69,21 @@ function setTopik(level){
   }
 }
 
+function getDoneLessons(){
+  try { return JSON.parse(localStorage.getItem("RK_LESSON_DONE") || "[]"); } catch(e){ return []; }
+}
+
 function renderLessonList(){
   listEl.innerHTML = "";
   const filtered = lessons.filter(l => l.topik === currentTopik);
+  const done = getDoneLessons();
 
   filtered.forEach((lesson, idx) => {
     const el = document.createElement("div");
-    el.className = "lesson-item" + (lesson.id === currentLessonId ? " active" : "");
+    const isDone = done.includes(lesson.id);
+    el.className = "lesson-item" + (lesson.id === currentLessonId ? " active" : "") + (isDone ? " lesson-done" : "");
     el.dataset.id = lesson.id;
-    el.textContent = `${idx + 1}. ${lesson.title[currentLang]}`;
+    el.innerHTML = `<span class="lesson-title">${idx + 1}. ${lesson.title[currentLang]}</span>${isDone ? '<span class="lesson-check">✓</span>' : ''}`;
     el.addEventListener("click", () => selectLesson(lesson.id));
     listEl.appendChild(el);
   });

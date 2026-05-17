@@ -315,6 +315,16 @@ function updateBadges(){
   if(meterFill) meterFill.style.width = percent + "%";
 }
 
+function markLessonDone(lessonId){
+  if(!lessonId) return;
+  let done;
+  try { done = JSON.parse(localStorage.getItem("RK_LESSON_DONE") || "[]"); } catch(e){ done = []; }
+  if(!done.includes(lessonId)){
+    done.push(lessonId);
+    localStorage.setItem("RK_LESSON_DONE", JSON.stringify(done));
+  }
+}
+
 function saveStats(isCorrect, type){
   const today = new Date().toISOString().slice(0, 10);
   let s;
@@ -684,7 +694,7 @@ function checkCurrentAnswer(){
       ? t("correctAnswer")
       : `${t("wrongAnswer")} — ${item.correct.join(sep)}`;
     total++;
-    if(isRight){ correct++; streak++; if(streak >= 2) showHeartFx(); }
+    if(isRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
     else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item); }
     if(!isWrongMode) saveStats(isRight, typeSelect.value);
     answered = true;
@@ -724,6 +734,7 @@ function checkCurrentAnswer(){
     correct++;
     streak++;
     if(streak >= 2) showHeartFx();
+    if(!isWrongMode) markLessonDone(item.lessonId);
   } else {
     if(streak > 0) launchFireworks();
     streak = 0;
