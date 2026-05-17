@@ -1,4 +1,4 @@
-const CACHE = 'rk-v18';
+const CACHE = 'rk-v19';
 
 const STATIC = [
   './',
@@ -58,7 +58,11 @@ const STATIC = [
   './js/core/vocabulary.js',
   './data/exercises.json',
   './data/lessons.json',
-  './data/vocab-korean.json'
+  './data/stories.json',
+  './data/vocab-korean.json',
+  './stories.html',
+  './stories.css',
+  './js/stories.js'
 ];
 
 /* ── Install: cache each file individually so one slow/missing file
