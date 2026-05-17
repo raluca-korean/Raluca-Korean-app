@@ -1,24 +1,43 @@
 /**
- * RKLang — modul comun pentru selectorul de limbă (ro/en).
+ * RKLang — language picker + home button module.
  *
- * HTML așteptat pe fiecare pagină:
- *   <div style="position:relative">
- *     <button type="button" id="langBtn">ro</button>
- *     <div id="langPicker" class="lang-picker">
- *       <button type="button" id="pickRo">ro</button>
- *       <button type="button" id="pickEn">en</button>
- *     </div>
- *   </div>
+ * Utilizare simplă (HTML minim pe pagină):
+ *   <div id="pageControls"></div>
+ *   → modulul injectează automat: butonul Home + selectorul ro/en
  *
- * Utilizare:
+ * Sau cu buton extra înainte (ex: writing.html):
+ *   <a href="./hangul.html" class="homeBtn" title="Hangul">가</a>
+ *   <div id="pageControls"></div>
+ *   → modulul injectează Home + ro/en, butonul extra rămâne al paginii
+ *
+ * API:
  *   RKLang.get()          → limba curentă ("ro" | "en")
- *   RKLang.init(onChange) → configurează evenimentele; onChange(lang) e apelat la schimbare
+ *   RKLang.init(onChange) → injectează HTML dacă e nevoie, configurează
+ *                           evenimentele; onChange(lang) e apelat la schimbare
  */
 window.RKLang = (function () {
   var KEY = "RK_LANG";
 
   function get() {
     return localStorage.getItem(KEY) || "ro";
+  }
+
+  function _inject(container) {
+    if (!container.hasAttribute("data-no-home")) {
+      container.setAttribute("style",
+        "display:flex;gap:8px;align-items:center;flex-shrink:0");
+    }
+    var home = container.hasAttribute("data-no-home") ? "" :
+      '<a href="./index.html" class="homeBtn" aria-label="Acasă">🏠</a>';
+    container.innerHTML =
+      home +
+      '<div style="position:relative">' +
+        '<button type="button" id="langBtn"></button>' +
+        '<div id="langPicker" class="lang-picker">' +
+          '<button type="button" id="pickRo">ro</button>' +
+          '<button type="button" id="pickEn">en</button>' +
+        '</div>' +
+      '</div>';
   }
 
   function _syncBtns(lang) {
@@ -41,6 +60,9 @@ window.RKLang = (function () {
   }
 
   function init(onChange) {
+    var container = document.getElementById("pageControls");
+    if (container) _inject(container);
+
     _syncBtns(get());
 
     var lb    = document.getElementById("langBtn");
