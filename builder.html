@@ -555,6 +555,35 @@
     color:#9a3412;
   }
 
+  .tableMainBtn.is-new::after{
+    content:'';
+    position:absolute;
+    top:7px;
+    left:7px;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#fbbf24;
+    box-shadow:0 0 0 3px rgba(251,191,36,.22);
+    pointer-events:none;
+  }
+
+  .vocabItem.is-new{
+    border-color:rgba(251,191,36,.45);
+  }
+
+  .vocabNewDot{
+    display:inline-block;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#fbbf24;
+    margin-right:7px;
+    vertical-align:middle;
+    flex-shrink:0;
+    box-shadow:0 0 0 2px rgba(251,191,36,.25);
+  }
+
   .tableMainBtn[data-kind="connector"]{
     background:#cffafe;
     border-color:#67e8f9;
@@ -1766,6 +1795,32 @@
     filteredItems: []
   };
 
+  var USAGE_KEY = 'RK_WORD_USAGE';
+  var wordUsage = {};
+
+  function loadWordUsage(){
+    try{
+      var raw = localStorage.getItem(USAGE_KEY);
+      if(raw) wordUsage = JSON.parse(raw);
+    }catch(e){ wordUsage = {}; }
+  }
+
+  function saveWordUsage(){
+    try{ localStorage.setItem(USAGE_KEY, JSON.stringify(wordUsage)); }catch(e){}
+  }
+
+  function markWordUsed(fieldKey, item){
+    if(!item || !item.ko) return;
+    var k = fieldKey + ':' + item.ko;
+    wordUsage[k] = (wordUsage[k] || 0) + 1;
+    saveWordUsage();
+  }
+
+  function isWordNew(fieldKey, item){
+    if(!item || !item.ko) return false;
+    return !wordUsage[fieldKey + ':' + item.ko];
+  }
+
   var toastTimer = null;
   var mediaRecorder = null;
   var recordedChunks = [];
@@ -2278,6 +2333,7 @@
         if(FIELD_BINDINGS[fieldKey]){
           clause[FIELD_BINDINGS[fieldKey]].enabled = true;
         }
+        markWordUsed(fieldKey, firstItem);
         ensureChainLength();
         renderAll();
         if(firstItem.ko) autoSpeakWord(firstItem.ko);
@@ -2309,6 +2365,7 @@
 
     var nextItem = options[nextIndex] || null;
     setFieldItem(clause, fieldKey, nextItem);
+    if(nextItem) markWordUsed(fieldKey, nextItem);
     ensureChainLength();
     renderAll();
     if(nextItem && nextItem.ko) autoSpeakWord(nextItem.ko);
@@ -2667,6 +2724,7 @@
     var emptyHint = state.lang === 'en' ? 'click to select' : 'click pentru selectare';
     var meta = item ? (translationOf(item) || '') : emptyHint;
     var conjugated = false;
+    var isNew = false;
 
     if(col.key === 'verb' && active && item && item.ko){
       var conjForm = renderVerbKo(clause);
@@ -2678,10 +2736,12 @@
       }
     }
 
+    if(active && item && item.ko) isNew = isWordNew(col.key, item);
+
     return '' +
       '<div class="tableField ' + (active ? '' : 'off') + '">' +
         '<button class="tableToggle ' + (active ? 'active' : '') + '" data-toggle-cell="' + clauseIndex + ':' + col.key + '" type="button">✓</button>' +
-        '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + (conjugated ? ' is-conjugated' : '') + '" data-press-field="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind) + '" type="button">' +
+        '<button class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + (conjugated ? ' is-conjugated' : '') + (isNew ? ' is-new' : '') + '" data-press-field="' + clauseIndex + ':' + col.key + '" data-kind="' + escapeHtml(col.kind) + '" type="button">' +
           '<div class="tableMeta">' + escapeHtml(fieldLabel(col.key)) + '</div>' +
           '<div class="tableValue">' + escapeHtml(value || '—') + '</div>' +
           '<div class="tableMeta">' + escapeHtml(meta || '') + '</div>' +
@@ -3199,12 +3259,12 @@
     }
 
     list.innerHTML = items.map(function(item, index){
-      return `
-        <button type="button" class="vocabItem" data-vocab-index="${index}">
-          <div class="vocabItemKo">${escapeHtml(item.ko || '—')}</div>
-          <div class="vocabItemMeta">${escapeHtml([item.ro, item.en].filter(Boolean).join(' · '))}</div>
-        </button>
-      `;
+      var fresh = isWordNew(pickerState.fieldKey, item);
+      var dot = fresh ? '<span class="vocabNewDot"></span>' : '';
+      return '<button type="button" class="vocabItem' + (fresh ? ' is-new' : '') + '" data-vocab-index="' + index + '">' +
+        '<div class="vocabItemKo">' + dot + escapeHtml(item.ko || '—') + '</div>' +
+        '<div class="vocabItemMeta">' + escapeHtml([item.ro, item.en].filter(Boolean).join(' · ')) + '</div>' +
+        '</button>';
     }).join('');
   }
 
@@ -3260,6 +3320,7 @@
     var clause = state.clauses[pickerState.clauseIndex];
     if(!clause) return;
 
+    markWordUsed(pickerState.fieldKey, item);
     setFieldItem(clause, pickerState.fieldKey, item);
     ensureChainLength();
     closeVocabSheet();
@@ -3587,6 +3648,7 @@
   }
 
   function init(){
+    loadWordUsage();
     ensureVocabSheet();
     bindEvents();
     resetBuilder();
