@@ -41,6 +41,7 @@ const UI = {
     restart:"🔁 Reia",
     noFav:"Nu ai favorite. Adaugă din Glosar!",
     loadError:"Nu am putut încărca vocab-korean.json",
+    retry:"Încearcă din nou",
     srsNew:"NOU",
     srsEmpty:"Nicio recapitulare pentru azi 🎉",
     srsNext:"Urm. recapitulare",
@@ -57,6 +58,7 @@ const UI = {
     restart:"🔁 Restart",
     noFav:"No favorites. Add some in the Glossary!",
     loadError:"Could not load vocab-korean.json",
+    retry:"Try again",
     srsNew:"NEW",
     srsEmpty:"Nothing to review today 🎉",
     srsNext:"Next review",
@@ -441,6 +443,7 @@ async function loadVocab(){
 
   try{
     const resp  = await fetch("./data/vocab-korean.json");
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
     const vocab = await resp.json();
     const map   = new Map();
     const cats  = ["subjects","nouns","objects","verbs","adjectives","adverbs","modifiers","connectors","grammar"];
@@ -470,8 +473,14 @@ async function loadVocab(){
     buildDeck();
     renderFC();
   } catch(e){
-    document.getElementById("fcArea").innerHTML =
-      `<div class="card"><p class="sub" style="text-align:center;padding:20px">${t("loadError")}</p></div>`;
+    const area = document.getElementById("fcArea");
+    area.innerHTML =
+      '<div class="card"><div class="rk-load-error">' +
+      '<p>' + t("loadError") + '</p>' +
+      '<button type="button" id="_retryLoad">' + t("retry") + '</button>' +
+      '</div></div>';
+    var rb = document.getElementById("_retryLoad");
+    if (rb) rb.addEventListener("click", loadVocab);
   }
 }
 

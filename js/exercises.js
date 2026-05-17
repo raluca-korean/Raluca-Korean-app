@@ -190,6 +190,7 @@ const UI_TEXT = {
     modeKoRo: "KO → RO / EN",
     modeRoKo: "RO / EN → KO",
     loadError: "Nu am putut încărca exercises.json",
+    retry: "Încearcă din nou",
     labelType: "Tip exercițiu",
     labelLevel: "Nivel TOPIK",
     allLevels: "Toate nivelele",
@@ -234,6 +235,7 @@ const UI_TEXT = {
     modeKoRo: "KO → RO / EN",
     modeRoKo: "RO / EN → KO",
     loadError: "Could not load exercises.json",
+    retry: "Try again",
     labelType: "Exercise type",
     labelLevel: "TOPIK Level",
     allLevels: "All levels",
@@ -396,6 +398,7 @@ async function loadExercises(){
 
   try {
     const response = await fetch("./data/exercises.json");
+    if (!response.ok) throw new Error("HTTP " + response.status);
     const data = await response.json();
 
     allExercises = {
@@ -411,10 +414,16 @@ async function loadExercises(){
     render();
   } catch (error) {
     console.error("Exercises load error:", error);
-    questionEl.textContent = t("loadError");
+    questionEl.innerHTML =
+      '<div class="rk-load-error">' +
+      '<p>' + t("loadError") + '</p>' +
+      '<button type="button" id="_retryLoad">' + t("retry") + '</button>' +
+      '</div>';
     helperEl.textContent = "";
     answersEl.innerHTML = "";
     feedbackEl.textContent = "";
+    var rb = document.getElementById("_retryLoad");
+    if (rb) rb.addEventListener("click", loadExercises);
   }
 }
 

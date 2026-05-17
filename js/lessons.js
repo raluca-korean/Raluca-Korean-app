@@ -20,7 +20,8 @@ const UI_TEXT = {
     notes:        "Note",
     practice:     "Exersează această lecție →",
     topik:        "TOPIK",
-    loadError:    "Nu am putut încărca lessons.json"
+    loadError:    "Nu am putut încărca lessons.json",
+    retry:        "Încearcă din nou"
   },
   en: {
     pageTitle:    "TOPIK Lessons",
@@ -31,7 +32,8 @@ const UI_TEXT = {
     notes:        "Notes",
     practice:     "Practice this lesson →",
     topik:        "TOPIK",
-    loadError:    "Could not load lessons.json"
+    loadError:    "Could not load lessons.json",
+    retry:        "Try again"
   }
 };
 
@@ -155,6 +157,7 @@ async function loadLessons(){
 
   try {
     const res  = await fetch("./data/lessons.json");
+    if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     lessons = Array.isArray(data) ? data : [];
     lessons.sort((a,b) => a.topik !== b.topik ? a.topik - b.topik : a.id.localeCompare(b.id));
@@ -163,7 +166,14 @@ async function loadLessons(){
     const first = lessons.find(l => l.topik === currentTopik);
     if(first) selectLesson(first.id);
   } catch(e){
-    contentEl.innerHTML = `<div class="sub">${t("loadError")}</div>`;
+    listEl.innerHTML = "";
+    contentEl.innerHTML =
+      '<div class="rk-load-error">' +
+      '<p>' + t("loadError") + '</p>' +
+      '<button type="button" id="_retryLoad">' + t("retry") + '</button>' +
+      '</div>';
+    var rb = document.getElementById("_retryLoad");
+    if (rb) rb.addEventListener("click", loadLessons);
   }
 }
 

@@ -57,6 +57,7 @@ const UI_TEXT = {
     speak: "🔊 Pronunție",
     refresh: "🔁 Alte cuvinte",
     loadError: "Nu am putut încărca vocab-korean.json",
+    retry: "Încearcă din nou",
     category: "Categorie",
     allCategories: "Toate categoriile",
     favOnly: "⭐ Favorite"
@@ -71,6 +72,7 @@ const UI_TEXT = {
     speak: "🔊 Pronunciation",
     refresh: "🔁 More words",
     loadError: "Could not load vocab-korean.json",
+    retry: "Try again",
     category: "Category",
     allCategories: "All categories",
     favOnly: "⭐ Favorites"
@@ -260,6 +262,7 @@ async function loadVocabulary(){
 
   try {
     const response = await fetch("./data/vocab-korean.json");
+    if (!response.ok) throw new Error("HTTP " + response.status);
     const vocab = await response.json();
 
     WORDS = buildWordsFromVocabulary(vocab);
@@ -269,9 +272,15 @@ async function loadVocabulary(){
     render();
   } catch (error) {
     console.error("Vocabulary load error:", error);
-    dailyCard.innerHTML = `<div class="sub">${t("loadError")}</div>`;
-    countEl.textContent = t("loadError");
-    listEl.innerHTML = "";
+    dailyCard.innerHTML = "";
+    countEl.textContent = "";
+    listEl.innerHTML =
+      '<div class="rk-load-error">' +
+      '<p>' + t("loadError") + '</p>' +
+      '<button type="button" id="_retryLoad">' + t("retry") + '</button>' +
+      '</div>';
+    var rb = document.getElementById("_retryLoad");
+    if (rb) rb.addEventListener("click", loadVocabulary);
   }
 }
 
