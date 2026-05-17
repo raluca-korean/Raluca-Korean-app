@@ -5,348 +5,329 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Raluca Korean — Study App</title>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#db2777">
+<meta name="theme-color" content="#db2877">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./theme-anime.css">
 <style>
-* { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
+*{box-sizing:border-box}
 
-body {
-  font-family: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
-  background:
-    radial-gradient(900px 500px at 15% 10%, rgba(139,92,246,.22), transparent 55%),
-    radial-gradient(900px 500px at 85% 15%, rgba(34,197,94,.14), transparent 55%),
-    radial-gradient(600px 600px at 50% 90%, rgba(219,39,119,.13), transparent 55%),
-    linear-gradient(180deg, #faf5ff, #f0f4ff);
-  color: #1b1630;
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 12px;
+body{
+  margin:0;
+  font-family:'Noto Sans KR',system-ui,-apple-system,sans-serif;
+  background:#f5f5f7;
+  color:#1d1d1f;
+  min-height:100vh;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: -6%;
-  background: url('./flag.svg') center / cover no-repeat;
-  filter: blur(3px);
-  opacity: .45;
-  z-index: 0;
-  pointer-events: none;
+/* Override the anime gradient on this page */
+body.dark-mode{
+  background:#09090b !important;
+  color:#f5f5f7;
 }
 
-body.dark-mode::before { opacity: .10; filter: blur(6px) brightness(.6); }
-
-/* ── LANG BAR ─────────────────────────── */
-.home-lang-bar {
-  position: fixed;
-  top: 14px; right: 16px;
-  display: flex; gap: 6px;
-  z-index: 100;
+/* ── LAYOUT ───────────────────────────── */
+.page{
+  max-width:580px;
+  margin:0 auto;
+  padding:28px 18px 44px;
 }
 
-.home-lang-bar button {
-  padding: 5px 13px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(219,39,119,.25);
-  background: rgba(255,255,255,.90);
-  color: #7c3aed;
-  font-weight: 800; font-size: 12px;
-  cursor: pointer;
-  transition: background .15s, color .15s;
-  backdrop-filter: blur(6px);
+/* ── HEADER ───────────────────────────── */
+.site-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:28px;
 }
 
-.home-lang-bar button.active {
-  background: linear-gradient(135deg,#f472b6,#a855f7,#6366f1);
-  color: #fff; border-color: transparent;
+.logo-lockup{
+  display:flex;
+  align-items:center;
+  gap:13px;
 }
 
-body.dark-mode .home-lang-bar button {
-  background: rgba(32,6,55,.85); color: #f0e8ff;
-  border-color: rgba(244,114,182,.25);
-}
-body.dark-mode .home-lang-bar button.active {
-  background: linear-gradient(135deg,#f472b6,#a855f7,#6366f1);
-  color: #fff;
-}
-
-/* ── BLOB SCENE ──────────────────────── */
-/* container 820×690, centru (410, 345) */
-.blob-scene {
-  position: relative;
-  z-index: 1;
-  width: 820px;
-  height: 690px;
-  flex-shrink: 0;
+.logo-mark{
+  width:48px; height:48px;
+  border-radius:11px;
+  background:linear-gradient(140deg,#7c3aed 0%,#db2877 100%);
+  color:#fff;
+  font-size:16px; font-weight:900;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  letter-spacing:-.5px;
+  user-select:none;
 }
 
-/* ── CENTER — RK oval ────────────────── */
-.blob-center {
-  position: absolute;
-  width: 206px; height: 192px;
-  top: 249px; left: 307px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed 0%, #db2777 55%, #0891b2 100%);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  color: #fff; text-align: center;
-  z-index: 3;
-  box-shadow:
-    0 0 0 14px rgba(139,92,246,.11),
-    0 0 0 28px rgba(219,39,119,.06),
-    0 22px 52px rgba(124,58,237,.46);
-  animation: pop-in .38s cubic-bezier(.34,1.56,.64,1) both;
-  user-select: none;
+.logo-text h1{
+  font-size:22px; font-weight:900;
+  margin:0; line-height:1.15;
+  color:#1d1d1f;
+  letter-spacing:-.4px;
 }
 
-.c-logo  { font-size: 38px; font-weight: 900; line-height: 1; }
-.c-title { font-size: 11px; font-weight: 800; margin-top: 5px; opacity: .90; letter-spacing: .5px; }
-.c-sub   { font-size: 9px; opacity: .60; margin-top: 2px; }
-
-/* ── CATEGORY OVALS ──────────────────── */
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center;
-  color: #fff;
-  z-index: 2;
-  padding: 20px 26px;
-  transition: filter .15s;
-}
-.blob:hover { filter: brightness(1.07); }
-
-/* Fundamentale — near-circle, top-left */
-.blob-1 {
-  width: 262px; height: 258px;
-  top: 22px; left: 28px;
-  background: linear-gradient(150deg,#FF9600,#FF6500);
-  box-shadow: 0 8px 0 #C24E00, 0 14px 32px rgba(255,101,0,.32);
-  animation: pop-in .38s .06s cubic-bezier(.34,1.56,.64,1) both;
+.logo-text p{
+  font-size:12px;
+  color:#86868b;
+  margin:3px 0 0;
+  font-weight:600;
 }
 
-/* Studiu — wide horizontal oval, top-right */
-.blob-2 {
-  width: 322px; height: 246px;
-  top: 18px; left: 474px;
-  background: linear-gradient(150deg,#1CB0F6,#009FDE);
-  box-shadow: 0 8px 0 #007AAB, 0 14px 32px rgba(28,176,246,.30);
-  animation: pop-in .38s .10s cubic-bezier(.34,1.56,.64,1) both;
+.header-controls{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding-top:6px;
+  flex-shrink:0;
 }
 
-/* Practică — horizontal oval, bottom-left */
-.blob-3 {
-  width: 308px; height: 232px;
-  top: 436px; left: 16px;
-  background: linear-gradient(150deg,#58CC02,#3CAD00);
-  box-shadow: 0 8px 0 #258700, 0 14px 32px rgba(88,204,2,.30);
-  animation: pop-in .38s .14s cubic-bezier(.34,1.56,.64,1) both;
+/* ── NAV GRID ─────────────────────────── */
+.nav-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
 }
 
-/* Abilități & Progres — widest oval, bottom-right */
-.blob-4 {
-  width: 344px; height: 238px;
-  top: 432px; left: 458px;
-  background: linear-gradient(150deg,#CE82FF,#A855F7);
-  box-shadow: 0 8px 0 #7C3ACA, 0 14px 32px rgba(168,85,247,.30);
-  animation: pop-in .38s .18s cubic-bezier(.34,1.56,.64,1) both;
+/* ── NAV CARD ─────────────────────────── */
+.nav-card{
+  background:#fff;
+  border:1px solid #e6e6eb;
+  border-radius:12px;
+  border-top:3px solid var(--accent,#aaa);
+  overflow:hidden;
 }
 
-/* ── BLOB CONTENT ────────────────────── */
-.b-icon { font-size: 24px; line-height: 1; margin-bottom: 3px; filter: drop-shadow(0 1px 3px rgba(0,0,0,.20)); }
-.b-name { font-size: 13px; font-weight: 900; margin-bottom: 7px; text-shadow: 0 1px 3px rgba(0,0,0,.18); }
-.b-sep  { width: 75%; height: 1px; background: rgba(255,255,255,.28); margin-bottom: 7px; }
-
-.b-links { display: flex; flex-direction: column; gap: 5px; width: 100%; }
-
-.b-link {
-  display: flex; align-items: center; gap: 6px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.20);
-  color: #fff;
-  text-decoration: none;
-  font-size: 11px; font-weight: 700;
-  transition: background .12s, transform .12s;
+.nav-card-head{
+  padding:13px 14px 10px;
+  display:flex;
+  align-items:center;
+  gap:7px;
 }
-.b-link:hover  { background: rgba(255,255,255,.38); transform: scale(1.05); }
-.b-link:active { transform: scale(.97); }
 
-.b-link-icon { font-size: 12px; line-height: 1; }
-.b-link-name { flex: 1; text-align: left; }
-
-/* ── ANIMATION ────────────────────────── */
-@keyframes pop-in {
-  from { opacity: 0; transform: scale(.78) translateY(10px); }
-  to   { opacity: 1; transform: scale(1)   translateY(0); }
+.nav-card-icon{
+  font-size:17px; line-height:1;
 }
+
+.nav-card-label{
+  font-size:10.5px; font-weight:900;
+  letter-spacing:.65px; text-transform:uppercase;
+  color:var(--accent,#888);
+}
+
+/* ── LINKS ────────────────────────────── */
+.nav-links{
+  border-top:1px solid #f0f0f2;
+}
+
+.nav-link{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  font-size:13.5px; font-weight:700;
+  color:#1d1d1f;
+  text-decoration:none;
+  border-top:1px solid #f0f0f2;
+  transition:background .08s;
+}
+.nav-link:first-child{ border-top:none; }
+.nav-link:hover{ background:#f5f5f7; }
+.nav-link:active{ background:#ebebed; }
+
+.nav-link-icon{ font-size:14px; line-height:1; flex-shrink:0; }
+.nav-link-name{ flex:1; }
+.nav-link-arrow{ color:#c7c7cc; font-size:13px; font-weight:600; flex-shrink:0; }
+
+/* ── STATS FOOTER ─────────────────────── */
+.stats-footer{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0;
+  margin-top:20px;
+  padding-top:16px;
+  border-top:1px solid #e6e6eb;
+}
+
+.mini-stat{
+  font-size:12px; font-weight:600;
+  color:#86868b;
+  padding-right:18px;
+  white-space:nowrap;
+  line-height:1.6;
+}
+
+.mini-stat b{ color:#1d1d1f; font-weight:800; }
 
 /* ── DARK MODE ────────────────────────── */
-body.dark-mode {
-  background:
-    radial-gradient(900px 500px at 15% 10%, rgba(100,0,70,.24), transparent 55%),
-    radial-gradient(900px 500px at 85% 15%, rgba(0,30,80,.18), transparent 55%),
-    linear-gradient(180deg, #0e0020, #060012);
-  color: #f0e8ff;
+body.dark-mode .logo-text h1{ color:#f5f5f7; }
+body.dark-mode .logo-text p { color:#636366; }
+
+body.dark-mode .nav-card{
+  background:#1c1c1e;
+  border-color:#2c2c2e;
 }
 
-/* ── MINI STATS ──────────────────────── */
-#miniStats{
-  position:fixed;
-  bottom:14px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:6px;
-  flex-wrap:nowrap;
-  z-index:50;
-  pointer-events:none;
+body.dark-mode .nav-links{ border-color:#2c2c2e; }
+
+body.dark-mode .nav-link{
+  color:#f5f5f7;
+  border-color:#2c2c2e;
 }
-.mini-stat{
-  padding:4px 12px;
-  border-radius:999px;
-  background:rgba(255,255,255,.80);
-  backdrop-filter:blur(8px);
-  font-size:11px;
-  font-weight:700;
-  color:#7c3aed;
-  border:1.5px solid rgba(139,92,246,.18);
-  white-space:nowrap;
+body.dark-mode .nav-link:hover{ background:#2c2c2e; }
+body.dark-mode .nav-link:active{ background:#3a3a3c; }
+body.dark-mode .nav-link-arrow{ color:#48484a; }
+
+body.dark-mode .stats-footer{ border-color:#2c2c2e; }
+body.dark-mode .mini-stat{ color:#636366; }
+body.dark-mode .mini-stat b{ color:#aeaeb2; }
+
+/* Override injected homeBtn style for this clean page */
+.header-controls .homeBtn{
+  background:#fff !important;
+  border:1px solid #e6e6eb !important;
+  border-bottom:1px solid #e6e6eb !important;
+  border-radius:8px !important;
+  color:#1d1d1f !important;
+  font-size:12px !important; font-weight:700 !important;
+  padding:6px 12px !important;
+  box-shadow:none !important;
 }
-body.dark-mode .mini-stat{
-  background:rgba(20,4,40,.78);
-  color:#d8b4fe;
-  border-color:rgba(167,139,250,.25);
+.header-controls .homeBtn:hover{ background:#f5f5f7 !important; }
+body.dark-mode .header-controls .homeBtn{
+  background:#1c1c1e !important;
+  border-color:#3a3a3c !important;
+  color:#f5f5f7 !important;
 }
 
 /* ── MOBILE ───────────────────────────── */
-@media (max-width: 840px) {
-  body { align-items: flex-start; justify-content: flex-start; padding: 16px 14px 48px; }
-
-  .blob-scene {
-    width: 100%; height: auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .blob-center {
-    position: static;
-    width: 100%; height: auto;
-    border-radius: 24px;
-    padding: 18px 20px;
-    grid-column: 1 / -1;
-    flex-direction: row; gap: 12px;
-    justify-content: flex-start; text-align: left;
-    animation: none;
-    box-shadow: 0 12px 32px rgba(124,58,237,.28);
-  }
-
-  .blob {
-    position: static;
-    width: 100%; height: auto;
-    border-radius: 28px !important;
-    padding: 16px;
-    animation: none;
-  }
+@media(max-width:460px){
+  .page{ padding:20px 14px 36px; }
+  .nav-grid{ grid-template-columns:1fr; }
+  .nav-link{ font-size:14.5px; padding:12px 14px; }
 }
 </style>
 </head>
 
 <body>
+<div class="page">
 
-<div class="home-lang-bar" id="pageControls" data-no-home></div>
-
-<div class="blob-scene">
-
-  <!-- CENTER -->
-  <div class="blob-center">
-    <div class="c-logo">RK</div>
-    <div class="c-title">Raluca Korean</div>
-    <div class="c-sub">Study App</div>
-  </div>
-
-  <!-- 1 · Fundamentale — top-left -->
-  <div class="blob blob-1">
-    <div class="b-icon">가</div>
-    <div class="b-name" data-ro="Fundamentale" data-en="Fundamentals"></div>
-    <div class="b-sep"></div>
-    <div class="b-links">
-      <a href="hangul.html" class="b-link">
-        <span class="b-link-icon">가</span>
-        <span class="b-link-name">Hangul</span>
-      </a>
-      <a href="hanja-book.html" class="b-link">
-        <span class="b-link-icon">📖</span>
-        <span class="b-link-name">Hanja Book</span>
-      </a>
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="logo-lockup">
+      <div class="logo-mark">RK</div>
+      <div class="logo-text">
+        <h1>Raluca Korean</h1>
+        <p data-ro="Aplicație de studiu · TOPIK I–VI" data-en="Study App · TOPIK I–VI">Aplicație de studiu · TOPIK I–VI</p>
+      </div>
     </div>
+    <div class="header-controls" id="pageControls" data-no-home></div>
+  </header>
+
+  <!-- NAV GRID -->
+  <div class="nav-grid">
+
+    <!-- Fundamentale -->
+    <div class="nav-card" style="--accent:#FF9600">
+      <div class="nav-card-head">
+        <span class="nav-card-icon">가</span>
+        <span class="nav-card-label" data-ro="Fundamentale" data-en="Fundamentals">Fundamentale</span>
+      </div>
+      <div class="nav-links">
+        <a href="hangul.html" class="nav-link">
+          <span class="nav-link-icon">가</span>
+          <span class="nav-link-name">Hangul</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+        <a href="hanja-book.html" class="nav-link">
+          <span class="nav-link-icon">📖</span>
+          <span class="nav-link-name">Hanja Book</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Studiu -->
+    <div class="nav-card" style="--accent:#1CB0F6">
+      <div class="nav-card-head">
+        <span class="nav-card-icon">📗</span>
+        <span class="nav-card-label" data-ro="Studiu" data-en="Study">Studiu</span>
+      </div>
+      <div class="nav-links">
+        <a href="lessons.html" class="nav-link">
+          <span class="nav-link-icon">📗</span>
+          <span class="nav-link-name">Lessons</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+        <a href="glossary.html" class="nav-link">
+          <span class="nav-link-icon">📚</span>
+          <span class="nav-link-name">Glossary</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+        <a href="flashcards.html" class="nav-link">
+          <span class="nav-link-icon">🃏</span>
+          <span class="nav-link-name">Flashcards</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Practică -->
+    <div class="nav-card" style="--accent:#58CC02">
+      <div class="nav-card-head">
+        <span class="nav-card-icon">📝</span>
+        <span class="nav-card-label" data-ro="Practică" data-en="Practice">Practică</span>
+      </div>
+      <div class="nav-links">
+        <a href="exercises.html" class="nav-link">
+          <span class="nav-link-icon">📝</span>
+          <span class="nav-link-name">Exercises</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+        <a href="builder.html" class="nav-link">
+          <span class="nav-link-icon">🏗️</span>
+          <span class="nav-link-name">Builder</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+        <a href="drill.html" class="nav-link">
+          <span class="nav-link-icon">🔥</span>
+          <span class="nav-link-name">Drill</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Abilități -->
+    <div class="nav-card" style="--accent:#CE82FF">
+      <div class="nav-card-head">
+        <span class="nav-card-icon">🎙</span>
+        <span class="nav-card-label" data-ro="Abilități" data-en="Skills">Abilități</span>
+      </div>
+      <div class="nav-links">
+        <a href="pronunciation.html" class="nav-link">
+          <span class="nav-link-icon">🎙</span>
+          <span class="nav-link-name">Speaking</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+        <a href="writing.html" class="nav-link">
+          <span class="nav-link-icon">✏️</span>
+          <span class="nav-link-name">Writing</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+        <a href="stats.html" class="nav-link">
+          <span class="nav-link-icon">📊</span>
+          <span class="nav-link-name">Statistics</span>
+          <span class="nav-link-arrow">›</span>
+        </a>
+      </div>
+    </div>
+
   </div>
 
-  <!-- 2 · Studiu — top-right -->
-  <div class="blob blob-2">
-    <div class="b-icon">📗</div>
-    <div class="b-name" data-ro="Studiu" data-en="Study"></div>
-    <div class="b-sep"></div>
-    <div class="b-links">
-      <a href="lessons.html" class="b-link">
-        <span class="b-link-icon">📗</span>
-        <span class="b-link-name">Lessons</span>
-      </a>
-      <a href="glossary.html" class="b-link">
-        <span class="b-link-icon">📚</span>
-        <span class="b-link-name">Glossary</span>
-      </a>
-      <a href="flashcards.html" class="b-link">
-        <span class="b-link-icon">🃏</span>
-        <span class="b-link-name">Flashcards</span>
-      </a>
-    </div>
-  </div>
-
-  <!-- 3 · Practică — bottom-left -->
-  <div class="blob blob-3">
-    <div class="b-icon">🎯</div>
-    <div class="b-name" data-ro="Practică" data-en="Practice"></div>
-    <div class="b-sep"></div>
-    <div class="b-links">
-      <a href="exercises.html" class="b-link">
-        <span class="b-link-icon">📝</span>
-        <span class="b-link-name">Exercises</span>
-      </a>
-      <a href="builder.html" class="b-link">
-        <span class="b-link-icon">🏗️</span>
-        <span class="b-link-name">Builder</span>
-      </a>
-    </div>
-  </div>
-
-  <!-- 4 · Abilități & Progres — bottom-right -->
-  <div class="blob blob-4">
-    <div class="b-icon">🎙</div>
-    <div class="b-name" data-ro="Abilități & Progres" data-en="Skills & Progress"></div>
-    <div class="b-sep"></div>
-    <div class="b-links">
-      <a href="pronunciation.html" class="b-link">
-        <span class="b-link-icon">🎙</span>
-        <span class="b-link-name">Speaking</span>
-      </a>
-      <a href="writing.html" class="b-link">
-        <span class="b-link-icon">✏️</span>
-        <span class="b-link-name">Writing</span>
-      </a>
-    </div>
-  </div>
+  <!-- STATS FOOTER -->
+  <div class="stats-footer" id="miniStats" style="display:none"></div>
 
 </div>
-
-<div id="miniStats"></div>
 
 <script src="./js/core/lang-picker.js"></script>
 <script>
@@ -362,12 +343,13 @@ function renderMiniStats(lang) {
   if(!el) return;
   var s;
   try { s = JSON.parse(localStorage.getItem('RK_STATS') || 'null'); } catch(e){ s = null; }
-  if(!s || s.total === 0){ el.innerHTML = ''; return; }
+  if(!s || s.total === 0){ el.style.display = 'none'; return; }
   var favCount = (JSON.parse(localStorage.getItem('FAV_WORDS') || '[]')).length;
   var today = new Date().toISOString().slice(0, 10);
   var todayEx = s.today === today ? s.todayTotal : 0;
   var pct = s.total ? Math.round(s.correct / s.total * 100) : 0;
   var L = STATS_LABELS[lang];
+  el.style.display = '';
   el.innerHTML =
     '<span class="mini-stat">' + L.today + ': <b>' + todayEx + '</b></span>' +
     '<span class="mini-stat">' + L.acc   + ': <b>' + pct + '%</b></span>' +
