@@ -139,7 +139,7 @@ function shuffle(array){
 }
 
 function getFavs(){
-  return JSON.parse(localStorage.getItem("FAV_WORDS") || "[]");
+  return JSON.parse(localStorage.getItem("RK_FAV_WORDS") || "[]");
 }
 
 function getLearned(){
@@ -170,7 +170,7 @@ function toggleFav(ko){
     ? favs.filter(item => item !== ko)
     : [...favs, ko];
 
-  localStorage.setItem("FAV_WORDS", JSON.stringify(nextFavs));
+  localStorage.setItem("RK_FAV_WORDS", JSON.stringify(nextFavs));
   render();
   renderDailyView();
 }

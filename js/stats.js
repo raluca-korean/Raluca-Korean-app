@@ -39,8 +39,8 @@ const UI = {
 
 const BACKUP_KEYS = [
   "RK_STATS","RK_LESSON_DONE","RK_LEARNED_EX",
-  "FAV_WORDS","FC_SRS","FC_SORT","FC_STATS",
-  "HJ_LEARNED","RK_LEARNED","RK_LEVEL","RK_LANG","RK_THEME"
+  "RK_FAV_WORDS","RK_FC_SRS","RK_FC_SORT","RK_FC_STATS",
+  "RK_HJ_LEARNED","RK_LEARNED","RK_LEVEL","RK_LANG","RK_THEME"
 ];
 
 function t(k){ return UI[currentLang][k]; }
@@ -100,7 +100,7 @@ function render(){
 
   let s;
   try { s = JSON.parse(localStorage.getItem("RK_STATS") || "null"); } catch(e){ s = null; }
-  const favCount = (JSON.parse(localStorage.getItem("FAV_WORDS") || "[]")).length;
+  const favCount = (JSON.parse(localStorage.getItem("RK_FAV_WORDS") || "[]")).length;
   const el = document.getElementById("mainStats");
 
   let statsHtml;

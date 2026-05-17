@@ -13,7 +13,7 @@
  * that a restored backup triggers re-migration on the next page load.
  */
 (function () {
-  var CURRENT = 2;
+  var CURRENT = 3;
 
   /* ── v1 → v2 ────────────────────────────────────────────────────────
      RK_STATS gained a `byType` object for per-type accuracy tracking.
@@ -29,11 +29,36 @@
     } catch(e) {}
   }
 
+  /* ── v2 → v3 ────────────────────────────────────────────────────────
+     Standardised all keys to RK_ prefix.
+     Old keys are copied to the new name then deleted.
+  */
+  function migrateV2toV3() {
+    var renames = [
+      ['FAV_WORDS',  'RK_FAV_WORDS'],
+      ['FC_SRS',     'RK_FC_SRS'],
+      ['FC_SORT',    'RK_FC_SORT'],
+      ['FC_STATS',   'RK_FC_STATS'],
+      ['HJ_LEARNED', 'RK_HJ_LEARNED'],
+      ['vocab_user', 'RK_VOCAB_USER']
+    ];
+    renames.forEach(function(pair) {
+      try {
+        var val = localStorage.getItem(pair[0]);
+        if (val !== null) {
+          localStorage.setItem(pair[1], val);
+          localStorage.removeItem(pair[0]);
+        }
+      } catch(e) {}
+    });
+  }
+
   function run() {
     try {
       var ver = parseInt(localStorage.getItem('RK_SCHEMA_VER') || '1', 10);
       if (ver >= CURRENT) return;
       if (ver < 2) migrateV1toV2();
+      if (ver < 3) migrateV2toV3();
       localStorage.setItem('RK_SCHEMA_VER', String(CURRENT));
     } catch(e) {}
   }

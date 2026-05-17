@@ -14,8 +14,8 @@ const NEW_PER_SESSION = 20;
 
 // ── State ───────────────────────────────────────────────
 let currentLang = RKLang.get();
-let sortMode    = localStorage.getItem("FC_SORT") || "srs";
-let FC_STATS    = JSON.parse(localStorage.getItem("FC_STATS") || "{}");
+let sortMode    = localStorage.getItem("RK_FC_SORT") || "srs";
+let FC_STATS    = JSON.parse(localStorage.getItem("RK_FC_STATS") || "{}");
 let WORDS       = [];
 let deck        = [];
 let lapQueue    = [];
@@ -68,7 +68,7 @@ const UI = {
 function t(k){ return UI[currentLang][k] || k; }
 
 // ── SM-2 ────────────────────────────────────────────────
-const SRS_KEY = "FC_SRS";
+const SRS_KEY = "RK_FC_SRS";
 
 function srsLoad() {
   try { return JSON.parse(localStorage.getItem(SRS_KEY) || "{}"); } catch { return {}; }
@@ -138,7 +138,7 @@ function srsNextLabel(date) {
 function getMeaning(w){ return currentLang === "ro" ? w.ro : w.en; }
 function getCat(w){ return currentLang === "ro" ? (w.categoriesRo||[])[0] : (w.categoriesEn||[])[0]; }
 function getWordColor(w){ const c = getCat(w); return c ? (ROLE_COLORS[c] || null) : null; }
-function getFavs(){ return JSON.parse(localStorage.getItem("FAV_WORDS") || "[]"); }
+function getFavs(){ return JSON.parse(localStorage.getItem("RK_FAV_WORDS") || "[]"); }
 
 function diffScore(ko){
   const s = FC_STATS[ko];
@@ -309,7 +309,7 @@ function answer(knows){
   if(word){
     if(!FC_STATS[word.ko]) FC_STATS[word.ko] = {c:0, w:0};
     if(knows) FC_STATS[word.ko].c++; else FC_STATS[word.ko].w++;
-    localStorage.setItem("FC_STATS", JSON.stringify(FC_STATS));
+    localStorage.setItem("RK_FC_STATS", JSON.stringify(FC_STATS));
 
     if(sortMode === "srs"){
       srsUpdate(word.ko, knows ? 4 : 1);
@@ -420,7 +420,7 @@ function setLang(lang){
 }
 function setSortMode(mode){
   sortMode = mode;
-  localStorage.setItem("FC_SORT", mode);
+  localStorage.setItem("RK_FC_SORT", mode);
   updateSortBtns(); buildDeck(); renderFC();
 }
 

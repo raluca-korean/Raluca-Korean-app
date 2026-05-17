@@ -1002,7 +1002,7 @@ const DATA = [
 ];
 
 let idx = 0;
-let learned = JSON.parse(localStorage.getItem("HJ_LEARNED") || "[]");
+let learned = JSON.parse(localStorage.getItem("RK_HJ_LEARNED") || "[]");
 let lang = RKLang.get();
 
 const UI = {
@@ -1139,7 +1139,7 @@ function navigate(dir){
 
 function markLearned(){
   if(!learned.includes(idx)) learned.push(idx);
-  localStorage.setItem("HJ_LEARNED", JSON.stringify(learned));
+  localStorage.setItem("RK_HJ_LEARNED", JSON.stringify(learned));
   renderPage(false);
 }
 

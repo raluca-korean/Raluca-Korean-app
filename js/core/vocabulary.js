@@ -199,12 +199,12 @@ window.Vocabulary = {
   // STORAGE
   // =====================
   saveUserData(){
-    localStorage.setItem("vocab_user", JSON.stringify(this.data));
+    localStorage.setItem("RK_VOCAB_USER", JSON.stringify(this.data));
   },
 
   loadUserData(){
 
-    const saved = localStorage.getItem("vocab_user");
+    const saved = localStorage.getItem("RK_VOCAB_USER");
     if(saved){
       this.data = JSON.parse(saved);
     }
