@@ -1083,6 +1083,95 @@
   .lang-picker button{padding:6px 14px;font-size:13px;border-radius:8px;border:none;font-weight:800;cursor:pointer;background:transparent;color:var(--text);}
   .lang-picker button.active{background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1) !important;color:#fff !important;}
   body.dark-mode .lang-picker{background:#16213e !important;border-color:#2a2a4a !important}
+
+  .savedPanel{ display:none }
+  .savedPanel.has-items{ display:block }
+
+  .savedHeader{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+
+  .savedTitle{
+    font-size:13px;
+    font-weight:900;
+    color:var(--muted);
+  }
+
+  .savedList{
+    display:grid;
+    gap:8px;
+  }
+
+  .savedItem{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:12px 14px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1.5px solid #e5e5e5;
+    border-bottom:3px solid #d0d0d0;
+  }
+
+  .savedItemText{
+    flex:1;
+    min-width:0;
+  }
+
+  .savedItemKo{
+    font-size:16px;
+    font-weight:900;
+    background:linear-gradient(135deg,#db2777,#7c3aed);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    margin-bottom:3px;
+    line-height:1.3;
+  }
+
+  .savedItemTr{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:700;
+    line-height:1.3;
+  }
+
+  .savedItemDel{
+    flex-shrink:0;
+    width:28px;
+    height:28px;
+    border-radius:8px;
+    border:1px solid #e5e5e5;
+    background:#f1f5f9;
+    color:#94a3b8;
+    cursor:pointer;
+    font-size:14px;
+    font-weight:900;
+    display:grid;
+    place-items:center;
+    line-height:1;
+    transition:background .15s, color .15s;
+  }
+
+  .savedItemDel:hover{
+    background:#fee2e2;
+    color:#ef4444;
+    border-color:#fca5a5;
+  }
+
+  body.dark-mode .savedItem{
+    background:#1e1b4b;
+    border-color:#312e81;
+  }
+
+  body.dark-mode .savedItemDel{
+    background:#1e1b4b;
+    border-color:#312e81;
+    color:#818cf8;
+  }
 </style>
 
 </head><body>
@@ -1146,6 +1235,7 @@
           <button class="iconBtn" id="playBtn" type="button" title="Ascultă propoziția" aria-label="Ascultă propoziția">🔊</button>
           <button class="iconBtn" id="recordBtn" type="button" title="Înregistrează vocea" aria-label="Înregistrează vocea">🎤</button>
           <button class="iconBtn" id="autoSpeakBtn" type="button" title="Auto-pronunție: OFF" aria-label="Auto-pronunție">🔈</button>
+          <button class="iconBtn" id="saveBtn" type="button" title="Salvează propoziția" aria-label="Salvează propoziția">💾</button>
         </div>
       </div>
 
@@ -1167,6 +1257,16 @@
         <div class="recordedLabel">Înregistrarea ta</div>
         <audio id="recordedAudio" controls playsinline></audio>
       </div>
+    </section>
+
+    <section class="panel savedPanel" id="savedPanel">
+      <div class="savedHeader">
+        <span class="savedTitle" id="savedTitle">Propoziții salvate</span>
+        <div class="savedActions">
+          <button class="tinyBtn" id="exportBtn" type="button">⬇ .txt</button>
+        </div>
+      </div>
+      <div class="savedList" id="savedList"></div>
     </section>
 
     <section class="panel">
@@ -1198,7 +1298,11 @@
       recordStart: "Înregistrare pornită.",
       recordStop: "Înregistrare oprită. Poți asculta mai jos.",
       recordUnsupported: "Înregistrarea audio nu este disponibilă pe acest browser.",
-      recordedLabel: "Înregistrarea ta"
+      recordedLabel: "Înregistrarea ta",
+      noSentenceToSave: "Nicio propoziție de salvat.",
+      alreadySaved: "Deja salvat ✓",
+      saved: "Salvat ✓",
+      savedTitle: "Propoziții salvate"
     },
     en: {
       placeholder: "Type a sentence or a chain of sentences here...",
@@ -1207,7 +1311,11 @@
       recordStart: "Recording started.",
       recordStop: "Recording stopped. You can listen below.",
       recordUnsupported: "Audio recording is not available on this browser.",
-      recordedLabel: "Your recording"
+      recordedLabel: "Your recording",
+      noSentenceToSave: "No sentence to save.",
+      alreadySaved: "Already saved ✓",
+      saved: "Saved ✓",
+      savedTitle: "Saved sentences"
     }
   };
 
@@ -1726,6 +1834,7 @@
     recordBox: document.getElementById('recordBox'),
     recordedAudio: document.getElementById('recordedAudio'),
     autoSpeakBtn: document.getElementById('autoSpeakBtn'),
+    saveBtn: document.getElementById('saveBtn'),
     templateMenu: document.getElementById('templateMenu'),
     templateDropdown: document.getElementById('templateDropdown'),
     templateSummaryText: document.getElementById('templateSummaryText')
@@ -1786,6 +1895,88 @@
       clearTimeout(_wordSpeakTimer);
       clearTimeout(_sentenceSpeakTimer);
     }
+  }
+
+  /* ============================================================
+     SAVED SENTENCES
+  ============================================================ */
+  var SAVED_KEY = 'RK_SAVED_SENTENCES';
+  var savedSentences = [];
+
+  function loadSavedSentences(){
+    try{
+      var raw = localStorage.getItem(SAVED_KEY);
+      if(raw) savedSentences = JSON.parse(raw);
+    }catch(e){ savedSentences = []; }
+  }
+
+  function persistSaved(){
+    try{ localStorage.setItem(SAVED_KEY, JSON.stringify(savedSentences)); }catch(e){}
+  }
+
+  function renderSavedPanel(){
+    var panel = document.getElementById('savedPanel');
+    var list  = document.getElementById('savedList');
+    var title = document.getElementById('savedTitle');
+    if(!panel || !list) return;
+
+    if(!savedSentences.length){
+      panel.classList.remove('has-items');
+      return;
+    }
+
+    panel.classList.add('has-items');
+    if(title) title.textContent = currentUI().savedTitle + ' (' + savedSentences.length + ')';
+
+    list.innerHTML = savedSentences.map(function(s, i){
+      return '<div class="savedItem">' +
+        '<div class="savedItemText">' +
+          '<div class="savedItemKo">' + escapeHtml(s.ko) + '</div>' +
+          (s.tr ? '<div class="savedItemTr">' + escapeHtml(s.tr) + '</div>' : '') +
+        '</div>' +
+        '<button class="savedItemDel" type="button" data-del-idx="' + i + '" title="Șterge">×</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  function addCurrentSentence(){
+    var built = buildFullOutput();
+    if(!built.korean){
+      showToast(currentUI().noSentenceToSave);
+      return;
+    }
+    for(var i=0; i<savedSentences.length; i++){
+      if(savedSentences[i].ko === built.korean){
+        showToast(currentUI().alreadySaved);
+        return;
+      }
+    }
+    savedSentences.unshift({ ko: built.korean, tr: built.translation || '', ts: Date.now() });
+    persistSaved();
+    renderSavedPanel();
+    showToast(currentUI().saved);
+  }
+
+  function deleteSavedSentence(idx){
+    savedSentences.splice(idx, 1);
+    persistSaved();
+    renderSavedPanel();
+  }
+
+  function exportSentencesAsTxt(){
+    if(!savedSentences.length) return;
+    var lines = savedSentences.map(function(s, i){
+      return (i + 1) + '. ' + s.ko + (s.tr ? '\n   ' + s.tr : '');
+    }).join('\n\n');
+    var blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'raluca-korean.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   var pickerState = {
@@ -2805,6 +2996,7 @@
     state.lang = lang === 'en' ? 'en' : 'ro';
     localStorage.setItem('RK_LANG', state.lang);
     renderTemplateMenu();
+    renderSavedPanel();
     renderAll();
   }
 
@@ -3544,6 +3736,12 @@
       els.autoSpeakBtn.addEventListener('click', toggleAutoSpeak);
     }
 
+    var _saveBtn = document.getElementById('saveBtn');
+    if(_saveBtn) _saveBtn.addEventListener('click', addCurrentSentence);
+
+    var _exportBtn = document.getElementById('exportBtn');
+    if(_exportBtn) _exportBtn.addEventListener('click', exportSentencesAsTxt);
+
     if(els.sentenceBox){
       els.sentenceBox.addEventListener('click', playCurrent);
       els.sentenceBox.addEventListener('keydown', function(e){
@@ -3631,6 +3829,12 @@
       var pickBtn = event.target.closest('[data-vocab-index]');
       if(pickBtn){
         pickVocabItem(Number(pickBtn.getAttribute('data-vocab-index')));
+        return;
+      }
+
+      var delBtn = event.target.closest('[data-del-idx]');
+      if(delBtn){
+        deleteSavedSentence(Number(delBtn.getAttribute('data-del-idx')));
       }
     });
 
@@ -3649,6 +3853,7 @@
 
   function init(){
     loadWordUsage();
+    loadSavedSentences();
     ensureVocabSheet();
     bindEvents();
     resetBuilder();
@@ -3656,6 +3861,7 @@
     setLang(localStorage.getItem('RK_LANG') || 'ro');
     updateAutoSpeakBtn();
     renderTemplateMenu();
+    renderSavedPanel();
 
     window.ralucaBuilderState = state;
     window.ralucaBuilderRender = renderAll;
