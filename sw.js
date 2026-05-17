@@ -1,4 +1,4 @@
-const CACHE = 'rk-v12';
+const CACHE = 'rk-v13';
 
 const STATIC = [
   './',
@@ -11,10 +11,12 @@ const STATIC = [
   './stats.html',
   './theme-anime.css',
   './builder.css',
+  './hanja-book.css',
   './flag.svg',
   './manifest.json',
   './icons/icon.svg',
   './js/builder.js',
+  './js/hanja-book.js',
   './js/core/audio.js',
   './js/core/conjugation.js',
   './js/core/dark-mode.js',
