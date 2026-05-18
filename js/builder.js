@@ -337,7 +337,7 @@
       {ko:'많이', ro:'mult', en:'a lot', aliases:['mult','multa','multă','a lot','very much','much','lots']},
       {ko:'행복하게', ro:'cu bucurie', en:'happily', aliases:['happily','cu bucurie','cu fericire','in mod fericit']},
       {ko:'슬프게', ro:'cu tristețe', en:'sadly', aliases:['sadly','cu tristete','cu tristețe','in mod trist']},
-      {ko:'화나게', ro:'supărat', en:'angrily', aliases:['suparat','supărată','supărat','angry','angrily','furios','furioasa','furioasă']},
+      {ko:'화나게', ro:'cu furie', en:'angrily', aliases:['angrily','cu furie','cu manie','in mod furios']},
       {ko:'피곤하게', ro:'cu oboseală', en:'tiredly', aliases:['tiredly','cu oboseala','cu oboseală','exhaustedly']},
       {ko:'눈이 큰', ro:'cu ochii mari', en:'with big eyes', modifiesSubject:true, aliases:['cu ochii mari','cu ochi mari','ochii mari','ochi mari','with big eyes','big eyes','big-eyed']},
       {ko:'머리가 긴', ro:'cu părul lung', en:'with long hair', modifiesSubject:true, aliases:['cu parul lung','cu părul lung','parul lung','părul lung','with long hair','long hair']},
@@ -425,6 +425,7 @@
       {ko:'바꾸다', ro:'a schimba', en:'to change', aliases:['schimb','schimbi','schimba','schimbam','schimbat','am schimbat','s-a schimbat','voi schimba','schimbă','schimbăm','change','changes','changed','alter','modify','will change'], final:'바꿔요', forms:{none:'바꿔요',seq:'바꾸고',cause1:'바꿔서',cause2:'바꾸니까',condition:'바꾸면',contrast1:'바꾸지만',contrast2:'바꾸는데',purpose:'바꾸려고',result:'바꾸게 되다'}},
       {ko:'결정하다', ro:'a decide', en:'to decide', aliases:['decid','decizi','decide','decidem','decis','am decis','a decis','voi decide','hotarasc','hotărăsc','hotarat','hotărât','am hotarat','am hotărât','decide','decides','decided','choosing','will decide'], final:'결정해요', forms:{none:'결정해요',seq:'결정하고',cause1:'결정해서',cause2:'결정하니까',condition:'결정하면',contrast1:'결정하지만',contrast2:'결정하는데',purpose:'결정하려고',result:'결정하게 되다'}},
       {ko:'기쁘다', ro:'a fi fericit', en:'to be happy', aliases:['bucuros','bucuroasa','bucuroasă','fericita','fericită','fericit','sunt fericit','sunt fericita','sunt fericită','sunt bucuros','sunt bucuroasa','sunt bucuroasă','esti fericit','ești fericit','esti bucuros','ești bucuroasă','happy','glad','joyful','am happy','are happy','is happy'], final:'기뻐요', forms:{none:'기뻐요',seq:'기쁘고',cause1:'기뻐서',cause2:'기쁘니까',condition:'기쁘면',contrast1:'기쁘지만',contrast2:'기쁜데',purpose:'기쁘게',result:'기쁘게 되다'}},
+      {ko:'화나다', ro:'a fi supărat', en:'to be angry', aliases:['suparat','suparata','supărată','supărat','iritat','iritata','iritată','nervos','nervoasa','nervoasă','sunt suparat','sunt suparata','sunt supărată','esti suparat','ești supărată','angry','mad','upset','annoyed','furious','am angry','am upset','is angry','are angry'], final:'화나요', forms:{none:'화나요',seq:'화나고',cause1:'화나서',cause2:'화나니까',condition:'화나면',contrast1:'화나지만',contrast2:'화나는데',purpose:'화나려고',result:'화나게 되다'}},
       {ko:'슬프다', ro:'a fi trist', en:'to be sad', aliases:['trist','trista','tristă','trists','sunt trist','sunt trista','sunt tristă','esti trist','ești tristă','sad','unhappy','am sad','is sad','are sad'], final:'슬퍼요', forms:{none:'슬퍼요',seq:'슬프고',cause1:'슬퍼서',cause2:'슬프니까',condition:'슬프면',contrast1:'슬프지만',contrast2:'슬픈데',purpose:'슬프게',result:'슬프게 되다'}},
       {ko:'피곤하다', ro:'a fi obosit', en:'to be tired', aliases:['obosit','obosita','obosită','sunt obosit','sunt obosita','sunt obosită','esti obosit','ești obosită','tired','exhausted','am tired','is tired','are tired'], final:'피곤해요', forms:{none:'피곤해요',seq:'피곤하고',cause1:'피곤해서',cause2:'피곤하니까',condition:'피곤하면',contrast1:'피곤하지만',contrast2:'피곤한데',purpose:'피곤하게',result:'피곤하게 되다'}},
       {ko:'안녕하세요', ro:'Bună ziua', en:'Hello', isPhrase:true, aliases:['buna ziua','salut','hello','buna','good afternoon','good day'], final:'안녕하세요', forms:{none:'안녕하세요',seq:'안녕하세요',cause1:'안녕하세요',cause2:'안녕하세요',condition:'안녕하세요',contrast1:'안녕하세요',contrast2:'안녕하세요',purpose:'안녕하세요',result:'안녕하세요'}},
@@ -544,6 +545,7 @@
     '바꾸다':   {ro:{i:'schimb',you_sg:'schimbi',you_pl:'schimbați',we:'schimbăm',third:'schimbă',third_pl:'schimbă'}, en:{i:'change',you_sg:'change',you_pl:'change',we:'change',third:'changes',third_pl:'change'}},
     '결정하다': {ro:{i:'decid',you_sg:'decizi',you_pl:'decideți',we:'decidem',third:'decide',third_pl:'decid'}, en:{i:'decide',you_sg:'decide',you_pl:'decide',we:'decide',third:'decides',third_pl:'decide'}},
     '기쁘다':   {ro:{i:'sunt fericit',you_sg:'ești fericit',you_pl:'sunteți fericiți',we:'suntem fericiți',third:'este fericit',third_pl:'sunt fericiți'}, en:{i:'am happy',you_sg:'are happy',you_pl:'are happy',we:'are happy',third:'is happy',third_pl:'are happy'}},
+    '화나다':   {ro:{i:'sunt supărat',you_sg:'ești supărat',you_pl:'sunteți supărați',we:'suntem supărați',third:'este supărat',third_pl:'sunt supărați'}, en:{i:'am angry',you_sg:'are angry',you_pl:'are angry',we:'are angry',third:'is angry',third_pl:'are angry'}},
     '슬프다':   {ro:{i:'sunt trist',you_sg:'ești trist',you_pl:'sunteți triști',we:'suntem triști',third:'este trist',third_pl:'sunt triști'}, en:{i:'am sad',you_sg:'are sad',you_pl:'are sad',we:'are sad',third:'is sad',third_pl:'are sad'}},
     '피곤하다': {ro:{i:'sunt obosit',you_sg:'ești obosit',you_pl:'sunteți obosiți',we:'suntem obosiți',third:'este obosit',third_pl:'sunt obosiți'}, en:{i:'am tired',you_sg:'are tired',you_pl:'are tired',we:'are tired',third:'is tired',third_pl:'are tired'}}
   };
@@ -589,6 +591,7 @@
     '바꾸다':   {roPart:'schimbat',  roBase:'schimba',   enPast:'changed',    refl:false},
     '결정하다': {roPart:'decis',     roBase:'decide',    enPast:'decided',    refl:false},
     '기쁘다':   {roPart:'fericit',   roBase:'fi fericit', enPast:'was happy',  refl:false},
+    '화나다':   {roPart:'suparat',   roBase:'fi suparat', enPast:'was angry',  refl:false},
     '슬프다':   {roPart:'trist',     roBase:'fi trist',   enPast:'was sad',    refl:false},
     '피곤하다': {roPart:'obosit',    roBase:'fi obosit',  enPast:'was tired',  refl:false}
   };
@@ -2019,8 +2022,8 @@
 
   function findBestMatch(fieldKey, text){
     var options = getOptionsForField(fieldKey);
-    var normalizedText = normalizeLatin(text);
-    if(!normalizedText) return null;
+    var normalizedText = ' ' + normalizeLatin(text) + ' ';
+    if(!normalizedText.trim()) return null;
 
     var best = null;
     var bestLen = 0;
@@ -2031,7 +2034,7 @@
 
       for(var j=0;j<candidates.length;j++){
         var candidate = normalizeLatin(candidates[j]);
-        if(candidate && normalizedText.indexOf(candidate) !== -1 && candidate.length > bestLen){
+        if(candidate && normalizedText.indexOf(' ' + candidate + ' ') !== -1 && candidate.length > bestLen){
           best = item;
           bestLen = candidate.length;
         }
