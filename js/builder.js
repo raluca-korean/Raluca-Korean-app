@@ -1481,8 +1481,8 @@
       if(cKey === 'cause2')    return conj.connector(verb.ko, '-(으)니까');
       if(cKey === 'contrast1') return conj.connector(verb.ko, '-지만');
       if(cKey === 'contrast2') return conj.connector(verb.ko, '-(으)ㄴ/는데');
-      if(cKey === 'condition') return conj.hasBatchim(stem) ? stem + '으면' : stem + '면';
-      if(cKey === 'purpose')        return conj.hasBatchim(stem) ? stem + '으려고' : stem + '려고';
+      if(cKey === 'condition') return conj.euOrNot(stem) ? stem + '으면' : stem + '면';
+      if(cKey === 'purpose')        return conj.euOrNot(stem) ? stem + '으려고' : stem + '려고';
       if(cKey === 'result')         return conj.aeo(verb.ko) + '서 그렇게 되다';
       // TOPIK 1
       if(cKey === 'while')          return conj.connector(verb.ko, '-(으)면서');
@@ -1519,11 +1519,11 @@
     if(cKey === 'tense_mustnot'){
       if(!conj) return verb.final || verb.ko;
       var sm = conj.stem(verb.ko);
-      return (conj.hasBatchim(sm) ? sm + '으면' : sm + '면') + ' 안 돼요';
+      return (conj.euOrNot(sm) ? sm + '으면' : sm + '면') + ' 안 돼요';
     }
     if(cKey === 'tense_intention'){
       var s2 = conj ? conj.stem(verb.ko) : '';
-      return s2 ? (conj.hasBatchim(s2) ? s2 + '으려고 해요' : s2 + '려고 해요') : (verb.final || verb.ko);
+      return s2 ? (conj.euOrNot(s2) ? s2 + '으려고 해요' : s2 + '려고 해요') : (verb.final || verb.ko);
     }
     if(cKey === 'tense_can')     return conj ? conj.future(verb.ko).replace('거예요', '수 있어요') : (verb.final || verb.ko);
     if(cKey === 'tense_cannot')  return conj ? conj.future(verb.ko).replace('거예요', '수 없어요') : (verb.final || verb.ko);

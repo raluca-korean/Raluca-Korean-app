@@ -28,6 +28,14 @@ window.Conjugation = {
     return (code - 44032) % 28 !== 0;
   },
 
+  // Returns true only when 으 is needed: has batchim AND it's NOT ㄹ (jong=8).
+  // ㄹ-irregular verbs (만들다, 알다, 울다) drop 으 just like no-batchim stems.
+  euOrNot(stem){
+    if(!this.hasBatchim(stem)) return false;
+    const d = this.decompose(stem.at(-1));
+    return !(d && d.jong === 8);
+  },
+
   // Fuse ㄹ (jong=8) into last syllable (only when no existing batchim)
   addBatchimR(word){
     if(!word) return word;
@@ -176,9 +184,10 @@ window.Conjugation = {
       case "-고":                    return stem + "고";
       case "-고 나서":               return stem + "고 나서";
       case "-기 전에":               return stem + "기 전에";
-      case "-(으)면서":              return this.hasBatchim(stem) ? stem + "으면서" : stem + "면서";
-      case "-(으)니까":              return this.hasBatchim(stem) ? stem + "으니까" : stem + "니까";
-      case "-(으)ㄴ/는데":           return this.hasBatchim(stem) ? stem + "는데"   : stem + "ㄴ데";
+      case "-(으)면서":              return this.euOrNot(stem) ? stem + "으면서" : stem + "면서";
+      case "-(으)니까":              return this.euOrNot(stem) ? stem + "으니까" : stem + "니까";
+      // Action verbs always use -는데; -(으)ㄴ데 is for adjectives (not in builder DATA)
+      case "-(으)ㄴ/는데":           return stem + "는데";
       case "-지만":                  return stem + "지만";
       case "-아/어도":               return this.aeo(verb) + "도";
       case "-아/어서":               return this.aeo(verb) + "서";
@@ -197,7 +206,12 @@ window.Conjugation = {
       case "-는 동안":              return stem + "는 동안";
       case "-는 대신에":            return stem + "는 대신에";
       case "-(으)ㄴ/는데도":        return stem + "는데도";
-      case "-(으)ㄹ수록":           return this.hasBatchim(stem) ? stem + "을수록" : stem + "ㄹ수록";
+      case "-(으)ㄹ수록": {
+        const d5 = this.decompose(stem.at(-1));
+        if(!d5 || d5.jong === 0) return this.addBatchimR(stem) + "수록";
+        if(d5.jong === 8)         return stem + "수록";
+        return stem + "을수록";
+      }
       case "-기에":                 return stem + "기에";
       case "-길래":                 return stem + "길래";
       // TOPIK 4-5
