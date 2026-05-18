@@ -217,7 +217,7 @@
       {ko:'저는', ro:'eu', en:'I', aliases:['eu','i']},
       {ko:'나는', ro:'eu', en:'I', aliases:[]},
       {ko:'너는', ro:'tu', en:'you', aliases:['tu','you']},
-      {ko:'여러분은', ro:'voi', en:'you (all)', aliases:['voi','you all','you guys','voi toti','voi toți','ati','ați']},
+      {ko:'여러분은', ro:'voi toți', en:'you (all)', aliases:['voi toti','voi toți','you all','you guys','toata lumea','toată lumea','everyone']},
       {ko:'우리는', ro:'noi', en:'we', aliases:['noi','we']},
       {ko:'그는', ro:'el', en:'he', aliases:['el','he']},
       {ko:'그녀는', ro:'ea', en:'she', aliases:['ea','she']},
