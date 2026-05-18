@@ -335,6 +335,7 @@
       {ko:'깨끗이', ro:'curat', en:'cleanly', aliases:['curat','curata','curată','clean','cleanly','neat','ingrijit','îngrijit']},
       {ko:'예쁘게', ro:'frumos', en:'beautifully', aliases:['frumos','frumoasa','frumoasă','beautiful','beautifully','pretty','prettily','dragut','drăguț']},
       {ko:'많이', ro:'mult', en:'a lot', aliases:['mult','multa','multă','a lot','very much','much','lots']},
+      {ko:'잘', ro:'bine', en:'well', aliases:['bine','mai bine','well','do well','correctly']},
       {ko:'행복하게', ro:'cu bucurie', en:'happily', aliases:['happily','cu bucurie','cu fericire','in mod fericit']},
       {ko:'슬프게', ro:'cu tristețe', en:'sadly', aliases:['sadly','cu tristete','cu tristețe','in mod trist']},
       {ko:'화나게', ro:'cu furie', en:'angrily', aliases:['angrily','cu furie','cu manie','in mod furios']},
