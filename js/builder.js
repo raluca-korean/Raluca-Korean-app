@@ -2071,7 +2071,7 @@
       {key:'extent',        phrases:['astfel incat','astfel încât','so that']},
       {key:'informal_cause',phrases:['vazand ca','văzând că','seeing that']},
       {key:'because_of',    phrases:['din cauza ca','din cauza că','due to','because of']},
-      {key:'cause1',        phrases:['pentru ca','pentru că','because','ca']},
+      {key:'cause1',        phrases:['pentru ca','pentru că','because']},
       {key:'cause2',        phrases:['fiindca','fiindcă','since']},
       {key:'condition',     phrases:['daca','dacă','if']},
       {key:'contrast1',     phrases:['dar','insa','însă','but','however']},
@@ -2158,7 +2158,8 @@
     if(/\b(nu pot|nu pot sa|cannot|can't|cant)\b/.test(n)) return 'cannot';
     if(/\b(nu vreau|nu doresc|nu vrei|don't want|do not want|dont want)\b/.test(n)) return 'notwish';
     if(/\b(nu trebuie|nu ar trebui|must not|mustn't|mustnt)\b/.test(n)) return 'mustnot';
-    if(/\bnu\b/.test(n) || /\b(don't|doesn't|do not|does not|dont|doesnt)\b/.test(n)) return 'neg';
+    // Exclude 'nu numai' (not only…) — that 'nu' is not a negation
+    if((/\bnu\b/.test(n) && !/\bnu numai\b/.test(n)) || /\b(don't|doesn't|do not|does not|dont|doesnt)\b/.test(n)) return 'neg';
 
     // Obligations
     if(/\b(ar trebui|should|ought to)\b/.test(n)) return 'should';
