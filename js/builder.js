@@ -1540,11 +1540,17 @@
         if(cKey === 'cause1')    return nb + '아서';
         if(cKey === 'cause2')    return nb + '으니까';
         if(cKey === 'contrast1') return nb + '지만';
-        if(cKey === 'contrast2') return nb + '는데';
-        if(cKey === 'purpose')   return nb + '으려고';
-        if(cKey === 'while')     return nb + '으면서';
-        if(cKey === 'concede')   return nb + '아도';
-        if(cKey === 'after')     return nb + '고 나서';
+        if(cKey === 'contrast2')      return nb + '는데';
+        if(cKey === 'purpose')        return nb + '으려고';
+        if(cKey === 'while')          return nb + '으면서';
+        if(cKey === 'concede')        return nb + '아도';
+        if(cKey === 'after')          return nb + '고 나서';
+        if(cKey === 'before')         return nb + '기 전에';
+        if(cKey === 'formal_cause')   return nb + '기에';
+        if(cKey === 'informal_cause') return nb + '길래';
+        if(cKey === 'because_of')     return nb + '는 탓에';
+        if(cKey === 'concede2')       return nb + '는데도';
+        if(cKey === 'formal_result')  return nb + '므로';
       }
 
       // Past connector: e.g. "dacă ai citit" → 읽었으면
