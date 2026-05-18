@@ -1528,6 +1528,22 @@
     // Clause connectors — return verb in connector form (stem + suffix)
     if(conj){
       var stem = conj.stem(verb.ko);
+
+      // Negated connector: e.g. "dacă nu citești" → 읽지 않으면
+      if(clause.negated){
+        var nb = stem + '지 않';
+        if(cKey === 'condition') return nb + '으면';
+        if(cKey === 'seq')       return nb + '고';
+        if(cKey === 'cause1')    return nb + '아서';
+        if(cKey === 'cause2')    return nb + '으니까';
+        if(cKey === 'contrast1') return nb + '지만';
+        if(cKey === 'contrast2') return nb + '는데';
+        if(cKey === 'purpose')   return nb + '으려고';
+        if(cKey === 'while')     return nb + '으면서';
+        if(cKey === 'concede')   return nb + '아도';
+        if(cKey === 'after')     return nb + '고 나서';
+      }
+
       if(cKey === 'seq')       return conj.connector(verb.ko, '-고');
       if(cKey === 'cause1')    return conj.connector(verb.ko, '-아/어서');
       if(cKey === 'cause2')    return conj.connector(verb.ko, '-(으)니까');
@@ -2385,6 +2401,30 @@
     state.detectedFields = ALL_FIELD_KEYS.filter(function(fk){ return detectedSet[fk]; });
 
     state.clauses = newClauses;
+
+    // For multi-clause sentences, re-detect tense from the last clause's text only.
+    // This prevents negation/modality in an earlier clause from polluting the final clause
+    // (e.g. "Dacă nu citești, eu sunt tristă." — "nu" belongs to clause 0, not clause 1).
+    if(clauseData.length > 1){
+      var lastClTense = detectTenseFromText(clauseData[clauseData.length - 1].text);
+      detectedTenseKey = lastClTense === 'past'    ? 'tense_past'
+                       : lastClTense === 'future'  ? 'tense_fut'
+                       : lastClTense === 'cannot'  ? 'tense_cannot'
+                       : lastClTense === 'notwish' ? 'tense_notwish'
+                       : lastClTense === 'mustnot' ? 'tense_mustnot'
+                       : lastClTense === 'neg'     ? 'tense_neg'
+                       : lastClTense === 'must'    ? 'tense_must'
+                       : lastClTense === 'should'  ? 'tense_should'
+                       : 'tense_pres';
+    }
+
+    // Mark intermediate clauses whose text contains negation so renderVerbKo
+    // can produce e.g. 읽지 않으면 instead of 읽으면.
+    for(var ni = 0; ni < newClauses.length - 1; ni++){
+      if(clauseData[ni] && detectTenseFromText(clauseData[ni].text) === 'neg'){
+        newClauses[ni].negated = true;
+      }
+    }
 
     // Set detected tense on the last clause
     var lastParsed = state.clauses[state.clauses.length - 1];
