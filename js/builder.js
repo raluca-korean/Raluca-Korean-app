@@ -1547,6 +1547,18 @@
         if(cKey === 'after')     return nb + '고 나서';
       }
 
+      // Past connector: e.g. "dacă ai citit" → 읽었으면
+      if(clause.tenseOverride === 'past'){
+        var ps = conj.past(verb.ko).slice(0, -2); // e.g. 읽었어요 → 읽었
+        var psEu = conj.euOrNot(ps);
+        if(cKey === 'condition') return ps + (psEu ? '으면' : '면');
+        if(cKey === 'seq')       return ps + '고';
+        if(cKey === 'cause2')    return ps + (psEu ? '으니까' : '니까');
+        if(cKey === 'contrast1') return ps + '지만';
+        if(cKey === 'contrast2') return ps + '는데';
+        if(cKey === 'concede')   return ps + '어도';
+      }
+
       if(cKey === 'seq')       return conj.connector(verb.ko, '-고');
       if(cKey === 'cause1')    return conj.connector(verb.ko, '-아/어서');
       if(cKey === 'cause2')    return conj.connector(verb.ko, '-(으)니까');
@@ -2265,7 +2277,9 @@
                    'adus','plimbat','plecat',
                    // verbe TOPIK 5-6
                    'reusit','esuat','predat','renuntat','progresat','schimbat','decis','devenit',
-                   'trebuit','muncit','obtinut','rezolvat','participat','contribuit'];
+                   'trebuit','muncit','obtinut','rezolvat','participat','contribuit',
+                   // verbe de stare (adjective)
+                   'fericit','trist','obosit','suparat','bucuros'];
     for(var i=0;i<roParts.length;i++){
       if(n.indexOf(roParts[i]) !== -1) return 'past';
     }
@@ -2405,27 +2419,29 @@
 
     state.clauses = newClauses;
 
-    // For multi-clause sentences, re-detect tense from the last clause's text only.
-    // This prevents negation/modality in an earlier clause from polluting the final clause
-    // (e.g. "Dacă nu citești, eu sunt tristă." — "nu" belongs to clause 0, not clause 1).
+    // For multi-clause sentences, negation/modality detected globally can bleed from
+    // an earlier clause onto the last one. Re-detect from the last clause's own text
+    // and override only for these cases (past/future are sentence-level and stay global).
     if(clauseData.length > 1){
-      var lastClTense = detectTenseFromText(clauseData[clauseData.length - 1].text);
-      detectedTenseKey = lastClTense === 'past'    ? 'tense_past'
-                       : lastClTense === 'future'  ? 'tense_fut'
-                       : lastClTense === 'cannot'  ? 'tense_cannot'
-                       : lastClTense === 'notwish' ? 'tense_notwish'
-                       : lastClTense === 'mustnot' ? 'tense_mustnot'
-                       : lastClTense === 'neg'     ? 'tense_neg'
-                       : lastClTense === 'must'    ? 'tense_must'
-                       : lastClTense === 'should'  ? 'tense_should'
-                       : 'tense_pres';
+      var _negKeys = {tense_neg:1, tense_notwish:1, tense_mustnot:1, tense_cannot:1};
+      if(_negKeys[detectedTenseKey]){
+        var lastClTense = detectTenseFromText(clauseData[clauseData.length - 1].text);
+        var lastClKey = lastClTense === 'neg'     ? 'tense_neg'
+                      : lastClTense === 'notwish' ? 'tense_notwish'
+                      : lastClTense === 'mustnot' ? 'tense_mustnot'
+                      : lastClTense === 'cannot'  ? 'tense_cannot'
+                      : 'tense_pres';
+        detectedTenseKey = lastClKey;
+      }
     }
 
-    // Mark intermediate clauses whose text contains negation so renderVerbKo
-    // can produce e.g. 읽지 않으면 instead of 읽으면.
+    // Per-clause tense for intermediate clauses:
+    // negation → clause.negated (읽지 않으면), past → clause.tenseOverride='past' (읽었으면)
     for(var ni = 0; ni < newClauses.length - 1; ni++){
-      if(clauseData[ni] && detectTenseFromText(clauseData[ni].text) === 'neg'){
-        newClauses[ni].negated = true;
+      if(clauseData[ni]){
+        var clTns = detectTenseFromText(clauseData[ni].text);
+        if(clTns === 'neg') newClauses[ni].negated = true;
+        else if(clTns === 'past') newClauses[ni].tenseOverride = 'past';
       }
     }
 
