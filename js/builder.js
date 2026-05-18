@@ -1695,18 +1695,15 @@
 
   function buildFullOutput(){
     var ko = [];
-    var tr = [];
 
     for(var i=0;i<state.clauses.length;i++){
       var lineKo = buildClauseKorean(state.clauses[i]);
-      var lineTr = buildClauseTranslation(state.clauses[i]);
       if(lineKo) ko.push(lineKo);
-      if(lineTr) tr.push(lineTr);
     }
 
     return {
       korean: cleanSentenceText(ko.join(' ')),
-      translation: cleanSentenceText(tr.join(' '))
+      translation: (state.text || '').trim()
     };
   }
 
