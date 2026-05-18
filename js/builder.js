@@ -1543,7 +1543,7 @@
         var nb2 = stem + '지 않았';
         if(cKey === 'formal_cause')   return nb2 + '기에';
         if(cKey === 'condition')      return nb2 + '으면';
-        if(cKey === 'seq')            return nb2 + '고';
+        if(cKey === 'seq')            return stem + '지 않고'; // plain neg 고, not past
         if(cKey === 'cause1')         return nb2 + '어서';
         if(cKey === 'cause2')         return nb2 + '으니까';
         if(cKey === 'contrast1')      return nb2 + '지만';
@@ -1598,7 +1598,8 @@
         var ps = conj.past(verb.ko).slice(0, -2); // e.g. 읽었어요 → 읽었
         var psEu = conj.euOrNot(ps);
         if(cKey === 'condition') return ps + (psEu ? '으면' : '면');
-        if(cKey === 'seq')       return ps + '고';
+        // For seq (고), only the last verb takes past tense — use plain 고 form
+        if(cKey === 'seq')       return conj.connector(verb.ko, '-고');
         if(cKey === 'cause2')    return ps + (psEu ? '으니까' : '니까');
         if(cKey === 'contrast1') return ps + '지만';
         if(cKey === 'contrast2') return ps + '는데';
