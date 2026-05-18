@@ -359,7 +359,8 @@
       {ko:'더욱', ro:'și mai mult', en:'even more', aliases:['si mai mult','și mai mult','tot mai mult','even more','more and more']},
       {ko:'특히', ro:'în special', en:'especially', aliases:['in special','în special','mai ales','cu precadere','cu precădere','especially','in particular']},
       {ko:'물론', ro:'desigur', en:'of course', aliases:['desigur','bineinteles','bineînțeles','fireste','firește','of course','certainly']},
-      {ko:'오히려', ro:'dimpotrivă', en:'on the contrary', aliases:['dimpotriva','dimpotrivă','ba dimpotriva','on the contrary','rather','instead']}
+      {ko:'오히려', ro:'dimpotrivă', en:'on the contrary', aliases:['dimpotriva','dimpotrivă','ba dimpotriva','on the contrary','rather','instead']},
+      {ko:'대신에', ro:'în locul lui', en:'in his place', aliases:['in locul lui','în locul lui','in locul meu','în locul meu','in locul tau','în locul tău','in locul ei','în locul ei','in locul lor','în locul lor','in locul nostru','în locul nostru','in his place','in her place','in their place','in my place']}
 
     ],
     verb: [
@@ -2319,6 +2320,12 @@
     if(/\b(ar trebui|should|ought to)\b/.test(n)) return 'should';
     if(/\b(trebuie|must|have to|has to|need to|needs to)\b/.test(n)) return 'must';
 
+    // Romanian conditional mood: aș/ai/ar + infinitive (normalized as/ai/ar)
+    // 'as' = aș (1st sg) — always conditional in Romanian; exclude common English 'as X' phrases
+    if(/\bas [a-z]/.test(n) && !/\b(such as|as well|as long|as soon|as far|as if|as much|as many|as per|as usual|as often|as though)\b/.test(n)) return 'polite';
+    // 'ai/ar' + infinitive ending in a/e/i (distinguishes from past participles ending in consonants)
+    if(/\b(ai|ar)\s+[a-z]+[aei]\b/.test(n)) return 'polite';
+
     // Past Romanian: participii cunoscute (normalizate, fără diacritice)
     var roParts = ['mers','mancat','venit','vazut','citit','scris','intalnit',
                    'odihnit','lucrat','studiat','pregatit','invatat','ascultat',
@@ -2385,6 +2392,7 @@
                          : detectedTense === 'neg'      ? 'tense_neg'
                          : detectedTense === 'must'     ? 'tense_must'
                          : detectedTense === 'should'   ? 'tense_should'
+                         : detectedTense === 'polite'   ? 'tense_polite'
                          : 'tense_pres';
 
     // Split on connector markers; create a clause for each segment that has a verb.
