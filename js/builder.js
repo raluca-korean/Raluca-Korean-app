@@ -1538,6 +1538,25 @@
     if(conj){
       var stem = conj.stem(verb.ko);
 
+      // Negated PAST connector: e.g. "deoarece nu am mâncat" → 먹지 않았기에
+      if(clause.negated && clause.tenseOverride === 'past'){
+        var nb2 = stem + '지 않았';
+        if(cKey === 'formal_cause')   return nb2 + '기에';
+        if(cKey === 'condition')      return nb2 + '으면';
+        if(cKey === 'seq')            return nb2 + '고';
+        if(cKey === 'cause1')         return nb2 + '어서';
+        if(cKey === 'cause2')         return nb2 + '으니까';
+        if(cKey === 'contrast1')      return nb2 + '지만';
+        if(cKey === 'contrast2')      return nb2 + '는데';
+        if(cKey === 'concede')        return nb2 + '어도';
+        if(cKey === 'after')          return nb2 + '고 나서';
+        if(cKey === 'before')         return nb2 + '기 전에';
+        if(cKey === 'informal_cause') return nb2 + '길래';
+        if(cKey === 'because_of')     return nb2 + '는 탓에';
+        if(cKey === 'concede2')       return nb2 + '는데도';
+        if(cKey === 'formal_result')  return nb2 + '므로';
+      }
+
       // Negated connector: e.g. "dacă nu citești" → 읽지 않으면
       if(clause.negated){
         var nb = stem + '지 않';
@@ -2476,8 +2495,15 @@
     for(var ni = 0; ni < newClauses.length - 1; ni++){
       if(clauseData[ni]){
         var clTns = detectTenseFromText(clauseData[ni].text);
-        if(clTns === 'neg') newClauses[ni].negated = true;
-        else if(clTns === 'past') newClauses[ni].tenseOverride = 'past';
+        if(clTns === 'neg'){
+          newClauses[ni].negated = true;
+          // If the negated clause also contains a past participle (e.g. "nu am mâncat"),
+          // set tenseOverride so the connector form becomes 먹지 않았기에 not 먹지 않기에
+          var _clStripped = normalizeLatin(clauseData[ni].text).replace(/\bnu\b/g, '');
+          if(detectTenseFromText(_clStripped) === 'past') newClauses[ni].tenseOverride = 'past';
+        } else if(clTns === 'past'){
+          newClauses[ni].tenseOverride = 'past';
+        }
         var clNorm = normalizeLatin(clauseData[ni].text);
         if(/\b(vreau sa|vrei sa|vrea sa|vrem sa|want to|would like to)\b/.test(clNorm)) newClauses[ni].wishModal = true;
       }
