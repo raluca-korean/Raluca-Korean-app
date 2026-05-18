@@ -565,12 +565,12 @@
     lang: 'ro',
     level: 1,
     text: '',
-    clauses: []
+    clauses: [],
+    detectedFields: []
   };
 
   var _wordSpeakTimer = null;
   var _sentenceSpeakTimer = null;
-  var _parseTextMode = false;
 
   function speakText(text, rate){
     if(!('speechSynthesis' in window) || !text) return;
@@ -1698,10 +1698,12 @@
   }
 
   function getVisibleColumns(){
-    var fields = getLevelFields();
-    return fields.map(function(fieldKey){
-      return FIELD_META[fieldKey];
-    }).filter(Boolean);
+    var levelFields = getLevelFields();
+    var detected = state.detectedFields || [];
+    var combined = ALL_FIELD_KEYS.filter(function(fk){
+      return levelFields.indexOf(fk) !== -1 || detected.indexOf(fk) !== -1;
+    });
+    return combined.map(function(fk){ return FIELD_META[fk]; }).filter(Boolean);
   }
 
   function renderCell(clauseIndex, col){
@@ -1894,6 +1896,7 @@
     level = Number(level);
     if(!level || level < 1 || level > 6) level = 1;
     state.level = level;
+    state.detectedFields = [];
     ensureChainLength();
     renderAll();
   }
@@ -1923,15 +1926,14 @@
       state.clauses.pop();
     }
 
-    if(!_parseTextMode){
-      var visible = getLevelFields();
-      for(var r=0;r<state.clauses.length;r++){
-        var clause = ensureClauseShape(state.clauses[r]);
-        for(var k=0;k<ALL_FIELD_KEYS.length;k++){
-          var fieldKey = ALL_FIELD_KEYS[k];
-          if(visible.indexOf(fieldKey) === -1){
-            clearFieldFromClause(clause, fieldKey);
-          }
+    var visible = getLevelFields();
+    var detected = state.detectedFields || [];
+    for(var r=0;r<state.clauses.length;r++){
+      var clause = ensureClauseShape(state.clauses[r]);
+      for(var k=0;k<ALL_FIELD_KEYS.length;k++){
+        var fieldKey = ALL_FIELD_KEYS[k];
+        if(visible.indexOf(fieldKey) === -1 && detected.indexOf(fieldKey) === -1){
+          clearFieldFromClause(clause, fieldKey);
         }
       }
     }
@@ -2197,6 +2199,7 @@
 
     if(!String(raw).trim()){
       state.clauses = [makeEmptyLayoutClause()];
+      state.detectedFields = [];
       renderAll();
       return;
     }
@@ -2291,6 +2294,18 @@
       newClauses.push(clause);
     }
 
+    // Compute detected fields from the newly built clauses (so ensureChainLength preserves them)
+    var detectedSet = {};
+    for(var dci = 0; dci < newClauses.length; dci++){
+      for(var dk = 0; dk < ALL_FIELD_KEYS.length; dk++){
+        var dfk = ALL_FIELD_KEYS[dk];
+        if(!detectedSet[dfk] && isFieldActive(newClauses[dci], dfk)){
+          detectedSet[dfk] = true;
+        }
+      }
+    }
+    state.detectedFields = ALL_FIELD_KEYS.filter(function(fk){ return detectedSet[fk]; });
+
     state.clauses = newClauses;
 
     // Set detected tense on the last clause
@@ -2304,10 +2319,8 @@
         normalizeItem(tenseEntry, 'connector', DATA.connector.indexOf(tenseEntry)));
     }
 
-    _parseTextMode = true;
     ensureChainLength();
     renderAll();
-    _parseTextMode = false;
   }
 
   function ensureVocabSheet(){
