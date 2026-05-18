@@ -2083,6 +2083,7 @@
     var options = getOptionsForField(fieldKey);
     var normalizedText = ' ' + normalizeLatin(text) + ' ';
     if(!normalizedText.trim()) return null;
+    var strippedText = normalizedText.replace(/[.,!?;:'"()]/g,' ').replace(/ {2,}/g,' ');
 
     var best = null;
     var bestLen = 0;
@@ -2093,9 +2094,12 @@
 
       for(var j=0;j<candidates.length;j++){
         var candidate = normalizeLatin(candidates[j]);
-        if(candidate && normalizedText.indexOf(' ' + candidate + ' ') !== -1 && candidate.length > bestLen){
-          best = item;
-          bestLen = candidate.length;
+        if(candidate && candidate.length > bestLen){
+          if(normalizedText.indexOf(' ' + candidate + ' ') !== -1 ||
+             strippedText.indexOf(' ' + candidate + ' ') !== -1){
+            best = item;
+            bestLen = candidate.length;
+          }
         }
       }
     }
