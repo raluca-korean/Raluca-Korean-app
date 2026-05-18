@@ -254,7 +254,8 @@
       {ko:'낮에', ro:'ziua', en:'during the day', aliases:['ziua','in timpul zilei','în timpul zilei','during the day','daytime']},
       {ko:'în fiecare săptămână', ro:'în fiecare săptămână', en:'every week', aliases:['in fiecare saptamana','în fiecare săptămână','saptamanal','săptămânal','every week','weekly']},
       {ko:'최근에', ro:'recent', en:'recently', aliases:['recent','in ultima vreme','în ultima vreme','recently','lately']},
-      {ko:'앞으로', ro:'pe viitor', en:'in the future', aliases:['pe viitor','in viitor','în viitor','de acum inainte','de acum înainte','in the future','from now on']}
+      {ko:'앞으로', ro:'pe viitor', en:'in the future', aliases:['pe viitor','in viitor','în viitor','de acum inainte','de acum înainte','in the future','from now on']},
+      {ko:'시험 중에', ro:'în timpul examenului', en:'during the exam', aliases:['examen','examenului','pe durata examenului','in timpul examenului','în timpul examenului','during the exam','during exam']}
     ],
     location: [
       {ko:'', ro:'', en:'', aliases:[]},
