@@ -1,4 +1,4 @@
-const CACHE = 'rk-v23';
+const CACHE = 'rk-v24';
 
 const STATIC = [
   './',
@@ -158,8 +158,8 @@ self.addEventListener('notificationclick', event => {
 
 /* ── Fetch strategy ─────────────────────────────────────────────────
    Cross-origin (fonts, CDN): let browser handle it — no SW interception.
-   data/ JSON files: cache-first — they're large and pre-cached; only
-     refresh when the SW installs a new version.
+   data/ JSON files: network-first — always fetch fresh data; fall back
+     to cache only when offline so new stories/exercises appear instantly.
    Everything else: stale-while-revalidate — serve cached copy
      instantly, update cache in background from network.
    ────────────────────────────────────────────────────────────────── */
@@ -172,15 +172,13 @@ self.addEventListener('fetch', event => {
 
   const path = new URL(request.url).pathname;
 
-  // Cache-first for data JSON (256 KB exercises.json must not block on network)
+  // Network-first for data JSON — always get fresh data, cache as fallback
   if (path.includes('/data/')) {
     event.respondWith(
-      caches.match(request).then(cached =>
-        cached || fetch(request).then(resp => {
-          if (resp.ok) caches.open(CACHE).then(c => c.put(request, resp.clone()));
-          return resp;
-        })
-      )
+      fetch(request).then(resp => {
+        if (resp.ok) caches.open(CACHE).then(c => c.put(request, resp.clone()));
+        return resp;
+      }).catch(() => caches.match(request))
     );
     return;
   }
