@@ -2326,8 +2326,10 @@
                    'reusit','esuat','predat','renuntat','progresat','schimbat','decis','devenit',
                    'trebuit','muncit','obtinut','rezolvat','participat','contribuit',
                    'trezit','inteles'];
+    // Word-boundary check: prevents 'studiat' matching inside 'studiati', etc.
+    var _nn = ' ' + n + ' ';
     for(var i=0;i<roParts.length;i++){
-      if(n.indexOf(roParts[i]) !== -1) return 'past';
+      if(_nn.indexOf(' '+roParts[i]+' ') !== -1) return 'past';
     }
     // Past Romanian: auxiliare de perfect compus — forme cu cratimă și "ați"
     // "ati" (normalizat din "ați") = aux pl.2 distinctiv românesc, nu apare în engleză
@@ -2338,7 +2340,9 @@
     // Future Romanian: voi/vei/va/vom/veți/vor
     // "voi" singur poate fi pronume (voi = you all); excludem "voi ați/toți"
     if(/\b(vei|va|vom|veti|vor)\b/.test(n)) return 'future';
-    if(/\bvoi\b/.test(n) && !/\bvoi\s*(ati|toti)\b/.test(n)) return 'future';
+    // "voi" as subject pronoun (you all) when followed by a 2nd-pl conjugated form
+    // ending in -ați/-eți (studiați, mergeți, etc.) — NOT a future auxiliary in that case
+    if(/\bvoi\b/.test(n) && !/\bvoi\s*([a-z]+[ae]ti|toti)\b/.test(n)) return 'future';
     // Future English
     if(/\bwill\b/.test(n)) return 'future';
 
