@@ -2258,7 +2258,10 @@
     // so a real connector is never silently erased by a trailing comma/none segment.
     for(var ei = segments.length - 1; ei >= 1; ei--){
       if(segments[ei].text === ''){
-        if(segments[ei].connector !== 'none'){
+        // Only overwrite previous connector if it is still 'none' — prevents a
+        // second connector word (e.g. "ca să" after "astfel încât") from erasing
+        // the first one that was already correctly assigned.
+        if(segments[ei].connector !== 'none' && segments[ei - 1].connector === 'none'){
           segments[ei - 1].connector = segments[ei].connector;
         }
         segments.splice(ei, 1);
