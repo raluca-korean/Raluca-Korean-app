@@ -2448,11 +2448,14 @@
       }
       if(verb)        setFieldItem(clause, 'verb', verb);
 
-      // Set clause connector for intermediate clauses (not the last)
-      if(ci < clauseData.length - 1 && cd.connKey && cd.connKey !== 'none'){
+      // Set clause connector for intermediate clauses (not the last).
+      // Bare comma separation (connKey='none') defaults to seq(고) so that
+      // "Mă trezesc, mănânc și merg" → 일어나고 먹고 가요 instead of 일어나요 먹고 가요.
+      if(ci < clauseData.length - 1){
+        var _ck = (cd.connKey && cd.connKey !== 'none') ? cd.connKey : 'seq';
         var connItem = null; var connIdx = 0;
         for(var k = 0; k < DATA.connector.length; k++){
-          if(DATA.connector[k].key === cd.connKey){ connItem = DATA.connector[k]; connIdx = k; break; }
+          if(DATA.connector[k].key === _ck){ connItem = DATA.connector[k]; connIdx = k; break; }
         }
         if(connItem) setFieldItem(clause, 'connector', normalizeItem(connItem, 'connector', connIdx));
       }
