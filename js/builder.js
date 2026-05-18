@@ -363,7 +363,7 @@
     verb: [
       {ko:'공부하다', ro:'a studia', en:'to study', aliases:['studiez','studiezi','studiem','studiati','studiați','studiaza','studiază','studia','invat','învăț','study','studies','learn','studiat','am studiat','a studiat','voi studia','studied','will study'], final:'공부해요', forms:{none:'공부해요',seq:'공부하고',cause1:'공부해서',cause2:'공부하니까',condition:'공부하면',contrast1:'공부하지만',contrast2:'공부하는데',purpose:'공부하려고',result:'공부하게 되다'}},
       {ko:'먹다', ro:'a mânca', en:'to eat', aliases:['mananc','mănânc','mananci','mănânci','mancam','mâncăm','mancati','mâncați','mananca','mănâncă','eat','manca','mânca','mancat','mâncat','am mancat','am mâncat','a mancat','a mâncat','voi manca','voi mânca','ate','will eat'], final:'먹어요', forms:{none:'먹어요',seq:'먹고',cause1:'먹어서',cause2:'먹으니까',condition:'먹으면',contrast1:'먹지만',contrast2:'먹는데',purpose:'먹으려고',result:'먹게 되다'}},
-      {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','mergi','mergem','mergeti','mergeți','plec','merge','go','leave','mers','am mers','a mers','voi merge','went','will go'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
+      {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','mergi','mergem','mergeti','mergeți','plec','merge','go','leave','mers','am mers','a mers','voi merge','went','will go','ma duc','mă duc','te duci','se duce','ne ducem','va duceti','vă duceți','se duc','am mers','dus','am dus'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
       {ko:'오다', ro:'a veni', en:'to come', aliases:['vin','vii','venim','veniti','veniți','vine','veni','come','venit','am venit','a venit','voi veni','came','will come'], final:'와요', forms:{none:'와요',seq:'오고',cause1:'와서',cause2:'오니까',condition:'오면',contrast1:'오지만',contrast2:'오는데',purpose:'오려고',result:'오게 되다'}},
       {ko:'보다', ro:'a vedea', en:'to see', aliases:['vad','văd','vezi','vede','vedea','see','watch','vazut','văzut','am vazut','am văzut','a vazut','a văzut','voi vedea','saw','will see'], final:'봐요', forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
       {ko:'읽다', ro:'a citi', en:'to read', aliases:['citesc','citesti','citești','citeste','citește','citim','cititi','citiți','citi','read','citit','am citit','a citit','voi citi','will read'], final:'읽어요', forms:{none:'읽어요',seq:'읽고',cause1:'읽어서',cause2:'읽으니까',condition:'읽으면',contrast1:'읽지만',contrast2:'읽는데',purpose:'읽으려고',result:'읽게 되다'}},
@@ -424,6 +424,8 @@
       {ko:'발전하다', ro:'a progresa', en:'to progress', aliases:['progresez','progresezi','progreseaza','progresează','progresat','am progresat','a progresat','voi progresa','avansez','avansat','progress','progresses','progressed','improve','improved','advance','will progress'], final:'발전해요', forms:{none:'발전해요',seq:'발전하고',cause1:'발전해서',cause2:'발전하니까',condition:'발전하면',contrast1:'발전하지만',contrast2:'발전하는데',purpose:'발전하려고',result:'발전하게 되다'}},
       {ko:'바꾸다', ro:'a schimba', en:'to change', aliases:['schimb','schimbi','schimba','schimbam','schimbat','am schimbat','s-a schimbat','voi schimba','schimbă','schimbăm','change','changes','changed','alter','modify','will change'], final:'바꿔요', forms:{none:'바꿔요',seq:'바꾸고',cause1:'바꿔서',cause2:'바꾸니까',condition:'바꾸면',contrast1:'바꾸지만',contrast2:'바꾸는데',purpose:'바꾸려고',result:'바꾸게 되다'}},
       {ko:'결정하다', ro:'a decide', en:'to decide', aliases:['decid','decizi','decide','decidem','decis','am decis','a decis','voi decide','hotarasc','hotărăsc','hotarat','hotărât','am hotarat','am hotărât','decide','decides','decided','choosing','will decide'], final:'결정해요', forms:{none:'결정해요',seq:'결정하고',cause1:'결정해서',cause2:'결정하니까',condition:'결정하면',contrast1:'결정하지만',contrast2:'결정하는데',purpose:'결정하려고',result:'결정하게 되다'}},
+      {ko:'일어나다', ro:'a se trezi', en:'to wake up', aliases:['ma trezesc','mă trezesc','te trezesti','te trezești','se trezeste','se trezește','ne trezim','va treziti','vă treziți','se trezesc','trezit','m-am trezit','te-ai trezit','s-a trezit','ne-am trezit','ma voi trezi','mă voi trezi','wake up','woke up','wake','wakes','waking'], final:'일어나요', forms:{none:'일어나요',seq:'일어나고',cause1:'일어나서',cause2:'일어나니까',condition:'일어나면',contrast1:'일어나지만',contrast2:'일어나는데',purpose:'일어나려고',result:'일어나게 되다'}},
+      {ko:'이해하다', ro:'a înțelege', en:'to understand', aliases:['inteleg','înțeleg','intelegi','înțelegi','intelege','înțelege','intelegem','înțelegem','intelegeti','înțelegeți','inteles','înțeles','am inteles','am înțeles','a inteles','a înțeles','voi intelege','voi înțelege','understand','understands','understood','understanding'], final:'이해해요', forms:{none:'이해해요',seq:'이해하고',cause1:'이해해서',cause2:'이해하니까',condition:'이해하면',contrast1:'이해하지만',contrast2:'이해하는데',purpose:'이해하려고',result:'이해하게 되다'}},
       {ko:'기쁘다', ro:'a fi fericit', en:'to be happy', aliases:['bucuros','bucuroasa','bucuroasă','fericita','fericită','fericit','sunt fericit','sunt fericita','sunt fericită','sunt bucuros','sunt bucuroasa','sunt bucuroasă','esti fericit','ești fericit','esti bucuros','ești bucuroasă','happy','glad','joyful','am happy','are happy','is happy'], final:'기뻐요', forms:{none:'기뻐요',seq:'기쁘고',cause1:'기뻐서',cause2:'기쁘니까',condition:'기쁘면',contrast1:'기쁘지만',contrast2:'기쁜데',purpose:'기쁘게',result:'기쁘게 되다'}},
       {ko:'화나다', ro:'a fi supărat', en:'to be angry', aliases:['suparat','suparata','supărată','supărat','iritat','iritata','iritată','nervos','nervoasa','nervoasă','sunt suparat','sunt suparata','sunt supărată','esti suparat','ești supărată','angry','mad','upset','annoyed','furious','am angry','am upset','is angry','are angry'], final:'화나요', forms:{none:'화나요',seq:'화나고',cause1:'화나서',cause2:'화나니까',condition:'화나면',contrast1:'화나지만',contrast2:'화나는데',purpose:'화나려고',result:'화나게 되다'}},
       {ko:'슬프다', ro:'a fi trist', en:'to be sad', aliases:['trist','trista','tristă','trists','sunt trist','sunt trista','sunt tristă','esti trist','ești tristă','sad','unhappy','am sad','is sad','are sad'], final:'슬퍼요', forms:{none:'슬퍼요',seq:'슬프고',cause1:'슬퍼서',cause2:'슬프니까',condition:'슬프면',contrast1:'슬프지만',contrast2:'슬픈데',purpose:'슬프게',result:'슬프게 되다'}},
@@ -547,7 +549,9 @@
     '기쁘다':   {ro:{i:'sunt fericit',you_sg:'ești fericit',you_pl:'sunteți fericiți',we:'suntem fericiți',third:'este fericit',third_pl:'sunt fericiți'}, en:{i:'am happy',you_sg:'are happy',you_pl:'are happy',we:'are happy',third:'is happy',third_pl:'are happy'}},
     '화나다':   {ro:{i:'sunt supărat',you_sg:'ești supărat',you_pl:'sunteți supărați',we:'suntem supărați',third:'este supărat',third_pl:'sunt supărați'}, en:{i:'am angry',you_sg:'are angry',you_pl:'are angry',we:'are angry',third:'is angry',third_pl:'are angry'}},
     '슬프다':   {ro:{i:'sunt trist',you_sg:'ești trist',you_pl:'sunteți triști',we:'suntem triști',third:'este trist',third_pl:'sunt triști'}, en:{i:'am sad',you_sg:'are sad',you_pl:'are sad',we:'are sad',third:'is sad',third_pl:'are sad'}},
-    '피곤하다': {ro:{i:'sunt obosit',you_sg:'ești obosit',you_pl:'sunteți obosiți',we:'suntem obosiți',third:'este obosit',third_pl:'sunt obosiți'}, en:{i:'am tired',you_sg:'are tired',you_pl:'are tired',we:'are tired',third:'is tired',third_pl:'are tired'}}
+    '피곤하다': {ro:{i:'sunt obosit',you_sg:'ești obosit',you_pl:'sunteți obosiți',we:'suntem obosiți',third:'este obosit',third_pl:'sunt obosiți'}, en:{i:'am tired',you_sg:'are tired',you_pl:'are tired',we:'are tired',third:'is tired',third_pl:'are tired'}},
+    '일어나다': {ro:{i:'mă trezesc',you_sg:'te trezești',you_pl:'vă treziți',we:'ne trezim',third:'se trezește',third_pl:'se trezesc'}, en:{i:'wake up',you_sg:'wake up',you_pl:'wake up',we:'wake up',third:'wakes up',third_pl:'wake up'}},
+    '이해하다': {ro:{i:'înțeleg',you_sg:'înțelegi',you_pl:'înțelegeți',we:'înțelegem',third:'înțelege',third_pl:'înțeleg'}, en:{i:'understand',you_sg:'understand',you_pl:'understand',we:'understand',third:'understands',third_pl:'understand'}}
   };
 
   var VERB_TENSE_DATA = {
@@ -593,7 +597,9 @@
     '기쁘다':   {roPart:'fericit',   roBase:'fi fericit', enPast:'was happy',  refl:false},
     '화나다':   {roPart:'suparat',   roBase:'fi suparat', enPast:'was angry',  refl:false},
     '슬프다':   {roPart:'trist',     roBase:'fi trist',   enPast:'was sad',    refl:false},
-    '피곤하다': {roPart:'obosit',    roBase:'fi obosit',  enPast:'was tired',  refl:false}
+    '피곤하다': {roPart:'obosit',    roBase:'fi obosit',  enPast:'was tired',  refl:false},
+    '일어나다': {roPart:'trezit',    roBase:'trezi',      enPast:'woke up',    refl:true},
+    '이해하다': {roPart:'inteles',   roBase:'intelege',   enPast:'understood', refl:false}
   };
 
   var els = {
@@ -1553,6 +1559,21 @@
         if(cKey === 'formal_result')  return nb + '므로';
       }
 
+      // Wish modal in intermediate clause: "vreau să merg, dar" → 가고 싶지만
+      if(clause.wishModal){
+        var ws = stem + '고 싶';
+        if(cKey === 'condition')  return ws + (conj.euOrNot(ws) ? '으면' : '면');
+        if(cKey === 'seq')        return ws + '고';
+        if(cKey === 'cause1')     return ws + '어서';
+        if(cKey === 'cause2')     return ws + '으니까';
+        if(cKey === 'contrast1')  return ws + '지만';
+        if(cKey === 'contrast2')  return ws + '은데';
+        if(cKey === 'concede')    return ws + '어도';
+        if(cKey === 'purpose')    return ws + '어서';
+        if(cKey === 'after')      return ws + '고 나서';
+        if(cKey === 'before')     return ws + '기 전에';
+      }
+
       // Past connector: e.g. "dacă ai citit" → 읽었으면
       if(clause.tenseOverride === 'past'){
         var ps = conj.past(verb.ko).slice(0, -2); // e.g. 읽었어요 → 읽었
@@ -2283,7 +2304,8 @@
                    'adus','plimbat','plecat',
                    // verbe TOPIK 5-6
                    'reusit','esuat','predat','renuntat','progresat','schimbat','decis','devenit',
-                   'trebuit','muncit','obtinut','rezolvat','participat','contribuit'];
+                   'trebuit','muncit','obtinut','rezolvat','participat','contribuit',
+                   'trezit','inteles'];
     for(var i=0;i<roParts.length;i++){
       if(n.indexOf(roParts[i]) !== -1) return 'past';
     }
@@ -2425,19 +2447,27 @@
 
     state.clauses = newClauses;
 
-    // For multi-clause sentences, negation/modality detected globally can bleed from
-    // an earlier clause onto the last one. Re-detect from the last clause's own text
-    // and override only for these cases (past/future are sentence-level and stay global).
+    // For multi-clause sentences, tense detected globally can bleed from an earlier
+    // clause onto the last one. Re-detect from the last clause's own text and override:
+    // — negation/modality: always override from last clause
+    // — past: only keep past if the last clause itself is also past (prevents
+    //   "fiindcă am citit" from making the final "sunt fericită" past)
     if(clauseData.length > 1){
       var _negKeys = {tense_neg:1, tense_notwish:1, tense_mustnot:1, tense_cannot:1};
+      var lastClTense2 = detectTenseFromText(clauseData[clauseData.length - 1].text);
       if(_negKeys[detectedTenseKey]){
-        var lastClTense = detectTenseFromText(clauseData[clauseData.length - 1].text);
-        var lastClKey = lastClTense === 'neg'     ? 'tense_neg'
-                      : lastClTense === 'notwish' ? 'tense_notwish'
-                      : lastClTense === 'mustnot' ? 'tense_mustnot'
-                      : lastClTense === 'cannot'  ? 'tense_cannot'
+        var lastClKey = lastClTense2 === 'neg'     ? 'tense_neg'
+                      : lastClTense2 === 'notwish' ? 'tense_notwish'
+                      : lastClTense2 === 'mustnot' ? 'tense_mustnot'
+                      : lastClTense2 === 'cannot'  ? 'tense_cannot'
                       : 'tense_pres';
         detectedTenseKey = lastClKey;
+      } else if(detectedTenseKey === 'tense_past' && lastClTense2 !== 'past'){
+        // Last clause is present/future even though an earlier clause was past.
+        detectedTenseKey = lastClTense2 === 'future' ? 'tense_fut'
+                         : lastClTense2 === 'must'   ? 'tense_must'
+                         : lastClTense2 === 'should' ? 'tense_should'
+                         : 'tense_pres';
       }
     }
 
@@ -2448,6 +2478,8 @@
         var clTns = detectTenseFromText(clauseData[ni].text);
         if(clTns === 'neg') newClauses[ni].negated = true;
         else if(clTns === 'past') newClauses[ni].tenseOverride = 'past';
+        var clNorm = normalizeLatin(clauseData[ni].text);
+        if(/\b(vreau sa|vrei sa|vrea sa|vrem sa|want to|would like to)\b/.test(clNorm)) newClauses[ni].wishModal = true;
       }
     }
 
