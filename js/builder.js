@@ -2277,15 +2277,15 @@
                    'adus','plimbat','plecat',
                    // verbe TOPIK 5-6
                    'reusit','esuat','predat','renuntat','progresat','schimbat','decis','devenit',
-                   'trebuit','muncit','obtinut','rezolvat','participat','contribuit',
-                   // verbe de stare (adjective)
-                   'fericit','trist','obosit','suparat','bucuros'];
+                   'trebuit','muncit','obtinut','rezolvat','participat','contribuit'];
     for(var i=0;i<roParts.length;i++){
       if(n.indexOf(roParts[i]) !== -1) return 'past';
     }
     // Past Romanian: auxiliare de perfect compus — forme cu cratimă și "ați"
     // "ati" (normalizat din "ați") = aux pl.2 distinctiv românesc, nu apare în engleză
     if(/\b(ati|ne-am|m-am|te-ai|s-a|s-au|v-ati)\b/.test(n)) return 'past';
+    // "am/ai/a fost" = trecut de la "a fi" (am fost fericit, ai fost trist etc.)
+    if(/\b(am fost|ai fost|a fost|am fi fost)\b/.test(n)) return 'past';
 
     // Future Romanian: voi/vei/va/vom/veți/vor
     // "voi" singur poate fi pronume (voi = you all); excludem "voi ați/toți"
