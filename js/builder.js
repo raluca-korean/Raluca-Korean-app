@@ -2053,24 +2053,31 @@
     // Multi-word / specific markers must come BEFORE short single-word markers
     // to avoid partial matches (e.g. 'ca' in 'cu toate că' must not be eaten first).
     var markers = [
-      {key:'purpose',      phrases:['ca sa','ca să','in order to']},
-      {key:'concede2',     phrases:['cu toate ca','cu toate că','desi','deși','even though']},
-      {key:'concede',      phrases:['chiar daca','chiar dacă','even if']},
-      {key:'purpose2',     phrases:['pentru a','in order to do']},
-      {key:'while',        phrases:['in timp ce','pe cand','pe când','while doing']},
-      {key:'after',        phrases:['dupa ce','după ce','after doing']},
-      {key:'before',       phrases:['inainte sa','înainte să','inainte de a','înainte de a','before doing']},
-      {key:'asap',         phrases:['imediat ce','as soon as']},
-      {key:'aslong',       phrases:['atat timp cat','atât timp cât','as long as']},
-      {key:'because_of',   phrases:['din cauza ca','din cauza că','due to']},
-      {key:'formal_cause', phrases:['deoarece','given that']},
-      {key:'cause1',       phrases:['pentru ca','pentru că','because','ca']},
-      {key:'cause2',       phrases:['fiindca','fiindcă','since']},
-      {key:'condition',    phrases:['daca','dacă','if']},
-      {key:'contrast1',    phrases:['dar','insa','însă','but','however']},
-      {key:'contrast2',    phrases:['iar']},
-      {key:'or',           phrases:['sau','or']},
-      {key:'seq',          phrases:['si apoi','și apoi','dupa aceea','după aceea','and then','si','and']}
+      {key:'purpose',       phrases:['ca sa','ca să','in order to']},
+      {key:'concede2',      phrases:['cu toate ca','cu toate că','desi','deși','even though']},
+      {key:'concede',       phrases:['chiar daca','chiar dacă','even if']},
+      {key:'purpose2',      phrases:['pentru a','in order to do']},
+      {key:'while',         phrases:['in timp ce','pe cand','pe când','while doing']},
+      {key:'after',         phrases:['dupa ce','după ce','after doing']},
+      {key:'before',        phrases:['inainte sa','înainte să','inainte de a','înainte de a','before doing']},
+      {key:'asap',          phrases:['imediat ce','as soon as']},
+      {key:'aslong',        phrases:['atat timp cat','atât timp cât','as long as']},
+      {key:'formal_cause',  phrases:['deoarece','given that']},
+      // TOPIK 5-6: must be before 'cause1'('ca'), 'contrast1'('dar'), 'seq'('si')
+      {key:'proportion',    phrases:['cu atat','cu atât']},
+      {key:'notonly',       phrases:['ci si','ci și','but also','nu numai ci']},
+      {key:'contrast3',     phrases:['pe de alta parte','pe de altă parte','whereas']},
+      {key:'formal_result', phrases:['prin urmare','therefore']},
+      {key:'extent',        phrases:['astfel incat','astfel încât','so that']},
+      {key:'informal_cause',phrases:['vazand ca','văzând că','seeing that']},
+      {key:'because_of',    phrases:['din cauza ca','din cauza că','due to','because of']},
+      {key:'cause1',        phrases:['pentru ca','pentru că','because']},
+      {key:'cause2',        phrases:['fiindca','fiindcă','since']},
+      {key:'condition',     phrases:['daca','dacă','if']},
+      {key:'contrast1',     phrases:['dar','insa','însă','but','however']},
+      {key:'contrast2',     phrases:['iar']},
+      {key:'or',            phrases:['sau','or']},
+      {key:'seq',           phrases:['si apoi','și apoi','dupa aceea','după aceea','and then','si','and']}
     ];
 
     for(var i=0;i<markers.length;i++){
@@ -2151,7 +2158,8 @@
     if(/\b(nu pot|nu pot sa|cannot|can't|cant)\b/.test(n)) return 'cannot';
     if(/\b(nu vreau|nu doresc|nu vrei|don't want|do not want|dont want)\b/.test(n)) return 'notwish';
     if(/\b(nu trebuie|nu ar trebui|must not|mustn't|mustnt)\b/.test(n)) return 'mustnot';
-    if(/\bnu\b/.test(n) || /\b(don't|doesn't|do not|does not|dont|doesnt)\b/.test(n)) return 'neg';
+    // Exclude 'nu numai' (not only…) — that 'nu' is not a negation
+    if((/\bnu\b/.test(n) && !/\bnu numai\b/.test(n)) || /\b(don't|doesn't|do not|does not|dont|doesnt)\b/.test(n)) return 'neg';
 
     // Obligations
     if(/\b(ar trebui|should|ought to)\b/.test(n)) return 'should';
