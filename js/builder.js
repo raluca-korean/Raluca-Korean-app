@@ -252,7 +252,9 @@
       {ko:'어제 저녁에', ro:'ieri seara', en:'yesterday evening', aliases:['ieri seara','yesterday evening']},
       {ko:'밤에', ro:'noaptea', en:'at night', aliases:['noaptea','la noapte','noaptea tarziu','noaptea târziu','at night','night']},
       {ko:'낮에', ro:'ziua', en:'during the day', aliases:['ziua','in timpul zilei','în timpul zilei','during the day','daytime']},
-      {ko:'în fiecare săptămână', ro:'în fiecare săptămână', en:'every week', aliases:['in fiecare saptamana','în fiecare săptămână','saptamanal','săptămânal','every week','weekly']}
+      {ko:'în fiecare săptămână', ro:'în fiecare săptămână', en:'every week', aliases:['in fiecare saptamana','în fiecare săptămână','saptamanal','săptămânal','every week','weekly']},
+      {ko:'최근에', ro:'recent', en:'recently', aliases:['recent','in ultima vreme','în ultima vreme','recently','lately']},
+      {ko:'앞으로', ro:'pe viitor', en:'in the future', aliases:['pe viitor','in viitor','în viitor','de acum inainte','de acum înainte','in the future','from now on']}
     ],
     location: [
       {ko:'', ro:'', en:'', aliases:[]},
@@ -305,7 +307,17 @@
       {ko:'돈이', ro:'bani', en:'money', aliases:['bani','money','banul','banii','ban']},
       {ko:'물을', ro:'apă', en:'water', aliases:['apa','apă','water']},
       {ko:'이름을', ro:'numele', en:'name', aliases:['numele','nume','name','my name','my name is']},
-      {ko:'전화를', ro:'telefonul', en:'phone', aliases:['telefonul','telefon','phone','call']}
+      {ko:'전화를', ro:'telefonul', en:'phone', aliases:['telefonul','telefon','phone','call']},
+      {ko:'일본어를', ro:'japoneza', en:'Japanese', aliases:['japoneza','japoneză','limba japoneza','limba japoneză','Japanese']},
+      {ko:'중국어를', ro:'chineza', en:'Chinese', aliases:['chineza','chineză','limba chineza','limba chineză','Chinese']},
+      {ko:'영어를', ro:'engleza', en:'English', aliases:['engleza','engleză','limba engleza','limba engleză','English']},
+      {ko:'목표를', ro:'obiectivul', en:'the goal', aliases:['obiectivul','obiectiv','scopul','scop','tinta','ținta','goal','target','objective']},
+      {ko:'결과를', ro:'rezultatul', en:'the result', aliases:['rezultatul','rezultat','result']},
+      {ko:'경험을', ro:'experiența', en:'experience', aliases:['experienta','experiența','experienta mea','experience']},
+      {ko:'기회를', ro:'șansa', en:'the chance', aliases:['sansa','șansa','sanse','șanse','oportunitate','chance','opportunity']},
+      {ko:'노력을', ro:'efortul', en:'the effort', aliases:['efortul','efort','effort','stradania','strădania','silinta','silința']},
+      {ko:'문제를', ro:'problema', en:'the problem', aliases:['problema','problemă','issue','problem']},
+      {ko:'결정을', ro:'decizia', en:'the decision', aliases:['decizia','decizie','hotararea','hotărârea','decision']}
     ],
     description: [
       {ko:'', ro:'', en:'', aliases:[]},
@@ -338,7 +350,14 @@
       {ko:'드물게', ro:'rar', en:'rarely', aliases:['rar','rareori','rarely','seldom','arareori']},
       {ko:'즉시', ro:'imediat', en:'immediately', aliases:['imediat','imediat dupa','imediat după','immediately','right away','instant']},
       {ko:'실수로', ro:'din greșeală', en:'by mistake', aliases:['din greseala','din greșeală','accidental','accidentally','by mistake','by accident','gresit','greșit']},
-      {ko:'의도적으로', ro:'intenționat', en:'intentionally', aliases:['intentionat','intenționat','deliberately','on purpose','intentionally','dinadins']}
+      {ko:'의도적으로', ro:'intenționat', en:'intentionally', aliases:['intentionat','intenționat','deliberately','on purpose','intentionally','dinadins']},
+      {ko:'점점', ro:'treptat', en:'gradually', aliases:['treptat','gradual','din ce in ce','din ce in ce mai','gradually','increasingly']},
+      {ko:'결국', ro:'în cele din urmă', en:'in the end', aliases:['in cele din urma','în cele din urmă','pana la urma','până la urmă','finally','in the end','ultimately']},
+      {ko:'갑자기', ro:'brusc', en:'suddenly', aliases:['brusc','deodata','deodată','pe neasteptate','pe neașteptate','suddenly','all of a sudden']},
+      {ko:'더욱', ro:'și mai mult', en:'even more', aliases:['si mai mult','și mai mult','tot mai mult','even more','more and more']},
+      {ko:'특히', ro:'în special', en:'especially', aliases:['in special','în special','mai ales','cu precadere','cu precădere','especially','in particular']},
+      {ko:'물론', ro:'desigur', en:'of course', aliases:['desigur','bineinteles','bineînțeles','fireste','firește','of course','certainly']},
+      {ko:'오히려', ro:'dimpotrivă', en:'on the contrary', aliases:['dimpotriva','dimpotrivă','ba dimpotriva','on the contrary','rather','instead']}
 
     ],
     verb: [
@@ -397,6 +416,14 @@
       {ko:'가져오다', ro:'a aduce', en:'to bring', aliases:['aduc','aduci','aduce','aducem','adus','am adus','a adus','voi aduce','bring','brings','brought','bringing','will bring'], final:'가져와요', forms:{none:'가져와요',seq:'가져오고',cause1:'가져와서',cause2:'가져오니까',condition:'가져오면',contrast1:'가져오지만',contrast2:'가져오는데',purpose:'가져오려고',result:'가져오게 되다'}},
       {ko:'산책하다', ro:'a se plimba', en:'to walk', aliases:['ma plimb','mă plimb','te plimbi','se plimba','se plimbă','plimbam','plimbăm','plimbat','m-am plimbat','s-a plimbat','ne-am plimbat','ma voi plimba','mă voi plimba','walk','walks','walked','stroll','strolling','will walk'], final:'산책해요', forms:{none:'산책해요',seq:'산책하고',cause1:'산책해서',cause2:'산책하니까',condition:'산책하면',contrast1:'산책하지만',contrast2:'산책하는데',purpose:'산책하려고',result:'산책하게 되다'}},
       {ko:'떠나다', ro:'a pleca', en:'to leave', aliases:['pleci','pleaca','pleacă','plecam','plecăm','plecat','am plecat','a plecat','voi pleca','leave','leaves','left','leaving','depart','departed','will leave'], final:'떠나요', forms:{none:'떠나요',seq:'떠나고',cause1:'떠나서',cause2:'떠나니까',condition:'떠나면',contrast1:'떠나지만',contrast2:'떠나는데',purpose:'떠나려고',result:'떠나게 되다'}},
+      {ko:'되다', ro:'a deveni', en:'to become', aliases:['devin','devii','devine','devenim','deveniti','deveniți','devenit','am devenit','a devenit','voi deveni','become','becomes','became','turn into','will become'], final:'돼요', forms:{none:'돼요',seq:'되고',cause1:'돼서',cause2:'되니까',condition:'되면',contrast1:'되지만',contrast2:'되는데',purpose:'되려고',result:'되게 되다'}},
+      {ko:'성공하다', ro:'a reuși', en:'to succeed', aliases:['reusesc','reusesti','reuseste','reusim','reusit','am reusit','a reusit','voi reusi','reușesc','reușești','reușește','reușim','reușit','am reușit','a reușit','voi reuși','succeed','succeeds','succeeded','pass','passes','passed','will succeed'], final:'성공해요', forms:{none:'성공해요',seq:'성공하고',cause1:'성공해서',cause2:'성공하니까',condition:'성공하면',contrast1:'성공하지만',contrast2:'성공하는데',purpose:'성공하려고',result:'성공하게 되다'}},
+      {ko:'실패하다', ro:'a eșua', en:'to fail', aliases:['esuez','esuezi','esueaza','esuat','am esuat','a esuat','voi esua','eșuez','eșuezi','eșuează','eșuat','am eșuat','picat','am picat','a picat','fail','fails','failed','failing','will fail'], final:'실패해요', forms:{none:'실패해요',seq:'실패하고',cause1:'실패해서',cause2:'실패하니까',condition:'실패하면',contrast1:'실패하지만',contrast2:'실패하는데',purpose:'실패하려고',result:'실패하게 되다'}},
+      {ko:'가르치다', ro:'a preda', en:'to teach', aliases:['predau','predai','preda','predam','predăm','predat','am predat','a predat','voi preda','predă','predati','predați','teach','teaches','taught','teaching','will teach'], final:'가르쳐요', forms:{none:'가르쳐요',seq:'가르치고',cause1:'가르쳐서',cause2:'가르치니까',condition:'가르치면',contrast1:'가르치지만',contrast2:'가르치는데',purpose:'가르치려고',result:'가르치게 되다'}},
+      {ko:'포기하다', ro:'a renunța', en:'to give up', aliases:['renunt','renunti','renunta','renuntam','renuntat','am renuntat','a renuntat','voi renunta','renunț','renunți','renunță','renunțăm','renunțat','am renunțat','give up','gives up','gave up','quit','quits','quitting','abandon','will give up'], final:'포기해요', forms:{none:'포기해요',seq:'포기하고',cause1:'포기해서',cause2:'포기하니까',condition:'포기하면',contrast1:'포기하지만',contrast2:'포기하는데',purpose:'포기하려고',result:'포기하게 되다'}},
+      {ko:'발전하다', ro:'a progresa', en:'to progress', aliases:['progresez','progresezi','progreseaza','progresează','progresat','am progresat','a progresat','voi progresa','avansez','avansat','progress','progresses','progressed','improve','improved','advance','will progress'], final:'발전해요', forms:{none:'발전해요',seq:'발전하고',cause1:'발전해서',cause2:'발전하니까',condition:'발전하면',contrast1:'발전하지만',contrast2:'발전하는데',purpose:'발전하려고',result:'발전하게 되다'}},
+      {ko:'바꾸다', ro:'a schimba', en:'to change', aliases:['schimb','schimbi','schimba','schimbam','schimbat','am schimbat','s-a schimbat','voi schimba','schimbă','schimbăm','change','changes','changed','alter','modify','will change'], final:'바꿔요', forms:{none:'바꿔요',seq:'바꾸고',cause1:'바꿔서',cause2:'바꾸니까',condition:'바꾸면',contrast1:'바꾸지만',contrast2:'바꾸는데',purpose:'바꾸려고',result:'바꾸게 되다'}},
+      {ko:'결정하다', ro:'a decide', en:'to decide', aliases:['decid','decizi','decide','decidem','decis','am decis','a decis','voi decide','hotarasc','hotărăsc','hotarat','hotărât','am hotarat','am hotărât','decide','decides','decided','choosing','will decide'], final:'결정해요', forms:{none:'결정해요',seq:'결정하고',cause1:'결정해서',cause2:'결정하니까',condition:'결정하면',contrast1:'결정하지만',contrast2:'결정하는데',purpose:'결정하려고',result:'결정하게 되다'}},
       {ko:'안녕하세요', ro:'Bună ziua', en:'Hello', isPhrase:true, aliases:['buna ziua','salut','hello','buna','good afternoon','good day'], final:'안녕하세요', forms:{none:'안녕하세요',seq:'안녕하세요',cause1:'안녕하세요',cause2:'안녕하세요',condition:'안녕하세요',contrast1:'안녕하세요',contrast2:'안녕하세요',purpose:'안녕하세요',result:'안녕하세요'}},
       {ko:'좋은 아침이에요', ro:'Bună dimineața', en:'Good morning', isPhrase:true, aliases:['buna dimineata','buna dimineața','good morning'], final:'좋은 아침이에요', forms:{none:'좋은 아침이에요',seq:'좋은 아침이에요',cause1:'좋은 아침이에요',cause2:'좋은 아침이에요',condition:'좋은 아침이에요',contrast1:'좋은 아침이에요',contrast2:'좋은 아침이에요',purpose:'좋은 아침이에요',result:'좋은 아침이에요'}},
       {ko:'좋은 저녁이에요', ro:'Bună seara', en:'Good evening', isPhrase:true, aliases:['buna seara','good evening'], final:'좋은 저녁이에요', forms:{none:'좋은 저녁이에요',seq:'좋은 저녁이에요',cause1:'좋은 저녁이에요',cause2:'좋은 저녁이에요',condition:'좋은 저녁이에요',contrast1:'좋은 저녁이에요',contrast2:'좋은 저녁이에요',purpose:'좋은 저녁이에요',result:'좋은 저녁이에요'}},
@@ -504,7 +531,15 @@
     '말하다':   {ro:{i:'vorbesc',you_sg:'vorbești',you_pl:'vorbiți',we:'vorbim',third:'vorbește',third_pl:'vorbesc'}, en:{i:'speak',you_sg:'speak',you_pl:'speak',we:'speak',third:'speaks',third_pl:'speak'}},
     '원하다':   {ro:{i:'vreau',you_sg:'vrei',you_pl:'vreți',we:'vrem',third:'vrea',third_pl:'vor'}, en:{i:'want',you_sg:'want',you_pl:'want',we:'want',third:'wants',third_pl:'want'}},
     '알다':     {ro:{i:'știu',you_sg:'știi',you_pl:'știți',we:'știm',third:'știe',third_pl:'știu'}, en:{i:'know',you_sg:'know',you_pl:'know',we:'know',third:'knows',third_pl:'know'}},
-    '돕다':     {ro:{i:'ajut',you_sg:'ajuți',you_pl:'ajutați',we:'ajutăm',third:'ajută',third_pl:'ajută'}, en:{i:'help',you_sg:'help',you_pl:'help',we:'help',third:'helps',third_pl:'help'}}
+    '돕다':     {ro:{i:'ajut',you_sg:'ajuți',you_pl:'ajutați',we:'ajutăm',third:'ajută',third_pl:'ajută'}, en:{i:'help',you_sg:'help',you_pl:'help',we:'help',third:'helps',third_pl:'help'}},
+    '되다':     {ro:{i:'devin',you_sg:'devii',you_pl:'deveniți',we:'devenim',third:'devine',third_pl:'devin'}, en:{i:'become',you_sg:'become',you_pl:'become',we:'become',third:'becomes',third_pl:'become'}},
+    '성공하다': {ro:{i:'reușesc',you_sg:'reușești',you_pl:'reușiți',we:'reușim',third:'reușește',third_pl:'reușesc'}, en:{i:'succeed',you_sg:'succeed',you_pl:'succeed',we:'succeed',third:'succeeds',third_pl:'succeed'}},
+    '실패하다': {ro:{i:'eșuez',you_sg:'eșuezi',you_pl:'eșuați',we:'eșuăm',third:'eșuează',third_pl:'eșuează'}, en:{i:'fail',you_sg:'fail',you_pl:'fail',we:'fail',third:'fails',third_pl:'fail'}},
+    '가르치다': {ro:{i:'predau',you_sg:'predai',you_pl:'predați',we:'predăm',third:'predă',third_pl:'predau'}, en:{i:'teach',you_sg:'teach',you_pl:'teach',we:'teach',third:'teaches',third_pl:'teach'}},
+    '포기하다': {ro:{i:'renunț',you_sg:'renunți',you_pl:'renunțați',we:'renunțăm',third:'renunță',third_pl:'renunță'}, en:{i:'give up',you_sg:'give up',you_pl:'give up',we:'give up',third:'gives up',third_pl:'give up'}},
+    '발전하다': {ro:{i:'progresez',you_sg:'progresezi',you_pl:'progresați',we:'progresăm',third:'progresează',third_pl:'progresează'}, en:{i:'progress',you_sg:'progress',you_pl:'progress',we:'progress',third:'progresses',third_pl:'progress'}},
+    '바꾸다':   {ro:{i:'schimb',you_sg:'schimbi',you_pl:'schimbați',we:'schimbăm',third:'schimbă',third_pl:'schimbă'}, en:{i:'change',you_sg:'change',you_pl:'change',we:'change',third:'changes',third_pl:'change'}},
+    '결정하다': {ro:{i:'decid',you_sg:'decizi',you_pl:'decideți',we:'decidem',third:'decide',third_pl:'decid'}, en:{i:'decide',you_sg:'decide',you_pl:'decide',we:'decide',third:'decides',third_pl:'decide'}}
   };
 
   var VERB_TENSE_DATA = {
@@ -538,7 +573,15 @@
     '말하다':   {roPart:'vorbit',   roBase:'vorbi',       enPast:'spoke',     refl:false},
     '원하다':   {roPart:'vrut',     roBase:'vrea',        enPast:'wanted',    refl:false},
     '알다':     {roPart:'știut',    roBase:'ști',         enPast:'knew',      refl:false},
-    '돕다':     {roPart:'ajutat',   roBase:'ajuta',       enPast:'helped',    refl:false}
+    '돕다':     {roPart:'ajutat',   roBase:'ajuta',       enPast:'helped',    refl:false},
+    '되다':     {roPart:'devenit',   roBase:'deveni',    enPast:'became',     refl:false},
+    '성공하다': {roPart:'reusit',    roBase:'reusi',     enPast:'succeeded',  refl:false},
+    '실패하다': {roPart:'esuat',     roBase:'esua',      enPast:'failed',     refl:false},
+    '가르치다': {roPart:'predat',    roBase:'preda',     enPast:'taught',     refl:false},
+    '포기하다': {roPart:'renuntat',  roBase:'renunta',   enPast:'gave up',    refl:false},
+    '발전하다': {roPart:'progresat', roBase:'progresa',  enPast:'progressed', refl:false},
+    '바꾸다':   {roPart:'schimbat',  roBase:'schimba',   enPast:'changed',    refl:false},
+    '결정하다': {roPart:'decis',     roBase:'decide',    enPast:'decided',    refl:false}
   };
 
   var els = {
@@ -2049,7 +2092,8 @@
   }
 
   function splitIntoSegments(text){
-    var working = ' ' + normalizeLatin(text) + ' ';
+    var _COMMA_PH = 'xcommax';
+    var working = ' ' + normalizeLatin(text.replace(/,/g, ' ' + _COMMA_PH + ' ')) + ' ';
     // Multi-word / specific markers must come BEFORE short single-word markers
     // to avoid partial matches (e.g. 'ca' in 'cu toate că' must not be eaten first).
     var markers = [
@@ -2089,7 +2133,7 @@
       }
     }
 
-    working = working.replace(/,/g, ' |||none||| ');
+    working = working.replace(/\bxcommax\b/g, '|||none|||');
 
     var parts = working.split('|||');
     var segments = [];
@@ -2126,10 +2170,27 @@
     // Absorb empty segments: transfer their connector to the preceding segment.
     // This fixes "studiez, dar" → comma creates {text:'', connector:'contrast1'};
     // the contrast connector moves to the real segment before it.
+    // Only overwrite when the absorbed segment carries a meaningful (non-none) connector,
+    // so a real connector is never silently erased by a trailing comma/none segment.
     for(var ei = segments.length - 1; ei >= 1; ei--){
       if(segments[ei].text === ''){
-        segments[ei - 1].connector = segments[ei].connector;
+        if(segments[ei].connector !== 'none'){
+          segments[ei - 1].connector = segments[ei].connector;
+        }
         segments.splice(ei, 1);
+      }
+    }
+
+    // Handle connector-first sentences: when the connector word starts the sentence
+    // (e.g. "Dacă X, Y", "Cu toate că X, Y", "Deoarece X, Y"), the first segment is
+    // empty. Move its connector forward onto the first real clause and mark it as
+    // "leading" so the SWAP below is suppressed — Romanian order already matches Korean.
+    if(segments.length >= 2 && segments[0].text === '' && segments[0].connector !== 'none'){
+      var _leadConn = segments[0].connector;
+      segments.splice(0, 1);
+      if(segments.length > 0 && (!segments[0].connector || segments[0].connector === 'none')){
+        segments[0].connector = _leadConn;
+        segments[0].leadingConnector = true;
       }
     }
 
@@ -2141,7 +2202,7 @@
       after:true, before:true, concede:true, concede2:true, while:true, asap:true
     };
     for(var pi = 0; pi < segments.length - 1; pi++){
-      if(SWAP_KEYS[segments[pi].connector]){
+      if(!segments[pi].leadingConnector && SWAP_KEYS[segments[pi].connector]){
         var tmp = segments[pi].text;
         segments[pi].text     = segments[pi + 1].text;
         segments[pi + 1].text = tmp;
@@ -2176,7 +2237,10 @@
                    'ramas','ajuns','intors','gatit','spalat','gasit','pierdut','ales',
                    'deschis','inchis','primit','pus','gandit','oprit','continuat',
                    'trimis','folosit','calatorit','explicat','intrebat','alergat',
-                   'adus','plimbat','plecat'];
+                   'adus','plimbat','plecat',
+                   // verbe TOPIK 5-6
+                   'reusit','esuat','predat','renuntat','progresat','schimbat','decis','devenit',
+                   'trebuit','muncit','obtinut','rezolvat','participat','contribuit'];
     for(var i=0;i<roParts.length;i++){
       if(n.indexOf(roParts[i]) !== -1) return 'past';
     }
