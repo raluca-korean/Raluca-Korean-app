@@ -570,6 +570,7 @@
 
   var _wordSpeakTimer = null;
   var _sentenceSpeakTimer = null;
+  var _parseTextMode = false;
 
   function speakText(text, rate){
     if(!('speechSynthesis' in window) || !text) return;
@@ -1571,8 +1572,17 @@
     }
     if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
     if(time && time.ko) parts.push(time.ko);
-    if(departure && departure.ko) parts.push(departure.ko);
-    if(transit && transit.ko) parts.push(transit.ko);
+    if(departure && departure.ko){
+      if(transit && transit.ko){
+        var depBase = departure.ko.replace(/에서$|에$/, '');
+        var locConj = (window.Conjugation && window.Conjugation.hasBatchim(depBase)) ? '과' : '와';
+        parts.push(depBase + locConj + ' ' + transit.ko);
+      } else {
+        parts.push(departure.ko);
+      }
+    } else if(transit && transit.ko){
+      parts.push(transit.ko);
+    }
     if(object1 && object1.ko) parts.push(object1.ko);
     if(object2 && object2.ko) parts.push(object2.ko);
     mannerAdvs.forEach(function(ko){ parts.push(ko); });
@@ -1603,9 +1613,15 @@
     }
     if(time) parts.push(translationOf(time));
     if(departure) parts.push(translationOf(departure));
-    if(transit) parts.push(translationOf(transit));
+    if(transit){
+      var ttr = translationOf(transit);
+      if(ttr) parts.push((state.lang === 'en' ? 'and ' : 'și ') + ttr);
+    }
     if(object1) parts.push(translationOf(object1));
-    if(object2) parts.push(translationOf(object2));
+    if(object2){
+      var o2tr = translationOf(object2);
+      if(o2tr) parts.push((state.lang === 'en' ? 'and ' : 'și ') + o2tr);
+    }
     if(adverb) parts.push(translationOf(adverb));
     if(adverb2) parts.push(translationOf(adverb2));
 
@@ -1907,14 +1923,15 @@
       state.clauses.pop();
     }
 
-    var visible = getLevelFields();
-
-    for(var r=0;r<state.clauses.length;r++){
-      var clause = ensureClauseShape(state.clauses[r]);
-      for(var k=0;k<ALL_FIELD_KEYS.length;k++){
-        var fieldKey = ALL_FIELD_KEYS[k];
-        if(visible.indexOf(fieldKey) === -1){
-          clearFieldFromClause(clause, fieldKey);
+    if(!_parseTextMode){
+      var visible = getLevelFields();
+      for(var r=0;r<state.clauses.length;r++){
+        var clause = ensureClauseShape(state.clauses[r]);
+        for(var k=0;k<ALL_FIELD_KEYS.length;k++){
+          var fieldKey = ALL_FIELD_KEYS[k];
+          if(visible.indexOf(fieldKey) === -1){
+            clearFieldFromClause(clause, fieldKey);
+          }
         }
       }
     }
@@ -2249,16 +2266,16 @@
         setFieldItem(clause, 'topic', subjects[0]);
         lastSubjectKo = subjects[0].ko;
       }
-      if(subjects[1] && state.level >= 6) setFieldItem(clause, 'topic2', subjects[1]);
+      if(subjects[1]) setFieldItem(clause, 'topic2', subjects[1]);
       // Greeting phrases are standalone — skip time/place/object/adverb to avoid noise
       if(!verb || !verb.isPhrase){
         if(times[0])    setFieldItem(clause, 'time', times[0]);
         if(places[0])   setFieldItem(clause, 'departure', places[0]);
-        if(places[1] && state.level >= 6) setFieldItem(clause, 'transit', places[1]);
+        if(places[1])   setFieldItem(clause, 'transit', places[1]);
         if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
-        if(objects[1] && state.level >= 5) setFieldItem(clause, 'object2', objects[1]);
+        if(objects[1])  setFieldItem(clause, 'object2', objects[1]);
         if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
-        if(descs[1] && state.level >= 6) setFieldItem(clause, 'adverb2', descs[1]);
+        if(descs[1])    setFieldItem(clause, 'adverb2', descs[1]);
       }
       if(verb)        setFieldItem(clause, 'verb', verb);
 
@@ -2287,8 +2304,10 @@
         normalizeItem(tenseEntry, 'connector', DATA.connector.indexOf(tenseEntry)));
     }
 
+    _parseTextMode = true;
     ensureChainLength();
     renderAll();
+    _parseTextMode = false;
   }
 
   function ensureVocabSheet(){
