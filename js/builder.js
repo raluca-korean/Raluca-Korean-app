@@ -363,7 +363,7 @@
     verb: [
       {ko:'공부하다', ro:'a studia', en:'to study', aliases:['studiez','studia','invat','învăț','study','learn','studiat','am studiat','a studiat','voi studia','studied','will study'], final:'공부해요', forms:{none:'공부해요',seq:'공부하고',cause1:'공부해서',cause2:'공부하니까',condition:'공부하면',contrast1:'공부하지만',contrast2:'공부하는데',purpose:'공부하려고',result:'공부하게 되다'}},
       {ko:'먹다', ro:'a mânca', en:'to eat', aliases:['mananc','mănânc','eat','manca','mânca','mancat','mâncat','am mancat','am mâncat','a mancat','a mâncat','voi manca','voi mânca','ate','will eat'], final:'먹어요', forms:{none:'먹어요',seq:'먹고',cause1:'먹어서',cause2:'먹으니까',condition:'먹으면',contrast1:'먹지만',contrast2:'먹는데',purpose:'먹으려고',result:'먹게 되다'}},
-      {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','mergi','mergem','mergeti','mergeți','plec','pleci','merge','go','leave','mers','am mers','a mers','voi merge','went','will go'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
+      {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','mergi','mergem','mergeti','mergeți','plec','merge','go','leave','mers','am mers','a mers','voi merge','went','will go'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
       {ko:'오다', ro:'a veni', en:'to come', aliases:['vin','vii','venim','veniti','veniți','vine','veni','come','venit','am venit','a venit','voi veni','came','will come'], final:'와요', forms:{none:'와요',seq:'오고',cause1:'와서',cause2:'오니까',condition:'오면',contrast1:'오지만',contrast2:'오는데',purpose:'오려고',result:'오게 되다'}},
       {ko:'보다', ro:'a vedea', en:'to see', aliases:['vad','văd','vezi','vede','vedea','see','watch','vazut','văzut','am vazut','am văzut','a vazut','a văzut','voi vedea','saw','will see'], final:'봐요', forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
       {ko:'읽다', ro:'a citi', en:'to read', aliases:['citesc','citeste','citește','citi','read','citit','am citit','a citit','voi citi','will read'], final:'읽어요', forms:{none:'읽어요',seq:'읽고',cause1:'읽어서',cause2:'읽으니까',condition:'읽으면',contrast1:'읽지만',contrast2:'읽는데',purpose:'읽으려고',result:'읽게 되다'}},
@@ -1761,9 +1761,9 @@
     if(col.key === 'verb' && active && item && item.ko){
       var conjForm = renderVerbKo(clause);
       if(conjForm){
-        value = conjForm;
+        value = item.ko;
         var tr = translationOf(item) || '';
-        meta = item.ko + (tr ? ' · ' + tr : '');
+        meta = conjForm + (tr ? ' · ' + tr : '');
         conjugated = true;
       }
     }
