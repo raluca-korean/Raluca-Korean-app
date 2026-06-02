@@ -355,10 +355,14 @@ function makeRef(char, sz=160) {
   const c=document.createElement("canvas");
   c.width=c.height=sz;
   const cx=c.getContext("2d");
-  const chars=[...char];
-  const fs=chars.length>2 ? sz*0.38 : chars.length>1 ? sz*0.55 : sz*0.78;
+  // Micșorează fontul până încape tot textul în lățimea canvas-ului
+  let fs=Math.round(sz*0.78);
+  cx.font=`900 ${fs}px system-ui,sans-serif`;
+  while(cx.measureText(char).width > sz*0.92 && fs > 12) {
+    fs -= 2;
+    cx.font=`900 ${fs}px system-ui,sans-serif`;
+  }
   cx.fillStyle="#000";
-  cx.font=`900 ${Math.round(fs)}px system-ui,sans-serif`;
   cx.textAlign="center"; cx.textBaseline="middle";
   cx.fillText(char,sz/2,sz/2+sz*0.04);
   return c;
