@@ -388,10 +388,14 @@ function paintFbCanvas(id, src, color) {
   const dst=document.getElementById(id);
   const dc=dst.getContext("2d");
   if (!src) { dc.clearRect(0,0,dst.width,dst.height); return; }
-  // Adaptează dimensiunea canvas-ului la forma sursei
+  // Adaptează forma canvas-ului la aspectul sursei
   const BASE=120, ratio=src.width/src.height;
   dst.height=BASE;
   dst.width=ratio>=1.4 ? Math.round(BASE*ratio) : BASE;
+  // Forțează CSS să respecte noile dimensiuni
+  dst.style.width='100%';
+  dst.style.aspectRatio=`${dst.width} / ${dst.height}`;
+  dst.style.height='';
   dc.clearRect(0,0,dst.width,dst.height);
   const tmp=document.createElement("canvas");
   tmp.width=dst.width; tmp.height=dst.height;
