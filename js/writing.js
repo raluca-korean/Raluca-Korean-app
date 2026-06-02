@@ -387,8 +387,12 @@ function compare(userCvs, targetChar) {
 function paintFbCanvas(id, src, color) {
   const dst=document.getElementById(id);
   const dc=dst.getContext("2d");
+  if (!src) { dc.clearRect(0,0,dst.width,dst.height); return; }
+  // Adaptează dimensiunea canvas-ului la forma sursei
+  const BASE=120, ratio=src.width/src.height;
+  dst.height=BASE;
+  dst.width=ratio>=1.4 ? Math.round(BASE*ratio) : BASE;
   dc.clearRect(0,0,dst.width,dst.height);
-  if (!src) return;
   const tmp=document.createElement("canvas");
   tmp.width=dst.width; tmp.height=dst.height;
   const tc=tmp.getContext("2d");
