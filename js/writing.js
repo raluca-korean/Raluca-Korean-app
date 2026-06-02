@@ -389,15 +389,10 @@ function paintFbCanvas(id, src, color) {
   const dc=dst.getContext("2d");
   dc.clearRect(0,0,dst.width,dst.height);
   if (!src) return;
-  // Letterbox: scalează sursa proporțional în spațiul destinație
-  const sr=src.width/src.height, dr=dst.width/dst.height;
-  let dw,dh,dx,dy;
-  if (sr>dr) { dw=dst.width; dh=Math.round(dw/sr); dx=0; dy=Math.round((dst.height-dh)/2); }
-  else       { dh=dst.height; dw=Math.round(dh*sr); dy=0; dx=Math.round((dst.width-dw)/2); }
   const tmp=document.createElement("canvas");
   tmp.width=dst.width; tmp.height=dst.height;
   const tc=tmp.getContext("2d");
-  tc.drawImage(src,dx,dy,dw,dh);
+  tc.drawImage(src,0,0,dst.width,dst.height);
   tc.globalCompositeOperation="source-in";
   tc.fillStyle=color; tc.fillRect(0,0,dst.width,dst.height);
   dc.drawImage(tmp,0,0);
