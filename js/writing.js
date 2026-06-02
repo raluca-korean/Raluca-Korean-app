@@ -351,14 +351,33 @@ function normalise(src, sz=160) {
   return out;
 }
 
+function makeWideRef(char, chars) {
+  const H=200, W=Math.max(H, chars.length*H);
+  const c=document.createElement("canvas");
+  c.width=W; c.height=H;
+  const cx=c.getContext("2d");
+  const fs=Math.round(H*0.75);
+  cx.fillStyle="#000";
+  cx.font=`900 ${fs}px system-ui,sans-serif`;
+  cx.textAlign="center"; cx.textBaseline="middle";
+  chars.forEach((ch,i)=>{
+    cx.fillText(ch, (i+0.5)*(W/chars.length), H/2+H*0.04);
+  });
+  return c;
+}
+
 function makeRef(char, sz=160) {
   const c=document.createElement("canvas");
   c.width=c.height=sz;
   const cx=c.getContext("2d");
-  const chars=[...char];
-  const fs=chars.length>2 ? sz*0.38 : chars.length>1 ? sz*0.55 : sz*0.78;
+  // Micșorează fontul până încape tot textul în lățimea canvas-ului
+  let fs=Math.round(sz*0.78);
+  cx.font=`900 ${fs}px system-ui,sans-serif`;
+  while(cx.measureText(char).width > sz*0.92 && fs > 12) {
+    fs -= 2;
+    cx.font=`900 ${fs}px system-ui,sans-serif`;
+  }
   cx.fillStyle="#000";
-  cx.font=`900 ${Math.round(fs)}px system-ui,sans-serif`;
   cx.textAlign="center"; cx.textBaseline="middle";
   cx.fillText(char,sz/2,sz/2+sz*0.04);
   return c;
@@ -387,12 +406,21 @@ function compare(userCvs, targetChar) {
 function paintFbCanvas(id, src, color) {
   const dst=document.getElementById(id);
   const dc=dst.getContext("2d");
+  if (!src) { dc.clearRect(0,0,dst.width,dst.height); return; }
+  // Adaptează canvas-ul destinație la forma sursei
+  const ratio=src.width/src.height;
+  dst.height=160;
+  dst.width=Math.round(160*Math.max(ratio,1));
   dc.clearRect(0,0,dst.width,dst.height);
-  if (!src) return;
+  // Letterbox: centrează sursa proporțional
+  let dw,dh,dx,dy;
+  const dr=dst.width/dst.height;
+  if(ratio>dr){dw=dst.width;dh=Math.round(dw/ratio);dx=0;dy=Math.round((dst.height-dh)/2);}
+  else{dh=dst.height;dw=Math.round(dh*ratio);dy=0;dx=Math.round((dst.width-dw)/2);}
   const tmp=document.createElement("canvas");
   tmp.width=dst.width; tmp.height=dst.height;
   const tc=tmp.getContext("2d");
-  tc.drawImage(src,0,0,dst.width,dst.height);
+  tc.drawImage(src,dx,dy,dw,dh);
   tc.globalCompositeOperation="source-in";
   tc.fillStyle=color; tc.fillRect(0,0,dst.width,dst.height);
   dc.drawImage(tmp,0,0);
@@ -450,8 +478,10 @@ function doCheck() {
   document.getElementById("fbMsg").textContent=
     pct>=65?t.excellent:pct>=42?t.good:pct>=22?t.tryAgain:t.wrong;
 
-  paintFbCanvas("fbUserCv", nu, drawColor());
-  paintFbCanvas("fbRefCv",  nr, "#7c3aed");
+  // Pt cuvinte/propoziții: arată canvas-ul original lat, nu versiunea normalizată
+  const multiChar = (mode==="words"||mode==="sentences") && chars.length>1;
+  paintFbCanvas("fbUserCv", multiChar ? cvs : nu, drawColor());
+  paintFbCanvas("fbRefCv",  multiChar ? makeWideRef(item.char,chars) : nr, "#7c3aed");
 
   const fb=document.getElementById("fbCard");
   fb.style.display="";
