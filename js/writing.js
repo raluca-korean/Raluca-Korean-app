@@ -387,20 +387,17 @@ function compare(userCvs, targetChar) {
 function paintFbCanvas(id, src, color) {
   const dst=document.getElementById(id);
   const dc=dst.getContext("2d");
-  if (!src) { dc.clearRect(0,0,dst.width,dst.height); return; }
-  // Adaptează forma canvas-ului la aspectul sursei
-  const BASE=120, ratio=src.width/src.height;
-  dst.height=BASE;
-  dst.width=ratio>=1.4 ? Math.round(BASE*ratio) : BASE;
-  // Forțează CSS să respecte noile dimensiuni
-  dst.style.width='100%';
-  dst.style.aspectRatio=`${dst.width} / ${dst.height}`;
-  dst.style.height='';
   dc.clearRect(0,0,dst.width,dst.height);
+  if (!src) return;
+  // Letterbox: scalează sursa proporțional în spațiul destinație
+  const sr=src.width/src.height, dr=dst.width/dst.height;
+  let dw,dh,dx,dy;
+  if (sr>dr) { dw=dst.width; dh=Math.round(dw/sr); dx=0; dy=Math.round((dst.height-dh)/2); }
+  else       { dh=dst.height; dw=Math.round(dh*sr); dy=0; dx=Math.round((dst.width-dw)/2); }
   const tmp=document.createElement("canvas");
   tmp.width=dst.width; tmp.height=dst.height;
   const tc=tmp.getContext("2d");
-  tc.drawImage(src,0,0,dst.width,dst.height);
+  tc.drawImage(src,dx,dy,dw,dh);
   tc.globalCompositeOperation="source-in";
   tc.fillStyle=color; tc.fillRect(0,0,dst.width,dst.height);
   dc.drawImage(tmp,0,0);
