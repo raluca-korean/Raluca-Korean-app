@@ -1,315 +1,501 @@
-/* ── Stories — mini-dialogue contextual learning ──────────────────
-   Three phases per episode:
-   1. Read  — chat-bubble display with TTS, one line at a time
-   2. Practice — arrange shuffled Korean lines in correct order
-   3. Complete — XP reward + unlock next episode
-   ─────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   RESONANCE FIELD INTERFACE — Particle Field System
+═══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var canvas, ctx, W, H, particles = [];
+
+  function init() {
+    canvas = document.getElementById('rfCanvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+    resize();
+    particles = Array.from({length: 55}, makeParticle);
+    window.addEventListener('resize', resize);
+    requestAnimationFrame(tick);
+  }
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function makeParticle() {
+    return {
+      x:     Math.random() * (W || 800),
+      y:     Math.random() * (H || 600),
+      vx:    (Math.random() - 0.5) * 0.18,
+      vy:    (Math.random() - 0.5) * 0.18,
+      r:     Math.random() * 1.6 + 0.3,
+      baseA: Math.random() * 0.45 + 0.08,
+      phase: Math.random() * Math.PI * 2,
+      freq:  0.004 + Math.random() * 0.008,
+    };
+  }
+
+  function isLight() {
+    return document.body.classList.contains('rfi-light');
+  }
+
+  function tick(t) {
+    ctx.clearRect(0, 0, W, H);
+    var light = isLight();
+    var R = light ? 91 : 123, G = light ? 63 : 92, B = light ? 212 : 250;
+
+    particles.forEach(function (p) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -10 || p.x > W + 10) p.vx *= -1;
+      if (p.y < -10 || p.y > H + 10) p.vy *= -1;
+      p.a = p.baseA * (0.5 + 0.5 * Math.sin(p.phase + t * p.freq));
+    });
+
+    /* Connecting lines */
+    for (var i = 0; i < particles.length; i++) {
+      for (var j = i + 1; j < particles.length; j++) {
+        var dx = particles[i].x - particles[j].x;
+        var dy = particles[i].y - particles[j].y;
+        var d  = Math.sqrt(dx * dx + dy * dy);
+        if (d < 110) {
+          var la = (light ? 0.09 : 0.13) * (1 - d / 110);
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = 'rgba(' + R + ',' + G + ',' + B + ',' + la + ')';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    /* Dots */
+    particles.forEach(function (p) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + R + ',' + G + ',' + B + ',' + p.a + ')';
+      ctx.fill();
+    });
+
+    requestAnimationFrame(tick);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+}());
+
+/* ═══════════════════════════════════════════════════════════
+   RFI Theme System — Night Field / Luminous Field
+═══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var KEY = 'RK_RFI_THEME';
+
+  function apply() {
+    var light = localStorage.getItem(KEY) === 'light';
+    document.body.classList.toggle('rfi-dark',  !light);
+    document.body.classList.toggle('rfi-light',  light);
+  }
+
+  function toggle() {
+    var nowLight = !document.body.classList.contains('rfi-light');
+    document.body.classList.toggle('rfi-dark',  !nowLight);
+    document.body.classList.toggle('rfi-light',  nowLight);
+    localStorage.setItem(KEY, nowLight ? 'light' : 'dark');
+  }
+
+  function setup() {
+    apply();
+    var btn = document.getElementById('rfTheme');
+    if (btn) btn.addEventListener('click', toggle);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+}());
+
+/* ═══════════════════════════════════════════════════════════
+   Resonance Field Interface — Stories App
+═══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
 
   /* ── State ── */
-  let STORIES      = [];
-  let lang         = 'ro';
-  let currentStory = null;
-  let currentEp    = null;
-  let lineIdx      = 0;      // next line to reveal in Read phase
-  let bank         = [];     // shuffled Korean sentences (Practice)
-  let line         = [];     // user-ordered sentences (Practice)
-  let answered     = false;
+  var STORIES      = [];
+  var lang         = 'ro';
+  var currentStory = null;
+  var currentEp    = null;
+  var lineIdx      = 0;
+  var bank         = [];
+  var line         = [];
+  var answered     = false;
+  var currentState = 'stateField';
 
   /* ── UI strings ── */
-  const UI = {
+  var UI = {
     ro: {
-      sub:         'Dialoguri cu context narativ',
-      episodes:    n  => `${n} episoade`,
-      progress:    (d,t) => `${d}/${t} completate`,
-      readPhase:   '📖 Citește dialogul',
-      practicePhase:'🏋 Aranjează în ordine corectă',
-      placeholder: 'Atinge o replică din bancă →',
-      continua:    'Continuă →',
-      practica:    '🏋 Practică',
-      verifica:    'Verifică',
-      reset:       '↺ Resetează',
-      locked:      '🔒 Blocat',
-      done:        '✓ Completat',
-      play:        '▶ Joacă',
-      lines:       n  => `${n} replici`,
-      ok:          '✓ Perfect! Ordinea e corectă!',
-      err:         '✗ Nu e în ordine. Mai încearcă!',
-      completeTitle:'Episod completat!',
-      xp:          xp => `+${xp} XP`,
-      nextEp:      'Episodul următor →',
-      backStory:   '← Înapoi la poveste',
+      fieldTitle:    'Povești',
+      fieldSub:      'Intră în rezonanță cu un univers narativ',
+      bcStories:     'Povești',
+      episodes:      function (n) { return n + ' episoade'; },
+      progress:      function (d, t) { return d + '/' + t + ' completate'; },
+      bankLabel:     'Fragmente disponibile',
+      seqLabel:      'Secvența ta',
+      placeholder:   'Atinge un fragment →',
+      continua:      'Continuă →',
+      practica:      'Practică →',
+      verifica:      'Verifică',
+      reset:         '↺ Resetează',
+      locked:        '🔒 Blocat',
+      done:          '✓ Completat',
+      play:          '▶ Joacă',
+      lines:         function (n) { return n + ' replici'; },
+      ok:            '✓ Rezonanță perfectă!',
+      err:           '✗ Secvența nu e corectă. Mai încearcă!',
+      completeTitle: 'Rezonanță atinsă!',
+      xp:            function (xp) { return '+' + xp + ' XP'; },
+      nextEp:        'Episodul următor →',
+      backStory:     '← Înapoi la poveste',
     },
     en: {
-      sub:         'Mini-dialogues with narrative context',
-      episodes:    n  => `${n} episodes`,
-      progress:    (d,t) => `${d}/${t} completed`,
-      readPhase:   '📖 Read the dialogue',
-      practicePhase:'🏋 Arrange in correct order',
-      placeholder: 'Tap a line from the bank →',
-      continua:    'Continue →',
-      practica:    '🏋 Practice',
-      verifica:    'Check',
-      reset:       '↺ Reset',
-      locked:      '🔒 Locked',
-      done:        '✓ Completed',
-      play:        '▶ Play',
-      lines:       n  => `${n} lines`,
-      ok:          '✓ Perfect! The order is correct!',
-      err:         '✗ Not in order. Try again!',
-      completeTitle:'Episode complete!',
-      xp:          xp => `+${xp} XP`,
-      nextEp:      'Next episode →',
-      backStory:   '← Back to story',
-    }
+      fieldTitle:    'Stories',
+      fieldSub:      'Enter resonance with a narrative universe',
+      bcStories:     'Stories',
+      episodes:      function (n) { return n + ' episodes'; },
+      progress:      function (d, t) { return d + '/' + t + ' completed'; },
+      bankLabel:     'Available fragments',
+      seqLabel:      'Your sequence',
+      placeholder:   'Tap a fragment →',
+      continua:      'Continue →',
+      practica:      'Practice →',
+      verifica:      'Verify',
+      reset:         '↺ Reset',
+      locked:        '🔒 Locked',
+      done:          '✓ Completed',
+      play:          '▶ Play',
+      lines:         function (n) { return n + ' lines'; },
+      ok:            '✓ Perfect resonance!',
+      err:           '✗ Sequence incorrect. Try again!',
+      completeTitle: 'Resonance achieved!',
+      xp:            function (xp) { return '+' + xp + ' XP'; },
+      nextEp:        'Next episode →',
+      backStory:     '← Back to story',
+    },
   };
-  const t = (k, ...a) => { const v = UI[lang][k]; return typeof v === 'function' ? v(...a) : v; };
+
+  function t(k) {
+    var v    = UI[lang][k];
+    var args = Array.prototype.slice.call(arguments, 1);
+    return typeof v === 'function' ? v.apply(null, args) : v;
+  }
 
   /* ── Progress ── */
   function loadProg() {
-    try { return JSON.parse(localStorage.getItem('RK_STORIES') || '{}'); } catch(e) { return {}; }
+    try { return JSON.parse(localStorage.getItem('RK_STORIES') || '{}'); } catch (e) { return {}; }
   }
   function saveProg(p) { localStorage.setItem('RK_STORIES', JSON.stringify(p)); }
 
   function isDone(sid, eid) {
-    const p = loadProg();
-    return !!(p[sid] && p[sid].done && p[sid].done.includes(eid));
+    var p = loadProg();
+    return !!(p[sid] && p[sid].done && p[sid].done.indexOf(eid) !== -1);
   }
   function markDone(sid, eid) {
-    const p = loadProg();
-    if (!p[sid]) p[sid] = { done: [] };
-    if (!p[sid].done.includes(eid)) p[sid].done.push(eid);
+    var p = loadProg();
+    if (!p[sid]) p[sid] = {done: []};
+    if (p[sid].done.indexOf(eid) === -1) p[sid].done.push(eid);
     saveProg(p);
   }
   function isUnlocked(story, idx) {
     return idx === 0 || isDone(story.id, story.episodes[idx - 1].id);
   }
   function doneCount(story) {
-    const p = loadProg()[story.id];
+    var p = loadProg()[story.id];
     return p ? p.done.length : 0;
   }
 
   /* ── Helpers ── */
   function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j   = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
     }
     return a;
   }
+
   function speakKorean(text) {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    var u  = new SpeechSynthesisUtterance(text);
     u.lang = 'ko-KR';
     u.rate = 0.85;
     window.speechSynthesis.speak(u);
   }
 
-  /* ── View switching ── */
-  function showView(id) {
-    document.querySelectorAll('.s-view').forEach(v => v.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+  /* ── Phase transition ── */
+  function showState(id) {
+    document.querySelectorAll('.rf-state').forEach(function (el) {
+      el.classList.remove('active');
+    });
+    var el = document.getElementById(id);
+    if (el) el.classList.add('active');
+    currentState = id;
+    window.scrollTo(0, 0);
   }
-  function setNav(title, sub, showBack1, back1Text, showBack2, back2Text) {
-    document.getElementById('navTitle').textContent = title;
-    document.getElementById('navSub').textContent   = sub;
-    const b1 = document.getElementById('btnToList');
-    const b2 = document.getElementById('btnToEpisodes');
-    b1.style.display = showBack1 ? '' : 'none';
-    b2.style.display = showBack2 ? '' : 'none';
-    if (showBack1) b1.textContent = back1Text;
-    if (showBack2) b2.textContent = back2Text;
+
+  function setBreadcrumb(parts) {
+    var bc = document.getElementById('rfBreadcrumb');
+    if (!bc) return;
+    bc.innerHTML = parts.map(function (p, i) {
+      return '<span class="bc-crumb">' + p + '</span>' +
+        (i < parts.length - 1 ? '<span class="bc-sep">›</span>' : '');
+    }).join('');
+  }
+
+  /* ── Attentional Gravity (cursor → nodes drift) ── */
+  function initGravity() {
+    document.addEventListener('mousemove', function (e) {
+      if (currentState !== 'stateField') return;
+      document.querySelectorAll('.rf-story-node').forEach(function (node) {
+        var rect  = node.getBoundingClientRect();
+        var cx    = rect.left + rect.width  / 2;
+        var cy    = rect.top  + rect.height / 2;
+        var dx    = e.clientX - cx;
+        var dy    = e.clientY - cy;
+        var dist  = Math.sqrt(dx * dx + dy * dy);
+        var range = 230;
+        if (dist < range) {
+          var force = (1 - dist / range) * 12;
+          var angle = Math.atan2(dy, dx);
+          node.style.transform = 'translate(' +
+            (Math.cos(angle) * force).toFixed(1) + 'px,' +
+            (Math.sin(angle) * force).toFixed(1) + 'px)';
+        } else {
+          node.style.transform = '';
+        }
+      });
+    });
   }
 
   /* ══════════════════════════════════════════════
-     VIEW 1 — Story list
+     STATE 1: FIELD
   ══════════════════════════════════════════════ */
-  function renderList() {
-    setNav('📖 Stories', t('sub'), false, '', false, '');
-    showView('viewList');
+  function renderField() {
+    setBreadcrumb([t('bcStories')]);
+    showState('stateField');
+    document.getElementById('fieldTitle').textContent = t('fieldTitle');
+    document.getElementById('fieldSub').textContent   = t('fieldSub');
 
-    const grid = document.getElementById('storiesGrid');
-    grid.innerHTML = STORIES.map(s => {
-      const done  = doneCount(s);
-      const total = s.episodes.length;
-      const pct   = Math.round(done / total * 100);
-      return `
-        <div class="story-card" data-id="${s.id}">
-          <div class="story-card-icon">${s.icon}</div>
-          <div class="story-topik">TOPIK ${s.topik}</div>
-          <div class="story-card-title">${s.title[lang]}</div>
-          <div class="story-card-desc">${s.description[lang]}</div>
-          <div class="story-card-foot">
-            <span>${t('episodes', total)}</span>
-            ${done > 0 ? `<span class="story-done-label">${t('progress', done, total)}</span>` : ''}
-          </div>
-          <div class="story-prog-track">
-            <div class="story-prog-fill" style="width:${pct}%"></div>
-          </div>
-        </div>`;
+    var container = document.getElementById('rfNodes');
+    container.innerHTML = '';
+
+    STORIES.forEach(function (s) {
+      var done  = doneCount(s);
+      var total = s.episodes.length;
+      var pct   = total > 0 ? Math.round(done / total * 100) : 0;
+      /* SVG ring: viewBox 152×152, center 76,76, r=68 */
+      var circ  = +(2 * Math.PI * 68).toFixed(1);
+      var offset = +(circ * (1 - pct / 100)).toFixed(1);
+
+      var node = document.createElement('div');
+      node.className  = 'rf-story-node';
+      node.dataset.id = s.id;
+      node.innerHTML  = [
+        '<div class="rf-node-orb">',
+          '<div class="rf-node-rim"></div>',
+          '<div class="rf-node-surface">',
+            '<div class="rf-node-icon">', s.icon, '</div>',
+            '<div class="rf-node-topik">TOPIK ', s.topik, '</div>',
+          '</div>',
+          '<svg class="rf-node-ring" viewBox="0 0 152 152">',
+            '<circle class="rf-ring-track" cx="76" cy="76" r="68"/>',
+            '<circle class="rf-ring-fill"  cx="76" cy="76" r="68"',
+              ' stroke-dasharray="', circ, '"',
+              ' stroke-dashoffset="', offset, '"/>',
+          '</svg>',
+        '</div>',
+        '<div>',
+          '<div class="rf-node-title">', s.title[lang], '</div>',
+          done > 0
+            ? '<div class="rf-node-prog">' + t('progress', done, total) + '</div>'
+            : '',
+        '</div>',
+      ].join('');
+
+      node.addEventListener('click', function () {
+        renderConstellation(s);
+      });
+      container.appendChild(node);
+    });
+  }
+
+  /* ══════════════════════════════════════════════
+     STATE 2: CONSTELLATION
+  ══════════════════════════════════════════════ */
+  function renderConstellation(story) {
+    currentStory = story;
+    setBreadcrumb([t('bcStories'), story.title[lang]]);
+    showState('stateConstellation');
+
+    document.getElementById('btnFieldBackLabel').textContent = t('bcStories');
+    document.getElementById('coreIcon').textContent  = story.icon;
+    document.getElementById('coreTitle').textContent = story.title[lang];
+    document.getElementById('coreChars').innerHTML   = Object.entries(story.characters).map(function (e) {
+      var ko = e[0], info = e[1];
+      return '<span class="rf-char-sig" style="border-color:' + info.color + '55;background:' + info.color + '12">' +
+        '<span class="rf-char-ko" style="color:' + info.color + '">' + ko + '</span>' +
+        '<span class="rf-char-name">' + info[lang] + '</span>' +
+        '</span>';
     }).join('');
 
-    grid.querySelectorAll('.story-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const s = STORIES.find(x => x.id === card.dataset.id);
-        if (s) renderEpisodes(s);
-      });
+    var path = document.getElementById('episodePath');
+    path.innerHTML = '';
+
+    story.episodes.forEach(function (ep, idx) {
+      var done      = isDone(story.id, ep.id);
+      var unlocked  = isUnlocked(story, idx);
+      var cls       = done ? 'wp-done' : (unlocked ? 'wp-current' : 'wp-locked');
+      var icon      = done ? '✓' : (unlocked ? '▶' : '🔒');
+      var badgeTxt  = done ? t('done') : (unlocked ? t('play') : t('locked'));
+
+      var wp = document.createElement('div');
+      wp.className   = 'rf-ep-waypoint ' + cls;
+      wp.dataset.epId = ep.id;
+      wp.innerHTML   = [
+        '<div class="rf-wp-path">',
+          '<div class="rf-wp-orb">', icon, '</div>',
+          '<div class="rf-wp-line"></div>',
+        '</div>',
+        '<div class="rf-wp-content">',
+          '<div class="rf-wp-info">',
+            '<div class="rf-wp-title">', ep.title[lang], '</div>',
+            '<div class="rf-wp-meta">',  t('lines', ep.lines.length), '</div>',
+          '</div>',
+          '<span class="rf-wp-badge ', cls, '">', badgeTxt, '</span>',
+        '</div>',
+      ].join('');
+
+      if (!wp.classList.contains('wp-locked')) {
+        wp.addEventListener('click', function () {
+          var epObj = story.episodes.find(function (e) { return e.id === wp.dataset.epId; });
+          if (epObj) startImmersion(story, epObj);
+        });
+      }
+      path.appendChild(wp);
     });
   }
 
   /* ══════════════════════════════════════════════
-     VIEW 2 — Episode list
+     STATE 3: IMMERSION — dialogue reading
   ══════════════════════════════════════════════ */
-  function renderEpisodes(story) {
-    currentStory = story;
-    setNav(
-      story.icon + ' ' + story.title[lang],
-      story.description[lang],
-      true, '‹ Stories',
-      false, ''
-    );
-    showView('viewEpisodes');
-
-    // Character chips
-    document.getElementById('charBar').innerHTML =
-      Object.entries(story.characters).map(([ko, info]) => `
-        <div class="char-chip" style="border-color:${info.color}40;background:${info.color}10">
-          <span class="char-ko"  style="color:${info.color}">${ko}</span>
-          <span class="char-native">${info[lang]}</span>
-        </div>`).join('');
-
-    // Episode items
-    document.getElementById('episodeList').innerHTML =
-      story.episodes.map((ep, idx) => {
-        const done      = isDone(story.id, ep.id);
-        const unlocked  = isUnlocked(story, idx);
-        const stateKey  = done ? 'done' : unlocked ? 'play' : 'locked';
-        const stateIcon = done ? '✓' : unlocked ? '▶' : '🔒';
-        return `
-          <div class="episode-item ${done ? 'done' : unlocked ? 'current' : 'locked'}"
-               data-ep-id="${ep.id}">
-            <div class="ep-status-icon">${stateIcon}</div>
-            <div class="ep-info">
-              <div class="ep-title">${ep.title[lang]}</div>
-              <div class="ep-meta">${t('lines', ep.lines.length)}</div>
-            </div>
-            <div class="ep-badge ${done ? 'done' : unlocked ? 'current' : 'locked'}">${t(stateKey)}</div>
-          </div>`;
-      }).join('');
-
-    document.querySelectorAll('.episode-item:not(.locked)').forEach(el => {
-      el.addEventListener('click', () => {
-        const ep = story.episodes.find(e => e.id === el.dataset.epId);
-        if (ep) startEpisode(story, ep);
-      });
-    });
-  }
-
-  /* ══════════════════════════════════════════════
-     VIEW 3 — Episode player
-  ══════════════════════════════════════════════ */
-  function startEpisode(story, ep) {
+  function startImmersion(story, ep) {
     currentStory = story;
     currentEp    = ep;
     lineIdx      = 0;
     answered     = false;
 
-    setNav(
-      ep.title[lang],
-      story.title[lang],
-      false, '',
-      true, '‹ ' + story.title[lang]
-    );
-    showView('viewPlayer');
+    setBreadcrumb([t('bcStories'), story.title[lang], ep.title[lang]]);
+    showState('stateImmersion');
 
-    // Reset all phases
-    document.getElementById('phaseRead').style.display     = '';
-    document.getElementById('phasePractice').style.display = 'none';
-    document.getElementById('phaseComplete').style.display = 'none';
-    document.getElementById('dialogue').innerHTML          = '';
-    document.getElementById('readLabel').textContent       = t('readPhase');
-    document.getElementById('btnNextLine').textContent     = t('continua');
+    document.getElementById('btnConstellationBackLabel').textContent = story.title[lang];
+    document.getElementById('immEpLabel').textContent                = ep.title[lang];
+    document.getElementById('immersionStream').innerHTML             = '';
+    document.getElementById('immProgressFlow').style.width           = '0%';
+    document.getElementById('btnNextLineLabel').textContent          = t('continua');
 
     showNextLine();
   }
 
-  /* ── Read phase ── */
   function showNextLine() {
-    const ep   = currentEp;
-    const l    = ep.lines[lineIdx];
+    var ep       = currentEp;
+    var l        = ep.lines[lineIdx];
     if (!l) return;
 
-    const story    = currentStory;
-    const charInfo = story.characters[l.speaker] || { color: '#888', ro: l.speaker, en: l.speaker };
-    const speakers = Object.keys(story.characters);
-    const isRight  = speakers.indexOf(l.speaker) % 2 === 1;
-    const initial  = [...l.speaker][0]; // first Unicode char (handles Korean)
+    var story    = currentStory;
+    var charInfo = story.characters[l.speaker] || {color: '#888', ro: l.speaker, en: l.speaker};
+    var speakers = Object.keys(story.characters);
+    var isRight  = speakers.indexOf(l.speaker) % 2 === 1;
+    var initial  = Array.from(l.speaker)[0];
 
-    const row = document.createElement('div');
-    row.className = 'bubble-row' + (isRight ? ' right' : '');
-    row.innerHTML = `
-      <div class="bubble-avatar" style="background:${charInfo.color}">${initial}</div>
-      <div class="bubble-body">
-        <div class="bubble-speaker" style="color:${charInfo.color}">
-          ${l.speaker} · ${charInfo[lang]}
-        </div>
-        <div class="bubble">
-          <div class="bubble-ko">${l.ko}</div>
-          <div class="bubble-trans">${l[lang]}</div>
-        </div>
-        <button class="bubble-sound" data-ko="${l.ko.replace(/"/g,'&quot;')}" aria-label="🔊">🔊</button>
-      </div>`;
+    var stream = document.getElementById('immersionStream');
 
-    document.getElementById('dialogue').appendChild(row);
-    row.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    /* Fade older lines when stream gets long */
+    var existing = stream.querySelectorAll('.rf-dial-line');
+    if (existing.length >= 3) {
+      existing.forEach(function (el, i) {
+        if (i < existing.length - 2) el.classList.add('dl-fading');
+      });
+    }
+
+    var row = document.createElement('div');
+    row.className = 'rf-dial-line' + (isRight ? ' dl-right' : '');
+    row.innerHTML = [
+      '<div class="rf-speaker-dot" style="background:', charInfo.color, '">', initial, '</div>',
+      '<div class="rf-line-body">',
+        '<div class="rf-line-speaker" style="color:', charInfo.color, '">',
+          l.speaker, ' · ', charInfo[lang],
+        '</div>',
+        '<div class="rf-line-bubble">',
+          '<div class="rf-line-ko">', l.ko, '</div>',
+          '<div class="rf-line-trans">', l[lang], '</div>',
+        '</div>',
+        '<button class="rf-line-tts" data-ko="', l.ko.replace(/"/g, '&quot;'), '">🔊</button>',
+      '</div>',
+    ].join('');
+
+    stream.appendChild(row);
+    row.scrollIntoView({behavior: 'smooth', block: 'end'});
     speakKorean(l.ko);
 
-    row.querySelector('.bubble-sound').addEventListener('click', function () {
+    row.querySelector('.rf-line-tts').addEventListener('click', function () {
       speakKorean(this.dataset.ko);
     });
 
     lineIdx++;
-    const btn = document.getElementById('btnNextLine');
-    if (lineIdx >= ep.lines.length) {
-      btn.textContent = t('practica');
-    } else {
-      btn.textContent = t('continua');
-    }
+    document.getElementById('immProgressFlow').style.width =
+      Math.round(lineIdx / ep.lines.length * 100) + '%';
+    document.getElementById('btnNextLineLabel').textContent =
+      lineIdx >= ep.lines.length ? t('practica') : t('continua');
   }
 
-  /* ── Practice phase ── */
+  /* ══════════════════════════════════════════════
+     STATE 4: PRACTICE
+  ══════════════════════════════════════════════ */
   function startPractice() {
-    document.getElementById('phaseRead').style.display     = 'none';
-    document.getElementById('phasePractice').style.display = '';
+    showState('statePractice');
 
-    document.getElementById('practiceLabel').textContent = t('practicePhase');
-    document.getElementById('btnCheck').textContent      = t('verifica');
-    document.getElementById('btnReset').textContent      = t('reset');
-    document.getElementById('practiceFeedback').textContent = '';
-    document.getElementById('practiceFeedback').className   = 'practice-feedback';
+    document.getElementById('practiceBankLabel').textContent  = t('bankLabel');
+    document.getElementById('practiceSeqLabel').textContent   = t('seqLabel');
+    document.getElementById('btnCheckLabel').textContent      = t('verifica');
+    document.getElementById('btnResetLabel').textContent      = t('reset');
     document.getElementById('practicePlaceholder').textContent = t('placeholder');
+    document.getElementById('practiceFeedback').textContent   = '';
+    document.getElementById('practiceFeedback').className     = '';
+    document.getElementById('practiceSequence').classList.remove('seq-ok', 'seq-err');
 
-    bank     = shuffle(currentEp.lines.map(l => l.ko));
+    bank     = shuffle(currentEp.lines.map(function (l) { return l.ko; }));
     line     = [];
     answered = false;
     renderPractice();
   }
 
   function renderPractice() {
-    const bankEl  = document.getElementById('practiceBank');
-    const lineEl  = document.getElementById('practiceLine');
-    const phEl    = document.getElementById('practicePlaceholder');
+    var bankEl = document.getElementById('practiceBank');
+    var seqEl  = document.getElementById('practiceSequence');
+    var phEl   = document.getElementById('practicePlaceholder');
     bankEl.innerHTML = '';
-    lineEl.innerHTML = '';
+    seqEl.innerHTML  = '';
+    if (phEl) seqEl.appendChild(phEl);
 
-    bank.forEach((ko, idx) => {
-      const chip = document.createElement('div');
-      chip.className   = 'practice-chip';
+    bank.forEach(function (ko, idx) {
+      var chip = document.createElement('div');
+      chip.className   = 'rf-fragment';
       chip.textContent = ko;
-      chip.addEventListener('click', () => {
+      chip.addEventListener('click', function () {
         if (answered) return;
         bank.splice(idx, 1);
         line.push(ko);
@@ -318,116 +504,120 @@
       bankEl.appendChild(chip);
     });
 
-    line.forEach((ko, idx) => {
-      const chip = document.createElement('div');
-      chip.className   = 'practice-chip placed';
+    line.forEach(function (ko, idx) {
+      var chip = document.createElement('div');
+      chip.className   = 'rf-fragment rf-placed';
       chip.textContent = ko;
-      chip.addEventListener('click', () => {
+      chip.addEventListener('click', function () {
         if (answered) return;
         line.splice(idx, 1);
         bank.push(ko);
         renderPractice();
       });
-      lineEl.appendChild(chip);
+      seqEl.appendChild(chip);
     });
 
-    // Placeholder only when answer area is empty
     if (phEl) phEl.style.display = line.length === 0 ? '' : 'none';
   }
 
   function checkAnswer() {
     if (answered) return;
-    const correct = currentEp.lines.map(l => l.ko);
-    const fb      = document.getElementById('practiceFeedback');
+    var correct = currentEp.lines.map(function (l) { return l.ko; });
+    var fb      = document.getElementById('practiceFeedback');
+    var seq     = document.getElementById('practiceSequence');
 
     if (JSON.stringify(line) === JSON.stringify(correct)) {
       fb.textContent = t('ok');
-      fb.className   = 'practice-feedback ok';
-      answered       = true;
-      setTimeout(showComplete, 700);
+      fb.className   = 'fb-ok';
+      seq.classList.add('seq-ok');
+      answered = true;
+      setTimeout(showComplete, 800);
     } else {
       fb.textContent = t('err');
-      fb.className   = 'practice-feedback err';
+      fb.className   = 'fb-err';
+      seq.classList.add('seq-err');
+      setTimeout(function () { seq.classList.remove('seq-err'); }, 600);
     }
   }
 
   function resetPractice() {
-    bank     = shuffle(currentEp.lines.map(l => l.ko));
+    bank     = shuffle(currentEp.lines.map(function (l) { return l.ko; }));
     line     = [];
     answered = false;
     document.getElementById('practiceFeedback').textContent = '';
-    document.getElementById('practiceFeedback').className   = 'practice-feedback';
+    document.getElementById('practiceFeedback').className   = '';
+    document.getElementById('practiceSequence').classList.remove('seq-ok', 'seq-err');
     renderPractice();
   }
 
-  /* ── Complete phase ── */
+  /* ══════════════════════════════════════════════
+     STATE 5: COMPLETE
+  ══════════════════════════════════════════════ */
   function showComplete() {
-    document.getElementById('phasePractice').style.display = 'none';
-    document.getElementById('phaseComplete').style.display = '';
-
-    const XP = 15;
+    var XP = 15;
     markDone(currentStory.id, currentEp.id);
     if (window.RKGamification) RKGamification.addXPBonus(XP);
 
-    document.getElementById('completeBody').innerHTML = `
-      <div class="complete-emoji">🎉</div>
-      <div class="complete-title">${t('completeTitle')}</div>
-      <div class="complete-xp">${t('xp', XP)}</div>`;
+    showState('stateComplete');
+    document.getElementById('completePulse').textContent = '✦';
+    document.getElementById('completeTitle').textContent  = t('completeTitle');
+    document.getElementById('completeXP').textContent     = t('xp', XP);
 
-    const epIdx = currentStory.episodes.findIndex(e => e.id === currentEp.id);
-    const nextEp = currentStory.episodes[epIdx + 1] || null;
-    const btn    = document.getElementById('btnNextEpisode');
-    if (nextEp) {
-      btn.textContent = t('nextEp');
-      btn.onclick = () => startEpisode(currentStory, nextEp);
-    } else {
-      btn.textContent = t('backStory');
-      btn.onclick = () => renderEpisodes(currentStory);
+    var epIdx  = currentStory.episodes.findIndex(function (e) { return e.id === currentEp.id; });
+    var nextEp = currentStory.episodes[epIdx + 1] || null;
+    var btnEl  = document.getElementById('btnNextEpisode');
+    document.getElementById('btnNextEpLabel').textContent = nextEp ? t('nextEp') : t('backStory');
+    btnEl.onclick = nextEp
+      ? function () { startImmersion(currentStory, nextEp); }
+      : function () { renderConstellation(currentStory); };
+  }
+
+  /* ── Language switching ── */
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem('RK_LANG', l);
+    document.documentElement.lang = l;
+    document.getElementById('rfLangRo').classList.toggle('active', l === 'ro');
+    document.getElementById('rfLangEn').classList.toggle('active', l === 'en');
+    if (currentState === 'stateField') {
+      renderField();
+    } else if (currentState === 'stateConstellation' && currentStory) {
+      renderConstellation(currentStory);
     }
   }
 
   /* ── Init ── */
   function init() {
-    // Back navigation
-    document.getElementById('btnToList').addEventListener('click', renderList);
-    document.getElementById('btnToEpisodes').addEventListener('click', () => {
-      if (currentStory) renderEpisodes(currentStory);
+    lang = localStorage.getItem('RK_LANG') || 'ro';
+    document.documentElement.lang = lang;
+    document.getElementById('rfLangRo').classList.toggle('active', lang === 'ro');
+    document.getElementById('rfLangEn').classList.toggle('active', lang === 'en');
+
+    document.getElementById('rfLangRo').addEventListener('click', function () { setLang('ro'); });
+    document.getElementById('rfLangEn').addEventListener('click', function () { setLang('en'); });
+
+    document.getElementById('btnFieldBack').addEventListener('click', renderField);
+    document.getElementById('btnConstellationBack').addEventListener('click', function () {
+      if (currentStory) renderConstellation(currentStory);
     });
 
-    // Read phase button (toggles between "Continuă" and "Practică")
-    document.getElementById('btnNextLine').addEventListener('click', () => {
-      if (lineIdx >= currentEp.lines.length) {
-        startPractice();
-      } else {
-        showNextLine();
-      }
+    document.getElementById('btnNextLine').addEventListener('click', function () {
+      if (lineIdx >= currentEp.lines.length) startPractice();
+      else showNextLine();
     });
 
-    // Practice buttons
     document.getElementById('btnCheck').addEventListener('click', checkAnswer);
     document.getElementById('btnReset').addEventListener('click', resetPractice);
 
-    // Load story data
-    fetch('./data/stories.json')
-      .then(r => r.json())
-      .then(data => { STORIES = data; renderList(); })
-      .catch(() => {
-        document.getElementById('storiesGrid').innerHTML =
-          '<p style="color:var(--rk-muted-ui);text-align:center;padding:20px">Nu s-au putut încărca poveștile.</p>';
-      });
+    initGravity();
 
-    // Language switching
-    RKLang.init(l => {
-      lang = l;
-      document.documentElement.lang = l;
-      // Re-render whichever view is active
-      const active = document.querySelector('.s-view.active');
-      if (!active) return;
-      if (active.id === 'viewList') renderList();
-      else if (active.id === 'viewEpisodes' && currentStory) renderEpisodes(currentStory);
-      // Player view: strings update only on next episode start
-    });
-    lang = RKLang.get();
+    fetch('./data/stories.json')
+      .then(function (r) { return r.json(); })
+      .then(function (data) { STORIES = data; renderField(); })
+      .catch(function () {
+        var el = document.getElementById('rfNodes');
+        if (el) el.innerHTML = '<p style="color:var(--t2);text-align:center;padding:40px">Nu s-au putut încărca poveștile.</p>';
+      });
   }
 
   if (document.readyState === 'loading') {
@@ -435,4 +625,4 @@
   } else {
     init();
   }
-})();
+}());

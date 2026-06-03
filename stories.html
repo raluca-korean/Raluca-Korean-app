@@ -5,81 +5,117 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Raluca Korean — Stories</title>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#db2877">
+<meta name="theme-color" content="#7b5cfa">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./theme-anime.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./stories.css">
 </head>
-<body class="theme-anime">
-<div class="app">
+<body class="rfi-dark">
 
-  <!-- HEADER -->
-  <div class="card headerCard">
-    <div class="headerRow">
-      <div class="stories-nav">
-        <button id="btnToList"     class="back-btn" style="display:none">‹ Stories</button>
-        <button id="btnToEpisodes" class="back-btn" style="display:none"></button>
-        <h1 id="navTitle">📖 Stories</h1>
-      </div>
-      <div id="pageControls"></div>
+<canvas id="rfCanvas"></canvas>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <filter id="rf-glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<div id="rfi">
+
+  <!-- Ambient header — not a nav bar, a floating utility layer -->
+  <div id="rfAmbient">
+    <div id="rfBreadcrumb"></div>
+    <div id="rfUtility">
+      <button id="rfTheme" class="rf-util-btn" title="Toggle field mode">◐</button>
+      <button id="rfLangRo" class="rf-lang-token active">RO</button>
+      <button id="rfLangEn" class="rf-lang-token">EN</button>
+      <a href="index.html" class="rf-util-btn" aria-label="Home">⌂</a>
     </div>
-    <p class="sub" id="navSub">Dialoguri cu context narativ</p>
   </div>
 
-  <!-- VIEW: Story list -->
-  <div id="viewList" class="s-view active">
-    <div class="stories-grid" id="storiesGrid"></div>
+  <!-- STATE 1: FIELD — story nodes float in the knowledge field -->
+  <div id="stateField" class="rf-state active">
+    <div id="fieldOrigin">
+      <div id="fieldEyebrow">RESONANCE FIELD INTERFACE</div>
+      <h1 id="fieldTitle">Povești</h1>
+      <p id="fieldSub">Intră în rezonanță cu un univers narativ</p>
+    </div>
+    <div id="rfNodes"></div>
   </div>
 
-  <!-- VIEW: Episode list -->
-  <div id="viewEpisodes" class="s-view">
-    <div class="char-bar card" id="charBar"></div>
-    <div id="episodeList"></div>
+  <!-- STATE 2: CONSTELLATION — selected story with episode path -->
+  <div id="stateConstellation" class="rf-state">
+    <div id="constellationCore">
+      <div id="coreIcon"></div>
+      <div id="coreTitle"></div>
+      <div id="coreChars"></div>
+    </div>
+    <div id="episodePath"></div>
+    <button id="btnFieldBack" class="rf-retreat-btn">
+      <span>←</span><span id="btnFieldBackLabel">Câmp</span>
+    </button>
   </div>
 
-  <!-- VIEW: Episode player -->
-  <div id="viewPlayer" class="s-view">
+  <!-- STATE 3: IMMERSION — dialogue emerges from the field -->
+  <div id="stateImmersion" class="rf-state">
+    <div id="immersionAxis">
+      <div id="immProgressTrack"><div id="immProgressFlow"></div></div>
+      <div id="immEpLabel"></div>
+    </div>
+    <div id="immersionChamber">
+      <div id="immersionAura"></div>
+      <div id="immersionStream"></div>
+    </div>
+    <div id="immersionControl">
+      <button id="btnNextLine" class="rf-nucleus-btn"><span id="btnNextLineLabel"></span></button>
+    </div>
+    <button id="btnConstellationBack" class="rf-retreat-btn">
+      <span>←</span><span id="btnConstellationBackLabel"></span>
+    </button>
+  </div>
 
-    <!-- Phase: Read -->
-    <div class="card" id="phaseRead">
-      <div class="phase-label" id="readLabel"></div>
-      <div class="dialogue" id="dialogue"></div>
-      <div class="dialogue-foot">
-        <button class="primary" id="btnNextLine"></button>
+  <!-- STATE 4: PRACTICE — sentence resonance ordering -->
+  <div id="statePractice" class="rf-state">
+    <div id="practiceOrbit">
+      <div class="rf-field-label" id="practiceBankLabel"></div>
+      <div id="practiceBank" class="rf-fragment-field"></div>
+    </div>
+    <div id="practiceTarget">
+      <div class="rf-field-label" id="practiceSeqLabel"></div>
+      <div id="practiceSequence" class="rf-sequence-field">
+        <span id="practicePlaceholder" class="rf-seq-placeholder"></span>
       </div>
     </div>
+    <div id="practiceFeedback"></div>
+    <div id="practiceControl">
+      <button id="btnCheck" class="rf-nucleus-btn"><span id="btnCheckLabel"></span></button>
+      <button id="btnReset" class="rf-secondary-btn"><span id="btnResetLabel"></span></button>
+    </div>
+  </div>
 
-    <!-- Phase: Practice -->
-    <div class="card" id="phasePractice" style="display:none">
-      <div class="phase-label" id="practiceLabel"></div>
-      <div class="practice-bank" id="practiceBank"></div>
-      <div class="practice-sep"></div>
-      <div class="practice-line" id="practiceLine">
-        <span class="practice-placeholder" id="practicePlaceholder"></span>
-      </div>
-      <div class="practice-feedback" id="practiceFeedback"></div>
-      <div class="practice-controls">
-        <button class="primary" id="btnCheck"></button>
-        <button id="btnReset"></button>
+  <!-- STATE 5: COMPLETE — resonance achieved -->
+  <div id="stateComplete" class="rf-state">
+    <div id="resonanceEvent">
+      <div class="rf-resonance-ring" style="--dur:1.8s;--delay:0s"></div>
+      <div class="rf-resonance-ring" style="--dur:1.8s;--delay:0.6s"></div>
+      <div class="rf-resonance-ring" style="--dur:1.8s;--delay:1.2s"></div>
+      <div id="resonanceCore">
+        <div id="completePulse"></div>
+        <div id="completeTitle"></div>
+        <div id="completeXP"></div>
       </div>
     </div>
-
-    <!-- Phase: Complete -->
-    <div class="card" id="phaseComplete" style="display:none">
-      <div class="complete-body" id="completeBody"></div>
-      <button class="primary" id="btnNextEpisode" style="width:100%;margin-top:16px"></button>
-    </div>
-
+    <button id="btnNextEpisode" class="rf-nucleus-btn"><span id="btnNextEpLabel"></span></button>
   </div>
 
 </div>
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/gamification.js"></script>
-<script src="./js/core/lang-picker.js"></script>
 <script src="./js/stories.js"></script>
-<script src="./js/core/dark-mode.js"></script>
 <script src="./js/core/register-sw.js"></script>
 </body>
 </html>
