@@ -577,11 +577,13 @@ let idx   = 0;
 let score = {};   // idx → correct count
 let recog = null;
 let speaking = false;
-let mrec    = null;
-let mchunks = [];
-let recUrl  = null;
-let recAudio= null;
-let sessId  = 0;    // session counter — invalidates stale setTimeout-uri
+let mrec      = null;
+let mchunks   = [];
+let recUrl    = null;
+let recAudio  = null;
+let sessId    = 0;
+let activeStream = null; // stream curent de microfon
+let placedSats   = {};  // distanțe scalate, actualizate de place()
 
 // ── SATELLITE POSITIONS (angle°, distance px) ──────────────
 const SATS = {
@@ -617,14 +619,24 @@ function place(){
   const nc=document.getElementById('nc');
   nc.style.left=(cx-100)+'px';
   nc.style.top =(cy-100)+'px';
+
+  // Scalăm distanțele ca nodurile să nu iasă din ecran
+  const minDim=Math.min(innerWidth, innerHeight);
+  const scale=Math.min(1, minDim/780);
+
+  placedSats={};
   Object.entries(SATS).forEach(([id,{a,d}])=>{
     const el=document.getElementById(id);
     if(!el) return;
+    const sd=Math.round(d*scale); // distanță scalată
+    placedSats[id]={a, d:sd};
     const rad=a*Math.PI/180;
     const hw=el.offsetWidth/2||50, hh=el.offsetHeight/2||50;
-    el.style.left=(cx+Math.cos(rad)*d-hw)+'px';
-    el.style.top =(cy+Math.sin(rad)*d-hh)+'px';
+    el.style.left=(cx+Math.cos(rad)*sd-hw)+'px';
+    el.style.top =(cy+Math.sin(rad)*sd-hh)+'px';
   });
+
+  weave();
 }
 
 // ── SVG THREAD WEB ─────────────────────────────────────────
@@ -635,7 +647,9 @@ function weave(){
   const dm=document.body.classList.contains('dm');
   const col=dm?'rgba(167,139,250,.2)':'rgba(124,58,237,.16)';
 
-  Object.values(SATS).forEach(({a,d})=>{
+  // Folosim placedSats (distanțe deja scalate)
+  const src=Object.keys(placedSats).length?placedSats:SATS;
+  Object.values(src).forEach(({a,d})=>{
     const rad=a*Math.PI/180;
     const x=cx+Math.cos(rad)*d, y=cy+Math.sin(rad)*d;
     const line=document.createElementNS('http://www.w3.org/2000/svg','line');
@@ -672,6 +686,9 @@ function render(item, i){
 }
 
 function next(animate){
+  // Oprim orice recunoaștere activă înainte de clearRec
+  if(recog){try{recog.abort();}catch(e){} recog=null;}
+  if(speaking){speaking=false;stopUi();}
   clearRec();
   const arr=items();
   const ni=(idx+1)%arr.length;
@@ -775,11 +792,16 @@ function resonate(){
 }
 
 // ── SPEECH ────────────────────────────────────────────────
-function initSpeech(){
-  // recog is created lazily in startMic() after getUserMedia succeeds
-}
+function initSpeech(){}
 
 function clearRec(){
+  // Oprim stream-ul activ — esențial pentru ca startMic să poată porni din nou
+  if(mrec&&mrec.state!=='inactive'){
+    mrec.ondataavailable=null; // ignorăm datele rămase
+    try{mrec.stop();}catch(e){}
+  }
+  mrec=null;
+  if(activeStream){activeStream.getTracks().forEach(t=>t.stop());activeStream=null;}
   if(recUrl){URL.revokeObjectURL(recUrl);recUrl=null;}
   if(recAudio){recAudio.pause();recAudio=null;}
   mchunks=[];
@@ -794,63 +816,74 @@ function finishRec(){
 
 async function startMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){
-    toast(lang==='ro'?'Browser incompatibil (folosiți Chrome)':'Use Chrome for speech support');
-    return;
-  }
+  if(!SR){toast(lang==='ro'?'Folosiți Chrome pentru vorbire':'Use Chrome for speech');return;}
 
+  // Oprim sesiunea anterioară complet
+  if(recog){try{recog.abort();}catch(e){} recog=null;}
   clearRec();
   speaking=true;
-  const mySession=++sessId; // ID unic pentru această sesiune
+  const mySession=++sessId;
   setUiListening(true);
 
-  // 1. SpeechRecognition pornește primul
-  recog=new SR();
-  recog.lang='ko-KR';
-  recog.continuous=false;
-  recog.interimResults=false;
-  recog.onresult=e=>{finishRec();evaluate(e.results[0][0].transcript);};
-  recog.onend=()=>stopUi();
-  recog.onerror=e=>{
-    finishRec();stopUi();
-    if(e.error!=='no-speech'&&e.error!=='aborted'){
-      toast((lang==='ro'?'Eroare: ':'Error: ')+e.error);
-    }
-  };
-  try{recog.start();}catch(e){stopUi();return;}
+  // Obținem stream-ul de microfon
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
+  catch(e){
+    if(sessId!==mySession) return;
+    toast(lang==='ro'?'Permisiune microfon refuzată':'Mic permission denied');
+    speaking=false;setUiListening(false);return;
+  }
+  if(sessId!==mySession){stream.getTracks().forEach(t=>t.stop());return;}
+  activeStream=stream;
 
-  // 2. MediaRecorder pornește după 150ms — verifică sessId, nu speaking
-  setTimeout(async()=>{
-    if(sessId!==mySession) return; // sesiune nouă a început, abandonăm
-    try{
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-      if(sessId!==mySession){stream.getTracks().forEach(t=>t.stop());return;}
-      const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg']
-        .find(t=>MediaRecorder.isTypeSupported(t))||'';
-      mrec=new MediaRecorder(stream,mime?{mimeType:mime}:{});
-      mrec.ondataavailable=e=>{if(e.data&&e.data.size>0)mchunks.push(e.data);};
-      mrec.onstop=()=>{
-        stream.getTracks().forEach(t=>t.stop());
-        if(mchunks.length){
-          recUrl=URL.createObjectURL(new Blob(mchunks,{type:mrec.mimeType||'audio/webm'}));
-          setBtnIcon();
-        }
-      };
-      mrec.start(200);
-    }catch(e){mrec=null;}
-  },150);
+  // Pornim MediaRecorder pe stream-ul obținut
+  const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg']
+    .find(t=>MediaRecorder.isTypeSupported(t))||'';
+  try{
+    const m=new MediaRecorder(stream, mime?{mimeType:mime}:{});
+    mrec=m;
+    m.ondataavailable=e=>{if(mrec===m&&e.data&&e.data.size>0)mchunks.push(e.data);};
+    m.onstop=()=>{
+      // Oprim tracks doar dacă stream-ul e tot al nostru
+      if(activeStream===stream){stream.getTracks().forEach(t=>t.stop());activeStream=null;}
+      if(mrec===m&&mchunks.length){
+        recUrl=URL.createObjectURL(new Blob(mchunks,{type:m.mimeType||'audio/webm'}));
+        setBtnIcon();
+      }
+    };
+    m.start(200);
+  }catch(e){mrec=null;}
+
+  // Pornim SpeechRecognition — permisiunea e deja acordată
+  const r=new SR();
+  recog=r;
+  r.lang='ko-KR';r.continuous=false;r.interimResults=false;
+  r.onresult=e=>{
+    if(recog!==r) return;
+    finishRec();evaluate(e.results[0][0].transcript);
+  };
+  r.onend=()=>{
+    if(recog===r&&sessId===mySession) stopUi();
+  };
+  r.onerror=e=>{
+    if(recog!==r) return;
+    finishRec();stopUi();
+    if(e.error!=='no-speech'&&e.error!=='aborted')
+      toast((lang==='ro'?'Eroare: ':'Error: ')+e.error);
+  };
+  try{r.start();}catch(e){finishRec();stopUi();}
 }
 
 function stopMic(){
   speaking=false;
+  if(recog){try{recog.stop();}catch(e){}}
   finishRec();
-  try{if(recog)recog.stop();}catch(e){}
   stopUi();
 }
 
 function stopUi(){
   speaking=false;
-  sessId++;  // invalidează orice setTimeout pending al sesiunii curente
+  sessId++;
   document.getElementById('bS').classList.remove('on');
   document.getElementById('bS').textContent='🎙';
   document.getElementById('wf').classList.remove('on');
@@ -924,7 +957,8 @@ document.getElementById('mf').addEventListener('mousemove',e=>{
     graf=null;
     const cx=innerWidth/2, cy=innerHeight/2;
     const mx=e.clientX-cx, my=e.clientY-cy;
-    Object.entries(SATS).forEach(([id,{a,d}])=>{
+    const src=Object.keys(placedSats).length?placedSats:SATS;
+    Object.entries(src).forEach(([id,{a,d}])=>{
       const rad=a*Math.PI/180;
       const nx=Math.cos(rad)*d, ny=Math.sin(rad)*d;
       const dx=mx-nx, dy=my-ny;
