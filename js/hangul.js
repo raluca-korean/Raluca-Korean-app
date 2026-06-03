@@ -4,6 +4,13 @@
              attention creates gravitational vortices.
 ══════════════════════════════════════════════════════════════ */
 
+// Apply saved theme before any rendering to avoid flash
+(function() {
+  if (localStorage.getItem('RK_THEME') === 'dark') {
+    document.body.classList.add('dark-mode');
+  }
+})();
+
 // ── CHARACTER DATA ────────────────────────────────────────────
 const CONS_BASIC = [
   { char:"ㄱ", rom:"g/k",  speak:"가", type:"cons" },
@@ -977,11 +984,8 @@ function init() {
 
   // Night mode toggle (only persistent button)
   el('mrsThemeBtn').onclick = () => {
-    document.body.classList.toggle('dark-mode');
-    try {
-      const isDark = document.body.classList.contains('dark-mode');
-      RKStorage && typeof RKStorage.set === 'function' && RKStorage.set('RK_DARK', isDark ? '1' : '0');
-    } catch(e) {}
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('RK_THEME', isDark ? 'dark' : 'light');
   };
 
   // Keyboard navigation
