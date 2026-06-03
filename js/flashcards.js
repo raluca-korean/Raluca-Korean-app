@@ -375,9 +375,9 @@ function renderFC() {
   const diffEl = document.getElementById("crfDiffDot");
   if (diffEl) diffEl.innerHTML = getDiffDot(word.ko);
 
-  // Hint
+  // Hint hidden
   const hintEl = document.getElementById("crfCoreHint");
-  if (hintEl) hintEl.textContent = t("tapToFlip");
+  if (hintEl) hintEl.textContent = "";
 
   // Meaning
   const meaningEl = document.getElementById("crfMeaning");
