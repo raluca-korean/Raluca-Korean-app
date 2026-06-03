@@ -577,8 +577,9 @@
     lang = l;
     localStorage.setItem('RK_LANG', l);
     document.documentElement.lang = l;
-    document.getElementById('rfLangRo').classList.toggle('active', l === 'ro');
-    document.getElementById('rfLangEn').classList.toggle('active', l === 'en');
+    document.getElementById('rfLangBtn').textContent = l;
+    document.getElementById('rfPickRo').classList.toggle('lp-active', l === 'ro');
+    document.getElementById('rfPickEn').classList.toggle('lp-active', l === 'en');
     if (currentState === 'stateField') {
       renderField();
     } else if (currentState === 'stateConstellation' && currentStory) {
@@ -590,11 +591,30 @@
   function init() {
     lang = localStorage.getItem('RK_LANG') || 'ro';
     document.documentElement.lang = lang;
-    document.getElementById('rfLangRo').classList.toggle('active', lang === 'ro');
-    document.getElementById('rfLangEn').classList.toggle('active', lang === 'en');
+    document.getElementById('rfLangBtn').textContent = lang;
+    document.getElementById('rfPickRo').classList.toggle('lp-active', lang === 'ro');
+    document.getElementById('rfPickEn').classList.toggle('lp-active', lang === 'en');
 
-    document.getElementById('rfLangRo').addEventListener('click', function () { setLang('ro'); });
-    document.getElementById('rfLangEn').addEventListener('click', function () { setLang('en'); });
+    /* Single lang button — long press (>450ms) opens picker */
+    var langBtn    = document.getElementById('rfLangBtn');
+    var langPicker = document.getElementById('rfLangPicker');
+    var langTimer  = null;
+
+    function openPicker() { langPicker.classList.add('open'); }
+    function closePicker() { langPicker.classList.remove('open'); }
+
+    langBtn.addEventListener('pointerdown', function () {
+      langTimer = setTimeout(function () { langTimer = null; openPicker(); }, 450);
+    });
+    langBtn.addEventListener('pointerup',    function () { clearTimeout(langTimer); langTimer = null; });
+    langBtn.addEventListener('pointerleave', function () { clearTimeout(langTimer); langTimer = null; });
+
+    document.getElementById('rfPickRo').addEventListener('click', function () { setLang('ro'); closePicker(); });
+    document.getElementById('rfPickEn').addEventListener('click', function () { setLang('en'); closePicker(); });
+
+    document.addEventListener('pointerdown', function (e) {
+      if (!e.target.closest('#rfLangBtn,#rfLangPicker')) closePicker();
+    });
 
     document.getElementById('btnFieldBack').addEventListener('click', renderField);
     document.getElementById('btnConstellationBack').addEventListener('click', function () {
