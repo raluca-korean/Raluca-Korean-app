@@ -954,8 +954,7 @@ function init() {
   el('mrsVClose').onclick = closeVortex;
   el('mrsVWrite').onclick = () => {
     if (!currentItem) return;
-    closeVortex();
-    openWriting(currentItem);
+    window.location.href = `./writing.html?char=${encodeURIComponent(currentItem.char)}`;
   };
   el('mrsVortex').addEventListener('click', e => {
     if (e.target === el('mrsVortex')) closeVortex();

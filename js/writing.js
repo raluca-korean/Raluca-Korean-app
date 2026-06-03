@@ -136,6 +136,14 @@ let idx     = 0;
 let checked = false;
 let lang    = RKLang.get();
 
+// Jump to character passed via ?char= from hangul.html
+(function () {
+  const param = new URLSearchParams(window.location.search).get('char');
+  if (!param) return;
+  const found = LETTERS.findIndex(l => l.char === param);
+  if (found !== -1) idx = found;
+})();
+
 // ── TRADUCERI ─────────────────────────────────────────────────
 const T = {
   ro:{
