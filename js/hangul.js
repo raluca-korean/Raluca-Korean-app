@@ -1,56 +1,61 @@
-// ── DATE ──────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════
+   MORPHIC RESONANCE SPACE — Hangul Living Alphabet
+   Paradigm: characters breathe, knowledge self-organises,
+             attention creates gravitational vortices.
+══════════════════════════════════════════════════════════════ */
+
+// ── CHARACTER DATA ────────────────────────────────────────────
 const CONS_BASIC = [
-  { char:"ㄱ", rom:"g/k",  speak:"가" },
-  { char:"ㄴ", rom:"n",    speak:"나" },
-  { char:"ㄷ", rom:"d/t",  speak:"다" },
-  { char:"ㄹ", rom:"r/l",  speak:"라" },
-  { char:"ㅁ", rom:"m",    speak:"마" },
-  { char:"ㅂ", rom:"b/p",  speak:"바" },
-  { char:"ㅅ", rom:"s",    speak:"사" },
-  { char:"ㅇ", rom:"–/ng", speak:"아" },
-  { char:"ㅈ", rom:"j",    speak:"자" },
-  { char:"ㅊ", rom:"ch",   speak:"차" },
-  { char:"ㅋ", rom:"k",    speak:"카" },
-  { char:"ㅌ", rom:"t",    speak:"타" },
-  { char:"ㅍ", rom:"p",    speak:"파" },
-  { char:"ㅎ", rom:"h",    speak:"하" },
+  { char:"ㄱ", rom:"g/k",  speak:"가", type:"cons" },
+  { char:"ㄴ", rom:"n",    speak:"나", type:"cons" },
+  { char:"ㄷ", rom:"d/t",  speak:"다", type:"cons" },
+  { char:"ㄹ", rom:"r/l",  speak:"라", type:"cons" },
+  { char:"ㅁ", rom:"m",    speak:"마", type:"cons" },
+  { char:"ㅂ", rom:"b/p",  speak:"바", type:"cons" },
+  { char:"ㅅ", rom:"s",    speak:"사", type:"cons" },
+  { char:"ㅇ", rom:"–/ng", speak:"아", type:"cons" },
+  { char:"ㅈ", rom:"j",    speak:"자", type:"cons" },
+  { char:"ㅊ", rom:"ch",   speak:"차", type:"cons" },
+  { char:"ㅋ", rom:"k",    speak:"카", type:"cons" },
+  { char:"ㅌ", rom:"t",    speak:"타", type:"cons" },
+  { char:"ㅍ", rom:"p",    speak:"파", type:"cons" },
+  { char:"ㅎ", rom:"h",    speak:"하", type:"cons" },
 ];
-
 const CONS_TENSED = [
-  { char:"ㄲ", rom:"kk", speak:"까" },
-  { char:"ㄸ", rom:"tt", speak:"따" },
-  { char:"ㅃ", rom:"pp", speak:"빠" },
-  { char:"ㅆ", rom:"ss", speak:"싸" },
-  { char:"ㅉ", rom:"jj", speak:"짜" },
+  { char:"ㄲ", rom:"kk", speak:"까", type:"tensed" },
+  { char:"ㄸ", rom:"tt", speak:"따", type:"tensed" },
+  { char:"ㅃ", rom:"pp", speak:"빠", type:"tensed" },
+  { char:"ㅆ", rom:"ss", speak:"싸", type:"tensed" },
+  { char:"ㅉ", rom:"jj", speak:"짜", type:"tensed" },
 ];
-
 const VOWELS_BASIC = [
-  { char:"ㅏ", rom:"a",   speak:"아" },
-  { char:"ㅐ", rom:"ae",  speak:"애" },
-  { char:"ㅑ", rom:"ya",  speak:"야" },
-  { char:"ㅒ", rom:"yae", speak:"얘" },
-  { char:"ㅓ", rom:"eo",  speak:"어" },
-  { char:"ㅔ", rom:"e",   speak:"에" },
-  { char:"ㅕ", rom:"yeo", speak:"여" },
-  { char:"ㅖ", rom:"ye",  speak:"예" },
-  { char:"ㅗ", rom:"o",   speak:"오" },
-  { char:"ㅛ", rom:"yo",  speak:"요" },
-  { char:"ㅜ", rom:"u",   speak:"우" },
-  { char:"ㅠ", rom:"yu",  speak:"유" },
-  { char:"ㅡ", rom:"eu",  speak:"으" },
-  { char:"ㅣ", rom:"i",   speak:"이" },
+  { char:"ㅏ", rom:"a",   speak:"아",  type:"vowel" },
+  { char:"ㅐ", rom:"ae",  speak:"애",  type:"vowel" },
+  { char:"ㅑ", rom:"ya",  speak:"야",  type:"vowel" },
+  { char:"ㅒ", rom:"yae", speak:"얘",  type:"vowel" },
+  { char:"ㅓ", rom:"eo",  speak:"어",  type:"vowel" },
+  { char:"ㅔ", rom:"e",   speak:"에",  type:"vowel" },
+  { char:"ㅕ", rom:"yeo", speak:"여",  type:"vowel" },
+  { char:"ㅖ", rom:"ye",  speak:"예",  type:"vowel" },
+  { char:"ㅗ", rom:"o",   speak:"오",  type:"vowel" },
+  { char:"ㅛ", rom:"yo",  speak:"요",  type:"vowel" },
+  { char:"ㅜ", rom:"u",   speak:"우",  type:"vowel" },
+  { char:"ㅠ", rom:"yu",  speak:"유",  type:"vowel" },
+  { char:"ㅡ", rom:"eu",  speak:"으",  type:"vowel" },
+  { char:"ㅣ", rom:"i",   speak:"이",  type:"vowel" },
 ];
-
 const VOWELS_COMP = [
-  { char:"ㅘ", rom:"wa",  speak:"봐" },
-  { char:"ㅙ", rom:"wae", speak:"왜" },
-  { char:"ㅚ", rom:"oe",  speak:"외" },
-  { char:"ㅝ", rom:"wo",  speak:"봐" },
-  { char:"ㅞ", rom:"we",  speak:"웨" },
-  { char:"ㅟ", rom:"wi",  speak:"위" },
-  { char:"ㅢ", rom:"ui",  speak:"의" },
+  { char:"ㅘ", rom:"wa",  speak:"봐",  type:"vowel" },
+  { char:"ㅙ", rom:"wae", speak:"왜",  type:"vowel" },
+  { char:"ㅚ", rom:"oe",  speak:"외",  type:"vowel" },
+  { char:"ㅝ", rom:"wo",  speak:"워",  type:"vowel" },
+  { char:"ㅞ", rom:"we",  speak:"웨",  type:"vowel" },
+  { char:"ㅟ", rom:"wi",  speak:"위",  type:"vowel" },
+  { char:"ㅢ", rom:"ui",  speak:"의",  type:"vowel" },
 ];
+const ALL_CHARS = [...CONS_BASIC, ...CONS_TENSED, ...VOWELS_BASIC, ...VOWELS_COMP];
 
+// ── BATCHIM DATA ──────────────────────────────────────────────
 const BATCHIM_ROWS = {
   ro: [
     { chars:"ㄱ ㄲ ㅋ", sound:"k", ex:"먹 (meok) — mânâncă" },
@@ -72,515 +77,269 @@ const BATCHIM_ROWS = {
   ],
 };
 
+// ── PHONOLOGICAL FAMILIES (echo resonance) ───────────────────
+const ECHO_FAMILY = {
+  'ㄱ':['ㄲ','ㅋ'], 'ㄲ':['ㄱ','ㅋ'], 'ㅋ':['ㄱ','ㄲ'],
+  'ㄷ':['ㄸ','ㅌ'], 'ㄸ':['ㄷ','ㅌ'], 'ㅌ':['ㄷ','ㄸ'],
+  'ㅂ':['ㅃ','ㅍ'], 'ㅃ':['ㅂ','ㅍ'], 'ㅍ':['ㅂ','ㅃ'],
+  'ㅅ':['ㅆ'],      'ㅆ':['ㅅ'],
+  'ㅈ':['ㅉ','ㅊ'], 'ㅉ':['ㅈ','ㅊ'], 'ㅊ':['ㅈ','ㅉ'],
+  'ㅏ':['ㅗ','ㅑ'], 'ㅗ':['ㅏ','ㅛ'], 'ㅛ':['ㅗ'],  'ㅑ':['ㅏ'],
+  'ㅓ':['ㅕ','ㅡ'], 'ㅡ':['ㅓ','ㅢ'], 'ㅕ':['ㅓ'],
+  'ㅜ':['ㅠ','ㅡ'], 'ㅠ':['ㅜ'],
+  'ㅣ':['ㅐ','ㅔ'], 'ㅐ':['ㅣ','ㅔ'], 'ㅔ':['ㅣ','ㅐ'],
+};
+
+// ── SYLLABLE COMBINATION (Unicode algebra) ────────────────────
+const CONS_INIT_IDX = {
+  'ㄱ':0,'ㄲ':1,'ㄴ':2,'ㄷ':3,'ㄸ':4,'ㄹ':5,'ㅁ':6,'ㅂ':7,
+  'ㅃ':8,'ㅅ':9,'ㅆ':10,'ㅇ':11,'ㅈ':12,'ㅉ':13,'ㅊ':14,
+  'ㅋ':15,'ㅌ':16,'ㅍ':17,'ㅎ':18,
+};
+const VOWEL_MED_IDX = {
+  'ㅏ':0,'ㅐ':1,'ㅑ':2,'ㅒ':3,'ㅓ':4,'ㅔ':5,'ㅕ':6,'ㅖ':7,
+  'ㅗ':8,'ㅘ':9,'ㅙ':10,'ㅚ':11,'ㅛ':12,'ㅜ':13,'ㅝ':14,
+  'ㅞ':15,'ㅟ':16,'ㅠ':17,'ㅡ':18,'ㅢ':19,'ㅣ':20,
+};
+const VOWEL_ROM = {
+  'ㅏ':'a','ㅐ':'ae','ㅑ':'ya','ㅒ':'yae','ㅓ':'eo','ㅔ':'e',
+  'ㅕ':'yeo','ㅖ':'ye','ㅗ':'o','ㅘ':'wa','ㅙ':'wae','ㅚ':'oe',
+  'ㅛ':'yo','ㅜ':'u','ㅝ':'wo','ㅞ':'we','ㅟ':'wi','ㅠ':'yu',
+  'ㅡ':'eu','ㅢ':'ui','ㅣ':'i',
+};
+// Display vowels for consonant examples (ㅏ, ㅣ, ㅗ)
+const EX_VOWELS  = ['ㅏ','ㅣ','ㅗ'];
+// Display consonants for vowel examples (ㄱ, ㄴ, ㅁ)
+const EX_CONS    = ['ㄱ','ㄴ','ㅁ'];
+const EX_CONS_R  = ['g', 'n', 'm'];
+
+function makeSyllable(ci, vi) {
+  if (ci === undefined || vi === undefined) return null;
+  return String.fromCharCode(0xAC00 + (ci * 21 + vi) * 28);
+}
+function buildExamples(item) {
+  const exs = [];
+  if (item.type === 'cons' || item.type === 'tensed') {
+    const ci = CONS_INIT_IDX[item.char];
+    if (ci !== undefined) {
+      EX_VOWELS.forEach(v => {
+        const syl = makeSyllable(ci, VOWEL_MED_IDX[v]);
+        if (syl) exs.push({ syl, rom: item.rom.split('/')[0] + VOWEL_ROM[v] });
+      });
+    }
+  } else {
+    const vi = VOWEL_MED_IDX[item.char];
+    if (vi !== undefined) {
+      EX_CONS.forEach((c, i) => {
+        const syl = makeSyllable(CONS_INIT_IDX[c], vi);
+        if (syl) exs.push({ syl, rom: EX_CONS_R[i] + item.rom });
+      });
+    }
+  }
+  return exs.slice(0, 3);
+}
+
+// ── RULES (75 rules, both languages) ─────────────────────────
 const RULES = {
   ro: [
     { ko:"연음 — Legătura", label:"Regula 1", text:"Batchim-ul se leagǎ de vocala urmǎtoare: <strong>한국어 → han-gu-geo</strong> (ㄱ trece la 어)." },
     { ko:"ㅇ mut la început", label:"Regula 2", text:"ㅇ la <strong>începutul silabei</strong> este mut: <strong>아버지 → a-beo-ji</strong>." },
-    { ko:"ㅇ = ng la final", label:"Regula 3", text:"ㅇ ca <strong>batchim</strong> se pronunțǎ <em>ng</em>: <strong>강 → gang</strong>, <strong>영어 → yeong-eo</strong>." },
+    { ko:"ㅇ = ng la final", label:"Regula 3", text:"ㅇ ca <strong>batchim</strong> se pronunțǎ <em>ng</em>: <strong>강 → gang</strong>." },
     { ko:"Aspirație ㅋ ㅌ ㅍ ㅊ", label:"Regula 4", text:"Sunt variante <strong>aspirate</strong> (cu suflare de aer) ale lui ㄱ ㄷ ㅂ ㅈ." },
     { ko:"Nazalizare", label:"Regula 5", text:"ㄱ/ㄷ/ㅂ devin <em>ng/n/m</em> înainte de ㄴ sau ㅁ: <strong>국민 → gungmin</strong>." },
-    { ko:"구개음화 — Palatalizare", label:"Regula 6", text:"ㄷ/ㅌ + 이 devin <em>지/치</em>: <strong>같이 → 가치</strong> (ga-chi), <strong>굳이 → 구지</strong> (gu-ji)." },
-    { ko:"유음화 — Lichidizare", label:"Regula 7", text:"ㄴ lângǎ ㄹ devine ㄹ (și invers): <strong>신라 → 실라</strong> (sil-la), <strong>편리 → 펼리</strong> (pyeol-li)." },
-    { ko:"경음화 — Tensionare", label:"Regula 8", text:"Dupǎ batchim ㄱ/ㄷ/ㅂ, consoanele ㄱ/ㄷ/ㅂ/ㅅ/ㅈ devin tensionate: <strong>학교 → 학꾜</strong> (hak-kyo), <strong>입다 → 입따</strong> (ip-tta)." },
-    { ko:"ㅎ + consoană → aspiratǎ", label:"Regula 9", text:"Batchim ㅎ + ㄱ/ㄷ/ㅈ fuzionează în ㅋ/ㅌ/ㅊ: <strong>좋다 → 조타</strong> (jo-ta), <strong>넣고 → 너코</strong> (neo-ko)." },
-    { ko:"ㅎ dispare între vocale", label:"Regula 10", text:"ㅎ între douǎ vocale se reduce sau dispare: <strong>좋아요 → 조아요</strong> (jo-a-yo), <strong>전화 → 저놔</strong> (jeo-nwa)." },
-    { ko:"겹받침 — Batchim dublu", label:"Regula 11", text:"Când douǎ consoane formeazǎ batchim, de regulǎ se pronunțǎ una: <strong>읽다 → 익다</strong> (ik-da), <strong>닭 → 닥</strong> (dak). Înainte de vocalǎ, amândouǎ sunt pronunțate." },
-    { ko:"ㄹ → ㄴ dupǎ nazale", label:"Regula 12", text:"ㄹ dupǎ batchim ㅁ/ㅇ devine ㄴ: <strong>음료 → 음뇨</strong> (eum-nyo), <strong>강릉 → 강능</strong> (gang-neung)." },
-    { ko:"ㄴ 첨가 — Inserție ㄴ", label:"Regula 13", text:"La granița cuvintelor compuse, înainte de 이/야/여/요/유 se inserează ㄴ: <strong>꽃잎 → 꼰닙</strong> (kkon-nip), <strong>색연필 → 생년필</strong> (saeng-nyeon-pil)." },
-    { ko:"두음법칙 — ㄹ inițial", label:"Regula 14", text:"ㄹ la <strong>începutul cuvântului</strong> devine ㄴ (înainte de 이/야) sau dispare: <strong>여자</strong> (din 녀자), <strong>노인</strong> (din 로인)." },
-    { ko:"경음화 în compuse", label:"Regula 15", text:"În cuvinte compuse, consoana inițialǎ a celui de-al doilea element poate deveni tensionatǎ: <strong>눈빛 → 눈삣</strong> (nun-ppit), <strong>강가 → 강까</strong> (gang-kka)." },
-    { ko:"활음화 — Alunecare vocalicǎ", label:"Regula 16", text:"Vocalele 오/우 sau 이 înainte de altǎ vocalǎ formeazǎ alunecare: <strong>보+아 → 봐</strong>, <strong>되+어 → 돼</strong>, <strong>피+어 → 펴</strong>." },
-    { ko:"모음 조화 — Armonie vocalicǎ", label:"Regula 17", text:"Terminațiile verbale folosesc ㅏ dupǎ vocale <em>pozitive</em> (ㅏ, ㅗ) și ㅓ dupǎ <em>negative</em>: <strong>가+아요 → 가요</strong>, <strong>먹+어요 → 먹어요</strong>." },
-    { ko:"ㅎ mut înainte de ㄴ/ㄹ", label:"Regula 18", text:"Batchim ㅎ înainte de ㄴ sau ㄹ dispare și consonanta se dublează: <strong>놓는 → 논는</strong> (non-neun), <strong>좋네 → 존네</strong> (jon-ne)." },
-    { ko:"ㄹ탈락 — Cǎderea lui ㄹ", label:"Regula 19", text:"Tulpinile verbale cu ㄹ pierd ㄹ înainte de ㄴ/ㅂ/ㅅ: <strong>알다→아는</strong> (știind), <strong>살다→삽니다</strong> (trăiesc), <strong>만들다→만드는</strong>." },
-    { ko:"사이시옷 — ㅅ intercalat", label:"Regula 20", text:"ㅅ scris între douǎ substantive provoacǎ tensionare sau inserție de ㄴ: <strong>나뭇잎 → 나문닙</strong> (na-mun-nip), <strong>냇가 → 내까</strong> (nae-kka)." },
-    { ko:"장단음 — Lungimea vocalei", label:"Regula 21", text:"Unele silabe au vocale lungi care disting sensuri: <strong>눈[nu:n]</strong> (zǎpadǎ) vs <strong>눈[nun]</strong> (ochi), <strong>말[ma:l]</strong> (vorbire) vs <strong>말[mal]</strong> (cal)." },
-    { ko:"ㄷ 불규칙 — Neregulat ㄷ→ㄹ", label:"Regula 22", text:"Anumite tulpini cu ㄷ devin ㄹ înainte de vocalǎ: <strong>듣다→들어요</strong> (a asculta), <strong>걷다→걸어요</strong> (a merge pe jos). Excepție: <strong>받다→받아요</strong>." },
-    { ko:"ㅂ 불규칙 — Neregulat ㅂ→우", label:"Regula 23", text:"Anumite tulpini cu ㅂ devin 우 înainte de vocalǎ: <strong>춥다→추워요</strong> (frig), <strong>돕다→도와요</strong> (a ajuta). Excepție: <strong>잡다→잡아요</strong>." },
-    { ko:"ㅅ 불규칙 — Neregulat ㅅ dispare", label:"Regula 24", text:"Anumite tulpini cu ㅅ pierd ㅅ înainte de vocalǎ: <strong>낫다→나아요</strong> (a se vindeca), <strong>붓다→부어요</strong> (a turna). Excepție: <strong>씻다→씻어요</strong>." },
-    { ko:"-ㄹ + tensionare", label:"Regula 25", text:"Sufixul prospectiv -ㄹ tensionează consoana urmǎtoare: <strong>갈 수 → 갈 쑤</strong>, <strong>할 것 → 할 껏</strong>, <strong>볼게요 → 볼께요</strong>." },
-    { ko:"ㅡ탈락 — ㅡ cade înainte de vocalǎ", label:"Regula 26", text:"Tulpinile verbale cu ㅡ pierd ㅡ înainte de terminații cu vocalǎ: <strong>쓰다→써요</strong> (a scrie), <strong>크다→커요</strong> (mare), <strong>바쁘다→바빠요</strong> (ocupat)." },
-    { ko:"르 불규칙 — ㄹ se dubleazǎ", label:"Regula 27", text:"Tulpinile în 르: ㅡ cade și ㄹ se dubleazǎ: <strong>모르다→몰라요</strong> (nu știu), <strong>부르다→불러요</strong> (a chema), <strong>다르다→달라요</strong> (diferit)." },
-    { ko:"ㅎ 불규칙 — adjective de culoare", label:"Regula 28", text:"Adjectivele de culoare pierd ㅎ + vocala se contractǎ: <strong>빨갛다→빨개요</strong> (roșu), <strong>노랗다→노래요</strong> (galben), <strong>파랗다→파래요</strong> (albastru)." },
-    { ko:"하다 + 아/여 → 해", label:"Regula 29", text:"Verbele 하다 contractǎ terminația: 하+아/여→해: <strong>공부해요</strong> (studiez), <strong>일해요</strong> (muncesc), <strong>사랑해요</strong> (iubesc)." },
-    { ko:"중화 — 7 sunete finale", label:"Regula 30", text:"La finalul silabei, orice consoană se neutralizeazǎ la unul din cele 7 sunete posibile: ㅋ/ㄲ→ㄱ, ㅌ/ㅅ/ㅊ/ㅈ→ㄷ, ㅍ→ㅂ. Ex: <strong>꽃→꼳</strong>, <strong>낮→낟</strong>." },
-    { ko:"ㅐ = ㅔ în coreeana modernǎ", label:"Regula 31", text:"Cei mai mulți vorbitori pronunțǎ ㅐ și ㅔ identic [e]: <strong>개</strong>(câine) sună ca <strong>게</strong>(crab). Distincția se pǎstreazǎ doar în vorbirea formalǎ." },
-    { ko:"ㄹ: vibrantǎ între vocale, lateralǎ la final", label:"Regula 32", text:"ㄹ între vocale suna ca un <em>r</em> usor (vibrant): <strong>바람</strong> (ba-ram). La finalul silabei suna ca <em>l</em>: <strong>말</strong> (mal). Douǎ sunete, o literǎ!" },
-    { ko:"ㅢ — trei pronunții", label:"Regula 33", text:"ㅢ se pronunțǎ diferit dupǎ poziție: la început de cuvânt [의] ui, dupǎ consoana [이] i (<strong>희망→히망</strong>), ca particulǎ posesivǎ [에] e (<strong>나의→나에</strong>)." },
-    { ko:"Sonorizare între vocale", label:"Regula 34", text:"ㄱ/ㄷ/ㅂ/ㅈ între douǎ sunete sonore devin sonore [g/d/b/j]: <strong>가방</strong> [ga-<em>b</em>ang] (geantǎ), <strong>바다</strong> [ba-<em>d</em>a] (mare), <strong>아기</strong> [a-<em>g</em>i] (bebeluș)." },
-    { ko:"이/가, 은/는, 을/를 — alternanțǎ", label:"Regula 35", text:"Particulele se aleg dupǎ ultima literǎ: dupǎ <strong>consoana</strong> → 이/은/을; dupǎ <strong>vocalǎ</strong> → 가/는/를. Ex: 학생<strong>이</strong> vs 나<strong>가</strong>, 책<strong>을</strong> vs 물<strong>를</strong>." },
-    { ko:"폐쇄 미개방 — Oclusivǎ neeliberatǎ", label:"Regula 36", text:"ㄱ/ㄷ/ㅂ la finalul enunțului sunt ținute mut — fǎrǎ suflare de aer: <strong>먹[meok̚]</strong>, <strong>밥[bap̚]</strong>, <strong>밖[bak̚]</strong>. Silaba se „oprește” brusc." },
-    { ko:"것 → 거/걸/건 în vorbire", label:"Regula 37", text:"것 se contractǎ curent: 것이→거, 것을→걸, 것은→건. Ex: <strong>이것→이거</strong>, <strong>그것→그거</strong>, <strong>뭐 먹을 거예요?</strong> (Ce vei mânca?)" },
-    { ko:"이에요/예요 — copula", label:"Regula 38", text:"이다+어요: dupǎ <strong>consoana</strong>→이에요 (<strong>학생이에요</strong>), dupǎ <strong>vocalǎ</strong>→예요 (<strong>가수예요</strong>). Informal: 이야/야." },
-    { ko:"Adaptarea împrumuturilor", label:"Regula 39", text:"Grupurile consonantice englezești primesc ㅡ între ele: <strong>스트레스</strong>(stress), <strong>크림</strong>(cream). Consoanele finale izolate: <strong>컵</strong>(cup→keop), <strong>초콜릿</strong>(chocolate)." },
-    { ko:"야/아 — sufixul vocativ", label:"Regula 40", text:"Chemând pe cineva: dupǎ <strong>vocalǎ</strong>→야 (<strong>지수야!</strong>), dupǎ <strong>consoana</strong>→아 (<strong>민준아!</strong>). Același tipar ca particulele 이/가." },
-    { ko:"음절 박자 — Ritm silabic", label:"Regula 41", text:"Coreeana este <strong>silabicǎ</strong> ca ritm — fiecare silabǎ are durată egalǎ, fǎrǎ accent de intensitate ca în englezǎ. 한·국·어 — toate silabele egale." },
-    { ko:"Sistemul dublu de numere", label:"Regula 42", text:"Existǎ douǎ sisteme: <strong>sino-coreean</strong> (일·이·삼) pentru date, bani, etaje; <strong>nativ</strong> (하나·둘·셋) pentru obiecte și vârstǎ. Amestecarea lor e greșitǎ." },
-    { ko:"-아/어서 — conector cauzal", label:"Regula 43", text:"Terminația -아/어서 urmeazǎ armonia vocalicǎ și se contractǎ: <strong>가+아서→가서</strong>, <strong>먹+어서→먹어서</strong>, <strong>하+아서→해서</strong>." },
-    { ko:"-겠- — cascadǎ foneticǎ", label:"Regula 44", text:"-겠- se pronunțǎ [겓] și declanșeazǎ reguli în lanț: <strong>하겠습니다→하겓씀니다</strong> (tensionare + nazalizare în succesiune)." },
-    { ko:"ㄴ 첨가 în sino-coreeanǎ", label:"Regula 45", text:"ㄴ se insereazǎ și în cuvinte sino-coreene compuse înainte de 야/여/요/유/이: <strong>허용량→허용냥</strong> (heo-yong-nyang), <strong>생산율→생산뉼</strong> (saeng-san-nyul)." },
-    { ko:"닫히다→다치다 (구개음화 pasivǎ)", label:"Regula 46", text:"Batchim ㄷ/ㅌ + sufixul pasiv <strong>-히-</strong> → 치: <strong>닫히다→다치다</strong> (a fi închis), <strong>굳히다→구치다</strong> (a întǎri). Extensie a Regulii 6." },
-    { ko:"없다/있다 — cascade fonetice", label:"Regula 47", text:"없다: batchim ㄼ→ㅂ (Reg.11) + ㄷ tensionat (Reg.8) → <strong>[업따]</strong>. 있다: batchim ㅆ→ㄷ (Reg.30) + ㄷ tensionat → <strong>[읻따]</strong>." },
-    { ko:"-(으)면 — condiție", label:"Regula 48", text:"Dupǎ <strong>consoana</strong>→으면, dupǎ <strong>vocalǎ/ㄹ</strong>→면: <strong>먹으면</strong> (dacǎ mǎnânci), <strong>가면</strong> (dacǎ mergi), <strong>알면</strong> (dacǎ știi)." },
-    { ko:"Contracții în vorbire rapidǎ", label:"Regula 49", text:"Uzuale: 그런데→<strong>근데</strong>, 저는→<strong>전</strong>, 나는→<strong>난</strong>, -지 않다→<strong>-잖다</strong> (먹지 않아→먹잖아), 어떻게→<strong>어케</strong>." },
-    { ko:"Intonație 억양", label:"Regula 50", text:"Afirmațiile coboarǎ ↘; întrebǎrile da/nu urcǎ ↗; întrebǎrile cu pronume interogativ (ce, unde) coboarǎ ↘ ca afirmațiile, dar cu un debut mai înalt." },
-    { ko:"못/안 + tensionare de frazǎ", label:"Regula 51", text:"못/안 înaintea unui verb provoacǎ tensionare: <strong>못 가다→[몯까다]</strong> (nu poate merge), <strong>못 먹다→[몯먹따]</strong>. Batchim ㄷ al lui 못 tensionează urmǎtoarea consoana." },
-    { ko:"-(으)로 — particulǎ de direcție", label:"Regula 52", text:"Dupǎ <strong>consoana</strong> (ex ㄹ)→으로, dupǎ <strong>vocalǎ</strong> sau <strong>ㄹ</strong>→로: <strong>집으로</strong> (spre casǎ), <strong>학교로</strong>, <strong>서울로</strong> (ㄹ→로)." },
-    { ko:"-ㅂ니다/-습니다 — formal politicos", label:"Regula 53", text:"Terminație formalǎ: dupǎ <strong>vocalǎ</strong>→ㅂ니다 (<strong>갑니다</strong> merg), dupǎ <strong>consoana</strong>→습니다 (<strong>먹습니다</strong> mǎnânc). 갑니다: ㅂ nazalizat→[감니다]." },
-    { ko:"Tensionare în compuse sino-coreene", label:"Regula 54", text:"Unele compuse sino-coreene tensionează consoana inițialǎ a celui de-al doilea element: <strong>일기→[일끼]</strong> (jurnal), <strong>발달→[발딸]</strong> (dezvoltare), <strong>성격→[성껵]</strong>." },
-    { ko:"-(으)ㄴ/는/ㄹ adnominal", label:"Regula 55", text:"Dupǎ <strong>consoana</strong>→으ㄴ/으ㄹ; dupǎ <strong>vocalǎ/ㄹ</strong>→ㄴ/ㄹ: <strong>먹은</strong> vs <strong>간</strong> (trecut), <strong>먹을</strong> vs <strong>갈</strong> (viitor). ㅡ dispare dupǎ vocalǎ." },
-    { ko:"와/과, (이)랑, (이)나 — alternanțǎ", label:"Regula 56", text:"Același tipar ca 이/가: dupǎ <strong>vocalǎ</strong>→와/랑/나, dupǎ <strong>consoana</strong>→과/이랑/이나. Ex: <strong>사과와</strong> vs <strong>책과</strong>, <strong>친구랑</strong> vs <strong>학생이랑</strong>." },
-    { ko:"ㅅ + vocale iotizate → [ɕ]", label:"Regula 57", text:"ㅅ înainte de 이/야/여/요/유 suna mai aproape de <em>sh</em>: <strong>시</strong>[ɕi] (timp), <strong>셔츠</strong>[ɕjʌ] (cǎmașǎ), <strong>신발</strong>[ɕin-bal] (pantof). Nu e scris diferit, dar se aude!" },
-    { ko:"ㅈ/ㅊ/ㅉ — africate alveopalatale", label:"Regula 58", text:"ㅈ/ㅊ/ㅉ sunt pronunțate cu limba mai în spate decât englezescul j/ch — poziție alveopalatalǎ. ㅈ=neaspirat, ㅊ=aspirat, ㅉ=tensionat. Distincte ca la ㄱ/ㅋ/ㄲ." },
-    { ko:"Lungimea vocalei numai în prima silabǎ", label:"Regula 59", text:"Vocalele lungi (Regula 21) apar <strong>numai în prima silabǎ</strong> a cuvântului. În compuse sau dupǎ prefixe lungimea dispare: <strong>말[ma:l]</strong> dar <strong>말하다→[말하다]</strong> (scurt)." },
-    { ko:"러 불규칙 — 이르다/푸르다", label:"Regula 60", text:"Tulpini speciale ce adaugǎ <strong>러</strong> (nu <em>어</em>) înainte de terminații: <strong>이르다→이르러요</strong> (a ajunge), <strong>푸르다→푸르러요</strong> (a fi albastru/verde). Diferit de 르 irregular." },
-    { ko:"우 불규칙 — 푸다→퍼요", label:"Regula 61", text:"Singurul verb din categorie: <strong>푸다</strong> (a scoate apǎ cu polonicul) → <strong>퍼요</strong>, nu *푸어요. ㅜ dispare și vocala 어 rǎmâne singurǎ." },
-    { ko:"이게/그게/저게/뭐 — contracții", label:"Regula 62", text:"Contracții peste cele din Regula 37: 이것이→<strong>이게</strong>, 그것이→<strong>그게</strong>, 저것이→<strong>저게</strong>, 무엇→<strong>뭐</strong>. Uzuale în orice registru de vorbire." },
-    { ko:"-(이)었다 — trecut copula", label:"Regula 63", text:"이다 la trecut: dupǎ <strong>consoana</strong>→이었어요 (<strong>학생이었어요</strong>), dupǎ <strong>vocalǎ</strong>→였어요 (<strong>가수였어요</strong>). Informal: 이었어/였어." },
-    { ko:"Sunete englezești absente din coreeanǎ", label:"Regula 64", text:"Coreeana nu are /f/, /v/, /z/, /θ/: f→ㅍ (<strong>피자</strong>/pizza) sau ㅎ, v→ㅂ (<strong>바이올린</strong>), z→ㅈ (<strong>지퍼</strong>/zipper), th→ㄷ sau ㅅ (<strong>다이아몬드</strong>)." },
-    { ko:"ㄹ batchim în compuse → tensionare", label:"Regula 65", text:"ㄹ batchim în cuvinte compuse tensionează consoana urmǎtoare: <strong>길+가→길까</strong>[길까] (marginea drumului), <strong>쌀+가게→쌀까게</strong> (magazin de orez), <strong>말+달리기→말딸리기</strong>." },
-    { ko:"Cascade dublǎ — douǎ reguli în serie", label:"Regula 66", text:"Uneori douǎ reguli se activeazǎ consecutiv: <strong>격려→[경녀]</strong> (ㄱ+ㄹ: Reg.5 nazalizare + Reg.12 ㄹ→ㄴ), <strong>독립→[동닙]</strong>, <strong>국력→[궁녁]</strong>." },
-    { ko:"ㅂ불규칙 + activare alunecare", label:"Regula 67", text:"ㅂ→오/우, apoi 오/우+vocalǎ formeazǎ alunecare (Reg.16): <strong>돕+아→도+오+아→도와</strong>, <strong>춥+어→추+우+어→추워</strong>. Douǎ reguli în lanț." },
-    { ko:"Valorile fonetice ale vocalelor (IPA)", label:"Regula 68", text:"ㅏ[a](tatǎ), ㅓ[ʌ](but—fǎrǎ rotunjire), ㅡ[ɯ](ca rom. î), ㅗ[o](go), ㅜ[u](tu), ㅣ[i](zi), ㅐ≈ㅔ[e](bed). Cunoașterea IPA eliminǎ accentul strǎin." },
-    { ko:"ㅓ vs ㅗ — confuzie frecventǎ", label:"Regula 69", text:"ㅓ[ʌ] = <strong>fǎrǎ</strong> rotunjire labialǎ (posterior-central); ㅗ[o] = <strong>cu</strong> rotunjire. Cheie: 어머니(mamǎ) vs 오빠(frate mai mare). Rotunjirea buzelor diferențiazǎ cele douǎ." },
-    { ko:"Sistemul de 3 consoane (IPA)", label:"Regula 70", text:"Fiecare serie are 3 grade: <em>lenis</em> ㄱ[k̬] / <em>aspirat</em> ㅋ[kʰ] / <em>tensionat</em> ㄲ[k']. La fel pentru ㄷ/ㅌ/ㄸ, ㅂ/ㅍ/ㅃ, ㅅ/ㅆ, ㅈ/ㅊ/ㅉ. Unicǎ în limbile lumii." },
-    { ko:"자모 순서 — Ordinea alfabetului", label:"Regula 71", text:"Ordinea în dicționar: ㄱ ㄲ ㄴ ㄷ ㄸ ㄹ ㅁ ㅂ ㅃ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅋ ㅌ ㅍ ㅎ. Vocale: ㅏ ㅐ ㅑ ㅒ ㅓ ㅔ ㅕ ㅖ ㅗ ㅘ ㅙ ㅚ 㛗 ㅜ ㅝ ㅞ ㅟ ㅠ ㅡ ㅢ ㅣ." },
-    { ko:"방언 — Dialecte regionale", label:"Regula 72", text:"Dialect standard: Seoul (표준어). Gyeongsang/경상: accent tonal. Jeolla/전라: terminații distinctive. Jeju: aproape o altǎ limbǎ. Nord-coreean: vocabular diferit, accent conservator." },
-    { ko:"ㅋㅋ / ㅎㅎ — Limbaj digital", label:"Regula 73", text:"În mesaje și online, literele Hangul se folosesc ca abrevieri: ㅋㅋ(râs), ㅎㅎ(haha), ㄷㄷ(fioruri), ㄱㅅ(감사=mulțumesc), ㅇㅋ(okay), ㄴㄴ(nu), ㅠㅠ(plâns)." },
-    { ko:"줄임말 — Cuvinte trunchiate", label:"Regula 74", text:"Cuvinte compuse scurtate uzual: <strong>셀카</strong>(셀프+카메라/selfie), <strong>치맥</strong>(치킨+맥주), <strong>남친/여친</strong>(iubit/iubitǎ), <strong>편의점</strong>(magazin non-stop), <strong>앱</strong>(app)." },
-    { ko:"형태소 원칙 — Scriere morfologicǎ", label:"Regula 75", text:"Coreeana scrie dupǎ rǎdǎcina morfemului, nu dupǎ sunet: <strong>먹이다</strong>(nu 머기다), <strong>같이</strong>(nu 가치), <strong>좋고</strong>(nu 조코). Scrierea pǎstreazǎ etimologia; pronunția urmeazǎ regulile fonetice." },
+    { ko:"구개음화 — Palatalizare", label:"Regula 6", text:"ㄷ/ㅌ + 이 devin <em>지/치</em>: <strong>같이 → 가치</strong> (ga-chi)." },
+    { ko:"유음화 — Lichidizare", label:"Regula 7", text:"ㄴ lângǎ ㄹ devine ㄹ: <strong>신라 → 실라</strong> (sil-la)." },
+    { ko:"경음화 — Tensionare", label:"Regula 8", text:"Dupǎ batchim ㄱ/ㄷ/ㅂ, consoanele plain devin tensionate: <strong>학교 → 학꾜</strong>." },
+    { ko:"ㅎ + consoană → aspiratǎ", label:"Regula 9", text:"Batchim ㅎ + ㄱ/ㄷ/ㅈ fuzionează: <strong>좋다 → 조타</strong> (jo-ta)." },
+    { ko:"ㅎ dispare între vocale", label:"Regula 10", text:"ㅎ între douǎ vocale se reduce: <strong>좋아요 → 조아요</strong>." },
+    { ko:"겹받침 — Batchim dublu", label:"Regula 11", text:"Douǎ consoane batchim: de regulǎ se pronunțǎ una: <strong>읽다 → 익다</strong> (ik-da)." },
+    { ko:"ㄹ → ㄴ dupǎ nazale", label:"Regula 12", text:"ㄹ dupǎ batchim ㅁ/ㅇ devine ㄴ: <strong>강릉 → 강능</strong>." },
+    { ko:"ㄴ 첨가 — Inserție ㄴ", label:"Regula 13", text:"La granița cuvintelor compuse, înainte de 이/야/여/요/유 se inserează ㄴ: <strong>꽃잎 → 꼰닙</strong>." },
+    { ko:"두음법칙 — ㄹ inițial", label:"Regula 14", text:"ㄹ la <strong>începutul cuvântului</strong> devine ㄴ sau dispare: <strong>여자</strong> (din 녀자)." },
+    { ko:"경음화 în compuse", label:"Regula 15", text:"În cuvinte compuse, consoana inițialǎ a celui de-al doilea element poate deveni tensionatǎ." },
+    { ko:"활음화 — Alunecare vocalicǎ", label:"Regula 16", text:"오/우 sau 이 înainte de altǎ vocalǎ: <strong>보+아 → 봐</strong>." },
+    { ko:"모음 조화 — Armonie vocalicǎ", label:"Regula 17", text:"ㅏ dupǎ vocale pozitive (ㅏ, ㅗ) și ㅓ dupǎ negative: <strong>가+아요 → 가요</strong>." },
+    { ko:"ㅎ mut înainte de ㄴ/ㄹ", label:"Regula 18", text:"Batchim ㅎ înainte de ㄴ sau ㄹ dispare: <strong>놓는 → 논는</strong>." },
+    { ko:"ㄹ탈락 — Cǎderea lui ㄹ", label:"Regula 19", text:"Tulpini cu ㄹ pierd ㄹ înainte de ㄴ/ㅂ/ㅅ: <strong>알다→아는</strong>." },
+    { ko:"사이시옷 — ㅅ intercalat", label:"Regula 20", text:"ㅅ între douǎ substantive: <strong>나뭇잎 → 나문닙</strong>." },
+    { ko:"장단음 — Lungimea vocalei", label:"Regula 21", text:"눈[nu:n] (zǎpadǎ) vs 눈[nun] (ochi): vocale lungi în prima silabǎ." },
+    { ko:"ㄷ 불규칙 — Neregulat ㄷ→ㄹ", label:"Regula 22", text:"<strong>듣다→들어요</strong> (a asculta), <strong>걷다→걸어요</strong> (a merge)." },
+    { ko:"ㅂ 불규칙 — Neregulat ㅂ→우", label:"Regula 23", text:"<strong>춥다→추워요</strong> (frig), <strong>돕다→도와요</strong> (a ajuta)." },
+    { ko:"ㅅ 불규칙 — Neregulat ㅅ dispare", label:"Regula 24", text:"<strong>낫다→나아요</strong> (a se vindeca), <strong>붓다→부어요</strong>." },
+    { ko:"-ㄹ + tensionare", label:"Regula 25", text:"Sufixul -ㄹ tensionează consoana urmǎtoare: <strong>갈 수 → 갈 쑤</strong>." },
+    { ko:"ㅡ탈락 — ㅡ cade", label:"Regula 26", text:"Tulpini cu ㅡ pierd ㅡ înainte de vocale: <strong>쓰다→써요</strong>, <strong>크다→커요</strong>." },
+    { ko:"르 불규칙 — ㄹ se dubleazǎ", label:"Regula 27", text:"<strong>모르다→몰라요</strong> (nu știu), <strong>부르다→불러요</strong>." },
+    { ko:"ㅎ 불규칙 — adjective culoare", label:"Regula 28", text:"<strong>빨갛다→빨개요</strong> (roșu), <strong>노랗다→노래요</strong> (galben)." },
+    { ko:"하다 + 아/여 → 해", label:"Regula 29", text:"하다 contractǎ terminația: <strong>공부해요</strong>, <strong>사랑해요</strong>." },
+    { ko:"중화 — 7 sunete finale", label:"Regula 30", text:"Orice consoana finalǎ se neutralizeazǎ: ㅋ/ㄲ→ㄱ, ㅌ/ㅅ→ㄷ, ㅍ→ㅂ." },
+    { ko:"ㅐ = ㅔ modern", label:"Regula 31", text:"Majoritarea vorbitorilor pronunțǎ ㅐ și ㅔ identic [e] în vorbirea curentǎ." },
+    { ko:"ㄹ: vibrantǎ/lateralǎ", label:"Regula 32", text:"ㄹ între vocale = <em>r</em> vibrant; la finalul silabei = <em>l</em> lateral." },
+    { ko:"ㅢ — trei pronunții", label:"Regula 33", text:"La început = [ui], dupǎ consoana = [i], ca particulǎ posesivǎ = [e]." },
+    { ko:"Sonorizare între vocale", label:"Regula 34", text:"ㄱ/ㄷ/ㅂ/ㅈ între sunete sonore devin sonore: <strong>바다</strong> [ba-<em>d</em>a]." },
+    { ko:"이/가, 은/는, 을/를", label:"Regula 35", text:"Dupǎ consoana → 이/은/을; dupǎ vocalǎ → 가/는/를." },
+    { ko:"Oclusivǎ neeliberatǎ", label:"Regula 36", text:"ㄱ/ㄷ/ㅂ la finalul enunțului sunt ținute mut: <strong>먹[meok̚]</strong>." },
+    { ko:"것 → 거/걸/건", label:"Regula 37", text:"것 se contractǎ: 것이→거, 것을→걸, 것은→건." },
+    { ko:"이에요/예요 — copula", label:"Regula 38", text:"Dupǎ consoana→이에요; dupǎ vocalǎ→예요: <strong>학생이에요</strong>." },
+    { ko:"Adaptarea împrumuturilor", label:"Regula 39", text:"Grupuri consonantice engl. primesc ㅡ: <strong>스트레스</strong> (stress)." },
+    { ko:"야/아 — vocativ", label:"Regula 40", text:"Dupǎ vocalǎ→야 (<strong>지수야!</strong>); dupǎ consoana→아 (<strong>민준아!</strong>)." },
+    { ko:"음절 박자 — Ritm silabic", label:"Regula 41", text:"Coreeana e <strong>silabicǎ</strong>: fiecare silabǎ are duratǎ egalǎ." },
+    { ko:"Sistemul dublu de numere", label:"Regula 42", text:"Sino-coreean (일이삼) pentru date/bani; nativ (하나둘셋) pentru obiecte." },
+    { ko:"-아/어서 — conector cauzal", label:"Regula 43", text:"Urmează armonia vocalicǎ: <strong>가서</strong>, <strong>먹어서</strong>, <strong>해서</strong>." },
+    { ko:"-겠- — cascadǎ foneticǎ", label:"Regula 44", text:"-겠- provoacǎ cascadǎ: <strong>하겠습니다→하겓씀니다</strong>." },
+    { ko:"ㄴ 첨가 sino-coreean", label:"Regula 45", text:"ㄴ se insereazǎ și în compuse sino-coreene: <strong>허용량→허용냥</strong>." },
+    { ko:"닫히다→다치다", label:"Regula 46", text:"Batchim ㄷ/ㅌ + sufixul pasiv -히- → 치: <strong>닫히다→다치다</strong>." },
+    { ko:"없다/있다 cascade", label:"Regula 47", text:"없다: ㄼ→ㅂ + ㄷ tensionat → <strong>[업따]</strong>; 있다 → <strong>[읻따]</strong>." },
+    { ko:"-(으)면 — condiție", label:"Regula 48", text:"Dupǎ consoana→으면; dupǎ vocalǎ/ㄹ→면: <strong>먹으면</strong>, <strong>가면</strong>." },
+    { ko:"Contracții vorbire rapidǎ", label:"Regula 49", text:"그런데→근데, 저는→전, 나는→난, -지 않다→-잖다." },
+    { ko:"억양 — Intonație", label:"Regula 50", text:"Afirmații ↘; întrebǎri da/nu ↗; întrebǎri cu pronume ↘ dar mai sus." },
+    { ko:"못/안 + tensionare", label:"Regula 51", text:"못/안 + verb: <strong>못 가다→[몯까다]</strong> (nu poate merge)." },
+    { ko:"-(으)로 — direcție", label:"Regula 52", text:"Dupǎ consoana (excl. ㄹ)→으로; dupǎ vocalǎ/ㄹ→로: <strong>집으로</strong>." },
+    { ko:"-ㅂ니다/-습니다 formal", label:"Regula 53", text:"Dupǎ vocalǎ→ㅂ니다 (<strong>갑니다</strong>); dupǎ consoana→습니다 (<strong>먹습니다</strong>)." },
+    { ko:"Tensionare sino-coreeanǎ", label:"Regula 54", text:"<strong>일기→[일끼]</strong> (jurnal), <strong>발달→[발딸]</strong> (dezvoltare)." },
+    { ko:"-(으)ㄴ/는/ㄹ adnominal", label:"Regula 55", text:"먹은/간 (trecut), 먹을/갈 (viitor). ㅡ dispare dupǎ vocalǎ." },
+    { ko:"와/과 alternanțǎ", label:"Regula 56", text:"Dupǎ vocalǎ→와/랑/나; dupǎ consoana→과/이랑/이나." },
+    { ko:"ㅅ + vocale iotizate → [ɕ]", label:"Regula 57", text:"ㅅ înainte de 이/야/여/요/유 sunǎ ca <em>sh</em>: <strong>시</strong>[ɕi]." },
+    { ko:"ㅈ/ㅊ/ㅉ — alveopalatale", label:"Regula 58", text:"Produse mai în spate decât engl. j/ch: ㅈ=neaspirat, ㅊ=aspirat, ㅉ=tensionat." },
+    { ko:"Vocale lungi numai în prima silabǎ", label:"Regula 59", text:"<strong>말[ma:l]</strong> dar în compus <strong>말하다→[말하다]</strong> (scurt)." },
+    { ko:"러 불규칙 — 이르다/푸르다", label:"Regula 60", text:"<strong>이르다→이르러요</strong> (a ajunge). Diferit de 르 irregular." },
+    { ko:"우 불규칙 — 푸다→퍼요", label:"Regula 61", text:"Singurul verb: <strong>푸다→퍼요</strong>. ㅜ dispare, 어 rǎmâne." },
+    { ko:"이게/그게/뭐 contracții", label:"Regula 62", text:"이것이→이게, 그것이→그게, 무엇→뭐. Uzuale în orice registru." },
+    { ko:"-(이)었다 — trecut copula", label:"Regula 63", text:"Dupǎ consoana→이었어요; dupǎ vocalǎ→였어요." },
+    { ko:"Sunete engl. absente", label:"Regula 64", text:"f→ㅍ, v→ㅂ, z→ㅈ, th→ㄷ/ㅅ: <strong>바이올린</strong>, <strong>지퍼</strong>." },
+    { ko:"ㄹ batchim în compuse", label:"Regula 65", text:"ㄹ batchim tensionează: <strong>길+가→길까</strong> [길까]." },
+    { ko:"Cascadǎ dublǎ", label:"Regula 66", text:"<strong>격려→[경녀]</strong>: Reg.5 nazalizare + Reg.12 ㄹ→ㄴ în succesiune." },
+    { ko:"ㅂ irregular + alunecare", label:"Regula 67", text:"<strong>돕+아→도와</strong>: ㅂ→우, apoi 우+아 → alunecare (douǎ reguli)." },
+    { ko:"Valori fonetice IPA", label:"Regula 68", text:"ㅏ[a], ㅓ[ʌ], ㅡ[ɯ](rom. î), ㅗ[o], ㅜ[u], ㅣ[i], ㅐ≈ㅔ[e]." },
+    { ko:"ㅓ vs ㅗ — confuzie", label:"Regula 69", text:"ㅓ[ʌ]=fǎrǎ rotunjire; ㅗ[o]=cu rotunjire. Cheie: 어머니 vs 오빠." },
+    { ko:"Sistemul de 3 consoane", label:"Regula 70", text:"Lenis ㄱ[k̬] / Aspirat ㅋ[kʰ] / Tensionat ㄲ[k']. Unic în lume." },
+    { ko:"Ordinea alfabetului", label:"Regula 71", text:"ㄱ ㄲ ㄴ ㄷ ㄸ ㄹ ㅁ ㅂ ㅃ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅋ ㅌ ㅍ ㅎ." },
+    { ko:"방언 — Dialecte", label:"Regula 72", text:"Seoul=standard. Gyeongsang=tonal. Jeolla=terminații proprii. Jeju≈altǎ limbǎ." },
+    { ko:"ㅋㅋ / ㅎㅎ — Limbaj digital", label:"Regula 73", text:"ㅋㅋ=râs, ㅎㅎ=haha, ㄷㄷ=fioruri, ㄱㅅ=mulțumesc, ㅠㅠ=plâns." },
+    { ko:"줄임말 — Cuvinte trunchiate", label:"Regula 74", text:"셀카(selfie), 치맥(pui+bere), 남친/여친(iubit/iubitǎ), 앱(app)." },
+    { ko:"형태소 — Scriere morfologicǎ", label:"Regula 75", text:"Scrierea pǎstreazǎ rǎdǎcina: <strong>먹이다</strong> (nu 머기다), <strong>같이</strong>." },
   ],
   en: [
-    { ko:"연음 — Liaison", label:"Rule 1", text:"Batchim links to the next vowel: <strong>한국어 → han-gu-geo</strong> (ㄱ shifts to 어)." },
-    { ko:"Silent ㅇ at start", label:"Rule 2", text:"ㅇ at the <strong>start of a syllable</strong> is silent: <strong>아버지 → a-beo-ji</strong>." },
-    { ko:"ㅇ = ng at end", label:"Rule 3", text:"ㅇ as <strong>batchim</strong> sounds like <em>ng</em>: <strong>강 → gang</strong>, <strong>영어 → yeong-eo</strong>." },
-    { ko:"Aspiration ㅋ ㅌ ㅍ ㅊ", label:"Rule 4", text:"These are <strong>aspirated</strong> versions (with a puff of air) of ㄱ ㄷ ㅂ ㅈ." },
+    { ko:"연음 — Liaison", label:"Rule 1", text:"Batchim links to the next vowel: <strong>한국어 → han-gu-geo</strong>." },
+    { ko:"Silent ㅇ at start", label:"Rule 2", text:"ㅇ at the start of a syllable is silent: <strong>아버지 → a-beo-ji</strong>." },
+    { ko:"ㅇ = ng at end", label:"Rule 3", text:"ㅇ as batchim sounds like <em>ng</em>: <strong>강 → gang</strong>." },
+    { ko:"Aspiration ㅋ ㅌ ㅍ ㅊ", label:"Rule 4", text:"Aspirated (puff of air) versions of ㄱ ㄷ ㅂ ㅈ." },
     { ko:"Nasalization", label:"Rule 5", text:"ㄱ/ㄷ/ㅂ become <em>ng/n/m</em> before ㄴ or ㅁ: <strong>국민 → gungmin</strong>." },
-    { ko:"구개음화 — Palatalization", label:"Rule 6", text:"ㄷ/ㅌ before 이 become <em>지/치</em>: <strong>같이 → 가치</strong> (ga-chi), <strong>굳이 → 구지</strong> (gu-ji)." },
-    { ko:"유음화 — Liquidization", label:"Rule 7", text:"ㄴ next to ㄹ becomes ㄹ (and vice versa): <strong>신라 → 실라</strong> (sil-la), <strong>편리 → 펼리</strong> (pyeol-li)." },
-    { ko:"경음화 — Tensification", label:"Rule 8", text:"After batchim ㄱ/ㄷ/ㅂ, the consonants ㄱ/ㄷ/ㅂ/ㅅ/ㅈ become tensed: <strong>학교 → 학꾜</strong> (hak-kyo), <strong>입다 → 입따</strong> (ip-tta)." },
-    { ko:"ㅎ + consonant → aspirated", label:"Rule 9", text:"Batchim ㅎ + ㄱ/ㄷ/ㅈ merge into aspirated ㅋ/ㅌ/ㅊ: <strong>좋다 → 조타</strong> (jo-ta), <strong>넣고 → 너코</strong> (neo-ko)." },
-    { ko:"ㅎ weakens between vowels", label:"Rule 10", text:"ㅎ between two vowels weakens or disappears: <strong>좋아요 → 조아요</strong> (jo-a-yo), <strong>전화 → 저놔</strong> (jeo-nwa)." },
-    { ko:"겹받침 — Double batchim", label:"Rule 11", text:"When two consonants form batchim, usually only one is pronounced: <strong>읽다 → 익다</strong> (ik-da), <strong>닭 → 닥</strong> (dak). Before a vowel, both are pronounced." },
-    { ko:"ㄹ → ㄴ after nasals", label:"Rule 12", text:"ㄹ after batchim ㅁ/ㅇ becomes ㄴ: <strong>음료 → 음뇨</strong> (eum-nyo), <strong>강릉 → 강능</strong> (gang-neung)." },
-    { ko:"ㄴ 첨가 — ㄴ insertion", label:"Rule 13", text:"At compound word boundaries, ㄴ is inserted before 이/야/여/요/유: <strong>꽃잎 → 꼰닙</strong> (kkon-nip), <strong>색연필 → 생년필</strong> (saeng-nyeon-pil)." },
-    { ko:"두음법칙 — Initial ㄹ", label:"Rule 14", text:"ㄹ at the <strong>start of a word</strong> becomes ㄴ (before 이/야) or disappears: <strong>여자</strong> (from 녀자), <strong>노인</strong> (from 로인)." },
-    { ko:"경음화 in compounds", label:"Rule 15", text:"In compound words, the initial consonant of the second element can become tensed: <strong>눈빛 → 눈삣</strong> (nun-ppit), <strong>강가 → 강까</strong> (gang-kka)." },
-    { ko:"활음화 — Glide formation", label:"Rule 16", text:"Vowels 오/우 or 이 before another vowel form a glide: <strong>보+아 → 봐</strong>, <strong>되+어 → 돼</strong>, <strong>피+어 → 펴</strong>." },
-    { ko:"모음 조화 — Vowel harmony", label:"Rule 17", text:"Verb endings use ㅏ after <em>bright</em> vowels (ㅏ, ㅗ) and ㅓ after <em>dark</em> vowels: <strong>가+아요 → 가요</strong>, <strong>먹+어요 → 먹어요</strong>." },
-    { ko:"ㅎ silent before ㄴ/ㄹ", label:"Rule 18", text:"Batchim ㅎ before ㄴ or ㄹ disappears and the consonant doubles: <strong>놓는 → 논는</strong> (non-neun), <strong>좋네 → 존네</strong> (jon-ne)." },
-    { ko:"ㄹ탈락 — ㄹ deletion", label:"Rule 19", text:"Verb stems ending in ㄹ drop it before ㄴ/ㅂ/ㅅ: <strong>알다→아는</strong> (knowing), <strong>살다→삽니다</strong> (I live), <strong>만들다→만드는</strong>." },
-    { ko:"사이시옷 — Inserted ㅅ", label:"Rule 20", text:"ㅅ written between two nouns causes tensification or ㄴ-insertion: <strong>나뭇잎 → 나문닙</strong> (na-mun-nip), <strong>냇가 → 내까</strong> (nae-kka)." },
-    { ko:"장단음 — Vowel length", label:"Rule 21", text:"Some syllables have long vowels that distinguish meaning: <strong>눈[nu:n]</strong> (snow) vs <strong>눈[nun]</strong> (eye), <strong>말[ma:l]</strong> (speech) vs <strong>말[mal]</strong> (horse)." },
-    { ko:"ㄷ 불규칙 — Irregular ㄷ→ㄹ", label:"Rule 22", text:"Certain ㄷ stems change to ㄹ before a vowel: <strong>듣다→들어요</strong> (listen), <strong>걷다→걸어요</strong> (walk). Exception: <strong>받다→받아요</strong>." },
-    { ko:"ㅂ 불규칙 — Irregular ㅂ→우", label:"Rule 23", text:"Certain ㅂ stems change to 우 before a vowel: <strong>춥다→추워요</strong> (cold), <strong>돕다→도와요</strong> (help). Exception: <strong>잡다→잡아요</strong>." },
-    { ko:"ㅅ 불규칙 — Irregular ㅅ drops", label:"Rule 24", text:"Certain ㅅ stems drop ㅅ before a vowel: <strong>낫다→나아요</strong> (get better), <strong>붓다→부어요</strong> (pour). Exception: <strong>씻다→씻어요</strong>." },
-    { ko:"-ㄹ + tensification", label:"Rule 25", text:"The prospective suffix -ㄹ tensifies the following consonant: <strong>갈 수 → 갈 쑤</strong>, <strong>할 것 → 할 껏</strong>, <strong>볼게요 → 볼께요</strong>." },
-    { ko:"ㅡ탈락 — ㅡ drops before vowel", label:"Rule 26", text:"Verb stems ending in ㅡ drop it before vowel endings: <strong>쓰다→써요</strong> (write), <strong>크다→커요</strong> (big), <strong>바쁘다→바빠요</strong> (busy)." },
-    { ko:"르 불규칙 — ㄹ doubling", label:"Rule 27", text:"르 stems drop ㅡ and double ㄹ before vowel endings: <strong>모르다→몰라요</strong> (don't know), <strong>부르다→불러요</strong> (call), <strong>다르다→달라요</strong> (different)." },
-    { ko:"ㅎ 불규칙 — color adjectives", label:"Rule 28", text:"Color adjectives lose ㅎ and the vowel contracts: <strong>빨갛다→빨개요</strong> (red), <strong>노랗다→노래요</strong> (yellow), <strong>파랗다→파래요</strong> (blue)." },
-    { ko:"하다 + 아/여 → 해", label:"Rule 29", text:"하다 verbs contract the ending: 하+아/여→해: <strong>공부해요</strong> (I study), <strong>일해요</strong> (I work), <strong>사랑해요</strong> (I love you)." },
-    { ko:"중화 — 7 final sounds", label:"Rule 30", text:"At syllable end, all consonants neutralize to one of 7 sounds: ㅋ/ㄲ→ㄱ, ㅌ/ㅅ/ㅊ/ㅈ→ㄷ, ㅍ→ㅂ. E.g. <strong>꽃→꼳</strong>, <strong>낮→낟</strong>." },
-    { ko:"ㅐ = ㅔ in modern Korean", label:"Rule 31", text:"Most speakers pronounce ㅐ and ㅔ identically as [e]: <strong>개</strong>(dog) sounds like <strong>게</strong>(crab). The distinction survives only in careful formal speech." },
-    { ko:"ㄹ: flap between vowels, lateral at end", label:"Rule 32", text:"ㄹ between vowels sounds like a light <em>r</em> (flap): <strong>바람</strong> (ba-ram). At syllable end it sounds like <em>l</em>: <strong>말</strong> (mal). One letter, two sounds!" },
-    { ko:"ㅢ — three pronunciations", label:"Rule 33", text:"ㅢ changes by position: word-initial [의] ui, after a consonant [이] i (<strong>희망→히망</strong>), as possessive particle [에] e (<strong>나의→나에</strong>)." },
-    { ko:"Voicing between voiced sounds", label:"Rule 34", text:"ㄱ/ㄷ/ㅂ/ㅈ between voiced sounds become voiced [g/d/b/j]: <strong>가방</strong> [ga-<em>b</em>ang] (bag), <strong>바다</strong> [ba-<em>d</em>a] (sea), <strong>아기</strong> [a-<em>g</em>i] (baby)." },
-    { ko:"이/가, 은/는, 을/를 alternation", label:"Rule 35", text:"Particles are chosen by the final sound: after a <strong>consonant</strong> → 이/은/을; after a <strong>vowel</strong> → 가/는/를. E.g. 학생<strong>이</strong> vs 나<strong>가</strong>, 책<strong>을</strong> vs 물<strong>를</strong>." },
-    { ko:"폐쇄 미개방 — Unreleased stops", label:"Rule 36", text:"ㄱ/ㄷ/ㅂ at the end of an utterance are held silently — no puff of air: <strong>먹[meok̚]</strong>, <strong>밥[bap̚]</strong>, <strong>밖[bak̚]</strong>. The syllable stops abruptly." },
-    { ko:"것 → 거/걸/건 in speech", label:"Rule 37", text:"것 contracts before particles in everyday speech: 것이→거, 것을→걸, 것은→건. E.g. <strong>이것→이거</strong>, <strong>그것→그거</strong>, <strong>뭐 먹을 거예요?</strong> (What will you eat?)" },
-    { ko:"이에요/예요 — copula", label:"Rule 38", text:"이다+어요: after a <strong>consonant</strong>→이에요 (<strong>학생이에요</strong>), after a <strong>vowel</strong>→예요 (<strong>가수예요</strong>). Casual: 이야/야." },
-    { ko:"Loanword phonological adaptation", label:"Rule 39", text:"English consonant clusters get ㅡ inserted: <strong>스트레스</strong>(stress), <strong>크림</strong>(cream). Final consonants: <strong>컵</strong>(cup→keop), <strong>초콜릿</strong>(chocolate)." },
-    { ko:"야/아 — vocative suffix", label:"Rule 40", text:"Calling someone: after a <strong>vowel</strong>→야 (<strong>지수야!</strong>), after a <strong>consonant</strong>→아 (<strong>민준아!</strong>). Same pattern as subject particles 이/가." },
-    { ko:"음절 박자 — Syllable timing", label:"Rule 41", text:"Korean is <strong>syllable-timed</strong> — every syllable gets equal duration, with no stress accent like in English. 한·국·어 — each syllable is equally weighted." },
-    { ko:"Dual number systems", label:"Rule 42", text:"Two systems exist: <strong>Sino-Korean</strong> (일·이·삼) for dates, money, floors; <strong>Native Korean</strong> (하나·둘·셋) for counting objects and age. Mixing them is incorrect." },
-    { ko:"-아/어서 — causal connector", label:"Rule 43", text:"The ending -아/어서 follows vowel harmony and contracts: <strong>가+아서→가서</strong>, <strong>먹+어서→먹어서</strong>, <strong>하+아서→해서</strong>." },
-    { ko:"-겠- — phonetic cascade", label:"Rule 44", text:"-겠- is pronounced [겓] and triggers a chain reaction: <strong>하겠습니다→하겓씀니다</strong> (tensification + nasalization in sequence)." },
-    { ko:"ㄴ insertion in Sino-Korean", label:"Rule 45", text:"ㄴ is also inserted in Sino-Korean compounds before 야/여/요/유/이: <strong>허용량→허용냥</strong> (heo-yong-nyang), <strong>생산율→생산뉼</strong> (saeng-san-nyul)." },
-    { ko:"닫히다→다치다 (passive palatalization)", label:"Rule 46", text:"Batchim ㄷ/ㅌ + passive suffix <strong>-히-</strong> → 치: <strong>닫히다→다치다</strong> (be closed), <strong>굳히다→구치다</strong> (be hardened). Extension of Rule 6." },
-    { ko:"없다/있다 — phonetic cascade", label:"Rule 47", text:"없다: batchim ㄼ→ㅂ (Rule 11) + ㄷ tensified (Rule 8) → <strong>[업따]</strong>. 있다: batchim ㅆ→ㄷ (Rule 30) + ㄷ tensified → <strong>[읻따]</strong>." },
-    { ko:"-(으)면 — conditional", label:"Rule 48", text:"After a <strong>consonant</strong>→으면, after a <strong>vowel/ㄹ</strong>→면: <strong>먹으면</strong> (if you eat), <strong>가면</strong> (if you go), <strong>알면</strong> (if you know)." },
-    { ko:"Fast speech contractions", label:"Rule 49", text:"Common: 그런데→<strong>근데</strong>, 저는→<strong>전</strong>, 나는→<strong>난</strong>, -지 않다→<strong>-잖다</strong> (먹지 않아→먹잖아), 어떻게→<strong>어케</strong>." },
-    { ko:"억양 — Intonation", label:"Rule 50", text:"Statements fall ↘; yes/no questions rise ↗; wh-questions (what, where) fall ↘ like statements but start at a higher pitch." },
-    { ko:"못/안 + phrase-level tensification", label:"Rule 51", text:"못/안 before a verb triggers tensification: <strong>못 가다→[몯까다]</strong> (can't go), <strong>못 먹다→[몯먹따]</strong>. 못's batchim ㄷ tensifies the following consonant." },
-    { ko:"-(으)로 — directional particle", label:"Rule 52", text:"After a <strong>consonant</strong> (except ㄹ)→으로, after a <strong>vowel</strong> or <strong>ㄹ</strong>→로: <strong>집으로</strong> (toward home), <strong>학교로</strong>, <strong>서울로</strong> (ㄹ→로)." },
-    { ko:"-ㅂ니다/-습니다 — formal polite", label:"Rule 53", text:"Formal ending: after a <strong>vowel</strong>→ㅂ니다 (<strong>갑니다</strong> I go), after a <strong>consonant</strong>→습니다 (<strong>먹습니다</strong> I eat). 갑니다: ㅂ nasalizes → [감니다]." },
-    { ko:"Tensification in Sino-Korean compounds", label:"Rule 54", text:"Some Sino-Korean compounds tensify the initial consonant of the second element: <strong>일기→[일끼]</strong> (diary), <strong>발달→[발딸]</strong> (development), <strong>성격→[성껵]</strong> (personality)." },
-    { ko:"-(으)ㄴ/는/ㄹ adnominal endings", label:"Rule 55", text:"After a <strong>consonant</strong>→으ㄴ/으ㄹ; after a <strong>vowel/ㄹ</strong>→ㄴ/ㄹ: <strong>먹은</strong> vs <strong>간</strong> (past), <strong>먹을</strong> vs <strong>갈</strong> (future). ㅡ disappears after a vowel." },
-    { ko:"와/과, (이)랑, (이)나 alternation", label:"Rule 56", text:"Same pattern as 이/가: after a <strong>vowel</strong>→와/랑/나, after a <strong>consonant</strong>→과/이랑/이나. E.g. <strong>사과와</strong> vs <strong>책과</strong>, <strong>친구랑</strong> vs <strong>학생이랑</strong>." },
-    { ko:"ㅅ before iotized vowels → [ɕ]", label:"Rule 57", text:"ㅅ before 이/야/여/요/유 sounds closer to <em>sh</em>: <strong>시</strong>[ɕi] (time), <strong>셔츠</strong>[ɕjʌ] (shirt), <strong>신발</strong>[ɕin-bal] (shoes). Not written differently, but audibly distinct!" },
-    { ko:"ㅈ/ㅊ/ㅉ — alveopalatal affricates", label:"Rule 58", text:"ㅈ/ㅊ/ㅉ are produced further back than English j/ch — alveopalatal position. ㅈ=unaspirated, ㅊ=aspirated, ㅉ=tensed. Same trio pattern as ㄱ/ㅋ/ㄲ." },
-    { ko:"Vowel length in first syllable only", label:"Rule 59", text:"Long vowels (Rule 21) appear <strong>only in the first syllable</strong> of a word. In compounds or after prefixes, length disappears: <strong>말[ma:l]</strong> alone, but <strong>말하다→[말하다]</strong> (short)." },
-    { ko:"러 불규칙 — 이르다/푸르다", label:"Rule 60", text:"Special stems that add <strong>러</strong> (not <em>어</em>) before endings: <strong>이르다→이르러요</strong> (to reach), <strong>푸르다→푸르러요</strong> (to be blue/green). Different from 르 irregular." },
-    { ko:"우 불규칙 — 푸다→퍼요", label:"Rule 61", text:"The only verb in this class: <strong>푸다</strong> (to scoop water) → <strong>퍼요</strong>, not *푸어요. ㅜ disappears and the vowel 어 remains alone." },
-    { ko:"이게/그게/저게/뭐 — contractions", label:"Rule 62", text:"One step beyond Rule 37: 이것이→<strong>이게</strong>, 그것이→<strong>그게</strong>, 저것이→<strong>저게</strong>, 무엇→<strong>뭐</strong>. Used in all speech registers." },
-    { ko:"-(이)었다 — past copula", label:"Rule 63", text:"이다 in the past: after a <strong>consonant</strong>→이었어요 (<strong>학생이었어요</strong>), after a <strong>vowel</strong>→였어요 (<strong>가수였어요</strong>). Casual: 이었어/였어." },
-    { ko:"English sounds absent from Korean", label:"Rule 64", text:"Korean has no /f/, /v/, /z/, /θ/: f→ㅍ (<strong>피자</strong>/pizza) or ㅎ, v→ㅂ (<strong>바이올린</strong>), z→ㅈ (<strong>지퍼</strong>/zipper), th→ㄷ or ㅅ (<strong>다이아몬드</strong>)." },
-    { ko:"ㄹ batchim in compounds → tensification", label:"Rule 65", text:"ㄹ batchim in compound nouns tensifies the following consonant: <strong>길+가→길까</strong>[길까] (roadside), <strong>쌀+가게→쌀까게</strong> (rice shop), <strong>말+달리기→말딸리기</strong> (horse riding)." },
-    { ko:"Double cascade — two rules in sequence", label:"Rule 66", text:"Sometimes two rules fire consecutively: <strong>격려→[경녀]</strong> (ㄱ+ㄹ: Rule 5 nasalization + Rule 12 ㄹ→ㄴ), <strong>독립→[동닙]</strong>, <strong>국력→[궁녁]</strong>." },
-    { ko:"ㅂ irregular + glide activation", label:"Rule 67", text:"ㅂ→오/우, then 오/우+vowel forms a glide (Rule 16): <strong>돕+아→도+오+아→도와</strong>, <strong>춥+어→추+우+어→추워</strong>. Two rules chained." },
-    { ko:"Vowel phonetic values (IPA)", label:"Rule 68", text:"ㅏ[a](father), ㅓ[ʌ](but—unrounded), ㅡ[ɯ](no English equiv.; like Ro. î), ㅗ[o](go), ㅜ[u](too), ㅣ[i](see), ㅐ≈ㅔ[e](bed). Knowing these eliminates a foreign accent." },
-    { ko:"ㅓ vs ㅗ — common confusion", label:"Rule 69", text:"ㅓ[ʌ] = <strong>no</strong> lip rounding (back-central); ㅗ[o] = <strong>rounded</strong> lips. Key: 어머니(mother) vs 오빠(older brother). Lip rounding is the only difference." },
-    { ko:"Three-way consonant system (IPA)", label:"Rule 70", text:"Each series has 3 grades: <em>lenis</em> ㄱ[k̬] / <em>aspirated</em> ㅋ[kʰ] / <em>tensed</em> ㄲ[k']. Same for ㄷ/ㅌ/ㄸ, ㅂ/ㅍ/ㅃ, ㅅ/ㅆ, ㅈ/ㅊ/ㅉ. Unique among world languages." },
-    { ko:"자모 순서 — Alphabet order", label:"Rule 71", text:"Dictionary order: ㄱ ㄲ ㄴ ㄷ ㄸ ㄹ ㅁ ㅂ ㅃ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅋ ㅌ ㅍ ㅎ. Vowels: ㅏ ㅐ ㅑ ㅒ ㅓ ㅔ ㅕ ㅖ ㅗ ㅘ ㅙ ㅚ ㅛ ㅜ ㅝ ㅞ ㅟ ㅠ ㅡ ㅢ ㅣ." },
-    { ko:"방언 — Regional dialects", label:"Rule 72", text:"Standard: Seoul (표준어). Gyeongsang/경상: pitch accent. Jeolla/전라: distinctive endings. Jeju: nearly a separate language. North Korean: different vocabulary, more conservative accent." },
-    { ko:"ㅋㅋ / ㅎㅎ — Digital language", label:"Rule 73", text:"In messages and online, Hangul letters serve as abbreviations: ㅋㅋ(laughter), ㅎㅎ(haha), ㄷㄷ(shiver/wow), ㄱㅅ(감사=thanks), ㅇㅋ(okay), ㄴㄴ(no), ㅠㅠ(crying)." },
-    { ko:"줄임말 — Truncated words", label:"Rule 74", text:"Common compound shortenings: <strong>셀카</strong>(셀프+카메라/selfie), <strong>치맥</strong>(치킨+맥주), <strong>남친/여친</strong>(boyfriend/girlfriend), <strong>편의점</strong>(convenience store), <strong>앱</strong>(app)." },
-    { ko:"형태소 원칙 — Morphophonemic spelling", label:"Rule 75", text:"Korean spells by morpheme root, not by sound: <strong>먹이다</strong>(not 머기다), <strong>같이</strong>(not 가치), <strong>좋고</strong>(not 조코). Writing preserves etymology; pronunciation follows phonological rules." },
+    { ko:"구개음화 — Palatalization", label:"Rule 6", text:"ㄷ/ㅌ before 이 become <em>지/치</em>: <strong>같이 → 가치</strong> (ga-chi)." },
+    { ko:"유음화 — Liquidization", label:"Rule 7", text:"ㄴ next to ㄹ becomes ㄹ: <strong>신라 → 실라</strong> (sil-la)." },
+    { ko:"경음화 — Tensification", label:"Rule 8", text:"After batchim ㄱ/ㄷ/ㅂ, plain consonants become tense: <strong>학교 → 학꾜</strong>." },
+    { ko:"ㅎ + consonant → aspirated", label:"Rule 9", text:"Batchim ㅎ + ㄱ/ㄷ/ㅈ merge: <strong>좋다 → 조타</strong> (jo-ta)." },
+    { ko:"ㅎ weakens between vowels", label:"Rule 10", text:"ㅎ between vowels weakens: <strong>좋아요 → 조아요</strong>." },
+    { ko:"겹받침 — Double batchim", label:"Rule 11", text:"Two-consonant batchim: usually one pronounced: <strong>읽다 → 익다</strong>." },
+    { ko:"ㄹ → ㄴ after nasals", label:"Rule 12", text:"ㄹ after batchim ㅁ/ㅇ becomes ㄴ: <strong>강릉 → 강능</strong>." },
+    { ko:"ㄴ 첨가 — ㄴ insertion", label:"Rule 13", text:"At compound boundaries, ㄴ inserted before 이/야/여/요/유: <strong>꽃잎 → 꼰닙</strong>." },
+    { ko:"두음법칙 — Initial ㄹ", label:"Rule 14", text:"ㄹ at word start becomes ㄴ or disappears: <strong>여자</strong> (from 녀자)." },
+    { ko:"경음화 in compounds", label:"Rule 15", text:"In compounds, the second element's initial consonant can tensify." },
+    { ko:"활음화 — Glide formation", label:"Rule 16", text:"오/우 or 이 before another vowel: <strong>보+아 → 봐</strong>." },
+    { ko:"모음 조화 — Vowel harmony", label:"Rule 17", text:"ㅏ after bright vowels (ㅏ,ㅗ); ㅓ after dark vowels: <strong>가요, 먹어요</strong>." },
+    { ko:"ㅎ silent before ㄴ/ㄹ", label:"Rule 18", text:"Batchim ㅎ before ㄴ/ㄹ disappears: <strong>놓는 → 논는</strong>." },
+    { ko:"ㄹ탈락 — ㄹ deletion", label:"Rule 19", text:"ㄹ-stems drop ㄹ before ㄴ/ㅂ/ㅅ: <strong>알다→아는</strong>." },
+    { ko:"사이시옷 — Inserted ㅅ", label:"Rule 20", text:"ㅅ between two nouns causes tensification: <strong>나뭇잎 → 나문닙</strong>." },
+    { ko:"장단음 — Vowel length", label:"Rule 21", text:"눈[nu:n] (snow) vs 눈[nun] (eye): long vowels in first syllable only." },
+    { ko:"ㄷ 불규칙 — Irregular ㄷ→ㄹ", label:"Rule 22", text:"<strong>듣다→들어요</strong> (listen), <strong>걷다→걸어요</strong> (walk)." },
+    { ko:"ㅂ 불규칙 — Irregular ㅂ→우", label:"Rule 23", text:"<strong>춥다→추워요</strong> (cold), <strong>돕다→도와요</strong> (help)." },
+    { ko:"ㅅ 불규칙 — Irregular ㅅ drops", label:"Rule 24", text:"<strong>낫다→나아요</strong> (get better), <strong>붓다→부어요</strong>." },
+    { ko:"-ㄹ + tensification", label:"Rule 25", text:"Prospective suffix -ㄹ tensifies next consonant: <strong>갈 수 → 갈 쑤</strong>." },
+    { ko:"ㅡ탈락 — ㅡ drops", label:"Rule 26", text:"ㅡ-stems drop ㅡ before vowels: <strong>쓰다→써요</strong>, <strong>크다→커요</strong>." },
+    { ko:"르 불규칙 — ㄹ doubling", label:"Rule 27", text:"<strong>모르다→몰라요</strong> (don't know), <strong>부르다→불러요</strong>." },
+    { ko:"ㅎ 불규칙 — color adjectives", label:"Rule 28", text:"<strong>빨갛다→빨개요</strong> (red), <strong>노랗다→노래요</strong> (yellow)." },
+    { ko:"하다 + 아/여 → 해", label:"Rule 29", text:"하다 verbs contract: <strong>공부해요</strong>, <strong>사랑해요</strong>." },
+    { ko:"중화 — 7 final sounds", label:"Rule 30", text:"All final consonants neutralize: ㅋ/ㄲ→ㄱ, ㅌ/ㅅ→ㄷ, ㅍ→ㅂ." },
+    { ko:"ㅐ = ㅔ in modern Korean", label:"Rule 31", text:"Most speakers pronounce ㅐ and ㅔ identically as [e]." },
+    { ko:"ㄹ: flap/lateral", label:"Rule 32", text:"ㄹ between vowels = light <em>r</em>; at syllable end = <em>l</em>." },
+    { ko:"ㅢ — three pronunciations", label:"Rule 33", text:"Word-initial [ui], after consonant [i], as possessive [e]." },
+    { ko:"Voicing between voiced sounds", label:"Rule 34", text:"ㄱ/ㄷ/ㅂ/ㅈ between voiced sounds become voiced: <strong>바다</strong> [ba-<em>d</em>a]." },
+    { ko:"이/가, 은/는, 을/를", label:"Rule 35", text:"After consonant → 이/은/을; after vowel → 가/는/를." },
+    { ko:"Unreleased stops", label:"Rule 36", text:"ㄱ/ㄷ/ㅂ at utterance end are held silent: <strong>먹[meok̚]</strong>." },
+    { ko:"것 → 거/걸/건", label:"Rule 37", text:"것 contracts: 것이→거, 것을→걸, 것은→건." },
+    { ko:"이에요/예요 — copula", label:"Rule 38", text:"After consonant→이에요; after vowel→예요: <strong>학생이에요</strong>." },
+    { ko:"Loanword adaptation", label:"Rule 39", text:"Consonant clusters get ㅡ: <strong>스트레스</strong> (stress), <strong>크림</strong>." },
+    { ko:"야/아 — vocative suffix", label:"Rule 40", text:"After vowel→야 (<strong>지수야!</strong>); after consonant→아 (<strong>민준아!</strong>)." },
+    { ko:"음절 박자 — Syllable timing", label:"Rule 41", text:"Korean is syllable-timed: every syllable gets equal duration." },
+    { ko:"Dual number systems", label:"Rule 42", text:"Sino-Korean (일이삼) for dates/money; Native (하나둘셋) for counting." },
+    { ko:"-아/어서 — causal connector", label:"Rule 43", text:"Follows vowel harmony: <strong>가서</strong>, <strong>먹어서</strong>, <strong>해서</strong>." },
+    { ko:"-겠- — phonetic cascade", label:"Rule 44", text:"-겠- triggers chain: <strong>하겠습니다→하겓씀니다</strong>." },
+    { ko:"ㄴ insertion in Sino-Korean", label:"Rule 45", text:"ㄴ also inserted in Sino-Korean compounds: <strong>허용량→허용냥</strong>." },
+    { ko:"닫히다→다치다", label:"Rule 46", text:"Batchim ㄷ/ㅌ + passive -히- → 치: <strong>닫히다→다치다</strong>." },
+    { ko:"없다/있다 cascades", label:"Rule 47", text:"없다: ㄼ→ㅂ + tensification → <strong>[업따]</strong>; 있다 → <strong>[읻따]</strong>." },
+    { ko:"-(으)면 — conditional", label:"Rule 48", text:"After consonant→으면; after vowel/ㄹ→면: <strong>먹으면</strong>, <strong>가면</strong>." },
+    { ko:"Fast speech contractions", label:"Rule 49", text:"그런데→근데, 저는→전, 나는→난, -지 않다→-잖다." },
+    { ko:"억양 — Intonation", label:"Rule 50", text:"Statements fall ↘; yes/no questions rise ↗; wh-questions fall ↘." },
+    { ko:"못/안 + tensification", label:"Rule 51", text:"못/안 before verb: <strong>못 가다→[몯까다]</strong> (can't go)." },
+    { ko:"-(으)로 — directional", label:"Rule 52", text:"After consonant (not ㄹ)→으로; after vowel/ㄹ→로: <strong>집으로</strong>." },
+    { ko:"-ㅂ니다/-습니다 formal", label:"Rule 53", text:"After vowel→ㅂ니다 (<strong>갑니다</strong>); after consonant→습니다." },
+    { ko:"Sino-Korean tensification", label:"Rule 54", text:"<strong>일기→[일끼]</strong> (diary), <strong>발달→[발딸]</strong> (development)." },
+    { ko:"-(으)ㄴ/는/ㄹ adnominal", label:"Rule 55", text:"먹은/간 (past), 먹을/갈 (future). ㅡ disappears after vowel." },
+    { ko:"와/과 alternation", label:"Rule 56", text:"After vowel→와/랑/나; after consonant→과/이랑/이나." },
+    { ko:"ㅅ before iotized vowels", label:"Rule 57", text:"ㅅ before 이/야/여/요/유 sounds like <em>sh</em>: <strong>시</strong>[ɕi]." },
+    { ko:"ㅈ/ㅊ/ㅉ — alveopalatals", label:"Rule 58", text:"Produced further back than English j/ch. ㅈ=plain, ㅊ=aspirated, ㅉ=tensed." },
+    { ko:"Vowel length in first syllable", label:"Rule 59", text:"<strong>말[ma:l]</strong> alone; in compound <strong>말하다→[말하다]</strong> (short)." },
+    { ko:"러 불규칙 — 이르다/푸르다", label:"Rule 60", text:"<strong>이르다→이르러요</strong> (to reach). Different from 르 irregular." },
+    { ko:"우 불규칙 — 푸다→퍼요", label:"Rule 61", text:"Only verb: <strong>푸다→퍼요</strong>. ㅜ disappears, 어 remains." },
+    { ko:"이게/그게/뭐 contractions", label:"Rule 62", text:"이것이→이게, 그것이→그게, 무엇→뭐. All registers." },
+    { ko:"-(이)었다 — past copula", label:"Rule 63", text:"After consonant→이었어요; after vowel→였어요." },
+    { ko:"English sounds absent", label:"Rule 64", text:"f→ㅍ, v→ㅂ, z→ㅈ, th→ㄷ/ㅅ: <strong>바이올린</strong>, <strong>지퍼</strong>." },
+    { ko:"ㄹ batchim in compounds", label:"Rule 65", text:"ㄹ batchim tensifies: <strong>길+가→길까</strong> [길까]." },
+    { ko:"Double cascade", label:"Rule 66", text:"<strong>격려→[경녀]</strong>: Rule 5 nasalization + Rule 12 ㄹ→ㄴ." },
+    { ko:"ㅂ irregular + glide", label:"Rule 67", text:"<strong>돕+아→도와</strong>: ㅂ→우, then 우+아 forms glide (two rules chained)." },
+    { ko:"Vowel phonetic values (IPA)", label:"Rule 68", text:"ㅏ[a], ㅓ[ʌ], ㅡ[ɯ], ㅗ[o], ㅜ[u], ㅣ[i], ㅐ≈ㅔ[e]." },
+    { ko:"ㅓ vs ㅗ confusion", label:"Rule 69", text:"ㅓ[ʌ]=no lip rounding; ㅗ[o]=rounded lips. 어머니 vs 오빠." },
+    { ko:"Three-way consonant system", label:"Rule 70", text:"Lenis ㄱ[k̬] / Aspirated ㅋ[kʰ] / Tensed ㄲ[k']. Unique worldwide." },
+    { ko:"자모 순서 — Alphabet order", label:"Rule 71", text:"ㄱ ㄲ ㄴ ㄷ ㄸ ㄹ ㅁ ㅂ ㅃ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅋ ㅌ ㅍ ㅎ." },
+    { ko:"방언 — Dialects", label:"Rule 72", text:"Seoul=standard. Gyeongsang=pitch accent. Jeolla=distinctive endings." },
+    { ko:"ㅋㅋ / ㅎㅎ — Digital language", label:"Rule 73", text:"ㅋㅋ=laughter, ㅎㅎ=haha, ㄷㄷ=shiver, ㄱㅅ=thanks, ㅠㅠ=crying." },
+    { ko:"줄임말 — Truncated words", label:"Rule 74", text:"셀카(selfie), 치맥(chicken+beer), 남친/여친(bf/gf), 앱(app)." },
+    { ko:"Morphophonemic spelling", label:"Rule 75", text:"Korean spells by morpheme: <strong>먹이다</strong> (not 머기다), <strong>같이</strong>." },
   ],
 };
 
-function buildBatchim(l) {
-  const tbody = document.getElementById("batchimBody");
-  tbody.innerHTML = "";
-  BATCHIM_ROWS[l].forEach(row => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><span class="bt-chars">${row.chars}</span></td>
-      <td><span class="bt-sound">${row.sound}</span></td>
-      <td><span class="bt-example">${row.ex}</span></td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-const RULES_PER_PAGE = 5;
-let rulesPage = 0;
-
-function buildRules(l) {
-  const rules = RULES[l];
-  const totalPages = Math.ceil(rules.length / RULES_PER_PAGE);
-  rulesPage = Math.min(rulesPage, totalPages - 1);
-
-  const ul = document.getElementById("rulesList");
-  ul.innerHTML = "";
-  const start = rulesPage * RULES_PER_PAGE;
-  rules.slice(start, start + RULES_PER_PAGE).forEach(r => {
-    const li = document.createElement("li");
-    li.innerHTML = `<span class="rule-ko">${r.ko}</span><span class="rule-label">${r.label}:</span> ${r.text}`;
-    ul.appendChild(li);
-  });
-
-  document.getElementById("rulesPageInfo").textContent =
-    `${start + 1}–${Math.min(start + RULES_PER_PAGE, rules.length)} / ${rules.length}`;
-  document.getElementById("rulesPrev").disabled = rulesPage === 0;
-  document.getElementById("rulesNext").disabled = rulesPage >= totalPages - 1;
-}
-
-document.getElementById("rulesPrev").onclick = () => { rulesPage--; buildRules(lang); };
-document.getElementById("rulesNext").onclick = () => { rulesPage++; buildRules(lang); };
-
-// ── LIMBĂ ─────────────────────────────────────────────────────
-let lang = RKLang.get();
+// ── TRANSLATIONS ──────────────────────────────────────────────
 const T = {
   ro: {
-    title:           "Alfabet Hangul",
-    sub:             "Consoane · Vocale · Reguli de citire",
-    groupConsTitle:  "Consoane",
-    groupConsSub:    "14 de bază · 5 duble",
-    groupVowelsTitle:"Vocale",
-    groupVowelsSub:  "14 de bază · 7 compuse",
-    groupStructTitle:"Structura silabei",
-    groupStructSub:  "Blocul silabic · Exemple",
-    groupRulesTitle: "Batchim & Reguli",
-    groupRulesSub:   "Consoana finală · Pronunție",
-    consBasicTitle:  "Consoane de bază (14)",
-    consTensedTitle: "Consoane duble (5)",
-    consTensedInfo:  "Pronunțate <strong>tensionat</strong>, fără aspirație — ca și cum ai ține aerul înainte de sunet.",
-    vowelsBasicTitle:"Vocale de bază (14)",
-    vowelsCompTitle: "Vocale compuse (7)",
-    vowelsCompInfo:  "Combinații de două vocale simple, folosite frecvent în cuvinte cotidiene.",
-    syllableTitle:   "Structura silabei",
-    syllableInfo:    "Fiecare silabǎ coreeanǎ e un <strong>bloc pǎtrat</strong> format din 2–3 litere.<br>Formula: <strong>C + V</strong> sau <strong>C + V + C</strong>",
-    batchimTitle:    "Batchim — consoana finalǎ",
-    batchimInfo:     "Batchim este consoana de la baza blocului silabic. Sunetul e scurt și tǎiat — nu se deschide ca la început de silabǎ.",
-    bth1:"Litere", bth2:"Sunet", bth3:"Exemplu",
-    rulesTitle:      "Reguli de citire",
-    quizTitle:       "Quiz rapid",
-    qMode:           "Ce sunet face această literă?",
-    qCorrect:        "✅ Corect!",
-    qWrong:          ans => `❌ Greșit — răspuns corect: ${ans}`,
-    qNext:           "Următor →",
-    qRestart:        "Restart 🔄",
-    qDone:           (c, t) => `Terminat! ${c} din ${t} corecte`,
-    lpHint:          "Ține apăsat pe o literă pentru a practica scrisul",
-    writeLinkTitle:  "✍️ Practică Scrisul",
-    writeLinkSub:    "Tablă de scris · Litere, silabe, cuvinte · Recunoaștere automată",
+    title: "Alfabet Hangul", paradigmSub: "Hangul · Alfabet Viu",
+    zoneCons: "consoane", zoneTensed: "duble", zoneVowels: "vocale",
+    rulesTitle: "Fluxul Cunoașterii",
+    typeCons: "Consoană de bază", typeTensed: "Consoană dublǎ", typeVowel: "Vocalǎ",
+    typeVowelComp: "Vocalǎ compusǎ",
+    nodeExamples: "Silabe", nodeFamily: "Familie fonetică",
+    nodeBatchim: "Batchim", nodeHarmony: "Armonie vocalicǎ",
+    echoLabel: "Rezonanțǎ",
+    vHear: "Ascultǎ", vWrite: "Scrie",
+    qMode: "Ce sunet face?",
+    qCorrect: "✦ Corect!", qWrong: ans => `✕ Rǎspuns corect: ${ans}`,
+    qNext: "Următor →", qRestart: "Reîncepe ◎",
+    qDone: (c, t) => `Armonicǎ completǎ — ${c} din ${t}`,
+    writeHint: "Urmărește săgețile, apoi scrie",
+    sylTitle: "Structura silabei",
+    sylInfo: "Fiecare silabǎ coreeanǎ e un <strong>bloc pǎtrat</strong> format din 2–3 litere. Formula: <strong>C + V</strong> sau <strong>C + V + C</strong>",
+    sylLabels: { cons: "consoană", vowel: "vocalǎ", batchim: "batchim" },
   },
   en: {
-    title:           "Hangul Alphabet",
-    sub:             "Consonants · Vowels · Reading Rules",
-    groupConsTitle:  "Consonants",
-    groupConsSub:    "14 basic · 5 tensed",
-    groupVowelsTitle:"Vowels",
-    groupVowelsSub:  "14 basic · 7 compound",
-    groupStructTitle:"Syllable Structure",
-    groupStructSub:  "Syllable block · Examples",
-    groupRulesTitle: "Batchim & Rules",
-    groupRulesSub:   "Final consonant · Pronunciation",
-    consBasicTitle:  "Basic Consonants (14)",
-    consTensedTitle: "Tensed Consonants (5)",
-    consTensedInfo:  "Pronounced with <strong>extra tension</strong>, no aspiration — hold the air right before the sound.",
-    vowelsBasicTitle:"Basic Vowels (14)",
-    vowelsCompTitle: "Compound Vowels (7)",
-    vowelsCompInfo:  "Combinations of two simple vowels, common in everyday words.",
-    syllableTitle:   "Syllable Structure",
-    syllableInfo:    "Every Korean syllable is a <strong>square block</strong> made of 2–3 letters.<br>Formula: <strong>C + V</strong> or <strong>C + V + C</strong>",
-    batchimTitle:    "Batchim — Final Consonant",
-    batchimInfo:     "Batchim is the consonant at the bottom of a syllable block. The sound is short and clipped — it doesn't open like at the start of a syllable.",
-    bth1:"Letters", bth2:"Sound", bth3:"Example",
-    rulesTitle:      "Reading Rules",
-    quizTitle:       "Quick Quiz",
-    qMode:           "What sound does this letter make?",
-    qCorrect:        "✅ Correct!",
-    qWrong:          ans => `❌ Wrong — correct answer: ${ans}`,
-    qNext:           "Next →",
-    qRestart:        "Restart 🔄",
-    qDone:           (c, t) => `Done! ${c} out of ${t} correct`,
-    lpHint:          "Hold a letter to practice writing",
-    writeLinkTitle:  "✍️ Practice Writing",
-    writeLinkSub:    "Writing board · Letters, syllables, words · Auto recognition",
-  }
+    title: "Hangul Alphabet", paradigmSub: "Hangul · Living Alphabet",
+    zoneCons: "consonants", zoneTensed: "tensed", zoneVowels: "vowels",
+    rulesTitle: "Knowledge Stream",
+    typeCons: "Basic Consonant", typeTensed: "Tensed Consonant", typeVowel: "Vowel",
+    typeVowelComp: "Compound Vowel",
+    nodeExamples: "Syllables", nodeFamily: "Phonological family",
+    nodeBatchim: "Batchim", nodeHarmony: "Vowel harmony",
+    echoLabel: "Resonating",
+    vHear: "Hear", vWrite: "Write",
+    qMode: "What sound?",
+    qCorrect: "✦ Correct!", qWrong: ans => `✕ Answer: ${ans}`,
+    qNext: "Next →", qRestart: "Restart ◎",
+    qDone: (c, t) => `Attunement complete — ${c} of ${t}`,
+    writeHint: "Follow the arrows, then draw",
+    sylTitle: "Syllable Structure",
+    sylInfo: "Every Korean syllable is a <strong>square block</strong> of 2–3 letters. Formula: <strong>C + V</strong> or <strong>C + V + C</strong>",
+    sylLabels: { cons: "consonant", vowel: "vowel", batchim: "batchim" },
+  },
 };
 
-function applyLang() {
-  const t = T[lang];
-  document.getElementById("pageTitle").textContent        = t.title;
-  document.getElementById("pageSub").textContent          = t.sub;
-  document.getElementById("groupConsTitle").textContent   = t.groupConsTitle;
-  document.getElementById("groupConsSub").textContent     = t.groupConsSub;
-  document.getElementById("groupVowelsTitle").textContent = t.groupVowelsTitle;
-  document.getElementById("groupVowelsSub").textContent   = t.groupVowelsSub;
-  document.getElementById("groupStructTitle").textContent = t.groupStructTitle;
-  document.getElementById("groupStructSub").textContent   = t.groupStructSub;
-  document.getElementById("groupRulesTitle").textContent  = t.groupRulesTitle;
-  document.getElementById("groupRulesSub").textContent    = t.groupRulesSub;
-  document.getElementById("consBasicTitle").textContent   = t.consBasicTitle;
-  document.getElementById("consTensedTitle").textContent = t.consTensedTitle;
-  document.getElementById("consTensedInfo").innerHTML    = t.consTensedInfo;
-  document.getElementById("vowelsBasicTitle").textContent= t.vowelsBasicTitle;
-  document.getElementById("vowelsCompTitle").textContent  = t.vowelsCompTitle;
-  document.getElementById("vowelsCompInfo").innerHTML     = t.vowelsCompInfo;
-  document.getElementById("syllableTitle").textContent    = t.syllableTitle;
-  document.getElementById("syllableInfo").innerHTML       = t.syllableInfo;
-  document.getElementById("batchimTitle").textContent     = t.batchimTitle;
-  document.getElementById("batchimInfo").innerHTML        = t.batchimInfo;
-  document.getElementById("bth1").textContent             = t.bth1;
-  document.getElementById("bth2").textContent             = t.bth2;
-  document.getElementById("bth3").textContent             = t.bth3;
-  document.getElementById("rulesTitle").textContent       = t.rulesTitle;
-  // actualizare etichete syl-label cu atribut data-ro/data-en
-  document.querySelectorAll(".syl-label").forEach(el => {
-    el.textContent = el.dataset[lang] || el.textContent;
-  });
-  buildBatchim(lang);
-  rulesPage = 0;
-  buildRules(lang);
-  document.getElementById("quizTitle").textContent     = t.quizTitle;
-  document.getElementById("qMode").textContent         = t.qMode;
-  document.getElementById("writeLinkTitle").textContent = t.writeLinkTitle;
-  document.getElementById("writeLinkSub").textContent   = t.writeLinkSub;
-  document.getElementById("btnNext").textContent   = t.qNext;
-}
-
-RKLang.init(function(newLang){ lang = newLang; applyLang(); });
-
-// ── AUDIO ─────────────────────────────────────────────────────
-function speakKo(text) {
-  if (!("speechSynthesis" in window)) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "ko-KR";
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
-}
-
-// ── GRID ──────────────────────────────────────────────────────
-function buildGrid(data, containerId, showHint) {
-  const grid = document.getElementById(containerId);
-  data.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "lcard";
-    div.innerHTML = `<div class="lchar">${item.char}</div><div class="lrom">${item.rom}</div>`;
-
-    let timer = null, startX = 0, startY = 0, fired = false;
-
-    div.addEventListener("pointerdown", e => {
-      fired  = false;
-      startX = e.clientX; startY = e.clientY;
-      timer  = setTimeout(() => {
-        fired = true;
-        openModal(item);
-      }, 480);
-    });
-    div.addEventListener("pointermove", e => {
-      if (Math.hypot(e.clientX-startX, e.clientY-startY) > 8) {
-        clearTimeout(timer); timer = null;
-      }
-    });
-    div.addEventListener("pointerup", () => {
-      if (timer) {
-        clearTimeout(timer); timer = null;
-        if (!fired) {
-          speakKo(item.speak);
-          div.classList.add("played");
-          setTimeout(() => div.classList.remove("played"), 600);
-        }
-      }
-    });
-    div.addEventListener("pointercancel",  () => { clearTimeout(timer); timer = null; });
-    div.addEventListener("contextmenu",    e => e.preventDefault());
-
-    grid.appendChild(div);
-  });
-
-  if (showHint) {
-    const hint = document.createElement("p");
-    hint.className = "lpress-hint";
-    hint.id = "lpHint";
-    hint.textContent = T[lang]?.lpHint || "Ține apăsat pe o literă pentru a practica scrisul";
-    grid.insertAdjacentElement("afterend", hint);
-  }
-}
-
-buildGrid(CONS_BASIC,   "grid-cons-basic",   true);
-buildGrid(CONS_TENSED,  "grid-cons-tensed",  false);
-buildGrid(VOWELS_BASIC, "grid-vowels-basic", false);
-buildGrid(VOWELS_COMP,  "grid-vowels-comp",  false);
-
-// ── COLLAPSIBLE ───────────────────────────────────────────────
-document.querySelectorAll(".sec-header").forEach(hdr => {
-  hdr.addEventListener("click", () => {
-    const body  = document.getElementById(hdr.dataset.target);
-    const arrow = hdr.querySelector(".sec-arrow");
-    const isOpen = body.classList.toggle("open");
-    arrow.classList.toggle("open", isOpen);
-  });
-});
-
-document.querySelectorAll(".group-hdr").forEach(hdr => {
-  hdr.addEventListener("click", () => {
-    const body  = document.getElementById(hdr.dataset.group);
-    const arrow = hdr.querySelector(".group-arr");
-    const isOpen = body.classList.toggle("open");
-    arrow.classList.toggle("open", isOpen);
-    hdr.classList.toggle("open", isOpen);
-  });
-});
-
-// ── QUIZ ─────────────────────────────────────────────────────
-const QUIZ_POOL = [...CONS_BASIC, ...CONS_TENSED, ...VOWELS_BASIC, ...VOWELS_COMP];
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-let qDeck = [], qIdx = 0, qCorrect = 0, qTotal = 0, qStreak = 0, qAnswered = false;
-
-function initQuiz() {
-  qDeck     = shuffle(QUIZ_POOL);
-  qIdx      = 0;
-  qCorrect  = 0;
-  qTotal    = 0;
-  qStreak   = 0;
-  qAnswered = false;
-  renderQ();
-  updateScore();
-}
-
-function renderQ() {
-  const q   = qDeck[qIdx];
-  const t   = T[lang];
-
-  document.getElementById("qLetter").textContent = q.char;
-  document.getElementById("qMode").textContent   = t.qMode;
-  document.getElementById("qResult").textContent = "";
-  document.getElementById("btnNext").disabled    = true;
-  document.getElementById("btnNext").textContent = t.qNext;
-  document.getElementById("qProgress").style.width =
-    `${(qIdx / qDeck.length) * 100}%`;
-
-  const wrongs  = shuffle(QUIZ_POOL.filter(x => x.rom !== q.rom)).slice(0, 3).map(x => x.rom);
-  const options = shuffle([q.rom, ...wrongs]);
-
-  const grid = document.getElementById("qOptions");
-  grid.innerHTML = "";
-  options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.className    = "q-opt";
-    btn.textContent  = opt;
-    btn.onclick      = () => checkQ(btn, opt, q.rom, q.speak);
-    grid.appendChild(btn);
-  });
-
-  qAnswered = false;
-}
-
-function checkQ(btn, chosen, correct, speak) {
-  if (qAnswered) return;
-  qAnswered = true;
-  qTotal++;
-
-  document.querySelectorAll(".q-opt").forEach(b => b.disabled = true);
-
-  if (chosen === correct) {
-    btn.classList.add("q-correct");
-    qCorrect++;
-    qStreak++;
-    document.getElementById("qResult").textContent = T[lang].qCorrect;
-    speakKo(speak);
-  } else {
-    btn.classList.add("q-wrong");
-    document.querySelectorAll(".q-opt").forEach(b => {
-      if (b.textContent === correct) b.classList.add("q-correct");
-    });
-    qStreak = 0;
-    document.getElementById("qResult").textContent = T[lang].qWrong(correct);
-  }
-
-  updateScore();
-  document.getElementById("btnNext").disabled = false;
-}
-
-function nextQ() {
-  qIdx++;
-  if (qIdx >= qDeck.length) { showSummary(); return; }
-  renderQ();
-}
-
-function showSummary() {
-  const t = T[lang];
-  document.getElementById("qLetter").textContent = "🎉";
-  document.getElementById("qMode").textContent   = t.qDone(qCorrect, qDeck.length);
-  document.getElementById("qOptions").innerHTML  = "";
-  document.getElementById("qResult").textContent = "";
-  document.getElementById("qProgress").style.width = "100%";
-  const btn = document.getElementById("btnNext");
-  btn.textContent = t.qRestart;
-  btn.disabled    = false;
-  btn.onclick     = () => { btn.onclick = nextQ; initQuiz(); };
-}
-
-function updateScore() {
-  document.getElementById("qScoreC").textContent = `✅ ${qCorrect}`;
-  document.getElementById("qScoreT").textContent = `📝 ${qTotal}`;
-  document.getElementById("qScoreS").textContent = `🔥 ${qStreak}`;
-}
-
-function speakCurrent() {
-  const q = qDeck[qIdx];
-  if (q) speakKo(q.speak);
-}
-
-document.getElementById("qLetter").onclick = speakCurrent;
-document.getElementById("btnNext").onclick = nextQ;
-
 // ── STROKE ORDER DATA ─────────────────────────────────────────
-// Coordonate în viewBox 0 0 200 200
-// p = array de puncte [[x,y],...], n = numărul pasului
-// circle = arc pentru ㅇ
 const SD = {
   'ㄱ':[{p:[[30,48],[168,48]],n:1},{p:[[168,48],[168,168]],n:2}],
   'ㄴ':[{p:[[38,42],[38,165]],n:1},{p:[[38,165],[165,165]],n:2}],
@@ -624,97 +383,499 @@ const SD = {
   'ㅢ':[{p:[[25,100],[175,100]],n:1},{p:[[130,25],[130,175]],n:2}],
 };
 
-function renderStrokes(char) {
-  const svg  = document.getElementById("mArrows");
-  const data = SD[char];
-  if (!data || !data.length) { svg.innerHTML = ""; return; }
+// ── FIELD POSITIONS (% of viewport) ──────────────────────────
+// Pre-defined organic positions for each of the 40 characters
+const FIELD_POSITIONS = {
+  // Basic consonants — left cluster
+  'ㄱ':[8,20], 'ㄴ':[18,30], 'ㄷ':[26,18], 'ㄹ':[7,40],
+  'ㅁ':[20,50], 'ㅂ':[10,62], 'ㅅ':[24,65], 'ㅇ':[14,78],
+  'ㅈ':[28,80], 'ㅊ':[6,85], 'ㅋ':[22,90], 'ㅌ':[34,72],
+  'ㅍ':[38,55], 'ㅎ':[34,38],
+  // Tensed — top center cluster
+  'ㄲ':[42,10], 'ㄸ':[50,8], 'ㅃ':[57,12], 'ㅆ':[64,9], 'ㅉ':[54,20],
+  // Basic vowels — right cluster
+  'ㅏ':[74,22], 'ㅐ':[84,18], 'ㅑ':[92,28], 'ㅒ':[88,40],
+  'ㅓ':[72,35], 'ㅔ':[80,46], 'ㅕ':[90,55], 'ㅖ':[84,64],
+  'ㅗ':[70,55], 'ㅛ':[76,68], 'ㅜ':[88,73], 'ㅠ':[80,82],
+  'ㅡ':[70,78], 'ㅣ':[90,85],
+  // Compound vowels — bottom right
+  'ㅘ':[60,82], 'ㅙ':[68,90], 'ㅚ':[78,92], 'ㅝ':[88,92],
+  'ㅞ':[62,93], 'ㅟ':[74,95], 'ㅢ':[85,87],
+};
 
-  const AID = "wArrow";
-  let h = `<defs><marker id="${AID}" markerWidth="8" markerHeight="6"
-    refX="7" refY="3" orient="auto">
-    <polygon points="0 0,8 3,0 6" fill="#db2777" opacity=".9"/>
-  </marker></defs>`;
-
-  data.forEach(s => {
-    if (s.circle) {
-      // arc SVG pentru ㅇ/ㅎ
-      const {cx,cy,r,n} = s;
-      h += `<circle cx="${cx}" cy="${cy}" r="${r}"
-        fill="none" stroke="#db2777" stroke-width="2.5"
-        stroke-dasharray="6 3" opacity=".70"/>`;
-      // săgeată mică la vârf
-      h += `<line x1="${cx}" y1="${cy-r}" x2="${cx+1}" y2="${cy-r}"
-        stroke="#db2777" stroke-width="2" marker-end="url(#${AID})" opacity=".9"/>`;
-      // număr pas
-      h += numCircle(cx, cy - r - 14, n);
-    } else {
-      const pts = s.p;
-      const [x1,y1] = pts[0];
-      const last = pts[pts.length-1]; const [x2,y2] = last;
-      if (pts.length === 2) {
-        h += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
-          stroke="#db2777" stroke-width="2.5" stroke-linecap="round"
-          marker-end="url(#${AID})" opacity=".72"/>`;
-      } else {
-        const d = pts.map((p,i)=>`${i?'L':'M'}${p[0]},${p[1]}`).join(' ');
-        h += `<path d="${d}" fill="none"
-          stroke="#db2777" stroke-width="2.5" stroke-linecap="round"
-          stroke-linejoin="round" marker-end="url(#${AID})" opacity=".72"/>`;
-      }
-      h += numCircle(x1, y1, s.n);
-    }
-  });
-
-  svg.innerHTML = h;
-}
-
-function numCircle(cx, cy, n) {
-  return `<circle cx="${cx}" cy="${cy}" r="10" fill="#7c3aed" opacity=".88"/>
-  <text x="${cx}" y="${cy+4}" text-anchor="middle"
-    fill="white" font-size="11" font-weight="bold" font-family="system-ui">${n}</text>`;
-}
-
-// ── MODAL ─────────────────────────────────────────────────────
+// ── STATE ─────────────────────────────────────────────────────
+let lang = 'ro';
+let mode = 'explore'; // 'explore' | 'quiz'
 let currentItem = null;
+let glyphMap = {};  // char → DOM element
+let visitedChars = new Set();
+
+// Quiz state
+let qDeck = [], qIdx = 0, qCorrect = 0, qTotal = 0, qStreak = 0, qAnswered = false;
+// Write state
 let wDrawing = false, wLastX = 0, wLastY = 0;
 
-function openModal(item) {
+// ── AUDIO ─────────────────────────────────────────────────────
+function speakKo(text) {
+  if (!('speechSynthesis' in window) || !text) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR';
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+// ── BACKGROUND PARTICLE FIELD ─────────────────────────────────
+function initBg() {
+  const canvas = document.getElementById('mrsBg');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width  = window.innerWidth;
+  const H = canvas.height = window.innerHeight;
+  const pts = [];
+  for (let i = 0; i < 60; i++) {
+    pts.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.5 + 0.3,
+      a: Math.random() * 0.4 + 0.05,
+      sp: Math.random() * 0.4 + 0.1,
+      dir: Math.random() > 0.5 ? 1 : -1,
+    });
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // Determine if dark mode
+    const dark = document.body.classList.contains('dark-mode');
+    pts.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = dark
+        ? `rgba(180,170,255,${p.a * 0.9})`
+        : `rgba(120,100,80,${p.a * 0.5})`;
+      ctx.fill();
+      p.y -= p.sp * 0.3;
+      if (p.y < -2) p.y = H + 2;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ── COSMOS: BUILD GLYPH FIELD ─────────────────────────────────
+function buildCosmos() {
+  const cosmos = document.getElementById('mrsCosmos');
+  cosmos.innerHTML = '';
+  glyphMap = {};
+
+  ALL_CHARS.forEach((item, i) => {
+    const pos = FIELD_POSITIONS[item.char] || [50, 50];
+    // Add slight jitter
+    const jx = (Math.random() - 0.5) * 3;
+    const jy = (Math.random() - 0.5) * 3;
+    const xPct = pos[0] + jx;
+    const yPct = pos[1] + jy;
+
+    // Convert percentage to pixels, offset by character half-size
+    const gx = (xPct / 100) * window.innerWidth  - 18;
+    const gy = (yPct / 100) * window.innerHeight - 22;
+
+    // Unique float parameters
+    const fdur   = (4 + Math.random() * 5).toFixed(1) + 's';
+    const fdel   = '-' + (Math.random() * 6).toFixed(1) + 's';
+    const fx     = ((Math.random() - 0.5) * 22).toFixed(1) + 'px';
+    const fy     = ((Math.random() - 0.5) * 18).toFixed(1) + 'px';
+    const frot   = ((Math.random() - 0.5) * 4).toFixed(1) + 'deg';
+    const frot2  = ((Math.random() - 0.5) * 4).toFixed(1) + 'deg';
+
+    const typeClass = item.type === 'cons'   ? 'mrs-g-cons'   :
+                      item.type === 'tensed' ? 'mrs-g-tensed' : 'mrs-g-vowel';
+
+    const el = document.createElement('div');
+    el.className = `mrs-glyph ${typeClass}`;
+    el.setAttribute('data-char', item.char);
+    el.setAttribute('data-idx', i);
+    el.style.cssText = [
+      `--gx:${gx}`, `--gy:${gy}`,
+      `--fdur:${fdur}`, `--fdel:${fdel}`,
+      `--fx:${fx}`, `--fy:${fy}`,
+      `--frot:${frot}`, `--frot2:${frot2}`,
+    ].join(';');
+
+    el.innerHTML = `
+      <div class="mrs-glyph-char">${item.char}</div>
+      <div class="mrs-glyph-rom">${item.rom}</div>`;
+
+    // Entrance delay
+    el.style.animationDelay = fdel;
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.style.opacity = '1';
+      el.style.transition = 'opacity .4s';
+    }, 80 + i * 30);
+
+    el.addEventListener('click', () => openVortex(item));
+
+    cosmos.appendChild(el);
+    glyphMap[item.char] = el;
+  });
+}
+
+// ── VORTEX: FOCUS A CHARACTER ─────────────────────────────────
+function openVortex(item) {
   currentItem = item;
-  document.getElementById("mChar").textContent  = item.char;
-  document.getElementById("mRom").textContent   = item.rom;
-  document.getElementById("mGuide").textContent = item.char;
-  document.getElementById("mHint").textContent  =
-    lang === "ro"
-      ? "Urmărește săgețile, apoi scrie cu degetul sau mouse-ul"
-      : "Follow the arrows, then write with your finger or mouse";
-  renderStrokes(item.char);
-  clearBoard();
-  initBoard();
-  document.getElementById("writeModal").classList.add("open");
-  document.body.style.overflow = "hidden";
+  visitedChars.add(item.char);
+  if (glyphMap[item.char]) glyphMap[item.char].classList.add('mrs-visited');
+
+  const t = T[lang];
+  document.getElementById('mrsVGlyph').textContent = item.char;
+  document.getElementById('mrsVRom').textContent   = item.rom;
+
+  // Determine type label
+  const isComp = VOWELS_COMP.some(v => v.char === item.char);
+  const typeLabel = item.type === 'cons'   ? t.typeCons   :
+                    item.type === 'tensed' ? t.typeTensed :
+                    isComp                 ? t.typeVowelComp : t.typeVowel;
+  document.getElementById('mrsVType').textContent = typeLabel;
+
+  // Action button labels
+  document.getElementById('mrsVAudioLbl').textContent = t.vHear;
+  document.getElementById('mrsVWriteLbl').textContent = t.vWrite;
+
+  // Apply type-specific colour class (CSS handles animation colours)
+  const vortex = document.getElementById('mrsVortex');
+  vortex.className = `mrs-vortex open type-${item.type}`;
+
+  buildVortexNodes(item);
+  buildEchoPanel(item);
+  activateEcho(item);
 }
 
-function closeModal(e) {
-  if (e && e.target !== document.getElementById("writeModal")) return;
-  document.getElementById("writeModal").classList.remove("open");
-  document.body.style.overflow = "";
+function closeVortex() {
+  const vortex = document.getElementById('mrsVortex');
+  vortex.classList.remove('open');
+  // Remove type class so it doesn't linger
+  vortex.className = 'mrs-vortex';
+  deactivateEcho();
+  currentItem = null;
 }
 
+// ── VORTEX: ORBITAL KNOWLEDGE NODES ──────────────────────────
+function buildVortexNodes(item) {
+  const container = document.getElementById('mrsVNodes');
+  container.innerHTML = '';
+  const t = T[lang];
+
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const cx = W / 2, cy = H / 2;
+
+  const exs = buildExamples(item);
+  const family = ECHO_FAMILY[item.char] || [];
+
+  // Node definitions: [angle_deg, delay, content_html, label]
+  const defs = [];
+
+  // Example syllables node (top-right)
+  if (exs.length) {
+    const sylsHtml = exs.map(e => `<span class="mrs-v-node-syl">${e.syl}</span><span class="mrs-v-node-rom">${e.rom}</span>`).join('&nbsp;&nbsp;');
+    defs.push({ angle: 55, delay: 0.05, title: t.nodeExamples, body: sylsHtml });
+  }
+
+  // Family resonance node (left)
+  if (family.length) {
+    const famHtml = family.join('&emsp;');
+    defs.push({ angle: 200, delay: 0.10, title: t.nodeFamily, body: `<span style="font-size:20px;font-weight:900;">${famHtml}</span>` });
+  }
+
+  // Batchim node (bottom-left) — consonants only
+  if (item.type === 'cons' || item.type === 'tensed') {
+    const brow = BATCHIM_ROWS[lang].find(r => r.chars.includes(item.char));
+    if (brow) {
+      defs.push({ angle: 290, delay: 0.15, title: t.nodeBatchim, body: `${brow.chars} → <strong>${brow.sound}</strong><br><small>${brow.ex}</small>` });
+    }
+  }
+
+  // Vowel harmony node (bottom-right) — vowels only
+  if (item.type === 'vowel') {
+    const bright = ['ㅏ','ㅗ','ㅑ','ㅛ','ㅘ','ㅙ'];
+    const isB = bright.includes(item.char);
+    const harmony = lang === 'ro'
+      ? (isB ? 'Vocalǎ <strong>pozitivǎ</strong> — folosește terminații cu ㅏ' : 'Vocalǎ <strong>negativǎ</strong> — folosește terminații cu ㅓ')
+      : (isB ? '<strong>Bright</strong> vowel — use ㅏ verb endings' : '<strong>Dark</strong> vowel — use ㅓ verb endings');
+    defs.push({ angle: 310, delay: 0.15, title: t.nodeHarmony, body: harmony });
+  }
+
+  // Calculate orbital radius as fraction of screen
+  const radius = Math.min(W, H) * 0.32;
+
+  defs.forEach(d => {
+    const rad = d.angle * Math.PI / 180;
+    const nx  = cx + Math.cos(rad) * radius;
+    const ny  = cy + Math.sin(rad) * radius;
+    const ox  = (Math.cos(rad) * 40).toFixed(0) + 'px';
+    const oy  = (Math.sin(rad) * 40).toFixed(0) + 'px';
+
+    const node = document.createElement('div');
+    node.className = 'mrs-v-node';
+    node.style.cssText = `
+      left:${nx}px; top:${ny}px;
+      transform: translate(-50%,-50%);
+      --ndelay:${d.delay}s; --nox:${ox}; --noy:${oy};
+    `;
+    node.innerHTML = `
+      <div class="mrs-v-node-title">${d.title}</div>
+      ${d.body}`;
+    container.appendChild(node);
+  });
+}
+
+// ── VORTEX: PHONOLOGICAL ECHO PANEL ──────────────────────────
+function buildEchoPanel(item) {
+  const panel = document.getElementById('mrsVEcho');
+  const family = ECHO_FAMILY[item.char] || [];
+  if (!family.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'flex';
+  const t = T[lang];
+  panel.innerHTML = `
+    <span class="mrs-v-echo-label">${t.echoLabel}</span>
+    ${family.map(c => `<span class="mrs-v-echo-char" style="color:var(--mrs-v-rom)">${c}</span>`).join('')}`;
+}
+
+function activateEcho(item) {
+  const family = ECHO_FAMILY[item.char] || [];
+  family.forEach(c => {
+    if (glyphMap[c]) glyphMap[c].classList.add('mrs-echoing');
+  });
+}
+function deactivateEcho() {
+  document.querySelectorAll('.mrs-echoing').forEach(el => el.classList.remove('mrs-echoing'));
+}
+
+// ── QUIZ (ATTUNEMENT) ─────────────────────────────────────────
+const QUIZ_POOL = ALL_CHARS;
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function initQuiz() {
+  qDeck     = shuffle(QUIZ_POOL);
+  qIdx      = 0; qCorrect = 0; qTotal = 0; qStreak = 0;
+  qAnswered = false;
+  renderQ();
+  updateQHud();
+}
+
+function renderQ() {
+  const q = qDeck[qIdx];
+  const t = T[lang];
+  const qChar = document.getElementById('mrsQChar');
+  qChar.textContent = q.char;
+
+  // Color the question character
+  if (q.type === 'cons')   qChar.style.color = 'var(--mrs-cons)';
+  else if (q.type === 'tensed') qChar.style.color = 'var(--mrs-tensed)';
+  else                     qChar.style.color = 'var(--mrs-vowel)';
+
+  document.getElementById('mrsQPrompt').textContent   = t.qMode;
+  document.getElementById('mrsQFeedback').textContent = '';
+  document.getElementById('mrsQFeedback').className   = 'mrs-q-feedback';
+  document.getElementById('mrsQFill').style.width = `${(qIdx / qDeck.length) * 100}%`;
+
+  const wrongs  = shuffle(QUIZ_POOL.filter(x => x.rom !== q.rom)).slice(0, 3).map(x => x.rom);
+  const options = shuffle([q.rom, ...wrongs]);
+
+  const grid = document.getElementById('mrsQOpts');
+  grid.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className   = 'mrs-q-opt';
+    btn.textContent = opt;
+    btn.onclick     = () => checkQ(btn, opt, q.rom, q.speak);
+    grid.appendChild(btn);
+  });
+
+  qAnswered = false;
+}
+
+function checkQ(btn, chosen, correct, speak) {
+  if (qAnswered) return;
+  qAnswered = true;
+  qTotal++;
+  document.querySelectorAll('.mrs-q-opt').forEach(b => b.disabled = true);
+  const fb = document.getElementById('mrsQFeedback');
+  const t  = T[lang];
+
+  if (chosen === correct) {
+    btn.classList.add('q-ok');
+    qCorrect++; qStreak++;
+    fb.textContent = t.qCorrect;
+    fb.className = 'mrs-q-feedback ok';
+    speakKo(speak);
+    // Ripple effect
+    const center = document.querySelector('.mrs-q-center');
+    center.classList.add('ripple-ok');
+    setTimeout(() => center.classList.remove('ripple-ok'), 700);
+  } else {
+    btn.classList.add('q-err');
+    qStreak = 0;
+    document.querySelectorAll('.mrs-q-opt').forEach(b => {
+      if (b.textContent === correct) b.classList.add('q-ok');
+    });
+    fb.textContent = t.qWrong(correct);
+    fb.className = 'mrs-q-feedback err';
+  }
+
+  updateQHud();
+
+  setTimeout(() => {
+    qIdx++;
+    if (qIdx >= qDeck.length) { showQSummary(); return; }
+    renderQ();
+  }, 1100);
+}
+
+function showQSummary() {
+  const t = T[lang];
+  const qChar = document.getElementById('mrsQChar');
+  qChar.textContent = '◎';
+  qChar.style.color = 'var(--mrs-q-fill)';
+  document.getElementById('mrsQPrompt').textContent   = t.qDone(qCorrect, qDeck.length);
+  document.getElementById('mrsQFeedback').textContent = '';
+  document.getElementById('mrsQOpts').innerHTML       = '';
+  document.getElementById('mrsQFill').style.width     = '100%';
+
+  const restartBtn = document.createElement('button');
+  restartBtn.className   = 'mrs-q-opt';
+  restartBtn.textContent = t.qRestart;
+  restartBtn.style.gridColumn = '1 / -1';
+  restartBtn.style.marginTop  = '8px';
+  restartBtn.onclick = initQuiz;
+  document.getElementById('mrsQOpts').appendChild(restartBtn);
+}
+
+function updateQHud() {
+  document.getElementById('mrsQOk').textContent     = `✦ ${qCorrect}`;
+  document.getElementById('mrsQStreak').textContent = `⚡ ${qStreak}`;
+}
+
+// ── RULES STREAM ──────────────────────────────────────────────
+function buildRules(filter) {
+  const t     = T[lang];
+  const rules = RULES[lang];
+  const list  = document.getElementById('mrsRulesList');
+  const q     = (filter || '').toLowerCase();
+  list.innerHTML = '';
+  rules.forEach(r => {
+    if (q && !r.ko.toLowerCase().includes(q) && !r.label.toLowerCase().includes(q) && !r.text.toLowerCase().includes(q)) return;
+    const item = document.createElement('div');
+    item.className = 'mrs-rule-item';
+    item.innerHTML = `
+      <span class="mrs-rule-ko">${r.ko}</span>
+      <span class="mrs-rule-label">${r.label}</span>
+      <div class="mrs-rule-text">${r.text}</div>`;
+    list.appendChild(item);
+  });
+  document.getElementById('mrsRulesTitle').textContent = t.rulesTitle;
+}
+
+// ── SYLLABLE STRUCTURE PANEL ──────────────────────────────────
+function buildSylPanel() {
+  const t       = T[lang];
+  const content = document.getElementById('mrsSylContent');
+  const labs    = t.sylLabels;
+
+  const rows = [
+    { parts: ['ㄱ', 'ㅗ'], labels: [labs.cons, labs.vowel], result: '고', rom:'go' },
+    { parts: ['ㅎ', 'ㅏ', 'ㄴ'], labels: [labs.cons, labs.vowel, labs.batchim], result: '한', rom:'han' },
+    { parts: ['ㄱ', 'ㅜ', 'ㄱ'], labels: [labs.cons, labs.vowel, labs.batchim], result: '국', rom:'guk' },
+  ];
+
+  content.innerHTML = `<div class="mrs-syl-title">${t.sylTitle}</div>
+    <div class="mrs-syl-info">${t.sylInfo}</div>`;
+
+  rows.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'mrs-syl-row';
+    row.parts.forEach((p, i) => {
+      if (i > 0) { const op = document.createElement('div'); op.className = 'mrs-syl-op'; op.textContent = '+'; rowEl.appendChild(op); }
+      const block = document.createElement('div');
+      block.innerHTML = `<div class="mrs-syl-block">${p}</div><div class="mrs-syl-block-label">${row.labels[i]}</div>`;
+      rowEl.appendChild(block);
+    });
+    const arrow = document.createElement('div');
+    arrow.className = 'mrs-syl-op'; arrow.textContent = '→';
+    rowEl.appendChild(arrow);
+    const res = document.createElement('div');
+    res.innerHTML = `<div class="mrs-syl-block mrs-syl-result">${row.result}</div><div class="mrs-syl-block-label">${row.rom}</div>`;
+    rowEl.appendChild(res);
+    content.appendChild(rowEl);
+  });
+}
+
+// ── WRITING RITUAL ────────────────────────────────────────────
+function renderStrokes(char) {
+  const svg    = document.getElementById('mWriteArrows');
+  const data   = SD[char];
+  if (!data || !data.length) { svg.innerHTML = ''; return; }
+  // Resolve colors without CSS variables (SVG attributes don't reliably support them)
+  const isDark = document.body.classList.contains('dark-mode');
+  const stroke = isDark ? '#F472B6' : '#DB2777';
+  const badge  = isDark ? '#818CF8' : '#3730A3';
+  const AID    = 'wArrow2';
+  let h = `<defs><marker id="${AID}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="${stroke}" opacity=".9"/>
+  </marker></defs>`;
+  data.forEach(s => {
+    if (s.circle) {
+      h += `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}"
+        fill="none" stroke="${stroke}" stroke-width="2.5"
+        stroke-dasharray="6 3" opacity=".70"/>`;
+      h += `<line x1="${s.cx}" y1="${s.cy-s.r}" x2="${s.cx+1}" y2="${s.cy-s.r}"
+        stroke="${stroke}" stroke-width="2" marker-end="url(#${AID})" opacity=".9"/>`;
+      h += numCircle(s.cx, s.cy - s.r - 14, s.n, badge);
+    } else {
+      const [x1,y1] = s.p[0], [x2,y2] = s.p[s.p.length-1];
+      if (s.p.length === 2) {
+        h += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+          stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"
+          marker-end="url(#${AID})" opacity=".72"/>`;
+      } else {
+        const d = s.p.map((p,i) => `${i?'L':'M'}${p[0]},${p[1]}`).join(' ');
+        h += `<path d="${d}" fill="none" stroke="${stroke}"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+          marker-end="url(#${AID})" opacity=".72"/>`;
+      }
+      h += numCircle(x1, y1, s.n, badge);
+    }
+  });
+  svg.innerHTML = h;
+}
+function numCircle(cx, cy, n, badge) {
+  const col = badge || '#3730A3';
+  return `<circle cx="${cx}" cy="${cy}" r="10" fill="${col}" opacity=".88"/>
+  <text x="${cx}" y="${cy+4}" text-anchor="middle" fill="white" font-size="11"
+    font-weight="bold" font-family="sans-serif">${n}</text>`;
+}
 function clearBoard() {
-  const c = document.getElementById("wCanvas");
-  if (c) c.getContext("2d").clearRect(0, 0, c.width, c.height);
+  const c = document.getElementById('wCanvas');
+  if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
 }
-
 function initBoard() {
-  const canvas = document.getElementById("wCanvas");
-  const ctx    = canvas.getContext("2d");
-  ctx.strokeStyle = "#f472b6";
+  const canvas    = document.getElementById('wCanvas');
+  const ctx       = canvas.getContext('2d');
+  // Canvas cannot resolve CSS custom properties — use computed fallback
+  const drawColor = document.body.classList.contains('dark-mode') ? '#F472B6' : '#DB2777';
+  ctx.strokeStyle = drawColor;
   ctx.lineWidth   = 9;
-  ctx.lineCap     = "round";
-  ctx.lineJoin    = "round";
-
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
   function pos(e) {
-    const r = canvas.getBoundingClientRect();
+    const r  = canvas.getBoundingClientRect();
     const sx = canvas.width / r.width, sy = canvas.height / r.height;
     return [(e.clientX - r.left)*sx, (e.clientY - r.top)*sy];
   }
@@ -722,22 +883,169 @@ function initBoard() {
     canvas.setPointerCapture(e.pointerId);
     wDrawing = true;
     [wLastX, wLastY] = pos(e);
-    ctx.beginPath();
-    ctx.arc(wLastX, wLastY, 4.5, 0, Math.PI*2);
-    ctx.fillStyle = "#f472b6";
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(wLastX, wLastY, 4.5, 0, Math.PI*2);
+    ctx.fillStyle = drawColor; ctx.fill();
   };
   canvas.onpointermove = e => {
     if (!wDrawing) return;
-    const [x, y] = pos(e);
-    ctx.beginPath();
-    ctx.moveTo(wLastX, wLastY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
+    const [x,y] = pos(e);
+    ctx.beginPath(); ctx.moveTo(wLastX, wLastY); ctx.lineTo(x,y); ctx.stroke();
     [wLastX, wLastY] = [x, y];
   };
   canvas.onpointerup = canvas.onpointercancel = () => { wDrawing = false; };
 }
+function openWriting(item) {
+  currentItem = item;
+  document.getElementById('mrsWriteChar').textContent = item.char;
+  document.getElementById('mrsWriteRom').textContent  = item.rom;
+  document.getElementById('mrsWriteGuide').textContent= item.char;
+  document.getElementById('mrsWriteHint').textContent = T[lang].writeHint;
+  renderStrokes(item.char);
+  clearBoard();
+  initBoard();
+  document.getElementById('mrsWriteOverlay').classList.add('open');
+}
 
-applyLang();
-initQuiz();
+// ── LANGUAGE ──────────────────────────────────────────────────
+function applyLang() {
+  const t = T[lang];
+  document.getElementById('mrsBrandSub').textContent    = t.paradigmSub;
+  document.getElementById('mrsZoneCons').textContent    = t.zoneCons;
+  document.getElementById('mrsZoneTensed').textContent  = t.zoneTensed;
+  document.getElementById('mrsZoneVowels').textContent  = t.zoneVowels;
+  document.getElementById('mrsLangBtn').textContent     = lang.toUpperCase();
+  if (document.getElementById('mrsRules').classList.contains('open')) buildRules();
+  if (document.getElementById('mrsSylPanel').classList.contains('open')) buildSylPanel();
+  if (document.getElementById('mrsQuiz').classList.contains('open')) {
+    document.getElementById('mrsQPrompt').textContent = t.qMode;
+  }
+  if (currentItem) {
+    buildVortexNodes(currentItem);
+    buildEchoPanel(currentItem);
+    document.getElementById('mrsVAudioLbl').textContent = t.vHear;
+    document.getElementById('mrsVWriteLbl').textContent = t.vWrite;
+  }
+}
+
+// ── MODE CONTROLS ─────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  document.getElementById('mrsExploreBtn').classList.toggle('mrs-ctrl-active', m === 'explore');
+  document.getElementById('mrsQuizBtn').classList.toggle('mrs-ctrl-active',    m === 'quiz');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+function init() {
+  initBg();
+  buildCosmos();
+  buildRules();
+  buildSylPanel();
+
+  // Vortex events
+  document.getElementById('mrsVClose').onclick  = closeVortex;
+  document.getElementById('mrsVAudio').onclick  = () => currentItem && speakKo(currentItem.speak);
+  document.getElementById('mrsVWrite').onclick  = () => {
+    if (!currentItem) return;
+    closeVortex();
+    openWriting(currentItem);
+  };
+
+  // Backdrop close
+  document.getElementById('mrsVortex').addEventListener('click', e => {
+    if (e.target === document.getElementById('mrsVortex')) closeVortex();
+  });
+
+  // Quiz events
+  document.getElementById('mrsQuizBtn').onclick = () => {
+    document.getElementById('mrsQuiz').classList.add('open');
+    setMode('quiz');
+    initQuiz();
+  };
+  document.getElementById('mrsQExit').onclick = () => {
+    document.getElementById('mrsQuiz').classList.remove('open');
+    setMode('explore');
+  };
+
+  // Explore mode
+  document.getElementById('mrsExploreBtn').onclick = () => {
+    document.getElementById('mrsQuiz').classList.remove('open');
+    setMode('explore');
+  };
+
+  // Rules stream
+  document.getElementById('mrsRulesBtn').onclick = () => {
+    document.getElementById('mrsRules').classList.add('open');
+  };
+  document.getElementById('mrsRulesClose').onclick = () => {
+    document.getElementById('mrsRules').classList.remove('open');
+  };
+  document.getElementById('mrsRulesSearch').oninput = e => buildRules(e.target.value);
+
+  // Syllable panel
+  document.getElementById('mrsSylBtn').onclick = () => {
+    buildSylPanel();
+    document.getElementById('mrsSylPanel').classList.add('open');
+  };
+  document.getElementById('mrsSylClose').onclick = () => {
+    document.getElementById('mrsSylPanel').classList.remove('open');
+  };
+
+  // Writing close
+  document.getElementById('mrsWriteClose').onclick = () => {
+    document.getElementById('mrsWriteOverlay').classList.remove('open');
+  };
+  document.getElementById('mrsWriteOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('mrsWriteOverlay')) {
+      document.getElementById('mrsWriteOverlay').classList.remove('open');
+    }
+  });
+
+  // Language toggle
+  document.getElementById('mrsLangBtn').onclick = () => {
+    lang = (lang === 'ro') ? 'en' : 'ro';
+    try { RKLang && typeof RKLang.set === 'function' && RKLang.set(lang); } catch(e) {}
+    applyLang();
+  };
+
+  // Dark/light toggle
+  document.getElementById('mrsThemeBtn').onclick = () => {
+    document.body.classList.toggle('dark-mode');
+    try {
+      const isDark = document.body.classList.contains('dark-mode');
+      RKStorage && typeof RKStorage.set === 'function' && RKStorage.set('RK_DARK', isDark ? '1' : '0');
+    } catch(e) {}
+  };
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeVortex();
+      document.getElementById('mrsWriteOverlay').classList.remove('open');
+      document.getElementById('mrsSylPanel').classList.remove('open');
+      document.getElementById('mrsRules').classList.remove('open');
+    }
+  });
+
+  // Initialize from existing lang-picker if available
+  try {
+    if (typeof RKLang !== 'undefined') {
+      lang = RKLang.get() || 'ro';
+      RKLang.init(newLang => { lang = newLang; applyLang(); });
+    }
+  } catch(e) {}
+
+  applyLang();
+
+  // Resize handler
+  window.addEventListener('resize', () => {
+    buildCosmos();
+    initBg();
+  });
+}
+
+// Start when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
