@@ -574,10 +574,11 @@ let idx   = 0;
 let score = {};   // idx → correct count
 let recog = null;
 let speaking = false;
-let mrec  = null;   // MediaRecorder instance
-let mchunks = [];   // recorded audio chunks
-let recUrl  = null; // blob URL of last recording
-let recAudio= null; // Audio element for playback
+let mrec    = null;
+let mchunks = [];
+let recUrl  = null;
+let recAudio= null;
+let sessId  = 0;    // session counter — invalidates stale setTimeout-uri
 
 // ── SATELLITE POSITIONS (angle°, distance px) ──────────────
 const SATS = {
@@ -797,9 +798,10 @@ async function startMic(){
 
   clearRec();
   speaking=true;
+  const mySession=++sessId; // ID unic pentru această sesiune
   setUiListening(true);
 
-  // 1. SpeechRecognition pornește primul — obține microfonul fără conflicte
+  // 1. SpeechRecognition pornește primul
   recog=new SR();
   recog.lang='ko-KR';
   recog.continuous=false;
@@ -808,18 +810,18 @@ async function startMic(){
   recog.onend=()=>stopUi();
   recog.onerror=e=>{
     finishRec();stopUi();
-    // 'no-speech' și 'aborted' sunt non-erori — nu afișa toast
     if(e.error!=='no-speech'&&e.error!=='aborted'){
       toast((lang==='ro'?'Eroare: ':'Error: ')+e.error);
     }
   };
   try{recog.start();}catch(e){stopUi();return;}
 
-  // 2. MediaRecorder pornește după (~150ms) — Chrome permite al doilea consumer
+  // 2. MediaRecorder pornește după 150ms — verifică sessId, nu speaking
   setTimeout(async()=>{
-    if(!speaking) return; // recunoașterea s-a terminat deja
+    if(sessId!==mySession) return; // sesiune nouă a început, abandonăm
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      if(sessId!==mySession){stream.getTracks().forEach(t=>t.stop());return;}
       const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg']
         .find(t=>MediaRecorder.isTypeSupported(t))||'';
       mrec=new MediaRecorder(stream,mime?{mimeType:mime}:{});
@@ -832,7 +834,7 @@ async function startMic(){
         }
       };
       mrec.start(200);
-    }catch(e){mrec=null;} // înregistrare indisponibilă, recunoașterea continuă
+    }catch(e){mrec=null;}
   },150);
 }
 
@@ -845,6 +847,7 @@ function stopMic(){
 
 function stopUi(){
   speaking=false;
+  sessId++;  // invalidează orice setTimeout pending al sesiunii curente
   document.getElementById('bS').classList.remove('on');
   document.getElementById('bS').textContent='🎙';
   document.getElementById('wf').classList.remove('on');
