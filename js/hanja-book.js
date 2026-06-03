@@ -1001,163 +1001,402 @@ const DATA = [
   }
 ];
 
-let idx = 0;
-let learned = JSON.parse(localStorage.getItem("RK_HJ_LEARNED") || "[]");
-let lang = RKLang.get();
+/* ═══════════════════════════════════════════════════════════
+   COGNITIVE MORPHOGENESIS INTERFACE  —  CMI v1.0
+   Adaptive Biomorphic Knowledge Field
+   ═══════════════════════════════════════════════════════════ */
 
-const UI = {
-  ro:{ learned:"Învățat", learnedDone:"✓ Învățat", learnedLabel:"învățate" },
-  en:{ learned:"Learned", learnedDone:"✓ Learned", learnedLabel:"learned" }
+var idx         = 0;
+var lang        = localStorage.getItem('RK_LANG') || 'ro';
+var learned     = JSON.parse(localStorage.getItem('RK_HJ_LEARNED') || '[]');
+var bloomActive = -1;
+
+var ORB_COLORS_DARK  = ['#9B6DFF','#FF6B8A','#4DFFB8','#FFB347'];
+var ORB_COLORS_LIGHT = ['#5B21B6','#B91C1C','#065F46','#92400E'];
+var ORB_ANGLES       = [-50, 50, 130, -130];
+var ORB_CSS_VARS     = ['--c0','--c1','--c2','--c3'];
+
+var UI_TEXT = {
+  ro: { learn:'Înregistrează', learned:'✓ \xCEnvățat', etym:'Etimologie' },
+  en: { learn:'Mark Learned',  learned:'✓ Learned',              etym:'Etymology'  }
 };
 
-function renderPage(animate){
-  const page = document.getElementById("page");
-  const item = DATA[idx];
-  const isLearned = learned.includes(idx);
-  const trackBase = idx * 5 + 1;
+/* ── CANVAS PARTICLE FIELD ─────────────────────────────── */
+var _canvas, _ctx, _particles = [], _raf;
 
-  const html = `
-    <div class="hanja-area" id="area-char" onclick="speakChar()">
-      <div class="hanja-char">${item.hanja}</div>
-      <div class="hanja-reading">${item.reading[lang]}</div>
-      <div class="hanja-meaning">${item.meaning[lang]}</div>
-    </div>
-    <hr class="divider">
-    ${item.etymology ? `
-    <button class="etym-toggle" id="etym-btn" onclick="toggleEtym()">
-      📜 ${lang==='ro'?'Etimologie':'Etymology'} <i class="etym-arrow">▾</i>
-    </button>
-    <div class="etymology-box" id="etym-box">
-      <p class="etym-text">${item.etymology[lang]}</p>
-    </div>` : ''}
-    <div class="words">
-      ${item.words.map((w, wi) => `
-        <div class="word-block">
-          <div class="word-row" id="row-w${wi}" onclick="speakWord(${wi})">
-            <div class="word-body">
-              <div class="word-top">
-                <span class="word-ko">${w.ko}</span>
-                <span class="word-sep">—</span>
-                <span class="word-tr">${w[lang]}</span>
-              </div>
-            </div>
-          </div>
-          ${w.sentence ? `<div class="sentence-row" id="sent-w${wi}" onclick="speakSentence(${wi})">
-            <div class="sentence-ko">${w.sentence}</div>
-            ${w['sentence_'+lang] ? `<div class="sentence-tr">${w['sentence_'+lang]}</div>` : ''}
-          </div>` : ''}
-        </div>`).join("")}
-    </div>
-    <div class="page-footer">
-      <span class="page-num">${idx + 1} / ${DATA.length}</span>
-      <span class="learned-badge ${isLearned ? "visible" : ""}">✓ ${UI[lang].learnedDone}</span>
-    </div>`;
+function initCanvas() {
+  _canvas = document.getElementById('fieldCanvas');
+  _ctx    = _canvas.getContext('2d');
+  _resizeCanvas();
+  window.addEventListener('resize', _resizeCanvas);
+  _spawnParticles();
+  _animateCanvas();
+}
 
-  if(animate){
-    page.classList.add("flip-out");
-    page.addEventListener("animationend", function handler(){
-      page.removeEventListener("animationend", handler);
-      page.innerHTML = html;
-      page.classList.remove("flip-out");
-      page.classList.add("flip-in");
-      page.addEventListener("animationend", function h2(){
-        page.removeEventListener("animationend", h2);
-        page.classList.remove("flip-in");
-      });
+function _resizeCanvas() {
+  _canvas.width  = window.innerWidth;
+  _canvas.height = window.innerHeight;
+}
+
+function _spawnParticles() {
+  _particles = [];
+  for (var i = 0; i < 28; i++) {
+    _particles.push({
+      x:  Math.random() * window.innerWidth,
+      y:  Math.random() * window.innerHeight,
+      vx: (Math.random() - .5) * .35,
+      vy: (Math.random() - .5) * .35,
+      r:  .8 + Math.random() * 1.4,
+      a:  .08 + Math.random() * .28
     });
-  } else {
-    page.innerHTML = html;
+  }
+}
+
+function _animateCanvas() {
+  _raf = requestAnimationFrame(_animateCanvas);
+  _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
+
+  var isLight = document.body.classList.contains('light-mode');
+  var rgb     = isLight ? '15,10,30' : '91,255,245';
+  var maxD    = 155;
+
+  for (var i = 0; i < _particles.length; i++) {
+    var p = _particles[i];
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = _canvas.width;
+    if (p.x > _canvas.width)  p.x = 0;
+    if (p.y < 0) p.y = _canvas.height;
+    if (p.y > _canvas.height) p.y = 0;
+    _ctx.beginPath();
+    _ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    _ctx.fillStyle = 'rgba(' + rgb + ',' + (p.a * .55) + ')';
+    _ctx.fill();
   }
 
-  document.getElementById("btnPrev").disabled = idx === 0;
-  document.getElementById("btnNext").disabled = idx === DATA.length - 1;
-  const btn = document.getElementById("btnLearned");
-  btn.textContent = isLearned ? UI[lang].learnedDone : "✔ " + UI[lang].learned;
-  btn.classList.toggle("done", isLearned);
-  updateProgress();
+  for (var i = 0; i < _particles.length - 1; i++) {
+    for (var j = i + 1; j < _particles.length; j++) {
+      var dx = _particles[i].x - _particles[j].x;
+      var dy = _particles[i].y - _particles[j].y;
+      var d  = Math.sqrt(dx*dx + dy*dy);
+      if (d < maxD) {
+        var a = (1 - d / maxD) * (isLight ? .032 : .062);
+        _ctx.beginPath();
+        _ctx.moveTo(_particles[i].x, _particles[i].y);
+        _ctx.lineTo(_particles[j].x, _particles[j].y);
+        _ctx.strokeStyle = 'rgba(' + rgb + ',' + a + ')';
+        _ctx.lineWidth   = .5;
+        _ctx.stroke();
+      }
+    }
+  }
 }
 
-/* ── AUDIO ───────────────────────────────── */
-let _activeBadge = null;
-let _activeRow   = null;
+/* ── ORBITAL POSITIONING ───────────────────────────────── */
+function orbRadius() {
+  return Math.min(175, Math.max(110, window.innerWidth * 0.36));
+}
 
-function _stopSpeech(){
+function positionOrbitals() {
+  var r = orbRadius();
+  for (var i = 0; i < ORB_ANGLES.length; i++) {
+    var rad   = ORB_ANGLES[i] * Math.PI / 180;
+    var x     = Math.round(Math.cos(rad) * r);
+    var y     = Math.round(Math.sin(rad) * r);
+    var shell = document.getElementById('osh' + i);
+    if (shell) shell.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+  }
+}
+
+/* ── RESONANCE SVG LINES ───────────────────────────────── */
+var _resSVG = null;
+
+function _getResSVG() {
+  if (!_resSVG) _resSVG = document.getElementById('resSVG');
+  return _resSVG;
+}
+
+function clearResonance() {
+  var svg = _getResSVG();
+  while (svg && svg.firstChild) svg.removeChild(svg.firstChild);
+}
+
+function drawResonance(wi) {
+  var node = document.getElementById('orb' + wi);
+  var nuc  = document.getElementById('nucCore');
+  if (!node || !nuc) return;
+
+  var nr = nuc.getBoundingClientRect();
+  var or = node.getBoundingClientRect();
+  var x1 = nr.left + nr.width  / 2;
+  var y1 = nr.top  + nr.height / 2;
+  var x2 = or.left + or.width  / 2;
+  var y2 = or.top  + or.height / 2;
+
+  var isLight = document.body.classList.contains('light-mode');
+  var colors  = isLight ? ORB_COLORS_LIGHT : ORB_COLORS_DARK;
+
+  var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', x1);
+  line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2);
+  line.setAttribute('y2', y2);
+  line.setAttribute('stroke', colors[wi]);
+  line.setAttribute('stroke-opacity', '0.22');
+  line.setAttribute('stroke-width',   '1');
+  _getResSVG().appendChild(line);
+}
+
+/* ── RENDER ────────────────────────────────────────────── */
+function render(animate) {
+  var item      = DATA[idx];
+  var isLearned = learned.indexOf(idx) >= 0;
+
+  /* Nucleus */
+  document.getElementById('hanjaGlyph').textContent   = item.hanja;
+  document.getElementById('glyphReading').textContent = item.reading[lang];
+  document.getElementById('glyphMeaning').textContent = item.meaning[lang];
+
+  var nuc = document.getElementById('nucleus');
+  nuc.classList.toggle('learned', isLearned);
+
+  if (animate) {
+    nuc.classList.add('entering');
+    setTimeout(function() { nuc.classList.remove('entering'); }, 600);
+  }
+
+  /* Orbital nodes */
+  for (var i = 0; i < ORB_CSS_VARS.length; i++) {
+    (function(i) {
+      var shell = document.getElementById('osh' + i);
+      var node  = document.getElementById('orb' + i);
+      var w     = item.words[i];
+
+      if (!w) { if (shell) shell.style.opacity = '0'; return; }
+      if (shell) shell.style.opacity = '1';
+
+      node.querySelector('.orbKo').textContent = w.ko;
+      node.querySelector('.orbTr').textContent = w[lang];
+      node.style.setProperty('--node-color', 'var(' + ORB_CSS_VARS[i] + ')');
+      node.classList.remove('lit');
+
+      if (animate && shell) {
+        shell.classList.add('entering');
+        setTimeout(function() { shell.classList.remove('entering'); }, 600 + i * 90);
+      }
+    })(i);
+  }
+
+  /* Close open panels */
+  _closeBloom();
+  _closeEtym();
+
+  /* Etym button */
+  var eb = document.getElementById('etymBtn');
+  eb.style.visibility = item.etymology ? 'visible' : 'hidden';
+  document.getElementById('etymLabel').textContent = UI_TEXT[lang].etym;
+
+  /* Learn button */
+  var lb = document.getElementById('learnBtn');
+  lb.classList.toggle('done', isLearned);
+  document.getElementById('learnText').textContent =
+    isLearned ? UI_TEXT[lang].learned : UI_TEXT[lang].learn;
+
+  /* Nav */
+  document.getElementById('navPrev').disabled = (idx === 0);
+  document.getElementById('navNext').disabled = (idx === DATA.length - 1);
+  document.getElementById('posIdx').textContent   = idx + 1;
+  document.getElementById('posTotal').textContent = DATA.length;
+
+  /* Progress bar */
+  var pct = learned.length / DATA.length * 100;
+  document.getElementById('kFill').style.width    = pct + '%';
+  document.getElementById('kLearned').textContent = learned.length;
+  document.getElementById('kTotal').textContent   = DATA.length;
+}
+
+/* ── WORD BLOOM ────────────────────────────────────────── */
+function _openBloom(wi) {
+  var w = DATA[idx].words[wi];
+  if (!w) return;
+  bloomActive = wi;
+
+  var isLight = document.body.classList.contains('light-mode');
+  var colors  = isLight ? ORB_COLORS_LIGHT : ORB_COLORS_DARK;
+  var c       = colors[wi];
+
+  var panel = document.getElementById('wordBloom');
+  panel.style.setProperty('--bloom-c', c);
+  document.getElementById('bloomWord').textContent    = w.ko;
+  document.getElementById('bloomMeaning').textContent = w[lang];
+  document.getElementById('bloomKo').textContent      = w.sentence || '';
+  document.getElementById('bloomTr').textContent      = w['sentence_' + lang] || '';
+  panel.classList.remove('hidden');
+
+  var nodes = document.querySelectorAll('.orbNode');
+  for (var n = 0; n < nodes.length; n++) nodes[n].classList.remove('lit');
+  document.getElementById('orb' + wi).classList.add('lit');
+
+  clearResonance();
+  setTimeout(function() { drawResonance(wi); }, 55);
+}
+
+function _closeBloom() {
+  bloomActive = -1;
+  document.getElementById('wordBloom').classList.add('hidden');
+  var nodes = document.querySelectorAll('.orbNode');
+  for (var n = 0; n < nodes.length; n++) nodes[n].classList.remove('lit');
+  clearResonance();
+}
+
+/* ── ETYMOLOGY ─────────────────────────────────────────── */
+function _openEtym() {
+  var item = DATA[idx];
+  if (!item.etymology) return;
+  document.getElementById('etymTitle').textContent = item.hanja + '  \xB7  ' + UI_TEXT[lang].etym;
+  document.getElementById('etymBody').textContent  = item.etymology[lang];
+  document.getElementById('etymPanel').classList.remove('hidden');
+}
+
+function _closeEtym() {
+  document.getElementById('etymPanel').classList.add('hidden');
+}
+
+/* ── AUDIO ─────────────────────────────────────────────── */
+function _speak(text) {
   window.speechSynthesis.cancel();
-  if(_activeBadge){ _activeBadge.classList.remove("playing"); _activeBadge = null; }
-  if(_activeRow){   _activeRow.classList.remove("playing");   _activeRow   = null; }
+  var u  = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR';
+  u.rate = 0.85;
+  window.speechSynthesis.speak(u);
 }
 
-function _play(text, badgeId, rowId){
-  _stopSpeech();
-  const badge = document.getElementById(badgeId);
-  const row   = rowId ? document.getElementById(rowId) : null;
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = "ko-KR";
-  utter.rate = 0.85;
-  if(badge){ badge.classList.add("playing"); _activeBadge = badge; }
-  if(row){   row.classList.add("playing");   _activeRow   = row;   }
-  utter.onend = () => {
-    if(badge) badge.classList.remove("playing");
-    if(row)   row.classList.remove("playing");
-    if(_activeBadge === badge) _activeBadge = null;
-    if(_activeRow   === row)   _activeRow   = null;
-  };
-  window.speechSynthesis.speak(utter);
+/* ── THEME ─────────────────────────────────────────────── */
+function _applyTheme() {
+  var theme = localStorage.getItem('RK_THEME') || 'dark';
+  document.body.classList.toggle('light-mode', theme === 'light');
+  var mc = document.getElementById('themeColorMeta');
+  if (mc) mc.content = (theme === 'light') ? '#F0EAD6' : '#030308';
 }
 
-function toggleEtym(){
-  const btn = document.getElementById("etym-btn");
-  const box = document.getElementById("etym-box");
-  if(!btn || !box) return;
-  btn.classList.toggle("open");
-  box.classList.toggle("open");
+function _toggleTheme() {
+  var wasLight = document.body.classList.contains('light-mode');
+  var next     = wasLight ? 'dark' : 'light';
+  localStorage.setItem('RK_THEME', next);
+  _applyTheme();
+  if (bloomActive >= 0) {
+    clearResonance();
+    setTimeout(function() { drawResonance(bloomActive); }, 35);
+  }
 }
 
-function speakChar(){
-  const item = DATA[idx];
-  const reading = item.ko_reading || item.reading[lang].split(" ")[0];
-  _play(reading, null, "area-char");
-}
-
-function speakWord(wi){
-  const w = DATA[idx].words[wi];
-  _play(w.ko, null, "row-w" + wi);
-}
-
-function speakSentence(wi){
-  const w = DATA[idx].words[wi];
-  if(w.sentence) _play(w.sentence, null, "sent-w" + wi);
-}
-
-function navigate(dir){
-  _stopSpeech();
-  const next = idx + dir;
-  if(next < 0 || next >= DATA.length) return;
-  idx = next;
-  renderPage(true);
-}
-
-function markLearned(){
-  if(!learned.includes(idx)) learned.push(idx);
-  localStorage.setItem("RK_HJ_LEARNED", JSON.stringify(learned));
-  renderPage(false);
-}
-
-function updateProgress(){
-  const pct = Math.round(learned.length / DATA.length * 100);
-  document.getElementById("progFill").style.width = pct + "%";
-  document.getElementById("learnedCount").textContent = learned.length;
-  document.getElementById("totalCount").textContent = DATA.length;
-  document.getElementById("learnedLabel").textContent = UI[lang].learnedLabel;
-}
-
-function setLang(l){
+/* ── LANGUAGE ──────────────────────────────────────────── */
+function _setLang(l) {
   lang = l;
-  renderPage(false);
+  localStorage.setItem('RK_LANG', l);
+  document.getElementById('btnRo').classList.toggle('active', l === 'ro');
+  document.getElementById('btnEn').classList.toggle('active', l === 'en');
+  render(false);
 }
 
-document.getElementById("btnPrev").addEventListener("click", ()=> navigate(-1));
-document.getElementById("btnNext").addEventListener("click", ()=> navigate(1));
-document.getElementById("btnLearned").addEventListener("click", markLearned);
-RKLang.init(setLang);
-renderPage(false);
+/* ── NAVIGATION ────────────────────────────────────────── */
+function _navigate(dir) {
+  window.speechSynthesis.cancel();
+  var next = idx + dir;
+  if (next < 0 || next >= DATA.length) return;
+  idx = next;
+  render(true);
+}
+
+/* ── MARK LEARNED ──────────────────────────────────────── */
+function _markLearned() {
+  if (learned.indexOf(idx) < 0) learned.push(idx);
+  localStorage.setItem('RK_HJ_LEARNED', JSON.stringify(learned));
+  var nuc = document.getElementById('nucleus');
+  nuc.classList.add('nova');
+  setTimeout(function() { nuc.classList.remove('nova'); }, 700);
+  render(false);
+}
+
+/* ── BOOT ──────────────────────────────────────────────── */
+(function boot() {
+  _applyTheme();
+
+  document.getElementById('btnRo').classList.toggle('active', lang === 'ro');
+  document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+
+  document.getElementById('btnRo').addEventListener('click', function() { _setLang('ro'); });
+  document.getElementById('btnEn').addEventListener('click', function() { _setLang('en'); });
+  document.getElementById('themeBtn').addEventListener('click', _toggleTheme);
+
+  document.getElementById('navPrev').addEventListener('click', function() { _navigate(-1); });
+  document.getElementById('navNext').addEventListener('click', function() { _navigate(1); });
+  document.getElementById('learnBtn').addEventListener('click', _markLearned);
+  document.getElementById('etymBtn').addEventListener('click', _openEtym);
+  document.getElementById('etymClose').addEventListener('click', _closeEtym);
+  document.getElementById('bloomClose').addEventListener('click', _closeBloom);
+
+  /* Nucleus click → TTS */
+  document.getElementById('nucleus').addEventListener('click', function(e) {
+    if (e.target.closest('#wordBloom') || e.target.closest('#etymPanel')) return;
+    var item    = DATA[idx];
+    var reading = item.ko_reading || item.reading[lang].split(' ')[0];
+    _speak(reading);
+  });
+
+  /* Bloom speak */
+  document.getElementById('bloomSpeak').addEventListener('click', function() {
+    if (bloomActive >= 0) {
+      var w = DATA[idx].words[bloomActive];
+      if (w && w.sentence) _speak(w.sentence);
+    }
+  });
+
+  /* Orbital node clicks */
+  var nodes = document.querySelectorAll('.orbNode');
+  for (var n = 0; n < nodes.length; n++) {
+    nodes[n].addEventListener('click', function(e) {
+      e.stopPropagation();
+      var wi = parseInt(this.dataset.wi, 10);
+      if (bloomActive === wi) { _closeBloom(); return; }
+      _openBloom(wi);
+    });
+  }
+
+  /* Stage background tap → dismiss bloom */
+  document.getElementById('stage').addEventListener('click', function(e) {
+    if (!e.target.closest('.orbNode') && !e.target.closest('#nucleus')) {
+      _closeBloom();
+    }
+  });
+
+  /* Keyboard */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') _navigate(1);
+    if (e.key === 'ArrowLeft')  _navigate(-1);
+    if (e.key === 'Escape')     { _closeBloom(); _closeEtym(); }
+  });
+
+  /* Swipe */
+  var _tx = 0;
+  document.addEventListener('touchstart', function(e) {
+    _tx = e.touches[0].clientX;
+  }, {passive: true});
+  document.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - _tx;
+    if (Math.abs(dx) > 65) _navigate(dx > 0 ? -1 : 1);
+  }, {passive: true});
+
+  /* Resize */
+  window.addEventListener('resize', function() {
+    _resizeCanvas();
+    positionOrbitals();
+    if (bloomActive >= 0) {
+      clearResonance();
+      setTimeout(function() { drawResonance(bloomActive); }, 55);
+    }
+  });
+
+  initCanvas();
+  positionOrbitals();
+  render(false);
+})();

@@ -2,54 +2,132 @@
 <html lang="ro">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Raluca Korean — Hanja Book</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Raluca Korean · Hanja</title>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#db2777">
+<meta name="theme-color" content="#030308" id="themeColorMeta">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./theme-anime.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./hanja-book.css">
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-left">
-    <span class="page-title">📖 Hanja Book</span>
-  </div>
-  <div class="topbar-right" id="pageControls"></div>
-</div>
+<!-- LAYER 0: ambient field canvas -->
+<canvas id="fieldCanvas"></canvas>
 
-<!-- PROGRESS -->
-<div class="progress-wrap">
-  <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
-  <div class="prog-text"><span id="learnedCount">0</span> / <span id="totalCount">0</span> <span id="learnedLabel">învățate</span></div>
-</div>
+<!-- LAYER 1: resonance SVG overlay -->
+<svg id="resSVG" xmlns="http://www.w3.org/2000/svg"></svg>
 
-<!-- BOOK -->
-<div class="book">
-  <div class="spine">
-    <span class="spine-text">Hanja</span>
-  </div>
-  <div class="page-wrap">
-    <div class="page" id="page">
-      <!-- rendered by JS -->
+<!-- LAYER 2: Cognitive Morphogenesis Interface -->
+<div id="cmi">
+
+  <!-- TOP-LEFT: knowledge state -->
+  <div id="kState">
+    <div id="kBar"><div id="kFill"></div></div>
+    <div id="kCount">
+      <span id="kLearned">0</span><span class="kdot">·</span><span id="kTotal">100</span>
     </div>
   </div>
+
+  <!-- TOP-RIGHT: sys tray -->
+  <div id="sysTray">
+    <a href="./index.html" class="trayBtn" id="homeBtn" title="Home">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </a>
+    <button class="trayBtn langBtn" id="btnRo">ro</button>
+    <button class="trayBtn langBtn" id="btnEn">en</button>
+    <button class="trayBtn" id="themeBtn" title="Toggle theme">◐</button>
+  </div>
+
+  <!-- CENTER STAGE: nucleus + orbital field -->
+  <div id="stage">
+
+    <!-- THE MORPHIC NUCLEUS -->
+    <div id="nucleus">
+      <div class="ring" id="ring3"></div>
+      <div class="ring" id="ring2"></div>
+      <div class="ring" id="ring1"></div>
+      <div id="nucCore">
+        <div id="hanjaGlyph"></div>
+      </div>
+      <div id="nucLabel">
+        <div id="glyphReading"></div>
+        <div id="glyphMeaning"></div>
+      </div>
+    </div>
+
+    <!-- ORBITAL FIELD: 4 word nodes -->
+    <div id="orbField">
+      <div class="orbitShell" id="osh0">
+        <div class="orbNode" id="orb0" data-wi="0">
+          <span class="orbKo"></span>
+          <span class="orbTr"></span>
+        </div>
+      </div>
+      <div class="orbitShell" id="osh1">
+        <div class="orbNode" id="orb1" data-wi="1">
+          <span class="orbKo"></span>
+          <span class="orbTr"></span>
+        </div>
+      </div>
+      <div class="orbitShell" id="osh2">
+        <div class="orbNode" id="orb2" data-wi="2">
+          <span class="orbKo"></span>
+          <span class="orbTr"></span>
+        </div>
+      </div>
+      <div class="orbitShell" id="osh3">
+        <div class="orbNode" id="orb3" data-wi="3">
+          <span class="orbKo"></span>
+          <span class="orbTr"></span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /stage -->
+
+  <!-- BOTTOM SYSTEM BAR -->
+  <div id="sysBar">
+    <button id="etymBtn">
+      <span id="etymIcon">⌬</span> <span id="etymLabel">Etimologie</span>
+    </button>
+    <button id="learnBtn">
+      <span id="learnText">Înregistrează</span>
+    </button>
+    <div id="navRow">
+      <button id="navPrev" class="navBtn" disabled><span>‹</span></button>
+      <div id="posLabel">
+        <span id="posIdx">1</span><span class="posDot">·</span><span id="posTotal">100</span>
+      </div>
+      <button id="navNext" class="navBtn"><span>›</span></button>
+    </div>
+  </div>
+
+</div><!-- /cmi -->
+
+<!-- WORD BLOOM PANEL -->
+<div id="wordBloom" class="hidden">
+  <button id="bloomClose">✕</button>
+  <div id="bloomWord"></div>
+  <div id="bloomMeaning"></div>
+  <div class="bloomSep"></div>
+  <div id="bloomKo"></div>
+  <div id="bloomTr"></div>
+  <button id="bloomSpeak">▶</button>
 </div>
 
-<!-- CONTROLS -->
-<div class="controls">
-  <button class="btn-nav" id="btnPrev" title="Pagina anterioară">◀</button>
-  <button class="btn-learned" id="btnLearned">✔ Învățat</button>
-  <button class="btn-nav" id="btnNext" title="Pagina următoare">▶</button>
+<!-- ETYMOLOGY BLOOM PANEL -->
+<div id="etymPanel" class="hidden">
+  <button id="etymClose">✕</button>
+  <div id="etymTitle"></div>
+  <div id="etymBody"></div>
 </div>
 
 <script src="./js/core/storage.js"></script>
-<script src="./js/core/lang-picker.js"></script>
 <script src="./js/hanja-book.js"></script>
-<script src="./js/core/dark-mode.js"></script>
 <script src="./js/core/register-sw.js"></script>
 </body>
 </html>
