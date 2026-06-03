@@ -1,4 +1,4 @@
-// ── Constants ──────────────────────────────────────────
+// ── Constants ────────────────────────────────────────────────
 const ROLE_COLORS = {
   "Subiect":"#e74c3c","Subject":"#e74c3c",
   "Obiect":"#2980b9","Object":"#2980b9",
@@ -12,7 +12,7 @@ const ROLE_COLORS = {
 };
 const NEW_PER_SESSION = 20;
 
-// ── State ───────────────────────────────────────────────
+// ── State ────────────────────────────────────────────────────
 let currentLang = RKLang.get();
 let sortMode    = localStorage.getItem("RK_FC_SORT") || "srs";
 let FC_STATS    = JSON.parse(localStorage.getItem("RK_FC_STATS") || "{}");
@@ -25,51 +25,54 @@ let knowCount   = 0;
 let dontCount   = 0;
 let flipped     = false;
 let filterFav   = false;
+let _answerLocked = false;
 
 const imgCache = (() => {
   try { return JSON.parse(sessionStorage.getItem("FC_IMG") || "{}"); } catch { return {}; }
 })();
 
-// ── UI strings ──────────────────────────────────────────
+// ── UI strings ───────────────────────────────────────────────
 const UI = {
   ro:{
-    title:"🃏 Flashcards",
-    tapToFlip:"Atinge ca să vezi răspunsul",
-    know:"✓ Știu", dontKnow:"✗ Nu știu",
-    summaryTitle:"Sesiune completă!",
-    know2:"Știu", dontKnow2:"Nu știu",
-    restart:"🔁 Reia",
+    title:"Helioform",
+    tapToFlip:"toacă pentru a rezona",
+    know:"Știu", dontKnow:"Nu știu",
+    summaryTitle:"Câmp complet",
+    know2:"Rezonanță", dontKnow2:"Necunoscut",
+    restart:"↺  Reia",
     noFav:"Nu ai favorite. Adaugă din Glosar!",
     loadError:"Nu am putut încărca vocab-korean.json",
     retry:"Încearcă din nou",
     srsNew:"NOU",
-    srsEmpty:"Nicio recapitulare pentru azi 🎉",
-    srsNext:"Urm. recapitulare",
-    srsDueCards:"carduri",
+    srsEmpty:"Câmp liber azi",
+    srsNext:"Următor câmp",
+    srsDueCards:"nuclee",
     srsNextIn:"Mâine",
-    srsNextInDays:"Peste {n} zile"
+    srsNextInDays:"Peste {n} zile",
+    newCards:"+ Nuclee noi"
   },
   en:{
-    title:"🃏 Flashcards",
-    tapToFlip:"Tap to see the answer",
-    know:"✓ I know", dontKnow:"✗ Don't know",
-    summaryTitle:"Session complete!",
-    know2:"Know", dontKnow2:"Don't know",
-    restart:"🔁 Restart",
+    title:"Helioform",
+    tapToFlip:"tap to resonate",
+    know:"I know", dontKnow:"Don't know",
+    summaryTitle:"Field complete",
+    know2:"Resonance", dontKnow2:"Unknown",
+    restart:"↺  Restart",
     noFav:"No favorites. Add some in the Glossary!",
     loadError:"Could not load vocab-korean.json",
     retry:"Try again",
     srsNew:"NEW",
-    srsEmpty:"Nothing to review today 🎉",
-    srsNext:"Next review",
-    srsDueCards:"cards",
+    srsEmpty:"Field clear today",
+    srsNext:"Next field",
+    srsDueCards:"nuclei",
     srsNextIn:"Tomorrow",
-    srsNextInDays:"In {n} days"
+    srsNextInDays:"In {n} days",
+    newCards:"+ New nuclei"
   }
 };
 function t(k){ return UI[currentLang][k] || k; }
 
-// ── SM-2 ────────────────────────────────────────────────
+// ── SM-2 ─────────────────────────────────────────────────────
 const SRS_KEY = "RK_FC_SRS";
 
 function srsLoad() {
@@ -80,7 +83,6 @@ function srsSave(s) {
 }
 
 function srsUpdate(ko, quality) {
-  // quality: 1=fail, 4=good (simplified SM-2)
   const s = srsLoad();
   const c = s[ko] || { n: 0, I: 1, EF: 2.5, due: 0 };
   if (quality >= 3) {
@@ -136,7 +138,7 @@ function srsNextLabel(date) {
     : t("srsNextInDays").replace("{n}", days);
 }
 
-// ── Helpers ─────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────
 function getMeaning(w){ return currentLang === "ro" ? w.ro : w.en; }
 function getCat(w){ return currentLang === "ro" ? (w.categoriesRo||[])[0] : (w.categoriesEn||[])[0]; }
 function getWordColor(w){ const c = getCat(w); return c ? (ROLE_COLORS[c] || null) : null; }
@@ -160,7 +162,7 @@ function imgKey(word){
   return word.en.split(/[,;/(]/)[0].trim().replace(/^to\s+/i,"").toLowerCase();
 }
 
-// ── Image loading ────────────────────────────────────────
+// ── Image loading (prefetch only, not displayed in Helioform) ─
 async function getWordImage(key){
   if(key in imgCache) return imgCache[key];
   if(!key || key.startsWith("-") || key.length < 2 || /^(a|an|the|to|in|on|at|by|of)$/.test(key)){
@@ -175,24 +177,10 @@ async function getWordImage(key){
     return src;
   } catch { imgCache[key] = null; return null; }
 }
-async function loadCardImage(word){
-  const key = imgKey(word);
-  const src = await getWordImage(key);
-  const wrap = document.getElementById("fcImgWrap");
-  const ph   = document.getElementById("fcImgPh");
-  const img  = document.getElementById("fcImgEl");
-  if(!wrap) return;
-  if(src){
-    img.onload  = () => { ph.style.display="none"; img.style.display="block"; };
-    img.onerror = () => { wrap.style.display="none"; };
-    img.src = src;
-  } else { wrap.style.display="none"; }
-}
-function preloadNext(idx){
-  if(idx < deck.length) getWordImage(imgKey(deck[idx]));
-}
+function loadCardImage(word){ getWordImage(imgKey(word)); }
+function preloadNext(idx){ if(idx < deck.length) getWordImage(imgKey(deck[idx])); }
 
-// ── Deck building ────────────────────────────────────────
+// ── Deck building ────────────────────────────────────────────
 function getPool(){
   if(!filterFav) return WORDS;
   const favs = getFavs();
@@ -214,7 +202,7 @@ function buildDeck(){
   cardIndex = 0; knowCount = 0; dontCount = 0; flipped = false;
 }
 
-// ── Speech ───────────────────────────────────────────────
+// ── Speech ───────────────────────────────────────────────────
 function speakKO(text){
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = "ko-KR"; utt.rate = 0.9;
@@ -222,130 +210,262 @@ function speakKO(text){
   speechSynthesis.speak(utt);
 }
 
-// ── Render card ──────────────────────────────────────────
-function renderFC(){
-  const el = document.getElementById("fcArea");
+// ── CRF: Set interface state ─────────────────────────────────
+function crfSetState(state) {
+  const field    = document.getElementById("crfField");
+  const response = document.getElementById("crfResponse");
+  const progress = document.getElementById("crfProgress");
+  const fcArea   = document.getElementById("fcArea");
+  const nav      = document.getElementById("crfNav");
+  const orbits   = document.getElementById("crfOrbits");
 
-  if(WORDS.length === 0){
-    el.innerHTML = `<div class="card"><p class="sub" style="text-align:center;padding:20px">${t("loadError")}</p></div>`;
+  if (state === "learning") {
+    if (field)    field.style.display    = "";
+    if (response) response.style.display = "";
+    if (progress) progress.style.display = "";
+    if (fcArea)   { fcArea.style.display = "none"; fcArea.innerHTML = ""; }
+    if (orbits)   orbits.style.display   = "";
+  } else {
+    if (field)    field.style.display    = "none";
+    if (response) response.style.display = "none";
+    if (progress) progress.style.display = "none";
+    if (fcArea)   fcArea.style.display   = "flex";
+    if (orbits)   orbits.style.display   = "none";
+  }
+}
+
+// ── CRF: Particle burst on answer ────────────────────────────
+function crfEmitParticles(type) {
+  const container = document.getElementById("crfParticles");
+  const field     = document.getElementById("crfField");
+  if (!container) return;
+
+  // Nucleus pulse class
+  if (field) {
+    field.classList.remove("pulse-know", "pulse-dont");
+    void field.offsetWidth; // reflow
+    field.classList.add(type === "know" ? "pulse-know" : "pulse-dont");
+    setTimeout(() => field.classList.remove("pulse-know", "pulse-dont"), 500);
+  }
+
+  // Radial particle burst
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement("div");
+    p.className = "crf-particle crf-particle--" + type;
+    const angle = (i / count) * 360 + (Math.random() * 10 - 5);
+    const dist  = 70 + Math.random() * 110;
+    const delay = Math.random() * 0.12;
+    p.style.setProperty("--pa", angle + "deg");
+    p.style.setProperty("--pr", dist  + "px");
+    p.style.setProperty("--pd", delay + "s");
+    container.appendChild(p);
+    setTimeout(() => p.remove(), 750);
+  }
+}
+
+// ── CRF: Update circular progress arc ───────────────────────
+function crfUpdateArc(done, total) {
+  const progText = document.getElementById("crfProgText");
+  const arcFill  = document.getElementById("crfArcFill");
+  if (progText) progText.textContent = done + "/" + total;
+  if (arcFill) {
+    const circ = 326.73;
+    const pct  = total === 0 ? 0 : done / total;
+    arcFill.style.strokeDashoffset = circ * (1 - pct);
+  }
+}
+
+// ── Render card ──────────────────────────────────────────────
+function renderFC() {
+  if (WORDS.length === 0) {
+    crfSetState("overlay");
+    document.getElementById("fcArea").innerHTML =
+      `<div class="crf-state-card">
+         <div class="crf-state-title">⚠</div>
+         <div class="crf-state-sub">${t("loadError")}</div>
+         <button class="crf-state-btn" onclick="loadVocab()">${t("retry")}</button>
+       </div>`;
     return;
   }
-  if(filterFav && deck.length === 0 && getFavs().length === 0){
-    el.innerHTML = `<div class="card"><p class="sub" style="text-align:center;padding:20px">${t("noFav")}</p></div>`;
+
+  if (filterFav && deck.length === 0 && getFavs().length === 0) {
+    crfSetState("overlay");
+    document.getElementById("fcArea").innerHTML =
+      `<div class="crf-state-card">
+         <div class="crf-state-title">⭐</div>
+         <div class="crf-state-sub">${t("noFav")}</div>
+       </div>`;
     return;
   }
-  if(sortMode === "srs" && deck.length === 0){
+
+  if (sortMode === "srs" && deck.length === 0) {
     renderSRSEmpty(); return;
   }
-  if(cardIndex >= deck.length){
-    if(sortMode === "srs" && lapQueue.length > 0){
+
+  if (cardIndex >= deck.length) {
+    if (sortMode === "srs" && lapQueue.length > 0) {
       deck.push(...lapQueue.splice(0));
     } else {
       renderSummary(); return;
     }
   }
 
+  crfSetState("learning");
+
   const word    = deck[cardIndex];
   const done    = knowCount + dontCount;
   const total   = deck.length + (sortMode === "srs" ? lapQueue.length : 0);
-  const progPct = total === 0 ? 0 : Math.round(done / total * 100);
   const wColor  = getWordColor(word);
   const cat     = getCat(word);
-
-  const roleBadge = cat && wColor
-    ? `<div class="fc-role-badge" style="background:${wColor}22;color:${wColor};border:1.5px solid ${wColor}55">${cat}</div>`
-    : "";
-  const koStyle = wColor ? `color:${wColor}` : "";
-
   const srsData = sortMode === "srs" ? srsLoad() : null;
   const isNew   = srsData && !srsData[word.ko];
-  const srsTag  = isNew
-    ? `<span class="fc-srs-tag fc-srs-new">${t("srsNew")}</span>` : "";
 
-  el.innerHTML = `
-    <div class="card" style="padding-bottom:12px">
-      <div class="prog-bar"><div class="prog-fill" style="width:${progPct}%"></div></div>
-      <div class="prog-text">${done}/${total}</div>
+  // Korean text
+  const koEl = document.getElementById("crfKorean");
+  if (koEl) {
+    koEl.textContent = word.ko;
+    koEl.style.color      = wColor || "";
+    koEl.style.textShadow = "";
+  }
 
-      <div class="fc-scene" id="fcScene" onclick="flipCard()">
-        <div class="fc-card" id="fcCard">
-          <div class="fc-front">
-            ${srsTag}
-            ${getDiffDot(word.ko)}
-            ${roleBadge}
-            <div class="fc-img-wrap" id="fcImgWrap">
-              <div class="fc-img-ph" id="fcImgPh"></div>
-              <img id="fcImgEl" class="fc-img" alt="">
-            </div>
-            <div class="fc-ko" style="${koStyle}">${word.ko}</div>
-            <div class="fc-hint">${t("tapToFlip")}</div>
-          </div>
-          <div class="fc-back">
-            <div class="fc-meaning">${getMeaning(word) || "—"}</div>
-            ${cat ? `<div class="fc-cat" style="${wColor ? `background:${wColor}22;color:${wColor}` : ""}">${cat}</div>` : ""}
-            <button class="fc-speak" onclick="event.stopPropagation();speakKO('${word.ko.replace(/'/g,"\\'")}')">🔈 ${word.ko}</button>
-          </div>
-        </div>
-      </div>
+  // Nucleus glow tint (word-color override when available)
+  const glowEl = document.getElementById("crfNucleusGlow");
+  if (glowEl && wColor) {
+    glowEl.style.background =
+      `radial-gradient(circle, ${wColor}44 0%, transparent 68%)`;
+  } else if (glowEl) {
+    glowEl.style.background = "";
+  }
 
-      <div class="action-row">
-        <button class="btn-dontknow" onclick="answer(false)">${t("dontKnow")}</button>
-        <button class="btn-know"     onclick="answer(true)">${t("know")}</button>
-      </div>
-    </div>`;
+  // SRS tag
+  const srsTagEl = document.getElementById("crfSrsTag");
+  if (srsTagEl) {
+    srsTagEl.innerHTML = isNew
+      ? `<span class="crf-srs-new">${t("srsNew")}</span>` : "";
+  }
 
-  if(flipped) document.getElementById("fcCard").classList.add("flipped");
+  // Difficulty dot
+  const diffEl = document.getElementById("crfDiffDot");
+  if (diffEl) diffEl.innerHTML = getDiffDot(word.ko);
+
+  // Hint
+  const hintEl = document.getElementById("crfCoreHint");
+  if (hintEl) hintEl.textContent = t("tapToFlip");
+
+  // Meaning
+  const meaningEl = document.getElementById("crfMeaning");
+  if (meaningEl) {
+    meaningEl.textContent = getMeaning(word) || "—";
+    meaningEl.style.color = wColor || "";
+  }
+
+  // Category badge
+  const catEl = document.getElementById("crfCat");
+  if (catEl) {
+    if (cat) {
+      catEl.textContent       = cat;
+      catEl.style.display     = "";
+      catEl.style.background  = wColor ? wColor + "18" : "";
+      catEl.style.color       = wColor || "";
+      catEl.style.borderColor = wColor ? wColor + "44" : "";
+    } else {
+      catEl.style.display = "none";
+    }
+  }
+
+  // Speak button
+  const speakEl = document.getElementById("crfSpeak");
+  if (speakEl) {
+    speakEl.innerHTML = `◉ ${word.ko}`;
+    speakEl.onclick = (e) => { e.stopPropagation(); speakKO(word.ko); };
+  }
+
+  // Response labels
+  const lKnow = document.getElementById("respKnow");
+  const lDont = document.getElementById("respDontKnow");
+  if (lKnow) lKnow.textContent = t("know");
+  if (lDont) lDont.textContent = t("dontKnow");
+
+  // Progress arc
+  crfUpdateArc(done, total);
+
+  // Reset nucleus state + trigger appear animation
+  const core = document.getElementById("crfCore");
+  if (core) {
+    core.classList.remove("revealed", "crf-appear");
+    void core.offsetWidth;
+    core.classList.add("crf-appear");
+  }
+  flipped = false;
+  _answerLocked = false;
+
   loadCardImage(word);
   preloadNext(cardIndex + 1);
 }
 
-function flipCard(){
+// ── Flip: meaning erupts from the nucleus ────────────────────
+function flipCard() {
   flipped = !flipped;
-  const card = document.getElementById("fcCard");
-  if(card) card.classList.toggle("flipped", flipped);
-  if(flipped && deck[cardIndex]) speakKO(deck[cardIndex].ko);
+  const core = document.getElementById("crfCore");
+  if (core) core.classList.toggle("revealed", flipped);
+  if (flipped && deck[cardIndex]) speakKO(deck[cardIndex].ko);
 }
 
-function answer(knows){
+// ── Answer ───────────────────────────────────────────────────
+function answer(knows) {
+  if (_answerLocked) return;
+  _answerLocked = true;
+
   const word = deck[cardIndex];
-  if(word){
-    if(!FC_STATS[word.ko]) FC_STATS[word.ko] = {c:0, w:0};
-    if(knows) FC_STATS[word.ko].c++; else FC_STATS[word.ko].w++;
+  if (word) {
+    if (!FC_STATS[word.ko]) FC_STATS[word.ko] = {c: 0, w: 0};
+    if (knows) FC_STATS[word.ko].c++; else FC_STATS[word.ko].w++;
     localStorage.setItem("RK_FC_STATS", JSON.stringify(FC_STATS));
 
-    if(sortMode === "srs"){
+    if (sortMode === "srs") {
       srsUpdate(word.ko, knows ? 4 : 1);
-      if(!knows && !lapSeen.has(word.ko)){
+      if (!knows && !lapSeen.has(word.ko)) {
         lapSeen.add(word.ko);
         lapQueue.push(word);
       }
     }
   }
-  if(knows) knowCount++; else dontCount++;
-  cardIndex++;
-  flipped = false;
-  renderFC();
+
+  crfEmitParticles(knows ? "know" : "dont");
+
+  if (knows) knowCount++; else dontCount++;
+
+  setTimeout(() => {
+    cardIndex++;
+    flipped = false;
+    renderFC();
+  }, 320);
 }
 
-// ── SRS empty state ──────────────────────────────────────
-function renderSRSEmpty(){
-  const el   = document.getElementById("fcArea");
-  const next = srsNextDate();
+// ── SRS empty state ──────────────────────────────────────────
+function renderSRSEmpty() {
+  crfSetState("overlay");
+  const el    = document.getElementById("fcArea");
+  const next  = srsNextDate();
   const label = next ? srsNextLabel(next) : "";
   const pool  = getPool();
   const { fresh } = srsCounts(pool);
-  const freshInfo = fresh > 0
-    ? `<div class="sub" style="margin-top:6px">${fresh} ${currentLang==="ro"?"cuvinte noi disponibile":"new words available"}</div>`
-    : "";
+
+  const nextLine = next
+    ? `<div class="crf-state-sub">${t("srsNext")}: <b>${label}</b></div>` : "";
+  const freshLine = fresh > 0
+    ? `<div class="crf-state-sub" style="margin-top:4px">
+         ${fresh} ${currentLang==="ro"?"nuclee noi disponibile":"new nuclei available"}
+       </div>` : "";
+
   el.innerHTML = `
-    <div class="card" style="text-align:center;padding:40px 24px">
-      <div style="font-size:52px;margin-bottom:14px">🎉</div>
-      <h2>${t("srsEmpty")}</h2>
-      ${next ? `<div class="sub" style="margin-top:8px">${t("srsNext")}: <b>${label}</b></div>` : ""}
-      ${freshInfo}
-      <button onclick="forceNewCards()" style="margin-top:20px;padding:10px 24px;border-radius:999px;border:none;background:var(--rk-violet);color:#fff;font-weight:900;font-size:14px;cursor:pointer">
-        ${currentLang==="ro"?"+ Carduri noi":"+ New cards"}
-      </button>
+    <div class="crf-state-card">
+      <div style="font-size:52px;margin-bottom:16px;line-height:1">✦</div>
+      <div class="crf-state-title">${t("srsEmpty")}</div>
+      ${nextLine}
+      ${freshLine}
+      <button class="crf-state-btn" onclick="forceNewCards()">${t("newCards")}</button>
     </div>`;
 }
 
@@ -361,87 +481,165 @@ function forceNewCards(){
   renderFC();
 }
 
-// ── Summary ──────────────────────────────────────────────
-function renderSummary(){
+// ── Summary ──────────────────────────────────────────────────
+function renderSummary() {
+  crfSetState("overlay");
   const el   = document.getElementById("fcArea");
   const next = sortMode === "srs" ? srsNextDate() : null;
 
   let nextInfo = "";
-  if(next){
-    const pool = getPool();
-    const s    = srsLoad();
-    const nextTs = next.getTime();
-    const nextCount = pool.filter(w => s[w.ko] && s[w.ko].due <= nextTs).length;
-    nextInfo = `<div class="sub" style="margin-top:10px">
-      ${t("srsNext")}: <b>${srsNextLabel(next)}</b> · ${nextCount} ${t("srsDueCards")}
+  if (next) {
+    const pool    = getPool();
+    const s       = srsLoad();
+    const nextTs  = next.getTime();
+    const nCount  = pool.filter(w => s[w.ko] && s[w.ko].due <= nextTs).length;
+    nextInfo = `<div class="crf-state-sub" style="margin-top:8px">
+      ${t("srsNext")}: <b>${srsNextLabel(next)}</b> · ${nCount} ${t("srsDueCards")}
     </div>`;
   }
 
+  const pct = (knowCount + dontCount) === 0
+    ? 0 : Math.round(knowCount / (knowCount + dontCount) * 100);
+
   el.innerHTML = `
-    <div class="card" style="text-align:center">
-      <h2 style="margin-bottom:16px">${t("summaryTitle")}</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-        <div style="background:rgba(88,204,2,.12);border:1.5px solid rgba(88,204,2,.30);border-radius:16px;padding:16px">
-          <div style="font-size:36px;font-weight:900;color:var(--rk-green)">${knowCount}</div>
-          <div style="font-size:12px;color:var(--rk-muted-ui);font-weight:700">${t("know2")}</div>
+    <div class="crf-state-card">
+      <div class="crf-state-title">${t("summaryTitle")}</div>
+      <div class="crf-stat-pair">
+        <div class="crf-stat-box crf-stat-box--know">
+          <div class="crf-stat-num">${knowCount}</div>
+          <div class="crf-stat-label">${t("know2")}</div>
         </div>
-        <div style="background:rgba(255,75,75,.10);border:1.5px solid rgba(255,75,75,.25);border-radius:16px;padding:16px">
-          <div style="font-size:36px;font-weight:900;color:var(--rk-red)">${dontCount}</div>
-          <div style="font-size:12px;color:var(--rk-muted-ui);font-weight:700">${t("dontKnow2")}</div>
+        <div class="crf-stat-box crf-stat-box--dont">
+          <div class="crf-stat-num">${dontCount}</div>
+          <div class="crf-stat-label">${t("dontKnow2")}</div>
         </div>
       </div>
+      <div class="crf-state-sub">${pct}% ${currentLang==="ro"?"rezonanță":"resonance"}</div>
       ${nextInfo}
-      <button onclick="buildDeck();renderFC()" style="margin-top:16px;padding:12px 28px;border-radius:999px;border:none;background:linear-gradient(135deg,#f472b6,#a855f7,#6366f1);color:#fff;font-weight:900;font-size:15px;cursor:pointer">${t("restart")}</button>
+      <button class="crf-state-btn" onclick="buildDeck();renderFC()">${t("restart")}</button>
     </div>`;
 }
 
-// ── UI sync ──────────────────────────────────────────────
+// ── UI sync ──────────────────────────────────────────────────
 function updateSortBtns(){
   const pool = getPool();
   const { due, fresh } = srsCounts(pool);
-  const total = due + fresh;
+  const total  = due + fresh;
   const srsBtn = document.getElementById("sortSRS");
-  if(srsBtn){
+  if (srsBtn) {
     const badge = total > 0 ? ` <span class="srs-count">${total}</span>` : "";
-    srsBtn.innerHTML = `📅${badge}`;
+    srsBtn.innerHTML = `SRS${badge}`;
     srsBtn.classList.toggle("active", sortMode === "srs");
   }
-  document.getElementById("sortRandom").classList.toggle("active", sortMode === "random");
-  document.getElementById("sortHard").classList.toggle("active", sortMode === "hard");
-  document.getElementById("sortEasy").classList.toggle("active", sortMode === "easy");
+  const r = document.getElementById("sortRandom");
+  const h = document.getElementById("sortHard");
+  const e = document.getElementById("sortEasy");
+  if (r) r.classList.toggle("active", sortMode === "random");
+  if (h) h.classList.toggle("active", sortMode === "hard");
+  if (e) e.classList.toggle("active", sortMode === "easy");
 }
+
 function updateFilterBtns(){
-  document.getElementById("filterFav").classList.toggle("active", filterFav);
+  const fb = document.getElementById("filterFav");
+  if (fb) fb.classList.toggle("active", filterFav);
 }
 
 function setLang(lang){
   currentLang = lang;
-  document.getElementById("pageTitle").textContent = t("title");
-  updateFilterBtns(); updateSortBtns();
-  buildDeck(); renderFC();
+  updateFilterBtns();
+  updateSortBtns();
+  buildDeck();
+  renderFC();
 }
+
 function setSortMode(mode){
   sortMode = mode;
   localStorage.setItem("RK_FC_SORT", mode);
-  updateSortBtns(); buildDeck(); renderFC();
+  updateSortBtns();
+  buildDeck();
+  renderFC();
 }
 
-// ── Events ───────────────────────────────────────────────
+// ── Canvas: drifting stellar particle field ──────────────────
+function initCRFCanvas() {
+  const canvas = document.getElementById("crfCanvas");
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext("2d");
+  let stars   = [];
+  let raf     = null;
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function makeStars() {
+    stars = Array.from({ length: 55 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.4 + 0.3,
+      o: Math.random() * 0.45 + 0.08,
+      s: Math.random() * 0.25 + 0.04,
+      d: (Math.random() - 0.5) * 0.15,
+      p: Math.random() * Math.PI * 2
+    }));
+  }
+
+  function draw(ts) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const isDark  = document.body.classList.contains("dark-mode");
+    const rgb     = isDark ? "200,180,255" : "80,40,120";
+    const t_      = ts * 0.001;
+
+    stars.forEach(s => {
+      const opacity = s.o * (0.65 + 0.35 * Math.sin(t_ * 0.8 + s.p));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${rgb},${opacity.toFixed(2)})`;
+      ctx.fill();
+
+      s.y -= s.s;
+      s.x += s.d;
+      if (s.y < -2)              { s.y = canvas.height + 2; s.x = Math.random() * canvas.width; }
+      if (s.x < -2)              s.x = canvas.width  + 2;
+      if (s.x > canvas.width + 2) s.x = -2;
+    });
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  resize();
+  makeStars();
+  raf = requestAnimationFrame(draw);
+  window.addEventListener("resize", () => { resize(); makeStars(); });
+}
+
+// ── Events ───────────────────────────────────────────────────
 RKLang.init(setLang);
+
 document.getElementById("filterFav").addEventListener("click", () => {
-  filterFav = !filterFav; updateFilterBtns(); buildDeck(); renderFC();
+  filterFav = !filterFav;
+  updateFilterBtns();
+  buildDeck();
+  renderFC();
 });
 document.getElementById("sortSRS").addEventListener("click",    () => setSortMode("srs"));
 document.getElementById("sortRandom").addEventListener("click", () => setSortMode("random"));
 document.getElementById("sortHard").addEventListener("click",   () => setSortMode("hard"));
 document.getElementById("sortEasy").addEventListener("click",   () => setSortMode("easy"));
 
-// ── Boot ─────────────────────────────────────────────────
-async function loadVocab(){
+// ── Boot ─────────────────────────────────────────────────────
+async function loadVocab() {
+  crfSetState("overlay");
   document.getElementById("fcArea").innerHTML =
-    `<div class="card"><div class="rk-spinner">${currentLang==="ro"?"Se încarcă flashcard-urile…":"Loading flashcards…"}</div></div>`;
+    `<div class="crf-state-card">
+       <div class="crf-state-title" style="font-size:36px;margin-bottom:12px">✦</div>
+       <div class="crf-state-sub" style="letter-spacing:1.5px;text-transform:uppercase;font-size:11px">
+         ${currentLang === "ro" ? "Câmpul se inițializează…" : "Initializing field…"}
+       </div>
+     </div>`;
 
-  try{
+  try {
     const resp  = await fetch("./data/vocab-korean.json");
     if (!resp.ok) throw new Error("HTTP " + resp.status);
     const vocab = await resp.json();
@@ -460,29 +658,29 @@ async function loadVocab(){
     };
     cats.forEach(cat => {
       (vocab[cat]||[]).forEach(e => {
-        if(!e.ko) return;
-        if(!map.has(e.ko)) map.set(e.ko,{ko:e.ko,ro:e.ro||"",en:e.en||"",categoriesRo:[],categoriesEn:[]});
+        if (!e.ko) return;
+        if (!map.has(e.ko)) map.set(e.ko, {ko:e.ko, ro:e.ro||"", en:e.en||"", categoriesRo:[], categoriesEn:[]});
         const w = map.get(e.ko);
-        if(!w.categoriesRo.includes(catLabels[cat].ro)) w.categoriesRo.push(catLabels[cat].ro);
-        if(!w.categoriesEn.includes(catLabels[cat].en)) w.categoriesEn.push(catLabels[cat].en);
+        if (!w.categoriesRo.includes(catLabels[cat].ro)) w.categoriesRo.push(catLabels[cat].ro);
+        if (!w.categoriesEn.includes(catLabels[cat].en)) w.categoriesEn.push(catLabels[cat].en);
       });
     });
-    WORDS = [...map.values()].sort((a,b)=>a.ko.localeCompare(b.ko,"ko"));
-    document.getElementById("pageTitle").textContent = t("title");
+    WORDS = [...map.values()].sort((a, b) => a.ko.localeCompare(b.ko, "ko"));
     updateSortBtns();
     buildDeck();
     renderFC();
-  } catch(e){
-    const area = document.getElementById("fcArea");
-    area.innerHTML =
-      '<div class="card"><div class="rk-load-error">' +
-      '<p>' + t("loadError") + '</p>' +
-      '<button type="button" id="_retryLoad">' + t("retry") + '</button>' +
-      '</div></div>';
-    var rb = document.getElementById("_retryLoad");
-    if (rb) rb.addEventListener("click", loadVocab);
+  } catch(e) {
+    crfSetState("overlay");
+    document.getElementById("fcArea").innerHTML =
+      `<div class="crf-state-card">
+         <div class="crf-state-title">⚠</div>
+         <div class="crf-state-sub">${t("loadError")}</div>
+         <button class="crf-state-btn" onclick="loadVocab()">${t("retry")}</button>
+       </div>`;
   }
 }
 
+// Init canvas + vocab
+initCRFCanvas();
 updateSortBtns();
 loadVocab();

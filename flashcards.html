@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Raluca Korean — Flashcards</title>
+<title>Raluca Korean — Helioform</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#db2877">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,27 +12,93 @@
 <link rel="stylesheet" href="./flashcards.css">
 </head>
 <body class="theme-anime">
-<div class="app">
 
-<div class="card">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-    <div>
-      <h1 id="pageTitle">🃏 Flashcards</h1>
-    </div>
-    <div id="pageControls"></div>
+<!-- Particle canvas — drifting stellar field -->
+<canvas id="crfCanvas" aria-hidden="true"></canvas>
+
+<!-- Ambient field orbs — nebula atmosphere -->
+<div id="crfAmbient" aria-hidden="true">
+  <div class="amb-orb" style="--ox:12%;--oy:18%;--os:580px;--oc:var(--crf-orb-1)"></div>
+  <div class="amb-orb" style="--ox:82%;--oy:62%;--os:520px;--oc:var(--crf-orb-2)"></div>
+  <div class="amb-orb" style="--ox:46%;--oy:90%;--os:420px;--oc:var(--crf-orb-3)"></div>
+</div>
+
+<!-- Navigation strip -->
+<nav id="crfNav">
+  <div id="pageControls"></div>
+  <div id="crfFilters">
+    <button class="crf-filter" id="filterFav" title="Favorite">⭐</button>
+    <button class="crf-filter active" id="sortSRS">SRS</button>
+    <button class="crf-filter" id="sortRandom">RND</button>
+    <button class="crf-filter" id="sortHard">HARD</button>
+    <button class="crf-filter" id="sortEasy">EASY</button>
   </div>
-  <div class="filter-row" id="sortRow">
-    <button type="button" class="filter-btn" id="filterFav" title="Favorite">⭐</button>
-    <button type="button" class="filter-btn active" id="sortSRS" title="Spaced Repetition">📅</button>
-    <button type="button" class="filter-btn" id="sortRandom" title="Aleatoriu">🔀</button>
-    <button type="button" class="filter-btn" id="sortHard" title="Greu întâi">🤯</button>
-    <button type="button" class="filter-btn" id="sortEasy" title="Ușor întâi">🤓</button>
+</nav>
+
+<!-- Circular progress ring -->
+<div id="crfProgress">
+  <span id="crfProgText">0/0</span>
+  <svg id="crfProgArc" viewBox="0 0 120 120" aria-hidden="true">
+    <circle class="arc-track" cx="60" cy="60" r="52"/>
+    <circle class="arc-fill" id="crfArcFill" cx="60" cy="60" r="52" transform="rotate(-90 60 60)"/>
+  </svg>
+</div>
+
+<!-- Learning field — the Helioform nucleus -->
+<div id="crfField">
+
+  <!-- Orbital rings (decorative depth) -->
+  <div id="crfOrbits" aria-hidden="true">
+    <div class="crf-orbit crf-orbit--1"></div>
+    <div class="crf-orbit crf-orbit--2"></div>
+  </div>
+
+  <!-- Nucleus — tap to resonate -->
+  <div id="crfCore" role="button" tabindex="0"
+       onclick="flipCard()"
+       onkeydown="if(event.key==='Enter'||event.key===' ')flipCard()">
+
+    <div id="crfNucleusGlow" aria-hidden="true"></div>
+
+    <!-- Front: Korean character -->
+    <div class="crf-front">
+      <div id="crfSrsTag"></div>
+      <div id="crfDiffDot" aria-hidden="true"></div>
+      <div id="crfKorean">가</div>
+      <div id="crfCoreHint"></div>
+    </div>
+
+    <!-- Back: meaning erupts from within -->
+    <div class="crf-back">
+      <div id="crfMeaning"></div>
+      <div id="crfCat"></div>
+      <button type="button" id="crfSpeak" onclick="event.stopPropagation()"></button>
+    </div>
+
   </div>
 </div>
 
+<!-- Response field — two resonance zones -->
+<div id="crfResponse">
+  <button type="button" id="crfDontKnow" onclick="answer(false)">
+    <span class="resp-icon">◌</span>
+    <span class="resp-label" id="respDontKnow">Nu știu</span>
+  </button>
+  <button type="button" id="crfKnow" onclick="answer(true)">
+    <span class="resp-icon">◎</span>
+    <span class="resp-label" id="respKnow">Știu</span>
+  </button>
+</div>
+
+<!-- Particle emitter container -->
+<div id="crfParticles" aria-hidden="true"></div>
+
+<!-- State overlays: summary / SRS-empty / error -->
 <div id="fcArea"></div>
 
-</div>
+<!-- Compat: JS uses this element for title sync -->
+<span id="pageTitle" style="display:none"></span>
+
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/lang-picker.js"></script>
 <script src="./js/flashcards.js"></script>
