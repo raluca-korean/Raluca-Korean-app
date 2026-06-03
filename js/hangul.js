@@ -386,21 +386,21 @@ const SD = {
 // ── FIELD POSITIONS (% of viewport) ──────────────────────────
 // Pre-defined organic positions for each of the 40 characters
 const FIELD_POSITIONS = {
-  // Basic consonants — left cluster
-  'ㄱ':[8,20], 'ㄴ':[18,30], 'ㄷ':[26,18], 'ㄹ':[7,40],
-  'ㅁ':[20,50], 'ㅂ':[10,62], 'ㅅ':[24,65], 'ㅇ':[14,78],
-  'ㅈ':[28,80], 'ㅊ':[6,85], 'ㅋ':[22,90], 'ㅌ':[34,72],
-  'ㅍ':[38,55], 'ㅎ':[34,38],
-  // Tensed — top center cluster
-  'ㄲ':[42,10], 'ㄸ':[50,8], 'ㅃ':[57,12], 'ㅆ':[64,9], 'ㅉ':[54,20],
-  // Basic vowels — right cluster
-  'ㅏ':[74,22], 'ㅐ':[84,18], 'ㅑ':[92,28], 'ㅒ':[88,40],
-  'ㅓ':[72,35], 'ㅔ':[80,46], 'ㅕ':[90,55], 'ㅖ':[84,64],
-  'ㅗ':[70,55], 'ㅛ':[76,68], 'ㅜ':[88,73], 'ㅠ':[80,82],
-  'ㅡ':[70,78], 'ㅣ':[90,85],
-  // Compound vowels — bottom right
-  'ㅘ':[60,82], 'ㅙ':[68,90], 'ㅚ':[78,92], 'ㅝ':[88,92],
-  'ㅞ':[62,93], 'ㅟ':[74,95], 'ㅢ':[85,87],
+  // Basic consonants — left cluster  (safe zone: 9–40% x, 14–82% y)
+  'ㄱ':[10,16], 'ㄴ':[19,27], 'ㄷ':[27,14], 'ㄹ':[9,37],
+  'ㅁ':[21,47], 'ㅂ':[11,59], 'ㅅ':[25,62], 'ㅇ':[15,72],
+  'ㅈ':[29,76], 'ㅊ':[10,82], 'ㅋ':[23,82], 'ㅌ':[34,68],
+  'ㅍ':[38,52], 'ㅎ':[35,36],
+  // Tensed — top centre cluster  (44–63% x, 12–23% y)
+  'ㄲ':[44,14], 'ㄸ':[51,12], 'ㅃ':[57,16], 'ㅆ':[63,13], 'ㅉ':[54,23],
+  // Basic vowels — right cluster  (68–83% x, 14–82% y)
+  'ㅏ':[70,16], 'ㅐ':[80,14], 'ㅑ':[83,25], 'ㅒ':[79,36],
+  'ㅓ':[68,33], 'ㅔ':[77,43], 'ㅕ':[83,52], 'ㅖ':[79,62],
+  'ㅗ':[67,52], 'ㅛ':[74,65], 'ㅜ':[82,70], 'ㅠ':[76,78],
+  'ㅡ':[67,75], 'ㅣ':[82,80],
+  // Compound vowels — bottom right  (57–82% x, 74–84% y)
+  'ㅘ':[58,76], 'ㅙ':[66,82], 'ㅚ':[74,84], 'ㅝ':[82,82],
+  'ㅞ':[61,84], 'ㅟ':[70,78], 'ㅢ':[80,74],
 };
 
 // ── STATE ─────────────────────────────────────────────────────
@@ -469,23 +469,27 @@ function buildCosmos() {
 
   ALL_CHARS.forEach((item, i) => {
     const pos = FIELD_POSITIONS[item.char] || [50, 50];
-    // Add slight jitter
-    const jx = (Math.random() - 0.5) * 3;
-    const jy = (Math.random() - 0.5) * 3;
-    const xPct = pos[0] + jx;
-    const yPct = pos[1] + jy;
+    // Tiny jitter — kept small so chars stay inside safe zone
+    const jx = (Math.random() - 0.5) * 1.5;
+    const jy = (Math.random() - 0.5) * 1.5;
+    // Clamp final position strictly within viewport safe margins
+    const CHAR_W = 40, CHAR_H = 44; // approximate rendered size px
+    const PAD_X  = CHAR_W + 6;
+    const PAD_Y  = CHAR_H + 6;
+    const xPct = Math.min(Math.max(pos[0] + jx, 0), 100);
+    const yPct = Math.min(Math.max(pos[1] + jy, 0), 100);
+    const rawGx = (xPct / 100) * window.innerWidth  - 18;
+    const rawGy = (yPct / 100) * window.innerHeight - 22;
+    const gx = Math.min(Math.max(rawGx, PAD_X), window.innerWidth  - PAD_X - CHAR_W);
+    const gy = Math.min(Math.max(rawGy, PAD_Y), window.innerHeight - PAD_Y - CHAR_H - 60);
 
-    // Convert percentage to pixels, offset by character half-size
-    const gx = (xPct / 100) * window.innerWidth  - 18;
-    const gy = (yPct / 100) * window.innerHeight - 22;
-
-    // Unique float parameters
-    const fdur   = (4 + Math.random() * 5).toFixed(1) + 's';
-    const fdel   = '-' + (Math.random() * 6).toFixed(1) + 's';
-    const fx     = ((Math.random() - 0.5) * 22).toFixed(1) + 'px';
-    const fy     = ((Math.random() - 0.5) * 18).toFixed(1) + 'px';
-    const frot   = ((Math.random() - 0.5) * 4).toFixed(1) + 'deg';
-    const frot2  = ((Math.random() - 0.5) * 4).toFixed(1) + 'deg';
+    // Float amplitude capped at ±6px so chars never reach the boundary
+    const fdur  = (4 + Math.random() * 5).toFixed(1) + 's';
+    const fdel  = '-' + (Math.random() * 6).toFixed(1) + 's';
+    const fx    = ((Math.random() - 0.5) * 12).toFixed(1) + 'px';
+    const fy    = ((Math.random() - 0.5) * 10).toFixed(1) + 'px';
+    const frot  = ((Math.random() - 0.5) * 3).toFixed(1) + 'deg';
+    const frot2 = ((Math.random() - 0.5) * 3).toFixed(1) + 'deg';
 
     const typeClass = item.type === 'cons'   ? 'mrs-g-cons'   :
                       item.type === 'tensed' ? 'mrs-g-tensed' : 'mrs-g-vowel';
