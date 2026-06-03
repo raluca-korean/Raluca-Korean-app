@@ -668,9 +668,7 @@ function render(item, i){
 }
 
 function next(animate){
-  // clear recording when moving to next item
-  if(recUrl){URL.revokeObjectURL(recUrl);recUrl=null;}
-  mchunks=[];setBtnIcon();
+  clearRec();
   const arr=items();
   const ni=(idx+1)%arr.length;
   if(animate){
@@ -774,62 +772,94 @@ function resonate(){
 
 // ── SPEECH ────────────────────────────────────────────────
 function initSpeech(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR) return;
-  recog=new SR();
-  recog.lang='ko-KR';
-  recog.continuous=false;
-  recog.interimResults=false;
-  recog.onresult=e=>evaluate(e.results[0][0].transcript);
-  recog.onend=()=>stopMic();
-  recog.onerror=()=>{
-    stopMic();
-    toast(lang==='ro'?'Microfon indisponibil':'Microphone unavailable');
-  };
+  // recog is created lazily in startMic() after getUserMedia succeeds
+}
+
+function clearRec(){
+  if(recUrl){URL.revokeObjectURL(recUrl);recUrl=null;}
+  if(recAudio){recAudio.pause();recAudio=null;}
+  mchunks=[];
+  setBtnIcon();
+}
+
+function finishRec(){
+  if(!mrec||mrec.state==='inactive') return;
+  try{mrec.requestData();}catch(e){}
+  try{mrec.stop();}catch(e){}
 }
 
 async function startMic(){
-  if(!recog){
-    toast(lang==='ro'?'Recunoașterea vocală nu e disponibilă':'Speech recognition unavailable');
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    toast(lang==='ro'?'Browser incompatibil':'Browser not supported');
     return;
   }
-  // clear previous recording
-  if(recUrl){URL.revokeObjectURL(recUrl);recUrl=null;}
-  mchunks=[];
-  setBtnIcon();
 
-  // start MediaRecorder for playback (best-effort)
+  clearRec();
+  speaking=true;
+  setUiListening(true);
+
+  // Cerere microfon unică → stream partajat cu MediaRecorder + recog
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
+  catch(e){
+    toast(lang==='ro'?'Permisiune microfon refuzată':'Microphone permission denied');
+    speaking=false;setUiListening(false);return;
+  }
+
+  // MediaRecorder pe stream-ul obținut
+  const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg']
+    .find(t=>MediaRecorder.isTypeSupported(t))||'';
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    mrec=new MediaRecorder(stream);
-    mrec.ondataavailable=e=>{if(e.data.size>0)mchunks.push(e.data);};
+    mrec=new MediaRecorder(stream, mime?{mimeType:mime}:{});
+    mrec.ondataavailable=e=>{if(e.data&&e.data.size>0)mchunks.push(e.data);};
     mrec.onstop=()=>{
-      recUrl=URL.createObjectURL(new Blob(mchunks,{type:'audio/webm'}));
       stream.getTracks().forEach(t=>t.stop());
-      setBtnIcon();
+      if(mchunks.length){
+        recUrl=URL.createObjectURL(new Blob(mchunks,{type:mrec.mimeType||'audio/webm'}));
+        setBtnIcon();
+      }
     };
-    mrec.start();
+    mrec.start(200); // fragment la 200ms — garantăm date chiar și pentru replici scurte
   }catch(e){mrec=null;}
 
-  speaking=true;
-  document.getElementById('bS').classList.add('on');
-  document.getElementById('bS').textContent='⏹';
-  document.getElementById('wf').classList.add('on');
-  document.getElementById('sh').textContent=lang==='ro'?'ascultând…':'listening…';
+  // SpeechRecognition — folosește intern același microfon (permisiunea e deja acordată)
+  if(!recog){
+    recog=new SR();
+    recog.lang='ko-KR';
+    recog.continuous=false;
+    recog.interimResults=false;
+    recog.onresult=e=>{finishRec();evaluate(e.results[0][0].transcript);};
+    recog.onend=()=>stopUi();
+    recog.onerror=()=>{finishRec();stopUi();toast(lang==='ro'?'Eroare recunoaștere':'Recognition error');};
+  }
   try{recog.start();}catch(e){}
 }
 
 function stopMic(){
   speaking=false;
-  if(mrec&&mrec.state!=='inactive'){try{mrec.stop();}catch(e){}}
+  finishRec();
+  try{if(recog)recog.stop();}catch(e){}
+  stopUi();
+}
+
+function stopUi(){
+  speaking=false;
   document.getElementById('bS').classList.remove('on');
   document.getElementById('bS').textContent='🎙';
   document.getElementById('wf').classList.remove('on');
   document.getElementById('sh').textContent=lang==='ro'?'atingeți pentru a vorbi':'tap to speak';
-  try{recog.stop();}catch(e){}
 }
 
-// update 🔊 icon to signal recording available
+function setUiListening(on){
+  document.getElementById('bS').classList.toggle('on',on);
+  document.getElementById('bS').textContent=on?'⏹':'🎙';
+  document.getElementById('wf').classList.toggle('on',on);
+  document.getElementById('sh').textContent=on
+    ?(lang==='ro'?'ascultând…':'listening…')
+    :(lang==='ro'?'atingeți pentru a vorbi':'tap to speak');
+}
+
 function setBtnIcon(){
   document.getElementById('bL').textContent=recUrl?'▶':'🔊';
 }
@@ -915,12 +945,11 @@ document.getElementById('mf').addEventListener('mouseleave',()=>{
 function bind(){
   document.getElementById('bL').addEventListener('click',()=>{
     if(recUrl){
-      // play back user's own recording
       if(recAudio){recAudio.pause();recAudio=null;}
       recAudio=new Audio(recUrl);
-      recAudio.play();
+      recAudio.onerror=()=>toast(lang==='ro'?'Eroare redare audio':'Playback error');
+      recAudio.play().catch(()=>toast(lang==='ro'?'Eroare redare audio':'Playback error'));
     } else {
-      // no recording yet — play TTS as reference
       const item=items()[idx];
       if(item) speakKo(item.k);
     }
@@ -951,6 +980,7 @@ function bind(){
       topik=parseInt(d.dataset.t);
       idx=0;
       const arr=items();
+      clearRec();
       if(arr.length){
         const f=document.getElementById('mf');
         f.classList.add('out');
