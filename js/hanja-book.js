@@ -1289,12 +1289,27 @@ function _toggleTheme() {
   }
 }
 
-/* ── LANGUAGE ──────────────────────────────────────────── */
+/* ── LANGUAGE PICKER ───────────────────────────────────── */
+function _syncLangBtn() {
+  var lb = document.getElementById('langBtn');
+  if (lb) lb.textContent = lang;
+  document.getElementById('pickRo').classList.toggle('active', lang === 'ro');
+  document.getElementById('pickEn').classList.toggle('active', lang === 'en');
+}
+
+function _openLangPicker() {
+  document.getElementById('langPicker').classList.add('open');
+}
+
+function _closeLangPicker() {
+  document.getElementById('langPicker').classList.remove('open');
+}
+
 function _setLang(l) {
   lang = l;
   localStorage.setItem('RK_LANG', l);
-  document.getElementById('btnRo').classList.toggle('active', l === 'ro');
-  document.getElementById('btnEn').classList.toggle('active', l === 'en');
+  _syncLangBtn();
+  _closeLangPicker();
   render(false);
 }
 
@@ -1320,12 +1335,19 @@ function _markLearned() {
 /* ── BOOT ──────────────────────────────────────────────── */
 (function boot() {
   _applyTheme();
+  _syncLangBtn();
 
-  document.getElementById('btnRo').classList.toggle('active', lang === 'ro');
-  document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+  document.getElementById('langBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    var picker = document.getElementById('langPicker');
+    picker.classList.contains('open') ? _closeLangPicker() : _openLangPicker();
+  });
+  document.getElementById('pickRo').addEventListener('click', function() { _setLang('ro'); });
+  document.getElementById('pickEn').addEventListener('click', function() { _setLang('en'); });
+  document.addEventListener('pointerdown', function(e) {
+    if (!e.target.closest('#langWrap')) _closeLangPicker();
+  });
 
-  document.getElementById('btnRo').addEventListener('click', function() { _setLang('ro'); });
-  document.getElementById('btnEn').addEventListener('click', function() { _setLang('en'); });
   document.getElementById('themeBtn').addEventListener('click', _toggleTheme);
 
   document.getElementById('navPrev').addEventListener('click', function() { _navigate(-1); });
