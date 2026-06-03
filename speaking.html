@@ -791,7 +791,7 @@ function finishRec(){
 async function startMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){
-    toast(lang==='ro'?'Browser incompatibil':'Browser not supported');
+    toast(lang==='ro'?'Browser incompatibil (folosiți Chrome)':'Use Chrome for speech support');
     return;
   }
 
@@ -799,41 +799,41 @@ async function startMic(){
   speaking=true;
   setUiListening(true);
 
-  // Cerere microfon unică → stream partajat cu MediaRecorder + recog
-  let stream;
-  try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
-  catch(e){
-    toast(lang==='ro'?'Permisiune microfon refuzată':'Microphone permission denied');
-    speaking=false;setUiListening(false);return;
-  }
+  // 1. SpeechRecognition pornește primul — obține microfonul fără conflicte
+  recog=new SR();
+  recog.lang='ko-KR';
+  recog.continuous=false;
+  recog.interimResults=false;
+  recog.onresult=e=>{finishRec();evaluate(e.results[0][0].transcript);};
+  recog.onend=()=>stopUi();
+  recog.onerror=e=>{
+    finishRec();stopUi();
+    // 'no-speech' și 'aborted' sunt non-erori — nu afișa toast
+    if(e.error!=='no-speech'&&e.error!=='aborted'){
+      toast((lang==='ro'?'Eroare: ':'Error: ')+e.error);
+    }
+  };
+  try{recog.start();}catch(e){stopUi();return;}
 
-  // MediaRecorder pe stream-ul obținut
-  const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg']
-    .find(t=>MediaRecorder.isTypeSupported(t))||'';
-  try{
-    mrec=new MediaRecorder(stream, mime?{mimeType:mime}:{});
-    mrec.ondataavailable=e=>{if(e.data&&e.data.size>0)mchunks.push(e.data);};
-    mrec.onstop=()=>{
-      stream.getTracks().forEach(t=>t.stop());
-      if(mchunks.length){
-        recUrl=URL.createObjectURL(new Blob(mchunks,{type:mrec.mimeType||'audio/webm'}));
-        setBtnIcon();
-      }
-    };
-    mrec.start(200); // fragment la 200ms — garantăm date chiar și pentru replici scurte
-  }catch(e){mrec=null;}
-
-  // SpeechRecognition — folosește intern același microfon (permisiunea e deja acordată)
-  if(!recog){
-    recog=new SR();
-    recog.lang='ko-KR';
-    recog.continuous=false;
-    recog.interimResults=false;
-    recog.onresult=e=>{finishRec();evaluate(e.results[0][0].transcript);};
-    recog.onend=()=>stopUi();
-    recog.onerror=()=>{finishRec();stopUi();toast(lang==='ro'?'Eroare recunoaștere':'Recognition error');};
-  }
-  try{recog.start();}catch(e){}
+  // 2. MediaRecorder pornește după (~150ms) — Chrome permite al doilea consumer
+  setTimeout(async()=>{
+    if(!speaking) return; // recunoașterea s-a terminat deja
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg']
+        .find(t=>MediaRecorder.isTypeSupported(t))||'';
+      mrec=new MediaRecorder(stream,mime?{mimeType:mime}:{});
+      mrec.ondataavailable=e=>{if(e.data&&e.data.size>0)mchunks.push(e.data);};
+      mrec.onstop=()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        if(mchunks.length){
+          recUrl=URL.createObjectURL(new Blob(mchunks,{type:mrec.mimeType||'audio/webm'}));
+          setBtnIcon();
+        }
+      };
+      mrec.start(200);
+    }catch(e){mrec=null;} // înregistrare indisponibilă, recunoașterea continuă
+  },150);
 }
 
 function stopMic(){
