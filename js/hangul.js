@@ -909,29 +909,26 @@ function openWriting(item) {
 // ── LANGUAGE ──────────────────────────────────────────────────
 function applyLang() {
   const t = T[lang];
-  document.getElementById('mrsBrandSub').textContent    = t.paradigmSub;
-  document.getElementById('mrsZoneCons').textContent    = t.zoneCons;
-  document.getElementById('mrsZoneTensed').textContent  = t.zoneTensed;
-  document.getElementById('mrsZoneVowels').textContent  = t.zoneVowels;
-  document.getElementById('mrsLangBtn').textContent     = lang.toUpperCase();
-  if (document.getElementById('mrsRules').classList.contains('open')) buildRules();
-  if (document.getElementById('mrsSylPanel').classList.contains('open')) buildSylPanel();
-  if (document.getElementById('mrsQuiz').classList.contains('open')) {
-    document.getElementById('mrsQPrompt').textContent = t.qMode;
+  const el = id => document.getElementById(id);
+  if (el('mrsZoneCons'))   el('mrsZoneCons').textContent   = t.zoneCons;
+  if (el('mrsZoneTensed')) el('mrsZoneTensed').textContent = t.zoneTensed;
+  if (el('mrsZoneVowels')) el('mrsZoneVowels').textContent = t.zoneVowels;
+  if (el('mrsRules') && el('mrsRules').classList.contains('open')) buildRules();
+  if (el('mrsSylPanel') && el('mrsSylPanel').classList.contains('open')) buildSylPanel();
+  if (el('mrsQuiz') && el('mrsQuiz').classList.contains('open') && el('mrsQPrompt')) {
+    el('mrsQPrompt').textContent = t.qMode;
   }
   if (currentItem) {
     buildVortexNodes(currentItem);
     buildEchoPanel(currentItem);
-    document.getElementById('mrsVAudioLbl').textContent = t.vHear;
-    document.getElementById('mrsVWriteLbl').textContent = t.vWrite;
+    if (el('mrsVAudioLbl')) el('mrsVAudioLbl').textContent = t.vHear;
+    if (el('mrsVWriteLbl')) el('mrsVWriteLbl').textContent = t.vWrite;
   }
 }
 
 // ── MODE CONTROLS ─────────────────────────────────────────────
 function setMode(m) {
   mode = m;
-  document.getElementById('mrsExploreBtn').classList.toggle('mrs-ctrl-active', m === 'explore');
-  document.getElementById('mrsQuizBtn').classList.toggle('mrs-ctrl-active',    m === 'quiz');
 }
 
 // ── INIT ──────────────────────────────────────────────────────
@@ -941,74 +938,41 @@ function init() {
   buildRules();
   buildSylPanel();
 
+  const el = id => document.getElementById(id);
+
   // Vortex events
-  document.getElementById('mrsVClose').onclick  = closeVortex;
-  document.getElementById('mrsVAudio').onclick  = () => currentItem && speakKo(currentItem.speak);
-  document.getElementById('mrsVWrite').onclick  = () => {
+  el('mrsVClose').onclick = closeVortex;
+  el('mrsVAudio').onclick = () => currentItem && speakKo(currentItem.speak);
+  el('mrsVWrite').onclick = () => {
     if (!currentItem) return;
     closeVortex();
     openWriting(currentItem);
   };
-
-  // Backdrop close
-  document.getElementById('mrsVortex').addEventListener('click', e => {
-    if (e.target === document.getElementById('mrsVortex')) closeVortex();
+  el('mrsVortex').addEventListener('click', e => {
+    if (e.target === el('mrsVortex')) closeVortex();
   });
 
-  // Quiz events
-  document.getElementById('mrsQuizBtn').onclick = () => {
-    document.getElementById('mrsQuiz').classList.add('open');
-    setMode('quiz');
-    initQuiz();
-  };
-  document.getElementById('mrsQExit').onclick = () => {
-    document.getElementById('mrsQuiz').classList.remove('open');
+  // Quiz exit
+  el('mrsQExit').onclick = () => {
+    el('mrsQuiz').classList.remove('open');
     setMode('explore');
   };
 
-  // Explore mode
-  document.getElementById('mrsExploreBtn').onclick = () => {
-    document.getElementById('mrsQuiz').classList.remove('open');
-    setMode('explore');
-  };
+  // Rules close & search
+  el('mrsRulesClose').onclick = () => el('mrsRules').classList.remove('open');
+  el('mrsRulesSearch').oninput = e => buildRules(e.target.value);
 
-  // Rules stream
-  document.getElementById('mrsRulesBtn').onclick = () => {
-    document.getElementById('mrsRules').classList.add('open');
-  };
-  document.getElementById('mrsRulesClose').onclick = () => {
-    document.getElementById('mrsRules').classList.remove('open');
-  };
-  document.getElementById('mrsRulesSearch').oninput = e => buildRules(e.target.value);
-
-  // Syllable panel
-  document.getElementById('mrsSylBtn').onclick = () => {
-    buildSylPanel();
-    document.getElementById('mrsSylPanel').classList.add('open');
-  };
-  document.getElementById('mrsSylClose').onclick = () => {
-    document.getElementById('mrsSylPanel').classList.remove('open');
-  };
+  // Syllable close
+  el('mrsSylClose').onclick = () => el('mrsSylPanel').classList.remove('open');
 
   // Writing close
-  document.getElementById('mrsWriteClose').onclick = () => {
-    document.getElementById('mrsWriteOverlay').classList.remove('open');
-  };
-  document.getElementById('mrsWriteOverlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('mrsWriteOverlay')) {
-      document.getElementById('mrsWriteOverlay').classList.remove('open');
-    }
+  el('mrsWriteClose').onclick = () => el('mrsWriteOverlay').classList.remove('open');
+  el('mrsWriteOverlay').addEventListener('click', e => {
+    if (e.target === el('mrsWriteOverlay')) el('mrsWriteOverlay').classList.remove('open');
   });
 
-  // Language toggle
-  document.getElementById('mrsLangBtn').onclick = () => {
-    lang = (lang === 'ro') ? 'en' : 'ro';
-    try { RKLang && typeof RKLang.set === 'function' && RKLang.set(lang); } catch(e) {}
-    applyLang();
-  };
-
-  // Dark/light toggle
-  document.getElementById('mrsThemeBtn').onclick = () => {
+  // Night mode toggle (only persistent button)
+  el('mrsThemeBtn').onclick = () => {
     document.body.classList.toggle('dark-mode');
     try {
       const isDark = document.body.classList.contains('dark-mode');
@@ -1020,13 +984,14 @@ function init() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       closeVortex();
-      document.getElementById('mrsWriteOverlay').classList.remove('open');
-      document.getElementById('mrsSylPanel').classList.remove('open');
-      document.getElementById('mrsRules').classList.remove('open');
+      el('mrsWriteOverlay').classList.remove('open');
+      el('mrsSylPanel').classList.remove('open');
+      el('mrsRules').classList.remove('open');
+      el('mrsQuiz').classList.remove('open');
     }
   });
 
-  // Initialize from existing lang-picker if available
+  // Initialize language from existing lang-picker if available
   try {
     if (typeof RKLang !== 'undefined') {
       lang = RKLang.get() || 'ro';
@@ -1036,11 +1001,7 @@ function init() {
 
   applyLang();
 
-  // Resize handler
-  window.addEventListener('resize', () => {
-    buildCosmos();
-    initBg();
-  });
+  window.addEventListener('resize', () => { buildCosmos(); initBg(); });
 }
 
 // Start when DOM is ready
