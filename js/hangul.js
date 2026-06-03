@@ -315,7 +315,7 @@ const T = {
     nodeExamples: "Silabe", nodeFamily: "Familie fonetică",
     nodeBatchim: "Batchim", nodeHarmony: "Armonie vocalicǎ",
     echoLabel: "Rezonanțǎ",
-    vHear: "Ascultǎ", vWrite: "Scrie",
+    vWrite: "Scrie",
     qMode: "Ce sunet face?",
     qCorrect: "✦ Corect!", qWrong: ans => `✕ Rǎspuns corect: ${ans}`,
     qNext: "Următor →", qRestart: "Reîncepe ◎",
@@ -334,7 +334,7 @@ const T = {
     nodeExamples: "Syllables", nodeFamily: "Phonological family",
     nodeBatchim: "Batchim", nodeHarmony: "Vowel harmony",
     echoLabel: "Resonating",
-    vHear: "Hear", vWrite: "Write",
+    vWrite: "Write",
     qMode: "What sound?",
     qCorrect: "✦ Correct!", qWrong: ans => `✕ Answer: ${ans}`,
     qNext: "Next →", qRestart: "Restart ◎",
@@ -548,13 +548,13 @@ function openVortex(item) {
                     isComp                 ? t.typeVowelComp : t.typeVowel;
   document.getElementById('mrsVType').textContent = typeLabel;
 
-  // Action button labels
-  document.getElementById('mrsVAudioLbl').textContent = t.vHear;
   document.getElementById('mrsVWriteLbl').textContent = t.vWrite;
 
   // Apply type-specific colour class (CSS handles animation colours)
   const vortex = document.getElementById('mrsVortex');
   vortex.className = `mrs-vortex open type-${item.type}`;
+
+  speakKo(item.speak);
 
   buildVortexNodes(item);
   buildEchoPanel(item);
@@ -932,7 +932,6 @@ function applyLang() {
   if (currentItem) {
     buildVortexNodes(currentItem);
     buildEchoPanel(currentItem);
-    if (el('mrsVAudioLbl')) el('mrsVAudioLbl').textContent = t.vHear;
     if (el('mrsVWriteLbl')) el('mrsVWriteLbl').textContent = t.vWrite;
   }
 }
@@ -953,7 +952,6 @@ function init() {
 
   // Vortex events
   el('mrsVClose').onclick = closeVortex;
-  el('mrsVAudio').onclick = () => currentItem && speakKo(currentItem.speak);
   el('mrsVWrite').onclick = () => {
     if (!currentItem) return;
     closeVortex();
