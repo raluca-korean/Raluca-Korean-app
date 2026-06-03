@@ -180,6 +180,32 @@ async function getWordImage(key){
 function loadCardImage(word){ getWordImage(imgKey(word)); }
 function preloadNext(idx){ if(idx < deck.length) getWordImage(imgKey(deck[idx])); }
 
+// ── Fit Korean text inside circular nucleus ───────────────────
+function fitNucleusText() {
+  const core = document.getElementById("crfCore");
+  const koEl = document.getElementById("crfKorean");
+  if (!core || !koEl) return;
+
+  // Usable width: ~70% of nucleus diameter (accounts for circle geometry + padding)
+  const maxWidth = core.offsetWidth * 0.70;
+
+  // Reset to CSS default so clamp() recalculates
+  koEl.style.fontSize = "";
+
+  // If it already fits, nothing to do
+  if (koEl.scrollWidth <= maxWidth) return;
+
+  // Binary-search the right font size (px) between 20 and current computed size
+  let lo = 20;
+  let hi = Math.round(parseFloat(getComputedStyle(koEl).fontSize));
+  while (hi - lo > 1) {
+    const mid = Math.round((lo + hi) / 2);
+    koEl.style.fontSize = mid + "px";
+    if (koEl.scrollWidth <= maxWidth) lo = mid; else hi = mid;
+  }
+  koEl.style.fontSize = lo + "px";
+}
+
 // ── Deck building ────────────────────────────────────────────
 function getPool(){
   if(!filterFav) return WORDS;
@@ -399,6 +425,9 @@ function renderFC() {
   }
   flipped = false;
   _answerLocked = false;
+
+  // Fit text after layout is ready
+  requestAnimationFrame(fitNucleusText);
 
   loadCardImage(word);
   preloadNext(cardIndex + 1);
