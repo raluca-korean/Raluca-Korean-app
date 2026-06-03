@@ -574,6 +574,10 @@ let idx   = 0;
 let score = {};   // idx → correct count
 let recog = null;
 let speaking = false;
+let mrec  = null;   // MediaRecorder instance
+let mchunks = [];   // recorded audio chunks
+let recUrl  = null; // blob URL of last recording
+let recAudio= null; // Audio element for playback
 
 // ── SATELLITE POSITIONS (angle°, distance px) ──────────────
 const SATS = {
@@ -664,6 +668,9 @@ function render(item, i){
 }
 
 function next(animate){
+  // clear recording when moving to next item
+  if(recUrl){URL.revokeObjectURL(recUrl);recUrl=null;}
+  mchunks=[];setBtnIcon();
   const arr=items();
   const ni=(idx+1)%arr.length;
   if(animate){
@@ -781,11 +788,29 @@ function initSpeech(){
   };
 }
 
-function startMic(){
+async function startMic(){
   if(!recog){
     toast(lang==='ro'?'Recunoașterea vocală nu e disponibilă':'Speech recognition unavailable');
     return;
   }
+  // clear previous recording
+  if(recUrl){URL.revokeObjectURL(recUrl);recUrl=null;}
+  mchunks=[];
+  setBtnIcon();
+
+  // start MediaRecorder for playback (best-effort)
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mrec=new MediaRecorder(stream);
+    mrec.ondataavailable=e=>{if(e.data.size>0)mchunks.push(e.data);};
+    mrec.onstop=()=>{
+      recUrl=URL.createObjectURL(new Blob(mchunks,{type:'audio/webm'}));
+      stream.getTracks().forEach(t=>t.stop());
+      setBtnIcon();
+    };
+    mrec.start();
+  }catch(e){mrec=null;}
+
   speaking=true;
   document.getElementById('bS').classList.add('on');
   document.getElementById('bS').textContent='⏹';
@@ -796,11 +821,17 @@ function startMic(){
 
 function stopMic(){
   speaking=false;
+  if(mrec&&mrec.state!=='inactive'){try{mrec.stop();}catch(e){}}
   document.getElementById('bS').classList.remove('on');
   document.getElementById('bS').textContent='🎙';
   document.getElementById('wf').classList.remove('on');
   document.getElementById('sh').textContent=lang==='ro'?'atingeți pentru a vorbi':'tap to speak';
   try{recog.stop();}catch(e){}
+}
+
+// update 🔊 icon to signal recording available
+function setBtnIcon(){
+  document.getElementById('bL').textContent=recUrl?'▶':'🔊';
 }
 
 function evaluate(transcript){
@@ -883,8 +914,16 @@ document.getElementById('mf').addEventListener('mouseleave',()=>{
 // ── BIND CONTROLS ─────────────────────────────────────────
 function bind(){
   document.getElementById('bL').addEventListener('click',()=>{
-    const item=items()[idx];
-    if(item) speakKo(item.k);
+    if(recUrl){
+      // play back user's own recording
+      if(recAudio){recAudio.pause();recAudio=null;}
+      recAudio=new Audio(recUrl);
+      recAudio.play();
+    } else {
+      // no recording yet — play TTS as reference
+      const item=items()[idx];
+      if(item) speakKo(item.k);
+    }
   });
   document.getElementById('bS').addEventListener('click',()=>{
     speaking?stopMic():startMic();
