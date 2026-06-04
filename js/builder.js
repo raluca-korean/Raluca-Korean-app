@@ -1669,7 +1669,8 @@
     return conj ? conj.present(verb.ko) : (verb.final || verb.ko || '');
   }
 
-  function buildClauseKorean(clause){
+  function buildClauseKorean(clause, opts){
+    var skipVerb = opts && opts.skipVerb;
     var parts = [];
 
     var topic = itemOf(clause, 'topic');
@@ -1719,9 +1720,10 @@
     if(object1 && object1.ko) parts.push(object1.ko);
     if(object2 && object2.ko) parts.push(object2.ko);
     mannerAdvs.forEach(function(ko){ parts.push(ko); });
-    if(verbKo) parts.push(verbKo);
+    if(!skipVerb && verbKo) parts.push(verbKo);
 
-    return cleanSentenceText(parts.join(' '));
+    var result = cleanSentenceText(parts.join(' '));
+    return skipVerb ? result + ',' : result;
   }
 
   function buildClauseTranslation(clause){
@@ -1785,9 +1787,28 @@
 
   function buildFullOutput(){
     var ko = [];
+    var n = state.clauses.length;
 
-    for(var i=0;i<state.clauses.length;i++){
-      var lineKo = buildClauseKorean(state.clauses[i]);
+    for(var i = 0; i < n; i++){
+      var clause = state.clauses[i];
+      var nextClause = state.clauses[i + 1];
+
+      // Verb gapping: when this clause uses seq(고) and the next clause
+      // inherited the same verb, drop the verb from this clause and use
+      // a comma separator instead.
+      // "아침에 시장에서 가고 저녁에 식당에서 가요"
+      //   → "아침에 시장에서, 저녁에 식당에서 가요"
+      var doGap = false;
+      if(nextClause && nextClause.__inheritedVerb){
+        var connItem = itemOf(clause, 'connector');
+        var verbItem = itemOf(clause, 'verb');
+        var nextVerbItem = itemOf(nextClause, 'verb');
+        doGap = connItem && connItem.key === 'seq' &&
+                verbItem && nextVerbItem &&
+                verbItem.ko === nextVerbItem.ko;
+      }
+
+      var lineKo = buildClauseKorean(clause, doGap ? { skipVerb: true } : null);
       if(lineKo) ko.push(lineKo);
     }
 
@@ -2490,6 +2511,7 @@
         if(connItem) setFieldItem(clause, 'connector', normalizeItem(connItem, 'connector', connIdx));
       }
 
+      if(cd.inheritVerb) clause.__inheritedVerb = true;
       newClauses.push(clause);
     }
 
