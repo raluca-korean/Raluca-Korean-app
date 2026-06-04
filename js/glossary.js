@@ -501,7 +501,7 @@ function initCanvas() {
   function resize() {
     cvs.width  = window.innerWidth;
     cvs.height = window.innerHeight;
-    const n = Math.min(Math.floor(cvs.width * cvs.height / 13000), 110);
+    const n = Math.min(Math.floor(cvs.width * cvs.height / 28000), 50);
     pts = Array.from({ length: n }, () => ({
       x:  Math.random() * cvs.width,
       y:  Math.random() * cvs.height,
@@ -514,9 +514,11 @@ function initCanvas() {
   }
 
   let tick = 0;
+  let frameCount = 0;
 
   function frame() {
     tick += 0.004;
+    frameCount++;
     const dark = document.body.classList.contains("dark-mode");
 
     ctx.clearRect(0, 0, cvs.width, cvs.height);
@@ -559,20 +561,22 @@ function initCanvas() {
       ctx.fill();
     });
 
-    // Constellation lines between nearby particles
-    const lc = dark ? "rgba(167,139,250," : "rgba(124,58,237,";
-    for (let i = 0; i < pts.length - 1; i++) {
-      for (let j = i + 1; j < pts.length; j++) {
-        const dx = pts[i].x - pts[j].x;
-        const dy = pts[i].y - pts[j].y;
-        const d  = Math.sqrt(dx * dx + dy * dy);
-        if (d < 88) {
-          ctx.beginPath();
-          ctx.moveTo(pts[i].x, pts[i].y);
-          ctx.lineTo(pts[j].x, pts[j].y);
-          ctx.strokeStyle = lc + (1 - d / 88) * 0.09 + ")";
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
+    // Constellation lines between nearby particles — redrawn every 3 frames
+    if (frameCount % 3 === 0) {
+      const lc = dark ? "rgba(167,139,250," : "rgba(124,58,237,";
+      for (let i = 0; i < pts.length - 1; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[i].x - pts[j].x;
+          const dy = pts[i].y - pts[j].y;
+          const d  = Math.sqrt(dx * dx + dy * dy);
+          if (d < 60) {
+            ctx.beginPath();
+            ctx.moveTo(pts[i].x, pts[i].y);
+            ctx.lineTo(pts[j].x, pts[j].y);
+            ctx.strokeStyle = lc + (1 - d / 60) * 0.09 + ")";
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
         }
       }
     }
