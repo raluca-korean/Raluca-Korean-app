@@ -25,10 +25,8 @@ window.RKLang = (function () {
   }
 
   function _inject(container) {
-    if (!container.hasAttribute("data-no-home")) {
-      container.setAttribute("style",
-        "display:flex;gap:8px;align-items:center;flex-shrink:0");
-    }
+    container.setAttribute("style",
+      "display:flex;gap:8px;align-items:center;flex-shrink:0");
     var home = container.hasAttribute("data-no-home") ? "" :
       '<a href="./index.html" class="homeBtn" aria-label="Acasă">' + HOME_ICON + '</a>';
     container.innerHTML =
@@ -39,7 +37,8 @@ window.RKLang = (function () {
           '<button type="button" id="pickRo">ro</button>' +
           '<button type="button" id="pickEn">en</button>' +
         '</div>' +
-      '</div>';
+      '</div>' +
+      '<button type="button" id="darkToggle" aria-label="Toggle dark mode"></button>';
   }
 
   function _syncBtns(lang) {

@@ -8,49 +8,35 @@
     }
   }
 
-  function setBtn(btn, isDark){
-    btn.innerHTML = isDark ? SVG_MOON : SVG_SUN;
-  }
-
-  function addToggle(){
-    var isDark = document.body.classList.contains('dark-mode');
-    var btn = document.createElement('button');
-    btn.id   = 'darkToggle';
-    btn.type = 'button';
-    btn.setAttribute('aria-label', 'Toggle dark mode');
-    btn.style.cssText = [
-      'position:fixed',
-      'bottom:20px',
-      'left:20px',
-      'width:44px',
-      'height:44px',
-      'border-radius:999px',
-      'padding:0',
-      'z-index:9999',
-      'cursor:pointer',
-      'display:grid',
-      'place-items:center'
-    ].join(';');
-    setBtn(btn, isDark);
-
+  function wireBtn(btn){
+    btn.innerHTML = document.body.classList.contains('dark-mode') ? SVG_MOON : SVG_SUN;
     btn.addEventListener('click', function(){
       document.documentElement.style.setProperty('--rk-transition-dur','0.25s');
       var nowDark = document.body.classList.toggle('dark-mode');
       localStorage.setItem('RK_THEME', nowDark ? 'dark' : 'light');
-      setBtn(btn, nowDark);
+      btn.innerHTML = nowDark ? SVG_MOON : SVG_SUN;
       setTimeout(function(){ document.documentElement.style.removeProperty('--rk-transition-dur'); }, 300);
     });
+  }
 
-    document.body.appendChild(btn);
+  function setupToggle(){
+    var btn = document.getElementById('darkToggle');
+    if(btn){ wireBtn(btn); return; }
+    // darkToggle e injectat de lang-picker.js; așteptăm să apară în DOM
+    var obs = new MutationObserver(function(){
+      var b = document.getElementById('darkToggle');
+      if(b){ obs.disconnect(); wireBtn(b); }
+    });
+    obs.observe(document.documentElement, {childList:true, subtree:true});
   }
 
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', function(){
       applyTheme();
-      addToggle();
+      setupToggle();
     });
   } else {
     applyTheme();
-    addToggle();
+    setupToggle();
   }
 })();
