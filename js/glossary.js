@@ -158,6 +158,7 @@ function getMeaning(w) { return currentLang === "ro" ? w.ro : w.en; }
 function getCats(w)    { return currentLang === "ro" ? w.categoriesRo : w.categoriesEn; }
 function shuffle(a)    { return [...a].sort(() => Math.random() - 0.5); }
 function esc(s)        { return s.replace(/'/g, "\\'"); }
+function sanitizeHTML(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 function getCatColor(w) {
   const cats = getCats(w);
@@ -212,15 +213,6 @@ function getPos(i, total) {
   };
 }
 
-// Periphery position for dimmed (non-matching) nodes
-function getPeripheryPos(i, total) {
-  const φ = (i / Math.max(total, 1)) * Math.PI * 2;
-  const r = 0.50 + ((i * 7) % 11) * 0.004;
-  return {
-    x: 0.5 + r * Math.cos(φ) * 0.95,
-    y: 0.5 + r * Math.sin(φ) * 0.88
-  };
-}
 
 // ── Node pool ──
 const nodeMap = new Map(); // ko → DOM element
@@ -240,7 +232,7 @@ function createNode(word) {
   el.innerHTML =
     `<span class="nl-node-dot" style="background:${color}"></span>` +
     `<span class="nl-node-ko"  style="color:${color}">${word.ko}</span>` +
-    `<span class="nl-node-tr">${getMeaning(word)}</span>`;
+    `<span class="nl-node-tr">${sanitizeHTML(getMeaning(word))}</span>`;
 
   el.classList.toggle("nl-fav",     isFav(word.ko));
   el.classList.toggle("nl-learned", isLearned(word.ko) && !isFav(word.ko));
@@ -370,6 +362,7 @@ function closeLens() {
   nlLens.classList.remove("nl-open");
   nlLens.setAttribute("aria-hidden", "true");
   listEl.classList.remove("nl-shifted");
+  dailyCard.classList.remove("nl-rev-gone");
   // Restore positions
   render();
 }
@@ -383,12 +376,9 @@ function _attractRelated(word) {
   const fx = parseFloat(focusEl.style.left) / 100;
   const fy = parseFloat(focusEl.style.top)  / 100;
 
-  // Only attract visible (non-dim) related words
   const related = WORDS.filter(w => {
     if (w.ko === word.ko) return false;
     if (!nodeMap.has(w.ko)) return false;
-    const nd = nodeMap.get(w.ko);
-    if (nd.classList.contains("nl-dim")) return false;
     return getCats(w).some(c => wCats.includes(c));
   }).slice(0, 16);
 
@@ -418,7 +408,7 @@ function _renderLens(word) {
     `<button class="nl-lens-x" onclick="closeLens()" aria-label="${t("close")}">${t("close")}</button>` +
 
     `<div class="nl-lens-ko" style="color:${color}">${word.ko}</div>` +
-    `<div class="nl-lens-meaning">${getMeaning(word)}</div>` +
+    `<div class="nl-lens-meaning">${sanitizeHTML(getMeaning(word))}</div>` +
 
     `<div class="nl-lens-cats">${cats.map(c => {
       const k = LABEL_KEY[c]; const cc = (k && CAT_COLORS[k]) || "#7c3aed";
@@ -483,7 +473,7 @@ function renderDailyView() {
       `<div class="nl-rev-word" onclick="focusWord('${esc(w.ko)}')">` +
         `<div>` +
           `<div class="nl-rev-ko" style="color:${getCatColor(w)}">${w.ko}</div>` +
-          `<div class="nl-rev-tr">${getMeaning(w)}</div>` +
+          `<div class="nl-rev-tr">${sanitizeHTML(getMeaning(w))}</div>` +
         `</div>` +
         `<span style="margin-left:auto;font-size:13px;cursor:pointer;opacity:${isFav(w.ko) ? 1 : 0.3};flex-shrink:0" onclick="event.stopPropagation();toggleFav('${esc(w.ko)}')">${isFav(w.ko) ? "◆" : "◇"}</span>` +
       `</div>`
@@ -587,16 +577,22 @@ function initCanvas() {
       }
     }
 
-    requestAnimationFrame(frame);
+    rafId = requestAnimationFrame(frame);
   }
 
+  let rafId;
   resize();
   frame();
   window.addEventListener("resize", resize);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { cancelAnimationFrame(rafId); }
+    else                 { frame(); }
+  });
 }
 
 // ── Language switch ──
 function setLanguage(lang) {
+  closeLens();
   currentLang = lang;
   filterCat   = "";
   // Dissolve all nodes — they'll respawn with new language text
