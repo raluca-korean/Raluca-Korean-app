@@ -1706,13 +1706,18 @@
     }
     if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
     if(time && time.ko) parts.push(time.ko);
+    // Motion-to verbs (가다/오다/도착하다) take destination particle 에, not 에서
+    var MOTION_TO = { '가다': 1, '오다': 1, '도착하다': 1 };
+    var verbItem = itemOf(clause, 'verb');
+    var isMotionTo = verbItem && MOTION_TO[verbItem.ko];
     if(departure && departure.ko){
+      var depKo = isMotionTo ? departure.ko.replace(/에서$/, '에') : departure.ko;
       if(transit && transit.ko){
-        var depBase = departure.ko.replace(/에서$|에$/, '');
+        var depBase = depKo.replace(/에서$|에$/, '');
         var locConj = (window.Conjugation && window.Conjugation.hasBatchim(depBase)) ? '과' : '와';
         parts.push(depBase + locConj + ' ' + transit.ko);
       } else {
-        parts.push(departure.ko);
+        parts.push(depKo);
       }
     } else if(transit && transit.ko){
       parts.push(transit.ko);
