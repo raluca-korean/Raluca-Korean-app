@@ -22,7 +22,7 @@ let filterCat   = "";
 let filterFavs  = false;
 let focusedKo   = null;
 let currentPage = 1;
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 25;
 
 // ── Category data ──
 const CAT_COLORS = {
