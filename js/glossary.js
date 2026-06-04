@@ -139,14 +139,16 @@ function _syncNodeClasses(ko) {
 }
 
 // ── Speech ──
+let _speakTimer = null;
 function speakKO(text) {
   if (!text || !window.speechSynthesis) return;
+  clearTimeout(_speakTimer);
   speechSynthesis.cancel();
-  setTimeout(() => {
+  _speakTimer = setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "ko-KR"; u.rate = 0.9;
     speechSynthesis.speak(u);
-  }, 50);
+  }, 80);
 }
 
 function openYouGlish(w) {
@@ -467,7 +469,7 @@ function renderDailyView() {
       `<button class="nl-rev-x" onclick="document.getElementById('dailyCard').classList.add('nl-rev-gone')" aria-label="${t("close")}">${t("close")}</button>` +
     `</div>` +
     `<div class="nl-rev-words">${daily.map(w =>
-      `<div class="nl-rev-word" onclick="focusWord('${esc(w.ko)}', false)">` +
+      `<div class="nl-rev-word" onclick="focusWord('${esc(w.ko)}')">` +
         `<div>` +
           `<div class="nl-rev-ko" style="color:${getCatColor(w)}">${w.ko}</div>` +
           `<div class="nl-rev-tr">${sanitizeHTML(getMeaning(w))}</div>` +
