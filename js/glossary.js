@@ -418,7 +418,6 @@ function _renderLens(word) {
     `<div class="nl-lens-acts">` +
       `<button class="nl-act${isFav(word.ko) ? " nl-act-fav" : ""}" onclick="toggleFav('${esc(word.ko)}')">${isFav(word.ko) ? "◆" : "◇"} ${t("favLbl")}</button>` +
       `<button class="nl-act${isLearned(word.ko) ? " nl-act-learn" : ""}" onclick="toggleLearned('${esc(word.ko)}')">${isLearned(word.ko) ? "✓" : "○"} ${t("learnLbl")}</button>` +
-      `<button class="nl-act" onclick="speakKO('${esc(word.ko)}')">${t("speak")}</button>` +
       `<button class="nl-act" onclick="openYouGlish('${esc(word.ko)}')">${t("youglish")}</button>` +
     `</div>` +
 
