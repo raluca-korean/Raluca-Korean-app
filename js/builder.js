@@ -2926,17 +2926,6 @@
     var _quizExitBtn = document.getElementById('quizExitBtn');
     if(_quizExitBtn) _quizExitBtn.addEventListener('click', exitQuizMode);
 
-    var _txtToggleBtn = document.getElementById('txtToggleBtn');
-    var _txtCollapsible = document.getElementById('txtCollapsible');
-    if(_txtToggleBtn && _txtCollapsible){
-      var _txtOpen = false;
-      _txtToggleBtn.addEventListener('click', function(){
-        _txtOpen = !_txtOpen;
-        _txtCollapsible.classList.toggle('open', _txtOpen);
-        _txtToggleBtn.textContent = _txtOpen ? '▲ Text' : '▼ Text';
-      });
-    }
-
     if(els.sentenceBox){
       els.sentenceBox.addEventListener('click', playCurrent);
       els.sentenceBox.addEventListener('keydown', function(e){
