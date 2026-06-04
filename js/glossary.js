@@ -479,12 +479,10 @@ function renderDailyView() {
       `</div>`
     ).join("")}</div>` +
     `<div class="nl-rev-acts">` +
-      `<button class="nl-rev-btn" onclick="playDaily()">${t("speak")}</button>` +
       `<button class="nl-rev-btn" onclick="refreshDaily()">${t("refresh")}</button>` +
     `</div>`;
 }
 
-function playDaily()    { daily.forEach((w, i) => setTimeout(() => speakKO(w.ko), i * 1200)); }
 function refreshDaily() { pickDaily(); renderDailyView(); }
 
 // ── Canvas — breathing nebula background ──
