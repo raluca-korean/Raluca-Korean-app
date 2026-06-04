@@ -9,9 +9,7 @@
   }
 
   function setBtn(btn, isDark){
-    btn.innerHTML  = isDark ? SVG_MOON : SVG_SUN;
-    btn.style.background = isDark ? 'rgba(28,4,50,.95)' : 'rgba(255,255,255,.92)';
-    btn.style.color      = isDark ? '#f5f5f7' : '#374151';
+    btn.innerHTML = isDark ? SVG_MOON : SVG_SUN;
   }
 
   function addToggle(){
@@ -30,9 +28,6 @@
       'padding:0',
       'z-index:9999',
       'cursor:pointer',
-      'border:none',
-      'box-shadow:0 2px 12px rgba(0,0,0,.22)',
-      'transition:transform .10s ease,background .20s ease,color .20s ease',
       'display:grid',
       'place-items:center'
     ].join(';');
