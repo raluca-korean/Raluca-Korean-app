@@ -71,11 +71,10 @@ window.RKLang = (function () {
     var timer = null;
 
     if (lb) {
-      lb.addEventListener("pointerdown", function () {
-        timer = setTimeout(function () { timer = null; _open(); }, 450);
+      lb.addEventListener("click", function () {
+        var p = document.getElementById("langPicker");
+        if (p) p.classList.contains("open") ? _close() : _open();
       });
-      lb.addEventListener("pointerup",    function () { clearTimeout(timer); timer = null; });
-      lb.addEventListener("pointerleave", function () { clearTimeout(timer); timer = null; });
     }
 
     function _pick(lang) {
