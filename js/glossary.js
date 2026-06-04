@@ -228,13 +228,16 @@ function _makeRow(word) {
   const el = document.createElement("div");
   el.className = "gls-row";
   el.dataset.ko = word.ko;
+  el.style.setProperty("--cat-color", color);
   el.innerHTML =
-    `<div class="gls-row-bar" style="background:${color}"></div>` +
     `<div class="gls-row-text">` +
       `<span class="gls-row-ko" style="color:${color}">${sanitizeHTML(word.ko)}</span>` +
       `<span class="gls-row-tr">${sanitizeHTML(getMeaning(word))}</span>` +
     `</div>` +
-    `<div class="gls-row-icons">${_iconsHTML(word.ko)}</div>`;
+    `<div class="gls-row-end">` +
+      `<span class="gls-row-dot" style="background:${color}"></span>` +
+      `<div class="gls-row-icons">${_iconsHTML(word.ko)}</div>` +
+    `</div>`;
   el.addEventListener("click", () => focusWord(word.ko));
   return el;
 }
