@@ -405,8 +405,6 @@ function _renderLens(word) {
   }).slice(0, 12);
 
   nlLensInner.innerHTML =
-    `<button class="nl-lens-x" onclick="closeLens()" aria-label="${t("close")}">${t("close")}</button>` +
-
     `<div class="nl-lens-ko" style="color:${color}">${word.ko}</div>` +
     `<div class="nl-lens-meaning">${sanitizeHTML(getMeaning(word))}</div>` +
 
