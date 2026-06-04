@@ -245,13 +245,28 @@
 
   function flattenVocab(data) {
     const seen = new Set();
-    const out = [];
+    const out  = [];
+
+    if (Array.isArray(data)) {
+      // New flat format: [{ko, ro, en, categories:[...]}]
+      for (const item of data) {
+        if (!item?.ko) continue;
+        for (const cat of (item.categories?.length ? item.categories : ['unknown'])) {
+          const key = item.ko + cat;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push({ ko: item.ko, ro: item.ro || '', en: item.en || '', cat });
+        }
+      }
+      return out;
+    }
+
+    // Old nested format: {cat: [{ko,ro,en}]}
     for (const cat of Object.keys(data)) {
       const arr = data[cat];
       if (!Array.isArray(arr)) continue;
       for (const item of arr) {
-        if (!item || typeof item !== 'object') continue;
-        if (!item.ko) continue;
+        if (!item?.ko) continue;
         if (seen.has(item.ko + cat)) continue;
         seen.add(item.ko + cat);
         out.push({ ko: item.ko, ro: item.ro || '', en: item.en || '', cat });
@@ -261,6 +276,11 @@
   }
 
   function discoverCats(data) {
+    if (Array.isArray(data)) {
+      const cats = new Set();
+      data.forEach(w => (w.categories || []).forEach(c => cats.add(c)));
+      return [...cats];
+    }
     return Object.keys(data).filter(k => {
       const arr = data[k];
       return Array.isArray(arr) && arr.some(i => i && typeof i === 'object' && i.ko);

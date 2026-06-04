@@ -685,13 +685,19 @@ async function loadVocab() {
       connectors: {ro:"Conector",  en:"Connector"},
       grammar:    {ro:"Gramatică", en:"Grammar"}
     };
-    cats.forEach(cat => {
-      (vocab[cat]||[]).forEach(e => {
-        if (!e.ko) return;
-        if (!map.has(e.ko)) map.set(e.ko, {ko:e.ko, ro:e.ro||"", en:e.en||"", categoriesRo:[], categoriesEn:[]});
-        const w = map.get(e.ko);
-        if (!w.categoriesRo.includes(catLabels[cat].ro)) w.categoriesRo.push(catLabels[cat].ro);
-        if (!w.categoriesEn.includes(catLabels[cat].en)) w.categoriesEn.push(catLabels[cat].en);
+    // Support both flat array (new) and nested object (old) format
+    const flat = Array.isArray(vocab) ? vocab : cats.flatMap(cat =>
+      (vocab[cat]||[]).map(e => ({...e, categories:[cat]}))
+    );
+    flat.forEach(e => {
+      if (!e.ko) return;
+      if (!map.has(e.ko)) map.set(e.ko, {ko:e.ko, ro:e.ro||"", en:e.en||"", categoriesRo:[], categoriesEn:[]});
+      const w = map.get(e.ko);
+      (e.categories||[]).forEach(cat => {
+        const lbl = catLabels[cat];
+        if (!lbl) return;
+        if (!w.categoriesRo.includes(lbl.ro)) w.categoriesRo.push(lbl.ro);
+        if (!w.categoriesEn.includes(lbl.en)) w.categoriesEn.push(lbl.en);
       });
     });
     WORDS = [...map.values()].sort((a, b) => a.ko.localeCompare(b.ko, "ko"));

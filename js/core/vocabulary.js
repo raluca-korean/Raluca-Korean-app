@@ -63,19 +63,33 @@ async function loadVocabulary(){
    NORMALIZE (important)
 ========================= */
 
-function normalizeVocab(data){
-
-  return {
-
-    subjects: data.subjects || [],
-    objects: data.objects || [],
-    verbs: data.verbs || [],
-    times: data.times || [],
-    places: data.places || [],
-    modifiers: data.modifiers || [],
-    conjugations: data.conjugations || []
-
+function normalizeVocab(data) {
+  const result = {
+    subjects: [], objects: [], verbs: [], nouns: [], adjectives: [],
+    adverbs: [], modifiers: [], connectors: [], grammar: [],
+    times: [], places: [], conjugations: []
   };
+
+  const flat = Array.isArray(data) ? data : _vocabNestedToFlat(data);
+  flat.forEach(w => {
+    (w.categories || []).forEach(cat => {
+      if (result[cat]) result[cat].push(w.ko);
+    });
+  });
+  return result;
+}
+
+function _vocabNestedToFlat(data) {
+  const map = new Map();
+  for (const cat of Object.keys(data)) {
+    for (const w of (Array.isArray(data[cat]) ? data[cat] : [])) {
+      const ko = typeof w === 'string' ? w : w?.ko;
+      if (!ko) continue;
+      if (!map.has(ko)) map.set(ko, { ko, ro: w.ro || '', en: w.en || '', categories: [] });
+      if (!map.get(ko).categories.includes(cat)) map.get(ko).categories.push(cat);
+    }
+  }
+  return [...map.values()];
 }
 
 /* =========================

@@ -166,26 +166,41 @@ function _iconsHTML(ko) {
 }
 
 // ── Data ──
-function normalizeEntry(e) { return { ko: e.ko || "", ro: e.ro || "", en: e.en || "" }; }
-
+// Handles both new flat array [{ko,ro,en,categories:[]}] and old nested {cat:[{ko,ro,en}]} format
 function buildWords(vocab) {
-  const map = new Map();
-  Object.keys(CAT_LABELS).forEach(catKey => {
-    (Array.isArray(vocab[catKey]) ? vocab[catKey] : []).forEach(raw => {
-      const e  = normalizeEntry(raw);
-      const ko = e.ko.trim();
-      if (!ko) return;
-      if (!map.has(ko)) map.set(ko, { ko, ro: e.ro, en: e.en, categoriesRo: new Set(), categoriesEn: new Set() });
-      const c = map.get(ko);
-      if (!c.ro && e.ro) c.ro = e.ro;
-      if (!c.en && e.en) c.en = e.en;
-      c.categoriesRo.add(CAT_LABELS[catKey].ro);
-      c.categoriesEn.add(CAT_LABELS[catKey].en);
+  const flat = Array.isArray(vocab) ? vocab : _nestedToFlat(vocab);
+  const map  = new Map();
+
+  flat.forEach(raw => {
+    const ko = (raw.ko || "").trim();
+    if (!ko) return;
+    if (!map.has(ko)) map.set(ko, { ko, ro: raw.ro || "", en: raw.en || "", categoriesRo: new Set(), categoriesEn: new Set() });
+    const c = map.get(ko);
+    if (!c.ro && raw.ro) c.ro = raw.ro;
+    if (!c.en && raw.en) c.en = raw.en;
+    (raw.categories || []).forEach(catKey => {
+      if (CAT_LABELS[catKey]) {
+        c.categoriesRo.add(CAT_LABELS[catKey].ro);
+        c.categoriesEn.add(CAT_LABELS[catKey].en);
+      }
     });
   });
+
   return Array.from(map.values())
     .map(w => ({ ko: w.ko, ro: w.ro, en: w.en, categoriesRo: [...w.categoriesRo], categoriesEn: [...w.categoriesEn] }))
     .sort((a, b) => a.ko.localeCompare(b.ko, "ko"));
+}
+
+function _nestedToFlat(data) {
+  const map = new Map();
+  for (const cat of Object.keys(data)) {
+    for (const w of (Array.isArray(data[cat]) ? data[cat] : [])) {
+      if (!w?.ko) continue;
+      if (!map.has(w.ko)) map.set(w.ko, { ko: w.ko, ro: w.ro || "", en: w.en || "", categories: [] });
+      if (!map.get(w.ko).categories.includes(cat)) map.get(w.ko).categories.push(cat);
+    }
+  }
+  return [...map.values()];
 }
 
 // ── Filter ──
