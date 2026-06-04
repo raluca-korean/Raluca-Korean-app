@@ -21,6 +21,8 @@ let currentLang = RKLang.get();
 let filterCat   = "";
 let filterFavs  = false;
 let focusedKo   = null;
+let currentPage = 1;
+const PAGE_SIZE = 50;
 
 // ── Category data ──
 const CAT_COLORS = {
@@ -197,19 +199,26 @@ function getFiltered() {
 }
 
 // ── Render ──
-let _animating = false;
-
 function render(animate) {
-  const filtered = getFiltered();
-  countEl.textContent = filtered.length + " " + t("words");
+  const filtered  = getFiltered();
+  const total     = filtered.length;
+  const totalPg   = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage > totalPg) currentPage = totalPg;
 
-  if (!filtered.length) {
+  const start     = (currentPage - 1) * PAGE_SIZE;
+  const pageWords = filtered.slice(start, start + PAGE_SIZE);
+
+  countEl.textContent = totalPg > 1
+    ? `${start + 1}–${start + pageWords.length} / ${total} ${t("words")}`
+    : `${total} ${t("words")}`;
+
+  if (!total) {
     listEl.innerHTML = `<div class="gls-none">${t("noWords")}</div>`;
     return;
   }
 
   const frag = document.createDocumentFragment();
-  filtered.forEach((word, i) => {
+  pageWords.forEach((word, i) => {
     const row = _makeRow(word);
     row.classList.toggle("hot", focusedKo === word.ko);
     if (animate && i < 30) {
@@ -219,8 +228,42 @@ function render(animate) {
     frag.appendChild(row);
   });
 
+  if (totalPg > 1) {
+    const pg = document.createElement("div");
+    pg.className = "gls-pagination";
+    pg.innerHTML = _pgHTML(currentPage, totalPg);
+    frag.appendChild(pg);
+  }
+
   listEl.innerHTML = "";
   listEl.appendChild(frag);
+}
+
+function goPage(p) {
+  currentPage = p;
+  render(true);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function _pgHTML(page, total) {
+  const nums = new Set([1, total]);
+  if (page > 1) nums.add(page - 1);
+  nums.add(page);
+  if (page < total) nums.add(page + 1);
+  const sorted = [...nums].sort((a, b) => a - b);
+
+  let btns = "", prev = 0;
+  for (const p of sorted) {
+    if (p - prev > 1) btns += `<span class="gls-pg-gap">…</span>`;
+    btns += `<button class="gls-pg-num${p === page ? " on" : ""}" onclick="goPage(${p})">${p}</button>`;
+    prev = p;
+  }
+
+  return `<div class="gls-pg-row">` +
+    `<button class="gls-pg-arr" ${page <= 1 ? "disabled" : ""} onclick="goPage(${page - 1})">←</button>` +
+    btns +
+    `<button class="gls-pg-arr" ${page >= total ? "disabled" : ""} onclick="goPage(${page + 1})">→</button>` +
+  `</div>`;
 }
 
 function _makeRow(word) {
@@ -228,13 +271,16 @@ function _makeRow(word) {
   const el = document.createElement("div");
   el.className = "gls-row";
   el.dataset.ko = word.ko;
+  el.style.setProperty("--cat-color", color);
   el.innerHTML =
-    `<div class="gls-row-bar" style="background:${color}"></div>` +
     `<div class="gls-row-text">` +
       `<span class="gls-row-ko" style="color:${color}">${sanitizeHTML(word.ko)}</span>` +
       `<span class="gls-row-tr">${sanitizeHTML(getMeaning(word))}</span>` +
     `</div>` +
-    `<div class="gls-row-icons">${_iconsHTML(word.ko)}</div>`;
+    `<div class="gls-row-end">` +
+      `<span class="gls-row-dot" style="background:${color}"></span>` +
+      `<div class="gls-row-icons">${_iconsHTML(word.ko)}</div>` +
+    `</div>`;
   el.addEventListener("click", () => focusWord(word.ko));
   return el;
 }
@@ -338,6 +384,7 @@ function buildCatDots() {
 
 function setCatFilter(lbl) {
   filterCat = lbl;
+  currentPage = 1;
   buildCatDots();
   render(false);
 }
@@ -375,6 +422,7 @@ function setLanguage(lang) {
   closePanel();
   currentLang = lang;
   filterCat   = "";
+  currentPage = 1;
   searchInput.placeholder = t("search");
   buildCatDots();
   renderDailyView();
@@ -385,11 +433,12 @@ function setLanguage(lang) {
 let _searchTimer = null;
 searchInput.addEventListener("input", () => {
   clearTimeout(_searchTimer);
-  _searchTimer = setTimeout(() => render(false), 150);
+  _searchTimer = setTimeout(() => { currentPage = 1; render(false); }, 150);
 });
 
 favFilterBtn.addEventListener("click", () => {
   filterFavs = !filterFavs;
+  currentPage = 1;
   favFilterBtn.classList.toggle("on", filterFavs);
   render(false);
 });

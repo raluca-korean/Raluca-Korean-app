@@ -2,501 +2,945 @@
 <html lang="ro">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Raluca Korean — Study App</title>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#db2877">
+<meta name="theme-color" content="#03030c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./theme-anime.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box}
+/* ================================================================
+   MORPHOGENETIC KNOWLEDGE FIELD  ·  MKF 1.0
+   A new interface paradigm — knowledge as living organism
+   Night Mode (default) · Day Mode
+================================================================ */
 
-body{
-  margin:0;
-  font-family:'Noto Sans KR',system-ui,-apple-system,sans-serif;
-  background:#f5f5f7;
-  color:#1d1d1f;
-  min-height:100vh;
+/* ── RESET ──────────────────────────────────────────────────── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+/* ── MODE TOKENS ─────────────────────────────────────────────── */
+:root{
+  --bg:          #03030c;
+  --bg-mid:      #07071c;
+  --bg-srf:      #0d0d2a;
+  --hi:          rgba(255,255,255,.90);
+  --mid:         rgba(255,255,255,.50);
+  --lo:          rgba(255,255,255,.26);
+  --core:        #00d4ff;
+  --g1:          #ff9600;  /* fundamentale */
+  --g2:          #1cb0f6;  /* studiu */
+  --g3:          #58cc02;  /* practică */
+  --g4:          #ce82ff;  /* abilități */
+  --r1:          255,150,0;
+  --r2:          28,176,246;
+  --r3:          88,204,2;
+  --r4:          206,130,255;
+  --canvas-o:    .55;
+}
+html[data-mode="day"]{
+  --bg:          #f0f0fa;
+  --bg-mid:      #e6e6f4;
+  --bg-srf:      #dcdcee;
+  --hi:          rgba(8,6,28,.90);
+  --mid:         rgba(8,6,28,.50);
+  --lo:          rgba(8,6,28,.26);
+  --core:        #0077aa;
+  --g1:          #c06800;
+  --g2:          #006da0;
+  --g3:          #368000;
+  --g4:          #7c3aed;
+  --canvas-o:    .28;
 }
 
-/* Override the anime gradient on this page */
-body.dark-mode{
-  background:#09090b !important;
-  color:#f5f5f7;
+/* ── BASE ────────────────────────────────────────────────────── */
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);cursor:none}
+body{font-family:'Noto Sans KR','Helvetica Neue',-apple-system,sans-serif;
+     transition:background .8s ease;-webkit-font-smoothing:antialiased}
+
+/* ── VOID SUBSTRATE ──────────────────────────────────────────── */
+.mkf-void{
+  position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse 150% 110% at 25% 28%, var(--bg-srf) 0%, var(--bg-mid) 45%, var(--bg) 85%);
+  transition:background .8s ease;
 }
 
-/* ── LAYOUT ───────────────────────────── */
-.page{
-  max-width:580px;
-  margin:0 auto;
-  padding:28px 18px 44px;
+/* ── NEURAL CANVAS ───────────────────────────────────────────── */
+#mkf-canvas{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:var(--canvas-o);transition:opacity .8s}
+
+/* ── FIELD CONTAINER ─────────────────────────────────────────── */
+.mkf-field{position:fixed;inset:0;z-index:10}
+
+/* ── CUSTOM CURSOR ───────────────────────────────────────────── */
+.cur-dot{
+  position:fixed;width:6px;height:6px;border-radius:50%;
+  background:var(--core);box-shadow:0 0 10px var(--core),0 0 28px var(--core);
+  pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
+  transition:width .15s,height .15s,background .2s,box-shadow .2s;
+  mix-blend-mode:screen;
+}
+html[data-mode="day"] .cur-dot{mix-blend-mode:multiply}
+.cur-ring{
+  position:fixed;width:30px;height:30px;
+  border:1px solid rgba(0,212,255,.35);border-radius:50%;
+  pointer-events:none;z-index:9998;transform:translate(-50%,-50%);
+  transition:width .45s cubic-bezier(.34,1.56,.64,1),
+             height .45s cubic-bezier(.34,1.56,.64,1),
+             border-color .3s;
 }
 
-/* ── HEADER ───────────────────────────── */
-.site-header{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:16px;
-  margin-bottom:28px;
+/* ── IDENTITY MARK ───────────────────────────────────────────── */
+.mkf-identity{
+  position:fixed;top:34px;left:42px;z-index:100;
+  opacity:0;animation:emerge .9s ease .4s both;
+}
+.mkf-identity-sub  {font-size:9px;letter-spacing:.55em;text-transform:uppercase;color:var(--lo);margin-bottom:5px}
+.mkf-identity-name {font-size:21px;font-weight:300;color:var(--hi);letter-spacing:.06em;line-height:1}
+.mkf-identity-ko   {font-size:12px;color:var(--core);letter-spacing:.14em;margin-top:5px;opacity:.7}
+
+/* ── MODE TOGGLE ─────────────────────────────────────────────── */
+.mkf-mode{
+  position:fixed;top:34px;right:42px;z-index:100;
+  display:flex;align-items:center;gap:9px;
+  background:none;border:none;cursor:none;padding:0;
+  opacity:0;animation:emerge .9s ease .6s both;
+}
+.mkf-mode-lbl{font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--lo);transition:color .4s}
+.mkf-mode:hover .mkf-mode-lbl{color:var(--mid)}
+.mkf-mode-pill{
+  width:28px;height:15px;border:1px solid rgba(255,255,255,.22);
+  border-radius:8px;position:relative;transition:border-color .4s;
+}
+html[data-mode="day"] .mkf-mode-pill{border-color:rgba(0,0,0,.18)}
+.mkf-mode-pill::after{
+  content:'';position:absolute;left:3px;top:3px;
+  width:7px;height:7px;border-radius:50%;
+  background:var(--core);box-shadow:0 0 6px var(--core);
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1),background .4s,box-shadow .4s;
+}
+html[data-mode="day"] .mkf-mode-pill::after{
+  transform:translateX(13px);background:var(--g1);box-shadow:0 0 6px var(--g1);
 }
 
-.logo-lockup{
-  display:flex;
-  align-items:center;
-  gap:13px;
+/* ── COGNITIVE CORE ──────────────────────────────────────────── */
+.mkf-core{
+  position:fixed;left:50%;top:50%;
+  width:140px;height:140px;
+  transform:translate(-50%,-50%);
+  z-index:50;pointer-events:none;
+  opacity:0;animation:core-emerge 2.2s ease .2s both;
+}
+.mkf-core-halo{
+  position:absolute;inset:-65px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.04) 0%,transparent 65%);
+  animation:halo-breathe 5s ease-in-out infinite;
+}
+html[data-mode="day"] .mkf-core-halo{
+  background:radial-gradient(circle,rgba(0,100,180,.05) 0%,transparent 65%);
+}
+@keyframes halo-breathe{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.2);opacity:1}}
+
+.mkf-core-o1{position:absolute;inset:0;border-radius:50%;animation:orbit 22s linear infinite}
+.mkf-core-o2{position:absolute;inset:0;border-radius:50%;animation:orbit 36s linear infinite reverse}
+@keyframes orbit{to{transform:rotate(360deg)}}
+.mkf-core-o1::before,.mkf-core-o2::before{
+  content:'';position:absolute;border-radius:50%;
+  border:1px solid transparent;
+}
+.mkf-core-o1::before{
+  inset:-12px;
+  background:conic-gradient(from 0deg,transparent 0%,transparent 55%,rgba(0,212,255,.5) 88%,transparent 100%) border-box;
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:destination-out;mask-composite:exclude;
+}
+.mkf-core-o2::before{
+  inset:-28px;
+  background:conic-gradient(from 120deg,transparent 0%,transparent 70%,rgba(168,85,247,.35) 90%,transparent 100%) border-box;
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:destination-out;mask-composite:exclude;
+}
+.mkf-core-glow{
+  position:absolute;left:50%;top:50%;
+  width:30px;height:30px;transform:translate(-50%,-50%);
+  border-radius:50%;background:var(--core);filter:blur(16px);
+  opacity:.18;animation:glow-throb 4.5s ease-in-out infinite;
+}
+@keyframes glow-throb{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.18}50%{transform:translate(-50%,-50%) scale(2);opacity:.30}}
+.mkf-core-body{
+  position:absolute;left:50%;top:50%;
+  width:76px;height:76px;transform:translate(-50%,-50%);
+  animation:core-breathe 4.5s ease-in-out infinite;
+}
+@keyframes core-breathe{
+  0%,100%{transform:translate(-50%,-50%) scale(1) rotate(0deg)}
+  25%{transform:translate(-50%,-50%) scale(1.05) rotate(3deg)}
+  50%{transform:translate(-50%,-50%) scale(1.1) rotate(0deg)}
+  75%{transform:translate(-50%,-50%) scale(1.05) rotate(-3deg)}
+}
+.mkf-core-inscription{
+  position:absolute;bottom:-38px;left:50%;transform:translateX(-50%);
+  font-size:8px;letter-spacing:.6em;text-transform:uppercase;
+  color:var(--lo);white-space:nowrap;
+  animation:inscription-fade 5s ease-in-out infinite;
+}
+@keyframes inscription-fade{0%,100%{opacity:.35}50%{opacity:.65}}
+
+/* ── ORGANISMS FIELD ─────────────────────────────────────────── */
+.mkf-organisms{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:visible}
+
+.org{
+  position:absolute;pointer-events:all;cursor:none;
+  overflow:visible;
+  opacity:0;
+}
+.org:nth-child(1){animation:org-emerge 1.8s ease .8s both,float-a 10s ease-in-out 2.6s infinite}
+.org:nth-child(2){animation:org-emerge 1.8s ease 1.0s both,float-b 12s ease-in-out 2.8s infinite}
+.org:nth-child(3){animation:org-emerge 1.8s ease 1.2s both,float-c  9s ease-in-out 3.0s infinite}
+.org:nth-child(4){animation:org-emerge 1.8s ease 1.4s both,float-d 11s ease-in-out 3.2s infinite}
+
+@keyframes org-emerge{from{opacity:0;transform:scale(.72);filter:blur(8px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+@keyframes float-a{0%,100%{transform:translate(0,0)rotate(0deg)}30%{transform:translate(7px,-14px)rotate(1.5deg)}65%{transform:translate(-5px,-22px)rotate(-1deg)}}
+@keyframes float-b{0%,100%{transform:translate(0,0)rotate(0deg)}25%{transform:translate(-9px,-18px)rotate(-2deg)}60%{transform:translate(8px,-11px)rotate(1deg)}}
+@keyframes float-c{0%,100%{transform:translate(0,0)rotate(0deg)}35%{transform:translate(11px,-11px)rotate(1deg)}70%{transform:translate(-5px,-20px)rotate(-1.5deg)}}
+@keyframes float-d{0%,100%{transform:translate(0,0)rotate(0deg)}40%{transform:translate(-8px,-16px)rotate(-1deg)}75%{transform:translate(10px,-9px)rotate(2deg)}}
+
+.org.bloomed{animation-play-state:paused;z-index:60}
+
+/* Organism anchor — centers visual at organism position */
+.org-anchor{
+  position:absolute;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;
 }
 
-.logo-mark{
-  width:48px; height:48px;
-  border-radius:11px;
-  background:linear-gradient(140deg,#7c3aed 0%,#db2877 100%);
-  color:#fff;
-  font-size:16px; font-weight:900;
-  display:flex; align-items:center; justify-content:center;
-  flex-shrink:0;
-  letter-spacing:-.5px;
-  user-select:none;
+/* Morphic membrane */
+.org-mem{width:84px;height:84px;position:relative;transition:transform .65s cubic-bezier(.34,1.56,.64,1)}
+.org-bg,.org-brd{
+  position:absolute;inset:0;
+  border-radius:40% 60% 58% 42% / 44% 42% 58% 56%;
+  animation:morph 9s ease-in-out infinite;transition:all .65s ease;
+}
+.org-brd{border:1px solid transparent}
+.org:nth-child(1) .org-bg,.org:nth-child(1) .org-brd{animation-delay:0s;animation-duration:9s}
+.org:nth-child(2) .org-bg,.org:nth-child(2) .org-brd{animation-delay:-3s;animation-duration:7s}
+.org:nth-child(3) .org-bg,.org:nth-child(3) .org-brd{animation-delay:-5s;animation-duration:10s}
+.org:nth-child(4) .org-bg,.org:nth-child(4) .org-brd{animation-delay:-1.5s;animation-duration:8s}
+@keyframes morph{
+  0%,100%{border-radius:40% 60% 58% 42% / 44% 42% 58% 56%}
+  33%{border-radius:58% 42% 38% 62% / 58% 60% 40% 42%}
+  66%{border-radius:44% 56% 60% 40% / 42% 60% 44% 58%}
 }
 
-.logo-text h1{
-  font-size:22px; font-weight:900;
-  margin:0; line-height:1.15;
-  color:#1d1d1f;
-  letter-spacing:-.4px;
-}
+/* Per-organism idle colors */
+.org[data-id="f"] .org-bg{background:radial-gradient(ellipse at 38% 35%,rgba(255,150,0,.18) 0%,rgba(255,150,0,.04) 50%,transparent 70%)}
+.org[data-id="f"] .org-brd{border-color:rgba(255,150,0,.38);box-shadow:0 0 22px rgba(255,150,0,.07)}
+.org[data-id="s"] .org-bg{background:radial-gradient(ellipse at 38% 35%,rgba(28,176,246,.18) 0%,rgba(28,176,246,.04) 50%,transparent 70%)}
+.org[data-id="s"] .org-brd{border-color:rgba(28,176,246,.38);box-shadow:0 0 22px rgba(28,176,246,.07)}
+.org[data-id="p"] .org-bg{background:radial-gradient(ellipse at 38% 35%,rgba(88,204,2,.18) 0%,rgba(88,204,2,.04) 50%,transparent 70%)}
+.org[data-id="p"] .org-brd{border-color:rgba(88,204,2,.38);box-shadow:0 0 22px rgba(88,204,2,.07)}
+.org[data-id="a"] .org-bg{background:radial-gradient(ellipse at 38% 35%,rgba(206,130,255,.18) 0%,rgba(206,130,255,.04) 50%,transparent 70%)}
+.org[data-id="a"] .org-brd{border-color:rgba(206,130,255,.38);box-shadow:0 0 22px rgba(206,130,255,.07)}
 
-.logo-text p{
-  font-size:12px;
-  color:#86868b;
-  margin:3px 0 0;
-  font-weight:600;
-}
+/* Bloomed membrane */
+.org[data-id="f"].bloomed .org-bg{background:radial-gradient(ellipse at 38% 35%,rgba(255,150,0,.32) 0%,rgba(255,150,0,.10) 50%,transparent 70%)}
+.org[data-id="f"].bloomed .org-brd{border-color:rgba(255,150,0,.75);box-shadow:0 0 70px rgba(255,150,0,.30),inset 0 0 28px rgba(255,150,0,.06)}
+.org[data-id="s"].bloomed .org-bg{background:radial-gradient(ellipse at 38% 35%,rgba(28,176,246,.32) 0%,rgba(28,176,246,.10) 50%,transparent 70%)}
+.org[data-id="s"].bloomed .org-brd{border-color:rgba(28,176,246,.75);box-shadow:0 0 70px rgba(28,176,246,.30),inset 0 0 28px rgba(28,176,246,.06)}
+.org[data-id="p"].bloomed .org-bg{background:radial-gradient(ellipse at 38% 35%,rgba(88,204,2,.32) 0%,rgba(88,204,2,.10) 50%,transparent 70%)}
+.org[data-id="p"].bloomed .org-brd{border-color:rgba(88,204,2,.75);box-shadow:0 0 70px rgba(88,204,2,.30),inset 0 0 28px rgba(88,204,2,.06)}
+.org[data-id="a"].bloomed .org-bg{background:radial-gradient(ellipse at 38% 35%,rgba(206,130,255,.32) 0%,rgba(206,130,255,.10) 50%,transparent 70%)}
+.org[data-id="a"].bloomed .org-brd{border-color:rgba(206,130,255,.75);box-shadow:0 0 70px rgba(206,130,255,.30),inset 0 0 28px rgba(206,130,255,.06)}
 
-.header-controls{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  padding-top:6px;
-  flex-shrink:0;
-}
+.org.bloomed .org-mem{transform:scale(1.3)}
 
-/* ── NAV GRID ─────────────────────────── */
-.nav-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
+/* Organism sigil */
+.org-sigil{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  transition:all .5s ease;
 }
+.org-sigil svg{width:34px;height:34px;opacity:.6;transition:all .5s ease}
+.org.bloomed .org-sigil svg{opacity:1;transform:scale(1.08)}
 
-/* ── NAV CARD ─────────────────────────── */
-.nav-card{
-  background:#fff;
-  border:1px solid #e6e6eb;
-  border-radius:12px;
-  border-top:3px solid var(--accent,#aaa);
-  overflow:hidden;
+/* Organism label */
+.org-lbl{margin-top:16px;text-align:center;pointer-events:none;white-space:nowrap}
+.org-name{display:block;font-size:9.5px;letter-spacing:.48em;text-transform:uppercase;color:var(--mid);transition:color .4s}
+.org-sub{
+  display:block;font-size:8px;letter-spacing:.2em;color:var(--lo);
+  margin-top:4px;opacity:0;transform:translateY(5px);
+  transition:all .4s ease .05s;
 }
+.org.bloomed .org-name{color:var(--hi)}
+.org.bloomed .org-sub{opacity:.55;transform:translateY(0)}
+.org[data-id="f"].bloomed .org-name{color:var(--g1)}
+.org[data-id="s"].bloomed .org-name{color:var(--g2)}
+.org[data-id="p"].bloomed .org-name{color:var(--g3)}
+.org[data-id="a"].bloomed .org-name{color:var(--g4)}
 
-.nav-card-head{
-  padding:13px 14px 10px;
-  display:flex;
-  align-items:center;
-  gap:7px;
+/* ── SATELLITES ──────────────────────────────────────────────── */
+/* Satellites are direct children of .org, positioned relative to org anchor (0,0) */
+.sat{
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;
+  text-decoration:none;cursor:none;
+  opacity:0;
+  transform:translate(-50%,-50%) scale(.35);
+  pointer-events:none;
+  transition:opacity .35s ease,transform .45s cubic-bezier(.34,1.56,.64,1);
+  will-change:transform,opacity;
 }
+.org.bloomed .sat{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:all}
+.org.bloomed .sat:nth-child(1){transition-delay:.04s}
+.org.bloomed .sat:nth-child(2){transition-delay:.10s}
+.org.bloomed .sat:nth-child(3){transition-delay:.16s}
 
-.nav-card-icon{
-  font-size:17px; line-height:1;
+.sat-dot{
+  width:40px;height:40px;position:relative;
+  display:flex;align-items:center;justify-content:center;
 }
+.sat-bg{
+  position:absolute;inset:0;
+  border-radius:40% 60% 55% 45% / 46% 44% 56% 54%;
+  border:1px solid transparent;
+  animation:morph 6s ease-in-out infinite;
+  transition:all .35s ease;
+}
+.sat:hover .sat-bg{transform:scale(1.22)}
 
-.nav-card-label{
-  font-size:10.5px; font-weight:900;
-  letter-spacing:.65px; text-transform:uppercase;
-  color:var(--accent,#888);
-}
+/* Satellite colors from parent organism */
+.org[data-id="f"] .sat-bg{border-color:rgba(255,150,0,.45);background:rgba(255,150,0,.10)}
+.org[data-id="s"] .sat-bg{border-color:rgba(28,176,246,.45);background:rgba(28,176,246,.10)}
+.org[data-id="p"] .sat-bg{border-color:rgba(88,204,2,.45);background:rgba(88,204,2,.10)}
+.org[data-id="a"] .sat-bg{border-color:rgba(206,130,255,.45);background:rgba(206,130,255,.10)}
 
-/* ── LINKS ────────────────────────────── */
-.nav-links{
-  border-top:1px solid #f0f0f2;
-}
+.org[data-id="f"] .sat:hover .sat-bg{border-color:rgba(255,150,0,.85);box-shadow:0 0 28px rgba(255,150,0,.28)}
+.org[data-id="s"] .sat:hover .sat-bg{border-color:rgba(28,176,246,.85);box-shadow:0 0 28px rgba(28,176,246,.28)}
+.org[data-id="p"] .sat:hover .sat-bg{border-color:rgba(88,204,2,.85);box-shadow:0 0 28px rgba(88,204,2,.28)}
+.org[data-id="a"] .sat:hover .sat-bg{border-color:rgba(206,130,255,.85);box-shadow:0 0 28px rgba(206,130,255,.28)}
 
-.nav-link{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 14px;
-  font-size:13.5px; font-weight:700;
-  color:#1d1d1f;
-  text-decoration:none;
-  border-top:1px solid #f0f0f2;
-  transition:background .08s;
+.sat-icon{position:relative;font-size:15px;z-index:1;transition:transform .3s ease;line-height:1}
+.sat:hover .sat-icon{transform:scale(1.15)}
+.sat-name{
+  text-align:center;margin-top:6px;
+  font-size:8px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--mid);white-space:nowrap;transition:color .3s;
 }
-.nav-link:first-child{ border-top:none; }
-.nav-link:hover{ background:#f5f5f7; }
-.nav-link:active{ background:#ebebed; }
+.sat:hover .sat-name{color:var(--hi)}
 
-.nav-link-icon{ font-size:14px; line-height:1; flex-shrink:0; }
-.nav-link-name{ flex:1; }
-.nav-link-arrow{ color:#c7c7cc; font-size:13px; font-weight:600; flex-shrink:0; }
+/* ── LANG MEMBRANE ───────────────────────────────────────────── */
+.mkf-lang{
+  position:fixed;bottom:36px;right:42px;z-index:100;
+  display:flex;align-items:center;gap:12px;
+  opacity:0;animation:emerge .9s ease 1.6s both;
+}
+.lang-btn{
+  font-size:8.5px;letter-spacing:.45em;text-transform:uppercase;
+  color:var(--lo);cursor:none;background:none;border:none;padding:6px 8px;
+  position:relative;transition:color .4s;
+}
+.lang-btn::after{
+  content:'';position:absolute;bottom:3px;left:50%;width:0;height:1px;
+  background:var(--core);box-shadow:0 0 5px var(--core);
+  transform:translateX(-50%);transition:width .4s ease;
+}
+.lang-btn.active{color:var(--core)}
+.lang-btn.active::after,.lang-btn:hover::after{width:70%}
+.lang-btn:hover{color:var(--mid);cursor:none}
+.lang-sep{width:1px;height:12px;background:var(--lo);opacity:.35}
 
-/* ── STATS FOOTER ─────────────────────── */
-.stats-footer{
-  display:flex;
-  flex-wrap:wrap;
-  gap:0;
-  margin-top:20px;
-  padding-top:16px;
-  border-top:1px solid #e6e6eb;
+/* ── PROGRESS ECHO ───────────────────────────────────────────── */
+.mkf-progress{
+  position:fixed;bottom:36px;left:42px;z-index:100;
+  opacity:0;animation:emerge .9s ease 1.8s both;
 }
+.prog-lbl{font-size:8px;letter-spacing:.5em;text-transform:uppercase;color:var(--lo);margin-bottom:7px}
+.prog-track{width:68px;height:1px;background:rgba(255,255,255,.07);position:relative}
+html[data-mode="day"] .prog-track{background:rgba(0,0,0,.07)}
+.prog-fill{height:100%;background:var(--core);box-shadow:0 0 7px var(--core);width:0;transition:width 1.5s cubic-bezier(.4,0,.2,1)}
+.prog-node{
+  position:absolute;top:-3px;
+  width:7px;height:7px;border-radius:50%;
+  background:var(--core);box-shadow:0 0 12px var(--core);
+  left:0;transition:left 1.5s cubic-bezier(.4,0,.2,1);
+}
+.prog-detail{font-size:7.5px;letter-spacing:.25em;color:var(--lo);margin-top:8px;line-height:1.75}
 
-.mini-stat{
-  font-size:12px; font-weight:600;
-  color:#86868b;
-  padding-right:18px;
-  white-space:nowrap;
-  line-height:1.6;
+/* ── VOID RIPPLE ─────────────────────────────────────────────── */
+.mkf-ripple{
+  position:fixed;border-radius:50%;
+  border:1px solid rgba(0,212,255,.45);
+  pointer-events:none;z-index:9997;
+  transform:translate(-50%,-50%);
+  animation:ripple-out 1.3s ease forwards;
 }
+@keyframes ripple-out{from{width:0;height:0;opacity:.65}to{width:260px;height:260px;opacity:0}}
 
-.mini-stat b{ color:#1d1d1f; font-weight:800; }
+/* ── NAVIGATION BLOOM ────────────────────────────────────────── */
+.mkf-nav-bloom{
+  position:fixed;inset:0;background:var(--bg);
+  opacity:0;pointer-events:none;z-index:9995;transition:opacity .5s ease;
+}
+.mkf-nav-bloom.go{opacity:1;pointer-events:all}
 
-/* ── DARK MODE ────────────────────────── */
-body.dark-mode .logo-text h1{ color:#f5f5f7; }
-body.dark-mode .logo-text p { color:#636366; }
+/* ── KEYFRAMES ───────────────────────────────────────────────── */
+@keyframes emerge      {from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes core-emerge {from{opacity:0;transform:translate(-50%,-50%) scale(.82);filter:blur(6px)}to{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}}
 
-body.dark-mode .nav-card{
-  background:#1c1c1e;
-  border-color:#2c2c2e;
-}
+/* ── HIDDEN LEGACY HOOK ──────────────────────────────────────── */
+#notifBtnWrap{position:fixed;bottom:80px;right:40px;z-index:100;opacity:.35;transform:scale(.78)}
 
-body.dark-mode .nav-links{ border-color:#2c2c2e; }
-
-body.dark-mode .nav-link{
-  color:#f5f5f7;
-  border-color:#2c2c2e;
+/* ── MOBILE ──────────────────────────────────────────────────── */
+@media(pointer:coarse){
+  .cur-dot,.cur-ring{display:none}
+  html,body{cursor:auto}
+  .org,.sat,.lang-btn,.mkf-mode{cursor:pointer}
 }
-body.dark-mode .nav-link:hover{ background:#2c2c2e; }
-body.dark-mode .nav-link:active{ background:#3a3a3c; }
-body.dark-mode .nav-link-arrow{ color:#48484a; }
-
-body.dark-mode .stats-footer{ border-color:#2c2c2e; }
-body.dark-mode .mini-stat{ color:#636366; }
-body.dark-mode .mini-stat b{ color:#aeaeb2; }
-
-/* ── NOTIFICATION BUTTON ──────────────── */
-.rk-notif-btn{
-  font-size:12px; font-weight:700;
-  padding:6px 12px;
-  border-radius:8px;
-  cursor:pointer;
-  white-space:nowrap;
-  transition:background .1s;
-}
-.rk-notif-btn[data-state="granted"]{
-  background:#d1fae5 !important;
-  border-color:#6ee7b7 !important;
-  color:#065f46 !important;
-}
-.rk-notif-btn[data-state="denied"]{
-  background:#fef2f2 !important;
-  border-color:#fca5a5 !important;
-  color:#991b1b !important;
-}
-body.dark-mode .rk-notif-btn[data-state="granted"]{
-  background:rgba(6,95,70,.35) !important;
-  border-color:rgba(110,231,183,.3) !important;
-  color:#6ee7b7 !important;
-}
-body.dark-mode .rk-notif-btn[data-state="denied"]{
-  background:rgba(153,27,27,.3) !important;
-  border-color:rgba(252,165,165,.3) !important;
-  color:#fca5a5 !important;
-}
-
-/* ── STREAK REMINDER BANNER ───────────── */
-.streak-banner{
-  display:flex; align-items:center; gap:10px;
-  background:linear-gradient(135deg,#fef3c7,#fde68a);
-  border:1px solid #fbbf24;
-  border-radius:12px;
-  padding:12px 14px;
-  margin-bottom:14px;
-  font-size:13px; font-weight:700;
-  color:#92400e;
-}
-.streak-banner-icon{ font-size:20px; flex-shrink:0; }
-.streak-banner-text{ flex:1; }
-.streak-banner-close{
-  background:none !important; border:none !important;
-  font-size:16px; cursor:pointer; color:#92400e !important;
-  padding:0 2px; line-height:1; flex-shrink:0;
-  box-shadow:none !important;
-}
-body.dark-mode .streak-banner{
-  background:linear-gradient(135deg,rgba(120,53,15,.5),rgba(146,64,14,.4));
-  border-color:#92400e;
-  color:#fde68a;
-}
-body.dark-mode .streak-banner-close{ color:#fde68a !important; }
-
-/* ── MOBILE ───────────────────────────── */
-@media(max-width:460px){
-  .page{ padding:20px 14px 36px; }
-  .nav-grid{ grid-template-columns:1fr; }
-  .nav-link{ font-size:14.5px; padding:12px 14px; }
+@media(max-width:600px){
+  .mkf-identity{top:20px;left:20px}
+  .mkf-mode{top:20px;right:20px}
+  .mkf-lang{bottom:20px;right:20px}
+  .mkf-progress{bottom:20px;left:20px}
+  .org-lbl{display:none}
 }
 </style>
 </head>
-
 <body>
-<div class="page">
 
-  <!-- HEADER -->
-  <header class="site-header">
-    <div class="logo-lockup">
-      <div class="logo-mark">RK</div>
-      <div class="logo-text">
-        <h1>Raluca Korean</h1>
-        <p data-ro="Aplicație de studiu · TOPIK I–VI" data-en="Study App · TOPIK I–VI">Aplicație de studiu · TOPIK I–VI</p>
-      </div>
-    </div>
-    <div class="header-controls" id="pageControls" data-no-home>
-      <div id="notifBtnWrap"></div>
-    </div>
-  </header>
+<!-- Void substrate -->
+<div class="mkf-void"></div>
+<!-- Neural canvas -->
+<canvas id="mkf-canvas"></canvas>
+<!-- Custom cursor -->
+<div class="cur-dot"  id="curDot"></div>
+<div class="cur-ring" id="curRing"></div>
+<!-- Navigation bloom overlay -->
+<div class="mkf-nav-bloom" id="navBloom"></div>
 
-  <!-- STREAK REMINDER (shown if not studied today and has streak) -->
-  <div class="streak-banner" id="streakBanner" style="display:none">
-    <span class="streak-banner-icon">🔥</span>
-    <span class="streak-banner-text" id="streakBannerText"></span>
-    <button class="streak-banner-close" id="streakBannerClose" aria-label="Închide">✕</button>
+<div class="mkf-field">
+
+  <!-- Identity -->
+  <div class="mkf-identity">
+    <div class="mkf-identity-sub">한국어 학습</div>
+    <div class="mkf-identity-name">Raluca Korean</div>
+    <div class="mkf-identity-ko">배움의 세계</div>
   </div>
 
-  <!-- DAILY QUEST -->
-  <div class="quest-widget" id="questWidget" style="display:none">
-    <div class="quest-widget-head">
-      <span class="quest-widget-icon">🎯</span>
-      <div class="quest-widget-info">
-        <div class="quest-widget-label" id="questWidgetLabel">Misiunea zilei</div>
-        <div class="quest-widget-goal" id="questWidgetGoal">0 / 10</div>
-      </div>
-      <div class="quest-widget-xp" id="questWidgetXP">+50 XP</div>
+  <!-- Mode toggle -->
+  <button class="mkf-mode" id="modeBtn" aria-label="Toggle day/night mode">
+    <span class="mkf-mode-lbl" id="modeLbl">NIGHT</span>
+    <div class="mkf-mode-pill"></div>
+  </button>
+
+  <!-- Cognitive Core -->
+  <div class="mkf-core">
+    <div class="mkf-core-halo"></div>
+    <div class="mkf-core-o1"></div>
+    <div class="mkf-core-o2"></div>
+    <div class="mkf-core-glow"></div>
+    <div class="mkf-core-body">
+      <svg viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="38" cy="38" r="33" stroke="rgba(0,212,255,.10)" stroke-width=".5"/>
+        <circle cx="38" cy="38" r="21" stroke="rgba(0,212,255,.20)" stroke-width=".5"/>
+        <circle cx="38" cy="38" r="9"  stroke="rgba(0,212,255,.45)" stroke-width=".8" fill="rgba(0,212,255,.04)"/>
+        <circle cx="38" cy="38" r="2.2" fill="rgba(0,212,255,.88)"/>
+        <line x1="38" y1="4"  x2="38" y2="14" stroke="rgba(0,212,255,.16)" stroke-width=".5"/>
+        <line x1="38" y1="62" x2="38" y2="72" stroke="rgba(0,212,255,.16)" stroke-width=".5"/>
+        <line x1="4"  y1="38" x2="14" y2="38" stroke="rgba(0,212,255,.16)" stroke-width=".5"/>
+        <line x1="62" y1="38" x2="72" y2="38" stroke="rgba(0,212,255,.16)" stroke-width=".5"/>
+        <line x1="13" y1="13" x2="19" y2="19" stroke="rgba(0,212,255,.08)" stroke-width=".5"/>
+        <line x1="57" y1="57" x2="63" y2="63" stroke="rgba(0,212,255,.08)" stroke-width=".5"/>
+        <line x1="63" y1="13" x2="57" y2="19" stroke="rgba(0,212,255,.08)" stroke-width=".5"/>
+        <line x1="19" y1="57" x2="13" y2="63" stroke="rgba(0,212,255,.08)" stroke-width=".5"/>
+      </svg>
     </div>
-    <div class="quest-widget-bar-wrap">
-      <div class="quest-widget-bar" id="questWidgetBar" style="width:0%"></div>
-    </div>
+    <div class="mkf-core-inscription">지식의 핵심</div>
   </div>
 
-  <!-- NAV GRID -->
-  <div class="nav-grid">
+  <!-- Knowledge Organisms -->
+  <div class="mkf-organisms" id="orgField">
 
-    <!-- Fundamentale -->
-    <div class="nav-card" style="--accent:#FF9600">
-      <div class="nav-card-head">
-        <span class="nav-card-icon">가</span>
-        <span class="nav-card-label" data-ro="Fundamentale" data-en="Fundamentals">Fundamentale</span>
+    <!-- FUNDAMENTALE — top-left — orange -->
+    <div class="org" data-id="f" id="org0">
+      <div class="org-anchor">
+        <div class="org-mem">
+          <div class="org-bg"></div><div class="org-brd"></div>
+          <div class="org-sigil">
+            <svg viewBox="0 0 34 34" fill="none">
+              <line x1="17" y1="6"  x2="17" y2="28" stroke="rgba(255,150,0,.82)" stroke-width="1.8" stroke-linecap="round"/>
+              <line x1="9"  y1="12" x2="25" y2="12" stroke="rgba(255,150,0,.82)" stroke-width="1.4" stroke-linecap="round"/>
+              <circle cx="9"  cy="24" r="2.8" stroke="rgba(255,150,0,.65)" stroke-width="1" fill="rgba(255,150,0,.12)"/>
+              <circle cx="25" cy="24" r="2.8" stroke="rgba(255,150,0,.65)" stroke-width="1" fill="rgba(255,150,0,.12)"/>
+              <circle cx="17" cy="6"  r="1.5" fill="rgba(255,150,0,.8)"/>
+            </svg>
+          </div>
+        </div>
+        <div class="org-lbl">
+          <span class="org-name" id="ln-f">Fundamentale</span>
+          <span class="org-sub"  id="ls-f">Hangul · Hanja Book</span>
+        </div>
       </div>
-      <div class="nav-links">
-        <a href="hangul.html" class="nav-link">
-          <span class="nav-link-icon">가</span>
-          <span class="nav-link-name">Hangul</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
-        <a href="hanja-book.html" class="nav-link">
-          <span class="nav-link-icon">📖</span>
-          <span class="nav-link-name">Hanja Book</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
+      <!-- satellites injected by JS -->
+    </div>
+
+    <!-- STUDIU — top-right — blue -->
+    <div class="org" data-id="s" id="org1">
+      <div class="org-anchor">
+        <div class="org-mem">
+          <div class="org-bg"></div><div class="org-brd"></div>
+          <div class="org-sigil">
+            <svg viewBox="0 0 34 34" fill="none">
+              <polygon points="17,5 27,11 27,23 17,29 7,23 7,11" stroke="rgba(28,176,246,.72)" stroke-width="1" fill="rgba(28,176,246,.06)"/>
+              <polygon points="17,11 22,14 22,20 17,23 12,20 12,14" stroke="rgba(28,176,246,.50)" stroke-width=".8" fill="rgba(28,176,246,.04)"/>
+              <circle cx="17" cy="17" r="2.2" fill="rgba(28,176,246,.85)"/>
+              <circle cx="17" cy="5"  r="1.1" fill="rgba(28,176,246,.5)"/>
+              <circle cx="27" cy="11" r="1"   fill="rgba(28,176,246,.4)"/>
+              <circle cx="27" cy="23" r="1"   fill="rgba(28,176,246,.4)"/>
+            </svg>
+          </div>
+        </div>
+        <div class="org-lbl">
+          <span class="org-name" id="ln-s">Studiu</span>
+          <span class="org-sub"  id="ls-s">Lecții · Glosar · Flashcards</span>
+        </div>
       </div>
     </div>
 
-    <!-- Studiu -->
-    <div class="nav-card" style="--accent:#1CB0F6">
-      <div class="nav-card-head">
-        <span class="nav-card-icon">📗</span>
-        <span class="nav-card-label" data-ro="Studiu" data-en="Study">Studiu</span>
-      </div>
-      <div class="nav-links">
-        <a href="lessons.html" class="nav-link">
-          <span class="nav-link-icon">📗</span>
-          <span class="nav-link-name">Lessons</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
-        <a href="glossary.html" class="nav-link">
-          <span class="nav-link-icon">📚</span>
-          <span class="nav-link-name">Glossary</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
-        <a href="flashcards.html" class="nav-link">
-          <span class="nav-link-icon">🃏</span>
-          <span class="nav-link-name">Flashcards</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
+    <!-- PRACTICĂ — bottom-right — green -->
+    <div class="org" data-id="p" id="org2">
+      <div class="org-anchor">
+        <div class="org-mem">
+          <div class="org-bg"></div><div class="org-brd"></div>
+          <div class="org-sigil">
+            <svg viewBox="0 0 34 34" fill="none">
+              <path d="M17 8 C24 8 28 12.5 28 17 C28 23 23 28 17 28 C11 28 6 23 6 17 C6 12.5 10 8 17 8" stroke="rgba(88,204,2,.82)" stroke-width="1.2" stroke-linecap="round"/>
+              <path d="M17 8 L14 4.5 M17 8 L14 11.5" stroke="rgba(88,204,2,.82)" stroke-width="1.2" stroke-linecap="round"/>
+              <circle cx="17" cy="17" r="3" fill="rgba(88,204,2,.72)" stroke="rgba(88,204,2,.25)" stroke-width=".5"/>
+            </svg>
+          </div>
+        </div>
+        <div class="org-lbl">
+          <span class="org-name" id="ln-p">Practică</span>
+          <span class="org-sub"  id="ls-p">Exerciții · Builder · Stories</span>
+        </div>
       </div>
     </div>
 
-    <!-- Practică -->
-    <div class="nav-card" style="--accent:#58CC02">
-      <div class="nav-card-head">
-        <span class="nav-card-icon">📝</span>
-        <span class="nav-card-label" data-ro="Practică" data-en="Practice">Practică</span>
-      </div>
-      <div class="nav-links">
-        <a href="exercises.html" class="nav-link">
-          <span class="nav-link-icon">📝</span>
-          <span class="nav-link-name">Exercises</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
-        <a href="builder.html" class="nav-link">
-          <span class="nav-link-icon">🏗️</span>
-          <span class="nav-link-name">Builder</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
-<a href="stories.html" class="nav-link">
-          <span class="nav-link-icon">📖</span>
-          <span class="nav-link-name">Stories</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
+    <!-- ABILITĂȚI — bottom-left — violet -->
+    <div class="org" data-id="a" id="org3">
+      <div class="org-anchor">
+        <div class="org-mem">
+          <div class="org-bg"></div><div class="org-brd"></div>
+          <div class="org-sigil">
+            <svg viewBox="0 0 34 34" fill="none">
+              <circle cx="17" cy="9"  r="3.5" stroke="rgba(206,130,255,.82)" stroke-width="1" fill="rgba(206,130,255,.10)"/>
+              <circle cx="9"  cy="25" r="3.5" stroke="rgba(206,130,255,.70)" stroke-width="1" fill="rgba(206,130,255,.08)"/>
+              <circle cx="25" cy="25" r="3.5" stroke="rgba(206,130,255,.70)" stroke-width="1" fill="rgba(206,130,255,.08)"/>
+              <line x1="17" y1="12.5" x2="10.5" y2="21.5" stroke="rgba(206,130,255,.45)" stroke-width=".9"/>
+              <line x1="17" y1="12.5" x2="23.5" y2="21.5" stroke="rgba(206,130,255,.45)" stroke-width=".9"/>
+              <line x1="12.5" y1="25" x2="21.5" y2="25" stroke="rgba(206,130,255,.38)" stroke-width=".9"/>
+            </svg>
+          </div>
+        </div>
+        <div class="org-lbl">
+          <span class="org-name" id="ln-a">Abilități</span>
+          <span class="org-sub"  id="ls-a">Speaking · Writing · Stats</span>
+        </div>
       </div>
     </div>
 
-    <!-- Abilități -->
-    <div class="nav-card" style="--accent:#CE82FF">
-      <div class="nav-card-head">
-        <span class="nav-card-icon">🎙</span>
-        <span class="nav-card-label" data-ro="Abilități" data-en="Skills">Abilități</span>
-      </div>
-      <div class="nav-links">
-        <a href="speaking.html" class="nav-link">
-          <span class="nav-link-icon">✦</span>
-          <span class="nav-link-name">Speaking Field</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
-        <a href="writing.html" class="nav-link">
-          <span class="nav-link-icon">✏️</span>
-          <span class="nav-link-name">Writing</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
-        <a href="stats.html" class="nav-link">
-          <span class="nav-link-icon">📊</span>
-          <span class="nav-link-name">Statistics</span>
-          <span class="nav-link-arrow">›</span>
-        </a>
-      </div>
-    </div>
+  </div><!-- /organisms -->
 
+  <!-- Language membrane -->
+  <div class="mkf-lang">
+    <button class="lang-btn active" id="btn-ro" onclick="setLang('ro')">RO</button>
+    <div class="lang-sep"></div>
+    <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
   </div>
 
-  <!-- STATS FOOTER -->
-  <div class="stats-footer" id="miniStats" style="display:none"></div>
+  <!-- Progress echo -->
+  <div class="mkf-progress">
+    <div class="prog-lbl" id="progLbl">Progres total</div>
+    <div class="prog-track">
+      <div class="prog-fill" id="progFill"></div>
+      <div class="prog-node" id="progNode"></div>
+    </div>
+    <div class="prog-detail" id="progDetail"></div>
+  </div>
 
-</div>
+  <!-- Notification slot for legacy script -->
+  <div id="notifBtnWrap"></div>
+
+</div><!-- /field -->
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/gamification.js"></script>
 <script src="./js/core/notifications.js"></script>
-<script src="./js/core/lang-picker.js"></script>
 <script>
-var currentLang = RKLang.get();
+/* ================================================================
+   MORPHOGENETIC KNOWLEDGE FIELD — Engine
+   Paradigm: Attention-Activated Morphogenesis
+   © Raluca Korean — MKF 1.0
+================================================================ */
 
-var STATS_LABELS = {
-  ro: {today:'Azi', acc:'Acuratețe', streak:'Streak', favs:'Favorite'},
-  en: {today:'Today', acc:'Accuracy', streak:'Streak', favs:'Favorites'}
+const canvas   = document.getElementById('mkf-canvas');
+const ctx      = canvas.getContext('2d');
+const curDot   = document.getElementById('curDot');
+const curRing  = document.getElementById('curRing');
+const navBloom = document.getElementById('navBloom');
+
+let mx = innerWidth/2, my = innerHeight/2;
+let sx = mx, sy = my;
+let frame = 0;
+let mode  = localStorage.getItem('RK_THEME') === 'light' ? 'day' : 'night';
+let lang  = localStorage.getItem('RK_LANG') || 'ro';
+let particles = [];
+let orgPos = [];  // { x, y, el } for each organism
+
+// ── SATELLITE DATA ─────────────────────────────────────────────
+const SAT_DATA = {
+  f: [
+    { icon:'가',  href:'hangul.html',     ro:'Hangul',     en:'Hangul'     },
+    { icon:'漢',  href:'hanja-book.html', ro:'Hanja Book', en:'Hanja Book' }
+  ],
+  s: [
+    { icon:'📗', href:'lessons.html',    ro:'Lecții',      en:'Lessons'    },
+    { icon:'📚', href:'glossary.html',   ro:'Glosar',      en:'Glossary'   },
+    { icon:'🃏', href:'flashcards.html', ro:'Flashcards',  en:'Flashcards' }
+  ],
+  p: [
+    { icon:'📝', href:'exercises.html',  ro:'Exerciții',   en:'Exercises'  },
+    { icon:'🏗', href:'builder.html',    ro:'Builder',     en:'Builder'    },
+    { icon:'✦',  href:'stories.html',    ro:'Stories',     en:'Stories'    }
+  ],
+  a: [
+    { icon:'◎',  href:'speaking.html',   ro:'Speaking',    en:'Speaking'   },
+    { icon:'✏',  href:'writing.html',    ro:'Writing',     en:'Writing'    },
+    { icon:'📊', href:'stats.html',      ro:'Statistici',  en:'Statistics' }
+  ]
 };
 
-function renderMiniStats(lang) {
-  var el = document.getElementById('miniStats');
-  if(!el) return;
-  var s;
-  try { s = JSON.parse(localStorage.getItem('RK_STATS') || 'null'); } catch(e){ s = null; }
-  if(!s || s.total === 0){ el.style.display = 'none'; return; }
-  var favCount = (JSON.parse(localStorage.getItem('RK_FAV_WORDS') || '[]')).length;
-  var today = new Date().toISOString().slice(0, 10);
-  var todayEx = s.today === today ? s.todayTotal : 0;
-  var pct = s.total ? Math.round(s.correct / s.total * 100) : 0;
-  var L = STATS_LABELS[lang];
-  var xpStr = '';
-  if(window.RKGamification){
-    var xpData = RKGamification.getXPData();
-    var lvl = RKGamification.getLevelInfo(xpData.total);
-    xpStr = '<span class="mini-stat">XP: <b>' + xpData.total + ' · Lv.' + lvl.current.level + '</b></span>';
+// Satellite radial angles (CSS: 0°=right, 90°=down) relative to organism center.
+// Each fan points toward screen center (away from corner).
+const SAT_CFG = {
+  f: { angles:[ 18,  58,  98 ], d:88 }, // top-left  → fan toward lower-right
+  s: { angles:[ 82, 132, 178 ], d:88 }, // top-right → fan toward lower-left
+  p: { angles:[182, 228, 272 ], d:88 }, // bot-right → fan toward upper-left
+  a: { angles:[268, 312, 352 ], d:88 }  // bot-left  → fan toward upper-right
+};
+
+// ── LANGUAGE STRINGS ──────────────────────────────────────────
+const LABELS = {
+  ro:{ f:'Fundamentale', fSub:'Hangul · Hanja Book',
+       s:'Studiu',       sSub:'Lecții · Glosar · Flashcards',
+       p:'Practică',     pSub:'Exerciții · Builder · Stories',
+       a:'Abilități',    aSub:'Speaking · Writing · Stats',
+       progress:'Progres total', today:'Azi', streak:'Streak' },
+  en:{ f:'Fundamentals', fSub:'Hangul · Hanja Book',
+       s:'Study',         sSub:'Lessons · Glossary · Flashcards',
+       p:'Practice',      pSub:'Exercises · Builder · Stories',
+       a:'Skills',        aSub:'Speaking · Writing · Stats',
+       progress:'Total progress', today:'Today', streak:'Streak' }
+};
+
+// ── MODE ──────────────────────────────────────────────────────
+function applyMode() {
+  const root = document.documentElement;
+  if (mode === 'day') {
+    root.setAttribute('data-mode','day');
+    document.getElementById('modeLbl').textContent = 'DAY';
+    document.body.classList.remove('dark-mode');
+    localStorage.setItem('RK_THEME','light');
+  } else {
+    root.removeAttribute('data-mode');
+    document.getElementById('modeLbl').textContent = 'NIGHT';
+    document.body.classList.add('dark-mode');
+    localStorage.setItem('RK_THEME','dark');
   }
-  el.style.display = '';
-  el.innerHTML =
-    '<span class="mini-stat">' + L.today + ': <b>' + todayEx + '</b></span>' +
-    '<span class="mini-stat">' + L.acc   + ': <b>' + pct + '%</b></span>' +
-    '<span class="mini-stat">' + L.streak+ ': <b>🔥' + (s.bestStreak||0) + '</b></span>' +
-    '<span class="mini-stat">' + L.favs  + ': <b>⭐' + favCount + '</b></span>' +
-    xpStr;
+  particles = []; initParticles();
 }
 
-function renderQuestWidget(lang) {
-  var el = document.getElementById('questWidget');
-  if(!el || !window.RKGamification) return;
-  var q = RKGamification.getQuestData();
-  var GOAL = RKGamification.DAILY_GOAL;
-  var pct = Math.min(100, Math.round(q.done / GOAL * 100));
-  var done = q.done >= GOAL;
-  el.style.display = '';
-  el.classList.toggle('done', done);
-  var labelEl = document.getElementById('questWidgetLabel');
-  var goalEl  = document.getElementById('questWidgetGoal');
-  var xpEl    = document.getElementById('questWidgetXP');
-  var barEl   = document.getElementById('questWidgetBar');
-  if(labelEl) labelEl.textContent = done
-    ? (lang === 'ro' ? '✅ Misiunea zilei' : '✅ Daily Quest')
-    : (lang === 'ro' ? 'Misiunea zilei'    : 'Daily Quest');
-  if(goalEl) goalEl.textContent = q.done + ' / ' + GOAL +
-    (done ? (lang === 'ro' ? ' — Completată!' : ' — Done!') : '');
-  if(xpEl) xpEl.textContent = done ? '✓ +50 XP' : '+50 XP';
-  if(barEl) barEl.style.width = pct + '%';
+document.getElementById('modeBtn').addEventListener('click', () => {
+  mode = mode === 'night' ? 'day' : 'night';
+  applyMode();
+});
+
+// ── LANGUAGE ──────────────────────────────────────────────────
+function applyLang(l) {
+  lang = l;
+  localStorage.setItem('RK_LANG', lang);
+  const L = LABELS[lang];
+  document.getElementById('btn-ro').className = 'lang-btn'+(lang==='ro'?' active':'');
+  document.getElementById('btn-en').className = 'lang-btn'+(lang==='en'?' active':'');
+  document.getElementById('ln-f').textContent = L.f;
+  document.getElementById('ls-f').textContent = L.fSub;
+  document.getElementById('ln-s').textContent = L.s;
+  document.getElementById('ls-s').textContent = L.sSub;
+  document.getElementById('ln-p').textContent = L.p;
+  document.getElementById('ls-p').textContent = L.pSub;
+  document.getElementById('ln-a').textContent = L.a;
+  document.getElementById('ls-a').textContent = L.aSub;
+  document.getElementById('progLbl').textContent = L.progress;
+  buildSatellites();
+  renderProgress();
 }
 
-function applyLang(lang) {
-  currentLang = lang;
-  document.querySelectorAll('[data-ro][data-en]').forEach(function(el) {
-    el.textContent = el.dataset[lang];
+function setLang(l) { applyLang(l); }
+window.setLang = setLang;
+
+// ── SATELLITES ─────────────────────────────────────────────────
+function buildSatellites() {
+  ['f','s','p','a'].forEach(id => {
+    const org = document.querySelector('.org[data-id="'+id+'"]');
+    if (!org) return;
+    org.querySelectorAll('.sat').forEach(el => el.remove());
+    const items = SAT_DATA[id];
+    const cfg   = SAT_CFG[id];
+    items.forEach((item, i) => {
+      const rad = cfg.angles[i] * Math.PI / 180;
+      const dx  = Math.cos(rad) * cfg.d;
+      const dy  = Math.sin(rad) * cfg.d;
+      const a   = document.createElement('a');
+      a.className = 'sat';
+      a.href = item.href;
+      a.style.left = dx + 'px';
+      a.style.top  = dy + 'px';
+      a.innerHTML =
+        '<div class="sat-dot">' +
+          '<div class="sat-bg"></div>' +
+          '<span class="sat-icon">' + item.icon + '</span>' +
+        '</div>' +
+        '<div class="sat-name">' + item[lang] + '</div>';
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        navigateTo(item.href);
+      });
+      org.appendChild(a);
+    });
   });
-  document.documentElement.lang = lang;
-  renderMiniStats(lang);
-  renderQuestWidget(lang);
 }
 
-applyLang(currentLang);
-renderQuestWidget(currentLang);
-RKLang.init(applyLang);
+// ── ORGANISM POSITIONING ───────────────────────────────────────
+function positionOrganisms() {
+  const w = innerWidth, h = innerHeight;
+  const cx = w/2, cy = h/2;
+  const rx = Math.min(w*.30, 285);
+  const ry = Math.min(h*.27, 245);
+  const pos = [
+    { x: cx - rx*.92, y: cy - ry*.88 },
+    { x: cx + rx*.92, y: cy - ry*.82 },
+    { x: cx + rx*.84, y: cy + ry*.88 },
+    { x: cx - rx*.80, y: cy + ry*.84 }
+  ];
+  orgPos = [];
+  document.querySelectorAll('.org').forEach((o, i) => {
+    if (!pos[i]) return;
+    o.style.left = pos[i].x + 'px';
+    o.style.top  = pos[i].y + 'px';
+    orgPos.push({ x: pos[i].x, y: pos[i].y, el: o });
+  });
+}
 
-// Notification toggle button
+positionOrganisms();
+window.addEventListener('resize', () => { positionOrganisms(); resizeCanvas(); });
+
+// ── BLOOM INTERACTION (distance-based) ────────────────────────
+const BLOOM_R = 112; // px from organism center
+
+function updateBloom() {
+  let nearestEl = null, nearestD = BLOOM_R;
+  orgPos.forEach(({x, y, el}) => {
+    const d = Math.hypot(mx - x, my - y);
+    if (d < nearestD) { nearestD = d; nearestEl = el; }
+  });
+  orgPos.forEach(({el}) => {
+    if (el === nearestEl) {
+      if (!el.classList.contains('bloomed')) el.classList.add('bloomed');
+    } else {
+      el.classList.remove('bloomed');
+    }
+  });
+  // Cursor color
+  if (nearestEl) {
+    const colors = { f:'255,150,0', s:'28,176,246', p:'88,204,2', a:'206,130,255' };
+    const c = colors[nearestEl.getAttribute('data-id')];
+    if (c) {
+      curDot.style.background   = `rgb(${c})`;
+      curDot.style.boxShadow    = `0 0 10px rgb(${c}),0 0 28px rgb(${c})`;
+      curRing.style.borderColor = `rgba(${c},.5)`;
+      curRing.style.width  = '50px';
+      curRing.style.height = '50px';
+    }
+  } else {
+    curDot.style.background   = 'var(--core)';
+    curDot.style.boxShadow    = '0 0 10px var(--core),0 0 28px var(--core)';
+    curRing.style.borderColor = 'rgba(0,212,255,.35)';
+    curRing.style.width  = '30px';
+    curRing.style.height = '30px';
+  }
+}
+
+// ── CURSOR ────────────────────────────────────────────────────
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  updateBloom();
+});
+
+function animCursor() {
+  sx += (mx - sx) * .12;
+  sy += (my - sy) * .12;
+  curDot.style.left  = mx + 'px';
+  curDot.style.top   = my + 'px';
+  curRing.style.left = sx + 'px';
+  curRing.style.top  = sy + 'px';
+  requestAnimationFrame(animCursor);
+}
+animCursor();
+
+// Void ripple on empty click
+document.addEventListener('click', e => {
+  if (e.target.closest('.org') || e.target.closest('.mkf-mode') || e.target.closest('.lang-btn')) return;
+  const r = document.createElement('div');
+  r.className  = 'mkf-ripple';
+  r.style.left = e.clientX + 'px';
+  r.style.top  = e.clientY + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 1300);
+});
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function navigateTo(href) {
+  navBloom.classList.add('go');
+  setTimeout(() => { window.location.href = href; }, 480);
+}
+
+// ── CANVAS ────────────────────────────────────────────────────
+function resizeCanvas() { canvas.width = innerWidth; canvas.height = innerHeight; }
+resizeCanvas();
+
+// ── PARTICLE SYSTEM ───────────────────────────────────────────
+const N_PART = 48;
+
+function initParticles() {
+  const cols = mode === 'night'
+    ? ['0,212,255','168,85,247','255,150,0','88,204,2']
+    : ['0,100,180','90,0,200','160,80,0','40,140,0'];
+  for (let i = 0; i < N_PART; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.1 + .3,
+      vx:(Math.random()-.5)*.2,
+      vy:(Math.random()-.5)*.2,
+      a: Math.random()*.32+.08,
+      ph:Math.random()*Math.PI*2,
+      c: cols[i % cols.length]
+    });
+  }
+}
+initParticles();
+
+// ── RENDER LOOP ───────────────────────────────────────────────
+function render() {
+  frame++;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const dark = mode === 'night';
+  const cX   = innerWidth/2, cY = innerHeight/2;
+
+  // Neural filaments: core → each organism
+  for (let i = 0; i < orgPos.length; i++) {
+    const o = orgPos[i];
+    const t = Math.sin(frame * .007 + i * .8) * .5 + .5;
+    const cmx = (cX + o.x) / 2;
+    const cmy = (cY + o.y) / 2;
+    const dx  = o.x - cX, dy = o.y - cY;
+    const len = Math.hypot(dx, dy) || 1;
+    const cpx = cmx - dy/len * len * .08;
+    const cpy = cmy + dx/len * len * .08;
+
+    ctx.beginPath();
+    ctx.moveTo(cX, cY);
+    ctx.quadraticCurveTo(cpx, cpy, o.x, o.y);
+    ctx.strokeStyle = `rgba(0,212,255,${dark ? .04+t*.05 : .02+t*.03})`;
+    ctx.lineWidth   = .5;
+    ctx.setLineDash([2,7]);
+    ctx.lineDashOffset = -frame * .4;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Traveling energy node
+    const tp  = ((frame * .005 + i*.25) % 1);
+    const bx  = (1-tp)**2*cX + 2*(1-tp)*tp*cpx + tp**2*o.x;
+    const by  = (1-tp)**2*cY + 2*(1-tp)*tp*cpy + tp**2*o.y;
+    ctx.beginPath(); ctx.arc(bx, by, 1.4, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(0,212,255,${dark?.42:.28})`; ctx.fill();
+  }
+
+  // Particles
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = canvas.width;
+    if (p.x > canvas.width)  p.x = 0;
+    if (p.y < 0) p.y = canvas.height;
+    if (p.y > canvas.height) p.y = 0;
+    const pulse = Math.sin(frame*.016 + p.ph)*.3+.7;
+    const a = p.a * pulse * (dark ? 1 : .45);
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(${p.c},${a})`; ctx.fill();
+    for (let j = i+1; j < particles.length; j++) {
+      const q = particles[j];
+      const d = Math.hypot(p.x-q.x, p.y-q.y);
+      if (d < 72) {
+        ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+        ctx.strokeStyle = `rgba(${p.c},${(1-d/72)*.04*(dark?1:.38)})`;
+        ctx.lineWidth = .35; ctx.stroke();
+      }
+    }
+  }
+
+  requestAnimationFrame(render);
+}
+render();
+
+// ── PROGRESS ECHO ─────────────────────────────────────────────
+function renderProgress() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem('RK_STATS')||'null'); } catch(e){}
+  if (!s || !s.total) return;
+  const pct    = Math.min(100, Math.round(s.correct/s.total*100));
+  const today  = new Date().toISOString().slice(0,10);
+  const todayN = s.today === today ? (s.todayTotal||0) : 0;
+  const L = LABELS[lang];
+  setTimeout(() => {
+    document.getElementById('progFill').style.width = pct+'%';
+    document.getElementById('progNode').style.left  = 'calc('+pct+'% - 3.5px)';
+  }, 2000);
+  document.getElementById('progDetail').innerHTML =
+    L.today+': <b>'+todayN+'</b> &nbsp; '+L.streak+': <b>🔥'+(s.bestStreak||0)+'</b>';
+}
+
+// ── MOBILE TOUCH ──────────────────────────────────────────────
+document.querySelectorAll('.org').forEach(org => {
+  org.addEventListener('touchstart', e => {
+    if (!org.classList.contains('bloomed')) {
+      e.preventDefault();
+      orgPos.forEach(({el}) => el.classList.remove('bloomed'));
+      org.classList.add('bloomed');
+    }
+  }, { passive: false });
+});
+document.addEventListener('touchstart', e => {
+  if (!e.target.closest('.org')) {
+    orgPos.forEach(({el}) => el.classList.remove('bloomed'));
+  }
+});
+
+// ── LEGACY NOTIFICATIONS ──────────────────────────────────────
 if (window.RKNotifications) RKNotifications.renderToggle('notifBtnWrap');
 
-// In-app streak reminder — shown if not studied today and user has a streak
-(function() {
-  var banner = document.getElementById('streakBanner');
-  var bannerText = document.getElementById('streakBannerText');
-  var closeBtn = document.getElementById('streakBannerClose');
-  if (!banner || !bannerText) return;
-  var dismissed = sessionStorage.getItem('RK_STREAK_BANNER_DISMISSED');
-  if (dismissed) return;
-  var s;
-  try { s = JSON.parse(localStorage.getItem('RK_STATS') || 'null'); } catch(e){ s = null; }
-  if (!s || !s.bestStreak) return;
-  var today = new Date().toISOString().slice(0, 10);
-  if (s.today === today && s.todayTotal > 0) return; // already studied today
-  var streak = s.bestStreak || 0;
-  var lang = localStorage.getItem('RK_LANG') || 'ro';
-  bannerText.textContent = streak > 0
-    ? (lang === 'ro'
-        ? 'Streakul tău de ' + streak + (streak === 1 ? ' zi' : ' zile') + ' e în pericol! Studiază acum 🔥'
-        : 'Your ' + streak + '-day streak is at risk! Study now 🔥')
-    : (lang === 'ro' ? 'Nu ai studiat azi. Continuă! 💪' : "You haven't studied today. Keep going! 💪");
-  banner.style.display = '';
-  closeBtn.addEventListener('click', function() {
-    banner.style.display = 'none';
-    sessionStorage.setItem('RK_STREAK_BANNER_DISMISSED', '1');
-  });
-})();
+// ── BOOT ──────────────────────────────────────────────────────
+applyMode();
+applyLang(lang);
 </script>
 
-<script src="./js/core/dark-mode.js"></script>
 <script src="./js/core/register-sw.js"></script>
 </body>
 </html>
