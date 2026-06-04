@@ -1,21 +1,18 @@
-/* ═══════════════════════════════════════════════════════════════════
-   NeuraLux Field — Living Knowledge Topology  js/glossary.js
-   New interaction paradigm: words as luminous semantic organisms.
-   Information reorganizes itself around the user's attention.
-   ═══════════════════════════════════════════════════════════════════ */
+/* PRISM — Glosar Korean
+   Paradigm: Chromatic Typography.
+   Clean, fast, no canvas. Words as colored language. */
 
 // ── DOM ──
-const pageTitleEl    = document.getElementById("pageTitle");
-const pageSubtitleEl = document.getElementById("pageSubtitle");
-const dailyCard      = document.getElementById("dailyCard");
-const searchInput    = document.getElementById("search");
-const countEl        = document.getElementById("count");
-const listEl         = document.getElementById("list");
-const catFilterEl    = document.getElementById("catFilter");
-const favFilterBtn   = document.getElementById("favFilterBtn");
-const nlLens         = document.getElementById("nlLens");
-const nlLensInner    = document.getElementById("nlLensInner");
-const nlCatDots      = document.getElementById("nlCatDots");
+const searchInput  = document.getElementById("search");
+const countEl      = document.getElementById("count");
+const listEl       = document.getElementById("list");
+const catFilterEl  = document.getElementById("catFilter");
+const favFilterBtn = document.getElementById("favFilterBtn");
+const glsCatDots   = document.getElementById("glsCatDots");
+const dailyCard    = document.getElementById("dailyCard");
+const glsPanel     = document.getElementById("glsPanel");
+const glsPanelBody = document.getElementById("glsPanelBody");
+const glsVeil      = document.getElementById("glsVeil");
 
 // ── State ──
 let WORDS       = [];
@@ -25,18 +22,15 @@ let filterCat   = "";
 let filterFavs  = false;
 let focusedKo   = null;
 
-// Maximum DOM nodes in the field at any time
-const MAX_NODES = 120;
-
-// ── Category System ──
+// ── Category data ──
 const CAT_COLORS = {
   subjects:   "#e74c3c",
   objects:    "#2980b9",
   nouns:      "#607d8b",
   verbs:      "#e91e63",
-  adjectives: "#d4ac0d",
+  adjectives: "#c0962a",
   adverbs:    "#8e44ad",
-  modifiers:  "#d4ac0d",
+  modifiers:  "#c0962a",
   connectors: "#e67e22",
   grammar:    "#1abc9c"
 };
@@ -59,129 +53,127 @@ Object.keys(CAT_LABELS).forEach(k => {
   LABEL_KEY[CAT_LABELS[k].en] = k;
 });
 
-// ── UI Text (bilingual) ──
+// ── UI strings ──
 const UI = {
   ro: {
-    title:    "Glosar Korean",
-    subtitle: "NeuraLux — Câmp Cognitiv",
-    search:   "CAUTĂ",
-    nodes:    "noduri",
-    noWords:  "Niciun cuvânt",
-    daily:    "REVELAȚIE ZILNICĂ",
-    speak:    "◎ PRONUNȚĂ",
-    refresh:  "↺ NOI CUVINTE",
-    loadErr:  "Eroare vocabular",
-    retry:    "Reîncearcă",
-    favOnly:  "◆",
-    allCats:  "TOATE",
-    favLbl:   "Favorit",
-    learnLbl: "Memorat",
-    youglish: "YouGlish",
-    related:  "ÎN RELAȚIE",
-    close:    "×"
+    search:  "Caută",
+    words:   "cuvinte",
+    noWords: "Niciun cuvânt",
+    daily:   "CUVINTELE ZILEI",
+    refresh: "↺ Cuvinte noi",
+    loadErr: "Eroare vocabular",
+    retry:   "Reîncearcă",
+    favLbl:  "Favorit",
+    learnLbl:"Memorat",
+    youglish:"YouGlish ↗",
+    related: "DIN ACEEAȘI CATEGORIE",
+    back:    "Înapoi",
+    allCats: "Toate",
+    close:   "×",
+    init:    "INIȚIALIZARE"
   },
   en: {
-    title:    "Korean Glossary",
-    subtitle: "NeuraLux — Cognitive Field",
-    search:   "SEARCH",
-    nodes:    "nodes",
-    noWords:  "No words",
-    daily:    "DAILY REVELATION",
-    speak:    "◎ PRONOUNCE",
-    refresh:  "↺ NEW WORDS",
-    loadErr:  "Vocabulary error",
-    retry:    "Retry",
-    favOnly:  "◆",
-    allCats:  "ALL",
-    favLbl:   "Favorite",
-    learnLbl: "Learned",
-    youglish: "YouGlish",
-    related:  "RELATED",
-    close:    "×"
+    search:  "Search",
+    words:   "words",
+    noWords: "No words",
+    daily:   "TODAY'S WORDS",
+    refresh: "↺ New words",
+    loadErr: "Vocabulary error",
+    retry:   "Retry",
+    favLbl:  "Favorite",
+    learnLbl:"Learned",
+    youglish:"YouGlish ↗",
+    related: "SAME CATEGORY",
+    back:    "Back",
+    allCats: "All",
+    close:   "×",
+    init:    "INITIALIZING"
   }
 };
 
 function t(k) { return UI[currentLang][k]; }
 
-// ── Storage helpers ──
+// ── Storage ──
 let _fSet = null, _lSet = null;
-function _f()        { if (!_fSet) _fSet = new Set(JSON.parse(localStorage.getItem("RK_FAV_WORDS") || "[]")); return _fSet; }
-function _l()        { if (!_lSet) _lSet = new Set(JSON.parse(localStorage.getItem("RK_LEARNED")   || "[]")); return _lSet; }
+function _f() { if (!_fSet) _fSet = new Set(JSON.parse(localStorage.getItem("RK_FAV_WORDS") || "[]")); return _fSet; }
+function _l() { if (!_lSet) _lSet = new Set(JSON.parse(localStorage.getItem("RK_LEARNED")   || "[]")); return _lSet; }
 function isFav(ko)     { return _f().has(ko); }
 function isLearned(ko) { return _l().has(ko); }
 
 function toggleFav(ko) {
   const s = _f(); s.has(ko) ? s.delete(ko) : s.add(ko);
   localStorage.setItem("RK_FAV_WORDS", JSON.stringify([...s]));
-  _syncNodeClasses(ko);
-  if (focusedKo === ko) _renderLens(WORDS.find(w => w.ko === ko));
-  renderDailyView();
+  _refreshRowIcons(ko);
+  if (focusedKo === ko) _renderPanel(WORDS.find(w => w.ko === ko));
+  _refreshDailyChip(ko);
 }
 
 function toggleLearned(ko) {
   const s = _l(); s.has(ko) ? s.delete(ko) : s.add(ko);
   localStorage.setItem("RK_LEARNED", JSON.stringify([...s]));
-  _syncNodeClasses(ko);
-  if (focusedKo === ko) _renderLens(WORDS.find(w => w.ko === ko));
-  // Memory ripple effect
-  const nd = nodeMap.get(ko);
-  if (nd) {
-    nd.classList.add("nl-rippling");
-    setTimeout(() => nd.classList.remove("nl-rippling"), 700);
-  }
+  _refreshRowIcons(ko);
+  if (focusedKo === ko) _renderPanel(WORDS.find(w => w.ko === ko));
 }
 
-function _syncNodeClasses(ko) {
-  const nd = nodeMap.get(ko);
-  if (!nd) return;
-  nd.classList.toggle("nl-fav",     isFav(ko));
-  nd.classList.toggle("nl-learned", isLearned(ko) && !isFav(ko));
+function _refreshRowIcons(ko) {
+  const row = listEl.querySelector(`[data-ko="${CSS.escape(ko)}"]`);
+  if (!row) return;
+  const ic = row.querySelector(".gls-row-icons");
+  if (ic) ic.innerHTML = _iconsHTML(ko);
+}
+
+function _refreshDailyChip(ko) {
+  renderDailyView();
 }
 
 // ── Speech ──
+let _speakTimer = null;
 function speakKO(text) {
   if (!text || !window.speechSynthesis) return;
+  clearTimeout(_speakTimer);
   speechSynthesis.cancel();
-  setTimeout(() => {
+  _speakTimer = setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "ko-KR"; u.rate = 0.9;
     speechSynthesis.speak(u);
-  }, 50);
+  }, 80);
 }
 
 function openYouGlish(w) {
   window.open("https://youglish.com/pronounce/" + encodeURIComponent(w) + "/korean", "_blank");
 }
 
-// ── Data helpers ──
-function getMeaning(w) { return currentLang === "ro" ? w.ro : w.en; }
-function getCats(w)    { return currentLang === "ro" ? w.categoriesRo : w.categoriesEn; }
-function shuffle(a)    { return [...a].sort(() => Math.random() - 0.5); }
-function esc(s)        { return s.replace(/'/g, "\\'"); }
+// ── Helpers ──
+function getMeaning(w)   { return currentLang === "ro" ? w.ro : w.en; }
+function getCats(w)      { return currentLang === "ro" ? w.categoriesRo : w.categoriesEn; }
+function shuffle(a)      { return [...a].sort(() => Math.random() - 0.5); }
+function esc(s)          { return s.replace(/'/g, "\\'"); }
+function sanitizeHTML(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 function getCatColor(w) {
-  const cats = getCats(w);
-  for (const c of cats) {
+  for (const c of getCats(w)) {
     const k = LABEL_KEY[c];
     if (k && CAT_COLORS[k]) return CAT_COLORS[k];
   }
   return "#7c3aed";
 }
 
-// ── Data loading ──
+function _iconsHTML(ko) {
+  return (isFav(ko)     ? '<span class="gls-icon-fav">◆</span>'  : "") +
+         (isLearned(ko) ? '<span class="gls-icon-learned">✓</span>' : "");
+}
+
+// ── Data ──
 function normalizeEntry(e) { return { ko: e.ko || "", ro: e.ro || "", en: e.en || "" }; }
 
 function buildWords(vocab) {
   const map = new Map();
   Object.keys(CAT_LABELS).forEach(catKey => {
-    const items = Array.isArray(vocab[catKey]) ? vocab[catKey] : [];
-    items.forEach(raw => {
-      const e = normalizeEntry(raw);
+    (Array.isArray(vocab[catKey]) ? vocab[catKey] : []).forEach(raw => {
+      const e  = normalizeEntry(raw);
       const ko = e.ko.trim();
       if (!ko) return;
-      if (!map.has(ko)) {
-        map.set(ko, { ko, ro: e.ro, en: e.en, categoriesRo: new Set(), categoriesEn: new Set() });
-      }
+      if (!map.has(ko)) map.set(ko, { ko, ro: e.ro, en: e.en, categoriesRo: new Set(), categoriesEn: new Set() });
       const c = map.get(ko);
       if (!c.ro && e.ro) c.ro = e.ro;
       if (!c.en && e.en) c.en = e.en;
@@ -194,273 +186,163 @@ function buildWords(vocab) {
     .sort((a, b) => a.ko.localeCompare(b.ko, "ko"));
 }
 
-// ── Phyllotaxis layout (golden angle spiral) ──
-// Creates the most natural, non-repeating distribution of organisms.
-const GOLDEN = 137.508 * Math.PI / 180;
-
-function getPos(i, total) {
-  const r = Math.sqrt((i + 0.5) / Math.max(total, 1));
-  const θ = i * GOLDEN;
-  // Field center shifted left slightly when lens opens; base at 47%/50%
-  const cx = 0.47, cy = 0.50;
-  // Radius scales to fill field without clipping edges
-  const rx = Math.min(0.42, 0.38 + total * 0.0002);
-  const ry = Math.min(0.38, 0.34 + total * 0.0002);
-  return {
-    x: cx + r * Math.cos(θ) * rx,
-    y: cy + r * Math.sin(θ) * ry
-  };
-}
-
-// Periphery position for dimmed (non-matching) nodes
-function getPeripheryPos(i, total) {
-  const φ = (i / Math.max(total, 1)) * Math.PI * 2;
-  const r = 0.50 + ((i * 7) % 11) * 0.004;
-  return {
-    x: 0.5 + r * Math.cos(φ) * 0.95,
-    y: 0.5 + r * Math.sin(φ) * 0.88
-  };
-}
-
-// ── Node pool ──
-const nodeMap = new Map(); // ko → DOM element
-const exiting = new Set(); // ko's currently dissolving
-
-function createNode(word) {
-  const el = document.createElement("div");
-  el.className = "nl-node nl-spawning";
-  el.setAttribute("data-ko", word.ko);
-
-  const color = getCatColor(word);
-  // Unique breathing rhythm per organism
-  el.style.setProperty("--bd",  (3.0 + Math.random() * 3.0) + "s");
-  el.style.setProperty("--bph", (Math.random() * 3.5) + "s");
-  el.style.setProperty("--_glow", color + "55");
-
-  el.innerHTML =
-    `<span class="nl-node-dot" style="background:${color}"></span>` +
-    `<span class="nl-node-ko"  style="color:${color}">${word.ko}</span>` +
-    `<span class="nl-node-tr">${getMeaning(word)}</span>`;
-
-  el.classList.toggle("nl-fav",     isFav(word.ko));
-  el.classList.toggle("nl-learned", isLearned(word.ko) && !isFav(word.ko));
-
-  el.addEventListener("click", () => focusWord(word.ko));
-
-  setTimeout(() => el.classList.remove("nl-spawning"), 600);
-  return el;
-}
-
-function placeNode(el, x, y) {
-  el.style.left = (x * 100) + "%";
-  el.style.top  = (y * 100) + "%";
-}
-
-function removeNode(ko) {
-  const el = nodeMap.get(ko);
-  if (!el) return;
-  exiting.add(ko);
-  el.classList.add("nl-dissolving");
-  setTimeout(() => {
-    el.remove();
-    nodeMap.delete(ko);
-    exiting.delete(ko);
-  }, 400);
-}
-
 // ── Filter ──
 function getFiltered() {
   const q = searchInput.value.trim().toLowerCase();
   return WORDS.filter(w => {
-    const textOk = !q ||
-      w.ko.toLowerCase().includes(q) ||
-      (w.ro || "").toLowerCase().includes(q) ||
-      (w.en || "").toLowerCase().includes(q);
-    const catOk = !filterCat  || getCats(w).includes(filterCat);
-    const favOk = !filterFavs || isFav(w.ko);
-    return textOk && catOk && favOk;
+    const ok = !q || w.ko.toLowerCase().includes(q) ||
+      (w.ro||"").toLowerCase().includes(q) || (w.en||"").toLowerCase().includes(q);
+    return ok && (!filterCat || getCats(w).includes(filterCat)) && (!filterFavs || isFav(w.ko));
   });
 }
 
-// ── Render — the living field update ──
-function render() {
+// ── Render ──
+let _animating = false;
+
+function render(animate) {
   const filtered = getFiltered();
-  // Show up to MAX_NODES; if more filtered results exist, show first MAX_NODES
-  const toShow   = filtered.slice(0, MAX_NODES);
-  const showSet  = new Set(toShow.map(w => w.ko));
+  countEl.textContent = filtered.length + " " + t("words");
 
-  countEl.textContent = filtered.length + " " + t("nodes");
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="gls-none">${t("noWords")}</div>`;
+    return;
+  }
 
-  // Remove nodes no longer in active set (not exiting yet)
-  nodeMap.forEach((el, ko) => {
-    if (!showSet.has(ko) && !exiting.has(ko)) removeNode(ko);
+  const frag = document.createDocumentFragment();
+  filtered.forEach((word, i) => {
+    const row = _makeRow(word);
+    row.classList.toggle("hot", focusedKo === word.ko);
+    if (animate && i < 30) {
+      row.classList.add("entering");
+      row.style.animationDelay = (i * 12) + "ms";
+    }
+    frag.appendChild(row);
   });
 
-  // Add / position nodes for active words
-  toShow.forEach((word, i) => {
-    const pos = getPos(i, toShow.length);
-
-    if (exiting.has(word.ko)) {
-      // Re-entering before dissolve finishes: cancel exit
-      exiting.delete(word.ko);
-      const el = nodeMap.get(word.ko);
-      if (el) {
-        el.classList.remove("nl-dissolving");
-        placeNode(el, pos.x, pos.y);
-      }
-      return;
-    }
-
-    if (!nodeMap.has(word.ko)) {
-      const el = createNode(word);
-      placeNode(el, pos.x, pos.y);
-      listEl.appendChild(el);
-      nodeMap.set(word.ko, el);
-    } else {
-      placeNode(nodeMap.get(word.ko), pos.x, pos.y);
-    }
-
-    const el = nodeMap.get(word.ko);
-    if (el) {
-      el.classList.remove("nl-dim");
-      el.classList.toggle("nl-focused", word.ko === focusedKo);
-    }
-  });
+  listEl.innerHTML = "";
+  listEl.appendChild(frag);
 }
 
-// ── Focus — semantic gravity activation ──
-function focusWord(ko) {
-  if (focusedKo === ko) { closeLens(); return; }
+function _makeRow(word) {
+  const color = getCatColor(word);
+  const el = document.createElement("div");
+  el.className = "gls-row";
+  el.dataset.ko = word.ko;
+  el.innerHTML =
+    `<div class="gls-row-bar" style="background:${color}"></div>` +
+    `<div class="gls-row-text">` +
+      `<span class="gls-row-ko" style="color:${color}">${sanitizeHTML(word.ko)}</span>` +
+      `<span class="gls-row-tr">${sanitizeHTML(getMeaning(word))}</span>` +
+    `</div>` +
+    `<div class="gls-row-icons">${_iconsHTML(word.ko)}</div>`;
+  el.addEventListener("click", () => focusWord(word.ko));
+  return el;
+}
 
-  // Deactivate previous
+// ── Focus word ──
+function focusWord(ko, speak = true) {
+  if (focusedKo === ko) { closePanel(); return; }
+
   if (focusedKo) {
-    const prev = nodeMap.get(focusedKo);
-    if (prev) prev.classList.remove("nl-focused");
+    const prev = listEl.querySelector(`[data-ko="${CSS.escape(focusedKo)}"]`);
+    if (prev) prev.classList.remove("hot");
   }
 
   focusedKo = ko;
-  const nd = nodeMap.get(ko);
-  if (nd) nd.classList.add("nl-focused");
+  const row = listEl.querySelector(`[data-ko="${CSS.escape(ko)}"]`);
+  if (row) row.classList.add("hot");
 
   const word = WORDS.find(w => w.ko === ko);
   if (!word) return;
 
-  speakKO(ko);
-  _renderLens(word);
-  nlLens.classList.add("nl-open");
-  nlLens.setAttribute("aria-hidden", "false");
-  listEl.classList.add("nl-shifted");
-
-  // Semantic gravity: pull related organisms into orbit
-  _attractRelated(word);
+  if (speak) speakKO(ko);
+  _renderPanel(word);
+  glsPanel.classList.add("open");
+  glsPanel.setAttribute("aria-hidden", "false");
+  glsVeil.classList.add("on");
 }
 
-function closeLens() {
+function closePanel() {
   if (focusedKo) {
-    const nd = nodeMap.get(focusedKo);
-    if (nd) nd.classList.remove("nl-focused");
+    const row = listEl.querySelector(`[data-ko="${CSS.escape(focusedKo)}"]`);
+    if (row) row.classList.remove("hot");
   }
   focusedKo = null;
-  nlLens.classList.remove("nl-open");
-  nlLens.setAttribute("aria-hidden", "true");
-  listEl.classList.remove("nl-shifted");
-  // Restore positions
-  render();
+  glsPanel.classList.remove("open");
+  glsPanel.setAttribute("aria-hidden", "true");
+  glsVeil.classList.remove("on");
 }
 
-// Pull semantically related words into orbital positions around the focused word
-function _attractRelated(word) {
-  const wCats = getCats(word);
-  const focusEl = nodeMap.get(word.ko);
-  if (!focusEl) return;
-
-  const fx = parseFloat(focusEl.style.left) / 100;
-  const fy = parseFloat(focusEl.style.top)  / 100;
-
-  // Only attract visible (non-dim) related words
-  const related = WORDS.filter(w => {
-    if (w.ko === word.ko) return false;
-    if (!nodeMap.has(w.ko)) return false;
-    const nd = nodeMap.get(w.ko);
-    if (nd.classList.contains("nl-dim")) return false;
-    return getCats(w).some(c => wCats.includes(c));
-  }).slice(0, 16);
-
-  related.forEach((rw, i) => {
-    const rEl = nodeMap.get(rw.ko);
-    if (!rEl) return;
-    const angle   = (i / related.length) * Math.PI * 2;
-    const orbit   = 0.13 + (i % 3) * 0.045;
-    const tx = Math.max(0.04, Math.min(0.90, fx + Math.cos(angle) * orbit * 0.88));
-    const ty = Math.max(0.06, Math.min(0.90, fy + Math.sin(angle) * orbit * 0.72));
-    placeNode(rEl, tx, ty);
-  });
-}
-
-// Render the detail lens for a focused word
-function _renderLens(word) {
+// ── Panel content ──
+function _renderPanel(word) {
   if (!word) return;
   const color = getCatColor(word);
   const cats  = getCats(word);
 
-  const related = WORDS.filter(w => {
-    if (w.ko === word.ko) return false;
-    return getCats(w).some(c => cats.includes(c));
-  }).slice(0, 12);
+  const related = WORDS.filter(w => w.ko !== word.ko && getCats(w).some(c => cats.includes(c))).slice(0, 14);
 
-  nlLensInner.innerHTML =
-    `<button class="nl-lens-x" onclick="closeLens()" aria-label="${t("close")}">${t("close")}</button>` +
+  glsPanelBody.innerHTML =
+    `<button class="gls-panel-back" onclick="closePanel()">` +
+      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">` +
+        `<path d="M19 12H5M12 5l-7 7 7 7"/>` +
+      `</svg>${t("back")}` +
+    `</button>` +
 
-    `<div class="nl-lens-ko" style="color:${color}">${word.ko}</div>` +
-    `<div class="nl-lens-meaning">${getMeaning(word)}</div>` +
+    `<div class="gls-panel-ko" style="color:${color}">${sanitizeHTML(word.ko)}</div>` +
+    `<div class="gls-panel-tr">${sanitizeHTML(getMeaning(word))}</div>` +
 
-    `<div class="nl-lens-cats">${cats.map(c => {
+    `<div class="gls-panel-cats">${cats.map(c => {
       const k = LABEL_KEY[c]; const cc = (k && CAT_COLORS[k]) || "#7c3aed";
-      return `<span class="nl-lens-cat" style="color:${cc};border-color:${cc};background:${cc}18">${c}</span>`;
+      return `<span class="gls-panel-cat" style="background:${cc}1a;color:${cc}">${sanitizeHTML(c)}</span>`;
     }).join("")}</div>` +
 
-    `<div class="nl-lens-acts">` +
-      `<button class="nl-act${isFav(word.ko) ? " nl-act-fav" : ""}" onclick="toggleFav('${esc(word.ko)}')">${isFav(word.ko) ? "◆" : "◇"} ${t("favLbl")}</button>` +
-      `<button class="nl-act${isLearned(word.ko) ? " nl-act-learn" : ""}" onclick="toggleLearned('${esc(word.ko)}')">${isLearned(word.ko) ? "✓" : "○"} ${t("learnLbl")}</button>` +
-      `<button class="nl-act" onclick="speakKO('${esc(word.ko)}')">${t("speak")}</button>` +
-      `<button class="nl-act" onclick="openYouGlish('${esc(word.ko)}')">${t("youglish")}</button>` +
+    `<div class="gls-panel-acts">` +
+      `<button class="gls-panel-btn${isFav(word.ko) ? " fav-on" : ""}" onclick="toggleFav('${esc(word.ko)}')">` +
+        `<span class="gls-panel-btn-ico">${isFav(word.ko) ? "◆" : "◇"}</span>${t("favLbl")}` +
+      `</button>` +
+      `<button class="gls-panel-btn${isLearned(word.ko) ? " learn-on" : ""}" onclick="toggleLearned('${esc(word.ko)}')">` +
+        `<span class="gls-panel-btn-ico">${isLearned(word.ko) ? "✓" : "○"}</span>${t("learnLbl")}` +
+      `</button>` +
+      `<button class="gls-panel-btn" onclick="openYouGlish('${esc(word.ko)}')">` +
+        `<span class="gls-panel-btn-ico">▶</span>${t("youglish")}` +
+      `</button>` +
     `</div>` +
 
-    (related.length ?
-      `<div class="nl-lens-hdg">${t("related")}</div>` +
-      `<div class="nl-related">${related.map(rw =>
-        `<span class="nl-rel" style="color:${getCatColor(rw)}" onclick="focusWord('${esc(rw.ko)}')">${rw.ko}</span>`
-      ).join("")}</div>`
-    : "");
+    (related.length
+      ? `<div class="gls-panel-hdg">${t("related")}</div>` +
+        `<div class="gls-panel-related">${related.map(rw =>
+          `<span class="gls-panel-rel" style="color:${getCatColor(rw)}" onclick="focusWord('${esc(rw.ko)}')">${sanitizeHTML(rw.ko)}</span>`
+        ).join("")}</div>`
+      : "");
 }
 
-// ── Category Dots ──
+// ── Category dots ──
 function buildCatDots() {
-  const keys = Object.keys(CAT_LABELS);
-
-  // Rebuild hidden select for internal tracking
   catFilterEl.innerHTML = `<option value="">${t("allCats")}</option>` +
-    keys.map(k => `<option value="${CAT_LABELS[k][currentLang]}">${CAT_LABELS[k][currentLang]}</option>`).join("");
+    Object.keys(CAT_LABELS).map(k =>
+      `<option value="${CAT_LABELS[k][currentLang]}">${CAT_LABELS[k][currentLang]}</option>`
+    ).join("");
 
-  // Build visible dot row
-  nlCatDots.innerHTML =
-    `<span class="nl-dot nl-dot-all${!filterCat ? " nl-dot-on" : ""}" title="${t("allCats")}" onclick="setCatFilter('')" style="--_dc:linear-gradient(#7c3aed,#db2877)"></span>` +
-    keys.map(k => {
+  const allClass = "gls-dot" + (!filterCat ? " on" : "");
+  glsCatDots.innerHTML =
+    `<button class="${allClass}" title="${t("allCats")}" onclick="setCatFilter('')"` +
+      ` style="background:linear-gradient(135deg,#7c3aed,#db2877)"></button>` +
+    Object.keys(CAT_LABELS).map(k => {
       const lbl   = CAT_LABELS[k][currentLang];
       const color = CAT_COLORS[k];
       const on    = filterCat === lbl;
-      return `<span class="nl-dot${on ? " nl-dot-on" : ""}" title="${lbl}" onclick="setCatFilter('${esc(lbl)}')" style="background:${color};--_dc:${color}"></span>`;
+      return `<button class="gls-dot${on ? " on" : ""}" title="${lbl}"` +
+        ` onclick="setCatFilter('${esc(lbl)}')" style="background:${color}"></button>`;
     }).join("");
 }
 
 function setCatFilter(lbl) {
   filterCat = lbl;
-  catFilterEl.value = lbl;
   buildCatDots();
-  render();
+  render(false);
 }
 
-// ── Daily Revelation ──
+// ── Daily words ──
 function pickDaily() {
   daily = WORDS.length ? shuffle(WORDS).slice(0, 3) : [];
 }
@@ -469,152 +351,57 @@ function renderDailyView() {
   if (!daily.length) { dailyCard.innerHTML = ""; return; }
 
   dailyCard.innerHTML =
-    `<div class="nl-rev-hdr">` +
-      `<span class="nl-rev-label">${t("daily")}</span>` +
-      `<button class="nl-rev-x" onclick="document.getElementById('dailyCard').classList.add('nl-rev-gone')" aria-label="${t("close")}">${t("close")}</button>` +
+    `<div class="gls-daily-top">` +
+      `<span class="gls-daily-label">${t("daily")}</span>` +
+      `<button class="gls-daily-dismiss" onclick="dailyCard.innerHTML=''" aria-label="${t("close")}">${t("close")}</button>` +
     `</div>` +
-    `<div class="nl-rev-words">${daily.map(w =>
-      `<div class="nl-rev-word" onclick="focusWord('${esc(w.ko)}')">` +
-        `<div>` +
-          `<div class="nl-rev-ko" style="color:${getCatColor(w)}">${w.ko}</div>` +
-          `<div class="nl-rev-tr">${getMeaning(w)}</div>` +
-        `</div>` +
-        `<span style="margin-left:auto;font-size:13px;cursor:pointer;opacity:${isFav(w.ko) ? 1 : 0.3};flex-shrink:0" onclick="event.stopPropagation();toggleFav('${esc(w.ko)}')">${isFav(w.ko) ? "◆" : "◇"}</span>` +
-      `</div>`
-    ).join("")}</div>` +
-    `<div class="nl-rev-acts">` +
-      `<button class="nl-rev-btn" onclick="playDaily()">${t("speak")}</button>` +
-      `<button class="nl-rev-btn" onclick="refreshDaily()">${t("refresh")}</button>` +
+    `<div class="gls-daily-chips">` +
+      daily.map(w =>
+        `<div class="gls-daily-chip" onclick="focusWord('${esc(w.ko)}')">` +
+          `<div class="gls-daily-ko" style="color:${getCatColor(w)}">${sanitizeHTML(w.ko)}</div>` +
+          `<div class="gls-daily-tr">${sanitizeHTML(getMeaning(w))}</div>` +
+        `</div>`
+      ).join("") +
+    `</div>` +
+    `<div class="gls-daily-foot">` +
+      `<button class="gls-daily-refresh" onclick="refreshDaily()">${t("refresh")}</button>` +
     `</div>`;
 }
 
-function playDaily()    { daily.forEach((w, i) => setTimeout(() => speakKO(w.ko), i * 1200)); }
 function refreshDaily() { pickDaily(); renderDailyView(); }
-
-// ── Canvas — breathing nebula background ──
-function initCanvas() {
-  const cvs = document.getElementById("nlCanvas");
-  if (!cvs) return;
-  const ctx = cvs.getContext("2d");
-  let pts = [];
-
-  function resize() {
-    cvs.width  = window.innerWidth;
-    cvs.height = window.innerHeight;
-    const n = Math.min(Math.floor(cvs.width * cvs.height / 28000), 50);
-    pts = Array.from({ length: n }, () => ({
-      x:  Math.random() * cvs.width,
-      y:  Math.random() * cvs.height,
-      vx: (Math.random() - 0.5) * 0.24,
-      vy: (Math.random() - 0.5) * 0.20,
-      r:  Math.random() * 1.1 + 0.28,
-      a:  Math.random() * 0.44 + 0.10,
-      ph: Math.random() * Math.PI * 2
-    }));
-  }
-
-  let tick = 0;
-  let frameCount = 0;
-
-  function frame() {
-    tick += 0.004;
-    frameCount++;
-    const dark = document.body.classList.contains("dark-mode");
-
-    ctx.clearRect(0, 0, cvs.width, cvs.height);
-
-    // Breathing nebula zones — different configurations for light/dark
-    const nbs = dark ? [
-      [0.12, 0.18, 0.40, "rgba(88,0,66,0.14)"],
-      [0.88, 0.10, 0.34, "rgba(38,0,108,0.12)"],
-      [0.50, 0.88, 0.44, "rgba(48,0,88,0.10)"],
-      [0.70, 0.44, 0.28, "rgba(0,28,90,0.08)"]
-    ] : [
-      [0.10, 0.14, 0.44, "rgba(219,39,119,0.072)"],
-      [0.90, 0.08, 0.36, "rgba(14,165,233,0.060)"],
-      [0.50, 0.94, 0.48, "rgba(124,58,237,0.058)"],
-      [0.66, 0.50, 0.30, "rgba(219,39,119,0.042)"]
-    ];
-
-    nbs.forEach(([nx, ny, nr, nc]) => {
-      const breathe = 1 + Math.sin(tick * 0.36 + nx * 5.8) * 0.13;
-      const g = ctx.createRadialGradient(
-        nx * cvs.width, ny * cvs.height, 0,
-        nx * cvs.width, ny * cvs.height,
-        nr * Math.min(cvs.width, cvs.height) * breathe
-      );
-      g.addColorStop(0, nc);
-      g.addColorStop(1, "transparent");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, cvs.width, cvs.height);
-    });
-
-    // Dust particles
-    const pc = dark ? "rgba(167,139,250," : "rgba(124,58,237,";
-    pts.forEach(p => {
-      p.x = (p.x + p.vx + cvs.width)  % cvs.width;
-      p.y = (p.y + p.vy + cvs.height) % cvs.height;
-      const alpha = p.a * (0.62 + 0.38 * Math.sin(tick * 1.15 + p.ph));
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, 6.283);
-      ctx.fillStyle = pc + alpha + ")";
-      ctx.fill();
-    });
-
-    // Constellation lines between nearby particles — redrawn every 3 frames
-    if (frameCount % 3 === 0) {
-      const lc = dark ? "rgba(167,139,250," : "rgba(124,58,237,";
-      for (let i = 0; i < pts.length - 1; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[i].x - pts[j].x;
-          const dy = pts[i].y - pts[j].y;
-          const d  = Math.sqrt(dx * dx + dy * dy);
-          if (d < 60) {
-            ctx.beginPath();
-            ctx.moveTo(pts[i].x, pts[i].y);
-            ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.strokeStyle = lc + (1 - d / 60) * 0.09 + ")";
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-    }
-
-    requestAnimationFrame(frame);
-  }
-
-  resize();
-  frame();
-  window.addEventListener("resize", resize);
-}
 
 // ── Language switch ──
 function setLanguage(lang) {
+  closePanel();
   currentLang = lang;
   filterCat   = "";
-  // Dissolve all nodes — they'll respawn with new language text
-  nodeMap.forEach((el, ko) => removeNode(ko));
+  searchInput.placeholder = t("search");
   buildCatDots();
   renderDailyView();
-  // Slight delay so dissolve animations play before respawn
-  setTimeout(render, 420);
+  render(false);
 }
 
-function updateTexts() {
-  if (pageTitleEl)    pageTitleEl.textContent    = t("title");
-  if (pageSubtitleEl) pageSubtitleEl.textContent = t("subtitle");
-  searchInput.placeholder = t("search");
-  favFilterBtn.textContent = t("favOnly") + (filterFavs ? " ✓" : "");
-  buildCatDots();
-}
+// ── Events ──
+let _searchTimer = null;
+searchInput.addEventListener("input", () => {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => render(false), 150);
+});
 
-// ── Load vocabulary ──
+favFilterBtn.addEventListener("click", () => {
+  filterFavs = !filterFavs;
+  favFilterBtn.classList.toggle("on", filterFavs);
+  render(false);
+});
+
+glsVeil.addEventListener("click", closePanel);
+
+// ── Load ──
 async function loadVocabulary() {
   listEl.innerHTML =
-    `<div class="nl-loading">` +
-      `<div class="nl-loading-ring"></div>` +
-      `<div class="nl-loading-text">${currentLang === "ro" ? "INIȚIALIZARE" : "INITIALIZING"}</div>` +
+    `<div class="gls-loading">` +
+      `<div class="gls-spinner"></div>` +
+      `<span>${currentLang === "ro" ? "INIȚIALIZARE" : "INITIALIZING"}</span>` +
     `</div>`;
 
   try {
@@ -624,45 +411,21 @@ async function loadVocabulary() {
     WORDS = buildWords(vocab);
     listEl.innerHTML = "";
     pickDaily();
+    buildCatDots();
     renderDailyView();
-    render();
+    render(true);
   } catch (err) {
     console.error(err);
     listEl.innerHTML =
-      `<div class="nl-err">` +
-        `<div class="nl-err-msg">${t("loadErr")}</div>` +
-        `<button class="nl-err-retry" onclick="loadVocabulary()">${t("retry")}</button>` +
+      `<div class="gls-err">` +
+        `<div class="gls-err-msg">${t("loadErr")}</div>` +
+        `<button class="gls-err-btn" onclick="loadVocabulary()">${t("retry")}</button>` +
       `</div>`;
   }
 }
 
-// ── Events ──
-let _st = null;
-searchInput.addEventListener("input", () => {
-  clearTimeout(_st);
-  _st = setTimeout(() => {
-    // Collapse daily revelation when user starts typing
-    if (searchInput.value.trim()) {
-      dailyCard.classList.add("nl-rev-gone");
-    }
-    render();
-  }, 150);
-});
-
-favFilterBtn.addEventListener("click", () => {
-  filterFavs = !filterFavs;
-  favFilterBtn.classList.toggle("active", filterFavs);
-  favFilterBtn.textContent = t("favOnly") + (filterFavs ? " ✓" : "");
-  render();
-});
-
-// Tap on empty field to close lens
-listEl.addEventListener("click", e => {
-  if (!e.target.closest(".nl-node")) closeLens();
-});
-
-// ── Initialize ──
-initCanvas();
-updateTexts();
+// ── Init ──
+searchInput.placeholder = t("search");
+buildCatDots();
 RKLang.init(setLanguage);
 loadVocabulary();
