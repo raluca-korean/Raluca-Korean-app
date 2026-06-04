@@ -2380,6 +2380,8 @@
     if(/\b(am fost|ai fost|a fost|am fi fost)\b/.test(n)) return 'past';
 
     // Future Romanian: voi/vei/va/vom/veți/vor
+    // "am să / ai să / o să" — construcție de viitor în română vorbită
+    if(/\b(am sa|ai sa|o sa|are sa|avem sa|aveti sa|au sa)\b/.test(n)) return 'future';
     // "voi" singur poate fi pronume (voi = you all); excludem "voi ați/toți"
     if(/\b(vei|va|vom|veti|vor)\b/.test(n)) return 'future';
     // "voi" as subject pronoun (you all) when followed by a 2nd-pl conjugated form
