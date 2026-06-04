@@ -324,7 +324,7 @@ function render() {
 }
 
 // ── Focus — semantic gravity activation ──
-function focusWord(ko) {
+function focusWord(ko, speak = true) {
   if (focusedKo === ko) { closeLens(); return; }
 
   // Deactivate previous
@@ -343,7 +343,7 @@ function focusWord(ko) {
   // Dismiss daily revelation so it stops blocking word clicks
   dailyCard.classList.add("nl-rev-gone");
 
-  speakKO(ko);
+  if (speak) speakKO(ko);
   _renderLens(word);
   nlLens.classList.add("nl-open");
   nlLens.setAttribute("aria-hidden", "false");
@@ -470,7 +470,7 @@ function renderDailyView() {
       `<button class="nl-rev-x" onclick="document.getElementById('dailyCard').classList.add('nl-rev-gone')" aria-label="${t("close")}">${t("close")}</button>` +
     `</div>` +
     `<div class="nl-rev-words">${daily.map(w =>
-      `<div class="nl-rev-word" onclick="focusWord('${esc(w.ko)}')">` +
+      `<div class="nl-rev-word" onclick="focusWord('${esc(w.ko)}', false)">` +
         `<div>` +
           `<div class="nl-rev-ko" style="color:${getCatColor(w)}">${w.ko}</div>` +
           `<div class="nl-rev-tr">${sanitizeHTML(getMeaning(w))}</div>` +
