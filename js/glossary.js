@@ -262,6 +262,7 @@ function removeNode(ko) {
   exiting.add(ko);
   el.classList.add("nl-dissolving");
   setTimeout(() => {
+    if (!exiting.has(ko)) return; // re-entered before timer fired — don't remove
     el.remove();
     nodeMap.delete(ko);
     exiting.delete(ko);
@@ -306,6 +307,8 @@ function render() {
       const el = nodeMap.get(word.ko);
       if (el) {
         el.classList.remove("nl-dissolving");
+        el.classList.remove("nl-dim");
+        el.classList.toggle("nl-focused", word.ko === focusedKo);
         placeNode(el, pos.x, pos.y);
       }
       return;
@@ -344,6 +347,9 @@ function focusWord(ko) {
 
   const word = WORDS.find(w => w.ko === ko);
   if (!word) return;
+
+  // Dismiss daily revelation so it stops blocking word clicks
+  dailyCard.classList.add("nl-rev-gone");
 
   speakKO(ko);
   _renderLens(word);
@@ -656,9 +662,9 @@ favFilterBtn.addEventListener("click", () => {
   render();
 });
 
-// Tap on empty field to close lens
+// Tap on empty field to close lens (only when lens is actually open)
 listEl.addEventListener("click", e => {
-  if (!e.target.closest(".nl-node")) closeLens();
+  if (!e.target.closest(".nl-node") && focusedKo !== null) closeLens();
 });
 
 // ── Initialize ──
