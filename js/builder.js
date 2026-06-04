@@ -2409,8 +2409,19 @@
       var segText = pendingText ? (pendingText + ' ' + (cleanText || seg.text)) : (cleanText || seg.text);
       pendingText = '';
       var segVerb = findBestMatch('verb', segText);
+      // A verb-less segment that has its own time/place/object signals a new
+      // predicate with an implied verb (e.g. "și seara la restaurant" after
+      // "dimineața merg la piață"). Create a separate clause that inherits
+      // the verb from the preceding clause instead of merging backward.
+      var segHasCtx = !segVerb && segText && clauseData.length > 0 && (
+        findBestMatch('time', segText) ||
+        findBestMatch('departure', segText) ||
+        findBestMatch('object1', segText)
+      );
       if(segVerb){
         clauseData.push({ text: segText, connKey: seg.connector });
+      } else if(segHasCtx){
+        clauseData.push({ text: segText, connKey: seg.connector, inheritVerb: true });
       } else if(clauseData.length > 0 && segText){
         // Merge backward: attach verb-less text to the preceding clause so that
         // extra locations / subjects in it are picked up (e.g. "și la magazin").
@@ -2443,6 +2454,11 @@
       var objects  = findAllMatches('object1', cd.text, 2);
       var descs    = findAllMatches('adverb', cd.text, 2);
       var verb     = findBestMatch('verb', cd.text);
+      // Inherit verb from previous clause when this segment had none explicitly
+      // (e.g. "și seara la restaurant" after "dimineața merg la piață")
+      if(!verb && cd.inheritVerb && ci > 0){
+        verb = findBestMatch('verb', clauseData[ci - 1].text);
+      }
 
       // Topic drop: only set subject if different from previous clause's subject
       if(subjects[0] && subjects[0].ko !== lastSubjectKo){
