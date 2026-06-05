@@ -1823,9 +1823,14 @@
     } else if(transit && transit.ko){
       parts.push(transit.ko);
     }
-    // Embedded (subordinate) clause: [subj이/가 pred-다는 걸] — acts as complex object
+    // Embedded (subordinate) clause — acts as complex object.
+    // Quotative verbs (말하다, 생각하다) take -다고; all others take -다는 걸.
     if(embSub && embSub.ko && embPred && embPred.ko){
       var clausalForm = (embPred.raw && embPred.raw.clausal) ? embPred.raw.clausal : (embPred.ko + '다는 걸');
+      var mainVerb = itemOf(clause, 'verb');
+      if(mainVerb && QUOTATIVE_VERBS[mainVerb.ko]){
+        clausalForm = clausalForm.replace(/는 걸$/, '고');
+      }
       parts.push(embSub.ko + ' ' + clausalForm);
     }
     // Indirect object / recipient (에게): placed before the direct object
@@ -1972,6 +1977,9 @@
   };
   // 있다 takes 이/가 (subject marker) for the possessed item, not 를/을
   var EXISTENTIAL_VERBS = { '있다':1 };
+
+  // Quotative verbs take -다고 (reported speech/thought); all others use -다는 걸 (nominalized)
+  var QUOTATIVE_VERBS = { '말하다':1, '생각하다':1 };
 
   function renderPreview(){
     var built = buildFullOutput();
