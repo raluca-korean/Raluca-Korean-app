@@ -425,10 +425,12 @@ let wDrawing = false, wLastX = 0, wLastY = 0;
 // ── AUDIO ─────────────────────────────────────────────────────
 function speakKo(text) {
   if (!('speechSynthesis' in window) || !text) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ko-KR';
   speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    speechSynthesis.speak(u);
+  }, 80);
 }
 
 // ── BACKGROUND PARTICLE FIELD ─────────────────────────────────
@@ -952,6 +954,7 @@ function init() {
 
   // Vortex events
   el('mrsVClose').onclick = closeVortex;
+  el('mrsVGlyph').onclick = () => currentItem && speakKo(currentItem.speak);
   el('mrsVWrite').onclick = () => {
     if (!currentItem) return;
     window.location.href = `./writing.html?char=${encodeURIComponent(currentItem.char)}`;
