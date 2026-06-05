@@ -1010,6 +1010,48 @@ var lang        = localStorage.getItem('RK_LANG') || 'ro';
 var learned     = JSON.parse(localStorage.getItem('RK_HJ_LEARNED') || '[]');
 var bloomActive = -1;
 
+/* Streak + daily goal */
+var DAILY_GOAL  = 10;
+var streakData  = JSON.parse(localStorage.getItem('RK_HJ_STREAK') || '{"streak":0,"lastDate":"","today":0}');
+
+function _todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function _checkAndUpdateStreak() {
+  var today = _todayStr();
+  if (streakData.lastDate === today) return;
+  /* New day */
+  var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  streakData.streak = (streakData.lastDate === yesterday) ? streakData.streak : 0;
+  streakData.today  = 0;
+  streakData.lastDate = today;
+  localStorage.setItem('RK_HJ_STREAK', JSON.stringify(streakData));
+}
+
+function _bumpStreak() {
+  _checkAndUpdateStreak();
+  streakData.today++;
+  if (streakData.today === DAILY_GOAL) {
+    /* Goal reached today — increment streak */
+    streakData.streak++;
+    var row = document.getElementById('streakRow');
+    if (row) { row.classList.add('goal-reached'); setTimeout(function() { row.classList.remove('goal-reached'); }, 500); }
+  }
+  localStorage.setItem('RK_HJ_STREAK', JSON.stringify(streakData));
+  _renderStreak();
+}
+
+function _renderStreak() {
+  var sv = document.getElementById('streakVal');
+  var gv = document.getElementById('goalVal');
+  var gm = document.getElementById('goalMark');
+  if (!sv) return;
+  sv.textContent = streakData.streak;
+  gv.textContent = streakData.today + '/' + DAILY_GOAL;
+  gm.textContent = streakData.today >= DAILY_GOAL ? ' ✓' : '';
+}
+
 /* SRS data: {reps, ease, interval(days), due(ms timestamp)} */
 var srsData = JSON.parse(localStorage.getItem('RK_HJ_SRS') || '{}');
 
@@ -1418,6 +1460,8 @@ function _markLearned() {
   idx = queue[queuePos];
   localStorage.setItem('RK_HJ_QUEUE', JSON.stringify(queue));
 
+  _bumpStreak();
+
   var nuc = document.getElementById('nucleus');
   nuc.classList.add('nova');
   setTimeout(function() { nuc.classList.remove('nova'); }, 700);
@@ -1528,7 +1572,7 @@ function _answerQuiz(wi) {
   var chosen  = quizQ.options[wi];
   var correct = quizQ.correctMeaning;
   var isRight = chosen === correct;
-  if (isRight) quizScore.ok++;
+  if (isRight) { quizScore.ok++; _bumpStreak(); }
 
   document.getElementById('orb' + wi).classList.add(isRight ? 'quiz-correct' : 'quiz-wrong');
 
@@ -1642,6 +1686,8 @@ function _answerQuiz(wi) {
     }
   });
 
+  _checkAndUpdateStreak();
+  _renderStreak();
   _sortQueueByDue();
   initCanvas();
   positionOrbitals();
