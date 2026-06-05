@@ -1,4 +1,4 @@
-const CACHE = 'rk-v31';
+const CACHE = 'rk-v32';
 
 const STATIC = [
   './',
@@ -20,7 +20,6 @@ const STATIC = [
   './glossary.css',
   './hangul.css',
   './hanja-book.css',
-  './lessons.css',
   './pronunciation.css',
   './stats.css',
   './writing.css',
@@ -37,22 +36,14 @@ const STATIC = [
   './js/pronunciation.js',
   './js/stats.js',
   './js/writing.js',
-  './js/core/audio.js',
   './js/core/conjugation.js',
   './js/core/dark-mode.js',
   './js/core/gamification.js',
-  './js/core/grammar.js',
   './js/core/grammar-color.js',
   './js/core/lang-picker.js',
   './js/core/notifications.js',
-  './js/core/parser.js',
   './js/core/register-sw.js',
-  './js/core/sentence-builder.js',
   './js/core/storage.js',
-  './js/core/translations.js',
-  './js/core/vocab-data.js',
-  './js/core/vocab-widget.js',
-  './js/core/vocabulary.js',
   './data/exercises.json',
   './data/lessons.json',
   './data/stories.json',
