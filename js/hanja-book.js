@@ -1344,6 +1344,50 @@ function _speak(text) {
   window.speechSynthesis.speak(u);
 }
 
+/* ── STROKE ORDER ──────────────────────────────────────── */
+var _hwWriter = null;
+
+function _openStroke() {
+  var item     = DATA[idx];
+  var isLight  = document.body.classList.contains('light-mode');
+  var panel    = document.getElementById('strokePanel');
+
+  document.getElementById('strokeTitle').textContent =
+    item.hanja + '  ·  ' + item.reading[lang] + '  ·  ' + item.meaning[lang];
+
+  /* Clear previous writer */
+  var target = document.getElementById('strokeWriter');
+  target.innerHTML = '';
+  _hwWriter = null;
+
+  if (typeof HanziWriter !== 'undefined') {
+    _hwWriter = HanziWriter.create('strokeWriter', item.hanja, {
+      width:                200,
+      height:               200,
+      padding:              16,
+      showOutline:          true,
+      strokeColor:          isLight ? '#1e1b2e' : '#e8e0ff',
+      outlineColor:         isLight ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.1)',
+      drawingColor:         '#9B6DFF',
+      highlightColor:       '#FFB347',
+      strokeAnimationSpeed: 1,
+      delayBetweenStrokes:  180
+    });
+    _hwWriter.animateCharacter();
+  } else {
+    /* Fallback: show large glyph */
+    target.style.cssText = 'font-size:140px;line-height:200px;text-align:center;font-family:"Noto Sans KR",sans-serif;color:var(--nuke)';
+    target.textContent   = item.hanja;
+  }
+
+  panel.classList.remove('hidden');
+}
+
+function _closeStroke() {
+  document.getElementById('strokePanel').classList.add('hidden');
+  _hwWriter = null;
+}
+
 /* ── THEME ─────────────────────────────────────────────── */
 function _applyTheme() {
   var theme = localStorage.getItem('RK_THEME') || 'dark';
@@ -1621,6 +1665,10 @@ function _answerQuiz(wi) {
   document.getElementById('quizBtn').addEventListener('click', _startQuiz);
   document.getElementById('quizExitBtn').addEventListener('click', _exitQuiz);
   document.getElementById('etymBtn').addEventListener('click', _openEtym);
+  document.getElementById('strokeBtn').addEventListener('click', function(e) { e.stopPropagation(); _openStroke(); });
+  document.getElementById('strokeClose').addEventListener('click', _closeStroke);
+  document.getElementById('strokeAnimate').addEventListener('click', function() { if (_hwWriter) _hwWriter.animateCharacter(); });
+  document.getElementById('strokeQuiz').addEventListener('click', function() { if (_hwWriter) _hwWriter.quiz(); });
   document.getElementById('etymClose').addEventListener('click', _closeEtym);
   document.getElementById('bloomClose').addEventListener('click', _closeBloom);
 
@@ -1663,7 +1711,7 @@ function _answerQuiz(wi) {
   document.addEventListener('keydown', function(e) {
     if (e.key === 'ArrowRight') _navigate(1);
     if (e.key === 'ArrowLeft')  _navigate(-1);
-    if (e.key === 'Escape')     { if (quizMode) { _exitQuiz(); } else { _closeBloom(); _closeEtym(); } }
+    if (e.key === 'Escape')     { if (quizMode) { _exitQuiz(); } else { _closeBloom(); _closeEtym(); _closeStroke(); } }
   });
 
   /* Swipe */
