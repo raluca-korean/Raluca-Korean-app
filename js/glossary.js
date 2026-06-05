@@ -340,7 +340,12 @@ function _renderPanel(word) {
   const color = getCatColor(word);
   const cats  = getCats(word);
 
-  const related = WORDS.filter(w => w.ko !== word.ko && getCats(w).some(c => cats.includes(c))).slice(0, 14);
+  const relPool = WORDS.filter(w => w.ko !== word.ko && getCats(w).some(c => cats.includes(c)));
+  for (let i = relPool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [relPool[i], relPool[j]] = [relPool[j], relPool[i]];
+  }
+  const related = relPool.slice(0, 14);
 
   glsPanelBody.innerHTML =
     `<button class="gls-panel-back" onclick="closePanel()">` +
