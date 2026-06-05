@@ -53,6 +53,8 @@
     transit: '맥락',
     numeral: '수사',
     quantifier: '분류사',
+    embSub: '내포절 주어',
+    embPred: '내포절 술어',
     object1: '목적어 1',
     beneficiary: '수혜자',
     object2: '목적어 2',
@@ -71,6 +73,8 @@
     transit: '선택',
     numeral: '선택',
     quantifier: '선택',
+    embSub: '선택',
+    embPred: '선택',
     object1: '선택',
     beneficiary: '선택',
     object2: '선택',
@@ -90,6 +94,8 @@
       transit: 'context',
       numeral: 'numeral',
       quantifier: 'cuantificator',
+      embSub: 'subiect subord.',
+      embPred: 'predicat subord.',
       object1: 'obiect 1',
       beneficiary: 'beneficiar',
       object2: 'obiect 2',
@@ -107,6 +113,8 @@
       transit: 'context',
       numeral: 'numeral',
       quantifier: 'quantifier',
+      embSub: 'embedded subject',
+      embPred: 'embedded predicate',
       object1: 'object 1',
       beneficiary: 'beneficiary',
       object2: 'object 2',
@@ -129,35 +137,38 @@
 
   var ALL_FIELD_KEYS = [
     'topic','topic2','associate','time','departure','transit',
-    'numeral','quantifier','object1','beneficiary','object2',
+    'numeral','quantifier','embSub','embPred',
+    'object1','beneficiary','object2',
     'adverb','adverb2','verb','connector'
   ];
 
   var FIELD_META = {
-    topic:      { key:'topic', kind:'subject' },
-    topic2:     { key:'topic2', kind:'subject' },
-    associate:  { key:'associate', kind:'subject' },
-    time:       { key:'time', kind:'time' },
-    departure:  { key:'departure', kind:'location' },
-    transit:    { key:'transit', kind:'location' },
-    numeral:    { key:'numeral', kind:'object' },
+    topic:      { key:'topic',      kind:'subject' },
+    topic2:     { key:'topic2',     kind:'subject' },
+    associate:  { key:'associate',  kind:'associate' },
+    time:       { key:'time',       kind:'time' },
+    departure:  { key:'departure',  kind:'location' },
+    transit:    { key:'transit',    kind:'location' },
+    numeral:    { key:'numeral',    kind:'object' },
     quantifier: { key:'quantifier', kind:'object' },
-    object1:    { key:'object1', kind:'object' },
-    beneficiary:{ key:'beneficiary', kind:'subject' },
-    object2:    { key:'object2', kind:'object' },
-    adverb:     { key:'adverb', kind:'description' },
-    adverb2:    { key:'adverb2', kind:'description' },
-    verb:       { key:'verb', kind:'verb' },
-    connector:  { key:'connector', kind:'connector' }
+    embSub:     { key:'embSub',     kind:'emb_subject' },
+    embPred:    { key:'embPred',    kind:'emb_pred' },
+    object1:    { key:'object1',    kind:'object' },
+    beneficiary:{ key:'beneficiary',kind:'beneficiary' },
+    object2:    { key:'object2',    kind:'object' },
+    adverb:     { key:'adverb',     kind:'description' },
+    adverb2:    { key:'adverb2',    kind:'description' },
+    verb:       { key:'verb',       kind:'verb' },
+    connector:  { key:'connector',  kind:'connector' }
   };
 
   var LEVEL_FIELDS = {
     1: ['topic','object1','verb','connector'],
     2: ['topic','time','departure','object1','verb','connector'],
     3: ['topic','time','departure','object1','adverb','verb','connector'],
-    4: ['topic','time','departure','object1','adverb','verb','connector'],
-    5: ['topic','time','departure','object1','object2','adverb','verb','connector'],
-    6: ['topic','topic2','time','departure','transit','object1','object2','adverb','adverb2','verb','connector']
+    4: ['topic','time','departure','embSub','embPred','object1','adverb','verb','connector'],
+    5: ['topic','time','departure','embSub','embPred','object1','object2','adverb','verb','connector'],
+    6: ['topic','topic2','time','departure','transit','embSub','embPred','object1','object2','adverb','adverb2','verb','connector']
   };
 
   var TEMPLATES = [
@@ -456,9 +467,11 @@
       {id:'tense_intention',   key:'tense_intention',   ko:'-(으)려고 해요',     ro:'intenționez să',    en:'intend to',         isTense:true, aliases:[]},
       {id:'tense_can',         key:'tense_can',         ko:'-(으)ㄹ 수 있어요',  ro:'pot să',            en:'can',               isTense:true, aliases:[]},
       {id:'tense_cannot',      key:'tense_cannot',      ko:'-(으)ㄹ 수 없어요',  ro:'nu pot să',         en:'cannot',            isTense:true, aliases:[]},
-      {id:'tense_neg',         key:'tense_neg',         ko:'-지 않아요',         ro:'nu',                en:'don\'t',            isTense:true, aliases:[]},
-      {id:'tense_notwish',     key:'tense_notwish',     ko:'-고 싶지 않아요',    ro:'nu vreau să',       en:'don\'t want to',    isTense:true, aliases:[]},
-      {id:'tense_mustnot',     key:'tense_mustnot',     ko:'-면 안 돼요',        ro:'nu trebuie să',     en:'must not',          isTense:true, aliases:[]},
+      {id:'tense_neg',          key:'tense_neg',          ko:'-지 않아요',         ro:'nu (voinţă)',        en:'don\'t',               isTense:true, aliases:[]},
+      {id:'tense_notwish',      key:'tense_notwish',      ko:'-고 싶지 않아요',    ro:'nu vreau să',       en:'don\'t want to',       isTense:true, aliases:[]},
+      {id:'tense_mot_neg',      key:'tense_mot_neg',      ko:'-지 못해요',         ro:'nu reușesc',        en:'can\'t manage to',     isTense:true, aliases:[]},
+      {id:'tense_mot_neg_past', key:'tense_mot_neg_past', ko:'-지 못했어요',       ro:'n-am reușit',       en:'couldn\'t manage',     isTense:true, aliases:[]},
+      {id:'tense_mustnot',      key:'tense_mustnot',      ko:'-면 안 돼요',        ro:'nu trebuie să',     en:'must not',             isTense:true, aliases:[]},
       {id:'tense_must',        key:'tense_must',        ko:'-아/어야 해요',      ro:'trebuie să',        en:'must / have to',    isTense:true, aliases:[]},
       {id:'tense_should',      key:'tense_should',      ko:'-는 게 좋아요',       ro:'ar trebui să',      en:'should',            isTense:true, aliases:[]},
       {id:'tense_polite',      key:'tense_polite',      ko:'-겠어요',            ro:'voi / cred că',     en:'will / I think',    isTense:true, aliases:[]},
@@ -529,6 +542,41 @@
       {ko:'학생에게', ro:'studentului', en:'to the student', aliases:['studentului','to the student']},
       {ko:'아이에게', ro:'copilului', en:'to the child', aliases:['copilului','to the child']},
       {ko:'동생에게', ro:'fratelui/surorii mai mici', en:'to (younger) sibling', aliases:['fratelui','surorii','to sibling']}
+    ],
+    emb_subject: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'모든 게', ro:'totul', en:'everything', aliases:['totul','everything','all','toate']},
+      {ko:'시간이', ro:'timpul', en:'time', aliases:['timpul','time']},
+      {ko:'한국어가', ro:'coreeana', en:'Korean', aliases:['coreeana','Korean','limba coreeana','limba coreeană']},
+      {ko:'공부가', ro:'studiul', en:'studying', aliases:['studiul','studying','invatatul','învățatul']},
+      {ko:'그게', ro:'acel lucru', en:'that (thing)', aliases:['acel lucru','that thing','asta','asta','that']},
+      {ko:'삶이', ro:'viața', en:'life', aliases:['viata','viața','life']},
+      {ko:'사랑이', ro:'iubirea', en:'love', aliases:['iubirea','iubire','love']},
+      {ko:'결과가', ro:'rezultatul', en:'the result', aliases:['rezultatul','rezultat','result']},
+      {ko:'현실이', ro:'realitatea', en:'reality', aliases:['realitatea','realitate','reality']},
+      {ko:'진실이', ro:'adevărul', en:'the truth', aliases:['adevarul','adevărul','adevăr','truth']},
+      {ko:'일이', ro:'munca / treaba', en:'the work / the thing', aliases:['munca','treaba','work','thing']},
+      {ko:'세상이', ro:'lumea', en:'the world', aliases:['lumea','lume','world']},
+      {ko:'꿈이', ro:'visul', en:'the dream', aliases:['visul','vis','dream']}
+    ],
+    emb_pred: [
+      {ko:'', ro:'', en:'', aliases:[], clausal:''},
+      {ko:'덧없다', ro:'e trecător/trecătoare', en:'is fleeting / transient', aliases:['trecator','trecatoare','trecătoare','fleeting','transient','trece'], clausal:'덧없다는 걸'},
+      {ko:'어렵다', ro:'e greu / dificil', en:'is difficult', aliases:['greu','dificil','difficult','grea'], clausal:'어렵다는 걸'},
+      {ko:'중요하다', ro:'e important', en:'is important', aliases:['important','importanta','importantă','important','important'], clausal:'중요하다는 걸'},
+      {ko:'힘들다', ro:'e greu / obositor', en:'is hard / tiring', aliases:['greu','obositor','obositoare','hard','tiring'], clausal:'힘들다는 걸'},
+      {ko:'사실이다', ro:'e adevărat', en:'is true / a fact', aliases:['adevarat','adevărat','true','a fact','real'], clausal:'사실이라는 걸'},
+      {ko:'좋다', ro:'e bun / bine', en:'is good', aliases:['bun','buna','bună','bine','good'], clausal:'좋다는 걸'},
+      {ko:'나쁘다', ro:'e rău', en:'is bad', aliases:['rau','rău','rea','bad'], clausal:'나쁘다는 걸'},
+      {ko:'빠르다', ro:'e repede', en:'is fast', aliases:['repede','rapid','rapida','rapidă','fast'], clausal:'빠르다는 걸'},
+      {ko:'많다', ro:'e mult / sunt mulți', en:'is a lot / there are many', aliases:['mult','multi','mulți','a lot','many'], clausal:'많다는 걸'},
+      {ko:'없다', ro:'nu există / nu are', en:'doesn\'t exist / have', aliases:['nu exista','nu există','nu are','doesn\'t exist'], clausal:'없다는 걸'},
+      {ko:'변하다', ro:'se schimbă', en:'changes', aliases:['se schimba','se schimbă','schimba','changes'], clausal:'변한다는 걸'},
+      {ko:'끝나다', ro:'se termină', en:'ends', aliases:['se termina','se termină','termina','ends','terminates'], clausal:'끝난다는 걸'},
+      {ko:'지나가다', ro:'trece', en:'passes by', aliases:['trece','trece','passes','goes by'], clausal:'지나간다는 걸'},
+      {ko:'필요하다', ro:'e necesar', en:'is necessary', aliases:['necesar','necesara','necesară','necessary','needed'], clausal:'필요하다는 걸'},
+      {ko:'가능하다', ro:'e posibil', en:'is possible', aliases:['posibil','posibila','posibilă','possible'], clausal:'가능하다는 걸'},
+      {ko:'불가능하다', ro:'e imposibil', en:'is impossible', aliases:['imposibil','imposibila','imposibilă','impossible'], clausal:'불가능하다는 걸'}
     ]
   };
 
@@ -1010,6 +1058,8 @@
       transit: ['locations','location','places','place','transit'],
       numeral: ['numerals','numeral','numbers','number'],
       quantifier: ['quantifiers','quantifier','classifiers','classifier','units','unit'],
+      embSub: ['emb_subject','embedded_subject'],
+      embPred: ['emb_pred','embedded_pred','embedded_predicate'],
       object1: ['objects','object','object1'],
       beneficiary: ['beneficiaries','beneficiary','people','persons','subjects','subject'],
       object2: ['objects','object','object2'],
@@ -1052,6 +1102,10 @@
         items = normalizeList(DATA.associate, 'associate');
       }else if(sourceKey === 'beneficiary'){
         items = normalizeList(DATA.beneficiary, 'beneficiary');
+      }else if(sourceKey === 'embSub'){
+        items = normalizeList(DATA.emb_subject, 'emb_subject');
+      }else if(sourceKey === 'embPred'){
+        items = normalizeList(DATA.emb_pred, 'emb_pred');
       }else if(sourceKey === 'time'){
         items = normalizeList(DATA.time, 'time');
       }else if(sourceKey === 'departure' || sourceKey === 'transit'){
@@ -1105,6 +1159,8 @@
         transit: null,
         numeral: null,
         quantifier: null,
+        embSub: null,
+        embPred: null,
         beneficiary: null,
         object2: null,
         adverb2: null
@@ -1133,11 +1189,15 @@
         transit: null,
         numeral: null,
         quantifier: null,
+        embSub: null,
+        embPred: null,
         beneficiary: null,
         object2: null,
         adverb2: null
       };
     }
+    if(!('embSub'  in clause.extras)) clause.extras.embSub  = null;
+    if(!('embPred' in clause.extras)) clause.extras.embPred = null;
 
     if(!clause.__picked) clause.__picked = {};
     return clause;
@@ -1674,8 +1734,10 @@
 
     if(cKey === 'tense_progressive') return conj ? conj.stem(verb.ko) + '고 있어요' : (verb.final || verb.ko);
     if(cKey === 'tense_wish')        return conj ? conj.stem(verb.ko) + '고 싶어요' : (verb.final || verb.ko);
-    if(cKey === 'tense_neg')         return conj ? conj.stem(verb.ko) + '지 않아요' : (verb.final || verb.ko);
-    if(cKey === 'tense_notwish')     return conj ? conj.stem(verb.ko) + '고 싶지 않아요' : (verb.final || verb.ko);
+    if(cKey === 'tense_neg')          return conj ? conj.stem(verb.ko) + '지 않아요' : (verb.final || verb.ko);
+    if(cKey === 'tense_notwish')      return conj ? conj.stem(verb.ko) + '고 싶지 않아요' : (verb.final || verb.ko);
+    if(cKey === 'tense_mot_neg')      return conj ? conj.stem(verb.ko) + '지 못해요' : (verb.final || verb.ko);
+    if(cKey === 'tense_mot_neg_past') return conj ? conj.stem(verb.ko) + '지 못했어요' : (verb.final || verb.ko);
     if(cKey === 'tense_mustnot'){
       if(!conj) return verb.final || verb.ko;
       var sm = conj.stem(verb.ko);
@@ -1706,6 +1768,8 @@
     var time = itemOf(clause, 'time');
     var departure = itemOf(clause, 'departure');
     var transit = itemOf(clause, 'transit');
+    var embSub = itemOf(clause, 'embSub');
+    var embPred = itemOf(clause, 'embPred');
     var beneficiary = itemOf(clause, 'beneficiary');
     var numeral = itemOf(clause, 'numeral');
     var quantifier = itemOf(clause, 'quantifier');
@@ -1759,6 +1823,11 @@
     } else if(transit && transit.ko){
       parts.push(transit.ko);
     }
+    // Embedded (subordinate) clause: [subj이/가 pred-다는 걸] — acts as complex object
+    if(embSub && embSub.ko && embPred && embPred.ko){
+      var clausalForm = (embPred.raw && embPred.raw.clausal) ? embPred.raw.clausal : (embPred.ko + '다는 걸');
+      parts.push(embSub.ko + ' ' + clausalForm);
+    }
     // Indirect object / recipient (에게): placed before the direct object
     if(beneficiary && beneficiary.ko) parts.push(beneficiary.ko);
     if(object1 && object1.ko){
@@ -1784,6 +1853,8 @@
     var departure = itemOf(clause, 'departure');
     var transit = itemOf(clause, 'transit');
     var associate = itemOf(clause, 'associate');
+    var embSub = itemOf(clause, 'embSub');
+    var embPred = itemOf(clause, 'embPred');
     var beneficiary = itemOf(clause, 'beneficiary');
     var numeral = itemOf(clause, 'numeral');
     var quantifier = itemOf(clause, 'quantifier');
@@ -1805,6 +1876,11 @@
     if(transit){
       var ttr = translationOf(transit);
       if(ttr) parts.push((state.lang === 'en' ? 'and ' : 'și ') + ttr);
+    }
+    if(embSub && embPred && embSub.ko && embPred.ko){
+      var embTrSubj = state.lang === 'en' ? (embSub.en || embSub.ro) : (embSub.ro || embSub.en);
+      var embTrPred = state.lang === 'en' ? (embPred.en || embPred.ro) : (embPred.ro || embPred.en);
+      parts.push((state.lang === 'en' ? 'that ' : 'că ') + embTrSubj + ' ' + embTrPred);
     }
     if(beneficiary) parts.push(translationOf(beneficiary));
     if(object1){
@@ -1831,15 +1907,17 @@
     if(verb){
       var topicKo = topic ? topic.ko : '';
       var cKeyTr = connectorKey(clause);
-      var tenseTr = cKeyTr === 'tense_past'    ? 'past'
-                 : cKeyTr === 'tense_fut'     ? 'future'
-                 : cKeyTr === 'tense_neg'     ? 'neg'
-                 : cKeyTr === 'tense_notwish' ? 'notwish'
-                 : cKeyTr === 'tense_mustnot' ? 'mustnot'
-                 : cKeyTr === 'tense_cannot'  ? 'cannot'
-                 : cKeyTr === 'tense_wish'    ? 'wish'
-                 : cKeyTr === 'tense_must'    ? 'must'
-                 : cKeyTr === 'tense_should'  ? 'should'
+      var tenseTr = cKeyTr === 'tense_past'         ? 'past'
+                 : cKeyTr === 'tense_fut'          ? 'future'
+                 : cKeyTr === 'tense_neg'          ? 'neg'
+                 : cKeyTr === 'tense_notwish'      ? 'notwish'
+                 : cKeyTr === 'tense_mot_neg'      ? 'neg'
+                 : cKeyTr === 'tense_mot_neg_past' ? 'neg'
+                 : cKeyTr === 'tense_mustnot'      ? 'mustnot'
+                 : cKeyTr === 'tense_cannot'       ? 'cannot'
+                 : cKeyTr === 'tense_wish'         ? 'wish'
+                 : cKeyTr === 'tense_must'         ? 'must'
+                 : cKeyTr === 'tense_should'       ? 'should'
                  : 'present';
       parts.push(finiteVerbText(verb, state.lang, topicKo, tenseTr));
       // For clause connectors, append connector translation word
