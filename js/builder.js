@@ -1710,8 +1710,12 @@
     var MOTION_TO = { '가다': 1, '오다': 1, '도착하다': 1 };
     var verbItem = itemOf(clause, 'verb');
     var isMotionTo = verbItem && MOTION_TO[verbItem.ko];
+    // When verb-gapping a motion clause, chain locations with 하고 (시장하고 식당에 가요)
+    // instead of a comma (시장에, 식당에 가요) which is unnatural Korean.
+    var useLocChain = skipVerb && isMotionTo && !!(departure && departure.ko) && !(transit && transit.ko);
     if(departure && departure.ko){
       var depKo = isMotionTo ? departure.ko.replace(/에서$/, '에') : departure.ko;
+      if(useLocChain) depKo = depKo.replace(/에$/, '하고');
       if(transit && transit.ko){
         var depBase = depKo.replace(/에서$|에$/, '');
         var locConj = (window.Conjugation && window.Conjugation.hasBatchim(depBase)) ? '과' : '와';
@@ -1728,7 +1732,7 @@
     if(!skipVerb && verbKo) parts.push(verbKo);
 
     var result = cleanSentenceText(parts.join(' '));
-    return skipVerb ? result + ',' : result;
+    return (skipVerb && !useLocChain) ? result + ',' : result;
   }
 
   function buildClauseTranslation(clause){
