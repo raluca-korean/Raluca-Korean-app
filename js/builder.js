@@ -1678,6 +1678,8 @@
     var time = itemOf(clause, 'time');
     var departure = itemOf(clause, 'departure');
     var transit = itemOf(clause, 'transit');
+    var numeral = itemOf(clause, 'numeral');
+    var quantifier = itemOf(clause, 'quantifier');
     var object1 = itemOf(clause, 'object1');
     var object2 = itemOf(clause, 'object2');
     var adverb = itemOf(clause, 'adverb');
@@ -1726,7 +1728,12 @@
     } else if(transit && transit.ko){
       parts.push(transit.ko);
     }
-    if(object1 && object1.ko) parts.push(object1.ko);
+    if(object1 && object1.ko){
+      parts.push(object1.ko);
+      // numeral + quantifier follow the object they quantify (커피를 한 잔 마셔요)
+      if(numeral && numeral.ko) parts.push(numeral.ko);
+      if(quantifier && quantifier.ko) parts.push(quantifier.ko);
+    }
     if(object2 && object2.ko) parts.push(object2.ko);
     mannerAdvs.forEach(function(ko){ parts.push(ko); });
     if(!skipVerb && verbKo) parts.push(verbKo);
@@ -1743,6 +1750,8 @@
     var time = itemOf(clause, 'time');
     var departure = itemOf(clause, 'departure');
     var transit = itemOf(clause, 'transit');
+    var numeral = itemOf(clause, 'numeral');
+    var quantifier = itemOf(clause, 'quantifier');
     var object1 = itemOf(clause, 'object1');
     var object2 = itemOf(clause, 'object2');
     var adverb = itemOf(clause, 'adverb');
@@ -1761,7 +1770,20 @@
       var ttr = translationOf(transit);
       if(ttr) parts.push((state.lang === 'en' ? 'and ' : 'și ') + ttr);
     }
-    if(object1) parts.push(translationOf(object1));
+    if(object1){
+      var o1tr = translationOf(object1);
+      if(o1tr){
+        // Build "N quantifier of object" style: "un pahar de cafea" / "one cup of coffee"
+        var numTr = numeral ? translationOf(numeral) : '';
+        var qtTr  = quantifier ? translationOf(quantifier) : '';
+        if(numTr && qtTr)
+          parts.push(numTr + ' ' + qtTr + (state.lang === 'en' ? ' of ' : ' de ') + o1tr);
+        else if(numTr || qtTr)
+          parts.push((numTr || qtTr) + ' ' + o1tr);
+        else
+          parts.push(o1tr);
+      }
+    }
     if(object2){
       var o2tr = translationOf(object2);
       if(o2tr) parts.push((state.lang === 'en' ? 'and ' : 'și ') + o2tr);
@@ -1827,34 +1849,51 @@
     };
   }
 
+  // Verbs that cannot take a direct object with 를/을
   var INTRANSITIVE_VERBS = {
     '가다':1,'오다':1,'도착하다':1,'떠나다':1,'돌아오다':1,
-    '자다':1,'쉬다':1,'울다':1,'웃다':1,'달리다':1,'산책하다':1,'일어나다':1
+    '자다':1,'쉬다':1,'울다':1,'웃다':1,'달리다':1,'산책하다':1,'일어나다':1,
+    '기쁘다':1,'슬프다':1,'화나다':1,'피곤하다':1
   };
+  // 있다 takes 이/가 (subject marker) for the possessed item, not 를/을
+  var EXISTENTIAL_VERBS = { '있다':1 };
 
   function renderPreview(){
     var built = buildFullOutput();
     var korean = built.korean || '';
     var words = korean ? korean.split(/\s+/).filter(Boolean) : [];
 
-    // Warn when intransitive verb is paired with a direct object (를/을)
+    // Warn when an incompatible verb+object combination is detected
     var warnEl = document.getElementById('grammarWarning');
     if(warnEl){
       var conflictVerb = null;
+      var conflictType = null;
+      var hasAccObj = function(o){ return o && o.ko && /[를을]$/.test(o.ko); };
       state.clauses.forEach(function(clause){
         if(conflictVerb) return;
         var vb = itemOf(clause, 'verb');
+        if(!vb || !vb.ko) return;
         var o1 = itemOf(clause, 'object1');
         var o2 = itemOf(clause, 'object2');
-        if(vb && INTRANSITIVE_VERBS[vb.ko] && ((o1 && o1.ko) || (o2 && o2.ko))){
-          conflictVerb = vb;
+        if(EXISTENTIAL_VERBS[vb.ko] && (hasAccObj(o1) || hasAccObj(o2))){
+          conflictVerb = vb; conflictType = 'existential';
+        } else if(INTRANSITIVE_VERBS[vb.ko] && (hasAccObj(o1) || hasAccObj(o2))){
+          conflictVerb = vb; conflictType = 'intransitive';
         }
       });
       if(conflictVerb){
         warnEl.hidden = false;
-        warnEl.textContent = state.lang === 'en'
-          ? '⚠ “' + conflictVerb.ko + '” (' + conflictVerb.en + ') is an intransitive verb — it takes a destination (에), not a direct object (를/을).'
-          : '⚠ “' + conflictVerb.ko + '” (' + conflictVerb.ro + ') este verb intranzitiv — ia un loc (에), nu un obiect direct (를/을).';
+        var msg;
+        if(conflictType === 'existential'){
+          msg = state.lang === 'en'
+            ? '⚠ “있다” uses 이/가 for the possessed item, not 를/을. E.g.: 책이 있어요, not 책을 있어요.'
+            : '⚠ “있다” cere marcator 이/가 pentru obiectul posedat, nu 를/을. Ex: 책이 있어요, nu 책을 있어요.';
+        } else {
+          msg = state.lang === 'en'
+            ? '⚠ “' + conflictVerb.ko + '” (' + conflictVerb.en + ') does not take a direct object with 를/을.'
+            : '⚠ “' + conflictVerb.ko + '” (' + conflictVerb.ro + ') nu acceptă obiect direct cu 를/을.';
+        }
+        warnEl.textContent = msg;
       } else {
         warnEl.hidden = true;
       }
