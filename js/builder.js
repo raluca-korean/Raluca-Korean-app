@@ -1823,10 +1823,38 @@
     };
   }
 
+  var INTRANSITIVE_VERBS = {
+    '가다':1,'오다':1,'도착하다':1,'떠나다':1,'돌아오다':1,
+    '자다':1,'쉬다':1,'울다':1,'웃다':1,'달리다':1,'산책하다':1,'일어나다':1
+  };
+
   function renderPreview(){
     var built = buildFullOutput();
     var korean = built.korean || '';
     var words = korean ? korean.split(/\s+/).filter(Boolean) : [];
+
+    // Warn when intransitive verb is paired with a direct object (를/을)
+    var warnEl = document.getElementById('grammarWarning');
+    if(warnEl){
+      var conflictVerb = null;
+      state.clauses.forEach(function(clause){
+        if(conflictVerb) return;
+        var vb = itemOf(clause, 'verb');
+        var o1 = itemOf(clause, 'object1');
+        var o2 = itemOf(clause, 'object2');
+        if(vb && INTRANSITIVE_VERBS[vb.ko] && ((o1 && o1.ko) || (o2 && o2.ko))){
+          conflictVerb = vb;
+        }
+      });
+      if(conflictVerb){
+        warnEl.hidden = false;
+        warnEl.textContent = state.lang === 'en'
+          ? '⚠ “' + conflictVerb.ko + '” (' + conflictVerb.en + ') is an intransitive verb — it takes a destination (에), not a direct object (를/을).'
+          : '⚠ “' + conflictVerb.ko + '” (' + conflictVerb.ro + ') este verb intranzitiv — ia un loc (에), nu un obiect direct (를/을).';
+      } else {
+        warnEl.hidden = true;
+      }
+    }
 
     if(els.sentenceWords){
       els.sentenceWords.innerHTML = words.map(function(word){
