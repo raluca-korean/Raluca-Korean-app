@@ -2077,6 +2077,7 @@
 
     if(active && item && item.ko) isNew = isWordNew(col.key, item);
 
+    var lenTier = value.length > 14 ? 'xl' : value.length > 9 ? 'lg' : value.length > 5 ? 'md' : '';
     return '' +
       '<div class="tableField ' + (active ? '' : 'off') + '">' +
         '<button class="tableToggle ' + (active ? 'active' : '') + '" data-toggle-cell="' + clauseIndex + ':' + col.key + '" type="button">✓</button>' +
@@ -2084,6 +2085,7 @@
           '<div class="tableMeta">' + escapeHtml(fieldLabel(col.key)) + '</div>' +
           '<input class="tableKoInput" type="text"' +
             ' data-field-input="' + clauseIndex + ':' + col.key + '"' +
+            ' data-len="' + lenTier + '"' +
             ' placeholder="한국어..."' +
             ' value="' + escapeHtml(value) + '"' +
             ' autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"' +
@@ -3168,6 +3170,8 @@
       els.clauseList.addEventListener('input', function(event){
         var input = event.target.closest('[data-field-input]');
         if(!input) return;
+        var len = input.value.length;
+        input.dataset.len = len > 14 ? 'xl' : len > 9 ? 'lg' : len > 5 ? 'md' : '';
         var parts = input.getAttribute('data-field-input').split(':');
         handleCellInput(Number(parts[0]), parts[1], input.value);
       });
