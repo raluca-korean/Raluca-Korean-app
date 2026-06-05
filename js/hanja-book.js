@@ -1010,6 +1010,13 @@ var lang        = localStorage.getItem('RK_LANG') || 'ro';
 var learned     = JSON.parse(localStorage.getItem('RK_HJ_LEARNED') || '[]');
 var bloomActive = -1;
 
+/* Quiz state */
+var quizMode  = false;
+var quizScore = {ok: 0, total: 0};
+var quizQ     = null;   /* {dataIdx, correctMeaning, options:[str×4]} */
+var quizDone  = false;
+var quizTimer = null;
+
 /* Study queue: unlearned hanja first; marking learned sends them to the back */
 var queue = (function() {
   var saved = localStorage.getItem('RK_HJ_QUEUE');
@@ -1225,6 +1232,13 @@ function render(animate) {
   document.getElementById('kFill').style.width    = pct + '%';
   document.getElementById('kLearned').textContent = learned.length;
   document.getElementById('kTotal').textContent   = DATA.length;
+
+  /* Quiz button — needs at least 1 learned hanja */
+  var qb = document.getElementById('quizBtn');
+  if (qb) {
+    qb.disabled = (learned.length === 0);
+    qb.title    = learned.length === 0 ? 'Înregistrează cel puțin un hanja pentru a începe' : '';
+  }
 }
 
 /* ── WORD BLOOM ────────────────────────────────────────── */
@@ -1357,6 +1371,133 @@ function _markLearned() {
   render(true);
 }
 
+/* ── QUIZ ──────────────────────────────────────────────── */
+function _startQuiz() {
+  if (learned.length === 0) return;
+  quizMode  = true;
+  quizScore = {ok: 0, total: 0};
+  _nextQuizQ();
+}
+
+function _exitQuiz() {
+  if (quizTimer) { clearTimeout(quizTimer); quizTimer = null; }
+  quizMode = false;
+  quizQ    = null;
+  quizDone = false;
+  document.getElementById('stage').classList.remove('quiz-mode');
+  document.getElementById('learnBtn').style.display    = '';
+  document.getElementById('quizBtn').style.display     = '';
+  document.getElementById('quizExitBtn').style.display = 'none';
+  render(false);
+}
+
+function _nextQuizQ() {
+  if (!quizMode) return;
+  quizDone  = false;
+  quizTimer = null;
+
+  var dataIdx = learned[Math.floor(Math.random() * learned.length)];
+  var correct = DATA[dataIdx].meaning[lang];
+
+  var distractors = [];
+  var used = new Set([dataIdx]);
+  var attempts = 0;
+  while (distractors.length < 3 && attempts < 300) {
+    attempts++;
+    var ri = Math.floor(Math.random() * DATA.length);
+    if (!used.has(ri) && DATA[ri].meaning[lang] !== correct) {
+      used.add(ri);
+      distractors.push(DATA[ri].meaning[lang]);
+    }
+  }
+
+  var opts = [correct].concat(distractors);
+  for (var i = 3; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = opts[i]; opts[i] = opts[j]; opts[j] = t;
+  }
+
+  quizQ = {dataIdx: dataIdx, correctMeaning: correct, options: opts};
+  _renderQuiz();
+}
+
+function _renderQuiz() {
+  var item = DATA[quizQ.dataIdx];
+
+  document.getElementById('hanjaGlyph').textContent   = item.hanja;
+  document.getElementById('glyphReading').textContent = item.reading[lang];
+  document.getElementById('glyphMeaning').textContent = quizDone ? item.meaning[lang] : '?';
+
+  var nuc = document.getElementById('nucleus');
+  nuc.classList.remove('learned', 'nova');
+  nuc.classList.add('entering');
+  setTimeout(function() { nuc.classList.remove('entering'); }, 600);
+
+  _closeBloom();
+  _closeEtym();
+
+  for (var i = 0; i < 4; i++) {
+    var shell = document.getElementById('osh' + i);
+    var node  = document.getElementById('orb' + i);
+    shell.style.opacity = '1';
+    node.querySelector('.orbKo').textContent = quizQ.options[i];
+    node.querySelector('.orbTr').textContent = '';
+    node.classList.remove('lit', 'quiz-correct', 'quiz-wrong');
+    node.style.setProperty('--node-color', 'var(' + ORB_CSS_VARS[i] + ')');
+    if (shell) {
+      shell.classList.add('entering');
+      (function(s) { setTimeout(function() { s.classList.remove('entering'); }, 500); })(shell);
+    }
+  }
+
+  document.getElementById('stage').classList.add('quiz-mode');
+  document.getElementById('learnBtn').style.display    = 'none';
+  document.getElementById('etymBtn').style.visibility  = 'hidden';
+  document.getElementById('navPrev').disabled          = true;
+  document.getElementById('navNext').disabled          = true;
+  document.getElementById('quizBtn').style.display     = 'none';
+  document.getElementById('quizExitBtn').style.display = 'inline-flex';
+
+  document.getElementById('kLearned').textContent = quizScore.ok;
+  document.getElementById('kTotal').textContent   = quizScore.total;
+  var pct = quizScore.total > 0 ? (quizScore.ok / quizScore.total) * 100 : 0;
+  document.getElementById('kFill').style.width    = pct + '%';
+  document.getElementById('posIdx').textContent   = quizScore.total + 1;
+  document.getElementById('posTotal').textContent = '?';
+}
+
+function _answerQuiz(wi) {
+  if (quizDone) return;
+  quizDone = true;
+  quizScore.total++;
+
+  var chosen  = quizQ.options[wi];
+  var correct = quizQ.correctMeaning;
+  var isRight = chosen === correct;
+  if (isRight) quizScore.ok++;
+
+  document.getElementById('orb' + wi).classList.add(isRight ? 'quiz-correct' : 'quiz-wrong');
+
+  if (!isRight) {
+    for (var i = 0; i < 4; i++) {
+      if (quizQ.options[i] === correct) {
+        document.getElementById('orb' + i).classList.add('quiz-correct');
+        break;
+      }
+    }
+  }
+
+  document.getElementById('glyphMeaning').textContent = correct;
+  _speak(DATA[quizQ.dataIdx].ko_reading || DATA[quizQ.dataIdx].reading[lang].split(' ')[0]);
+
+  document.getElementById('kLearned').textContent = quizScore.ok;
+  document.getElementById('kTotal').textContent   = quizScore.total;
+  var pct = (quizScore.ok / quizScore.total) * 100;
+  document.getElementById('kFill').style.width = pct + '%';
+
+  quizTimer = setTimeout(_nextQuizQ, isRight ? 900 : 1500);
+}
+
 /* ── BOOT ──────────────────────────────────────────────── */
 (function boot() {
   _applyTheme();
@@ -1378,6 +1519,8 @@ function _markLearned() {
   document.getElementById('navPrev').addEventListener('click', function() { _navigate(-1); });
   document.getElementById('navNext').addEventListener('click', function() { _navigate(1); });
   document.getElementById('learnBtn').addEventListener('click', _markLearned);
+  document.getElementById('quizBtn').addEventListener('click', _startQuiz);
+  document.getElementById('quizExitBtn').addEventListener('click', _exitQuiz);
   document.getElementById('etymBtn').addEventListener('click', _openEtym);
   document.getElementById('etymClose').addEventListener('click', _closeEtym);
   document.getElementById('bloomClose').addEventListener('click', _closeBloom);
@@ -1404,6 +1547,7 @@ function _markLearned() {
     nodes[n].addEventListener('click', function(e) {
       e.stopPropagation();
       var wi = parseInt(this.dataset.wi, 10);
+      if (quizMode) { _answerQuiz(wi); return; }
       if (bloomActive === wi) { _closeBloom(); return; }
       _openBloom(wi);
     });
@@ -1420,7 +1564,7 @@ function _markLearned() {
   document.addEventListener('keydown', function(e) {
     if (e.key === 'ArrowRight') _navigate(1);
     if (e.key === 'ArrowLeft')  _navigate(-1);
-    if (e.key === 'Escape')     { _closeBloom(); _closeEtym(); }
+    if (e.key === 'Escape')     { if (quizMode) { _exitQuiz(); } else { _closeBloom(); _closeEtym(); } }
   });
 
   /* Swipe */
