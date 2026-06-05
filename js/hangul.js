@@ -1000,19 +1000,19 @@ function init() {
   });
 
   // Initialize language from existing lang-picker if available
-  // Language buttons (built directly in HTML, no lang-picker.js injection)
+  // Single language toggle button — tap to cycle ro ↔ en
   lang = localStorage.getItem('RK_LANG') || 'ro';
-  const btnRo = document.getElementById('btnLangRo');
-  const btnEn = document.getElementById('btnLangEn');
+  const btnLang = document.getElementById('btnLang');
   function setLang(l) {
     lang = l;
     localStorage.setItem('RK_LANG', l);
-    if (btnRo) btnRo.classList.toggle('active', l === 'ro');
-    if (btnEn) btnEn.classList.toggle('active', l === 'en');
+    if (btnLang) btnLang.textContent = l;
     applyLang();
   }
-  if (btnRo) { btnRo.addEventListener('click', () => setLang('ro')); btnRo.classList.toggle('active', lang === 'ro'); }
-  if (btnEn) { btnEn.addEventListener('click', () => setLang('en')); btnEn.classList.toggle('active', lang === 'en'); }
+  if (btnLang) {
+    btnLang.textContent = lang;
+    btnLang.addEventListener('click', () => setLang(lang === 'ro' ? 'en' : 'ro'));
+  }
 
   applyLang();
 
