@@ -1344,6 +1344,64 @@ function _speak(text) {
   window.speechSynthesis.speak(u);
 }
 
+/* ── SEARCH ────────────────────────────────────────────── */
+function _openSearch() {
+  document.getElementById('searchOverlay').classList.remove('hidden');
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchResults').innerHTML = '';
+  setTimeout(function() { document.getElementById('searchInput').focus(); }, 60);
+}
+
+function _closeSearch() {
+  document.getElementById('searchOverlay').classList.add('hidden');
+}
+
+function _doSearch(q) {
+  var results = document.getElementById('searchResults');
+  results.innerHTML = '';
+  if (!q.trim()) return;
+  var ql = q.toLowerCase();
+  var hits = [];
+  for (var i = 0; i < DATA.length; i++) {
+    var d = DATA[i];
+    var score = 0;
+    if (d.hanja === q)                                        score = 100;
+    else if ((d.ko_reading || '').indexOf(ql) === 0)          score = 80;
+    else if (d.reading[lang].toLowerCase().indexOf(ql) === 0) score = 70;
+    else if (d.meaning[lang].toLowerCase().indexOf(ql) === 0) score = 60;
+    else if (d.meaning['ro'].toLowerCase().indexOf(ql) >= 0)  score = 40;
+    else if (d.meaning['en'].toLowerCase().indexOf(ql) >= 0)  score = 35;
+    else if (d.reading[lang].toLowerCase().indexOf(ql) >= 0)  score = 30;
+    if (score > 0) hits.push({i: i, score: score});
+  }
+  hits.sort(function(a, b) { return b.score - a.score; });
+  hits = hits.slice(0, 20);
+  if (hits.length === 0) {
+    results.innerHTML = '<div style="padding:16px 18px;font-size:12px;color:var(--tx3)">Niciun rezultat</div>';
+    return;
+  }
+  hits.forEach(function(h) {
+    var d   = DATA[h.i];
+    var pos = queue.indexOf(h.i);
+    var el  = document.createElement('div');
+    el.className = 'searchItem';
+    el.innerHTML =
+      '<span class="si-glyph">' + d.hanja + '</span>' +
+      '<span class="si-info">' +
+        '<span class="si-reading">' + (d.ko_reading || '') + ' · ' + d.meaning[lang] + '</span>' +
+        '<span class="si-meaning">' + d.reading[lang] + '</span>' +
+      '</span>' +
+      '<span class="si-pos">#' + (pos + 1) + '</span>';
+    el.addEventListener('click', function() {
+      _closeSearch();
+      queuePos = pos >= 0 ? pos : 0;
+      idx      = h.i;
+      render(true);
+    });
+    results.appendChild(el);
+  });
+}
+
 /* ── STROKE ORDER ──────────────────────────────────────── */
 var _hwWriter = null;
 
@@ -1665,6 +1723,11 @@ function _answerQuiz(wi) {
   document.getElementById('quizBtn').addEventListener('click', _startQuiz);
   document.getElementById('quizExitBtn').addEventListener('click', _exitQuiz);
   document.getElementById('etymBtn').addEventListener('click', _openEtym);
+  document.getElementById('searchBtn').addEventListener('click', function(e) { e.stopPropagation(); _openSearch(); });
+  document.getElementById('searchClear').addEventListener('click', function() { document.getElementById('searchInput').value = ''; document.getElementById('searchResults').innerHTML = ''; });
+  document.getElementById('searchInput').addEventListener('input', function() { _doSearch(this.value); });
+  document.getElementById('searchOverlay').addEventListener('click', function(e) { if (e.target === this) _closeSearch(); });
+
   document.getElementById('strokeBtn').addEventListener('click', function(e) { e.stopPropagation(); _openStroke(); });
   document.getElementById('strokeClose').addEventListener('click', _closeStroke);
   document.getElementById('strokeAnimate').addEventListener('click', function() { if (_hwWriter) _hwWriter.animateCharacter(); });
@@ -1709,9 +1772,10 @@ function _answerQuiz(wi) {
 
   /* Keyboard */
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowRight') _navigate(1);
-    if (e.key === 'ArrowLeft')  _navigate(-1);
-    if (e.key === 'Escape')     { if (quizMode) { _exitQuiz(); } else { _closeBloom(); _closeEtym(); _closeStroke(); } }
+    if (e.key === '/') { if (!document.getElementById('searchOverlay').classList.contains('hidden')) return; e.preventDefault(); _openSearch(); }
+    if (e.key === 'ArrowRight') { if (!document.getElementById('searchOverlay').classList.contains('hidden')) return; _navigate(1); }
+    if (e.key === 'ArrowLeft')  { if (!document.getElementById('searchOverlay').classList.contains('hidden')) return; _navigate(-1); }
+    if (e.key === 'Escape')     { if (quizMode) { _exitQuiz(); } else { _closeBloom(); _closeEtym(); _closeStroke(); _closeSearch(); } }
   });
 
   /* Swipe */
