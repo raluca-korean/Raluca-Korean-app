@@ -16,7 +16,8 @@ const glsVeil      = document.getElementById("glsVeil");
 
 // ── State ──
 let WORDS       = [];
-let CLUSTERS    = [];   // semantic word clusters loaded from word-clusters.json
+let CLUSTERS    = [];
+let SENTENCES   = [];   // [{ko, ro, en}] din exercises.json
 let daily       = [];
 let currentLang = RKLang.get();
 let filterCat   = "";
@@ -80,7 +81,8 @@ const UI = {
     sortAlpha:   "Alfabetic",
     sortUnknown: "Necunoscute primul",
     sortFavs:    "Favorite primul",
-    sortCat:     "După categorie"
+    sortCat:     "După categorie",
+    example:     "EXEMPLU"
   },
   en: {
     search:  "Search",
@@ -102,7 +104,8 @@ const UI = {
     sortAlpha:   "Alphabetical",
     sortUnknown: "Unknown first",
     sortFavs:    "Favorites first",
-    sortCat:     "By category"
+    sortCat:     "By category",
+    example:     "EXAMPLE"
   }
 };
 
@@ -446,6 +449,18 @@ function getAssociated(ko, max) {
   return pool.slice(0, max);
 }
 
+function findExample(ko, max) {
+  if (!SENTENCES.length) return [];
+  const needle = (ko.endsWith("다") && ko.length > 2) ? ko.slice(0, -1) : ko;
+  if (needle.length < 2) return [];
+  const hits = SENTENCES.filter(s => s.ko.includes(needle));
+  for (let i = hits.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [hits[i], hits[j]] = [hits[j], hits[i]];
+  }
+  return hits.slice(0, max || 2);
+}
+
 function _renderPanel(word) {
   if (!word) return;
   const color = getCatColor(word);
@@ -461,6 +476,9 @@ function _renderPanel(word) {
 
   // Semantically associated: 10 from clusters
   const associated = getAssociated(word.ko, 10);
+
+  // Example sentences
+  const examples = findExample(word.ko);
 
   glsPanelBody.innerHTML =
     `<button class="gls-panel-back" onclick="closePanel()">` +
@@ -488,6 +506,16 @@ function _renderPanel(word) {
         `<span class="gls-panel-btn-ico">▶</span>${t("youglish")}` +
       `</button>` +
     `</div>` +
+
+    (examples.length
+      ? `<div class="gls-panel-hdg gls-panel-hdg-ex">${t("example")}</div>` +
+        examples.map(ex =>
+          `<div class="gls-panel-example">` +
+            `<div class="gls-ex-ko">${sanitizeHTML(ex.ko)}</div>` +
+            `<div class="gls-ex-tr">${sanitizeHTML(currentLang === "ro" ? ex.ro : ex.en)}</div>` +
+          `</div>`
+        ).join("")
+      : "") +
 
     (related.length
       ? `<div class="gls-panel-hdg">${t("related")}</div>` +
@@ -597,14 +625,25 @@ async function loadVocabulary() {
     `</div>`;
 
   try {
-    const [vocabRes, clustersRes] = await Promise.all([
+    const [vocabRes, clustersRes, exRes] = await Promise.all([
       fetch("./data/vocab-korean.json"),
-      fetch("./data/word-clusters.json")
+      fetch("./data/word-clusters.json"),
+      fetch("./data/exercises.json")
     ]);
     if (!vocabRes.ok) throw new Error("HTTP " + vocabRes.status);
     const vocab = await vocabRes.json();
     WORDS = buildWords(vocab);
     if (clustersRes.ok) CLUSTERS = await clustersRes.json();
+    if (exRes.ok) {
+      const ex = await exRes.json();
+      SENTENCES = [];
+      (ex["ko-ro"] || []).forEach(e => {
+        if (e.q && e.correct) SENTENCES.push({ ko: e.q, ro: e.correct.ro || "", en: e.correct.en || "" });
+      });
+      (ex["ro-ko"] || []).forEach(e => {
+        if (e.correct && e.prompt) SENTENCES.push({ ko: e.correct, ro: e.prompt.ro || "", en: e.prompt.en || "" });
+      });
+    }
     listEl.innerHTML = "";
     pickDaily();
     buildCatDots();
