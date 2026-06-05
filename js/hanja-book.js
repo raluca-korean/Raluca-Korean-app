@@ -1006,10 +1006,23 @@ const DATA = [
    Adaptive Biomorphic Knowledge Field
    ═══════════════════════════════════════════════════════════ */
 
-var idx         = 0;
 var lang        = localStorage.getItem('RK_LANG') || 'ro';
 var learned     = JSON.parse(localStorage.getItem('RK_HJ_LEARNED') || '[]');
 var bloomActive = -1;
+
+/* Study queue: unlearned hanja first; marking learned sends them to the back */
+var queue = (function() {
+  var saved = localStorage.getItem('RK_HJ_QUEUE');
+  if (saved) {
+    var q = JSON.parse(saved);
+    if (q.length === DATA.length) return q;
+  }
+  var q = [];
+  for (var i = 0; i < DATA.length; i++) q.push(i);
+  return q;
+})();
+var queuePos = 0;
+var idx      = queue[queuePos];
 
 var ORB_COLORS_DARK  = ['#9B6DFF','#FF6B8A','#4DFFB8','#FFB347'];
 var ORB_COLORS_LIGHT = ['#5B21B6','#B91C1C','#065F46','#92400E'];
@@ -1202,10 +1215,10 @@ function render(animate) {
     isLearned ? UI_TEXT[lang].learned : UI_TEXT[lang].learn;
 
   /* Nav */
-  document.getElementById('navPrev').disabled = (idx === 0);
-  document.getElementById('navNext').disabled = (idx === DATA.length - 1);
-  document.getElementById('posIdx').textContent   = idx + 1;
-  document.getElementById('posTotal').textContent = DATA.length;
+  document.getElementById('navPrev').disabled = (queuePos === 0);
+  document.getElementById('navNext').disabled = (queuePos === queue.length - 1);
+  document.getElementById('posIdx').textContent   = queuePos + 1;
+  document.getElementById('posTotal').textContent = queue.length;
 
   /* Progress bar */
   var pct = learned.length / DATA.length * 100;
@@ -1317,9 +1330,10 @@ function _setLang(l) {
 /* ── NAVIGATION ────────────────────────────────────────── */
 function _navigate(dir) {
   window.speechSynthesis.cancel();
-  var next = idx + dir;
-  if (next < 0 || next >= DATA.length) return;
-  idx = next;
+  var next = queuePos + dir;
+  if (next < 0 || next >= queue.length) return;
+  queuePos = next;
+  idx = queue[queuePos];
   render(true);
 }
 
@@ -1327,10 +1341,20 @@ function _navigate(dir) {
 function _markLearned() {
   if (learned.indexOf(idx) < 0) learned.push(idx);
   localStorage.setItem('RK_HJ_LEARNED', JSON.stringify(learned));
+
+  /* Move current to back of queue so unlearned hanja appear next */
+  var current = queue.splice(queuePos, 1)[0];
+  queue.push(current);
+  localStorage.setItem('RK_HJ_QUEUE', JSON.stringify(queue));
+
+  /* queuePos stays the same — now points to the next item */
+  if (queuePos >= queue.length) queuePos = queue.length - 1;
+  idx = queue[queuePos];
+
   var nuc = document.getElementById('nucleus');
   nuc.classList.add('nova');
   setTimeout(function() { nuc.classList.remove('nova'); }, 700);
-  render(false);
+  render(true);
 }
 
 /* ── BOOT ──────────────────────────────────────────────── */
