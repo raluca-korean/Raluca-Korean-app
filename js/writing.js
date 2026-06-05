@@ -136,14 +136,6 @@ let idx     = 0;
 let checked = false;
 let lang    = RKLang.get();
 
-// Jump to character passed via ?char= from hangul.html
-(function () {
-  const param = new URLSearchParams(window.location.search).get('char');
-  if (!param) return;
-  const found = LETTERS.findIndex(l => l.char === param);
-  if (found !== -1) idx = found;
-})();
-
 // ── TRADUCERI ─────────────────────────────────────────────────
 const T = {
   ro:{
@@ -510,3 +502,18 @@ function nextItem() {
 
 // ── INIT ──────────────────────────────────────────────────────
 applyLang();
+
+// If coming from hangul.html with ?char=, jump to that letter
+(function () {
+  const param = new URLSearchParams(window.location.search).get('char');
+  if (!param) return;
+  const found = LETTERS.findIndex(l => l.char === param);
+  if (found === -1) return;
+  idx = found;
+  pool = LETTERS;
+  mode = 'letters';
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  const lettersTab = document.getElementById('tab-letters');
+  if (lettersTab) lettersTab.classList.add('active');
+  updateTarget();
+})();
