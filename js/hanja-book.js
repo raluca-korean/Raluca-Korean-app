@@ -1231,6 +1231,7 @@ function _openBloom(wi) {
   document.getElementById('bloomKo').textContent      = w.sentence || '';
   document.getElementById('bloomTr').textContent      = w['sentence_' + lang] || '';
   panel.classList.remove('hidden');
+  _speak(w.ko);
 
   var nodes = document.querySelectorAll('.orbNode');
   for (var n = 0; n < nodes.length; n++) nodes[n].classList.remove('lit');
