@@ -24,6 +24,8 @@ let filterFavs  = false;
 let focusedKo   = null;
 let currentPage = 1;
 const PAGE_SIZE = 25;
+// sort: "alpha" | "unknown" | "favs" | "cat"
+let currentSort = "alpha";
 
 // ── Category data ──
 const CAT_COLORS = {
@@ -74,7 +76,11 @@ const UI = {
     back:    "Înapoi",
     allCats: "Toate",
     close:   "×",
-    init:    "INIȚIALIZARE"
+    init:    "INIȚIALIZARE",
+    sortAlpha:   "Alfabetic",
+    sortUnknown: "Necunoscute primul",
+    sortFavs:    "Favorite primul",
+    sortCat:     "După categorie"
   },
   en: {
     search:  "Search",
@@ -92,7 +98,11 @@ const UI = {
     back:    "Back",
     allCats: "All",
     close:   "×",
-    init:    "INITIALIZING"
+    init:    "INITIALIZING",
+    sortAlpha:   "Alphabetical",
+    sortUnknown: "Unknown first",
+    sortFavs:    "Favorites first",
+    sortCat:     "By category"
   }
 };
 
@@ -206,14 +216,93 @@ function _nestedToFlat(data) {
   return [...map.values()];
 }
 
+// ── Sort ──
+function applySortMenu() {
+  const sortBtn = document.getElementById("sortBtn");
+  if (!sortBtn) return;
+
+  // Remove existing menu
+  const old = document.getElementById("gls-sort-menu");
+  if (old) { old.remove(); return; }
+
+  const menu = document.createElement("div");
+  menu.id = "gls-sort-menu";
+  menu.className = "gls-sort-menu";
+
+  const options = [
+    { key: "alpha",   label: t("sortAlpha") },
+    { key: "unknown", label: t("sortUnknown") },
+    { key: "favs",    label: t("sortFavs") },
+    { key: "cat",     label: t("sortCat") }
+  ];
+
+  options.forEach(({ key, label }) => {
+    const btn = document.createElement("button");
+    btn.className = "gls-sort-opt" + (currentSort === key ? " on" : "");
+    btn.textContent = label;
+    btn.onclick = () => {
+      currentSort = key;
+      currentPage = 1;
+      menu.remove();
+      render(false);
+    };
+    menu.appendChild(btn);
+  });
+
+  // Position below sortBtn
+  const rect = sortBtn.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 6) + "px";
+  menu.style.right = (window.innerWidth - rect.right) + "px";
+  document.body.appendChild(menu);
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener("click", function close(e) {
+      if (!menu.contains(e.target) && e.target !== sortBtn) {
+        menu.remove();
+        document.removeEventListener("click", close);
+      }
+    });
+  }, 0);
+}
+
+function sortWords(words) {
+  switch (currentSort) {
+    case "unknown":
+      return [...words].sort((a, b) => {
+        const aL = isLearned(a.ko) ? 1 : 0;
+        const bL = isLearned(b.ko) ? 1 : 0;
+        if (aL !== bL) return aL - bL;
+        return a.ko.localeCompare(b.ko, "ko");
+      });
+    case "favs":
+      return [...words].sort((a, b) => {
+        const aF = isFav(a.ko) ? 0 : 1;
+        const bF = isFav(b.ko) ? 0 : 1;
+        if (aF !== bF) return aF - bF;
+        return a.ko.localeCompare(b.ko, "ko");
+      });
+    case "cat":
+      return [...words].sort((a, b) => {
+        const ac = getCats(a)[0] || "";
+        const bc = getCats(b)[0] || "";
+        if (ac !== bc) return ac.localeCompare(bc);
+        return a.ko.localeCompare(b.ko, "ko");
+      });
+    default: // alpha
+      return words;
+  }
+}
+
 // ── Filter ──
 function getFiltered() {
   const q = searchInput.value.trim().toLowerCase();
-  return WORDS.filter(w => {
+  const base = WORDS.filter(w => {
     const ok = !q || w.ko.toLowerCase().includes(q) ||
       (w.ro||"").toLowerCase().includes(q) || (w.en||"").toLowerCase().includes(q);
     return ok && (!filterCat || getCats(w).includes(filterCat)) && (!filterFavs || isFav(w.ko));
   });
+  return sortWords(base);
 }
 
 // ── Render ──
@@ -487,6 +576,8 @@ searchInput.addEventListener("input", () => {
   clearTimeout(_searchTimer);
   _searchTimer = setTimeout(() => { currentPage = 1; render(false); }, 150);
 });
+
+document.getElementById("sortBtn").addEventListener("click", applySortMenu);
 
 favFilterBtn.addEventListener("click", () => {
   filterFavs = !filterFavs;
