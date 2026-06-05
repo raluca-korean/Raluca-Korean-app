@@ -506,6 +506,29 @@
       {ko:'인분', ro:'porție', en:'portion', aliases:['portie','porție','portii','porții','portion']},
       {ko:'권', ro:'volum', en:'volume', aliases:['volum','volume']},
       {ko:'명', ro:'persoană', en:'person', aliases:['persoana','persoană','persoane','person']}
+    ],
+    associate: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'친구와', ro:'cu prietenul/prietena', en:'with a friend', aliases:['cu prietenul','cu prietena','cu un prieten','with a friend','with my friend','friend']},
+      {ko:'선생님과', ro:'cu profesorul', en:'with the teacher', aliases:['cu profesorul','with the teacher','teacher']},
+      {ko:'가족과', ro:'cu familia', en:'with (my) family', aliases:['cu familia','with family','family']},
+      {ko:'부모님과', ro:'cu părinții', en:'with (my) parents', aliases:['cu parintii','cu părinții','with parents','parents']},
+      {ko:'남자친구와', ro:'cu iubitul', en:'with my boyfriend', aliases:['cu iubitul','with boyfriend','boyfriend']},
+      {ko:'여자친구와', ro:'cu iubita', en:'with my girlfriend', aliases:['cu iubita','with girlfriend','girlfriend']},
+      {ko:'동생과', ro:'cu fratele/sora mai mică', en:'with (younger) sibling', aliases:['cu fratele','cu sora','with sibling']},
+      {ko:'반 친구들과', ro:'cu colegii de clasă', en:'with classmates', aliases:['cu colegii','with classmates','classmates']},
+      {ko:'동료와', ro:'cu colegul de muncă', en:'with a colleague', aliases:['cu colegul','with colleague','colleague']}
+    ],
+    beneficiary: [
+      {ko:'', ro:'', en:'', aliases:[]},
+      {ko:'저에게', ro:'mie', en:'to me', aliases:['mie','pentru mine','to me']},
+      {ko:'너에게', ro:'ție', en:'to you', aliases:['tie','ție','pentru tine','to you']},
+      {ko:'친구에게', ro:'prietenului/prietenei', en:'to a friend', aliases:['prietenului','prietenei','to friend','to my friend']},
+      {ko:'선생님에게', ro:'profesorului', en:'to the teacher', aliases:['profesorului','to the teacher']},
+      {ko:'부모님에게', ro:'părinților', en:'to (my) parents', aliases:['parintilor','părinților','to parents']},
+      {ko:'학생에게', ro:'studentului', en:'to the student', aliases:['studentului','to the student']},
+      {ko:'아이에게', ro:'copilului', en:'to the child', aliases:['copilului','to the child']},
+      {ko:'동생에게', ro:'fratelui/surorii mai mici', en:'to (younger) sibling', aliases:['fratelui','surorii','to sibling']}
     ]
   };
 
@@ -1023,8 +1046,12 @@
     }
 
     if(!items.length){
-      if(sourceKey === 'topic' || sourceKey === 'associate' || sourceKey === 'beneficiary'){
+      if(sourceKey === 'topic'){
         items = normalizeList(DATA.subject, 'subject');
+      }else if(sourceKey === 'associate'){
+        items = normalizeList(DATA.associate, 'associate');
+      }else if(sourceKey === 'beneficiary'){
+        items = normalizeList(DATA.beneficiary, 'beneficiary');
       }else if(sourceKey === 'time'){
         items = normalizeList(DATA.time, 'time');
       }else if(sourceKey === 'departure' || sourceKey === 'transit'){
@@ -1675,9 +1702,11 @@
 
     var topic = itemOf(clause, 'topic');
     var topic2 = itemOf(clause, 'topic2');
+    var associate = itemOf(clause, 'associate');
     var time = itemOf(clause, 'time');
     var departure = itemOf(clause, 'departure');
     var transit = itemOf(clause, 'transit');
+    var beneficiary = itemOf(clause, 'beneficiary');
     var numeral = itemOf(clause, 'numeral');
     var quantifier = itemOf(clause, 'quantifier');
     var object1 = itemOf(clause, 'object1');
@@ -1707,6 +1736,8 @@
       }
     }
     if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
+    // Comitative (와/과): person you do the action with — placed right after topic
+    if(associate && associate.ko) parts.push(associate.ko);
     if(time && time.ko) parts.push(time.ko);
     // Motion-to verbs (가다/오다/도착하다) take destination particle 에, not 에서
     var MOTION_TO = { '가다': 1, '오다': 1, '도착하다': 1 };
@@ -1728,6 +1759,8 @@
     } else if(transit && transit.ko){
       parts.push(transit.ko);
     }
+    // Indirect object / recipient (에게): placed before the direct object
+    if(beneficiary && beneficiary.ko) parts.push(beneficiary.ko);
     if(object1 && object1.ko){
       parts.push(object1.ko);
       // numeral + quantifier follow the object they quantify (커피를 한 잔 마셔요)
@@ -1750,6 +1783,8 @@
     var time = itemOf(clause, 'time');
     var departure = itemOf(clause, 'departure');
     var transit = itemOf(clause, 'transit');
+    var associate = itemOf(clause, 'associate');
+    var beneficiary = itemOf(clause, 'beneficiary');
     var numeral = itemOf(clause, 'numeral');
     var quantifier = itemOf(clause, 'quantifier');
     var object1 = itemOf(clause, 'object1');
@@ -1764,12 +1799,14 @@
         ? ('and ' + (topic2.en || topic2.ro || topic2.ko))
         : ('și ' + (topic2.ro || topic2.en || topic2.ko)));
     }
+    if(associate) parts.push(translationOf(associate));
     if(time) parts.push(translationOf(time));
     if(departure) parts.push(translationOf(departure));
     if(transit){
       var ttr = translationOf(transit);
       if(ttr) parts.push((state.lang === 'en' ? 'and ' : 'și ') + ttr);
     }
+    if(beneficiary) parts.push(translationOf(beneficiary));
     if(object1){
       var o1tr = translationOf(object1);
       if(o1tr){
