@@ -16,6 +16,7 @@ const glsVeil      = document.getElementById("glsVeil");
 
 // ── State ──
 let WORDS       = [];
+let CLUSTERS    = [];   // semantic word clusters loaded from word-clusters.json
 let daily       = [];
 let currentLang = RKLang.get();
 let filterCat   = "";
@@ -69,6 +70,7 @@ const UI = {
     learnLbl:"Memorat",
     youglish:"YouGlish ↗",
     related: "DIN ACEEAȘI CATEGORIE",
+    associated: "CUVINTE ASOCIATE",
     back:    "Înapoi",
     allCats: "Toate",
     close:   "×",
@@ -86,6 +88,7 @@ const UI = {
     learnLbl:"Learned",
     youglish:"YouGlish ↗",
     related: "SAME CATEGORY",
+    associated: "ASSOCIATED WORDS",
     back:    "Back",
     allCats: "All",
     close:   "×",
@@ -335,17 +338,40 @@ function closePanel() {
 }
 
 // ── Panel content ──
+// Returns up to `max` semantically associated words for `ko` using CLUSTERS
+function getAssociated(ko, max) {
+  const koSet = new Set();
+  for (const cl of CLUSTERS) {
+    if (cl.words.includes(ko)) {
+      cl.words.forEach(w => { if (w !== ko) koSet.add(w); });
+    }
+  }
+  // Map to WORDS objects (skip words not in vocab)
+  const pool = [];
+  koSet.forEach(k => { const w = WORDS.find(x => x.ko === k); if (w) pool.push(w); });
+  // Shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, max);
+}
+
 function _renderPanel(word) {
   if (!word) return;
   const color = getCatColor(word);
   const cats  = getCats(word);
 
+  // Same-category: 10 random
   const relPool = WORDS.filter(w => w.ko !== word.ko && getCats(w).some(c => cats.includes(c)));
   for (let i = relPool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [relPool[i], relPool[j]] = [relPool[j], relPool[i]];
   }
-  const related = relPool.slice(0, 14);
+  const related = relPool.slice(0, 10);
+
+  // Semantically associated: 10 from clusters
+  const associated = getAssociated(word.ko, 10);
 
   glsPanelBody.innerHTML =
     `<button class="gls-panel-back" onclick="closePanel()">` +
@@ -378,6 +404,12 @@ function _renderPanel(word) {
       ? `<div class="gls-panel-hdg">${t("related")}</div>` +
         `<div class="gls-panel-related">${related.map(rw =>
           `<span class="gls-panel-rel" style="color:${getCatColor(rw)}" onclick="focusWord('${esc(rw.ko)}')">${sanitizeHTML(rw.ko)}</span>`
+        ).join("")}</div>`
+      : "") +
+    (associated.length
+      ? `<div class="gls-panel-hdg gls-panel-hdg-assoc">${t("associated")}</div>` +
+        `<div class="gls-panel-related gls-panel-assoc">${associated.map(rw =>
+          `<span class="gls-panel-rel gls-rel-assoc" onclick="focusWord('${esc(rw.ko)}')">${sanitizeHTML(rw.ko)}<span class="gls-rel-tr">${sanitizeHTML(getMeaning(rw))}</span></span>`
         ).join("")}</div>`
       : "");
 }
@@ -474,10 +506,14 @@ async function loadVocabulary() {
     `</div>`;
 
   try {
-    const res = await fetch("./data/vocab-korean.json");
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const vocab = await res.json();
+    const [vocabRes, clustersRes] = await Promise.all([
+      fetch("./data/vocab-korean.json"),
+      fetch("./data/word-clusters.json")
+    ]);
+    if (!vocabRes.ok) throw new Error("HTTP " + vocabRes.status);
+    const vocab = await vocabRes.json();
     WORDS = buildWords(vocab);
+    if (clustersRes.ok) CLUSTERS = await clustersRes.json();
     listEl.innerHTML = "";
     pickDaily();
     buildCatDots();
