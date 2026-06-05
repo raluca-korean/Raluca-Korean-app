@@ -1010,6 +1010,9 @@ var lang        = localStorage.getItem('RK_LANG') || 'ro';
 var learned     = JSON.parse(localStorage.getItem('RK_HJ_LEARNED') || '[]');
 var bloomActive = -1;
 
+/* SRS data: {reps, ease, interval(days), due(ms timestamp)} */
+var srsData = JSON.parse(localStorage.getItem('RK_HJ_SRS') || '{}');
+
 /* Quiz state */
 var quizMode  = false;
 var quizScore = {ok: 0, total: 0};
@@ -1352,19 +1355,68 @@ function _navigate(dir) {
   render(true);
 }
 
+/* ── SPACED REPETITION (SM-2 simplificat) ──────────────── */
+function _getSRS(di) {
+  return srsData[di] || {reps: 0, ease: 2.5, interval: 1, due: 0};
+}
+
+function _srsInsertPos(di) {
+  var due = _getSRS(di).due;
+  for (var i = 0; i < queue.length; i++) {
+    if (_getSRS(queue[i]).due > due) return i;
+  }
+  return queue.length;
+}
+
+function _updateSRS(di, correct) {
+  var s   = _getSRS(di);
+  var MIN = 60000;
+  var DAY = 86400000;
+  if (correct) {
+    s.reps++;
+    if      (s.reps === 1) { s.interval = 1; s.due = Date.now() + 10 * MIN; }
+    else if (s.reps === 2) { s.interval = 1; s.due = Date.now() + DAY; }
+    else {
+      s.interval = Math.round(s.interval * s.ease);
+      s.ease     = Math.min(2.9, s.ease + 0.05);
+      s.due      = Date.now() + s.interval * DAY;
+    }
+  } else {
+    s.ease = Math.max(1.3, s.ease - 0.15);
+    s.reps = 0; s.interval = 1;
+    s.due  = Date.now() + MIN;
+  }
+  srsData[di] = s;
+  localStorage.setItem('RK_HJ_SRS', JSON.stringify(srsData));
+}
+
+function _sortQueueByDue() {
+  var now = Date.now();
+  queue.sort(function(a, b) {
+    var dA = srsData[a] ? srsData[a].due : now;
+    var dB = srsData[b] ? srsData[b].due : now;
+    return dA - dB;
+  });
+  var p = queue.indexOf(idx);
+  queuePos = p >= 0 ? p : 0;
+  idx = queue[queuePos];
+  localStorage.setItem('RK_HJ_QUEUE', JSON.stringify(queue));
+}
+
 /* ── MARK LEARNED ──────────────────────────────────────── */
 function _markLearned() {
   if (learned.indexOf(idx) < 0) learned.push(idx);
   localStorage.setItem('RK_HJ_LEARNED', JSON.stringify(learned));
 
-  /* Move current to back of queue so unlearned hanja appear next */
+  /* Init SRS and re-insert at due-sorted position */
   var current = queue.splice(queuePos, 1)[0];
-  queue.push(current);
-  localStorage.setItem('RK_HJ_QUEUE', JSON.stringify(queue));
-
-  /* queuePos stays the same — now points to the next item */
+  if (!srsData[current]) _updateSRS(current, true);
+  var ins = _srsInsertPos(current);
+  queue.splice(ins, 0, current);
+  if (ins <= queuePos) queuePos++;
   if (queuePos >= queue.length) queuePos = queue.length - 1;
   idx = queue[queuePos];
+  localStorage.setItem('RK_HJ_QUEUE', JSON.stringify(queue));
 
   var nuc = document.getElementById('nucleus');
   nuc.classList.add('nova');
@@ -1389,6 +1441,7 @@ function _exitQuiz() {
   document.getElementById('learnBtn').style.display    = '';
   document.getElementById('quizBtn').style.display     = '';
   document.getElementById('quizExitBtn').style.display = 'none';
+  _sortQueueByDue();
   render(false);
 }
 
@@ -1496,6 +1549,7 @@ function _answerQuiz(wi) {
   var pct = (quizScore.ok / quizScore.total) * 100;
   document.getElementById('kFill').style.width = pct + '%';
 
+  _updateSRS(quizQ.dataIdx, isRight);
   quizTimer = setTimeout(_nextQuizQ, isRight ? 900 : 1500);
 }
 
@@ -1588,6 +1642,7 @@ function _answerQuiz(wi) {
     }
   });
 
+  _sortQueueByDue();
   initCanvas();
   positionOrbitals();
   render(false);
