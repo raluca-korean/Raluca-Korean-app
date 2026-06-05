@@ -1004,6 +1004,12 @@ function init() {
     if (typeof RKLang !== 'undefined') {
       lang = RKLang.get() || 'ro';
       RKLang.init(newLang => { lang = newLang; applyLang(); });
+      // Override long-press with single click
+      const langBtn = document.getElementById('langBtn');
+      const langPicker = document.getElementById('langPicker');
+      if (langBtn && langPicker) {
+        langBtn.addEventListener('click', () => langPicker.classList.toggle('open'));
+      }
     }
   } catch(e) {}
 
