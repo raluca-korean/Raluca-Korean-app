@@ -1000,18 +1000,19 @@ function init() {
   });
 
   // Initialize language from existing lang-picker if available
-  try {
-    if (typeof RKLang !== 'undefined') {
-      lang = RKLang.get() || 'ro';
-      RKLang.init(newLang => { lang = newLang; applyLang(); });
-      // Override long-press with single click
-      const langBtn = document.getElementById('langBtn');
-      const langPicker = document.getElementById('langPicker');
-      if (langBtn && langPicker) {
-        langBtn.addEventListener('click', () => langPicker.classList.toggle('open'));
-      }
-    }
-  } catch(e) {}
+  // Language buttons (built directly in HTML, no lang-picker.js injection)
+  lang = localStorage.getItem('RK_LANG') || 'ro';
+  const btnRo = document.getElementById('btnLangRo');
+  const btnEn = document.getElementById('btnLangEn');
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem('RK_LANG', l);
+    if (btnRo) btnRo.classList.toggle('active', l === 'ro');
+    if (btnEn) btnEn.classList.toggle('active', l === 'en');
+    applyLang();
+  }
+  if (btnRo) { btnRo.addEventListener('click', () => setLang('ro')); btnRo.classList.toggle('active', lang === 'ro'); }
+  if (btnEn) { btnEn.addEventListener('click', () => setLang('en')); btnEn.classList.toggle('active', lang === 'en'); }
 
   applyLang();
 
