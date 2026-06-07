@@ -281,7 +281,10 @@
       {ko:'여름에', ro:'vara', en:'in summer', aliases:['vara','in vara','în vară','summer','in summer']},
       {ko:'겨울에', ro:'iarna', en:'in winter', aliases:['iarna','in iarna','în iarnă','winter','in winter']},
       {ko:'봄에', ro:'primăvara', en:'in spring', aliases:['primavara','primăvara','spring','in spring']},
-      {ko:'가을에', ro:'toamna', en:'in autumn', aliases:['toamna','in toamna','în toamnă','fall','autumn','in fall']}
+      {ko:'가을에', ro:'toamna', en:'in autumn', aliases:['toamna','in toamna','în toamnă','fall','autumn','in fall']},
+      {ko:'올해', ro:'anul acesta', en:'this year', aliases:['anul acesta','in acest an','în acest an','anul asta','this year']},
+      {ko:'작년에', ro:'anul trecut', en:'last year', aliases:['anul trecut','last year']},
+      {ko:'내년에', ro:'anul viitor', en:'next year', aliases:['anul viitor','next year']}
     ],
     location: [
       {ko:'', ro:'', en:'', aliases:[]},
