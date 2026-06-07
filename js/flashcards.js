@@ -180,6 +180,59 @@ async function getWordImage(key){
 function loadCardImage(word){ getWordImage(imgKey(word)); }
 function preloadNext(idx){ if(idx < deck.length) getWordImage(imgKey(deck[idx])); }
 
+// ── Memory glow: nucleus light reflects SRS strength ─────────
+// Returns 0 (unknown/new) → 1 (mastered)
+function memoryStrength(ko) {
+  const s = srsLoad();
+  const d = s[ko];
+  if (!d || d.n === 0) return null; // no data yet
+  // EF range: 1.3 (struggling) … 2.5 (neutral) … 3.5+ (easy)
+  return Math.max(0, Math.min(1, (d.EF - 1.3) / 2.2));
+}
+
+// Apply corona color based on memory strength to the nucleus
+function applyMemoryGlow(ko) {
+  const glowEl = document.getElementById("crfNucleusGlow");
+  const core   = document.getElementById("crfCore");
+  if (!glowEl || !core) return;
+
+  const strength = memoryStrength(ko);
+  const dark = document.body.classList.contains("dark-mode");
+
+  let glowColor, borderColor, shadowColor;
+
+  if (strength === null) {
+    // New word — default neutral glow (CSS variable handles it)
+    glowEl.style.background = "";
+    core.style.borderColor  = "";
+    core.style.boxShadow    = "";
+    return;
+  }
+
+  if (strength > 0.62) {
+    // Well-known: warm amber/gold — like a mature star
+    glowColor   = dark ? "rgba(251,191,36,0.42)"  : "rgba(245,158,11,0.28)";
+    borderColor = dark ? "rgba(251,191,36,0.35)"  : "rgba(245,158,11,0.30)";
+    shadowColor = dark ? "rgba(251,191,36,0.22)"  : "rgba(245,158,11,0.16)";
+  } else if (strength > 0.32) {
+    // Medium — rose/violet (current default, clear)
+    glowEl.style.background = "";
+    core.style.borderColor  = "";
+    core.style.boxShadow    = "";
+    return;
+  } else {
+    // Struggling: cool indigo — dimmer, colder
+    glowColor   = dark ? "rgba(99,102,241,0.38)"  : "rgba(99,102,241,0.22)";
+    borderColor = dark ? "rgba(99,102,241,0.32)"  : "rgba(99,102,241,0.28)";
+    shadowColor = dark ? "rgba(99,102,241,0.20)"  : "rgba(99,102,241,0.12)";
+  }
+
+  glowEl.style.background = `radial-gradient(circle, ${glowColor} 0%, transparent 68%)`;
+  core.style.borderColor  = borderColor;
+  core.style.boxShadow    =
+    `0 0 60px ${shadowColor}, 0 0 120px ${shadowColor}, 0 20px 60px rgba(0,0,0,.06)`;
+}
+
 // ── Fit Korean text inside circular nucleus ───────────────────
 function fitNucleusText() {
   const core = document.getElementById("crfCore");
@@ -428,6 +481,9 @@ function renderFC() {
 
   // Fit text after layout is ready
   requestAnimationFrame(fitNucleusText);
+
+  // Apply memory-strength glow to nucleus
+  applyMemoryGlow(word.ko);
 
   loadCardImage(word);
   preloadNext(cardIndex + 1);
