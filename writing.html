@@ -45,7 +45,8 @@
     <button class="mode-tab active" data-mode="letters"   id="tab-letters"   title="Litere">ㄱ</button>
     <button class="mode-tab"        data-mode="syllables" id="tab-syllables"  title="Silabe">가</button>
     <button class="mode-tab"        data-mode="words"     id="tab-words"      title="Cuvinte">단</button>
-    <button class="mode-tab"        data-mode="sentences" id="tab-sentences"  title="Propoziții">문</button>
+    <button class="mode-tab"        data-mode="sentences"  id="tab-sentences"  title="Propoziții">문</button>
+    <button class="mode-tab"        data-mode="compunere"  id="tab-compunere"  title="Compunere">✍</button>
   </div>
 
   <div class="rfi-echo" id="progLbl">01 / 26</div>
@@ -150,6 +151,96 @@
     <div class="fb-col rfi-field-col">
       <div class="fb-col-lbl" id="fbRefLbl">CÂMP REFERINȚĂ</div>
       <canvas id="fbRefCv"  width="160" height="160" class="fb-cv rfi-cv"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ▓ COMPUNERE ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ -->
+<div id="compSection" class="comp-section" style="display:none">
+
+  <p class="comp-sub" id="compSub">Scrie în coreeană și primești corecturi</p>
+
+  <div class="comp-levels" role="group">
+    <button class="comp-lvl-btn active" data-level="1">T1</button>
+    <button class="comp-lvl-btn" data-level="2">T2</button>
+    <button class="comp-lvl-btn" data-level="3">T3</button>
+    <button class="comp-lvl-btn" data-level="4">T4</button>
+    <button class="comp-lvl-btn" data-level="5">T5</button>
+    <button class="comp-lvl-btn" data-level="6">T6</button>
+  </div>
+
+  <div class="comp-prompt-card">
+    <div class="comp-prompt-badge" id="compPromptBadge">Subiect</div>
+    <p class="comp-prompt-text" id="compPromptText">Se încarcă...</p>
+    <p class="comp-prompt-ko"   id="compPromptKo"></p>
+    <button class="comp-refresh-btn" onclick="newCompPrompt()" title="Subiect nou" aria-label="Subiect nou">↻</button>
+  </div>
+
+  <div class="comp-limit-hint" id="compLimitHint">Recomandat: 100–150 caractere</div>
+
+  <div class="comp-editor-wrap">
+    <textarea id="compTextarea"
+      class="comp-textarea"
+      placeholder="여기에 한국어로 쓰세요… (Scrie aici în coreeană)"
+      rows="7"
+      spellcheck="false"
+      autocorrect="off"
+      autocapitalize="off"></textarea>
+    <div class="comp-editor-bar">
+      <span class="comp-char-count" id="compCharCount">0</span>
+      <span class="comp-char-lbl"   id="compCharLbl">caractere</span>
+    </div>
+  </div>
+
+  <div class="comp-actions">
+    <button class="comp-btn comp-btn-clear"   onclick="clearCompose()"    id="btnCompClear">Șterge</button>
+    <button class="comp-btn comp-btn-correct" onclick="doCompCorrect()"   id="btnCompCorrect">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span id="btnCompLbl">Corectează</span>
+    </button>
+  </div>
+
+  <div class="comp-loading" id="compLoading">
+    <div class="comp-loading-dot"></div>
+    <span id="compLoadingMsg">Analizez…</span>
+  </div>
+
+  <section class="comp-results" id="compResults">
+    <div class="comp-result-score-row">
+      <div class="comp-score-circle" id="compScoreCircle">
+        <span class="comp-score-num"   id="compScoreNum">8</span>
+        <span class="comp-score-denom">/10</span>
+      </div>
+      <p class="comp-feedback-text" id="compFeedbackText"></p>
+    </div>
+    <div class="comp-result-section">
+      <div class="comp-result-label" id="compLblCorrected">TEXT CORECTAT</div>
+      <div class="comp-corrected-text" id="compCorrectedText"></div>
+    </div>
+    <div class="comp-result-section">
+      <div class="comp-result-label" id="compLblErrors">GREȘELI</div>
+      <ul class="comp-errors-list" id="compErrorsList"></ul>
+    </div>
+    <button class="comp-btn comp-btn-new" onclick="newCompAttempt()" id="btnCompNew">Subiect nou</button>
+  </section>
+
+</div>
+
+<!-- ▓ MODAL CHEIE API ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ -->
+<div class="comp-modal-overlay" id="compApiModal">
+  <div class="comp-apikey-card">
+    <div class="comp-apikey-icon">🔑</div>
+    <p class="comp-apikey-title" id="compApiTitle">Configurare cheie API</p>
+    <p class="comp-apikey-desc"  id="compApiDesc">
+      Pentru corecturi AI introdu cheia ta Anthropic API.<br>
+      Cheia rămâne salvată local pe dispozitivul tău.
+    </p>
+    <input type="password" id="compApiKeyInput" class="comp-apikey-input" placeholder="sk-ant-api03-…"
+      autocomplete="off" spellcheck="false">
+    <p class="comp-apikey-err" id="compApiErr"></p>
+    <div class="comp-apikey-actions">
+      <button class="comp-btn comp-btn-clear"   onclick="closeCompApiModal()" id="btnCompApiCancel">Anulează</button>
+      <button class="comp-btn comp-btn-correct" onclick="saveCompApiKey()"    id="btnCompApiSave">Salvează</button>
     </div>
   </div>
 </div>
