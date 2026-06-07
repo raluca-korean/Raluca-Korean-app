@@ -284,7 +284,10 @@
       {ko:'가을에', ro:'toamna', en:'in autumn', aliases:['toamna','in toamna','în toamnă','fall','autumn','in fall']},
       {ko:'올해', ro:'anul acesta', en:'this year', aliases:['anul acesta','in acest an','în acest an','anul asta','this year']},
       {ko:'작년에', ro:'anul trecut', en:'last year', aliases:['anul trecut','last year']},
-      {ko:'내년에', ro:'anul viitor', en:'next year', aliases:['anul viitor','next year']}
+      {ko:'내년에', ro:'anul viitor', en:'next year', aliases:['anul viitor','next year']},
+      {ko:'이번 세기에', ro:'secolul acesta', en:'this century', aliases:['secolul acesta','in acest secol','în acest secol','this century']},
+      {ko:'지난 세기에', ro:'secolul trecut', en:'last century', aliases:['secolul trecut','last century']},
+      {ko:'다음 세기에', ro:'secolul viitor', en:'next century', aliases:['secolul viitor','next century']}
     ],
     location: [
       {ko:'', ro:'', en:'', aliases:[]},
