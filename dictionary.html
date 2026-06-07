@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dicționar Coreean</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#db2777">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+/* ── Search bar ── */
+.dict-search-wrap{position:relative;margin-bottom:0}
+.dict-search{
+  width:100%;padding:14px 48px 14px 18px;border-radius:14px;
+  background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);
+  color:var(--text,#fff);font-size:1.1rem;font-family:inherit;
+  outline:none;transition:border-color .2s,background .2s;
+}
+.dict-search:focus{background:rgba(255,255,255,.12);border-color:#db2779}
+.dict-search::placeholder{color:rgba(255,255,255,.3)}
+.dict-clear{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:rgba(255,255,255,.4);font-size:1.3rem;
+  cursor:pointer;padding:4px;line-height:1;display:none;
+}
+.dict-clear.vis{display:block}
+.dict-hint{font-size:.78rem;color:rgba(255,255,255,.3);margin-top:6px;text-align:right}
+
+/* ── Category pills ── */
+.cat-row{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.cat-pill{
+  padding:4px 12px;border-radius:14px;font-size:.76rem;font-weight:700;
+  border:1px solid rgba(255,255,255,.16);background:none;
+  color:rgba(255,255,255,.45);cursor:pointer;transition:all .18s;
+  white-space:nowrap;
+}
+.cat-pill.on{background:rgba(219,39,119,.22);border-color:#db2779;color:#f0abfc}
+.cat-pill:hover:not(.on){background:rgba(255,255,255,.07);color:rgba(255,255,255,.7)}
+
+/* ── Results list ── */
+.res-count{font-size:.78rem;color:rgba(255,255,255,.35);margin:8px 0 6px;min-height:1em}
+.res-list{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+.res-item{
+  padding:11px 14px;border-radius:12px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:all .16s;
+  display:flex;align-items:center;gap:12px;
+}
+.res-item:hover{background:rgba(219,39,119,.12);border-color:rgba(219,39,119,.35)}
+.res-item.active{background:rgba(219,39,119,.18);border-color:#db2779}
+.ri-ko{font-size:1.25rem;font-weight:700;min-width:80px;color:#f0abfc}
+.ri-trans{font-size:.88rem;color:rgba(255,255,255,.6);flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.ri-cat{font-size:.72rem;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.4);white-space:nowrap}
+.ri-fav{font-size:1rem;opacity:.4;transition:opacity .2s;cursor:pointer;padding:4px;flex-shrink:0}
+.ri-fav:hover{opacity:.8}
+.ri-fav.on{opacity:1;filter:drop-shadow(0 0 4px #f59e0b)}
+
+/* ── Word detail panel ── */
+.dict-detail{
+  margin-top:12px;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px 18px;
+  animation:fade-up .25s ease;
+}
+@keyframes fade-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.dd-ko{font-size:2.8rem;font-weight:900;letter-spacing:.06em;line-height:1.1;margin-bottom:4px}
+.dd-cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.dd-cat{padding:3px 10px;border-radius:10px;font-size:.75rem;font-weight:700;
+  background:rgba(219,39,119,.18);color:#f0abfc;border:1px solid rgba(219,39,119,.3)}
+.dd-trans-row{display:flex;gap:6px;margin-bottom:6px;align-items:baseline}
+.dd-flag{font-size:.8rem;color:rgba(255,255,255,.3);min-width:24px}
+.dd-trans{font-size:1rem;font-weight:700;color:rgba(255,255,255,.9)}
+.dd-actions{display:flex;gap:8px;margin:14px 0 16px;flex-wrap:wrap}
+.dd-btn{
+  padding:7px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.18);
+  background:none;color:rgba(255,255,255,.55);font-size:.82rem;cursor:pointer;
+  transition:all .18s;font-family:inherit;display:flex;align-items:center;gap:5px;
+}
+.dd-btn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.85)}
+.dd-btn.fav-on{background:rgba(245,158,11,.15);border-color:#f59e0b;color:#fcd34d}
+
+/* ── Conjugation table ── */
+.conj-title{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.35);margin:16px 0 8px;font-weight:700}
+.conj-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center}
+.cj-lbl{font-size:.75rem;color:rgba(255,255,255,.35);white-space:nowrap}
+.cj-form{font-size:1rem;font-weight:700;color:#f0abfc}
+
+/* ── Related words ── */
+.related-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rel-chip{
+  padding:5px 12px;border-radius:12px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);font-size:.85rem;cursor:pointer;
+  transition:all .16s;color:rgba(255,255,255,.7);
+}
+.rel-chip:hover{background:rgba(219,39,119,.14);border-color:#db2779;color:#f0abfc}
+
+/* ── Word of the day ── */
+.wotd{
+  background:linear-gradient(135deg,rgba(219,39,119,.15),rgba(147,51,234,.15));
+  border:1px solid rgba(219,39,119,.25);border-radius:14px;padding:16px;margin-bottom:12px;
+}
+.wotd-lbl{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.35);margin-bottom:8px;font-weight:700}
+.wotd-ko{font-size:2rem;font-weight:900;color:#f0abfc;margin-bottom:4px;cursor:pointer}
+.wotd-tr{font-size:.9rem;color:rgba(255,255,255,.65)}
+
+/* ── Recent searches ── */
+.recent-row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.recent-chip{
+  padding:5px 11px;border-radius:12px;background:rgba(255,255,255,.07);
+  font-size:.82rem;color:rgba(255,255,255,.55);cursor:pointer;border:1px solid rgba(255,255,255,.1);
+  transition:all .16s;
+}
+.recent-chip:hover{background:rgba(255,255,255,.13);color:rgba(255,255,255,.85)}
+
+/* ── Empty state ── */
+.dict-empty{text-align:center;padding:32px 16px;color:rgba(255,255,255,.3);font-size:.9rem}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <h1 id="pgTitle">📖 Dicționar</h1>
+      <div class="sub" id="pgSub">Coreeană ↔ Română / Engleză</div>
+    </div>
+    <div id="pageControls"></div>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="card">
+  <div class="dict-search-wrap">
+    <input id="dictSearch" class="dict-search" type="search" autocomplete="off" spellcheck="false"
+           placeholder="Caută în coreeană, română sau engleză…">
+    <button class="dict-clear" id="dictClear" onclick="clearSearch()">✕</button>
+  </div>
+  <div class="hint dict-hint" id="dictHint"></div>
+
+  <!-- Category filter -->
+  <div class="cat-row" id="catRow"></div>
+
+  <!-- Results count -->
+  <div class="res-count" id="resCount"></div>
+
+  <!-- Results -->
+  <div class="res-list" id="resList"></div>
+
+  <!-- Detail panel -->
+  <div id="detailPanel"></div>
+</div>
+
+<!-- Home screen (word of day + recent) -->
+<div id="homeScreen">
+  <div class="card" id="wotdCard"></div>
+  <div class="card" id="recentCard" style="display:none">
+    <div style="font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:8px;font-weight:700">Căutări recente</div>
+    <div class="recent-row" id="recentRow"></div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────
+const CAT_LABELS = {
+  nouns:'Substantive', verbs:'Verbe', adjectives:'Adjective', adverbs:'Adverbe',
+  objects:'Obiecte', subjects:'Subiecte', connectors:'Conectori', grammar:'Gramatică',
+  modifiers:'Modificatori', times:'Timp', places:'Locuri'
+};
+const CAT_LABELS_EN = {
+  nouns:'Nouns', verbs:'Verbs', adjectives:'Adjectives', adverbs:'Adverbs',
+  objects:'Objects', subjects:'Subjects', connectors:'Connectors', grammar:'Grammar',
+  modifiers:'Modifiers', times:'Times', places:'Places'
+};
+const FAV_KEY    = 'RK_FAV_WORDS';
+const RECENT_KEY = 'RK_DICT_RECENT';
+
+// ── STATE ─────────────────────────────────────────────────────────
+let vocab = [];
+let cLang = 'ro';
+let query = '';
+let activeCat = '';
+let activeIdx = -1;
+let favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY)||'[]'));
+let recent = JSON.parse(localStorage.getItem(RECENT_KEY)||'[]');
+
+// ── JAMO DECOMPOSE (for Korean search) ──────────────────────────
+const JUNG=['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+function toJamo(text) {
+  let r = '';
+  for (const ch of text) {
+    const c = ch.charCodeAt(0);
+    if (c >= 0xAC00 && c <= 0xD7A3) {
+      const s = c - 0xAC00;
+      const jong = s%28, jung = Math.floor(s/28)%21, cho = Math.floor(s/588);
+      r += ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'][cho];
+      r += JUNG[jung];
+      if (jong) r += JONG[jong];
+    } else { r += ch; }
+  }
+  return r;
+}
+
+// ── CONJUGATION ──────────────────────────────────────────────────
+function conjugate(word) {
+  if (!word.endsWith('다')) return null;
+  const stem = word.slice(0,-1);
+  const last = stem[stem.length-1];
+  if (!last) return null;
+  const code = last.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) return null;
+
+  const s    = code - 0xAC00;
+  const jong = s % 28;
+  const jung = Math.floor(s/28) % 21;
+  const cho  = Math.floor(s/588);
+
+  // 이다 copula
+  if (last === '이') {
+    const base = stem.slice(0,-1);
+    return [
+      {ro:'prezent polite',en:'polite present', form: base+'이에요 / '+base+'예요'},
+      {ro:'trecut',        en:'past',           form: base+'이었어요'},
+      {ro:'negare',        en:'negative',       form: base+'이 아니에요'},
+    ];
+  }
+
+  // 하다 verbs
+  if (last === '하') {
+    const base = stem.slice(0,-1);
+    return [
+      {ro:'prezent (해요체)', en:'polite present', form: base+'해요'},
+      {ro:'trecut',          en:'past',            form: base+'했어요'},
+      {ro:'viitor',          en:'future',          form: base+'할 거예요'},
+      {ro:'negare',          en:'negative',        form: base+'안 해요'},
+    ];
+  }
+
+  // Determine vowel: ㅏ(0) or ㅗ(8) → 아, else → 어
+  const aVowel = jung===0||jung===8;
+  const suf = aVowel ? '아':'어';
+
+  let pres, past, fut, neg;
+
+  if (jong===0) {
+    // Open syllable: contract same vowels
+    if (jung===0) {
+      // ㅏ + 아 → ㅏ (elision)
+      pres = stem+'요';
+      past = stem.slice(0,-1) + String.fromCharCode(code+20) + '어요'; // 갔: add ㅆ(20)
+      // Actually: add ㅆ as jongseong → code + 20
+      // Verify: 가(0xAC00) + 20 = 0xAC14... 0xAC00+20=0xAC14
+      // 0xAC00 + 20 = 0xAC14 → let me check: 0xAC14-0xAC00=20, 20%28=20=ㅆ, jung=0(ㅏ), cho=0(ㄱ) → 갔 ✓ NO wait
+      // Actually 갔 = ㄱ+ㅏ+ㅆ = 0xAC00 + (0*21+0)*28 + 20 = 0xAC14 ✓
+      past = stem.slice(0,-1) + String.fromCharCode(code+20) + '어요';
+      fut  = stem.slice(0,-1) + String.fromCharCode(code+8) + ' 거예요'; // add ㄹ(8)
+    } else if (jung===8) {
+      // ㅗ + 아 → 와 (ㅗ→ㅘ = jung 9)
+      pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+9*28) + '요';
+      past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+9*28+20) + '어요';
+      fut  = stem.slice(0,-1) + String.fromCharCode(code+8) + ' 거예요';
+    } else if (jung===13) {
+      // ㅜ + 어 → 워 (ㅝ = jung 14)
+      pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+14*28) + '요';
+      past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+14*28+20) + '어요';
+      fut  = stem.slice(0,-1) + String.fromCharCode(code+8) + ' 거예요';
+    } else {
+      // Other open syllable: stem + 어요
+      pres = stem+'어요';
+      past = stem+'었어요';
+      fut  = stem.slice(0,-1) + String.fromCharCode(code+8) + ' 거예요'; // add ㄹ
+    }
+    neg = '안 '+pres;
+  } else {
+    // Closed syllable
+    pres = stem+suf+'요';
+    past = stem+suf+'ㅆ어요';
+    // Actually: 먹어요 past = 먹었어요
+    past = stem+(aVowel?'았':'었')+'어요';
+    fut  = stem+'을 거예요';
+    neg  = '안 '+pres;
+  }
+
+  return [
+    {ro:'prezent (해요체)', en:'polite present', form: pres},
+    {ro:'trecut',          en:'past',            form: past},
+    {ro:'viitor',          en:'future',          form: fut},
+    {ro:'negare',          en:'negative',        form: neg},
+  ];
+}
+
+// ── SEARCH / FILTER ───────────────────────────────────────────────
+function scoreEntry(entry, q) {
+  if (!q) return 0;
+  const qL = q.toLowerCase();
+  const koJ = toJamo(entry.ko);
+  const qJ  = toJamo(qL);
+  const koL = entry.ko.toLowerCase();
+  const ro  = entry.ro.toLowerCase();
+  const en  = entry.en.toLowerCase();
+
+  if (koL === qL || ro === qL || en === qL) return 100;
+  if (koL.startsWith(qL) || koJ.startsWith(qJ)) return 80;
+  if (ro.startsWith(qL) || en.startsWith(qL)) return 70;
+  if (koL.includes(qL) || koJ.includes(qJ)) return 50;
+  if (ro.includes(qL) || en.includes(qL)) return 40;
+  return 0;
+}
+
+function getResults() {
+  let results = vocab.map((e,i) => ({...e, _i:i}));
+  if (activeCat) results = results.filter(e => e.categories?.includes(activeCat));
+  if (!query.trim()) return results.slice(0,60);
+  return results
+    .map(e => ({...e, _score: scoreEntry(e, query.trim())}))
+    .filter(e => e._score > 0)
+    .sort((a,b) => b._score-a._score)
+    .slice(0,80);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function renderCats() {
+  const cats = ['nouns','verbs','adjectives','adverbs','connectors','grammar','times','places'];
+  const L = cLang === 'ro' ? CAT_LABELS : CAT_LABELS_EN;
+  const all = cLang==='ro' ? 'Toate':'All';
+  let html = `<button class="cat-pill${!activeCat?' on':''}" onclick="setCat('')">${all}</button>`;
+  cats.forEach(c => {
+    html += `<button class="cat-pill${activeCat===c?' on':''}" onclick="setCat('${c}')">${L[c]||c}</button>`;
+  });
+  document.getElementById('catRow').innerHTML = html;
+}
+
+function renderResults() {
+  const res = getResults();
+  const q = query.trim();
+
+  if (q) {
+    document.getElementById('homeScreen').style.display = 'none';
+  } else {
+    document.getElementById('homeScreen').style.display = '';
+  }
+
+  const countEl = document.getElementById('resCount');
+  if (q || activeCat) {
+    const lbl = cLang==='ro' ? 'rezultate':'results';
+    countEl.textContent = res.length + ' ' + lbl;
+  } else {
+    countEl.textContent = vocab.length + (cLang==='ro' ? ' cuvinte în total' : ' total words');
+  }
+
+  const list = document.getElementById('resList');
+  if (res.length === 0) {
+    list.innerHTML = `<div class="dict-empty">${cLang==='ro'?'Niciun rezultat pentru':'No results for'} „${q}"</div>`;
+    document.getElementById('detailPanel').innerHTML = '';
+    return;
+  }
+
+  const L = cLang==='ro' ? CAT_LABELS : CAT_LABELS_EN;
+  list.innerHTML = res.slice(0,50).map((e,i) => {
+    const cat = e.categories?.[0] || '';
+    const isFav = favs.has(e.ko);
+    return `<div class="res-item${activeIdx===e._i?' active':''}" onclick="selectWord(${e._i})">
+      <span class="ri-ko">${e.ko}</span>
+      <span class="ri-trans">${cLang==='ro'?e.ro:e.en}</span>
+      <span class="ri-cat">${L[cat]||cat}</span>
+      <span class="ri-fav${isFav?' on':''}" onclick="toggleFav(event,'${e.ko.replace(/'/g,"\\'")}')">★</span>
+    </div>`;
+  }).join('');
+}
+
+function renderDetail(idx) {
+  const e = vocab[idx];
+  if (!e) return;
+  const isFav = favs.has(e.ko);
+  const L  = cLang==='ro' ? CAT_LABELS : CAT_LABELS_EN;
+  const cats = (e.categories||[]).map(c => `<span class="dd-cat">${L[c]||c}</span>`).join('');
+  const isVerb = e.categories?.some(c => ['verbs','adjectives'].includes(c));
+  const conj = isVerb ? conjugate(e.ko) : null;
+
+  let html = `<div class="dict-detail">
+    <div class="dd-ko">${e.ko}</div>
+    <div class="dd-cats">${cats}</div>
+    <div class="dd-trans-row"><span class="dd-flag">RO</span><span class="dd-trans">${e.ro}</span></div>
+    <div class="dd-trans-row"><span class="dd-flag">EN</span><span class="dd-trans">${e.en}</span></div>
+    <div class="dd-actions">
+      <button class="dd-btn" onclick="speakWord('${e.ko.replace(/'/g,"\\'")}')">🔊 ${cLang==='ro'?'Pronunție':'Pronounce'}</button>
+      <button class="dd-btn${isFav?' fav-on':''}" id="detFavBtn" onclick="toggleFavDetail(${idx})">
+        ${isFav?'★ Favorit':'☆ '+(cLang==='ro'?'Adaugă favorit':'Add favorite')}
+      </button>
+    </div>`;
+
+  if (conj) {
+    html += `<div class="conj-title">${cLang==='ro'?'Conjugare (infinitiv → forme)':'Conjugation (stem forms)'}</div>
+      <div class="conj-grid">`;
+    conj.forEach(row => {
+      html += `<span class="cj-lbl">${cLang==='ro'?row.ro:row.en}</span><span class="cj-form">${row.form}</span>`;
+    });
+    html += '</div>';
+  }
+
+  // Related words (same category, random 6)
+  const cat = e.categories?.[0];
+  if (cat) {
+    const related = vocab
+      .filter(x => x !== e && x.categories?.includes(cat))
+      .sort(()=>Math.random()-.5)
+      .slice(0,6);
+    if (related.length) {
+      html += `<div class="conj-title">${cLang==='ro'?'Cuvinte înrudite':'Related words'}</div>
+        <div class="related-row">`;
+      related.forEach(r => {
+        const ri = vocab.indexOf(r);
+        html += `<div class="rel-chip" onclick="selectWord(${ri})" title="${r.ro} / ${r.en}">${r.ko}</div>`;
+      });
+      html += '</div>';
+    }
+  }
+
+  html += '</div>';
+  document.getElementById('detailPanel').innerHTML = html;
+}
+
+function renderWotd() {
+  // Seed by date
+  const today = new Date().toISOString().slice(0,10);
+  const seed  = today.split('-').reduce((a,b) => a*100 + parseInt(b), 0) % vocab.length;
+  const w = vocab[seed];
+  if (!w) return;
+  const card = document.getElementById('wotdCard');
+  card.innerHTML = `<div class="wotd">
+    <div class="wotd-lbl">✨ ${cLang==='ro'?'Cuvântul zilei':'Word of the day'}</div>
+    <div class="wotd-ko" onclick="selectWordAndSearch(${seed})">${w.ko}</div>
+    <div class="wotd-tr">${cLang==='ro'?w.ro:w.en}</div>
+  </div>`;
+}
+
+function renderRecent() {
+  const card = document.getElementById('recentCard');
+  const row  = document.getElementById('recentRow');
+  if (!recent.length) { card.style.display='none'; return; }
+  card.style.display='';
+  row.innerHTML = recent.map(ko => {
+    const idx = vocab.findIndex(e => e.ko===ko);
+    if (idx<0) return '';
+    return `<div class="recent-chip" onclick="selectWordAndSearch(${idx})">${ko}</div>`;
+  }).join('');
+}
+
+// ── ACTIONS ────────────────────────────────────────────────────────
+function setCat(c) {
+  activeCat = c;
+  activeIdx = -1;
+  renderCats();
+  renderResults();
+  document.getElementById('detailPanel').innerHTML = '';
+}
+window.setCat = setCat;
+
+function selectWord(idx) {
+  activeIdx = idx;
+  const e = vocab[idx];
+  // Add to recent
+  recent = [e.ko, ...recent.filter(x=>x!==e.ko)].slice(0,8);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+  renderResults();
+  renderDetail(idx);
+  renderRecent();
+  document.getElementById('detailPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+window.selectWord = selectWord;
+
+function selectWordAndSearch(idx) {
+  const e = vocab[idx];
+  query = e.ko;
+  document.getElementById('dictSearch').value = e.ko;
+  document.getElementById('dictClear').classList.add('vis');
+  renderResults();
+  selectWord(idx);
+}
+window.selectWordAndSearch = selectWordAndSearch;
+
+function clearSearch() {
+  query = '';
+  document.getElementById('dictSearch').value = '';
+  document.getElementById('dictClear').classList.remove('vis');
+  activeIdx = -1;
+  document.getElementById('detailPanel').innerHTML = '';
+  renderResults();
+}
+window.clearSearch = clearSearch;
+
+function toggleFav(e, ko) {
+  e.stopPropagation();
+  if (favs.has(ko)) favs.delete(ko); else favs.add(ko);
+  localStorage.setItem(FAV_KEY, JSON.stringify([...favs]));
+  renderResults();
+  if (activeIdx >= 0) renderDetail(activeIdx);
+}
+window.toggleFav = toggleFav;
+
+function toggleFavDetail(idx) {
+  const ko = vocab[idx].ko;
+  if (favs.has(ko)) favs.delete(ko); else favs.add(ko);
+  localStorage.setItem(FAV_KEY, JSON.stringify([...favs]));
+  renderResults();
+  renderDetail(idx);
+}
+window.toggleFavDetail = toggleFavDetail;
+
+function speakWord(ko) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(ko);
+  u.lang = 'ko-KR'; u.rate = 0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+window.speakWord = speakWord;
+
+// ── SEARCH INPUT ──────────────────────────────────────────────────
+let searchT = null;
+document.getElementById('dictSearch').addEventListener('input', e => {
+  query = e.target.value;
+  document.getElementById('dictClear').classList.toggle('vis', query.length > 0);
+  clearTimeout(searchT);
+  searchT = setTimeout(() => { activeIdx=-1; renderResults(); }, 120);
+});
+
+// ── LANG ─────────────────────────────────────────────────────────
+function applyLang(l) {
+  cLang = l;
+  document.getElementById('pgTitle').textContent = l==='ro' ? '📖 Dicționar' : '📖 Dictionary';
+  document.getElementById('pgSub').textContent   = l==='ro'
+    ? 'Coreeană ↔ Română / Engleză'
+    : 'Korean ↔ Romanian / English';
+  renderCats();
+  renderResults();
+  if (activeIdx>=0) renderDetail(activeIdx);
+  renderWotd();
+  renderRecent();
+}
+
+if (window.RKLang) {
+  cLang = RKLang.get();
+  RKLang.init(l => applyLang(l));
+}
+
+// ── LOAD DATA ─────────────────────────────────────────────────────
+fetch('./data/vocab-korean.json')
+  .then(r => r.json())
+  .then(data => {
+    vocab = data;
+    document.getElementById('dictHint').textContent =
+      cLang==='ro'
+        ? `${vocab.length} cuvinte — scrie în coreeană, română sau engleză`
+        : `${vocab.length} words — type in Korean, Romanian or English`;
+    applyLang(cLang);
+  })
+  .catch(() => {
+    document.getElementById('resList').innerHTML =
+      '<div class="dict-empty">⚠️ Nu s-au putut încărca datele.</div>';
+  });
+</script>
+</body>
+</html>
