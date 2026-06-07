@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Examen TOPIK</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#c84b2f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<link rel="stylesheet" href="./exercises.css">
+<style>
+.exam-phase{display:none}
+.exam-phase.active{display:block}
+
+/* ── TIMER ── */
+.exam-timer-wrap{display:flex;align-items:center;gap:8px}
+.exam-timer{
+  font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;
+  color:var(--lmn-text);padding:5px 14px;
+  border:1.5px solid var(--lmn-nucleus-rim);border-radius:10px;
+  background:var(--lmn-nucleus-bg);min-width:78px;text-align:center;
+  transition:color .3s,border-color .3s;backdrop-filter:blur(8px);
+}
+.exam-timer.warning{color:#c84b2f;border-color:rgba(200,75,47,.6);animation:tpulse 1s ease-in-out infinite}
+@keyframes tpulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── SETUP ── */
+.exam-setup{max-width:600px;margin:0 auto;padding:0 16px 48px}
+.exam-card{
+  background:var(--lmn-nucleus-bg);border:1px solid var(--lmn-nucleus-rim);
+  border-radius:18px;padding:24px 24px;margin-bottom:14px;
+  backdrop-filter:blur(12px);
+}
+.exam-card h2{
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--lmn-text-soft);margin-bottom:14px;
+}
+.exam-level-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.exam-lvl-btn,.exam-dur-btn{
+  background:var(--lmn-ans-bg);border:1.5px solid var(--lmn-ans-rim);
+  border-radius:10px;color:var(--lmn-text);font-size:13px;font-weight:700;
+  padding:10px 4px;cursor:pointer;transition:all .18s;font-family:inherit;
+}
+.exam-lvl-btn:hover,.exam-dur-btn:hover{border-color:var(--lmn-ans-hover-rim);background:var(--lmn-ans-hover-bg)}
+.exam-lvl-btn.sel,.exam-dur-btn.sel{
+  background:var(--lmn-ans-sel-bg);border-color:var(--lmn-ans-sel-rim);color:var(--lmn-ans-sel-text);
+}
+.exam-dur-grid{display:flex;gap:8px}
+.exam-dur-btn{flex:1;font-size:14px}
+.exam-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.exam-info-item{background:rgba(0,0,0,.04);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--lmn-text-soft)}
+body.dark-mode .exam-info-item{background:rgba(255,255,255,.04)}
+.exam-info-item strong{display:block;font-size:20px;font-weight:700;color:var(--lmn-text);margin-bottom:2px}
+.exam-info-item.span2{grid-column:span 2}
+.exam-start-btn{
+  width:100%;padding:16px;font-size:16px;font-weight:700;font-family:inherit;
+  border:none;border-radius:14px;cursor:pointer;
+  background:linear-gradient(135deg,var(--lmn-accent-a),var(--lmn-accent-b));
+  color:#fff;letter-spacing:.05em;transition:opacity .2s,transform .15s;margin-top:4px;
+}
+.exam-start-btn:hover{opacity:.88;transform:translateY(-1px)}
+.exam-start-btn:active{transform:translateY(0)}
+.exam-start-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* ── EXAM QUESTION ── */
+.exam-nucleus-wrap{max-width:720px;margin:0 auto;padding:0 16px}
+.exam-ans-btn{
+  display:block;width:100%;padding:13px 18px;margin-bottom:9px;
+  border:1.5px solid var(--lmn-ans-rim);border-radius:13px;
+  background:var(--lmn-ans-bg);color:var(--lmn-ans-text);
+  font-size:15px;font-weight:500;font-family:inherit;
+  cursor:pointer;text-align:left;transition:all .18s;
+}
+.exam-ans-btn:hover{border-color:var(--lmn-ans-hover-rim);background:var(--lmn-ans-hover-bg);transform:translateX(3px)}
+.exam-ans-btn.sel{border-color:var(--lmn-ans-sel-rim);background:var(--lmn-ans-sel-bg);color:var(--lmn-ans-sel-text)}
+.exam-nav-row{display:flex;gap:9px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.exam-nav-btn{
+  padding:10px 18px;border:1.5px solid var(--lmn-btn-rim);border-radius:10px;
+  background:var(--lmn-btn-bg);color:var(--lmn-btn-text);
+  font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;
+}
+.exam-nav-btn:hover{border-color:var(--lmn-ans-hover-rim);background:var(--lmn-ans-hover-bg)}
+.exam-nav-btn:disabled{opacity:.35;cursor:not-allowed}
+.exam-nav-btn.pri{background:linear-gradient(135deg,#1a6b8a,#7c2d91);border-color:transparent;color:#fff}
+.exam-nav-btn.dan{background:linear-gradient(135deg,#c84b2f,#7c2d91);border-color:transparent;color:#fff}
+.q-type-chip{
+  display:inline-block;font-size:10px;padding:2px 8px;border-radius:5px;
+  font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  background:rgba(124,45,145,.12);color:var(--lmn-accent-b);margin-right:8px;
+}
+
+/* ── Q NAVIGATOR ── */
+.exam-qnav-wrap{max-width:720px;margin:12px auto 0;padding:0 16px}
+.exam-qnav{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.qnav-dot{
+  width:27px;height:27px;border-radius:7px;
+  border:1.5px solid var(--lmn-ans-rim);background:var(--lmn-ans-bg);
+  font-size:10px;font-weight:700;color:var(--lmn-text-ghost);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .18s;font-family:inherit;
+}
+.qnav-dot.ans{background:rgba(26,107,138,.15);border-color:var(--lmn-ans-sel-rim);color:var(--lmn-ans-sel-text)}
+.qnav-dot.cur{background:var(--lmn-ans-sel-bg);border-color:var(--lmn-ans-sel-rim);color:var(--lmn-ans-sel-text);box-shadow:0 0 10px rgba(26,107,138,.3);transform:scale(1.12)}
+.qnav-dot:hover:not(.cur){border-color:var(--lmn-ans-hover-rim)}
+
+/* ── RESULTS ── */
+.exam-results{max-width:640px;margin:0 auto;padding:0 16px 48px}
+.exam-score-card{
+  background:var(--lmn-nucleus-bg);border:1px solid var(--lmn-nucleus-rim);
+  border-radius:22px;padding:36px 28px;text-align:center;margin-bottom:14px;
+  backdrop-filter:blur(12px);
+}
+.exam-grade{font-size:74px;font-weight:900;line-height:1;margin-bottom:6px}
+.grade-a{color:#3cb950}.grade-b{color:#1a6b8a}.grade-c{color:#c89c2f}.grade-d{color:#c84b2f}.grade-f{color:#aaa}
+.exam-score-num{font-size:26px;font-weight:700;color:var(--lmn-text)}
+.exam-score-pct{font-size:15px;color:var(--lmn-text-soft);margin-top:3px}
+.exam-pass-badge{
+  display:inline-block;margin-top:14px;padding:5px 20px;border-radius:20px;
+  font-size:13px;font-weight:700;letter-spacing:.07em;
+}
+.badge-pass{background:rgba(60,185,80,.15);color:#1a5a20;border:1.5px solid rgba(60,185,80,.45)}
+.badge-fail{background:rgba(210,50,50,.10);color:#7a1010;border:1.5px solid rgba(210,50,50,.35)}
+.exam-time-badge{font-size:13px;color:var(--lmn-text-ghost);margin-top:9px}
+.exam-bd-card{
+  background:var(--lmn-nucleus-bg);border:1px solid var(--lmn-nucleus-rim);
+  border-radius:18px;padding:22px 24px;margin-bottom:14px;backdrop-filter:blur(12px);
+}
+.exam-bd-card h3{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--lmn-text-soft);margin-bottom:16px}
+.bd-row{display:grid;grid-template-columns:1fr 58px 110px;gap:8px;align-items:center;margin-bottom:12px}
+.bd-label{font-size:13px;color:var(--lmn-text);font-weight:600}
+.bd-score{font-size:13px;color:var(--lmn-text-soft);text-align:right;font-weight:700}
+.bd-bar-bg{height:8px;background:rgba(0,0,0,.08);border-radius:4px;overflow:hidden}
+body.dark-mode .bd-bar-bg{background:rgba(255,255,255,.10)}
+.bd-bar{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.bd-bar.good{background:#3cb950}.bd-bar.ok{background:#c89c2f}.bd-bar.bad{background:#c84b2f}
+.exam-result-actions{display:flex;gap:10px}
+.exam-res-btn{
+  flex:1;padding:14px;font-size:14px;font-weight:700;font-family:inherit;
+  border-radius:12px;cursor:pointer;transition:all .2s;
+}
+.exam-res-btn.pri{background:linear-gradient(135deg,var(--lmn-accent-a),var(--lmn-accent-b));border:none;color:#fff}
+.exam-res-btn.sec{background:var(--lmn-btn-bg);border:1.5px solid var(--lmn-btn-rim);color:var(--lmn-btn-text)}
+.exam-res-btn:hover{opacity:.85;transform:translateY(-1px)}
+
+/* ── REVIEW ── */
+.exam-review{max-width:700px;margin:0 auto;padding:0 16px 16px}
+.review-q{
+  background:var(--lmn-nucleus-bg);border:1px solid var(--lmn-nucleus-rim);
+  border-radius:14px;padding:18px 20px;margin-bottom:11px;backdrop-filter:blur(8px);
+}
+.review-meta{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--lmn-text-ghost);margin-bottom:6px}
+.review-prompt{font-size:15px;font-weight:600;color:var(--lmn-text);margin-bottom:10px;line-height:1.5}
+.review-chips{display:flex;gap:7px;flex-wrap:wrap}
+.rchip{padding:4px 12px;border-radius:8px;font-size:13px;font-weight:600}
+.rchip.ok{background:rgba(60,185,80,.18);color:#1a5a20;border:1px solid rgba(60,185,80,.50)}
+.rchip.err{background:rgba(210,50,50,.12);color:#7a1010;border:1px solid rgba(210,50,50,.38)}
+.rchip.ans-ok{background:rgba(60,185,80,.25);color:#1a5a20;border:1px solid rgba(60,185,80,.65)}
+.review-back-wrap{max-width:700px;margin:0 auto;padding:0 16px 48px}
+.review-back-btn{
+  width:100%;padding:14px;font-size:14px;font-weight:700;font-family:inherit;
+  border-radius:12px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#c84b2f,#7c2d91);color:#fff;transition:opacity .2s;
+}
+.review-back-btn:hover{opacity:.85}
+
+/* ── MOBILE ── */
+@media(max-width:600px){
+  .exam-level-grid{grid-template-columns:repeat(4,1fr)}
+  .exam-info-grid{grid-template-columns:1fr}
+  .exam-info-item.span2{grid-column:span 1}
+  .bd-row{grid-template-columns:1fr 50px}
+  .bd-bar-bg{display:none}
+  .exam-result-actions{flex-direction:column}
+}
+</style>
+</head>
+<body class="theme-anime exercise-page">
+
+<div class="lmn-field" aria-hidden="true">
+  <div class="lmn-orb lmn-orb-1"></div>
+  <div class="lmn-orb lmn-orb-2"></div>
+  <div class="lmn-orb lmn-orb-3"></div>
+  <div class="lmn-orb lmn-orb-4"></div>
+  <div class="lmn-orb lmn-orb-5"></div>
+</div>
+
+<div class="lmn-viewport">
+
+  <div class="lmn-thread-wrap" title="Progres examen">
+    <div id="examProgressFill" class="lmn-thread-fill" style="width:0%"></div>
+  </div>
+
+  <header class="lmn-meridian">
+    <div class="lmn-title-atom">
+      <h1 id="pageTitle">Examen TOPIK</h1>
+      <div class="sub" id="pageSubtitle">Simulator de examen complet</div>
+    </div>
+    <div id="timerWrap" style="display:none" class="exam-timer-wrap">
+      <div id="examTimer" class="exam-timer">40:00</div>
+    </div>
+    <div class="lmn-nav-atom"><div id="pageControls"></div></div>
+  </header>
+
+  <!-- ═══ PHASE 1: SETUP ═══ -->
+  <div id="phaseSetup" class="exam-phase active">
+    <div class="exam-setup">
+
+      <div class="exam-card">
+        <h2 id="lblLevel">Nivel TOPIK</h2>
+        <div class="exam-level-grid" id="levelGrid">
+          <button class="exam-lvl-btn sel" data-lv="1">T1</button>
+          <button class="exam-lvl-btn" data-lv="2">T2</button>
+          <button class="exam-lvl-btn" data-lv="3">T3</button>
+          <button class="exam-lvl-btn" data-lv="4">T4</button>
+          <button class="exam-lvl-btn" data-lv="5">T5</button>
+          <button class="exam-lvl-btn" data-lv="6">T6</button>
+          <button class="exam-lvl-btn" data-lv="mix" style="font-size:12px">MIX</button>
+        </div>
+      </div>
+
+      <div class="exam-card">
+        <h2 id="lblDuration">Durată</h2>
+        <div class="exam-dur-grid" id="durGrid">
+          <button class="exam-dur-btn" data-mins="20">20 min</button>
+          <button class="exam-dur-btn sel" data-mins="40">40 min</button>
+          <button class="exam-dur-btn" data-mins="60">60 min</button>
+        </div>
+      </div>
+
+      <div class="exam-card">
+        <h2 id="lblInfo">Structura examenului</h2>
+        <div class="exam-info-grid" id="infoGrid"></div>
+      </div>
+
+      <button class="exam-start-btn" id="startBtn" disabled>Se încarcă...</button>
+    </div>
+  </div>
+
+  <!-- ═══ PHASE 2: EXAM ═══ -->
+  <div id="phaseExam" class="exam-phase">
+    <div class="exam-nucleus-wrap">
+      <main class="lmn-nucleus" id="examNucleus">
+        <div class="lmn-aura lmn-aura-1" aria-hidden="true"></div>
+        <div class="lmn-aura lmn-aura-2" aria-hidden="true"></div>
+        <div class="lmn-question-zone">
+          <div id="examBadge" class="lmn-info-cluster"></div>
+          <div id="examQ" class="question" style="word-break:keep-all"></div>
+        </div>
+        <div id="examAns"></div>
+        <div class="exam-nav-row">
+          <button class="exam-nav-btn" id="prevBtn">← Înapoi</button>
+          <button class="exam-nav-btn pri" id="nextBtn">Înainte →</button>
+          <button class="exam-nav-btn dan" id="submitBtn">Predă examenul</button>
+        </div>
+      </main>
+      <div class="exam-qnav-wrap">
+        <div id="examQnav" class="exam-qnav"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PHASE 3: RESULTS ═══ -->
+  <div id="phaseResults" class="exam-phase">
+    <div class="exam-results">
+      <div class="exam-score-card">
+        <div id="rGrade" class="exam-grade grade-b">B</div>
+        <div id="rScore" class="exam-score-num">18 / 25</div>
+        <div id="rPct" class="exam-score-pct">72%</div>
+        <div id="rPass" class="exam-pass-badge badge-pass">PROMOVAT</div>
+        <div id="rTime" class="exam-time-badge">⏱ Timp: 18:32</div>
+      </div>
+      <div class="exam-bd-card">
+        <h3 id="bdTitle">Rezultate pe tipuri</h3>
+        <div id="examBd"></div>
+      </div>
+      <div class="exam-result-actions">
+        <button class="exam-res-btn sec" id="reviewBtn">📋 Revizuiește</button>
+        <button class="exam-res-btn pri" id="retryBtn">🔄 Încearcă din nou</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PHASE 4: REVIEW ═══ -->
+  <div id="phaseReview" class="exam-phase">
+    <div class="exam-review" id="reviewContent"></div>
+    <div class="review-back-wrap">
+      <button class="review-back-btn" id="backResultsBtn">← Înapoi la rezultate</button>
+    </div>
+  </div>
+
+</div><!-- /lmn-viewport -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script>
+'use strict';
+
+// ── STATE ─────────────────────────────────────────────────────────
+var LANG        = RKLang.get();
+var examLang    = LANG;
+var allData     = {};
+var questions   = [];  // [{type, data}]
+var answers     = [];  // null | string
+var curQ        = 0;
+var timeLeft    = 0;
+var timerTick   = null;
+var selLevel    = '1';
+var selMins     = 40;
+var examDone    = false;
+var timeUsedSec = 0;
+
+// ── CONSTANTS ─────────────────────────────────────────────────────
+var TYPES = ['ko-ro','ro-ko','particle','particlePlus','conjug'];
+
+var TYPE_NAMES = {
+  'ko-ro':        {ro:'KO → RO',             en:'KO → EN'},
+  'ro-ko':        {ro:'RO → KO',             en:'EN → KO'},
+  'particle':     {ro:'Particulă',            en:'Particle'},
+  'particlePlus': {ro:'Particule multiple',   en:'Multiple Particles'},
+  'conjug':       {ro:'Conjugare',            en:'Conjugation'}
+};
+
+var UI = {
+  ro:{
+    title:'Examen TOPIK', sub:'Simulator de examen complet',
+    lblLevel:'Nivel TOPIK', lblDuration:'Durată', lblInfo:'Structura examenului',
+    startBtn:'Începe examenul →', loadErr:'⚠ Eroare la încărcare',
+    questions:'Întrebări', timeLimit:'Durată', types:'Tipuri', passScore:'Scor promovare',
+    level:'Nivel',
+    prevBtn:'← Înapoi', nextBtn:'Înainte →', lastBtn:'Verifică →', submitBtn:'Predă examenul',
+    submitConfirm:'Predai examenul? Mai ai {n} întrebări fără răspuns.',
+    submitConfirm0:'Predai examenul? Poți reveni la orice întrebare.',
+    pass:'PROMOVAT', fail:'NEPROMOVAT',
+    bdTitle:'Rezultate pe tipuri',
+    reviewBtn:'📋 Revizuiește', retryBtn:'🔄 Încearcă din nou',
+    backBtn:'← Înapoi la rezultate',
+    qOf:'din', timeLabel:'Timp', unanswered:'fără răspuns',
+    gradeA:'Excelent', gradeB:'Bine', gradeC:'Satisfăcător', gradeD:'Aproape', gradeF:'Mai studiezi'
+  },
+  en:{
+    title:'TOPIK Exam', sub:'Full exam simulator',
+    lblLevel:'TOPIK Level', lblDuration:'Duration', lblInfo:'Exam structure',
+    startBtn:'Start exam →', loadErr:'⚠ Load error',
+    questions:'Questions', timeLimit:'Time limit', types:'Types', passScore:'Pass score',
+    level:'Level',
+    prevBtn:'← Back', nextBtn:'Next →', lastBtn:'Review →', submitBtn:'Submit exam',
+    submitConfirm:'Submit the exam? You have {n} unanswered questions.',
+    submitConfirm0:'Submit the exam? You can go back to any question.',
+    pass:'PASSED', fail:'FAILED',
+    bdTitle:'Results by type',
+    reviewBtn:'📋 Review', retryBtn:'🔄 Try again',
+    backBtn:'← Back to results',
+    qOf:'of', timeLabel:'Time', unanswered:'unanswered',
+    gradeA:'Excellent', gradeB:'Good', gradeC:'Satisfactory', gradeD:'Almost', gradeF:'Keep studying'
+  }
+};
+function L(){ return UI[LANG]; }
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function shuffle(a){
+  var b=[].concat(a);
+  for(var i=b.length-1;i>0;i--){var j=0|Math.random()*(i+1);var t=b[i];b[i]=b[j];b[j]=t;}
+  return b;
+}
+function fmt(s){
+  var m=('0'+Math.floor(s/60)).slice(-2);
+  var ss=('0'+(s%60)).slice(-2);
+  return m+':'+ss;
+}
+function showPhase(id){
+  document.querySelectorAll('.exam-phase').forEach(function(el){el.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+}
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── LOAD DATA ─────────────────────────────────────────────────────
+fetch('./data/exercises.json')
+  .then(function(r){return r.json();})
+  .then(function(d){
+    allData=d;
+    var sb=document.getElementById('startBtn');
+    sb.disabled=false;
+    sb.textContent=L().startBtn;
+    renderInfo();
+  })
+  .catch(function(){
+    var sb=document.getElementById('startBtn');
+    sb.textContent=L().loadErr;
+  });
+
+// ── SETUP EVENTS ──────────────────────────────────────────────────
+document.getElementById('levelGrid').addEventListener('click',function(e){
+  var b=e.target.closest('[data-lv]'); if(!b) return;
+  document.querySelectorAll('.exam-lvl-btn').forEach(function(x){x.classList.remove('sel');});
+  b.classList.add('sel');
+  selLevel=b.dataset.lv;
+  renderInfo();
+});
+document.getElementById('durGrid').addEventListener('click',function(e){
+  var b=e.target.closest('[data-mins]'); if(!b) return;
+  document.querySelectorAll('.exam-dur-btn').forEach(function(x){x.classList.remove('sel');});
+  b.classList.add('sel');
+  selMins=parseInt(b.dataset.mins,10);
+  renderInfo();
+});
+document.getElementById('startBtn').addEventListener('click',startExam);
+
+function countQuestions(){
+  if(!Object.keys(allData).length) return 0;
+  var n=0;
+  var perType=selLevel==='mix'?6:5;
+  TYPES.forEach(function(t){
+    var pool=(allData[t]||[]).filter(function(ex){
+      return selLevel==='mix'?true:String(ex.topik)===String(selLevel);
+    });
+    n+=Math.min(pool.length,perType);
+  });
+  return n;
+}
+
+function renderInfo(){
+  var l=L();
+  document.getElementById('pageTitle').textContent=l.title;
+  document.getElementById('pageSubtitle').textContent=l.sub;
+  document.getElementById('lblLevel').textContent=l.lblLevel;
+  document.getElementById('lblDuration').textContent=l.lblDuration;
+  document.getElementById('lblInfo').textContent=l.lblInfo;
+  var sb=document.getElementById('startBtn');
+  if(!sb.disabled) sb.textContent=l.startBtn;
+
+  var n=countQuestions();
+  var typeStr=TYPES.map(function(t){return TYPE_NAMES[t][LANG];}).join(', ');
+  var lvStr=selLevel==='mix'?'T1–T6':'TOPIK '+selLevel;
+  document.getElementById('infoGrid').innerHTML=
+    '<div class="exam-info-item"><strong>'+n+'</strong>'+l.questions+'</div>'+
+    '<div class="exam-info-item"><strong>'+selMins+' min</strong>'+l.timeLimit+'</div>'+
+    '<div class="exam-info-item span2"><strong>5</strong>'+l.types+': '+typeStr+'</div>'+
+    '<div class="exam-info-item"><strong>60%</strong>'+l.passScore+'</div>'+
+    '<div class="exam-info-item"><strong>'+lvStr+'</strong>'+l.level+'</div>';
+}
+
+// ── START EXAM ────────────────────────────────────────────────────
+function startExam(){
+  if(!Object.keys(allData).length) return;
+  examLang=LANG;
+  questions=pickQuestions();
+  if(!questions.length){alert('Nu există exerciții pentru acest nivel.');return;}
+  answers=new Array(questions.length).fill(null);
+  curQ=0;
+  examDone=false;
+  timeLeft=selMins*60;
+  showPhase('phaseExam');
+  document.getElementById('timerWrap').style.display='flex';
+  buildQnav();
+  renderQ(0);
+  updateProgress();
+  startTimer();
+}
+
+function pickQuestions(){
+  var qs=[];
+  var perType=selLevel==='mix'?6:5;
+  TYPES.forEach(function(t){
+    var pool=(allData[t]||[]).filter(function(ex){
+      return selLevel==='mix'?true:String(ex.topik)===String(selLevel);
+    });
+    shuffle(pool).slice(0,perType).forEach(function(ex){qs.push({type:t,data:ex});});
+  });
+  return shuffle(qs);
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────
+function startTimer(){
+  clearInterval(timerTick);
+  timerTick=setInterval(function(){
+    timeLeft--;
+    updateTimer();
+    if(timeLeft<=0){clearInterval(timerTick);finishExam(true);}
+  },1000);
+  updateTimer();
+}
+function updateTimer(){
+  var el=document.getElementById('examTimer');
+  el.textContent=fmt(timeLeft);
+  el.classList.toggle('warning',timeLeft<=300);
+}
+function stopTimer(){
+  clearInterval(timerTick);
+  timeUsedSec=selMins*60-timeLeft;
+}
+
+// ── RENDER QUESTION ───────────────────────────────────────────────
+function renderQ(idx){
+  curQ=idx;
+  var q=questions[idx];
+  var t=q.type, d=q.data;
+  var l=L();
+
+  // Badge line
+  document.getElementById('examBadge').innerHTML=
+    '<span class="q-type-chip">'+TYPE_NAMES[t][examLang]+'</span>'+
+    '<span style="font-size:12px;color:var(--lmn-text-ghost)">Q'+(idx+1)+' '+l.qOf+' '+questions.length+'</span>';
+
+  // Question text
+  var qEl=document.getElementById('examQ');
+  if(t==='ko-ro'){
+    qEl.style.fontSize='30px'; qEl.style.letterSpacing='.05em'; qEl.style.fontWeight='700';
+    qEl.textContent=d.q;
+  } else if(t==='ro-ko'){
+    qEl.style.fontSize='19px'; qEl.style.letterSpacing='0'; qEl.style.fontWeight='600';
+    qEl.textContent=d.prompt[examLang]||d.prompt.ro;
+  } else if(t==='particle'){
+    qEl.style.fontSize='22px'; qEl.style.letterSpacing='.04em'; qEl.style.fontWeight='700';
+    qEl.innerHTML=escHtml(d.template).replace(/___/g,'<span style="color:var(--lmn-accent-a);font-weight:900">___</span>');
+  } else if(t==='particlePlus'){
+    qEl.style.fontSize='20px'; qEl.style.letterSpacing='.04em'; qEl.style.fontWeight='700';
+    qEl.innerHTML=escHtml(d.template).replace(/___/g,'<span style="color:var(--lmn-accent-a);font-weight:900">___</span>');
+  } else if(t==='conjug'){
+    qEl.style.fontSize='19px'; qEl.style.letterSpacing='0'; qEl.style.fontWeight='600';
+    qEl.textContent=d.prompt[examLang]||d.prompt.ro;
+  }
+
+  // Options
+  var opts=buildOptions(t,d);
+  var sel=answers[idx];
+  var ansEl=document.getElementById('examAns');
+  ansEl.innerHTML='';
+  opts.forEach(function(opt){
+    var btn=document.createElement('button');
+    btn.className='exam-ans-btn'+(opt===sel?' sel':'');
+    btn.textContent=opt;
+    btn.addEventListener('click',function(){selectAns(opt);});
+    ansEl.appendChild(btn);
+  });
+
+  // Nav buttons
+  document.getElementById('prevBtn').disabled=(idx===0);
+  var isLast=(idx===questions.length-1);
+  document.getElementById('nextBtn').textContent=isLast?l.lastBtn:l.nextBtn;
+  document.getElementById('nextBtn').className=isLast?'exam-nav-btn dan':'exam-nav-btn pri';
+  document.getElementById('submitBtn').style.display=isLast?'none':'inline-block';
+
+  // Q nav highlight
+  document.querySelectorAll('.qnav-dot').forEach(function(dot,i){
+    dot.classList.toggle('cur',i===idx);
+    dot.classList.toggle('ans',answers[i]!==null&&i!==idx);
+  });
+  updateProgress();
+}
+
+// ── OPTIONS ───────────────────────────────────────────────────────
+function buildOptions(t,d){
+  if(t==='ko-ro')       return shuffle([].concat(d.answers[examLang]||d.answers.ro));
+  if(t==='ro-ko')       return shuffle([].concat(d.options));
+  if(t==='particle')    return shuffle([].concat(d.options));
+  if(t==='conjug')      return shuffle([].concat(d.options));
+  if(t==='particlePlus') return buildPPlusPairs(d);
+  return [];
+}
+
+function buildPPlusPairs(d){
+  var correct=d.correct; // ["는","를"]
+  var correctStr=correct.join(' + ');
+  var pool0=[].concat(d.options[0]);
+  var pool1=[].concat(d.options[1]);
+  var seen=new Set([correctStr]);
+  var opts=[correctStr];
+  outer: for(var i=0;i<pool0.length;i++){
+    for(var j=0;j<pool1.length;j++){
+      if(opts.length>=4) break outer;
+      var combo=pool0[i]+' + '+pool1[j];
+      if(!seen.has(combo)){seen.add(combo);opts.push(combo);}
+    }
+  }
+  return shuffle(opts);
+}
+
+function getCorrect(t,d){
+  if(t==='ko-ro')        return d.correct[examLang]||d.correct.ro;
+  if(t==='ro-ko')        return d.correct;
+  if(t==='particle')     return d.correct;
+  if(t==='particlePlus') return d.correct.join(' + ');
+  if(t==='conjug')       return d.correct;
+  return '';
+}
+
+// ── SELECT ANSWER ─────────────────────────────────────────────────
+function selectAns(ans){
+  answers[curQ]=ans;
+  document.querySelectorAll('.exam-ans-btn').forEach(function(b){
+    b.classList.toggle('sel',b.textContent===ans);
+  });
+  var dot=document.querySelectorAll('.qnav-dot')[curQ];
+  if(dot){dot.classList.add('ans');}
+  updateProgress();
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────
+document.getElementById('prevBtn').addEventListener('click',function(){
+  if(curQ>0) renderQ(curQ-1);
+});
+document.getElementById('nextBtn').addEventListener('click',function(){
+  if(curQ<questions.length-1) renderQ(curQ+1);
+  else confirmSubmit();
+});
+document.getElementById('submitBtn').addEventListener('click',confirmSubmit);
+
+function confirmSubmit(){
+  var unan=answers.filter(function(a){return a===null;}).length;
+  var l=L();
+  var msg=unan>0?l.submitConfirm.replace('{n}',unan):l.submitConfirm0;
+  if(confirm(msg)) finishExam(false);
+}
+
+// ── Q NAV ─────────────────────────────────────────────────────────
+function buildQnav(){
+  var nav=document.getElementById('examQnav');
+  nav.innerHTML='';
+  questions.forEach(function(_,i){
+    var d=document.createElement('button');
+    d.className='qnav-dot'+(i===0?' cur':'');
+    d.textContent=i+1;
+    d.addEventListener('click',function(){renderQ(i);});
+    nav.appendChild(d);
+  });
+}
+function updateProgress(){
+  var done=answers.filter(function(a){return a!==null;}).length;
+  var pct=questions.length?(done/questions.length*100):0;
+  document.getElementById('examProgressFill').style.width=pct+'%';
+}
+
+// ── FINISH ────────────────────────────────────────────────────────
+function finishExam(timeout){
+  stopTimer();
+  examDone=true;
+  showPhase('phaseResults');
+  document.getElementById('timerWrap').style.display='none';
+  document.getElementById('examProgressFill').style.width='100%';
+  renderResults(timeout);
+}
+
+function renderResults(timeout){
+  var correct=0;
+  var bd={};
+  TYPES.forEach(function(t){bd[t]={ok:0,tot:0};});
+  questions.forEach(function(q,i){
+    var ok=(answers[i]===getCorrect(q.type,q.data));
+    if(ok) correct++;
+    bd[q.type].tot++;
+    if(ok) bd[q.type].ok++;
+  });
+  var total=questions.length;
+  var pct=total?Math.round(correct/total*100):0;
+  var passed=pct>=60;
+  var l=L();
+
+  // Grade
+  var grade,gc;
+  if(pct>=95){grade='A+';gc='grade-a';}
+  else if(pct>=80){grade='A';gc='grade-a';}
+  else if(pct>=65){grade='B';gc='grade-b';}
+  else if(pct>=50){grade='C';gc='grade-c';}
+  else if(pct>=35){grade='D';gc='grade-d';}
+  else{grade='F';gc='grade-f';}
+
+  document.getElementById('rGrade').textContent=grade;
+  document.getElementById('rGrade').className='exam-grade '+gc;
+  document.getElementById('rScore').textContent=correct+' / '+total;
+  document.getElementById('rPct').textContent=pct+'%'+(timeout?' · ⏰ Timp expirat':'');
+  document.getElementById('rPass').textContent=passed?l.pass:l.fail;
+  document.getElementById('rPass').className='exam-pass-badge '+(passed?'badge-pass':'badge-fail');
+  document.getElementById('rTime').textContent='⏱ '+l.timeLabel+': '+fmt(timeUsedSec);
+  document.getElementById('bdTitle').textContent=l.bdTitle;
+  document.getElementById('reviewBtn').textContent=l.reviewBtn;
+  document.getElementById('retryBtn').textContent=l.retryBtn;
+
+  var bdEl=document.getElementById('examBd');
+  bdEl.innerHTML='';
+  TYPES.forEach(function(t){
+    if(!bd[t].tot) return;
+    var p=Math.round(bd[t].ok/bd[t].tot*100);
+    var bc=p>=80?'good':p>=50?'ok':'bad';
+    bdEl.innerHTML+=
+      '<div class="bd-row">'+
+        '<div class="bd-label">'+TYPE_NAMES[t][examLang]+'</div>'+
+        '<div class="bd-score">'+bd[t].ok+'/'+bd[t].tot+'</div>'+
+        '<div class="bd-bar-bg"><div class="bd-bar '+bc+'" style="width:'+p+'%"></div></div>'+
+      '</div>';
+  });
+
+  // Save history
+  try{
+    var hist=JSON.parse(localStorage.getItem('RK_EXAM_HISTORY')||'[]');
+    hist.unshift({level:selLevel,correct:correct,total:total,pct:pct,grade:grade,
+                  timeUsed:timeUsedSec,date:new Date().toISOString()});
+    if(hist.length>20) hist.pop();
+    localStorage.setItem('RK_EXAM_HISTORY',JSON.stringify(hist));
+  }catch(e){}
+}
+
+// ── RESULTS ACTIONS ───────────────────────────────────────────────
+document.getElementById('reviewBtn').addEventListener('click',function(){
+  renderReview();
+  showPhase('phaseReview');
+});
+document.getElementById('retryBtn').addEventListener('click',function(){
+  clearInterval(timerTick);
+  showPhase('phaseSetup');
+  document.getElementById('timerWrap').style.display='none';
+  document.getElementById('examProgressFill').style.width='0%';
+  renderInfo();
+});
+document.getElementById('backResultsBtn').addEventListener('click',function(){
+  showPhase('phaseResults');
+});
+
+// ── REVIEW ────────────────────────────────────────────────────────
+function renderReview(){
+  var l=L();
+  var html='<h2 style="margin-bottom:14px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--lmn-text-soft)">'+l.reviewBtn.replace('📋 ','')+'</h2>';
+  questions.forEach(function(q,i){
+    var correctAns=getCorrect(q.type,q.data);
+    var userAns=answers[i];
+    var isOk=(userAns===correctAns);
+    var icon=isOk?'✅':(userAns?'❌':'⬜');
+    var prompt='';
+    if(q.type==='ko-ro') prompt=q.data.q;
+    else if(q.type==='ro-ko') prompt=q.data.prompt[examLang]||q.data.prompt.ro;
+    else if(q.type==='particle') prompt=q.data.template;
+    else if(q.type==='particlePlus') prompt=q.data.template;
+    else if(q.type==='conjug') prompt=q.data.prompt[examLang]||q.data.prompt.ro;
+    html+=
+      '<div class="review-q">'+
+        '<div class="review-meta">'+icon+' Q'+(i+1)+' · '+TYPE_NAMES[q.type][examLang]+'</div>'+
+        '<div class="review-prompt">'+escHtml(prompt)+'</div>'+
+        '<div class="review-chips">'+
+          (userAns
+            ?'<span class="rchip '+(isOk?'ans-ok':'err')+'">'+escHtml(userAns)+'</span>'
+            :'<span class="rchip err">—</span>')+
+          (!isOk?'<span class="rchip ok">✓ '+escHtml(correctAns)+'</span>':'')+
+        '</div>'+
+      '</div>';
+  });
+  document.getElementById('reviewContent').innerHTML=html;
+  document.getElementById('backResultsBtn').textContent=L().backBtn;
+}
+
+// ── LANG SWITCH ───────────────────────────────────────────────────
+RKLang.init(function(lang){
+  LANG=lang;
+  if(document.getElementById('phaseSetup').classList.contains('active')){
+    renderInfo();
+  }
+});
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+</body>
+</html>
