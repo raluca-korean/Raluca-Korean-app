@@ -590,7 +590,7 @@ function buildVortexNodes(item) {
 
   // Example syllables node (top-right)
   if (exs.length) {
-    const sylsHtml = exs.map(e => `<span class="mrs-v-node-syl">${e.syl}</span><span class="mrs-v-node-rom">${e.rom}</span>`).join('&nbsp;&nbsp;');
+    const sylsHtml = exs.map(e => `<span class="mrs-v-node-syl" data-speak="${e.syl}" role="button" tabindex="0">${e.syl}</span><span class="mrs-v-node-rom">${e.rom}</span>`).join('&nbsp;&nbsp;');
     defs.push({ angle: 55, delay: 0.05, title: t.nodeExamples, body: sylsHtml });
   }
 
@@ -955,6 +955,10 @@ function init() {
   // Vortex events
   el('mrsVClose').onclick = closeVortex;
   el('mrsVGlyph').onclick = () => currentItem && speakKo(currentItem.speak);
+  el('mrsVNodes').addEventListener('click', e => {
+    const syl = e.target.closest('[data-speak]');
+    if (syl) speakKo(syl.dataset.speak);
+  });
   el('mrsVWrite').onclick = () => {
     if (!currentItem) return;
     window.location.href = `./writing.html?char=${encodeURIComponent(currentItem.char)}`;
