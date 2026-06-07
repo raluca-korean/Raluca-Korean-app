@@ -472,7 +472,7 @@ function renderFC() {
   // Reset nucleus state + trigger appear animation
   const core = document.getElementById("crfCore");
   if (core) {
-    core.classList.remove("revealed", "crf-appear");
+    core.classList.remove("revealed", "crf-appear", "crf-collapse");
     void core.offsetWidth;
     core.classList.add("crf-appear");
   }
@@ -521,11 +521,18 @@ function answer(knows) {
 
   if (knows) knowCount++; else dontCount++;
 
+  // Stellar collapse: nucleus implodes into a point of light
+  const core = document.getElementById("crfCore");
+  if (core) {
+    core.classList.remove("crf-appear");
+    core.classList.add("crf-collapse");
+  }
+
   setTimeout(() => {
     cardIndex++;
     flipped = false;
-    renderFC();
-  }, 320);
+    renderFC(); // renderFC adds crf-appear which expands from nothing
+  }, 380);
 }
 
 // ── SRS empty state ──────────────────────────────────────────
