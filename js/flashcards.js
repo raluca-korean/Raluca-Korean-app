@@ -715,7 +715,61 @@ async function loadVocab() {
   }
 }
 
+// ── Parallax: orbits drift with gaze / device tilt ───────────
+function initParallax() {
+  const orbits = document.getElementById("crfOrbits");
+  if (!orbits) return;
+
+  const MAX  = 24;   // max pixel displacement for outer layer
+  let tx = 0, ty = 0;
+  let cx = 0, cy = 0;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  (function tick() {
+    cx = lerp(cx, tx, 0.055);
+    cy = lerp(cy, ty, 0.055);
+    const x = Math.round(cx * 10) / 10;
+    const y = Math.round(cy * 10) / 10;
+    orbits.style.transform = `translate(${x}px, ${y}px)`;
+    requestAnimationFrame(tick);
+  })();
+
+  // Desktop: mouse position relative to viewport center
+  document.addEventListener("mousemove", e => {
+    const hw = window.innerWidth  / 2;
+    const hh = window.innerHeight / 2;
+    tx = ((e.clientX - hw) / hw) * MAX;
+    ty = ((e.clientY - hh) / hh) * MAX;
+  });
+  // Reset gently when mouse leaves
+  document.addEventListener("mouseleave", () => { tx = 0; ty = 0; });
+
+  // Mobile: gyroscope tilt
+  let gyroOn = false;
+  function onTilt(e) {
+    if (!gyroOn || e.gamma == null) return;
+    tx = Math.max(-MAX, Math.min(MAX, e.gamma       * 0.55));
+    ty = Math.max(-MAX, Math.min(MAX, (e.beta - 45) * 0.42));
+  }
+  window.addEventListener("deviceorientation", onTilt);
+
+  // iOS 13+ needs explicit permission — request on first tap
+  if (typeof DeviceOrientationEvent !== "undefined" &&
+      typeof DeviceOrientationEvent.requestPermission === "function") {
+    document.addEventListener("pointerdown", function ask() {
+      DeviceOrientationEvent.requestPermission()
+        .then(r => { if (r === "granted") gyroOn = true; })
+        .catch(() => {});
+      document.removeEventListener("pointerdown", ask);
+    }, { once: true });
+  } else {
+    gyroOn = true;
+  }
+}
+
 // Init canvas + vocab
 initCRFCanvas();
+initParallax();
 updateSortBtns();
 loadVocab();
