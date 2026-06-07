@@ -329,7 +329,15 @@
       {ko:'기회를', ro:'șansa', en:'the chance', aliases:['sansa','șansa','sanse','șanse','oportunitate','chance','opportunity']},
       {ko:'노력을', ro:'efortul', en:'the effort', aliases:['efortul','efort','effort','stradania','strădania','silinta','silința']},
       {ko:'문제를', ro:'problema', en:'the problem', aliases:['problema','problemă','issue','problem']},
-      {ko:'결정을', ro:'decizia', en:'the decision', aliases:['decizia','decizie','hotararea','hotărârea','decision']}
+      {ko:'결정을', ro:'decizia', en:'the decision', aliases:['decizia','decizie','hotararea','hotărârea','decision']},
+      {ko:'배를', ro:'pere', en:'pears', aliases:['pere','para','pear','pears']},
+      {ko:'사과를', ro:'mere', en:'apples', aliases:['mere','mar','măr','apple','apples']},
+      {ko:'바나나를', ro:'banane', en:'bananas', aliases:['banane','banana','bananas']},
+      {ko:'오렌지를', ro:'portocale', en:'oranges', aliases:['portocale','portocala','portocală','orange','oranges']},
+      {ko:'포도를', ro:'struguri', en:'grapes', aliases:['struguri','strugure','grape','grapes']},
+      {ko:'딸기를', ro:'căpșuni', en:'strawberries', aliases:['capsuni','căpșuni','capsuna','căpșună','strawberry','strawberries']},
+      {ko:'채소를', ro:'legume', en:'vegetables', aliases:['legume','leguma','legumă','vegetable','vegetables','verdete','verdeturi','verdeturi']},
+      {ko:'과일을', ro:'fructe', en:'fruit', aliases:['fructe','fruct','fruit','fruits']}
     ],
     description: [
       {ko:'', ro:'', en:'', aliases:[]},
@@ -390,7 +398,7 @@
       {ko:'배우다', ro:'a învăța', en:'to learn', aliases:['invat','inveti','înveți','invatam','învatam','invatati','învățați','învăț','learn','invatat','învățat','am invatat','am învățat','a invatat','a învățat','voi invata','voi învăța','learned','will learn'], final:'배워요', forms:{none:'배워요',seq:'배우고',cause1:'배워서',cause2:'배우니까',condition:'배우면',contrast1:'배우지만',contrast2:'배우는데',purpose:'배우려고',result:'배우게 되다'}},
       {ko:'듣다', ro:'a asculta', en:'to listen', aliases:['ascult','asculta','listen','ascultat','am ascultat','a ascultat','voi asculta','listened','will listen'], final:'들어요', forms:{none:'들어요',seq:'듣고',cause1:'들어서',cause2:'들으니까',condition:'들으면',contrast1:'듣지만',contrast2:'듣는데',purpose:'들으려고',result:'듣게 되다'}},
       {ko:'만들다', ro:'a face', en:'to make', aliases:['fac','creeaza','creează','make','create','facut','am facut','a facut','voi face','made','will make'], final:'만들어요', forms:{none:'만들어요',seq:'만들고',cause1:'만들어서',cause2:'만드니까',condition:'만들면',contrast1:'만들지만',contrast2:'만드는데',purpose:'만들려고',result:'만들게 되다'}},
-      {ko:'사다', ro:'a cumpăra', en:'to buy', aliases:['cumpar','cumpăr','cumpăra','buy','cumparat','cumpărat','am cumparat','a cumparat','voi cumpara','bought','will buy'], final:'사요', forms:{none:'사요',seq:'사고',cause1:'사서',cause2:'사니까',condition:'사면',contrast1:'사지만',contrast2:'사는데',purpose:'사려고',result:'사게 되다'}},
+      {ko:'사다', ro:'a cumpăra', en:'to buy', aliases:['cumpar','cumpăr','cumpăra','cumpere','cumperi','cumpara','cumpără','cumparam','cumpărăm','cumparati','cumpărați','buy','cumparat','cumpărat','am cumparat','a cumparat','voi cumpara','bought','will buy'], final:'사요', forms:{none:'사요',seq:'사고',cause1:'사서',cause2:'사니까',condition:'사면',contrast1:'사지만',contrast2:'사는데',purpose:'사려고',result:'사게 되다'}},
       {ko:'주다', ro:'a da', en:'to give', aliases:['dau','da','give','dat','am dat','a dat','voi da','gave','will give'], final:'줘요', forms:{none:'줘요',seq:'주고',cause1:'줘서',cause2:'주니까',condition:'주면',contrast1:'주지만',contrast2:'주는데',purpose:'주려고',result:'주게 되다'}},
       {ko:'기다리다', ro:'a aștepta', en:'to wait', aliases:['astept','aștept','asteapta','așteaptă','asteptam','așteptăm','wait','asteptat','așteptat','am asteptat','am așteptat','a asteptat','a așteptat','voi astepta','voi aștepta','waited','will wait'], final:'기다려요', forms:{none:'기다려요',seq:'기다리고',cause1:'기다려서',cause2:'기다리니까',condition:'기다리면',contrast1:'기다리지만',contrast2:'기다리는데',purpose:'기다리려고',result:'기다리게 되다'}},
       {ko:'감사하다', ro:'a mulțumi', en:'to thank', aliases:['multumesc','mulțumesc','multumim','mulțumim','multumesti','mulțumești','thank','multumit','mulțumit','am multumit','am mulțumit','a multumit','a mulțumit','voi multumi','voi mulțumi','thanked','will thank'], final:'감사해요', forms:{none:'감사해요',seq:'감사하고',cause1:'감사해서',cause2:'감사하니까',condition:'감사하면',contrast1:'감사하지만',contrast2:'감사하는데',purpose:'감사하려고',result:'감사하게 되다'}},
@@ -2690,6 +2698,27 @@
       // (e.g. "și seara la restaurant" after "dimineața merg la piață")
       if(!verb && cd.inheritVerb && ci > 0){
         verb = findBestMatch('verb', clauseData[ci - 1].text);
+      }
+
+      // Proper noun fallback: if no vocab subject found, look for a capitalized word
+      // in the original text that isn't already matched by another category
+      if(!subjects.length){
+        var rawWords = raw.split(/\s+/);
+        for(var pw = 0; pw < rawWords.length && pw < 5; pw++){
+          var ow = rawWords[pw];
+          if(ow && /^[A-ZĂÎȘȚ]/.test(ow)){
+            var owNorm = normalizeLatin(ow);
+            if(cd.text.indexOf(owNorm) !== -1 &&
+               !findBestMatch('departure', owNorm) &&
+               !findBestMatch('time', owNorm) &&
+               !findBestMatch('verb', owNorm) &&
+               !findBestMatch('object1', owNorm)){
+              var ptcl = 'aeiou'.indexOf(ow[ow.length-1].toLowerCase()) >= 0 ? '는' : '은';
+              subjects = [{ key:'topic', kind:'topic', ko: ow+ptcl, ro: ow, en: ow, isProperName: true }];
+              break;
+            }
+          }
+        }
       }
 
       // Topic drop: only set subject if different from previous clause's subject
