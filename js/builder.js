@@ -2328,6 +2328,9 @@
 
     var best = null;
     var bestLen = 0;
+    // Fallback for verbs: sa-preceded match (subjunctive/purpose verb)
+    var bestSa = null;
+    var bestSaLen = 0;
 
     for(var i=0;i<options.length;i++){
       var item = options[i];
@@ -2335,17 +2338,32 @@
 
       for(var j=0;j<candidates.length;j++){
         var candidate = normalizeLatin(candidates[j]);
-        if(candidate && candidate.length > bestLen){
-          if(normalizedText.indexOf(' ' + candidate + ' ') !== -1 ||
-             strippedText.indexOf(' ' + candidate + ' ') !== -1){
-            best = item;
-            bestLen = candidate.length;
+        if(!candidate) continue;
+
+        var pos = normalizedText.indexOf(' ' + candidate + ' ');
+        if(pos === -1) pos = strippedText.indexOf(' ' + candidate + ' ');
+        if(pos === -1) continue;
+
+        // For verbs: check if this match is preceded by 'sa' (Romanian subjunctive marker).
+        // "sa cumpere" = purpose clause, NOT the main verb — prefer the non-sa verb.
+        if(fieldKey === 'verb'){
+          var before = normalizedText.substring(0, pos).trimEnd();
+          var prevWord = before.split(/\s+/).pop();
+          if(prevWord === 'sa'){
+            if(candidate.length > bestSaLen){ bestSa = item; bestSaLen = candidate.length; }
+            continue;
           }
+        }
+
+        if(candidate.length > bestLen){
+          best = item;
+          bestLen = candidate.length;
         }
       }
     }
 
-    return best;
+    // For verbs: use sa-preceded verb only if no main verb found
+    return best || (fieldKey === 'verb' ? bestSa : null);
   }
 
   function findAllMatches(fieldKey, text, maxCount){
