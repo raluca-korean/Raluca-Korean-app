@@ -351,8 +351,11 @@ function renderTarget() {
   document.getElementById('kbMeaning').textContent = item.meaning[cLang] || '';
 }
 
+const HINT_KEYS = 3; // show hint for first N keystrokes per item
+
 // ── RENDER KEYS HINT ──────────────────────────────────────────────
 function renderKeys() {
+  if (kIdx >= HINT_KEYS) { document.getElementById('kbKeys').innerHTML = ''; return; }
   let html = '';
   exKeys.forEach((k, i) => {
     const cls = i < kIdx ? 'kd' : i === kIdx ? 'kc' : 'kt';
@@ -373,7 +376,7 @@ function renderKeyboard() {
   KEY_ROWS.forEach(row => {
     html += '<div class="vkbd-row">';
     row.forEach(k => {
-      const isActive = k === nextLower;
+      const isActive = kIdx < HINT_KEYS && k === nextLower;
       const kr  = Q2J[k]  || '';
       const krS = Q2J[k.toUpperCase()] || '';
       const showShift = krS && krS !== kr;
@@ -398,7 +401,7 @@ function renderKeyboard() {
     });
   });
 
-  document.getElementById('shiftNote').textContent = needShift ? '⇧ Shift nécessaire' : '';
+  document.getElementById('shiftNote').textContent = (kIdx < HINT_KEYS && needShift) ? '⇧ Shift nécessaire' : '';
 }
 
 function updateProg() {
