@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Compunere · Raluca Korean</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<link rel="stylesheet" href="./composition.css">
+</head>
+<body class="theme-anime">
+
+<!-- ▓ TOP BAR ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ -->
+<header class="comp-topbar">
+  <div class="comp-topbar-title">✍ Compunere</div>
+  <div id="pageControls"></div>
+</header>
+
+<!-- ▓ CONȚINUT PRINCIPAL ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ -->
+<main class="comp-main">
+
+  <!-- Subtitlu -->
+  <p class="comp-sub" id="compSub">Scrie în coreeană și primești corecturi</p>
+
+  <!-- Selector nivel TOPIK -->
+  <div class="comp-levels" role="group" aria-label="Nivel TOPIK">
+    <button class="lvl-btn active" data-level="1">T1</button>
+    <button class="lvl-btn" data-level="2">T2</button>
+    <button class="lvl-btn" data-level="3">T3</button>
+    <button class="lvl-btn" data-level="4">T4</button>
+    <button class="lvl-btn" data-level="5">T5</button>
+    <button class="lvl-btn" data-level="6">T6</button>
+  </div>
+
+  <!-- Card subiect -->
+  <div class="comp-prompt-card">
+    <div class="prompt-badge" id="promptBadge">Subiect</div>
+    <p class="prompt-text" id="promptText">Se încarcă...</p>
+    <p class="prompt-ko"   id="promptKo"></p>
+    <button class="prompt-refresh-btn" onclick="newPrompt()" title="Subiect nou" aria-label="Subiect nou">↻</button>
+  </div>
+
+  <!-- Indiciu lungime -->
+  <div class="comp-limit-hint" id="limitHint">Recomandat: 100–150 caractere</div>
+
+  <!-- Zona de scriere -->
+  <div class="comp-editor-wrap">
+    <textarea id="writingArea"
+      class="comp-textarea"
+      placeholder="여기에 한국어로 쓰세요… (Scrie aici în coreeană)"
+      rows="7"
+      spellcheck="false"
+      autocorrect="off"
+      autocapitalize="off"></textarea>
+    <div class="comp-editor-bar">
+      <span class="char-count" id="charCount">0</span>
+      <span class="char-count-lbl" id="charCountLbl">caractere</span>
+    </div>
+  </div>
+
+  <!-- Acțiuni -->
+  <div class="comp-actions">
+    <button class="comp-btn comp-btn-clear" onclick="clearAll()" id="btnClear">Șterge</button>
+    <button class="comp-btn comp-btn-correct" id="btnCorrect" onclick="doCorrect()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span id="btnCorrectLbl">Corectează</span>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="comp-loading" id="compLoading">
+    <div class="comp-loading-dot"></div>
+    <span id="loadingMsg">Analizez…</span>
+  </div>
+
+  <!-- Rezultate -->
+  <section class="comp-results" id="compResults">
+
+    <!-- Scor + feedback general -->
+    <div class="result-score-row">
+      <div class="result-score-circle" id="scoreCircle">
+        <span class="score-num"   id="scoreNum">8</span>
+        <span class="score-denom">/10</span>
+      </div>
+      <p class="result-feedback-text" id="feedbackText"></p>
+    </div>
+
+    <!-- Text corectat -->
+    <div class="result-section">
+      <div class="result-section-label" id="lblCorrected">TEXT CORECTAT</div>
+      <div class="result-corrected-text" id="correctedText"></div>
+    </div>
+
+    <!-- Lista greșeli -->
+    <div class="result-section" id="errorsSection">
+      <div class="result-section-label" id="lblErrors">GREȘELI</div>
+      <ul class="result-errors-list" id="errorsList"></ul>
+    </div>
+
+    <button class="comp-btn comp-btn-new" onclick="newAttempt()" id="btnNewAttempt">Subiect nou</button>
+
+  </section>
+
+</main>
+
+<!-- ▓ MODAL CHEIE API ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ -->
+<div class="comp-modal-overlay" id="apiModal">
+  <div class="apikey-card">
+    <div class="apikey-icon">🔑</div>
+    <p class="apikey-title"  id="apiTitle">Configurare cheie API</p>
+    <p class="apikey-desc"   id="apiDesc">
+      Pentru corecturi AI introdu cheia ta Anthropic API.<br>
+      Cheia rămâne salvată local pe dispozitivul tău.
+    </p>
+    <input type="password" id="apiKeyInput" class="apikey-input" placeholder="sk-ant-api03-…"
+      autocomplete="off" spellcheck="false">
+    <p class="apikey-err" id="apiErr"></p>
+    <div class="apikey-actions">
+      <button class="comp-btn comp-btn-clear" onclick="closeApiModal()" id="btnApiCancel">Anulează</button>
+      <button class="comp-btn comp-btn-correct" onclick="saveApiKey()" id="btnApiSave">Salvează</button>
+    </div>
+  </div>
+</div>
+
+<!-- ▓ SCRIPTURI ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ -->
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+<script>
+
+/* ══════════════════════════════════════════════════════════════
+   DATE — SUBIECTE DE COMPUNERE
+══════════════════════════════════════════════════════════════ */
+const PROMPTS = {
+  1: [
+    { ro:'Prezintă-te: cum te cheamă, câți ani ai, de unde ești.',
+      en:'Introduce yourself: name, age, where you are from.',
+      ko:'자기소개를 해 보세요.' },
+    { ro:'Descrie familia ta: câți membri are, ce face fiecare.',
+      en:'Describe your family: how many members, what each does.',
+      ko:'가족에 대해 써 보세요.' },
+    { ro:'Ce faci de obicei dimineața? Descrie rutina ta.',
+      en:'What do you usually do in the morning? Describe your routine.',
+      ko:'보통 아침에 무엇을 해요?' },
+    { ro:'Descrie casa sau camera ta.',
+      en:'Describe your house or room.',
+      ko:'집이나 방을 설명해 보세요.' },
+    { ro:'Ce mâncare îți place cel mai mult? De ce?',
+      en:'What food do you like the most? Why?',
+      ko:'가장 좋아하는 음식은 무엇이에요? 왜 좋아해요?' },
+  ],
+  2: [
+    { ro:'Scrie despre weekend-ul tău preferat.',
+      en:'Write about your favorite weekend.',
+      ko:'좋아하는 주말에 대해 써 보세요.' },
+    { ro:'Descrie prietenul tău cel mai bun.',
+      en:'Describe your best friend.',
+      ko:'가장 친한 친구를 소개해 보세요.' },
+    { ro:'Ce hobby-uri ai? Descrie unul în detaliu.',
+      en:'What hobbies do you have? Describe one in detail.',
+      ko:'취미가 있어요? 하나 자세히 설명해 보세요.' },
+    { ro:'Scrie despre locul tău preferat din oraș.',
+      en:'Write about your favorite place in the city.',
+      ko:'도시에서 가장 좋아하는 장소에 대해 써 보세요.' },
+    { ro:'Cum petreci vacanța? Descrie o vacanță tipică.',
+      en:'How do you spend holidays? Describe a typical vacation.',
+      ko:'방학이나 휴가를 어떻게 보내요?' },
+  ],
+  3: [
+    { ro:'Compară viața de student cu viața de adult.',
+      en:'Compare student life with adult life.',
+      ko:'학생 생활과 직장 생활을 비교해 보세요.' },
+    { ro:'Descrie o experiență memorabilă de călătorie.',
+      en:'Describe a memorable travel experience.',
+      ko:'기억에 남는 여행 경험을 써 보세요.' },
+    { ro:'De ce înveți coreeana? Ce ți-a plăcut cel mai mult?',
+      en:'Why do you study Korean? What have you liked most?',
+      ko:'한국어를 왜 배워요? 무엇이 가장 좋았어요?' },
+    { ro:'Scrie despre un obicei bun sau rău al tău.',
+      en:'Write about a good or bad habit of yours.',
+      ko:'자신의 좋은 습관이나 나쁜 습관에 대해 써 보세요.' },
+  ],
+  4: [
+    { ro:'Ce înseamnă prietenia adevărată pentru tine?',
+      en:'What does true friendship mean to you?',
+      ko:'진정한 우정이란 무엇인지 써 보세요.' },
+    { ro:'Compară viața la oraș cu viața la sat.',
+      en:'Compare city life with country life.',
+      ko:'도시 생활과 시골 생활을 비교해 보세요.' },
+    { ro:'Descrie planurile tale de viitor.',
+      en:'Describe your plans for the future.',
+      ko:'미래 계획에 대해 써 보세요.' },
+    { ro:'Scrie despre un film sau o carte care te-a impresionat.',
+      en:'Write about a movie or book that impressed you.',
+      ko:'인상 깊었던 영화나 책에 대해 써 보세요.' },
+  ],
+  5: [
+    { ro:'Discută avantajele și dezavantajele rețelelor sociale.',
+      en:'Discuss the advantages and disadvantages of social media.',
+      ko:'SNS의 장점과 단점에 대해 쓰세요.' },
+    { ro:'Ce crezi despre importanța educației în societatea modernă?',
+      en:'What do you think about the importance of education in modern society?',
+      ko:'현대 사회에서 교육의 중요성에 대해 쓰세요.' },
+    { ro:'Cum afectează tehnologia relațiile umane?',
+      en:'How does technology affect human relationships?',
+      ko:'기술이 인간관계에 미치는 영향에 대해 쓰세요.' },
+  ],
+  6: [
+    { ro:'Analizează impactul globalizării asupra culturii locale.',
+      en:'Analyze the impact of globalization on local culture.',
+      ko:'세계화가 지역 문화에 미치는 영향을 분석하세요.' },
+    { ro:'Discută problemele de mediu și soluțiile posibile.',
+      en:'Discuss environmental problems and possible solutions.',
+      ko:'환경 문제와 가능한 해결책에 대해 쓰세요.' },
+    { ro:'Ce rol ar trebui să joace guvernul în asigurarea bunăstării sociale?',
+      en:'What role should government play in ensuring social welfare?',
+      ko:'사회 복지를 위한 정부의 역할에 대해 논하세요.' },
+  ],
+};
+
+const LIMIT_HINTS = {
+  ro: { 1:'Recomandat: 100–150 caractere', 2:'Recomandat: 150–200 caractere',
+        3:'Recomandat: 200–250 caractere', 4:'Recomandat: 250–300 caractere',
+        5:'Recomandat: 400–500 caractere', 6:'Recomandat: 600–700 caractere' },
+  en: { 1:'Recommended: 100–150 chars', 2:'Recommended: 150–200 chars',
+        3:'Recommended: 200–250 chars', 4:'Recommended: 250–300 chars',
+        5:'Recommended: 400–500 chars', 6:'Recommended: 600–700 chars' },
+};
+
+/* ══════════════════════════════════════════════════════════════
+   STARE
+══════════════════════════════════════════════════════════════ */
+let currentLevel  = 1;
+let currentPrompt = null;
+let currentLang   = 'ro';
+
+/* ══════════════════════════════════════════════════════════════
+   INIȚIALIZARE
+══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  RKLang.init(lang => {
+    currentLang = lang;
+    applyLang();
+    renderPrompt();
+  });
+  currentLang = RKLang.get();
+
+  setupLevelBtns();
+  newPrompt();
+  setupTextarea();
+  applyLang();
+});
+
+/* ══════════════════════════════════════════════════════════════
+   LIMBĂ
+══════════════════════════════════════════════════════════════ */
+function applyLang() {
+  const ro = currentLang === 'ro';
+  document.getElementById('compSub').textContent =
+    ro ? 'Scrie în coreeană și primești corecturi'
+       : 'Write in Korean and get corrections';
+  document.getElementById('charCountLbl').textContent =
+    ro ? 'caractere' : 'characters';
+  document.getElementById('loadingMsg').textContent =
+    ro ? 'Analizez…' : 'Analysing…';
+  document.getElementById('limitHint').textContent =
+    LIMIT_HINTS[currentLang][currentLevel];
+  document.getElementById('promptBadge').textContent =
+    ro ? 'Subiect' : 'Topic';
+  document.getElementById('lblCorrected').textContent =
+    ro ? 'TEXT CORECTAT' : 'CORRECTED TEXT';
+  document.getElementById('lblErrors').textContent =
+    ro ? 'GREȘELI' : 'ERRORS';
+  document.getElementById('btnClear').textContent =
+    ro ? 'Șterge' : 'Clear';
+  document.getElementById('btnCorrectLbl').textContent =
+    ro ? 'Corectează' : 'Correct';
+  document.getElementById('btnNewAttempt').textContent =
+    ro ? 'Subiect nou' : 'New topic';
+  document.getElementById('apiTitle').textContent =
+    ro ? 'Configurare cheie API' : 'API Key Setup';
+  document.getElementById('apiDesc').innerHTML =
+    ro ? 'Pentru corecturi AI introdu cheia ta Anthropic API.<br>Cheia rămâne salvată local pe dispozitivul tău.'
+       : 'For AI corrections, enter your Anthropic API key.<br>The key stays saved locally on your device.';
+  document.getElementById('btnApiCancel').textContent =
+    ro ? 'Anulează' : 'Cancel';
+  document.getElementById('btnApiSave').textContent =
+    ro ? 'Salvează' : 'Save';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BUTOANE NIVEL
+══════════════════════════════════════════════════════════════ */
+function setupLevelBtns() {
+  document.querySelectorAll('.lvl-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.lvl-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentLevel = parseInt(btn.dataset.level, 10);
+      document.getElementById('limitHint').textContent =
+        LIMIT_HINTS[currentLang][currentLevel];
+      newPrompt();
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SUBIECT
+══════════════════════════════════════════════════════════════ */
+function newPrompt() {
+  const list = PROMPTS[currentLevel];
+  currentPrompt = list[Math.floor(Math.random() * list.length)];
+  renderPrompt();
+  hideResults();
+}
+
+function renderPrompt() {
+  if (!currentPrompt) return;
+  document.getElementById('promptText').textContent = currentPrompt[currentLang];
+  document.getElementById('promptKo').textContent   = currentPrompt.ko;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ZONA DE SCRIERE
+══════════════════════════════════════════════════════════════ */
+function setupTextarea() {
+  document.getElementById('writingArea').addEventListener('input', () => {
+    document.getElementById('charCount').textContent =
+      document.getElementById('writingArea').value.length;
+  });
+}
+
+function clearAll() {
+  document.getElementById('writingArea').value = '';
+  document.getElementById('charCount').textContent = '0';
+  hideResults();
+}
+
+function hideResults() {
+  document.getElementById('compResults').classList.remove('visible');
+  document.getElementById('compLoading').classList.remove('visible');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CORECTEAZĂ
+══════════════════════════════════════════════════════════════ */
+async function doCorrect() {
+  const text = document.getElementById('writingArea').value.trim();
+  if (!text) {
+    alert(currentLang === 'ro' ? 'Scrie ceva mai întâi!' : 'Write something first!');
+    return;
+  }
+
+  const apiKey = localStorage.getItem('RK_CLAUDE_KEY');
+  if (!apiKey) { showApiModal(); return; }
+
+  document.getElementById('compResults').classList.remove('visible');
+  document.getElementById('compLoading').classList.add('visible');
+  document.getElementById('btnCorrect').disabled = true;
+
+  try {
+    const result = await callClaude(apiKey, text);
+    showResults(result);
+  } catch (err) {
+    document.getElementById('compLoading').classList.remove('visible');
+    if (err.status === 401) {
+      localStorage.removeItem('RK_CLAUDE_KEY');
+      alert(currentLang === 'ro'
+        ? 'Cheie API invalidă. Te rog introdu din nou.'
+        : 'Invalid API key. Please re-enter.');
+      showApiModal();
+    } else {
+      alert((currentLang === 'ro' ? 'Eroare: ' : 'Error: ') + (err.message || 'Unknown'));
+    }
+  } finally {
+    document.getElementById('btnCorrect').disabled = false;
+  }
+}
+
+async function callClaude(apiKey, text) {
+  const lang = currentLang === 'ro' ? 'Romanian' : 'English';
+  const system = `You are a Korean language teacher. A student studying for TOPIK level ${currentLevel} has written a Korean text.
+
+Analyze their writing and respond ONLY with valid JSON (no markdown, no extra text):
+{
+  "score": <integer 1-10>,
+  "feedback": "<1-2 sentence general feedback in ${lang}>",
+  "corrected": "<full corrected text in Korean>",
+  "errors": [
+    { "original": "<wrong part>", "fix": "<correct version>", "explanation": "<why, in ${lang}>" }
+  ]
+}
+
+Rules:
+- List at most 5 most important errors; use [] if none
+- "corrected" is the full text with all fixes applied
+- Keep explanations to one sentence
+- Score: 10=perfect, 1=major issues`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      system,
+      messages: [{ role: 'user', content: text }],
+    }),
+  });
+
+  if (!resp.ok) {
+    const e = new Error(`HTTP ${resp.status}`);
+    e.status = resp.status;
+    throw e;
+  }
+
+  const data = await resp.json();
+  const raw  = data.content[0].text;
+  const m    = raw.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('Format răspuns invalid');
+  return JSON.parse(m[0]);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AFIȘARE REZULTATE
+══════════════════════════════════════════════════════════════ */
+function showResults(result) {
+  document.getElementById('compLoading').classList.remove('visible');
+
+  const score = Math.max(1, Math.min(10, result.score || 5));
+  document.getElementById('scoreNum').textContent = score;
+  const circle = document.getElementById('scoreCircle');
+  circle.className = 'result-score-circle '
+    + (score >= 8 ? 'score-great' : score >= 5 ? 'score-ok' : 'score-low');
+
+  document.getElementById('feedbackText').textContent = result.feedback || '';
+  document.getElementById('correctedText').textContent = result.corrected || '';
+
+  const list   = document.getElementById('errorsList');
+  const errors = result.errors || [];
+  list.innerHTML = '';
+
+  if (errors.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'error-item error-none';
+    li.textContent = currentLang === 'ro' ? '🎉 Nicio greșeală!' : '🎉 No errors!';
+    list.appendChild(li);
+  } else {
+    errors.forEach(err => {
+      const li = document.createElement('li');
+      li.className = 'error-item';
+      li.innerHTML =
+        '<span class="err-original">' + esc(err.original || '') + '</span>'
+        + '<span class="err-arrow"> → </span>'
+        + '<span class="err-fix">'      + esc(err.fix || '')      + '</span>'
+        + '<p class="err-explanation">' + esc(err.explanation || '') + '</p>';
+      list.appendChild(li);
+    });
+  }
+
+  document.getElementById('compResults').classList.add('visible');
+  document.getElementById('compResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function newAttempt() {
+  newPrompt();
+  clearAll();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => document.getElementById('writingArea').focus(), 300);
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL CHEIE API
+══════════════════════════════════════════════════════════════ */
+function showApiModal() {
+  document.getElementById('apiErr').textContent = '';
+  document.getElementById('apiKeyInput').value  = '';
+  document.getElementById('apiModal').classList.add('open');
+  setTimeout(() => document.getElementById('apiKeyInput').focus(), 100);
+}
+
+function closeApiModal() {
+  document.getElementById('apiModal').classList.remove('open');
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-ant')) {
+    document.getElementById('apiErr').textContent =
+      currentLang === 'ro'
+        ? 'Cheie invalidă — trebuie să înceapă cu sk-ant-…'
+        : 'Invalid key — must start with sk-ant-…';
+    return;
+  }
+  localStorage.setItem('RK_CLAUDE_KEY', key);
+  closeApiModal();
+  doCorrect();
+}
+
+/* Închide modal la click pe fundal */
+document.getElementById('apiModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('apiModal')) closeApiModal();
+});
+
+</script>
+</body>
+</html>
