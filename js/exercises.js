@@ -499,6 +499,23 @@ function trackWrong(item){
   const type = typeSelect.value;
   if(!wrongsByType[type]) wrongsByType[type] = [];
   if(!wrongsByType[type].includes(item)) wrongsByType[type].push(item);
+  // Persist for mistakes.html
+  try {
+    const log = JSON.parse(localStorage.getItem('RK_WRONG_LOG') || '[]');
+    const ekey = getExerciseKey(type, item);
+    const today = new Date().toISOString().slice(0, 10);
+    const idx = log.findIndex(e => e.key === ekey);
+    if(idx >= 0){
+      log[idx].count = (log[idx].count || 1) + 1;
+      log[idx].date  = today;
+      const entry = log.splice(idx, 1)[0];
+      log.unshift(entry);
+    } else {
+      log.unshift({ type, key: ekey, topik: item.topik || 0, date: today, count: 1 });
+    }
+    if(log.length > 150) log.splice(150);
+    localStorage.setItem('RK_WRONG_LOG', JSON.stringify(log));
+  } catch(e) {}
 }
 
 function updateWrongBtn(){

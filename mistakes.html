@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Greșelile Mele</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#db2777">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+/* ── METRICS STRIP ─────────────────────────────────────── */
+.mk-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.mk-metric{background:var(--rk-card);border:2px solid var(--rk-stroke);border-bottom:4px solid var(--rk-stroke-b);border-radius:14px;padding:14px 12px;text-align:center;box-shadow:0 4px 14px var(--rk-shadow);transition:background .25s,border-color .25s}
+.mk-val{font-size:24px;font-weight:900;color:var(--rk-heading)}
+.mk-lbl{font-size:11px;color:var(--rk-muted);margin-top:2px;font-weight:600;letter-spacing:.03em}
+
+/* ── FILTER PILLS ──────────────────────────────────────── */
+.mk-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.mk-fpill{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.02em;border:1.5px solid var(--rk-stroke);background:var(--rk-card);color:var(--rk-text-ui);cursor:pointer;transition:all .15s;font-family:inherit}
+.mk-fpill:hover{border-color:rgba(219,39,119,.40);color:var(--rk-pink)}
+.mk-fpill.on{background:linear-gradient(135deg,#db2777,#7c3aed);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(219,39,119,.28)}
+
+/* ── HARD EXERCISE ITEMS ───────────────────────────────── */
+.mk-hard-list{display:flex;flex-direction:column;gap:8px}
+.mk-hard-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;border-radius:12px;
+  background:var(--rk-bg-flat);border:1.5px solid var(--rk-stroke);
+  transition:border-color .15s;
+}
+.mk-hard-item:hover{border-color:rgba(219,39,119,.30)}
+.mk-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.mk-dot.red{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.6)}
+.mk-dot.yellow{background:#f59e0b;box-shadow:0 0 6px rgba(245,158,11,.5)}
+.mk-dot.green{background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.4)}
+.mk-ef{font-size:11px;font-weight:900;color:var(--rk-muted-ui);width:36px;flex-shrink:0}
+.mk-type-chip{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:5px;flex-shrink:0}
+.chip-koro{background:rgba(219,39,119,.12);color:#be185d}
+.chip-roku{background:rgba(14,165,233,.12);color:#0369a1}
+.chip-part{background:rgba(124,58,237,.12);color:#6d28d9}
+.chip-pp{background:rgba(124,58,237,.18);color:#6d28d9}
+.chip-conj{background:rgba(16,185,129,.12);color:#065f46}
+.chip-puzz{background:rgba(245,158,11,.12);color:#92400e}
+.chip-chain{background:rgba(239,68,68,.10);color:#991b1b}
+.mk-hard-text{flex:1;font-size:14px;font-weight:600;color:var(--rk-heading);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk-topik{font-size:10px;font-weight:700;color:var(--rk-muted-ui);flex-shrink:0}
+.mk-pract-link{font-size:11px;font-weight:900;color:var(--rk-violet);text-decoration:none;flex-shrink:0;padding:4px 8px;border-radius:6px;background:rgba(124,58,237,.08);transition:background .15s}
+.mk-pract-link:hover{background:rgba(124,58,237,.18)}
+
+/* ── TYPE ACCURACY BARS ───────────────────────────────── */
+.mk-type-row{margin-bottom:12px}
+.mk-type-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--rk-heading);margin-bottom:5px}
+.mk-type-pct{font-size:12px;font-weight:700;color:var(--rk-muted)}
+.mk-bar-bg{height:9px;background:rgba(0,0,0,.07);border-radius:5px;overflow:hidden}
+.mk-bar{height:100%;border-radius:5px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.mk-bar.good{background:linear-gradient(90deg,#22c55e,#16a34a)}
+.mk-bar.ok{background:linear-gradient(90deg,#f59e0b,#d97706)}
+.mk-bar.bad{background:linear-gradient(90deg,#ef4444,#dc2626)}
+.mk-type-warn{font-size:10px;color:#dc2626;font-weight:700;margin-left:4px}
+
+/* ── WRONG LOG ────────────────────────────────────────── */
+.mk-log-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:10px;background:var(--rk-bg-flat);border:1.5px solid var(--rk-stroke);margin-bottom:7px}
+.mk-log-date{font-size:10px;color:var(--rk-muted-ui);font-weight:700;min-width:36px}
+.mk-log-text{flex:1;font-size:13px;font-weight:600;color:var(--rk-heading);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk-log-count{font-size:11px;font-weight:900;color:var(--rk-red);background:rgba(239,68,68,.10);border-radius:12px;padding:1px 6px}
+
+/* ── EXAM HISTORY ─────────────────────────────────────── */
+.mk-exam-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:10px;background:var(--rk-bg-flat);border:1.5px solid var(--rk-stroke);margin-bottom:7px;font-size:13px}
+.mk-exam-grade{font-size:18px;font-weight:900;min-width:30px;text-align:center}
+.mk-exam-info{flex:1}
+.mk-exam-pct{font-weight:900;color:var(--rk-heading)}
+.mk-exam-pass{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.ep-pass{background:rgba(34,197,94,.15);color:#166534}
+.ep-fail{background:rgba(239,68,68,.12);color:#991b1b}
+.mk-exam-date{font-size:11px;color:var(--rk-muted-ui)}
+
+/* ── EMPTY STATE ──────────────────────────────────────── */
+.mk-empty{text-align:center;padding:40px 20px}
+.mk-empty-icon{font-size:52px;line-height:1;margin-bottom:12px}
+.mk-empty-title{font-size:16px;font-weight:700;color:var(--rk-heading);margin-bottom:6px}
+.mk-empty-sub{font-size:13px;color:var(--rk-muted);margin-bottom:18px}
+.mk-empty-btn{display:inline-block;padding:10px 22px;border-radius:20px;background:linear-gradient(135deg,#db2777,#7c3aed);color:#fff;font-weight:700;font-size:14px;text-decoration:none;box-shadow:0 4px 16px rgba(219,39,119,.28)}
+
+/* ── SECTION TITLE ────────────────────────────────────── */
+.sec-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-title h3{margin:0;font-size:15px}
+.sec-count{font-size:12px;font-weight:700;color:var(--rk-muted-ui);background:var(--rk-bg-flat);padding:2px 8px;border-radius:8px;border:1px solid var(--rk-stroke)}
+
+/* ── CTA BUTTON ───────────────────────────────────────── */
+.mk-cta{display:block;width:100%;text-align:center;margin-top:10px;padding:11px;border-radius:12px;background:linear-gradient(135deg,#db2777,#7c3aed);color:#fff;font-weight:700;font-size:14px;text-decoration:none;transition:opacity .2s}
+.mk-cta:hover{opacity:.85}
+
+/* ── DARK MODE ────────────────────────────────────────── */
+body.dark-mode .mk-metric{background:#1a0e2e;border-color:rgba(219,39,119,.22)}
+body.dark-mode .mk-hard-item,body.dark-mode .mk-log-item,body.dark-mode .mk-exam-item{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.10)}
+body.dark-mode .mk-bar-bg{background:rgba(255,255,255,.09)}
+body.dark-mode .mk-hard-text,body.dark-mode .mk-log-text{color:#eef0ff}
+
+/* ── MOBILE ───────────────────────────────────────────── */
+@media(max-width:500px){
+  .mk-strip{grid-template-columns:repeat(3,1fr)}
+  .mk-val{font-size:18px}
+  .mk-hard-text{font-size:12px}
+}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <h1 id="pageTitle">❌ Greșelile Mele</h1>
+      <div class="sub" id="pageSubtitle">Analiza punctelor slabe</div>
+    </div>
+    <div id="pageControls"></div>
+  </div>
+</div>
+
+<div id="mainContent"></div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script>
+'use strict';
+
+var LANG = RKLang.get();
+
+var UI = {
+  ro:{
+    title:'❌ Greșelile Mele', sub:'Analiza punctelor slabe',
+    total:'Total exerciții', hardCount:'Exerciții dificile', examCount:'Examene',
+    secHard:'Exerciții dificile', secTypes:'Acuratețe pe tipuri',
+    secLog:'Greșeli recente', secExams:'Examene recente',
+    filterAll:'Toate',
+    practiceLink:'Practică →',
+    emptyTitle:'Nicio greșeală înregistrată',
+    emptySub:'Completează câteva exerciții și revino pentru analiza greșelilor.',
+    emptyBtn:'Mergi la exerciții →',
+    noHard:'Nu există exerciții dificile momentan! Continuă să exersezi.',
+    noLog:'Nicio greșeală înregistrată recent.',
+    noExams:'Nu ai dat examene încă.',
+    pass:'PROMOVAT', fail:'NEPROMOVAT',
+    today:'azi', yesterday:'ieri',
+    topik:'TOPIK', count:'ori',
+    types:{
+      'ko-ro':'KO → RO','ro-ko':'RO → KO','particle':'Particulă',
+      'particlePlus':'Particule +','conjug':'Conjugare','puzzle':'Puzzle','chain':'Chain'
+    },
+    efLabel:'EF',
+    hardDesc:'Exerciții la care ai greșit frecvent (SRS Ease Factor scăzut)'
+  },
+  en:{
+    title:'❌ My Mistakes', sub:'Weak spot analysis',
+    total:'Total exercises', hardCount:'Hard exercises', examCount:'Exams',
+    secHard:'Hard exercises', secTypes:'Accuracy by type',
+    secLog:'Recent mistakes', secExams:'Recent exams',
+    filterAll:'All',
+    practiceLink:'Practice →',
+    emptyTitle:'No mistakes recorded yet',
+    emptySub:'Complete some exercises and come back for mistake analysis.',
+    emptyBtn:'Go to exercises →',
+    noHard:'No hard exercises right now! Keep practicing.',
+    noLog:'No recent mistakes recorded.',
+    noExams:"You haven't taken any exams yet.",
+    pass:'PASSED', fail:'FAILED',
+    today:'today', yesterday:'yesterday',
+    topik:'TOPIK', count:'times',
+    types:{
+      'ko-ro':'KO → RO','ro-ko':'RO → KO','particle':'Particle',
+      'particlePlus':'Multi-particle','conjug':'Conjugation','puzzle':'Puzzle','chain':'Chain'
+    },
+    efLabel:'EF',
+    hardDesc:'Exercises you frequently miss (low SRS Ease Factor)'
+  }
+};
+function L(){ return UI[LANG]; }
+
+var TYPE_CHIP = {
+  'ko-ro':'chip-koro','ro-ko':'chip-roku','particle':'chip-part',
+  'particlePlus':'chip-pp','conjug':'chip-conj','puzzle':'chip-puzz','chain':'chip-chain'
+};
+var MAIN_TYPES = ['ko-ro','ro-ko','particle','particlePlus','conjug'];
+
+// ── DATA ──────────────────────────────────────────────────────────
+function loadStats(){ try{return JSON.parse(localStorage.getItem('RK_STATS')||'null');}catch(e){return null;} }
+function loadSRS(){ try{return JSON.parse(localStorage.getItem('RK_EX_SRS')||'{}');}catch(e){return {};} }
+function loadWrongLog(){ try{return JSON.parse(localStorage.getItem('RK_WRONG_LOG')||'[]');}catch(e){return [];} }
+function loadExamHistory(){ try{return JSON.parse(localStorage.getItem('RK_EXAM_HISTORY')||'[]');}catch(e){return [];} }
+
+// ── KEY PARSING ───────────────────────────────────────────────────
+function parseKey(key){
+  if(key.startsWith('ko-ro||'))   return {type:'ko-ro',   text:key.slice(7)};
+  if(key.startsWith('ro-ko||'))   return {type:'ro-ko',   text:key.slice(7)};
+  if(key.startsWith('particle||')){
+    var rest=key.slice(10).split('|');
+    return {type:'particle', text:rest[0]||key};
+  }
+  if(key.startsWith('pp||')){
+    var rest2=key.slice(4).split('|');
+    return {type:'particlePlus', text:rest2[0]||key};
+  }
+  if(key.startsWith('conjug||'))  return {type:'conjug',  text:key.slice(8)};
+  if(key.startsWith('puzzle||'))  return {type:'puzzle',  text:key.slice(8)};
+  if(key.startsWith('chain||'))   return {type:'chain',   text:key.slice(7)};
+  return {type:'unknown', text:key};
+}
+
+// ── DATE FORMATTING ───────────────────────────────────────────────
+function fmtDate(iso){
+  var today=new Date().toISOString().slice(0,10);
+  var yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  if(iso===today) return L().today;
+  if(iso===yesterday) return L().yesterday;
+  return iso.slice(5); // MM-DD
+}
+
+// ── HARD EXERCISES FROM SRS ───────────────────────────────────────
+function getHardExercises(srs){
+  var items=[];
+  Object.keys(srs).forEach(function(key){
+    var c=srs[key];
+    if(!c||c.n<1) return;
+    var parsed=parseKey(key);
+    if(parsed.type==='unknown') return;
+    items.push({key:key,type:parsed.type,text:parsed.text,ef:c.EF,n:c.n});
+  });
+  items.sort(function(a,b){return a.ef-b.ef;});
+  return items;
+}
+
+// ── GRADE COLOR ───────────────────────────────────────────────────
+function gradeColor(g){
+  if(g==='A+'||g==='A') return '#16a34a';
+  if(g==='B') return '#0369a1';
+  if(g==='C') return '#d97706';
+  if(g==='D') return '#dc2626';
+  return '#6b7280';
+}
+
+// ── STATE ─────────────────────────────────────────────────────────
+var activeFilter = 'all';
+var hardItems = [];
+
+// ── RENDER ────────────────────────────────────────────────────────
+function render(){
+  var stats   = loadStats();
+  var srs     = loadSRS();
+  var log     = loadWrongLog();
+  var exams   = loadExamHistory();
+  var l       = L();
+
+  document.getElementById('pageTitle').textContent     = l.title;
+  document.getElementById('pageSubtitle').textContent  = l.sub;
+
+  hardItems = getHardExercises(srs);
+  var hardLow = hardItems.filter(function(i){return i.ef<2.2;}); // EF < 2.2 = needs work
+
+  var hasAny = stats||hardLow.length||log.length||exams.length;
+  var container = document.getElementById('mainContent');
+
+  if(!hasAny){
+    container.innerHTML =
+      '<div class="card"><div class="mk-empty">'+
+        '<div class="mk-empty-icon">📭</div>'+
+        '<div class="mk-empty-title">'+l.emptyTitle+'</div>'+
+        '<div class="mk-empty-sub">'+l.emptySub+'</div>'+
+        '<a class="mk-empty-btn" href="exercises.html">'+l.emptyBtn+'</a>'+
+      '</div></div>';
+    return;
+  }
+
+  var html='';
+
+  // ── Metrics strip ──
+  var totalEx   = stats ? stats.total : 0;
+  var accuracy  = (stats&&stats.total) ? Math.round(stats.correct/stats.total*100) : 0;
+  var hardCount = hardLow.length;
+  html+=
+    '<div class="mk-strip">'+
+      mkMetric(totalEx, l.total, accuracy+'%')+
+      mkMetricRaw(hardCount, l.hardCount, hardCount>10?'🔴':hardCount>3?'🟡':'✅')+
+      mkMetricRaw(exams.length, l.examCount, '🎓')+
+    '</div>';
+
+  // ── Per-type accuracy ──
+  if(stats&&stats.byType&&Object.keys(stats.byType).length){
+    html+='<div class="card"><h3>'+l.secTypes+'</h3><div style="margin-top:12px">';
+    MAIN_TYPES.forEach(function(t){
+      var d=stats.byType[t];
+      if(!d||d.total<3) return;
+      var p=Math.round(d.correct/d.total*100);
+      var bc=p>=75?'good':p>=50?'ok':'bad';
+      var warn=p<65?'<span class="mk-type-warn">⚠</span>':'';
+      html+=
+        '<div class="mk-type-row">'+
+          '<div class="mk-type-head">'+
+            '<span>'+l.types[t]+warn+'</span>'+
+            '<span class="mk-type-pct">'+d.correct+'/'+d.total+' · '+p+'%</span>'+
+          '</div>'+
+          '<div class="mk-bar-bg"><div class="mk-bar '+bc+'" style="width:'+p+'%"></div></div>'+
+        '</div>';
+    });
+    html+='</div></div>';
+  }
+
+  // ── Hard exercises ──
+  html+='<div class="card" id="hardCard">';
+  html+='<div class="sec-title"><h3>'+l.secHard+'</h3><span class="sec-count" id="hardCountBadge">'+hardLow.length+'</span></div>';
+  html+='<div class="sub" style="margin-bottom:12px;font-size:12px">'+l.hardDesc+'</div>';
+
+  // Filters
+  html+='<div class="mk-filters" id="filterRow">';
+  html+='<button class="mk-fpill on" data-f="all" onclick="setFilter(\'all\')">'+l.filterAll+'</button>';
+  MAIN_TYPES.forEach(function(t){
+    var cnt=hardLow.filter(function(i){return i.type===t;}).length;
+    if(!cnt) return;
+    html+='<button class="mk-fpill" data-f="'+t+'" onclick="setFilter(\''+t+'\')">'+l.types[t]+' ('+cnt+')</button>';
+  });
+  html+='</div>';
+
+  html+='<div id="hardList">';
+  html+=renderHardList(hardLow,'all');
+  html+='</div>';
+
+  html+='<a class="mk-cta" href="exercises.html">'+l.practiceLink+'</a>';
+  html+='</div>';
+
+  // ── Wrong log ──
+  if(log.length){
+    html+='<div class="card"><div class="sec-title"><h3>'+l.secLog+'</h3><span class="sec-count">'+Math.min(log.length,20)+'</span></div>';
+    log.slice(0,20).forEach(function(entry){
+      var parsed=parseKey(entry.key);
+      html+=
+        '<div class="mk-log-item">'+
+          '<span class="mk-log-date">'+fmtDate(entry.date)+'</span>'+
+          '<span class="mk-type-chip '+TYPE_CHIP[entry.type||parsed.type]+'" style="flex-shrink:0">'+
+            l.types[entry.type||parsed.type]+'</span>'+
+          '<span class="mk-log-text">'+escHtml(parsed.text)+'</span>'+
+          (entry.count&&entry.count>1?'<span class="mk-log-count">×'+entry.count+'</span>':'')+
+        '</div>';
+    });
+    html+='</div>';
+  }
+
+  // ── Exam history ──
+  if(exams.length){
+    html+='<div class="card"><div class="sec-title"><h3>'+l.secExams+'</h3><span class="sec-count">'+exams.length+'</span></div>';
+    exams.slice(0,8).forEach(function(e){
+      var gc=gradeColor(e.grade);
+      var lvStr=e.level==='mix'?'T1–T6':'T'+e.level;
+      var passed=e.pct>=60;
+      var date=e.date?e.date.slice(0,10):'';
+      html+=
+        '<div class="mk-exam-item">'+
+          '<div class="mk-exam-grade" style="color:'+gc+'">'+e.grade+'</div>'+
+          '<div class="mk-exam-info">'+
+            '<span class="mk-exam-pct">'+e.correct+'/'+e.total+' ('+e.pct+'%)</span>'+
+            ' <span class="mk-exam-level">'+lvStr+'</span>'+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<span class="mk-exam-pass '+(passed?'ep-pass':'ep-fail')+'">'+
+              (passed?l.pass:l.fail)+'</span>'+
+            '<div class="mk-exam-date">'+date+'</div>'+
+          '</div>'+
+        '</div>';
+    });
+    html+='</div>';
+  }
+
+  container.innerHTML=html;
+}
+
+function mkMetric(val, lbl, extra){
+  return '<div class="mk-metric">'+
+    '<div class="mk-val">'+val+(extra?'</div><div class="mk-val" style="font-size:15px;opacity:.7">'+extra:'')+'</div>'+
+    '<div class="mk-lbl">'+lbl+'</div>'+
+  '</div>';
+}
+function mkMetricRaw(val, lbl, icon){
+  return '<div class="mk-metric">'+
+    '<div class="mk-val">'+icon+'</div>'+
+    '<div class="mk-val" style="font-size:18px">'+val+'</div>'+
+    '<div class="mk-lbl">'+lbl+'</div>'+
+  '</div>';
+}
+
+function renderHardList(items, filter){
+  var l=L();
+  var filtered=filter==='all'?items:items.filter(function(i){return i.type===filter;});
+  if(!filtered.length) return '<div style="text-align:center;padding:16px;font-size:13px;color:var(--rk-muted)">'+l.noHard+'</div>';
+  var html='<div class="mk-hard-list">';
+  filtered.slice(0,40).forEach(function(item){
+    var ef=item.ef;
+    var dotClass=ef<1.7?'red':ef<2.1?'yellow':'green';
+    html+=
+      '<div class="mk-hard-item">'+
+        '<div class="mk-dot '+dotClass+'"></div>'+
+        '<span class="mk-ef">'+ef.toFixed(2)+'</span>'+
+        '<span class="mk-type-chip '+TYPE_CHIP[item.type]+'">'+l.types[item.type]+'</span>'+
+        '<span class="mk-hard-text" title="'+escHtml(item.text)+'">'+escHtml(item.text)+'</span>'+
+        '<a class="mk-pract-link" href="exercises.html">'+l.practiceLink+'</a>'+
+      '</div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+function setFilter(f){
+  activeFilter=f;
+  document.querySelectorAll('.mk-fpill').forEach(function(btn){
+    btn.classList.toggle('on', btn.dataset.f===f);
+  });
+  var l=L();
+  var hardLow=hardItems.filter(function(i){return i.ef<2.2;});
+  document.getElementById('hardList').innerHTML=renderHardList(hardLow,f);
+  var cnt=f==='all'?hardLow.length:hardLow.filter(function(i){return i.type===f;}).length;
+  document.getElementById('hardCountBadge').textContent=cnt;
+}
+window.setFilter=setFilter;
+
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── LANG SWITCH ───────────────────────────────────────────────────
+RKLang.init(function(lang){
+  LANG=lang;
+  render();
+});
+
+render();
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+</body>
+</html>
