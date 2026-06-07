@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════
-   MORPHIC FIELD INTERFACE · MFI v1.0
+   MORPHIC FIELD INTERFACE · MFI v1.1
    "Bioluminescent Knowledge Space"
    — A new interaction paradigm —
    Knowledge as a living organism. Information reorganizes
@@ -74,6 +74,9 @@ html,body{
   pointer-events:none;z-index:0;
 }
 
+/* ── VOICE WAVEFORM CANVAS ── */
+#vwc{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:6;}
+
 /* ── MORPHIC FIELD ── */
 #mf{
   position:fixed;inset:0;
@@ -117,6 +120,7 @@ html,body{
     inset 0 0 40px rgba(255,255,255,.12);
   animation:breath 3.8s ease-in-out infinite;
   z-index:5;
+  position:absolute;
 }
 .ck{font-size:32px;font-weight:900;color:var(--tp);line-height:1.2;letter-spacing:-.5px;}
 .ct{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ts);margin-top:6px;}
@@ -381,6 +385,25 @@ body:not(.dm) #bN{background:rgba(217,119,6,.09);border-color:rgba(217,119,6,.45
   z-index:5;pointer-events:none;
 }
 
+/* ── SCORE RING ── */
+#scoreRing{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+#scoreArc{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1),stroke .3s;}
+
+/* ── SCORE BADGE ── */
+#scoreBadge{
+  position:fixed;
+  font-size:22px;font-weight:900;
+  pointer-events:none;z-index:20;
+  opacity:0;transition:opacity .4s,transform .4s;
+  text-shadow:0 0 20px currentColor;
+  transform:translateY(0px);
+}
+#scoreBadge.show{opacity:1;transform:translateY(-20px);}
+
+/* ── MEMORY GLOW STATES ── */
+#nc.mem-fresh{box-shadow:0 0 0 16px rgba(34,211,238,.25),0 0 0 36px rgba(34,211,238,.08),0 0 80px rgba(34,211,238,.5),inset 0 0 40px rgba(255,255,255,.12);}
+#nc.mem-mastered{box-shadow:0 0 0 16px rgba(251,191,36,.25),0 0 0 36px rgba(251,191,36,.08),0 0 80px rgba(251,191,36,.5),inset 0 0 40px rgba(255,255,255,.12);}
+
 /* ── RESPONSIVE ── */
 @media(max-width:480px){
   #nc{width:160px;height:160px;}
@@ -401,6 +424,9 @@ body:not(.dm) #bN{background:rgba(217,119,6,.09);border-color:rgba(217,119,6,.45
 <!-- background particle canvas -->
 <canvas id="cv"></canvas>
 
+<!-- voice waveform canvas -->
+<canvas id="vwc"></canvas>
+
 <!-- morphic field -->
 <div id="mf">
 
@@ -414,6 +440,13 @@ body:not(.dm) #bN{background:rgba(217,119,6,.09);border-color:rgba(217,119,6,.45
 
   <!-- core attention node -->
   <div class="nd" id="nc">
+    <!-- score ring SVG inside core node -->
+    <svg id="scoreRing" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+      <circle id="scoreArc" cx="100" cy="100" r="96"
+        stroke="transparent"
+        stroke-dasharray="603" stroke-dashoffset="603"
+        transform="rotate(-90 100 100)"/>
+    </svg>
     <div class="ck" id="ck">안녕하세요</div>
     <div class="ct" id="ct">TOPIK 1</div>
   </div>
@@ -444,6 +477,9 @@ body:not(.dm) #bN{background:rgba(217,119,6,.09);border-color:rgba(217,119,6,.45
   </div>
 
 </div>
+
+<!-- score badge (floating number above core node) -->
+<div id="scoreBadge"></div>
 
 <!-- voice field -->
 <div id="vf">
@@ -498,7 +534,7 @@ body:not(.dm) #bN{background:rgba(217,119,6,.09);border-color:rgba(217,119,6,.45
 <div id="fl"></div>
 
 <!-- paradigm tag -->
-<div id="ptag">Morphic Field Interface · MFI v1.0</div>
+<div id="ptag">Morphic Field Interface · MFI v1.1</div>
 
 <script>
 /* ══════════════════════════════════════════════════════════
@@ -585,6 +621,18 @@ let sessId    = 0;
 let activeStream = null; // stream curent de microfon
 let placedSats   = {};  // distanțe scalate, actualizate de place()
 
+// ── NEW STATE — Feature 1: Waveform analyser ──────────────
+let analyser   = null;  // AnalyserNode
+let audioCtx   = null;  // AudioContext
+let waveFreqData = null; // Uint8Array for frequency data
+
+// ── NEW STATE — Feature 2: Spaced Repetition ─────────────
+const lastPracticed = {}; // idx → timestamp (ms) of last correct answer
+
+// ── NEW STATE — Feature 3: Parallax ──────────────────────
+const PARALLAX_DEPTH = {nc:6, nr:18, nm:14, ne:24, np:10};
+let parallaxFx = 0, parallaxFy = 0; // normalized -1..1
+
 // ── SATELLITE POSITIONS (angle°, distance px) ──────────────
 const SATS = {
   nr: {a:-30,  d:250},
@@ -609,6 +657,18 @@ const SATS = {
   syncLang();
   spineRefresh();
   window.addEventListener('resize',()=>{place();weave();});
+
+  // Feature 3: gyroscope for mobile parallax
+  if(window.DeviceOrientationEvent){
+    window.addEventListener('deviceorientation', e=>{
+      // gamma: left/right tilt (-90..90), beta: front/back (0..180)
+      const gam = e.gamma || 0; // left/right
+      const bet = (e.beta || 45) - 45; // center around 45deg
+      parallaxFx = Math.max(-1, Math.min(1, gam / 45));
+      parallaxFy = Math.max(-1, Math.min(1, bet / 45));
+      applyParallax();
+    });
+  }
 })();
 
 function items(){ return DATA.filter(d=>d.t===topik); }
@@ -637,6 +697,8 @@ function place(){
   });
 
   weave();
+  // Re-apply parallax after reposition
+  applyParallax();
 }
 
 // ── SVG THREAD WEB ─────────────────────────────────────────
@@ -683,6 +745,69 @@ function render(item, i){
   const pct=Math.min(100,(score[i]||0)*25);
   document.getElementById('npt').textContent=pct+'%';
   spineRefresh();
+
+  // Feature 2: Update memory glow based on score
+  updateMemoryGlow(i);
+
+  // Feature 5: Reset score ring when moving to next word
+  resetScoreRing();
+}
+
+// ── Feature 2: Spaced Repetition ─────────────────────────
+// Pick item with oldest lastPracticed (0 = never practiced, comes first)
+function nextSpacedRepetition(){
+  const arr = items();
+  if(!arr.length) return 0;
+  let bestIdx = 0;
+  let bestTime = Infinity;
+  arr.forEach((_, i) => {
+    const t = lastPracticed[i] || 0;
+    if(t < bestTime){
+      bestTime = t;
+      bestIdx = i;
+    }
+  });
+  return bestIdx;
+}
+
+// Feature 2: Update memory glow on core node
+function updateMemoryGlow(i){
+  const nc = document.getElementById('nc');
+  nc.classList.remove('mem-fresh','mem-mastered');
+  const s = score[i] || 0;
+  const lp = lastPracticed[i] || 0;
+  const now = Date.now();
+  const age = now - lp; // ms since last correct
+
+  if(s >= 3){
+    // Mastered — gold glow
+    nc.classList.add('mem-mastered');
+  } else if(lp > 0 && age < 2 * 60 * 1000){
+    // Recently practiced (< 2 min) — cyan glow
+    nc.classList.add('mem-fresh');
+  }
+  // Never practiced or old → default violet glow (no extra class)
+
+  // Opacity of the core node text based on freshness
+  // Never practiced = full, recently practiced = slightly lower
+  const ck = document.getElementById('ck');
+  if(lp === 0){
+    nc.style.opacity = '1';
+    nc.title = lang === 'ro' ? 'Nou — niciodată practicat' : 'New — never practiced';
+  } else if(age < 2 * 60 * 1000){
+    nc.style.opacity = '0.75';
+    const mins = Math.floor(age / 60000);
+    const secs = Math.floor((age % 60000) / 1000);
+    nc.title = lang === 'ro'
+      ? `Practicat acum ${mins}m ${secs}s`
+      : `Practiced ${mins}m ${secs}s ago`;
+  } else {
+    nc.style.opacity = '1';
+    const d = new Date(lp);
+    nc.title = lang === 'ro'
+      ? `Ultima practică: ${d.toLocaleTimeString()}`
+      : `Last practiced: ${d.toLocaleTimeString()}`;
+  }
 }
 
 function next(animate){
@@ -691,7 +816,8 @@ function next(animate){
   if(speaking){speaking=false;stopUi();}
   clearRec();
   const arr=items();
-  const ni=(idx+1)%arr.length;
+  // Feature 2: Use spaced repetition ordering
+  const ni = nextSpacedRepetition();
   if(animate){
     const f=document.getElementById('mf');
     f.classList.add('out');
@@ -701,13 +827,156 @@ function next(animate){
   }
 }
 
-// ── PARTICLE CANVAS ───────────────────────────────────────
+// ── Feature 3: Parallax ───────────────────────────────────
+function applyParallax(){
+  // Apply transform:translate() to each node based on depth
+  // This is SEPARATE from left/top used by place() and gravity
+  const nodes = ['nc','nr','nm','ne','np'];
+  nodes.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const depth = PARALLAX_DEPTH[id] || 0;
+    const tx = -parallaxFx * depth;
+    const ty = -parallaxFy * depth;
+    el.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px)`;
+  });
+}
+
+function resetParallax(){
+  const nodes = ['nc','nr','nm','ne','np'];
+  nodes.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.transform = 'translate(0,0)';
+  });
+}
+
+// ── Feature 5: Score Ring ─────────────────────────────────
+// Circumference of circle r=96: 2*pi*96 ≈ 603
+const RING_CIRC = 2 * Math.PI * 96;
+
+function showScoreRing(scorePct){
+  const arc = document.getElementById('scoreArc');
+  if(!arc) return;
+
+  // Pick color
+  let color;
+  if(scorePct >= 80) color = '#58CC02';
+  else if(scorePct >= 50) color = '#FFC800';
+  else color = '#FF4B4B';
+
+  arc.setAttribute('stroke', color);
+  // Reset to full offset (invisible) then animate
+  arc.style.transition = 'none';
+  arc.setAttribute('stroke-dashoffset', String(RING_CIRC));
+  // Force reflow
+  void arc.getBoundingClientRect();
+  // Animate to target offset
+  const offset = RING_CIRC * (1 - scorePct / 100);
+  arc.style.transition = 'stroke-dashoffset 1s cubic-bezier(.4,0,.2,1), stroke .3s';
+  arc.setAttribute('stroke-dashoffset', String(offset.toFixed(2)));
+
+  // Show floating badge
+  showScoreBadge(scorePct, color);
+}
+
+function resetScoreRing(){
+  const arc = document.getElementById('scoreArc');
+  if(!arc) return;
+  arc.style.transition = 'none';
+  arc.setAttribute('stroke', 'transparent');
+  arc.setAttribute('stroke-dashoffset', String(RING_CIRC));
+}
+
+function showScoreBadge(scorePct, color){
+  const nc = document.getElementById('nc');
+  const badge = document.getElementById('scoreBadge');
+  if(!badge || !nc) return;
+
+  const rect = nc.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top;
+
+  badge.style.color = color;
+  badge.style.left = (cx - 20) + 'px';
+  badge.style.top = (cy - 10) + 'px';
+  badge.textContent = scorePct + '%';
+  badge.style.transition = 'none';
+  badge.style.opacity = '0';
+  badge.style.transform = 'translateY(0px)';
+  void badge.getBoundingClientRect();
+
+  badge.classList.add('show');
+
+  clearTimeout(badge._hideT);
+  badge._hideT = setTimeout(() => {
+    badge.classList.remove('show');
+  }, 2500);
+}
+
+function computeScore(correct, transcript, targetKorean){
+  if(correct){
+    return 85 + Math.floor(Math.random() * 16); // 85-100
+  }
+  // Compute character overlap between transcript and target
+  const target = targetKorean.replace(/\s/g,'');
+  const heard = transcript.replace(/\s/g,'');
+  if(!target.length) return 0;
+  let overlap = 0;
+  const targetChars = [...target];
+  const heardChars = [...heard];
+  targetChars.forEach(ch => {
+    const hi = heardChars.indexOf(ch);
+    if(hi !== -1){
+      overlap++;
+      heardChars.splice(hi, 1);
+    }
+  });
+  const ratio = overlap / targetChars.length;
+  return Math.round(ratio * 70); // max 70 for incorrect
+}
+
+// ── Feature 1: Voice Waveform ─────────────────────────────
+function startAnalyser(stream){
+  try{
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    waveFreqData = new Uint8Array(analyser.frequencyBinCount);
+    const src = audioCtx.createMediaStreamSource(stream);
+    src.connect(analyser);
+  } catch(e){
+    analyser = null;
+    audioCtx = null;
+  }
+}
+
+function stopAnalyser(){
+  analyser = null;
+  waveFreqData = null;
+  if(audioCtx){
+    try{ audioCtx.close(); } catch(e){}
+    audioCtx = null;
+  }
+  // Clear waveform canvas
+  const vc = document.getElementById('vwc');
+  if(vc){
+    const ctx = vc.getContext('2d');
+    ctx.clearRect(0, 0, vc.width, vc.height);
+  }
+}
+
+// ── PARTICLE CANVAS + WAVEFORM DRAW LOOP ─────────────────
 function initCanvas(){
   const cv=document.getElementById('cv');
   const ctx=cv.getContext('2d');
+  const vc=document.getElementById('vwc');
+  const vctx=vc.getContext('2d');
   let W,H,P=[];
 
-  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+  function resize(){
+    W=cv.width=innerWidth;H=cv.height=innerHeight;
+    vc.width=innerWidth; vc.height=innerHeight;
+  }
   resize();
   window.addEventListener('resize',resize);
 
@@ -755,6 +1024,56 @@ function initCanvas(){
       if(p.x<0)p.x=W; if(p.x>W)p.x=0;
       if(p.y<0)p.y=H; if(p.y>H)p.y=0;
     });
+
+    // ── Feature 1: Waveform on vwc canvas ──
+    vctx.clearRect(0, 0, W, H);
+    if(analyser && waveFreqData){
+      analyser.getByteFrequencyData(waveFreqData);
+      const cx = W / 2, cy = H / 2;
+      const baseR = 110; // radius of waveform circle
+      const barLen = 22; // max bar length outward
+      const binCount = waveFreqData.length;
+
+      for(let i = 0; i < binCount; i++){
+        const angle = (i / binCount) * Math.PI * 2 - Math.PI / 2;
+        const val = waveFreqData[i] / 255; // 0..1
+        const len = val * barLen + 2;
+
+        // Color based on frequency band
+        let color;
+        const third = binCount / 3;
+        if(i < third){
+          // Low freq → violet
+          color = dm
+            ? `rgba(167,139,250,${0.4 + val * 0.6})`
+            : `rgba(124,58,237,${0.4 + val * 0.6})`;
+        } else if(i < 2 * third){
+          // Mid freq → cyan
+          color = dm
+            ? `rgba(34,211,238,${0.4 + val * 0.6})`
+            : `rgba(14,165,233,${0.4 + val * 0.6})`;
+        } else {
+          // High freq → pink
+          color = dm
+            ? `rgba(244,114,182,${0.4 + val * 0.6})`
+            : `rgba(219,39,119,${0.4 + val * 0.6})`;
+        }
+
+        const x1 = cx + Math.cos(angle) * baseR;
+        const y1 = cy + Math.sin(angle) * baseR;
+        const x2 = cx + Math.cos(angle) * (baseR + len);
+        const y2 = cy + Math.sin(angle) * (baseR + len);
+
+        vctx.strokeStyle = color;
+        vctx.lineWidth = 2.5;
+        vctx.lineCap = 'round';
+        vctx.beginPath();
+        vctx.moveTo(x1, y1);
+        vctx.lineTo(x2, y2);
+        vctx.stroke();
+      }
+    }
+
     requestAnimationFrame(frame);
   })();
 }
@@ -805,13 +1124,16 @@ function clearRec(){
   if(recUrl){URL.revokeObjectURL(recUrl);recUrl=null;}
   if(recAudio){recAudio.pause();recAudio=null;}
   mchunks=[];
+  stopAnalyser();
   setBtnIcon();
 }
 
+// Fix: improved finishRec with delay
 function finishRec(){
   if(!mrec||mrec.state==='inactive') return;
-  try{mrec.requestData();}catch(e){}
-  try{mrec.stop();}catch(e){}
+  const m=mrec;
+  try{m.requestData();}catch(e){}
+  setTimeout(()=>{ if(m.state!=='inactive') try{m.stop();}catch(e){}; }, 60);
 }
 
 async function startMic(){
@@ -836,6 +1158,9 @@ async function startMic(){
   if(sessId!==mySession){stream.getTracks().forEach(t=>t.stop());return;}
   activeStream=stream;
 
+  // Feature 1: Start analyser for waveform
+  startAnalyser(stream);
+
   // Pornim MediaRecorder pe stream-ul obținut
   const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg']
     .find(t=>MediaRecorder.isTypeSupported(t))||'';
@@ -851,27 +1176,33 @@ async function startMic(){
         setBtnIcon();
       }
     };
-    m.start(200);
+    // Fix: use 100ms timeslice instead of 200ms
+    m.start(100);
   }catch(e){mrec=null;}
 
-  // Pornim SpeechRecognition — permisiunea e deja acordată
-  const r=new SR();
-  recog=r;
-  r.lang='ko-KR';r.continuous=false;r.interimResults=false;
-  r.onresult=e=>{
-    if(recog!==r) return;
-    finishRec();evaluate(e.results[0][0].transcript);
-  };
-  r.onend=()=>{
-    if(recog===r&&sessId===mySession) stopUi();
-  };
-  r.onerror=e=>{
-    if(recog!==r) return;
-    finishRec();stopUi();
-    if(e.error!=='no-speech'&&e.error!=='aborted')
-      toast((lang==='ro'?'Eroare: ':'Error: ')+e.error);
-  };
-  try{r.start();}catch(e){finishRec();stopUi();}
+  // Fix: 80ms delay before starting SpeechRecognition to let MediaRecorder initialize
+  setTimeout(()=>{
+    if(sessId !== mySession) return;
+
+    // Pornim SpeechRecognition — permisiunea e deja acordată
+    const r=new SR();
+    recog=r;
+    r.lang='ko-KR';r.continuous=false;r.interimResults=false;
+    r.onresult=e=>{
+      if(recog!==r) return;
+      finishRec();evaluate(e.results[0][0].transcript);
+    };
+    r.onend=()=>{
+      if(recog===r&&sessId===mySession) stopUi();
+    };
+    r.onerror=e=>{
+      if(recog!==r) return;
+      finishRec();stopUi();
+      if(e.error!=='no-speech'&&e.error!=='aborted')
+        toast((lang==='ro'?'Eroare: ':'Error: ')+e.error);
+    };
+    try{r.start();}catch(e){finishRec();stopUi();}
+  }, 80);
 }
 
 function stopMic(){
@@ -888,6 +1219,8 @@ function stopUi(){
   document.getElementById('bS').textContent='🎙';
   document.getElementById('wf').classList.remove('on');
   document.getElementById('sh').textContent=lang==='ro'?'atingeți pentru a vorbi':'tap to speak';
+  // Stop waveform analyser when mic stops
+  stopAnalyser();
 }
 
 function setUiListening(on){
@@ -909,7 +1242,14 @@ function evaluate(transcript){
   if(!item) return;
   const clean=s=>s.replace(/[^가-힣a-z]/gi,'').toLowerCase();
   const ok=clean(transcript)===clean(item.k)||transcript.includes(item.k);
+
+  // Feature 5: Compute similarity score
+  const simScore = computeScore(ok, transcript, item.k);
+  showScoreRing(simScore);
+
   if(ok){
+    // Feature 2: Record timestamp of correct answer
+    lastPracticed[idx] = Date.now();
     score[idx]=(score[idx]||0)+1;
     resonate();
     const nc=document.getElementById('nc');
@@ -949,9 +1289,14 @@ function toast(msg){
   toastT=setTimeout(()=>el.classList.remove('on'),2600);
 }
 
-// ── GRAVITY PULL (nodes drift toward cursor) ──────────────
+// ── GRAVITY PULL + PARALLAX (merged handler) ──────────────
 let graf=null;
 document.getElementById('mf').addEventListener('mousemove',e=>{
+  // Feature 3: Update parallax factors
+  const cx0=innerWidth/2, cy0=innerHeight/2;
+  parallaxFx = Math.max(-1, Math.min(1, (e.clientX - cx0) / (innerWidth / 2)));
+  parallaxFy = Math.max(-1, Math.min(1, (e.clientY - cy0) / (innerHeight / 2)));
+
   if(graf) return;
   graf=requestAnimationFrame(()=>{
     graf=null;
@@ -973,12 +1318,17 @@ document.getElementById('mf').addEventListener('mousemove',e=>{
       el.style.left=(cx+Math.cos(rad)*d+ox-hw)+'px';
       el.style.top =(cy+Math.sin(rad)*d+oy-hh)+'px';
     });
+
+    // Feature 3: Apply parallax via transform (separate from gravity left/top)
+    applyParallax();
   });
 });
 
-// restore positions on mouse leave
+// restore positions and parallax on mouse leave
 document.getElementById('mf').addEventListener('mouseleave',()=>{
+  parallaxFx=0; parallaxFy=0;
   place();
+  resetParallax();
 });
 
 // ── BIND CONTROLS ─────────────────────────────────────────
