@@ -1851,6 +1851,13 @@
     }
     if(object2 && object2.ko) parts.push(object2.ko);
     mannerAdvs.forEach(function(ko){ parts.push(ko); });
+    // Purpose clause -(으)러: "sa cumpere" → 사러, placed before main verb
+    if(!skipVerb && clause.__purposeVerbItem){
+      var pv = clause.__purposeVerbItem;
+      var pvStem = pv.ko.replace(/다$/, '');
+      var pvHasBatchim = window.Conjugation && window.Conjugation.hasBatchim(pvStem);
+      parts.push(pvStem + (pvHasBatchim ? '으러' : '러'));
+    }
     if(!skipVerb && verbKo) parts.push(verbKo);
 
     var result = cleanSentenceText(parts.join(' '));
@@ -2009,7 +2016,9 @@
         if(EXISTENTIAL_VERBS[vb.ko] && (hasAccObj(o1) || hasAccObj(o2))){
           conflictVerb = vb; conflictType = 'existential';
         } else if(INTRANSITIVE_VERBS[vb.ko] && (hasAccObj(o1) || hasAccObj(o2))){
-          conflictVerb = vb; conflictType = 'intransitive';
+          if(!clause.__purposeVerbItem){
+            conflictVerb = vb; conflictType = 'intransitive';
+          }
         }
       });
       if(conflictVerb){
@@ -2750,6 +2759,22 @@
         if(times[0])    setFieldItem(clause, 'time', times[0]);
         if(places[0])   setFieldItem(clause, 'departure', places[0]);
         if(places[1])   setFieldItem(clause, 'transit', places[1]);
+
+        // Purpose clause detection: "sa/să + VERB" in text means the verb after "sa"
+        // is a purpose verb (-(으)러 form), NOT the main verb.
+        // When main verb is a motion verb (가다/오다), objects belong to the purpose verb.
+        var MOTION_VERBS_SET = {'가다':1,'오다':1,'도착하다':1};
+        var purposeVerbItem = null;
+        if(verb && MOTION_VERBS_SET[verb.ko]){
+          var saMatch = (' ' + normalizeLatin(cd.text) + ' ').match(/\bsa\s+(\S+)/);
+          if(saMatch){
+            var wordAfterSa = saMatch[1].replace(/[!?.,;]/g,'');
+            var pvCandidate = findBestMatch('verb', wordAfterSa);
+            if(pvCandidate && pvCandidate.ko !== verb.ko) purposeVerbItem = pvCandidate;
+          }
+        }
+        if(purposeVerbItem) clause.__purposeVerbItem = purposeVerbItem;
+
         if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
         if(objects[1])  setFieldItem(clause, 'object2', objects[1]);
         if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
