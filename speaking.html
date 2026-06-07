@@ -1294,8 +1294,10 @@ function speakKo(txt){
   const u=new SpeechSynthesisUtterance(txt);
   u.lang='ko-KR'; u.rate=.82;
   if(koVoice) u.voice=koVoice;
-  // Unele browsere mobile au nevoie de un mic delay după cancel()
-  setTimeout(()=>speechSynthesis.speak(u), 50);
+  u.onerror=e=>{ if(e.error!=='interrupted') toast('Audio: '+e.error); };
+  // speak() trebuie apelat sincron (iOS blochează dacă e în setTimeout)
+  if(speechSynthesis.paused) speechSynthesis.resume();
+  speechSynthesis.speak(u);
 }
 
 // ── TOAST ─────────────────────────────────────────────────
