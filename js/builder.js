@@ -2075,6 +2075,14 @@
       }
     }
 
+    if(col.key === 'departure' && active && item && item.ko){
+      var MOTION_TO = {'가다':1,'오다':1,'도착하다':1};
+      var verbItem = itemOf(clause, 'verb');
+      if(verbItem && MOTION_TO[verbItem.ko]){
+        value = item.ko.replace(/에서$/, '에');
+      }
+    }
+
     if(active && item && item.ko) isNew = isWordNew(col.key, item);
 
     var lenTier = value.length > 14 ? 'xl' : value.length > 9 ? 'lg' : value.length > 5 ? 'md' : '';
