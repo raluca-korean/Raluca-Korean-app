@@ -387,7 +387,7 @@
       {ko:'먹다', ro:'a mânca', en:'to eat', aliases:['mananc','mănânc','mananci','mănânci','mancam','mâncăm','mancati','mâncați','mananca','mănâncă','eat','manca','mânca','mancat','mâncat','am mancat','am mâncat','a mancat','a mâncat','voi manca','voi mânca','ate','will eat'], final:'먹어요', forms:{none:'먹어요',seq:'먹고',cause1:'먹어서',cause2:'먹으니까',condition:'먹으면',contrast1:'먹지만',contrast2:'먹는데',purpose:'먹으려고',result:'먹게 되다'}},
       {ko:'가다', ro:'a merge', en:'to go', aliases:['merg','mergi','mergem','mergeti','mergeți','plec','merge','go','leave','mers','am mers','a mers','voi merge','went','will go','ma duc','mă duc','te duci','se duce','ne ducem','va duceti','vă duceți','se duc','am mers','dus','am dus'], final:'가요', forms:{none:'가요',seq:'가고',cause1:'가서',cause2:'가니까',condition:'가면',contrast1:'가지만',contrast2:'가는데',purpose:'가려고',result:'가게 되다'}},
       {ko:'오다', ro:'a veni', en:'to come', aliases:['vin','vii','venim','veniti','veniți','vine','veni','come','venit','am venit','a venit','voi veni','came','will come'], final:'와요', forms:{none:'와요',seq:'오고',cause1:'와서',cause2:'오니까',condition:'오면',contrast1:'오지만',contrast2:'오는데',purpose:'오려고',result:'오게 되다'}},
-      {ko:'보다', ro:'a vedea', en:'to see', aliases:['vad','văd','vezi','vede','vedea','see','watch','vazut','văzut','am vazut','am văzut','a vazut','a văzut','voi vedea','saw','will see'], final:'봐요', forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
+      {ko:'보다', ro:'a vedea', en:'to see', aliases:['vad','văd','vezi','vede','vedea','vada','vadă','vazi','văzi','see','watch','vazut','văzut','am vazut','am văzut','a vazut','a văzut','voi vedea','saw','will see'], final:'봐요', forms:{none:'봐요',seq:'보고',cause1:'봐서',cause2:'보니까',condition:'보면',contrast1:'보지만',contrast2:'보는데',purpose:'보려고',result:'보게 되다'}},
       {ko:'읽다', ro:'a citi', en:'to read', aliases:['citesc','citesti','citești','citeste','citește','citim','cititi','citiți','citi','read','citit','am citit','a citit','voi citi','will read'], final:'읽어요', forms:{none:'읽어요',seq:'읽고',cause1:'읽어서',cause2:'읽으니까',condition:'읽으면',contrast1:'읽지만',contrast2:'읽는데',purpose:'읽으려고',result:'읽게 되다'}},
       {ko:'쓰다', ro:'a scrie', en:'to write', aliases:['scriu','scrii','scriem','scrieti','scrieți','scrie','write','scris','am scris','a scris','voi scrie','wrote','will write'], final:'써요', forms:{none:'써요',seq:'쓰고',cause1:'써서',cause2:'쓰니까',condition:'쓰면',contrast1:'쓰지만',contrast2:'쓰는데',purpose:'쓰려고',result:'쓰게 되다'}},
       {ko:'만나다', ro:'a întâlni', en:'to meet', aliases:['intalnesc','întâlnesc','meet','intalni','întâlni','intalnit','întâlnit','am intalnit','am întâlnit','a intalnit','a întâlnit','voi intalni','voi întâlni','met','will meet'], final:'만나요', forms:{none:'만나요',seq:'만나고',cause1:'만나서',cause2:'만나니까',condition:'만나면',contrast1:'만나지만',contrast2:'만나는데',purpose:'만나려고',result:'만나게 되다'}},
@@ -2685,7 +2685,15 @@
         findBestMatch('departure', segText) ||
         findBestMatch('object1', segText)
       );
-      if(segVerb){
+      // When previous segment ended with "ca sa / pentru a" (purpose connector),
+      // fold this segment into that clause as purpose payload rather than a new clause.
+      var _prevCd = clauseData.length > 0 ? clauseData[clauseData.length - 1] : null;
+      var _isPurposeFollowup = _prevCd && (_prevCd.connKey === 'purpose' || _prevCd.connKey === 'purpose2');
+
+      if(_isPurposeFollowup && segText){
+        _prevCd.__purposeText = segText;
+        _prevCd.connKey = 'none'; // merge into one clause, no connector needed
+      } else if(segVerb){
         clauseData.push({ text: segText, connKey: seg.connector });
       } else if(segHasCtx){
         clauseData.push({ text: segText, connKey: seg.connector, inheritVerb: true });
@@ -2766,11 +2774,21 @@
         var MOTION_VERBS_SET = {'가다':1,'오다':1,'도착하다':1};
         var purposeVerbItem = null;
         if(verb && MOTION_VERBS_SET[verb.ko]){
+          // Path 1: "sa + verb" in the same segment text (e.g. "merge la piata sa cumpere")
           var saMatch = (' ' + normalizeLatin(cd.text) + ' ').match(/\bsa\s+(\S+)/);
           if(saMatch){
             var wordAfterSa = saMatch[1].replace(/[!?.,;]/g,'');
             var pvCandidate = findBestMatch('verb', wordAfterSa);
             if(pvCandidate && pvCandidate.ko !== verb.ko) purposeVerbItem = pvCandidate;
+          }
+          // Path 2: "ca sa" connector folded a separate segment (e.g. "merge la cinema ca sa vada un film")
+          if(!purposeVerbItem && cd.__purposeText){
+            var ptVerb = findBestMatch('verb', cd.__purposeText);
+            if(ptVerb && ptVerb.ko !== verb.ko){
+              purposeVerbItem = ptVerb;
+              var ptObjs = findAllMatches('object1', cd.__purposeText, 2);
+              if(ptObjs.length) objects = ptObjs;
+            }
           }
         }
         if(purposeVerbItem) clause.__purposeVerbItem = purposeVerbItem;
