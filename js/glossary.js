@@ -72,7 +72,6 @@ const UI = {
     favLbl:  "Favorit",
     learnLbl:"Memorat",
     youglish:"YouGlish ↗",
-    related: "DIN ACEEAȘI CATEGORIE",
     associated: "CUVINTE ASOCIATE",
     back:    "Înapoi",
     allCats: "Toate",
@@ -95,7 +94,6 @@ const UI = {
     favLbl:  "Favorite",
     learnLbl:"Learned",
     youglish:"YouGlish ↗",
-    related: "SAME CATEGORY",
     associated: "ASSOCIATED WORDS",
     back:    "Back",
     allCats: "All",
@@ -466,14 +464,6 @@ function _renderPanel(word) {
   const color = getCatColor(word);
   const cats  = getCats(word);
 
-  // Same-category: 10 random
-  const relPool = WORDS.filter(w => w.ko !== word.ko && getCats(w).some(c => cats.includes(c)));
-  for (let i = relPool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [relPool[i], relPool[j]] = [relPool[j], relPool[i]];
-  }
-  const related = relPool.slice(0, 10);
-
   // Semantically associated: 10 from clusters
   const associated = getAssociated(word.ko, 10);
 
@@ -517,12 +507,6 @@ function _renderPanel(word) {
         ).join("")
       : "") +
 
-    (related.length
-      ? `<div class="gls-panel-hdg">${t("related")}</div>` +
-        `<div class="gls-panel-related">${related.map(rw =>
-          `<span class="gls-panel-rel" style="color:${getCatColor(rw)}" onclick="focusWord('${esc(rw.ko)}')">${sanitizeHTML(rw.ko)}</span>`
-        ).join("")}</div>`
-      : "") +
     (associated.length
       ? `<div class="gls-panel-hdg gls-panel-hdg-assoc">${t("associated")}</div>` +
         `<div class="gls-panel-related gls-panel-assoc">${associated.map(rw =>
