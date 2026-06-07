@@ -638,6 +638,12 @@ function buildVortexNodes(item) {
     node.innerHTML = `
       <div class="mrs-v-node-title">${d.title}</div>
       ${d.body}`;
+    node.querySelectorAll('[data-speak]').forEach(span => {
+      span.addEventListener('click', e => {
+        e.stopPropagation();
+        speakKo(span.dataset.speak);
+      });
+    });
     container.appendChild(node);
   });
 }
@@ -955,10 +961,6 @@ function init() {
   // Vortex events
   el('mrsVClose').onclick = closeVortex;
   el('mrsVGlyph').onclick = () => currentItem && speakKo(currentItem.speak);
-  el('mrsVNodes').addEventListener('click', e => {
-    const syl = e.target.closest('[data-speak]');
-    if (syl) speakKo(syl.dataset.speak);
-  });
   el('mrsVWrite').onclick = () => {
     if (!currentItem) return;
     window.location.href = `./writing.html?char=${encodeURIComponent(currentItem.char)}`;
