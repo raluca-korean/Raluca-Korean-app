@@ -337,7 +337,13 @@
       {ko:'포도를', ro:'struguri', en:'grapes', aliases:['struguri','strugure','grape','grapes']},
       {ko:'딸기를', ro:'căpșuni', en:'strawberries', aliases:['capsuni','căpșuni','capsuna','căpșună','strawberry','strawberries']},
       {ko:'채소를', ro:'legume', en:'vegetables', aliases:['legume','leguma','legumă','vegetable','vegetables','verdete','verdeturi','verdeturi']},
-      {ko:'과일을', ro:'fructe', en:'fruit', aliases:['fructe','fruct','fruit','fruits']}
+      {ko:'과일을', ro:'fructe', en:'fruit', aliases:['fructe','fruct','fruit','fruits']},
+      {ko:'집을', ro:'o casă', en:'a house', aliases:['casa','casă','o casa','o casă','locuinta','locuință','o locuinta','o locuință','house','a house','home']},
+      {ko:'돈을', ro:'banii', en:'the money', aliases:['banii','bani','banu','money','the money','cash']},
+      {ko:'차를', ro:'o mașină', en:'a car', aliases:['masina','mașina','mașină','o masina','o mașina','o mașină','masini','mașini','car','a car','vehicle']},
+      {ko:'직장을', ro:'un job', en:'a job', aliases:['un job','job','slujba','slujbă','o slujba','o slujbă','serviciu','un serviciu','locul de munca','locul de muncă','work','a job']},
+      {ko:'비자를', ro:'o viză', en:'a visa', aliases:['viza','viză','o viza','o viză','visa','a visa']},
+      {ko:'표를', ro:'un bilet', en:'a ticket', aliases:['bilet','un bilet','bilete','ticket','a ticket']}
     ],
     description: [
       {ko:'', ro:'', en:'', aliases:[]},
@@ -2584,6 +2590,17 @@
     return segments;
   }
 
+  // Strip leading modal phrases from purpose text so that
+  // "pot să cumpăr o casă" → "cumpăr o casă" (purpose verb detected cleanly)
+  function stripModalPrefix(text){
+    var n = normalizeLatin(text).trim();
+    // Romanian modals: pot să, trebuie să, încerc să, reușesc să, vreau să
+    n = n.replace(/^(pot|trebuie|incerc|reusesc|vreau|vrei|vrea|vrem)\s+sa\s+/, '');
+    // English modals: can, must, have to, want to, try to
+    n = n.replace(/^(can|must|have to|want to|try to|need to)\s+/, '');
+    return n || text;
+  }
+
   function detectTenseFromText(text){
     var n = normalizeLatin(text);
 
@@ -2796,20 +2813,22 @@
           }
           // Path 2: "ca sa" connector folded a separate segment (e.g. "merge la cinema ca sa vada un film")
           if(!purposeVerbItem && cd.__purposeText){
-            var ptVerb = findBestMatch('verb', cd.__purposeText);
+            var ptText = stripModalPrefix(cd.__purposeText);
+            var ptVerb = findBestMatch('verb', ptText);
             if(ptVerb && ptVerb.ko !== verb.ko){
               purposeVerbItem = ptVerb;
-              var ptObjs = findAllMatches('object1', cd.__purposeText, 2);
+              var ptObjs = findAllMatches('object1', ptText, 2);
               if(ptObjs.length) objects = ptObjs;
             }
           }
         } else if(verb && cd.__purposeText){
           // Non-motion verb + "ca sa" connector: generates -(으)려고 form
-          // e.g. "Muncesc ca sa castig bani" → 돈을 벌려고 일해요
-          var ptVerb2 = findBestMatch('verb', cd.__purposeText);
+          // e.g. "Economisesc ca sa pot sa cumpere o casa" → 집을 사려고 저축해요
+          var ptText2 = stripModalPrefix(cd.__purposeText);
+          var ptVerb2 = findBestMatch('verb', ptText2);
           if(ptVerb2 && ptVerb2.ko !== verb.ko){
             purposeVerbItem = ptVerb2;
-            var ptObjs2 = findAllMatches('object1', cd.__purposeText, 2);
+            var ptObjs2 = findAllMatches('object1', ptText2, 2);
             if(ptObjs2.length) objects = ptObjs2;
           }
         }
