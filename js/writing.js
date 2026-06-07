@@ -268,6 +268,11 @@ function updateTarget() {
     mode === "sentences" ? T[lang].sentHint :
     mode === "words"     ? T[lang].wordHint : "";
 
+  // Animație: referința se „scrie" de la stânga la dreapta
+  trace.classList.remove("animate-write");
+  void trace.offsetWidth;
+  trace.classList.add("animate-write");
+
   checked = false;
   document.getElementById("btnCheck").disabled = false;
   document.getElementById("btnNext").disabled  = true;
@@ -290,7 +295,7 @@ function speakTarget() {
 // ── CANVAS ────────────────────────────────────────────────────
 const cvs = document.getElementById("wCanvas");
 const ctx  = cvs.getContext("2d");
-let drawing=false, lx=0, ly=0;
+let drawing=false, lx=0, ly=0, pmx=0, pmy=0, lastMs=0;
 
 function drawColor() {
   return document.body.classList.contains("dark-mode") ? "#e879f9" : "#1a0533";
@@ -304,17 +309,24 @@ function cPos(e) {
 
 cvs.addEventListener("pointerdown", e => {
   cvs.setPointerCapture(e.pointerId);
-  drawing=true; [lx,ly]=cPos(e);
-  ctx.beginPath(); ctx.arc(lx,ly,4.5,0,Math.PI*2);
+  drawing=true;
+  [lx,ly]=cPos(e); pmx=lx; pmy=ly; lastMs=Date.now();
+  ctx.beginPath(); ctx.arc(lx,ly,5.5,0,Math.PI*2);
   ctx.fillStyle=drawColor(); ctx.fill();
 });
 cvs.addEventListener("pointermove", e => {
   if (!drawing) return;
   const [x,y]=cPos(e);
-  ctx.strokeStyle=drawColor(); ctx.lineWidth=9;
+  const now=Date.now(), dt=Math.max(now-lastMs,1);
+  const speed=Math.hypot(x-lx,y-ly)/dt;
+  // Pensulă: gros când lent, subțire când rapid
+  const w=Math.max(2.5, Math.min(13, 13-speed*7));
+  const mx=(lx+x)/2, my=(ly+y)/2;
+  ctx.strokeStyle=drawColor(); ctx.lineWidth=w;
   ctx.lineCap="round"; ctx.lineJoin="round";
-  ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(x,y); ctx.stroke();
-  [lx,ly]=[x,y];
+  ctx.beginPath(); ctx.moveTo(pmx,pmy);
+  ctx.quadraticCurveTo(lx,ly,mx,my); ctx.stroke();
+  pmx=mx; pmy=my; [lx,ly]=[x,y]; lastMs=now;
 });
 cvs.addEventListener("pointerup",     () => { drawing=false; });
 cvs.addEventListener("pointercancel", () => { drawing=false; });
