@@ -290,7 +290,10 @@
       {ko:'다음 세기에', ro:'secolul viitor', en:'next century', aliases:['secolul viitor','next century']},
       {ko:'이번 밀레니엄에', ro:'mileniul acesta', en:'this millennium', aliases:['mileniul acesta','in acest mileniu','în acest mileniu','this millennium']},
       {ko:'지난 밀레니엄에', ro:'mileniul trecut', en:'last millennium', aliases:['mileniul trecut','last millennium']},
-      {ko:'다음 밀레니엄에', ro:'mileniul viitor', en:'next millennium', aliases:['mileniul viitor','next millennium']}
+      {ko:'다음 밀레니엄에', ro:'mileniul viitor', en:'next millennium', aliases:['mileniul viitor','next millennium']},
+      {ko:'이번 십 년에', ro:'deceniul acesta', en:'this decade', aliases:['deceniul acesta','in acest deceniu','în acest deceniu','this decade']},
+      {ko:'지난 십 년에', ro:'deceniul trecut', en:'last decade', aliases:['deceniul trecut','last decade']},
+      {ko:'다음 십 년에', ro:'deceniul viitor', en:'next decade', aliases:['deceniul viitor','next decade']}
     ],
     location: [
       {ko:'', ro:'', en:'', aliases:[]},
