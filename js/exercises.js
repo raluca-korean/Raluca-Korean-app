@@ -46,6 +46,12 @@ let levelStreak = 0;
 let levelSuggestDismissed = false;
 const LEVEL_SUGGEST_THRESHOLD = 3;
 
+// ── SESSION STATS (reset per round / type-level change) ─────
+let sessionCorrect   = 0;
+let sessionTotal     = 0;
+let sessionMaxStreak = 0;
+let sessionXPStart   = 0;
+
 // ── EXERCISE SRS (SM-2) ─────────────────────────────────────────────────
 const EX_SRS_KEY = 'RK_EX_SRS';
 const EX_SRS_NEW_CAP = 10;
@@ -492,6 +498,7 @@ function saveStats(isCorrect, type){
   s.byType[type].total++;
   if(isCorrect) s.byType[type].correct++;
   localStorage.setItem("RK_STATS", JSON.stringify(s));
+  saveToCalendar();
   if(isCorrect) syncStudyToSW(streak);
 }
 
@@ -525,6 +532,289 @@ function exitWrongMode(){
   isWrongMode = false;
   wrongModeItems = [];
   currentIndex = 0;
+  resetSessionStats();
+}
+
+// ── SESSION ─────────────────────────────────────────────────
+function resetSessionStats(){
+  sessionCorrect   = 0;
+  sessionTotal     = 0;
+  sessionMaxStreak = 0;
+  sessionXPStart   = window.RKGamification ? RKGamification.getXPData().total : 0;
+}
+
+// ── STUDY CALENDAR ──────────────────────────────────────────
+function saveToCalendar(){
+  const today = new Date().toISOString().slice(0, 10);
+  let cal;
+  try { cal = JSON.parse(localStorage.getItem('RK_STUDY_CAL') || '{}'); } catch { cal = {}; }
+  cal[today] = (cal[today] || 0) + 1;
+  try { localStorage.setItem('RK_STUDY_CAL', JSON.stringify(cal)); } catch {}
+}
+
+// ── SCORE CARD ──────────────────────────────────────────────
+function showScoreCard(){
+  const pct = sessionTotal === 0 ? 0 : Math.round((sessionCorrect / sessionTotal) * 100);
+  const xpNow    = window.RKGamification ? RKGamification.getXPData().total : sessionXPStart;
+  const xpGained = Math.max(0, xpNow - sessionXPStart);
+  const isRo     = currentLang === 'ro';
+
+  const emoji = pct >= 90 ? '🏆' : pct >= 70 ? '🎉' : pct >= 50 ? '💪' : '📚';
+  document.getElementById('scEmoji').textContent  = emoji;
+  document.getElementById('scTitle').textContent  = isRo ? 'Rundă completă!' : 'Round complete!';
+  document.getElementById('scPct').textContent    = pct + '%';
+  document.getElementById('scCorrect').textContent   = sessionCorrect;
+  document.getElementById('scTotalEl').textContent   = sessionTotal;
+  document.getElementById('scStreakEl').textContent  = '🔥 ' + sessionMaxStreak;
+  document.getElementById('scXPGain').textContent    = '+' + xpGained + ' XP';
+  document.getElementById('scLabCorrect').textContent = isRo ? 'Corecte'    : 'Correct';
+  document.getElementById('scLabTotal').textContent   = isRo ? 'Total'      : 'Total';
+  document.getElementById('scLabStreak').textContent  = isRo ? 'Max streak' : 'Best streak';
+  document.getElementById('scLabXP').textContent      = isRo ? 'XP câștigat' : 'XP earned';
+  document.getElementById('scNext').textContent = isRo ? '🔄 Rundă nouă' : '🔄 New round';
+
+  // Animated ring
+  const circ = 2 * Math.PI * 50; // r=50 → 314.16
+  const fill = document.getElementById('scRingFill');
+  fill.style.strokeDasharray  = circ;
+  fill.style.strokeDashoffset = circ;
+  setTimeout(() => { fill.style.strokeDashoffset = circ * (1 - pct / 100); }, 60);
+
+  // Mistakes button
+  const wrongCount  = (wrongsByType[typeSelect.value] || []).length;
+  const scMistakes  = document.getElementById('scMistakes');
+  scMistakes.style.display = wrongCount > 0 ? '' : 'none';
+  if(wrongCount > 0)
+    scMistakes.textContent = `❌ ${isRo ? 'Repetă greșelile' : 'Retry mistakes'} (${wrongCount})`;
+
+  document.getElementById('scoreCard').setAttribute('aria-hidden', 'false');
+}
+
+function hideScoreCard(){
+  document.getElementById('scoreCard').setAttribute('aria-hidden', 'true');
+}
+
+// ── STATS PANEL ─────────────────────────────────────────────
+function openStatsPanel(){
+  renderStatsPanel();
+  document.getElementById('statsPanel').classList.add('open');
+  document.getElementById('statsPanel').setAttribute('aria-hidden', 'false');
+  document.getElementById('statsBackdrop').classList.add('open');
+}
+
+function closeStatsPanel(){
+  document.getElementById('statsPanel').classList.remove('open');
+  document.getElementById('statsPanel').setAttribute('aria-hidden', 'true');
+  document.getElementById('statsBackdrop').classList.remove('open');
+}
+
+function renderStatsPanel(){
+  const isRo = currentLang === 'ro';
+  let stats;
+  try { stats = JSON.parse(localStorage.getItem('RK_STATS') || '{}'); } catch { stats = {}; }
+  const xpData  = window.RKGamification ? RKGamification.getXPData()  : {total:0};
+  const lvlInfo = window.RKGamification ? RKGamification.getLevelInfo(xpData.total) : null;
+  const quest   = window.RKGamification ? RKGamification.getQuestData() : {done:0, questsDone:0};
+  const earned  = window.RKGamification ? RKGamification.getEarnedBadges() : [];
+  let cal;
+  try { cal = JSON.parse(localStorage.getItem('RK_STUDY_CAL') || '{}'); } catch { cal = {}; }
+
+  const totalEx   = stats.total   || 0;
+  const totalCorr = stats.correct || 0;
+  const accPct    = totalEx > 0 ? Math.round((totalCorr / totalEx) * 100) : 0;
+  const bestStr   = stats.bestStreak || 0;
+  const questGoal = window.RKGamification ? RKGamification.DAILY_GOAL : 10;
+  const questDone = quest.done || 0;
+  const questPct  = Math.min(100, Math.round((questDone / questGoal) * 100));
+  const lvlStr    = lvlInfo ? `Lv.${lvlInfo.current.level} — ${lvlInfo.current['title_' + currentLang] || lvlInfo.current.title_ro}` : '';
+
+  // Per-type bars
+  const TMETA = [
+    {key:'ko-ro',        label:'KO→RO'},
+    {key:'ro-ko',        label:'RO→KO'},
+    {key:'particle',     label: isRo ? 'Particulă' : 'Particle'},
+    {key:'particlePlus', label: isRo ? 'Part.+'    : 'Part.+'},
+    {key:'conjug',       label: isRo ? 'Conj.'     : 'Conj.'},
+    {key:'puzzle',       label:'Puzzle'},
+    {key:'chain',        label:'Chain'},
+  ];
+  const typeBarsHTML = TMETA.map(m => {
+    const td  = (stats.byType || {})[m.key] || {total:0, correct:0};
+    const pct = td.total > 0 ? Math.round((td.correct / td.total) * 100) : 0;
+    const dim = td.total === 0 ? 'style="opacity:.38"' : '';
+    return `<div class="sp-type-row" ${dim}>
+      <div class="sp-type-name">${m.label}</div>
+      <div class="sp-type-track"><div class="sp-type-fill" style="width:${pct}%"></div></div>
+      <div class="sp-type-pct">${td.total > 0 ? pct + '%' : '—'}</div>
+    </div>`;
+  }).join('');
+
+  // Calendar — last 42 days (6 weeks)
+  const todayDate = new Date();
+  let calHTML = '';
+  for(let i = 41; i >= 0; i--){
+    const d   = new Date(todayDate);
+    d.setDate(d.getDate() - i);
+    const key   = d.toISOString().slice(0, 10);
+    const count = cal[key] || 0;
+    const cls   = count >= 30 ? 'd4' : count >= 15 ? 'd3' : count >= 5 ? 'd2' : count >= 1 ? 'd1' : '';
+    calHTML += `<div class="sp-cal-day ${cls}" title="${key} · ${count}"></div>`;
+  }
+
+  // Badges
+  const BDEFS = window.RKGamification ? RKGamification.BADGE_DEFS : [];
+  const badgesHTML = BDEFS.map(b => {
+    const ok    = earned.includes(b.id);
+    const label = ok ? (b['title_' + currentLang] || b.title_ro) : (isRo ? 'Blocat' : 'Locked');
+    return `<div class="sp-badge-chip ${ok ? 'earned' : ''}" title="${label}">
+      <span>${ok ? b.icon : '🔒'}</span><span>${label}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('statsPanelTitle').textContent = isRo ? '📊 Statistici' : '📊 Statistics';
+  document.getElementById('statsPanelBody').innerHTML = `
+    <div class="sp-section">
+      <div class="sp-section-title">${isRo ? 'Sumar' : 'Summary'}</div>
+      <div class="sp-summary-grid">
+        <div class="sp-summary-cell"><div class="sp-summary-val">${totalEx}</div><div class="sp-summary-lab">${isRo ? 'Exerciții' : 'Exercises'}</div></div>
+        <div class="sp-summary-cell"><div class="sp-summary-val">${accPct}%</div><div class="sp-summary-lab">${isRo ? 'Acuratețe' : 'Accuracy'}</div></div>
+        <div class="sp-summary-cell"><div class="sp-summary-val">🔥 ${bestStr}</div><div class="sp-summary-lab">${isRo ? 'Max streak' : 'Best streak'}</div></div>
+        <div class="sp-summary-cell"><div class="sp-summary-val">⭐ ${xpData.total}</div><div class="sp-summary-lab">${lvlStr}</div></div>
+        <div class="sp-summary-cell"><div class="sp-summary-val">📅 ${quest.questsDone || 0}</div><div class="sp-summary-lab">${isRo ? 'Misiuni' : 'Quests'}</div></div>
+        <div class="sp-summary-cell"><div class="sp-summary-val">🏅 ${earned.length}</div><div class="sp-summary-lab">${isRo ? 'Badge-uri' : 'Badges'}</div></div>
+      </div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-section-title">${isRo ? 'Misiunea de azi' : "Today's quest"}</div>
+      <div class="sp-quest-wrap">
+        <div class="sp-quest-row">
+          <span>${questDone}/${questGoal} ${isRo ? 'exerciții' : 'exercises'}</span>
+          <span>${questPct}%</span>
+        </div>
+        <div class="sp-bar-track"><div class="sp-bar-fill" style="width:${questPct}%"></div></div>
+      </div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-section-title">${isRo ? 'Acuratețe per tip' : 'Accuracy per type'}</div>
+      ${typeBarsHTML}
+    </div>
+    <div class="sp-section">
+      <div class="sp-section-title">${isRo ? 'Zile de studiu — 6 săptămâni' : 'Study days — 6 weeks'}</div>
+      <div class="sp-calendar">${calHTML}</div>
+      <div class="sp-cal-legend">
+        <div class="sp-cal-swatch"></div>${isRo ? 'Mai puțin' : 'Less'}
+        <div class="sp-cal-swatch d1"></div>
+        <div class="sp-cal-swatch d2"></div>
+        <div class="sp-cal-swatch d3"></div>
+        <div class="sp-cal-swatch d4"></div>
+        ${isRo ? 'Mai mult' : 'More'}
+      </div>
+    </div>
+    <div class="sp-section">
+      <div class="sp-section-title">${isRo ? 'Badge-uri' : 'Badges'}</div>
+      <div class="sp-badges-grid">${badgesHTML}</div>
+    </div>`;
+}
+
+// ── PRONUNCIATION (Speech Recognition) ─────────────────────
+let micListening = false;
+let _speechRec   = null;
+
+function _normSpeech(s){
+  return (s || '').toLowerCase().trim().replace(/[.,!?;:'"„"–—]/g, '').replace(/\s+/g, ' ');
+}
+function _micScore(transcript, correct){
+  const t = _normSpeech(transcript);
+  const c = _normSpeech(correct);
+  if(!t || !c) return 0;
+  if(t === c)            return 1;
+  if(t.includes(c) || c.includes(t)) return 0.8;
+  const tw = t.split(' ').filter(Boolean);
+  const cw = c.split(' ').filter(Boolean);
+  const hits = tw.filter(w => cw.some(cword => cword.startsWith(w) || w.startsWith(cword))).length;
+  return cw.length > 0 ? hits / cw.length : 0;
+}
+
+function stopMic(){
+  if(_speechRec){ try{ _speechRec.stop(); }catch{} _speechRec = null; }
+  micListening = false;
+  const btn = document.getElementById('micBtn');
+  if(btn) btn.classList.remove('listening');
+  const lbl = document.getElementById('micLabel');
+  if(lbl) lbl.textContent = currentLang === 'ro' ? 'Pronunță traducerea' : 'Speak the translation';
+}
+
+function startMic(){
+  if(micListening){ stopMic(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+
+  const isRo   = currentLang === 'ro';
+  const btn    = document.getElementById('micBtn');
+  const status = document.getElementById('micStatus');
+  const lbl    = document.getElementById('micLabel');
+
+  if(status){ status.textContent = isRo ? '🎤 Ascult...' : '🎤 Listening...'; status.className = 'mic-status'; }
+  if(btn)   btn.classList.add('listening');
+  if(lbl)   lbl.textContent = isRo ? 'Oprește' : 'Stop';
+  micListening = true;
+
+  const rec = new SR();
+  _speechRec  = rec;
+  rec.lang               = isRo ? 'ro-RO' : 'en-US';
+  rec.interimResults     = false;
+  rec.maxAlternatives    = 3;
+
+  rec.onresult = (e) => {
+    micListening = false;
+    if(btn) btn.classList.remove('listening');
+    if(lbl) lbl.textContent = isRo ? 'Pronunță traducerea' : 'Speak the translation';
+
+    const item       = currentList[currentIndex];
+    const correctAns = item ? (item.correct[currentLang] || '') : '';
+    const alts       = Array.from(e.results[0]).map(a => a.transcript);
+    const bestScore  = Math.max(...alts.map(tr => _micScore(tr, correctAns)));
+    const transcript = alts[0];
+
+    if(status){
+      if(bestScore >= 0.65){
+        status.textContent = `✅ "${transcript}"`;
+        status.className   = 'mic-status ok';
+      } else {
+        status.textContent = `❌ "${transcript}" — ${isRo ? 'Corect' : 'Correct'}: "${correctAns}"`;
+        status.className   = 'mic-status err';
+      }
+    }
+  };
+
+  rec.onerror = (e) => {
+    micListening = false;
+    if(btn) btn.classList.remove('listening');
+    if(lbl) lbl.textContent = isRo ? 'Pronunță traducerea' : 'Speak the translation';
+    if(status){
+      status.textContent = e.error === 'no-speech'
+        ? (isRo ? '— Niciun sunet detectat' : '— No speech detected')
+        : (isRo ? '— Eroare recunoaștere' : '— Recognition error');
+      status.className = 'mic-status';
+    }
+  };
+
+  rec.onend = () => {
+    micListening = false;
+    if(btn) btn.classList.remove('listening');
+    if(lbl) lbl.textContent = isRo ? 'Pronunță traducerea' : 'Speak the translation';
+  };
+
+  try { rec.start(); } catch { micListening = false; if(btn) btn.classList.remove('listening'); }
+}
+
+function _updateMicWrap(){
+  const wrap = document.getElementById('micWrap');
+  if(!wrap) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const show = typeSelect.value === 'ko-ro' && !answered && !!SR;
+  wrap.style.display = show ? '' : 'none';
+  if(!show){ stopMic(); const ms = document.getElementById('micStatus'); if(ms){ ms.textContent=''; ms.className='mic-status'; } }
 }
 
 // ── DIFFICULTY ADAPTIVĂ ──────────────────────────────────────────────────
@@ -695,6 +985,7 @@ function cleanConjugPrompt(prompt){
 function render(){
   selectedAnswer = null;
   answered = false;
+  _updateMicWrap();
   document.getElementById("answers").classList.remove("done");
   feedbackEl.textContent = "";
   answersEl.innerHTML = "";
@@ -961,7 +1252,11 @@ function checkCurrentAnswer(){
     appendSrsInfo(typeSelect.value, item, effectiveRight);
     processGamification(effectiveRight);
     if(!isWrongMode) checkLevelSuggestion(effectiveRight);
+    sessionTotal++;
+    if(effectiveRight) sessionCorrect++;
+    sessionMaxStreak = Math.max(sessionMaxStreak, streak);
     answered = true;
+    _updateMicWrap();
     const hb = document.getElementById("hintBtn");
     if(hb) hb.style.display = "none";
     document.getElementById("answers").classList.add("done");
@@ -1012,7 +1307,11 @@ function checkCurrentAnswer(){
   appendSrsInfo(typeSelect.value, item, isCorrect);
   processGamification(isCorrect);
   if(!isWrongMode) checkLevelSuggestion(isCorrect);
+  sessionTotal++;
+  if(isCorrect) sessionCorrect++;
+  sessionMaxStreak = Math.max(sessionMaxStreak, streak);
   answered = true;
+  _updateMicWrap();
   document.getElementById("answers").classList.add("done");
   updateBadges();
   updateWrongBtn();
@@ -1086,6 +1385,12 @@ function launchFireworks(){
 
 function nextQuestion(){
   if(currentList.length === 0) return;
+  const atEnd = currentIndex + 1 >= currentList.length;
+  if(atEnd && sessionTotal > 0 && !isWrongMode && !typeSelect.value.startsWith('drill-')){
+    showScoreCard();
+    currentIndex = 0;
+    return;
+  }
   currentIndex = (currentIndex + 1) % currentList.length;
   render();
 }
@@ -1095,6 +1400,7 @@ typeSelect.addEventListener("change", () => {
   levelStreak = 0;
   dismissLevelSuggestion();
   currentIndex = 0;
+  resetSessionStats();
   if(typeSelect.value === 'drill-conjug') drillConjQueue = [];
   if(typeSelect.value === 'drill-ext')    drillExtQueue  = [];
   const isDrill = typeSelect.value.startsWith('drill-');
@@ -1113,6 +1419,7 @@ levelBtnsEl.querySelectorAll("button[data-level]").forEach(btn => {
     currentLevel = btn.dataset.level;
     localStorage.setItem("RK_LEVEL", currentLevel);
     currentIndex = 0;
+    resetSessionStats();
     updateLevelButtons();
     render();
     updateWrongBtn();
@@ -1208,3 +1515,44 @@ document.addEventListener("keydown", function(e){
 
 updateBadges();
 loadExercises();
+
+// ── NEW FEATURE LISTENERS ────────────────────────────────────
+
+// Score Card
+document.getElementById('scNext').addEventListener('click', () => {
+  hideScoreCard();
+  resetSessionStats();
+  total = 0; correct = 0; streak = 0;
+  currentIndex = 0;
+  render();
+  updateBadges();
+  updateWrongBtn();
+});
+document.getElementById('scMistakes').addEventListener('click', () => {
+  hideScoreCard();
+  resetSessionStats();
+  enterWrongMode();
+});
+document.getElementById('scoreCard').addEventListener('click', (e) => {
+  if(e.target === e.currentTarget) hideScoreCard();
+});
+
+// Stats Panel
+document.getElementById('statsBtn').addEventListener('click', openStatsPanel);
+document.getElementById('statsPanelClose').addEventListener('click', closeStatsPanel);
+document.getElementById('statsBackdrop').addEventListener('click', closeStatsPanel);
+
+// Mic
+const _micBtnEl = document.getElementById('micBtn');
+if(_micBtnEl) _micBtnEl.addEventListener('click', startMic);
+
+// Keyboard: Escape closes Score Card / Stats Panel
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape'){
+    if(document.getElementById('scoreCard').getAttribute('aria-hidden') === 'false') hideScoreCard();
+    if(document.getElementById('statsPanel').classList.contains('open')) closeStatsPanel();
+  }
+});
+
+// Initialize session XP baseline after gamification is loaded
+resetSessionStats();
