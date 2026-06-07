@@ -243,7 +243,7 @@
     ],
     time: [
       {ko:'', ro:'', en:'', aliases:[]},
-      {ko:'오늘', ro:'astăzi', en:'today', aliases:['astăzi','astazi','azi','today']},
+      {ko:'오늘', ro:'astăzi', en:'today', aliases:['astăzi','astazi','azi','today','ziua curenta','ziua curentă','ziua de azi','in ziua de azi','în ziua de azi']},
       {ko:'어제', ro:'ieri', en:'yesterday', aliases:['ieri','yesterday']},
       {ko:'내일', ro:'mâine', en:'tomorrow', aliases:['maine','mâine','tomorrow']},
       {ko:'지금', ro:'acum', en:'now', aliases:['acum','now']},
