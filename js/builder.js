@@ -1851,12 +1851,15 @@
     }
     if(object2 && object2.ko) parts.push(object2.ko);
     mannerAdvs.forEach(function(ko){ parts.push(ko); });
-    // Purpose clause -(으)러: "sa cumpere" → 사러, placed before main verb
+    // Purpose clause: motion verb → -(으)러 (보러 가다); other → -(으)려고 (벌려고 일하다)
     if(!skipVerb && clause.__purposeVerbItem){
       var pv = clause.__purposeVerbItem;
       var pvStem = pv.ko.replace(/다$/, '');
       var pvHasBatchim = window.Conjugation && window.Conjugation.hasBatchim(pvStem);
-      parts.push(pvStem + (pvHasBatchim ? '으러' : '러'));
+      var purposeSuffix = isMotionTo
+        ? (pvHasBatchim ? '으러' : '러')
+        : (pvHasBatchim ? '으려고' : '려고');
+      parts.push(pvStem + purposeSuffix);
     }
     if(!skipVerb && verbKo) parts.push(verbKo);
 
@@ -2789,6 +2792,15 @@
               var ptObjs = findAllMatches('object1', cd.__purposeText, 2);
               if(ptObjs.length) objects = ptObjs;
             }
+          }
+        } else if(verb && cd.__purposeText){
+          // Non-motion verb + "ca sa" connector: generates -(으)려고 form
+          // e.g. "Muncesc ca sa castig bani" → 돈을 벌려고 일해요
+          var ptVerb2 = findBestMatch('verb', cd.__purposeText);
+          if(ptVerb2 && ptVerb2.ko !== verb.ko){
+            purposeVerbItem = ptVerb2;
+            var ptObjs2 = findAllMatches('object1', cd.__purposeText, 2);
+            if(ptObjs2.length) objects = ptObjs2;
           }
         }
         if(purposeVerbItem) clause.__purposeVerbItem = purposeVerbItem;
