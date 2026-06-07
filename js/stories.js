@@ -34,7 +34,7 @@
   }
 
   function isLight() {
-    return document.body.classList.contains('rfi-light');
+    return !document.body.classList.contains('dark-mode');
   }
 
   function tick(t) {
@@ -82,39 +82,6 @@
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
-  }
-}());
-
-/* ═══════════════════════════════════════════════════════════
-   RFI Theme System — Night Field / Luminous Field
-═══════════════════════════════════════════════════════════ */
-(function () {
-  'use strict';
-  var KEY = 'RK_RFI_THEME';
-
-  function apply() {
-    var light = localStorage.getItem(KEY) === 'light';
-    document.body.classList.toggle('rfi-dark',  !light);
-    document.body.classList.toggle('rfi-light',  light);
-  }
-
-  function toggle() {
-    var nowLight = !document.body.classList.contains('rfi-light');
-    document.body.classList.toggle('rfi-dark',  !nowLight);
-    document.body.classList.toggle('rfi-light',  nowLight);
-    localStorage.setItem(KEY, nowLight ? 'light' : 'dark');
-  }
-
-  function setup() {
-    apply();
-    var btn = document.getElementById('rfTheme');
-    if (btn) btn.addEventListener('click', toggle);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setup);
-  } else {
-    setup();
   }
 }());
 
@@ -572,48 +539,19 @@
       : function () { renderConstellation(currentStory); };
   }
 
-  /* ── Language switching ── */
-  function setLang(l) {
-    lang = l;
-    localStorage.setItem('RK_LANG', l);
-    document.documentElement.lang = l;
-    document.getElementById('rfLangBtn').textContent = l;
-    document.getElementById('rfPickRo').classList.toggle('lp-active', l === 'ro');
-    document.getElementById('rfPickEn').classList.toggle('lp-active', l === 'en');
-    if (currentState === 'stateField') {
-      renderField();
-    } else if (currentState === 'stateConstellation' && currentStory) {
-      renderConstellation(currentStory);
-    }
-  }
-
   /* ── Init ── */
   function init() {
-    lang = localStorage.getItem('RK_LANG') || 'ro';
+    lang = RKLang.get();
     document.documentElement.lang = lang;
-    document.getElementById('rfLangBtn').textContent = lang;
-    document.getElementById('rfPickRo').classList.toggle('lp-active', lang === 'ro');
-    document.getElementById('rfPickEn').classList.toggle('lp-active', lang === 'en');
 
-    /* Single lang button — long press (>450ms) opens picker */
-    var langBtn    = document.getElementById('rfLangBtn');
-    var langPicker = document.getElementById('rfLangPicker');
-    var langTimer  = null;
-
-    function openPicker() { langPicker.classList.add('open'); }
-    function closePicker() { langPicker.classList.remove('open'); }
-
-    langBtn.addEventListener('pointerdown', function () {
-      langTimer = setTimeout(function () { langTimer = null; openPicker(); }, 450);
-    });
-    langBtn.addEventListener('pointerup',    function () { clearTimeout(langTimer); langTimer = null; });
-    langBtn.addEventListener('pointerleave', function () { clearTimeout(langTimer); langTimer = null; });
-
-    document.getElementById('rfPickRo').addEventListener('click', function () { setLang('ro'); closePicker(); });
-    document.getElementById('rfPickEn').addEventListener('click', function () { setLang('en'); closePicker(); });
-
-    document.addEventListener('pointerdown', function (e) {
-      if (!e.target.closest('#rfLangBtn,#rfLangPicker')) closePicker();
+    RKLang.init(function (newLang) {
+      lang = newLang;
+      document.documentElement.lang = lang;
+      if (currentState === 'stateField') {
+        renderField();
+      } else if (currentState === 'stateConstellation' && currentStory) {
+        renderConstellation(currentStory);
+      }
     });
 
     document.getElementById('btnFieldBack').addEventListener('click', renderField);
