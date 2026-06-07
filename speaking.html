@@ -1111,7 +1111,19 @@ function resonate(){
 }
 
 // ── SPEECH ────────────────────────────────────────────────
-function initSpeech(){}
+let koVoice = null;
+
+function initSpeech(){
+  if(!('speechSynthesis' in window)) return;
+  const load = () => {
+    const vs = speechSynthesis.getVoices();
+    koVoice = vs.find(v=>v.lang==='ko-KR')
+           || vs.find(v=>v.lang.startsWith('ko'))
+           || null;
+  };
+  load();
+  speechSynthesis.addEventListener('voiceschanged', load);
+}
 
 function clearRec(){
   // Oprim stream-ul activ — esențial pentru ca startMic să poată porni din nou
@@ -1273,11 +1285,16 @@ function evaluate(transcript){
 }
 
 function speakKo(txt){
-  if(!('speechSynthesis' in window)) return;
+  if(!('speechSynthesis' in window)){
+    toast(lang==='ro'?'Sinteză vocală indisponibilă':'Speech synthesis unavailable');
+    return;
+  }
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(txt);
   u.lang='ko-KR'; u.rate=.82;
-  speechSynthesis.speak(u);
+  if(koVoice) u.voice=koVoice;
+  // Unele browsere mobile au nevoie de un mic delay după cancel()
+  setTimeout(()=>speechSynthesis.speak(u), 50);
 }
 
 // ── TOAST ─────────────────────────────────────────────────
