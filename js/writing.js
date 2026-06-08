@@ -140,7 +140,7 @@ let lang    = RKLang.get();
 const T = {
   ro:{
     title:"Practică Scrisul", sub:"Litere · Silabe · Cuvinte · Propoziții · Compunere",
-    tabL:"Litere", tabS:"Silabe", tabW:"Cuvinte", tabP:"Propoziții",
+    tabL:"Litere", tabS:"Silabe", tabW:"Cuvinte", tabP:"Propoziții", tabK:'Tastatură',
     trace:"Afișează litera fantomă",
     check:"Verifică",
     yourLbl:"Ce ai scris", refLbl:"Referință",
@@ -165,7 +165,7 @@ const T = {
   },
   en:{
     title:"Practice Writing", sub:"Letters · Syllables · Words · Sentences · Composition",
-    tabL:"Letters", tabS:"Syllables", tabW:"Words", tabP:"Sentences",
+    tabL:"Letters", tabS:"Syllables", tabW:"Words", tabP:"Sentences", tabK:'Keyboard',
     trace:"Show ghost letter",
     check:"Check",
     yourLbl:"Your writing", refLbl:"Reference",
@@ -199,6 +199,7 @@ function applyLang(newLang) {
   document.getElementById("tab-syllables").textContent   = t.tabS;
   document.getElementById("tab-words").textContent       = t.tabW;
   document.getElementById("tab-sentences").textContent   = t.tabP;
+  document.getElementById("tab-keyboard").textContent   = t.tabK;
   document.getElementById("traceLbl").textContent        = t.trace;
   document.getElementById("checkLbl").textContent        = t.check;
   document.getElementById("fbYourLbl").textContent       = t.yourLbl;
@@ -220,6 +221,7 @@ function applyLang(newLang) {
   compUpdateLimitHint();
   if (compCurrentPrompt) compRenderPrompt();
   if (mode !== "compunere") updateTarget();
+  window.KB?.setLang(lang);
 }
 
 RKLang.init(applyLang);
@@ -231,8 +233,13 @@ document.querySelectorAll(".mode-tab").forEach(btn => {
     btn.classList.add("active");
     mode = btn.dataset.mode;
     if (mode === "compunere") {
+      window.KB?.deactivate();
       showComposeMode();
+    } else if (mode === "keyboard") {
+      showKeyboardMode();
+      window.KB?.activate();
     } else {
+      window.KB?.deactivate();
       showDrawMode();
       pool = mode==="letters" ? LETTERS : mode==="syllables" ? SYLLABLES : mode==="words" ? WORDS : SENTENCES;
       idx  = 0;
@@ -249,7 +256,17 @@ function showComposeMode() {
   document.getElementById("fbCard").style.display           = "none";
   document.getElementById("progLbl").style.visibility       = "hidden";
   document.getElementById("compSection").style.display      = "";
+  document.getElementById("kbSection").style.display        = "none";
   if (!compCurrentPrompt) newCompPrompt();
+}
+
+function showKeyboardMode() {
+  document.querySelector(".rfi-knowledge").style.display     = "none";
+  document.querySelector(".rfi-manifestation").style.display = "none";
+  document.getElementById("fbCard").style.display            = "none";
+  document.getElementById("progLbl").style.visibility        = "hidden";
+  document.getElementById("compSection").style.display       = "none";
+  document.getElementById("kbSection").style.display         = "";
 }
 
 function showDrawMode() {
@@ -257,6 +274,7 @@ function showDrawMode() {
   document.querySelector(".rfi-manifestation").style.display= "";
   document.getElementById("progLbl").style.visibility       = "";
   document.getElementById("compSection").style.display      = "none";
+  document.getElementById("kbSection").style.display        = "none";
 }
 
 // ── TARGET ────────────────────────────────────────────────────
