@@ -591,24 +591,6 @@ function nextItem() {
   updateTarget();
 }
 
-// ── INIT ──────────────────────────────────────────────────────
-applyLang();
-
-// If coming from hangul.html with ?char=, jump to that letter
-(function () {
-  const param = new URLSearchParams(window.location.search).get('char');
-  if (!param) return;
-  const found = LETTERS.findIndex(l => l.char === param);
-  if (found === -1) return;
-  idx = found;
-  pool = LETTERS;
-  mode = 'letters';
-  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
-  const lettersTab = document.getElementById('tab-letters');
-  if (lettersTab) lettersTab.classList.add('active');
-  updateTarget();
-})();
-
 /* ══════════════════════════════════════════════════════════════
    COMPUNERE — scriere liberă cu corecturi AI
 ══════════════════════════════════════════════════════════════ */
@@ -841,3 +823,21 @@ function saveCompApiKey() {
   closeCompApiModal();
   doCompCorrect();
 }
+
+// ── INIT (după toate definițiile, inclusiv compunere) ─────────
+applyLang();
+
+// If coming from hangul.html with ?char=, jump to that letter
+(function () {
+  const param = new URLSearchParams(window.location.search).get('char');
+  if (!param) return;
+  const found = LETTERS.findIndex(l => l.char === param);
+  if (found === -1) return;
+  idx = found;
+  pool = LETTERS;
+  mode = 'letters';
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  const lettersTab = document.getElementById('tab-letters');
+  if (lettersTab) lettersTab.classList.add('active');
+  updateTarget();
+})();
