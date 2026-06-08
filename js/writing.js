@@ -139,8 +139,8 @@ let lang    = RKLang.get();
 // ── TRADUCERI ─────────────────────────────────────────────────
 const T = {
   ro:{
-    title:"Practică Scrisul", sub:"Litere · Silabe · Cuvinte · Propoziții · Compunere",
-    tabL:"Litere", tabS:"Silabe", tabW:"Cuvinte", tabP:"Propoziții", tabK:'Tastatură',
+    title:"Practică Scrisul", sub:"Litere · Silabe · Cuvinte · Propoziții",
+    tabL:"Litere", tabS:"Silabe", tabW:"Cuvinte", tabP:"Propoziții",
     trace:"Afișează litera fantomă",
     check:"Verifică",
     yourLbl:"Ce ai scris", refLbl:"Referință",
@@ -150,22 +150,10 @@ const T = {
     wordHint:"Scrie cuvântul în spațiul alb de mai sus",
     sentHint:"Scrie propoziția în spațiul alb de mai sus",
     selfCheck:"Compară cu referința de mai jos",
-    // compunere
-    compSub:"Scrie în coreeană și primești corecturi",
-    compBadge:"Subiect", compChars:"caractere", compLoading:"Analizez…",
-    compLblCorrected:"TEXT CORECTAT", compLblErrors:"GREȘELI",
-    compBtnClear:"Șterge", compBtnCorrect:"Corectează", compBtnNew:"Subiect nou",
-    compApiTitle:"Configurare cheie API",
-    compApiDesc:"Pentru corecturi AI introdu cheia ta Anthropic API.<br>Cheia rămâne salvată local pe dispozitivul tău.",
-    compApiCancel:"Anulează", compApiSave:"Salvează",
-    compNoErrors:"🎉 Nicio greșeală!", compWriteFirst:"Scrie ceva mai întâi!",
-    compInvalidKey:"Cheie invalidă — trebuie să înceapă cu sk-ant-…",
-    compBadKey:"Cheie API invalidă. Te rog introdu din nou.",
-    compError:"Eroare: ",
   },
   en:{
-    title:"Practice Writing", sub:"Letters · Syllables · Words · Sentences · Composition",
-    tabL:"Letters", tabS:"Syllables", tabW:"Words", tabP:"Sentences", tabK:'Keyboard',
+    title:"Practice Writing", sub:"Letters · Syllables · Words · Sentences",
+    tabL:"Letters", tabS:"Syllables", tabW:"Words", tabP:"Sentences",
     trace:"Show ghost letter",
     check:"Check",
     yourLbl:"Your writing", refLbl:"Reference",
@@ -175,18 +163,6 @@ const T = {
     wordHint:"Write the word in the white space above",
     sentHint:"Write the sentence in the white space above",
     selfCheck:"Compare with the reference below",
-    // composition
-    compSub:"Write in Korean and get corrections",
-    compBadge:"Topic", compChars:"characters", compLoading:"Analysing…",
-    compLblCorrected:"CORRECTED TEXT", compLblErrors:"ERRORS",
-    compBtnClear:"Clear", compBtnCorrect:"Correct", compBtnNew:"New topic",
-    compApiTitle:"API Key Setup",
-    compApiDesc:"For AI corrections, enter your Anthropic API key.<br>The key stays saved locally on your device.",
-    compApiCancel:"Cancel", compApiSave:"Save",
-    compNoErrors:"🎉 No errors!", compWriteFirst:"Write something first!",
-    compInvalidKey:"Invalid key — must start with sk-ant-…",
-    compBadKey:"Invalid API key. Please re-enter.",
-    compError:"Error: ",
   },
 };
 
@@ -199,29 +175,11 @@ function applyLang(newLang) {
   document.getElementById("tab-syllables").textContent   = t.tabS;
   document.getElementById("tab-words").textContent       = t.tabW;
   document.getElementById("tab-sentences").textContent   = t.tabP;
-  document.getElementById("tab-keyboard").textContent   = t.tabK;
   document.getElementById("traceLbl").textContent        = t.trace;
   document.getElementById("checkLbl").textContent        = t.check;
   document.getElementById("fbYourLbl").textContent       = t.yourLbl;
   document.getElementById("fbRefLbl").textContent        = t.refLbl;
-  // compunere
-  document.getElementById("compSub").textContent         = t.compSub;
-  document.getElementById("compPromptBadge").textContent = t.compBadge;
-  document.getElementById("compCharLbl").textContent     = t.compChars;
-  document.getElementById("compLoadingMsg").textContent  = t.compLoading;
-  document.getElementById("compLblCorrected").textContent= t.compLblCorrected;
-  document.getElementById("compLblErrors").textContent   = t.compLblErrors;
-  document.getElementById("btnCompClear").textContent    = t.compBtnClear;
-  document.getElementById("btnCompLbl").textContent      = t.compBtnCorrect;
-  document.getElementById("btnCompNew").textContent      = t.compBtnNew;
-  document.getElementById("compApiTitle").textContent    = t.compApiTitle;
-  document.getElementById("compApiDesc").innerHTML       = t.compApiDesc;
-  document.getElementById("btnCompApiCancel").textContent= t.compApiCancel;
-  document.getElementById("btnCompApiSave").textContent  = t.compApiSave;
-  compUpdateLimitHint();
-  if (compCurrentPrompt) compRenderPrompt();
-  if (mode !== "compunere") updateTarget();
-  window.KB?.setLang(lang);
+  updateTarget();
 }
 
 RKLang.init(applyLang);
@@ -232,49 +190,19 @@ document.querySelectorAll(".mode-tab").forEach(btn => {
     document.querySelectorAll(".mode-tab").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     mode = btn.dataset.mode;
-    if (mode === "compunere") {
-      window.KB?.deactivate();
-      showComposeMode();
-    } else if (mode === "keyboard") {
-      showKeyboardMode();
-      window.KB?.activate();
-    } else {
-      window.KB?.deactivate();
-      showDrawMode();
-      pool = mode==="letters" ? LETTERS : mode==="syllables" ? SYLLABLES : mode==="words" ? WORDS : SENTENCES;
-      idx  = 0;
-      clearBoard();
-      hideFb();
-      updateTarget();
-    }
+    showDrawMode();
+    pool = mode==="letters" ? LETTERS : mode==="syllables" ? SYLLABLES : mode==="words" ? WORDS : SENTENCES;
+    idx  = 0;
+    clearBoard();
+    hideFb();
+    updateTarget();
   });
 });
-
-function showComposeMode() {
-  document.querySelector(".rfi-knowledge").style.display    = "none";
-  document.querySelector(".rfi-manifestation").style.display= "none";
-  document.getElementById("fbCard").style.display           = "none";
-  document.getElementById("progLbl").style.visibility       = "hidden";
-  document.getElementById("compSection").style.display      = "";
-  document.getElementById("kbSection").style.display        = "none";
-  if (!compCurrentPrompt) newCompPrompt();
-}
-
-function showKeyboardMode() {
-  document.querySelector(".rfi-knowledge").style.display     = "none";
-  document.querySelector(".rfi-manifestation").style.display = "none";
-  document.getElementById("fbCard").style.display            = "none";
-  document.getElementById("progLbl").style.visibility        = "hidden";
-  document.getElementById("compSection").style.display       = "none";
-  document.getElementById("kbSection").style.display         = "";
-}
 
 function showDrawMode() {
   document.querySelector(".rfi-knowledge").style.display    = "";
   document.querySelector(".rfi-manifestation").style.display= "";
   document.getElementById("progLbl").style.visibility       = "";
-  document.getElementById("compSection").style.display      = "none";
-  document.getElementById("kbSection").style.display        = "none";
 }
 
 // ── TARGET ────────────────────────────────────────────────────
@@ -591,240 +519,7 @@ function nextItem() {
   updateTarget();
 }
 
-/* ══════════════════════════════════════════════════════════════
-   COMPUNERE — scriere liberă cu corecturi AI
-══════════════════════════════════════════════════════════════ */
-
-const COMP_PROMPTS = {
-  1:[
-    {ro:"Prezintă-te: cum te cheamă, câți ani ai, de unde ești.", en:"Introduce yourself: name, age, where you are from.", ko:"자기소개를 해 보세요."},
-    {ro:"Descrie familia ta: câți membri are, ce face fiecare.", en:"Describe your family: how many members, what each does.", ko:"가족에 대해 써 보세요."},
-    {ro:"Ce faci de obicei dimineața? Descrie rutina ta.", en:"What do you usually do in the morning? Describe your routine.", ko:"보통 아침에 무엇을 해요?"},
-    {ro:"Descrie casa sau camera ta.", en:"Describe your house or room.", ko:"집이나 방을 설명해 보세요."},
-    {ro:"Ce mâncare îți place cel mai mult? De ce?", en:"What food do you like the most? Why?", ko:"가장 좋아하는 음식은 무엇이에요?"},
-  ],
-  2:[
-    {ro:"Scrie despre weekend-ul tău preferat.", en:"Write about your favorite weekend.", ko:"좋아하는 주말에 대해 써 보세요."},
-    {ro:"Descrie prietenul tău cel mai bun.", en:"Describe your best friend.", ko:"가장 친한 친구를 소개해 보세요."},
-    {ro:"Ce hobby-uri ai? Descrie unul în detaliu.", en:"What hobbies do you have? Describe one in detail.", ko:"취미가 있어요? 하나 자세히 설명해 보세요."},
-    {ro:"Scrie despre locul tău preferat din oraș.", en:"Write about your favorite place in the city.", ko:"도시에서 가장 좋아하는 장소에 대해 써 보세요."},
-  ],
-  3:[
-    {ro:"Compară viața de student cu viața de adult.", en:"Compare student life with adult life.", ko:"학생 생활과 직장 생활을 비교해 보세요."},
-    {ro:"Descrie o experiență memorabilă de călătorie.", en:"Describe a memorable travel experience.", ko:"기억에 남는 여행 경험을 써 보세요."},
-    {ro:"De ce înveți coreeana? Ce ți-a plăcut cel mai mult?", en:"Why do you study Korean? What have you liked most?", ko:"한국어를 왜 배워요? 무엇이 가장 좋았어요?"},
-    {ro:"Scrie despre un obicei bun sau rău al tău.", en:"Write about a good or bad habit of yours.", ko:"자신의 좋은 습관이나 나쁜 습관에 대해 써 보세요."},
-  ],
-  4:[
-    {ro:"Ce înseamnă prietenia adevărată pentru tine?", en:"What does true friendship mean to you?", ko:"진정한 우정이란 무엇인지 써 보세요."},
-    {ro:"Compară viața la oraș cu viața la sat.", en:"Compare city life with country life.", ko:"도시 생활과 시골 생활을 비교해 보세요."},
-    {ro:"Descrie planurile tale de viitor.", en:"Describe your plans for the future.", ko:"미래 계획에 대해 써 보세요."},
-    {ro:"Scrie despre un film sau o carte care te-a impresionat.", en:"Write about a movie or book that impressed you.", ko:"인상 깊었던 영화나 책에 대해 써 보세요."},
-  ],
-  5:[
-    {ro:"Discută avantajele și dezavantajele rețelelor sociale.", en:"Discuss the advantages and disadvantages of social media.", ko:"SNS의 장점과 단점에 대해 쓰세요."},
-    {ro:"Ce crezi despre importanța educației în societatea modernă?", en:"What do you think about the importance of education in modern society?", ko:"현대 사회에서 교육의 중요성에 대해 쓰세요."},
-    {ro:"Cum afectează tehnologia relațiile umane?", en:"How does technology affect human relationships?", ko:"기술이 인간관계에 미치는 영향에 대해 쓰세요."},
-  ],
-  6:[
-    {ro:"Analizează impactul globalizării asupra culturii locale.", en:"Analyze the impact of globalization on local culture.", ko:"세계화가 지역 문화에 미치는 영향을 분석하세요."},
-    {ro:"Discută problemele de mediu și soluțiile posibile.", en:"Discuss environmental problems and possible solutions.", ko:"환경 문제와 가능한 해결책에 대해 쓰세요."},
-    {ro:"Ce rol ar trebui să joace guvernul în asigurarea bunăstării sociale?", en:"What role should government play in ensuring social welfare?", ko:"사회 복지를 위한 정부의 역할에 대해 논하세요."},
-  ],
-};
-
-const COMP_LIMIT_HINTS = {
-  ro:{1:"Recomandat: 100–150 caractere",2:"Recomandat: 150–200 caractere",3:"Recomandat: 200–250 caractere",4:"Recomandat: 250–300 caractere",5:"Recomandat: 400–500 caractere",6:"Recomandat: 600–700 caractere"},
-  en:{1:"Recommended: 100–150 chars",2:"Recommended: 150–200 chars",3:"Recommended: 200–250 chars",4:"Recommended: 250–300 chars",5:"Recommended: 400–500 chars",6:"Recommended: 600–700 chars"},
-};
-
-let compLevel   = 1;
-let compCurrentPrompt = null;
-
-// Butoane nivel
-document.querySelectorAll(".comp-lvl-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".comp-lvl-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    compLevel = parseInt(btn.dataset.level, 10);
-    compUpdateLimitHint();
-    newCompPrompt();
-  });
-});
-
-// Contor caractere
-document.getElementById("compTextarea").addEventListener("input", () => {
-  document.getElementById("compCharCount").textContent =
-    document.getElementById("compTextarea").value.length;
-});
-
-// Închide modal la click pe fundal
-document.getElementById("compApiModal").addEventListener("click", e => {
-  if (e.target === document.getElementById("compApiModal")) closeCompApiModal();
-});
-
-function compUpdateLimitHint() {
-  const el = document.getElementById("compLimitHint");
-  if (el) el.textContent = COMP_LIMIT_HINTS[lang][compLevel];
-}
-
-function newCompPrompt() {
-  const list = COMP_PROMPTS[compLevel];
-  compCurrentPrompt = list[Math.floor(Math.random() * list.length)];
-  compRenderPrompt();
-  compHideResults();
-}
-
-function compRenderPrompt() {
-  if (!compCurrentPrompt) return;
-  document.getElementById("compPromptText").textContent = compCurrentPrompt[lang];
-  document.getElementById("compPromptKo").textContent   = compCurrentPrompt.ko;
-}
-
-function clearCompose() {
-  document.getElementById("compTextarea").value = "";
-  document.getElementById("compCharCount").textContent = "0";
-  compHideResults();
-}
-
-function compHideResults() {
-  document.getElementById("compResults").classList.remove("visible");
-  document.getElementById("compLoading").classList.remove("visible");
-}
-
-async function doCompCorrect() {
-  const text = document.getElementById("compTextarea").value.trim();
-  if (!text) { alert(T[lang].compWriteFirst); return; }
-  const apiKey = localStorage.getItem("RK_CLAUDE_KEY");
-  if (!apiKey) { showCompApiModal(); return; }
-
-  document.getElementById("compResults").classList.remove("visible");
-  document.getElementById("compLoading").classList.add("visible");
-  document.getElementById("btnCompCorrect").disabled = true;
-
-  try {
-    const result = await compCallClaude(apiKey, text);
-    compShowResults(result);
-  } catch (err) {
-    document.getElementById("compLoading").classList.remove("visible");
-    if (err.status === 401) {
-      localStorage.removeItem("RK_CLAUDE_KEY");
-      alert(T[lang].compBadKey);
-      showCompApiModal();
-    } else {
-      alert(T[lang].compError + (err.message || "Unknown"));
-    }
-  } finally {
-    document.getElementById("btnCompCorrect").disabled = false;
-  }
-}
-
-async function compCallClaude(apiKey, text) {
-  const langName = lang === "ro" ? "Romanian" : "English";
-  const system =
-    `You are a Korean language teacher. A student studying for TOPIK level ${compLevel} has written a Korean text.\n\n` +
-    `Analyze their writing and respond ONLY with valid JSON (no markdown, no extra text):\n` +
-    `{"score":<integer 1-10>,"feedback":"<1-2 sentence feedback in ${langName}>","corrected":"<full corrected text in Korean>","errors":[{"original":"<wrong part>","fix":"<correct version>","explanation":"<why, in ${langName}>"}]}\n\n` +
-    `Rules: list at most 5 most important errors, use [] if none; "corrected" is the full text with all fixes; keep explanations to one sentence; 10=perfect, 1=major issues.`;
-
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      system,
-      messages: [{role:"user", content:text}],
-    }),
-  });
-
-  if (!resp.ok) {
-    const e = new Error(`HTTP ${resp.status}`);
-    e.status = resp.status;
-    throw e;
-  }
-  const data = await resp.json();
-  const m = data.content[0].text.match(/\{[\s\S]*\}/);
-  if (!m) throw new Error("Format răspuns invalid");
-  return JSON.parse(m[0]);
-}
-
-function compShowResults(result) {
-  document.getElementById("compLoading").classList.remove("visible");
-
-  const score = Math.max(1, Math.min(10, result.score || 5));
-  document.getElementById("compScoreNum").textContent = score;
-  const circle = document.getElementById("compScoreCircle");
-  circle.className = "comp-score-circle " + (score >= 8 ? "score-great" : score >= 5 ? "score-ok" : "score-low");
-
-  document.getElementById("compFeedbackText").textContent = result.feedback || "";
-  document.getElementById("compCorrectedText").textContent = result.corrected || "";
-
-  const list   = document.getElementById("compErrorsList");
-  const errors = result.errors || [];
-  list.innerHTML = "";
-
-  if (errors.length === 0) {
-    const li = document.createElement("li");
-    li.className = "comp-error-item comp-error-none";
-    li.textContent = T[lang].compNoErrors;
-    list.appendChild(li);
-  } else {
-    errors.forEach(err => {
-      const li = document.createElement("li");
-      li.className = "comp-error-item";
-      li.innerHTML =
-        '<span class="comp-err-orig">'  + compEsc(err.original || "") + '</span>' +
-        '<span class="comp-err-arrow"> → </span>' +
-        '<span class="comp-err-fix">'   + compEsc(err.fix || "")      + '</span>' +
-        '<p class="comp-err-expl">'     + compEsc(err.explanation || "") + '</p>';
-      list.appendChild(li);
-    });
-  }
-
-  document.getElementById("compResults").classList.add("visible");
-  document.getElementById("compResults").scrollIntoView({behavior:"smooth", block:"start"});
-}
-
-function newCompAttempt() {
-  newCompPrompt();
-  clearCompose();
-  document.getElementById("compSection").scrollIntoView({behavior:"smooth", block:"start"});
-  setTimeout(() => document.getElementById("compTextarea").focus(), 300);
-}
-
-function compEsc(s) {
-  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
-
-function showCompApiModal() {
-  document.getElementById("compApiErr").textContent = "";
-  document.getElementById("compApiKeyInput").value  = "";
-  document.getElementById("compApiModal").classList.add("open");
-  setTimeout(() => document.getElementById("compApiKeyInput").focus(), 100);
-}
-
-function closeCompApiModal() {
-  document.getElementById("compApiModal").classList.remove("open");
-}
-
-function saveCompApiKey() {
-  const key = document.getElementById("compApiKeyInput").value.trim();
-  if (!key.startsWith("sk-ant")) {
-    document.getElementById("compApiErr").textContent = T[lang].compInvalidKey;
-    return;
-  }
-  localStorage.setItem("RK_CLAUDE_KEY", key);
-  closeCompApiModal();
-  doCompCorrect();
-}
-
-// ── INIT (după toate definițiile, inclusiv compunere) ─────────
+// ── INIT ────────────────────────────────────────────────────
 applyLang();
 
 // If coming from hangul.html with ?char=, jump to that letter
