@@ -2427,12 +2427,12 @@
         if(pos === -1) pos = strippedText.indexOf(' ' + candidate + ' ');
         if(pos === -1) continue;
 
-        // For verbs: check if this match is preceded by 'sa' (Romanian subjunctive marker).
-        // "sa cumpere" = purpose clause, NOT the main verb — prefer the non-sa verb.
+        // For verbs: check if this match is preceded by 'sa' (Romanian subjunctive) or
+        // 'to' (English infinitive). These signal a purpose verb, not the main verb.
         if(fieldKey === 'verb'){
           var before = normalizedText.substring(0, pos).trimEnd();
           var prevWord = before.split(/\s+/).pop();
-          if(prevWord === 'sa'){
+          if(prevWord === 'sa' || prevWord === 'to'){
             if(candidate.length > bestSaLen){ bestSa = item; bestSaLen = candidate.length; }
             continue;
           }
@@ -2865,6 +2865,15 @@
             var wordAfterSa = saMatch[1].replace(/[!?.,;]/g,'');
             var pvCandidate = findBestMatch('verb', wordAfterSa);
             if(pvCandidate && pvCandidate.ko !== verb.ko) purposeVerbItem = pvCandidate;
+          }
+          // Path 1b: English "to + infinitive" (e.g. "go to the market to eat food")
+          if(!purposeVerbItem){
+            var toMatches = normalizeLatin(cd.text).match(/\bto\s+([a-z]+)/g) || [];
+            for(var ti = 0; ti < toMatches.length; ti++){
+              var wordAfterTo = toMatches[ti].replace(/^to\s+/, '');
+              var pvCandTo = findBestMatch('verb', wordAfterTo);
+              if(pvCandTo && pvCandTo.ko !== verb.ko){ purposeVerbItem = pvCandTo; break; }
+            }
           }
           // Path 2: "ca sa" connector folded a separate segment (e.g. "merge la cinema ca sa vada un film")
           if(!purposeVerbItem && cd.__purposeText){
