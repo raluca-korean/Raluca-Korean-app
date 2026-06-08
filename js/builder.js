@@ -1926,10 +1926,10 @@
     if(!skipVerb && clause.__purposeVerbItem){
       var pv = clause.__purposeVerbItem;
       var pvStem = pv.ko.replace(/다$/, '');
-      var pvHasBatchim = window.Conjugation && window.Conjugation.hasBatchim(pvStem);
+      var pvNeedsEu = window.Conjugation && window.Conjugation.euOrNot(pvStem);
       var purposeSuffix = isMotionTo
-        ? (pvHasBatchim ? '으러' : '러')
-        : (pvHasBatchim ? '으려고' : '려고');
+        ? (pvNeedsEu ? '으러' : '러')
+        : (pvNeedsEu ? '으려고' : '려고');
       parts.push(pvStem + purposeSuffix);
     }
     if(!skipVerb && verbKo) parts.push(verbKo);
@@ -2888,15 +2888,35 @@
               if(ptObjs.length) objects = ptObjs;
             }
           }
-        } else if(verb && cd.__purposeText){
-          // Non-motion verb + "ca sa" connector: generates -(으)려고 form
-          // e.g. "Economisesc ca sa pot sa cumpere o casa" → 집을 사려고 저축해요
-          var ptText2 = stripModalPrefix(cd.__purposeText);
-          var ptVerb2 = findBestMatch('verb', ptText2);
-          if(ptVerb2 && ptVerb2.ko !== verb.ko){
-            purposeVerbItem = ptVerb2;
-            var ptObjs2 = findAllMatches('object1', ptText2, 2);
-            if(ptObjs2.length) objects = ptObjs2;
+        } else if(verb){
+          // Non-motion verb purpose: connector (__purposeText) or inline să/to → -(으)려고
+          if(cd.__purposeText){
+            // "ca să/pentru a" split: e.g. "Economisesc ca să cumpăr o casă" → 집을 사려고 저축해요
+            var ptText2 = stripModalPrefix(cd.__purposeText);
+            var ptVerb2 = findBestMatch('verb', ptText2);
+            if(ptVerb2 && ptVerb2.ko !== verb.ko){
+              purposeVerbItem = ptVerb2;
+              var ptObjs2 = findAllMatches('object1', ptText2, 2);
+              if(ptObjs2.length) objects = ptObjs2;
+            }
+          }
+          // Inline "să + verb" without "ca" connector (e.g. "Lucrez să câștig bani")
+          if(!purposeVerbItem){
+            var saMat2 = (' ' + normalizeLatin(cd.text) + ' ').match(/\bsa\s+(\S+)/);
+            if(saMat2){
+              var pvW2 = saMat2[1].replace(/[!?.,;]/g,'');
+              var pvC2 = findBestMatch('verb', pvW2);
+              if(pvC2 && pvC2.ko !== verb.ko) purposeVerbItem = pvC2;
+            }
+          }
+          // Inline "to + verb" (English, e.g. "I work to earn money")
+          if(!purposeVerbItem){
+            var toMat2 = normalizeLatin(cd.text).match(/\bto\s+([a-z]+)/g) || [];
+            for(var ti2 = 0; ti2 < toMat2.length; ti2++){
+              var pvWt2 = toMat2[ti2].replace(/^to\s+/, '');
+              var pvCt2 = findBestMatch('verb', pvWt2);
+              if(pvCt2 && pvCt2.ko !== verb.ko){ purposeVerbItem = pvCt2; break; }
+            }
           }
         }
         if(purposeVerbItem) clause.__purposeVerbItem = purposeVerbItem;
