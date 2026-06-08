@@ -2630,8 +2630,11 @@
     // In Romanian, many connectors follow the pattern "result CONNECTOR reason",
     // but Korean needs "reason CONNECTOR result". Swap the clause texts so the
     // reason/precondition verb gets the connector suffix, and the main result follows.
+    // purpose/purpose2 are excluded: __purposeText folding already handles
+    // Korean word order (purpose verb before main verb); swapping would put
+    // the wrong text in the main clause slot.
     var SWAP_KEYS = {
-      purpose:true, purpose2:true, cause1:true, cause2:true,
+      cause1:true, cause2:true,
       after:true, before:true, concede:true, concede2:true, while:true, asap:true
     };
     for(var pi = 0; pi < segments.length - 1; pi++){
