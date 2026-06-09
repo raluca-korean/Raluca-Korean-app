@@ -171,10 +171,10 @@ function applyLang(newLang) {
   const t = T[lang];
   document.getElementById("pageTitle").textContent       = t.title;
   document.getElementById("pageSub").textContent         = t.sub;
-  document.getElementById("tab-letters").textContent     = t.tabL;
-  document.getElementById("tab-syllables").textContent   = t.tabS;
-  document.getElementById("tab-words").textContent       = t.tabW;
-  document.getElementById("tab-sentences").textContent   = t.tabP;
+  document.getElementById("tab-letters").title           = t.tabL;
+  document.getElementById("tab-syllables").title         = t.tabS;
+  document.getElementById("tab-words").title             = t.tabW;
+  document.getElementById("tab-sentences").title         = t.tabP;
   document.getElementById("traceLbl").textContent        = t.trace;
   document.getElementById("checkLbl").textContent        = t.check;
   document.getElementById("fbYourLbl").textContent       = t.yourLbl;
