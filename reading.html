@@ -546,6 +546,94 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
   flex-shrink: 0;
 }
 
+/* ── RECORDING BUTTON ─────────────────────────────────────────── */
+.rd-rec-btn {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--rk-stroke);
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s ease;
+  color: var(--rk-muted-ui);
+  margin-top: 3px;
+  font-family: inherit;
+}
+.rd-rec-btn:hover {
+  background: #db2777;
+  border-color: #db2777;
+  color: #fff;
+  transform: scale(1.08);
+}
+.rd-rec-btn.recording {
+  background: #db2777;
+  border-color: #db2777;
+  color: #fff;
+  animation: rd-rec-pulse .9s ease-in-out infinite;
+}
+.rd-rec-btn.has-rec {
+  border-color: #db2777;
+  color: #db2777;
+}
+@keyframes rd-rec-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(219,39,119,.5); }
+  50%       { box-shadow: 0 0 0 7px rgba(219,39,119,0); }
+}
+
+/* ── INLINE WAVEFORM BARS ─────────────────────────────────────── */
+.rd-wavebars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 22px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  flex-shrink: 0;
+  margin-top: 5px;
+  margin-right: 4px;
+}
+.rd-wavebars.on { opacity: 1; }
+.rd-wbar {
+  width: 3px;
+  background: #db2777;
+  border-radius: 2px;
+  animation: rd-wbar .75s ease-in-out infinite;
+}
+.rd-wbar:nth-child(1) { height: 6px;  animation-delay: 0s; }
+.rd-wbar:nth-child(2) { height: 13px; animation-delay: .12s; }
+.rd-wbar:nth-child(3) { height: 20px; animation-delay: .24s; }
+.rd-wbar:nth-child(4) { height: 13px; animation-delay: .36s; }
+.rd-wbar:nth-child(5) { height: 6px;  animation-delay: .48s; }
+@keyframes rd-wbar {
+  0%, 100% { transform: scaleY(1); opacity: .75; }
+  50% { transform: scaleY(.28); opacity: 1; }
+}
+
+/* ── SPEECH FEEDBACK ──────────────────────────────────────────── */
+.rd-speech-feedback {
+  display: none;
+  font-size: 12px; font-weight: 700;
+  margin-top: 5px; padding: 3px 10px;
+  border-radius: 20px;
+  width: fit-content;
+  animation: rd-slide-in .15s ease;
+}
+.rd-speech-feedback.ok {
+  display: inline-block;
+  background: rgba(88,204,2,.12);
+  color: #58CC02;
+  border: 1.5px solid rgba(88,204,2,.4);
+}
+.rd-speech-feedback.err {
+  display: inline-block;
+  background: rgba(219,39,119,.1);
+  color: #db2777;
+  border: 1.5px solid rgba(219,39,119,.35);
+}
+
 </style>
 </head>
 <body class="theme-anime">
@@ -786,6 +874,19 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
       speakText(sent.full, sndBtn);
     });
 
+    /* Record button */
+    var recBtn = document.createElement('button');
+    recBtn.className = 'rd-rec-btn';
+    recBtn.type = 'button';
+    recBtn.title = currentLang === 'ro' ? 'Practică pronunția' : 'Practice pronunciation';
+    recBtn.innerHTML = '🎙';
+    (function(capturedSent, capturedRecBtn) {
+      capturedRecBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        rdHandleRecClick(capturedSent.full, capturedRecBtn, capturedRecBtn._waveBars, capturedRecBtn._feedbackEl);
+      });
+    })(sent, recBtn);
+
     /* Sentence body */
     var sentBody = document.createElement('div');
     sentBody.className = 'rd-sent-body';
@@ -816,7 +917,24 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
       tokWrap.appendChild(span);
     });
 
+    /* Waveform bars (inside tokens row, shown when recording) */
+    var waveBars = document.createElement('div');
+    waveBars.className = 'rd-wavebars';
+    for (var wi = 0; wi < 5; wi++) {
+      var wb = document.createElement('div');
+      wb.className = 'rd-wbar';
+      waveBars.appendChild(wb);
+    }
+    tokRow.appendChild(waveBars);
     tokRow.appendChild(tokWrap);
+
+    /* Speech feedback */
+    var feedbackEl = document.createElement('div');
+    feedbackEl.className = 'rd-speech-feedback';
+
+    /* Link waveform + feedback to recBtn for click handler access */
+    recBtn._waveBars  = waveBars;
+    recBtn._feedbackEl = feedbackEl;
 
     /* Translation toggle (Feature 1) */
     if (sent.translation) {
@@ -844,11 +962,14 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
       tokRow.appendChild(transBtn);
       sentBody.appendChild(tokRow);
       sentBody.appendChild(tranDiv);
+      sentBody.appendChild(feedbackEl);
     } else {
       sentBody.appendChild(tokRow);
+      sentBody.appendChild(feedbackEl);
     }
 
     row.appendChild(sndBtn);
+    row.appendChild(recBtn);
     row.appendChild(sentBody);
     return row;
   }
@@ -1117,11 +1238,197 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
   function updateProgress() {
     var badge = document.getElementById('rdProgress');
     if (!badge) return;
-    var total = allTexts.length || 12;
+    var total = allTexts.length || 18;
     var done  = getReadTexts().length;
     badge.textContent = done + '/' + total;
     badge.style.color = done === total && total > 0 ? '#58CC02' : '';
     badge.style.borderColor = done === total && total > 0 ? '#58CC02' : '';
+  }
+
+  /* ── SPEAKING / RECORDING ─────────────────────────────────────── */
+  var rdRec = {
+    active:    false,
+    sessId:    0,
+    recog:     null,
+    mrec:      null,
+    stream:    null,
+    mchunks:   [],
+    recBtn:    null,
+    waveBars:  null,
+    feedbackEl: null,
+    targetFull: null
+  };
+
+  function rdHandleRecClick(sentFull, recBtn, waveBars, feedbackEl) {
+    /* Stop active recording for this button */
+    if (rdRec.active && rdRec.recBtn === recBtn) {
+      rdStopRec(false);
+      return;
+    }
+    /* Play back existing recording for this button */
+    if (recBtn._recUrl) {
+      var audio = new Audio(recBtn._recUrl);
+      audio.play().catch(function () {});
+      return;
+    }
+    /* Reset previous recording button if different */
+    if (rdRec.recBtn && rdRec.recBtn !== recBtn) {
+      var prev = rdRec.recBtn;
+      prev.classList.remove('recording', 'has-rec');
+      prev.innerHTML = '🎙';
+      prev.title = currentLang === 'ro' ? 'Practică pronunția' : 'Practice pronunciation';
+      if (prev._recUrl) { URL.revokeObjectURL(prev._recUrl); prev._recUrl = null; }
+      if (prev._waveBars) prev._waveBars.classList.remove('on');
+    }
+    rdStopRec(false);
+    rdStartRec(sentFull, recBtn, waveBars, feedbackEl);
+  }
+
+  function rdStartRec(sentFull, recBtn, waveBars, feedbackEl) {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      rdShowFeedback(feedbackEl, false,
+        currentLang === 'ro' ? 'Folosiți Chrome pentru vorbire' : 'Use Chrome for speech');
+      return;
+    }
+
+    rdRec.active     = true;
+    rdRec.targetFull = sentFull;
+    rdRec.recBtn     = recBtn;
+    rdRec.waveBars   = waveBars;
+    rdRec.feedbackEl = feedbackEl;
+    rdRec.mchunks    = [];
+    var mySession    = ++rdRec.sessId;
+
+    recBtn.classList.add('recording');
+    recBtn.innerHTML = '⏹';
+    waveBars.classList.add('on');
+
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      .then(function (stream) {
+        if (rdRec.sessId !== mySession) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+        rdRec.stream = stream;
+
+        var mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg']
+          .filter(function (t) { return MediaRecorder.isTypeSupported(t); })[0] || '';
+        try {
+          var m = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+          rdRec.mrec = m;
+          m.ondataavailable = function (e) {
+            if (e.data && e.data.size > 0) rdRec.mchunks.push(e.data);
+          };
+          m.onstop = function () {
+            if (rdRec.stream === stream) { stream.getTracks().forEach(function (t) { t.stop(); }); rdRec.stream = null; }
+            if (rdRec.mchunks.length && rdRec.recBtn === recBtn) {
+              recBtn._recUrl = URL.createObjectURL(new Blob(rdRec.mchunks, { type: m.mimeType || 'audio/webm' }));
+              recBtn.innerHTML = '▶';
+              recBtn.classList.add('has-rec');
+              recBtn.title = currentLang === 'ro' ? 'Redă înregistrarea' : 'Play recording';
+            }
+          };
+          m.start(100);
+        } catch (e) { rdRec.mrec = null; }
+
+        setTimeout(function () {
+          if (rdRec.sessId !== mySession) return;
+          var r = new SR();
+          rdRec.recog = r;
+          r.lang = 'ko-KR'; r.continuous = false; r.interimResults = false;
+          r.onresult = function (e) {
+            if (rdRec.recog !== r) return;
+            rdFinishMrec();
+            rdEvaluate(e.results[0][0].transcript, mySession);
+          };
+          r.onend = function () {
+            if (rdRec.recog === r && rdRec.sessId === mySession) rdStopUi();
+          };
+          r.onerror = function (e) {
+            if (rdRec.recog !== r) return;
+            rdFinishMrec(); rdStopUi();
+            if (e.error !== 'no-speech' && e.error !== 'aborted')
+              rdShowFeedback(feedbackEl, false, e.error);
+          };
+          try { r.start(); } catch (e) { rdFinishMrec(); rdStopUi(); }
+        }, 80);
+      })
+      .catch(function () {
+        rdRec.active = false;
+        recBtn.classList.remove('recording');
+        recBtn.innerHTML = '🎙';
+        waveBars.classList.remove('on');
+        rdShowFeedback(feedbackEl, false,
+          currentLang === 'ro' ? 'Microfon refuzat' : 'Mic denied');
+      });
+  }
+
+  function rdFinishMrec() {
+    if (rdRec.mrec && rdRec.mrec.state !== 'inactive') {
+      try { rdRec.mrec.requestData(); } catch (e) {}
+      var m = rdRec.mrec;
+      setTimeout(function () { if (m.state !== 'inactive') try { m.stop(); } catch (e) {} }, 60);
+    }
+  }
+
+  function rdStopUi() {
+    rdRec.active = false;
+    if (rdRec.waveBars) rdRec.waveBars.classList.remove('on');
+    if (rdRec.recBtn) {
+      rdRec.recBtn.classList.remove('recording');
+      if (!rdRec.recBtn._recUrl) rdRec.recBtn.innerHTML = '🎙';
+    }
+  }
+
+  function rdStopRec(resetBtn) {
+    rdRec.sessId++;
+    rdRec.active = false;
+    if (rdRec.recog) { try { rdRec.recog.abort(); } catch (e) {} rdRec.recog = null; }
+    rdFinishMrec();
+    if (rdRec.waveBars) rdRec.waveBars.classList.remove('on');
+    if (resetBtn && rdRec.recBtn) {
+      rdRec.recBtn.classList.remove('recording');
+      rdRec.recBtn.innerHTML = '🎙';
+    } else if (rdRec.recBtn) {
+      rdRec.recBtn.classList.remove('recording');
+    }
+  }
+
+  function rdEvaluate(transcript, sessionId) {
+    if (rdRec.sessId !== sessionId) return;
+    rdStopUi();
+    var target     = rdRec.targetFull;
+    var feedbackEl = rdRec.feedbackEl;
+    if (!target || !feedbackEl) return;
+
+    var clean = function (s) { return s.replace(/[^가-힣]/g, ''); };
+    var tClean = clean(target);
+    var hClean = clean(transcript);
+
+    /* character overlap score */
+    var overlap = 0;
+    var hArr = hClean.split('');
+    tClean.split('').forEach(function (ch) {
+      var i = hArr.indexOf(ch);
+      if (i !== -1) { overlap++; hArr.splice(i, 1); }
+    });
+    var score = tClean.length > 0 ? Math.round((overlap / tClean.length) * 100) : 0;
+    var ok = score >= 65 || transcript.includes(target) || hClean === tClean;
+
+    if (ok) {
+      rdShowFeedback(feedbackEl, true,
+        (currentLang === 'ro' ? '✓ Excelent! ' : '✓ Excellent! ') + score + '%');
+    } else {
+      var heard = transcript.length > 22 ? transcript.slice(0, 22) + '…' : transcript;
+      rdShowFeedback(feedbackEl, false,
+        (currentLang === 'ro' ? 'Auzit: ' : 'Heard: ') + (heard || '—'));
+    }
+  }
+
+  function rdShowFeedback(el, ok, msg) {
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'rd-speech-feedback ' + (ok ? 'ok' : 'err');
+    clearTimeout(el._hideT);
+    el._hideT = setTimeout(function () { el.className = 'rd-speech-feedback'; }, 4500);
   }
 
 })();
