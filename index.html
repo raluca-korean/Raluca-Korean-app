@@ -921,8 +921,14 @@ function renderProgress() {
 // ── MOBILE TOUCH ──────────────────────────────────────────────
 document.querySelectorAll('.org').forEach(org => {
   org.addEventListener('touchstart', e => {
+    e.preventDefault(); // always block synthetic mouse events that would trigger updateBloom
+    const sat = e.target.closest('.sat');
+    if (sat && org.classList.contains('bloomed')) {
+      const href = sat.getAttribute('href');
+      if (href) navigateTo(href);
+      return;
+    }
     if (!org.classList.contains('bloomed')) {
-      e.preventDefault();
       orgPos.forEach(({el}) => el.classList.remove('bloomed'));
       org.classList.add('bloomed');
     }
