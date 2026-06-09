@@ -1,4 +1,4 @@
-const CACHE = 'rk-v54';
+const CACHE = 'rk-v55';
 
 const STATIC = [
   './',
@@ -59,7 +59,9 @@ const STATIC = [
   './data/vocab-korean.json',
   './stories.html',
   './stories.css',
-  './js/stories.js'
+  './js/stories.js',
+  './reading.html',
+  './data/reading-texts.json'
 ];
 
 /* ── Install: cache each file individually so one slow/missing file
