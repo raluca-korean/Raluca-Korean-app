@@ -1,4 +1,4 @@
-const CACHE = 'rk-v55';
+const CACHE = 'rk-v56';
 
 const STATIC = [
   './',
@@ -13,8 +13,18 @@ const STATIC = [
   './pronunciation.html',
   './hangul.html',
   './hanja-book.html',
+  './stories.html',
+  './reading.html',
+  './composition.html',
+  './conversation.html',
+  './dictionary.html',
+  './exam.html',
+  './keyboard.html',
+  './mistakes.html',
+  './speaking.html',
   './theme-anime.css',
   './builder.css',
+  './composition.css',
   './exercises.css',
   './flashcards.css',
   './glossary.css',
@@ -23,6 +33,7 @@ const STATIC = [
   './lessons.css',
   './pronunciation.css',
   './stats.css',
+  './stories.css',
   './writing.css',
   './flag.svg',
   './manifest.json',
@@ -36,6 +47,7 @@ const STATIC = [
   './js/lessons.js',
   './js/pronunciation.js',
   './js/stats.js',
+  './js/stories.js',
   './js/writing.js',
   './js/core/audio.js',
   './js/core/conjugation.js',
@@ -57,11 +69,8 @@ const STATIC = [
   './data/lessons.json',
   './data/stories.json',
   './data/vocab-korean.json',
-  './stories.html',
-  './stories.css',
-  './js/stories.js',
-  './reading.html',
-  './data/reading-texts.json'
+  './data/reading-texts.json',
+  './data/word-clusters.json'
 ];
 
 /* ── Install: cache each file individually so one slow/missing file
