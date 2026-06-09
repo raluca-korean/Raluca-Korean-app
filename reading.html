@@ -239,7 +239,7 @@ body.dark-mode .rd-card-header {
   background: transparent;
   border: 1.5px solid transparent;
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--rd-tok-size, 17px);
   font-weight: 600;
   color: var(--rk-heading);
   font-family: 'Noto Sans KR', sans-serif;
@@ -416,7 +416,7 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
   .rd-card-icon { font-size: 26px; }
   .rd-card-title { font-size: 15px; }
   .rd-sentences { padding: 12px 14px; gap: 14px; }
-  .rd-token { font-size: 16px; padding: 3px 5px; }
+  .rd-token { font-size: var(--rd-tok-size, 17px); padding: 3px 5px; }
   .rd-popup { width: calc(100vw - 24px); }
   .rd-popup-ko { font-size: 22px; }
   .rd-header-top { flex-wrap: wrap; }
@@ -429,6 +429,114 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
 .lvl-badge-4 { background: #db2777; }
 .lvl-badge-5 { background: #7c3aed; }
 .lvl-badge-6 { background: #CE82FF; }
+
+/* ── SENTENCE BODY (translation wrapper) ─────────────────────── */
+.rd-sent-body { flex: 1; min-width: 0; }
+.rd-tokens-row { display: flex; align-items: flex-start; gap: 6px; }
+
+/* Translation toggle button */
+.rd-trans-btn {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1.5px solid var(--rk-stroke);
+  background: transparent;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--rk-muted-ui);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  margin-top: 3px;
+  line-height: 1;
+  font-family: inherit;
+}
+.rd-trans-btn:hover { border-color: var(--rk-violet); color: var(--rk-violet); background: rgba(124,58,237,.07); }
+.rd-trans-btn.active { border-color: var(--rk-violet); color: var(--rk-violet); background: rgba(124,58,237,.12); }
+
+/* Translation reveal */
+.rd-translation {
+  display: none;
+  font-size: 14px;
+  color: var(--rk-muted);
+  font-style: italic;
+  margin-top: 7px;
+  padding: 7px 11px;
+  background: rgba(124,58,237,.05);
+  border-left: 3px solid var(--rk-violet);
+  border-radius: 0 8px 8px 0;
+  line-height: 1.55;
+  animation: rd-slide-in .15s ease;
+}
+.rd-translation.visible { display: block; }
+@keyframes rd-slide-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+body.dark-mode .rd-translation { background: rgba(124,58,237,.14); color: rgba(255,255,255,.62); }
+
+/* ── SAVE WORD BUTTON (popup) ─────────────────────────────────── */
+.rd-popup-save {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--rk-stroke);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px; font-weight: 600;
+  color: var(--rk-muted-ui);
+  transition: all .15s;
+  font-family: inherit;
+}
+.rd-popup-save:hover { border-color: #58CC02; color: #58CC02; }
+.rd-popup-save.saved { background: #58CC02; border-color: #58CC02; color: #fff; }
+
+/* ── CARD FOOTER (read progress) ─────────────────────────────── */
+.rd-card-footer {
+  padding: 10px 20px;
+  border-top: 1px solid var(--rk-stroke);
+  display: flex; align-items: center; justify-content: flex-end;
+}
+body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
+
+.rd-read-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 2px solid var(--rk-stroke);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px; font-weight: 700;
+  color: var(--rk-muted-ui);
+  transition: all .18s;
+  font-family: inherit;
+}
+.rd-read-btn:hover { border-color: #58CC02; color: #58CC02; }
+.rd-read-btn.read { background: #58CC02; border-color: #58CC02; color: #fff; }
+
+/* ── HEADER EXTRAS (progress + font) ─────────────────────────── */
+.rd-mode-spacer { flex: 1; min-width: 4px; }
+
+.rd-progress-badge {
+  font-size: 11px; font-weight: 700;
+  color: var(--rk-muted-ui);
+  white-space: nowrap;
+  background: rgba(124,58,237,.07);
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1.5px solid var(--rk-stroke);
+}
+
+.rd-font-btn {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--rk-stroke);
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px; font-weight: 800;
+  color: var(--rk-muted-ui);
+  transition: all .15s;
+  font-family: inherit; line-height: 1.4;
+}
+.rd-font-btn:hover { border-color: var(--rk-violet); color: var(--rk-violet); }
 
 /* Page controls injection area */
 #pageControls {
@@ -530,10 +638,14 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
       </div>
       <div id="pageControls"></div>
     </div>
-    <!-- View mode toggle -->
+    <!-- View mode toggle + progress + font size -->
     <div class="rd-mode-row">
       <button class="rd-mode-btn active" id="modeLvlBtn">T1–T6</button>
       <button class="rd-mode-btn" id="modeTopicBtn">Topice</button>
+      <div class="rd-mode-spacer"></div>
+      <span class="rd-progress-badge" id="rdProgress">0/12</span>
+      <button class="rd-font-btn" id="fontDecBtn" title="Micșorează textul">A−</button>
+      <button class="rd-font-btn" id="fontIncBtn" title="Mărește textul">A+</button>
     </div>
     <!-- Level buttons (level mode) -->
     <div class="rd-controls-row" id="levelRow">
@@ -567,6 +679,9 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
   <div class="rd-popup-trans" id="popTrans"></div>
   <div class="rd-popup-note" id="popNote"></div>
   <div class="rd-popup-actions">
+    <button class="rd-popup-save" id="popSave" type="button">
+      🔖 <span id="popSaveLabel">Salvează</span>
+    </button>
     <button class="rd-popup-sound" id="popSound" type="button">
       🔊 <span id="popSoundLabel">Pronunță</span>
     </button>
@@ -604,6 +719,12 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
     { key: 'global',    ro: 'Globalizare',  en: 'Globalization',icon: '🌍' }
   ];
 
+  var FONT_SIZES = [15, 17, 19, 22];
+  var fontIdx    = 1;   // default index → 17px
+  var RD_FONT_KEY     = 'RK_RD_FONT';
+  var RD_SAVED_KEY    = 'RK_RD_SAVED';
+  var RD_READ_KEY     = 'RK_RD_READ';
+
   var LEVEL_LABELS = {
     ro: ['', 'TOPIK 1 · Începător', 'TOPIK 2 · Elementar', 'TOPIK 3 · Mediu-Inferior',
              'TOPIK 4 · Mediu-Superior', 'TOPIK 5 · Avansat-Inferior', 'TOPIK 6 · Avansat-Superior'],
@@ -620,8 +741,11 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
       renderTexts();
     });
 
+    fontIdx = parseInt(localStorage.getItem(RD_FONT_KEY) || '1', 10);
+    applyFontSize();
     wireLevel();
     wireMode();
+    wireFontSize();
     wirePopup();
     loadData();
   });
@@ -633,6 +757,7 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
       .then(function (data) {
         allTexts = data;
         document.getElementById('rdSpinner').style.display = 'none';
+        updateProgress();
         renderTexts();
       })
       .catch(function () {
@@ -734,6 +859,28 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
     });
 
     card.appendChild(sentWrap);
+
+    /* Footer — read progress */
+    var footer = document.createElement('div');
+    footer.className = 'rd-card-footer';
+    var readTexts = getReadTexts();
+    var isRead = readTexts.indexOf(text.id) !== -1;
+    var readBtn = document.createElement('button');
+    readBtn.className = 'rd-read-btn' + (isRead ? ' read' : '');
+    readBtn.type = 'button';
+    readBtn.textContent = isRead
+      ? (currentLang === 'ro' ? '✓ Citit' : '✓ Read')
+      : (currentLang === 'ro' ? '○ Marchează citit' : '○ Mark as read');
+    readBtn.addEventListener('click', function () {
+      var nowRead = toggleRead(text.id);
+      readBtn.classList.toggle('read', nowRead);
+      readBtn.textContent = nowRead
+        ? (currentLang === 'ro' ? '✓ Citit' : '✓ Read')
+        : (currentLang === 'ro' ? '○ Marchează citit' : '○ Mark as read');
+    });
+    footer.appendChild(readBtn);
+    card.appendChild(footer);
+
     return card;
   }
 
@@ -742,7 +889,7 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
     row.className = 'rd-sentence';
     row.setAttribute('data-full', sent.full);
 
-    /* Sound button for full sentence */
+    /* Sound button */
     var sndBtn = document.createElement('button');
     sndBtn.className = 'rd-sound-btn';
     sndBtn.type = 'button';
@@ -753,7 +900,14 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
       speakText(sent.full, sndBtn);
     });
 
-    /* Token container */
+    /* Sentence body */
+    var sentBody = document.createElement('div');
+    sentBody.className = 'rd-sent-body';
+
+    /* Tokens row */
+    var tokRow = document.createElement('div');
+    tokRow.className = 'rd-tokens-row';
+
     var tokWrap = document.createElement('div');
     tokWrap.className = 'rd-tokens';
 
@@ -769,41 +923,82 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
         span.setAttribute('data-note-ro', tok.note.ro || '');
         span.setAttribute('data-note-en', tok.note.en || '');
       }
-
       span.addEventListener('click', function (e) {
         e.stopPropagation();
         openPopup(span, tok);
       });
-
       tokWrap.appendChild(span);
     });
 
+    tokRow.appendChild(tokWrap);
+
+    /* Translation toggle (Feature 1) */
+    if (sent.translation) {
+      var transBtn = document.createElement('button');
+      transBtn.className = 'rd-trans-btn';
+      transBtn.type = 'button';
+      transBtn.title = currentLang === 'ro' ? 'Arată traducerea' : 'Show translation';
+      transBtn.innerHTML = '≡';
+
+      var tranDiv = document.createElement('div');
+      tranDiv.className = 'rd-translation';
+      tranDiv.setAttribute('data-ro', sent.translation.ro);
+      tranDiv.setAttribute('data-en', sent.translation.en);
+      tranDiv.textContent = currentLang === 'ro' ? sent.translation.ro : sent.translation.en;
+
+      transBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = tranDiv.classList.toggle('visible');
+        transBtn.classList.toggle('active', open);
+        transBtn.title = open
+          ? (currentLang === 'ro' ? 'Ascunde traducerea' : 'Hide translation')
+          : (currentLang === 'ro' ? 'Arată traducerea' : 'Show translation');
+      });
+
+      tokRow.appendChild(transBtn);
+      sentBody.appendChild(tokRow);
+      sentBody.appendChild(tranDiv);
+    } else {
+      sentBody.appendChild(tokRow);
+    }
+
     row.appendChild(sndBtn);
-    row.appendChild(tokWrap);
+    row.appendChild(sentBody);
     return row;
   }
 
   /* ── POPUP ───────────────────────────────────────────────────── */
-  var popup   = null;
-  var popKo   = null;
-  var popTrans = null;
-  var popNote = null;
-  var popSound = null;
+  var popup        = null;
+  var popKo        = null;
+  var popTrans     = null;
+  var popNote      = null;
+  var popSound     = null;
   var popSoundLabel = null;
+  var popSave      = null;
+  var popSaveLabel = null;
 
   function wirePopup() {
-    popup        = document.getElementById('wordPopup');
-    popKo        = document.getElementById('popKo');
-    popTrans     = document.getElementById('popTrans');
-    popNote      = document.getElementById('popNote');
-    popSound     = document.getElementById('popSound');
+    popup         = document.getElementById('wordPopup');
+    popKo         = document.getElementById('popKo');
+    popTrans      = document.getElementById('popTrans');
+    popNote       = document.getElementById('popNote');
+    popSound      = document.getElementById('popSound');
     popSoundLabel = document.getElementById('popSoundLabel');
+    popSave       = document.getElementById('popSave');
+    popSaveLabel  = document.getElementById('popSaveLabel');
 
     document.getElementById('popClose').addEventListener('click', closePopup);
 
     popSound.addEventListener('click', function (e) {
       e.stopPropagation();
       if (popupToken) speakText(popupToken.ko, null);
+    });
+
+    popSave.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!popupToken) return;
+      var saved = toggleSaveWord(popupToken);
+      updateSaveBtnState(saved);
     });
 
     /* Close on outside click / scroll */
@@ -841,6 +1036,9 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
       popNote.textContent = '';
       popNote.classList.remove('has-content');
     }
+
+    /* save button state */
+    if (popSave) updateSaveBtnState(isWordSaved(tok.ko));
 
     popup.setAttribute('aria-hidden', 'false');
 
@@ -964,6 +1162,21 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
     });
   }
 
+  /* ── FONT SIZE ───────────────────────────────────────────────── */
+  function applyFontSize() {
+    var sz = FONT_SIZES[fontIdx] || 17;
+    document.documentElement.style.setProperty('--rd-tok-size', sz + 'px');
+  }
+
+  function wireFontSize() {
+    document.getElementById('fontDecBtn').addEventListener('click', function () {
+      if (fontIdx > 0) { fontIdx--; applyFontSize(); localStorage.setItem(RD_FONT_KEY, fontIdx); }
+    });
+    document.getElementById('fontIncBtn').addEventListener('click', function () {
+      if (fontIdx < FONT_SIZES.length - 1) { fontIdx++; applyFontSize(); localStorage.setItem(RD_FONT_KEY, fontIdx); }
+    });
+  }
+
   /* ── LEVEL SWITCHING ─────────────────────────────────────────── */
   function wireLevel() {
     var btns = document.querySelectorAll('.rd-lvl-btn');
@@ -990,13 +1203,9 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
 
   /* ── LANG UI UPDATE ──────────────────────────────────────────── */
   function updateLangUI() {
-    /* update mode button label */
     var modeTopicBtn = document.getElementById('modeTopicBtn');
-    if (modeTopicBtn) {
-      modeTopicBtn.textContent = currentLang === 'ro' ? 'Topice' : 'Topics';
-    }
+    if (modeTopicBtn) modeTopicBtn.textContent = currentLang === 'ro' ? 'Topice' : 'Topics';
 
-    /* update topic button labels */
     var topicBtnsEl = document.getElementById('topicBtns');
     if (topicBtnsEl) {
       topicBtnsEl.querySelectorAll('.rd-topic-btn').forEach(function (btn) {
@@ -1006,20 +1215,90 @@ body.dark-mode .rd-title-block h1 { color: #CE82FF; }
       });
     }
 
-    /* update any open popup translation */
+    /* update visible sentence translations */
+    document.querySelectorAll('.rd-translation').forEach(function (div) {
+      div.textContent = currentLang === 'ro' ? div.getAttribute('data-ro') : div.getAttribute('data-en');
+    });
+
+    /* update read buttons */
+    document.querySelectorAll('.rd-read-btn').forEach(function (btn) {
+      var card = btn.closest('.rd-card');
+      var id   = card ? card.getAttribute('data-id') : null;
+      if (!id) return;
+      var read = getReadTexts().indexOf(id) !== -1;
+      btn.textContent = read
+        ? (currentLang === 'ro' ? '✓ Citit' : '✓ Read')
+        : (currentLang === 'ro' ? '○ Marchează citit' : '○ Mark as read');
+    });
+
+    /* update font buttons titles */
+    var fontDecBtn = document.getElementById('fontDecBtn');
+    var fontIncBtn = document.getElementById('fontIncBtn');
+    if (fontDecBtn) fontDecBtn.title = currentLang === 'ro' ? 'Micșorează textul' : 'Decrease font';
+    if (fontIncBtn) fontIncBtn.title = currentLang === 'ro' ? 'Mărește textul' : 'Increase font';
+
+    /* update open popup */
     if (popupToken && popup && popup.classList.contains('visible')) {
       popTrans.textContent = (currentLang === 'en' ? popupToken.en : popupToken.ro) || popupToken.ro;
       var noteText = popupToken.note
         ? (currentLang === 'en' ? popupToken.note.en : popupToken.note.ro) : '';
-      if (noteText) {
-        popNote.textContent = noteText;
-        popNote.classList.add('has-content');
-      } else {
-        popNote.textContent = '';
-        popNote.classList.remove('has-content');
-      }
+      if (noteText) { popNote.textContent = noteText; popNote.classList.add('has-content'); }
+      else          { popNote.textContent = ''; popNote.classList.remove('has-content'); }
       popSoundLabel.textContent = currentLang === 'ro' ? 'Pronunță' : 'Pronounce';
+      if (popSaveLabel) {
+        var saved = isWordSaved(popupToken.ko);
+        popSaveLabel.textContent = saved
+          ? (currentLang === 'ro' ? 'Salvat' : 'Saved')
+          : (currentLang === 'ro' ? 'Salvează' : 'Save');
+      }
     }
+  }
+
+  /* ── SAVE WORDS (Feature 2) ──────────────────────────────────── */
+  function getSavedWords() {
+    try { return JSON.parse(localStorage.getItem(RD_SAVED_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function isWordSaved(ko) {
+    return getSavedWords().some(function (w) { return w.ko === ko; });
+  }
+  function toggleSaveWord(tok) {
+    var words = getSavedWords();
+    var idx   = words.findIndex ? words.findIndex(function (w) { return w.ko === tok.ko; })
+                                : (function () { for (var i=0;i<words.length;i++) if (words[i].ko===tok.ko) return i; return -1; })();
+    if (idx !== -1) { words.splice(idx, 1); }
+    else            { words.push({ ko: tok.ko, ro: tok.ro || '', en: tok.en || '' }); }
+    localStorage.setItem(RD_SAVED_KEY, JSON.stringify(words));
+    return idx === -1; /* true = just saved */
+  }
+  function updateSaveBtnState(saved) {
+    if (!popSave || !popSaveLabel) return;
+    popSave.classList.toggle('saved', saved);
+    popSaveLabel.textContent = saved
+      ? (currentLang === 'ro' ? 'Salvat' : 'Saved')
+      : (currentLang === 'ro' ? 'Salvează' : 'Save');
+  }
+
+  /* ── READ PROGRESS (Feature 3) ───────────────────────────────── */
+  function getReadTexts() {
+    try { return JSON.parse(localStorage.getItem(RD_READ_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function toggleRead(id) {
+    var list = getReadTexts();
+    var idx  = list.indexOf(id);
+    if (idx !== -1) { list.splice(idx, 1); }
+    else            { list.push(id); }
+    localStorage.setItem(RD_READ_KEY, JSON.stringify(list));
+    updateProgress();
+    return idx === -1; /* true = marked as read */
+  }
+  function updateProgress() {
+    var badge = document.getElementById('rdProgress');
+    if (!badge) return;
+    var total = allTexts.length || 12;
+    var done  = getReadTexts().length;
+    badge.textContent = done + '/' + total;
+    badge.style.color = done === total && total > 0 ? '#58CC02' : '';
+    badge.style.borderColor = done === total && total > 0 ? '#58CC02' : '';
   }
 
 })();
