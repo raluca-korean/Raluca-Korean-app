@@ -546,74 +546,6 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
   flex-shrink: 0;
 }
 
-/* ── VIEW MODE TOGGLE ─────────────────────────────────────────── */
-.rd-mode-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.rd-mode-btn {
-  padding: 5px 14px;
-  border-radius: 20px;
-  border: 2px solid var(--rk-stroke);
-  background: transparent;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--rk-muted-ui);
-  cursor: pointer;
-  transition: all .18s ease;
-  font-family: inherit;
-  white-space: nowrap;
-}
-.rd-mode-btn:hover {
-  border-color: var(--rk-violet);
-  color: var(--rk-violet);
-}
-.rd-mode-btn.active {
-  background: var(--rk-violet);
-  border-color: var(--rk-violet);
-  color: #fff;
-  box-shadow: 0 2px 10px rgba(124,58,237,.3);
-}
-
-/* ── TOPIC BUTTONS ────────────────────────────────────────────── */
-.rd-topic-row {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-.rd-topic-row::-webkit-scrollbar { display: none; }
-
-.rd-topics {
-  display: flex;
-  gap: 6px;
-  flex-wrap: nowrap;
-}
-
-.rd-topic-btn {
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 2px solid var(--rk-stroke);
-  background: transparent;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--rk-muted-ui);
-  cursor: pointer;
-  transition: all .18s ease;
-  font-family: inherit;
-  white-space: nowrap;
-}
-.rd-topic-btn:hover {
-  border-color: var(--rk-violet);
-  color: var(--rk-violet);
-}
-.rd-topic-btn.active {
-  background: var(--rk-violet);
-  border-color: var(--rk-violet);
-  color: #fff;
-  box-shadow: 0 2px 10px rgba(124,58,237,.3);
-}
 </style>
 </head>
 <body class="theme-anime">
@@ -638,17 +570,8 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
       </div>
       <div id="pageControls"></div>
     </div>
-    <!-- View mode toggle + progress + font size -->
-    <div class="rd-mode-row">
-      <button class="rd-mode-btn active" id="modeLvlBtn">T1–T6</button>
-      <button class="rd-mode-btn" id="modeTopicBtn">Topice</button>
-      <div class="rd-mode-spacer"></div>
-      <span class="rd-progress-badge" id="rdProgress">0/12</span>
-      <button class="rd-font-btn" id="fontDecBtn" title="Micșorează textul">A−</button>
-      <button class="rd-font-btn" id="fontIncBtn" title="Mărește textul">A+</button>
-    </div>
-    <!-- Level buttons (level mode) -->
-    <div class="rd-controls-row" id="levelRow">
+    <!-- Level buttons + progress + font size -->
+    <div class="rd-controls-row">
       <div class="rd-levels" id="levelBtns" role="tablist" aria-label="Nivel TOPIK">
         <button class="rd-lvl-btn active" data-level="1" role="tab" aria-selected="true">T1</button>
         <button class="rd-lvl-btn" data-level="2" role="tab" aria-selected="false">T2</button>
@@ -657,11 +580,10 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
         <button class="rd-lvl-btn" data-level="5" role="tab" aria-selected="false">T5</button>
         <button class="rd-lvl-btn" data-level="6" role="tab" aria-selected="false">T6</button>
       </div>
-      <div id="levelLabel" style="font-size:12px;color:var(--rk-muted-ui);white-space:nowrap"></div>
-    </div>
-    <!-- Topic buttons (topic mode, hidden by default) -->
-    <div class="rd-topic-row" id="topicRow" style="display:none">
-      <div class="rd-topics" id="topicBtns"></div>
+      <div class="rd-mode-spacer"></div>
+      <span class="rd-progress-badge" id="rdProgress">0/12</span>
+      <button class="rd-font-btn" id="fontDecBtn" title="Micșorează textul">A−</button>
+      <button class="rd-font-btn" id="fontIncBtn" title="Mărește textul">A+</button>
     </div>
   </header>
 
@@ -699,31 +621,14 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
   var allTexts    = [];
   var currentLvl  = 1;
   var currentLang = 'ro';
-  var viewMode    = 'level';   // 'level' | 'topic'
-  var currentTopic = 'intro';
   var activeToken = null;
   var popupToken  = null;
 
-  var TOPICS = [
-    { key: 'intro',     ro: 'Prezentare',  en: 'Introduction', icon: '👋' },
-    { key: 'family',    ro: 'Familie',      en: 'Family',       icon: '🏠' },
-    { key: 'nature',    ro: 'Natură',       en: 'Nature',       icon: '🌸' },
-    { key: 'shopping',  ro: 'Cumpărături', en: 'Shopping',     icon: '🥬' },
-    { key: 'food',      ro: 'Mâncare',      en: 'Food',         icon: '🍚' },
-    { key: 'transport', ro: 'Transport',    en: 'Transport',    icon: '🚇' },
-    { key: 'youth',     ro: 'Tineret',      en: 'Youth',        icon: '✨' },
-    { key: 'proverbs',  ro: 'Proverbe',     en: 'Proverbs',     icon: '📖' },
-    { key: 'tech',      ro: 'Tehnologie',   en: 'Technology',   icon: '📱' },
-    { key: 'education', ro: 'Educație',     en: 'Education',    icon: '📚' },
-    { key: 'language',  ro: 'Limbaj',       en: 'Language',     icon: '🗣️' },
-    { key: 'global',    ro: 'Globalizare',  en: 'Globalization',icon: '🌍' }
-  ];
-
-  var FONT_SIZES = [15, 17, 19, 22];
-  var fontIdx    = 1;   // default index → 17px
-  var RD_FONT_KEY     = 'RK_RD_FONT';
-  var RD_SAVED_KEY    = 'RK_RD_SAVED';
-  var RD_READ_KEY     = 'RK_RD_READ';
+  var FONT_SIZES   = [15, 17, 19, 22];
+  var fontIdx      = 1;
+  var RD_FONT_KEY  = 'RK_RD_FONT';
+  var RD_SAVED_KEY = 'RK_RD_SAVED';
+  var RD_READ_KEY  = 'RK_RD_READ';
 
   var LEVEL_LABELS = {
     ro: ['', 'TOPIK 1 · Începător', 'TOPIK 2 · Elementar', 'TOPIK 3 · Mediu-Inferior',
@@ -744,7 +649,6 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     fontIdx = parseInt(localStorage.getItem(RD_FONT_KEY) || '1', 10);
     applyFontSize();
     wireLevel();
-    wireMode();
     wireFontSize();
     wirePopup();
     loadData();
@@ -768,45 +672,27 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
 
   /* ── RENDER ──────────────────────────────────────────────────── */
   function renderTexts() {
-    var main = document.getElementById('rdMain');
-    var texts;
+    var main  = document.getElementById('rdMain');
+    var texts = allTexts.filter(function (t) { return t.topik === currentLvl; });
 
-    if (viewMode === 'topic') {
-      texts = allTexts.filter(function (t) { return t.topic === currentTopic; });
-    } else {
-      texts = allTexts.filter(function (t) { return t.topik === currentLvl; });
-    }
-
-    /* clear old content but keep spinner if still loading */
     var oldCards = main.querySelectorAll('.rd-card');
     oldCards.forEach(function (c) { c.remove(); });
 
     /* level label */
     var lbl = document.getElementById('levelLabel');
-    if (lbl) lbl.textContent = viewMode === 'level'
-      ? (LEVEL_LABELS[currentLang][currentLvl] || '') : '';
+    if (lbl) lbl.textContent = LEVEL_LABELS[currentLang][currentLvl] || '';
 
-    /* page subtitle */
+    /* subtitle */
     var sub = document.getElementById('pageSub');
-    if (sub) {
-      if (viewMode === 'topic') {
-        var topicDef = TOPICS.filter(function(t) { return t.key === currentTopic; })[0];
-        sub.textContent = topicDef
-          ? (topicDef.icon + ' ' + (currentLang === 'ro' ? topicDef.ro : topicDef.en))
-          : '';
-      } else {
-        sub.textContent = currentLang === 'ro'
-          ? 'Apasă pe fiecare cuvânt · TOPIK 1–6'
-          : 'Tap each word · TOPIK 1–6';
-      }
-    }
+    if (sub) sub.textContent = currentLang === 'ro'
+      ? 'Apasă pe fiecare cuvânt · TOPIK 1–6'
+      : 'Tap each word · TOPIK 1–6';
 
     if (!texts.length) {
-      var emptyMsg = viewMode === 'topic'
-        ? (currentLang === 'ro' ? 'Nu există text pentru acest subiect.' : 'No text for this topic.')
-        : (currentLang === 'ro' ? 'Nu există texte pentru acest nivel.' : 'No texts for this level.');
       main.insertAdjacentHTML('beforeend',
-        '<div class="rd-empty"><div class="rd-empty-icon">📭</div>' + emptyMsg + '</div>');
+        '<div class="rd-empty"><div class="rd-empty-icon">📭</div>' +
+        (currentLang === 'ro' ? 'Nu există texte pentru acest nivel.' : 'No texts for this level.') +
+        '</div>');
       return;
     }
 
@@ -1111,57 +997,6 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     window.speechSynthesis.speak(utt);
   }
 
-  /* ── MODE SWITCHING (level ↔ topic) ─────────────────────────── */
-  function wireMode() {
-    var modeLvlBtn   = document.getElementById('modeLvlBtn');
-    var modeTopicBtn = document.getElementById('modeTopicBtn');
-    var levelRow     = document.getElementById('levelRow');
-    var topicRow     = document.getElementById('topicRow');
-    var topicBtns    = document.getElementById('topicBtns');
-
-    /* Build topic buttons */
-    TOPICS.forEach(function (tp, i) {
-      var btn = document.createElement('button');
-      btn.className = 'rd-topic-btn' + (i === 0 ? ' active' : '');
-      btn.setAttribute('data-topic', tp.key);
-      btn.textContent = tp.icon + ' ' + (currentLang === 'ro' ? tp.ro : tp.en);
-      btn.addEventListener('click', function () {
-        currentTopic = tp.key;
-        topicBtns.querySelectorAll('.rd-topic-btn').forEach(function (b) {
-          b.classList.toggle('active', b.getAttribute('data-topic') === tp.key);
-        });
-        closePopup();
-        renderTexts();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-      topicBtns.appendChild(btn);
-    });
-
-    modeLvlBtn.addEventListener('click', function () {
-      if (viewMode === 'level') return;
-      viewMode = 'level';
-      modeLvlBtn.classList.add('active');
-      modeTopicBtn.classList.remove('active');
-      levelRow.style.display = '';
-      topicRow.style.display = 'none';
-      closePopup();
-      renderTexts();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    modeTopicBtn.addEventListener('click', function () {
-      if (viewMode === 'topic') return;
-      viewMode = 'topic';
-      modeTopicBtn.classList.add('active');
-      modeLvlBtn.classList.remove('active');
-      levelRow.style.display = 'none';
-      topicRow.style.display = '';
-      closePopup();
-      renderTexts();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
   /* ── FONT SIZE ───────────────────────────────────────────────── */
   function applyFontSize() {
     var sz = FONT_SIZES[fontIdx] || 17;
@@ -1203,18 +1038,6 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
 
   /* ── LANG UI UPDATE ──────────────────────────────────────────── */
   function updateLangUI() {
-    var modeTopicBtn = document.getElementById('modeTopicBtn');
-    if (modeTopicBtn) modeTopicBtn.textContent = currentLang === 'ro' ? 'Topice' : 'Topics';
-
-    var topicBtnsEl = document.getElementById('topicBtns');
-    if (topicBtnsEl) {
-      topicBtnsEl.querySelectorAll('.rd-topic-btn').forEach(function (btn) {
-        var key = btn.getAttribute('data-topic');
-        var tp = TOPICS.filter(function (t) { return t.key === key; })[0];
-        if (tp) btn.textContent = tp.icon + ' ' + (currentLang === 'ro' ? tp.ro : tp.en);
-      });
-    }
-
     /* update visible sentence translations */
     document.querySelectorAll('.rd-translation').forEach(function (div) {
       div.textContent = currentLang === 'ro' ? div.getAttribute('data-ro') : div.getAttribute('data-en');
