@@ -1460,6 +1460,7 @@ function checkSingle(id){
   const v=norm(inp.value), a=norm(inp.dataset.ans);
   inp.classList.remove('correct','wrong','shown');
   inp.classList.add(v===a?'correct':'wrong');
+  if(v===a) focusNextInput(id);
   checkAllDone();
 }
 
@@ -1639,13 +1640,15 @@ function checkReview(si){
   const v=norm(inp.value),a=norm(inp.dataset.ans);
   inp.classList.remove('correct','wrong','shown');
   inp.classList.add(v===a?'correct':'wrong');
+  if(v===a) focusNextInput(`ri-${si}`);
   checkReviewDone();
 }
 function revealReview(si,ans){
-  const inp=document.getElementById(`ri-${si}`);
+  const id=si==='final'?'ri-final':`ri-${si}`;
+  const inp=document.getElementById(id);
   if(!inp)return;
   inp.value=ans; inp.classList.remove('correct','wrong'); inp.classList.add('shown');
-  setShown(2,`rv-${si}`);
+  if(si!=='final') setShown(2,`rv-${si}`); else setShown(2,'rv-final');
   checkReviewDone();
 }
 function checkFinalReview(){
@@ -1730,6 +1733,7 @@ function checkDlg(i){
     inp.classList.add('correct'); wrap.classList.add('correct-ans');
     const hint=document.getElementById(`danh-${i}`);
     if(hint)hint.style.display='block';
+    focusNextInput(`di-${i}`);
   } else {
     inp.classList.add('wrong');
   }
@@ -1784,6 +1788,30 @@ function showChapterComplete(){
   if(panel) panel.appendChild(card);
   renderChapters();
 }
+
+/* ═══════════════════════════════════════════════
+   KEYBOARD NAVIGATION
+═══════════════════════════════════════════════ */
+function focusableInputs(){
+  return Array.from(document.querySelectorAll('#sfpContent input:not([disabled]), #sfpContent textarea:not([disabled])'));
+}
+function focusNextInput(currentId){
+  const all=focusableInputs();
+  const cur=document.getElementById(currentId);
+  if(!cur)return;
+  const idx=all.indexOf(cur);
+  const next=all.slice(idx+1).find(el=>!el.classList.contains('correct')&&!el.classList.contains('shown'));
+  if(next) setTimeout(()=>{ next.focus(); next.select(); },150);
+}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Tab')return;
+  const inputs=focusableInputs();
+  const idx=inputs.indexOf(document.activeElement);
+  if(idx===-1)return;
+  e.preventDefault();
+  const next=e.shiftKey?inputs[idx-1]:inputs[idx+1];
+  if(next){ next.focus(); next.select(); }
+});
 
 /* ═══════════════════════════════════════════════
    PANEL DISPATCH
