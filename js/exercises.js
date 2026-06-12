@@ -120,6 +120,16 @@ const DRILL_VERBS = [
   {ko:'운동하다', ro:'a face sport',  en:'to exercise'},
   {ko:'사다',     ro:'a cumpăra',     en:'to buy'},
   {ko:'주다',     ro:'a da',          en:'to give'},
+  {ko:'알다',     ro:'a ști',         en:'to know'},
+  {ko:'모르다',   ro:'a nu ști',      en:'not to know'},
+  {ko:'좋아하다', ro:'a plăcea',      en:'to like'},
+  {ko:'싫어하다', ro:'a displăcea',   en:'to dislike'},
+  {ko:'기다리다', ro:'a aștepta',     en:'to wait'},
+  {ko:'일하다',   ro:'a munci',       en:'to work'},
+  {ko:'놀다',     ro:'a se juca',     en:'to hang out'},
+  {ko:'찾다',     ro:'a căuta',       en:'to search'},
+  {ko:'시작하다', ro:'a începe',      en:'to start'},
+  {ko:'끝나다',   ro:'a se termina',  en:'to finish'},
 ];
 
 const DRILL_EXT = [
@@ -173,10 +183,38 @@ const DRILL_EXT = [
    conn:'-지만', conn_ro:'dar (contrast)', conn_en:'but (contrast)',
    correct:'말하지만 잘 들어요',
    wrongs:['말해서 잘 들어요','말하고 잘 들어요','잘 들어서 말해요']},
+  {s1_ko:'친구를 만나요', s1_ro:'Întâlnesc un prieten.', s1_en:'I meet a friend.',
+   s2_ko:'같이 밥을 먹어요', s2_ro:'Mâncăm împreună.',   s2_en:'We eat together.',
+   conn:'-고', conn_ro:'și (secvențial)', conn_en:'and (then)',
+   correct:'친구를 만나고 같이 밥을 먹어요',
+   wrongs:['친구를 만나서 같이 밥을 먹어요','같이 밥을 먹고 친구를 만나요','친구를 만나지만 같이 밥을 먹어요']},
+  {s1_ko:'도서관에 가요', s1_ro:'Merg la bibliotecă.', s1_en:'I go to the library.',
+   s2_ko:'책을 빌려요',   s2_ro:'Împrumut o carte.',   s2_en:'I borrow a book.',
+   conn:'-아/어서', conn_ro:'deci (cauzal)', conn_en:'so (causal)',
+   correct:'도서관에 가서 책을 빌려요',
+   wrongs:['도서관에 가고 책을 빌려요','책을 빌려서 도서관에 가요','도서관에 가지만 책을 빌려요']},
+  {s1_ko:'비가 와요',   s1_ro:'Plouă.',           s1_en:'It rains.',
+   s2_ko:'우산을 써요', s2_ro:'Folosesc umbrela.', s2_en:'I use an umbrella.',
+   conn:'-아/어서', conn_ro:'deci (cauzal)', conn_en:'so (causal)',
+   correct:'비가 와서 우산을 써요',
+   wrongs:['비가 오고 우산을 써요','우산을 써서 비가 와요','비가 오지만 우산을 써요']},
+  {s1_ko:'한국어를 배워요', s1_ro:'Învăț coreeană.',    s1_en:'I learn Korean.',
+   s2_ko:'드라마를 봐요',   s2_ro:'Mă uit la seriale.', s2_en:'I watch dramas.',
+   conn:'-지만', conn_ro:'dar (contrast)', conn_en:'but (contrast)',
+   correct:'한국어를 배우지만 드라마를 봐요',
+   wrongs:['한국어를 배워서 드라마를 봐요','한국어를 배우고 드라마를 봐요','드라마를 보지만 한국어를 배워요']},
+  {s1_ko:'숙제를 해요', s1_ro:'Fac temele.',  s1_en:'I do homework.',
+   s2_ko:'게임을 해요', s2_ro:'Joc jocuri.', s2_en:'I play games.',
+   conn:'-지만', conn_ro:'dar (contrast)', conn_en:'but (contrast)',
+   correct:'숙제를 하지만 게임을 해요',
+   wrongs:['숙제를 해서 게임을 해요','숙제를 하고 게임을 해요','게임을 하지만 숙제를 해요']},
 ];
 
 let drillConjQueue = [];
 let drillExtQueue  = [];
+let allVocab = [];
+let drillVocabQueue = [];
+let drillVocabRevQueue = [];
 
 const DRILL_TENSE_LABELS = {
   pres: {ro:'PREZENT', en:'PRESENT'},
@@ -209,6 +247,18 @@ function buildDrillConjOptions(verbKo, tense){
     if(!pool.includes(f)) pool.push(f);
   }
   return {correct, options: shuffle(pool.slice(0, 4))};
+}
+
+function buildDrillVocabOptions(item, lang, reverse){
+  const pool = shuffle(allVocab.filter(v => v !== item));
+  const distractors = pool.slice(0, 3);
+  if(reverse){
+    const options = shuffle([item.ko, ...distractors.map(v => v.ko)]);
+    return {correct: item.ko, options};
+  } else {
+    const options = shuffle([item[lang], ...distractors.map(v => v[lang])]);
+    return {correct: item[lang], options};
+  }
 }
 
 const UI_TEXT = {
@@ -256,8 +306,12 @@ const UI_TEXT = {
     allLevels: "Toate nivelele",
     modeDrillConjug: "🔤 Drill Conjugare",
     modeDrillExt: "🔗 Drill Extindere",
+    modeDrillVocab: "📚 Vocabular KO→RO",
+    modeDrillVocabRev: "📖 Vocabular RO→KO",
     chooseDrillConjug: "Alege forma conjugată:",
     chooseDrillExt: "Combină propozițiile cu conectorul:",
+    chooseDrillVocab: "Alege traducerea corectă:",
+    chooseDrillVocabRev: "Alege cuvântul corean:",
   },
   en: {
     title: "TOPIK Exercises",
@@ -303,8 +357,12 @@ const UI_TEXT = {
     wrongModeLabel: "Mistakes Mode",
     modeDrillConjug: "🔤 Drill Conjugation",
     modeDrillExt: "🔗 Drill Extension",
+    modeDrillVocab: "📚 Vocab KO→EN",
+    modeDrillVocabRev: "📖 Vocab EN→KO",
     chooseDrillConjug: "Choose the conjugated form:",
     chooseDrillExt: "Combine the sentences using the connector:",
+    chooseDrillVocab: "Choose the correct translation:",
+    chooseDrillVocabRev: "Choose the correct Korean word:",
   }
 };
 
@@ -334,8 +392,10 @@ function modeLabel(type){
   if(type === "conjug")       return t("modeConjug");
   if(type === "puzzle")       return t("modePuzzle");
   if(type === "chain")        return t("modeChain");
-  if(type === "drill-conjug") return t("modeDrillConjug");
-  if(type === "drill-ext")    return t("modeDrillExt");
+  if(type === "drill-conjug")   return t("modeDrillConjug");
+  if(type === "drill-ext")      return t("modeDrillExt");
+  if(type === "drill-vocab")    return t("modeDrillVocab");
+  if(type === "drill-vocab-rev") return t("modeDrillVocabRev");
   return t("modeRoKo");
 }
 
@@ -366,10 +426,14 @@ function updateStaticTexts(){
   if(optionConjug)     optionConjug.textContent     = t("modeConjug");
   if(optionPuzzle)     optionPuzzle.textContent     = t("modePuzzle");
   if(optionChain)      optionChain.textContent      = t("modeChain");
-  const optDrillConjug = typeSelect.querySelector('option[value="drill-conjug"]');
-  const optDrillExt    = typeSelect.querySelector('option[value="drill-ext"]');
-  if(optDrillConjug) optDrillConjug.textContent = t("modeDrillConjug");
-  if(optDrillExt)    optDrillExt.textContent    = t("modeDrillExt");
+  const optDrillConjug   = typeSelect.querySelector('option[value="drill-conjug"]');
+  const optDrillExt      = typeSelect.querySelector('option[value="drill-ext"]');
+  const optDrillVocab    = typeSelect.querySelector('option[value="drill-vocab"]');
+  const optDrillVocabRev = typeSelect.querySelector('option[value="drill-vocab-rev"]');
+  if(optDrillConjug)   optDrillConjug.textContent   = t("modeDrillConjug");
+  if(optDrillExt)      optDrillExt.textContent       = t("modeDrillExt");
+  if(optDrillVocab)    optDrillVocab.textContent     = t("modeDrillVocab");
+  if(optDrillVocabRev) optDrillVocabRev.textContent  = t("modeDrillVocabRev");
 }
 
 function updateBadges(){
@@ -611,9 +675,12 @@ async function loadExercises(){
   feedbackEl.textContent = "";
 
   try {
-    const response = await fetch("./data/exercises.json");
-    if (!response.ok) throw new Error("HTTP " + response.status);
-    const data = await response.json();
+    const [exResp, vocResp] = await Promise.all([
+      fetch("./data/exercises.json"),
+      fetch("./data/vocab-korean.json")
+    ]);
+    if (!exResp.ok) throw new Error("HTTP " + exResp.status);
+    const data = await exResp.json();
 
     allExercises = {
       "ko-ro": Array.isArray(data["ko-ro"]) ? data["ko-ro"] : [],
@@ -624,6 +691,15 @@ async function loadExercises(){
       "puzzle": Array.isArray(data["puzzle"]) ? data["puzzle"] : [],
       "chain": Array.isArray(data["chain"]) ? data["chain"] : []
     };
+
+    if(vocResp.ok){
+      const vocData = await vocResp.json();
+      allVocab = vocData.filter(item =>
+        item.categories && item.categories.some(c =>
+          ['nouns','verbs','adjectives','adverbs','subjects','objects','places','times'].includes(c)
+        )
+      );
+    }
 
     render();
   } catch (error) {
@@ -651,6 +727,14 @@ function getFilteredList(){
   if(type === 'drill-ext'){
     if(!drillExtQueue.length) drillExtQueue = shuffle([...DRILL_EXT]);
     return drillExtQueue;
+  }
+  if(type === 'drill-vocab'){
+    if(!drillVocabQueue.length) drillVocabQueue = shuffle([...allVocab]);
+    return drillVocabQueue;
+  }
+  if(type === 'drill-vocab-rev'){
+    if(!drillVocabRevQueue.length) drillVocabRevQueue = shuffle([...allVocab]);
+    return drillVocabRevQueue;
   }
   let list = allExercises[type] || [];
   if(lessonParam){
@@ -757,6 +841,47 @@ function render(){
       const el = document.createElement("div");
       el.className = "answer";
       el.textContent = opt;
+      el.addEventListener("click", () => {
+        if(answered) return;
+        document.querySelectorAll("#answers .answer").forEach(n => n.classList.remove("selected"));
+        el.classList.add("selected");
+        selectedAnswer = opt;
+      });
+      answersEl.appendChild(el);
+    });
+    updateBadges();
+    return;
+  }
+
+  if(typeSelect.value === "drill-vocab" || typeSelect.value === "drill-vocab-rev"){
+    const vocabItem = item;
+    const isReverse = typeSelect.value === "drill-vocab-rev";
+    if(allVocab.length < 4){
+      questionEl.textContent = currentLang === 'ro' ? 'Se încarcă vocabularul…' : 'Loading vocabulary…';
+      return;
+    }
+    const {correct: vCorrect, options: vOptions} = buildDrillVocabOptions(vocabItem, currentLang, isReverse);
+    const cats = vocabItem.categories ? vocabItem.categories.join(', ') : '';
+    badgeEl.innerHTML =
+      `<span style="padding:5px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.28);font-weight:900;font-size:11px;color:#7c3aed">${cats}</span>` +
+      `<span style="padding:6px 10px;border-radius:999px;background:rgba(34,211,238,.10);border:1px solid rgba(34,211,238,.20);font-weight:900;margin-left:6px">#${currentIndex + 1}/${currentList.length}</span>`;
+    if(isReverse){
+      questionEl.textContent = vocabItem[currentLang];
+      helperEl.textContent = t("chooseDrillVocabRev");
+    } else {
+      questionEl.innerHTML = GrammarColor.colorize(vocabItem.ko);
+      helperEl.textContent = t("chooseDrillVocab");
+      speakKorean(vocabItem.ko);
+    }
+    document.getElementById("drillContext").style.display = "none";
+    vOptions.forEach(opt => {
+      const el = document.createElement("div");
+      el.className = "answer";
+      if(/[가-힣]/.test(opt)){
+        el.innerHTML = GrammarColor.colorize(opt);
+      } else {
+        el.textContent = opt;
+      }
       el.addEventListener("click", () => {
         if(answered) return;
         document.querySelectorAll("#answers .answer").forEach(n => n.classList.remove("selected"));
@@ -943,10 +1068,12 @@ function showHint(){
 document.getElementById("hintBtn").addEventListener("click", showHint);
 
 function getCorrectAnswer(item){
-  if(typeSelect.value === "ko-ro")        return item.correct[currentLang];
-  if(typeSelect.value === "particlePlus") return Array.isArray(item.correct) ? item.correct.join(" · ") : item.correct;
-  if(typeSelect.value === "drill-conjug") return drillGetForm(item.verb.ko, item.tense);
-  if(typeSelect.value === "drill-ext")    return item.correct;
+  if(typeSelect.value === "ko-ro")          return item.correct[currentLang];
+  if(typeSelect.value === "particlePlus")   return Array.isArray(item.correct) ? item.correct.join(" · ") : item.correct;
+  if(typeSelect.value === "drill-conjug")   return drillGetForm(item.verb.ko, item.tense);
+  if(typeSelect.value === "drill-ext")      return item.correct;
+  if(typeSelect.value === "drill-vocab")    return item[currentLang];
+  if(typeSelect.value === "drill-vocab-rev") return item.ko;
   return item.correct;
 }
 
@@ -1112,8 +1239,10 @@ typeSelect.addEventListener("change", () => {
   levelStreak = 0;
   dismissLevelSuggestion();
   currentIndex = 0;
-  if(typeSelect.value === 'drill-conjug') drillConjQueue = [];
-  if(typeSelect.value === 'drill-ext')    drillExtQueue  = [];
+  if(typeSelect.value === 'drill-conjug')   drillConjQueue    = [];
+  if(typeSelect.value === 'drill-ext')      drillExtQueue     = [];
+  if(typeSelect.value === 'drill-vocab')    drillVocabQueue   = [];
+  if(typeSelect.value === 'drill-vocab-rev') drillVocabRevQueue = [];
   const isDrill = typeSelect.value.startsWith('drill-');
   document.getElementById('levelRow').style.display = isDrill ? 'none' : '';
   render();
@@ -1160,13 +1289,14 @@ function getLearnedEx(){
   return JSON.parse(localStorage.getItem("RK_LEARNED_EX") || "[]");
 }
 function getExerciseKey(type, item){
-  if(type === "ko-ro")      return "ko-ro||" + (item.q || "");
-  if(type === "ro-ko")      return "ro-ko||" + (item.correct || "");
-  if(type === "particle")   return "particle||" + (item.template || "") + "|" + (item.correct || "");
+  if(type === "ko-ro")        return "ko-ro||" + (item.q || "");
+  if(type === "ro-ko")        return "ro-ko||" + (item.correct || "");
+  if(type === "particle")     return "particle||" + (item.template || "") + "|" + (item.correct || "");
   if(type === "particlePlus") return "pp||" + (item.template || "") + "|" + (Array.isArray(item.correct) ? item.correct.join() : item.correct || "");
-  if(type === "conjug")     return "conjug||" + (item.correct || "");
-  if(type === "puzzle")     return "puzzle||" + (Array.isArray(item.correct) ? item.correct[0] : "");
-  if(type === "chain")      return "chain||" + (Array.isArray(item.correct) ? item.correct[0] : "");
+  if(type === "conjug")       return "conjug||" + (item.correct || "");
+  if(type === "puzzle")       return "puzzle||" + (Array.isArray(item.correct) ? item.correct[0] : "");
+  if(type === "chain")        return "chain||" + (Array.isArray(item.correct) ? item.correct[0] : "");
+  if(type === "drill-vocab" || type === "drill-vocab-rev") return type + "||" + (item.ko || "");
   return type + "||" + JSON.stringify(item.correct);
 }
 function isLearnedEx(type, item){
