@@ -644,7 +644,12 @@ html[data-mode="day"] .sm-reveal { border-color:rgba(0,0,0,.14); color:rgba(0,0,
 /* ── CHAPTER FINAL SUMMARY ────────────────────────────────── */
 .chapter-complete {
   text-align: center;
-  padding: 30px 20px;
+  padding: 30px 20px 10px;
+  animation: cc-in .5s ease both;
+}
+@keyframes cc-in {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
 }
 .cc-emoji { font-size: 48px; margin-bottom: 12px; }
 .cc-title { font-size: 22px; font-weight: 900; color: #ffd700; margin-bottom: 8px; }
@@ -656,11 +661,37 @@ html[data-mode="day"] .cc-sub { color: rgba(0,0,0,.45); }
   border-radius: 14px; padding: 16px 20px;
   margin-bottom: 6px; line-height: 1.6;
 }
+.cc-final-ko .cc-speak { margin-left: 8px; }
 .cc-final-trans {
   font-size: 13px; color: rgba(255,255,255,.45);
   font-style: italic; margin-bottom: 20px;
 }
 html[data-mode="day"] .cc-final-trans { color: rgba(0,0,0,.45); }
+.cc-next-btn {
+  display: inline-block;
+  padding: 12px 28px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(124,58,237,.35);
+  transition: transform .15s, box-shadow .15s;
+}
+.cc-next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,.45); }
+
+/* ── DONE CHAPTER BUTTON ──────────────────────────────────── */
+.ch-btn.ch-done {
+  border-color: rgba(88,204,2,.4);
+  color: #58CC02;
+}
+.ch-btn.ch-done.active {
+  background: linear-gradient(135deg, #3a8c1e, #58CC02);
+  border-color: transparent;
+  color: white;
+}
 
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 480px) {
@@ -1262,9 +1293,35 @@ const STEPS = [
 const doneSteps   = {};   // doneSteps[chId][step] = true
 const shownCells  = {};   // shownCells[chId][step][key] = true
 
-function markDone(step){ if(!doneSteps[currentCh])doneSteps[currentCh]={}; doneSteps[currentCh][step]=true; }
+function saveState(){
+  try {
+    localStorage.setItem('RK_SFP_DONE', JSON.stringify(doneSteps));
+    localStorage.setItem('RK_SFP_SHOWN', JSON.stringify(shownCells));
+  } catch(e){}
+}
+function loadState(){
+  try {
+    const d=localStorage.getItem('RK_SFP_DONE');
+    const s=localStorage.getItem('RK_SFP_SHOWN');
+    if(d){ const p=JSON.parse(d); Object.keys(p).forEach(k=>{ doneSteps[k]=p[k]; }); }
+    if(s){ const p=JSON.parse(s); Object.keys(p).forEach(k=>{ shownCells[k]=p[k]; }); }
+  } catch(e){}
+}
+function isChapterDone(chIdx){ return !!(doneSteps[chIdx]&&doneSteps[chIdx][3]); }
+
+function markDone(step){
+  if(!doneSteps[currentCh])doneSteps[currentCh]={};
+  doneSteps[currentCh][step]=true;
+  saveState();
+  if(step===3) setTimeout(showChapterComplete, 400);
+}
 function isDone(step){   return !!(doneSteps[currentCh]&&doneSteps[currentCh][step]); }
-function setShown(step,key){ if(!shownCells[currentCh])shownCells[currentCh]={}; if(!shownCells[currentCh][step])shownCells[currentCh][step]={}; shownCells[currentCh][step][key]=true; }
+function setShown(step,key){
+  if(!shownCells[currentCh])shownCells[currentCh]={};
+  if(!shownCells[currentCh][step])shownCells[currentCh][step]={};
+  shownCells[currentCh][step][key]=true;
+  saveState();
+}
 function wasShown(step,key){ return !!(shownCells[currentCh]&&shownCells[currentCh][step]&&shownCells[currentCh][step][key]); }
 
 /* ═══════════════════════════════════════════════
@@ -1289,9 +1346,12 @@ function norm(s){ return s.trim().replace(/\s+/g,' '); }
 ═══════════════════════════════════════════════ */
 function renderChapters(){
   const el=document.getElementById('sfpChapters');
-  el.innerHTML=CHAPTERS.map((ch,i)=>
-    `<button class="ch-btn${i===currentCh?' active':''}" onclick="switchChapter(${i})">${t(ch.title)}</button>`
-  ).join('');
+  el.innerHTML=CHAPTERS.map((ch,i)=>{
+    const done=isChapterDone(i);
+    const cls=['ch-btn',i===currentCh?'active':'',done?'ch-done':''].filter(Boolean).join(' ');
+    const label=t(ch.title)+(done?' ✓':'');
+    return `<button class="${cls}" onclick="switchChapter(${i})">${label}</button>`;
+  }).join('');
 }
 
 /* ═══════════════════════════════════════════════
@@ -1701,6 +1761,31 @@ function checkDlgDone(){
 }
 
 /* ═══════════════════════════════════════════════
+   CHAPTER COMPLETE CARD
+═══════════════════════════════════════════════ */
+function showChapterComplete(){
+  if(document.getElementById('chapterCompleteCard'))return;
+  const ch=CHAPTERS[currentCh];
+  const isLast=currentCh===CHAPTERS.length-1;
+  const nextLbl=lang==='ro'?(isLast?'Revino la început ↺':'Capitol următor →'):(isLast?'Back to start ↺':'Next Chapter →');
+  const card=document.createElement('div');
+  card.className='chapter-complete';
+  card.id='chapterCompleteCard';
+  card.innerHTML=`
+    <div class="cc-emoji">🎉</div>
+    <div class="cc-title">${lang==='ro'?'Capitol terminat!':'Chapter complete!'}</div>
+    <div class="cc-sub">${lang==='ro'?'Ai parcurs toți cei 4 pași. Fraza completă:':'You\'ve completed all 4 steps. The full sentence:'}</div>
+    <div class="cc-final-ko">${ch.ext.final.ko} <button class="sm-speak cc-speak" onclick="speakKo('${ch.ext.final.ko.replace(/'/g,"\\'")}')">🔊</button></div>
+    <div class="cc-final-trans">${t(ch.ext.final.tr)}</div>
+    <button class="cc-next-btn" onclick="${isLast?'switchChapter(0)':'switchChapter('+(currentCh+1)+')'}">
+      ${nextLbl}
+    </button>`;
+  const panel=document.querySelector('.sfp-panel.active');
+  if(panel) panel.appendChild(card);
+  renderChapters();
+}
+
+/* ═══════════════════════════════════════════════
    PANEL DISPATCH
 ═══════════════════════════════════════════════ */
 function renderPanel(){
@@ -1774,6 +1859,9 @@ function toggleMode(){
    INIT
 ═══════════════════════════════════════════════ */
 (function init(){
+  // Restore progress
+  loadState();
+
   // Restore mode — RK_THEME is the canonical key ('light'/'dark')
   const savedTheme=localStorage.getItem('RK_THEME');
   const isLight = savedTheme === 'light';
