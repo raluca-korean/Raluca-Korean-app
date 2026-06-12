@@ -38,7 +38,9 @@ const CAT_COLORS = {
   adverbs:    "#8e44ad",
   modifiers:  "#c0962a",
   connectors: "#e67e22",
-  grammar:    "#1abc9c"
+  grammar:    "#1abc9c",
+  times:      "#0097a7",
+  places:     "#388e3c"
 };
 
 const CAT_LABELS = {
@@ -50,7 +52,9 @@ const CAT_LABELS = {
   adverbs:    { ro: "Adverb",      en: "Adverb"      },
   modifiers:  { ro: "Modificator", en: "Modifier"    },
   connectors: { ro: "Conector",    en: "Connector"   },
-  grammar:    { ro: "Gramatică",   en: "Grammar"     }
+  grammar:    { ro: "Gramatică",   en: "Grammar"     },
+  times:      { ro: "Timp",        en: "Time"        },
+  places:     { ro: "Loc",         en: "Place"       }
 };
 
 const LABEL_KEY = {};
