@@ -363,13 +363,16 @@ body.theme-anime::after {
   50%      { opacity: 0.45; transform: scale(1.10); }
 }
 
-/* Hover */
-.sb-node:hover {
+/* Hover + focus */
+.sb-node:hover,
+.sb-node:focus-visible {
   border-color: var(--sb-nd-hover-b);
   box-shadow: 0 0 0 11px var(--sb-nd-hover-glow), 0 8px 28px rgba(0,0,0,0.12);
   z-index: 15;
+  outline: none;
 }
-.sb-node:hover .sb-nd-ko  { color: var(--sb-nd-hover-ko); }
+.sb-node:hover .sb-nd-ko,
+.sb-node:focus-visible .sb-nd-ko { color: var(--sb-nd-hover-ko); }
 
 /* Done */
 .sb-node.sb-done {
@@ -1041,11 +1044,17 @@ function renderNodes() {
     node.style.top   = pos.top + '%';
     node.style.animation =
       `sb-node-in 0.5s ${i * 0.042}s cubic-bezier(0.16,1,0.3,1) backwards`;
+    node.setAttribute('role', 'button');
+    node.setAttribute('tabindex', '0');
+    node.setAttribute('aria-label', lesson.title[_lang] + (isDone ? ' — ' + t('done') : ''));
 
     node.innerHTML =
-      '<div class="sb-nd-ko">' + nodeGlyph(lesson) + '</div>';
+      '<div class="sb-nd-ko" aria-hidden="true">' + nodeGlyph(lesson) + '</div>';
 
     node.addEventListener('click', () => openBloom(lesson.id));
+    node.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBloom(lesson.id); }
+    });
     fieldEl.appendChild(node);
   });
 
@@ -1121,17 +1130,20 @@ function openBloom(id) {
   // 4 — Position bloom organism
   _positionBloom();
 
-  // 5 — Open with entrance animation
+  // 5 — Open with entrance animation; move focus for keyboard users
   bloomEl.classList.add('sb-bloom-open', 'sb-bloom-entering');
   setTimeout(() => {
     bloomEl.classList.remove('sb-bloom-entering');
     _animating = false;
+    const closeBtn = document.getElementById('sb-bloom-close');
+    if (closeBtn) closeBtn.focus();
   }, 480);
 }
 
 function closeBloom() {
   if (_animating || !_bloomId) return;
   _animating = true;
+  const returnId = _bloomId;
 
   bloomEl.classList.add('sb-bloom-leaving');
 
@@ -1150,6 +1162,10 @@ function closeBloom() {
     bloomCont.innerHTML = '';
     _bloomId   = null;
     _animating = false;
+
+    // Return focus to the source node for keyboard users
+    const src = fieldEl.querySelector(`.sb-node[data-id="${returnId}"]`);
+    if (src) src.focus();
   }, 280);
 }
 
