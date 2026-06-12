@@ -72,6 +72,7 @@ const UI = {
     favLbl:  "Favorit",
     learnLbl:"Memorat",
     youglish:"YouGlish ↗",
+    speak:   "Pronunță",
     associated: "CUVINTE ASOCIATE",
     back:    "Înapoi",
     allCats: "Toate",
@@ -94,6 +95,7 @@ const UI = {
     favLbl:  "Favorite",
     learnLbl:"Learned",
     youglish:"YouGlish ↗",
+    speak:   "Speak",
     associated: "ASSOCIATED WORDS",
     back:    "Back",
     allCats: "All",
@@ -386,10 +388,15 @@ function _makeRow(word) {
       `<span class="gls-row-tr">${sanitizeHTML(getMeaning(word))}</span>` +
     `</div>` +
     `<div class="gls-row-end">` +
+      `<button class="gls-row-speak" type="button" aria-label="${t('speak')}" title="${t('speak')}">🔊</button>` +
       `<span class="gls-row-dot" style="background:${color}"></span>` +
       `<div class="gls-row-icons">${_iconsHTML(word.ko)}</div>` +
     `</div>`;
   el.addEventListener("click", () => focusWord(word.ko));
+  el.querySelector(".gls-row-speak").addEventListener("click", e => {
+    e.stopPropagation();
+    speakKO(word.ko);
+  });
   return el;
 }
 
@@ -486,6 +493,9 @@ function _renderPanel(word) {
     }).join("")}</div>` +
 
     `<div class="gls-panel-acts">` +
+      `<button class="gls-panel-btn gls-panel-speak" onclick="speakKO('${esc(word.ko)}')">` +
+        `<span class="gls-panel-btn-ico">🔊</span>${t("speak")}` +
+      `</button>` +
       `<button class="gls-panel-btn${isFav(word.ko) ? " fav-on" : ""}" onclick="toggleFav('${esc(word.ko)}')">` +
         `<span class="gls-panel-btn-ico">${isFav(word.ko) ? "◆" : "◇"}</span>${t("favLbl")}` +
       `</button>` +
