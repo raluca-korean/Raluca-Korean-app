@@ -1758,8 +1758,15 @@ function setLang(l){
 function toggleMode(){
   const html=document.documentElement;
   const isDay=html.getAttribute('data-mode')==='day';
-  html.setAttribute('data-mode',isDay?'night':'day');
-  localStorage.setItem('RK_MODE',isDay?'night':'day');
+  if(isDay){
+    html.removeAttribute('data-mode');
+    document.body.classList.add('dark-mode');
+    localStorage.setItem('RK_THEME','dark');
+  } else {
+    html.setAttribute('data-mode','day');
+    document.body.classList.remove('dark-mode');
+    localStorage.setItem('RK_THEME','light');
+  }
   document.getElementById('modeBtn').textContent=isDay?'☀️':'🌙';
 }
 
@@ -1767,10 +1774,17 @@ function toggleMode(){
    INIT
 ═══════════════════════════════════════════════ */
 (function init(){
-  // Restore mode
-  const savedMode=localStorage.getItem('RK_MODE');
-  if(savedMode==='day') document.documentElement.setAttribute('data-mode','day');
-  document.getElementById('modeBtn').textContent=(savedMode==='day')?'🌙':'☀️';
+  // Restore mode — RK_THEME is the canonical key ('light'/'dark')
+  const savedTheme=localStorage.getItem('RK_THEME');
+  const isLight = savedTheme === 'light';
+  if(isLight){
+    document.documentElement.setAttribute('data-mode','day');
+    document.body.classList.remove('dark-mode');
+  } else {
+    document.documentElement.removeAttribute('data-mode');
+    document.body.classList.add('dark-mode');
+  }
+  document.getElementById('modeBtn').textContent=isLight?'🌙':'☀️';
 
   // Lang buttons
   document.getElementById('btnRo').addEventListener('click',()=>setLang('ro'));
