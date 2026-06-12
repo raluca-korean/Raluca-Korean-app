@@ -1,0 +1,1541 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Formare Propoziții</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+/* ── OVERRIDES ────────────────────────────────────────────── */
+html, body { overflow: auto; cursor: auto; height: auto; min-height: 100vh; }
+*, *::before, *::after { cursor: auto !important; }
+
+/* ── ROOT ─────────────────────────────────────────────────── */
+.sfp-root {
+  min-height: 100vh;
+  padding-bottom: 88px;
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ── HEADER ───────────────────────────────────────────────── */
+.sfp-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(7,7,28,.88);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+html[data-mode="day"] .sfp-header {
+  background: rgba(240,240,250,.92);
+  border-bottom-color: rgba(0,0,0,.08);
+}
+.sfp-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #a78bfa, #f472b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: .01em;
+}
+.sfp-controls { display: flex; align-items: center; gap: 6px; }
+.sfp-mode-btn {
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,.15);
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .2s;
+  line-height: 1;
+}
+html[data-mode="day"] .sfp-mode-btn { border-color: rgba(0,0,0,.15); }
+.sfp-lang-btn {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,.15);
+  background: transparent;
+  color: rgba(255,255,255,.5);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  cursor: pointer;
+  transition: all .2s;
+}
+html[data-mode="day"] .sfp-lang-btn { color: rgba(0,0,0,.45); border-color: rgba(0,0,0,.15); }
+.sfp-lang-btn.active {
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  border-color: transparent;
+  color: white;
+}
+
+/* ── CHAPTER TABS ─────────────────────────────────────────── */
+.sfp-chapters {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.sfp-chapters::-webkit-scrollbar { display: none; }
+html[data-mode="day"] .sfp-chapters { border-bottom-color: rgba(0,0,0,.06); }
+.ch-btn {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,.12);
+  background: transparent;
+  color: rgba(255,255,255,.55);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+html[data-mode="day"] .ch-btn { color: rgba(0,0,0,.45); border-color: rgba(0,0,0,.14); }
+.ch-btn.active {
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 3px 12px rgba(124,58,237,.3);
+}
+
+/* ── STEP INDICATOR ───────────────────────────────────────── */
+.sfp-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 14px 16px 10px;
+}
+.step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  gap: 4px;
+}
+.step-num {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 900;
+  color: rgba(255,255,255,.35);
+  background: transparent;
+  transition: all .3s;
+  flex-shrink: 0;
+}
+html[data-mode="day"] .step-num { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.35); }
+.step-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,.3);
+  white-space: nowrap;
+  transition: color .3s;
+  letter-spacing: .02em;
+}
+html[data-mode="day"] .step-lbl { color: rgba(0,0,0,.3); }
+.step-line {
+  width: 30px; height: 2px;
+  background: rgba(255,255,255,.1);
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+html[data-mode="day"] .step-line { background: rgba(0,0,0,.1); }
+.step-node.active .step-num {
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  border-color: transparent; color: white;
+  box-shadow: 0 0 14px rgba(124,58,237,.5);
+}
+.step-node.active .step-lbl { color: #a78bfa; }
+.step-node.done .step-num { background: #58CC02; border-color: transparent; color: white; }
+.step-node.done .step-lbl { color: rgba(255,255,255,.6); }
+html[data-mode="day"] .step-node.done .step-lbl { color: rgba(0,0,0,.5); }
+
+/* ── CONTENT ──────────────────────────────────────────────── */
+.sfp-content {
+  padding: 16px 16px 8px;
+}
+.sfp-panel { display: none; }
+.sfp-panel.active {
+  display: block;
+  animation: sfpFade .3s ease;
+}
+@keyframes sfpFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.panel-heading {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 0 8px;
+}
+.panel-heading h2 {
+  font-size: 20px; font-weight: 900;
+  color: var(--rk-text, white);
+  margin-bottom: 5px;
+}
+html[data-mode="day"] .panel-heading h2 { color: #1a0533; }
+.panel-heading p {
+  font-size: 13px;
+  color: rgba(255,255,255,.45);
+  line-height: 1.5;
+}
+html[data-mode="day"] .panel-heading p { color: rgba(0,0,0,.45); }
+
+/* ── CONJUGATION CARDS ────────────────────────────────────── */
+.verb-card {
+  background: rgba(255,255,255,.04);
+  border: 1.5px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  transition: border-color .3s, background .3s;
+}
+html[data-mode="day"] .verb-card { background: rgba(255,255,255,.8); border-color: rgba(0,0,0,.1); }
+.verb-card.all-done { border-color: rgba(88,204,2,.45); background: rgba(88,204,2,.04); }
+.verb-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,.03);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+html[data-mode="day"] .verb-header { background: rgba(0,0,0,.03); border-bottom-color: rgba(0,0,0,.07); }
+.verb-ko {
+  font-size: 22px; font-weight: 900;
+  color: white;
+}
+html[data-mode="day"] .verb-ko { color: #1a0533; }
+.verb-meaning {
+  font-size: 12px;
+  color: rgba(255,255,255,.45);
+  flex: 1;
+}
+html[data-mode="day"] .verb-meaning { color: rgba(0,0,0,.5); }
+.verb-speak-btn {
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: transparent;
+  color: rgba(255,255,255,.5);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .15s;
+}
+html[data-mode="day"] .verb-speak-btn { border-color: rgba(0,0,0,.12); color: rgba(0,0,0,.4); }
+.verb-speak-btn:hover { background: rgba(255,255,255,.08); color: white; }
+html[data-mode="day"] .verb-speak-btn:hover { background: rgba(0,0,0,.06); color: #1a0533; }
+
+.verb-rows { padding: 10px 16px; display: flex; flex-direction: column; gap: 9px; }
+.verb-row {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.tense-lbl {
+  font-size: 10px; font-weight: 900;
+  text-transform: uppercase; letter-spacing: .05em;
+  color: rgba(255,255,255,.3);
+  padding-top: 2px;
+}
+html[data-mode="day"] .tense-lbl { color: rgba(0,0,0,.35); }
+.row-right {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.tense-prompt {
+  font-size: 13px;
+  color: rgba(255,255,255,.55);
+  min-width: 120px;
+}
+html[data-mode="day"] .tense-prompt { color: rgba(0,0,0,.5); }
+.tense-eq { color: rgba(255,255,255,.25); font-size: 13px; }
+html[data-mode="day"] .tense-eq { color: rgba(0,0,0,.25); }
+.conj-input {
+  min-width: 120px; width: 140px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+  color: white;
+  font-size: 15px;
+  font-family: 'Noto Sans KR', sans-serif;
+  outline: none;
+  transition: border-color .2s, background .2s, color .2s;
+}
+html[data-mode="day"] .conj-input {
+  background: white;
+  border-color: rgba(0,0,0,.15);
+  color: #1a0533;
+}
+.conj-input:focus { border-color: rgba(124,58,237,.6); background: rgba(124,58,237,.08); }
+.conj-input.correct { border-color: #58CC02 !important; color: #58CC02 !important; background: rgba(88,204,2,.08) !important; }
+.conj-input.wrong   { border-color: #FF4B4B !important; color: #FF4B4B !important; background: rgba(255,75,75,.08) !important; }
+.conj-input.shown   { border-color: rgba(255,200,0,.5) !important; color: #ffd700 !important; background: rgba(255,200,0,.07) !important; }
+.reveal-btn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: transparent;
+  color: rgba(255,255,255,.4);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+}
+html[data-mode="day"] .reveal-btn { border-color: rgba(0,0,0,.12); color: rgba(0,0,0,.4); }
+.reveal-btn:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8); }
+html[data-mode="day"] .reveal-btn:hover { background: rgba(0,0,0,.06); color: rgba(0,0,0,.7); }
+
+.with-obj-section {
+  padding: 8px 16px 12px;
+  border-top: 1px solid rgba(255,255,255,.05);
+  margin-top: 2px;
+}
+html[data-mode="day"] .with-obj-section { border-top-color: rgba(0,0,0,.06); }
+.with-obj-lbl {
+  font-size: 10px; font-weight: 900;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: rgba(255,150,0,.7);
+  margin-bottom: 8px;
+}
+
+.verb-actions {
+  display: flex; gap: 8px;
+  padding: 8px 16px 14px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.check-btn {
+  padding: 8px 20px;
+  border-radius: 999px; border: none;
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  color: white; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  transition: transform .1s, box-shadow .2s;
+}
+.check-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(124,58,237,.4); }
+.show-all-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,.14);
+  background: transparent; color: rgba(255,255,255,.55);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+}
+html[data-mode="day"] .show-all-btn { border-color: rgba(0,0,0,.14); color: rgba(0,0,0,.5); }
+
+/* ── EXTENSION / REVIEW FLOW ──────────────────────────────── */
+.flow-starts {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.start-bubble {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 14px; font-weight: 700;
+  background: rgba(255,200,0,.12);
+  border: 1.5px solid rgba(255,200,0,.3);
+  color: #ffd700;
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.start-bubble:hover { background: rgba(255,200,0,.2); }
+.start-bubble .sb-trans {
+  font-size: 11px;
+  color: rgba(255,200,0,.5);
+  font-weight: 400;
+  font-style: italic;
+}
+.flow-step-card {
+  background: rgba(255,255,255,.03);
+  border: 1.5px solid rgba(255,255,255,.07);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  transition: all .4s ease;
+}
+html[data-mode="day"] .flow-step-card {
+  background: rgba(255,255,255,.7);
+  border-color: rgba(0,0,0,.09);
+}
+.flow-step-card.hidden-step { opacity: 0; transform: translateY(8px); pointer-events: none; }
+.flow-step-card.visible-step { opacity: 1; transform: translateY(0); }
+.fsc-header {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 10px;
+}
+.op-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 10px; font-weight: 900;
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.op-badge.add    { background: rgba(28,176,246,.15); color: #1CB0F6; border: 1px solid rgba(28,176,246,.3); }
+.op-badge.modify { background: rgba(255,150,0,.15);  color: #FF9600; border: 1px solid rgba(255,150,0,.3); }
+.op-badge.combine{ background: rgba(124,58,237,.15); color: #a78bfa; border: 1px solid rgba(124,58,237,.3); }
+.fsc-grammar {
+  font-size: 12px; font-weight: 700;
+  color: rgba(255,255,255,.55);
+  padding-top: 3px;
+}
+html[data-mode="day"] .fsc-grammar { color: rgba(0,0,0,.5); }
+.fsc-instruction {
+  font-size: 12px;
+  color: rgba(255,255,255,.35);
+  margin-left: auto;
+  font-style: italic;
+}
+html[data-mode="day"] .fsc-instruction { color: rgba(0,0,0,.4); }
+.fsc-from {
+  font-size: 12px; color: rgba(255,255,255,.35);
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+html[data-mode="day"] .fsc-from { color: rgba(0,0,0,.4); }
+.from-pill {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px; font-weight: 700;
+  color: rgba(255,255,255,.6);
+  cursor: pointer;
+}
+html[data-mode="day"] .from-pill {
+  background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.1); color: rgba(0,0,0,.5);
+}
+.fsc-arrow { color: rgba(255,255,255,.2); font-size: 16px; margin: 3px 0; }
+html[data-mode="day"] .fsc-arrow { color: rgba(0,0,0,.2); }
+.fsc-result-ko {
+  font-size: 18px; font-weight: 900;
+  color: #58CC02;
+  margin-bottom: 3px;
+  display: flex; align-items: center; gap: 8px;
+}
+.fsc-result-trans {
+  font-size: 12px;
+  color: rgba(255,255,255,.4);
+  font-style: italic;
+}
+html[data-mode="day"] .fsc-result-trans { color: rgba(0,0,0,.4); }
+.fsc-speak {
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(88,204,2,.2);
+  background: transparent;
+  color: rgba(88,204,2,.6);
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.fsc-speak:hover { background: rgba(88,204,2,.1); color: #58CC02; }
+
+/* Review mode inputs */
+.review-input {
+  border: none;
+  border-bottom: 2.5px solid rgba(124,58,237,.5);
+  background: transparent;
+  color: #a78bfa;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 17px; font-weight: 900;
+  padding: 2px 6px;
+  outline: none;
+  width: 220px;
+  transition: border-color .2s;
+}
+html[data-mode="day"] .review-input { color: #7c3aed; border-bottom-color: rgba(124,58,237,.4); }
+.review-input:focus { border-bottom-color: #a78bfa; }
+.review-input.correct { border-bottom-color: #58CC02 !important; color: #58CC02 !important; }
+.review-input.wrong   { border-bottom-color: #FF4B4B !important; color: #FF4B4B !important; }
+.review-input.shown   { border-bottom-color: #ffd700 !important; color: #ffd700 !important; }
+.review-actions {
+  display: flex; gap: 6px;
+  margin-top: 8px;
+}
+
+/* Final sentence card */
+.final-card {
+  background: linear-gradient(135deg, rgba(255,200,0,.1), rgba(255,150,0,.08));
+  border: 2px solid rgba(255,200,0,.3);
+  border-radius: 18px;
+  padding: 20px;
+  margin-top: 16px;
+  text-align: center;
+}
+html[data-mode="day"] .final-card { background: rgba(255,200,0,.08); }
+.final-label {
+  font-size: 10px; font-weight: 900;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: rgba(255,200,0,.6);
+  margin-bottom: 10px;
+}
+.final-ko {
+  font-size: 19px; font-weight: 900;
+  color: #ffd700;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.final-trans {
+  font-size: 13px;
+  color: rgba(255,200,0,.55);
+  font-style: italic;
+  line-height: 1.5;
+}
+.final-speak-btn {
+  margin-top: 12px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,200,0,.3);
+  background: transparent;
+  color: #ffd700;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.final-speak-btn:hover { background: rgba(255,200,0,.12); }
+
+/* ── DIALOGUE ─────────────────────────────────────────────── */
+.dialogue-wrap { display: flex; flex-direction: column; gap: 14px; }
+.dlg-turn { display: flex; flex-direction: column; max-width: 88%; }
+.dlg-turn.spk-a { align-self: flex-start; }
+.dlg-turn.spk-b { align-self: flex-end; }
+.dlg-who {
+  font-size: 10px; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .08em; margin-bottom: 4px;
+}
+.spk-a .dlg-who { color: rgba(255,255,255,.35); }
+.spk-b .dlg-who { color: rgba(167,139,250,.6); text-align: right; }
+html[data-mode="day"] .spk-a .dlg-who { color: rgba(0,0,0,.35); }
+html[data-mode="day"] .spk-b .dlg-who { color: rgba(124,58,237,.6); }
+
+.dlg-bubble-q {
+  padding: 12px 16px;
+  border-radius: 16px 16px 16px 4px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+}
+html[data-mode="day"] .dlg-bubble-q {
+  background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.1);
+}
+.dlg-ko { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.88); margin-bottom: 3px; }
+html[data-mode="day"] .dlg-ko { color: rgba(0,0,0,.8); }
+.dlg-trans { font-size: 12px; color: rgba(255,255,255,.38); font-style: italic; }
+html[data-mode="day"] .dlg-trans { color: rgba(0,0,0,.4); }
+
+.dlg-answer-wrap {
+  padding: 12px 16px;
+  border-radius: 16px 16px 4px 16px;
+  background: rgba(124,58,237,.12);
+  border: 1.5px solid rgba(124,58,237,.2);
+}
+html[data-mode="day"] .dlg-answer-wrap { background: rgba(124,58,237,.06); }
+.dlg-answer-wrap.correct-ans {
+  background: rgba(88,204,2,.1);
+  border-color: rgba(88,204,2,.35);
+}
+.dlg-answer-wrap.shown-ans {
+  background: rgba(255,200,0,.08);
+  border-color: rgba(255,200,0,.3);
+}
+.dlg-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #a78bfa;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px; font-weight: 700;
+  padding: 0;
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+}
+html[data-mode="day"] .dlg-input { color: #7c3aed; }
+.dlg-input.correct { color: #58CC02; }
+.dlg-input.shown   { color: #ffd700; }
+.dlg-hint-text {
+  font-size: 11px; color: rgba(255,255,255,.3);
+  font-style: italic; margin-top: 4px;
+}
+html[data-mode="day"] .dlg-hint-text { color: rgba(0,0,0,.35); }
+.dlg-answer-hint { font-size: 12px; color: rgba(88,204,2,.7); margin-top: 2px; }
+.dlg-actions {
+  display: flex; gap: 6px;
+  margin-top: 8px; justify-content: flex-end;
+}
+
+/* ── BOTTOM NAV ───────────────────────────────────────────── */
+.sfp-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 10px 16px;
+  background: rgba(7,7,28,.92);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 200;
+}
+html[data-mode="day"] .sfp-nav {
+  background: rgba(240,240,250,.94);
+  border-top-color: rgba(0,0,0,.07);
+}
+.nav-btn-prev {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,.14);
+  background: transparent;
+  color: rgba(255,255,255,.55);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: all .2s;
+}
+html[data-mode="day"] .nav-btn-prev { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.5); }
+.nav-btn-prev:disabled { opacity: .3; cursor: default; }
+.nav-btn-next {
+  padding: 10px 22px;
+  border-radius: 999px; border: none;
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  color: white; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(124,58,237,.35);
+  transition: transform .15s, box-shadow .2s;
+}
+.nav-btn-next:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(124,58,237,.45); }
+.nav-dots {
+  display: flex; gap: 5px; align-items: center;
+}
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  transition: all .2s;
+}
+html[data-mode="day"] .nav-dot { background: rgba(0,0,0,.2); }
+.nav-dot.active { background: #a78bfa; width: 16px; border-radius: 3px; }
+.nav-dot.done   { background: #58CC02; }
+
+/* ── SMALL BTNS ───────────────────────────────────────────── */
+.sm-check { padding:6px 12px; border-radius:999px; border:none; background:linear-gradient(135deg,#7c3aed,#db2777); color:white; font-size:11px; font-weight:700; cursor:pointer; transition:transform .1s; }
+.sm-check:hover { transform:translateY(-1px); }
+.sm-reveal { padding:6px 11px; border-radius:999px; border:1.5px solid rgba(255,255,255,.14); background:transparent; color:rgba(255,255,255,.5); font-size:11px; font-weight:700; cursor:pointer; }
+html[data-mode="day"] .sm-reveal { border-color:rgba(0,0,0,.14); color:rgba(0,0,0,.45); }
+.sm-speak { padding:5px 9px; border-radius:8px; border:1px solid rgba(28,176,246,.25); background:transparent; color:rgba(28,176,246,.6); font-size:12px; cursor:pointer; }
+.sm-speak:hover { background:rgba(28,176,246,.1); color:#1CB0F6; }
+
+/* ── CHAPTER FINAL SUMMARY ────────────────────────────────── */
+.chapter-complete {
+  text-align: center;
+  padding: 30px 20px;
+}
+.cc-emoji { font-size: 48px; margin-bottom: 12px; }
+.cc-title { font-size: 22px; font-weight: 900; color: #ffd700; margin-bottom: 8px; }
+.cc-sub { font-size: 14px; color: rgba(255,255,255,.5); margin-bottom: 20px; line-height: 1.6; }
+html[data-mode="day"] .cc-sub { color: rgba(0,0,0,.45); }
+.cc-final-ko {
+  font-size: 18px; font-weight: 900; color: #58CC02;
+  background: rgba(88,204,2,.08); border: 1.5px solid rgba(88,204,2,.2);
+  border-radius: 14px; padding: 16px 20px;
+  margin-bottom: 6px; line-height: 1.6;
+}
+.cc-final-trans {
+  font-size: 13px; color: rgba(255,255,255,.45);
+  font-style: italic; margin-bottom: 20px;
+}
+html[data-mode="day"] .cc-final-trans { color: rgba(0,0,0,.45); }
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .sfp-title { font-size: 14px; }
+  .verb-row { grid-template-columns: 50px 1fr; }
+  .conj-input { min-width: 100px; width: 120px; }
+  .step-lbl { font-size: 9px; }
+  .step-line { width: 20px; }
+  .final-ko { font-size: 16px; }
+}
+
+/* ── LMN FIELD BACKGROUND (from theme-anime) ──────────────── */
+.lmn-field {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.lmn-orb {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); opacity: .18;
+}
+.lmn-orb-1 { width:400px;height:400px; background:#7c3aed; top:-100px; left:-100px; }
+.lmn-orb-2 { width:350px;height:350px; background:#db2777; top:30%; right:-80px; }
+.lmn-orb-3 { width:300px;height:300px; background:#1CB0F6; bottom:10%; left:10%; }
+.lmn-orb-4 { width:250px;height:250px; background:#58CC02; bottom:-60px; right:20%; }
+.lmn-orb-5 { width:200px;height:200px; background:#FF9600; top:50%; left:40%; }
+html[data-mode="day"] .lmn-orb { opacity: .08; }
+</style>
+</head>
+<body class="theme-anime">
+
+<!-- Animated background -->
+<div class="lmn-field" aria-hidden="true">
+  <div class="lmn-orb lmn-orb-1"></div>
+  <div class="lmn-orb lmn-orb-2"></div>
+  <div class="lmn-orb lmn-orb-3"></div>
+  <div class="lmn-orb lmn-orb-4"></div>
+  <div class="lmn-orb lmn-orb-5"></div>
+</div>
+
+<div class="sfp-root">
+
+  <!-- Header -->
+  <header class="sfp-header">
+    <a href="index.html" class="homeBtn" aria-label="Acasă">🏠</a>
+    <div class="sfp-title" id="sfpTitle">Formare Propoziții</div>
+    <div class="sfp-controls">
+      <button class="sfp-mode-btn" id="modeBtn" aria-label="Mod">☀️</button>
+      <button class="sfp-lang-btn" id="btnRo">ro</button>
+      <button class="sfp-lang-btn" id="btnEn">en</button>
+    </div>
+  </header>
+
+  <!-- Chapter tabs -->
+  <nav class="sfp-chapters" id="sfpChapters" aria-label="Capitole"></nav>
+
+  <!-- Step indicator -->
+  <div class="sfp-stepper" id="sfpStepper" role="tablist" aria-label="Etape"></div>
+
+  <!-- Panel content -->
+  <main class="sfp-content" id="sfpContent"></main>
+
+</div>
+
+<!-- Bottom navigation -->
+<nav class="sfp-nav" aria-label="Navigare">
+  <button class="nav-btn-prev" id="navPrev">← Înapoi</button>
+  <div class="nav-dots" id="navDots"></div>
+  <button class="nav-btn-next" id="navNext">Continuă →</button>
+</nav>
+
+<script>
+/* ═══════════════════════════════════════════════
+   DATA — 3 CHAPTERS
+═══════════════════════════════════════════════ */
+const CHAPTERS = [
+  {
+    id: 0,
+    title:{ ro:'Cap. 1 · Frig și pătură', en:'Ch. 1 · Cold & Blanket' },
+    topik: 1,
+    verbs:[
+      {
+        base:'춥다', meaning:{ro:'a fi frig',en:'to be cold'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'E frig.',en:'It is cold.'}, ans:'추워요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Era frig.',en:'It was cold.'}, ans:'추웠어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Va fi frig.',en:'It will be cold.'}, ans:'추울 거예요'}
+        ]
+      },
+      {
+        base:'덮다', meaning:{ro:'a acoperi',en:'to cover'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'Acopăr (ceva).',en:'I cover (something).'}, ans:'덮어요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Am acoperit (ceva).',en:'I covered (something).'}, ans:'덮었어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Voi acoperi.',en:'I will cover (something).'}, ans:'덮을 거예요'}
+        ],
+        withObj:{
+          hint:'-을/를',
+          tenses:[
+            {prompt:{ro:'Mă acopăr cu o pătură.',en:'I cover myself with a blanket.'}, ans:'이불을 덮어요'},
+            {prompt:{ro:'M-am acoperit cu o pătură.',en:'I covered myself with a blanket.'}, ans:'이불을 덮었어요'},
+            {prompt:{ro:'Mă voi acoperi cu o pătură.',en:'I will cover myself with a blanket.'}, ans:'이불을 덮을 거예요'}
+          ]
+        }
+      },
+      {
+        base:'덥다', meaning:{ro:'a fi cald (temp.)',en:'to be hot'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'E cald.',en:'It is hot.'}, ans:'더워요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Era cald.',en:'It was hot.'}, ans:'더웠어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Va fi cald.',en:'It will be hot.'}, ans:'더울 거예요'}
+        ]
+      },
+      {
+        base:'땀이 나다', meaning:{ro:'a transpira',en:'to sweat'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'Transpir.',en:'I sweat.'}, ans:'땀이 나요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Am transpirat.',en:'I sweated.'}, ans:'땀이 났어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Voi transpira.',en:'I will sweat.'}, ans:'땀이 날 거예요'}
+        ]
+      }
+    ],
+    ext:{
+      starts:[
+        {ko:'추웠어요', tr:{ro:'Era frig.',en:'It was cold.'}},
+        {ko:'이불을 덮었어요', tr:{ro:'M-am acoperit cu o pătură.',en:'I covered myself with a blanket.'}},
+        {ko:'더웠어요', tr:{ro:'Era cald.',en:'It was hot.'}},
+        {ko:'땀이 났어요', tr:{ro:'Am transpirat.',en:'I sweated.'}}
+      ],
+      steps:[
+        {type:'add',    badge:'ADD',    grammar:'조금',
+         inst:{ro:'Adaugă 조금 (un pic)',en:'Add 조금 (a little)'},
+         from:['추웠어요'],
+         res:{ko:'조금 추웠어요', tr:{ro:'Era un pic de frig.',en:'It was a little cold.'}}},
+        {type:'modify', badge:'MODIFY', grammar:'따뜻하다 → 따뜻한',
+         inst:{ro:'Modifică 이불 cu 따뜻하다 (cald)',en:'Modify 이불 with 따뜻하다 (warm)'},
+         from:['이불을 덮었어요'],
+         res:{ko:'따뜻한 이불을 덮었어요', tr:{ro:'M-am acoperit cu o pătură caldă.',en:'I covered myself with a warm blanket.'}}},
+        {type:'combine',badge:'COMBINE',grammar:'-아/어서',
+         inst:{ro:'Combină cu -아서 (de aceea)',en:'Combine with -아서 (so/because)'},
+         from:['조금 추웠어요','따뜻한 이불을 덮었어요'],
+         res:{ko:'조금 추워서 따뜻한 이불을 덮었어요', tr:{ro:'Era un pic de frig, de aceea m-am acoperit cu o pătură caldă.',en:'It was a little cold, so I covered myself with a warm blanket.'}}},
+        {type:'combine',badge:'COMBINE',grammar:'-(으)ㄴ데 + -아서',
+         inst:{ro:'Combină cu -(으)ㄴ데 (dar) + -아서',en:'Combine with -(으)ㄴ데 (but) + -아서'},
+         from:['따뜻한 이불을 덮었어요','더웠어요','땀이 났어요'],
+         res:{ko:'따뜻한 이불을 덮었는데, 더워서 땀이 났어요', tr:{ro:'M-am acoperit cu o pătură caldă, dar mi-a fost cald și am transpirat.',en:'I covered myself with a warm blanket, but I was hot, so I sweated.'}}}
+      ],
+      final:{
+        ko:'조금 추워서 따뜻한 이불을 덮었는데, 더워서 땀이 났어요.',
+        tr:{ro:'Era un pic de frig, m-am acoperit cu o pătură caldă, dar mi-a fost cald și am transpirat.',en:'Since it was a little cold, I covered myself with a warm blanket, but then I was hot, so I sweated.'}
+      }
+    },
+    dlg:[
+      {spk:'A', ko:'왜 땀을 흘렸어요?', tr:{ro:'De ce ai transpirat?',en:'Why did you sweat?'}},
+      {spk:'B', ans:{ko:'이불을 덮었는데, 더워서 땀이 났어요.',tr:{ro:'M-am acoperit cu o pătură, dar mi-a fost cald și am transpirat.',en:'I covered myself with a blanket, but I was hot, so I sweated.'}}, hint:{ro:'(pătură → cald → transpirat)',en:'(blanket → hot → sweated)'}},
+      {spk:'A', ko:'어떤 이불을 덮었어요?', tr:{ro:'Cu ce fel de pătură te-ai acoperit?',en:'What kind of blanket did you cover yourself with?'}},
+      {spk:'B', ans:{ko:'따뜻한 이불을 덮었어요.',tr:{ro:'M-am acoperit cu o pătură caldă.',en:'I covered myself with a warm blanket.'}}, hint:{ro:'(pătură caldă)',en:'(warm blanket)'}},
+      {spk:'A', ko:'왜요?', tr:{ro:'De ce?',en:'Why?'}},
+      {spk:'B', ans:{ko:'조금 추워서 따뜻한 이불을 덮었어요.',tr:{ro:'Era un pic de frig, de aceea m-am acoperit cu o pătură caldă.',en:'It was a little cold, so I covered myself with a warm blanket.'}}, hint:{ro:'(un pic frig → pătură caldă)',en:'(a little cold → warm blanket)'}},
+      {spk:'A', ko:'그래서 땀을 흘렸어요?', tr:{ro:'De aia ai transpirat?',en:'That\'s why you sweated?'}},
+      {spk:'B', ans:{ko:'네. 조금 추워서 따뜻한 이불을 덮었는데, 더워서 땀이 났어요.',tr:{ro:'Da. Era un pic de frig, m-am acoperit cu o pătură caldă, dar mi-a fost cald și am transpirat.',en:'Yes. Since it was a little cold, I covered myself with a warm blanket, but then I was hot, so I sweated.'}}, hint:{ro:'(fraza completă)',en:'(the full sentence)'}}
+    ]
+  },
+
+  {
+    id: 1,
+    title:{ ro:'Cap. 2 · Foame și restaurant', en:'Ch. 2 · Hungry & Restaurant' },
+    topik: 1,
+    verbs:[
+      {
+        base:'배가 고프다', meaning:{ro:'a fi flămând',en:'to be hungry'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'Mi-e foame.',en:'I am hungry.'}, ans:'배가 고파요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Mi-era foame.',en:'I was hungry.'}, ans:'배가 고팠어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Mi-o fi foame.',en:'I will be hungry.'}, ans:'배가 고플 거예요'}
+        ]
+      },
+      {
+        base:'가다', meaning:{ro:'a merge',en:'to go'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'Mă duc.',en:'I go.'}, ans:'가요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'M-am dus.',en:'I went.'}, ans:'갔어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Mă voi duce.',en:'I will go.'}, ans:'갈 거예요'}
+        ],
+        withObj:{
+          hint:'-에',
+          tenses:[
+            {prompt:{ro:'Mă duc la restaurant.',en:'I go to a restaurant.'}, ans:'식당에 가요'},
+            {prompt:{ro:'M-am dus la restaurant.',en:'I went to a restaurant.'}, ans:'식당에 갔어요'},
+            {prompt:{ro:'Mă voi duce la restaurant.',en:'I will go to a restaurant.'}, ans:'식당에 갈 거예요'}
+          ]
+        }
+      },
+      {
+        base:'먹다', meaning:{ro:'a mânca',en:'to eat'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'Mănânc.',en:'I eat.'}, ans:'먹어요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Am mâncat.',en:'I ate.'}, ans:'먹었어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Voi mânca.',en:'I will eat.'}, ans:'먹을 거예요'}
+        ]
+      },
+      {
+        base:'배부르다', meaning:{ro:'a fi sătul',en:'to be full'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'Sunt sătul.',en:'I am full.'}, ans:'배불러요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Eram sătul.',en:'I was full.'}, ans:'배불렀어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Voi fi sătul.',en:'I will be full.'}, ans:'배부를 거예요'}
+        ]
+      }
+    ],
+    ext:{
+      starts:[
+        {ko:'배가 고팠어요', tr:{ro:'Mi-era foame.',en:'I was hungry.'}},
+        {ko:'식당에 갔어요', tr:{ro:'M-am dus la restaurant.',en:'I went to a restaurant.'}},
+        {ko:'많이 먹었어요', tr:{ro:'Am mâncat mult.',en:'I ate a lot.'}},
+        {ko:'배불렀어요', tr:{ro:'Eram sătul.',en:'I was full.'}}
+      ],
+      steps:[
+        {type:'add',    badge:'ADD',    grammar:'너무',
+         inst:{ro:'Adaugă 너무 (tare / foarte)',en:'Add 너무 (so much / very)'},
+         from:['배가 고팠어요'],
+         res:{ko:'너무 배가 고팠어요', tr:{ro:'Mi-era tare foame.',en:'I was so hungry.'}}},
+        {type:'modify', badge:'MODIFY', grammar:'한국 + 식당',
+         inst:{ro:'Modifică 식당 cu 한국 (coreean)',en:'Modify 식당 with 한국 (Korean)'},
+         from:['식당에 갔어요'],
+         res:{ko:'한국 식당에 갔어요', tr:{ro:'M-am dus la un restaurant coreean.',en:'I went to a Korean restaurant.'}}},
+        {type:'combine',badge:'COMBINE',grammar:'-아/어서',
+         inst:{ro:'Combină cu -아/어서',en:'Combine with -아/어서'},
+         from:['너무 배가 고팠어요','한국 식당에 갔어요'],
+         res:{ko:'너무 배가 고파서 한국 식당에 갔어요', tr:{ro:'Mi-era tare foame, de aceea m-am dus la un restaurant coreean.',en:'I was so hungry, so I went to a Korean restaurant.'}}},
+        {type:'combine',badge:'COMBINE',grammar:'-(으)ㄴ/는데 + -아서',
+         inst:{ro:'Combină cu -(으)ㄴ데 + -아서',en:'Combine with -(으)ㄴ데 + -아서'},
+         from:['한국 식당에 갔어요','많이 먹었어요','배불렀어요'],
+         res:{ko:'한국 식당에 갔는데, 많이 먹어서 배불렀어요', tr:{ro:'M-am dus la restaurantul coreean și am mâncat mult, de aceea eram sătul.',en:'I went to the Korean restaurant, and I ate a lot so I was full.'}}}
+      ],
+      final:{
+        ko:'너무 배가 고파서 한국 식당에 갔는데, 많이 먹어서 배불렀어요.',
+        tr:{ro:'Mi-era tare foame, de aceea m-am dus la un restaurant coreean, dar am mâncat mult și eram sătul.',en:'I was so hungry that I went to a Korean restaurant, but I ate a lot so I was full.'}
+      }
+    },
+    dlg:[
+      {spk:'A', ko:'왜 배불렀어요?', tr:{ro:'De ce erai sătul?',en:'Why were you full?'}},
+      {spk:'B', ans:{ko:'식당에 가서 많이 먹었어요.',tr:{ro:'M-am dus la restaurant și am mâncat mult.',en:'I went to a restaurant and ate a lot.'}}, hint:{ro:'(restaurant → mâncat mult)',en:'(restaurant → ate a lot)'}},
+      {spk:'A', ko:'어느 식당에 갔어요?', tr:{ro:'La ce restaurant ai mers?',en:'Which restaurant did you go to?'}},
+      {spk:'B', ans:{ko:'한국 식당에 갔어요.',tr:{ro:'M-am dus la un restaurant coreean.',en:'I went to a Korean restaurant.'}}, hint:{ro:'(restaurant coreean)',en:'(Korean restaurant)'}},
+      {spk:'A', ko:'왜요?', tr:{ro:'De ce?',en:'Why?'}},
+      {spk:'B', ans:{ko:'너무 배가 고파서 한국 식당에 갔어요.',tr:{ro:'Mi-era tare foame, de aceea m-am dus la un restaurant coreean.',en:'I was so hungry so I went to a Korean restaurant.'}}, hint:{ro:'(tare foame → restaurant coreean)',en:'(very hungry → Korean restaurant)'}},
+      {spk:'A', ko:'그래서 배불렀어요?', tr:{ro:'De aia erai sătul?',en:'That\'s why you were full?'}},
+      {spk:'B', ans:{ko:'네. 너무 배가 고파서 한국 식당에 갔는데, 많이 먹어서 배불렀어요.',tr:{ro:'Da. Mi-era tare foame, de aceea m-am dus la un restaurant coreean, dar am mâncat mult și eram sătul.',en:'Yes. I was so hungry that I went to a Korean restaurant, but I ate a lot and was full.'}}, hint:{ro:'(fraza completă)',en:'(the full sentence)'}}
+    ]
+  },
+
+  {
+    id: 2,
+    title:{ ro:'Cap. 3 · Examen și somn', en:'Ch. 3 · Exam & Sleep' },
+    topik: 2,
+    verbs:[
+      {
+        base:'시험이 있다', meaning:{ro:'a fi examen',en:'to have an exam'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'E examen.',en:'There is an exam.'}, ans:'시험이 있어요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Era examen.',en:'There was an exam.'}, ans:'시험이 있었어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Va fi examen.',en:'There will be an exam.'}, ans:'시험이 있을 거예요'}
+        ]
+      },
+      {
+        base:'공부하다', meaning:{ro:'a studia',en:'to study'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'Studiez.',en:'I study.'}, ans:'공부해요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Am studiat.',en:'I studied.'}, ans:'공부했어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Voi studia.',en:'I will study.'}, ans:'공부할 거예요'}
+        ]
+      },
+      {
+        base:'피곤하다', meaning:{ro:'a fi obosit',en:'to be tired'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'Sunt obosit.',en:'I am tired.'}, ans:'피곤해요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Eram obosit.',en:'I was tired.'}, ans:'피곤했어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Voi fi obosit.',en:'I will be tired.'}, ans:'피곤할 거예요'}
+        ]
+      },
+      {
+        base:'잠이 들다', meaning:{ro:'a adormi',en:'to fall asleep'},
+        tenses:[
+          {lbl:{ro:'Prezent',en:'Present'}, prompt:{ro:'Adorm.',en:'I fall asleep.'}, ans:'잠이 들어요'},
+          {lbl:{ro:'Trecut',en:'Past'},    prompt:{ro:'Am adormit.',en:'I fell asleep.'}, ans:'잠이 들었어요'},
+          {lbl:{ro:'Viitor',en:'Future'},  prompt:{ro:'Voi adormi.',en:'I will fall asleep.'}, ans:'잠이 들 거예요'}
+        ]
+      }
+    ],
+    ext:{
+      starts:[
+        {ko:'시험이 있었어요', tr:{ro:'Era un examen.',en:'There was an exam.'}},
+        {ko:'공부했어요', tr:{ro:'Am studiat.',en:'I studied.'}},
+        {ko:'피곤했어요', tr:{ro:'Eram obosit.',en:'I was tired.'}},
+        {ko:'잠이 들었어요', tr:{ro:'Am adormit.',en:'I fell asleep.'}}
+      ],
+      steps:[
+        {type:'add',    badge:'ADD',    grammar:'열심히',
+         inst:{ro:'Adaugă 열심히 (cu sârg)',en:'Add 열심히 (diligently / hard)'},
+         from:['공부했어요'],
+         res:{ko:'열심히 공부했어요', tr:{ro:'Am studiat din greu.',en:'I studied hard.'}}},
+        {type:'modify', badge:'MODIFY', grammar:'어렵다 → 어려운',
+         inst:{ro:'Modifică 시험 cu 어렵다 (greu)',en:'Modify 시험 with 어렵다 (difficult)'},
+         from:['시험이 있었어요'],
+         res:{ko:'어려운 시험이 있었어요', tr:{ro:'Era un examen greu.',en:'There was a difficult exam.'}}},
+        {type:'combine',badge:'COMBINE',grammar:'-아/어서',
+         inst:{ro:'Combină cu -아서 (din cauza / de aceea)',en:'Combine with -아서 (because/so)'},
+         from:['어려운 시험이 있었어요','열심히 공부했어요'],
+         res:{ko:'어려운 시험이 있어서 열심히 공부했어요', tr:{ro:'Era un examen greu, de aceea am studiat din greu.',en:'Because there was a difficult exam, I studied hard.'}}},
+        {type:'combine',badge:'COMBINE',grammar:'-(으)ㄴ데 + -아서',
+         inst:{ro:'Combină cu -(으)ㄴ데 + -아서',en:'Combine with -(으)ㄴ데 + -아서'},
+         from:['열심히 공부했어요','피곤했어요','잠이 들었어요'],
+         res:{ko:'열심히 공부했는데, 피곤해서 잠이 들었어요', tr:{ro:'Am studiat din greu, dar eram obosit și am adormit.',en:'I studied hard, but I was tired so I fell asleep.'}}}
+      ],
+      final:{
+        ko:'어려운 시험이 있어서 열심히 공부했는데, 피곤해서 잠이 들었어요.',
+        tr:{ro:'Era un examen greu, de aceea am studiat din greu, dar eram obosit și am adormit.',en:'Because there was a difficult exam, I studied hard, but I was tired so I fell asleep.'}
+      }
+    },
+    dlg:[
+      {spk:'A', ko:'왜 잠이 들었어요?', tr:{ro:'De ce ai adormit?',en:'Why did you fall asleep?'}},
+      {spk:'B', ans:{ko:'피곤해서 잠이 들었어요.',tr:{ro:'Eram obosit și am adormit.',en:'I was tired so I fell asleep.'}}, hint:{ro:'(obosit → adormit)',en:'(tired → fell asleep)'}},
+      {spk:'A', ko:'왜 피곤했어요?', tr:{ro:'De ce erai obosit?',en:'Why were you tired?'}},
+      {spk:'B', ans:{ko:'열심히 공부했어요.',tr:{ro:'Am studiat din greu.',en:'I studied hard.'}}, hint:{ro:'(studiat din greu)',en:'(studied hard)'}},
+      {spk:'A', ko:'왜 공부했어요?', tr:{ro:'De ce ai studiat?',en:'Why did you study?'}},
+      {spk:'B', ans:{ko:'어려운 시험이 있어서 열심히 공부했어요.',tr:{ro:'Era un examen greu, de aceea am studiat din greu.',en:'Because there was a difficult exam, I studied hard.'}}, hint:{ro:'(examen greu → studiat)',en:'(difficult exam → studied)'}},
+      {spk:'A', ko:'그래서 잠이 들었어요?', tr:{ro:'De aia ai adormit?',en:'That\'s why you fell asleep?'}},
+      {spk:'B', ans:{ko:'네. 어려운 시험이 있어서 열심히 공부했는데, 피곤해서 잠이 들었어요.',tr:{ro:'Da. Era un examen greu, am studiat din greu, dar eram obosit și am adormit.',en:'Yes. Because there was a difficult exam, I studied hard, but I was tired so I fell asleep.'}}, hint:{ro:'(fraza completă)',en:'(the full sentence)'}}
+    ]
+  }
+];
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let lang       = localStorage.getItem('RK_LANG') || 'ro';
+let currentCh  = 0;
+let currentStep= 0;
+const STEPS = [
+  { ro:'Conjugare',    en:'Conjugation' },
+  { ro:'Extindere',    en:'Extension'   },
+  { ro:'Recapitulare', en:'Review'      },
+  { ro:'Conversație',  en:'Dialogue'    }
+];
+const doneSteps   = {};   // doneSteps[chId][step] = true
+const shownCells  = {};   // shownCells[chId][step][key] = true
+
+function markDone(step){ if(!doneSteps[currentCh])doneSteps[currentCh]={}; doneSteps[currentCh][step]=true; }
+function isDone(step){   return !!(doneSteps[currentCh]&&doneSteps[currentCh][step]); }
+function setShown(step,key){ if(!shownCells[currentCh])shownCells[currentCh]={}; if(!shownCells[currentCh][step])shownCells[currentCh][step]={}; shownCells[currentCh][step][key]=true; }
+function wasShown(step,key){ return !!(shownCells[currentCh]&&shownCells[currentCh][step]&&shownCells[currentCh][step][key]); }
+
+/* ═══════════════════════════════════════════════
+   SPEECH
+═══════════════════════════════════════════════ */
+function speakKo(text){
+  if(!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='ko-KR'; u.rate=0.85;
+  window.speechSynthesis.speak(u);
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER HELPERS
+═══════════════════════════════════════════════ */
+function t(obj){ return obj[lang]||obj.ro||obj.en||''; }
+function norm(s){ return s.trim().replace(/\s+/g,' '); }
+
+/* ═══════════════════════════════════════════════
+   RENDER CHAPTERS
+═══════════════════════════════════════════════ */
+function renderChapters(){
+  const el=document.getElementById('sfpChapters');
+  el.innerHTML=CHAPTERS.map((ch,i)=>
+    `<button class="ch-btn${i===currentCh?' active':''}" onclick="switchChapter(${i})">${t(ch.title)}</button>`
+  ).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER STEPPER
+═══════════════════════════════════════════════ */
+function renderStepper(){
+  const el=document.getElementById('sfpStepper');
+  let html='';
+  STEPS.forEach((s,i)=>{
+    const done=isDone(i);
+    const active=i===currentStep;
+    const cls=active?'active':done?'done':'';
+    html+=`<div class="step-node ${cls}" role="tab" aria-selected="${active}" onclick="goStep(${i})">
+      <div class="step-num">${done&&!active?'✓':i+1}</div>
+      <div class="step-lbl">${t(s)}</div>
+    </div>`;
+    if(i<STEPS.length-1) html+=`<div class="step-line"></div>`;
+  });
+  el.innerHTML=html;
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER NAV DOTS + BUTTONS
+═══════════════════════════════════════════════ */
+function renderNav(){
+  const prev=document.getElementById('navPrev');
+  const next=document.getElementById('navNext');
+  const dots=document.getElementById('navDots');
+  prev.disabled=currentStep===0;
+  next.textContent=currentStep===3?(lang==='ro'?'Capitol următor →':'Next Chapter →'):(lang==='ro'?'Continuă →':'Continue →');
+  dots.innerHTML=STEPS.map((_,i)=>{
+    const cls=i===currentStep?'active':isDone(i)?'done':'';
+    return `<div class="nav-dot ${cls}"></div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER CONJUGATION (Step 0)
+═══════════════════════════════════════════════ */
+function renderConjugation(){
+  const ch=CHAPTERS[currentCh];
+  let html=`<div class="panel-heading">
+    <h2>${lang==='ro'?'Conjugare':'Conjugation'}</h2>
+    <p>${lang==='ro'?'Completează formele verbale la prezent, trecut și viitor.':'Fill in the verb forms for present, past, and future.'}</p>
+  </div>`;
+
+  ch.verbs.forEach((v,vi)=>{
+    html+=`<div class="verb-card" id="vc-${vi}">
+      <div class="verb-header">
+        <span class="verb-ko">${v.base}</span>
+        <span class="verb-meaning">${t(v.meaning)}</span>
+        <button class="verb-speak-btn sm-speak" onclick="speakKo('${v.base}')">🔊</button>
+      </div>
+      <div class="verb-rows">`;
+
+    v.tenses.forEach((ts,ti)=>{
+      const key=`${vi}-${ti}`;
+      html+=`<div class="verb-row">
+        <span class="tense-lbl">${t(ts.lbl)}</span>
+        <div class="row-right">
+          <span class="tense-prompt">${t(ts.prompt)}</span>
+          <span class="tense-eq">=</span>
+          <input class="conj-input" id="ci-${key}" type="text" autocomplete="off" autocorrect="off"
+            placeholder="..." data-ans="${ts.ans}" data-vi="${vi}"
+            onkeydown="if(event.key==='Enter')checkSingle('ci-${key}')">
+          <button class="reveal-btn" onclick="revealInput('ci-${key}','${ts.ans}')">${lang==='ro'?'Arată':'Show'}</button>
+        </div>
+      </div>`;
+    });
+
+    html+='</div>';
+
+    if(v.withObj){
+      html+=`<div class="with-obj-section">
+        <div class="with-obj-lbl">+ ${v.withObj.hint} · ${lang==='ro'?'cu obiect':'with object'}</div>
+        <div class="verb-rows" style="padding:0">`;
+      v.withObj.tenses.forEach((wt,wti)=>{
+        const key=`${vi}-w-${wti}`;
+        html+=`<div class="verb-row">
+          <span class="tense-lbl">${['Prez.','Trec.','Vii.'][wti]}</span>
+          <div class="row-right">
+            <span class="tense-prompt">${t(wt.prompt)}</span>
+            <span class="tense-eq">=</span>
+            <input class="conj-input" id="ci-${key}" type="text" autocomplete="off" autocorrect="off"
+              placeholder="..." data-ans="${wt.ans}" data-vi="${vi}"
+              onkeydown="if(event.key==='Enter')checkSingle('ci-${key}')">
+            <button class="reveal-btn" onclick="revealInput('ci-${key}','${wt.ans}')">${lang==='ro'?'Arată':'Show'}</button>
+          </div>
+        </div>`;
+      });
+      html+='</div></div>';
+    }
+
+    html+=`<div class="verb-actions">
+      <button class="show-all-btn" onclick="showAllVerb(${vi})">${lang==='ro'?'Arată tot':'Show all'}</button>
+      <button class="check-btn" onclick="checkVerb(${vi})">${lang==='ro'?'Verifică':'Check'}</button>
+    </div></div>`;
+  });
+
+  return html;
+}
+
+function checkSingle(id){
+  const inp=document.getElementById(id);
+  if(!inp)return;
+  const v=norm(inp.value), a=norm(inp.dataset.ans);
+  inp.classList.remove('correct','wrong','shown');
+  inp.classList.add(v===a?'correct':'wrong');
+  checkAllDone();
+}
+
+function revealInput(id,ans){
+  const inp=document.getElementById(id);
+  if(!inp)return;
+  inp.value=ans;
+  inp.classList.remove('correct','wrong');
+  inp.classList.add('shown');
+  checkAllDone();
+}
+
+function checkVerb(vi){
+  const ch=CHAPTERS[currentCh];
+  const v=ch.verbs[vi];
+  v.tenses.forEach((_,ti)=>{ const id=`ci-${vi}-${ti}`; if(document.getElementById(id)&&!document.getElementById(id).value.trim())return; checkSingle(`ci-${vi}-${ti}`); });
+  if(v.withObj) v.withObj.tenses.forEach((_,wti)=>{ const id=`ci-${vi}-w-${wti}`; if(document.getElementById(id)&&!document.getElementById(id).value.trim())return; checkSingle(`ci-${vi}-w-${wti}`); });
+  checkAllDone();
+}
+
+function showAllVerb(vi){
+  const ch=CHAPTERS[currentCh];
+  const v=ch.verbs[vi];
+  v.tenses.forEach((ts,ti)=>revealInput(`ci-${vi}-${ti}`,ts.ans));
+  if(v.withObj) v.withObj.tenses.forEach((wt,wti)=>revealInput(`ci-${vi}-w-${wti}`,wt.ans));
+  checkAllDone();
+}
+
+function checkAllDone(){
+  const ch=CHAPTERS[currentCh];
+  let allCorrect=true;
+  ch.verbs.forEach((v,vi)=>{
+    v.tenses.forEach((_,ti)=>{
+      const inp=document.getElementById(`ci-${vi}-${ti}`);
+      if(!inp||(inp.value.trim()==='')||(!inp.classList.contains('correct')&&!inp.classList.contains('shown')))allCorrect=false;
+    });
+    if(v.withObj) v.withObj.tenses.forEach((_,wti)=>{
+      const inp=document.getElementById(`ci-${vi}-w-${wti}`);
+      if(!inp||(inp.value.trim()==='')||(!inp.classList.contains('correct')&&!inp.classList.contains('shown')))allCorrect=false;
+    });
+    // card color
+    const card=document.getElementById(`vc-${vi}`);
+    if(card){
+      let cardDone=true;
+      v.tenses.forEach((_,ti)=>{ const inp=document.getElementById(`ci-${vi}-${ti}`); if(!inp||(!inp.classList.contains('correct')&&!inp.classList.contains('shown')))cardDone=false; });
+      if(v.withObj) v.withObj.tenses.forEach((_,wti)=>{ const inp=document.getElementById(`ci-${vi}-w-${wti}`); if(!inp||(!inp.classList.contains('correct')&&!inp.classList.contains('shown')))cardDone=false; });
+      card.classList.toggle('all-done',cardDone);
+    }
+  });
+  if(allCorrect) markDone(0);
+  renderStepper(); renderNav();
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER EXTENSION (Step 1) — view mode
+═══════════════════════════════════════════════ */
+function renderExtension(){
+  const ch=CHAPTERS[currentCh];
+  const ext=ch.ext;
+  let html=`<div class="panel-heading">
+    <h2>${lang==='ro'?'Extindere':'Extension'}</h2>
+    <p>${lang==='ro'?'Urmărește cum propoziții scurte devin o frază lungă.':'Watch how short sentences become one long sentence.'}</p>
+  </div>
+  <div class="flow-starts">`;
+  ext.starts.forEach(s=>{
+    html+=`<div class="start-bubble" onclick="speakKo('${s.ko}')">
+      <span>${s.ko}</span>
+      <span class="sb-trans">${t(s.tr)}</span>
+    </div>`;
+  });
+  html+='</div>';
+
+  ext.steps.forEach((step,si)=>{
+    const delay=si*120;
+    html+=`<div class="flow-step-card visible-step" style="animation-delay:${delay}ms">
+      <div class="fsc-header">
+        <span class="op-badge ${step.type}">${step.badge}</span>
+        <span class="fsc-grammar">${step.grammar}</span>
+        <span class="fsc-instruction">${t(step.inst)}</span>
+      </div>
+      <div class="fsc-from">${lang==='ro'?'Din:':'From:'}
+        ${step.from.map(f=>`<span class="from-pill" onclick="speakKo('${f}')">${f}</span>`).join(' + ')}
+      </div>
+      <div class="fsc-arrow">↓</div>
+      <div class="fsc-result-ko">
+        ${step.res.ko}
+        <button class="fsc-speak" onclick="speakKo('${step.res.ko}')">🔊</button>
+      </div>
+      <div class="fsc-result-trans">${t(step.res.tr)}</div>
+    </div>`;
+  });
+
+  html+=`<div class="final-card">
+    <div class="final-label">⭐ ${lang==='ro'?'Fraza finală':'Final Sentence'}</div>
+    <div class="final-ko">${ext.final.ko}</div>
+    <div class="final-trans">${t(ext.final.tr)}</div>
+    <button class="final-speak-btn" onclick="speakKo('${ext.final.ko}')">🔊 ${lang==='ro'?'Ascultă':'Listen'}</button>
+  </div>`;
+
+  markDone(1);
+  return html;
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER REVIEW (Step 2) — fill blanks
+═══════════════════════════════════════════════ */
+function renderReview(){
+  const ch=CHAPTERS[currentCh];
+  const ext=ch.ext;
+  let html=`<div class="panel-heading">
+    <h2>${lang==='ro'?'Recapitulare':'Review'}</h2>
+    <p>${lang==='ro'?'Citește traducerea și completează în coreeană.':'Read the translation and write in Korean.'}</p>
+  </div>
+  <div class="flow-starts">`;
+  ext.starts.forEach(s=>{
+    html+=`<div class="start-bubble"><span>${s.ko}</span><span class="sb-trans">${t(s.tr)}</span></div>`;
+  });
+  html+='</div>';
+
+  ext.steps.forEach((step,si)=>{
+    const key=`rv-${si}`;
+    const shown=wasShown(2,key);
+    const inputClass=shown?'review-input shown':'review-input';
+    const inputVal=shown?step.res.ko:'';
+    html+=`<div class="flow-step-card visible-step" id="rfc-${si}">
+      <div class="fsc-header">
+        <span class="op-badge ${step.type}">${step.badge}</span>
+        <span class="fsc-grammar">${step.grammar}</span>
+      </div>
+      <div class="fsc-from">${lang==='ro'?'Din:':'From:'}
+        ${step.from.map(f=>`<span class="from-pill">${f}</span>`).join(' + ')}
+      </div>
+      <div class="fsc-arrow">↓</div>
+      <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+        <input class="${inputClass}" id="ri-${si}" type="text" autocomplete="off" autocorrect="off"
+          placeholder="${t(step.res.tr)}" data-ans="${step.res.ko}"
+          onkeydown="if(event.key==='Enter')checkReview(${si})">
+        <button class="sm-speak" onclick="if(document.getElementById('ri-${si}').value)speakKo(document.getElementById('ri-${si}').value)">🔊</button>
+      </div>
+      <div class="fsc-result-trans" style="font-style:italic;margin-bottom:4px">${t(step.res.tr)}</div>
+      <div class="review-actions">
+        <button class="sm-reveal" onclick="revealReview(${si},'${step.res.ko}')">${lang==='ro'?'Arată':'Show'}</button>
+        <button class="sm-check" onclick="checkReview(${si})">${lang==='ro'?'Verifică':'Check'}</button>
+      </div>
+    </div>`;
+  });
+
+  // Final review
+  const fkey='rv-final';
+  const fShown=wasShown(2,fkey);
+  html+=`<div class="final-card">
+    <div class="final-label">⭐ ${lang==='ro'?'Fraza finală — completează:':'Final Sentence — complete:'}</div>
+    <div style="margin-bottom:8px">
+      <input class="review-input${fShown?' shown':''}" id="ri-final" type="text" autocomplete="off" autocorrect="off"
+        style="width:100%;font-size:16px"
+        placeholder="${t(ext.final.tr)}" data-ans="${ext.final.ko}"
+        onkeydown="if(event.key==='Enter')checkFinalReview()">
+    </div>
+    <div class="final-trans">${t(ext.final.tr)}</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+      <button class="sm-reveal" onclick="revealReview('final','${ext.final.ko.replace(/'/g,"\\'")}')">🔍 ${lang==='ro'?'Arată':'Show'}</button>
+      <button class="sm-check" onclick="checkFinalReview()">✓ ${lang==='ro'?'Verifică':'Check'}</button>
+      <button class="sm-speak" onclick="if(document.getElementById('ri-final').value)speakKo(document.getElementById('ri-final').value)">🔊</button>
+    </div>
+  </div>`;
+
+  if(fShown){
+    document.getElementById('ri-final') && (document.getElementById('ri-final').value=ext.final.ko);
+  }
+
+  return html;
+}
+
+function checkReview(si){
+  const inp=document.getElementById(`ri-${si}`);
+  if(!inp)return;
+  const v=norm(inp.value),a=norm(inp.dataset.ans);
+  inp.classList.remove('correct','wrong','shown');
+  inp.classList.add(v===a?'correct':'wrong');
+  checkReviewDone();
+}
+function revealReview(si,ans){
+  const inp=document.getElementById(`ri-${si}`);
+  if(!inp)return;
+  inp.value=ans; inp.classList.remove('correct','wrong'); inp.classList.add('shown');
+  setShown(2,`rv-${si}`);
+  checkReviewDone();
+}
+function checkFinalReview(){
+  const inp=document.getElementById('ri-final');
+  if(!inp)return;
+  const v=norm(inp.value),a=norm(inp.dataset.ans);
+  inp.classList.remove('correct','wrong','shown');
+  inp.classList.add(v===a?'correct':'wrong');
+  checkReviewDone();
+}
+function checkReviewDone(){
+  const ch=CHAPTERS[currentCh];
+  const total=ch.ext.steps.length+1;
+  let done=0;
+  ch.ext.steps.forEach((_,si)=>{
+    const inp=document.getElementById(`ri-${si}`);
+    if(inp&&(inp.classList.contains('correct')||inp.classList.contains('shown')))done++;
+  });
+  const finp=document.getElementById('ri-final');
+  if(finp&&(finp.classList.contains('correct')||finp.classList.contains('shown')))done++;
+  if(done===total)markDone(2);
+  renderStepper(); renderNav();
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER DIALOGUE (Step 3)
+═══════════════════════════════════════════════ */
+function renderDialogue(){
+  const ch=CHAPTERS[currentCh];
+  let html=`<div class="panel-heading">
+    <h2>${lang==='ro'?'Conversație':'Dialogue'}</h2>
+    <p>${lang==='ro'?'Completează răspunsurile lui B folosind propozițiile formate.':'Fill in B\'s answers using the sentences you\'ve built.'}</p>
+  </div>
+  <div class="dialogue-wrap">`;
+
+  let bi=0;
+  ch.dlg.forEach((turn,ti)=>{
+    if(turn.spk==='A'){
+      html+=`<div class="dlg-turn spk-a">
+        <div class="dlg-who">A</div>
+        <div class="dlg-bubble-q">
+          <div class="dlg-ko">${turn.ko} <button class="sm-speak" onclick="speakKo('${turn.ko}')">🔊</button></div>
+          <div class="dlg-trans">${t(turn.tr)}</div>
+        </div>
+      </div>`;
+    } else {
+      const key=`dlg-${bi}`;
+      const shown=wasShown(3,key);
+      const ans=turn.ans;
+      bi++;
+      html+=`<div class="dlg-turn spk-b">
+        <div class="dlg-who">B</div>
+        <div class="dlg-answer-wrap${shown?' shown-ans':''}" id="daw-${bi-1}">
+          <textarea class="dlg-input${shown?' shown':''}" id="di-${bi-1}" rows="2"
+            placeholder="${t(turn.hint)}" data-ans="${ans.ko}"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();checkDlg(${bi-1})}"
+          >${shown?ans.ko:''}</textarea>
+          <div class="dlg-hint-text">${t(turn.hint)}</div>
+          <div class="dlg-actions">
+            <button class="sm-speak" onclick="const v=document.getElementById('di-${bi-1}').value;if(v)speakKo(v)">🔊</button>
+            <button class="sm-reveal" onclick="revealDlg(${bi-1},'${ans.ko.replace(/'/g,"\\'")}')">${lang==='ro'?'Arată':'Show'}</button>
+            <button class="sm-check" onclick="checkDlg(${bi-1})">${lang==='ro'?'Verifică':'Check'}</button>
+          </div>
+        </div>
+        <div class="dlg-answer-hint" id="danh-${bi-1}" style="display:none">${t(ans.tr)}</div>
+      </div>`;
+    }
+  });
+
+  html+='</div>';
+  return html;
+}
+
+function checkDlg(i){
+  const inp=document.getElementById(`di-${i}`);
+  const wrap=document.getElementById(`daw-${i}`);
+  if(!inp||!wrap)return;
+  const v=norm(inp.value),a=norm(inp.dataset.ans);
+  inp.classList.remove('correct','shown');
+  wrap.classList.remove('correct-ans','shown-ans');
+  if(v===a){
+    inp.classList.add('correct'); wrap.classList.add('correct-ans');
+    const hint=document.getElementById(`danh-${i}`);
+    if(hint)hint.style.display='block';
+  } else {
+    inp.classList.add('wrong');
+  }
+  checkDlgDone();
+}
+function revealDlg(i,ans){
+  const inp=document.getElementById(`di-${i}`);
+  const wrap=document.getElementById(`daw-${i}`);
+  if(!inp||!wrap)return;
+  inp.value=ans; inp.classList.remove('correct','wrong'); inp.classList.add('shown');
+  wrap.classList.remove('correct-ans'); wrap.classList.add('shown-ans');
+  const hint=document.getElementById(`danh-${i}`);
+  if(hint)hint.style.display='block';
+  const ch=CHAPTERS[currentCh];
+  let bi=0;
+  ch.dlg.forEach(t=>{ if(t.spk==='B'){ if(bi===i)setShown(3,`dlg-${bi}`); bi++; } });
+  checkDlgDone();
+}
+function checkDlgDone(){
+  const ch=CHAPTERS[currentCh];
+  const total=ch.dlg.filter(t=>t.spk==='B').length;
+  let done=0;
+  for(let i=0;i<total;i++){
+    const inp=document.getElementById(`di-${i}`);
+    if(inp&&(inp.classList.contains('correct')||inp.classList.contains('shown')))done++;
+  }
+  if(done===total)markDone(3);
+  renderStepper(); renderNav();
+}
+
+/* ═══════════════════════════════════════════════
+   PANEL DISPATCH
+═══════════════════════════════════════════════ */
+function renderPanel(){
+  const el=document.getElementById('sfpContent');
+  let html='<div class="sfp-panel active">';
+  switch(currentStep){
+    case 0: html+=renderConjugation(); break;
+    case 1: html+=renderExtension();   break;
+    case 2: html+=renderReview();      break;
+    case 3: html+=renderDialogue();    break;
+  }
+  html+='</div>';
+  el.innerHTML=html;
+  el.scrollTop=0;
+  window.scrollTo(0,0);
+}
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+function goStep(n){
+  currentStep=Math.max(0,Math.min(3,n));
+  renderStepper(); renderPanel(); renderNav();
+}
+function navigate(dir){
+  if(dir==='next'){
+    if(currentStep===3){
+      // next chapter or wrap
+      if(currentCh<CHAPTERS.length-1){ switchChapter(currentCh+1); return; }
+      currentStep=0; renderStepper(); renderPanel(); renderNav(); return;
+    }
+    goStep(currentStep+1);
+  } else {
+    goStep(currentStep-1);
+  }
+}
+function switchChapter(idx){
+  currentCh=idx;
+  currentStep=0;
+  renderChapters(); renderStepper(); renderPanel(); renderNav();
+}
+
+/* ═══════════════════════════════════════════════
+   LANGUAGE + MODE
+═══════════════════════════════════════════════ */
+function setLang(l){
+  lang=l;
+  localStorage.setItem('RK_LANG',l);
+  document.getElementById('btnRo').classList.toggle('active',l==='ro');
+  document.getElementById('btnEn').classList.toggle('active',l==='en');
+  document.getElementById('sfpTitle').textContent=l==='ro'?'Formare Propoziții':'Sentence Formation';
+  renderChapters(); renderStepper(); renderPanel(); renderNav();
+}
+
+function toggleMode(){
+  const html=document.documentElement;
+  const isDay=html.getAttribute('data-mode')==='day';
+  html.setAttribute('data-mode',isDay?'night':'day');
+  localStorage.setItem('RK_MODE',isDay?'night':'day');
+  document.getElementById('modeBtn').textContent=isDay?'☀️':'🌙';
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+(function init(){
+  // Restore mode
+  const savedMode=localStorage.getItem('RK_MODE');
+  if(savedMode==='day') document.documentElement.setAttribute('data-mode','day');
+  document.getElementById('modeBtn').textContent=(savedMode==='day')?'🌙':'☀️';
+
+  // Lang buttons
+  document.getElementById('btnRo').addEventListener('click',()=>setLang('ro'));
+  document.getElementById('btnEn').addEventListener('click',()=>setLang('en'));
+  document.getElementById('modeBtn').addEventListener('click',toggleMode);
+  document.getElementById('navPrev').addEventListener('click',()=>navigate('prev'));
+  document.getElementById('navNext').addEventListener('click',()=>navigate('next'));
+
+  // Set active lang
+  document.getElementById('btnRo').classList.toggle('active',lang==='ro');
+  document.getElementById('btnEn').classList.toggle('active',lang==='en');
+  document.getElementById('sfpTitle').textContent=lang==='ro'?'Formare Propoziții':'Sentence Formation';
+
+  // Initial render
+  renderChapters();
+  renderStepper();
+  renderPanel();
+  renderNav();
+})();
+</script>
+</body>
+</html>
