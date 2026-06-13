@@ -1311,6 +1311,7 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
           if (rdRec.recBtn === recBtn && !recBtn._recUrl) { recBtn.classList.remove('recording'); recBtn.innerHTML = '🎙'; }
           return;
         }
+        if (rdRec.stream) { rdRec.stream.getTracks().forEach(function (t) { t.stop(); }); }
         rdRec.stream = stream;
 
         var mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg']
@@ -1323,7 +1324,8 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
             if (e.data && e.data.size > 0) mchunks.push(e.data);
           };
           m.onstop = function () {
-            if (rdRec.stream === stream) { stream.getTracks().forEach(function (t) { t.stop(); }); rdRec.stream = null; }
+            stream.getTracks().forEach(function (t) { t.stop(); });
+            if (rdRec.stream === stream) rdRec.stream = null;
             if (mchunks.length && rdRec.recBtn === recBtn) {
               recBtn._recUrl = URL.createObjectURL(new Blob(mchunks, { type: m.mimeType || 'audio/webm' }));
               recBtn.innerHTML = '▶';
