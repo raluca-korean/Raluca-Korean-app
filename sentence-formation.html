@@ -693,6 +693,67 @@ html[data-mode="day"] .cc-final-trans { color: rgba(0,0,0,.45); }
   color: white;
 }
 
+/* ── EXT QUIZ CHOICES ─────────────────────────────────────── */
+.ext-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 10px 0 4px;
+}
+.ext-choice-btn {
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.03);
+  color: rgba(255,255,255,.75);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+html[data-mode="day"] .ext-choice-btn {
+  border-color: rgba(0,0,0,.1);
+  background: rgba(255,255,255,.8);
+  color: rgba(0,0,0,.7);
+}
+.ext-choice-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.22);
+}
+html[data-mode="day"] .ext-choice-btn:hover:not(:disabled) {
+  background: rgba(0,0,0,.05);
+}
+.ext-choice-btn.correct-choice {
+  border-color: #58CC02 !important;
+  background: rgba(88,204,2,.1) !important;
+  color: #58CC02 !important;
+  cursor: default;
+}
+.ext-choice-btn.wrong-choice {
+  border-color: #FF4B4B !important;
+  background: rgba(255,75,75,.08) !important;
+  color: #FF4B4B !important;
+  animation: shake-choice .35s ease;
+}
+@keyframes shake-choice {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-7px); }
+  40%      { transform: translateX(7px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+.ext-result-wrap { display: none; }
+.ext-result-wrap.revealed {
+  display: block;
+  animation: sfpFade .3s ease;
+}
+.ext-final-hidden { display: none; }
+
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 480px) {
   .sfp-title { font-size: 14px; }
@@ -2406,14 +2467,90 @@ function checkAllDone(){
 }
 
 /* ═══════════════════════════════════════════════
-   RENDER EXTENSION (Step 1) — view mode
+   EXT QUIZ — state + helpers
+═══════════════════════════════════════════════ */
+const extAnswered = {}; // extAnswered[chIdx][stepIdx] = true
+
+const WORD_CONFUSERS = {
+  '너무':'많이','많이':'너무','조금':'별로','열심히':'천천히',
+  '천천히':'빨리','미리':'나중에','일찍':'늦게','그냥':'완전히',
+  '맛있게':'빨리','맛있는':'예쁜','따뜻한':'차가운','어려운':'쉬운',
+  '시끄러운':'조용한','한국':'중국','벌써':'아직','오래':'잠깐',
+  '일찍':'늦게','새벽':'저녁','천천히':'급하게',
+};
+
+function shuffleArr(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function buildExtChoices(step){
+  const correct=step.res.ko;
+  // wrong1 = base sentence (didn't apply grammar)
+  const wrong1=step.from[0];
+  // wrong2 = for combine: from[0]+from[1] smashed together; for add/modify: confuser swap
+  let wrong2=null;
+  if(step.type==='combine' && step.from.length>=2){
+    wrong2=step.from[0]+' '+step.from[step.from.length-1];
+  } else {
+    for(const [key,val] of Object.entries(WORD_CONFUSERS)){
+      if(correct.includes(key)){
+        const candidate=correct.replace(key,val);
+        if(candidate!==correct&&candidate!==wrong1){wrong2=candidate;break;}
+      }
+    }
+  }
+  const pool=[correct,wrong1];
+  if(wrong2&&wrong2!==correct&&wrong2!==wrong1) pool.push(wrong2);
+  // ensure exactly 3 distinct choices
+  while(pool.length<3) pool.push(pool[pool.length-1]+'?');
+  return shuffleArr([...new Set(pool)].slice(0,3));
+}
+
+function isExtAnswered(si){ return !!(extAnswered[currentCh]&&extAnswered[currentCh][si]); }
+
+function checkExtChoice(si,btn,isCorrect){
+  if(isExtAnswered(si)) return;
+  if(isCorrect){
+    btn.classList.add('correct-choice');
+    const stepEl=document.getElementById('ext-step-'+si);
+    if(stepEl){
+      stepEl.querySelectorAll('.ext-choice-btn').forEach(b=>{b.disabled=true;});
+      const res=stepEl.querySelector('.ext-result-wrap');
+      if(res){res.classList.add('revealed');}
+    }
+    if(!extAnswered[currentCh]) extAnswered[currentCh]={};
+    extAnswered[currentCh][si]=true;
+    const ch=CHAPTERS[currentCh];
+    speakKo(ch.ext.steps[si].res.ko);
+    if(ch.ext.steps.every((_,i)=>isExtAnswered(i))){
+      const fc=document.getElementById('ext-final-card');
+      if(fc){fc.classList.remove('ext-final-hidden');fc.style.display='';}
+      markDone(1);
+    }
+  } else {
+    btn.classList.add('wrong-choice');
+    setTimeout(()=>btn.classList.remove('wrong-choice'),400);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER EXTENSION (Step 1) — quiz mode
 ═══════════════════════════════════════════════ */
 function renderExtension(){
   const ch=CHAPTERS[currentCh];
   const ext=ch.ext;
+  // If already completed in a previous session, pre-fill answered state
+  if(isDone(1)){
+    if(!extAnswered[currentCh]) extAnswered[currentCh]={};
+    ext.steps.forEach((_,i)=>{ extAnswered[currentCh][i]=true; });
+  }
+  const allDone=ext.steps.every((_,i)=>isExtAnswered(i));
+
   let html=`<div class="panel-heading">
     <h2>${lang==='ro'?'Extindere':'Extension'}</h2>
-    <p>${lang==='ro'?'Urmărește cum propoziții scurte devin o frază lungă.':'Watch how short sentences become one long sentence.'}</p>
+    <p>${lang==='ro'?'Alege varianta corectă pentru fiecare pas.':'Choose the correct result for each step.'}</p>
   </div>
   <div class="flow-starts">`;
   ext.starts.forEach(s=>{
@@ -2425,8 +2562,10 @@ function renderExtension(){
   html+='</div>';
 
   ext.steps.forEach((step,si)=>{
+    const answered=isExtAnswered(si);
+    const choices=buildExtChoices(step);
     const delay=si*120;
-    html+=`<div class="flow-step-card visible-step" style="animation-delay:${delay}ms">
+    html+=`<div class="flow-step-card visible-step" id="ext-step-${si}" style="animation-delay:${delay}ms">
       <div class="fsc-header">
         <span class="op-badge ${step.type}">${step.badge}</span>
         <span class="fsc-grammar">${step.grammar}</span>
@@ -2435,23 +2574,34 @@ function renderExtension(){
       <div class="fsc-from">${lang==='ro'?'Din:':'From:'}
         ${step.from.map(f=>`<span class="from-pill" onclick="speakKo('${f}')">${f}</span>`).join(' + ')}
       </div>
-      <div class="fsc-arrow">↓</div>
-      <div class="fsc-result-ko">
-        ${step.res.ko}
-        <button class="fsc-speak" onclick="speakKo('${step.res.ko}')">🔊</button>
-      </div>
-      <div class="fsc-result-trans">${t(step.res.tr)}</div>
-    </div>`;
+      <div class="fsc-arrow">↓</div>`;
+
+    if(answered){
+      html+=`<div class="fsc-result-ko">${step.res.ko} <button class="fsc-speak" onclick="speakKo('${step.res.ko}')">🔊</button></div>
+        <div class="fsc-result-trans">${t(step.res.tr)}</div>`;
+    } else {
+      html+=`<div class="ext-choices">`;
+      choices.forEach(choice=>{
+        const isC=(choice===step.res.ko);
+        html+=`<button class="ext-choice-btn" onclick="checkExtChoice(${si},this,${isC})">${choice}</button>`;
+      });
+      html+=`</div>
+        <div class="ext-result-wrap">
+          <div class="fsc-result-ko">${step.res.ko} <button class="fsc-speak" onclick="speakKo('${step.res.ko}')">🔊</button></div>
+          <div class="fsc-result-trans">${t(step.res.tr)}</div>
+        </div>`;
+    }
+    html+=`</div>`;
   });
 
-  html+=`<div class="final-card">
+  html+=`<div class="final-card${allDone?'':' ext-final-hidden'}" id="ext-final-card"${allDone?'':' style="display:none"'}>
     <div class="final-label">⭐ ${lang==='ro'?'Fraza finală':'Final Sentence'}</div>
     <div class="final-ko">${ext.final.ko}</div>
     <div class="final-trans">${t(ext.final.tr)}</div>
     <button class="final-speak-btn" onclick="speakKo('${ext.final.ko}')">🔊 ${lang==='ro'?'Ascultă':'Listen'}</button>
   </div>`;
 
-  markDone(1);
+  if(allDone) markDone(1);
   return html;
 }
 
