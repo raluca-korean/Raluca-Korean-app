@@ -1306,7 +1306,11 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
 
     navigator.mediaDevices.getUserMedia({ audio: true, video: false })
       .then(function (stream) {
-        if (rdRec.sessId !== mySession) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+        if (rdRec.sessId !== mySession) {
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          if (rdRec.recBtn === recBtn && !recBtn._recUrl) { recBtn.classList.remove('recording'); recBtn.innerHTML = '🎙'; }
+          return;
+        }
         rdRec.stream = stream;
 
         var mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg']
@@ -1391,11 +1395,9 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     if (rdRec.recog) { try { rdRec.recog.abort(); } catch (e) {} rdRec.recog = null; }
     rdFinishMrec();
     if (rdRec.waveBars) rdRec.waveBars.classList.remove('on');
-    if (resetBtn && rdRec.recBtn) {
+    if (rdRec.recBtn) {
       rdRec.recBtn.classList.remove('recording');
-      rdRec.recBtn.innerHTML = '🎙';
-    } else if (rdRec.recBtn) {
-      rdRec.recBtn.classList.remove('recording');
+      if (resetBtn || !rdRec.recBtn._recUrl) rdRec.recBtn.innerHTML = '🎙';
     }
   }
 
