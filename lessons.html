@@ -829,8 +829,6 @@ body.dark-mode .sb-ex-ko { color: var(--sb-a3); }
 
 /* ── MOBILE ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .sb-node { width: 130px; height: 54px; border-radius: 14px; }
-  .sb-node::before { border-radius: 20px; }
   .sb-nd-ko { font-size: 12px; }
   .sb-nd-title { font-size: 9px; }
   #sb-orbit { gap: 7px; height: 68px; }
@@ -838,6 +836,41 @@ body.dark-mode .sb-ex-ko { color: var(--sb-a3); }
   #sb-bloom-body { padding: 22px 18px 20px; border-radius: 18px; }
   .sb-bloom-title { font-size: 17px; }
   .sb-ex-ko { font-size: 14px; }
+}
+
+/* ── MOBILE GRID LAYOUT (înlocuiește spirala pe telefon) ── */
+#sb-field.sb-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 10px;
+  padding: 14px 12px 18px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+#sb-field.sb-grid .sb-node {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  width: calc(50% - 5px);
+  height: 60px;
+  border-radius: 14px;
+}
+#sb-field.sb-grid .sb-node::before { display: none; }
+#sb-field.sb-grid .sb-node.sb-recede {
+  opacity: 0.18 !important;
+  transform: scale(0.93) !important;
+  transition: opacity 0.4s ease, transform 0.4s ease !important;
+}
+#sb-field.sb-grid .sb-node.sb-active-src {
+  opacity: 0.26 !important;
+  transform: none !important;
+  transition: opacity 0.3s ease !important;
+}
+@keyframes sb-node-in-grid {
+  from { opacity: 0; transform: scale(0.82); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* ── TABS ─────────────────────────────────────────────── */
@@ -1131,34 +1164,50 @@ function renderOrbit() {
 }
 
 // ── Render nodes ──────────────────────────────────────────────
+function isMobileView() { return window.innerWidth <= 600; }
+
 function renderNodes() {
-  // Remove old nodes + SVG content
   fieldEl.querySelectorAll('.sb-node').forEach(n => n.remove());
   svgEl.innerHTML = '';
 
   const filtered = _lessons.filter(l => l.topik === _topik);
   const done = getDone();
+  const mobile = isMobileView();
 
   if (filtered.length === 0) {
     emptyTxt.textContent = t('empty');
     emptyEl.classList.add('sb-vis');
+    fieldEl.classList.remove('sb-grid');
     return;
   }
   emptyEl.classList.remove('sb-vis');
 
-  const positions = spiralPositions(filtered.length);
+  if (mobile) {
+    fieldEl.classList.add('sb-grid');
+  } else {
+    fieldEl.classList.remove('sb-grid');
+  }
+
+  const positions = mobile ? null : spiralPositions(filtered.length);
 
   filtered.forEach((lesson, i) => {
-    const pos   = positions[i];
     const isDone = done.includes(lesson.id);
 
     const node = document.createElement('div');
     node.className = 'sb-node' + (isDone ? ' sb-done' : '');
-    node.dataset.id  = lesson.id;
-    node.style.left  = pos.left + '%';
-    node.style.top   = pos.top + '%';
-    node.style.animation =
-      `sb-node-in 0.5s ${i * 0.042}s cubic-bezier(0.16,1,0.3,1) backwards`;
+    node.dataset.id = lesson.id;
+
+    if (mobile) {
+      node.style.animation =
+        `sb-node-in-grid 0.35s ${i * 0.028}s ease both`;
+    } else {
+      const pos = positions[i];
+      node.style.left = pos.left + '%';
+      node.style.top  = pos.top + '%';
+      node.style.animation =
+        `sb-node-in 0.5s ${i * 0.042}s cubic-bezier(0.16,1,0.3,1) backwards`;
+    }
+
     node.setAttribute('role', 'button');
     node.setAttribute('tabindex', '0');
     node.setAttribute('aria-label', lesson.title[_lang] + (isDone ? ' — ' + t('done') : ''));
@@ -1173,8 +1222,7 @@ function renderNodes() {
     fieldEl.appendChild(node);
   });
 
-  // Initialise gravity tracking
-  startGravity();
+  if (!mobile) startGravity();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1302,6 +1350,7 @@ function _positionBloom() {
 }
 
 function _drawConnector(id) {
+  if (isMobileView()) return; // pe mobile grid nu desenăm linia
   const srcNode = fieldEl.querySelector(`.sb-node[data-id="${id}"]`);
   if (!srcNode) return;
 
@@ -1320,7 +1369,6 @@ function _drawConnector(id) {
   line.setAttribute('class', 'sb-conn-line');
   svgEl.appendChild(line);
 
-  // Animate line in
   requestAnimationFrame(() => line.classList.add('sb-conn-visible'));
 }
 
