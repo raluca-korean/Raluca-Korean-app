@@ -2477,11 +2477,15 @@ function checkAllDone(){
 const extAnswered = {}; // extAnswered[chIdx][stepIdx] = true
 
 const WORD_CONFUSERS = {
-  '너무':'많이','많이':'너무','조금':'별로','열심히':'천천히',
-  '천천히':'빨리','미리':'나중에','일찍':'늦게','그냥':'완전히',
-  '맛있게':'빨리','맛있는':'예쁜','따뜻한':'차가운','어려운':'쉬운',
-  '시끄러운':'조용한','한국':'중국','벌써':'아직','오래':'잠깐',
-  '일찍':'늦게','새벽':'저녁','천천히':'급하게',
+  '너무':'조금', '조금':'너무',
+  '열심히':'천천히', '천천히':'빨리',
+  '미리':'나중에', '일찍':'늦게',
+  '그냥':'완전히', '맛있게':'빨리',
+  '맛있는':'예쁜', '따뜻한':'차가운',
+  '어려운':'쉬운', '시끄러운':'조용한',
+  '한국':'중국', '벌써':'아직',
+  '오래':'잠깐', '새벽':'저녁',
+  '일찍':'늦게', '많이':'조금',
 };
 
 function shuffleArr(arr){
@@ -2492,9 +2496,7 @@ function shuffleArr(arr){
 
 function buildExtChoices(step){
   const correct=step.res.ko;
-  // wrong1 = base sentence (didn't apply grammar)
-  const wrong1=step.from[0];
-  // wrong2 = for combine: from[0]+from[1] smashed together; for add/modify: confuser swap
+  const wrong1=step.from[0]; // base (didn't apply grammar)
   let wrong2=null;
   if(step.type==='combine' && step.from.length>=2){
     wrong2=step.from[0]+' '+step.from[step.from.length-1];
@@ -2508,8 +2510,7 @@ function buildExtChoices(step){
   }
   const pool=[correct,wrong1];
   if(wrong2&&wrong2!==correct&&wrong2!==wrong1) pool.push(wrong2);
-  // ensure exactly 3 distinct choices
-  while(pool.length<3) pool.push(pool[pool.length-1]+'?');
+  while(pool.length<3) pool.push(pool[0]+'.');
   return shuffleArr([...new Set(pool)].slice(0,3));
 }
 
@@ -2523,15 +2524,26 @@ function checkExtChoice(si,btn,isCorrect){
     if(stepEl){
       stepEl.querySelectorAll('.ext-choice-btn').forEach(b=>{b.disabled=true;});
       const res=stepEl.querySelector('.ext-result-wrap');
-      if(res){res.classList.add('revealed');}
+      if(res) res.classList.add('revealed');
     }
     if(!extAnswered[currentCh]) extAnswered[currentCh]={};
     extAnswered[currentCh][si]=true;
     const ch=CHAPTERS[currentCh];
     speakKo(ch.ext.steps[si].res.ko);
+    // reveal next step progressively
+    const nextEl=document.getElementById('ext-step-'+(si+1));
+    if(nextEl){
+      nextEl.style.display='';
+      nextEl.style.animation='sfpFade .4s ease';
+      setTimeout(()=>nextEl.scrollIntoView({behavior:'smooth',block:'nearest'}),200);
+    }
     if(ch.ext.steps.every((_,i)=>isExtAnswered(i))){
       const fc=document.getElementById('ext-final-card');
-      if(fc){fc.classList.remove('ext-final-hidden');fc.style.display='';}
+      if(fc){
+        fc.classList.remove('ext-final-hidden');
+        fc.style.display='';
+        setTimeout(()=>fc.scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+      }
       markDone(1);
     }
   } else {
@@ -2541,17 +2553,18 @@ function checkExtChoice(si,btn,isCorrect){
 }
 
 /* ═══════════════════════════════════════════════
-   RENDER EXTENSION (Step 1) — quiz mode
+   RENDER EXTENSION (Step 1) — progressive quiz
 ═══════════════════════════════════════════════ */
 function renderExtension(){
   const ch=CHAPTERS[currentCh];
   const ext=ch.ext;
-  // If already completed in a previous session, pre-fill answered state
   if(isDone(1)){
     if(!extAnswered[currentCh]) extAnswered[currentCh]={};
     ext.steps.forEach((_,i)=>{ extAnswered[currentCh][i]=true; });
   }
   const allDone=ext.steps.every((_,i)=>isExtAnswered(i));
+  // first step that hasn't been answered yet
+  const firstUnanswered=ext.steps.findIndex((_,i)=>!isExtAnswered(i));
 
   let html=`<div class="panel-heading">
     <h2>${lang==='ro'?'Extindere':'Extension'}</h2>
@@ -2568,9 +2581,10 @@ function renderExtension(){
 
   ext.steps.forEach((step,si)=>{
     const answered=isExtAnswered(si);
+    // hide steps that come after the first unanswered one
+    const hidden=!answered && si>firstUnanswered;
     const choices=buildExtChoices(step);
-    const delay=si*120;
-    html+=`<div class="flow-step-card visible-step" id="ext-step-${si}" style="animation-delay:${delay}ms">
+    html+=`<div class="flow-step-card visible-step" id="ext-step-${si}"${hidden?' style="display:none"':''}>
       <div class="fsc-header">
         <span class="op-badge ${step.type}">${step.badge}</span>
         <span class="fsc-grammar">${step.grammar}</span>
