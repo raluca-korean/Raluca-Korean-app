@@ -46,6 +46,46 @@ let levelStreak = 0;
 let levelSuggestDismissed = false;
 const LEVEL_SUGGEST_THRESHOLD = 3;
 
+// ── TIMER + SPEED RECORD ────────────────────────────────────────────────────
+const SPEED_KEY = 'RK_SPEED';
+let exStartTime = 0;
+let timerInterval = null;
+
+function speedLoad(){ try{ return JSON.parse(localStorage.getItem(SPEED_KEY)||'{}'); }catch{ return {}; } }
+function speedSave(d){ try{ localStorage.setItem(SPEED_KEY,JSON.stringify(d)); }catch{} }
+
+function timerStart(){
+  clearInterval(timerInterval);
+  exStartTime = Date.now();
+  const b = document.getElementById('bTimer');
+  if(b){ b.querySelector('span:last-child').textContent='⏱ 0.0s'; b.classList.remove('record'); }
+  timerInterval = setInterval(()=>{
+    const b = document.getElementById('bTimer');
+    if(b) b.querySelector('span:last-child').textContent='⏱ '+((Date.now()-exStartTime)/1000).toFixed(1)+'s';
+  },100);
+}
+
+function timerStop(){
+  clearInterval(timerInterval); timerInterval=null;
+  return parseFloat(((Date.now()-exStartTime)/1000).toFixed(1));
+}
+
+function recordCheck(elapsed, type, isCorrect){
+  const b = document.getElementById('bTimer');
+  if(!b) return;
+  if(!isCorrect){ b.querySelector('span:last-child').textContent='⏱ '+elapsed+'s'; return; }
+  const d = speedLoad();
+  const prevBest = d.best || Infinity;
+  const prevType = (d.byType||{})[type] || Infinity;
+  const isRecord = elapsed < prevBest || elapsed < prevType;
+  if(elapsed < prevBest) d.best = elapsed;
+  if(elapsed < prevType){ d.byType = d.byType||{}; d.byType[type]=elapsed; }
+  speedSave(d);
+  b.querySelector('span:last-child').textContent = isRecord ? '🏆 '+elapsed+'s!' : '⏱ '+elapsed+'s';
+  b.classList.toggle('record', isRecord);
+  if(isRecord) setTimeout(()=>{ const fb=document.getElementById('feedback'); if(fb) fb.textContent+=' · 🏆 Record: '+elapsed+'s!'; },80);
+}
+
 // ── EXERCISE SRS (SM-2) ─────────────────────────────────────────────────
 const EX_SRS_KEY = 'RK_EX_SRS';
 const EX_SRS_NEW_CAP = 10;
@@ -712,6 +752,7 @@ function cleanConjugPrompt(prompt){
 function render(){
   selectedAnswer = null;
   answered = false;
+  timerStart();
   document.getElementById("answers").classList.remove("done");
   feedbackEl.textContent = "";
   answersEl.innerHTML = "";
@@ -952,6 +993,7 @@ function getCorrectAnswer(item){
 
 function checkCurrentAnswer(){
   if(answered) return;
+  const elapsed = timerStop();
 
   if(typeSelect.value === "puzzle" || typeSelect.value === "chain"){
     const emptyMsg = typeSelect.value === "chain" ? t("placeChain") : t("placeTiles");
@@ -974,6 +1016,7 @@ function checkCurrentAnswer(){
     if(effectiveRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
     else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item); }
     if(!isWrongMode) saveStats(effectiveRight, typeSelect.value);
+    recordCheck(elapsed, typeSelect.value, effectiveRight);
     updateExSrs(typeSelect.value, item, isRight, hintUsed);
     appendSrsInfo(typeSelect.value, item, effectiveRight);
     processGamification(effectiveRight);
@@ -1025,6 +1068,7 @@ function checkCurrentAnswer(){
   }
 
   if(!isWrongMode) saveStats(isCorrect, typeSelect.value);
+  recordCheck(elapsed, typeSelect.value, isCorrect);
   updateExSrs(typeSelect.value, item, isCorrect, false);
   appendSrsInfo(typeSelect.value, item, isCorrect);
   processGamification(isCorrect);
