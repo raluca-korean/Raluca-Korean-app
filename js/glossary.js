@@ -15,15 +15,16 @@ const glsPanelBody = document.getElementById("glsPanelBody");
 const glsVeil      = document.getElementById("glsVeil");
 
 // ── State ──
-let WORDS       = [];
-let CLUSTERS    = [];
-let SENTENCES   = [];   // [{ko, ro, en}] din exercises.json
-let daily       = [];
-let currentLang = RKLang.get();
-let filterCat   = "";
-let filterFavs  = false;
-let focusedKo   = null;
-let currentPage = 1;
+let WORDS        = [];
+let CLUSTERS     = [];
+let SENTENCES    = [];   // [{ko, ro, en}] din exercises.json
+let daily        = [];
+let currentLang  = RKLang.get();
+let filterCat    = "";
+let filterFavs   = false;
+let focusedKo    = null;
+let panelHistory = [];   // navigation stack for associated words
+let currentPage  = 1;
 const PAGE_SIZE = 25;
 // sort: "alpha" | "unknown" | "favs" | "cat"
 let currentSort = "alpha";
@@ -405,12 +406,13 @@ function _makeRow(word) {
 }
 
 // ── Focus word ──
-function focusWord(ko, speak = true) {
-  if (focusedKo === ko) { closePanel(); return; }
+function focusWord(ko, speak = true, pushHistory = false) {
+  if (focusedKo === ko && !pushHistory) { closePanel(); return; }
 
   if (focusedKo) {
     const prev = listEl.querySelector(`[data-ko="${CSS.escape(focusedKo)}"]`);
     if (prev) prev.classList.remove("hot");
+    if (pushHistory) panelHistory.push(focusedKo);
   }
 
   focusedKo = ko;
@@ -427,35 +429,36 @@ function focusWord(ko, speak = true) {
   glsVeil.classList.add("on");
 }
 
+function goBackPanel() {
+  if (!panelHistory.length) { closePanel(); return; }
+  const prev = panelHistory.pop();
+  focusWord(prev, false, false);
+}
+
 function closePanel() {
   if (focusedKo) {
     const row = listEl.querySelector(`[data-ko="${CSS.escape(focusedKo)}"]`);
     if (row) row.classList.remove("hot");
   }
   focusedKo = null;
+  panelHistory = [];
   glsPanel.classList.remove("open");
   glsPanel.setAttribute("aria-hidden", "true");
   glsVeil.classList.remove("on");
 }
 
 // ── Panel content ──
-// Returns up to `max` semantically associated words for `ko` using CLUSTERS
-function getAssociated(ko, max) {
+// Returns all semantically associated words for `ko` using CLUSTERS (stable order, no shuffle)
+function getAssociated(ko) {
   const koSet = new Set();
   for (const cl of CLUSTERS) {
     if (cl.words.includes(ko)) {
       cl.words.forEach(w => { if (w !== ko) koSet.add(w); });
     }
   }
-  // Map to WORDS objects (skip words not in vocab)
   const pool = [];
   koSet.forEach(k => { const w = WORDS.find(x => x.ko === k); if (w) pool.push(w); });
-  // Shuffle
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return pool.slice(0, max);
+  return pool;
 }
 
 function findExample(ko, max) {
@@ -475,14 +478,16 @@ function _renderPanel(word) {
   const color = getCatColor(word);
   const cats  = getCats(word);
 
-  // Semantically associated: 10 from clusters
-  const associated = getAssociated(word.ko, 10);
+  // All semantically associated words (stable order)
+  const associated = getAssociated(word.ko);
 
   // Example sentences
   const examples = findExample(word.ko);
 
+  const hasHistory = panelHistory.length > 0;
+
   glsPanelBody.innerHTML =
-    `<button class="gls-panel-back" onclick="closePanel()">` +
+    `<button class="gls-panel-back" onclick="${hasHistory ? "goBackPanel()" : "closePanel()"}">` +
       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">` +
         `<path d="M19 12H5M12 5l-7 7 7 7"/>` +
       `</svg>${t("back")}` +
@@ -524,7 +529,7 @@ function _renderPanel(word) {
     (associated.length
       ? `<div class="gls-panel-hdg gls-panel-hdg-assoc">${t("associated")}</div>` +
         `<div class="gls-panel-related gls-panel-assoc">${associated.map(rw =>
-          `<span class="gls-panel-rel gls-rel-assoc" onclick="focusWord('${esc(rw.ko)}')">${sanitizeHTML(rw.ko)}<span class="gls-rel-tr">${sanitizeHTML(getMeaning(rw))}</span></span>`
+          `<span class="gls-panel-rel gls-rel-assoc" onclick="focusWord('${esc(rw.ko)}',true,true)">${sanitizeHTML(rw.ko)}<span class="gls-rel-tr">${sanitizeHTML(getMeaning(rw))}</span></span>`
         ).join("")}</div>`
       : "");
 }
