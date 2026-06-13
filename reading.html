@@ -1246,13 +1246,13 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
   }
 
   /* ── SPEAKING / RECORDING ─────────────────────────────────────── */
+  var rdCurrentAudio = null;
   var rdRec = {
     active:    false,
     sessId:    0,
     recog:     null,
     mrec:      null,
     stream:    null,
-    mchunks:   [],
     recBtn:    null,
     waveBars:  null,
     feedbackEl: null,
@@ -1267,8 +1267,9 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     }
     /* Play back existing recording for this button */
     if (recBtn._recUrl) {
-      var audio = new Audio(recBtn._recUrl);
-      audio.play().catch(function () {});
+      if (rdCurrentAudio) { rdCurrentAudio.pause(); rdCurrentAudio.currentTime = 0; }
+      rdCurrentAudio = new Audio(recBtn._recUrl);
+      rdCurrentAudio.play().catch(function () {});
       return;
     }
     /* Reset previous recording button if different */
@@ -1297,7 +1298,6 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     rdRec.recBtn     = recBtn;
     rdRec.waveBars   = waveBars;
     rdRec.feedbackEl = feedbackEl;
-    rdRec.mchunks    = [];
     var mySession    = ++rdRec.sessId;
 
     recBtn.classList.add('recording');
@@ -1312,15 +1312,17 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
         var mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg']
           .filter(function (t) { return MediaRecorder.isTypeSupported(t); })[0] || '';
         try {
+          var mchunks = [];
+          var recognized = false;
           var m = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
           rdRec.mrec = m;
           m.ondataavailable = function (e) {
-            if (e.data && e.data.size > 0) rdRec.mchunks.push(e.data);
+            if (e.data && e.data.size > 0) mchunks.push(e.data);
           };
           m.onstop = function () {
             if (rdRec.stream === stream) { stream.getTracks().forEach(function (t) { t.stop(); }); rdRec.stream = null; }
-            if (rdRec.mchunks.length && rdRec.recBtn === recBtn) {
-              recBtn._recUrl = URL.createObjectURL(new Blob(rdRec.mchunks, { type: m.mimeType || 'audio/webm' }));
+            if (recognized && mchunks.length && rdRec.recBtn === recBtn && rdRec.sessId === mySession) {
+              recBtn._recUrl = URL.createObjectURL(new Blob(mchunks, { type: m.mimeType || 'audio/webm' }));
               recBtn.innerHTML = '▶';
               recBtn.classList.add('has-rec');
               recBtn.title = currentLang === 'ro' ? 'Redă înregistrarea' : 'Play recording';
@@ -1336,11 +1338,15 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
           r.lang = 'ko-KR'; r.continuous = false; r.interimResults = false;
           r.onresult = function (e) {
             if (rdRec.recog !== r) return;
+            recognized = true;
             rdFinishMrec();
             rdEvaluate(e.results[0][0].transcript, mySession);
           };
           r.onend = function () {
-            if (rdRec.recog === r && rdRec.sessId === mySession) rdStopUi();
+            if (rdRec.recog === r && rdRec.sessId === mySession) {
+              rdFinishMrec();
+              rdStopUi();
+            }
           };
           r.onerror = function (e) {
             if (rdRec.recog !== r) return;
