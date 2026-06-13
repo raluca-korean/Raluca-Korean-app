@@ -1313,7 +1313,6 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
           .filter(function (t) { return MediaRecorder.isTypeSupported(t); })[0] || '';
         try {
           var mchunks = [];
-          var recognized = false;
           var m = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
           rdRec.mrec = m;
           m.ondataavailable = function (e) {
@@ -1321,7 +1320,7 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
           };
           m.onstop = function () {
             if (rdRec.stream === stream) { stream.getTracks().forEach(function (t) { t.stop(); }); rdRec.stream = null; }
-            if (recognized && mchunks.length && rdRec.recBtn === recBtn && rdRec.sessId === mySession) {
+            if (mchunks.length && rdRec.recBtn === recBtn && rdRec.sessId === mySession) {
               recBtn._recUrl = URL.createObjectURL(new Blob(mchunks, { type: m.mimeType || 'audio/webm' }));
               recBtn.innerHTML = '▶';
               recBtn.classList.add('has-rec');
@@ -1338,23 +1337,25 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
           r.lang = 'ko-KR'; r.continuous = false; r.interimResults = false;
           r.onresult = function (e) {
             if (rdRec.recog !== r) return;
-            recognized = true;
+            rdRec.recog = null;
             rdFinishMrec();
             rdEvaluate(e.results[0][0].transcript, mySession);
           };
           r.onend = function () {
             if (rdRec.recog === r && rdRec.sessId === mySession) {
+              rdRec.recog = null;
               rdFinishMrec();
               rdStopUi();
             }
           };
           r.onerror = function (e) {
             if (rdRec.recog !== r) return;
+            rdRec.recog = null;
             rdFinishMrec(); rdStopUi();
             if (e.error !== 'no-speech' && e.error !== 'aborted')
               rdShowFeedback(feedbackEl, false, e.error);
           };
-          try { r.start(); } catch (e) { rdFinishMrec(); rdStopUi(); }
+          try { r.start(); } catch (e) { rdRec.recog = null; rdFinishMrec(); rdStopUi(); }
         }, 80);
       })
       .catch(function () {
