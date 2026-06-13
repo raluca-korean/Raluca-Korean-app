@@ -1470,6 +1470,7 @@ function revealInput(id,ans){
   inp.value=ans;
   inp.classList.remove('correct','wrong');
   inp.classList.add('shown');
+  speakKo(ans);
   checkAllDone();
 }
 
@@ -1576,7 +1577,10 @@ function renderReview(){
   </div>
   <div class="flow-starts">`;
   ext.starts.forEach(s=>{
-    html+=`<div class="start-bubble"><span>${s.ko}</span><span class="sb-trans">${t(s.tr)}</span></div>`;
+    html+=`<div class="start-bubble" onclick="speakKo('${s.ko}')">
+      <span>${s.ko}</span>
+      <span class="sb-trans">${t(s.tr)}</span>
+    </div>`;
   });
   html+='</div>';
 
@@ -1591,7 +1595,7 @@ function renderReview(){
         <span class="fsc-grammar">${step.grammar}</span>
       </div>
       <div class="fsc-from">${lang==='ro'?'Din:':'From:'}
-        ${step.from.map(f=>`<span class="from-pill">${f}</span>`).join(' + ')}
+        ${step.from.map(f=>`<span class="from-pill" onclick="speakKo('${f}')">${f}</span>`).join(' + ')}
       </div>
       <div class="fsc-arrow">↓</div>
       <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:4px">
@@ -1649,6 +1653,7 @@ function revealReview(si,ans){
   if(!inp)return;
   inp.value=ans; inp.classList.remove('correct','wrong'); inp.classList.add('shown');
   if(si!=='final') setShown(2,`rv-${si}`); else setShown(2,'rv-final');
+  speakKo(ans);
   checkReviewDone();
 }
 function checkFinalReview(){
@@ -1747,6 +1752,7 @@ function revealDlg(i,ans){
   wrap.classList.remove('correct-ans'); wrap.classList.add('shown-ans');
   const hint=document.getElementById(`danh-${i}`);
   if(hint)hint.style.display='block';
+  speakKo(ans);
   const ch=CHAPTERS[currentCh];
   let bi=0;
   ch.dlg.forEach(t=>{ if(t.spk==='B'){ if(bi===i)setShown(3,`dlg-${bi}`); bi++; } });
