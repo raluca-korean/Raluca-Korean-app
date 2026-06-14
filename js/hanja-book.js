@@ -1083,7 +1083,7 @@ var ORB_ANGLES       = [-50, 50, 130, -130];
 var ORB_CSS_VARS     = ['--c0','--c1','--c2','--c3'];
 
 var UI_TEXT = {
-  ro: { learn:'Înregistrează', learned:'✓ \xCEnvățat', etym:'Etimologie' },
+  ro: { learn:'Am învățat', learned:'✓ \xCEnvățat', etym:'Etimologie' },
   en: { learn:'Mark Learned',  learned:'✓ Learned',              etym:'Etymology'  }
 };
 
@@ -1283,7 +1283,7 @@ function render(animate) {
   var qb = document.getElementById('quizBtn');
   if (qb) {
     qb.disabled = (learned.length === 0);
-    qb.title    = learned.length === 0 ? 'Înregistrează cel puțin un hanja pentru a începe' : '';
+    qb.title    = learned.length === 0 ? 'Marchează cel puțin un hanja ca învățat pentru a începe' : '';
   }
 }
 
