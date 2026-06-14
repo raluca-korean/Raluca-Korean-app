@@ -1602,6 +1602,8 @@ function _exitQuiz() {
   quizMode = false;
   quizQ    = null;
   quizDone = false;
+  quizDeck = [];
+  _hideQuizResult();
   document.getElementById('stage').classList.remove('quiz-mode');
   document.getElementById('learnBtn').style.display    = '';
   document.getElementById('quizBtn').style.display     = '';
@@ -1610,9 +1612,43 @@ function _exitQuiz() {
   render(false);
 }
 
+var QUIZ_MSGS = {
+  ro: [
+    { min: 100, emoji: '🏆', msg: 'Perfect! 완벽해요!' },
+    { min: 80,  emoji: '🎉', msg: 'Bravo! Ai reușit!' },
+    { min: 60,  emoji: '💪', msg: 'Bine! Mai exersează puțin!' },
+    { min: 0,   emoji: '📚', msg: 'Mai ai de muncă! Nu te descuraja!' }
+  ],
+  en: [
+    { min: 100, emoji: '🏆', msg: 'Perfect! 완벽해요!' },
+    { min: 80,  emoji: '🎉', msg: 'Well done!' },
+    { min: 60,  emoji: '💪', msg: 'Good! Keep practicing!' },
+    { min: 0,   emoji: '📚', msg: 'Keep going! Don\'t give up!' }
+  ]
+};
+
+function _showQuizResult() {
+  var pct  = quizInitialSize > 0 ? Math.round((quizScore.ok / quizInitialSize) * 100) : 0;
+  var msgs = QUIZ_MSGS[lang] || QUIZ_MSGS.ro;
+  var found = msgs[msgs.length - 1];
+  for (var i = 0; i < msgs.length; i++) {
+    if (pct >= msgs[i].min) { found = msgs[i]; break; }
+  }
+  document.getElementById('qrEmoji').textContent = found.emoji;
+  document.getElementById('qrMsg').textContent   = found.msg;
+  document.getElementById('qrScore').textContent = quizScore.ok + ' / ' + quizInitialSize;
+  document.getElementById('qrRetry').textContent = lang === 'en' ? '↺ Again'  : '↺ Din nou';
+  document.getElementById('qrExit').textContent  = lang === 'en' ? '← Back'   : '← Înapoi';
+  document.getElementById('quizResult').classList.remove('hidden');
+}
+
+function _hideQuizResult() {
+  document.getElementById('quizResult').classList.add('hidden');
+}
+
 function _nextQuizQ() {
   if (!quizMode) return;
-  if (quizDeck.length === 0) { _exitQuiz(); return; }
+  if (quizDeck.length === 0) { _showQuizResult(); return; }
   quizDone  = false;
   quizTimer = null;
 
@@ -1747,6 +1783,15 @@ function _answerQuiz(wi) {
   document.getElementById('learnBtn').addEventListener('click', _markLearned);
   document.getElementById('quizBtn').addEventListener('click', _startQuiz);
   document.getElementById('quizExitBtn').addEventListener('click', _exitQuiz);
+  document.getElementById('qrRetry').addEventListener('click', function() {
+    _hideQuizResult();
+    _exitQuiz();
+    setTimeout(_startQuiz, 50);
+  });
+  document.getElementById('qrExit').addEventListener('click', function() {
+    _hideQuizResult();
+    _exitQuiz();
+  });
   document.getElementById('etymBtn').addEventListener('click', _openEtym);
   document.getElementById('searchBtn').addEventListener('click', function(e) { e.stopPropagation(); _openSearch(); });
   document.getElementById('searchClear').addEventListener('click', function() { document.getElementById('searchInput').value = ''; document.getElementById('searchResults').innerHTML = ''; });
