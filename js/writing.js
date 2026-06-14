@@ -284,6 +284,21 @@ function updateTarget() {
   checked = false;
   document.getElementById("btnCheck").disabled = false;
   document.getElementById("btnNext").disabled  = true;
+
+  const replay = document.getElementById("btnReplay");
+  if (mode === "letters" && SD && SD[item.char]) {
+    if (replay) replay.style.display = "";
+    setTimeout(() => animateStrokes(item.char, "wStrokeArrows"), 400);
+  } else {
+    if (replay) replay.style.display = "none";
+    const svg = document.getElementById("wStrokeArrows");
+    if (svg) svg.innerHTML = "";
+  }
+}
+
+function replayStrokes() {
+  const item = pool[idx];
+  if (item) animateStrokes(item.char, "wStrokeArrows");
 }
 
 function speakKo(char) {
