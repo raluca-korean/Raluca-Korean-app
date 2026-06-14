@@ -5,7 +5,7 @@ const DATA = [
     words:[
       {ko:"수영", sentence:"저는 주말마다 수영을 해요.", sentence_ro:"Fac înot în fiecare weekend.", sentence_en:"I go swimming every weekend.", ro:"înot",en:"swimming"},
       {ko:"수도", sentence:"서울은 대한민국의 수도예요.", sentence_ro:"Seulul este capitala Coreei de Sud.", sentence_en:"Seoul is the capital of South Korea.", ro:"apă curentă",en:"running water"},
-      {ko:"수분", sentence:"피부에 수분이 중요해요.", sentence_ro:"Hidratarea este importantă pentru piele.", sentence_en:"Moisture is important for the skin.", ro:"umiditate",en:"moisture"},
+      {ko:"수분", sentence:"피부에 수분이 중요해요.", sentence_ro:"Hidratarea este importantă pentru piele.", sentence_en:"Hydration is important for the skin.", ro:"hidratare",en:"hydration"},
       {ko:"음수", sentence:"깨끗한 음수를 마시세요.", sentence_ro:"Beți apă potabilă curată.", sentence_en:"Drink clean drinking water.", ro:"apă de băut",en:"drinking water"}
     ]
   },
