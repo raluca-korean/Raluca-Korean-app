@@ -37,13 +37,9 @@ const CONS_TENSED = [
 ];
 const VOWELS_BASIC = [
   { char:"ㅏ", rom:"a",   speak:"아",  type:"vowel" },
-  { char:"ㅐ", rom:"ae",  speak:"애",  type:"vowel" },
   { char:"ㅑ", rom:"ya",  speak:"야",  type:"vowel" },
-  { char:"ㅒ", rom:"yae", speak:"얘",  type:"vowel" },
   { char:"ㅓ", rom:"eo",  speak:"어",  type:"vowel" },
-  { char:"ㅔ", rom:"e",   speak:"에",  type:"vowel" },
   { char:"ㅕ", rom:"yeo", speak:"여",  type:"vowel" },
-  { char:"ㅖ", rom:"ye",  speak:"예",  type:"vowel" },
   { char:"ㅗ", rom:"o",   speak:"오",  type:"vowel" },
   { char:"ㅛ", rom:"yo",  speak:"요",  type:"vowel" },
   { char:"ㅜ", rom:"u",   speak:"우",  type:"vowel" },
@@ -52,6 +48,10 @@ const VOWELS_BASIC = [
   { char:"ㅣ", rom:"i",   speak:"이",  type:"vowel" },
 ];
 const VOWELS_COMP = [
+  { char:"ㅐ", rom:"ae",  speak:"애",  type:"vowel" },
+  { char:"ㅒ", rom:"yae", speak:"얘",  type:"vowel" },
+  { char:"ㅔ", rom:"e",   speak:"에",  type:"vowel" },
+  { char:"ㅖ", rom:"ye",  speak:"예",  type:"vowel" },
   { char:"ㅘ", rom:"wa",  speak:"봐",  type:"vowel" },
   { char:"ㅙ", rom:"wae", speak:"왜",  type:"vowel" },
   { char:"ㅚ", rom:"oe",  speak:"외",  type:"vowel" },
@@ -400,12 +400,12 @@ const FIELD_POSITIONS = {
   'ㅍ':[38,52], 'ㅎ':[35,36],
   // Tensed — top centre cluster  (44–63% x, 12–23% y)
   'ㄲ':[44,14], 'ㄸ':[51,12], 'ㅃ':[57,16], 'ㅆ':[63,13], 'ㅉ':[54,23],
-  // Basic vowels — right cluster  (68–83% x, 14–82% y)
-  'ㅏ':[70,16], 'ㅐ':[80,14], 'ㅑ':[83,25], 'ㅒ':[79,36],
-  'ㅓ':[68,33], 'ㅔ':[77,43], 'ㅕ':[83,52], 'ㅖ':[79,62],
+  // Basic vowels (10) — right cluster  (67–83% x, 14–82% y)
+  'ㅏ':[70,16], 'ㅑ':[83,25], 'ㅓ':[68,33], 'ㅕ':[83,52],
   'ㅗ':[67,52], 'ㅛ':[74,65], 'ㅜ':[82,70], 'ㅠ':[76,78],
   'ㅡ':[67,75], 'ㅣ':[82,80],
-  // Compound vowels — bottom right  (57–82% x, 74–84% y)
+  // Compound vowels (11) — upper/lower right  (57–82% x, 14–84% y)
+  'ㅐ':[80,14], 'ㅒ':[79,36], 'ㅔ':[77,43], 'ㅖ':[79,62],
   'ㅘ':[58,76], 'ㅙ':[66,82], 'ㅚ':[74,84], 'ㅝ':[82,82],
   'ㅞ':[61,84], 'ㅟ':[70,78], 'ㅢ':[80,74],
 };

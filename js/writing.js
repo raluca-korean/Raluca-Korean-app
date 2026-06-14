@@ -9,15 +9,16 @@ const LETTERS = [
   // consoane tensionate
   {char:"ㄲ",rom:"kk"},  {char:"ㄸ",rom:"tt"},  {char:"ㅃ",rom:"pp"},
   {char:"ㅆ",rom:"ss"},  {char:"ㅉ",rom:"jj"},
-  // vocale simple
-  {char:"ㅏ",rom:"a"},   {char:"ㅓ",rom:"eo"},  {char:"ㅗ",rom:"o"},
-  {char:"ㅜ",rom:"u"},   {char:"ㅡ",rom:"eu"},  {char:"ㅣ",rom:"i"},
-  {char:"ㅐ",rom:"ae"},  {char:"ㅔ",rom:"e"},   {char:"ㅑ",rom:"ya"},
-  {char:"ㅕ",rom:"yeo"}, {char:"ㅛ",rom:"yo"},  {char:"ㅠ",rom:"yu"},
-  // vocale compuse
-  {char:"ㅒ",rom:"yae"}, {char:"ㅖ",rom:"ye"},  {char:"ㅘ",rom:"wa"},
-  {char:"ㅙ",rom:"wae"}, {char:"ㅚ",rom:"oe"},  {char:"ㅝ",rom:"wo"},
-  {char:"ㅞ",rom:"we"},  {char:"ㅟ",rom:"wi"},  {char:"ㅢ",rom:"ui"},
+  // 10 vocale de bază
+  {char:"ㅏ",rom:"a"},   {char:"ㅑ",rom:"ya"},  {char:"ㅓ",rom:"eo"},
+  {char:"ㅕ",rom:"yeo"}, {char:"ㅗ",rom:"o"},   {char:"ㅛ",rom:"yo"},
+  {char:"ㅜ",rom:"u"},   {char:"ㅠ",rom:"yu"},  {char:"ㅡ",rom:"eu"},
+  {char:"ㅣ",rom:"i"},
+  // 11 vocale compuse
+  {char:"ㅐ",rom:"ae"},  {char:"ㅒ",rom:"yae"}, {char:"ㅔ",rom:"e"},
+  {char:"ㅖ",rom:"ye"},  {char:"ㅘ",rom:"wa"},  {char:"ㅙ",rom:"wae"},
+  {char:"ㅚ",rom:"oe"},  {char:"ㅝ",rom:"wo"},  {char:"ㅞ",rom:"we"},
+  {char:"ㅟ",rom:"wi"},  {char:"ㅢ",rom:"ui"},
 ];
 
 const SYLLABLES = [
