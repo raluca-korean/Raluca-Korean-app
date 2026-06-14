@@ -1303,8 +1303,12 @@ function _openBloom(wi) {
   panel.style.setProperty('--bloom-c', c);
   document.getElementById('bloomWord').textContent    = w.ko;
   document.getElementById('bloomMeaning').textContent = w[lang];
-  document.getElementById('bloomKo').textContent      = w.sentence || '';
-  document.getElementById('bloomTr').textContent      = w['sentence_' + lang] || '';
+
+  var esc = function(s) { return s.replace(/[&<>"]/g, function(ch) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]; }); };
+  var hilite = '<span class="bloom-hl">' + esc(w.ko) + '</span>';
+  var koSent = w.sentence ? esc(w.sentence).replace(esc(w.ko), hilite) : '';
+  document.getElementById('bloomKo').innerHTML = koSent;
+  document.getElementById('bloomTr').textContent = w['sentence_' + lang] || '';
   panel.classList.remove('hidden');
   _speak(w.ko);
 
