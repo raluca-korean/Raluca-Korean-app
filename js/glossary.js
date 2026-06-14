@@ -534,6 +534,47 @@ function _renderPanel(word) {
       : "");
 }
 
+// ── Daily popup ──
+function showDailyPopup() {
+  if (!daily.length) return;
+  const today = new Date().toDateString();
+  if (localStorage.getItem("RK_DAILY_POPUP") === today) return;
+  localStorage.setItem("RK_DAILY_POPUP", today);
+
+  const ov = document.createElement("div");
+  ov.className = "gls-daily-overlay";
+  ov.id = "dailyOverlay";
+  ov.innerHTML =
+    `<div class="gls-daily-popup">` +
+      `<div class="gls-daily-popup-lbl">${t("daily")}</div>` +
+      `<div class="gls-daily-popup-chips">` +
+        daily.map(w =>
+          `<div class="gls-daily-popup-chip" onclick="dismissDailyPopup('${esc(w.ko)}')">` +
+            `<div class="gls-daily-popup-ko" style="color:${getCatColor(w)}">${sanitizeHTML(w.ko)}</div>` +
+            `<div class="gls-daily-popup-tr">${sanitizeHTML(getMeaning(w))}</div>` +
+          `</div>`
+        ).join("") +
+      `</div>` +
+      `<button class="gls-daily-popup-cont" onclick="dismissDailyPopup()">` +
+        (currentLang === "ro" ? "Continuă →" : "Continue →") +
+      `</button>` +
+    `</div>`;
+
+  document.body.appendChild(ov);
+}
+
+function dismissDailyPopup(koToOpen) {
+  const ov = document.getElementById("dailyOverlay");
+  if (!ov) return;
+  ov.classList.add("gls-ov-out");
+  ov.addEventListener("animationend", () => {
+    ov.remove();
+    dailyCard.classList.add("gls-daily-settling");
+    dailyCard.addEventListener("animationend", () => dailyCard.classList.remove("gls-daily-settling"), { once: true });
+    if (koToOpen) focusWord(koToOpen);
+  }, { once: true });
+}
+
 // ── Category dots ──
 function buildCatDots() {
   catFilterEl.innerHTML = `<option value="">${t("allCats")}</option>` +
@@ -652,6 +693,7 @@ async function loadVocabulary() {
     buildCatDots();
     renderDailyView();
     render(true);
+    setTimeout(showDailyPopup, 300);
   } catch (err) {
     console.error(err);
     listEl.innerHTML =
