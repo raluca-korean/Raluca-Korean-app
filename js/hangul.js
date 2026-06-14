@@ -905,6 +905,64 @@ function buildSylPanel() {
   });
 }
 
+// ── STROKE ANIMATION ──────────────────────────────────────────
+let _animTimers = [];
+function _pLen(s) {
+  if (s.circle) return Math.ceil(2 * Math.PI * s.r) + 1;
+  let len = 0;
+  for (let i = 1; i < s.p.length; i++) {
+    len += Math.hypot(s.p[i][0] - s.p[i-1][0], s.p[i][1] - s.p[i-1][1]);
+  }
+  return Math.ceil(len) + 1;
+}
+function animateStrokes(char) {
+  if (!char) return;
+  _animTimers.forEach(clearTimeout);
+  _animTimers = [];
+  const svg  = document.getElementById('mWriteArrows');
+  const data = SD[char];
+  if (!data || !data.length) { svg.innerHTML = ''; return; }
+  const isDark = document.body.classList.contains('dark-mode');
+  const stroke = isDark ? '#F472B6' : '#DB2777';
+  const badge  = isDark ? '#818CF8' : '#3730A3';
+  const AID    = 'wArrow2';
+  let h = `<defs><marker id="${AID}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="${stroke}" opacity=".9"/>
+  </marker></defs>`;
+  data.forEach((s, i) => {
+    const len = _pLen(s);
+    if (s.circle) {
+      h += `<circle id="as${i}" cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="none"
+        stroke="${stroke}" stroke-width="2.5" opacity=".9"
+        style="stroke-dasharray:${len};stroke-dashoffset:${len}"/>`;
+      h += `<g id="ab${i}" style="opacity:0">${numCircle(s.cx, s.cy - s.r - 14, s.n, badge)}</g>`;
+    } else {
+      const d = s.p.map((p, j) => `${j ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ');
+      h += `<path id="as${i}" d="${d}" fill="none" stroke="${stroke}"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".9"
+        marker-end="url(#${AID})"
+        style="stroke-dasharray:${len};stroke-dashoffset:${len}"/>`;
+      h += `<g id="ab${i}" style="opacity:0">${numCircle(s.p[0][0], s.p[0][1], s.n, badge)}</g>`;
+    }
+  });
+  svg.innerHTML = h;
+  const DUR = 480, GAP = 120;
+  data.forEach((s, i) => {
+    const t0 = i * (DUR + GAP);
+    _animTimers.push(setTimeout(() => {
+      const el = svg.querySelector(`#as${i}`);
+      if (!el) return;
+      el.style.transition = `stroke-dashoffset ${DUR}ms ease-in-out`;
+      el.getBoundingClientRect();
+      el.style.strokeDashoffset = '0';
+    }, t0));
+    _animTimers.push(setTimeout(() => {
+      const bl = svg.querySelector(`#ab${i}`);
+      if (bl) { bl.style.transition = 'opacity 200ms'; bl.style.opacity = '1'; }
+    }, t0 + DUR));
+  });
+}
+
 // ── WRITING RITUAL ────────────────────────────────────────────
 function renderStrokes(char) {
   const svg    = document.getElementById('mWriteArrows');
@@ -988,7 +1046,7 @@ function openWriting(item) {
   document.getElementById('mrsWriteRom').textContent  = item.rom;
   document.getElementById('mrsWriteGuide').textContent= item.char;
   document.getElementById('mrsWriteHint').textContent = T[lang].writeHint;
-  renderStrokes(item.char);
+  animateStrokes(item.char);
   clearBoard();
   initBoard();
   document.getElementById('mrsWriteOverlay').classList.add('open');
