@@ -34,7 +34,7 @@
   }
 
   function isLight() {
-    return document.body.classList.contains('rfi-light');
+    return document.body.classList.contains('rfi-light') || localStorage.getItem('RK_THEME') === 'light';
   }
 
   function tick(t) {
@@ -90,25 +90,30 @@
 ═══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
-  var KEY = 'RK_RFI_THEME';
+  var SVG_MOON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  var SVG_SUN  = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.78" y2="4.22"/></svg>';
 
-  function apply() {
-    var light = localStorage.getItem(KEY) === 'light';
-    document.body.classList.toggle('rfi-dark',  !light);
-    document.body.classList.toggle('rfi-light',  light);
+  function isLight() {
+    return localStorage.getItem('RK_THEME') === 'light';
   }
 
-  function toggle() {
-    var nowLight = !document.body.classList.contains('rfi-light');
-    document.body.classList.toggle('rfi-dark',  !nowLight);
-    document.body.classList.toggle('rfi-light',  nowLight);
-    localStorage.setItem(KEY, nowLight ? 'light' : 'dark');
+  function apply(btn) {
+    var light = isLight();
+    document.body.classList.toggle('rfi-dark',  !light);
+    document.body.classList.toggle('rfi-light',  light);
+    if (btn) btn.innerHTML = light ? SVG_MOON : SVG_SUN;
+  }
+
+  function toggle(btn) {
+    var nowLight = !isLight();
+    localStorage.setItem('RK_THEME', nowLight ? 'light' : 'dark');
+    apply(btn);
   }
 
   function setup() {
-    apply();
     var btn = document.getElementById('rfTheme');
-    if (btn) btn.addEventListener('click', toggle);
+    apply(btn);
+    if (btn) btn.addEventListener('click', function () { toggle(btn); });
   }
 
   if (document.readyState === 'loading') {
