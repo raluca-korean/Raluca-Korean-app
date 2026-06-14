@@ -288,7 +288,7 @@ function updateTarget() {
   const replay = document.getElementById("btnReplay");
   if (mode === "letters" && SD && SD[item.char]) {
     if (replay) replay.style.display = "";
-    setTimeout(() => animateStrokes(item.char, "wStrokeArrows"), 400);
+    showStrokesStatic(item.char, "wStrokeArrows");
   } else {
     if (replay) replay.style.display = "none";
     const svg = document.getElementById("wStrokeArrows");

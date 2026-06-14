@@ -61,6 +61,37 @@ function numCircle(cx, cy, n, badge) {
     font-weight="bold" font-family="sans-serif">${n}</text>`;
 }
 
+function showStrokesStatic(char, svgId) {
+  if (!char) return;
+  _animTimers.forEach(clearTimeout);
+  _animTimers = [];
+  const svg = document.getElementById(svgId || 'mWriteArrows');
+  if (!svg) return;
+  const data = SD[char];
+  if (!data || !data.length) { svg.innerHTML = ''; return; }
+  const isDark = document.body.classList.contains('dark-mode');
+  const stroke = isDark ? '#F472B6' : '#DB2777';
+  const badge  = isDark ? '#818CF8' : '#3730A3';
+  const AID    = 'wArrowS';
+  let h = `<defs><marker id="${AID}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="${stroke}" opacity=".9"/>
+  </marker></defs>`;
+  data.forEach(s => {
+    if (s.circle) {
+      h += `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="none"
+        stroke="${stroke}" stroke-width="3" opacity=".9"/>`;
+      h += `<g>${numCircle(s.cx, s.cy - s.r - 14, s.n, badge)}</g>`;
+    } else {
+      const d = s.p.map((p, j) => `${j ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ');
+      h += `<path d="${d}" fill="none" stroke="${stroke}"
+        stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".9"
+        marker-end="url(#${AID})"/>`;
+      h += `<g>${numCircle(s.p[0][0], s.p[0][1], s.n, badge)}</g>`;
+    }
+  });
+  svg.innerHTML = h;
+}
+
 function animateStrokes(char, svgId) {
   if (!char) return;
   _animTimers.forEach(clearTimeout);
