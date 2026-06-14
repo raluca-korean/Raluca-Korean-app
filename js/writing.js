@@ -321,6 +321,11 @@ cvs.addEventListener("pointerdown", e => {
   [lx,ly]=cPos(e); pmx=lx; pmy=ly; lastMs=Date.now();
   ctx.beginPath(); ctx.arc(lx,ly,5.5,0,Math.PI*2);
   ctx.fillStyle=drawColor(); ctx.fill();
+  if (checked) {
+    checked = false;
+    document.getElementById("btnCheck").disabled = false;
+    hideFb();
+  }
 });
 cvs.addEventListener("pointermove", e => {
   if (!drawing) return;
