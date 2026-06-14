@@ -1061,6 +1061,8 @@ var quizScore = {ok: 0, total: 0};
 var quizQ     = null;   /* {dataIdx, correctMeaning, options:[str×4]} */
 var quizDone  = false;
 var quizTimer = null;
+var quizDeck  = [];     /* deck de parcurs: greșelile revin la coadă */
+var quizInitialSize = 0;
 
 
 /* Study queue: unlearned hanja first; marking learned sends them to the back */
@@ -1577,10 +1579,21 @@ function _markLearned() {
 }
 
 /* ── QUIZ ──────────────────────────────────────────────── */
+function _shuffled(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
 function _startQuiz() {
   if (learned.length === 0) return;
-  quizMode  = true;
-  quizScore = {ok: 0, total: 0};
+  quizMode        = true;
+  quizScore       = {ok: 0, total: 0};
+  quizDeck        = _shuffled(learned);
+  quizInitialSize = quizDeck.length;
   _nextQuizQ();
 }
 
@@ -1599,10 +1612,11 @@ function _exitQuiz() {
 
 function _nextQuizQ() {
   if (!quizMode) return;
+  if (quizDeck.length === 0) { _exitQuiz(); return; }
   quizDone  = false;
   quizTimer = null;
 
-  var dataIdx = learned[Math.floor(Math.random() * learned.length)];
+  var dataIdx = quizDeck[0];
   var correct = DATA[dataIdx].meaning[lang];
 
   var distractors = [];
@@ -1668,8 +1682,8 @@ function _renderQuiz() {
   document.getElementById('kTotal').textContent   = quizScore.total;
   var pct = quizScore.total > 0 ? (quizScore.ok / quizScore.total) * 100 : 0;
   document.getElementById('kFill').style.width    = pct + '%';
-  document.getElementById('posIdx').textContent   = quizScore.total + 1;
-  document.getElementById('posTotal').textContent = '?';
+  document.getElementById('posIdx').textContent   = quizInitialSize - quizDeck.length + 1;
+  document.getElementById('posTotal').textContent = quizInitialSize;
 }
 
 function _answerQuiz(wi) {
@@ -1702,6 +1716,11 @@ function _answerQuiz(wi) {
   document.getElementById('kFill').style.width = pct + '%';
 
   _updateSRS(quizQ.dataIdx, isRight);
+  if (isRight) {
+    quizDeck.shift();
+  } else {
+    quizDeck.push(quizDeck.shift());
+  }
   quizTimer = setTimeout(_nextQuizQ, isRight ? 900 : 1500);
 }
 
