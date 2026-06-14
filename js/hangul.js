@@ -627,9 +627,14 @@ function openVortex(item) {
   buildVortexNodes(item);
   buildEchoPanel(item);
   activateEcho(item);
+  animateStrokes(item.char, 'mrsVStroke');
 }
 
 function closeVortex() {
+  _animTimers.forEach(clearTimeout);
+  _animTimers = [];
+  const vs = document.getElementById('mrsVStroke');
+  if (vs) vs.innerHTML = '';
   const vortex = document.getElementById('mrsVortex');
   vortex.classList.remove('open');
   // Remove type class so it doesn't linger
@@ -915,11 +920,11 @@ function _pLen(s) {
   }
   return Math.ceil(len) + 1;
 }
-function animateStrokes(char) {
+function animateStrokes(char, svgId) {
   if (!char) return;
   _animTimers.forEach(clearTimeout);
   _animTimers = [];
-  const svg  = document.getElementById('mWriteArrows');
+  const svg  = document.getElementById(svgId || 'mWriteArrows');
   const data = SD[char];
   if (!data || !data.length) { svg.innerHTML = ''; return; }
   const isDark = document.body.classList.contains('dark-mode');
