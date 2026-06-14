@@ -645,9 +645,37 @@ function buildVortexNodes(item) {
   if (item.type === 'vowel') {
     const bright = ['ㅏ','ㅗ','ㅑ','ㅛ','ㅘ','ㅙ'];
     const isB = bright.includes(item.char);
-    const harmony = lang === 'ro'
-      ? (isB ? 'Vocalǎ <strong>pozitivǎ</strong> — folosește terminații cu ㅏ' : 'Vocalǎ <strong>negativǎ</strong> — folosește terminații cu ㅓ')
-      : (isB ? '<strong>Bright</strong> vowel — use ㅏ verb endings' : '<strong>Dark</strong> vowel — use ㅓ verb endings');
+    const harmonyRo = isB
+      ? `<div style="font-size:11px;line-height:1.7;margin-top:5px">
+          <span style="color:#F472B6">☀ Pozitive (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
+          → verb + <strong>-아요</strong>: 가다→가요, 오다→와요
+          <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
+          <span style="opacity:.55">● Negative (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
+          → verb + <strong>-어요</strong>: 먹다→먹어요
+        </div>`
+      : `<div style="font-size:11px;line-height:1.7;margin-top:5px">
+          <span style="color:#818CF8">● Negative (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
+          → verb + <strong>-어요</strong>: 먹다→먹어요, 쓰다→써요
+          <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
+          <span style="opacity:.55">☀ Pozitive (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
+          → verb + <strong>-아요</strong>: 가다→가요
+        </div>`;
+    const harmonyEn = isB
+      ? `<div style="font-size:11px;line-height:1.7;margin-top:5px">
+          <span style="color:#F472B6">☀ Bright (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
+          → verb + <strong>-아요</strong>: 가다→가요, 오다→와요
+          <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
+          <span style="opacity:.55">● Dark (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
+          → verb + <strong>-어요</strong>: 먹다→먹어요
+        </div>`
+      : `<div style="font-size:11px;line-height:1.7;margin-top:5px">
+          <span style="color:#818CF8">● Dark (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
+          → verb + <strong>-어요</strong>: 먹다→먹어요, 쓰다→써요
+          <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
+          <span style="opacity:.55">☀ Bright (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
+          → verb + <strong>-아요</strong>: 가다→가요
+        </div>`;
+    const harmony = lang === 'ro' ? harmonyRo : harmonyEn;
     defs.push({ angle: 310, delay: 0.15, title: t.nodeHarmony, body: harmony });
   }
 
