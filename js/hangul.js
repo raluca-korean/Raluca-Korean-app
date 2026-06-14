@@ -65,22 +65,88 @@ const ALL_CHARS = [...CONS_BASIC, ...CONS_TENSED, ...VOWELS_BASIC, ...VOWELS_COM
 // ── BATCHIM DATA ──────────────────────────────────────────────
 const BATCHIM_ROWS = {
   ro: [
-    { chars:"ㄱ ㄲ ㅋ", sound:"k", ex:"먹 (meok) — mânâncă" },
-    { chars:"ㄴ",       sound:"n", ex:"산 (san) — munte" },
-    { chars:"ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ", sound:"t", ex:"옷 (ot) — haine" },
-    { chars:"ㄹ",       sound:"l", ex:"말 (mal) — cal / cuvânt" },
-    { chars:"ㅁ",       sound:"m", ex:"봄 (bom) — primăvarǎ" },
-    { chars:"ㅂ ㅍ",   sound:"p", ex:"밥 (bap) — orez" },
-    { chars:"ㅇ",       sound:"ng",ex:"강 (gang) — râu" },
+    { chars:"ㄱ ㄲ ㅋ", sound:"k", exs:[
+      {ch:"ㄱ", word:"국",   rom:"guk",    gloss:"supǎ"},
+      {ch:"ㄱ", word:"먹다", rom:"meok-da",gloss:"a mânca"},
+      {ch:"ㅋ", word:"부엌", rom:"bu-eok", gloss:"bucǎtǎrie"},
+    ]},
+    { chars:"ㄴ", sound:"n", exs:[
+      {ch:"ㄴ", word:"산",  rom:"san", gloss:"munte"},
+      {ch:"ㄴ", word:"눈",  rom:"nun", gloss:"ochi / zǎpadǎ"},
+      {ch:"ㄴ", word:"돈",  rom:"don", gloss:"bani"},
+    ]},
+    { chars:"ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ", sound:"t", exs:[
+      {ch:"ㄷ", word:"곧",   rom:"got",    gloss:"în curând"},
+      {ch:"ㅅ", word:"옷",   rom:"ot",     gloss:"haine"},
+      {ch:"ㅆ", word:"있다", rom:"it-da",  gloss:"a exista"},
+      {ch:"ㅈ", word:"낮",   rom:"nat",    gloss:"amiazǎ"},
+      {ch:"ㅊ", word:"꽃",   rom:"kkot",   gloss:"floare"},
+      {ch:"ㅌ", word:"밭",   rom:"bat",    gloss:"câmp"},
+      {ch:"ㅎ", word:"좋다", rom:"joh-da", gloss:"bun"},
+    ]},
+    { chars:"ㄹ", sound:"l", exs:[
+      {ch:"ㄹ", word:"말",  rom:"mal",    gloss:"cal / cuvânt"},
+      {ch:"ㄹ", word:"물",  rom:"mul",    gloss:"apǎ"},
+      {ch:"ㄹ", word:"일",  rom:"il",     gloss:"muncǎ / zi"},
+    ]},
+    { chars:"ㅁ", sound:"m", exs:[
+      {ch:"ㅁ", word:"봄",  rom:"bom",    gloss:"primǎvarǎ"},
+      {ch:"ㅁ", word:"이름",rom:"i-reum", gloss:"nume"},
+      {ch:"ㅁ", word:"마음",rom:"ma-eum", gloss:"inimǎ"},
+    ]},
+    { chars:"ㅂ ㅍ", sound:"p", exs:[
+      {ch:"ㅂ", word:"밥",  rom:"bap", gloss:"orez"},
+      {ch:"ㅂ", word:"입",  rom:"ip",  gloss:"gurǎ"},
+      {ch:"ㅍ", word:"앞",  rom:"ap",  gloss:"în față"},
+      {ch:"ㅍ", word:"잎",  rom:"ip",  gloss:"frunzǎ"},
+    ]},
+    { chars:"ㅇ", sound:"ng", exs:[
+      {ch:"ㅇ", word:"강",   rom:"gang",    gloss:"râu"},
+      {ch:"ㅇ", word:"방",   rom:"bang",    gloss:"camerǎ"},
+      {ch:"ㅇ", word:"사랑", rom:"sa-rang", gloss:"iubire"},
+    ]},
   ],
   en: [
-    { chars:"ㄱ ㄲ ㅋ", sound:"k", ex:"먹 (meok) — eat" },
-    { chars:"ㄴ",       sound:"n", ex:"산 (san) — mountain" },
-    { chars:"ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ", sound:"t", ex:"옷 (ot) — clothes" },
-    { chars:"ㄹ",       sound:"l", ex:"말 (mal) — horse / word" },
-    { chars:"ㅁ",       sound:"m", ex:"봄 (bom) — spring" },
-    { chars:"ㅂ ㅍ",   sound:"p", ex:"밥 (bap) — rice" },
-    { chars:"ㅇ",       sound:"ng",ex:"강 (gang) — river" },
+    { chars:"ㄱ ㄲ ㅋ", sound:"k", exs:[
+      {ch:"ㄱ", word:"국",   rom:"guk",    gloss:"soup"},
+      {ch:"ㄱ", word:"먹다", rom:"meok-da",gloss:"to eat"},
+      {ch:"ㅋ", word:"부엌", rom:"bu-eok", gloss:"kitchen"},
+    ]},
+    { chars:"ㄴ", sound:"n", exs:[
+      {ch:"ㄴ", word:"산",  rom:"san", gloss:"mountain"},
+      {ch:"ㄴ", word:"눈",  rom:"nun", gloss:"eye / snow"},
+      {ch:"ㄴ", word:"돈",  rom:"don", gloss:"money"},
+    ]},
+    { chars:"ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ", sound:"t", exs:[
+      {ch:"ㄷ", word:"곧",   rom:"got",    gloss:"soon"},
+      {ch:"ㅅ", word:"옷",   rom:"ot",     gloss:"clothes"},
+      {ch:"ㅆ", word:"있다", rom:"it-da",  gloss:"to exist"},
+      {ch:"ㅈ", word:"낮",   rom:"nat",    gloss:"daytime"},
+      {ch:"ㅊ", word:"꽃",   rom:"kkot",   gloss:"flower"},
+      {ch:"ㅌ", word:"밭",   rom:"bat",    gloss:"field"},
+      {ch:"ㅎ", word:"좋다", rom:"joh-da", gloss:"good"},
+    ]},
+    { chars:"ㄹ", sound:"l", exs:[
+      {ch:"ㄹ", word:"말",  rom:"mal",    gloss:"horse / word"},
+      {ch:"ㄹ", word:"물",  rom:"mul",    gloss:"water"},
+      {ch:"ㄹ", word:"일",  rom:"il",     gloss:"work / day"},
+    ]},
+    { chars:"ㅁ", sound:"m", exs:[
+      {ch:"ㅁ", word:"봄",  rom:"bom",    gloss:"spring"},
+      {ch:"ㅁ", word:"이름",rom:"i-reum", gloss:"name"},
+      {ch:"ㅁ", word:"마음",rom:"ma-eum", gloss:"heart"},
+    ]},
+    { chars:"ㅂ ㅍ", sound:"p", exs:[
+      {ch:"ㅂ", word:"밥",  rom:"bap", gloss:"rice"},
+      {ch:"ㅂ", word:"입",  rom:"ip",  gloss:"mouth"},
+      {ch:"ㅍ", word:"앞",  rom:"ap",  gloss:"in front"},
+      {ch:"ㅍ", word:"잎",  rom:"ip",  gloss:"leaf"},
+    ]},
+    { chars:"ㅇ", sound:"ng", exs:[
+      {ch:"ㅇ", word:"강",   rom:"gang",    gloss:"river"},
+      {ch:"ㅇ", word:"방",   rom:"bang",    gloss:"room"},
+      {ch:"ㅇ", word:"사랑", rom:"sa-rang", gloss:"love"},
+    ]},
   ],
 };
 
@@ -604,7 +670,10 @@ function buildVortexNodes(item) {
   if (item.type === 'cons' || item.type === 'tensed') {
     const brow = BATCHIM_ROWS[lang].find(r => r.chars.includes(item.char));
     if (brow) {
-      defs.push({ angle: 290, delay: 0.15, title: t.nodeBatchim, body: `${brow.chars} → <strong>${brow.sound}</strong><br><small>${brow.ex}</small>` });
+      const exHtml = brow.exs.map(e =>
+        `<span style="opacity:.6">${e.ch}:</span> <strong>${e.word}</strong> <span style="opacity:.7">(${e.rom})</span> ${e.gloss}`
+      ).join('<br>');
+      defs.push({ angle: 290, delay: 0.15, title: t.nodeBatchim, body: `${brow.chars} → <strong>${brow.sound}</strong><br><small style="display:block;margin-top:4px;line-height:1.65">${exHtml}</small>` });
     }
   }
 
