@@ -3057,6 +3057,37 @@ function setShown(step,key){
 function wasShown(step,key){ return !!(shownCells[currentCh]&&shownCells[currentCh][step]&&shownCells[currentCh][step][key]); }
 
 /* ═══════════════════════════════════════════════
+   CHAPTER VOCABULARY (nouns / key words)
+═══════════════════════════════════════════════ */
+const VOCAB_BY_CHAPTER = {
+  0:  [{ko:'이불',ro:'pătură',en:'blanket'}],
+  1:  [{ko:'식당',ro:'restaurant',en:'restaurant'},{ko:'한국',ro:'coreean',en:'Korean'}],
+  2:  [{ko:'시험',ro:'examen',en:'exam'}],
+  3:  [{ko:'날씨',ro:'vreme',en:'weather'},{ko:'친구',ro:'prieten',en:'friend'},{ko:'밖',ro:'afară',en:'outside'}],
+  4:  [{ko:'병원',ro:'spital',en:'hospital'},{ko:'약',ro:'medicament',en:'medicine'}],
+  5:  [{ko:'영화',ro:'film',en:'movie'},{ko:'공포',ro:'horror',en:'horror'}],
+  6:  [{ko:'수염',ro:'barbă',en:'stubble'},{ko:'아침',ro:'dimineața',en:'morning'}],
+  7:  [{ko:'학교',ro:'școală',en:'school'},{ko:'양말',ro:'ciorapi',en:'socks'}],
+  8:  [{ko:'화장',ro:'machiaj',en:'makeup'},{ko:'화장품',ro:'produse cosmetice',en:'cosmetics'}],
+  9:  [{ko:'커피',ro:'cafea',en:'coffee'},{ko:'회사',ro:'birou',en:'office'}],
+  10: [{ko:'알람',ro:'alarmă',en:'alarm'}],
+  11: [{ko:'침대',ro:'pat',en:'bed'}],
+  12: [{ko:'알람',ro:'alarmă',en:'alarm'},{ko:'새벽',ro:'miezul nopții',en:'early morning'}],
+  13: [{ko:'옷',ro:'haină',en:'clothing'}],
+  14: [{ko:'카페',ro:'cafenea',en:'café'},{ko:'친구',ro:'prieten',en:'friend'},{ko:'커피',ro:'cafea',en:'coffee'}],
+  15: [{ko:'재료',ro:'ingrediente',en:'ingredients'},{ko:'음악',ro:'muzică',en:'music'}],
+  16: [{ko:'비',ro:'ploaie',en:'rain'}],
+  17: [{ko:'날씨',ro:'vreme',en:'weather'},{ko:'우산',ro:'umbrelă',en:'umbrella'}],
+  18: [{ko:'헬스장',ro:'sală de sport',en:'gym'}],
+  19: [{ko:'도서관',ro:'bibliotecă',en:'library'},{ko:'전화기',ro:'telefon',en:'phone'}],
+  20: [{ko:'김치찌개',ro:'supă kimchi',en:'kimchi jjigae'}],
+  21: [{ko:'비행기',ro:'avion',en:'plane'},{ko:'여권',ro:'pașaport',en:'passport'}],
+  22: [{ko:'친구',ro:'prieten',en:'friend'},{ko:'약',ro:'medicament',en:'medicine'}],
+  23: [{ko:'주말',ro:'weekend',en:'weekend'},{ko:'커피',ro:'cafea',en:'coffee'},{ko:'영화',ro:'film',en:'movie'}],
+  24: [{ko:'영수증',ro:'chitanță',en:'receipt'},{ko:'환불',ro:'ramburs',en:'refund'}]
+};
+
+/* ═══════════════════════════════════════════════
    SPEECH
 ═══════════════════════════════════════════════ */
 function speakKo(text){
@@ -3726,19 +3757,21 @@ function openVocabPopup(){
 
   titleEl.textContent=(lang==='ro'?'Vocabular — ':'Vocabulary — ')+t(ch.title);
 
+  const words=VOCAB_BY_CHAPTER[currentCh]||[];
   let html='';
-
-  // Simple word list
-  html+=`<div class="vp-section"><div class="vp-section-title">${lang==='ro'?'Cuvinte':'Words'}</div>`;
-  ch.verbs.forEach(v=>{
-    const koSafe=v.base.replace(/'/g,"\\'");
-    html+=`<div class="vp-word-row">
-      <span class="vp-word-ko">${v.base}</span>
-      <span class="vp-word-tr">${t(v.meaning)}</span>
-      <button class="vp-word-speak" onclick="speakKo('${koSafe}')">🔊</button>
-    </div>`;
-  });
-  html+='</div>';
+  if(words.length){
+    words.forEach(w=>{
+      const koSafe=w.ko.replace(/'/g,"\\'");
+      const tr=lang==='ro'?w.ro:w.en;
+      html+=`<div class="vp-word-row">
+        <span class="vp-word-ko">${w.ko}</span>
+        <span class="vp-word-tr">${tr}</span>
+        <button class="vp-word-speak" onclick="speakKo('${koSafe}')">🔊</button>
+      </div>`;
+    });
+  } else {
+    html=`<p style="color:var(--sfp-muted,#888);text-align:center;padding:1rem">${lang==='ro'?'Fără vocabular extra.':'No extra vocabulary.'}</p>`;
+  }
 
   body.innerHTML=html;
   popup.removeAttribute('hidden');
