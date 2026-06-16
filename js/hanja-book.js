@@ -1561,25 +1561,34 @@ function _sortQueueByDue() {
 
 /* ── MARK LEARNED ──────────────────────────────────────── */
 function _markLearned() {
-  if (learned.indexOf(idx) < 0) learned.push(idx);
-  localStorage.setItem('RK_HJ_LEARNED', JSON.stringify(learned));
+  var pos = learned.indexOf(idx);
 
-  /* Init SRS and re-insert at due-sorted position */
-  var current = queue.splice(queuePos, 1)[0];
-  if (!srsData[current]) _updateSRS(current, true);
-  var ins = _srsInsertPos(current);
-  queue.splice(ins, 0, current);
-  if (ins <= queuePos) queuePos++;
-  if (queuePos >= queue.length) queuePos = queue.length - 1;
-  idx = queue[queuePos];
-  localStorage.setItem('RK_HJ_QUEUE', JSON.stringify(queue));
+  if (pos < 0) {
+    /* Validează → adaugă în learned și avansează */
+    learned.push(idx);
+    localStorage.setItem('RK_HJ_LEARNED', JSON.stringify(learned));
 
-  _bumpStreak();
+    var current = queue.splice(queuePos, 1)[0];
+    if (!srsData[current]) _updateSRS(current, true);
+    var ins = _srsInsertPos(current);
+    queue.splice(ins, 0, current);
+    if (ins <= queuePos) queuePos++;
+    if (queuePos >= queue.length) queuePos = queue.length - 1;
+    idx = queue[queuePos];
+    localStorage.setItem('RK_HJ_QUEUE', JSON.stringify(queue));
 
-  var nuc = document.getElementById('nucleus');
-  nuc.classList.add('nova');
-  setTimeout(function() { nuc.classList.remove('nova'); }, 700);
-  render(true);
+    _bumpStreak();
+
+    var nuc = document.getElementById('nucleus');
+    nuc.classList.add('nova');
+    setTimeout(function() { nuc.classList.remove('nova'); }, 700);
+    render(true);
+  } else {
+    /* De-validează → scoate din learned, rămâne pe același hanja */
+    learned.splice(pos, 1);
+    localStorage.setItem('RK_HJ_LEARNED', JSON.stringify(learned));
+    render(false);
+  }
 }
 
 /* ── QUIZ ──────────────────────────────────────────────── */
