@@ -520,7 +520,10 @@ function _renderPanel(word) {
       ? `<div class="gls-panel-hdg gls-panel-hdg-ex">${t("example")}</div>` +
         examples.map(ex =>
           `<div class="gls-panel-example">` +
-            `<div class="gls-ex-ko">${sanitizeHTML(ex.ko)}</div>` +
+            `<div class="gls-ex-ko-row">` +
+              `<span class="gls-ex-ko">${sanitizeHTML(ex.ko)}</span>` +
+              `<button class="gls-ex-speak" onclick="speakKO('${esc(ex.ko)}')" title="${t('speak')}" aria-label="${t('speak')}">🔊</button>` +
+            `</div>` +
             `<div class="gls-ex-tr">${sanitizeHTML(currentLang === "ro" ? ex.ro : ex.en)}</div>` +
           `</div>`
         ).join("")
