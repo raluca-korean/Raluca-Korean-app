@@ -1055,9 +1055,49 @@ function _renderStreak() {
 /* SRS data: {reps, ease, interval(days), due(ms timestamp)} */
 var srsData = JSON.parse(localStorage.getItem('RK_HJ_SRS') || '{}');
 
+/* Silabe frecvente din vocabular care nu apar în cei 100 hanja principali */
+var HANJA_SUPPLEMENT = {
+  '교': {hanja:'校', meaning:{ro:'școală',en:'school'}},
+  '분': {hanja:'分', meaning:{ro:'parte / a împărți',en:'part / divide'}},
+  '습': {hanja:'習', meaning:{ro:'practică / obicei',en:'practice / habit'}},
+  '영': {hanja:'英', meaning:{ro:'Anglia / erou',en:'England / hero'}},
+  '한': {hanja:'韓', meaning:{ro:'Coreea',en:'Korea'}},
+  '관': {hanja:'觀', meaning:{ro:'a observa',en:'to observe'}},
+  '리': {hanja:'理', meaning:{ro:'principiu / rațiune',en:'principle / reason'}},
+  '안': {hanja:'安', meaning:{ro:'siguranță / pace',en:'safety / peace'}},
+  '급': {hanja:'給', meaning:{ro:'salariu / a furniza',en:'salary / to give'}},
+  '작': {hanja:'作', meaning:{ro:'a crea',en:'to create'}},
+  '당': {hanja:'當', meaning:{ro:'potrivit',en:'suitable / party'}},
+  '본': {hanja:'本', meaning:{ro:'origine / bază',en:'origin / basis'}},
+  '매': {hanja:'每', meaning:{ro:'fiecare',en:'every'}},
+  '요': {hanja:'曜', meaning:{ro:'zi a săptămânii',en:'day of the week'}},
+  '탄': {hanja:'誕', meaning:{ro:'naștere',en:'birth'}},
+  '친': {hanja:'親', meaning:{ro:'aproape / rudă',en:'close / relative'}},
+  '조': {hanja:'祖', meaning:{ro:'strămoș',en:'ancestor'}},
+  '청': {hanja:'靑', meaning:{ro:'albastru / tânăr',en:'blue / young'}},
+  '형': {hanja:'形', meaning:{ro:'formă',en:'form / shape'}},
+  '위': {hanja:'偉', meaning:{ro:'măreț',en:'great'}},
+  '단': {hanja:'單', meaning:{ro:'simplu / individual',en:'single / simple'}},
+  '언': {hanja:'言', meaning:{ro:'vorbire / cuvânt',en:'speech / word'}},
+  '하': {hanja:'下', meaning:{ro:'jos / sub',en:'below / under'}},
+  '발': {hanja:'發', meaning:{ro:'a emite / pornire',en:'to emit / departure'}},
+  '상': {hanja:'上', meaning:{ro:'sus / deasupra',en:'above / top'}},
+  '족': {hanja:'族', meaning:{ro:'trib / neam',en:'tribe / clan'}},
+  '재': {hanja:'才', meaning:{ro:'talent',en:'talent'}},
+  '등': {hanja:'登', meaning:{ro:'a urca',en:'to climb'}},
+  '악': {hanja:'樂', meaning:{ro:'muzică',en:'music'}},
+  '흑': {hanja:'黑', meaning:{ro:'negru',en:'black'}},
+  '유': {hanja:'有', meaning:{ro:'a exista / a avea',en:'to have / exist'}},
+  '결': {hanja:'結', meaning:{ro:'a lega / rezultat',en:'to tie / result'}},
+  '채': {hanja:'彩', meaning:{ro:'culoare / nuanță',en:'color / hue'}},
+  '락': {hanja:'樂', meaning:{ro:'plăcere',en:'pleasure'}},
+  '족': {hanja:'族', meaning:{ro:'clan / familie',en:'clan / family'}},
+};
+
 /* Lookup: silabă coreeană → {hanja, meaning} — construit din DATA */
 var _hanjaByReading = (function() {
   var map = {};
+  for (var syl in HANJA_SUPPLEMENT) map[syl] = HANJA_SUPPLEMENT[syl];
   for (var i = 0; i < DATA.length; i++) {
     var item = DATA[i];
     var parts = item.ko_reading.split(' ');
