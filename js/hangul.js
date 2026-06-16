@@ -975,7 +975,9 @@ function openWriting(item) {
   currentItem = item;
   document.getElementById('mrsWriteChar').textContent = item.char;
   document.getElementById('mrsWriteRom').textContent  = item.rom;
-  document.getElementById('mrsWriteGuide').textContent= item.char;
+  const guide = document.getElementById('mrsWriteGuide');
+  guide.textContent = item.char;
+  guide.style.display = (SD && SD[item.char]) ? 'none' : '';
   document.getElementById('mrsWriteHint').textContent = T[lang].writeHint;
   animateStrokes(item.char);
   clearBoard();

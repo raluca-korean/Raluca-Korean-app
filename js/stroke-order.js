@@ -72,10 +72,21 @@ function showStrokesStatic(char, svgId) {
   const isDark = document.body.classList.contains('dark-mode');
   const stroke = isDark ? '#F472B6' : '#DB2777';
   const badge  = isDark ? '#818CF8' : '#3730A3';
+  const guide  = isDark ? '#818CF8' : '#3730A3';
   const AID    = 'wArrowS';
   let h = `<defs><marker id="${AID}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
     <polygon points="0 0,8 3,0 6" fill="${stroke}" opacity=".9"/>
   </marker></defs>`;
+  data.forEach(s => {
+    if (s.circle) {
+      h += `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="none"
+        stroke="${guide}" stroke-width="16" opacity=".13"/>`;
+    } else {
+      const d = s.p.map((p, j) => `${j ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ');
+      h += `<path d="${d}" fill="none" stroke="${guide}"
+        stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity=".13"/>`;
+    }
+  });
   data.forEach(s => {
     if (s.circle) {
       h += `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="none"
@@ -103,10 +114,21 @@ function animateStrokes(char, svgId) {
   const isDark = document.body.classList.contains('dark-mode');
   const stroke = isDark ? '#F472B6' : '#DB2777';
   const badge  = isDark ? '#818CF8' : '#3730A3';
+  const guide  = isDark ? '#818CF8' : '#3730A3';
   const AID    = 'wArrow2';
   let h = `<defs><marker id="${AID}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
     <polygon points="0 0,8 3,0 6" fill="${stroke}" opacity=".9"/>
   </marker></defs>`;
+  data.forEach(s => {
+    if (s.circle) {
+      h += `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="none"
+        stroke="${guide}" stroke-width="16" opacity=".13"/>`;
+    } else {
+      const d = s.p.map((p, j) => `${j ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ');
+      h += `<path d="${d}" fill="none" stroke="${guide}"
+        stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity=".13"/>`;
+    }
+  });
   data.forEach((s, i) => {
     const len = _pLen(s);
     if (s.circle) {

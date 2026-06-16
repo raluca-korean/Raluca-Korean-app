@@ -286,7 +286,9 @@ function updateTarget() {
   document.getElementById("btnNext").disabled  = true;
 
   const replay = document.getElementById("btnReplay");
-  if (mode === "letters" && SD && SD[item.char]) {
+  const hasSD = mode === "letters" && SD && !!SD[item.char];
+  trace.style.display = hasSD ? "none" : "";
+  if (hasSD) {
     if (replay) replay.style.display = "";
     showStrokesStatic(item.char, "wStrokeArrows");
   } else {
