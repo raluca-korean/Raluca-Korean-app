@@ -533,6 +533,7 @@ function saveStats(isCorrect, type){
   if(isCorrect) s.byType[type].correct++;
   localStorage.setItem("RK_STATS", JSON.stringify(s));
   if(isCorrect) syncStudyToSW(streak);
+  updateTypeStats();
 }
 
 function trackWrong(item){
@@ -558,24 +559,58 @@ function trackWrong(item){
   } catch(e) {}
 }
 
+// ── PERSISTENT MISTAKES ────────────────────────────────────────────────────
+function getPersistentWrongs(type) {
+  try {
+    const log = JSON.parse(localStorage.getItem('RK_WRONG_LOG') || '[]');
+    const items = allExercises[type] || [];
+    const seen = new Set();
+    return log
+      .filter(e => e.type === type)
+      .map(entry => items.find(item => getExerciseKey(type, item) === entry.key))
+      .filter(item => { if (!item || seen.has(item)) return false; seen.add(item); return true; });
+  } catch { return []; }
+}
+
 function updateWrongBtn(){
   const isDrill = typeSelect.value.startsWith('drill-');
   if(isDrill){ wrongBtn.style.display = 'none'; return; }
-  const count = (wrongsByType[typeSelect.value] || []).length;
+  const type = typeSelect.value;
+  const sessionCount = (wrongsByType[type] || []).length;
+  const persistentItems = sessionCount === 0 ? getPersistentWrongs(type) : [];
+  const count = sessionCount || persistentItems.length;
   wrongBtn.style.display = (count > 0 && !isWrongMode) ? "" : "none";
-  wrongBtn.textContent = `❌ ${t("wrongModeBtn")} (${count})`;
+  wrongBtn.textContent = sessionCount > 0
+    ? `❌ ${t("wrongModeBtn")} (${sessionCount})`
+    : currentLang === 'ro' ? `📋 Greșeli recente (${count})` : `📋 Recent mistakes (${count})`;
 }
 
 function enterWrongMode(){
-  const wrongs = wrongsByType[typeSelect.value] || [];
-  if(wrongs.length === 0) return;
-  wrongModeItems = [...wrongs];
-  wrongsByType[typeSelect.value] = [];
+  const sessionWrongs = wrongsByType[typeSelect.value] || [];
+  const items = sessionWrongs.length > 0 ? sessionWrongs : getPersistentWrongs(typeSelect.value);
+  if(!items.length) return;
+  wrongModeItems = [...items];
+  if(sessionWrongs.length > 0) wrongsByType[typeSelect.value] = [];
   isWrongMode = true;
   currentIndex = 0;
   total = 0; correct = 0; streak = 0;
   render();
   updateWrongBtn();
+}
+
+// ── PER-TYPE STATS ──────────────────────────────────────────────────────────
+function updateTypeStats() {
+  const el = document.getElementById('typeStats');
+  if (!el) return;
+  const type = typeSelect.value;
+  if (type.startsWith('drill-')) { el.textContent = ''; return; }
+  try {
+    const s = JSON.parse(localStorage.getItem('RK_STATS') || '{}');
+    const bt = (s.byType || {})[type];
+    if (!bt || !bt.total) { el.textContent = currentLang === 'ro' ? '— fără statistici' : '— no stats yet'; return; }
+    const pct = Math.round((bt.correct / bt.total) * 100);
+    el.textContent = `${bt.total} ex. · ${pct}% ✓`;
+  } catch { el.textContent = ''; }
 }
 
 function exitWrongMode(){
@@ -637,6 +672,7 @@ function setLanguage(lang){
   currentLang = lang;
   updateStaticTexts();
   updateBadges();
+  updateTypeStats();
   render();
 }
 
@@ -752,6 +788,7 @@ function cleanConjugPrompt(prompt){
 function render(){
   selectedAnswer = null;
   answered = false;
+  hintUsed = false;
   timerStart();
   document.getElementById("answers").classList.remove("done");
   feedbackEl.textContent = "";
@@ -760,6 +797,7 @@ function render(){
   document.getElementById("puzzleUI").style.display = "none";
   const hb = document.getElementById("hintBtn");
   if(hb) hb.style.display = "none";
+  if(hintBtnMC){ hintBtnMC.style.display = "none"; hintBtnMC.disabled = false; }
   const lb = document.getElementById("learnBtn");
   if(lb) lb.style.display = "none";
 
@@ -897,6 +935,8 @@ function render(){
   if(typeSelect.value === "ko-ro" || typeSelect.value === "particle" || typeSelect.value === "particlePlus"){
     speakKorean(questionText);
   }
+
+  if(hintBtnMC && MC_TYPES.has(typeSelect.value) && !isWrongMode) hintBtnMC.style.display = "";
 
   options.forEach(option => {
     const el = document.createElement("div");
@@ -1069,11 +1109,12 @@ function checkCurrentAnswer(){
 
   if(!isWrongMode) saveStats(isCorrect, typeSelect.value);
   recordCheck(elapsed, typeSelect.value, isCorrect);
-  updateExSrs(typeSelect.value, item, isCorrect, false);
+  updateExSrs(typeSelect.value, item, isCorrect, hintUsed);
   appendSrsInfo(typeSelect.value, item, isCorrect);
   processGamification(isCorrect);
   if(!isWrongMode) checkLevelSuggestion(isCorrect);
   answered = true;
+  if(hintBtnMC) hintBtnMC.style.display = "none";
   document.getElementById("answers").classList.add("done");
   updateBadges();
   updateWrongBtn();
@@ -1162,6 +1203,7 @@ typeSelect.addEventListener("change", () => {
   document.getElementById('levelRow').style.display = isDrill ? 'none' : '';
   render();
   updateWrongBtn();
+  updateTypeStats();
 });
 
 levelBtnsEl.querySelectorAll("button[data-level]").forEach(btn => {
@@ -1241,6 +1283,26 @@ soundBtn.addEventListener("click", () => {
   soundBtn.classList.toggle("off", !soundOn);
   soundBtn.textContent = soundOn ? "🔊" : "🔇";
 });
+
+// ── MC HINT ────────────────────────────────────────────────────────────────
+const hintBtnMC = document.getElementById('hintBtnMC');
+const MC_TYPES = new Set(['ko-ro','ro-ko','particle','particlePlus','conjug']);
+
+function showHintMC() {
+  if (answered || hintUsed) return;
+  const type = typeSelect.value;
+  const item = currentList[currentIndex];
+  if (!item) return;
+  const correct = getCorrectAnswer(item);
+  const wrongNodes = [...document.querySelectorAll('#answers .answer')]
+    .filter(n => n.textContent.trim() !== correct && !n.classList.contains('hint-elim'));
+  if (!wrongNodes.length) return;
+  const toElim = wrongNodes[Math.floor(Math.random() * wrongNodes.length)];
+  toElim.classList.add('hint-elim');
+  hintUsed = true;
+  if (hintBtnMC) hintBtnMC.disabled = true;
+}
+if (hintBtnMC) hintBtnMC.addEventListener('click', showHintMC);
 
 updateLevelButtons();
 updateStaticTexts();

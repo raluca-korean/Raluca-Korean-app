@@ -129,6 +129,7 @@ function toggleFav(ko) {
   _refreshRowIcons(ko);
   if (focusedKo === ko) _renderPanel(WORDS.find(w => w.ko === ko));
   _refreshDailyChip(ko);
+  updateExportBtn();
 }
 
 function toggleLearned(ko) {
@@ -664,6 +665,26 @@ favFilterBtn.addEventListener("click", () => {
 
 glsVeil.addEventListener("click", closePanel);
 
+// ── Export favorites ──
+const exportFavBtn = document.getElementById("exportFavBtn");
+function exportFavorites() {
+  const favs = [..._f()];
+  if (!favs.length) return;
+  const lines = favs.map(ko => {
+    const w = WORDS.find(x => x.ko === ko);
+    return w ? `${w.ko}\t${w.ro}\t${w.en}` : ko;
+  });
+  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "glosar-favorite.txt"; a.click();
+  URL.revokeObjectURL(url);
+}
+function updateExportBtn() {
+  if (exportFavBtn) exportFavBtn.style.display = _f().size ? "" : "none";
+}
+if (exportFavBtn) exportFavBtn.addEventListener("click", exportFavorites);
+
 // ── Load ──
 async function loadVocabulary() {
   listEl.innerHTML =
@@ -697,6 +718,7 @@ async function loadVocabulary() {
     buildCatDots();
     renderDailyView();
     render(true);
+    updateExportBtn();
     setTimeout(showDailyPopup, 300);
   } catch (err) {
     console.error(err);

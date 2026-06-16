@@ -2136,6 +2136,45 @@
     }
 
     if(korean) autoSpeakSentence(korean);
+    renderPatternSuggestions();
+  }
+
+  function renderPatternSuggestions() {
+    var panel = document.getElementById('patternSuggestions');
+    if (!panel) return;
+
+    // Collect all filled field keys across clauses
+    var filled = new Set();
+    state.clauses.forEach(function(clause) {
+      ALL_FIELD_KEYS.forEach(function(k) {
+        if (clause[k] && clause[k].ko) filled.add(k);
+      });
+    });
+
+    if (filled.size === 0) { panel.innerHTML = ''; return; }
+
+    // Score each template by overlap with filled fields
+    var scored = TEMPLATES.map(function(tmpl) {
+      var match = tmpl.fields.filter(function(f) { return filled.has(f); }).length;
+      return { tmpl: tmpl, match: match, total: tmpl.fields.length };
+    }).filter(function(s) { return s.match > 0; })
+      .sort(function(a, b) {
+        var scoreA = a.match / a.total;
+        var scoreB = b.match / b.total;
+        return scoreB - scoreA || a.total - b.total;
+      }).slice(0, 3);
+
+    if (!scored.length) { panel.innerHTML = ''; return; }
+
+    var lang = state.lang || 'ro';
+    var label = lang === 'ro' ? 'Tipare posibile:' : 'Possible patterns:';
+    panel.innerHTML =
+      '<span class="msf-sug-label">' + label + '</span>' +
+      scored.map(function(s) {
+        return '<span class="msf-sug-chip" title="' + (lang === 'ro' ? s.tmpl.ro : s.tmpl.en) + '">' +
+          s.tmpl.code +
+        '</span>';
+      }).join('');
   }
 
   function getVisibleColumns(){

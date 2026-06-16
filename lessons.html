@@ -696,6 +696,76 @@ body.dark-mode .sb-ex-ko { color: var(--sb-a3); }
   box-shadow: 0 14px 32px rgba(124,58,237,0.38) !important;
 }
 
+/* ── Next lesson button ── */
+.sb-next-lesson {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--sb-bloom-border) !important;
+  background: transparent !important;
+  color: var(--sb-text) !important;
+  font-size: 13px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  opacity: 0;
+  animation: sb-cryst 0.5s 0.56s ease both;
+}
+.sb-next-lesson:hover { background: var(--sb-hover) !important; border-color: var(--sb-a1) !important; }
+.sb-next-title { color: var(--sb-a1); }
+
+/* ── Quiz mode toggle ── */
+.sb-quiz-modes {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.sb-qm-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--sb-bloom-border) !important;
+  background: transparent !important;
+  color: var(--sb-muted) !important;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sb-qm-btn.sb-qm-active {
+  background: var(--sb-a1) !important;
+  border-color: var(--sb-a1) !important;
+  color: #fff !important;
+}
+
+/* ── MC options ── */
+.sb-mc-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.sb-mc-opt {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1.5px solid var(--sb-bloom-border) !important;
+  background: var(--sb-ex-bg) !important;
+  color: var(--sb-text) !important;
+  font-size: 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  transition: background 0.13s, border-color 0.13s;
+}
+.sb-mc-opt:hover:not(:disabled) { background: var(--sb-ex-bg-hover) !important; border-color: var(--sb-a1) !important; }
+.sb-mc-opt.sq-ok  { background: rgba(22,163,74,0.12) !important; border-color: rgba(22,163,74,0.5) !important; color: #15803d !important; }
+.sb-mc-opt.sq-err { background: rgba(239,68,68,0.10) !important; border-color: rgba(239,68,68,0.4) !important; color: #dc2626 !important; }
+.sb-qi-mc .sb-qi-num { font-size: 11px; color: var(--sb-muted); margin-bottom: 6px; }
+
 /* Close button */
 #sb-bloom-close {
   position: absolute;
@@ -1089,6 +1159,10 @@ const I18N = {
     done:    'Completat',
     error:   'Eroare la încărcarea lecțiilor.',
     hear:    '▶ ascultă',
+    nextLesson: 'Lecția următoare:',
+    quizWrite: '✏️ Scrie',
+    quizMC:    '🎯 Variante',
+    mcInstr:   'Alege traducerea coreeană corectă.',
   },
   en: {
     title:   'TOPIK Lessons',
@@ -1101,6 +1175,10 @@ const I18N = {
     done:    'Completed',
     error:   'Could not load lessons.',
     hear:    '▶ hear',
+    nextLesson: 'Next lesson:',
+    quizWrite: '✏️ Write',
+    quizMC:    '🎯 Multiple choice',
+    mcInstr:   'Choose the correct Korean translation.',
   }
 };
 const t = k => I18N[_lang][k];
@@ -1380,6 +1458,7 @@ function _drawConnector(id) {
 let _qExamples = [];
 let _qLessonId = null;
 let _qDone     = {};   // idx → 'correct' | 'shown'
+let _qMode     = 'write'; // 'write' | 'mc'
 
 function _populateBloom(lesson) {
   const notes    = Array.isArray(lesson.notes[_lang]) ? lesson.notes[_lang] : [];
@@ -1423,6 +1502,15 @@ function _populateBloom(lesson) {
         '<ul>' + notes.map(n => '<li>' + _esc(n) + '</li>').join('') + '</ul></div>'
       : '') +
       '<button type="button" class="sb-practice" id="sb-practice-btn">' + t('practice') + '</button>' +
+      (function() {
+        const idx = _lessons.findIndex(l => l.id === lesson.id);
+        const nxt = _lessons[idx + 1];
+        return nxt
+          ? '<button type="button" class="sb-next-lesson" id="sb-next-lesson-btn">' +
+              t('nextLesson') + ' <span class="sb-next-title">' + _esc(nxt.title[_lang]) + '</span> →' +
+            '</button>'
+          : '';
+      })() +
     '</div>' +
 
     // ── Tab 1: Quiz (populated below) ─────────────────────
@@ -1445,10 +1533,19 @@ function _populateBloom(lesson) {
     window.location.href = 'exercises.html?lesson=' + lesson.id;
   });
 
+  // Next lesson button
+  const nextLessonBtn = document.getElementById('sb-next-lesson-btn');
+  if (nextLessonBtn) {
+    const nxtIdx = _lessons.findIndex(l => l.id === lesson.id) + 1;
+    const nxtLesson = _lessons[nxtIdx];
+    if (nxtLesson) nextLessonBtn.addEventListener('click', () => openBloom(nxtLesson.id));
+  }
+
   // ── Populate quiz tab ──────────────────────────────────
   _qExamples = examples;
   _qLessonId = lesson.id;
   _qDone     = {};
+  _qMode     = 'write';
   document.getElementById('sbt-1').innerHTML = _buildQuizTab();
 
   // ── Tab switching ──────────────────────────────────────
@@ -1469,23 +1566,7 @@ function _populateBloom(lesson) {
   });
 
   // ── Quiz event delegation ──────────────────────────────
-  const quizPanel = document.getElementById('sbt-1');
-  quizPanel.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-    const i = parseInt(btn.dataset.idx);
-    switch (btn.dataset.action) {
-      case 'check':  _qCheck(i);  break;
-      case 'reveal': _qReveal(i); break;
-      case 'speak':  _speak(_qExamples[i].ko); break;
-    }
-  });
-  quizPanel.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      const inp = e.target.closest('.sb-qi-inp');
-      if (inp) { e.preventDefault(); _qCheck(parseInt(inp.dataset.idx)); }
-    }
-  });
+  _attachQuizEvents(document.getElementById('sbt-1'));
 }
 
 // ── Build quiz HTML ───────────────────────────────────────────
@@ -1495,14 +1576,21 @@ function _buildQuizTab() {
       (_lang === 'ro' ? 'Nu există exemple pentru această lecție.' : 'No examples for this lesson.') +
     '</p>';
   }
-  const instr = _lang === 'ro'
-    ? 'Citește traducerea și scrie propoziția în coreeană.'
-    : 'Read the translation and write the sentence in Korean.';
-  const showLbl  = _lang === 'ro' ? 'Arată' : 'Show';
 
+  const toggle =
+    '<div class="sb-quiz-modes">' +
+      '<button class="sb-qm-btn' + (_qMode === 'write' ? ' sb-qm-active' : '') + '" onclick="_setQMode(\'write\')">' + t('quizWrite') + '</button>' +
+      '<button class="sb-qm-btn' + (_qMode === 'mc'    ? ' sb-qm-active' : '') + '" onclick="_setQMode(\'mc\')">' + t('quizMC') + '</button>' +
+    '</div>';
+
+  return toggle + (_qMode === 'mc' ? _buildMCPanel() : _buildWritePanel());
+}
+
+function _buildWritePanel() {
+  const instr   = _lang === 'ro' ? 'Citește traducerea și scrie propoziția în coreeană.' : 'Read the translation and write the sentence in Korean.';
+  const showLbl = _lang === 'ro' ? 'Arată' : 'Show';
   let html = '<p class="sb-quiz-instr">' + _esc(instr) + '</p>' +
     '<div class="sb-quiz-prog-wrap"><div class="sb-quiz-prog-bar" id="sq-pbar"></div></div>';
-
   _qExamples.forEach((ex, i) => {
     html +=
       '<div class="sb-qi" id="sqi-' + i + '">' +
@@ -1521,8 +1609,100 @@ function _buildQuizTab() {
         '<div class="sb-qi-feedback" id="sqfb-' + i + '"></div>' +
       '</div>';
   });
-
   return html;
+}
+
+function _buildMCPanel() {
+  // Collect distractor Korean sentences from other lessons at same topik level
+  const currentLesson = _lessons.find(l => l.id === _qLessonId);
+  const topik = currentLesson ? currentLesson.topik : 1;
+  const distractorPool = [];
+  _lessons.forEach(l => {
+    if (l.id === _qLessonId) return;
+    if (Math.abs(l.topik - topik) <= 1) {
+      (l.examples || []).forEach(ex => { if (ex.ko) distractorPool.push(ex.ko); });
+    }
+  });
+
+  function shuffle(a) { return [...a].sort(() => Math.random() - 0.5); }
+  function pickDistractors(correct, n) {
+    const pool = shuffle(distractorPool.filter(k => k !== correct));
+    return pool.slice(0, n);
+  }
+
+  let html = '<p class="sb-quiz-instr">' + _esc(t('mcInstr')) + '</p>' +
+    '<div class="sb-quiz-prog-wrap"><div class="sb-quiz-prog-bar" id="sq-pbar"></div></div>';
+
+  _qExamples.forEach((ex, i) => {
+    const distractors = pickDistractors(ex.ko, 3);
+    const options = shuffle([ex.ko, ...distractors]);
+    html +=
+      '<div class="sb-qi sb-qi-mc" id="sqi-' + i + '">' +
+        '<div class="sb-qi-num">' + (i + 1) + ' / ' + _qExamples.length + '</div>' +
+        '<div class="sb-qi-prompt">' + _esc(ex[_lang]) + '</div>' +
+        '<div class="sb-mc-opts">' +
+          options.map(opt =>
+            '<button class="sb-mc-opt" data-action="mc-pick" data-idx="' + i + '" data-ko="' + _esc(opt) + '">' +
+              _esc(opt) +
+            '</button>'
+          ).join('') +
+        '</div>' +
+        '<div class="sb-qi-feedback" id="sqfb-' + i + '"></div>' +
+      '</div>';
+  });
+  return html;
+}
+
+function _setQMode(mode) {
+  _qMode = mode;
+  _qDone = {};
+  document.getElementById('sbt-1').innerHTML = _buildQuizTab();
+  // Re-attach quiz events
+  const panel = document.getElementById('sbt-1');
+  _attachQuizEvents(panel);
+}
+
+function _attachQuizEvents(panel) {
+  panel.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const i = parseInt(btn.dataset.idx);
+    switch (btn.dataset.action) {
+      case 'check':   _qCheck(i);  break;
+      case 'reveal':  _qReveal(i); break;
+      case 'speak':   _speak(_qExamples[i].ko); break;
+      case 'mc-pick': _qMCPick(i, btn.dataset.ko); break;
+    }
+  });
+  panel.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const inp = e.target.closest('.sb-qi-inp');
+      if (inp) { e.preventDefault(); _qCheck(parseInt(inp.dataset.idx)); }
+    }
+  });
+}
+
+function _qMCPick(i, chosen) {
+  if (_qDone[i]) return;
+  const correct = (_qExamples[i].ko || '').trim();
+  const card = document.getElementById('sqi-' + i);
+  const fb   = document.getElementById('sqfb-' + i);
+  if (!card || !fb) return;
+  card.querySelectorAll('.sb-mc-opt').forEach(btn => {
+    btn.disabled = true;
+    if (btn.dataset.ko === correct) btn.classList.add('sq-ok');
+    else if (btn.dataset.ko === chosen) btn.classList.add('sq-err');
+  });
+  if (chosen === correct) {
+    _qDone[i] = 'correct';
+    fb.innerHTML = '<span class="sb-qi-ko-ok">✓</span>';
+    _speak(correct);
+  } else {
+    _qDone[i] = 'shown';
+    fb.innerHTML = '<span class="sb-qi-err-msg">' +
+      (_lang === 'ro' ? '✗ Greșit' : '✗ Wrong') + '</span>';
+  }
+  _qUpdateProgress();
 }
 
 // ── Quiz check ────────────────────────────────────────────────
