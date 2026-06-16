@@ -352,6 +352,7 @@ function render(animate) {
 
   listEl.innerHTML = "";
   listEl.appendChild(frag);
+  listEl.classList.toggle("gls-searching", !!(searchInput.value.trim() || filterCat || filterFavs));
 }
 
 function goPage(p) {
