@@ -1055,6 +1055,48 @@ function _renderStreak() {
 /* SRS data: {reps, ease, interval(days), due(ms timestamp)} */
 var srsData = JSON.parse(localStorage.getItem('RK_HJ_SRS') || '{}');
 
+/* Lookup: silabă coreeană → {hanja, meaning} — construit din DATA */
+var _hanjaByReading = (function() {
+  var map = {};
+  for (var i = 0; i < DATA.length; i++) {
+    var item = DATA[i];
+    var parts = item.ko_reading.split(' ');
+    for (var r = 0; r < parts.length; r++) {
+      var syl = parts[r].trim();
+      if (syl && !map[syl]) map[syl] = {hanja: item.hanja, meaning: item.meaning};
+    }
+  }
+  return map;
+})();
+
+function _renderMorphemes(word) {
+  var el = document.getElementById('bloomMorphemes');
+  if (!el) return;
+  var syllables = Array.from(word);
+  var found = syllables.some(function(s) { return !!_hanjaByReading[s]; });
+  if (!found) { el.classList.add('hidden'); return; }
+
+  var html = '';
+  for (var i = 0; i < syllables.length; i++) {
+    if (i > 0) html += '<span class="morph-sep">+</span>';
+    var syl   = syllables[i];
+    var entry = _hanjaByReading[syl];
+    if (entry) {
+      html += '<div class="morph-chip known">'
+            + '<span class="mc-hanja">' + entry.hanja + '</span>'
+            + '<span class="mc-syl">'   + syl          + '</span>'
+            + '<span class="mc-mean">'  + entry.meaning[lang] + '</span>'
+            + '</div>';
+    } else {
+      html += '<div class="morph-chip">'
+            + '<span class="mc-syl">' + syl + '</span>'
+            + '</div>';
+    }
+  }
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+}
+
 /* Quiz state */
 var quizMode  = false;
 var quizScore = {ok: 0, total: 0};
@@ -1309,6 +1351,7 @@ function _openBloom(wi) {
   var koSent = w.sentence ? esc(w.sentence).replace(esc(w.ko), hilite) : '';
   document.getElementById('bloomKo').innerHTML = koSent;
   document.getElementById('bloomTr').textContent = w['sentence_' + lang] || '';
+  _renderMorphemes(w.ko);
   panel.classList.remove('hidden');
   _speak(w.ko);
 
