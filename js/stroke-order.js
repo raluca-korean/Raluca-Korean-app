@@ -79,14 +79,14 @@ function showStrokesStatic(char, svgId) {
   data.forEach(s => {
     if (s.circle) {
       h += `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="none"
-        stroke="${stroke}" stroke-width="3" opacity=".38"/>`;
-      h += `<g opacity=".55">${numCircle(s.cx, s.cy - s.r - 14, s.n, badge)}</g>`;
+        stroke="${stroke}" stroke-width="5" opacity=".65"/>`;
+      h += `<g opacity=".85">${numCircle(s.cx, s.cy - s.r - 14, s.n, badge)}</g>`;
     } else {
       const d = s.p.map((p, j) => `${j ? 'L' : 'M'}${p[0]},${p[1]}`).join(' ');
       h += `<path d="${d}" fill="none" stroke="${stroke}"
-        stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".38"
+        stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".65"
         marker-end="url(#${AID})"/>`;
-      h += `<g opacity=".55">${numCircle(s.p[0][0], s.p[0][1], s.n, badge)}</g>`;
+      h += `<g opacity=".85">${numCircle(s.p[0][0], s.p[0][1], s.n, badge)}</g>`;
     }
   });
   svg.innerHTML = h;

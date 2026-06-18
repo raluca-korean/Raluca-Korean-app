@@ -337,7 +337,7 @@ function updateTarget() {
   const replay = document.getElementById("btnReplay");
   if (mode === "letters" && SD && SD[item.char]) {
     if (replay) replay.style.display = "";
-    showStrokesStatic(item.char, "wStrokeArrows");
+    fitStrokeSVG(item.char).then(() => showStrokesStatic(item.char, "wStrokeArrows"));
   } else {
     if (replay) replay.style.display = "none";
     const svg = document.getElementById("wStrokeArrows");
@@ -345,9 +345,67 @@ function updateTarget() {
   }
 }
 
+async function fitStrokeSVG(char) {
+  const svg  = document.getElementById('wStrokeArrows');
+  if (!svg || !SD || !SD[char]) return;
+  const wrap = document.querySelector('.board-wrap');
+  if (!wrap) return;
+
+  // Wait for Noto Sans KR to be ready so canvas measures the right font
+  try { await document.fonts.load(`900 195px 'Noto Sans KR'`); } catch(e) {}
+
+  // Guard against stale calls when the user has moved to the next character
+  if (!pool[idx] || pool[idx].char !== char) return;
+
+  const boxW = wrap.offsetWidth  || 260;
+  const boxH = wrap.offsetHeight || 260;
+  const FS   = 195; // must match .board-trace font-size in CSS
+
+  // Render the ghost character at the same position/size as the CSS board-trace element
+  // (flex centered, font-size FS, line-height 1 → line-box top = (boxH-FS)/2)
+  const tmp = document.createElement('canvas');
+  tmp.width  = boxW;
+  tmp.height = boxH;
+  const tc   = tmp.getContext('2d');
+  tc.fillStyle   = '#000';
+  tc.fillRect(0, 0, boxW, boxH);
+  tc.fillStyle   = '#fff';
+  tc.font        = `900 ${FS}px 'Noto Sans KR', sans-serif`;
+  tc.textAlign   = 'center';
+  tc.textBaseline= 'top';
+  tc.fillText(char, boxW / 2, (boxH - FS) / 2);
+
+  // Pixel-scan to find actual ink bounding box
+  const px = tc.getImageData(0, 0, boxW, boxH).data;
+  let gx0 = boxW, gx1 = 0, gy0 = boxH, gy1 = 0;
+  for (let y = 0; y < boxH; y++) {
+    for (let x = 0; x < boxW; x++) {
+      if (px[(y * boxW + x) * 4] > 32) {
+        if (x < gx0) gx0 = x; if (x > gx1) gx1 = x;
+        if (y < gy0) gy0 = y; if (y > gy1) gy1 = y;
+      }
+    }
+  }
+  if (gx0 > gx1 || gy0 > gy1) return; // font didn't render (rare)
+
+  // Expand by numCircle badge radius (10 SVG units ≈ 10/200 × boxW px)
+  const padPx = Math.round(10 * boxW / 200) + 2;
+  gx0 = Math.max(0, gx0 - padPx); gx1 = Math.min(boxW, gx1 + padPx);
+  gy0 = Math.max(0, gy0 - padPx); gy1 = Math.min(boxH, gy1 + padPx);
+
+  // Set SVG viewBox so arrows fill exactly the ghost character's ink region
+  svg.setAttribute('viewBox', [
+    (gx0 / boxW * 200).toFixed(1),
+    (gy0 / boxH * 200).toFixed(1),
+    ((gx1 - gx0) / boxW * 200).toFixed(1),
+    ((gy1 - gy0) / boxH * 200).toFixed(1),
+  ].join(' '));
+}
+
 function replayStrokes() {
   const item = pool[idx];
-  if (item) animateStrokes(item.char, "wStrokeArrows");
+  if (!item) return;
+  fitStrokeSVG(item.char).then(() => animateStrokes(item.char, "wStrokeArrows"));
 }
 
 function speakKo(char) {
