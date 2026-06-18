@@ -37,9 +37,13 @@ const CONS_TENSED = [
 ];
 const VOWELS_BASIC = [
   { char:"ㅏ", rom:"a",   speak:"아",  type:"vowel" },
+  { char:"ㅐ", rom:"ae",  speak:"애",  type:"vowel" },
   { char:"ㅑ", rom:"ya",  speak:"야",  type:"vowel" },
+  { char:"ㅒ", rom:"yae", speak:"얘",  type:"vowel" },
   { char:"ㅓ", rom:"eo",  speak:"어",  type:"vowel" },
+  { char:"ㅔ", rom:"e",   speak:"에",  type:"vowel" },
   { char:"ㅕ", rom:"yeo", speak:"여",  type:"vowel" },
+  { char:"ㅖ", rom:"ye",  speak:"예",  type:"vowel" },
   { char:"ㅗ", rom:"o",   speak:"오",  type:"vowel" },
   { char:"ㅛ", rom:"yo",  speak:"요",  type:"vowel" },
   { char:"ㅜ", rom:"u",   speak:"우",  type:"vowel" },
@@ -48,10 +52,6 @@ const VOWELS_BASIC = [
   { char:"ㅣ", rom:"i",   speak:"이",  type:"vowel" },
 ];
 const VOWELS_COMP = [
-  { char:"ㅐ", rom:"ae",  speak:"애",  type:"vowel" },
-  { char:"ㅒ", rom:"yae", speak:"얘",  type:"vowel" },
-  { char:"ㅔ", rom:"e",   speak:"에",  type:"vowel" },
-  { char:"ㅖ", rom:"ye",  speak:"예",  type:"vowel" },
   { char:"ㅘ", rom:"wa",  speak:"봐",  type:"vowel" },
   { char:"ㅙ", rom:"wae", speak:"왜",  type:"vowel" },
   { char:"ㅚ", rom:"oe",  speak:"외",  type:"vowel" },
@@ -65,88 +65,22 @@ const ALL_CHARS = [...CONS_BASIC, ...CONS_TENSED, ...VOWELS_BASIC, ...VOWELS_COM
 // ── BATCHIM DATA ──────────────────────────────────────────────
 const BATCHIM_ROWS = {
   ro: [
-    { chars:"ㄱ ㄲ ㅋ", sound:"k", exs:[
-      {ch:"ㄱ", word:"국",   rom:"guk",    gloss:"supǎ"},
-      {ch:"ㄱ", word:"먹다", rom:"meok-da",gloss:"a mânca"},
-      {ch:"ㅋ", word:"부엌", rom:"bu-eok", gloss:"bucǎtǎrie"},
-    ]},
-    { chars:"ㄴ", sound:"n", exs:[
-      {ch:"ㄴ", word:"산",  rom:"san", gloss:"munte"},
-      {ch:"ㄴ", word:"눈",  rom:"nun", gloss:"ochi / zǎpadǎ"},
-      {ch:"ㄴ", word:"돈",  rom:"don", gloss:"bani"},
-    ]},
-    { chars:"ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ", sound:"t", exs:[
-      {ch:"ㄷ", word:"곧",   rom:"got",    gloss:"în curând"},
-      {ch:"ㅅ", word:"옷",   rom:"ot",     gloss:"haine"},
-      {ch:"ㅆ", word:"있다", rom:"it-da",  gloss:"a exista"},
-      {ch:"ㅈ", word:"낮",   rom:"nat",    gloss:"amiazǎ"},
-      {ch:"ㅊ", word:"꽃",   rom:"kkot",   gloss:"floare"},
-      {ch:"ㅌ", word:"밭",   rom:"bat",    gloss:"câmp"},
-      {ch:"ㅎ", word:"좋다", rom:"joh-da", gloss:"bun"},
-    ]},
-    { chars:"ㄹ", sound:"l", exs:[
-      {ch:"ㄹ", word:"말",  rom:"mal",    gloss:"cal / cuvânt"},
-      {ch:"ㄹ", word:"물",  rom:"mul",    gloss:"apǎ"},
-      {ch:"ㄹ", word:"일",  rom:"il",     gloss:"muncǎ / zi"},
-    ]},
-    { chars:"ㅁ", sound:"m", exs:[
-      {ch:"ㅁ", word:"봄",  rom:"bom",    gloss:"primǎvarǎ"},
-      {ch:"ㅁ", word:"이름",rom:"i-reum", gloss:"nume"},
-      {ch:"ㅁ", word:"마음",rom:"ma-eum", gloss:"inimǎ"},
-    ]},
-    { chars:"ㅂ ㅍ", sound:"p", exs:[
-      {ch:"ㅂ", word:"밥",  rom:"bap", gloss:"orez"},
-      {ch:"ㅂ", word:"입",  rom:"ip",  gloss:"gurǎ"},
-      {ch:"ㅍ", word:"앞",  rom:"ap",  gloss:"în față"},
-      {ch:"ㅍ", word:"잎",  rom:"ip",  gloss:"frunzǎ"},
-    ]},
-    { chars:"ㅇ", sound:"ng", exs:[
-      {ch:"ㅇ", word:"강",   rom:"gang",    gloss:"râu"},
-      {ch:"ㅇ", word:"방",   rom:"bang",    gloss:"camerǎ"},
-      {ch:"ㅇ", word:"사랑", rom:"sa-rang", gloss:"iubire"},
-    ]},
+    { chars:"ㄱ ㄲ ㅋ", sound:"k", ex:"먹 (meok) — mânâncă" },
+    { chars:"ㄴ",       sound:"n", ex:"산 (san) — munte" },
+    { chars:"ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ", sound:"t", ex:"옷 (ot) — haine" },
+    { chars:"ㄹ",       sound:"l", ex:"말 (mal) — cal / cuvânt" },
+    { chars:"ㅁ",       sound:"m", ex:"봄 (bom) — primăvarǎ" },
+    { chars:"ㅂ ㅍ",   sound:"p", ex:"밥 (bap) — orez" },
+    { chars:"ㅇ",       sound:"ng",ex:"강 (gang) — râu" },
   ],
   en: [
-    { chars:"ㄱ ㄲ ㅋ", sound:"k", exs:[
-      {ch:"ㄱ", word:"국",   rom:"guk",    gloss:"soup"},
-      {ch:"ㄱ", word:"먹다", rom:"meok-da",gloss:"to eat"},
-      {ch:"ㅋ", word:"부엌", rom:"bu-eok", gloss:"kitchen"},
-    ]},
-    { chars:"ㄴ", sound:"n", exs:[
-      {ch:"ㄴ", word:"산",  rom:"san", gloss:"mountain"},
-      {ch:"ㄴ", word:"눈",  rom:"nun", gloss:"eye / snow"},
-      {ch:"ㄴ", word:"돈",  rom:"don", gloss:"money"},
-    ]},
-    { chars:"ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ", sound:"t", exs:[
-      {ch:"ㄷ", word:"곧",   rom:"got",    gloss:"soon"},
-      {ch:"ㅅ", word:"옷",   rom:"ot",     gloss:"clothes"},
-      {ch:"ㅆ", word:"있다", rom:"it-da",  gloss:"to exist"},
-      {ch:"ㅈ", word:"낮",   rom:"nat",    gloss:"daytime"},
-      {ch:"ㅊ", word:"꽃",   rom:"kkot",   gloss:"flower"},
-      {ch:"ㅌ", word:"밭",   rom:"bat",    gloss:"field"},
-      {ch:"ㅎ", word:"좋다", rom:"joh-da", gloss:"good"},
-    ]},
-    { chars:"ㄹ", sound:"l", exs:[
-      {ch:"ㄹ", word:"말",  rom:"mal",    gloss:"horse / word"},
-      {ch:"ㄹ", word:"물",  rom:"mul",    gloss:"water"},
-      {ch:"ㄹ", word:"일",  rom:"il",     gloss:"work / day"},
-    ]},
-    { chars:"ㅁ", sound:"m", exs:[
-      {ch:"ㅁ", word:"봄",  rom:"bom",    gloss:"spring"},
-      {ch:"ㅁ", word:"이름",rom:"i-reum", gloss:"name"},
-      {ch:"ㅁ", word:"마음",rom:"ma-eum", gloss:"heart"},
-    ]},
-    { chars:"ㅂ ㅍ", sound:"p", exs:[
-      {ch:"ㅂ", word:"밥",  rom:"bap", gloss:"rice"},
-      {ch:"ㅂ", word:"입",  rom:"ip",  gloss:"mouth"},
-      {ch:"ㅍ", word:"앞",  rom:"ap",  gloss:"in front"},
-      {ch:"ㅍ", word:"잎",  rom:"ip",  gloss:"leaf"},
-    ]},
-    { chars:"ㅇ", sound:"ng", exs:[
-      {ch:"ㅇ", word:"강",   rom:"gang",    gloss:"river"},
-      {ch:"ㅇ", word:"방",   rom:"bang",    gloss:"room"},
-      {ch:"ㅇ", word:"사랑", rom:"sa-rang", gloss:"love"},
-    ]},
+    { chars:"ㄱ ㄲ ㅋ", sound:"k", ex:"먹 (meok) — eat" },
+    { chars:"ㄴ",       sound:"n", ex:"산 (san) — mountain" },
+    { chars:"ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ", sound:"t", ex:"옷 (ot) — clothes" },
+    { chars:"ㄹ",       sound:"l", ex:"말 (mal) — horse / word" },
+    { chars:"ㅁ",       sound:"m", ex:"봄 (bom) — spring" },
+    { chars:"ㅂ ㅍ",   sound:"p", ex:"밥 (bap) — rice" },
+    { chars:"ㅇ",       sound:"ng",ex:"강 (gang) — river" },
   ],
 };
 
@@ -412,7 +346,49 @@ const T = {
   },
 };
 
-// SD, animateStrokes, _animTimers, _pLen, numCircle → js/stroke-order.js
+// ── STROKE ORDER DATA ─────────────────────────────────────────
+const SD = {
+  'ㄱ':[{p:[[30,48],[168,48]],n:1},{p:[[168,48],[168,168]],n:2}],
+  'ㄴ':[{p:[[38,42],[38,165]],n:1},{p:[[38,165],[165,165]],n:2}],
+  'ㄷ':[{p:[[30,42],[165,42]],n:1},{p:[[30,42],[30,162]],n:2},{p:[[30,162],[165,162]],n:3}],
+  'ㄹ':[{p:[[30,48],[165,48]],n:1},{p:[[165,48],[165,103]],n:2},{p:[[165,103],[30,103]],n:3},{p:[[30,103],[30,158]],n:4},{p:[[30,158],[165,158]],n:5}],
+  'ㅁ':[{p:[[32,42],[165,42]],n:1},{p:[[32,42],[32,163]],n:2},{p:[[165,42],[165,163]],n:3},{p:[[32,163],[165,163]],n:4}],
+  'ㅂ':[{p:[[40,42],[40,165]],n:1},{p:[[158,42],[158,165]],n:2},{p:[[40,42],[158,42]],n:3},{p:[[40,103],[158,103]],n:4},{p:[[40,165],[158,165]],n:5}],
+  'ㅅ':[{p:[[100,38],[40,168]],n:1},{p:[[100,38],[160,168]],n:2}],
+  'ㅇ':[{circle:true,cx:100,cy:108,r:56,n:1}],
+  'ㅈ':[{p:[[30,68],[168,68]],n:1},{p:[[100,68],[40,168]],n:2},{p:[[100,68],[160,168]],n:3}],
+  'ㅊ':[{p:[[82,30],[118,30]],n:1},{p:[[30,70],[168,70]],n:2},{p:[[100,70],[40,168]],n:3},{p:[[100,70],[160,168]],n:4}],
+  'ㅋ':[{p:[[30,48],[165,48]],n:1},{p:[[30,48],[30,165]],n:2},{p:[[30,106],[130,106]],n:3}],
+  'ㅌ':[{p:[[30,43],[165,43]],n:1},{p:[[30,43],[30,163]],n:2},{p:[[30,103],[165,103]],n:3},{p:[[30,163],[165,163]],n:4}],
+  'ㅍ':[{p:[[42,42],[42,163]],n:1},{p:[[158,42],[158,163]],n:2},{p:[[42,42],[158,42]],n:3},{p:[[42,102],[158,102]],n:4}],
+  'ㅎ':[{p:[[82,28],[118,28]],n:1},{p:[[30,68],[168,68]],n:2},{p:[[100,68],[100,108]],n:3},{circle:true,cx:100,cy:148,r:40,n:4}],
+  'ㄲ':[{p:[[30,48],[168,48]],n:1},{p:[[168,48],[168,168]],n:2}],
+  'ㄸ':[{p:[[30,42],[165,42]],n:1},{p:[[30,42],[30,162]],n:2},{p:[[30,162],[165,162]],n:3}],
+  'ㅃ':[{p:[[40,42],[40,165]],n:1},{p:[[158,42],[158,165]],n:2},{p:[[40,42],[158,42]],n:3},{p:[[40,103],[158,103]],n:4},{p:[[40,165],[158,165]],n:5}],
+  'ㅆ':[{p:[[100,38],[40,168]],n:1},{p:[[100,38],[160,168]],n:2}],
+  'ㅉ':[{p:[[30,68],[168,68]],n:1},{p:[[100,68],[40,168]],n:2},{p:[[100,68],[160,168]],n:3}],
+  'ㅏ':[{p:[[100,30],[100,170]],n:1},{p:[[100,100],[165,100]],n:2}],
+  'ㅐ':[{p:[[80,30],[80,170]],n:1},{p:[[80,100],[140,100]],n:2},{p:[[140,30],[140,170]],n:3}],
+  'ㅑ':[{p:[[100,30],[100,170]],n:1},{p:[[100,77],[165,77]],n:2},{p:[[100,120],[165,120]],n:3}],
+  'ㅒ':[{p:[[70,30],[70,170]],n:1},{p:[[70,77],[125,77]],n:2},{p:[[70,120],[125,120]],n:3},{p:[[125,30],[125,170]],n:4}],
+  'ㅓ':[{p:[[100,30],[100,170]],n:1},{p:[[35,100],[100,100]],n:2}],
+  'ㅔ':[{p:[[120,30],[120,170]],n:1},{p:[[55,100],[120,100]],n:2},{p:[[55,30],[55,170]],n:3}],
+  'ㅕ':[{p:[[100,30],[100,170]],n:1},{p:[[35,77],[100,77]],n:2},{p:[[35,120],[100,120]],n:3}],
+  'ㅖ':[{p:[[120,30],[120,170]],n:1},{p:[[55,77],[120,77]],n:2},{p:[[55,120],[120,120]],n:3},{p:[[55,30],[55,170]],n:4}],
+  'ㅗ':[{p:[[100,100],[100,168]],n:1},{p:[[30,100],[170,100]],n:2}],
+  'ㅛ':[{p:[[73,100],[73,168]],n:1},{p:[[127,100],[127,168]],n:2},{p:[[30,100],[170,100]],n:3}],
+  'ㅜ':[{p:[[100,32],[100,100]],n:1},{p:[[30,100],[170,100]],n:2}],
+  'ㅠ':[{p:[[73,32],[73,100]],n:1},{p:[[127,32],[127,100]],n:2},{p:[[30,100],[170,100]],n:3}],
+  'ㅡ':[{p:[[25,100],[175,100]],n:1}],
+  'ㅣ':[{p:[[100,25],[100,175]],n:1}],
+  'ㅘ':[{p:[[62,100],[62,168]],n:1},{p:[[28,100],[148,100]],n:2},{p:[[135,30],[135,170]],n:3},{p:[[135,100],[170,100]],n:4}],
+  'ㅙ':[{p:[[55,100],[55,168]],n:1},{p:[[25,100],[138,100]],n:2},{p:[[110,30],[110,170]],n:3},{p:[[110,100],[148,100]],n:4},{p:[[148,30],[148,170]],n:5}],
+  'ㅚ':[{p:[[62,100],[62,168]],n:1},{p:[[28,100],[165,100]],n:2},{p:[[155,25],[155,175]],n:3}],
+  'ㅝ':[{p:[[62,32],[62,100]],n:1},{p:[[28,100],[150,100]],n:2},{p:[[137,30],[137,170]],n:3},{p:[[75,100],[137,100]],n:4}],
+  'ㅞ':[{p:[[55,32],[55,100]],n:1},{p:[[25,100],[148,100]],n:2},{p:[[110,30],[110,170]],n:3},{p:[[75,100],[110,100]],n:4},{p:[[148,30],[148,170]],n:5}],
+  'ㅟ':[{p:[[62,32],[62,100]],n:1},{p:[[25,100],[165,100]],n:2},{p:[[150,25],[150,175]],n:3}],
+  'ㅢ':[{p:[[25,100],[175,100]],n:1},{p:[[130,25],[130,175]],n:2}],
+};
 
 // ── FIELD POSITIONS (% of viewport) ──────────────────────────
 // Pre-defined organic positions for each of the 40 characters
@@ -424,15 +400,14 @@ const FIELD_POSITIONS = {
   'ㅍ':[38,52], 'ㅎ':[35,36],
   // Tensed — top centre cluster  (44–63% x, 12–23% y)
   'ㄲ':[44,14], 'ㄸ':[51,12], 'ㅃ':[57,16], 'ㅆ':[63,13], 'ㅉ':[54,23],
-  // Basic vowels (10) — right cluster  (66–83% x, 14–77% y)
-  'ㅏ':[70,16], 'ㅑ':[83,25], 'ㅓ':[68,33], 'ㅕ':[83,52],
-  'ㅗ':[67,52], 'ㅛ':[72,66], 'ㅜ':[82,70], 'ㅠ':[75,74],
-  'ㅡ':[66,72], 'ㅣ':[83,77],
-  // Compound vowels ㅐㅒㅔㅖ — upper right  (77–80% x, 14–62% y)
-  'ㅐ':[80,14], 'ㅒ':[79,36], 'ㅔ':[77,43], 'ㅖ':[79,62],
-  // Compound vowels ㅘㅙㅚㅝㅞㅟㅢ — centre area  (46–65% x, 60–78% y)
-  'ㅘ':[55,60], 'ㅙ':[46,67], 'ㅚ':[63,62], 'ㅝ':[56,68],
-  'ㅞ':[46,74], 'ㅟ':[57,75], 'ㅢ':[65,78],
+  // Basic vowels — right cluster  (68–83% x, 14–82% y)
+  'ㅏ':[70,16], 'ㅐ':[80,14], 'ㅑ':[83,25], 'ㅒ':[79,36],
+  'ㅓ':[68,33], 'ㅔ':[77,43], 'ㅕ':[83,52], 'ㅖ':[79,62],
+  'ㅗ':[67,52], 'ㅛ':[74,65], 'ㅜ':[82,70], 'ㅠ':[76,78],
+  'ㅡ':[67,75], 'ㅣ':[82,80],
+  // Compound vowels — bottom right  (57–82% x, 74–84% y)
+  'ㅘ':[58,76], 'ㅙ':[66,82], 'ㅚ':[74,84], 'ㅝ':[82,82],
+  'ㅞ':[61,84], 'ㅟ':[70,78], 'ㅢ':[80,74],
 };
 
 // ── STATE ─────────────────────────────────────────────────────
@@ -450,12 +425,10 @@ let wDrawing = false, wLastX = 0, wLastY = 0;
 // ── AUDIO ─────────────────────────────────────────────────────
 function speakKo(text) {
   if (!('speechSynthesis' in window) || !text) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR';
   speechSynthesis.cancel();
-  setTimeout(() => {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ko-KR';
-    speechSynthesis.speak(u);
-  }, 80);
+  speechSynthesis.speak(u);
 }
 
 // ── BACKGROUND PARTICLE FIELD ─────────────────────────────────
@@ -586,14 +559,9 @@ function openVortex(item) {
   buildVortexNodes(item);
   buildEchoPanel(item);
   activateEcho(item);
-  animateStrokes(item.char, 'mrsVStroke');
 }
 
 function closeVortex() {
-  _animTimers.forEach(clearTimeout);
-  _animTimers = [];
-  const vs = document.getElementById('mrsVStroke');
-  if (vs) vs.innerHTML = '';
   const vortex = document.getElementById('mrsVortex');
   vortex.classList.remove('open');
   // Remove type class so it doesn't linger
@@ -620,7 +588,7 @@ function buildVortexNodes(item) {
 
   // Example syllables node (top-right)
   if (exs.length) {
-    const sylsHtml = exs.map(e => `<span class="mrs-v-node-syl" data-speak="${e.syl}" role="button" tabindex="0">${e.syl}</span><span class="mrs-v-node-rom">${e.rom}</span>`).join('&nbsp;&nbsp;');
+    const sylsHtml = exs.map(e => `<span class="mrs-v-node-syl">${e.syl}</span><span class="mrs-v-node-rom">${e.rom}</span>`).join('&nbsp;&nbsp;');
     defs.push({ angle: 55, delay: 0.05, title: t.nodeExamples, body: sylsHtml });
   }
 
@@ -634,10 +602,7 @@ function buildVortexNodes(item) {
   if (item.type === 'cons' || item.type === 'tensed') {
     const brow = BATCHIM_ROWS[lang].find(r => r.chars.includes(item.char));
     if (brow) {
-      const exHtml = brow.exs.map(e =>
-        `<span style="opacity:.6">${e.ch}:</span> <strong>${e.word}</strong> <span style="opacity:.7">(${e.rom})</span> ${e.gloss}`
-      ).join('<br>');
-      defs.push({ angle: 290, delay: 0.15, title: t.nodeBatchim, body: `${brow.chars} → <strong>${brow.sound}</strong><br><small style="display:block;margin-top:4px;line-height:1.65">${exHtml}</small>` });
+      defs.push({ angle: 290, delay: 0.15, title: t.nodeBatchim, body: `${brow.chars} → <strong>${brow.sound}</strong><br><small>${brow.ex}</small>` });
     }
   }
 
@@ -645,37 +610,9 @@ function buildVortexNodes(item) {
   if (item.type === 'vowel') {
     const bright = ['ㅏ','ㅗ','ㅑ','ㅛ','ㅘ','ㅙ'];
     const isB = bright.includes(item.char);
-    const harmonyRo = isB
-      ? `<div style="font-size:11px;line-height:1.7;margin-top:5px">
-          <span style="color:#F472B6">☀ Pozitive (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
-          → verb + <strong>-아요</strong>: 가다→가요, 오다→와요
-          <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
-          <span style="opacity:.55">● Negative (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
-          → verb + <strong>-어요</strong>: 먹다→먹어요
-        </div>`
-      : `<div style="font-size:11px;line-height:1.7;margin-top:5px">
-          <span style="color:#818CF8">● Negative (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
-          → verb + <strong>-어요</strong>: 먹다→먹어요, 쓰다→써요
-          <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
-          <span style="opacity:.55">☀ Pozitive (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
-          → verb + <strong>-아요</strong>: 가다→가요
-        </div>`;
-    const harmonyEn = isB
-      ? `<div style="font-size:11px;line-height:1.7;margin-top:5px">
-          <span style="color:#F472B6">☀ Bright (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
-          → verb + <strong>-아요</strong>: 가다→가요, 오다→와요
-          <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
-          <span style="opacity:.55">● Dark (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
-          → verb + <strong>-어요</strong>: 먹다→먹어요
-        </div>`
-      : `<div style="font-size:11px;line-height:1.7;margin-top:5px">
-          <span style="color:#818CF8">● Dark (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
-          → verb + <strong>-어요</strong>: 먹다→먹어요, 쓰다→써요
-          <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
-          <span style="opacity:.55">☀ Bright (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
-          → verb + <strong>-아요</strong>: 가다→가요
-        </div>`;
-    const harmony = lang === 'ro' ? harmonyRo : harmonyEn;
+    const harmony = lang === 'ro'
+      ? (isB ? 'Vocalǎ <strong>pozitivǎ</strong> — folosește terminații cu ㅏ' : 'Vocalǎ <strong>negativǎ</strong> — folosește terminații cu ㅓ')
+      : (isB ? '<strong>Bright</strong> vowel — use ㅏ verb endings' : '<strong>Dark</strong> vowel — use ㅓ verb endings');
     defs.push({ angle: 310, delay: 0.15, title: t.nodeHarmony, body: harmony });
   }
 
@@ -699,12 +636,6 @@ function buildVortexNodes(item) {
     node.innerHTML = `
       <div class="mrs-v-node-title">${d.title}</div>
       ${d.body}`;
-    node.querySelectorAll('[data-speak]').forEach(span => {
-      span.addEventListener('click', e => {
-        e.stopPropagation();
-        speakKo(span.dataset.speak);
-      });
-    });
     container.appendChild(node);
   });
 }
@@ -897,8 +828,6 @@ function buildSylPanel() {
   });
 }
 
-// animateStrokes → js/stroke-order.js
-
 // ── WRITING RITUAL ────────────────────────────────────────────
 function renderStrokes(char) {
   const svg    = document.getElementById('mWriteArrows');
@@ -937,7 +866,12 @@ function renderStrokes(char) {
   });
   svg.innerHTML = h;
 }
-// numCircle → js/stroke-order.js
+function numCircle(cx, cy, n, badge) {
+  const col = badge || '#3730A3';
+  return `<circle cx="${cx}" cy="${cy}" r="10" fill="${col}" opacity=".88"/>
+  <text x="${cx}" y="${cy+4}" text-anchor="middle" fill="white" font-size="11"
+    font-weight="bold" font-family="sans-serif">${n}</text>`;
+}
 function clearBoard() {
   const c = document.getElementById('wCanvas');
   if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
@@ -977,7 +911,7 @@ function openWriting(item) {
   document.getElementById('mrsWriteRom').textContent  = item.rom;
   document.getElementById('mrsWriteGuide').textContent= item.char;
   document.getElementById('mrsWriteHint').textContent = T[lang].writeHint;
-  animateStrokes(item.char);
+  renderStrokes(item.char);
   clearBoard();
   initBoard();
   document.getElementById('mrsWriteOverlay').classList.add('open');
@@ -1018,7 +952,6 @@ function init() {
 
   // Vortex events
   el('mrsVClose').onclick = closeVortex;
-  el('mrsVGlyph').onclick = () => currentItem && speakKo(currentItem.speak);
   el('mrsVWrite').onclick = () => {
     if (!currentItem) return;
     window.location.href = `./writing.html?char=${encodeURIComponent(currentItem.char)}`;
@@ -1047,19 +980,9 @@ function init() {
   });
 
   // Night mode toggle (only persistent button)
-  const SVG_SUN  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.78" y2="4.22"/></svg>`;
-  const SVG_MOON = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-  function syncThemeBtn(isDark) {
-    const btn = el('mrsThemeBtn');
-    btn.innerHTML = isDark ? SVG_MOON : SVG_SUN;
-    btn.style.background = isDark ? 'rgba(28,4,50,.95)' : 'rgba(255,255,255,.92)';
-    btn.style.color      = isDark ? '#f5f5f7' : '#374151';
-  }
-  syncThemeBtn(document.body.classList.contains('dark-mode'));
   el('mrsThemeBtn').onclick = () => {
     const isDark = document.body.classList.toggle('dark-mode');
     localStorage.setItem('RK_THEME', isDark ? 'dark' : 'light');
-    syncThemeBtn(isDark);
   };
 
   // Keyboard navigation
@@ -1074,19 +997,22 @@ function init() {
   });
 
   // Initialize language from existing lang-picker if available
-  // Single language toggle button — tap to cycle ro ↔ en
-  lang = localStorage.getItem('RK_LANG') || 'ro';
-  const btnLang = document.getElementById('btnLang');
-  function setLang(l) {
-    lang = l;
-    localStorage.setItem('RK_LANG', l);
-    if (btnLang) btnLang.textContent = l;
-    applyLang();
-  }
-  if (btnLang) {
-    btnLang.textContent = lang;
-    btnLang.addEventListener('click', () => setLang(lang === 'ro' ? 'en' : 'ro'));
-  }
+  try {
+    if (typeof RKLang !== 'undefined') {
+      lang = RKLang.get() || 'ro';
+      RKLang.init(newLang => { lang = newLang; applyLang(); });
+      const pc = document.getElementById('pageControls');
+      const homeBtn = pc && pc.querySelector('.homeBtn');
+      if (pc && homeBtn) {
+        const wb = document.createElement('a');
+        wb.href = './writing.html';
+        wb.className = 'homeBtn';
+        wb.title = 'Practică Scrisul';
+        wb.textContent = '✍';
+        pc.insertBefore(wb, homeBtn.nextSibling);
+      }
+    }
+  } catch(e) {}
 
   applyLang();
 
