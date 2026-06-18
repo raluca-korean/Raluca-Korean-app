@@ -1001,6 +1001,16 @@ function init() {
     if (typeof RKLang !== 'undefined') {
       lang = RKLang.get() || 'ro';
       RKLang.init(newLang => { lang = newLang; applyLang(); });
+      const pc = document.getElementById('pageControls');
+      const homeBtn = pc && pc.querySelector('.homeBtn');
+      if (pc && homeBtn) {
+        const wb = document.createElement('a');
+        wb.href = './writing.html';
+        wb.className = 'homeBtn';
+        wb.title = 'Practică Scrisul';
+        wb.textContent = '✍';
+        pc.insertBefore(wb, homeBtn.nextSibling);
+      }
     }
   } catch(e) {}
 
