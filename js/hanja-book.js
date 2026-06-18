@@ -998,6 +998,206 @@ const DATA = [
       {ko:"사명", sentence:"교사로서 사명감을 느껴요.", sentence_ro:"Simt un sentiment de misiune ca profesor.", sentence_en:"I feel a sense of mission as a teacher.", ro:"misiune",en:"mission / calling"},
       {ko:"수명", sentence:"이 기계의 수명이 다 됐어요.", sentence_ro:"Durata de viață a acestei mașini s-a terminat.", sentence_en:"This machine's lifespan has run out.", ro:"durată de viață",en:"lifespan"}
     ]
+  },
+  {
+    hanja:"上", ko_reading:"상", reading:{ro:"상 (sang)",en:"상 (sang)"}, meaning:{ro:"sus / deasupra",en:"above / up"},
+    etymology:{ro:"O linie orizontală de bază cu o linie scurtă deasupra ei — gestul de a indica ceva care se află mai sus, direcția ascendentă.",en:"A horizontal base line with a short stroke above it — the gesture of pointing to something above, the upward direction."},
+    words:[
+      {ko:"상승", sentence:"기온이 갑자기 상승했어요.", sentence_ro:"Temperatura a crescut brusc.", sentence_en:"The temperature rose suddenly.", ro:"creștere / ascensiune",en:"rise / ascent"},
+      {ko:"이상", sentence:"18세 이상만 입장할 수 있어요.", sentence_ro:"Pot intra doar persoanele de 18 ani sau mai mult.", sentence_en:"Only those 18 and above can enter.", ro:"și peste / mai mult de",en:"above / or more"},
+      {ko:"향상", sentence:"실력이 많이 향상되었어요.", sentence_ro:"Abilitățile s-au îmbunătățit mult.", sentence_en:"My skills have improved a lot.", ro:"îmbunătățire",en:"improvement"},
+      {ko:"상위", sentence:"성적이 상위 10%에 들었어요.", sentence_ro:"Notele mele se încadrează în top 10%.", sentence_en:"My grades are in the top 10%.", ro:"rang superior",en:"top rank / upper level"}
+    ]
+  },
+  {
+    hanja:"下", ko_reading:"하", reading:{ro:"하 (ha)",en:"하 (ha)"}, meaning:{ro:"jos / sub",en:"below / down"},
+    etymology:{ro:"O linie orizontală de bază cu o linie scurtă dedesubt — opusul lui 上, indicând direcția descendentă sau ceea ce se află sub altceva.",en:"A horizontal base line with a short stroke below it — the opposite of 上, indicating the downward direction or what lies beneath something."},
+    words:[
+      {ko:"이하", sentence:"10세 이하 어린이는 무료예요.", sentence_ro:"Copiii sub 10 ani intră gratuit.", sentence_en:"Children under 10 years old are free.", ro:"sub / mai puțin de",en:"below / under"},
+      {ko:"지하", sentence:"지하 주차장에 차를 세웠어요.", sentence_ro:"Am parcat mașina în parcarea subterană.", sentence_en:"I parked the car in the underground parking lot.", ro:"subteran",en:"underground"},
+      {ko:"하강", sentence:"비행기가 하강하기 시작했어요.", sentence_ro:"Avionul a început să coboare.", sentence_en:"The plane began to descend.", ro:"coborâre / descindere",en:"descent / decrease"},
+      {ko:"하락", sentence:"주가가 크게 하락했어요.", sentence_ro:"Prețul acțiunilor a scăzut brusc.", sentence_en:"Stock prices fell sharply.", ro:"scădere / cădere",en:"drop / fall"}
+    ]
+  },
+  {
+    hanja:"入", ko_reading:"입", reading:{ro:"입 (ip)",en:"입 (ip)"}, meaning:{ro:"a intra / intrare",en:"to enter / entry"},
+    etymology:{ro:"Două linii care se unesc în vârf — imaginea unui lucru care intră într-o formă triunghiulară, ca o săgeată sau un curent de apă care se varsă.",en:"Two lines meeting at a point at the top — the image of something entering in a triangular form, like an arrow or a stream of water flowing in."},
+    words:[
+      {ko:"입구", sentence:"박물관 입구에서 표를 사세요.", sentence_ro:"Cumpărați bilete la intrarea muzeului.", sentence_en:"Buy tickets at the museum entrance.", ro:"intrare",en:"entrance"},
+      {ko:"입학", sentence:"올해 봄에 대학교에 입학했어요.", sentence_ro:"Am intrat la universitate în primăvara acestui an.", sentence_en:"I enrolled in university this spring.", ro:"înmatriculare",en:"school enrollment"},
+      {ko:"수입", sentence:"수입 자동차가 인기가 많아요.", sentence_ro:"Mașinile importate sunt foarte populare.", sentence_en:"Imported cars are very popular.", ro:"import / venit",en:"import / income"},
+      {ko:"입장", sentence:"공연장 입장 시간이 되었어요.", sentence_ro:"A venit ora intrării în sala de spectacole.", sentence_en:"It's time to enter the performance hall.", ro:"intrare / poziție",en:"admission / stance"}
+    ]
+  },
+  {
+    hanja:"出", ko_reading:"출", reading:{ro:"출 (chul)",en:"출 (chul)"}, meaning:{ro:"a ieși / ieșire",en:"to exit / to go out"},
+    etymology:{ro:"O plantă (屮) deasupra altei plante (屮) — imaginea unui lăstar care iese din pământ, germinând. Sensul de bază este de a ieși sau a apărea.",en:"A sprout (屮) above another sprout (屮) — the image of a seedling pushing up out of the ground, germinating. The core meaning is to exit or to emerge."},
+    words:[
+      {ko:"출구", sentence:"비상구 출구를 항상 확인하세요.", sentence_ro:"Verificați întotdeauna ieșirea de urgență.", sentence_en:"Always check the emergency exit.", ro:"ieșire",en:"exit"},
+      {ko:"출발", sentence:"기차가 정시에 출발했어요.", sentence_ro:"Trenul a plecat la timp.", sentence_en:"The train departed on time.", ro:"plecare",en:"departure"},
+      {ko:"수출", sentence:"한국은 자동차를 많이 수출해요.", sentence_ro:"Coreea exportă multe mașini.", sentence_en:"Korea exports a lot of cars.", ro:"export",en:"export"},
+      {ko:"외출", sentence:"오늘은 외출하기 싫어요.", sentence_ro:"Astăzi nu am chef să ies afară.", sentence_en:"I don't feel like going out today.", ro:"ieșire din casă",en:"going out"}
+    ]
+  },
+  {
+    hanja:"感", ko_reading:"감", reading:{ro:"감 (gam)",en:"감 (gam)"}, meaning:{ro:"simțire / emoție",en:"feeling / sense / emotion"},
+    etymology:{ro:"Inimă (心) + toate (咸) — inima care rezonează cu toate lucrurile din jur. Când ceva ne atinge inima complet, simțim o emoție.",en:"Heart (心) + all / together (咸) — the heart resonating with everything around it. When something touches the heart completely, we feel an emotion."},
+    words:[
+      {ko:"감사", sentence:"도와주셔서 정말 감사해요.", sentence_ro:"Vă mulțumesc mult pentru ajutor.", sentence_en:"Thank you so much for your help.", ro:"mulțumire / recunoștință",en:"gratitude / thank you"},
+      {ko:"감동", sentence:"그 영화를 보고 정말 감동을 받았어요.", sentence_ro:"M-a emoționat cu adevărat acel film.", sentence_en:"I was really moved by that movie.", ro:"emoție profundă",en:"being deeply moved"},
+      {ko:"감정", sentence:"감정을 솔직하게 표현하세요.", sentence_ro:"Exprimați-vă sincer emoțiile.", sentence_en:"Express your feelings honestly.", ro:"emoție / sentiment",en:"emotion / feeling"},
+      {ko:"감기", sentence:"감기에 걸려서 병원에 갔어요.", sentence_ro:"Am răcit și am mers la doctor.", sentence_en:"I caught a cold and went to the doctor.", ro:"răceală / gripă",en:"cold / flu"}
+    ]
+  },
+  {
+    hanja:"安", ko_reading:"안", reading:{ro:"an (an)",en:"안 (an)"}, meaning:{ro:"sigur / liniștit",en:"safe / peaceful"},
+    etymology:{ro:"O femeie (女) sub un acoperiș (宀) — imaginea unei femei adăpostite în casă, în siguranță. Acoperișul oferă protecție și pace.",en:"A woman (女) under a roof (宀) — the image of a woman sheltered safely inside the house. The roof provides protection and peace."},
+    words:[
+      {ko:"안전", sentence:"교통 안전 규칙을 잘 지켜야 해요.", sentence_ro:"Trebuie să respectați bine regulile de siguranță rutieră.", sentence_en:"You must follow traffic safety rules carefully.", ro:"siguranță",en:"safety"},
+      {ko:"안정", sentence:"마음이 안정되면 결정하세요.", sentence_ro:"Luați decizia când vă liniștești.", sentence_en:"Make the decision when your mind is calm.", ro:"stabilitate",en:"stability / calm"},
+      {ko:"불안", sentence:"시험 전날 밤은 항상 불안해요.", sentence_ro:"Sunt mereu anxios în noaptea dinaintea examenului.", sentence_en:"I'm always anxious the night before an exam.", ro:"anxietate / neliniște",en:"anxiety / unease"},
+      {ko:"평안", sentence:"마음의 평안을 찾고 싶어요.", sentence_ro:"Vreau să găsesc liniștea sufletului.", sentence_en:"I want to find peace of mind.", ro:"pace / serenitate",en:"peace / serenity"}
+    ]
+  },
+  {
+    hanja:"平", ko_reading:"평", reading:{ro:"평 (pyeong)",en:"평 (pyeong)"}, meaning:{ro:"plan / pașnic",en:"flat / peaceful / equal"},
+    etymology:{ro:"Inițial o balanță sau o suprafață dreaptă de apă — nivelul apei este cel mai drept lucru din natură. Simbolizează echilibrul și pacea.",en:"Originally a balance scale or a calm flat water surface — a still water level is the straightest thing in nature. It symbolizes balance and peace."},
+    words:[
+      {ko:"평화", sentence:"세계 평화를 위해 노력해야 해요.", sentence_ro:"Trebuie să luptăm pentru pacea mondială.", sentence_en:"We must strive for world peace.", ro:"pace",en:"peace"},
+      {ko:"평균", sentence:"반 평균 점수는 80점이에요.", sentence_ro:"Scorul mediu al clasei este 80 de puncte.", sentence_en:"The class average score is 80 points.", ro:"medie",en:"average"},
+      {ko:"평일", sentence:"평일에는 회사에 일찍 가요.", sentence_ro:"Mergem devreme la serviciu în zilele lucrătoare.", sentence_en:"I go to work early on weekdays.", ro:"zi lucrătoare",en:"weekday"},
+      {ko:"공평", sentence:"모든 사람을 공평하게 대해야 해요.", sentence_ro:"Trebuie să tratăm pe toată lumea în mod egal.", sentence_en:"We should treat everyone equally.", ro:"corectitudine / egalitate",en:"fairness / equality"}
+    ]
+  },
+  {
+    hanja:"成", ko_reading:"성", reading:{ro:"성 (seong)",en:"성 (seong)"}, meaning:{ro:"a reuși / a forma",en:"to succeed / to form"},
+    etymology:{ro:"O secure sau unealtă (戊) + gură (口) — a cioplit și a modelat cu intenție până la finalizare. Sensul de bază este finalizarea și împlinirea unui scop.",en:"An axe or tool (戊) + mouth (口) — chiseling and shaping with intent until completion. The core meaning is finishing and fulfilling a purpose."},
+    words:[
+      {ko:"성공", sentence:"열심히 노력하면 성공할 수 있어요.", sentence_ro:"Dacă muncești din greu, poți reuși.", sentence_en:"If you work hard, you can succeed.", ro:"succes",en:"success"},
+      {ko:"성장", sentence:"아이들의 성장을 지켜보는 게 행복해요.", sentence_ro:"Este o fericire să privești creșterea copiilor.", sentence_en:"It's happiness to watch children grow.", ro:"creștere / dezvoltare",en:"growth / development"},
+      {ko:"완성", sentence:"드디어 프로젝트를 완성했어요.", sentence_ro:"În sfârșit am finalizat proiectul.", sentence_en:"I finally completed the project.", ro:"finalizare",en:"completion"},
+      {ko:"형성", sentence:"어릴 때 좋은 습관을 형성해야 해요.", sentence_ro:"Trebuie să formezi obiceiuri bune în copilărie.", sentence_en:"You should form good habits when young.", ro:"formare",en:"formation"}
+    ]
+  },
+  {
+    hanja:"行", ko_reading:"행", reading:{ro:"행 (haeng)",en:"행 (haeng)"}, meaning:{ro:"a merge / conduită",en:"to go / conduct / row"},
+    etymology:{ro:"O intersecție de drum cu direcții în toate sensurile — o persoană se deplasează pe o cale. Sensul de bază este mersul și, prin extensie, orice acțiune sau conduită.",en:"A crossroads with directions going all ways — a person moving along a path. The core meaning is walking and, by extension, any action or conduct."},
+    words:[
+      {ko:"여행", sentence:"방학 동안 제주도로 여행을 갔어요.", sentence_ro:"În vacanță am călătorit în insula Jeju.", sentence_en:"I traveled to Jeju Island during the vacation.", ro:"călătorie",en:"travel / trip"},
+      {ko:"행동", sentence:"말보다 행동이 더 중요해요.", sentence_ro:"Acțiunile contează mai mult decât vorbele.", sentence_en:"Actions speak louder than words.", ro:"acțiune / comportament",en:"action / behavior"},
+      {ko:"은행", sentence:"은행에서 돈을 환전했어요.", sentence_ro:"Am schimbat bani la bancă.", sentence_en:"I exchanged money at the bank.", ro:"bancă",en:"bank"},
+      {ko:"실행", sentence:"계획을 바로 실행에 옮기세요.", sentence_ro:"Puneți planul în aplicare imediat.", sentence_en:"Put the plan into action right away.", ro:"executare / implementare",en:"execution / implementation"}
+    ]
+  },
+  {
+    hanja:"法", ko_reading:"법", reading:{ro:"법 (beop)",en:"법 (beop)"}, meaning:{ro:"lege / metodă",en:"law / method"},
+    etymology:{ro:"Apă (氵) + a dispărea (去) — nivelul apei era folosit în antichitate ca standard de dreptate și măsură. Legea este standardul imparțial, ca apa care se nivelează mereu.",en:"Water (氵) + to go away (去) — water level was used in antiquity as a standard of justice and measure. Law is the impartial standard, like water that always finds its level."},
+    words:[
+      {ko:"방법", sentence:"더 좋은 방법이 없을까요?", sentence_ro:"Nu există o metodă mai bună?", sentence_en:"Is there a better method?", ro:"metodă",en:"method / way"},
+      {ko:"법률", sentence:"법률을 어기면 처벌을 받아요.", sentence_ro:"Dacă încalci legea, vei fi pedepsit.", sentence_en:"If you break the law, you will be punished.", ro:"lege / legislație",en:"law / legislation"},
+      {ko:"합법", sentence:"이 계약은 합법적으로 체결됐어요.", sentence_ro:"Acest contract a fost încheiat în mod legal.", sentence_en:"This contract was signed legally.", ro:"legal",en:"legal"},
+      {ko:"문법", sentence:"한국어 문법이 어렵지만 재미있어요.", sentence_ro:"Gramatica coreeană este dificilă dar interesantă.", sentence_en:"Korean grammar is difficult but interesting.", ro:"gramatică",en:"grammar"}
+    ]
+  },
+  {
+    hanja:"少", ko_reading:"소", reading:{ro:"소 (so)",en:"소 (so)"}, meaning:{ro:"puțin / tânăr",en:"few / little / young"},
+    etymology:{ro:"Patru puncte mici — imaginea unui lucru împărțit în bucăți tot mai mici. Simbolizează cantitatea redusă și, prin extensie, tinerețea (puțin în vârstă).",en:"Four small dots — the image of something divided into smaller and smaller pieces. It symbolizes a reduced quantity and, by extension, youth (few in years)."},
+    words:[
+      {ko:"소년", sentence:"그 소년은 아주 영리해요.", sentence_ro:"Acel băiat este foarte inteligent.", sentence_en:"That boy is very clever.", ro:"băiat / tânăr",en:"boy / youth"},
+      {ko:"청소년", sentence:"청소년들을 위한 프로그램이 많아요.", sentence_ro:"Există multe programe pentru tineri.", sentence_en:"There are many programs for teenagers.", ro:"adolescent / tânăr",en:"teenager / youth"},
+      {ko:"최소", sentence:"최소 30분은 운동해야 해요.", sentence_ro:"Trebuie să faceți mișcare cel puțin 30 de minute.", sentence_en:"You need to exercise at least 30 minutes.", ro:"minim / cel puțin",en:"minimum / at least"},
+      {ko:"소수", sentence:"이 의견에 동의하는 사람은 소수예요.", sentence_ro:"Puțini oameni sunt de acord cu această opinie.", sentence_en:"Only a few people agree with this opinion.", ro:"minoritate / puțini",en:"minority / few"}
+    ]
+  },
+  {
+    hanja:"有", ko_reading:"유", reading:{ro:"유 (yu)",en:"유 (yu)"}, meaning:{ro:"a avea / a exista",en:"to have / to exist"},
+    etymology:{ro:"O mână (又) care ține carne (月/肉) — a ține ceva în mână înseamnă a-l poseda. Sensul de bază este posesia și existența unui lucru.",en:"A hand (又) holding meat (月/肉) — holding something in the hand means possessing it. The core meaning is ownership and the existence of something."},
+    words:[
+      {ko:"유명", sentence:"그 가수는 전 세계적으로 유명해요.", sentence_ro:"Acel cântăreț este faimos în întreaga lume.", sentence_en:"That singer is famous all over the world.", ro:"faimos / renumit",en:"famous"},
+      {ko:"유용", sentence:"이 앱은 정말 유용해요.", sentence_ro:"Această aplicație este cu adevărat utilă.", sentence_en:"This app is really useful.", ro:"util",en:"useful"},
+      {ko:"보유", sentence:"그 팀은 우수한 선수를 많이 보유하고 있어요.", sentence_ro:"Acea echipă are mulți jucători excelenți.", sentence_en:"That team has many excellent players.", ro:"a deține / posesie",en:"to possess / to hold"},
+      {ko:"유리", sentence:"이 조건은 우리에게 유리해요.", sentence_ro:"Această condiție este avantajoasă pentru noi.", sentence_en:"This condition is advantageous for us.", ro:"avantajos",en:"advantageous / favorable"}
+    ]
+  },
+  {
+    hanja:"無", ko_reading:"무", reading:{ro:"무 (mu)",en:"무 (mu)"}, meaning:{ro:"fără / inexistență",en:"without / non-existence"},
+    etymology:{ro:"O persoană dansând cu ornamente de iarbă — dans ritual în antichitate simboliza rugăciunea pentru ceea ce lipsea (ploaie, recoltă). Sensul a evoluat spre 'a nu exista, a lipsi'.",en:"A person dancing with grass ornaments — ritual dance in antiquity symbolized prayer for what was lacking (rain, harvest). The meaning evolved to 'not exist, to lack.'"},
+    words:[
+      {ko:"무료", sentence:"이 서비스는 완전히 무료예요.", sentence_ro:"Acest serviciu este complet gratuit.", sentence_en:"This service is completely free.", ro:"gratuit",en:"free (of charge)"},
+      {ko:"무한", sentence:"우주는 무한히 넓어요.", sentence_ro:"Universul este infinit de vast.", sentence_en:"The universe is infinitely vast.", ro:"infinit / nelimitat",en:"infinite / unlimited"},
+      {ko:"무시", sentence:"남의 의견을 무시하면 안 돼요.", sentence_ro:"Nu trebuie să ignori opiniile altora.", sentence_en:"You shouldn't ignore others' opinions.", ro:"a ignora / a neglija",en:"to ignore / to disregard"},
+      {ko:"무관심", sentence:"환경 문제에 무관심하면 안 돼요.", sentence_ro:"Nu trebuie să fii indiferent față de problemele de mediu.", sentence_en:"You shouldn't be indifferent to environmental issues.", ro:"indiferență",en:"indifference"}
+    ]
+  },
+  {
+    hanja:"知", ko_reading:"지", reading:{ro:"지 (ji)",en:"지 (ji)"}, meaning:{ro:"a cunoaște / cunoaștere",en:"to know / knowledge"},
+    etymology:{ro:"Săgeată (矢) + gură (口) — cuvintele care țintesc direct și precis, ca o săgeată. A cunoaște înseamnă a putea exprima adevărul cu precizie.",en:"Arrow (矢) + mouth (口) — words that aim directly and precisely, like an arrow. To know is to be able to express the truth with precision."},
+    words:[
+      {ko:"지식", sentence:"다양한 지식을 쌓는 것이 중요해요.", sentence_ro:"Este important să acumulezi cunoștințe diverse.", sentence_en:"It's important to accumulate various knowledge.", ro:"cunoaștere / cunoștințe",en:"knowledge"},
+      {ko:"인지", sentence:"문제를 인지하는 것이 해결의 첫걸음이에요.", sentence_ro:"Recunoașterea problemei este primul pas spre rezolvare.", sentence_en:"Recognizing the problem is the first step to solving it.", ro:"recunoaștere / conștientizare",en:"recognition / awareness"},
+      {ko:"지혜", sentence:"경험에서 지혜를 얻을 수 있어요.", sentence_ro:"Din experiență poți dobândi înțelepciune.", sentence_en:"You can gain wisdom from experience.", ro:"înțelepciune",en:"wisdom"},
+      {ko:"통지", sentence:"합격 통지를 받았어요.", sentence_ro:"Am primit notificarea de admitere.", sentence_en:"I received the acceptance notification.", ro:"notificare / anunț",en:"notification / notice"}
+    ]
+  },
+  {
+    hanja:"光", ko_reading:"광", reading:{ro:"광 (gwang)",en:"광 (gwang)"}, meaning:{ro:"lumină / strălucire",en:"light / shine"},
+    etymology:{ro:"O persoană îngenuncheată (兀) cu foc (火) deasupra capului — un purtător de torță, sursa luminii. Sensul de bază este lumina și strălucirea.",en:"A kneeling person (兀) with fire (火) above the head — a torchbearer, the source of light. The core meaning is light and radiance."},
+    words:[
+      {ko:"관광", sentence:"제주도로 관광을 가고 싶어요.", sentence_ro:"Vreau să merg în excursie turistică în insula Jeju.", sentence_en:"I want to go sightseeing in Jeju Island.", ro:"turism",en:"tourism / sightseeing"},
+      {ko:"광선", sentence:"자외선 광선이 피부에 해로울 수 있어요.", sentence_ro:"Razele ultraviolete pot fi dăunătoare pielii.", sentence_en:"Ultraviolet rays can be harmful to the skin.", ro:"rază de lumină",en:"ray of light"},
+      {ko:"영광", sentence:"상을 받는 것은 영광이에요.", sentence_ro:"Este o onoare să primești un premiu.", sentence_en:"It is an honor to receive an award.", ro:"glorie / onoare",en:"glory / honor"},
+      {ko:"빛", sentence:"촛불의 빛이 아름다워요.", sentence_ro:"Lumina lumânării este frumoasă.", sentence_en:"The candlelight is beautiful.", ro:"lumină",en:"light"}
+    ]
+  },
+  {
+    hanja:"化", ko_reading:"화", reading:{ro:"화 (hwa)",en:"화 (hwa)"}, meaning:{ro:"transformare / schimbare",en:"change / transform"},
+    etymology:{ro:"O persoană dreaptă (人) lângă una întoarsă (匕) — imaginea vieții și a morții, a transformării dintr-o stare în alta. Schimbarea este esența acestui caracter.",en:"An upright person (人) next to an inverted one (匕) — the image of life and death, of transformation from one state to another. Change is the essence of this character."},
+    words:[
+      {ko:"변화", sentence:"계절의 변화가 아름다워요.", sentence_ro:"Schimbarea anotimpurilor este frumoasă.", sentence_en:"The change of seasons is beautiful.", ro:"schimbare",en:"change"},
+      {ko:"화학", sentence:"화학 시간에 실험을 해요.", sentence_ro:"Facem experimente la ora de chimie.", sentence_en:"We do experiments in chemistry class.", ro:"chimie",en:"chemistry"},
+      {ko:"진화", sentence:"생물은 오랜 시간 동안 진화해요.", sentence_ro:"Organismele evoluează de-a lungul unui timp îndelungat.", sentence_en:"Living things evolve over a long time.", ro:"evoluție",en:"evolution"},
+      {ko:"소화", sentence:"식사 후 소화가 잘 안 돼요.", sentence_ro:"Digestia nu merge bine după masă.", sentence_en:"I don't digest well after meals.", ro:"digestie",en:"digestion"}
+    ]
+  },
+  {
+    hanja:"和", ko_reading:"화", reading:{ro:"화 (hwa)",en:"화 (hwa)"}, meaning:{ro:"armonie / pace",en:"harmony / peace"},
+    etymology:{ro:"Grâu / gură de flaut (禾) + gură (口) — sunetele care se armonizează, ca mai mulți oameni cântând împreună. Simbolizează armonia și înțelegerea.",en:"Grain / flute mouth (禾) + mouth (口) — sounds harmonizing together, like many people singing in unison. It symbolizes harmony and mutual understanding."},
+    words:[
+      {ko:"평화", sentence:"전쟁 없는 평화로운 세상을 원해요.", sentence_ro:"Dorim o lume pașnică fără război.", sentence_en:"We want a peaceful world without war.", ro:"pace",en:"peace"},
+      {ko:"조화", sentence:"자연과 조화롭게 사는 것이 중요해요.", sentence_ro:"Este important să trăim în armonie cu natura.", sentence_en:"It's important to live in harmony with nature.", ro:"armonie",en:"harmony"},
+      {ko:"화합", sentence:"팀의 화합이 성공의 비결이에요.", sentence_ro:"Unitatea echipei este secretul succesului.", sentence_en:"Team unity is the secret to success.", ro:"unitate / coeziune",en:"unity / cohesion"},
+      {ko:"온화", sentence:"그분은 온화한 성격을 가지고 있어요.", sentence_ro:"Acea persoană are un caracter blând.", sentence_en:"That person has a gentle character.", ro:"blând / bland",en:"gentle / mild"}
+    ]
+  },
+  {
+    hanja:"情", ko_reading:"정", reading:{ro:"정 (jeong)",en:"정 (jeong)"}, meaning:{ro:"emoție / sentiment",en:"emotion / feeling / affection"},
+    etymology:{ro:"Inimă (忄) + verde / albastru (青) — verdele este culoarea vieții și a vitalității, iar inima vie este sediul sentimentelor. Combinate, înseamnă sentimentul autentic, viu.",en:"Heart (忄) + blue-green (青) — blue-green is the color of life and vitality, and the living heart is the seat of feelings. Combined, they mean authentic, living emotion."},
+    words:[
+      {ko:"감정", sentence:"자신의 감정을 잘 조절해야 해요.", sentence_ro:"Trebuie să îți controlezi bine emoțiile.", sentence_en:"You need to control your emotions well.", ro:"emoție",en:"emotion"},
+      {ko:"우정", sentence:"진정한 우정은 평생 이어져요.", sentence_ro:"Prietenia adevărată durează o viață întreagă.", sentence_en:"True friendship lasts a lifetime.", ro:"prietenie",en:"friendship"},
+      {ko:"열정", sentence:"그는 일에 대한 열정이 대단해요.", sentence_ro:"El are o pasiune extraordinară pentru munca sa.", sentence_en:"He has tremendous passion for his work.", ro:"pasiune",en:"passion"},
+      {ko:"동정", sentence:"어려운 사람들에게 동정을 베풀어야 해요.", sentence_ro:"Trebuie să arătăm compasiune față de cei aflați în dificultate.", sentence_en:"We should show compassion to those in difficulty.", ro:"compasiune / milă",en:"sympathy / compassion"}
+    ]
+  },
+  {
+    hanja:"春", ko_reading:"춘", reading:{ro:"춘 (chun)",en:"춘 (chun)"}, meaning:{ro:"primăvară",en:"spring"},
+    etymology:{ro:"Soare (日) + plante care cresc (屯) + iarbă (艸) — soarele care face plantele să încolțească primăvara. Una dintre cele mai poetice pictograme, capturând renașterea naturii.",en:"Sun (日) + plants sprouting (屯) + grass (艸) — the sun making plants sprout in spring. One of the most poetic pictograms, capturing the rebirth of nature."},
+    words:[
+      {ko:"봄", sentence:"봄이 오면 꽃이 피어요.", sentence_ro:"Când vine primăvara, florile înfloresc.", sentence_en:"When spring comes, flowers bloom.", ro:"primăvară",en:"spring (season)"},
+      {ko:"청춘", sentence:"청춘은 다시 돌아오지 않으니 열심히 살아요.", sentence_ro:"Tinerețea nu mai revine, deci trăiți din plin.", sentence_en:"Youth doesn't come back, so live fully.", ro:"tinerețe",en:"youth"},
+      {ko:"춘절", sentence:"중국에서는 춘절을 크게 축하해요.", sentence_ro:"În China, Festivalul de Primăvară se sărbătorește cu mare fast.", sentence_en:"In China, the Spring Festival is celebrated grandly.", ro:"festivalul primăverii",en:"Spring Festival"},
+      {ko:"입춘", sentence:"입춘이 지나면 날이 따뜻해지기 시작해요.", sentence_ro:"După Intrarea în Primăvară, zilele încep să se încălzească.", sentence_en:"After the start of spring, the days start to get warmer.", ro:"începutul primăverii",en:"start of spring"}
+    ]
+  },
+  {
+    hanja:"勝", ko_reading:"승", reading:{ro:"승 (seung)",en:"승 (seung)"}, meaning:{ro:"a câștiga / victorie",en:"to win / victory"},
+    etymology:{ro:"Forță (力) + a ridica (朕) — efortul de a ridica și depăși obstacole cu putere. Cel care depășește cu forță dificultățile iese victorios.",en:"Strength (力) + to lift (朕) — the effort to lift and overcome obstacles with power. One who forcefully overcomes difficulties emerges victorious."},
+    words:[
+      {ko:"승리", sentence:"팀이 결승전에서 승리했어요.", sentence_ro:"Echipa a câștigat în finală.", sentence_en:"The team won in the final.", ro:"victorie",en:"victory"},
+      {ko:"우승", sentence:"올림픽에서 금메달로 우승했어요.", sentence_ro:"A câștigat medalia de aur la Olimpiadă.", sentence_en:"They won the gold medal at the Olympics.", ro:"câștigarea unui titlu",en:"championship win"},
+      {ko:"필승", sentence:"필승의 각오로 경기에 임했어요.", sentence_ro:"A intrat în meci cu hotărârea de a câștiga cu siguranță.", sentence_en:"They entered the game with the determination to definitely win.", ro:"victorie sigură",en:"certain victory"},
+      {ko:"승패", sentence:"승패에 관계없이 최선을 다해요.", sentence_ro:"Dăm tot ce avem mai bun indiferent de rezultat.", sentence_en:"We do our best regardless of win or loss.", ro:"victorie sau înfrângere",en:"victory or defeat"}
+    ]
   }
 ];
 
