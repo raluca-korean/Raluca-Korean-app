@@ -1,3 +1,46 @@
+// ── JAMO DECOMPOSITION & COLOR CODING ────────────────────────
+const _CHO  = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const _JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const _JONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const _CROM = {
+  'ㄱ':'g/k','ㄲ':'kk','ㄴ':'n','ㄷ':'d/t','ㄸ':'tt','ㄹ':'r/l','ㅁ':'m','ㅂ':'b/p',
+  'ㅃ':'pp','ㅅ':'s','ㅆ':'ss','ㅇ':'-/ng','ㅈ':'j','ㅉ':'jj','ㅊ':'ch','ㅋ':'k',
+  'ㅌ':'t','ㅍ':'p','ㅎ':'h','ㄳ':'k','ㄵ':'n','ㄶ':'n','ㄺ':'k','ㄻ':'m',
+  'ㄼ':'l','ㄽ':'l','ㄾ':'l','ㄿ':'p','ㅀ':'l','ㅄ':'p'
+};
+const _VROM = {
+  'ㅏ':'a','ㅐ':'ae','ㅑ':'ya','ㅒ':'yae','ㅓ':'eo','ㅔ':'e','ㅕ':'yeo','ㅖ':'ye',
+  'ㅗ':'o','ㅘ':'wa','ㅙ':'wae','ㅚ':'oe','ㅛ':'yo','ㅜ':'u','ㅝ':'wo','ㅞ':'we',
+  'ㅟ':'wi','ㅠ':'yu','ㅡ':'eu','ㅢ':'ui','ㅣ':'i'
+};
+const _SC = new Set(['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ']);
+const _SV = new Set(['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ']);
+
+function decomposeHG(c) {
+  const code = c.charCodeAt(0);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    const base = code - 0xAC00;
+    const jong = base % 28, jung = Math.floor((base % 588) / 28), cho = Math.floor(base / 588);
+    const r = [
+      { j: _CHO[cho],   t: 'cons',  r: _CROM[_CHO[cho]]   || '' },
+      { j: _JUNG[jung], t: 'vowel', r: _VROM[_JUNG[jung]] || '' },
+    ];
+    if (jong > 0) r.push({ j: _JONG[jong], t: 'cons', r: _CROM[_JONG[jong]] || '' });
+    return r;
+  }
+  if (_SC.has(c)) return [{ j: c, t: 'cons',  r: _CROM[c] || '' }];
+  if (_SV.has(c)) return [{ j: c, t: 'vowel', r: _VROM[c] || '' }];
+  return null;
+}
+
+function jamoHTML(c) {
+  const parts = decomposeHG(c);
+  if (!parts) return '';
+  return parts.map(p =>
+    `<span class="jp jp-${p.t}"><span class="jp-c">${p.j}</span><span class="jp-r">${p.r}</span></span>`
+  ).join('');
+}
+
 // ── DATE ──────────────────────────────────────────────────────
 const LETTERS = [
   // consoane de bază
@@ -242,8 +285,9 @@ function updateTarget() {
     const fs = mode === "sentences"
       ? (chars.length > 4 ? 34 : chars.length > 3 ? 38 : 44)
       : (chars.length > 2 ? 44 : 56);
-    sylBoxes.innerHTML  = chars.map(c =>
-      `<div class="syl-box" style="font-size:${fs}px" onclick="speakKo('${c}')">${c}</div>`
+    document.getElementById('jamoStrip').innerHTML = '';
+    sylBoxes.innerHTML = chars.map(c =>
+      `<div class="syl-outer"><div class="syl-box" style="font-size:${fs}px" onclick="speakKo('${c}')">${c}</div><div class="jamo-row">${jamoHTML(c)}</div></div>`
     ).join('');
 
     // Trace: câte un span per silabă, font proporțional cu înălțimea tablei
@@ -268,6 +312,11 @@ function updateTarget() {
     trace.classList.remove("multi");
     trace.style.fontSize   = "";
     trace.textContent      = item.char;
+    // Color standalone jamo; show jamo strip for full syllables
+    const _p = decomposeHG(item.char);
+    tc.className = (_p && _p.length === 1) ? `target-char hg-${_p[0].t}` : 'target-char';
+    const strip = document.getElementById('jamoStrip');
+    strip.innerHTML = (_p && _p.length > 1) ? jamoHTML(item.char) : '';
   }
 
   const showHint = mode === "words" || mode === "sentences";
