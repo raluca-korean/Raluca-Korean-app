@@ -85,6 +85,7 @@ html[data-mode=day] .nl-card-mem{background:rgba(180,140,0,.07);border-color:rgb
 html[data-mode=day] #darkToggle{color:var(--lo)}
 html[data-mode=day] #darkToggle:hover{background:var(--cyan-d)}
 html[data-mode=day] .nl-picker{background:var(--deep);border-bottom-color:rgba(100,80,200,.18)}
+html[data-mode=day] .nl-done-btn{color:rgba(0,130,75,.95);border-color:rgba(0,160,90,.30)}
 html[data-mode=day] .nl-lesson-pill{background:rgba(255,255,255,.70);border-color:rgba(100,80,200,.22)}
 html[data-mode=day] .nl-lesson-pill:hover:not(.active){background:rgba(255,255,255,.90);border-color:rgba(100,80,200,.38)}
 html[data-mode=day] .nl-lesson-pill.active{background:rgba(0,160,200,.13);border-color:rgba(0,160,200,.55);box-shadow:0 0 12px rgba(0,160,200,.18)}
@@ -665,6 +666,18 @@ body{
 .nl-lp-ko{font-size:11px;font-weight:700;color:var(--mid)}
 .nl-lesson-pill.active .nl-lp-num{color:var(--cyan)}
 .nl-lesson-pill.active .nl-lp-ko{color:var(--cyan)}
+.nl-lesson-pill.done{opacity:.45}
+.nl-lesson-pill.done .nl-lp-num::after{content:' ✓';color:#00c47a}
+.nl-done-btn{
+  display:flex;align-items:center;gap:4px;
+  background:rgba(0,180,110,.10);border:1px solid rgba(0,200,120,.25);
+  border-radius:999px;padding:5px 12px;flex-shrink:0;cursor:pointer;
+  font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.12em;
+  color:#00c47a;transition:all .2s ease;
+}
+.nl-done-btn:hover{background:rgba(0,180,110,.22);transform:scale(1.05)}
+.nl-done-btn.is-done{opacity:.40;cursor:default}
+.nl-done-btn.is-done:hover{transform:none;background:rgba(0,180,110,.10)}
 
 /* ── GRAM NOTE ──────────────────────────────────────────────── */
 .nl-gram-note{
@@ -779,6 +792,7 @@ body{
         <button class="nl-speak" id="speakBtn" onclick="speakPattern()">
           <span>▶</span> <span id="speakLbl">Ascultă</span>
         </button>
+        <button class="nl-done-btn" id="doneBtn" onclick="markDone(curLesson)">✓ <span id="doneLbl">Gata</span></button>
         <div class="nl-orb-btn" onclick="toggleOrb()" title="Pronunciation Orb">🎙</div>
       </div>
     </div>
@@ -1073,6 +1087,7 @@ setTimeout(()=>{
 // ── LANGUAGE + STATE ──────────────────────────────────────────
 let lang = localStorage.getItem('RK_LANG')||'ro';
 let curLesson = 6;
+let doneSet=new Set(JSON.parse(localStorage.getItem('RK_DONE_NEURAL')||'[]'));
 let chalActive=false, chalDone=false;
 
 // ── LESSONS DATA ─────────────────────────────────────────────
@@ -3311,7 +3326,7 @@ const UI={
   ro:{
     lblPattern:'Tipar Principal',lblExamples:'10 Exemple Neurale',
     lblPractice:'Practice Zone',lblBonus:'Personaj Holografic',
-    speakLbl:'Ascultă',pracTtl:'Pronunciation Challenge',
+    speakLbl:'Ascultă',doneLbl:'Gata',pracTtl:'Pronunciation Challenge',
     prl1:'Ton',prl2:'Ritm',prl3:'Claritate',
     emotions:{
       happy:{ko:'잘 했어요!',tr:'Ai făcut bine!',tip:'Ești pe drumul cel bun! Continuă!'},
@@ -3326,7 +3341,7 @@ const UI={
   en:{
     lblPattern:'Main Pattern',lblExamples:'10 Neural Examples',
     lblPractice:'Practice Zone',lblBonus:'Holographic Character',
-    speakLbl:'Listen',pracTtl:'Pronunciation Challenge',
+    speakLbl:'Listen',doneLbl:'Done',pracTtl:'Pronunciation Challenge',
     prl1:'Tone',prl2:'Rhythm',prl3:'Clarity',
     emotions:{
       happy:{ko:'잘 했어요!',tr:'Well done!',tip:"You're on the right track! Keep going!"},
@@ -3343,9 +3358,16 @@ const UI={
 // ── PICKER ────────────────────────────────────────────────────
 function buildPicker(){
   const picker=document.getElementById('lessonPicker');
-  LESSONS.forEach((L,i)=>{
+  const order=[...Array(LESSONS.length).keys()].sort((a,b)=>{
+    const ad=doneSet.has(a),bd=doneSet.has(b);
+    if(ad===bd)return a-b;
+    return ad?1:-1;
+  });
+  order.forEach(i=>{
+    const L=LESSONS[i];
     const pill=document.createElement('div');
-    pill.className='nl-lesson-pill'+(i===curLesson?' active':'');
+    pill.dataset.idx=String(i);
+    pill.className='nl-lesson-pill'+(i===curLesson?' active':'')+(doneSet.has(i)?' done':'');
     pill.innerHTML=`<div class="nl-lp-num">P${L.id}</div><div class="nl-lp-ko">${L.short}</div>`;
     pill.onclick=()=>renderLesson(i,true);
     picker.appendChild(pill);
@@ -3369,8 +3391,8 @@ function buildGramTiles(tiles,isRo){
 function renderLesson(idx,doScroll){
   curLesson=idx;
   const L=LESSONS[idx],isRo=lang==='ro';
-  document.querySelectorAll('.nl-lesson-pill').forEach((p,i)=>p.classList.toggle('active',i===idx));
-  document.querySelectorAll('.nl-lesson-pill')[idx]?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  document.querySelectorAll('.nl-lesson-pill').forEach(p=>p.classList.toggle('active',parseInt(p.dataset.idx)===idx));
+  document.querySelector(`.nl-lesson-pill[data-idx="${idx}"]`)?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
   document.getElementById('hdTitle').textContent=isRo?L.titleRo:L.titleEn;
   document.getElementById('crTopik').textContent=L.topik;
   document.getElementById('crKo').textContent=L.ko;
@@ -3395,6 +3417,8 @@ function renderLesson(idx,doScroll){
   document.getElementById('chalBtn').classList.remove('listening');
   document.getElementById('pronOrb').classList.remove('show');
   document.getElementById('aiFb').classList.remove('show');
+  const db=document.getElementById('doneBtn');
+  if(db)db.classList.toggle('is-done',doneSet.has(idx));
   if(doScroll)window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -3422,7 +3446,7 @@ function setLang(l){lang=l;localStorage.setItem('RK_LANG',lang);document.getElem
 function toggleLang(){setLang(lang==='ro'?'en':'ro');}
 function applyLang(){
   const u=UI[lang];
-  ['lblPattern','lblExamples','lblPractice','lblBonus','speakLbl','pracTtl',
+  ['lblPattern','lblExamples','lblPractice','lblBonus','speakLbl','doneLbl','pracTtl',
    'prl1','prl2','prl3'].forEach(id=>{
     const el=document.getElementById(id);if(el&&u[id]!==undefined)el.textContent=u[id];
   });
@@ -3433,6 +3457,16 @@ function applyLang(){
 function speak(txt){speechSynthesis.cancel();setTimeout(function(){const u=new SpeechSynthesisUtterance(txt);u.lang='ko-KR';u.rate=0.9;speechSynthesis.speak(u);},50);}
 function speakPattern(){const btn=document.getElementById('speakBtn');btn.classList.add('speaking');speak(LESSONS[curLesson].ko.replace(/[\[\]]/g,''));setTimeout(()=>btn.classList.remove('speaking'),2500);}
 function toggleOrb(){document.getElementById('pronOrb').classList.toggle('show');}
+function markDone(idx){
+  if(doneSet.has(idx))return;
+  doneSet.add(idx);
+  localStorage.setItem('RK_DONE_NEURAL',JSON.stringify([...doneSet]));
+  const pill=document.querySelector(`.nl-lesson-pill[data-idx="${idx}"]`);
+  if(pill){pill.classList.add('done');document.getElementById('lessonPicker').appendChild(pill);}
+  const db=document.getElementById('doneBtn');if(db)db.classList.add('is-done');
+  const next=LESSONS.findIndex((_,i)=>!doneSet.has(i));
+  if(next!==-1)renderLesson(next,true);
+}
 
 // ── PRONUNCIATION ─────────────────────────────────────────────
 function startChallenge(){
@@ -3489,7 +3523,7 @@ function setEmo(emo){
 buildPicker();
 applyLang();
 document.getElementById('langLbl').textContent=lang.toUpperCase();
-setTimeout(()=>document.querySelectorAll('.nl-lesson-pill')[curLesson]?.scrollIntoView({inline:'center',block:'nearest'}),200);
+setTimeout(()=>document.querySelector(`.nl-lesson-pill[data-idx="${curLesson}"]`)?.scrollIntoView({inline:'center',block:'nearest'}),200);
 
 </script>
 
