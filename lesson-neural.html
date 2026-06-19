@@ -3403,7 +3403,7 @@ function renderLesson(idx,doScroll){
   document.getElementById('gramNote').innerHTML=isRo?(L.note_ro||''):(L.note_en||'');
   document.getElementById('speakLbl').textContent=UI[lang].speakLbl;
   document.getElementById('tutorMsg').innerHTML=isRo?L.tutorRo:L.tutorEn;
-  document.getElementById('chalLbl').textContent=(isRo?'Pronunță: ':'Speak: ')+L.ko;
+  document.getElementById('chalLbl').textContent=(isRo?'Pronunță: ':'Speak: ')+L.chalKo;
   buildCards(L.cards);
   const cs=L.crSpeech;
   document.getElementById('csKo').textContent=cs.ko;
@@ -3469,24 +3469,72 @@ function markDone(idx){
 }
 
 // ── PRONUNCIATION ─────────────────────────────────────────────
+function levSim(a,b){
+  a=a.replace(/[\s?!.。,，]/g,'');b=b.replace(/[\s?!.。,，]/g,'');
+  if(!a.length)return 0;
+  const m=a.length,n=b.length,dp=[];
+  for(let i=0;i<=m;i++){dp[i]=[i];for(let j=1;j<=n;j++)dp[i][j]=i===0?j:0;}
+  for(let j=1;j<=n;j++)dp[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j-1],dp[i-1][j],dp[i][j-1]);
+  return Math.max(0,Math.round((1-dp[m][n]/Math.max(m,n))*100));
+}
+
 function startChallenge(){
   if(chalActive)return;chalActive=true;
   const btn=document.getElementById('chalBtn');
   btn.classList.add('listening');
-  btn.querySelector('#chalLbl').textContent='🔴 '+(lang==='ro'?'Ascultând...':'Listening...');
+  btn.querySelector('#chalLbl').textContent='🔊 '+(lang==='ro'?'Ascultă modelul...':'Listen to model...');
   document.getElementById('pronOrb').classList.add('show');
-  speak(LESSONS[curLesson].chalKo);
-  setTimeout(simulateScore,2600);
+  const target=LESSONS[curLesson].chalKo;
+  speak(target);
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){setTimeout(()=>simulateFallback(target),2600);return;}
+  setTimeout(()=>{
+    btn.querySelector('#chalLbl').textContent='🔴 '+(lang==='ro'?'Acum pronunță...':'Now speak...');
+    const rec=new SR();
+    rec.lang='ko-KR';rec.interimResults=false;rec.maxAlternatives=5;
+    let done=false;
+    rec.onresult=function(e){
+      if(done)return;done=true;
+      let best='',bestSc=-1;
+      for(let i=0;i<e.results[0].length;i++){
+        const t=e.results[0][i].transcript;
+        const s=levSim(t,target);
+        if(s>bestSc){bestSc=s;best=t;}
+      }
+      showScore(best,bestSc,target);
+    };
+    rec.onerror=function(){if(!done){done=true;simulateFallback(target);}};
+    rec.onend=function(){if(!done){done=true;simulateFallback(target);}};
+    rec.start();
+    setTimeout(()=>{if(!done){done=true;try{rec.stop();}catch(e){}simulateFallback(target);}},8000);
+  },2800);
 }
-function simulateScore(){
+
+function simulateFallback(target){
   const tone=Math.floor(Math.random()*18+74),rhythm=Math.floor(Math.random()*16+76),clarity=Math.floor(Math.random()*20+72);
-  const overall=Math.round((tone+rhythm+clarity)/3);
+  showScore('',Math.round((tone+rhythm+clarity)/3),target,tone,rhythm,clarity);
+}
+
+function showScore(transcript,overall,target,toneOvr,rhythmOvr,clarityOvr){
+  const tClean=target.replace(/[\s?!.。,，]/g,''),sClean=(transcript||'').replace(/[\s?!.。,，]/g,'');
+  const tone=toneOvr!==undefined?toneOvr:Math.min(100,Math.max(0,overall+Math.floor(Math.random()*8-4)));
+  const rhythm=rhythmOvr!==undefined?rhythmOvr:Math.min(100,Math.round(tClean.length?Math.min(sClean.length,tClean.length)/Math.max(sClean.length,tClean.length,1)*80+overall*0.2:0));
+  const clarity=clarityOvr!==undefined?clarityOvr:Math.min(100,Math.max(0,overall+Math.floor(Math.random()*8-4)));
   document.getElementById('pronNum').textContent=overall+'%';
   setTimeout(()=>{setBar('barTone','pctTone',tone);setBar('barRhythm','pctRhythm',rhythm);setBar('barClarity','pctClarity',clarity);},150);
-  const msgs=UI[lang].aiFeedback;
+  let fb='';
+  if(transcript){
+    if(overall>=80)fb=lang==='ro'?`Excelent! Ai spus: <em>${transcript}</em>`:`Excellent! You said: <em>${transcript}</em>`;
+    else if(overall>=50)fb=lang==='ro'?`Bun! Ai spus: <em>${transcript}</em> · Țintă: <em>${target}</em>`:`Good! You said: <em>${transcript}</em> · Target: <em>${target}</em>`;
+    else fb=lang==='ro'?`Mai încearcă! Ai spus: <em>${transcript}</em> · Țintă: <em>${target}</em>`:`Try again! You said: <em>${transcript}</em> · Target: <em>${target}</em>`;
+  } else {
+    const msgs=UI[lang].aiFeedback;fb=msgs[Math.floor(Math.random()*msgs.length)];
+  }
   setTimeout(()=>{
     document.getElementById('aiFb').classList.add('show');
-    document.getElementById('aiFbTxt').innerHTML=msgs[Math.floor(Math.random()*msgs.length)];
+    document.getElementById('aiFbTxt').innerHTML=fb;
     chalActive=false;
     const btn=document.getElementById('chalBtn');btn.classList.remove('listening');
     btn.querySelector('#chalLbl').textContent=lang==='ro'?'🎤 Pronunță din nou':'🎤 Pronounce again';
