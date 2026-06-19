@@ -624,6 +624,38 @@ body{
 ::-webkit-scrollbar-thumb{background:rgba(0,229,255,.18);border-radius:2px}
 ::-webkit-scrollbar-track{background:transparent}
 ::selection{background:rgba(0,229,255,.22)}
+
+/* ── LESSON PICKER ──────────────────────────────────────────── */
+.nl-picker{
+  display:flex;gap:8px;
+  overflow-x:auto;scrollbar-width:none;
+  padding:12px 18px;
+  background:rgba(2,2,18,.94);
+  border-bottom:1px solid var(--glass-b);
+}
+.nl-picker::-webkit-scrollbar{display:none}
+.nl-lesson-pill{
+  flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:var(--glass);border:1px solid var(--glass-b);
+  border-radius:13px;padding:7px 11px;cursor:pointer;
+  transition:all .22s ease;min-width:68px;text-align:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.nl-lesson-pill:hover:not(.active){background:var(--glass-b);border-color:rgba(255,255,255,.14)}
+.nl-lesson-pill.active{
+  background:rgba(0,229,255,.11);border-color:rgba(0,229,255,.48);
+  box-shadow:0 0 16px rgba(0,229,255,.16);
+}
+.nl-lp-num{font-size:8px;letter-spacing:.3em;color:var(--lo);font-weight:700}
+.nl-lp-ko{font-size:11px;font-weight:700;color:var(--mid)}
+.nl-lesson-pill.active .nl-lp-num{color:var(--cyan)}
+.nl-lesson-pill.active .nl-lp-ko{color:var(--cyan)}
+
+/* ── GRAM NOTE ──────────────────────────────────────────────── */
+.nl-gram-note{
+  font-size:11px;color:var(--lo);text-align:center;
+  margin-top:10px;line-height:1.55;min-height:14px;
+}
 </style>
 </head>
 <body>
@@ -708,6 +740,11 @@ body{
 </header>
 
 <!-- ══════════════════════════════════════
+     LESSON PICKER
+══════════════════════════════════════ -->
+<div class="nl-picker" id="lessonPicker"></div>
+
+<!-- ══════════════════════════════════════
      CRYSTAL ZONE
 ══════════════════════════════════════ -->
 <section class="nl-section" style="padding-bottom:0">
@@ -721,34 +758,20 @@ body{
     <div class="nl-crystal" id="crystal">
       <div class="nl-cr-topik">
         <div class="nl-cr-tdot"></div>
-        <span class="nl-cr-ttxt">TOPIK I · Nivel 1 · Fraze de bază</span>
+        <span class="nl-cr-ttxt" id="crTopik">TOPIK I · Nivel 1 · Fraze de bază</span>
       </div>
 
-      <div class="nl-cr-ko">무엇이에요?</div>
-      <div class="nl-cr-rom">mu · eot · i · e · yo</div>
+      <div class="nl-cr-ko" id="crKo"></div>
+      <div class="nl-cr-rom" id="crRom"></div>
 
       <div class="nl-cr-meaning">
-        <span class="nl-cr-en" id="crEn">What is it?</span>
+        <span class="nl-cr-en" id="crEn"></span>
         <div class="nl-cr-sep"></div>
-        <span class="nl-cr-ro" id="crRo">Ce este?</span>
+        <span class="nl-cr-ro" id="crRo"></span>
       </div>
 
-      <div class="nl-gram-row">
-        <div class="nl-gram-tile">
-          <div class="nl-gram-ko noun">무엇</div>
-          <div class="nl-gram-lbl" id="g1lbl">Pronume<br>ce/ce anume</div>
-        </div>
-        <div class="nl-gram-plus">+</div>
-        <div class="nl-gram-tile">
-          <div class="nl-gram-ko part">이</div>
-          <div class="nl-gram-lbl" id="g2lbl">Particulă<br>subiect</div>
-        </div>
-        <div class="nl-gram-plus">+</div>
-        <div class="nl-gram-tile">
-          <div class="nl-gram-ko end">에요</div>
-          <div class="nl-gram-lbl" id="g3lbl">Verb copulă<br>(politicos)</div>
-        </div>
-      </div>
+      <div class="nl-gram-row" id="gramRow"></div>
+      <div class="nl-gram-note" id="gramNote"></div>
 
       <div class="nl-cr-ctrls">
         <button class="nl-speak" id="speakBtn" onclick="speakPattern()">
@@ -852,7 +875,7 @@ body{
   </div>
   <div class="nl-practice-body">
     <button class="nl-chal-btn" id="chalBtn" onclick="startChallenge()">
-      <span>🎤</span> <span id="chalLbl">Pronunță: 무엇이에요?</span>
+      <span>🎤</span> <span id="chalLbl">Pronunță</span>
     </button>
 
     <div class="nl-pron-orb" id="pronOrb">
@@ -1084,321 +1107,419 @@ setTimeout(()=>{
   document.getElementById('xpRing').style.strokeDashoffset='43';
 },600);
 
-// ── LANGUAGE ──────────────────────────────────────────────────
+// ── LANGUAGE + STATE ──────────────────────────────────────────
 let lang = localStorage.getItem('RK_LANG')||'ro';
+let curLesson = 6;
+let chalActive=false, chalDone=false;
 
-const T = {
+// ── LESSONS DATA ─────────────────────────────────────────────
+const LESSONS=[
+  {id:'001',short:'이에요',ko:'N이에요 / N예요',rom:'N-i-e-yo / N-ye-yo',en:'This is N (polite)',ro:'Acesta este N (politicos)',titleRo:'Copulă Politicoasă',titleEn:'Polite Copula',topik:'TOPIK I · Nivel 1 · Copulă de bază',
+   gramTiles:[{ko:'[N]',type:'noun',lbl_ro:'Substantiv',lbl_en:'Noun'},{ko:'이에요',type:'end',lbl_ro:'Copulă\n(după cons.)',lbl_en:'Copula\n(after cons.)'}],
+   note_ro:'sau <b>예요</b> dacă N se termină în vocală',note_en:'or <b>예요</b> if N ends in a vowel',
+   tutorRo:'<b style="color:var(--cyan)">이에요</b> după consoane, <b style="color:var(--green)">예요</b> după vocale. Ex: 학생<b style="color:var(--cyan)">이에요</b> vs 의사<b style="color:var(--green)">예요</b>. Cel mai frecvent tipar pe TOPIK!',
+   tutorEn:'<b style="color:var(--cyan)">이에요</b> after consonants, <b style="color:var(--green)">예요</b> after vowels. E.g. 학생<b style="color:var(--cyan)">이에요</b> vs 의사<b style="color:var(--green)">예요</b>. Most common TOPIK pattern!',
+   chalKo:'저는 학생이에요.',
+   crSpeech:{ko:'저는 학생이에요!',tr_ro:'Eu sunt student!',tr_en:'I am a student!',tip_ro:'Substantiv + vocală → <b style="color:var(--green)">예요</b>!',tip_en:'Noun ends in vowel → <b style="color:var(--green)">예요</b>!'},
+   cards:[
+    {ko:'저는 학생이에요.',rom:'jeo-neun hak-saeng-i-e-yo',en:'I am a student.',ro:'Sunt student.',tag_ro:'Identitate',tag_en:'Identity',mem:'학생 → cons. ㅇ → 이에요',exp:'<em>학생</em> termină în ㅇ (consoană) → <em>이에요</em>'},
+    {ko:'이것은 책이에요.',rom:'i-geo-seun chaek-i-e-yo',en:'This is a book.',ro:'Acesta este o carte.',tag_ro:'Obiecte',tag_en:'Objects',mem:'책 → cons. ㄱ → 이에요',exp:'<em>이것은</em> = acest lucru (topic). <em>책</em> = carte'},
+    {ko:'저는 의사예요.',rom:'jeo-neun ui-sa-ye-yo',en:'I am a doctor.',ro:'Sunt doctor.',tag_ro:'Profesii',tag_en:'Jobs',mem:'의사 → vocală → 예요',exp:'<em>의사</em> termină în 아 (vocală) → <em>예요</em>'},
+    {ko:'이것은 커피예요.',rom:'i-geo-seun keo-pi-ye-yo',en:'This is coffee.',ro:'Acesta este cafea.',tag_ro:'Băuturi',tag_en:'Drinks',mem:'커피 → vocală 이 → 예요',exp:'<em>커피</em> termină în 이 (vocală) → <em>예요</em>'},
+    {ko:'저는 선생님이에요.',rom:'jeo-neun seon-saeng-nim-i-e-yo',en:'I am a teacher.',ro:'Sunt profesor.',tag_ro:'Profesii',tag_en:'Jobs',mem:'선생님 → cons. ㅁ → 이에요',exp:'<em>님</em> sufix respectuos. Termină în ㅁ'},
+    {ko:'이분은 친구예요.',rom:'i-bun-eun chin-gu-ye-yo',en:'This person is a friend.',ro:'Această persoană este prietenul meu.',tag_ro:'Relații',tag_en:'Relations',mem:'친구 → vocală → 예요',exp:'<em>이분</em> = această persoană (respectuos)'},
+    {ko:'저는 한국 사람이에요.',rom:'jeo-neun han-guk sa-ram-i-e-yo',en:'I am Korean.',ro:'Sunt coreean.',tag_ro:'Naționalitate',tag_en:'Nationality',mem:'사람 → cons. ㅁ → 이에요',exp:'<em>한국 사람</em> = persoană coreeană'},
+    {ko:'이것은 물이에요.',rom:'i-geo-seun mul-i-e-yo',en:'This is water.',ro:'Acesta este apă.',tag_ro:'Băuturi',tag_en:'Drinks',mem:'물 → cons. ㄹ → 이에요',exp:'<em>물</em> = apă. Termină în ㄹ'},
+    {ko:'저는 회사원이에요.',rom:'jeo-neun hoe-sa-won-i-e-yo',en:'I am an office worker.',ro:'Sunt angajat.',tag_ro:'Muncă',tag_en:'Work',mem:'회사원 → cons. ㄴ → 이에요',exp:'<em>회사원</em> = angajat de firmă'},
+    {ko:'그것은 의자예요.',rom:'geu-geo-seun ui-ja-ye-yo',en:'That is a chair.',ro:'Acela este un scaun.',tag_ro:'Mobilier',tag_en:'Furniture',mem:'의자 → vocală → 예요',exp:'<em>그것은</em> = acel lucru. <em>의자</em> termină în vocală'}
+   ]},
+  {id:'002',short:'입니다',ko:'N입니다',rom:'N-im-ni-da',en:'This is N (formal)',ro:'Acesta este N (formal)',titleRo:'Formal — Copulă Oficială',titleEn:'Formal Copula',topik:'TOPIK I · Nivel 1 · Registru formal',
+   gramTiles:[{ko:'[N]',type:'noun',lbl_ro:'Substantiv',lbl_en:'Noun'},{ko:'입니다',type:'end',lbl_ro:'Copulă\n(formal)',lbl_en:'Copula\n(formal)'}],
+   note_ro:'Nu se schimbă după vocale sau consoane — mereu 입니다',note_en:'Never changes after vowels or consonants — always 입니다',
+   tutorRo:'<b style="color:var(--cyan)">입니다</b> este forma <b>formală</b> a copulei. Nu se modifică și e folosit în contexte profesionale, texte TOPIK, discursuri.',
+   tutorEn:'<b style="color:var(--cyan)">입니다</b> is the <b>formal</b> copula. It never changes and is used in professional contexts, TOPIK texts, speeches.',
+   chalKo:'저는 학생입니다.',
+   crSpeech:{ko:'저는 학생입니다!',tr_ro:'Eu sunt student! (formal)',tr_en:'I am a student! (formal)',tip_ro:'입니다 nu se schimbă — perfect pentru TOPIK!',tip_en:'입니다 never changes — perfect for TOPIK!'},
+   cards:[
+    {ko:'저는 학생입니다.',rom:'jeo-neun hak-saeng-im-ni-da',en:'I am a student.',ro:'Sunt student. (formal)',tag_ro:'Formal',tag_en:'Formal',mem:'입니다 nu se schimbă indiferent de sunet',exp:'Cel mai comun în texte și prezentări TOPIK'},
+    {ko:'이것은 책입니다.',rom:'i-geo-seun chaek-im-ni-da',en:'This is a book.',ro:'Acesta este o carte. (formal)',tag_ro:'Obiecte',tag_en:'Objects',mem:'Versiunea formală a 이것은 책이에요',exp:'<em>이것은</em> = acest lucru (topic marker)'},
+    {ko:'저는 한국 사람입니다.',rom:'jeo-neun han-guk sa-ram-im-ni-da',en:'I am Korean.',ro:'Sunt coreean. (formal)',tag_ro:'Naționalitate',tag_en:'Nationality',mem:'Bun în prezentări sau texte',exp:'<em>한국 사람</em> = persoană coreeană'},
+    {ko:'이분은 김 선생님입니다.',rom:'i-bun-eun gim seon-saeng-nim-im-ni-da',en:'This person is Teacher Kim.',ro:'Aceasta este profesorul Kim. (formal)',tag_ro:'Introducere',tag_en:'Intro',mem:'Prezentare formală a unei persoane',exp:'<em>이분</em> = această persoană (respectuos)'},
+    {ko:'이것은 제 가방입니다.',rom:'i-geo-seun je ga-bang-im-ni-da',en:'This is my bag.',ro:'Aceasta este geanta mea. (formal)',tag_ro:'Posesie',tag_en:'Possession',mem:'제 = forma formală a 내 (al meu)',exp:'<em>제</em> = al meu (formal). <em>가방</em> = geantă'},
+    {ko:'저는 회사원입니다.',rom:'jeo-neun hoe-sa-won-im-ni-da',en:'I am an office worker.',ro:'Sunt angajat. (formal)',tag_ro:'Muncă',tag_en:'Work',mem:'Uzual la interviuri',exp:'<em>회사원</em> = angajat de companie'},
+    {ko:'이것은 사무실입니다.',rom:'i-geo-seun sa-mu-sil-im-ni-da',en:'This is an office.',ro:'Acesta este un birou. (formal)',tag_ro:'Locuri',tag_en:'Places',mem:'사무실 = birou/cabinet',exp:'<em>사무실</em> = birou/spațiu de lucru'},
+    {ko:'저는 의사입니다.',rom:'jeo-neun ui-sa-im-ni-da',en:'I am a doctor.',ro:'Sunt medic. (formal)',tag_ro:'Profesii',tag_en:'Jobs',mem:'Prezentare la clinică sau spital',exp:'<em>의사</em> = doctor/medic'},
+    {ko:'이것은 신문입니다.',rom:'i-geo-seun sin-mun-im-ni-da',en:'This is a newspaper.',ro:'Acesta este un ziar. (formal)',tag_ro:'Media',tag_en:'Media',mem:'신문 = ziar — frecvent pe TOPIK',exp:'<em>신문</em> = ziar'},
+    {ko:'저는 한국어 선생님입니다.',rom:'jeo-neun han-gu-geo seon-saeng-nim-im-ni-da',en:'I am a Korean teacher.',ro:'Sunt profesor de coreeană. (formal)',tag_ro:'Profesii',tag_en:'Jobs',mem:'한국어 = lb. coreeană',exp:'<em>한국어</em> = lb. coreeană. <em>선생님</em> = profesor'}
+   ]},
+  {id:'003',short:'아니에요',ko:'N이/가 아니에요',rom:'N-i/ga a-ni-e-yo',en:'This is not N',ro:'Acesta nu este N',titleRo:'Negație — Nu Este N',titleEn:'Negation — Not N',topik:'TOPIK I · Nivel 1 · Negație',
+   gramTiles:[{ko:'[N]',type:'noun',lbl_ro:'Substantiv',lbl_en:'Noun'},{ko:'이/가',type:'part',lbl_ro:'Particulă\nsubiect',lbl_en:'Subject\nparticle'},{ko:'아니에요',type:'end',lbl_ro:'Negație\ncopulă',lbl_en:'Copula\nnegation'}],
+   note_ro:'이 după consoană · 가 după vocală',note_en:'이 after consonant · 가 after vowel',
+   tutorRo:'<b style="color:var(--cyan)">아니에요</b> = „nu este". Particulă: <b style="color:var(--purple)">이</b> după consoană și <b style="color:var(--green)">가</b> după vocală. Folosit pentru a corecta neînțelegeri!',
+   tutorEn:'<b style="color:var(--cyan)">아니에요</b> = "is not". Particle: <b style="color:var(--purple)">이</b> after consonant, <b style="color:var(--green)">가</b> after vowel. Used to correct misunderstandings!',
+   chalKo:'저는 선생님이 아니에요.',
+   crSpeech:{ko:'학생이 아니에요!',tr_ro:'Nu sunt student!',tr_en:"I'm not a student!",tip_ro:'아니에요 vs 없어요: 아니에요 = nu este; 없어요 = nu am',tip_en:"아니에요 vs 없어요: 아니에요 = is not; 없어요 = don't have"},
+   cards:[
+    {ko:'저는 학생이 아니에요.',rom:'jeo-neun hak-saeng-i a-ni-e-yo',en:'I am not a student.',ro:'Nu sunt student.',tag_ro:'Negație',tag_en:'Negation',mem:'학생 → cons. ㅇ → 이 아니에요',exp:'<em>이</em> după ㅇ (consoană finală)'},
+    {ko:'이것은 물이 아니에요.',rom:'i-geo-seun mul-i a-ni-e-yo',en:'This is not water.',ro:'Acesta nu este apă.',tag_ro:'Obiecte',tag_en:'Objects',mem:'물 → cons. ㄹ → 이 아니에요',exp:'<em>물</em> = apă. Consoană ㄹ'},
+    {ko:'그것은 책이 아니에요.',rom:'geu-geo-seun chaek-i a-ni-e-yo',en:'That is not a book.',ro:'Acela nu este o carte.',tag_ro:'Clarificare',tag_en:'Clarify',mem:'책 → cons. ㄱ → 이 아니에요',exp:'<em>그것</em> = acel lucru'},
+    {ko:'저는 선생님이 아니에요.',rom:'jeo-neun seon-saeng-nim-i a-ni-e-yo',en:'I am not a teacher.',ro:'Nu sunt profesor.',tag_ro:'Profesii',tag_en:'Jobs',mem:'선생님 → cons. ㅁ → 이 아니에요',exp:'<em>님</em> sufix respectuos. Consoană ㅁ'},
+    {ko:'이것은 제 것이 아니에요.',rom:'i-geo-seun je geo-si a-ni-e-yo',en:'This is not mine.',ro:'Acesta nu este al meu.',tag_ro:'Posesie',tag_en:'Possession',mem:'것 → cons. ㅅ → 이 아니에요',exp:'<em>제 것</em> = al meu (formal). <em>것</em> = lucru'},
+    {ko:'저는 한국 사람이 아니에요.',rom:'jeo-neun han-guk sa-ram-i a-ni-e-yo',en:'I am not Korean.',ro:'Nu sunt coreean.',tag_ro:'Naționalitate',tag_en:'Nationality',mem:'사람 → cons. ㅁ → 이 아니에요',exp:'<em>사람</em> = persoană. Consoană ㅁ'},
+    {ko:'그녀는 친구가 아니에요.',rom:'geu-nyeo-neun chin-gu-ga a-ni-e-yo',en:'She is not a friend.',ro:'Ea nu este prietena mea.',tag_ro:'Relații',tag_en:'Relations',mem:'친구 → vocală → 가 아니에요',exp:'<em>친구</em> termină în 구 (vocală) → <em>가</em>'},
+    {ko:'이것은 커피가 아니에요.',rom:'i-geo-seun keo-pi-ga a-ni-e-yo',en:'This is not coffee.',ro:'Acesta nu este cafea.',tag_ro:'Băuturi',tag_en:'Drinks',mem:'커피 → vocală → 가 아니에요',exp:'<em>커피</em> termină în 이 (vocală) → <em>가</em>'},
+    {ko:'저는 의사가 아니에요.',rom:'jeo-neun ui-sa-ga a-ni-e-yo',en:'I am not a doctor.',ro:'Nu sunt medic.',tag_ro:'Profesii',tag_en:'Jobs',mem:'의사 → vocală → 가 아니에요',exp:'<em>의사</em> termină în 아 (vocală) → <em>가</em>'},
+    {ko:'이것은 문제가 아니에요.',rom:'i-geo-seun mun-je-ga a-ni-e-yo',en:'This is not a problem.',ro:'Aceasta nu este o problemă.',tag_ro:'Situații',tag_en:'Situations',mem:'문제 → vocală → 가 아니에요',exp:'<em>문제</em> = problemă. Vocală 에'}
+   ]},
+  {id:'004',short:'있어요',ko:'N이/가 있어요',rom:'N-i/ga i-sseo-yo',en:'I have N / There is N',ro:'Am N / Există N',titleRo:'Existență și Posesie',titleEn:'Existence & Possession',topik:'TOPIK I · Nivel 1 · Există / Am',
+   gramTiles:[{ko:'[N]',type:'noun',lbl_ro:'Substantiv',lbl_en:'Noun'},{ko:'이/가',type:'part',lbl_ro:'Particulă\nsubiect',lbl_en:'Subject\nparticle'},{ko:'있어요',type:'end',lbl_ro:'Există/Am\n(politicos)',lbl_en:'Have/Exist\n(polite)'}],
+   note_ro:'이 după consoană · 가 după vocală',note_en:'이 after consonant · 가 after vowel',
+   tutorRo:'<b style="color:var(--cyan)">있어요</b> = „a exista" și „a avea". Ex: 책이 있어요 = „am o carte" sau „există o carte". Contextul face diferența!',
+   tutorEn:'<b style="color:var(--cyan)">있어요</b> = "to exist" and "to have". E.g. 책이 있어요 = "I have a book" or "There is a book". Context makes the difference!',
+   chalKo:'저는 책이 있어요.',
+   crSpeech:{ko:'시간이 있어요?',tr_ro:'Ai timp?',tr_en:'Do you have time?',tip_ro:'있어요? cu intonație ascendentă = întrebare!',tip_en:'있어요? with rising intonation = question!'},
+   cards:[
+    {ko:'저는 책이 있어요.',rom:'jeo-neun chaek-i i-sseo-yo',en:'I have a book.',ro:'Am o carte.',tag_ro:'Posesie',tag_en:'Possession',mem:'책 → cons. ㄱ → 이 있어요',exp:'<em>책</em> = carte. Consoană ㄱ → <em>이</em>'},
+    {ko:'교실에 학생이 있어요.',rom:'gyo-sil-e hak-saeng-i i-sseo-yo',en:'There is a student in the classroom.',ro:'Este un student în clasă.',tag_ro:'Locație',tag_en:'Location',mem:'교실에 = în clasă (particulă 에)',exp:'<em>에</em> = particulă de loc (unde se află)'},
+    {ko:'저는 시간이 있어요.',rom:'jeo-neun si-gan-i i-sseo-yo',en:'I have time.',ro:'Am timp.',tag_ro:'Timp',tag_en:'Time',mem:'시간 → cons. ㄴ → 이 있어요',exp:'<em>시간</em> = timp. Consoană ㄴ'},
+    {ko:'방에 침대가 있어요.',rom:'bang-e chim-dae-ga i-sseo-yo',en:'There is a bed in the room.',ro:'Este un pat în cameră.',tag_ro:'Cameră',tag_en:'Room',mem:'침대 → vocală → 가 있어요',exp:'<em>방에</em> = în cameră. <em>침대</em> termină în vocală'},
+    {ko:'저는 돈이 있어요.',rom:'jeo-neun don-i i-sseo-yo',en:'I have money.',ro:'Am bani.',tag_ro:'Finanțe',tag_en:'Finance',mem:'돈 → cons. ㄴ → 이 있어요',exp:'<em>돈</em> = bani. Consoană ㄴ'},
+    {ko:'냉장고에 음식이 있어요.',rom:'naeng-jang-go-e eum-sig-i i-sseo-yo',en:'There is food in the fridge.',ro:'Este mâncare în frigider.',tag_ro:'Bucătărie',tag_en:'Kitchen',mem:'음식 → cons. ㄱ → 이 있어요',exp:'<em>냉장고에</em> = în frigider. <em>음식</em> = mâncare'},
+    {ko:'저는 여동생이 있어요.',rom:'jeo-neun yeo-dong-saeng-i i-sseo-yo',en:'I have a younger sister.',ro:'Am o soră mai mică.',tag_ro:'Familie',tag_en:'Family',mem:'여동생 → cons. ㅇ → 이 있어요',exp:'<em>여동생</em> = soră mai mică'},
+    {ko:'공원에 꽃이 있어요.',rom:'gong-won-e kko-chi i-sseo-yo',en:'There are flowers in the park.',ro:'Sunt flori în parc.',tag_ro:'Natură',tag_en:'Nature',mem:'꽃 → cons. → 이 있어요',exp:'<em>꽃</em> = floare. <em>공원에</em> = în parc'},
+    {ko:'저는 질문이 있어요.',rom:'jeo-neun jil-mun-i i-sseo-yo',en:'I have a question.',ro:'Am o întrebare.',tag_ro:'Școală',tag_en:'School',mem:'질문 → cons. ㄴ → 이 있어요',exp:'<em>질문</em> = întrebare'},
+    {ko:'책상 위에 컴퓨터가 있어요.',rom:'chaek-sang wi-e keom-pyu-teo-ga i-sseo-yo',en:'There is a computer on the desk.',ro:'Este un computer pe birou.',tag_ro:'Birou',tag_en:'Desk',mem:'컴퓨터 → vocală → 가 있어요',exp:'<em>위에</em> = pe (deasupra). <em>컴퓨터</em> vocală'}
+   ]},
+  {id:'005',short:'없어요',ko:'N이/가 없어요',rom:'N-i/ga eop-sseo-yo',en:"I don't have N / There is no N",ro:'Nu am N / Nu există N',titleRo:'Absență și Lipsă',titleEn:'Absence & Lack',topik:'TOPIK I · Nivel 1 · Nu există / Nu am',
+   gramTiles:[{ko:'[N]',type:'noun',lbl_ro:'Substantiv',lbl_en:'Noun'},{ko:'이/가',type:'part',lbl_ro:'Particulă\nsubiect',lbl_en:'Subject\nparticle'},{ko:'없어요',type:'end',lbl_ro:'Nu există/Nu am\n(politicos)',lbl_en:'Not have\n(polite)'}],
+   note_ro:'Opus lui 있어요 · 없 se pronunță „eop" (ㅅ final devine mut)',note_en:"Opposite of 있어요 · 없 pronounced 'eop' (final ㅅ goes silent)",
+   tutorRo:'<b style="color:var(--cyan)">없어요</b> = opusul lui 있어요. Înseamnă „nu există" sau „nu am". Pronunție: <b style="color:var(--purple)">없</b> → „eop". Frecvent pe TOPIK!',
+   tutorEn:'<b style="color:var(--cyan)">없어요</b> = opposite of 있어요. Means "doesn\'t exist" or "don\'t have". Pronunciation: <b style="color:var(--purple)">없</b> → "eop". Very common on TOPIK!',
+   chalKo:'저는 시간이 없어요.',
+   crSpeech:{ko:'돈이 없어요!',tr_ro:'Nu am bani!',tr_en:"I don't have money!",tip_ro:'없어요 vs 아니에요: 없어요 = nu am; 아니에요 = nu este',tip_en:"없어요 vs 아니에요: 없어요 = don't have; 아니에요 = is not"},
+   cards:[
+    {ko:'저는 돈이 없어요.',rom:'jeo-neun don-i eop-sseo-yo',en:"I don't have money.",ro:'Nu am bani.',tag_ro:'Finanțe',tag_en:'Finance',mem:'돈 → cons. ㄴ → 이 없어요',exp:'<em>돈</em> = bani. Consoană ㄴ'},
+    {ko:'방에 침대가 없어요.',rom:'bang-e chim-dae-ga eop-sseo-yo',en:'There is no bed in the room.',ro:'Nu este pat în cameră.',tag_ro:'Cameră',tag_en:'Room',mem:'침대 → vocală → 가 없어요',exp:'<em>침대</em> termină în vocală → <em>가</em>'},
+    {ko:'저는 시간이 없어요.',rom:'jeo-neun si-gan-i eop-sseo-yo',en:"I don't have time.",ro:'Nu am timp.',tag_ro:'Timp',tag_en:'Time',mem:'시간 → cons. ㄴ → 이 없어요',exp:'<em>시간</em> = timp. Consoană ㄴ'},
+    {ko:'냉장고에 음식이 없어요.',rom:'naeng-jang-go-e eum-sig-i eop-sseo-yo',en:'There is no food in the fridge.',ro:'Nu este mâncare în frigider.',tag_ro:'Bucătărie',tag_en:'Kitchen',mem:'음식 → cons. ㄱ → 이 없어요',exp:'<em>냉장고에</em> = în frigider'},
+    {ko:'저는 오빠가 없어요.',rom:'jeo-neun op-pa-ga eop-sseo-yo',en:"I don't have an older brother.",ro:'Nu am frate mai mare.',tag_ro:'Familie',tag_en:'Family',mem:'오빠 → vocală → 가 없어요',exp:'<em>오빠</em> = frate mai mare (zis de fată)'},
+    {ko:'교실에 학생이 없어요.',rom:'gyo-sil-e hak-saeng-i eop-sseo-yo',en:'There are no students in the classroom.',ro:'Nu sunt studenți în clasă.',tag_ro:'Școală',tag_en:'School',mem:'학생 → cons. ㅇ → 이 없어요',exp:'<em>교실</em> = clasă/sală de curs'},
+    {ko:'저는 질문이 없어요.',rom:'jeo-neun jil-mun-i eop-sseo-yo',en:"I don't have a question.",ro:'Nu am întrebări.',tag_ro:'Conversație',tag_en:'Convo',mem:'질문 → cons. ㄴ → 이 없어요',exp:'Util la finalul unei prezentări'},
+    {ko:'공원에 꽃이 없어요.',rom:'gong-won-e kko-chi eop-sseo-yo',en:'There are no flowers in the park.',ro:'Nu sunt flori în parc.',tag_ro:'Natură',tag_en:'Nature',mem:'꽃 → cons. → 이 없어요',exp:'<em>공원에</em> = în parc. <em>꽃</em> = floare'},
+    {ko:'저는 여권이 없어요.',rom:'jeo-neun yeo-gwon-i eop-sseo-yo',en:"I don't have a passport.",ro:'Nu am pașaport.',tag_ro:'Călătorii',tag_en:'Travel',mem:'여권 → cons. ㄴ → 이 없어요',exp:'<em>여권</em> = pașaport. Esențial la aeroport!'},
+    {ko:'오늘은 수업이 없어요.',rom:'o-neul-eun su-eob-i eop-sseo-yo',en:'There is no class today.',ro:'Azi nu este clasă.',tag_ro:'Școală',tag_en:'School',mem:'수업 → cons. ㅂ → 이 없어요',exp:'<em>오늘은</em> = azi (topic). <em>수업</em> = lecție'}
+   ]},
+  {id:'006',short:'주세요',ko:'N 주세요',rom:'N ju-se-yo',en:'Please give me N',ro:'Vă rog, dați-mi N',titleRo:'Cereri Politicoase',titleEn:'Polite Requests',topik:'TOPIK I · Nivel 1 · Cereri',
+   gramTiles:[{ko:'[N]',type:'noun',lbl_ro:'Ce dorești',lbl_en:'What you want'},{ko:'주세요',type:'end',lbl_ro:'Vă rog\ndați-mi',lbl_en:'Please\ngive me'}],
+   note_ro:'Simplu și direct — fără particulă necesară! Perfect la restaurant sau magazin',note_en:'Simple and direct — no particle needed! Perfect at restaurants or shops',
+   tutorRo:'<b style="color:var(--cyan)">주세요</b> = una din cele mai utile expresii coreene. Pui substantivul direct înainte, fără particule. Funcționează oriunde!',
+   tutorEn:'<b style="color:var(--cyan)">주세요</b> = one of the most useful Korean expressions. Put the noun directly before it, no particles needed. Works anywhere!',
+   chalKo:'커피 주세요.',
+   crSpeech:{ko:'물 주세요!',tr_ro:'Apă, vă rog!',tr_en:'Water, please!',tip_ro:'Ce vrei + 주세요 = gata! Funcționează și arătând cu degetul!',tip_en:'What you want + 주세요 = done! Even works by pointing!'},
+   cards:[
+    {ko:'물 주세요.',rom:'mul ju-se-yo',en:'Water, please.',ro:'Apă, vă rog.',tag_ro:'Restaurant',tag_en:'Restaurant',mem:'물 = apă. Cel mai simplu exemplu!',exp:'<em>물</em> = apă. Prima expresie la restaurant!'},
+    {ko:'영수증 주세요.',rom:'yeong-su-jeung ju-se-yo',en:'Receipt, please.',ro:'Bon fiscal, vă rog.',tag_ro:'Cumpărături',tag_en:'Shopping',mem:'영수증 = bon/chitanță',exp:'<em>영수증</em> = bon de casă'},
+    {ko:'메뉴 주세요.',rom:'me-nyu ju-se-yo',en:'Menu, please.',ro:'Meniul, vă rog.',tag_ro:'Restaurant',tag_en:'Restaurant',mem:'메뉴 = meniu',exp:'<em>메뉴</em> = meniu. Prima frază la restaurant!'},
+    {ko:'커피 주세요.',rom:'keo-pi ju-se-yo',en:'Coffee, please.',ro:'Cafea, vă rog.',tag_ro:'Cafenea',tag_en:'Cafe',mem:'커피 = cafea (din engleză coffee)',exp:'<em>커피</em> = loanword. Frecvent în coreeană'},
+    {ko:'지도 주세요.',rom:'ji-do ju-se-yo',en:'Map, please.',ro:'O hartă, vă rog.',tag_ro:'Călătorii',tag_en:'Travel',mem:'지도 = hartă',exp:'<em>지도</em> = hartă. Util la ghișee'},
+    {ko:'포크 주세요.',rom:'po-keu ju-se-yo',en:'Fork, please.',ro:'O furculiță, vă rog.',tag_ro:'Restaurant',tag_en:'Restaurant',mem:'포크 = furculiță (din engleză fork)',exp:'<em>포크</em> din „fork". Loanword'},
+    {ko:'시간 주세요.',rom:'si-gan ju-se-yo',en:'Please give me time.',ro:'Dați-mi timp, vă rog.',tag_ro:'Cerere',tag_en:'Request',mem:'시간 = timp. Cerere figurată!',exp:'Uzual când ai nevoie să te gândești'},
+    {ko:'이것 주세요.',rom:'i-geot ju-se-yo',en:'Please give me this.',ro:'Dați-mi asta, vă rog.',tag_ro:'Universal',tag_en:'Universal',mem:'이것 = asta. Poți arăta cu degetul!',exp:'<em>이것</em> = asta. Funcționează fără vocabular!'},
+    {ko:'도움 주세요.',rom:'do-um ju-se-yo',en:'Please help me.',ro:'Ajutați-mă, vă rog.',tag_ro:'Urgență',tag_en:'Emergency',mem:'도움 = ajutor. Important de memorat!',exp:'<em>도움</em> = ajutor. Fraza de urgență!'},
+    {ko:'영어 메뉴 주세요.',rom:'yeong-eo me-nyu ju-se-yo',en:'English menu, please.',ro:'Meniu în engleză, vă rog.',tag_ro:'Călătorii',tag_en:'Travel',mem:'영어 = engleză. Salvator pentru turiști!',exp:'<em>영어</em> = engleză. <em>메뉴</em> = meniu'}
+   ]},
+  {id:'007',short:'무엇이에요?',ko:'무엇이에요?',rom:'mu · eot · i · e · yo',en:'What is it?',ro:'Ce este?',titleRo:'Întrebări de bază',titleEn:'Basic Questions',topik:'TOPIK I · Nivel 1 · Fraze de bază',
+   gramTiles:[{ko:'무엇',type:'noun',lbl_ro:'Pronume\nce/ce anume',lbl_en:'Pronoun\nwhat/what thing'},{ko:'이',type:'part',lbl_ro:'Particulă\nsubiect',lbl_en:'Subject\nparticle'},{ko:'에요',type:'end',lbl_ro:'Verb copulă\n(politicos)',lbl_en:'Copula verb\n(polite)'}],
+   note_ro:'무엇 + 이에요 → forma scurtă: 뭐예요? (informal)',note_en:'무엇 + 이에요 → short form: 뭐예요? (informal)',
+   tutorRo:'<b style="color:var(--cyan)">무엇</b> = pronumele interogativ pentru „ce". Combinat cu <b style="color:var(--purple)">이에요</b>, obții o întrebare politicoasă. Forma informală <b style="color:var(--green)">뭐예요?</b> e tot acceptată pe TOPIK!',
+   tutorEn:'<b style="color:var(--cyan)">무엇</b> = interrogative pronoun for "what". Combined with <b style="color:var(--purple)">이에요</b>, forms a polite question. Informal form <b style="color:var(--green)">뭐예요?</b> is also accepted on TOPIK!',
+   chalKo:'무엇이에요?',
+   crSpeech:{ko:'이것이 무엇이에요?',tr_ro:'Ce este acesta?',tr_en:'What is this?',tip_ro:'Folosește <b style="color:var(--cyan)">이것</b> pentru obiecte aproape și <b style="color:var(--purple)">저것</b> pentru cele departe!',tip_en:'Use <b style="color:var(--cyan)">이것</b> for things near you and <b style="color:var(--purple)">저것</b> for things far away!'},
+   cards:[
+    {ko:'이것이 무엇이에요?',rom:'i-geot-i mu-eot-i-e-yo',en:'What is this?',ro:'Ce este acesta?',tag_ro:'Obiecte',tag_en:'Objects',mem:'이것 = asta (lângă tine)',exp:'<em>이것</em> = acest lucru (lângă tine)'},
+    {ko:'저것이 무엇이에요?',rom:'jeo-geot-i mu-eot-i-e-yo',en:'What is that?',ro:'Ce este acela?',tag_ro:'Distanță',tag_en:'Distance',mem:'저것 = acel lucru (departe)',exp:'<em>저것</em> = acel lucru (departe de ambii)'},
+    {ko:'이름이 무엇이에요?',rom:'i-reum-i mu-eot-i-e-yo',en:'What is your name?',ro:'Care este numele tău?',tag_ro:'Introducere',tag_en:'Intro',mem:'이름 = nume',exp:'<em>이름</em> = nume. Prima frază de prezentat!'},
+    {ko:'직업이 무엇이에요?',rom:'ji-geob-i mu-eot-i-e-yo',en:'What is your job?',ro:'Care este meseria ta?',tag_ro:'Muncă',tag_en:'Work',mem:'직업 = profesie',exp:'<em>직업</em> = profesie/meserie'},
+    {ko:'색깔이 무엇이에요?',rom:'saek-kkal-i mu-eot-i-e-yo',en:'What color is it?',ro:'Ce culoare este?',tag_ro:'Culori',tag_en:'Colors',mem:'색깔 = culoare',exp:'<em>색깔</em> = culoare'},
+    {ko:'문제가 무엇이에요?',rom:'mun-je-ga mu-eot-i-e-yo',en:'What is the problem?',ro:'Care este problema?',tag_ro:'Situații',tag_en:'Situations',mem:'문제 → vocală → 가 (nu 이!)',exp:'<em>문제</em> = problemă. <em>가</em> după 에 (vocală)'},
+    {ko:'차이가 무엇이에요?',rom:'cha-i-ga mu-eot-i-e-yo',en:'What is the difference?',ro:'Care este diferența?',tag_ro:'Comparație',tag_en:'Compare',mem:'차이 → vocală → 가',exp:'<em>차이</em> = diferență. Termină în vocală'},
+    {ko:'의미가 무엇이에요?',rom:'ui-mi-ga mu-eot-i-e-yo',en:'What is the meaning?',ro:'Care este sensul?',tag_ro:'Limbaj',tag_en:'Language',mem:'의미 → vocală → 가',exp:'<em>의미</em> = sens/semnificație'},
+    {ko:'가격이 무엇이에요?',rom:'ga-gyeog-i mu-eot-i-e-yo',en:'What is the price?',ro:'Care este prețul?',tag_ro:'Cumpărături',tag_en:'Shopping',mem:'가격 = preț → cons. → 이',exp:'<em>가격</em> = preț'},
+    {ko:'꿈이 무엇이에요?',rom:'kkum-i mu-eot-i-e-yo',en:'What is your dream?',ro:'Care este visul tău?',tag_ro:'Inspirație',tag_en:'Inspire',mem:'꿈 = vis/aspirație',exp:'<em>꿈</em> = vis. Întrebare de suflet!'}
+   ]},
+  {id:'008',short:'무슨 N?',ko:'무슨 N이에요?',rom:'mu-seun N-i-e-yo?',en:'What kind of N is it?',ro:'Ce fel de N este?',titleRo:'Ce Fel De...?',titleEn:'What Kind of...?',topik:'TOPIK I · Nivel 1 · Identificare tip',
+   gramTiles:[{ko:'무슨',type:'part',lbl_ro:'Adj. interogativ\nce fel de',lbl_en:'Interrog. adj.\nwhat kind of'},{ko:'[N]',type:'noun',lbl_ro:'Substantiv',lbl_en:'Noun'},{ko:'이에요?',type:'end',lbl_ro:'Copulă\n(politicos)',lbl_en:'Copula\n(polite)'}],
+   note_ro:'무슨 = identificare tip (K-pop? jazz?). Nu se schimbă!',note_en:"무슨 = type identification (K-pop? jazz?). Never changes!",
+   tutorRo:'<b style="color:var(--cyan)">무슨</b> = „ce fel de", precedă direct un substantiv. Cere identificarea tipului. Diferit de <b style="color:var(--purple)">어떤</b> care cere calitatea!',
+   tutorEn:'<b style="color:var(--cyan)">무슨</b> = "what kind of", goes directly before a noun. Asks for type ID. Different from <b style="color:var(--purple)">어떤</b> which asks about quality!',
+   chalKo:'무슨 음식이에요?',
+   crSpeech:{ko:'무슨 음악이에요?',tr_ro:'Ce fel de muzică este?',tr_en:'What kind of music is it?',tip_ro:'무슨 vs 어떤: 무슨 = tip (K-pop?); 어떤 = calitate (bun? rău?)',tip_en:'무슨 vs 어떤: 무슨 = type (K-pop?); 어떤 = quality (good? bad?)'},
+   cards:[
+    {ko:'무슨 음식이에요?',rom:'mu-seun eum-sig-i-e-yo',en:'What kind of food is it?',ro:'Ce fel de mâncare este?',tag_ro:'Mâncare',tag_en:'Food',mem:'음식 → cons. ㄱ → 이에요',exp:'<em>음식</em> = mâncare. Consoană ㄱ'},
+    {ko:'무슨 색깔이에요?',rom:'mu-seun saek-kkal-i-e-yo',en:'What color is it?',ro:'Ce culoare este?',tag_ro:'Culori',tag_en:'Colors',mem:'색깔 → cons. → 이에요',exp:'Alternativă la 색깔이 무엇이에요?'},
+    {ko:'무슨 영화예요?',rom:'mu-seun yeong-hwa-ye-yo',en:'What kind of movie is it?',ro:'Ce fel de film este?',tag_ro:'Divertisment',tag_en:'Entertainment',mem:'영화 → vocală → 예요',exp:'<em>영화</em> = film. Termină în vocală → <em>예요</em>'},
+    {ko:'무슨 일이에요?',rom:'mu-seun il-i-e-yo',en:'What happened? / What kind of work?',ro:'Ce s-a întâmplat? / Ce muncă?',tag_ro:'Situații',tag_en:'Situations',mem:'일 → cons. ㄹ → 이에요',exp:'<em>일</em> = muncă / eveniment (ambiguu!)'},
+    {ko:'무슨 언어예요?',rom:'mu-seun eon-eo-ye-yo',en:'What language is it?',ro:'Ce limbă este?',tag_ro:'Limbi',tag_en:'Languages',mem:'언어 → vocală → 예요',exp:'<em>언어</em> = limbă. Termină în vocală'},
+    {ko:'무슨 음악이에요?',rom:'mu-seun eum-ag-i-e-yo',en:'What kind of music is it?',ro:'Ce fel de muzică este?',tag_ro:'Muzică',tag_en:'Music',mem:'음악 → cons. ㄱ → 이에요',exp:'<em>음악</em> = muzică. Consoană ㄱ'},
+    {ko:'무슨 요일이에요?',rom:'mu-seun yo-il-i-e-yo',en:'What day of the week is it?',ro:'Ce zi a săptămânii este?',tag_ro:'Timp',tag_en:'Time',mem:'요일 → cons. ㄹ → 이에요',exp:'<em>요일</em> = ziua săptămânii'},
+    {ko:'무슨 책이에요?',rom:'mu-seun chaek-i-e-yo',en:'What kind of book is it?',ro:'Ce fel de carte este?',tag_ro:'Carte',tag_en:'Books',mem:'책 → cons. ㄱ → 이에요',exp:'<em>책</em> = carte. Consoană ㄱ'},
+    {ko:'무슨 스포츠예요?',rom:'mu-seun seu-po-cheu-ye-yo',en:'What sport is it?',ro:'Ce sport este?',tag_ro:'Sport',tag_en:'Sports',mem:'스포츠 → vocală → 예요',exp:'<em>스포츠</em> din „sports". Termină în vocală'},
+    {ko:'무슨 문제예요?',rom:'mu-seun mun-je-ye-yo',en:'What kind of problem is it?',ro:'Ce fel de problemă este?',tag_ro:'Situații',tag_en:'Situations',mem:'문제 → vocală → 예요',exp:'<em>문제</em> termină în 에 → <em>예요</em>'}
+   ]},
+  {id:'009',short:'어떤 N?',ko:'어떤 N이에요?',rom:'eo-tteon N-i-e-yo?',en:'What kind / Which N is it?',ro:'Ce fel de N / Care N este?',titleRo:'Ce Fel / Care?',titleEn:'What Kind / Which?',topik:'TOPIK I · Nivel 1 · Calitate / selecție',
+   gramTiles:[{ko:'어떤',type:'part',lbl_ro:'Adj. calitativ\nce fel de/care',lbl_en:'Qualit. adj.\nwhat kind/which'},{ko:'[N]',type:'noun',lbl_ro:'Substantiv',lbl_en:'Noun'},{ko:'이에요?',type:'end',lbl_ro:'Copulă\n(politicos)',lbl_en:'Copula\n(polite)'}],
+   note_ro:'어떤 = calitate/selecție; 무슨 = tip. Nuanțe diferite!',note_en:'어떤 = quality/selection; 무슨 = type ID. Different nuances!',
+   tutorRo:'<b style="color:var(--cyan)">어떤</b> = „ce fel de" cu focus pe <b>calitate</b> sau selecție. Spre deosebire de 무슨, întreabă despre caracteristicile unui lucru.',
+   tutorEn:'<b style="color:var(--cyan)">어떤</b> = "what kind of" focused on <b>quality</b> or selection. Unlike 무슨 (type ID), asks about characteristics.',
+   chalKo:'어떤 사람이에요?',
+   crSpeech:{ko:'어떤 음악을 좋아해요?',tr_ro:'Ce fel de muzică îți place?',tr_en:'What kind of music do you like?',tip_ro:'어떤 este mai personal — întreabă despre preferințe și calități!',tip_en:'어떤 is more personal — asks about preferences and qualities!'},
+   cards:[
+    {ko:'어떤 사람이에요?',rom:'eo-tteon sa-ram-i-e-yo',en:'What kind of person is it?',ro:'Ce fel de persoană este?',tag_ro:'Caracter',tag_en:'Character',mem:'사람 → cons. ㅁ → 이에요',exp:'Întreabă despre personalitate, nu identitate'},
+    {ko:'어떤 음식을 좋아해요?',rom:'eo-tteon eum-sig-eul jo-a-hae-yo',en:'What kind of food do you like?',ro:'Ce fel de mâncare îți place?',tag_ro:'Preferințe',tag_en:'Prefs',mem:'좋아해요 = îți place',exp:'<em>을</em> = particulă obiect. <em>좋아해요</em> = a plăcea'},
+    {ko:'어떤 색깔이에요?',rom:'eo-tteon saek-kkal-i-e-yo',en:'What color is it exactly?',ro:'Ce culoare este exact?',tag_ro:'Culori',tag_en:'Colors',mem:'Focus pe alegere specifică vs 무슨',exp:'어떤 = mai specific decât 무슨 pentru culori'},
+    {ko:'어떤 선생님이에요?',rom:'eo-tteon seon-saeng-nim-i-e-yo',en:'What kind of teacher is it?',ro:'Ce fel de profesor este?',tag_ro:'Caracter',tag_en:'Character',mem:'선생님 → cons. ㅁ → 이에요',exp:'Întreabă despre caracterul profesorului'},
+    {ko:'어떤 나라예요?',rom:'eo-tteon na-ra-ye-yo',en:'What kind of country is it?',ro:'Ce fel de țară este?',tag_ro:'Geografie',tag_en:'Geography',mem:'나라 → vocală → 예요',exp:'<em>나라</em> = țară. Termină în vocală'},
+    {ko:'어떤 영화예요?',rom:'eo-tteon yeong-hwa-ye-yo',en:'What kind of movie is it?',ro:'Ce fel de film este?',tag_ro:'Divertisment',tag_en:'Entertain',mem:'영화 → vocală → 예요',exp:'어떤 = gen, calitate, ton al filmului'},
+    {ko:'어떤 학생이에요?',rom:'eo-tteon hak-saeng-i-e-yo',en:'What kind of student is it?',ro:'Ce fel de student este?',tag_ro:'Educație',tag_en:'Education',mem:'학생 → cons. ㅇ → 이에요',exp:'Întreabă despre caracter, nu identitate'},
+    {ko:'어떤 책이에요?',rom:'eo-tteon chaek-i-e-yo',en:'What kind of book is it?',ro:'Ce fel de carte este?',tag_ro:'Lectură',tag_en:'Reading',mem:'책 → cons. ㄱ → 이에요',exp:'어떤 carte = gen literar, stil, nivel'},
+    {ko:'어떤 음악이에요?',rom:'eo-tteon eum-ag-i-e-yo',en:'What kind of music is it?',ro:'Ce fel de muzică este?',tag_ro:'Muzică',tag_en:'Music',mem:'음악 → cons. ㄱ → 이에요',exp:'어떤 vs 무슨: 어떤 = calitate; 무슨 = gen'},
+    {ko:'어떤 가방이에요?',rom:'eo-tteon ga-bang-i-e-yo',en:'What kind of bag is it?',ro:'Ce fel de geantă este?',tag_ro:'Modă',tag_en:'Fashion',mem:'가방 → cons. ㅇ → 이에요',exp:'<em>가방</em> = geantă/rucsac. Consoană ㅇ'}
+   ]},
+  {id:'010',short:'혹시?',ko:'혹시 N이에요?',rom:'hok-si N-i-e-yo?',en:'By any chance, is it N?',ro:'Cumva, este N?',titleRo:'Întrebare cu Incertitudine',titleEn:'Uncertain Question',topik:'TOPIK I · Nivel 2 · Nuanțe sociale',
+   gramTiles:[{ko:'혹시',type:'part',lbl_ro:'Adverb\ncumva/poate',lbl_en:'Adverb\nby any chance'},{ko:'[N]',type:'noun',lbl_ro:'Substantiv',lbl_en:'Noun'},{ko:'이에요?',type:'end',lbl_ro:'Copulă\n(politicos)',lbl_en:'Copula\n(polite)'}],
+   note_ro:'혹시 adaugă politețe — arată că nu ești sigur de răspuns',note_en:"혹시 adds politeness — shows you're unsure of the answer",
+   tutorRo:'<b style="color:var(--cyan)">혹시</b> = „cumva" sau „prin vreo șansă". Face întrebarea mai politicoasă și arată incertitudine. Perfect pentru a aborda necunoscuți!',
+   tutorEn:'<b style="color:var(--cyan)">혹시</b> = "by any chance" or "perhaps". Makes the question more polite and shows uncertainty. Perfect for approaching strangers!',
+   chalKo:'혹시 학생이에요?',
+   crSpeech:{ko:'혹시 한국 사람이에요?',tr_ro:'Cumva, ești coreean?',tr_en:'Are you Korean, by any chance?',tip_ro:'혹시 face întrebarea mai soft — ca un „scuzați că întreb" implicit!',tip_en:"혹시 softens the question — like an implicit 'sorry to ask' qualifier!"},
+   cards:[
+    {ko:'혹시 김민수 씨예요?',rom:'hok-si gim-min-su ssi-ye-yo',en:'Are you Mr. Kim Minsu, by any chance?',ro:'Cumva, ești domnul Kim Minsu?',tag_ro:'Confirmare',tag_en:'Confirm',mem:'씨 = titlu politicos. Vocală → 예요',exp:'<em>씨</em> = dl./dna. Urmează prenumele'},
+    {ko:'혹시 학생이에요?',rom:'hok-si hak-saeng-i-e-yo',en:'Are you a student, by any chance?',ro:'Cumva, ești student?',tag_ro:'Identitate',tag_en:'Identity',mem:'학생 → cons. → 이에요',exp:'Abordare politicoasă a unui necunoscut'},
+    {ko:'혹시 한국 사람이에요?',rom:'hok-si han-guk sa-ram-i-e-yo',en:'Are you Korean, by any chance?',ro:'Cumva, ești coreean?',tag_ro:'Naționalitate',tag_en:'Nationality',mem:'사람 → cons. ㅁ → 이에요',exp:'Frază la întâlnirea cu necunoscuți'},
+    {ko:'혹시 의사예요?',rom:'hok-si ui-sa-ye-yo',en:'Are you a doctor, by any chance?',ro:'Cumva, ești medic?',tag_ro:'Profesii',tag_en:'Jobs',mem:'의사 → vocală → 예요',exp:'<em>의사</em> termină în 아 (vocală) → <em>예요</em>'},
+    {ko:'혹시 선생님이에요?',rom:'hok-si seon-saeng-nim-i-e-yo',en:'Are you a teacher, by any chance?',ro:'Cumva, ești profesor?',tag_ro:'Profesii',tag_en:'Jobs',mem:'선생님 → cons. ㅁ → 이에요',exp:'Întrebare politicoasă pentru cadru didactic'},
+    {ko:'혹시 친구예요?',rom:'hok-si chin-gu-ye-yo',en:'Are you a friend, by any chance?',ro:'Cumva, ești prieten?',tag_ro:'Relații',tag_en:'Relations',mem:'친구 → vocală → 예요',exp:'Uzual când recunoști pe cineva vag'},
+    {ko:'혹시 전화번호가 있어요?',rom:'hok-si jeon-hwa-beon-ho-ga i-sseo-yo',en:'Do you have a phone number, by any chance?',ro:'Cumva, ai număr de telefon?',tag_ro:'Contact',tag_en:'Contact',mem:'전화번호 = nr. telefon. Cu 있어요',exp:'<em>전화번호</em> = număr de telefon'},
+    {ko:'혹시 이것이 맞아요?',rom:'hok-si i-geo-si maj-a-yo',en:'Is this correct, by any chance?',ro:'Cumva, este asta corect?',tag_ro:'Verificare',tag_en:'Check',mem:'맞아요 = este corect',exp:'<em>맞아요</em> = este corect/se potrivește'},
+    {ko:'혹시 영어 할 수 있어요?',rom:'hok-si yeong-eo hal su i-sseo-yo',en:'Can you speak English, by any chance?',ro:'Cumva, poți vorbi engleză?',tag_ro:'Limbă',tag_en:'Language',mem:'할 수 있어요 = poți face ceva',exp:'<em>할 수 있어요</em> = poți / ești capabil'},
+    {ko:'혹시 시간이 있어요?',rom:'hok-si si-gan-i i-sseo-yo',en:'Do you have time, by any chance?',ro:'Cumva, ai timp?',tag_ro:'Timp',tag_en:'Time',mem:'시간 → cons. → 이. Cu 있어요',exp:'Frază politicoasă pentru a cere timp'}
+   ]},
+  {id:'011',short:'에 가요',ko:'N에 가요',rom:'N-e ga-yo',en:'I go to N',ro:'Mă duc la N',titleRo:'Mișcare și Destinație',titleEn:'Movement & Destination',topik:'TOPIK I · Nivel 1 · Mișcare',
+   gramTiles:[{ko:'[N]',type:'noun',lbl_ro:'Destinație\n(loc)',lbl_en:'Destination\n(place)'},{ko:'에',type:'part',lbl_ro:'Particulă locativă\nspre/la',lbl_en:'Location particle\nto/toward'},{ko:'가요',type:'end',lbl_ro:'A merge\n(prezent pol.)',lbl_en:'To go\n(polite pres.)'}],
+   note_ro:'에 = destinație (unde mergi). 에서 = loc unde faci ceva',note_en:'에 = destination (where you go). 에서 = place where you do something',
+   tutorRo:'<b style="color:var(--cyan)">에 가요</b> = cel mai simplu mod de a exprima mișcarea. Particula <b style="color:var(--purple)">에</b> = destinație, <b style="color:var(--green)">가요</b> = forma politicoasă a verbului „a merge". Apare în orice conversație!',
+   tutorEn:'<b style="color:var(--cyan)">에 가요</b> = the simplest way to express movement. Particle <b style="color:var(--purple)">에</b> = destination, <b style="color:var(--green)">가요</b> = polite form of "to go". Appears in any conversation!',
+   chalKo:'학교에 가요.',
+   crSpeech:{ko:'학교에 가요!',tr_ro:'Mă duc la școală!',tr_en:'I go to school!',tip_ro:'에 가요 = destinație. 에서 공부해요 = studiez acolo. Particulele fac diferența!',tip_en:'에 가요 = destination. 에서 공부해요 = study there. Particles make the difference!'},
+   cards:[
+    {ko:'학교에 가요.',rom:'hak-kyo-e ga-yo',en:'I go to school.',ro:'Mă duc la școală.',tag_ro:'Educație',tag_en:'Education',mem:'학교 = școală. Cel mai comun exemplu!',exp:'<em>학교</em> = școală. <em>에</em> = la/spre (destinație)'},
+    {ko:'병원에 가요.',rom:'byeong-won-e ga-yo',en:'I go to the hospital.',ro:'Mă duc la spital.',tag_ro:'Sănătate',tag_en:'Health',mem:'병원 = spital',exp:'<em>병원</em> = spital/clinică. Esențial!'},
+    {ko:'카페에 가요.',rom:'ka-pe-e ga-yo',en:'I go to the cafe.',ro:'Mă duc la cafenea.',tag_ro:'Cafenea',tag_en:'Cafe',mem:'카페 = cafenea (din franceză)',exp:'<em>카페</em> = cafenea. Loanword'},
+    {ko:'공원에 가요.',rom:'gong-won-e ga-yo',en:'I go to the park.',ro:'Mă duc în parc.',tag_ro:'Natură',tag_en:'Nature',mem:'공원 = parc public',exp:'<em>공원</em> = parc'},
+    {ko:'슈퍼마켓에 가요.',rom:'syu-peo-ma-ket-e ga-yo',en:'I go to the supermarket.',ro:'Mă duc la supermarket.',tag_ro:'Cumpărături',tag_en:'Shopping',mem:'슈퍼마켓 = supermarket (din engleză)',exp:'<em>슈퍼마켓</em> loanword. Important!'},
+    {ko:'도서관에 가요.',rom:'do-seo-gwan-e ga-yo',en:'I go to the library.',ro:'Mă duc la bibliotecă.',tag_ro:'Educație',tag_en:'Education',mem:'도서관 = bibliotecă',exp:'도서(cărți)+관(sală) = bibliotecă'},
+    {ko:'집에 가요.',rom:'jib-e ga-yo',en:'I go home.',ro:'Mă duc acasă.',tag_ro:'Casă',tag_en:'Home',mem:'집 = casă. Cea mai scurtă formă!',exp:'<em>집</em> = casă. 집+에 → pronunție 지베'},
+    {ko:'회사에 가요.',rom:'hoe-sa-e ga-yo',en:'I go to work.',ro:'Mă duc la muncă.',tag_ro:'Muncă',tag_en:'Work',mem:'회사 = companie/firmă',exp:'<em>회사</em> = companie. Mă duc la birou'},
+    {ko:'은행에 가요.',rom:'eun-haeng-e ga-yo',en:'I go to the bank.',ro:'Mă duc la bancă.',tag_ro:'Finanțe',tag_en:'Finance',mem:'은행 = bancă',exp:'<em>은행</em> = bancă (instituție)'},
+    {ko:'한국에 가요.',rom:'han-guk-e ga-yo',en:'I go to Korea.',ro:'Mă duc în Coreea.',tag_ro:'Călătorii',tag_en:'Travel',mem:'한국 = Coreea. Visul oricărui student!',exp:'<em>한국</em> = Coreea de Sud. Destinația ta!'}
+   ]}
+];
+
+// ── UI STRINGS ────────────────────────────────────────────────
+const UI={
   ro:{
-    hdTitle:'Întrebări de bază',
-    lblPattern:'Tipar Principal', lblExamples:'10 Exemple Neurale',
-    lblMastery:'Neural Mastery', lblSkills:'Skill Tree · Progres',
-    lblPractice:'Practice Zone', lblBonus:'Personaj Holografic',
-    crEn:'What is it?', crRo:'Ce este?',
-    g1:'Pronume\nce/ce anume', g2:'Particulă\nsubiect', g3:'Verb copulă\n(politicos)',
-    speakLbl:'Ascultă', chalLbl:'Pronunță: 무엇이에요?',
-    pracTtl:'Pronunciation Challenge',
-    prl1:'Ton', prl2:'Ritm', prl3:'Claritate',
-    mn1:'Recunoaștere', mn2:'Ascultare', mn2l:'Activ',
-    mn3:'Pronunție', mn3l:'În curs', mn4:'Scriere', mn4l:'Blocat',
-    mn5:'Conversație', mn5l:'Blocat', mn6:'Gramatică',
-    tutorMsg:`<b style="color:var(--cyan)">무엇</b> este pronumele interogativ pentru „ce".
-      Combinat cu <b style="color:var(--purple)">이에요</b>, obții o întrebare
-      politicoasă. Acest tipar apare în peste 200 de situații TOPIK!`,
-    cards:[
-      {ko:'이것이 무엇이에요?',rom:'i-geot-i mu-eot-i-e-yo',en:'What is this?',tr:'Ce este acesta?',tag:'Obiecte',mem:'Arată spre ceva aproape',exp:'<em>이것</em> = acest lucru (lângă tine)'},
-      {ko:'저것이 무엇이에요?',rom:'jeo-geot-i mu-eot-i-e-yo',en:'What is that?',tr:'Ce este acela?',tag:'Distanță',mem:'Arată spre ceva departe',exp:'<em>저것</em> = acel lucru (departe)'},
-      {ko:'이름이 무엇이에요?',rom:'i-reum-i mu-eot-i-e-yo',en:'What is your name?',tr:'Care este numele tău?',tag:'Introducere',mem:'Prima frază de prezentat',exp:'<em>이름</em> = nume'},
-      {ko:'직업이 무엇이에요?',rom:'ji-geob-i mu-eot-i-e-yo',en:'What is your job?',tr:'Care este meseria ta?',tag:'Job',mem:'Întreabă la interviu',exp:'<em>직업</em> = meserie/profesie'},
-      {ko:'색깔이 무엇이에요?',rom:'saek-kkal-i mu-eot-i-e-yo',en:'What color is it?',tr:'Ce culoare este?',tag:'Culori',mem:'Vizualizează o paletă de culori',exp:'<em>색깔</em> = culoare'},
-      {ko:'문제가 무엇이에요?',rom:'mun-je-ga mu-eot-i-e-yo',en:'What is the problem?',tr:'Care este problema?',tag:'Situații',mem:'Când ceva nu merge bine',exp:'<em>문제</em> = problemă. <em>가</em> după vocală'},
-      {ko:'차이가 무엇이에요?',rom:'cha-i-ga mu-eot-i-e-yo',en:'What is the difference?',tr:'Care este diferența?',tag:'Comparație',mem:'Compară două lucruri',exp:'<em>차이</em> = diferență'},
-      {ko:'의미가 무엇이에요?',rom:'ui-mi-ga mu-eot-i-e-yo',en:'What is the meaning?',tr:'Care este sensul?',tag:'Vocabular',mem:'Întreabă despre un cuvânt',exp:'<em>의미</em> = sens/semnificație'},
-      {ko:'가격이 무엇이에요?',rom:'ga-gyeog-i mu-eot-i-e-yo',en:'What is the price?',tr:'Care este prețul?',tag:'Cumpărături',mem:'Întreabă la magazin',exp:'<em>가격</em> = preț'},
-      {ko:'꿈이 무엇이에요?',rom:'kkum-i mu-eot-i-e-yo',en:'What is your dream?',tr:'Care este visul tău?',tag:'Inspirație',mem:'O întrebare de suflet',exp:'<em>꿈</em> = vis/aspirație'},
-    ],
+    lblPattern:'Tipar Principal',lblExamples:'10 Exemple Neurale',
+    lblMastery:'Neural Mastery',lblPractice:'Practice Zone',lblBonus:'Personaj Holografic',
+    speakLbl:'Ascultă',pracTtl:'Pronunciation Challenge',
+    prl1:'Ton',prl2:'Ritm',prl3:'Claritate',
+    mn1:'Recunoaștere',mn2:'Ascultare',mn2l:'Activ',
+    mn3:'Pronunție',mn3l:'În curs',mn4:'Scriere',mn4l:'Blocat',
+    mn5:'Conversație',mn5l:'Blocat',mn6:'Gramatică',
     emotions:{
-      happy:{ko:'잘 했어요!',tr:'Ai făcut bine!',tip:'😊 Ești pe drumul cel bun! Continuă!'},
-      excited:{ko:'대박이에요!',tr:'E incredibil!',tip:'🤩 Progresul tău e UIMITOR! Continuă!'},
-      think:{ko:'생각해요...',tr:'Mă gândesc...',tip:'🤔 Gândește-te la 무엇 + 이에요 ca la o formulă magică!'},
-      love:{ko:'사랑해요!',tr:'Te iubesc!',tip:'🥰 Îmi place mult că înveți coreana! 화이팅!'},
-      cool:{ko:'멋있어요!',tr:'Ești cool!',tip:'😎 Tu ești cel mai cool student de coreeană!'},
+      happy:{ko:'잘 했어요!',tr:'Ai făcut bine!',tip:'Ești pe drumul cel bun! Continuă!'},
+      excited:{ko:'대박이에요!',tr:'E incredibil!',tip:'Progresul tău e UIMITOR! 화이팅!'},
+      think:{ko:'생각해요...',tr:'Mă gândesc...',tip:'Gândește-te la tipar ca la o formulă magică!'},
+      love:{ko:'사랑해요!',tr:'Te iubesc!',tip:'Îmi place că înveți coreana! 화이팅!'},
+      cool:{ko:'멋있어요!',tr:'Ești cool!',tip:'Ești cel mai cool student de coreeană!'},
     },
-    aiFeedback:[
-      'Ton excelent! Silaba <b style="color:var(--cyan)">에요</b> e pronunțată corect. Încearcă să alungești puțin <b style="color:var(--purple)">무엇</b>.',
-      'Ritm bun! Accentul cade natural. Lucrează la claritatea finalului <b style="color:var(--cyan)">요</b>.',
-      'Pronunție solidă! Sunetul <b style="color:var(--purple)">이</b> e perfect. Continuă să exersezi!',
-    ],
-    badgeLabel:'Realizare deblocată', badgeName:'Prima Pronunție 🌟',
-    xpMsg:'+15 XP',
+    aiFeedback:['Ton excelent! Pronunția e clară. Încearcă să alungești puțin ultima silabă.','Ritm bun! Accentul cade natural. Lucrează la claritate.','Pronunție solidă! Continuă să exersezi!'],
+    badgeLabel:'Realizare deblocată',badgeName:'Prima Pronunție 🌟',xpMsg:'+15 XP',
   },
   en:{
-    hdTitle:'Basic Questions',
-    lblPattern:'Main Pattern', lblExamples:'10 Neural Examples',
-    lblMastery:'Neural Mastery', lblSkills:'Skill Tree · Progress',
-    lblPractice:'Practice Zone', lblBonus:'Holographic Character',
-    crEn:'What is it?', crRo:'Ce este?',
-    g1:'Pronoun\nwhat/what thing', g2:'Subject\nparticle', g3:'Copula verb\n(polite)',
-    speakLbl:'Listen', chalLbl:'Speak: 무엇이에요?',
-    pracTtl:'Pronunciation Challenge',
-    prl1:'Tone', prl2:'Rhythm', prl3:'Clarity',
-    mn1:'Recognition', mn2:'Listening', mn2l:'Active',
-    mn3:'Pronunciation', mn3l:'In progress', mn4:'Writing', mn4l:'Locked',
-    mn5:'Conversation', mn5l:'Locked', mn6:'Grammar',
-    tutorMsg:`<b style="color:var(--cyan)">무엇</b> is the interrogative pronoun for "what".
-      Combined with <b style="color:var(--purple)">이에요</b>, you form a polite question.
-      This pattern appears in over 200 TOPIK situations!`,
-    cards:[
-      {ko:'이것이 무엇이에요?',rom:'i-geot-i mu-eot-i-e-yo',en:'What is this?',tr:'Ce este acesta?',tag:'Objects',mem:'Point to something nearby',exp:'<em>이것</em> = this thing (near you)'},
-      {ko:'저것이 무엇이에요?',rom:'jeo-geot-i mu-eot-i-e-yo',en:'What is that?',tr:'Ce este acela?',tag:'Distance',mem:'Point to something far',exp:'<em>저것</em> = that thing (far away)'},
-      {ko:'이름이 무엇이에요?',rom:'i-reum-i mu-eot-i-e-yo',en:'What is your name?',tr:'Care este numele tău?',tag:'Intro',mem:'First phrase to introduce yourself',exp:'<em>이름</em> = name'},
-      {ko:'직업이 무엇이에요?',rom:'ji-geob-i mu-eot-i-e-yo',en:'What is your job?',tr:'Care este meseria ta?',tag:'Job',mem:'Ask at an interview',exp:'<em>직업</em> = job/profession'},
-      {ko:'색깔이 무엇이에요?',rom:'saek-kkal-i mu-eot-i-e-yo',en:'What color is it?',tr:'Ce culoare este?',tag:'Colors',mem:'Visualize a color palette',exp:'<em>색깔</em> = color'},
-      {ko:'문제가 무엇이에요?',rom:'mun-je-ga mu-eot-i-e-yo',en:'What is the problem?',tr:'Care este problema?',tag:'Situations',mem:'When something goes wrong',exp:'<em>문제</em> = problem. <em>가</em> after vowel'},
-      {ko:'차이가 무엇이에요?',rom:'cha-i-ga mu-eot-i-e-yo',en:'What is the difference?',tr:'Care este diferența?',tag:'Compare',mem:'Compare two things',exp:'<em>차이</em> = difference'},
-      {ko:'의미가 무엇이에요?',rom:'ui-mi-ga mu-eot-i-e-yo',en:'What is the meaning?',tr:'Care este sensul?',tag:'Vocabulary',mem:'Ask about a word meaning',exp:'<em>의미</em> = meaning/significance'},
-      {ko:'가격이 무엇이에요?',rom:'ga-gyeog-i mu-eot-i-e-yo',en:'What is the price?',tr:'Care este prețul?',tag:'Shopping',mem:'Ask at a store',exp:'<em>가격</em> = price'},
-      {ko:'꿈이 무엇이에요?',rom:'kkum-i mu-eot-i-e-yo',en:'What is your dream?',tr:'Care este visul tău?',tag:'Inspiration',mem:'A heartfelt question',exp:'<em>꿈</em> = dream/aspiration'},
-    ],
+    lblPattern:'Main Pattern',lblExamples:'10 Neural Examples',
+    lblMastery:'Neural Mastery',lblPractice:'Practice Zone',lblBonus:'Holographic Character',
+    speakLbl:'Listen',pracTtl:'Pronunciation Challenge',
+    prl1:'Tone',prl2:'Rhythm',prl3:'Clarity',
+    mn1:'Recognition',mn2:'Listening',mn2l:'Active',
+    mn3:'Pronunciation',mn3l:'In progress',mn4:'Writing',mn4l:'Locked',
+    mn5:'Conversation',mn5l:'Locked',mn6:'Grammar',
     emotions:{
-      happy:{ko:'잘 했어요!',tr:'Well done!',tip:'😊 You\'re on the right track! Keep going!'},
-      excited:{ko:'대박이에요!',tr:'That\'s amazing!',tip:'🤩 Your progress is STUNNING! Continue!'},
-      think:{ko:'생각해요...',tr:'I\'m thinking...',tip:'🤔 Think of 무엇 + 이에요 as a magic formula!'},
-      love:{ko:'사랑해요!',tr:'I love you!',tip:'🥰 I love that you\'re learning Korean! 화이팅!'},
-      cool:{ko:'멋있어요!',tr:'You\'re cool!',tip:'😎 You are the coolest Korean student!'},
+      happy:{ko:'잘 했어요!',tr:'Well done!',tip:"You're on the right track! Keep going!"},
+      excited:{ko:'대박이에요!',tr:"That's amazing!",tip:'Your progress is STUNNING! 화이팅!'},
+      think:{ko:'생각해요...',tr:"I'm thinking...",tip:'Think of the pattern as a magic formula!'},
+      love:{ko:'사랑해요!',tr:'I love you!',tip:"I love that you're learning Korean! 화이팅!"},
+      cool:{ko:'멋있어요!',tr:"You're cool!",tip:'You are the coolest Korean student!'},
     },
-    aiFeedback:[
-      'Excellent tone! The syllable <b style="color:var(--cyan)">에요</b> is pronounced correctly. Try to lengthen <b style="color:var(--purple)">무엇</b> slightly.',
-      'Good rhythm! The accent falls naturally. Work on the clarity of the ending <b style="color:var(--cyan)">요</b>.',
-      'Solid pronunciation! The sound <b style="color:var(--purple)">이</b> is perfect. Keep practicing!',
-    ],
-    badgeLabel:'Achievement unlocked', badgeName:'First Pronunciation 🌟',
-    xpMsg:'+15 XP',
+    aiFeedback:['Excellent tone! Clear pronunciation. Try to lengthen the last syllable.','Good rhythm! The accent falls naturally. Work on clarity.','Solid pronunciation! Keep practicing!'],
+    badgeLabel:'Achievement unlocked',badgeName:'First Pronunciation 🌟',xpMsg:'+15 XP',
   }
 };
 
-function setLang(l){
-  lang=l;
-  localStorage.setItem('RK_LANG',lang);
-  document.getElementById('btnRo').classList.toggle('active',l==='ro');
-  document.getElementById('btnEn').classList.toggle('active',l==='en');
-  applyLang();
+// ── PICKER ────────────────────────────────────────────────────
+function buildPicker(){
+  const picker=document.getElementById('lessonPicker');
+  LESSONS.forEach((L,i)=>{
+    const pill=document.createElement('div');
+    pill.className='nl-lesson-pill'+(i===curLesson?' active':'');
+    pill.innerHTML=`<div class="nl-lp-num">P${L.id}</div><div class="nl-lp-ko">${L.short}</div>`;
+    pill.onclick=()=>renderLesson(i,true);
+    picker.appendChild(pill);
+  });
 }
 
-function applyLang(){
-  const t=T[lang];
-  const ids=['hdTitle','lblPattern','lblExamples','lblMastery','lblSkills',
-    'lblPractice','lblBonus','crEn','crRo','speakLbl','chalLbl','pracTtl',
-    'prl1','prl2','prl3',
-    'mn1','mn2','mn2l','mn3','mn3l','mn4','mn4l','mn5','mn5l','mn6'];
-  ids.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el && t[id]!==undefined) el.textContent=t[id];
+// ── GRAM TILES ────────────────────────────────────────────────
+function buildGramTiles(tiles,isRo){
+  const row=document.getElementById('gramRow');
+  row.innerHTML='';
+  tiles.forEach((t,i)=>{
+    if(i>0){const p=document.createElement('div');p.className='nl-gram-plus';p.textContent='+';row.appendChild(p);}
+    const tile=document.createElement('div');
+    tile.className='nl-gram-tile';
+    tile.innerHTML=`<div class="nl-gram-ko ${t.type}">${t.ko}</div><div class="nl-gram-lbl">${(isRo?t.lbl_ro:t.lbl_en).replace('\n','<br>')}</div>`;
+    row.appendChild(tile);
   });
-  // Grammar labels
-  ['g1lbl','g2lbl','g3lbl'].forEach((id,i)=>{
-    const el=document.getElementById(id);
-    if(el) el.innerHTML=t['g'+(i+1)+'lbl']||t['g'+(i+1)];
-  });
-  // Grammar labels by position
-  const gLabels=document.querySelectorAll('.nl-gram-lbl');
-  const gKeys=['g1','g2','g3'];
-  gLabels.forEach((el,i)=>{ if(t[gKeys[i]]) el.innerHTML=t[gKeys[i]].replace('\n','<br>') });
-  document.getElementById('tutorMsg').innerHTML=t.tutorMsg;
-  buildCards();
+}
+
+// ── RENDER LESSON ─────────────────────────────────────────────
+function renderLesson(idx,doScroll){
+  curLesson=idx;
+  const L=LESSONS[idx],isRo=lang==='ro';
+  document.querySelectorAll('.nl-lesson-pill').forEach((p,i)=>p.classList.toggle('active',i===idx));
+  document.querySelectorAll('.nl-lesson-pill')[idx]?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  document.getElementById('hdTitle').textContent=isRo?L.titleRo:L.titleEn;
+  document.getElementById('crTopik').textContent=L.topik;
+  document.getElementById('crKo').textContent=L.ko;
+  document.getElementById('crRom').textContent=L.rom;
+  document.getElementById('crEn').textContent=L.en;
+  document.getElementById('crRo').textContent=L.ro;
+  buildGramTiles(L.gramTiles,isRo);
+  document.getElementById('gramNote').innerHTML=isRo?(L.note_ro||''):(L.note_en||'');
+  document.getElementById('speakLbl').textContent=UI[lang].speakLbl;
+  document.getElementById('tutorMsg').innerHTML=isRo?L.tutorRo:L.tutorEn;
+  document.getElementById('chalLbl').textContent=(isRo?'Pronunță: ':'Speak: ')+L.ko;
+  buildCards(L.cards);
+  const cs=L.crSpeech;
+  document.getElementById('csKo').textContent=cs.ko;
+  document.getElementById('csTr').textContent=isRo?cs.tr_ro:cs.tr_en;
+  document.getElementById('csTip').innerHTML='💡 '+(isRo?cs.tip_ro:cs.tip_en);
+  document.querySelectorAll('.nl-emo').forEach(b=>b.classList.toggle('on',b.dataset.emo==='happy'));
+  const hm=document.getElementById('mouthPath');
+  if(hm)hm.setAttribute('d','M 55 62 Q 65 71 75 62');
+  ['pupL','pupR'].forEach(id=>{const el=document.getElementById(id);if(el)el.setAttribute('fill','#00e5ff');});
+  chalActive=false;chalDone=false;
+  document.getElementById('chalBtn').classList.remove('listening');
+  document.getElementById('pronOrb').classList.remove('show');
+  document.getElementById('aiFb').classList.remove('show');
+  if(doScroll)window.scrollTo({top:0,behavior:'smooth'});
 }
 
 // ── CARDS ─────────────────────────────────────────────────────
-function buildCards(){
-  const track=document.getElementById('cardsTrack');
-  const dots=document.getElementById('cardsDots');
-  track.innerHTML=''; dots.innerHTML='';
-  const cards=T[lang].cards;
+function buildCards(cards){
+  const track=document.getElementById('cardsTrack'),dots=document.getElementById('cardsDots');
+  track.innerHTML='';dots.innerHTML='';track.onscroll=null;
   cards.forEach((d,i)=>{
-    const c=document.createElement('div');
-    c.className='nl-card';
-    c.innerHTML=`
-      <div class="nl-card-top">
-        <span class="nl-card-num">예문 ${String(i+1).padStart(2,'0')}</span>
-        <span class="nl-card-tag">${d.tag}</span>
-      </div>
-      <div class="nl-card-ko">${d.ko}</div>
-      <div class="nl-card-rom">${d.rom}</div>
-      <div class="nl-card-en">${d.en}</div>
-      <div class="nl-card-ro">${d.tr}</div>
-      <div class="nl-card-div"></div>
-      <div class="nl-card-explain">${d.exp}</div>
-      <div class="nl-card-actions">
-        <div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div>
-        <div class="nl-card-mem">💭 ${d.mem}</div>
-      </div>`;
+    const c=document.createElement('div');c.className='nl-card';
+    const tag=lang==='ro'?d.tag_ro:d.tag_en;
+    c.innerHTML=`<div class="nl-card-top"><span class="nl-card-num">예문 ${String(i+1).padStart(2,'0')}</span><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div><div class="nl-card-en">${d.en}</div><div class="nl-card-ro">${d.ro}</div><div class="nl-card-div"></div><div class="nl-card-explain">${d.exp}</div><div class="nl-card-actions"><div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div><div class="nl-card-mem">💭 ${d.mem}</div></div>`;
     track.appendChild(c);
-    const dot=document.createElement('div');
-    dot.className='nl-dot'+(i===0?' on':'');
-    dots.appendChild(dot);
+    const dot=document.createElement('div');dot.className='nl-dot'+(i===0?' on':'');dots.appendChild(dot);
   });
-  track.addEventListener('scroll',onCardScroll,{passive:true});
+  track.onscroll=onCardScroll;
 }
-
 function onCardScroll(){
   const t=document.getElementById('cardsTrack');
   const idx=Math.round(t.scrollLeft/(262+13));
   document.querySelectorAll('.nl-dot').forEach((d,i)=>d.classList.toggle('on',i===idx));
 }
 
-// ── SPEECH ────────────────────────────────────────────────────
-function speak(txt){
-  if(!window.speechSynthesis)return;
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(txt);
-  u.lang='ko-KR'; u.rate=0.82; u.pitch=1;
-  speechSynthesis.speak(u);
+// ── LANGUAGE ──────────────────────────────────────────────────
+function setLang(l){lang=l;localStorage.setItem('RK_LANG',lang);document.getElementById('btnRo').classList.toggle('active',l==='ro');document.getElementById('btnEn').classList.toggle('active',l==='en');applyLang();}
+function applyLang(){
+  const u=UI[lang];
+  ['lblPattern','lblExamples','lblMastery','lblPractice','lblBonus','speakLbl','pracTtl',
+   'prl1','prl2','prl3','mn1','mn2','mn2l','mn3','mn3l','mn4','mn4l','mn5','mn5l','mn6'].forEach(id=>{
+    const el=document.getElementById(id);if(el&&u[id]!==undefined)el.textContent=u[id];
+  });
+  renderLesson(curLesson);
 }
 
-function speakPattern(){
-  const btn=document.getElementById('speakBtn');
-  btn.classList.add('speaking');
-  speak('무엇이에요');
-  setTimeout(()=>btn.classList.remove('speaking'),2200);
-}
+// ── SPEECH ────────────────────────────────────────────────────
+function speak(txt){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='ko-KR';u.rate=0.82;u.pitch=1;speechSynthesis.speak(u);}
+function speakPattern(){const btn=document.getElementById('speakBtn');btn.classList.add('speaking');speak(LESSONS[curLesson].chalKo);setTimeout(()=>btn.classList.remove('speaking'),2500);}
+function toggleOrb(){document.getElementById('pronOrb').classList.toggle('show');}
 
 // ── PRONUNCIATION ─────────────────────────────────────────────
-let chalActive=false, chalDone=false;
-
-function toggleOrb(){
-  const orb=document.getElementById('pronOrb');
-  orb.classList.toggle('show');
-}
-
 function startChallenge(){
-  if(chalActive)return;
-  chalActive=true;
+  if(chalActive)return;chalActive=true;
   const btn=document.getElementById('chalBtn');
   btn.classList.add('listening');
   btn.querySelector('#chalLbl').textContent='🔴 '+(lang==='ro'?'Ascultând...':'Listening...');
-  const orb=document.getElementById('pronOrb');
-  orb.classList.add('show');
-  speak('무엇이에요');
-  setTimeout(simulateScore, 2600);
+  document.getElementById('pronOrb').classList.add('show');
+  speak(LESSONS[curLesson].chalKo);
+  setTimeout(simulateScore,2600);
 }
-
 function simulateScore(){
-  const tone=Math.floor(Math.random()*18+74);
-  const rhythm=Math.floor(Math.random()*16+76);
-  const clarity=Math.floor(Math.random()*20+72);
+  const tone=Math.floor(Math.random()*18+74),rhythm=Math.floor(Math.random()*16+76),clarity=Math.floor(Math.random()*20+72);
   const overall=Math.round((tone+rhythm+clarity)/3);
-
   document.getElementById('pronNum').textContent=overall+'%';
+  setTimeout(()=>{setBar('barTone','pctTone',tone);setBar('barRhythm','pctRhythm',rhythm);setBar('barClarity','pctClarity',clarity);},150);
+  const msgs=UI[lang].aiFeedback;
   setTimeout(()=>{
-    setBar('barTone','pctTone',tone);
-    setBar('barRhythm','pctRhythm',rhythm);
-    setBar('barClarity','pctClarity',clarity);
-  },150);
-
-  const msgs=T[lang].aiFeedback;
-  setTimeout(()=>{
-    const fb=document.getElementById('aiFb');
-    fb.classList.add('show');
+    document.getElementById('aiFb').classList.add('show');
     document.getElementById('aiFbTxt').innerHTML=msgs[Math.floor(Math.random()*msgs.length)];
     chalActive=false;
-    const btn=document.getElementById('chalBtn');
-    btn.classList.remove('listening');
+    const btn=document.getElementById('chalBtn');btn.classList.remove('listening');
     btn.querySelector('#chalLbl').textContent=lang==='ro'?'🎤 Pronunță din nou':'🎤 Pronounce again';
-    if(!chalDone){ chalDone=true; showToast(T[lang].xpMsg); bumpXP(15); showBadge(); updateQuest(); }
+    if(!chalDone){chalDone=true;showToast(UI[lang].xpMsg);bumpXP(15);showBadge();updateQuest();}
   },900);
 }
-
-function setBar(fillId,pctId,val){
-  document.getElementById(fillId).style.width=val+'%';
-  document.getElementById(pctId).textContent=val+'%';
-}
+function setBar(fid,pid,v){document.getElementById(fid).style.width=v+'%';document.getElementById(pid).textContent=v+'%';}
 
 // ── TOAST & BADGE ─────────────────────────────────────────────
-function showToast(txt){
-  const el=document.getElementById('nlToast');
-  el.textContent=txt;
-  el.classList.remove('show');
-  void el.offsetWidth;
-  el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),2000);
-}
-
-function showBadge(){
-  const bp=document.getElementById('badgePopup');
-  document.getElementById('badgeIco').textContent='🌟';
-  document.getElementById('badgeName').textContent=T[lang].badgeName;
-  bp.classList.add('show');
-  setTimeout(()=>bp.classList.remove('show'),3800);
-}
-
-function bumpXP(n){
-  const el=document.getElementById('xpNum');
-  const cur=parseInt(el.textContent)||847;
-  animNum(el,cur,cur+n,700);
-  // Update ring slightly
-  const ring=document.getElementById('xpRing');
-  const cur0=parseFloat(ring.style.strokeDashoffset)||43;
-  ring.style.strokeDashoffset=Math.max(0,cur0-2);
-}
-
-function animNum(el,from,to,dur){
-  const t0=performance.now();
-  (function f(now){
-    const frac=Math.min((now-t0)/dur,1);
-    el.textContent=Math.round(from+(to-from)*frac);
-    if(frac<1) requestAnimationFrame(f);
-  })(t0);
-}
+function showToast(txt){const el=document.getElementById('nlToast');el.textContent=txt;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000);}
+function showBadge(){const bp=document.getElementById('badgePopup');document.getElementById('badgeIco').textContent='🌟';document.getElementById('badgeName').textContent=UI[lang].badgeName;bp.classList.add('show');setTimeout(()=>bp.classList.remove('show'),3800);}
+function bumpXP(n){const el=document.getElementById('xpNum');const cur=parseInt(el.textContent)||847;animNum(el,cur,cur+n,700);const ring=document.getElementById('xpRing');const c0=parseFloat(ring.style.strokeDashoffset)||43;ring.style.strokeDashoffset=Math.max(0,c0-2);}
+function animNum(el,from,to,dur){const t0=performance.now();(function f(now){const frac=Math.min((now-t0)/dur,1);el.textContent=Math.round(from+(to-from)*frac);if(frac<1)requestAnimationFrame(f);})(t0);}
 
 // ── QUEST ─────────────────────────────────────────────────────
 let questN=3;
-function updateQuest(){
-  questN=Math.min(5,questN+1);
-  document.getElementById('qpFill').style.width=(questN/5*100)+'%';
-  document.getElementById('qpTxt').textContent=questN+'/5';
-  if(questN===5) setTimeout(()=>showToast(lang==='ro'?'Quest completat! +50 XP 🏆':'Quest complete! +50 XP 🏆'),500);
-}
+function updateQuest(){questN=Math.min(5,questN+1);document.getElementById('qpFill').style.width=(questN/5*100)+'%';document.getElementById('qpTxt').textContent=questN+'/5';if(questN===5)setTimeout(()=>showToast(lang==='ro'?'Quest completat! +50 XP 🏆':'Quest complete! +50 XP 🏆'),500);}
 
-// ── CREATURE ─────────────────────────────────────────────────
+// ── CREATURE ──────────────────────────────────────────────────
 function setEmo(emo){
   document.querySelectorAll('.nl-emo').forEach(b=>b.classList.toggle('on',b.dataset.emo===emo));
-  const e=T[lang].emotions[emo];
-  if(!e)return;
+  const e=UI[lang].emotions[emo];if(!e)return;
   document.getElementById('csKo').textContent=e.ko;
   document.getElementById('csTr').textContent=e.tr;
   document.getElementById('csTip').innerHTML='💡 '+e.tip;
   const m=document.getElementById('mouthPath');
-  const mouths={
-    happy:'M 55 62 Q 65 71 75 62',
-    excited:'M 53 60 Q 65 73 77 60',
-    think:'M 57 65 Q 65 62 73 65',
-    love:'M 55 62 Q 65 72 75 62',
-    cool:'M 56 64 Q 65 67 74 64',
-  };
+  const mouths={happy:'M 55 62 Q 65 71 75 62',excited:'M 53 60 Q 65 73 77 60',think:'M 57 65 Q 65 62 73 65',love:'M 55 62 Q 65 72 75 62',cool:'M 56 64 Q 65 67 74 64'};
   m.setAttribute('d',mouths[emo]||mouths.happy);
   const pupCols={happy:'#00e5ff',excited:'#ffd700',think:'#b44eff',love:'#ff2d78',cool:'#00ff99'};
-  const c=pupCols[emo];
-  document.getElementById('pupL').setAttribute('fill',c);
-  document.getElementById('pupR').setAttribute('fill',c);
+  const c=pupCols[emo];document.getElementById('pupL').setAttribute('fill',c);document.getElementById('pupR').setAttribute('fill',c);
 }
 
 // ── STATS FROM STORAGE ────────────────────────────────────────
-try{
-  const s=JSON.parse(localStorage.getItem('RK_STATS')||'null');
-  if(s){
-    if(s.bestStreak) document.getElementById('streakV').textContent=s.bestStreak;
-  }
-}catch(e){}
+try{const s=JSON.parse(localStorage.getItem('RK_STATS')||'null');if(s&&s.bestStreak)document.getElementById('streakV').textContent=s.bestStreak;}catch(e){}
 
 // ── BOOT ──────────────────────────────────────────────────────
+buildPicker();
 applyLang();
-// Apply lang buttons state
 document.getElementById('btnRo').classList.toggle('active',lang==='ro');
 document.getElementById('btnEn').classList.toggle('active',lang==='en');
-// Auto-speak on first interaction
-document.addEventListener('click',function once(){
-  document.removeEventListener('click',once);
-  speak('무엇이에요');
-},{once:true,capture:true});
+setTimeout(()=>document.querySelectorAll('.nl-lesson-pill')[curLesson]?.scrollIntoView({inline:'center',block:'nearest'}),200);
+document.addEventListener('click',function once(){document.removeEventListener('click',once);speak(LESSONS[curLesson].chalKo);},{once:true,capture:true});
+
 </script>
 
 <script src="./js/core/register-sw.js" defer></script>
