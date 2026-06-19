@@ -1,4 +1,4 @@
-const CACHE = 'rk-v66';
+const CACHE = 'rk-v67';
 
 const STATIC = [
   './',
@@ -37,7 +37,6 @@ const STATIC = [
   './js/glossary.js',
   './js/hangul.js',
   './js/hanja-book.js',
-  './js/lessons.js',
   './js/stories.js',
   './js/core/audio.js',
   './js/core/conjugation.js',

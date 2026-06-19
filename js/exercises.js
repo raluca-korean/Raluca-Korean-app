@@ -1232,14 +1232,8 @@ const soundBtn = document.getElementById("soundBtn");
 let soundOn = true;
 
 function speakKorean(text){
-  if(!soundOn || !text || !window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  setTimeout(function(){
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = "ko-KR";
-    utt.rate = 0.9;
-    speechSynthesis.speak(utt);
-  }, 50);
+  if(!soundOn || !text) return;
+  AudioEngine.speak(text);
 }
 
 function getLearnedEx(){

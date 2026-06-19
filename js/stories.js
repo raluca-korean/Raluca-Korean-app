@@ -233,12 +233,7 @@
   }
 
   function speakKorean(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    var u  = new SpeechSynthesisUtterance(text);
-    u.lang = 'ko-KR';
-    u.rate = 0.85;
-    window.speechSynthesis.speak(u);
+    AudioEngine.speak(text);
   }
 
   /* ── Phase transition ── */
