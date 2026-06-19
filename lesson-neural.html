@@ -152,19 +152,17 @@ body{
 .nl-badge-code{font-size:9px;letter-spacing:.5em;text-transform:uppercase;color:var(--cyan);opacity:.8;margin-bottom:2px}
 .nl-badge-title{font-size:14px;font-weight:700;color:var(--hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* Lang toggle */
-.nl-lang{
-  display:flex;align-items:center;gap:2px;
-  background:var(--glass);border:1px solid var(--glass-b);
-  border-radius:999px;padding:3px;flex-shrink:0;
+/* Lang toggle — single pill */
+.nl-lang-toggle{
+  display:flex;align-items:center;gap:5px;
+  background:var(--cyan-d);border:1px solid rgba(0,229,255,.38);
+  border-radius:999px;padding:5px 12px;flex-shrink:0;
+  cursor:pointer;font-family:inherit;
+  font-size:10px;font-weight:700;letter-spacing:.14em;
+  color:var(--cyan);transition:all .2s ease;
 }
-.nl-lang-btn{
-  font-size:9px;font-weight:700;letter-spacing:.12em;
-  padding:4px 9px;border-radius:999px;
-  background:transparent;border:none;color:var(--lo);cursor:pointer;
-  transition:all .2s ease;
-}
-.nl-lang-btn.active{background:var(--cyan-d);color:var(--cyan)}
+.nl-lang-toggle:hover{background:rgba(0,229,255,.28);transform:scale(1.05)}
+.nl-lang-toggle svg{width:11px;height:11px;stroke:currentColor;stroke-width:2.2;fill:none;flex-shrink:0}
 
 /* XP Ring */
 .nl-xp-ring{
@@ -707,11 +705,11 @@ body{
       <div class="nl-badge-code">T1-05 · Pattern Lesson</div>
       <div class="nl-badge-title" id="hdTitle">Întrebări de bază</div>
     </div>
-    <!-- Language toggle -->
-    <div class="nl-lang">
-      <button class="nl-lang-btn active" id="btnRo" onclick="setLang('ro')">RO</button>
-      <button class="nl-lang-btn" id="btnEn" onclick="setLang('en')">EN</button>
-    </div>
+    <!-- Language toggle — single pill -->
+    <button class="nl-lang-toggle" id="btnLang" onclick="toggleLang()">
+      <span id="langLbl">RO</span>
+      <svg viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+    </button>
     <!-- Theme toggle -->
     <button id="darkToggle" aria-label="Schimbă tema" style="width:38px;height:38px;border-radius:50%;border:1px solid var(--glass-b);background:var(--glass);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .25s ease;color:var(--lo);font-size:0"></button>
     <!-- XP Ring -->
@@ -3416,7 +3414,8 @@ function onCardScroll(){
 }
 
 // ── LANGUAGE ──────────────────────────────────────────────────
-function setLang(l){lang=l;localStorage.setItem('RK_LANG',lang);document.getElementById('btnRo').classList.toggle('active',l==='ro');document.getElementById('btnEn').classList.toggle('active',l==='en');applyLang();}
+function setLang(l){lang=l;localStorage.setItem('RK_LANG',lang);document.getElementById('langLbl').textContent=l.toUpperCase();applyLang();}
+function toggleLang(){setLang(lang==='ro'?'en':'ro');}
 function applyLang(){
   const u=UI[lang];
   ['lblPattern','lblExamples','lblPractice','lblBonus','speakLbl','pracTtl',
@@ -3485,8 +3484,7 @@ function setEmo(emo){
 // ── BOOT ──────────────────────────────────────────────────────
 buildPicker();
 applyLang();
-document.getElementById('btnRo').classList.toggle('active',lang==='ro');
-document.getElementById('btnEn').classList.toggle('active',lang==='en');
+document.getElementById('langLbl').textContent=lang.toUpperCase();
 setTimeout(()=>document.querySelectorAll('.nl-lesson-pill')[curLesson]?.scrollIntoView({inline:'center',block:'nearest'}),200);
 document.addEventListener('click',function once(){document.removeEventListener('click',once);speak(LESSONS[curLesson].chalKo);},{once:true,capture:true});
 
