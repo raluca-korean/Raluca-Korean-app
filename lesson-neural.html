@@ -414,6 +414,13 @@ body{
   cursor:pointer;font-size:13px;transition:all .2s ease;
 }
 .nl-card-audio:hover{background:rgba(0,229,255,.28);box-shadow:0 0 16px rgba(0,229,255,.3)}
+.nl-card-pron{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  background:rgba(0,180,110,.10);border:1px solid rgba(0,200,120,.25);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:13px;transition:all .2s ease;
+}
+.nl-card-pron:hover{background:rgba(0,180,110,.28);box-shadow:0 0 16px rgba(0,200,120,.3)}
 .nl-card-mem{
   flex:1;font-size:11px;
   background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.15);
@@ -842,7 +849,7 @@ body{
     <div class="nl-section-line rev"></div>
   </div>
 </section>
-<div class="nl-practice">
+<div class="nl-practice" id="nlPractice">
   <div class="nl-practice-hdr">
     <div class="nl-practice-ico">🎙</div>
     <div>
@@ -3429,7 +3436,7 @@ function buildCards(cards){
   cards.forEach((d,i)=>{
     const c=document.createElement('div');c.className='nl-card';
     const tag=lang==='ro'?d.tag_ro:d.tag_en;
-    c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div><div class="nl-card-en">${d.en}</div><div class="nl-card-ro">${d.ro}</div><div class="nl-card-div"></div><div class="nl-card-explain">${d.exp}</div><div class="nl-card-actions"><div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div><div class="nl-card-mem">💭 ${d.mem}</div></div>`;
+    c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div><div class="nl-card-en">${d.en}</div><div class="nl-card-ro">${d.ro}</div><div class="nl-card-div"></div><div class="nl-card-explain">${d.exp}</div><div class="nl-card-actions"><div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div><div class="nl-card-pron" onclick="challengeCard('${d.ko.replace(/'/g,"\\'")}')">🎤</div><div class="nl-card-mem">💭 ${d.mem}</div></div>`;
     track.appendChild(c);
     const dot=document.createElement('div');dot.className='nl-dot'+(i===0?' on':'');dots.appendChild(dot);
   });
@@ -3480,13 +3487,22 @@ function levSim(a,b){
   return Math.max(0,Math.round((1-dp[m][n]/Math.max(m,n))*100));
 }
 
-function startChallenge(){
+function challengeCard(ko){
+  chalActive=false;chalDone=false;
+  document.getElementById('chalBtn').classList.remove('listening');
+  document.getElementById('pronOrb').classList.remove('show');
+  document.getElementById('aiFb').classList.remove('show');
+  document.getElementById('chalLbl').textContent=(lang==='ro'?'Pronunță: ':'Speak: ')+ko;
+  document.getElementById('nlPractice')?.scrollIntoView({behavior:'smooth',block:'start'});
+  startChallenge(ko);
+}
+function startChallenge(targetOverride){
   if(chalActive)return;chalActive=true;
   const btn=document.getElementById('chalBtn');
   btn.classList.add('listening');
   btn.querySelector('#chalLbl').textContent='🔊 '+(lang==='ro'?'Ascultă modelul...':'Listen to model...');
   document.getElementById('pronOrb').classList.add('show');
-  const target=LESSONS[curLesson].chalKo;
+  const target=targetOverride||LESSONS[curLesson].chalKo;
   speak(target);
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){setTimeout(()=>simulateFallback(target),2600);return;}
