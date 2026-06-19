@@ -1,4 +1,4 @@
-const CACHE = 'rk-v67';
+const CACHE = 'rk-v68';
 
 const STATIC = [
   './',
@@ -42,13 +42,11 @@ const STATIC = [
   './js/core/conjugation.js',
   './js/core/dark-mode.js',
   './js/core/gamification.js',
-  './js/core/grammar.js',
   './js/core/grammar-color.js',
   './js/core/lang-picker.js',
   './js/core/notifications.js',
   './js/core/parser.js',
   './js/core/register-sw.js',
-  './js/core/sentence-builder.js',
   './js/core/storage.js',
   './js/core/translations.js',
   './js/core/vocab-data.js',
