@@ -3908,6 +3908,104 @@ function renderLesson(idx,doScroll){
   if(doScroll)window.scrollTo({top:0,behavior:'smooth'});
 }
 
+// ── CARD TRANSLATION (RO→EN for exp/mem fields) ───────────────
+const RO2EN=[
+  // phrases first (longer → shorter to avoid partial matches)
+  ['= a fi aproape','= to be close'],['= a fi recunoscător','= to be grateful'],
+  ['= a fi îngrijorat','= to be worried'],['= a fi fericit','= to be happy'],
+  ['= a fi dificil','= to be difficult'],['= a fi scump','= to be expensive'],
+  ['= a fi ieftin','= to be cheap'],['= a fi gustos','= to be delicious'],
+  ['= a fi obosit','= to be tired'],['= a fi rapid','= to be fast'],
+  ['= a fi greu','= to be hard'],['= a fi în regulă','= to be okay'],
+  ['= a fi corect','= to be correct'],['= a fi târziu','= to be late'],
+  ['= a fi','= to be'],
+  ['= a merge/pleca','= to go/leave'],['= a merge la','= to go to'],['= a merge','= to go'],
+  ['= a-şi face griji','= to worry'],['= a-și face griji','= to worry'],
+  ['= a face sport','= to do sports'],['= a face','= to do'],
+  ['= a lua cu sine','= to take along'],['= a lua','= to take'],
+  ['= a se întâlni','= to meet up'],['= a se odihni','= to rest'],
+  ['= a se înscrie','= to register'],['= a se uita','= to look at'],
+  ['= a-i plăcea','= to like'],['= a nu ști','= to not know'],
+  ['= a mânca','= to eat'],['= a bea','= to drink'],['= a veni','= to come'],
+  ['= a vrea','= to want'],['= a da','= to give'],['= a sta jos','= to sit down'],
+  ['= a sta','= to stay'],['= a vedea','= to see'],['= a ști','= to know'],
+  ['= a putea','= can'],['= a pleca','= to leave'],['= a cumpăra','= to buy'],
+  ['= a preda','= to teach'],['= a primi','= to receive'],['= a dura','= to take (time)'],
+  ['= a întreba','= to ask'],['= a răspunde','= to answer'],['= a ajuta','= to help'],
+  ['= a folosi','= to use'],['= a trăi','= to live'],['= a lucra','= to work'],
+  ['= a studia','= to study'],['= a citi','= to read'],['= a scrie','= to write'],
+  ['= a vorbi','= to speak'],['= a telefona','= to call'],['= a plânge','= to cry'],
+  ['= a renunța','= to give up'],['= a uita','= to forget'],['= a ieși','= to go out'],
+  ['= a fotografia','= to photograph'],['= a întârzia','= to be late'],
+  ['= a începe','= to start'],['= a învăța','= to learn'],['= a explica','= to explain'],
+  // nouns & common phrases
+  ['= geantă/rucsac','= bag/backpack'],['= geantă','= bag'],
+  ['= doctor/medic','= doctor'],['= medic','= doctor'],
+  ['= birou/spațiu de lucru','= office'],['= birou/cabinet','= office'],['= birou','= office'],
+  ['= toaletă/baie','= bathroom'],['= toaletă','= bathroom'],
+  ['= lb. coreeană','= Korean language'],['= limba coreeană','= Korean language'],
+  ['= angajat de firmă','= company employee'],['= angajat de companie','= company employee'],
+  ['= al meu (formal)','= mine (formal)'],['= al meu','= mine'],
+  ['= acel lucru','= that thing'],['= acest lucru','= this thing'],['= lucru','= thing'],
+  ['= această persoană','= this person'],['= persoană coreeană','= Korean person'],
+  ['= persoană','= person'],['= muzică pop coreeană','= Korean pop music'],
+  ['= vacanță școlară','= school vacation'],['= vacanță','= vacation'],
+  ['= stație metrou','= subway station'],['= stație','= station'],
+  ['= apă','= water'],['= carte','= book'],['= ziar','= newspaper'],
+  ['= profesor','= teacher'],['= prieten','= friend'],['= prieteni','= friends'],
+  ['= familie','= family'],['= câine','= dog (affectionate)'],
+  ['= preț','= price'],['= meniu','= menu'],['= mâncare','= food'],['= cafea','= coffee'],
+  ['= bani','= money'],['= casă','= house'],['= loc','= place'],
+  ['= număr','= number'],['= numere','= numbers'],['= clasă','= class'],
+  ['= muzică','= music'],['= culoare','= color'],['= culori','= colors'],
+  ['= oră','= hour'],['= scaun','= chair'],['= minciună','= lie'],
+  ['= împreună','= together'],['= școală','= school'],['= film','= movie'],
+  ['= medicament','= medicine'],['= mâine','= tomorrow'],['= azi','= today'],
+  ['= acum','= now'],['= aici','= here'],['= asta','= this/that'],
+  // grammar terms
+  ['consoană finală','final consonant'],['vocală finală','final vowel'],
+  ['consoană','consonant'],['Consoană','Consonant'],
+  ['vocală','vowel'],['Vocală','Vowel'],
+  ['termină în','ends in'],['Termină în','Ends in'],
+  ['neregulat','irregular'],['Neregulat','Irregular'],
+  ['radical','stem'],['Radical','Stem'],
+  ['respectuos','polite'],['politicoasă','polite'],['politicos','polite'],
+  ['sufix','suffix'],['prefix','prefix'],
+  ['particulă direcţie','direction particle'],['particulă direcție','direction particle'],
+  ['particulă subiect','subject particle'],['particulă obiect','object particle'],
+  ['particulă','particle'],['Particulă','Particle'],
+  ['obiect direct','direct object'],['obiect','object'],['subiect','subject'],
+  ['indiferent de sunet','regardless of sound'],
+  ['nu se schimbă','doesn\'t change'],['se schimbă','changes'],
+  ['formă prescurtată','contracted form'],['formă','form'],
+  ['formală','formal'],['informal','informal'],
+  ['negație','negation'],['nominalizat','nominalized'],['contras','contracted'],
+  ['direcţie','direction'],['direcție','direction'],
+  ['propoziție','sentence'],['abreviere','abbreviation'],
+  ['din engleză','from English'],['frecvent pe TOPIK','frequent on TOPIK'],
+  ['frecvent','frequent'],['respectuos','polite'],
+  ['Cel mai comun în texte și prezentări TOPIK','Most common in TOPIK texts and presentations'],
+  ['Conversație clasică cu corenii','Classic conversation with Koreans'],
+  ['Frază politicoasă pentru a cere timp','Polite phrase to ask about time'],
+  ['Frază la întâlnirea cu necunoscuți','Phrase when meeting strangers'],
+  ['Invitație clasică la cinema','Classic invitation to the cinema'],
+  ['Oferi o băutură prietenului','Offer a drink to a friend'],
+  ['Spune colegilor că ești pe drum','Tell colleagues you\'re on the way'],
+  ['Trimite mesaj prietenilor că vii','Text friends you\'re coming'],
+  ['Util la finalul unei prezentări','Useful at the end of a presentation'],
+  ['Uzual când ai nevoie să te gândești','Common when you need to think'],
+  ['Uzual când recunoști pe cineva vag','Common when you vaguely recognize someone'],
+  ['Întreabă despre caracter, nu identitate','Asks about character, not identity'],
+  ['Întreabă despre personalitate, nu identitate','Asks about personality, not identity'],
+  ['Întrebare politicoasă pentru cadru didactic','Polite question for a teacher'],
+  ['Abordare politicoasă a unui necunoscut','Polite approach to a stranger'],
+  ['Alternativă la','Alternative to'],['Uzual la','Common at'],
+  ['Circumstanţă temporală','Temporal circumstance'],['Circumstanță temporală','Temporal circumstance'],
+  ['pentru','for'],['despre','about'],['după','after'],
+  ['înainte de','before'],['deja','already'],['mai târziu','later'],
+];
+function expToEn(t){if(!t||lang==='ro')return t;let r=t;for(const[ro,en]of RO2EN)r=r.split(ro).join(en);return r;}
+
 // ── CARDS ─────────────────────────────────────────────────────
 function buildCards(cards){
   const track=document.getElementById('cardsTrack'),dots=document.getElementById('cardsDots');
@@ -3916,8 +4014,8 @@ function buildCards(cards){
     const c=document.createElement('div');c.className='nl-card';
     const tag=lang==='ro'?d.tag_ro:d.tag_en;
     const trDiv=lang==='ro'?`<div class="nl-card-ro">${d.ro}</div>`:`<div class="nl-card-en">${d.en}</div>`;
-    const expDiv=lang==='ro'?`<div class="nl-card-div"></div><div class="nl-card-explain">${d.exp}</div>`:'';
-    const memDiv=lang==='ro'?`<div class="nl-card-mem">💭 ${d.mem}</div>`:'';
+    const expDiv=`<div class="nl-card-div"></div><div class="nl-card-explain">${expToEn(d.exp)}</div>`;
+    const memDiv=`<div class="nl-card-mem">💭 ${expToEn(d.mem)}</div>`;
     c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div>${trDiv}${expDiv}<div class="nl-card-actions"><div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div><div class="nl-card-pron" onclick="challengeCard('${d.ko.replace(/'/g,"\\'")}')">🎤</div>${memDiv}</div>`;
     track.appendChild(c);
     const dot=document.createElement('div');dot.className='nl-dot'+(i===0?' on':'');dots.appendChild(dot);
