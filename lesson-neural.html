@@ -3880,8 +3880,11 @@ function renderLesson(idx,doScroll){
   document.getElementById('crTopik').textContent=L.topik;
   document.getElementById('crKo').textContent=L.ko;
   document.getElementById('crRom').textContent=L.rom;
-  document.getElementById('crEn').textContent=L.en;
-  document.getElementById('crRo').textContent=L.ro;
+  const crEn=document.getElementById('crEn'),crRo=document.getElementById('crRo'),crSep=document.querySelector('.nl-cr-sep');
+  crEn.textContent=L.en; crRo.textContent=L.ro;
+  crEn.style.display=isRo?'none':'';
+  crRo.style.display=isRo?'':'none';
+  if(crSep)crSep.style.display='none';
   buildGramTiles(L.gramTiles,isRo);
   document.getElementById('gramNote').innerHTML=isRo?(L.note_ro||''):(L.note_en||'');
   document.getElementById('speakLbl').textContent=UI[lang].speakLbl;
@@ -3912,7 +3915,8 @@ function buildCards(cards){
   cards.forEach((d,i)=>{
     const c=document.createElement('div');c.className='nl-card';
     const tag=lang==='ro'?d.tag_ro:d.tag_en;
-    c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div><div class="nl-card-en">${d.en}</div><div class="nl-card-ro">${d.ro}</div><div class="nl-card-div"></div><div class="nl-card-explain">${d.exp}</div><div class="nl-card-actions"><div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div><div class="nl-card-pron" onclick="challengeCard('${d.ko.replace(/'/g,"\\'")}')">🎤</div><div class="nl-card-mem">💭 ${d.mem}</div></div>`;
+    const trDiv=lang==='ro'?`<div class="nl-card-ro">${d.ro}</div>`:`<div class="nl-card-en">${d.en}</div>`;
+    c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div>${trDiv}<div class="nl-card-div"></div><div class="nl-card-explain">${d.exp}</div><div class="nl-card-actions"><div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div><div class="nl-card-pron" onclick="challengeCard('${d.ko.replace(/'/g,"\\'")}')">🎤</div><div class="nl-card-mem">💭 ${d.mem}</div></div>`;
     track.appendChild(c);
     const dot=document.createElement('div');dot.className='nl-dot'+(i===0?' on':'');dots.appendChild(dot);
   });
