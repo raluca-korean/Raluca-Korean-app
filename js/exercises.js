@@ -410,6 +410,11 @@ function updateStaticTexts(){
   const optDrillExt    = typeSelect.querySelector('option[value="drill-ext"]');
   if(optDrillConjug) optDrillConjug.textContent = t("modeDrillConjug");
   if(optDrillExt)    optDrillExt.textContent    = t("modeDrillExt");
+
+  const cfgTrigger = document.getElementById("lmn-config-trigger");
+  if(cfgTrigger) cfgTrigger.setAttribute("aria-label", currentLang==="ro" ? "Configurare exerciții" : "Exercise settings");
+  const cfgBody = document.querySelector(".lmn-config-body");
+  if(cfgBody) cfgBody.setAttribute("aria-label", currentLang==="ro" ? "Setări exerciții" : "Exercise settings");
 }
 
 function updateBadges(){

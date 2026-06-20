@@ -2377,6 +2377,28 @@
 
   function setLang(lang){
     state.lang = lang === 'en' ? 'en' : 'ro';
+    var isRo = state.lang === 'ro';
+    var el = function(id){ return document.getElementById(id); };
+    var homeBtn = document.querySelector('.homeBtn');
+    if(homeBtn) homeBtn.setAttribute('aria-label', isRo ? 'Acasă' : 'Home');
+    var freeText = el('freeText');
+    if(freeText) freeText.placeholder = isRo ? 'Scrie o propoziție în română sau engleză...' : 'Write a sentence in Romanian or English...';
+    var sentenceBox = el('sentenceBox');
+    if(sentenceBox) sentenceBox.setAttribute('aria-label', isRo ? 'Ascultă propoziția' : 'Listen to sentence');
+    var translationText = el('translationText');
+    if(translationText) translationText.setAttribute('data-placeholder', isRo ? 'traducere...' : 'translation...');
+    var playBtn = el('playBtn');
+    if(playBtn){ playBtn.title = isRo ? 'Ascultă' : 'Listen'; playBtn.setAttribute('aria-label', isRo ? 'Ascultă' : 'Listen'); }
+    var recordBtn = el('recordBtn');
+    if(recordBtn){ recordBtn.title = isRo ? 'Înregistrează' : 'Record'; recordBtn.setAttribute('aria-label', isRo ? 'Înregistrează' : 'Record'); }
+    var saveBtn = el('saveBtn');
+    if(saveBtn){ saveBtn.title = isRo ? 'Salvează' : 'Save'; saveBtn.setAttribute('aria-label', isRo ? 'Salvează' : 'Save'); }
+    var refreshBtn = el('refreshBtn');
+    if(refreshBtn){ refreshBtn.title = isRo ? 'Resetează' : 'Reset'; refreshBtn.setAttribute('aria-label', isRo ? 'Resetează' : 'Reset'); }
+    var recLabel = document.querySelector('.recordedLabel');
+    if(recLabel) recLabel.textContent = UI[state.lang].recordedLabel;
+    var vesselHint = document.querySelector('.msf-vessel-hint');
+    if(vesselHint) vesselHint.textContent = isRo ? 'construiește în câmpul de mai jos →' : 'build in the field below →';
     renderTemplateMenu();
     renderSavedPanel();
     renderAll();

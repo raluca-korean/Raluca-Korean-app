@@ -987,6 +987,11 @@ function openWriting(item) {
 function applyLang() {
   const t = T[lang];
   const el = id => document.getElementById(id);
+  const isRo = lang === 'ro';
+  const homeBtn = document.querySelector('#pageControls a[href]');
+  if (homeBtn) homeBtn.setAttribute('aria-label', isRo ? 'Acasă' : 'Home');
+  const strokeAnimBtn = document.querySelector('.mrs-write-actions button[onclick*="animateStrokes"]');
+  if (strokeAnimBtn) strokeAnimBtn.title = isRo ? 'Animație ordine trasare' : 'Stroke order animation';
   if (el('mrsZoneCons'))   el('mrsZoneCons').textContent   = t.zoneCons;
   if (el('mrsZoneTensed')) el('mrsZoneTensed').textContent = t.zoneTensed;
   if (el('mrsZoneVowels')) el('mrsZoneVowels').textContent = t.zoneVowels;

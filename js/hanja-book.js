@@ -1781,6 +1781,11 @@ function _setLang(l) {
   localStorage.setItem('RK_LANG', l);
   _syncLangBtn();
   _closeLangPicker();
+  var isRo = l === 'ro';
+  var searchBtn = document.getElementById('searchBtn');
+  if (searchBtn) searchBtn.title = isRo ? 'Caută (/)' : 'Search (/)';
+  var searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.placeholder = isRo ? 'Caută hanja, citire, sens…' : 'Search hanja, reading, meaning…';
   render(false);
 }
 
