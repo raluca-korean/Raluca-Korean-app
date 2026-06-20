@@ -1562,9 +1562,12 @@ renderCv();
 })();
 
 // ── XP RING ───────────────────────────────────────────────────
-// r=21 → circumference = 131.9; fill at 67% → offset = 131.9*(1-.67) = 43.5
+// r=21 → circumference = 131.9
 setTimeout(()=>{
-  document.getElementById('xpRing').style.strokeDashoffset='43';
+  const storedXP = parseInt(localStorage.getItem('RK_XP')||'847');
+  document.getElementById('xpNum').textContent = storedXP;
+  const offset = Math.max(0, Math.round(131.9 * (1 - Math.min(storedXP/1080, 0.99))));
+  document.getElementById('xpRing').style.strokeDashoffset = String(offset);
 },600);
 
 // ── LANGUAGE + STATE ──────────────────────────────────────────
@@ -1572,6 +1575,28 @@ let lang = localStorage.getItem('RK_LANG')||'ro';
 let curLesson = 6;
 let doneSet=new Set(JSON.parse(localStorage.getItem('RK_DONE_NEURAL')||'[]'));
 let chalActive=false, chalDone=false;
+
+// ── PERSISTENT XP + STREAK ────────────────────────────────────
+let xpTotal = parseInt(localStorage.getItem('RK_XP')||'847');
+let questN   = parseInt(localStorage.getItem('RK_QUEST')||'3');
+let spokeEver = localStorage.getItem('RK_EVER_SPOKE')==='1';
+let spokeToday = localStorage.getItem('RK_SPOKE_DATE')===new Date().toDateString();
+
+function computeStreak(){
+  const today = new Date().toDateString();
+  const last  = localStorage.getItem('RK_LAST_VISIT');
+  let s = parseInt(localStorage.getItem('RK_STREAK')||'1');
+  if(!last){
+    s=1;
+  } else if(last!==today){
+    const yest = new Date(Date.now()-86400000).toDateString();
+    s = (last===yest) ? s+1 : 1;
+  }
+  localStorage.setItem('RK_LAST_VISIT', today);
+  localStorage.setItem('RK_STREAK', s);
+  return s;
+}
+let streakDays = computeStreak();
 
 // ── LESSONS DATA ─────────────────────────────────────────────
 const LESSONS=[
@@ -4032,7 +4057,15 @@ function showScore(transcript,overall,target,toneOvr,rhythmOvr,clarityOvr){
     chalActive=false;
     const btn=document.getElementById('chalBtn');btn.classList.remove('listening');
     btn.querySelector('#chalLbl').textContent=lang==='ro'?'🎤 Pronunță din nou':'🎤 Pronounce again';
-    if(!chalDone){chalDone=true;showToast(UI[lang].xpMsg);bumpXP(15);showBadge();updateQuest();}
+    if(!chalDone){
+      chalDone=true;
+      spokeEver=true;spokeToday=true;
+      localStorage.setItem('RK_EVER_SPOKE','1');
+      localStorage.setItem('RK_SPOKE_DATE',new Date().toDateString());
+      showToast(UI[lang].xpMsg);bumpXP(15);showBadge();updateQuest();
+      const gs=document.getElementById('goalSpeak');if(gs)gs.classList.add('done');
+      updateAchievements();
+    }
   },900);
 }
 function setBar(fid,pid,v){document.getElementById(fid).style.width=v+'%';document.getElementById(pid).textContent=v+'%';}
@@ -4040,12 +4073,43 @@ function setBar(fid,pid,v){document.getElementById(fid).style.width=v+'%';docume
 // ── TOAST & BADGE ─────────────────────────────────────────────
 function showToast(txt){const el=document.getElementById('nlToast');el.textContent=txt;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000);}
 function showBadge(){const bp=document.getElementById('badgePopup');document.getElementById('badgeIco').textContent='🌟';document.getElementById('badgeName').textContent=UI[lang].badgeName;bp.classList.add('show');setTimeout(()=>bp.classList.remove('show'),3800);}
-function bumpXP(n){const el=document.getElementById('xpNum');const cur=parseInt(el.textContent)||847;animNum(el,cur,cur+n,700);const ring=document.getElementById('xpRing');const c0=parseFloat(ring.style.strokeDashoffset)||43;ring.style.strokeDashoffset=Math.max(0,c0-2);}
+function bumpXP(n){
+  const el=document.getElementById('xpNum');
+  const cur=parseInt(el.textContent)||xpTotal;
+  xpTotal=cur+n;
+  localStorage.setItem('RK_XP',xpTotal);
+  animNum(el,cur,xpTotal,700);
+  // Header ring
+  const ring=document.getElementById('xpRing');
+  const newOff=Math.max(0,Math.round(131.9*(1-Math.min(xpTotal/1080,.99))));
+  setTimeout(()=>{ring.style.strokeDashoffset=String(newOff);},100);
+  // Sidebar sync (after animation finishes)
+  setTimeout(()=>updateXPDisplay(),850);
+}
+function updateXPDisplay(){
+  const xp=xpTotal;
+  const maxXP=1080;
+  const pct=Math.min(Math.round(xp/maxXP*100),100);
+  const xpEl=document.getElementById('cmdXpNum');if(xpEl)xpEl.textContent=xp;
+  const cmdRing=document.getElementById('cmdXpRing');
+  if(cmdRing)cmdRing.style.strokeDashoffset=String(Math.max(0,Math.round(144.5*(1-Math.min(xp/maxXP,.99)))));
+  const b2=document.getElementById('cmdProgB2');if(b2)b2.style.width=pct+'%';
+  const p2=document.getElementById('cmdProgP2');if(p2)p2.textContent=xp;
+  const lvlFill=document.getElementById('cmdLevelFill');if(lvlFill)lvlFill.style.width=pct+'%';
+  const isRo=lang==='ro';
+  const lvlSub=document.getElementById('cmdLevelSub');
+  if(lvlSub)lvlSub.textContent=isRo?`${maxXP-xp} XP până la Nivel 13`:`${maxXP-xp} XP to Level 13`;
+}
 function animNum(el,from,to,dur){const t0=performance.now();(function f(now){const frac=Math.min((now-t0)/dur,1);el.textContent=Math.round(from+(to-from)*frac);if(frac<1)requestAnimationFrame(f);})(t0);}
 
 // ── QUEST ─────────────────────────────────────────────────────
-let questN=3;
-function updateQuest(){questN=Math.min(5,questN+1);document.getElementById('qpFill').style.width=(questN/5*100)+'%';document.getElementById('qpTxt').textContent=questN+'/5';if(questN===5)setTimeout(()=>showToast(lang==='ro'?'Quest completat! +50 XP 🏆':'Quest complete! +50 XP 🏆'),500);}
+function updateQuest(){
+  questN=Math.min(5,questN+1);
+  localStorage.setItem('RK_QUEST',questN);
+  document.getElementById('qpFill').style.width=(questN/5*100)+'%';
+  document.getElementById('qpTxt').textContent=questN+'/5';
+  if(questN===5)setTimeout(()=>showToast(lang==='ro'?'Quest completat! +50 XP 🏆':'Quest complete! +50 XP 🏆'),500);
+}
 
 // ── CREATURE ──────────────────────────────────────────────────
 function setEmo(emo){
@@ -4095,9 +4159,15 @@ function buildStreakDots(){
   el.innerHTML='';
   const days=lang==='ro'?CMD_DAYS_RO:CMD_DAYS_EN;
   const todayIdx=(new Date().getDay()+6)%7; // Mon=0
+  // How many days this week are "lit" based on streak
+  const litCount=Math.min(streakDays,7);
   days.forEach((d,i)=>{
     const dot=document.createElement('div');
-    dot.className='nl-cmd-sdot'+(i<6?' lit':'')+(i===todayIdx?' today':'');
+    const isToday=i===todayIdx;
+    // Lit = the last litCount days up to and including today
+    const litFrom=(todayIdx-litCount+1+7)%7;
+    const isLit=litCount>=7||(litFrom<=todayIdx?i>=litFrom&&i<=todayIdx:i>=litFrom||i<=todayIdx);
+    dot.className='nl-cmd-sdot'+(isLit?' lit':'')+(isToday?' today':'');
     dot.textContent=d;
     el.appendChild(dot);
   });
@@ -4119,15 +4189,38 @@ function buildWeekBars(){
   });
 }
 
+function updateAchievements(){
+  const achs=document.querySelectorAll('#cmdAchGrid .nl-cmd-ach');
+  if(!achs.length)return;
+  const done=doneSet.size;
+  const data=[
+    {earned:done>=1,        lbl_ro:'Prima Lecție', lbl_en:'First Lesson'},
+    {earned:streakDays>=5,  lbl_ro:'Streak 5 Zile', lbl_en:'5 Day Streak'},
+    {earned:streakDays>=10, lbl_ro:'Streak 10 Zile', lbl_en:'10 Day Streak'},
+    {earned:spokeEver||spokeToday, lbl_ro:'Prim Discurs', lbl_en:'First Speech'},
+    {earned:done>=50,       lbl_ro:'50 Lecții',    lbl_en:'50 Lessons'},
+    {earned:done>=LESSONS.length, lbl_ro:'TOPIK I', lbl_en:'TOPIK I'},
+  ];
+  const isRo=lang==='ro';
+  achs.forEach((el,i)=>{
+    if(!data[i])return;
+    const {earned,lbl_ro,lbl_en}=data[i];
+    el.classList.toggle('earned',earned);
+    el.classList.toggle('locked',!earned);
+    const lbl=el.querySelector('.nl-cmd-ach-lbl');
+    if(lbl)lbl.textContent=isRo?lbl_ro:lbl_en;
+  });
+}
+
 function updateCommandPanel(){
   const isRo=lang==='ro';
   const done=doneSet.size;
   const total=LESSONS.length;
 
   // Hero section
-  const h=new Date().getHours();
-  const greetRo=h<12?'Bună dimineața! 🌅':h<18?'Bună ziua! ☀️':'Bună seara! 🌙';
-  const greetEn=h<12?'Good morning! 🌅':h<18?'Good afternoon! ☀️':'Good evening! 🌙';
+  const hr=new Date().getHours();
+  const greetRo=hr<12?'Bună dimineața! 🌅':hr<18?'Bună ziua! ☀️':'Bună seara! 🌙';
+  const greetEn=hr<12?'Good morning! 🌅':hr<18?'Good afternoon! ☀️':'Good evening! 🌙';
   const heroEl=document.getElementById('heroGreeting');
   if(heroEl)heroEl.textContent=isRo?greetRo:greetEn;
   const heroLsn=document.getElementById('heroLessonName');
@@ -4135,31 +4228,22 @@ function updateCommandPanel(){
   const heroProg=document.getElementById('heroProgress');
   if(heroProg)heroProg.textContent=isRo?`${done} din ${total} completate`:`${done} of ${total} completed`;
 
-  // XP sync from header
-  const xpVal=parseInt(document.getElementById('xpNum')?.textContent||'847')||847;
-  const xpEl=document.getElementById('cmdXpNum');if(xpEl)xpEl.textContent=xpVal;
-  const maxXP=1080;
-  const cmdRing=document.getElementById('cmdXpRing');
-  if(cmdRing){
-    const circ=144.5;
-    cmdRing.style.strokeDashoffset=String(Math.round(circ*(1-Math.min(xpVal/maxXP,.99))));
-  }
-  const xpPct=Math.round(xpVal/maxXP*100);
-  const lvlFill=document.getElementById('cmdLevelFill');
-  if(lvlFill)lvlFill.style.width=xpPct+'%';
-  const lvlSub=document.getElementById('cmdLevelSub');
-  if(lvlSub)lvlSub.textContent=isRo?`${maxXP-xpVal} XP până la Nivel 13`:`${maxXP-xpVal} XP to Level 13`;
+  // Streak number (real)
+  const snEl=document.getElementById('cmdStreakNum');
+  if(snEl)snEl.textContent=streakDays;
+
+  // XP display (from persistent store)
+  updateXPDisplay();
 
   // Level name
+  const lvl=Math.floor(xpTotal/90)+1;
   const lvlName=document.getElementById('cmdLevelName');
-  if(lvlName)lvlName.textContent=isRo?'Nivel 12 🎓':'Level 12 🎓';
+  if(lvlName)lvlName.textContent=isRo?`Nivel ${lvl} 🎓`:`Level ${lvl} 🎓`;
 
-  // Progress bars
-  const pct=Math.round(done/total*100);
+  // Lessons progress bar
+  const pct=total>0?Math.round(done/total*100):0;
   const b1=document.getElementById('cmdProgB1');if(b1)b1.style.width=pct+'%';
   const p1=document.getElementById('cmdProgP1');if(p1)p1.textContent=`${done}/${total}`;
-  const b2=document.getElementById('cmdProgB2');if(b2)b2.style.width=Math.min(xpPct,100)+'%';
-  const p2=document.getElementById('cmdProgP2');if(p2)p2.textContent=xpVal;
   const pl1=document.getElementById('cmdProgL1');if(pl1)pl1.textContent=isRo?'Lecții':'Lessons';
   const pt=document.getElementById('cmdProgTtl');if(pt)pt.textContent=isRo?'Progres Astăzi':'Today\'s Progress';
 
@@ -4167,7 +4251,7 @@ function updateCommandPanel(){
   const gl=document.getElementById('goalLessons');
   if(gl)gl.classList.toggle('done',done>=5);
   const gt=document.getElementById('goalLessonsTxt');
-  if(gt)gt.textContent=isRo?`Completează 5 lecții (${done}/5)`:`Complete 5 lessons (${done}/5)`;
+  if(gt)gt.textContent=isRo?`Completează 5 lecții (${Math.min(done,5)}/5)`:`Complete 5 lessons (${Math.min(done,5)}/5)`;
   const goalO=document.getElementById('goalOpen');
   if(goalO)goalO.textContent=isRo?'Deschide aplicația':'Open the app';
   const goalSp=document.getElementById('goalSpeakTxt');
@@ -4175,7 +4259,7 @@ function updateCommandPanel(){
   const goalStr=document.getElementById('goalStreakTxt');
   if(goalStr)goalStr.textContent=isRo?'Menține streak-ul':'Maintain streak';
   const goalSpk=document.getElementById('goalSpeak');
-  if(goalSpk)goalSpk.classList.toggle('done',chalDone);
+  if(goalSpk)goalSpk.classList.toggle('done',spokeToday||chalDone);
 
   // Achievements localization
   const achTtl=document.getElementById('cmdAchTtl');
@@ -4185,12 +4269,14 @@ function updateCommandPanel(){
   const goalsT=document.getElementById('cmdGoalsTtl');
   if(goalsT)goalsT.textContent=isRo?'Obiective Zilnice':'Daily Goals';
 
+  updateAchievements();
+
   // AI Tip
   const tips=CMD_AI_TIPS[isRo?'ro':'en'];
   const tipEl=document.getElementById('cmdAiTip');
   if(tipEl)tipEl.textContent=tips[Math.floor(Date.now()/120000)%tips.length];
 
-  // Rebuild streak dots with correct language
+  // Rebuild streak dots + week bars
   buildStreakDots();
   buildWeekBars();
 }
@@ -4199,6 +4285,13 @@ function updateCommandPanel(){
 buildPicker();
 applyLang();
 document.getElementById('langLbl').textContent=lang.toUpperCase();
+// Restore quest bar from localStorage
+(function(){
+  const qf=document.getElementById('qpFill');
+  const qt=document.getElementById('qpTxt');
+  if(qf)qf.style.width=(questN/5*100)+'%';
+  if(qt)qt.textContent=questN+'/5';
+})();
 setTimeout(()=>document.querySelector(`.nl-lesson-pill[data-idx="${curLesson}"]`)?.scrollIntoView({inline:'center',block:'nearest'}),200);
 setTimeout(initCommandPanel,300);
 
