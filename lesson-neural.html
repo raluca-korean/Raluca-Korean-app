@@ -1023,7 +1023,7 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
 <div class="nl-badge-popup" id="badgePopup">
   <div class="nl-badge-ico" id="badgeIco">🏆</div>
   <div class="nl-badge-info">
-    <div class="nl-badge-label">Realizare deblocată</div>
+    <div class="nl-badge-label" id="badgeLabel">Realizare deblocată</div>
     <div class="nl-badge-name" id="badgeName">First Pronunciation</div>
   </div>
 </div>
@@ -1378,12 +1378,12 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
 
   <!-- Streak -->
   <div class="nl-cmd-block">
-    <div class="nl-cmd-block-ttl">Streak de Studiu</div>
+    <div class="nl-cmd-block-ttl" id="cmdStreakTtl">Streak de Studiu</div>
     <div class="nl-cmd-streak-row">
       <div class="nl-cmd-streak-num" id="cmdStreakNum">23</div>
       <div class="nl-cmd-streak-info">
-        <div class="nl-cmd-streak-lbl">🔥 Zile consecutive</div>
-        <div class="nl-cmd-streak-sub">Recordul tău: 31 de zile</div>
+        <div class="nl-cmd-streak-lbl" id="cmdStreakLbl">🔥 Zile consecutive</div>
+        <div class="nl-cmd-streak-sub" id="cmdStreakSub">Recordul tău: 31 de zile</div>
       </div>
     </div>
     <div class="nl-cmd-streak-dots" id="cmdStreakDots"></div>
@@ -3916,7 +3916,9 @@ function buildCards(cards){
     const c=document.createElement('div');c.className='nl-card';
     const tag=lang==='ro'?d.tag_ro:d.tag_en;
     const trDiv=lang==='ro'?`<div class="nl-card-ro">${d.ro}</div>`:`<div class="nl-card-en">${d.en}</div>`;
-    c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div>${trDiv}<div class="nl-card-div"></div><div class="nl-card-explain">${d.exp}</div><div class="nl-card-actions"><div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div><div class="nl-card-pron" onclick="challengeCard('${d.ko.replace(/'/g,"\\'")}')">🎤</div><div class="nl-card-mem">💭 ${d.mem}</div></div>`;
+    const expDiv=lang==='ro'?`<div class="nl-card-div"></div><div class="nl-card-explain">${d.exp}</div>`:'';
+    const memDiv=lang==='ro'?`<div class="nl-card-mem">💭 ${d.mem}</div>`:'';
+    c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div>${trDiv}${expDiv}<div class="nl-card-actions"><div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div><div class="nl-card-pron" onclick="challengeCard('${d.ko.replace(/'/g,"\\'")}')">🎤</div>${memDiv}</div>`;
     track.appendChild(c);
     const dot=document.createElement('div');dot.className='nl-dot'+(i===0?' on':'');dots.appendChild(dot);
   });
@@ -4043,7 +4045,7 @@ function setBar(fid,pid,v){document.getElementById(fid).style.width=v+'%';docume
 
 // ── TOAST & BADGE ─────────────────────────────────────────────
 function showToast(txt){const el=document.getElementById('nlToast');el.textContent=txt;el.classList.remove('show');void el.offsetWidth;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000);}
-function showBadge(){const bp=document.getElementById('badgePopup');document.getElementById('badgeIco').textContent='🌟';document.getElementById('badgeName').textContent=UI[lang].badgeName;bp.classList.add('show');setTimeout(()=>bp.classList.remove('show'),3800);}
+function showBadge(){const bp=document.getElementById('badgePopup');document.getElementById('badgeIco').textContent='🌟';document.getElementById('badgeName').textContent=UI[lang].badgeName;const bl=document.getElementById('badgeLabel');if(bl)bl.textContent=UI[lang].badgeLabel;bp.classList.add('show');setTimeout(()=>bp.classList.remove('show'),3800);}
 function bumpXP(n){const el=document.getElementById('xpNum');const cur=parseInt(el.textContent)||847;animNum(el,cur,cur+n,700);const ring=document.getElementById('xpRing');const c0=parseFloat(ring.style.strokeDashoffset)||43;ring.style.strokeDashoffset=Math.max(0,c0-2);}
 function animNum(el,from,to,dur){const t0=performance.now();(function f(now){const frac=Math.min((now-t0)/dur,1);el.textContent=Math.round(from+(to-from)*frac);if(frac<1)requestAnimationFrame(f);})(t0);}
 
@@ -4181,9 +4183,30 @@ function updateCommandPanel(){
   const goalSpk=document.getElementById('goalSpeak');
   if(goalSpk)goalSpk.classList.toggle('done',chalDone);
 
-  // Achievements localization
+  // Streak labels
+  const stTtl=document.getElementById('cmdStreakTtl');
+  if(stTtl)stTtl.textContent=isRo?'Streak de Studiu':'Study Streak';
+  const stLbl=document.getElementById('cmdStreakLbl');
+  if(stLbl)stLbl.textContent=isRo?'🔥 Zile consecutive':'🔥 Consecutive days';
+  const stSub=document.getElementById('cmdStreakSub');
+  if(stSub)stSub.textContent=isRo?`Recordul tău: 31 de zile`:`Your record: 31 days`;
+
+  // Achievements rebuild (bilingual)
   const achTtl=document.getElementById('cmdAchTtl');
   if(achTtl)achTtl.textContent=isRo?'Realizări':'Achievements';
+  const achGrid=document.getElementById('cmdAchGrid');
+  if(achGrid){
+    const ACHS=[
+      {ico:'🚀',ro:'Prima Lecție',en:'First Lesson',ok:doneSet.size>=1},
+      {ico:'⚡',ro:'Streak 5 Zile',en:'5-Day Streak',ok:streakDays>=5},
+      {ico:'🔥',ro:'Streak 10 Zile',en:'10-Day Streak',ok:streakDays>=10},
+      {ico:'🗣️',ro:'Prim Discurs',en:'First Speech',ok:spokeEver},
+      {ico:'🏆',ro:'50 Lecții',en:'50 Lessons',ok:doneSet.size>=50},
+      {ico:'💎',ro:'TOPIK I',en:'TOPIK I',ok:doneSet.size>=100},
+    ];
+    achGrid.innerHTML=ACHS.map(a=>`<div class="nl-cmd-ach ${a.ok?'earned':'locked'}"><div class="nl-cmd-ach-ico">${a.ico}</div><div class="nl-cmd-ach-lbl">${isRo?a.ro:a.en}</div></div>`).join('');
+  }
+
   const weekTtl=document.getElementById('cmdWeekTtl');
   if(weekTtl)weekTtl.textContent=isRo?'Această Săptămână':'This Week';
   const goalsT=document.getElementById('cmdGoalsTtl');
