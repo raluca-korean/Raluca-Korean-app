@@ -453,6 +453,14 @@ function renderFC() {
     }
   }
 
+  // Emoji display (front face)
+  const emojiEl = document.getElementById("crfEmojiDisplay");
+  if (emojiEl) emojiEl.textContent = getWordEmoji(word);
+
+  // Back face Korean reference
+  const backKoEl = document.getElementById("crfBackKorean");
+  if (backKoEl) backKoEl.textContent = word.ko;
+
   // Speak button
   const speakEl = document.getElementById("crfSpeak");
   if (speakEl) {
@@ -518,6 +526,7 @@ function answer(knows) {
   }
 
   crfEmitParticles(knows ? "know" : "dont");
+  gainXP(knows);
 
   if (knows) knowCount++; else dontCount++;
 
@@ -666,25 +675,27 @@ function initCRFCanvas() {
   }
 
   function makeStars() {
-    stars = Array.from({ length: 55 }, () => ({
+    const COLORS = ["80,40,120", "200,80,220", "56,189,248", "52,211,153", "253,186,116"];
+    stars = Array.from({ length: 75 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      r: Math.random() * 1.4 + 0.3,
-      o: Math.random() * 0.45 + 0.08,
-      s: Math.random() * 0.25 + 0.04,
-      d: (Math.random() - 0.5) * 0.15,
-      p: Math.random() * Math.PI * 2
+      r: Math.random() * 1.8 + 0.3,
+      o: Math.random() * 0.50 + 0.10,
+      s: Math.random() * 0.30 + 0.05,
+      d: (Math.random() - 0.5) * 0.18,
+      p: Math.random() * Math.PI * 2,
+      c: COLORS[Math.floor(Math.random() * COLORS.length)]
     }));
   }
 
   function draw(ts) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const isDark  = document.body.classList.contains("dark-mode");
-    const rgb     = isDark ? "200,180,255" : "80,40,120";
-    const t_      = ts * 0.001;
+    const isDark = document.body.classList.contains("dark-mode");
+    const t_     = ts * 0.001;
 
     stars.forEach(s => {
-      const opacity = s.o * (0.65 + 0.35 * Math.sin(t_ * 0.8 + s.p));
+      const opacity = s.o * (0.60 + 0.40 * Math.sin(t_ * 0.8 + s.p));
+      const rgb = isDark ? (s.c || "200,180,255") : (s.c || "80,40,120");
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${rgb},${opacity.toFixed(2)})`;
@@ -831,8 +842,146 @@ function initParallax() {
   }
 }
 
+// ── Category Emoji Mapping ────────────────────────────────────
+const CAT_EMOJI = {
+  "Verb":"🏃", "Substantiv":"📖", "Noun":"📖",
+  "Subiect":"👤", "Subject":"👤",
+  "Obiect":"🎯", "Object":"🎯",
+  "Adjectiv":"✨", "Adjective":"✨",
+  "Adverb":"⚡",
+  "Modificator":"🔧", "Modifier":"🔧",
+  "Conector":"🔗", "Connector":"🔗",
+  "Gramatică":"📚", "Grammar":"📚"
+};
+function getWordEmoji(word) {
+  const cat = getCat(word);
+  return cat ? (CAT_EMOJI[cat] || "💬") : "💬";
+}
+
+// ── Gamification ──────────────────────────────────────────────
+let sessionCombo = 0;
+let dayStreak    = 0;
+
+function initGamification() {
+  const today = new Date().toDateString();
+  const last  = localStorage.getItem("RK_FC_LAST_DATE") || "";
+  const saved = parseInt(localStorage.getItem("RK_FC_DAY_STREAK") || "0");
+  const yest  = new Date(Date.now() - 86400000).toDateString();
+
+  if (last === today) {
+    dayStreak = saved;
+  } else if (last === yest) {
+    dayStreak = saved + 1;
+    localStorage.setItem("RK_FC_DAY_STREAK", dayStreak);
+  } else {
+    dayStreak = 1;
+    localStorage.setItem("RK_FC_DAY_STREAK", dayStreak);
+  }
+  localStorage.setItem("RK_FC_LAST_DATE", today);
+  updateGamificationDisplay();
+}
+
+function updateGamificationDisplay() {
+  let xp = 0, levelNum = 1, pct = 0;
+  if (typeof RKGamification !== "undefined") {
+    const xpData  = RKGamification.getXPData();
+    const lvlInfo = RKGamification.getLevelInfo(xpData.total);
+    xp       = xpData.total;
+    levelNum = lvlInfo.current.level;
+    const currMin = lvlInfo.current.min;
+    const nextMin = lvlInfo.next ? lvlInfo.next.min : currMin + 500;
+    pct = Math.min(100, (xp - currMin) / (nextMin - currMin) * 100);
+  }
+
+  const el = {
+    streak: document.getElementById("gmStreakVal"),
+    level:  document.getElementById("gmLevel"),
+    xpFill: document.getElementById("gmXpFill"),
+    xpText: document.getElementById("gmXpText"),
+    combo:  document.getElementById("gmComboVal"),
+    acc:    document.getElementById("gmAccVal"),
+  };
+
+  if (el.streak) el.streak.textContent = dayStreak;
+  if (el.level)  el.level.textContent  = "Lv." + levelNum;
+  if (el.xpFill) el.xpFill.style.width = pct + "%";
+  if (el.xpText) el.xpText.textContent = xp + " XP";
+  if (el.combo)  el.combo.textContent  = "x" + Math.max(1, sessionCombo);
+
+  const total = knowCount + dontCount;
+  if (el.acc) el.acc.textContent = total > 0
+    ? Math.round(knowCount / total * 100) + "%" : "—";
+}
+
+function gainXP(knows) {
+  if (!knows) {
+    sessionCombo = 0;
+  } else {
+    sessionCombo++;
+    if (typeof RKGamification !== "undefined") {
+      const result = RKGamification.addXP(sessionCombo);
+      showFloatingXP("+" + result.xpGained + " XP");
+      if (result.levelUp) {
+        showAchievementToast("⭐ Level Up! Lv." + result.newLevel);
+      }
+    }
+    if (sessionCombo === 3)  showAchievementToast("⚡ Combo ×3!");
+    if (sessionCombo === 5)  showAchievementToast("🔥 Combo ×5!");
+    if (sessionCombo === 10) showAchievementToast("🌟 Combo ×10!");
+  }
+  updateGamificationDisplay();
+}
+
+function showFloatingXP(text) {
+  const container = document.getElementById("crfXpFloat");
+  if (!container) return;
+  const el = document.createElement("div");
+  el.className = "xp-float";
+  el.textContent = text;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+function showAchievementToast(text) {
+  const area = document.getElementById("crfToastArea");
+  if (!area) return;
+  const el = document.createElement("div");
+  el.className = "gm-toast";
+  el.textContent = text;
+  area.appendChild(el);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => el.classList.add("gm-toast--in"));
+  });
+  setTimeout(() => {
+    el.classList.remove("gm-toast--in");
+    el.classList.add("gm-toast--out");
+    setTimeout(() => el.remove(), 400);
+  }, 2200);
+}
+
+// ── Card tilt on hover ────────────────────────────────────────
+function initCardTilt() {
+  const core = document.getElementById("crfCore");
+  if (!core || window.matchMedia("(hover: none)").matches) return;
+
+  core.addEventListener("mousemove", e => {
+    if (core.classList.contains("crf-collapse")) return;
+    const rect = core.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width  - 0.5;
+    const y = (e.clientY - rect.top)  / rect.height - 0.5;
+    core.style.transform =
+      `perspective(1200px) rotateX(${y * -6}deg) rotateY(${x * 9}deg) translateZ(14px)`;
+  });
+
+  core.addEventListener("mouseleave", () => {
+    core.style.transform = "";
+  });
+}
+
 // Init canvas + vocab
 initCRFCanvas();
 initParallax();
+initGamification();
+initCardTilt();
 updateSortBtns();
 loadVocab();
