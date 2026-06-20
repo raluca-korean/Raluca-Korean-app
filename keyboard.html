@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자판 연습 — Keyboard Practice</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#db2777">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+/* ── target display ── */
+.kb-target{font-size:3rem;text-align:center;letter-spacing:.12em;margin:18px 0 6px;line-height:1.2;min-height:3.8rem}
+.char-done{color:#58cc02}
+.char-cur{color:#f0abfc;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#db2779}
+.char-todo{opacity:.35}
+
+/* ── meaning ── */
+.kb-meaning{text-align:center;font-size:.9rem;color:rgba(0,0,0,.48);margin-bottom:14px;min-height:1.3em}
+body.dark-mode .kb-meaning{color:rgba(255,255,255,.45)}
+
+/* ── key sequence hint ── */
+.kb-keys{text-align:center;font-size:.88rem;letter-spacing:.18em;margin-bottom:10px;min-height:1.4em;word-break:break-all}
+.kd{color:#58cc02}
+.kc{color:#db2779;font-weight:900;font-size:1.1em}
+.kt{opacity:.3}
+
+/* ── progress bar ── */
+.kb-prog{height:4px;background:rgba(0,0,0,.10);border-radius:2px;margin:10px 0}
+body.dark-mode .kb-prog{background:rgba(255,255,255,.1)}
+.kb-prog-fill{height:100%;background:linear-gradient(90deg,#db2779,#9333ea);border-radius:2px;transition:width .15s ease}
+
+/* ── word result ── */
+.word-res{text-align:center;font-size:1.4rem;font-weight:900;min-height:2rem;margin-top:4px}
+.wr-ok{color:#58cc02;animation:pop .3s ease}
+.wr-err{color:#ef4444;animation:pop .3s ease}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes shake-x{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.shake-err{animation:shake-x .35s ease!important}
+
+/* ── virtual keyboard ── */
+.vkbd{margin:0 auto;max-width:540px}
+.vkbd-row{display:flex;justify-content:center;gap:5px;margin-bottom:5px}
+.vkey{
+  width:46px;height:54px;border-radius:9px;
+  background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.15);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .12s ease;user-select:none;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.vkey .vk-kr{font-size:16px;font-weight:700;color:rgba(0,0,0,.82);line-height:1;font-family:'Noto Sans KR',sans-serif}
+.vkey .vk-en{font-size:9px;color:rgba(0,0,0,.42);margin-top:3px;letter-spacing:.04em}
+.vkey .vk-sh{position:absolute;top:4px;right:5px;font-size:8px;color:rgba(0,0,0,.28);font-family:monospace}
+body.dark-mode .vkey{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14)}
+body.dark-mode .vkey .vk-kr{color:rgba(255,255,255,.88)}
+body.dark-mode .vkey .vk-en{color:rgba(255,255,255,.3)}
+body.dark-mode .vkey .vk-sh{color:rgba(255,255,255,.25)}
+
+.vkey.active{
+  background:rgba(219,39,119,.3);border-color:#db2779;
+  box-shadow:0 0 18px rgba(219,39,119,.45);transform:scale(1.12);
+}
+.vkey.active .vk-kr{color:#f0abfc}
+.vkey.active .vk-en{color:#db2779}
+.vkey.hit-ok{background:rgba(88,204,2,.28);border-color:#58cc02;transition:all .08s}
+.vkey.hit-err{background:rgba(239,68,68,.28);border-color:#ef4444;transition:all .08s}
+.shift-note{text-align:center;font-size:.78rem;color:rgba(0,0,0,.38);margin-top:6px;min-height:1.2em;font-weight:700}
+body.dark-mode .shift-note{color:rgba(255,255,255,.35)}
+
+@media(max-width:520px){
+  .vkey{width:33px;height:44px}
+  .vkey .vk-kr{font-size:13px}
+  .vkey .vk-en{font-size:8px}
+  .vkbd-row{gap:3px}
+}
+@media(max-width:380px){
+  .vkey{width:28px;height:40px}
+  .vkey .vk-kr{font-size:11px}
+  .vkey .vk-sh{display:none}
+}
+
+/* ── mode selector ── */
+.seg{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.seg-btn{
+  padding:7px 16px;border-radius:18px;border:1px solid rgba(0,0,0,.18);
+  background:none;color:rgba(0,0,0,.52);font-size:.82rem;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+body.dark-mode .seg-btn{border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.5)}
+.seg-btn.on{background:rgba(219,39,119,.18);border-color:#db2779;color:#9b1c6a;font-weight:700}
+body.dark-mode .seg-btn.on{color:#f0abfc}
+
+/* ── stats strip ── */
+.stats-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.stat-chip{
+  padding:7px 18px;border-radius:20px;background:rgba(0,0,0,.06);
+  font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:5px;
+}
+body.dark-mode .stat-chip{background:rgba(255,255,255,.07)}
+
+/* ── action buttons ── */
+.act-row{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.act-btn{
+  padding:8px 20px;border-radius:18px;border:1px solid rgba(0,0,0,.18);
+  background:none;color:rgba(0,0,0,.52);font-size:.82rem;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.act-btn:hover{background:rgba(0,0,0,.07);color:rgba(0,0,0,.80)}
+body.dark-mode .act-btn{border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.5)}
+body.dark-mode .act-btn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8)}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <h1 id="pgTitle">⌨️ 자판 연습</h1>
+      <div class="sub" id="pgSub">Practică tastatura coreeană</div>
+    </div>
+    <div id="pageControls"></div>
+  </div>
+</div>
+
+<!-- Mode selector -->
+<div class="card">
+  <div class="seg" id="modeCtrl">
+    <button class="seg-btn" id="btn-jamo"      onclick="setMode('jamo')">자모 Jamo</button>
+    <button class="seg-btn" id="btn-syllables" onclick="setMode('syllables')">음절 Silabe</button>
+    <button class="seg-btn" id="btn-words"     onclick="setMode('words')">단어 Cuvinte</button>
+    <button class="seg-btn" id="btn-sentences" onclick="setMode('sentences')">문장 Propoziții</button>
+  </div>
+</div>
+
+<!-- Practice card -->
+<div class="card">
+  <div class="kb-target"  id="kbTarget"></div>
+  <div class="kb-meaning" id="kbMeaning"></div>
+  <div class="kb-keys"    id="kbKeys"></div>
+  <div class="kb-prog"><div class="kb-prog-fill" id="kbProg" style="width:0%"></div></div>
+  <div class="word-res"   id="wordRes"></div>
+  <div class="act-row">
+    <button class="act-btn" onclick="skipItem()">↩ Skip</button>
+    <button class="act-btn" onclick="restartSession()">↺ Restart</button>
+  </div>
+</div>
+
+<!-- Virtual keyboard -->
+<div class="card">
+  <div class="vkbd" id="vkbd"></div>
+  <div class="shift-note" id="shiftNote"></div>
+</div>
+
+<!-- Stats -->
+<div class="card">
+  <div class="stats-row">
+    <div class="stat-chip">✅ <span id="sCorr">0</span></div>
+    <div class="stat-chip">❌ <span id="sWrong">0</span></div>
+    <div class="stat-chip">🔥 <span id="sStreak">0</span></div>
+    <div class="stat-chip">⚡ <span id="sWpm">—</span> WPM</div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+<script>
+// ── DUBEOLSIK LAYOUT ────────────────────────────────────────────
+const Q2J = {
+  q:'ㅂ',w:'ㅈ',e:'ㄷ',r:'ㄱ',t:'ㅅ',y:'ㅛ',u:'ㅕ',i:'ㅑ',o:'ㅐ',p:'ㅔ',
+  a:'ㅁ',s:'ㄴ',d:'ㅇ',f:'ㄹ',g:'ㅎ',h:'ㅗ',j:'ㅓ',k:'ㅏ',l:'ㅣ',
+  z:'ㅋ',x:'ㅌ',c:'ㅊ',v:'ㅍ',b:'ㅠ',n:'ㅜ',m:'ㅡ',
+  Q:'ㅃ',W:'ㅉ',E:'ㄸ',R:'ㄲ',T:'ㅆ',O:'ㅒ',P:'ㅖ'
+};
+const KEY_ROWS = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l'],
+  ['z','x','c','v','b','n','m']
+];
+// Jamo → QWERTY keystroke(s)
+const J2Q = {
+  'ㄱ':'r','ㄲ':'R','ㄴ':'s','ㄷ':'e','ㄸ':'E','ㄹ':'f','ㅁ':'a',
+  'ㅂ':'q','ㅃ':'Q','ㅅ':'t','ㅆ':'T','ㅇ':'d','ㅈ':'w','ㅉ':'W',
+  'ㅊ':'c','ㅋ':'z','ㅌ':'x','ㅍ':'v','ㅎ':'g',
+  'ㅏ':'k','ㅐ':'o','ㅑ':'i','ㅒ':'O','ㅓ':'j','ㅔ':'p','ㅕ':'u','ㅖ':'P',
+  'ㅗ':'h','ㅘ':'hk','ㅙ':'ho','ㅚ':'hl','ㅛ':'y',
+  'ㅜ':'n','ㅝ':'nj','ㅞ':'np','ㅟ':'nl','ㅠ':'b',
+  'ㅡ':'m','ㅢ':'ml','ㅣ':'l',
+  // compound jongseong
+  'ㄳ':'rt','ㄵ':'sw','ㄶ':'sg','ㄺ':'fr','ㄻ':'fa',
+  'ㄼ':'fq','ㄽ':'ft','ㄾ':'fx','ㄿ':'fv','ㅀ':'fg','ㅄ':'qt'
+};
+const CHO  = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const JONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+function charKeys(ch) {
+  const code = ch.charCodeAt(0);
+  if (code >= 0xAC00 && code <= 0xD7A3) {
+    const s = code - 0xAC00;
+    const jong = s % 28, jung = Math.floor(s/28)%21, cho = Math.floor(s/588);
+    let k = (J2Q[CHO[cho]]||'') + (J2Q[JUNG[jung]]||'');
+    if (jong) k += (J2Q[JONG[jong]]||'');
+    return k.split('');
+  }
+  if (code >= 0x3131 && code <= 0x3163) return (J2Q[ch]||'').split('').filter(Boolean);
+  if (ch === ' ') return [' '];
+  return [];
+}
+
+function decomposeKorean(text) {
+  return [...text].flatMap(ch => charKeys(ch));
+}
+
+// ── PRACTICE DATA ───────────────────────────────────────────────
+const MODES = {
+  jamo: [
+    ...'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎㄲㄸㅃㅆㅉ'.split('').map(j => ({
+      text:j, meaning:{ro:J2Q[j]?`Tastă: ${J2Q[j].toUpperCase()}`:'—', en:J2Q[j]?`Key: ${J2Q[j].toUpperCase()}`:'—'}
+    })),
+    ...'ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣㅐㅔ'.split('').map(j => ({
+      text:j, meaning:{ro:J2Q[j]?`Tastă: ${J2Q[j].toUpperCase()}`:'—', en:J2Q[j]?`Key: ${J2Q[j].toUpperCase()}`:'—'}
+    }))
+  ],
+  syllables: [
+    {text:'가',meaning:{ro:'ga',en:'ga'}},{text:'나',meaning:{ro:'na',en:'na'}},
+    {text:'다',meaning:{ro:'da',en:'da'}},{text:'라',meaning:{ro:'ra',en:'ra'}},
+    {text:'마',meaning:{ro:'ma',en:'ma'}},{text:'바',meaning:{ro:'ba',en:'ba'}},
+    {text:'사',meaning:{ro:'sa',en:'sa'}},{text:'아',meaning:{ro:'a',en:'a'}},
+    {text:'자',meaning:{ro:'ja',en:'ja'}},{text:'차',meaning:{ro:'cha',en:'cha'}},
+    {text:'카',meaning:{ro:'ka',en:'ka'}},{text:'타',meaning:{ro:'ta',en:'ta'}},
+    {text:'파',meaning:{ro:'pa',en:'pa'}},{text:'하',meaning:{ro:'ha',en:'ha'}},
+    {text:'기',meaning:{ro:'gi',en:'gi'}},{text:'니',meaning:{ro:'ni',en:'ni'}},
+    {text:'도',meaning:{ro:'do',en:'do'}},{text:'로',meaning:{ro:'ro',en:'ro'}},
+    {text:'무',meaning:{ro:'mu',en:'mu'}},{text:'부',meaning:{ro:'bu',en:'bu'}},
+    {text:'한',meaning:{ro:'han',en:'han'}},{text:'국',meaning:{ro:'guk',en:'guk'}},
+    {text:'어',meaning:{ro:'eo',en:'eo'}},{text:'학',meaning:{ro:'hak',en:'hak'}},
+    {text:'교',meaning:{ro:'gyo',en:'gyo'}},{text:'말',meaning:{ro:'mal',en:'mal'}},
+    {text:'글',meaning:{ro:'geul',en:'geul'}},{text:'집',meaning:{ro:'jip',en:'jip'}},
+    {text:'밥',meaning:{ro:'bap',en:'bap'}},{text:'물',meaning:{ro:'mul',en:'mul'}}
+  ],
+  words: [
+    {text:'물',    meaning:{ro:'apă',              en:'water'}},
+    {text:'불',    meaning:{ro:'foc',               en:'fire'}},
+    {text:'밥',    meaning:{ro:'orez / masă',       en:'rice / meal'}},
+    {text:'집',    meaning:{ro:'casă',              en:'house'}},
+    {text:'차',    meaning:{ro:'mașină / ceai',     en:'car / tea'}},
+    {text:'책',    meaning:{ro:'carte',             en:'book'}},
+    {text:'돈',    meaning:{ro:'bani',              en:'money'}},
+    {text:'사람',  meaning:{ro:'persoană',           en:'person'}},
+    {text:'나라',  meaning:{ro:'țară',              en:'country'}},
+    {text:'친구',  meaning:{ro:'prieten',            en:'friend'}},
+    {text:'학교',  meaning:{ro:'școală',            en:'school'}},
+    {text:'선생',  meaning:{ro:'profesor',           en:'teacher'}},
+    {text:'음식',  meaning:{ro:'mâncare',            en:'food'}},
+    {text:'한국',  meaning:{ro:'Coreea',             en:'Korea'}},
+    {text:'가족',  meaning:{ro:'familie',            en:'family'}},
+    {text:'시간',  meaning:{ro:'timp / oră',         en:'time / hour'}},
+    {text:'오늘',  meaning:{ro:'azi',                en:'today'}},
+    {text:'어제',  meaning:{ro:'ieri',               en:'yesterday'}},
+    {text:'내일',  meaning:{ro:'mâine',              en:'tomorrow'}},
+    {text:'날씨',  meaning:{ro:'vreme',              en:'weather'}},
+    {text:'공부',  meaning:{ro:'studiu',             en:'study'}},
+    {text:'사랑',  meaning:{ro:'dragoste',           en:'love'}},
+    {text:'행복',  meaning:{ro:'fericire',           en:'happiness'}},
+    {text:'병원',  meaning:{ro:'spital',             en:'hospital'}},
+    {text:'버스',  meaning:{ro:'autobuz',            en:'bus'}},
+    {text:'지하철',meaning:{ro:'metrou',              en:'subway'}},
+    {text:'시장',  meaning:{ro:'piață',              en:'market'}},
+    {text:'숙제',  meaning:{ro:'temă',               en:'homework'}},
+    {text:'노래',  meaning:{ro:'cântec',             en:'song'}},
+    {text:'영화',  meaning:{ro:'film',               en:'movie'}}
+  ],
+  sentences: [
+    {text:'안녕하세요',      meaning:{ro:'Bună ziua',             en:'Hello'}},
+    {text:'감사합니다',      meaning:{ro:'Mulțumesc',              en:'Thank you'}},
+    {text:'미안합니다',      meaning:{ro:'Îmi pare rău',           en:'I am sorry'}},
+    {text:'괜찮아요',        meaning:{ro:'E în regulă',            en:'It\'s okay'}},
+    {text:'잘 모르겠어요',   meaning:{ro:'Nu știu bine',           en:'I\'m not sure'}},
+    {text:'저는 학생이에요', meaning:{ro:'Eu sunt student/ă',      en:'I am a student'}},
+    {text:'한국어를 공부해요',meaning:{ro:'Studiez coreeana',       en:'I study Korean'}},
+    {text:'오늘 날씨가 좋아요',meaning:{ro:'Azi vremea e frumoasă',en:'The weather is nice today'}},
+    {text:'이름이 뭐예요',   meaning:{ro:'Cum te numești?',        en:'What is your name?'}},
+    {text:'어디에 살아요',   meaning:{ro:'Unde locuiești?',        en:'Where do you live?'}}
+  ]
+};
+
+// ── STATE ────────────────────────────────────────────────────────
+let mode = 'jamo';
+let cLang = 'ro';
+let items = [];
+let iIdx = 0;
+let kIdx = 0;
+let exKeys = [];
+let sCorr = 0, sWrong = 0, streak = 0;
+let wordErrs = 0;
+let startTime = null;
+let keysTyped = 0;
+let shakeT = null;
+
+// ── SETUP ─────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('btn-'+m).classList.add('on');
+  items = [...MODES[m]].sort(()=>Math.random()-.5);
+  iIdx = 0; sCorr = 0; sWrong = 0; streak = 0; keysTyped = 0; startTime = null;
+  updateStats();
+  loadItem();
+}
+window.setMode = setMode;
+
+function skipItem() { iIdx++; wordErrs = 0; loadItem(); }
+window.skipItem = skipItem;
+
+function restartSession() {
+  items = items.sort(()=>Math.random()-.5);
+  iIdx = 0; sCorr = 0; sWrong = 0; streak = 0; keysTyped = 0; startTime = null;
+  updateStats();
+  loadItem();
+}
+window.restartSession = restartSession;
+
+function loadItem() {
+  if (iIdx >= items.length) { iIdx = 0; items = items.sort(()=>Math.random()-.5); }
+  exKeys = decomposeKorean(items[iIdx].text);
+  kIdx = 0; wordErrs = 0;
+  if (!startTime) startTime = Date.now();
+  renderTarget(); renderKeys(); renderKeyboard();
+  document.getElementById('wordRes').innerHTML = '';
+  updateProg();
+}
+
+// ── RENDER TARGET ─────────────────────────────────────────────────
+function renderTarget() {
+  const item = items[iIdx];
+  let kUsed = 0;
+  let html = '';
+  for (const ch of item.text) {
+    const ck = charKeys(ch).length;
+    const cls = kIdx >= kUsed+ck ? 'char-done' : kIdx >= kUsed ? 'char-cur' : 'char-todo';
+    html += `<span class="${cls}">${ch}</span>`;
+    kUsed += ck;
+  }
+  document.getElementById('kbTarget').innerHTML = html;
+  document.getElementById('kbMeaning').textContent = item.meaning[cLang] || '';
+}
+
+const HINT_KEYS = 3; // show hint for first N keystrokes per item
+
+// ── RENDER KEYS HINT ──────────────────────────────────────────────
+function renderKeys() {
+  if (kIdx >= HINT_KEYS) { document.getElementById('kbKeys').innerHTML = ''; return; }
+  let html = '';
+  exKeys.forEach((k, i) => {
+    const cls = i < kIdx ? 'kd' : i === kIdx ? 'kc' : 'kt';
+    const disp = k === ' ' ? '␣' : k.toUpperCase();
+    html += `<span class="${cls}">${disp}</span>`;
+    if (i < exKeys.length-1) html += '<span style="opacity:.2"> · </span>';
+  });
+  document.getElementById('kbKeys').innerHTML = html;
+}
+
+// ── RENDER VIRTUAL KEYBOARD ───────────────────────────────────────
+function renderKeyboard() {
+  const exp = kIdx < exKeys.length ? exKeys[kIdx] : null;
+  const nextLower = exp ? exp.toLowerCase() : null;
+  const needShift = exp && exp !== exp.toLowerCase();
+  const el = document.getElementById('vkbd');
+  let html = '';
+  KEY_ROWS.forEach(row => {
+    html += '<div class="vkbd-row">';
+    row.forEach(k => {
+      const isActive = kIdx < HINT_KEYS && k === nextLower;
+      const kr  = Q2J[k]  || '';
+      const krS = Q2J[k.toUpperCase()] || '';
+      const showShift = krS && krS !== kr;
+      html += `<div class="vkey${isActive?' active':''}" id="vk-${k}" data-key="${k}">`;
+      html += `<span class="vk-kr">${kr}</span>`;
+      html += `<span class="vk-en">${k.toUpperCase()}</span>`;
+      if (showShift) html += `<span class="vk-sh">${krS}</span>`;
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  el.innerHTML = html;
+  // Tap support for mobile
+  el.querySelectorAll('.vkey').forEach(vk => {
+    vk.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const k = vk.dataset.key;
+      const expectedNow = kIdx < exKeys.length ? exKeys[kIdx] : null;
+      // On tap, send the correct case if physical key matches
+      if (expectedNow && expectedNow.toLowerCase() === k) handleKey(expectedNow);
+      else handleKey(k);
+    });
+  });
+
+  document.getElementById('shiftNote').textContent = (kIdx < HINT_KEYS && needShift) ? '⇧ Shift nécessaire' : '';
+}
+
+function updateProg() {
+  const pct = exKeys.length > 0 ? kIdx / exKeys.length * 100 : 0;
+  document.getElementById('kbProg').style.width = pct + '%';
+}
+
+// ── KEY HANDLING ──────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  if (['Tab','Enter','Escape','Backspace','ArrowLeft','ArrowRight'].includes(e.key)) return;
+  if (e.key === ' ') e.preventDefault();
+  if (e.key.length === 1) handleKey(e.key);
+});
+
+function handleKey(key) {
+  if (kIdx >= exKeys.length) return;
+  const expected = exKeys[kIdx];
+  const ok = key === expected;
+
+  // Flash key
+  const vk = document.getElementById('vk-' + key.toLowerCase());
+  if (vk) {
+    vk.classList.add(ok ? 'hit-ok' : 'hit-err');
+    setTimeout(() => vk.classList.remove('hit-ok','hit-err'), 180);
+  }
+
+  if (ok) {
+    kIdx++; keysTyped++;
+    updateProg(); renderTarget(); renderKeys();
+    if (kIdx >= exKeys.length) { wordDone(); } else { renderKeyboard(); }
+  } else {
+    wordErrs++; sWrong++; streak = 0;
+    updateStats();
+    const td = document.getElementById('kbTarget');
+    clearTimeout(shakeT);
+    td.classList.remove('shake-err');
+    void td.offsetWidth;
+    td.classList.add('shake-err');
+    shakeT = setTimeout(() => td.classList.remove('shake-err'), 380);
+  }
+}
+
+function wordDone() {
+  sCorr++;
+  if (wordErrs === 0) streak++; else streak = 0;
+  updateStats();
+  const ok = wordErrs === 0;
+  document.getElementById('wordRes').innerHTML =
+    `<div class="${ok?'wr-ok':'wr-err'}">${ok ? '✓ Perfect!' : `${wordErrs} greș. — mai încearcă`}</div>`;
+  setTimeout(() => { iIdx++; loadItem(); }, ok ? 550 : 950);
+}
+
+function updateStats() {
+  document.getElementById('sCorr').textContent   = sCorr;
+  document.getElementById('sWrong').textContent  = sWrong;
+  document.getElementById('sStreak').textContent = streak;
+  if (startTime && keysTyped >= 5) {
+    const mins = (Date.now() - startTime) / 60000;
+    document.getElementById('sWpm').textContent = Math.round(keysTyped / 5 / Math.max(mins,.05));
+  }
+}
+
+// ── LANG ─────────────────────────────────────────────────────────
+if (window.RKLang) {
+  cLang = RKLang.get();
+  RKLang.init(l => { cLang = l; renderTarget(); });
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────
+setMode('jamo');
+</script>
+</body>
+</html>
