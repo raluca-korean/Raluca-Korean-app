@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Raluca Korean — Helioform</title>
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#db2877">
+<meta name="theme-color" content="#7C3AED">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./theme-anime.css">
@@ -16,16 +16,25 @@
 <!-- Particle canvas — drifting stellar field -->
 <canvas id="crfCanvas" aria-hidden="true"></canvas>
 
-<!-- Ambient field orbs — nebula atmosphere -->
+<!-- Ambient field orbs — vibrant aurora atmosphere -->
 <div id="crfAmbient" aria-hidden="true">
-  <div class="amb-orb" style="--ox:12%;--oy:18%;--os:580px;--oc:var(--crf-orb-1)"></div>
-  <div class="amb-orb" style="--ox:82%;--oy:62%;--os:520px;--oc:var(--crf-orb-2)"></div>
-  <div class="amb-orb" style="--ox:46%;--oy:90%;--os:420px;--oc:var(--crf-orb-3)"></div>
+  <div class="amb-orb" style="--ox:8%;--oy:12%;--os:680px;--oc:rgba(124,58,237,0.32)"></div>
+  <div class="amb-orb" style="--ox:88%;--oy:18%;--os:580px;--oc:rgba(236,72,153,0.26)"></div>
+  <div class="amb-orb" style="--ox:50%;--oy:58%;--os:520px;--oc:rgba(56,189,248,0.18)"></div>
+  <div class="amb-orb" style="--ox:12%;--oy:82%;--os:420px;--oc:rgba(52,211,153,0.16)"></div>
+  <div class="amb-orb" style="--ox:90%;--oy:78%;--os:380px;--oc:rgba(253,186,116,0.14)"></div>
 </div>
 
 <!-- Navigation strip -->
 <nav id="crfNav">
   <div id="pageControls"></div>
+  <div id="crfProgress">
+    <span id="crfProgText">0/0</span>
+    <svg id="crfProgArc" viewBox="0 0 120 120" aria-hidden="true">
+      <circle class="arc-track" cx="60" cy="60" r="52"/>
+      <circle class="arc-fill" id="crfArcFill" cx="60" cy="60" r="52" transform="rotate(-90 60 60)"/>
+    </svg>
+  </div>
   <div id="crfFilters">
     <button class="crf-filter" id="filterFav" title="Favorite">⭐</button>
     <button class="crf-filter active" id="sortSRS">SRS</button>
@@ -35,16 +44,35 @@
   </div>
 </nav>
 
-<!-- Circular progress ring -->
-<div id="crfProgress">
-  <span id="crfProgText">0/0</span>
-  <svg id="crfProgArc" viewBox="0 0 120 120" aria-hidden="true">
-    <circle class="arc-track" cx="60" cy="60" r="52"/>
-    <circle class="arc-fill" id="crfArcFill" cx="60" cy="60" r="52" transform="rotate(-90 60 60)"/>
-  </svg>
+<!-- Gamification dashboard bar -->
+<div id="crfGamification">
+  <div class="gm-stat">
+    <span class="gm-icon">🔥</span>
+    <span class="gm-val" id="gmStreakVal">0</span>
+    <span class="gm-lbl">streak</span>
+  </div>
+  <div class="gm-center">
+    <div class="gm-level-wrap">
+      <span class="gm-badge" id="gmLevel">Lv.1</span>
+      <div class="gm-xp-track">
+        <div class="gm-xp-fill" id="gmXpFill"></div>
+      </div>
+      <span class="gm-xp-val" id="gmXpText">0 XP</span>
+    </div>
+  </div>
+  <div class="gm-stat">
+    <span class="gm-icon">⚡</span>
+    <span class="gm-val" id="gmComboVal">x1</span>
+    <span class="gm-lbl">combo</span>
+  </div>
+  <div class="gm-stat">
+    <span class="gm-icon">🎯</span>
+    <span class="gm-val" id="gmAccVal">—</span>
+    <span class="gm-lbl">acc</span>
+  </div>
 </div>
 
-<!-- Learning field — the Helioform nucleus -->
+<!-- Learning field — hero card space -->
 <div id="crfField">
 
   <!-- Orbital rings (decorative depth) -->
@@ -53,23 +81,27 @@
     <div class="crf-orbit crf-orbit--2"></div>
   </div>
 
-  <!-- Nucleus — tap to resonate -->
+  <!-- Hero flashcard -->
   <div id="crfCore" role="button" tabindex="0"
        onclick="flipCard()"
        onkeydown="if(event.key==='Enter'||event.key===' ')flipCard()">
 
     <div id="crfNucleusGlow" aria-hidden="true"></div>
 
-    <!-- Front: Korean character -->
+    <!-- Front: Korean word -->
     <div class="crf-front">
-      <div id="crfSrsTag"></div>
-      <div id="crfDiffDot" aria-hidden="true"></div>
+      <div class="crf-front-badges">
+        <div id="crfSrsTag"></div>
+        <div id="crfDiffDot" aria-hidden="true"></div>
+      </div>
+      <div id="crfEmojiDisplay" aria-hidden="true"></div>
       <div id="crfKorean">가</div>
       <div id="crfCoreHint"></div>
     </div>
 
-    <!-- Back: meaning erupts from within -->
+    <!-- Back: meaning revealed -->
     <div class="crf-back">
+      <div id="crfBackKorean" aria-hidden="true"></div>
       <div id="crfMeaning"></div>
       <div id="crfCat"></div>
       <button type="button" id="crfSpeak" onclick="event.stopPropagation()"></button>
@@ -78,17 +110,20 @@
   </div>
 </div>
 
-<!-- Response field — two resonance zones -->
+<!-- Response field — two action zones -->
 <div id="crfResponse">
   <button type="button" id="crfDontKnow" onclick="answer(false)">
-    <span class="resp-icon">◌</span>
+    <span class="resp-icon">❌</span>
     <span class="resp-label" id="respDontKnow">Nu știu</span>
   </button>
   <button type="button" id="crfKnow" onclick="answer(true)">
-    <span class="resp-icon">◎</span>
+    <span class="resp-icon">✅</span>
     <span class="resp-label" id="respKnow">Știu</span>
   </button>
 </div>
+
+<!-- Floating XP text container -->
+<div id="crfXpFloat" aria-hidden="true"></div>
 
 <!-- Particle emitter container -->
 <div id="crfParticles" aria-hidden="true"></div>
@@ -96,11 +131,15 @@
 <!-- State overlays: summary / SRS-empty / error -->
 <div id="fcArea"></div>
 
+<!-- Achievement toast container -->
+<div id="crfToastArea" aria-live="polite"></div>
+
 <!-- Compat: JS uses this element for title sync -->
 <span id="pageTitle" style="display:none"></span>
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/lang-picker.js"></script>
+<script src="./js/core/gamification.js"></script>
 <script src="./js/flashcards.js"></script>
 <script src="./js/core/dark-mode.js"></script>
 <script src="./js/core/register-sw.js"></script>
