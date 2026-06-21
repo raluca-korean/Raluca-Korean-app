@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Povești Simple · English Zero→Hero</title>
+<meta name="theme-color" content="#050818">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#050818;--blue:#00b4ff;--purple:#8b5cf6;--teal:#00e5cc;--gold:#ffc400;--frost:rgba(255,255,255,.92);--frost2:rgba(255,255,255,.55);--frost3:rgba(255,255,255,.18);--glass:rgba(255,255,255,.06);--border:rgba(255,255,255,.09);}
+html,body{min-height:100%;background:var(--bg);color:var(--frost);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.bg{position:fixed;inset:0;background:radial-gradient(ellipse 65% 50% at 70% 10%,rgba(255,196,0,.12),transparent 65%),radial-gradient(ellipse 55% 45% at 20% 80%,rgba(139,92,246,.14),transparent 60%),#050818}
+.hdr{position:fixed;top:0;left:0;right:0;z-index:100;padding:13px 20px;display:flex;align-items:center;gap:12px;background:rgba(5,8,24,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.back{width:36px;height:36px;border-radius:11px;border:1px solid var(--border);background:var(--glass);display:flex;align-items:center;justify-content:center;font-size:16px;text-decoration:none;color:var(--frost);transition:all .2s;flex-shrink:0}
+.back:hover{border-color:rgba(255,196,0,.4);background:rgba(255,196,0,.08)}
+.hdr-t{font-size:14px;font-weight:700;flex:1}
+.lang-sw{display:flex;gap:3px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:20px;padding:3px}
+.lb{font-size:10px;font-weight:700;padding:4px 10px;border-radius:16px;border:none;background:none;color:var(--frost2);cursor:pointer;transition:all .2s}
+.lb.on{background:var(--gold);color:#050818}
+.main{padding:78px 20px 48px;position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:16px}
+.page-title{width:100%;max-width:480px;text-align:center;padding:20px 0 8px}
+.page-title h1{font-size:clamp(22px,6vw,32px);font-weight:900;letter-spacing:-.02em;background:linear-gradient(130deg,var(--gold),#ff9a3c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.page-title p{font-size:13px;color:var(--frost2);line-height:1.55}
+.story-list{width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px}
+.st-card{background:var(--glass);border:1px solid var(--border);border-radius:24px;overflow:hidden;backdrop-filter:blur(20px);transition:border-color .25s,box-shadow .25s;cursor:pointer}
+.st-card:hover{border-color:rgba(255,196,0,.25);box-shadow:0 12px 36px rgba(255,196,0,.12)}
+.st-head{padding:18px 20px;display:flex;align-items:center;gap:14px}
+.st-emo{font-size:32px;flex-shrink:0}
+.st-info{flex:1}
+.st-level{font-size:10px;font-weight:700;letter-spacing:.20em;text-transform:uppercase;color:var(--gold);opacity:.7;margin-bottom:4px}
+.st-title{font-size:16px;font-weight:700;margin-bottom:3px}
+.st-sub{font-size:12.5px;color:var(--frost2)}
+.st-arrow{font-size:18px;color:var(--frost3)}
+.st-body{display:none;padding:0 20px 20px}
+.st-card.open .st-body{display:block}
+.st-card.open .st-arrow{transform:rotate(90deg)}
+.sentences{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.sent{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:13px 16px;cursor:pointer;transition:all .2s}
+.sent:hover{background:rgba(255,196,0,.07);border-color:rgba(255,196,0,.22)}
+.sent-en{font-size:16px;font-weight:600;margin-bottom:4px}
+.sent-ph{font-size:11.5px;font-weight:700;color:var(--gold);letter-spacing:.03em;margin-bottom:4px}
+.sent-ro{font-size:12px;color:var(--frost2)}
+.st-play-all{width:100%;padding:13px;border-radius:14px;border:none;cursor:pointer;background:linear-gradient(135deg,rgba(255,196,0,.22),rgba(255,150,0,.15));border:1px solid rgba(255,196,0,.30);color:var(--gold);font-size:13px;font-weight:700;transition:all .2s}
+.st-play-all:hover{background:linear-gradient(135deg,rgba(255,196,0,.32),rgba(255,150,0,.22));box-shadow:0 0 20px rgba(255,196,0,.25)}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<header class="hdr">
+  <a class="back" href="index.html">←</a>
+  <div class="hdr-t" id="hdr-t">Povești Simple</div>
+  <div class="lang-sw">
+    <button class="lb on" id="btn-ro" onclick="setLang('ro')">RO</button>
+    <button class="lb" id="btn-en" onclick="setLang('en')">EN</button>
+  </div>
+</header>
+<main class="main">
+  <div class="page-title">
+    <h1 id="pg-h1">Povești Simple</h1>
+    <p id="pg-sub">Propoziții scurte, nivel A0. Apasă pe o propoziție pentru a o auzi.</p>
+  </div>
+  <div class="story-list" id="story-list"></div>
+</main>
+<script>
+const STORIES=[
+  {emo:'👤',level:'Nivel A0',title_ro:'Eu sunt Ana',title_en:'I am Ana',sub_ro:'Prezentare personală',sub_en:'Personal introduction',
+   sents:[
+    {en:'I am Ana.',ph:'AI AM ANA.',ro:'Eu sunt Ana.'},
+    {en:'I am from Romania.',ph:'AI AM FROM ROUMEINIA.',ro:'Sunt din România.'},
+    {en:'I am a student.',ph:'AI AM A STIUDENT.',ro:'Sunt studentă.'},
+    {en:'I am 20 years old.',ph:'AI AM TUENTI IERZ OULD.',ro:'Am 20 de ani.'},
+    {en:'I speak Romanian.',ph:'AI SPIIK ROUMEINIAN.',ro:'Vorbesc română.'},
+    {en:'I want to learn English.',ph:'AI UONT TU LORN INGLIȘ.',ro:'Vreau să învăț engleza.'},
+    {en:'English is beautiful.',ph:'INGLIȘ IZ BIUTIFUL.',ro:'Engleza este frumoasă.'}
+  ]},
+  {emo:'🐱',level:'Nivel A0',title_ro:'Pisica mea',title_en:'My cat',sub_ro:'Animale de companie',sub_en:'Pets',
+   sents:[
+    {en:'I have a cat.',ph:'AI HAV A KAT.',ro:'Am o pisică.'},
+    {en:'The cat is black.',ph:'ĐA KAT IZ BLAK.',ro:'Pisica este neagră.'},
+    {en:'Her name is Luna.',ph:'HOR NEIM IZ LUNA.',ro:'Numele ei este Luna.'},
+    {en:'Luna is very small.',ph:'LUNA IZ VERI SMOL.',ro:'Luna este foarte mică.'},
+    {en:'She likes milk.',ph:'ȘI LAIKS MILK.',ro:'Îi place laptele.'},
+    {en:'She sleeps a lot.',ph:'ȘI SLIIPS A LOT.',ro:'Doarme mult.'},
+    {en:'I love my cat.',ph:'AI LAV MAI KAT.',ro:'Îmi iubesc pisica.'}
+  ]},
+  {emo:'🏠',level:'Nivel A0',title_ro:'Casa mea',title_en:'My house',sub_ro:'Descrierea casei',sub_en:'Describing home',
+   sents:[
+    {en:'I have a house.',ph:'AI HAV A HAUS.',ro:'Am o casă.'},
+    {en:'The house is big.',ph:'ĐA HAUS IZ BIG.',ro:'Casa este mare.'},
+    {en:'There are three rooms.',ph:'ĐER AR ΘRII RUUMZ.',ro:'Sunt trei camere.'},
+    {en:'The kitchen is small.',ph:'ĐA KICEN IZ SMOL.',ro:'Bucătăria este mică.'},
+    {en:'I have a garden.',ph:'AI HAV A GARDN.',ro:'Am o grădină.'},
+    {en:'The garden is beautiful.',ph:'ĐA GARDN IZ BIUTIFUL.',ro:'Grădina este frumoasă.'},
+    {en:'I love my home.',ph:'AI LAV MAI HOUM.',ro:'Îmi iubesc casa.'}
+  ]},
+  {emo:'🌅',level:'Nivel A0',title_ro:'Ziua mea',title_en:'My day',sub_ro:'Rutina zilnică',sub_en:'Daily routine',
+   sents:[
+    {en:'Good morning!',ph:'GUD MORNING!',ro:'Bună dimineața!'},
+    {en:'I wake up at seven.',ph:'AI UEIK AP AT SEVEN.',ro:'Mă trezesc la șapte.'},
+    {en:'I drink coffee.',ph:'AI DRINK COFI.',ro:'Beau cafea.'},
+    {en:'I go to work.',ph:'AI GOU TU UORK.',ro:'Merg la muncă.'},
+    {en:'I eat lunch at noon.',ph:'AI IIT LANC AT NUUN.',ro:'Mănânc prânzul la amiază.'},
+    {en:'I come home at six.',ph:'AI CAM HOUM AT SICS.',ro:'Vin acasă la șase.'},
+    {en:'Good night!',ph:'GUD NAIT!',ro:'Noapte bună!'}
+  ]}
+];
+let lang=localStorage.getItem('EZH_LANG')||'ro';
+function build(){
+  const sl=document.getElementById('story-list');sl.innerHTML='';
+  STORIES.forEach((s,si)=>{
+    const L=lang==='ro';
+    const card=document.createElement('div');card.className='st-card';card.id='sc-'+si;
+    card.innerHTML=`
+      <div class="st-head" onclick="tog(${si})">
+        <div class="st-emo">${s.emo}</div>
+        <div class="st-info">
+          <div class="st-level">${s.level}</div>
+          <div class="st-title">${L?s.title_ro:s.title_en}</div>
+          <div class="st-sub">${L?s.sub_ro:s.sub_en}</div>
+        </div>
+        <div class="st-arrow">▶</div>
+      </div>
+      <div class="st-body">
+        <div class="sentences">
+          ${s.sents.map((sn,sni)=>`<div class="sent" onclick="sw('${sn.en.replace(/'/g,"\\'")}')"><div class="sent-en">${sn.en}</div><div class="sent-ph">${sn.ph}</div><div class="sent-ro">${sn.ro}</div></div>`).join('')}
+        </div>
+        <button class="st-play-all" onclick="playAll(${si})">▶ ${L?'Ascultă toată povestea':'Listen to the whole story'}</button>
+      </div>`;
+    sl.appendChild(card);
+  });
+}
+window.tog=function(i){document.getElementById('sc-'+i).classList.toggle('open');};
+window.sw=function(t){const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.75;speechSynthesis.cancel();speechSynthesis.speak(u);};
+window.playAll=function(si){
+  const sents=STORIES[si].sents;
+  speechSynthesis.cancel();
+  let idx=0;
+  function next(){if(idx>=sents.length)return;const u=new SpeechSynthesisUtterance(sents[idx].en);u.lang='en-US';u.rate=.75;u.onend=()=>{idx++;setTimeout(next,600);};speechSynthesis.speak(u);}
+  next();
+};
+function setLang(l){lang=l;localStorage.setItem('EZH_LANG',l);document.getElementById('btn-ro').className='lb'+(l==='ro'?' on':'');document.getElementById('btn-en').className='lb'+(l==='en'?' on':'');const L=l==='ro';document.getElementById('hdr-t').textContent=L?'Povești Simple':'Simple Stories';document.getElementById('pg-h1').textContent=L?'Povești Simple':'Simple Stories';document.getElementById('pg-sub').textContent=L?'Propoziții scurte, nivel A0. Apasă pe o propoziție pentru a o auzi.':'Short sentences, level A0. Tap a sentence to hear it.';build();}
+window.setLang=setLang;
+setLang(lang);
+</script>
+</body>
+</html>
