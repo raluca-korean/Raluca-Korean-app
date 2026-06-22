@@ -379,9 +379,31 @@ const REELS = [
       { ko:'보다',    emoji:'👀', ro:'a privi',     en:'to watch' },
       { ko:'배우다',  emoji:'🎓', ro:'a învăța',    en:'to learn' },
       { ko:'공부하다',emoji:'📚', ro:'a studia',    en:'to study' },
-      { ko:'만나다',  emoji:'🤝', ro:'a întâlni',   en:'to meet' },
+      { ko:'하다',    emoji:'⚡', ro:'a face',      en:'to do' },
     ]
   }
+];
+
+/* ── SEMANTIC CORES: loc + obj + verb mereu legate logic ─── */
+const CORES = [
+  { loc:'카페',   obj:'커피',   verb:'마시다'    },
+  { loc:'회사',   obj:'커피',   verb:'마시다'    },
+  { loc:'식당',   obj:'밥',     verb:'먹다'      },
+  { loc:'집',     obj:'밥',     verb:'먹다'      },
+  { loc:'도서관', obj:'책',     verb:'읽다'      },
+  { loc:'집',     obj:'책',     verb:'읽다'      },
+  { loc:'카페',   obj:'책',     verb:'읽다'      },
+  { loc:'학교',   obj:'한국어', verb:'배우다'    },
+  { loc:'집',     obj:'한국어', verb:'공부하다'  },
+  { loc:'도서관', obj:'한국어', verb:'공부하다'  },
+  { loc:'집',     obj:'음악',   verb:'듣다'      },
+  { loc:'카페',   obj:'음악',   verb:'듣다'      },
+  { loc:'공원',   obj:'음악',   verb:'듣다'      },
+  { loc:'집',     obj:'영화',   verb:'보다'      },
+  { loc:'학교',   obj:'숙제',   verb:'하다'      },
+  { loc:'집',     obj:'숙제',   verb:'하다'      },
+  { loc:'공원',   obj:'운동',   verb:'하다'      },
+  { loc:'집',     obj:'운동',   verb:'하다'      },
 ];
 
 /* ── PARTICLES ────────────────────────────────────────────── */
@@ -492,14 +514,35 @@ function doSpin() {
   const total = REELS.filter(r => !ST[r.id].locked).length || 0;
   if (total === 0) { spinning = false; document.getElementById('smSpinBtn').disabled = false; return; }
 
+  // Filtrăm nuclee semantice compatibile cu relele blocate
+  let pool = CORES.slice();
+  if (ST.location.locked) pool = pool.filter(c => c.loc === cur('location').ko);
+  if (ST.object.locked)   pool = pool.filter(c => c.obj === cur('object').ko);
+  if (ST.verb.locked)     pool = pool.filter(c => c.verb === cur('verb').ko);
+  if (pool.length === 0)  pool = CORES.slice();
+  const core = pool[Math.floor(Math.random() * pool.length)];
+
+  function idxOf(reelId, ko) {
+    return REELS.find(r => r.id === reelId).items.findIndex(it => it.ko === ko);
+  }
+
+  const targets = {
+    subject:  Math.floor(Math.random() * REELS.find(r => r.id === 'subject').items.length),
+    time:     Math.floor(Math.random() * REELS.find(r => r.id === 'time').items.length),
+    location: idxOf('location', core.loc),
+    object:   idxOf('object',   core.obj),
+    verb:     idxOf('verb',     core.verb),
+  };
+  // Subiect și timp: asigură că se schimbă față de valoarea curentă
+  ['subject', 'time'].forEach(id => {
+    const len = REELS.find(r => r.id === id).items.length;
+    if (targets[id] === ST[id].idx && len > 1)
+      targets[id] = (ST[id].idx + 1 + Math.floor(Math.random() * (len - 1))) % len;
+  });
+
   REELS.forEach((def, i) => {
     if (ST[def.id].locked) return;
-    const oldIdx = ST[def.id].idx;
-    let newIdx;
-    do { newIdx = Math.floor(Math.random() * def.items.length); }
-    while (newIdx === oldIdx && def.items.length > 1);
-
-    spinOne(def, delays[i], newIdx, () => {
+    spinOne(def, delays[i], targets[def.id], () => {
       done++;
       if (done === total) finishSpin();
     });
