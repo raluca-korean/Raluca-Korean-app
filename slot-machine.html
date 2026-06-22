@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Slot Machine</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+html, body { overflow-x: hidden; overflow-y: auto; min-height: 100vh; cursor: auto; }
+*, *::before, *::after { cursor: auto !important; }
+
+.sm-root { min-height: 100vh; padding-bottom: 48px; position: relative; z-index: 1; }
+
+/* BACKGROUND */
+.lmn-field { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.lmn-orb   { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .15; }
+.lmn-orb-1 { width:500px;height:500px;background:#7c3aed;top:-150px;left:-100px; }
+.lmn-orb-2 { width:400px;height:400px;background:#db2777;top:20%;right:-100px; }
+.lmn-orb-3 { width:300px;height:300px;background:#1CB0F6;bottom:15%;left:5%; }
+.lmn-orb-4 { width:250px;height:250px;background:#58CC02;bottom:-50px;right:25%; }
+.lmn-orb-5 { width:200px;height:200px;background:#f59e0b;top:45%;left:35%; }
+html[data-mode="day"] .lmn-orb { opacity: .07; }
+
+/* HEADER */
+.sm-nav {
+  position: sticky; top: 0; z-index: 200;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: rgba(7,7,28,.9); backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+html[data-mode="day"] .sm-nav { background: rgba(240,240,250,.93); border-bottom-color: rgba(0,0,0,.08); }
+.sm-nav-brand { flex: 1; }
+.sm-nav-title {
+  font-size: 16px; font-weight: 900;
+  background: linear-gradient(135deg, #a78bfa, #f472b6);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.sm-nav-sub {
+  display: block; font-size: 9px; font-weight: 700; letter-spacing: .08em;
+  color: rgba(167,139,250,.55); -webkit-text-fill-color: rgba(167,139,250,.55);
+  margin-top: 1px;
+}
+html[data-mode="day"] .sm-nav-sub { color: rgba(124,58,237,.5); -webkit-text-fill-color: rgba(124,58,237,.5); }
+
+/* TENSE BAR */
+.sm-tense-bar {
+  display: flex; gap: 6px; padding: 10px 14px;
+  overflow-x: auto; scrollbar-width: none;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.sm-tense-bar::-webkit-scrollbar { display: none; }
+html[data-mode="day"] .sm-tense-bar { border-bottom-color: rgba(0,0,0,.06); }
+.tense-btn {
+  flex-shrink: 0; padding: 7px 14px; border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,.12); background: transparent;
+  color: rgba(255,255,255,.5); font-size: 12px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; transition: all .2s;
+}
+html[data-mode="day"] .tense-btn { color: rgba(0,0,0,.45); border-color: rgba(0,0,0,.14); }
+.tense-btn.active {
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  border-color: transparent; color: white;
+  box-shadow: 0 3px 12px rgba(124,58,237,.3);
+}
+
+/* STRUCTURE LABEL */
+.sm-structure {
+  text-align: center; padding: 8px 14px 2px;
+  font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,.25); letter-spacing: .05em;
+}
+html[data-mode="day"] .sm-structure { color: rgba(0,0,0,.28); }
+.sm-structure b { font-weight: 900; }
+
+/* REELS WRAPPER */
+.sm-reels-wrap { padding: 10px 10px 0; overflow-x: auto; scrollbar-width: none; }
+.sm-reels-wrap::-webkit-scrollbar { display: none; }
+.sm-reels {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 6px; min-width: 330px;
+}
+
+/* SINGLE REEL */
+.sm-reel {
+  position: relative; border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1.5px solid rgba(255,255,255,.09);
+  overflow: hidden; transition: border-color .3s, box-shadow .3s;
+}
+html[data-mode="day"] .sm-reel { background: rgba(255,255,255,.82); border-color: rgba(0,0,0,.1); }
+.sm-reel.locked { border-color: rgba(251,191,36,.6) !important; box-shadow: 0 0 14px rgba(251,191,36,.2); }
+.reel-bar { height: 3px; }
+.reel-inner {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 8px 4px 10px; gap: 3px; min-height: 108px;
+}
+.reel-lbl { font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; opacity: .7; }
+.reel-emoji { font-size: 26px; line-height: 1.1; }
+.reel-ko {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 900; text-align: center; line-height: 1.2;
+  color: white;
+}
+html[data-mode="day"] .reel-ko { color: #1a0533; }
+.reel-ptcl { font-size: 10px; opacity: .5; font-weight: 400; }
+.reel-tr { font-size: 8px; opacity: .4; text-align: center; max-width: 100%; padding: 0 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reel-lockbtn {
+  position: absolute; top: 7px; right: 5px;
+  font-size: 11px; line-height: 1;
+  background: none; border: none; padding: 2px;
+  opacity: .3; cursor: pointer !important;
+  transition: opacity .2s; z-index: 2;
+}
+.sm-reel.locked .reel-lockbtn { opacity: .85; }
+.reel-lockbtn:hover { opacity: .7 !important; }
+
+/* REEL ANIMATIONS */
+@keyframes reel-out {
+  0%   { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+  100% { opacity:0; transform:translateY(-14px) scale(.85); filter:blur(3px); }
+}
+@keyframes reel-in {
+  0%   { opacity:0; transform:translateY(14px) scale(.85); filter:blur(3px); }
+  65%  { transform:translateY(-3px) scale(1.07); filter:blur(0); }
+  100% { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+}
+.sm-reel.is-out  .reel-inner { animation: reel-out .22s ease forwards; }
+.sm-reel.is-in   .reel-inner { animation: reel-in  .32s cubic-bezier(.34,1.56,.64,1) forwards; }
+
+/* SPIN BUTTON */
+.sm-spin-wrap { padding: 14px 14px 6px; text-align: center; }
+.sm-spin-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 15px 38px; border-radius: 999px; border: none;
+  background: linear-gradient(135deg, #7c3aed, #db2777, #f59e0b);
+  background-size: 200% 100%;
+  color: white; font-size: 16px; font-weight: 900; letter-spacing: .04em;
+  cursor: pointer !important;
+  box-shadow: 0 6px 28px rgba(124,58,237,.45);
+  transition: transform .15s, box-shadow .2s, background-position .4s;
+  animation: spin-pulse 3s ease infinite;
+}
+.sm-spin-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 38px rgba(219,39,119,.5); background-position: 100% 0; }
+.sm-spin-btn:active { transform: scale(.96); }
+.sm-spin-btn:disabled { animation: none; opacity: .6; cursor: not-allowed !important; pointer-events: none; }
+@keyframes spin-pulse {
+  0%,100% { box-shadow: 0 6px 28px rgba(124,58,237,.45); }
+  50%      { box-shadow: 0 6px 36px rgba(219,39,119,.55), 0 0 0 4px rgba(219,39,119,.12); }
+}
+
+/* STATS */
+.sm-stats {
+  display: flex; gap: 8px; justify-content: center;
+  padding: 8px 14px 0; flex-wrap: wrap;
+}
+.sm-stat {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.45);
+}
+html[data-mode="day"] .sm-stat { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.08); color: rgba(0,0,0,.4); }
+.sm-stat-val { color: white; font-size: 13px; font-weight: 900; }
+html[data-mode="day"] .sm-stat-val { color: #1a0533; }
+
+/* RESULT CARD */
+.sm-result {
+  margin: 10px 14px 0; border-radius: 20px;
+  background: rgba(255,255,255,.03); border: 1.5px solid rgba(255,255,255,.08);
+  overflow: hidden; transition: border-color .4s, background .4s;
+}
+html[data-mode="day"] .sm-result { background: rgba(255,255,255,.65); border-color: rgba(0,0,0,.1); }
+.sm-result.lit { border-color: rgba(167,139,250,.35); background: rgba(124,58,237,.06); }
+html[data-mode="day"] .sm-result.lit { border-color: rgba(124,58,237,.22); background: rgba(124,58,237,.04); }
+.sm-placeholder {
+  text-align: center; padding: 28px 20px;
+  color: rgba(255,255,255,.18); font-size: 13px; line-height: 1.6;
+}
+html[data-mode="day"] .sm-placeholder { color: rgba(0,0,0,.22); }
+.sm-result-body { padding: 16px; animation: sm-fadein .35s ease; }
+@keyframes sm-fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* SENTENCE */
+.sm-sentence {
+  display: flex; flex-wrap: wrap; gap: 6px 10px;
+  align-items: flex-end; margin-bottom: 12px;
+}
+.sm-chip {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.sm-chip-ko {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 21px; font-weight: 900; line-height: 1.2;
+}
+.sm-chip-ptcl { font-size: 14px; opacity: .55; }
+.sm-chip-lbl {
+  font-size: 7px; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .08em; opacity: .55;
+}
+.sm-chip-tr {
+  font-size: 10px; opacity: .4; font-style: italic;
+  white-space: nowrap;
+}
+
+/* TRANSLATION ROW */
+.sm-trans-row {
+  font-size: 13px; color: rgba(255,255,255,.45);
+  line-height: 1.5; margin-bottom: 12px; font-style: italic;
+}
+html[data-mode="day"] .sm-trans-row { color: rgba(0,0,0,.42); }
+
+/* ACTIONS */
+.sm-actions { display: flex; align-items: center; gap: 8px; }
+.sm-speak {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 16px; border-radius: 999px;
+  border: 1.5px solid rgba(167,139,250,.3); background: transparent;
+  color: #a78bfa; font-size: 13px; font-weight: 700;
+  cursor: pointer !important; transition: all .15s;
+}
+.sm-speak:hover { background: rgba(167,139,250,.12); }
+.sm-total { margin-left: auto; font-size: 11px; color: rgba(255,255,255,.28); font-weight: 700; }
+html[data-mode="day"] .sm-total { color: rgba(0,0,0,.28); }
+.sm-total span { color: #fbbf24; }
+
+/* RESPONSIVE */
+@media (max-width: 400px) {
+  .sm-chip-ko { font-size: 17px; }
+  .sm-spin-btn { padding: 13px 26px; font-size: 14px; }
+  .reel-emoji { font-size: 22px; }
+  .reel-ko { font-size: 11px; }
+  .reel-inner { min-height: 96px; }
+}
+</style>
+</head>
+<body class="theme-anime">
+
+<div class="lmn-field" aria-hidden="true">
+  <div class="lmn-orb lmn-orb-1"></div><div class="lmn-orb lmn-orb-2"></div>
+  <div class="lmn-orb lmn-orb-3"></div><div class="lmn-orb lmn-orb-4"></div>
+  <div class="lmn-orb lmn-orb-5"></div>
+</div>
+
+<div class="sm-root">
+
+  <nav class="sm-nav">
+    <a href="index.html" class="homeBtn" aria-label="Acasă">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+    <div class="sm-nav-brand">
+      <div class="sm-nav-title">🎰 슬롯 머신</div>
+      <span class="sm-nav-sub">SLOT MACHINE · PROPOZIȚII</span>
+    </div>
+    <div id="pageControls" data-no-home></div>
+  </nav>
+
+  <div class="sm-tense-bar" role="tablist">
+    <button class="tense-btn active" data-tense="present" role="tab" aria-selected="true">현재 · Prezent</button>
+    <button class="tense-btn" data-tense="past"    role="tab" aria-selected="false">과거 · Trecut</button>
+    <button class="tense-btn" data-tense="future"  role="tab" aria-selected="false">미래 · Viitor</button>
+  </div>
+
+  <div class="sm-structure">
+    <b style="color:#f472b6">주어</b> +
+    <b style="color:#fbbf24">시간</b> +
+    <b style="color:#38bdf8">장소</b> +
+    <b style="color:#4ade80">목적어</b> +
+    <b style="color:#a78bfa">동사</b>
+  </div>
+
+  <div class="sm-reels-wrap">
+    <div class="sm-reels" id="smReels"></div>
+  </div>
+
+  <div class="sm-spin-wrap">
+    <button class="sm-spin-btn" id="smSpinBtn" type="button">🎰 MEGA SPIN 🎰</button>
+  </div>
+
+  <div class="sm-stats">
+    <div class="sm-stat">스핀 <span class="sm-stat-val" id="statSpins">0</span></div>
+    <div class="sm-stat">🔥 <span class="sm-stat-val" id="statStreak">0</span></div>
+  </div>
+
+  <div class="sm-result" id="smResult">
+    <div class="sm-placeholder" id="smPlaceholder">
+      Apasă <strong>MEGA SPIN</strong> pentru o propoziție coreeană<br>
+      <span style="font-size:11px;opacity:.6">스핀 버튼을 누르면 한국어 문장이 나와요!</span>
+    </div>
+    <div class="sm-result-body" id="smBody" style="display:none">
+      <div class="sm-sentence" id="smSentence"></div>
+      <div class="sm-trans-row" id="smTrans"></div>
+      <div class="sm-actions">
+        <button class="sm-speak" id="smSpeak" type="button">🔊 <span id="smSpeakLbl">Ascultă</span></button>
+        <div class="sm-total">Total: <span id="smTotal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script src="./js/core/audio.js"></script>
+<script src="./js/core/conjugation.js"></script>
+<script src="./js/core/dark-mode.js"></script>
+<script>
+/* ── DATA ─────────────────────────────────────────────────── */
+const REELS = [
+  {
+    id:'subject', color:'#f472b6',
+    label:{ ro:'Subiect', en:'Subject' },
+    items:[
+      { ko:'저',    emoji:'🙋', ro:'eu (pol.)',   en:'I (pol.)' },
+      { ko:'나',    emoji:'😊', ro:'eu',           en:'I' },
+      { ko:'우리',  emoji:'👨‍👩‍👧', ro:'noi',       en:'we' },
+      { ko:'친구',  emoji:'👫', ro:'prietenul',   en:'the friend' },
+      { ko:'선생님',emoji:'👨‍🏫', ro:'profesorul', en:'the teacher' },
+      { ko:'가족',  emoji:'👨‍👩‍👧‍👦', ro:'familia',  en:'the family' },
+      { ko:'오빠',  emoji:'🧑', ro:'fratele mare',en:'older brother' },
+      { ko:'언니',  emoji:'👧', ro:'sora mare',   en:'older sister' },
+    ]
+  },
+  {
+    id:'time', color:'#fbbf24',
+    label:{ ro:'Timp', en:'Time' },
+    items:[
+      { ko:'오늘',   emoji:'📅', ro:'azi',         en:'today' },
+      { ko:'매일',   emoji:'🔄', ro:'zilnic',       en:'every day' },
+      { ko:'지금',   emoji:'⏰', ro:'acum',         en:'now' },
+      { ko:'어제',   emoji:'⏪', ro:'ieri',         en:'yesterday' },
+      { ko:'내일',   emoji:'⏩', ro:'mâine',        en:'tomorrow' },
+      { ko:'아침에', emoji:'🌅', ro:'dimineața',    en:'in the morning' },
+      { ko:'저녁에', emoji:'🌆', ro:'seara',        en:'in the evening' },
+      { ko:'주말에', emoji:'🎉', ro:'în weekend',   en:'on weekends' },
+    ]
+  },
+  {
+    id:'location', color:'#38bdf8',
+    label:{ ro:'Loc', en:'Location' },
+    items:[
+      { ko:'집',    emoji:'🏠', ro:'acasă',           en:'at home' },
+      { ko:'학교',  emoji:'🏫', ro:'la școală',       en:'at school' },
+      { ko:'카페',  emoji:'☕', ro:'la cafenea',       en:'at the café' },
+      { ko:'공원',  emoji:'🌳', ro:'în parc',         en:'in the park' },
+      { ko:'도서관',emoji:'📚', ro:'la bibliotecă',   en:'at the library' },
+      { ko:'식당',  emoji:'🍽️', ro:'la restaurant',  en:'at the restaurant' },
+      { ko:'회사',  emoji:'🏢', ro:'la serviciu',     en:'at work' },
+      { ko:'병원',  emoji:'🏥', ro:'la spital',       en:'at the hospital' },
+    ]
+  },
+  {
+    id:'object', color:'#4ade80',
+    label:{ ro:'Obiect', en:'Object' },
+    items:[
+      { ko:'밥',    emoji:'🍚', ro:'mâncare',    en:'food' },
+      { ko:'커피',  emoji:'☕', ro:'cafea',       en:'coffee' },
+      { ko:'책',    emoji:'📖', ro:'carte',       en:'a book' },
+      { ko:'음악',  emoji:'🎵', ro:'muzică',      en:'music' },
+      { ko:'영화',  emoji:'🎬', ro:'film',        en:'a movie' },
+      { ko:'한국어',emoji:'🇰🇷', ro:'coreeana',  en:'Korean' },
+      { ko:'운동',  emoji:'🏃', ro:'sport',       en:'exercise' },
+      { ko:'숙제',  emoji:'📝', ro:'tema',        en:'homework' },
+    ]
+  },
+  {
+    id:'verb', color:'#a78bfa',
+    label:{ ro:'Verb', en:'Verb' },
+    items:[
+      { ko:'먹다',    emoji:'🍴', ro:'a mânca',    en:'to eat' },
+      { ko:'마시다',  emoji:'🥤', ro:'a bea',       en:'to drink' },
+      { ko:'읽다',    emoji:'📖', ro:'a citi',      en:'to read' },
+      { ko:'듣다',    emoji:'🎧', ro:'a asculta',   en:'to listen' },
+      { ko:'보다',    emoji:'👀', ro:'a privi',     en:'to watch' },
+      { ko:'배우다',  emoji:'🎓', ro:'a învăța',    en:'to learn' },
+      { ko:'공부하다',emoji:'📚', ro:'a studia',    en:'to study' },
+      { ko:'만나다',  emoji:'🤝', ro:'a întâlni',   en:'to meet' },
+    ]
+  }
+];
+
+/* ── PARTICLES ────────────────────────────────────────────── */
+function hasBatchim(w) {
+  if (!w) return false;
+  const c = w.charCodeAt(w.length - 1);
+  return c >= 44032 && c <= 55203 && (c - 44032) % 28 !== 0;
+}
+function topicP(w)  { return hasBatchim(w) ? '은' : '는'; }
+function objectP(w) { return hasBatchim(w) ? '을' : '를'; }
+function particle(def, item) {
+  if (def.id === 'subject')  return topicP(item.ko);
+  if (def.id === 'location') return '에서';
+  if (def.id === 'object')   return objectP(item.ko);
+  return '';
+}
+
+/* ── CONJUGATION ──────────────────────────────────────────── */
+function conj(verbBase, tense) {
+  if (!window.Conjugation) return verbBase;
+  if (tense === 'past')   return Conjugation.past(verbBase);
+  if (tense === 'future') return Conjugation.future(verbBase);
+  return Conjugation.present(verbBase);
+}
+
+/* ── STATE ────────────────────────────────────────────────── */
+let tense = 'present', spins = 0, spinning = false;
+const ST = {};
+REELS.forEach(r => {
+  ST[r.id] = { idx: Math.floor(Math.random() * r.items.length), locked: false };
+});
+function cur(id) { return REELS.find(r => r.id === id).items[ST[id].idx]; }
+
+/* ── RENDER REEL ──────────────────────────────────────────── */
+function renderReel(def) {
+  const s    = ST[def.id];
+  const item = def.items[s.idx];
+  const ptcl = particle(def, item);
+  const lang = window.RKLang ? RKLang.get() : 'ro';
+  const el   = document.querySelector(`[data-rid="${def.id}"]`);
+  if (!el) return;
+
+  el.classList.toggle('locked', s.locked);
+  el.querySelector('.reel-lbl').textContent    = def.label[lang];
+  el.querySelector('.reel-emoji').textContent  = item.emoji;
+  el.querySelector('.reel-ko-word').textContent = item.ko;
+  el.querySelector('.reel-ptcl').textContent   = ptcl;
+  el.querySelector('.reel-tr').textContent     = item[lang];
+  el.querySelector('.reel-lockbtn').textContent = s.locked ? '🔒' : '🔓';
+}
+
+function buildReels() {
+  const container = document.getElementById('smReels');
+  const lang = window.RKLang ? RKLang.get() : 'ro';
+  container.innerHTML = '';
+  REELS.forEach(def => {
+    const s    = ST[def.id];
+    const item = def.items[s.idx];
+    const ptcl = particle(def, item);
+    const el   = document.createElement('div');
+    el.className = 'sm-reel' + (s.locked ? ' locked' : '');
+    el.dataset.rid = def.id;
+    el.innerHTML = `
+      <div class="reel-bar" style="background:${def.color}"></div>
+      <button class="reel-lockbtn" type="button" title="Blochează rela">${s.locked ? '🔒' : '🔓'}</button>
+      <div class="reel-inner">
+        <div class="reel-lbl" style="color:${def.color}">${def.label[lang]}</div>
+        <div class="reel-emoji">${item.emoji}</div>
+        <div class="reel-ko"><span class="reel-ko-word">${item.ko}</span><span class="reel-ptcl">${ptcl}</span></div>
+        <div class="reel-tr">${item[lang]}</div>
+      </div>`;
+    el.querySelector('.reel-lockbtn').addEventListener('click', e => {
+      e.stopPropagation();
+      if (spinning) return;
+      ST[def.id].locked = !ST[def.id].locked;
+      renderReel(def);
+    });
+    container.appendChild(el);
+  });
+}
+
+/* ── SPIN ─────────────────────────────────────────────────── */
+function spinOne(def, delay, finalIdx, cb) {
+  const el = document.querySelector(`[data-rid="${def.id}"]`);
+  setTimeout(() => {
+    el.classList.add('is-out');
+    el.querySelector('.reel-inner').addEventListener('animationend', () => {
+      el.classList.remove('is-out');
+      ST[def.id].idx = finalIdx;
+      renderReel(def);
+      void el.offsetWidth;
+      el.classList.add('is-in');
+      el.querySelector('.reel-inner').addEventListener('animationend', () => {
+        el.classList.remove('is-in');
+        cb && cb();
+      }, { once: true });
+    }, { once: true });
+  }, delay);
+}
+
+function doSpin() {
+  if (spinning) return;
+  spinning = true;
+  document.getElementById('smSpinBtn').disabled = true;
+
+  const delays = [0, 90, 180, 270, 360];
+  let done = 0;
+  const total = REELS.filter(r => !ST[r.id].locked).length || 0;
+  if (total === 0) { spinning = false; document.getElementById('smSpinBtn').disabled = false; return; }
+
+  REELS.forEach((def, i) => {
+    if (ST[def.id].locked) return;
+    const oldIdx = ST[def.id].idx;
+    let newIdx;
+    do { newIdx = Math.floor(Math.random() * def.items.length); }
+    while (newIdx === oldIdx && def.items.length > 1);
+
+    spinOne(def, delays[i], newIdx, () => {
+      done++;
+      if (done === total) finishSpin();
+    });
+  });
+}
+
+function finishSpin() {
+  spinning = false;
+  spins++;
+  document.getElementById('smSpinBtn').disabled = false;
+  document.getElementById('statSpins').textContent = spins;
+  document.getElementById('statStreak').textContent = spins;
+  document.getElementById('smTotal').textContent = spins;
+  showResult();
+  setTimeout(() => {
+    const s = buildKoSentence();
+    if (window.AudioEngine) AudioEngine.speak(s, { repeat: 1 });
+  }, 150);
+}
+
+/* ── RESULT ───────────────────────────────────────────────── */
+function buildKoSentence() {
+  const subj = cur('subject'), time = cur('time'),
+        loc  = cur('location'), obj = cur('object'), verb = cur('verb');
+  const verbConj = conj(verb.ko, tense);
+  return `${subj.ko}${topicP(subj.ko)} ${time.ko} ${loc.ko}에서 ${obj.ko}${objectP(obj.ko)} ${verbConj}`;
+}
+
+function showResult() {
+  const lang = window.RKLang ? RKLang.get() : 'ro';
+  const subj = cur('subject'), time = cur('time'),
+        loc  = cur('location'), obj = cur('object'), verb = cur('verb');
+  const verbConj = conj(verb.ko, tense);
+
+  const chips = [
+    { ko: subj.ko, ptcl: topicP(subj.ko),  color:'#f472b6', lbl:'주어',   tr: subj[lang]  },
+    { ko: time.ko, ptcl: '',               color:'#fbbf24', lbl:'시간',   tr: time[lang]  },
+    { ko: loc.ko,  ptcl: '에서',           color:'#38bdf8', lbl:'장소',   tr: loc[lang]   },
+    { ko: obj.ko,  ptcl: objectP(obj.ko),  color:'#4ade80', lbl:'목적어', tr: obj[lang]   },
+    { ko: verbConj,ptcl: '',               color:'#a78bfa', lbl:'동사',   tr: verb[lang]  },
+  ];
+
+  const sentEl = document.getElementById('smSentence');
+  sentEl.innerHTML = chips.map(c => `
+    <span class="sm-chip">
+      <span class="sm-chip-ko" style="color:${c.color}">${c.ko}<span class="sm-chip-ptcl">${c.ptcl}</span></span>
+      <span class="sm-chip-lbl" style="color:${c.color}">${c.lbl}</span>
+      <span class="sm-chip-tr">${c.tr}</span>
+    </span>`).join('');
+
+  const transLabel = lang === 'ro' ? 'Structura:' : 'Structure:';
+  document.getElementById('smTrans').textContent =
+    `${transLabel} ${chips.map(c => c.tr).join(' · ')}`;
+
+  document.getElementById('smSpeakLbl').textContent = lang === 'ro' ? 'Ascultă' : 'Listen';
+  document.getElementById('smPlaceholder').style.display = 'none';
+  const body = document.getElementById('smBody');
+  body.style.display = 'block';
+  body.style.animation = 'none';
+  void body.offsetWidth;
+  body.style.animation = 'sm-fadein .35s ease';
+  document.getElementById('smResult').classList.add('lit');
+}
+
+/* ── INIT ─────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  buildReels();
+
+  document.querySelectorAll('.tense-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tense-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+      tense = btn.dataset.tense;
+      if (spins > 0) showResult();
+    });
+  });
+
+  document.getElementById('smSpinBtn').addEventListener('click', doSpin);
+
+  document.getElementById('smSpeak').addEventListener('click', () => {
+    if (spins === 0) return;
+    if (window.AudioEngine) AudioEngine.speak(buildKoSentence(), { repeat: 1 });
+  });
+
+  RKLang.init(lang => {
+    REELS.forEach(renderReel);
+    document.getElementById('smSpeakLbl').textContent = lang === 'ro' ? 'Ascultă' : 'Listen';
+    if (spins > 0) showResult();
+  });
+});
+</script>
+</body>
+</html>
