@@ -310,8 +310,406 @@ html[data-mode="day"] .sm-total { color: rgba(0,0,0,.28); }
 <script src="./js/core/conjugation.js"></script>
 <script src="./js/core/dark-mode.js"></script>
 <script>
-/* ── DATA ─────────────────────────────────────────────────── */
+/* ── EMOJI MAP ────────────────────────────────────────────── */
+const EMOJI_MAP = {
+  // subjects / pronume & profesii
+  '저':'🙋','나':'😊','우리':'👨‍👩‍👧','친구':'👫','선생님':'👨‍🏫','가족':'👨‍👩‍👧‍👦',
+  '오빠':'🧑','언니':'👧','학생':'📚','대학생':'🎓','남자':'👨','여자':'👩',
+  '아이':'👶','의사':'👨‍⚕️','간호사':'👩‍⚕️','경찰관':'👮','소방관':'🚒','군인':'🪖',
+  '작가':'✍️','기자':'📰','배우':'🎭','가수':'🎤','요리사':'👨‍🍳','운동선수':'🏃',
+  '변호사':'⚖️','개발자':'💻','디자이너':'🎨','교사':'👩‍🏫','교수':'🎓',
+  '사업가':'💼','직원':'👔','회사원':'💼','주부':'🏠','농부':'🌾','노인':'👴',
+  '관광객':'🗺️','손님':'🙋','환자':'🤒','선수':'🏃','고객':'🛍️',
+  // times / timp
+  '오늘':'📅','매일':'🔄','지금':'⏰','어제':'⏪','내일':'⏩',
+  '아침에':'🌅','저녁에':'🌆','주말에':'🎉','주말':'🎉','평일':'💼',
+  '방학':'🏖️','작년':'📆','내년':'📆','방금':'⚡','요즘':'📱',
+  '월요일':'📅','화요일':'📅','수요일':'📅','목요일':'📅','금요일':'🎉',
+  '토요일':'🎊','일요일':'⛪','그저께':'⏪','모레':'⏩',
+  '생일':'🎂','지난달':'📆','다음 달':'📆',
+  // places / locuri
+  '집':'🏠','학교':'🏫','카페':'☕','공원':'🌳','도서관':'📚',
+  '식당':'🍽️','회사':'🏢','병원':'🏥','부엌':'🍳','거실':'🛋️',
+  '침실':'🛏️','편의점':'🏪','백화점':'🏬','해변':'🏖️',
+  '바다':'🌊','강':'🌊','숲':'🌲','광장':'🏛️','약국':'💊',
+  // objects / obiecte
+  '밥':'🍚','커피':'☕','책':'📖','음악':'🎵','영화':'🎬',
+  '한국어':'🇰🇷','운동':'🏃','숙제':'📝','선물':'🎁','시계':'⌚',
+  '신발':'👟','연필':'✏️','옷':'👕','우산':'☂️','약':'💊','물':'💧',
+  '차':'🍵','주스':'🥤','과일':'🍎','편지':'📨','자료':'📊',
+  '음식':'🍴','노래':'🎶',
+  // verbs / verbe
+  '먹다':'🍴','마시다':'🥤','읽다':'📖','듣다':'🎧','보다':'👀',
+  '배우다':'🎓','공부하다':'📚','하다':'⚡','요리하다':'🍳','만들다':'🔨',
+  '사다':'🛍️','쓰다':'✏️','준비하다':'📋','가르치다':'👨‍🏫','연습하다':'🔁',
+  '찾다':'🔍','만나다':'🤝','가다':'🚶','오다':'🚶','걷다':'🚶',
+};
+const CAT_EMOJI = { subjects:'👤', times:'🕐', places:'📍', objects:'📦', verbs:'⚡' };
+function emj(ko, cat) { return EMOJI_MAP[ko] || CAT_EMOJI[cat] || '•'; }
+
+/* ── CUVINTE ESENȚIALE CARE NU SUNT (ÎNCĂ) ÎN VOCAB ─────── */
+const EXTRAS = {
+  '저':    { ko:'저',    ro:'eu (pol.)',    en:'I (pol.)',       categories:['subjects'] },
+  '나':    { ko:'나',    ro:'eu',           en:'I',              categories:['subjects'] },
+  '우리':  { ko:'우리',  ro:'noi',          en:'we',             categories:['subjects'] },
+  '한국어':{ ko:'한국어',ro:'coreeana',      en:'Korean',         categories:['objects']  },
+  '물':    { ko:'물',    ro:'apă',          en:'water',          categories:['objects']  },
+  '오늘':  { ko:'오늘',  ro:'azi',          en:'today',          categories:['times']    },
+  '매일':  { ko:'매일',  ro:'zilnic',       en:'every day',      categories:['times']    },
+  '지금':  { ko:'지금',  ro:'acum',         en:'now',            categories:['times']    },
+  '어제':  { ko:'어제',  ro:'ieri',         en:'yesterday',      categories:['times']    },
+  '내일':  { ko:'내일',  ro:'mâine',        en:'tomorrow',       categories:['times']    },
+  '아침에':{ ko:'아침에',ro:'dimineața',    en:'in the morning', categories:['times']    },
+  '저녁에':{ ko:'저녁에',ro:'seara',        en:'in the evening', categories:['times']    },
+  '주말에':{ ko:'주말에',ro:'în weekend',   en:'on weekends',    categories:['times']    },
+};
+
+/* ── NUCLEE SEMANTICE: loc + obj + verb mereu coerente ───── */
+const CORES = [
+  // ☕ CAFENEA
+  { loc:'카페',   obj:'커피',   verb:'마시다'    },
+  { loc:'카페',   obj:'차',     verb:'마시다'    },
+  { loc:'카페',   obj:'주스',   verb:'마시다'    },
+  { loc:'카페',   obj:'책',     verb:'읽다'      },
+  { loc:'카페',   obj:'음악',   verb:'듣다'      },
+  // 🍽️ RESTAURANT
+  { loc:'식당',   obj:'밥',     verb:'먹다'      },
+  { loc:'식당',   obj:'과일',   verb:'먹다'      },
+  // 🏠 CASĂ
+  { loc:'집',     obj:'밥',     verb:'먹다'      },
+  { loc:'집',     obj:'과일',   verb:'먹다'      },
+  { loc:'집',     obj:'책',     verb:'읽다'      },
+  { loc:'집',     obj:'음악',   verb:'듣다'      },
+  { loc:'집',     obj:'영화',   verb:'보다'      },
+  { loc:'집',     obj:'한국어', verb:'공부하다'   },
+  { loc:'집',     obj:'숙제',   verb:'하다'      },
+  { loc:'집',     obj:'운동',   verb:'하다'      },
+  { loc:'집',     obj:'편지',   verb:'쓰다'      },
+  // 🍳 BUCĂTĂRIE
+  { loc:'부엌',   obj:'밥',     verb:'요리하다'   },
+  { loc:'부엌',   obj:'밥',     verb:'만들다'     },
+  // 🛋️ SUFRAGERIE
+  { loc:'거실',   obj:'영화',   verb:'보다'      },
+  { loc:'거실',   obj:'음악',   verb:'듣다'      },
+  // 📚 BIBLIOTECĂ
+  { loc:'도서관', obj:'책',     verb:'읽다'      },
+  { loc:'도서관', obj:'한국어', verb:'공부하다'   },
+  // 🏫 ȘCOALĂ
+  { loc:'학교',   obj:'한국어', verb:'배우다'     },
+  { loc:'학교',   obj:'숙제',   verb:'하다'      },
+  // 🏢 SERVICIU
+  { loc:'회사',   obj:'커피',   verb:'마시다'    },
+  { loc:'회사',   obj:'자료',   verb:'준비하다'   },
+  // 🌳 PARC
+  { loc:'공원',   obj:'운동',   verb:'하다'      },
+  { loc:'공원',   obj:'음악',   verb:'듣다'      },
+  // 🏪 MAGAZIN DE PROXIMITATE
+  { loc:'편의점', obj:'커피',   verb:'사다'      },
+  { loc:'편의점', obj:'물',     verb:'사다'      },
+  { loc:'편의점', obj:'우산',   verb:'사다'      },
+  // 🏬 MALL
+  { loc:'백화점', obj:'옷',     verb:'사다'      },
+  { loc:'백화점', obj:'신발',   verb:'사다'      },
+  { loc:'백화점', obj:'시계',   verb:'사다'      },
+  { loc:'백화점', obj:'선물',   verb:'사다'      },
+  // 🏥 SPITAL / FARMACIE
+  { loc:'병원',   obj:'약',     verb:'사다'      },
+  // 🏖️ PLAJĂ
+  { loc:'해변',   obj:'음악',   verb:'듣다'      },
+  // 🛏️ DORMITOR
+  { loc:'침실',   obj:'음악',   verb:'듣다'      },
+];
+
+/* ── STRUCTURA RELELOR (items populat din vocab) ─────────── */
 const REELS = [
+  { id:'subject',  color:'#f472b6', label:{ ro:'Subiect',  en:'Subject'  }, items:[] },
+  { id:'time',     color:'#fbbf24', label:{ ro:'Timp',     en:'Time'     }, items:[] },
+  { id:'location', color:'#38bdf8', label:{ ro:'Loc',      en:'Location' }, items:[] },
+  { id:'object',   color:'#4ade80', label:{ ro:'Obiect',   en:'Object'   }, items:[] },
+  { id:'verb',     color:'#a78bfa', label:{ ro:'Verb',     en:'Verb'     }, items:[] },
+];
+
+/* ── PARTICLES ────────────────────────────────────────────── */
+function hasBatchim(w) {
+  if (!w) return false;
+  const c = w.charCodeAt(w.length - 1);
+  return c >= 44032 && c <= 55203 && (c - 44032) % 28 !== 0;
+}
+function topicP(w)  { return hasBatchim(w) ? '은' : '는'; }
+function objectP(w) { return hasBatchim(w) ? '을' : '를'; }
+function particle(def, item) {
+  if (def.id === 'subject')  return topicP(item.ko);
+  if (def.id === 'location') return '에서';
+  if (def.id === 'object')   return objectP(item.ko);
+  return '';
+}
+
+/* ── CONJUGATION ──────────────────────────────────────────── */
+function conj(verbBase, tense) {
+  if (!window.Conjugation) return verbBase;
+  if (tense === 'past')   return Conjugation.past(verbBase);
+  if (tense === 'future') return Conjugation.future(verbBase);
+  return Conjugation.present(verbBase);
+}
+
+/* ── STATE ────────────────────────────────────────────────── */
+let tense = 'present', spins = 0, spinning = false;
+const ST = {};
+REELS.forEach(r => { ST[r.id] = { idx: 0, locked: false }; });
+function cur(id) {
+  const items = REELS.find(r => r.id === id).items;
+  return items[ST[id].idx] || { ko:'…', ro:'…', en:'…', emoji:'•' };
+}
+
+/* ── ÎNCARCĂ VOCABULARUL ──────────────────────────────────── */
+async function loadVocab() {
+  let byKo = { ...EXTRAS };
+  try {
+    const data = await fetch('./data/vocab-korean.json').then(r => r.json());
+    // EXTRAS au prioritate (suprascriu dacă există deja)
+    data.forEach(d => { if (!byKo[d.ko]) byKo[d.ko] = d; });
+  } catch(e) {
+    console.warn('Vocabularul nu s-a putut încărca, folosesc cuvintele de bază.');
+  }
+
+  function makeItem(ko, cat) {
+    const v = byKo[ko];
+    if (!v) return { ko, emoji: emj(ko, cat), ro: ko, en: ko };
+    const ro = (v.ro || ko).split(',')[0].split(';')[0].trim();
+    const en = (v.en || ko).split(',')[0].split(';')[0].trim();
+    return { ko, emoji: emj(ko, cat), ro, en };
+  }
+
+  // SUBIECTE: pronume esențiale + toți subiecții din vocab
+  const SKIP_SUBJ = new Set(['회사','책']); // în vocab cu altă categorie primară
+  const subjKos = ['저','나','우리'];
+  Object.values(byKo)
+    .filter(d => d.categories && d.categories.includes('subjects') && !SKIP_SUBJ.has(d.ko) && !subjKos.includes(d.ko))
+    .sort((a,b) => a.ko.localeCompare(b.ko))
+    .forEach(d => subjKos.push(d.ko));
+
+  // TIMPURI: de bază + toți din vocab (fără unități abstracte)
+  const SKIP_T = new Set(['분','초','주','달','년','언제']);
+  const timeKos = ['오늘','매일','어제','내일','아침에','저녁에','주말에','지금'];
+  Object.values(byKo)
+    .filter(d => d.categories && d.categories.includes('times') && !SKIP_T.has(d.ko) && !timeKos.includes(d.ko))
+    .sort((a,b) => a.ko.localeCompare(b.ko))
+    .forEach(d => timeKos.push(d.ko));
+
+  // LOCURI / OBIECTE / VERBE: derivate din CORES (numai cuvinte din combinații coerente)
+  const locKos  = [...new Set(CORES.map(c => c.loc))];
+  const objKos  = [...new Set(CORES.map(c => c.obj))];
+  const verbKos = [...new Set(CORES.map(c => c.verb))];
+
+  REELS.find(r => r.id === 'subject').items  = subjKos.map(ko => makeItem(ko, 'subjects'));
+  REELS.find(r => r.id === 'time').items     = timeKos.map(ko => makeItem(ko, 'times'));
+  REELS.find(r => r.id === 'location').items = locKos.map(ko  => makeItem(ko, 'places'));
+  REELS.find(r => r.id === 'object').items   = objKos.map(ko  => makeItem(ko, 'objects'));
+  REELS.find(r => r.id === 'verb').items     = verbKos.map(ko => makeItem(ko, 'verbs'));
+
+  REELS.forEach(r => { ST[r.id].idx = Math.floor(Math.random() * r.items.length); });
+  buildReels();
+}
+
+/* ── RENDER REEL ──────────────────────────────────────────── */
+function renderReel(def) {
+  const s    = ST[def.id];
+  const item = def.items[s.idx];
+  if (!item) return;
+  const ptcl = particle(def, item);
+  const lang = window.RKLang ? RKLang.get() : 'ro';
+  const el   = document.querySelector(`[data-rid="${def.id}"]`);
+  if (!el) return;
+
+  el.classList.toggle('locked', s.locked);
+  el.querySelector('.reel-lbl').textContent     = def.label[lang];
+  el.querySelector('.reel-emoji').textContent   = item.emoji;
+  el.querySelector('.reel-ko-word').textContent = item.ko;
+  el.querySelector('.reel-ptcl').textContent    = ptcl;
+  el.querySelector('.reel-tr').textContent      = item[lang];
+  el.querySelector('.reel-lockbtn').textContent = s.locked ? '🔒' : '🔓';
+}
+
+function buildReels() {
+  const container = document.getElementById('smReels');
+  const lang = window.RKLang ? RKLang.get() : 'ro';
+  container.innerHTML = '';
+  REELS.forEach(def => {
+    const s    = ST[def.id];
+    const item = def.items[s.idx] || { ko:'…', emoji:'•', ro:'…', en:'…' };
+    const ptcl = particle(def, item);
+    const el   = document.createElement('div');
+    el.className = 'sm-reel' + (s.locked ? ' locked' : '');
+    el.dataset.rid = def.id;
+    el.innerHTML = `
+      <div class="reel-bar" style="background:${def.color}"></div>
+      <button class="reel-lockbtn" type="button" title="Blochează rela">${s.locked ? '🔒' : '🔓'}</button>
+      <div class="reel-inner">
+        <div class="reel-lbl" style="color:${def.color}">${def.label[lang]}</div>
+        <div class="reel-emoji">${item.emoji}</div>
+        <div class="reel-ko"><span class="reel-ko-word">${item.ko}</span><span class="reel-ptcl">${ptcl}</span></div>
+        <div class="reel-tr">${item[lang]}</div>
+      </div>`;
+    el.querySelector('.reel-lockbtn').addEventListener('click', e => {
+      e.stopPropagation();
+      if (spinning) return;
+      ST[def.id].locked = !ST[def.id].locked;
+      renderReel(def);
+    });
+    container.appendChild(el);
+  });
+}
+
+/* ── SPIN ─────────────────────────────────────────────────── */
+function spinOne(def, delay, finalIdx, cb) {
+  const el = document.querySelector(`[data-rid="${def.id}"]`);
+  setTimeout(() => {
+    el.classList.add('is-out');
+    el.querySelector('.reel-inner').addEventListener('animationend', () => {
+      el.classList.remove('is-out');
+      ST[def.id].idx = finalIdx;
+      renderReel(def);
+      void el.offsetWidth;
+      el.classList.add('is-in');
+      el.querySelector('.reel-inner').addEventListener('animationend', () => {
+        el.classList.remove('is-in');
+        cb && cb();
+      }, { once: true });
+    }, { once: true });
+  }, delay);
+}
+
+function doSpin() {
+  if (spinning) return;
+  spinning = true;
+  document.getElementById('smSpinBtn').disabled = true;
+
+  const delays = [0, 90, 180, 270, 360];
+  let done = 0;
+  const total = REELS.filter(r => !ST[r.id].locked).length || 0;
+  if (total === 0) { spinning = false; document.getElementById('smSpinBtn').disabled = false; return; }
+
+  // Filtrăm nuclee compatibile cu relele blocate
+  let pool = CORES.slice();
+  if (ST.location.locked) pool = pool.filter(c => c.loc === cur('location').ko);
+  if (ST.object.locked)   pool = pool.filter(c => c.obj === cur('object').ko);
+  if (ST.verb.locked)     pool = pool.filter(c => c.verb === cur('verb').ko);
+  if (pool.length === 0)  pool = CORES.slice();
+  const core = pool[Math.floor(Math.random() * pool.length)];
+
+  function idxOf(reelId, ko) {
+    return REELS.find(r => r.id === reelId).items.findIndex(it => it.ko === ko);
+  }
+
+  const targets = {
+    subject:  Math.floor(Math.random() * REELS.find(r => r.id === 'subject').items.length),
+    time:     Math.floor(Math.random() * REELS.find(r => r.id === 'time').items.length),
+    location: idxOf('location', core.loc),
+    object:   idxOf('object',   core.obj),
+    verb:     idxOf('verb',     core.verb),
+  };
+  ['subject','time'].forEach(id => {
+    const len = REELS.find(r => r.id === id).items.length;
+    if (targets[id] === ST[id].idx && len > 1)
+      targets[id] = (ST[id].idx + 1 + Math.floor(Math.random() * (len - 1))) % len;
+  });
+
+  REELS.forEach((def, i) => {
+    if (ST[def.id].locked) return;
+    spinOne(def, delays[i], targets[def.id], () => {
+      done++;
+      if (done === total) finishSpin();
+    });
+  });
+}
+
+function finishSpin() {
+  spinning = false;
+  spins++;
+  document.getElementById('smSpinBtn').disabled = false;
+  document.getElementById('statSpins').textContent = spins;
+  document.getElementById('statStreak').textContent = spins;
+  document.getElementById('smTotal').textContent = spins;
+  showResult();
+  setTimeout(() => {
+    if (window.AudioEngine) AudioEngine.speak(buildKoSentence(), { repeat: 1 });
+  }, 150);
+}
+
+/* ── RESULT ───────────────────────────────────────────────── */
+function buildKoSentence() {
+  const subj = cur('subject'), time = cur('time'),
+        loc  = cur('location'), obj = cur('object'), verb = cur('verb');
+  const verbConj = conj(verb.ko, tense);
+  return `${subj.ko}${topicP(subj.ko)} ${time.ko} ${loc.ko}에서 ${obj.ko}${objectP(obj.ko)} ${verbConj}`;
+}
+
+function showResult() {
+  const lang = window.RKLang ? RKLang.get() : 'ro';
+  const subj = cur('subject'), time = cur('time'),
+        loc  = cur('location'), obj = cur('object'), verb = cur('verb');
+  const verbConj = conj(verb.ko, tense);
+
+  const chips = [
+    { ko: subj.ko,  ptcl: topicP(subj.ko),  color:'#f472b6', lbl:'주어',   tr: subj[lang]  },
+    { ko: time.ko,  ptcl: '',               color:'#fbbf24', lbl:'시간',   tr: time[lang]  },
+    { ko: loc.ko,   ptcl: '에서',           color:'#38bdf8', lbl:'장소',   tr: loc[lang]   },
+    { ko: obj.ko,   ptcl: objectP(obj.ko),  color:'#4ade80', lbl:'목적어', tr: obj[lang]   },
+    { ko: verbConj, ptcl: '',               color:'#a78bfa', lbl:'동사',   tr: verb[lang]  },
+  ];
+
+  document.getElementById('smSentence').innerHTML = chips.map(c => `
+    <span class="sm-chip">
+      <span class="sm-chip-ko" style="color:${c.color}">${c.ko}<span class="sm-chip-ptcl">${c.ptcl}</span></span>
+      <span class="sm-chip-lbl" style="color:${c.color}">${c.lbl}</span>
+      <span class="sm-chip-tr">${c.tr}</span>
+    </span>`).join('');
+
+  const transLabel = lang === 'ro' ? 'Structura:' : 'Structure:';
+  document.getElementById('smTrans').textContent =
+    `${transLabel} ${chips.map(c => c.tr).join(' · ')}`;
+
+  document.getElementById('smSpeakLbl').textContent = lang === 'ro' ? 'Ascultă' : 'Listen';
+  document.getElementById('smPlaceholder').style.display = 'none';
+  const body = document.getElementById('smBody');
+  body.style.display = 'block';
+  body.style.animation = 'none';
+  void body.offsetWidth;
+  body.style.animation = 'sm-fadein .35s ease';
+  document.getElementById('smResult').classList.add('lit');
+}
+
+/* ── INIT ─────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  // Arată stare de încărcare
+  document.getElementById('smReels').innerHTML =
+    '<div style="grid-column:1/-1;text-align:center;padding:24px;opacity:.35;font-size:12px;font-weight:700">Se încarcă vocabularul…</div>';
+
+  loadVocab(); // async — populează relele când e gata
+
+  document.querySelectorAll('.tense-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tense-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+      tense = btn.dataset.tense;
+      if (spins > 0) showResult();
+    });
+  });
+
+  document.getElementById('smSpinBtn').addEventListener('click', doSpin);
+
+  document.getElementById('smSpeak').addEventListener('click', () => {
+    if (spins === 0) return;
+    if (window.AudioEngine) AudioEngine.speak(buildKoSentence(), { repeat: 1 });
+  });
+
+  RKLang.init(lang => {
+    REELS.forEach(renderReel);
+    document.getElementById('smSpeakLbl').textContent = lang === 'ro' ? 'Ascultă' : 'Listen';
+    if (spins > 0) showResult();
+  });
+});
+</script>
   {
     id:'subject', color:'#f472b6',
     label:{ ro:'Subiect', en:'Subject' },
