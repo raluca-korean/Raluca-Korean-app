@@ -91,9 +91,12 @@ html[data-mode="day"] .sm-structure { color: rgba(0,0,0,.28); }
   background: rgba(255,255,255,.04);
   border: 1.5px solid rgba(255,255,255,.09);
   overflow: hidden; transition: border-color .3s, box-shadow .3s;
+  cursor: pointer !important;
 }
 html[data-mode="day"] .sm-reel { background: rgba(255,255,255,.82); border-color: rgba(0,0,0,.1); }
 .sm-reel.locked { border-color: rgba(251,191,36,.6) !important; box-shadow: 0 0 14px rgba(251,191,36,.2); }
+.sm-reel:hover { background: rgba(255,255,255,.07); }
+html[data-mode="day"] .sm-reel:hover { background: rgba(124,58,237,.05); }
 .reel-bar { height: 3px; }
 .reel-inner {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -118,6 +121,12 @@ html[data-mode="day"] .reel-ko { color: #1a0533; }
 }
 .sm-reel.locked .reel-lockbtn { opacity: .85; }
 .reel-lockbtn:hover { opacity: .7 !important; }
+.reel-edit-hint {
+  position: absolute; bottom: 4px; right: 5px;
+  font-size: 10px; opacity: .28; cursor: pointer !important;
+  transition: opacity .15s; z-index: 2; padding: 2px;
+}
+.reel-edit-hint:hover { opacity: .7; }
 
 /* REEL ANIMATIONS */
 @keyframes reel-out {
@@ -229,6 +238,64 @@ html[data-mode="day"] .sm-trans-row { color: rgba(0,0,0,.42); }
 html[data-mode="day"] .sm-total { color: rgba(0,0,0,.28); }
 .sm-total span { color: #fbbf24; }
 
+/* WORD PICKER MODAL */
+.sm-picker-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.sm-picker-overlay.open { opacity: 1; pointer-events: all; }
+.sm-picker-panel {
+  width: 100%; max-width: 540px; max-height: 72vh;
+  background: #0e0e26; border-radius: 24px 24px 0 0;
+  border: 1.5px solid rgba(255,255,255,.1); border-bottom: none;
+  overflow: hidden; display: flex; flex-direction: column;
+  transform: translateY(100%); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.sm-picker-overlay.open .sm-picker-panel { transform: translateY(0); }
+html[data-mode="day"] .sm-picker-panel { background: #f0f0fa; border-color: rgba(0,0,0,.1); }
+.sm-picker-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 16px 10px; flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+html[data-mode="day"] .sm-picker-header { border-bottom-color: rgba(0,0,0,.08); }
+.sm-picker-title { flex: 1; font-size: 15px; font-weight: 900; }
+.sm-picker-hint { font-size: 10px; opacity: .4; }
+.sm-picker-close {
+  background: none; border: none; color: rgba(255,255,255,.35);
+  font-size: 20px; line-height: 1; padding: 4px 8px;
+  cursor: pointer !important; transition: color .15s;
+}
+html[data-mode="day"] .sm-picker-close { color: rgba(0,0,0,.35); }
+.sm-picker-close:hover { color: rgba(255,255,255,.85); }
+html[data-mode="day"] .sm-picker-close:hover { color: rgba(0,0,0,.8); }
+.sm-picker-list {
+  overflow-y: auto; flex: 1; padding: 10px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 6px; scrollbar-width: thin;
+}
+.sm-picker-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 9px 5px; border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,.07);
+  background: rgba(255,255,255,.03);
+  cursor: pointer !important; transition: background .15s, border-color .15s;
+  text-align: center; width: 100%;
+}
+html[data-mode="day"] .sm-picker-item { background: rgba(255,255,255,.7); border-color: rgba(0,0,0,.08); }
+.sm-picker-item:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.18); }
+html[data-mode="day"] .sm-picker-item:hover { background: rgba(124,58,237,.08); border-color: rgba(124,58,237,.2); }
+.sm-picker-item.active { border-color: var(--pk-color, #a78bfa); background: rgba(124,58,237,.14); }
+.sm-picker-item-emoji { font-size: 22px; line-height: 1.1; }
+.sm-picker-item-ko {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px; font-weight: 900; color: white;
+}
+html[data-mode="day"] .sm-picker-item-ko { color: #1a0533; }
+.sm-picker-item-tr { font-size: 8px; opacity: .4; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* RESPONSIVE */
 @media (max-width: 400px) {
   .sm-chip-ko { font-size: 17px; }
@@ -302,6 +369,20 @@ html[data-mode="day"] .sm-total { color: rgba(0,0,0,.28); }
     </div>
   </div>
 
+  <!-- WORD PICKER MODAL -->
+  <div class="sm-picker-overlay" id="smPickerOverlay">
+    <div class="sm-picker-panel">
+      <div class="sm-picker-header">
+        <div>
+          <div class="sm-picker-title" id="smPickerTitle">—</div>
+          <div class="sm-picker-hint" id="smPickerHint">Atinge un cuvânt pentru a-l selecta</div>
+        </div>
+        <button class="sm-picker-close" id="smPickerClose" type="button">✕</button>
+      </div>
+      <div class="sm-picker-list" id="smPickerList"></div>
+    </div>
+  </div>
+
 </div>
 
 <script src="./js/core/storage.js"></script>
@@ -313,7 +394,7 @@ html[data-mode="day"] .sm-total { color: rgba(0,0,0,.28); }
 /* ── EMOJI MAP ────────────────────────────────────────────── */
 const EMOJI_MAP = {
   // subjects / pronume & profesii
-  '저':'🙋','나':'😊','우리':'👨‍👩‍👧','친구':'👫','선생님':'👨‍🏫','가족':'👨‍👩‍👧‍👦',
+  '저':'🙋','나':'😊','너':'😄','우리':'👨‍👩‍👧','친구':'👫','선생님':'👨‍🏫','가족':'👨‍👩‍👧‍👦',
   '오빠':'🧑','언니':'👧','학생':'📚','대학생':'🎓','남자':'👨','여자':'👩',
   '아이':'👶','의사':'👨‍⚕️','간호사':'👩‍⚕️','경찰관':'👮','소방관':'🚒','군인':'🪖',
   '작가':'✍️','기자':'📰','배우':'🎭','가수':'🎤','요리사':'👨‍🍳','운동선수':'🏃',
@@ -351,6 +432,7 @@ function emj(ko, cat) { return EMOJI_MAP[ko] || CAT_EMOJI[cat] || '•'; }
 const EXTRAS = {
   '저':    { ko:'저',    ro:'eu (pol.)',    en:'I (pol.)',       categories:['subjects'] },
   '나':    { ko:'나',    ro:'eu',           en:'I',              categories:['subjects'] },
+  '너':    { ko:'너',    ro:'tu',           en:'you',            categories:['subjects'] },
   '우리':  { ko:'우리',  ro:'noi',          en:'we',             categories:['subjects'] },
   '한국어':{ ko:'한국어',ro:'coreeana',      en:'Korean',         categories:['objects']  },
   '물':    { ko:'물',    ro:'apă',          en:'water',          categories:['objects']  },
@@ -412,7 +494,7 @@ const CORES = [
   { loc:'백화점', obj:'신발',   verb:'사다'      },
   { loc:'백화점', obj:'시계',   verb:'사다'      },
   { loc:'백화점', obj:'선물',   verb:'사다'      },
-  // 🏥 SPITAL / FARMACIE
+  // 🏥 SPITAL
   { loc:'병원',   obj:'약',     verb:'사다'      },
   // 🏖️ PLAJĂ
   { loc:'해변',   obj:'음악',   verb:'듣다'      },
@@ -466,7 +548,6 @@ async function loadVocab() {
   let byKo = { ...EXTRAS };
   try {
     const data = await fetch('./data/vocab-korean.json').then(r => r.json());
-    // EXTRAS au prioritate (suprascriu dacă există deja)
     data.forEach(d => { if (!byKo[d.ko]) byKo[d.ko] = d; });
   } catch(e) {
     console.warn('Vocabularul nu s-a putut încărca, folosesc cuvintele de bază.');
@@ -481,8 +562,8 @@ async function loadVocab() {
   }
 
   // SUBIECTE: pronume esențiale + toți subiecții din vocab
-  const SKIP_SUBJ = new Set(['회사','책']); // în vocab cu altă categorie primară
-  const subjKos = ['저','나','우리'];
+  const SKIP_SUBJ = new Set(['회사','책']);
+  const subjKos = ['저','나','너','우리'];
   Object.values(byKo)
     .filter(d => d.categories && d.categories.includes('subjects') && !SKIP_SUBJ.has(d.ko) && !subjKos.includes(d.ko))
     .sort((a,b) => a.ko.localeCompare(b.ko))
@@ -496,7 +577,7 @@ async function loadVocab() {
     .sort((a,b) => a.ko.localeCompare(b.ko))
     .forEach(d => timeKos.push(d.ko));
 
-  // LOCURI / OBIECTE / VERBE: derivate din CORES (numai cuvinte din combinații coerente)
+  // LOCURI / OBIECTE / VERBE: derivate din CORES
   const locKos  = [...new Set(CORES.map(c => c.loc))];
   const objKos  = [...new Set(CORES.map(c => c.obj))];
   const verbKos = [...new Set(CORES.map(c => c.verb))];
@@ -549,15 +630,84 @@ function buildReels() {
         <div class="reel-emoji">${item.emoji}</div>
         <div class="reel-ko"><span class="reel-ko-word">${item.ko}</span><span class="reel-ptcl">${ptcl}</span></div>
         <div class="reel-tr">${item[lang]}</div>
-      </div>`;
+      </div>
+      <span class="reel-edit-hint">✏️</span>`;
     el.querySelector('.reel-lockbtn').addEventListener('click', e => {
       e.stopPropagation();
       if (spinning) return;
       ST[def.id].locked = !ST[def.id].locked;
       renderReel(def);
     });
+    el.querySelector('.reel-edit-hint').addEventListener('click', e => {
+      e.stopPropagation();
+      openPicker(def.id);
+    });
+    el.addEventListener('click', e => {
+      if (e.target.closest('.reel-lockbtn')) return;
+      if (e.target.closest('.reel-edit-hint')) return;
+      if (spinning) return;
+      const items = def.items;
+      if (!items.length) return;
+      ST[def.id].idx = (ST[def.id].idx + 1) % items.length;
+      ST[def.id].locked = true;
+      renderReel(def);
+      if (spins > 0) showResult();
+    });
     container.appendChild(el);
   });
+}
+
+/* ── WORD PICKER ──────────────────────────────────────────── */
+let pickerReelId = null;
+
+function openPicker(reelId) {
+  if (spinning) return;
+  pickerReelId = reelId;
+  const def  = REELS.find(r => r.id === reelId);
+  const lang = window.RKLang ? RKLang.get() : 'ro';
+
+  const titleEl = document.getElementById('smPickerTitle');
+  titleEl.textContent = def.label[lang];
+  titleEl.style.color = def.color;
+
+  const hintEl = document.getElementById('smPickerHint');
+  hintEl.textContent = lang === 'ro'
+    ? 'Atinge un cuvânt pentru a-l selecta'
+    : 'Tap a word to select it';
+
+  const list = document.getElementById('smPickerList');
+  list.innerHTML = '';
+  def.items.forEach((item, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sm-picker-item' + (idx === ST[reelId].idx ? ' active' : '');
+    btn.style.setProperty('--pk-color', def.color);
+    btn.innerHTML = `
+      <span class="sm-picker-item-emoji">${item.emoji}</span>
+      <span class="sm-picker-item-ko">${item.ko}</span>
+      <span class="sm-picker-item-tr">${item[lang]}</span>`;
+    btn.addEventListener('click', () => {
+      ST[reelId].idx    = idx;
+      ST[reelId].locked = true;
+      renderReel(def);
+      if (spins > 0) showResult();
+      closePicker();
+    });
+    list.appendChild(btn);
+  });
+
+  // Scroll to active item
+  const overlay = document.getElementById('smPickerOverlay');
+  overlay.classList.add('open');
+  requestAnimationFrame(() => {
+    const activeBtn = list.querySelector('.active');
+    if (activeBtn) activeBtn.scrollIntoView({ block:'center', behavior:'smooth' });
+  });
+}
+
+function closePicker() {
+  document.getElementById('smPickerOverlay').classList.remove('open');
+  pickerReelId = null;
 }
 
 /* ── SPIN ─────────────────────────────────────────────────── */
@@ -681,11 +831,10 @@ function showResult() {
 
 /* ── INIT ─────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  // Arată stare de încărcare
   document.getElementById('smReels').innerHTML =
     '<div style="grid-column:1/-1;text-align:center;padding:24px;opacity:.35;font-size:12px;font-weight:700">Se încarcă vocabularul…</div>';
 
-  loadVocab(); // async — populează relele când e gata
+  loadVocab();
 
   document.querySelectorAll('.tense-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -703,326 +852,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.AudioEngine) AudioEngine.speak(buildKoSentence(), { repeat: 1 });
   });
 
-  RKLang.init(lang => {
-    REELS.forEach(renderReel);
-    document.getElementById('smSpeakLbl').textContent = lang === 'ro' ? 'Ascultă' : 'Listen';
-    if (spins > 0) showResult();
-  });
-});
-</script>
-  {
-    id:'subject', color:'#f472b6',
-    label:{ ro:'Subiect', en:'Subject' },
-    items:[
-      { ko:'저',    emoji:'🙋', ro:'eu (pol.)',   en:'I (pol.)' },
-      { ko:'나',    emoji:'😊', ro:'eu',           en:'I' },
-      { ko:'우리',  emoji:'👨‍👩‍👧', ro:'noi',       en:'we' },
-      { ko:'친구',  emoji:'👫', ro:'prietenul',   en:'the friend' },
-      { ko:'선생님',emoji:'👨‍🏫', ro:'profesorul', en:'the teacher' },
-      { ko:'가족',  emoji:'👨‍👩‍👧‍👦', ro:'familia',  en:'the family' },
-      { ko:'오빠',  emoji:'🧑', ro:'fratele mare',en:'older brother' },
-      { ko:'언니',  emoji:'👧', ro:'sora mare',   en:'older sister' },
-    ]
-  },
-  {
-    id:'time', color:'#fbbf24',
-    label:{ ro:'Timp', en:'Time' },
-    items:[
-      { ko:'오늘',   emoji:'📅', ro:'azi',         en:'today' },
-      { ko:'매일',   emoji:'🔄', ro:'zilnic',       en:'every day' },
-      { ko:'지금',   emoji:'⏰', ro:'acum',         en:'now' },
-      { ko:'어제',   emoji:'⏪', ro:'ieri',         en:'yesterday' },
-      { ko:'내일',   emoji:'⏩', ro:'mâine',        en:'tomorrow' },
-      { ko:'아침에', emoji:'🌅', ro:'dimineața',    en:'in the morning' },
-      { ko:'저녁에', emoji:'🌆', ro:'seara',        en:'in the evening' },
-      { ko:'주말에', emoji:'🎉', ro:'în weekend',   en:'on weekends' },
-    ]
-  },
-  {
-    id:'location', color:'#38bdf8',
-    label:{ ro:'Loc', en:'Location' },
-    items:[
-      { ko:'집',    emoji:'🏠', ro:'acasă',           en:'at home' },
-      { ko:'학교',  emoji:'🏫', ro:'la școală',       en:'at school' },
-      { ko:'카페',  emoji:'☕', ro:'la cafenea',       en:'at the café' },
-      { ko:'공원',  emoji:'🌳', ro:'în parc',         en:'in the park' },
-      { ko:'도서관',emoji:'📚', ro:'la bibliotecă',   en:'at the library' },
-      { ko:'식당',  emoji:'🍽️', ro:'la restaurant',  en:'at the restaurant' },
-      { ko:'회사',  emoji:'🏢', ro:'la serviciu',     en:'at work' },
-      { ko:'병원',  emoji:'🏥', ro:'la spital',       en:'at the hospital' },
-    ]
-  },
-  {
-    id:'object', color:'#4ade80',
-    label:{ ro:'Obiect', en:'Object' },
-    items:[
-      { ko:'밥',    emoji:'🍚', ro:'mâncare',    en:'food' },
-      { ko:'커피',  emoji:'☕', ro:'cafea',       en:'coffee' },
-      { ko:'책',    emoji:'📖', ro:'carte',       en:'a book' },
-      { ko:'음악',  emoji:'🎵', ro:'muzică',      en:'music' },
-      { ko:'영화',  emoji:'🎬', ro:'film',        en:'a movie' },
-      { ko:'한국어',emoji:'🇰🇷', ro:'coreeana',  en:'Korean' },
-      { ko:'운동',  emoji:'🏃', ro:'sport',       en:'exercise' },
-      { ko:'숙제',  emoji:'📝', ro:'tema',        en:'homework' },
-    ]
-  },
-  {
-    id:'verb', color:'#a78bfa',
-    label:{ ro:'Verb', en:'Verb' },
-    items:[
-      { ko:'먹다',    emoji:'🍴', ro:'a mânca',    en:'to eat' },
-      { ko:'마시다',  emoji:'🥤', ro:'a bea',       en:'to drink' },
-      { ko:'읽다',    emoji:'📖', ro:'a citi',      en:'to read' },
-      { ko:'듣다',    emoji:'🎧', ro:'a asculta',   en:'to listen' },
-      { ko:'보다',    emoji:'👀', ro:'a privi',     en:'to watch' },
-      { ko:'배우다',  emoji:'🎓', ro:'a învăța',    en:'to learn' },
-      { ko:'공부하다',emoji:'📚', ro:'a studia',    en:'to study' },
-      { ko:'하다',    emoji:'⚡', ro:'a face',      en:'to do' },
-    ]
-  }
-];
-
-/* ── SEMANTIC CORES: loc + obj + verb mereu legate logic ─── */
-const CORES = [
-  { loc:'카페',   obj:'커피',   verb:'마시다'    },
-  { loc:'회사',   obj:'커피',   verb:'마시다'    },
-  { loc:'식당',   obj:'밥',     verb:'먹다'      },
-  { loc:'집',     obj:'밥',     verb:'먹다'      },
-  { loc:'도서관', obj:'책',     verb:'읽다'      },
-  { loc:'집',     obj:'책',     verb:'읽다'      },
-  { loc:'카페',   obj:'책',     verb:'읽다'      },
-  { loc:'학교',   obj:'한국어', verb:'배우다'    },
-  { loc:'집',     obj:'한국어', verb:'공부하다'  },
-  { loc:'도서관', obj:'한국어', verb:'공부하다'  },
-  { loc:'집',     obj:'음악',   verb:'듣다'      },
-  { loc:'카페',   obj:'음악',   verb:'듣다'      },
-  { loc:'공원',   obj:'음악',   verb:'듣다'      },
-  { loc:'집',     obj:'영화',   verb:'보다'      },
-  { loc:'학교',   obj:'숙제',   verb:'하다'      },
-  { loc:'집',     obj:'숙제',   verb:'하다'      },
-  { loc:'공원',   obj:'운동',   verb:'하다'      },
-  { loc:'집',     obj:'운동',   verb:'하다'      },
-];
-
-/* ── PARTICLES ────────────────────────────────────────────── */
-function hasBatchim(w) {
-  if (!w) return false;
-  const c = w.charCodeAt(w.length - 1);
-  return c >= 44032 && c <= 55203 && (c - 44032) % 28 !== 0;
-}
-function topicP(w)  { return hasBatchim(w) ? '은' : '는'; }
-function objectP(w) { return hasBatchim(w) ? '을' : '를'; }
-function particle(def, item) {
-  if (def.id === 'subject')  return topicP(item.ko);
-  if (def.id === 'location') return '에서';
-  if (def.id === 'object')   return objectP(item.ko);
-  return '';
-}
-
-/* ── CONJUGATION ──────────────────────────────────────────── */
-function conj(verbBase, tense) {
-  if (!window.Conjugation) return verbBase;
-  if (tense === 'past')   return Conjugation.past(verbBase);
-  if (tense === 'future') return Conjugation.future(verbBase);
-  return Conjugation.present(verbBase);
-}
-
-/* ── STATE ────────────────────────────────────────────────── */
-let tense = 'present', spins = 0, spinning = false;
-const ST = {};
-REELS.forEach(r => {
-  ST[r.id] = { idx: Math.floor(Math.random() * r.items.length), locked: false };
-});
-function cur(id) { return REELS.find(r => r.id === id).items[ST[id].idx]; }
-
-/* ── RENDER REEL ──────────────────────────────────────────── */
-function renderReel(def) {
-  const s    = ST[def.id];
-  const item = def.items[s.idx];
-  const ptcl = particle(def, item);
-  const lang = window.RKLang ? RKLang.get() : 'ro';
-  const el   = document.querySelector(`[data-rid="${def.id}"]`);
-  if (!el) return;
-
-  el.classList.toggle('locked', s.locked);
-  el.querySelector('.reel-lbl').textContent    = def.label[lang];
-  el.querySelector('.reel-emoji').textContent  = item.emoji;
-  el.querySelector('.reel-ko-word').textContent = item.ko;
-  el.querySelector('.reel-ptcl').textContent   = ptcl;
-  el.querySelector('.reel-tr').textContent     = item[lang];
-  el.querySelector('.reel-lockbtn').textContent = s.locked ? '🔒' : '🔓';
-}
-
-function buildReels() {
-  const container = document.getElementById('smReels');
-  const lang = window.RKLang ? RKLang.get() : 'ro';
-  container.innerHTML = '';
-  REELS.forEach(def => {
-    const s    = ST[def.id];
-    const item = def.items[s.idx];
-    const ptcl = particle(def, item);
-    const el   = document.createElement('div');
-    el.className = 'sm-reel' + (s.locked ? ' locked' : '');
-    el.dataset.rid = def.id;
-    el.innerHTML = `
-      <div class="reel-bar" style="background:${def.color}"></div>
-      <button class="reel-lockbtn" type="button" title="Blochează rela">${s.locked ? '🔒' : '🔓'}</button>
-      <div class="reel-inner">
-        <div class="reel-lbl" style="color:${def.color}">${def.label[lang]}</div>
-        <div class="reel-emoji">${item.emoji}</div>
-        <div class="reel-ko"><span class="reel-ko-word">${item.ko}</span><span class="reel-ptcl">${ptcl}</span></div>
-        <div class="reel-tr">${item[lang]}</div>
-      </div>`;
-    el.querySelector('.reel-lockbtn').addEventListener('click', e => {
-      e.stopPropagation();
-      if (spinning) return;
-      ST[def.id].locked = !ST[def.id].locked;
-      renderReel(def);
-    });
-    container.appendChild(el);
-  });
-}
-
-/* ── SPIN ─────────────────────────────────────────────────── */
-function spinOne(def, delay, finalIdx, cb) {
-  const el = document.querySelector(`[data-rid="${def.id}"]`);
-  setTimeout(() => {
-    el.classList.add('is-out');
-    el.querySelector('.reel-inner').addEventListener('animationend', () => {
-      el.classList.remove('is-out');
-      ST[def.id].idx = finalIdx;
-      renderReel(def);
-      void el.offsetWidth;
-      el.classList.add('is-in');
-      el.querySelector('.reel-inner').addEventListener('animationend', () => {
-        el.classList.remove('is-in');
-        cb && cb();
-      }, { once: true });
-    }, { once: true });
-  }, delay);
-}
-
-function doSpin() {
-  if (spinning) return;
-  spinning = true;
-  document.getElementById('smSpinBtn').disabled = true;
-
-  const delays = [0, 90, 180, 270, 360];
-  let done = 0;
-  const total = REELS.filter(r => !ST[r.id].locked).length || 0;
-  if (total === 0) { spinning = false; document.getElementById('smSpinBtn').disabled = false; return; }
-
-  // Filtrăm nuclee semantice compatibile cu relele blocate
-  let pool = CORES.slice();
-  if (ST.location.locked) pool = pool.filter(c => c.loc === cur('location').ko);
-  if (ST.object.locked)   pool = pool.filter(c => c.obj === cur('object').ko);
-  if (ST.verb.locked)     pool = pool.filter(c => c.verb === cur('verb').ko);
-  if (pool.length === 0)  pool = CORES.slice();
-  const core = pool[Math.floor(Math.random() * pool.length)];
-
-  function idxOf(reelId, ko) {
-    return REELS.find(r => r.id === reelId).items.findIndex(it => it.ko === ko);
-  }
-
-  const targets = {
-    subject:  Math.floor(Math.random() * REELS.find(r => r.id === 'subject').items.length),
-    time:     Math.floor(Math.random() * REELS.find(r => r.id === 'time').items.length),
-    location: idxOf('location', core.loc),
-    object:   idxOf('object',   core.obj),
-    verb:     idxOf('verb',     core.verb),
-  };
-  // Subiect și timp: asigură că se schimbă față de valoarea curentă
-  ['subject', 'time'].forEach(id => {
-    const len = REELS.find(r => r.id === id).items.length;
-    if (targets[id] === ST[id].idx && len > 1)
-      targets[id] = (ST[id].idx + 1 + Math.floor(Math.random() * (len - 1))) % len;
-  });
-
-  REELS.forEach((def, i) => {
-    if (ST[def.id].locked) return;
-    spinOne(def, delays[i], targets[def.id], () => {
-      done++;
-      if (done === total) finishSpin();
-    });
-  });
-}
-
-function finishSpin() {
-  spinning = false;
-  spins++;
-  document.getElementById('smSpinBtn').disabled = false;
-  document.getElementById('statSpins').textContent = spins;
-  document.getElementById('statStreak').textContent = spins;
-  document.getElementById('smTotal').textContent = spins;
-  showResult();
-  setTimeout(() => {
-    const s = buildKoSentence();
-    if (window.AudioEngine) AudioEngine.speak(s, { repeat: 1 });
-  }, 150);
-}
-
-/* ── RESULT ───────────────────────────────────────────────── */
-function buildKoSentence() {
-  const subj = cur('subject'), time = cur('time'),
-        loc  = cur('location'), obj = cur('object'), verb = cur('verb');
-  const verbConj = conj(verb.ko, tense);
-  return `${subj.ko}${topicP(subj.ko)} ${time.ko} ${loc.ko}에서 ${obj.ko}${objectP(obj.ko)} ${verbConj}`;
-}
-
-function showResult() {
-  const lang = window.RKLang ? RKLang.get() : 'ro';
-  const subj = cur('subject'), time = cur('time'),
-        loc  = cur('location'), obj = cur('object'), verb = cur('verb');
-  const verbConj = conj(verb.ko, tense);
-
-  const chips = [
-    { ko: subj.ko, ptcl: topicP(subj.ko),  color:'#f472b6', lbl:'주어',   tr: subj[lang]  },
-    { ko: time.ko, ptcl: '',               color:'#fbbf24', lbl:'시간',   tr: time[lang]  },
-    { ko: loc.ko,  ptcl: '에서',           color:'#38bdf8', lbl:'장소',   tr: loc[lang]   },
-    { ko: obj.ko,  ptcl: objectP(obj.ko),  color:'#4ade80', lbl:'목적어', tr: obj[lang]   },
-    { ko: verbConj,ptcl: '',               color:'#a78bfa', lbl:'동사',   tr: verb[lang]  },
-  ];
-
-  const sentEl = document.getElementById('smSentence');
-  sentEl.innerHTML = chips.map(c => `
-    <span class="sm-chip">
-      <span class="sm-chip-ko" style="color:${c.color}">${c.ko}<span class="sm-chip-ptcl">${c.ptcl}</span></span>
-      <span class="sm-chip-lbl" style="color:${c.color}">${c.lbl}</span>
-      <span class="sm-chip-tr">${c.tr}</span>
-    </span>`).join('');
-
-  const transLabel = lang === 'ro' ? 'Structura:' : 'Structure:';
-  document.getElementById('smTrans').textContent =
-    `${transLabel} ${chips.map(c => c.tr).join(' · ')}`;
-
-  document.getElementById('smSpeakLbl').textContent = lang === 'ro' ? 'Ascultă' : 'Listen';
-  document.getElementById('smPlaceholder').style.display = 'none';
-  const body = document.getElementById('smBody');
-  body.style.display = 'block';
-  body.style.animation = 'none';
-  void body.offsetWidth;
-  body.style.animation = 'sm-fadein .35s ease';
-  document.getElementById('smResult').classList.add('lit');
-}
-
-/* ── INIT ─────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  buildReels();
-
-  document.querySelectorAll('.tense-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tense-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
-      btn.classList.add('active'); btn.setAttribute('aria-selected','true');
-      tense = btn.dataset.tense;
-      if (spins > 0) showResult();
-    });
-  });
-
-  document.getElementById('smSpinBtn').addEventListener('click', doSpin);
-
-  document.getElementById('smSpeak').addEventListener('click', () => {
-    if (spins === 0) return;
-    if (window.AudioEngine) AudioEngine.speak(buildKoSentence(), { repeat: 1 });
+  document.getElementById('smPickerClose').addEventListener('click', closePicker);
+  document.getElementById('smPickerOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closePicker();
   });
 
   RKLang.init(lang => {
