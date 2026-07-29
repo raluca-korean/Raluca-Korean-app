@@ -62,6 +62,9 @@ function applyLang() {
   document.getElementById('ilSub').textContent = ro
     ? 'Încarcă o poză și primești o lecție completă de coreeană'
     : 'Upload a photo and get a complete Korean lesson';
+  document.getElementById('ilCostNotice').textContent = ro
+    ? 'Funcție opțională · necesită propria cheie API Anthropic (plătită separat, nu prin această aplicație) · aplicația rămâne gratuită dacă nu o folosești'
+    : 'Optional feature · requires your own Anthropic API key (billed separately, not through this app) · the app stays free if you don’t use it';
   document.getElementById('ilDropText').textContent = ro
     ? 'Trage o poză aici sau apasă pentru a alege'
     : 'Drag a photo here or click to choose';
@@ -87,8 +90,8 @@ function applyLang() {
   document.getElementById('ilTabAdvanced').textContent = ro ? 'Avansat' : 'Advanced';
   document.getElementById('ilApiTitle').textContent = ro ? 'Configurare cheie API' : 'API Key Setup';
   document.getElementById('ilApiDesc').innerHTML = ro
-    ? 'Pentru a genera lecții din poze, introdu cheia ta Anthropic API.<br>Cheia rămâne salvată local pe dispozitivul tău.'
-    : 'To generate lessons from photos, enter your Anthropic API key.<br>The key stays saved locally on your device.';
+    ? 'Această funcție este opțională și separată de aplicație: necesită propria ta cheie Anthropic API, plătită direct către Anthropic (nu prin Raluca Korean).<br>Cheia rămâne salvată local pe dispozitivul tău — aplicația în sine rămâne gratuită dacă alegi să nu folosești această funcție.'
+    : 'This feature is optional and separate from the app: it requires your own Anthropic API key, billed directly by Anthropic (not through Raluca Korean).<br>The key stays saved locally on your device — the app itself stays free if you choose not to use this feature.';
   document.getElementById('ilBtnApiCancel').textContent = ro ? 'Anulează' : 'Cancel';
   document.getElementById('ilBtnApiSave').textContent = ro ? 'Salvează' : 'Save';
 
