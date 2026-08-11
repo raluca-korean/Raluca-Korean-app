@@ -3,15 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cuvântul în Context</title>
+<title>Harta Cuvântului</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#db2777">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./theme-anime.css">
 <style>
-/* ── Tighter card rhythm for this page (theme-anime.css defaults are roomier) ── */
-.app{max-width:760px}
+.app{max-width:1180px}
 .app .card{padding:13px 15px;margin-bottom:9px;border-radius:13px}
 .app h1{font-size:19px}
 .app .sub{font-size:12px}
@@ -37,8 +36,6 @@ body.dark-mode .wc-search{color:#f0e8ff}
 body.dark-mode .wc-hint{color:rgba(210,170,240,.55)}
 .wc-hint b{color:rgba(255,255,255,.6)}
 body.dark-mode .wc-hint b{color:rgba(240,232,255,.85)}
-
-/* ── Category filter ── */
 .wc-cat-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
 .wc-cat-pill{
   padding:3px 10px;border-radius:11px;font-size:.72rem;font-weight:700;
@@ -47,8 +44,6 @@ body.dark-mode .wc-hint b{color:rgba(240,232,255,.85)}
 }
 body.dark-mode .wc-cat-pill{color:rgba(210,170,240,.6)}
 .wc-cat-pill.on{background:rgba(219,39,119,.22);border-color:#db2779;color:#f0abfc}
-
-/* ── Results list ── */
 .wc-res-count{font-size:.74rem;color:rgba(255,255,255,.35);margin:8px 0 4px;min-height:1em}
 body.dark-mode .wc-res-count{color:rgba(210,170,240,.5)}
 .wc-res-list{display:flex;flex-direction:column;gap:4px;max-height:280px;overflow-y:auto;
@@ -66,8 +61,6 @@ body.dark-mode .wc-res-trans{color:rgba(224,213,245,.7)}
 .wc-res-cat{font-size:.64rem;padding:1px 7px;border-radius:8px;background:rgba(255,255,255,.08);
   color:rgba(255,255,255,.4);white-space:nowrap}
 .wc-res-full{font-size:.85rem;flex-shrink:0}
-
-/* ── Featured (curated) row ── */
 .wc-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .wc-chip{
   padding:4px 10px;border-radius:11px;background:rgba(219,39,119,.10);
@@ -75,191 +68,113 @@ body.dark-mode .wc-res-trans{color:rgba(224,213,245,.7)}
   transition:all .16s;color:#f0abfc;font-family:inherit;font-weight:700;
 }
 .wc-chip:hover{background:rgba(219,39,119,.2);border-color:#db2779}
-
-/* ── Empty / not-found state ── */
-.wc-empty{
-  text-align:center;padding:18px 14px;color:rgba(255,255,255,.35);font-size:.88rem;line-height:1.55;
-}
+.wc-empty{text-align:center;padding:18px 14px;color:rgba(255,255,255,.35);font-size:.88rem;line-height:1.55}
 body.dark-mode .wc-empty{color:rgba(210,170,240,.55)}
 
-/* ── Headword block (hero, centered) ── */
-.wc-head{display:flex;flex-direction:column;align-items:center;gap:5px;margin-bottom:2px;
-  text-align:center;padding:2px 0}
-.wc-head-ko{font-size:2.3rem;font-weight:900;color:#f0abfc;letter-spacing:.02em;cursor:pointer;
-  text-shadow:0 0 24px rgba(219,39,119,.22);line-height:1.1}
-.wc-head-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.wc-head-pos{
-  font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:10px;
-  background:rgba(219,39,119,.18);color:#f0abfc;border:1px solid rgba(219,39,119,.3);
-  white-space:nowrap;
-}
-.wc-head-badge{
-  font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:8px;
-  background:rgba(88,204,2,.16);color:#86efac;border:1px solid rgba(88,204,2,.28);
-}
-.wc-head-badge.gen{background:rgba(28,176,246,.14);color:#7dd3fc;border-color:rgba(28,176,246,.26)}
-.wc-basenote{
-  font-size:.8rem;color:rgba(255,255,255,.55);margin:6px 0;line-height:1.5;
-  padding:7px 11px;background:rgba(255,255,255,.04);border-radius:8px;
-  border-left:3px solid #db2779;
-}
-body.dark-mode .wc-basenote{color:rgba(224,213,245,.8)}
-.wc-homonym{
-  font-size:.8rem;color:#fcd34d;margin:6px 0;line-height:1.5;
-  padding:7px 11px;background:rgba(245,158,11,.10);border-radius:8px;
-  border-left:3px solid #f59e0b;
-}
+/* ── Explore layout: map + sentence panel side by side ── */
+.wc-explore{display:grid;grid-template-columns:1fr 1.35fr;gap:10px;align-items:start}
+@media(max-width:840px){.wc-explore{grid-template-columns:1fr}}
 
-/* ── Section titles ── */
-.wc-sec-title{
-  font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
-  color:rgba(255,255,255,.4);margin:13px 0 6px;font-weight:800;
-  display:flex;align-items:center;gap:6px;
+/* ── Compass map ── */
+.wc-map-card{padding:14px}
+.wc-compass{
+  display:grid;
+  grid-template-columns:1fr 1.5fr 1fr;
+  grid-template-areas:"n n n" "w c e" "s s s";
+  gap:7px;
 }
-body.dark-mode .wc-sec-title{color:rgba(210,170,240,.6)}
+@media(max-width:840px){
+  .wc-compass{grid-template-columns:1fr 1fr}
+  .wc-compass{grid-template-areas:"c c" "n n" "w e" "s s"}
+}
+.wc-zone-n{grid-area:n}
+.wc-zone-w{grid-area:w}
+.wc-zone-c{grid-area:c}
+.wc-zone-e{grid-area:e}
+.wc-zone-s{grid-area:s}
 
-/* ── Senses ── */
-.wc-sense{margin-bottom:10px}
-.wc-sense-meaning{
-  font-size:1rem;font-weight:800;color:var(--rk-text,#fff);margin-bottom:6px;
+.wc-zone-c{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:4px;padding:10px 6px;
 }
-body.dark-mode .wc-sense-meaning{color:#f0e8ff}
-.wc-sense-num{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:19px;height:19px;border-radius:50%;background:rgba(219,39,119,.25);
-  color:#f0abfc;font-size:.7rem;font-weight:900;margin-right:6px;
-}
+.wc-map-ko{font-size:2rem;font-weight:900;color:#f0abfc;letter-spacing:.02em;cursor:pointer;
+  text-shadow:0 0 22px rgba(219,39,119,.25);line-height:1.05}
+.wc-map-badges{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.wc-map-pos{font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:9px;
+  background:rgba(219,39,119,.18);color:#f0abfc;border:1px solid rgba(219,39,119,.3);white-space:nowrap}
+.wc-map-badge{font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:8px;
+  background:rgba(88,204,2,.16);color:#86efac;border:1px solid rgba(88,204,2,.28)}
+.wc-map-badge.gen{background:rgba(28,176,246,.14);color:#7dd3fc;border-color:rgba(28,176,246,.26)}
+.wc-homonym{font-size:.72rem;color:#fcd34d;margin-top:4px;line-height:1.4}
 
-/* ── Example cards ── */
-.wc-ex{
-  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);
-  border-radius:10px;padding:9px 12px;margin-bottom:6px;
+.wc-zone{border-radius:11px;padding:8px 9px;display:flex;flex-direction:column;gap:6px;min-height:36px}
+.wc-zone-n>.wc-zone{background:rgba(255,150,0,.08);border:1px solid rgba(255,150,0,.18)}
+.wc-zone-w>.wc-zone{background:rgba(28,176,246,.08);border:1px solid rgba(28,176,246,.18)}
+.wc-zone-e>.wc-zone{background:rgba(88,204,2,.08);border:1px solid rgba(88,204,2,.18)}
+.wc-zone-s>.wc-zone{background:rgba(206,130,255,.08);border:1px solid rgba(206,130,255,.18)}
+.wc-zone-lbl{font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;opacity:.65}
+.wc-zone-n .wc-zone-lbl{color:#ff9600}
+.wc-zone-w .wc-zone-lbl{color:#1cb0f6}
+.wc-zone-e .wc-zone-lbl{color:#58cc02}
+.wc-zone-s .wc-zone-lbl{color:#ce82ff}
+.wc-zone-words{display:flex;flex-wrap:wrap;gap:4px}
+.wc-word-chip{
+  padding:3px 9px;border-radius:9px;font-size:.78rem;font-weight:700;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.75);white-space:nowrap;
 }
-.wc-ex-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-.wc-ex-ko{font-size:1.05rem;font-weight:700;line-height:1.45;flex:1}
-.wc-ex-ko b{color:#f0abfc;background:rgba(219,39,119,.16);padding:0 1px;margin:0 -1px;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
-.wc-ex-ko .wc-tok{cursor:pointer;border-radius:4px;transition:background .12s}
-.wc-ex-ko .wc-tok:hover{background:rgba(255,255,255,.12)}
-.wc-ex-play{
+body.dark-mode .wc-word-chip{color:#e8e0f5}
+.wc-word-chip.clickable{cursor:pointer;transition:all .14s}
+.wc-word-chip.clickable:hover{background:rgba(255,255,255,.16);transform:translateY(-1px)}
+.wc-word-chip .g{font-size:.68rem;opacity:.6;font-weight:500;margin-left:4px}
+
+.wc-sense-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
+.wc-sense-tab{
+  padding:4px 11px;border-radius:10px;font-size:.76rem;font-weight:700;
+  border:1px solid rgba(255,255,255,.16);background:none;color:rgba(255,255,255,.5);cursor:pointer;
+}
+.wc-sense-tab.on{background:rgba(219,39,119,.2);border-color:#db2779;color:#f0abfc}
+
+/* ── Sentence panel ── */
+.wc-sent-card{padding:14px}
+.wc-sent-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.wc-sent-title{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:800}
+body.dark-mode .wc-sent-title{color:rgba(210,170,240,.6)}
+.wc-rom-toggle{
+  display:flex;align-items:center;gap:5px;font-size:.72rem;color:rgba(255,255,255,.5);cursor:pointer;user-select:none;
+}
+.wc-rom-toggle input{accent-color:#db2779}
+.wc-sent-list{display:flex;flex-direction:column}
+.wc-sent-row{
+  padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:flex-start;gap:8px;
+}
+.wc-sent-row:last-child{border-bottom:none}
+.wc-sent-lvl{
+  flex-shrink:0;width:7px;height:7px;border-radius:50%;margin-top:7px;
+}
+.wc-sent-lvl.easy{background:#58cc02}
+.wc-sent-lvl.medium{background:#1cb0f6}
+.wc-sent-lvl.complex{background:#ce82ff}
+.wc-sent-main{flex:1;min-width:0}
+.wc-sent-ko{font-size:.98rem;font-weight:700;line-height:1.45}
+.wc-sent-ko b{color:#f0abfc;background:rgba(219,39,119,.16);padding:0 1px;margin:0 -1px;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.wc-sent-ko .wc-tok{cursor:pointer;border-radius:4px;transition:background .12s}
+.wc-sent-ko .wc-tok:hover{background:rgba(255,255,255,.12)}
+.wc-sent-rom{font-size:.74rem;color:rgba(255,255,255,.4);font-style:italic;margin-top:1px;display:none}
+body.dark-mode .wc-sent-rom{color:rgba(210,170,240,.5)}
+.wc-sent-rom.show{display:block}
+.wc-sent-ro{font-size:.85rem;color:rgba(255,255,255,.72);margin-top:2px}
+body.dark-mode .wc-sent-ro{color:rgba(224,213,245,.82)}
+.wc-sent-play{
   flex-shrink:0;background:none;border:1px solid rgba(255,255,255,.16);
-  border-radius:50%;width:27px;height:27px;padding:0;font-size:.85rem;
-  display:flex;align-items:center;justify-content:center;box-shadow:none;
+  border-radius:50%;width:25px;height:25px;padding:0;font-size:.78rem;
+  display:flex;align-items:center;justify-content:center;box-shadow:none;margin-top:2px;
 }
-.wc-ex-play:hover{background:rgba(219,39,119,.14);transform:none}
-.wc-ex-rom{font-size:.76rem;color:rgba(255,255,255,.4);margin-top:2px;font-style:italic}
-body.dark-mode .wc-ex-rom{color:rgba(210,170,240,.5)}
-.wc-ex-tr{font-size:.87rem;color:rgba(255,255,255,.75);margin-top:4px}
-body.dark-mode .wc-ex-tr{color:rgba(224,213,245,.85)}
-.wc-ex-expl{
-  font-size:.75rem;color:rgba(255,255,255,.4);margin-top:5px;padding-top:5px;
-  border-top:1px dashed rgba(255,255,255,.1);line-height:1.4;
-}
-body.dark-mode .wc-ex-expl{color:rgba(210,170,240,.55)}
-.wc-ex-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
-.wc-tag{
-  font-size:.64rem;padding:1px 7px;border-radius:7px;
-  background:rgba(28,176,246,.14);color:#7dd3fc;border:1px solid rgba(28,176,246,.25);
-}
-.wc-tag.lvl{background:rgba(88,204,2,.14);color:#86efac;border-color:rgba(88,204,2,.25)}
-
-/* ── Situation filter ── */
-.wc-sit-row{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0 10px}
-.wc-sit-pill{
-  padding:3px 10px;border-radius:11px;font-size:.72rem;font-weight:700;
-  border:1px solid rgba(255,255,255,.16);background:none;
-  color:rgba(255,255,255,.45);cursor:pointer;transition:all .18s;
-}
-body.dark-mode .wc-sit-pill{color:rgba(210,170,240,.6)}
-.wc-sit-pill.on{background:rgba(28,176,246,.2);border-color:#1cb0f6;color:#7dd3fc}
-
-/* ── Grammar forms ── */
-.wc-gform-grid{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center}
-.wc-gform-lbl{font-size:.74rem;color:rgba(255,255,255,.4);white-space:nowrap}
-body.dark-mode .wc-gform-lbl{color:rgba(210,170,240,.55)}
-.wc-gform-val{font-size:.92rem;font-weight:700;color:#f0abfc}
-
-/* ── Related words ── */
-.wc-rel-block{margin-bottom:7px}
-.wc-rel-lbl{font-size:.72rem;color:rgba(255,255,255,.4);margin-bottom:4px;font-weight:700}
-body.dark-mode .wc-rel-lbl{color:rgba(210,170,240,.55)}
-.wc-rel-row{display:flex;flex-wrap:wrap;gap:5px}
-.wc-rel-chip{
-  padding:4px 10px;border-radius:10px;background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.1);font-size:.82rem;color:rgba(255,255,255,.7);
-}
-body.dark-mode .wc-rel-chip{color:#e0d5f5}
-.wc-rel-chip.clickable{cursor:pointer;transition:all .16s}
-.wc-rel-chip.clickable:hover{background:rgba(219,39,119,.14);border-color:#db2779;color:#f0abfc}
-.wc-mistake{
-  font-size:.8rem;color:rgba(255,255,255,.65);line-height:1.45;
-  background:rgba(255,150,0,.08);border-left:3px solid #ff9600;
-  padding:6px 10px;border-radius:7px;margin-bottom:4px;
-}
-body.dark-mode .wc-mistake{color:rgba(240,220,255,.8)}
-
-/* ── Derived forms ── */
-.wc-deriv-row{display:flex;flex-wrap:wrap;gap:5px}
-.wc-deriv-card{
-  display:flex;align-items:baseline;gap:5px;
-  padding:4px 10px;border-radius:9px;background:rgba(28,176,246,.08);
-  border:1px solid rgba(28,176,246,.2);
-}
-.wc-deriv-ko{font-size:.92rem;font-weight:800;color:#7dd3fc}
-.wc-deriv-pos{font-size:.62rem;color:rgba(125,211,252,.65);display:none}
-.wc-deriv-meaning{font-size:.76rem;color:rgba(255,255,255,.6)}
-body.dark-mode .wc-deriv-meaning{color:rgba(224,213,245,.75)}
-
-/* ── Idioms / metaphors ── */
-.wc-idiom{
-  background:rgba(206,130,255,.08);border:1px solid rgba(206,130,255,.22);
-  border-radius:10px;padding:7px 11px;margin-bottom:5px;
-}
-.wc-idiom-ko{font-size:.94rem;font-weight:800;color:#ce82ff;display:inline}
-.wc-idiom-rom{font-size:.72rem;color:rgba(255,255,255,.4);font-style:italic;display:inline;margin-left:6px}
-body.dark-mode .wc-idiom-rom{color:rgba(210,170,240,.5)}
-.wc-idiom-meaning{font-size:.82rem;color:rgba(255,255,255,.8);margin-top:3px;font-weight:700}
-body.dark-mode .wc-idiom-meaning{color:#f0e8ff}
-.wc-idiom-note{font-size:.75rem;color:rgba(255,255,255,.5);margin-top:2px;line-height:1.4}
-body.dark-mode .wc-idiom-note{color:rgba(210,170,240,.6)}
-
-/* ── Generated (non-curated) note ── */
-.wc-gen-note{
-  font-size:.78rem;color:rgba(255,255,255,.4);margin-top:6px;line-height:1.45;
-  font-style:italic;
-}
+.wc-sent-play:hover{background:rgba(219,39,119,.14);transform:none}
+.wc-gen-note{font-size:.78rem;color:rgba(255,255,255,.4);margin-top:8px;line-height:1.45;font-style:italic}
 body.dark-mode .wc-gen-note{color:rgba(210,170,240,.5)}
 
-/* ── Mini exercise ── */
-.wc-exercise{
-  background:linear-gradient(135deg,rgba(219,39,119,.10),rgba(147,51,234,.10));
-  border:1px solid rgba(219,39,119,.22);border-radius:12px;padding:12px 13px;margin-top:6px;
-}
-.wc-exercise-prompt{font-size:.88rem;font-weight:700;margin-bottom:6px;color:var(--rk-text,#fff)}
-body.dark-mode .wc-exercise-prompt{color:#f0e8ff}
-.wc-exercise-template{
-  font-size:1rem;font-weight:700;margin-bottom:8px;line-height:1.4;
-  padding:8px 11px;background:rgba(255,255,255,.05);border-radius:9px;
-}
-.wc-exercise-template .blank{color:#f0abfc;border-bottom:2px dashed #db2779;padding:0 6px}
-.wc-opt-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-.wc-opt-btn{
-  padding:6px 13px;border-radius:10px;font-size:.86rem;
-  background:rgba(255,255,255,.07);color:var(--rk-text,#fff);
-  border:1.5px solid rgba(255,255,255,.14);box-shadow:none;font-weight:700;
-}
-body.dark-mode .wc-opt-btn{color:#f0e8ff}
-.wc-opt-btn:hover{transform:translateY(-1px);border-color:#db2779}
-.wc-opt-btn.correct{background:rgba(88,204,2,.22);border-color:#58cc02;color:#86efac}
-.wc-opt-btn.wrong{background:rgba(255,71,87,.18);border-color:#ff4757;color:#ffb3b8}
-.wc-opt-btn.dim{opacity:.45}
-.wc-exercise-fb{
-  font-size:.82rem;line-height:1.45;padding:7px 11px;border-radius:8px;margin-top:2px;
-  background:rgba(255,255,255,.05);
-}
-.wc-exercise-fb.ok{color:#86efac}
-.wc-exercise-fb.no{color:#ffb3b8}
-
-/* ── Toast ── */
 .wc-toast{
   position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
   background:rgba(20,10,30,.92);color:#fff;padding:10px 20px;border-radius:12px;
@@ -267,11 +182,6 @@ body.dark-mode .wc-opt-btn{color:#f0e8ff}
   box-shadow:0 8px 24px rgba(0,0,0,.3);
 }
 .wc-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-@media(max-width:600px){
-  .wc-head-ko{font-size:2rem}
-  .wc-gform-grid{grid-template-columns:1fr}
-}
 </style>
 </head>
 <body class="theme-anime">
@@ -280,18 +190,17 @@ body.dark-mode .wc-opt-btn{color:#f0e8ff}
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <div>
-        <h1 id="pgTitle">🧩 Cuvântul în Context</h1>
-        <div class="sub" id="pgSub">Caută orice cuvânt din glosarul aplicației și învață-l printr-o micro-lecție</div>
+        <h1 id="pgTitle">🗺️ Harta Cuvântului</h1>
+        <div class="sub" id="pgSub">Introdu un cuvânt și explorează-l printr-o hartă de asocieri și propoziții</div>
       </div>
       <div id="pageControls"></div>
     </div>
   </div>
 
-  <!-- Search -->
   <div class="card">
     <div class="wc-search-wrap">
       <input id="wcSearch" class="wc-search" type="text" autocomplete="off" spellcheck="false"
-             placeholder="ex: 가다, 학교, 눈 …">
+             placeholder="ex: 물, 가다, 학교 …">
       <button class="wc-clear" id="wcClear" type="button">✕</button>
     </div>
     <div class="wc-hint" id="wcHint"></div>
@@ -299,15 +208,14 @@ body.dark-mode .wc-opt-btn{color:#f0e8ff}
     <div class="wc-res-count" id="wcResCount"></div>
     <div class="wc-res-list" id="wcResList"></div>
     <div id="wcFeatured">
-      <div class="wc-rel-lbl" id="wcFeaturedLbl" style="margin-top:14px"></div>
+      <div class="wc-rel-lbl" id="wcFeaturedLbl" style="margin-top:6px;font-size:.72rem;color:rgba(255,255,255,.4);font-weight:700"></div>
       <div class="wc-chips" id="wcChips"></div>
     </div>
   </div>
 
-  <!-- Result -->
   <div id="wcResult"></div>
 
-</div><!-- /app -->
+</div>
 
 <div class="wc-toast" id="wcToast"></div>
 
@@ -318,28 +226,16 @@ body.dark-mode .wc-opt-btn{color:#f0e8ff}
 <script src="./js/core/register-sw.js"></script>
 <script>
 // ── STATE ────────────────────────────────────────────────────────
-let DICT = {};         // curated context-words.json (enrichment layer, keyed by ko)
-let VOCAB = [];         // the app's real vocabulary — data/vocab-korean.json (single source of truth)
+let DICT = {};
+let VOCAB = [];
 let cLang = (window.RKLang && RKLang.get()) || 'ro';
-let activeSitFilter = '';
 let activeCat = '';
 let query = '';
-let currentKey = null;      // curated key currently shown, if any
-let currentVocab = null;    // vocab entry currently shown, if any
-let vocabIndex = null;      // Map ko -> vocab entry
+let currentWord = null;
+let currentSenseIdx = 0;
+let showRomanization = true;
+let vocabIndex = null;
 
-const SITUATION_LABELS = {
-  ro: { everyday:'Zi cu zi', school:'Școală', restaurant:'Restaurant', shopping:'Cumpărături',
-        travel:'Călătorie', friends:'Prieteni', work:'Serviciu', home:'Acasă',
-        chat:'Mesaje/Chat', informal:'Informal', polite:'Politicos' },
-  en: { everyday:'Everyday', school:'School', restaurant:'Restaurant', shopping:'Shopping',
-        travel:'Travel', friends:'Friends', work:'Work', home:'Home',
-        chat:'Chat/Messages', informal:'Informal', polite:'Polite' }
-};
-const LEVEL_LABELS = {
-  ro: { easy:'ușor', medium:'mediu', complex:'complex' },
-  en: { easy:'easy', medium:'medium', complex:'complex' }
-};
 const CAT_LABELS = {
   ro:{ nouns:'Substantiv', verbs:'Verb', adjectives:'Adjectiv', adverbs:'Adverb',
        objects:'Obiect', subjects:'Subiect', connectors:'Conector', grammar:'Gramatică',
@@ -349,10 +245,13 @@ const CAT_LABELS = {
        modifiers:'Modifier', times:'Time', places:'Place' }
 };
 const CAT_ORDER = ['nouns','verbs','adjectives','adverbs','connectors','grammar','modifiers','times','places'];
+const ZONE_LABELS = {
+  ro:{ n:'Adjective asociate', w:'Verbe asociate', e:'Substantive asociate', s:'Expresii & metafore' },
+  en:{ n:'Related adjectives', w:'Related verbs', e:'Related nouns', s:'Expressions & metaphors' }
+};
+const LEVEL_LABEL = { ro:{easy:'ușor',medium:'mediu',complex:'complex'}, en:{easy:'easy',medium:'medium',complex:'complex'} };
 
-// Common trailing particles/endings stripped for click-to-explore matching
 const STRIP_SUFFIXES = ['입니다','이에요','예요','습니다','합니다','했어요','했다','하고','해서','에서','에게','한테','까지','부터','이지만','지만','으로','로는','로써','로','는','은','이','가','을','를','에','도','와','과','랑','만','의','다','요','고','서'];
-
 function stripParticle(chunk) {
   let w = chunk.replace(/[.,!?"'”“‘’()]/g,'').trim();
   for (const suf of STRIP_SUFFIXES) {
@@ -361,9 +260,7 @@ function stripParticle(chunk) {
   return w;
 }
 
-// ── JAMO DECOMPOSE (for Korean fuzzy search, same approach as dictionary.html) ──
 const JUNG=['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
-const JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 function toJamo(text) {
   let r = '';
   for (const ch of text) {
@@ -373,21 +270,20 @@ function toJamo(text) {
       const jong = s%28, jung = Math.floor(s/28)%21, cho = Math.floor(s/588);
       r += ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'][cho];
       r += JUNG[jung];
-      if (jong) r += JONG[jong];
+      if (jong) r += ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'][jong];
     } else { r += ch; }
   }
   return r;
 }
 
-// ── HAS BATCHIM (final consonant) helper — drives particle allomorphy ──
 function hasBatchim(word) {
   const last = word[word.length - 1];
   const code = last ? last.charCodeAt(0) : 0;
-  if (code < 0xAC00 || code > 0xD7A3) return true; // non-hangul: default to consonant-style particle
+  if (code < 0xAC00 || code > 0xD7A3) return true;
   return ((code - 0xAC00) % 28) !== 0;
 }
 
-// ── CONJUGATION (ported from dictionary.html's proven algorithm) ──
+// ── CONJUGATION (for generated/non-curated conjugable words) ─────
 function conjugate(word) {
   if (!word.endsWith('다')) return null;
   const stem = word.slice(0,-1);
@@ -395,48 +291,22 @@ function conjugate(word) {
   if (!last) return null;
   const code = last.charCodeAt(0);
   if (code < 0xAC00 || code > 0xD7A3) return null;
-
-  const s    = code - 0xAC00;
-  const jong = s % 28;
-  const jung = Math.floor(s/28) % 21;
-  const cho  = Math.floor(s/588);
+  const s = code - 0xAC00, jong = s % 28, jung = Math.floor(s/28) % 21, cho = Math.floor(s/588);
 
   if (last === '이') {
     const base = stem.slice(0,-1);
-    return [
-      {ro:'prezent politicos',en:'polite present', form: base+'이에요 / '+base+'예요'},
-      {ro:'trecut',        en:'past',           form: base+'이었어요'},
-      {ro:'negație',        en:'negative',       form: base+'이 아니에요'},
-    ];
+    return [{ro:'prezent',en:'present', form: base+'예요'}, {ro:'trecut',en:'past', form: base+'이었어요'}];
   }
-
   if (last === '하') {
     const base = stem.slice(0,-1);
-    return [
-      {ro:'prezent (해요체)', en:'polite present', form: base+'해요'},
-      {ro:'trecut',          en:'past',            form: base+'했어요'},
-      {ro:'viitor',          en:'future',          form: base+'할 거예요'},
-      {ro:'negație',          en:'negative',        form: '안 '+base+'해요'},
-    ];
+    return [{ro:'prezent',en:'present', form: base+'해요'}, {ro:'trecut',en:'past', form: base+'했어요'}];
   }
-
-  // ㅂ-irregular (stem ends in ㅂ batchim, e.g. 고맙다, 춥다) — common set, safe heuristic.
-  // Rule: drop the ㅂ batchim, then attach 워 (+요/ㅆ어요) to the resulting open syllable.
   const B_IRREGULAR = ['고맙다','춥다','덥다','쉽다','어렵다','가깝다','아름답다','반갑다','귀엽다','무겁다','가볍다'];
-  if (jong === 17 && B_IRREGULAR.includes(word)) { // 17 = ㅂ
-    const openSyllable = String.fromCharCode(code - jong); // same cho+jung, jong removed
+  if (jong === 17 && B_IRREGULAR.includes(word)) {
+    const openSyllable = String.fromCharCode(code - jong);
     const base = stem.slice(0,-1) + openSyllable;
-    return [
-      {ro:'prezent politicos (neregulat ㅂ)', en:'polite present (ㅂ-irregular)', form: base+'워요'},
-      {ro:'prezent formal', en:'formal present', form: stem+'습니다'},
-      {ro:'trecut', en:'past', form: base+'웠어요'},
-      {ro:'negație', en:'negative', form: '안 '+base+'워요'},
-    ];
+    return [{ro:'prezent',en:'present', form: base+'워요'}, {ro:'trecut',en:'past', form: base+'웠어요'}];
   }
-
-  // 르-irregular (모르다, 부르다 style): the syllable before 르 gains a ㄹ batchim and
-  // is followed by 라/러, instead of the plain ㅡ-drop pattern. A handful of 르-final verbs
-  // (따르다, 들르다, 치르다) are regular and use the plain ㅡ-drop path below.
   const REUL_REGULAR = ['따르다', '들르다', '치르다'];
   if (last === '르' && jong === 0 && stem.length >= 2 && !REUL_REGULAR.includes(word)) {
     const preStem = stem.slice(0, -1);
@@ -444,92 +314,39 @@ function conjugate(word) {
     const pCode = preLast.charCodeAt(0);
     const pJung = Math.floor((pCode - 0xAC00) / 28) % 21;
     const preBright = pJung === 0 || pJung === 8;
-    const doubled = String.fromCharCode(pCode + 8); // add ㄹ batchim (jong index 8) to the pre-syllable
+    const doubled = String.fromCharCode(pCode + 8);
     const newSyl = preBright ? '라' : '러';
     const base = preStem.slice(0, -1) + doubled + newSyl;
-    return [
-      {ro:'prezent (해요체)', en:'polite present', form: base+'요'},
-      {ro:'trecut',          en:'past',            form: base.slice(0,-1)+(preBright?'랐':'렀')+'어요'},
-      {ro:'viitor',          en:'future',          form: preStem.slice(0,-1) + doubled + ' 거예요'},
-      {ro:'negație',          en:'negative',        form: '안 '+base+'요'},
-    ];
+    return [{ro:'prezent',en:'present', form: base+'요'}, {ro:'trecut',en:'past', form: base.slice(0,-1)+(preBright?'랐':'렀')+'어요'}];
   }
-
-  // ㄷ-irregular (걷다→걸어요, 듣다→들어요 and compounds ending in them). Most ㄷ-final
-  // stems are actually regular (받다, 닫다, 믿다), so this only fires for the known set.
   const DIGEUT_IRREGULAR_BASES = ['걷다', '듣다'];
   if (jong === 7 && DIGEUT_IRREGULAR_BASES.some(b => word === b || word.endsWith(b))) {
-    const base = stem.slice(0,-1) + String.fromCharCode(code + 1); // ㄷ(7) -> ㄹ(8) batchim
+    const base = stem.slice(0,-1) + String.fromCharCode(code + 1);
     const bright = jung === 0 || jung === 8;
-    return [
-      {ro:'prezent (해요체)', en:'polite present', form: base+(bright?'아요':'어요')},
-      {ro:'trecut',          en:'past',            form: base+(bright?'았어요':'었어요')},
-      {ro:'viitor',          en:'future',          form: base+'을 거예요'},
-      {ro:'negație',          en:'negative',        form: '안 '+base+(bright?'아요':'어요')},
-    ];
+    return [{ro:'prezent',en:'present', form: base+(bright?'아요':'어요')}, {ro:'trecut',en:'past', form: base+(bright?'았어요':'었어요')}];
   }
 
   const aVowel = jung===0||jung===8;
   const suf = aVowel ? '아':'어';
-
-  let pres, past, fut, neg;
-
+  let pres, past;
   if (jong===0) {
-    if (jung===0) {
-      pres = stem+'요';
-      past = stem.slice(0,-1) + String.fromCharCode(code+20) + '어요';
-      fut  = stem.slice(0,-1) + String.fromCharCode(code+8) + ' 거예요';
-    } else if (jung===8) {
-      pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+9*28) + '요';
-      past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+9*28+20) + '어요';
-      fut  = stem.slice(0,-1) + String.fromCharCode(code+8) + ' 거예요';
-    } else if (jung===13) {
-      pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+14*28) + '요';
-      past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+14*28+20) + '어요';
-      fut  = stem.slice(0,-1) + String.fromCharCode(code+8) + ' 거예요';
-    } else if (jung===18) {
-      // ㅡ-irregular (예쁘다, 바쁘다 style): drop ㅡ, use preceding syllable's vowel to pick 아/어
-      const pre = stem.slice(0,-1);
+    if (jung===0) { pres = stem+'요'; past = stem.slice(0,-1) + String.fromCharCode(code+20) + '어요'; }
+    else if (jung===8) { pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+9*28) + '요'; past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+9*28+20) + '어요'; }
+    else if (jung===13) { pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+14*28) + '요'; past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+14*28+20) + '어요'; }
+    else if (jung===18) {
+      const pre = stem.slice(0, -1);
       const preLast = pre[pre.length-1];
       let preBright = false;
       if (preLast) {
         const pc = preLast.charCodeAt(0);
-        if (pc >= 0xAC00 && pc <= 0xD7A3) {
-          const pj = Math.floor((pc-0xAC00)/28)%21;
-          preBright = pj===0||pj===8;
-        }
+        if (pc >= 0xAC00 && pc <= 0xD7A3) { const pj = Math.floor((pc-0xAC00)/28)%21; preBright = pj===0||pj===8; }
       }
-      const dropCho = cho; // consonant of the ㅡ syllable
-      const newJung = preBright ? 0 : 4; // ㅏ or ㅓ
-      pres = pre + String.fromCharCode(0xAC00 + dropCho*588 + newJung*28) + '요';
-      past = pre + String.fromCharCode(0xAC00 + dropCho*588 + newJung*28 + 20) + '어요';
-      fut  = pre + String.fromCharCode(0xAC00 + dropCho*588 + newJung*28) + ' 거예요';
-    } else {
-      pres = stem+'어요';
-      past = stem+'었어요';
-      fut  = stem.slice(0,-1) + String.fromCharCode(code+8) + ' 거예요';
-    }
-    neg = '안 '+pres;
-  } else if (jong === 8) {
-    // ㄹ-batchim stems (살다, 만들다…): 을 거예요 would double up on the existing ㄹ,
-    // so the future just attaches 거예요 directly to the unchanged stem.
-    pres = stem+suf+'요';
-    past = stem+(aVowel?'았':'었')+'어요';
-    fut  = stem+' 거예요';
-    neg  = '안 '+pres;
-  } else {
-    pres = stem+suf+'요';
-    past = stem+(aVowel?'았':'었')+'어요';
-    fut  = stem+'을 거예요';
-    neg  = '안 '+pres;
-  }
-
-  return [
-    {ro:'prezent (해요체)', en:'polite present', form: pres},
-    {ro:'trecut',          en:'past',            form: past},
-    {ro:'viitor',          en:'future',          form: fut},
-    {ro:'negație',          en:'negative',        form: neg},
-  ];
+      const newJung = preBright ? 0 : 4;
+      pres = pre + String.fromCharCode(0xAC00 + cho*588 + newJung*28) + '요';
+      past = pre + String.fromCharCode(0xAC00 + cho*588 + newJung*28 + 20) + '어요';
+    } else { pres = stem+'어요'; past = stem+'었어요'; }
+  } else { pres = stem+suf+'요'; past = stem+(aVowel?'았':'었')+'어요'; }
+  return [{ro:'prezent',en:'present', form: pres}, {ro:'trecut',en:'past', form: past}];
 }
 
 // ── LOAD DATA ────────────────────────────────────────────────────
@@ -548,7 +365,7 @@ Promise.all([
     '<div class="card"><div class="wc-empty">⚠️ Nu s-au putut încărca datele.</div></div>';
 });
 
-// ── SEARCH (over the app's real vocabulary, like dictionary.html) ──
+// ── SEARCH ─────────────────────────────────────────────────────
 function scoreEntry(entry, q) {
   if (!q) return 0;
   const qL = q.toLowerCase();
@@ -564,33 +381,21 @@ function scoreEntry(entry, q) {
   if (ro.includes(qL) || en.includes(qL)) return 40;
   return 0;
 }
-
 function getResults() {
   let results = VOCAB;
   if (activeCat) results = results.filter(e => e.categories?.includes(activeCat));
   if (!query.trim()) return activeCat ? results.slice(0,60) : [];
-  return results
-    .map(e => ({ ...e, _score: scoreEntry(e, query.trim()) }))
-    .filter(e => e._score > 0)
-    .sort((a,b) => b._score - a._score)
-    .slice(0,60);
+  return results.map(e => ({ ...e, _score: scoreEntry(e, query.trim()) }))
+    .filter(e => e._score > 0).sort((a,b) => b._score - a._score).slice(0,60);
 }
-
 function renderCats() {
   const L = cLang === 'ro' ? CAT_LABELS.ro : CAT_LABELS.en;
   const all = cLang === 'ro' ? 'Toate' : 'All';
   let html = `<button class="wc-cat-pill${!activeCat?' on':''}" onclick="setCat('')">${all}</button>`;
-  CAT_ORDER.forEach(c => {
-    html += `<button class="wc-cat-pill${activeCat===c?' on':''}" onclick="setCat('${c}')">${L[c]||c}</button>`;
-  });
+  CAT_ORDER.forEach(c => { html += `<button class="wc-cat-pill${activeCat===c?' on':''}" onclick="setCat('${c}')">${L[c]||c}</button>`; });
   document.getElementById('wcCatRow').innerHTML = html;
 }
-
-function setCat(c) {
-  activeCat = c;
-  renderCats();
-  renderSearchResults();
-}
+function setCat(c) { activeCat = c; renderCats(); renderSearchResults(); }
 window.setCat = setCat;
 
 function renderSearchResults() {
@@ -600,20 +405,9 @@ function renderSearchResults() {
   const countEl = document.getElementById('wcResCount');
   const listEl = document.getElementById('wcResList');
   const featuredEl = document.getElementById('wcFeatured');
-
-  if (!query.trim() && !activeCat) {
-    countEl.textContent = '';
-    listEl.innerHTML = '';
-    featuredEl.style.display = '';
-    return;
-  }
+  if (!query.trim() && !activeCat) { countEl.textContent=''; listEl.innerHTML=''; featuredEl.style.display=''; return; }
   featuredEl.style.display = 'none';
-
-  if (res.length === 0) {
-    countEl.textContent = isRo ? 'Niciun rezultat' : 'No results';
-    listEl.innerHTML = '';
-    return;
-  }
+  if (res.length === 0) { countEl.textContent = isRo ? 'Niciun rezultat' : 'No results'; listEl.innerHTML=''; return; }
   countEl.textContent = res.length + (isRo ? ' rezultate din glosar' : ' results from the glossary');
   listEl.innerHTML = res.map(e => {
     const cat = e.categories && e.categories[0];
@@ -624,26 +418,20 @@ function renderSearchResults() {
       <span class="wc-res-ko">${e.ko}</span>
       <span class="wc-res-trans">${trans}</span>
       ${catLbl ? `<span class="wc-res-cat">${catLbl}</span>` : ''}
-      ${isFull ? '<span class="wc-res-full" title="' + (isRo?'Lecție completă':'Full lesson') + '">✨</span>' : ''}
+      ${isFull ? '<span class="wc-res-full" title="' + (isRo?'Hartă completă':'Full map') + '">✨</span>' : ''}
     </div>`;
   }).join('');
 }
-
 document.getElementById('wcSearch').addEventListener('input', e => {
   query = e.target.value;
   document.getElementById('wcClear').classList.toggle('vis', query.length > 0);
   renderSearchResults();
 });
 document.getElementById('wcSearch').addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const res = getResults();
-    if (res.length) searchAndFill(res[0].ko);
-  }
+  if (e.key === 'Enter') { const res = getResults(); if (res.length) searchAndFill(res[0].ko); }
 });
 document.getElementById('wcClear').addEventListener('click', () => {
-  query = '';
-  document.getElementById('wcSearch').value = '';
-  document.getElementById('wcClear').classList.remove('vis');
+  query = ''; document.getElementById('wcSearch').value=''; document.getElementById('wcClear').classList.remove('vis');
   renderSearchResults();
 });
 
@@ -651,494 +439,209 @@ function searchAndFill(word) {
   document.getElementById('wcSearch').value = word;
   query = word;
   document.getElementById('wcClear').classList.add('vis');
-  activeSitFilter = '';
   renderSearchResults();
   openWord(word);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 window.searchAndFill = searchAndFill;
 
-// ── OPEN A WORD: curated lesson if available, else generated, else not-found ──
 function openWord(word) {
+  currentSenseIdx = 0;
   const v = vocabIndex && vocabIndex.get(word);
   if (!v) { renderNotFound(word); return; }
-  if (DICT[word]) { renderCurated(word); return; }
-  renderGenerated(v);
+  currentWord = word;
+  renderExplore();
 }
 
-function resolveAndOpen(raw) {
-  const q = (raw || '').trim();
-  if (!q) return;
-  const v = vocabIndex && vocabIndex.get(q);
-  if (v) { searchAndFill(q); return; }
-  // try exact curated key not present in vocab (shouldn't normally happen, kept as safety net)
-  renderNotFound(q);
-}
-
-// ── CLICK-TO-EXPLORE from example sentences ──────────────────────
 function exploreToken(raw) {
   const w = stripParticle(raw);
   if (!w) return;
   if (vocabIndex && vocabIndex.get(w)) { searchAndFill(w); return; }
   if (DICT[w]) { searchAndFill(w); return; }
-  const hit = Object.keys(DICT).find(k => k.startsWith(w) || w.startsWith(k.replace('다','')));
-  if (hit) { searchAndFill(hit); return; }
   toast(cLang === 'ro' ? `Nu am găsit „${w}” în glosar — încearcă un alt cuvânt.` : `Couldn't find "${w}" in the glossary — try another word.`);
 }
 window.exploreToken = exploreToken;
 
 function toast(msg) {
   const t = document.getElementById('wcToast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// ── RENDER: tokenized sentence (clickable eojeol) ────────────────
 function renderTokens(koHtml) {
   return koHtml.split(' ').map(chunk => {
     const plain = chunk.replace(/<\/?b>/g, '');
     return `<span class="wc-tok" onclick="exploreToken('${plain.replace(/'/g,"\\'")}')">${chunk}</span>`;
   }).join(' ');
 }
-
 function speak(text) {
   const clean = (text || '').replace(/<\/?b>/g, '');
   if (window.AudioEngine) AudioEngine.speak(clean);
 }
 window.speak = speak;
 
-// ── RENDER: featured (curated) row ────────────────────────────────
 function renderChips() {
   const isRo = cLang === 'ro';
   document.getElementById('wcFeaturedLbl').textContent = isRo
-    ? `✨ Cuvinte cu lecție completă (${Object.keys(DICT).length})`
-    : `✨ Words with a full lesson (${Object.keys(DICT).length})`;
-  const html = Object.keys(DICT).map(k =>
-    `<button class="wc-chip" onclick="searchAndFill('${k.replace(/'/g,"\\'")}')">${k}</button>`
-  ).join('');
-  document.getElementById('wcChips').innerHTML = html;
+    ? `✨ Cuvinte cu hartă completă (${Object.keys(DICT).length})`
+    : `✨ Words with a full map (${Object.keys(DICT).length})`;
+  document.getElementById('wcChips').innerHTML = Object.keys(DICT).map(k =>
+    `<button class="wc-chip" onclick="searchAndFill('${k.replace(/'/g,"\\'")}')">${k}</button>`).join('');
 }
 
-// ── RENDER: not found ─────────────────────────────────────────────
 function renderNotFound(q) {
-  const html = cLang === 'ro'
-    ? `<div class="card"><div class="wc-empty">
-         😕 „<b>${q}</b>” nu există în glosarul aplicației.<br>
-         Caută mai sus în vocabularul aplicației (${VOCAB.length} cuvinte) sau verifică ortografia.
-       </div></div>`
-    : `<div class="card"><div class="wc-empty">
-         😕 "<b>${q}</b>" isn't in the app's glossary.<br>
-         Search the app's vocabulary above (${VOCAB.length} words) or check the spelling.
-       </div></div>`;
-  document.getElementById('wcResult').innerHTML = html;
-  currentKey = null;
-  currentVocab = null;
+  const isRo = cLang === 'ro';
+  document.getElementById('wcResult').innerHTML = isRo
+    ? `<div class="card"><div class="wc-empty">😕 „<b>${q}</b>” nu există în glosarul aplicației.<br>Caută mai sus în vocabularul aplicației (${VOCAB.length} cuvinte).</div></div>`
+    : `<div class="card"><div class="wc-empty">😕 "<b>${q}</b>" isn't in the app's glossary.<br>Search the app's vocabulary above (${VOCAB.length} words).</div></div>`;
+  currentWord = null;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// GENERATED LESSONS — built live from data/vocab-korean.json for
-// every word that doesn't have a hand-curated entry. Frames are
-// deliberately simple (subject/object-drop is natural Korean) so
-// the generated Korean is always grammatical, even though it's
-// not hand-verified prose like the curated lessons.
+// GENERATED (non-curated) content — lighter map + a few sentences
 // ═══════════════════════════════════════════════════════════════
+function isConjugable(v) { const cats = v.categories || []; return v.ko.endsWith('다') && (cats.includes('verbs') || cats.includes('adjectives')); }
+function isNounLike(v) { const cats = v.categories || []; return !isConjugable(v) && cats.some(c => ['nouns','objects','subjects','places','times'].includes(c)); }
 
-function isConjugable(v) {
-  const cats = v.categories || [];
-  return v.ko.endsWith('다') && (cats.includes('verbs') || cats.includes('adjectives'));
-}
-function isNounLike(v) {
-  const cats = v.categories || [];
-  return !isConjugable(v) && cats.some(c => ['nouns','objects','subjects','places','times'].includes(c));
-}
-
-function frameLabel(labelRo) {
-  if (labelRo.includes('trecut')) return { ko: t => `어제 ${t}.`, ro: 'Ieri:', en: 'Yesterday:' };
-  if (labelRo.includes('viitor')) return { ko: t => `내일 ${t}.`, ro: 'Mâine:', en: 'Tomorrow:' };
-  if (labelRo.includes('negație')) return { ko: t => `오늘은 ${t}.`, ro: 'Azi, nu:', en: 'Today, not:' };
-  return { ko: t => `지금 ${t}.`, ro: 'Acum:', en: 'Right now:' };
-}
-
-function buildConjugableExamples(v) {
-  const conj = conjugate(v.ko);
-  if (!conj || !conj.length) return null;
-  return conj.map(c => {
-    const f = frameLabel(c.ro);
-    return {
-      ko: f.ko(`<b>${c.form}</b>`),
-      translation: { ro: `${f.ro} ${v.ro}.`, en: `${f.en} ${v.en}.` },
-      explanation: {
-        ro: `Formă generată automat din conjugarea lui ${v.ko} (${c.ro}).`,
-        en: `Auto-generated from the conjugation of ${v.ko} (${c.en}).`
-      },
-      form: c.form
-    };
-  });
-}
-
-function buildNounExamples(v) {
-  const bat = hasBatchim(v.ko);
-  const copula = bat ? '이에요' : '예요';
-  const ext = bat ? '이' : '가';
-  return [
-    {
-      ko: `이것은 <b>${v.ko}${copula}</b>.`,
-      translation: { ro: `Asta e ${v.ro}.`, en: `This is ${v.en}.` },
-      explanation: {
-        ro: `Propoziție cu copula 이다 (a fi): 이것은 (asta) + ${v.ko} + ${copula}.`,
-        en: `A sentence with the copula 이다 (to be): 이것은 (this) + ${v.ko} + ${copula}.`
-      }
-    },
-    {
-      ko: `${v.ko}<b>${ext}</b> 여기 있어요.`,
-      translation: { ro: `E ${v.ro} aici.`, en: `There's ${v.en} here.` },
-      explanation: {
-        ro: `${v.ko} se termină în ${bat ? 'consoană → 이' : 'vocală → 가'}, urmat de 있다 (a exista).`,
-        en: `${v.ko} ends in a ${bat ? 'consonant → 이' : 'vowel → 가'}, followed by 있다 (to exist).`
-      }
-    }
-  ];
-}
-
-// Generic, always-safe multiple-choice: "what does X mean?" using real distractor
-// translations sampled from other vocabulary entries (never fabricated Korean).
-function buildTranslationExercise(v) {
-  const isRo = cLang === 'ro';
-  const correct = isRo ? v.ro : v.en;
-  const pool = VOCAB.filter(e => e.ko !== v.ko);
-  const distractors = [];
-  const used = new Set([correct]);
-  while (distractors.length < 3 && pool.length) {
-    const idx = Math.floor(Math.random() * pool.length);
-    const cand = isRo ? pool[idx].ro : pool[idx].en;
-    if (!used.has(cand)) { used.add(cand); distractors.push(cand); }
-    pool.splice(idx, 1);
-  }
-  const options = [correct, ...distractors].sort(() => Math.random() - 0.5);
-  return {
-    prompt: { ro: `Ce înseamnă „${v.ko}”?`, en: `What does "${v.ko}" mean?` },
-    template: v.ko,
-    options,
-    correct,
-    explanation: { ro: `${v.ko} = ${v.ro} (${v.en}).`, en: `${v.ko} = ${v.en} (${v.ro}).` }
-  };
-}
-
-// Fill-in-the-blank present-tense exercise for conjugable words, with
-// distractors drawn from OTHER real conjugated verbs/adjectives — still
-// valid Korean, just the wrong answer in this slot.
-function buildConjugationExercise(v) {
-  const isRo = cLang === 'ro';
-  const conj = conjugate(v.ko);
-  const presRow = conj && conj.find(c => !c.ro.includes('trecut') && !c.ro.includes('viitor') && !c.ro.includes('negație'));
-  if (!presRow) return null;
-  const correct = presRow.form;
-  const pool = VOCAB.filter(e => isConjugable(e) && e.ko !== v.ko);
-  const distractors = [];
-  const used = new Set([correct]);
-  let guard = 0;
-  while (distractors.length < 3 && pool.length && guard < 200) {
-    guard++;
-    const idx = Math.floor(Math.random() * pool.length);
-    const cj = conjugate(pool[idx].ko);
-    const p = cj && cj.find(c => !c.ro.includes('trecut') && !c.ro.includes('viitor') && !c.ro.includes('negație'));
-    if (p && !used.has(p.form)) { used.add(p.form); distractors.push(p.form); }
-    pool.splice(idx, 1);
-  }
-  if (distractors.length < 3) return null;
-  const options = [correct, ...distractors].sort(() => Math.random() - 0.5);
-  return {
-    prompt: { ro: 'Completează spațiul liber (prezent politicos):', en: 'Fill in the blank (polite present):' },
-    template: `지금 ___.`,
-    options,
-    correct,
-    explanation: {
-      ro: `${v.ko} (${v.ro}) la prezent politicos este ${correct}.`,
-      en: `${v.ko} (${v.en}) in the polite present is ${correct}.`
-    }
-  };
-}
-
-// ── RENDER: generated (non-curated) lesson ────────────────────────
-function renderGenerated(v) {
-  currentKey = null;
-  currentVocab = v;
-  const isRo = cLang === 'ro';
-  const L = isRo ? CAT_LABELS.ro : CAT_LABELS.en;
+function buildGeneratedSense(v) {
   const cat = v.categories && v.categories[0];
-  const catLbl = cat ? (L[cat] || cat) : '';
-  const trans = isRo ? v.ro : v.en;
+  const sameCat = cat ? VOCAB.filter(e => e.ko !== v.ko && e.categories?.includes(cat)) : [];
+  const sample = sameCat.sort(() => Math.random()-0.5).slice(0,8).map(e => ({ ko:e.ko, ro:e.ro, en:e.en }));
+  const isRo = cLang === 'ro';
+  const associations = sample.length ? [
+    { zone:'e', label: {ro:'Cuvinte din aceeași categorie',en:'Words from the same category'}, words: sample }
+  ] : [];
 
-  let html = `<div class="card">
-    <div class="wc-head">
-      <span class="wc-head-ko" onclick="speak('${v.ko.replace(/'/g,"\\'")}')">${v.ko} 🔊</span>
-      <div class="wc-head-badges">
-        ${catLbl ? `<span class="wc-head-pos">${catLbl}</span>` : ''}
-        <span class="wc-head-badge gen">${isRo ? 'generat automat' : 'auto-generated'}</span>
-      </div>
-    </div>
-    <div class="wc-sec-title">${isRo ? 'Traducere' : 'Translation'}</div>
-    <div class="wc-sense-meaning" style="text-align:center">${trans}</div>`;
-
-  let examples = null;
+  let sentences = [];
   if (isConjugable(v)) {
-    examples = buildConjugableExamples(v);
-    html += `<div class="wc-basenote">${isRo
-      ? `${v.ko} se conjugă ca verb/adjectiv coreean (tulpina + terminații de timp/politețe).`
-      : `${v.ko} conjugates like a Korean verb/adjective (stem + tense/politeness endings).`}</div>`;
+    const conj = conjugate(v.ko);
+    if (conj) {
+      const frame = (label, t) => label.includes('trecut') || label==='past'
+        ? { ko:`어제 <b>${t}</b>.`, ro: isRo?`Ieri: ${v.ro}.`:`Yesterday: ${v.en}.`, level:'easy' }
+        : { ko:`지금 <b>${t}</b>.`, ro: isRo?`Acum: ${v.ro}.`:`Right now: ${v.en}.`, level:'easy' };
+      conj.forEach(c => sentences.push(frame(c.ro, c.form)));
+    }
   } else if (isNounLike(v)) {
-    examples = buildNounExamples(v);
+    const bat = hasBatchim(v.ko);
+    const copula = bat ? '이에요' : '예요';
+    const ext = bat ? '이' : '가';
+    sentences.push({ ko:`이것은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Asta e ${v.ro}.`:`This is ${v.en}.`, level:'easy' });
+    sentences.push({ ko:`${v.ko}<b>${ext}</b> 여기 있어요.`, ro: isRo?`E ${v.ro} aici.`:`There's ${v.en} here.`, level:'easy' });
   }
-
-  if (examples && examples.length) {
-    html += `<div class="wc-sec-title">💬 ${isRo ? 'Exemple în propoziții (generate)' : 'Example sentences (generated)'}</div>`;
-    examples.forEach(ex => {
-      html += `<div class="wc-ex">
-        <div class="wc-ex-top">
-          <div class="wc-ex-ko">${renderTokens(ex.ko)}</div>
-          <button class="wc-ex-play" onclick="speak('${ex.ko.replace(/<[^>]+>/g,'').replace(/'/g,"\\'")}')" title="🔊">🔊</button>
-        </div>
-        <div class="wc-ex-tr">${isRo ? ex.translation.ro : ex.translation.en}</div>
-        <div class="wc-ex-expl">💡 ${isRo ? ex.explanation.ro : ex.explanation.en}</div>
-      </div>`;
-    });
-    html += `<div class="wc-gen-note">${isRo
-      ? 'Aceste propoziții sunt generate automat dintr-un tipar sigur din punct de vedere gramatical (nu sunt scrise/verificate manual ca la cuvintele cu ✨ lecție completă).'
-      : 'These sentences are auto-generated from a grammatically-safe pattern (not hand-written/verified like the ✨ full-lesson words).'}</div>`;
-  } else {
-    html += `<div class="wc-gen-note">${isRo
-      ? 'Acest tip de cuvânt (adverb / conector / particulă gramaticală) se folosește foarte diferit în funcție de context, așa că nu generăm o propoziție automat — dar poți asculta pronunția și exersa traducerea mai jos.'
-      : 'This type of word (adverb / connector / grammar particle) is used very differently depending on context, so we don\'t auto-generate a sentence — but you can listen to the pronunciation and practice the translation below.'}</div>`;
-  }
-
-  // Grammar forms table for conjugable words (always reliable — mechanical conjugation)
-  const conj = isConjugable(v) ? conjugate(v.ko) : null;
-  if (conj && conj.length) {
-    html += `<div class="wc-sec-title">📐 ${isRo ? 'Forme gramaticale' : 'Grammar forms'}</div>
-      <div class="wc-gform-grid">`;
-    conj.forEach(c => {
-      html += `<span class="wc-gform-lbl">${isRo ? c.ro : c.en}</span><span class="wc-gform-val">${c.form}</span>`;
-    });
-    html += `</div>`;
-  }
-
-  // Featured cross-links (curated words), if any exist for quick discovery
-  html += `<div class="wc-sec-title">✨ ${isRo ? 'Vezi și lecții complete' : 'See also full lessons'}</div>
-    <div class="wc-rel-row">${Object.keys(DICT).slice(0,8).map(k =>
-      `<span class="wc-rel-chip clickable" onclick="searchAndFill('${k.replace(/'/g,"\\'")}')">${k}</span>`).join('')}</div>`;
-
-  html += `</div>`; // /card
-
-  // Exercise: conjugation-based for conjugable words, else translation-matching
-  const ex = isConjugable(v) ? (buildConjugationExercise(v) || buildTranslationExercise(v)) : buildTranslationExercise(v);
-  html += renderExercise(ex);
-
-  document.getElementById('wcResult').innerHTML = html;
+  return { associations, sentences, generated: true };
 }
 
-// ── RENDER: curated micro-lesson (hand-authored, full quality) ───
-function renderCurated(key) {
-  currentKey = key;
-  currentVocab = vocabIndex.get(key) || null;
-  const e = DICT[key];
-  const isRo = cLang === 'ro';
+// ═══════════════════════════════════════════════════════════════
+// RENDER: word map + sentence panel
+// ═══════════════════════════════════════════════════════════════
+function currentEntry() {
+  const v = vocabIndex.get(currentWord);
+  const curated = DICT[currentWord];
+  if (curated) return { v, curated: true, pos: curated.pos, homonymNote: curated.homonymNote, senses: curated.senses };
+  return { v, curated: false, pos: null, homonymNote: null, senses: [buildGeneratedSense(v)] };
+}
 
-  let html = `<div class="card">
-    <div class="wc-head">
-      <span class="wc-head-ko" onclick="speak('${key.replace(/'/g,"\\'")}')">${key} 🔊</span>
-      <div class="wc-head-badges">
-        <span class="wc-head-pos">${isRo ? e.pos.ro : e.pos.en}</span>
-        <span class="wc-head-badge">${isRo ? 'lecție completă' : 'full lesson'}</span>
+function renderExplore() {
+  const isRo = cLang === 'ro';
+  const entry = currentEntry();
+  const v = entry.v;
+  const senses = entry.senses;
+  const sense = senses[currentSenseIdx] || senses[0];
+  const ZL = isRo ? ZONE_LABELS.ro : ZONE_LABELS.en;
+
+  const zoneHtml = (zoneKey) => {
+    const groups = (sense.associations || []).filter(a => (a.zone || '').toLowerCase() === zoneKey);
+    if (!groups.length) return `<div class="wc-zone"></div>`;
+    return groups.map(g => `<div class="wc-zone">
+      <div class="wc-zone-lbl">${isRo ? g.label.ro : g.label.en}</div>
+      <div class="wc-zone-words">${g.words.map(w => {
+        const clickable = (vocabIndex.get(w.ko) || DICT[w.ko]) ? true : false;
+        const gloss = isRo ? w.ro : w.en;
+        return `<span class="wc-word-chip${clickable?' clickable':''}" ${clickable?`onclick="searchAndFill('${w.ko.replace(/'/g,"\\'")}')"`:''} title="${gloss}">${w.ko}<span class="g">${gloss}</span></span>`;
+      }).join('')}</div>
+    </div>`).join('');
+  };
+
+  let mapHtml = `<div class="wc-map-card card">`;
+  if (senses.length > 1) {
+    mapHtml += `<div class="wc-sense-tabs">${senses.map((s,i) =>
+      `<button class="wc-sense-tab${i===currentSenseIdx?' on':''}" onclick="switchSense(${i})">${isRo?s.meaning.ro:s.meaning.en}</button>`).join('')}</div>`;
+  }
+  mapHtml += `<div class="wc-compass">
+    <div class="wc-zone-n">${zoneHtml('n')}</div>
+    <div class="wc-zone-w">${zoneHtml('w')}</div>
+    <div class="wc-zone-c">
+      <span class="wc-map-ko" onclick="speak('${currentWord.replace(/'/g,"\\'")}')">${currentWord}</span>
+      <div class="wc-map-badges">
+        ${entry.pos ? `<span class="wc-map-pos">${isRo?entry.pos.ro:entry.pos.en}</span>` : (v.categories && v.categories[0] ? `<span class="wc-map-pos">${(isRo?CAT_LABELS.ro:CAT_LABELS.en)[v.categories[0]]||''}</span>` : '')}
+        <span class="wc-map-badge${entry.curated?'':' gen'}">${entry.curated ? (isRo?'hartă completă':'full map') : (isRo?'generat automat':'auto-generated')}</span>
       </div>
-    </div>`;
-
-  if (e.baseFormNote) {
-    html += `<div class="wc-basenote">${isRo ? e.baseFormNote.ro : e.baseFormNote.en}</div>`;
-  }
-  if (e.homonymNote) {
-    html += `<div class="wc-homonym">⚠️ ${isRo ? e.homonymNote.ro : e.homonymNote.en}</div>`;
-  }
-
-  // Forme & timpuri — shown right under the word, before examples
-  if (e.grammarForms && e.grammarForms.length) {
-    html += `<div class="wc-sec-title">📐 ${isRo ? 'Toate formele & timpurile' : 'All forms & tenses'}</div>
-      <div class="wc-gform-grid">`;
-    e.grammarForms.forEach(f => {
-      html += `<span class="wc-gform-lbl">${isRo ? f.label.ro : f.label.en}</span><span class="wc-gform-val">${f.form}</span>`;
-    });
-    html += `</div>`;
-  }
-
-  const allSituations = [...new Set((e.senses || []).flatMap(s => (s.examples || []).map(ex => ex.situation)).filter(Boolean))];
-  if (allSituations.length > 1) {
-    const SL = isRo ? SITUATION_LABELS.ro : SITUATION_LABELS.en;
-    html += `<div class="wc-sit-row">
-      <button class="wc-sit-pill${activeSitFilter===''?' on':''}" onclick="setSitFilter('')">${isRo?'Toate':'All'}</button>
-      ${allSituations.map(s => `<button class="wc-sit-pill${activeSitFilter===s?' on':''}" onclick="setSitFilter('${s}')">${SL[s]||s}</button>`).join('')}
-    </div>`;
-  }
-
-  html += `<div class="wc-sec-title">💬 ${isRo ? 'Exemple în propoziții' : 'Example sentences'}</div>`;
-  (e.senses || []).forEach((sense, i) => {
-    const examples = (sense.examples || []).filter(ex => !activeSitFilter || ex.situation === activeSitFilter);
-    if (!examples.length) return;
-    html += `<div class="wc-sense">`;
-    if (e.senses.length > 1) {
-      html += `<div class="wc-sense-meaning"><span class="wc-sense-num">${i+1}</span>${isRo ? sense.meaning.ro : sense.meaning.en}</div>`;
-    }
-    examples.forEach(ex => {
-      const SL = isRo ? SITUATION_LABELS.ro : SITUATION_LABELS.en;
-      const LL = isRo ? LEVEL_LABELS.ro : LEVEL_LABELS.en;
-      html += `<div class="wc-ex">
-        <div class="wc-ex-top">
-          <div class="wc-ex-ko">${renderTokens(ex.ko)}</div>
-          <button class="wc-ex-play" onclick="speak('${ex.ko.replace(/<[^>]+>/g,'').replace(/'/g,"\\'")}')" title="🔊">🔊</button>
-        </div>
-        ${ex.romanization ? `<div class="wc-ex-rom">${ex.romanization}</div>` : ''}
-        <div class="wc-ex-tr">${isRo ? ex.translation.ro : ex.translation.en}</div>
-        ${ex.explanation ? `<div class="wc-ex-expl">💡 ${isRo ? ex.explanation.ro : ex.explanation.en}</div>` : ''}
-        <div class="wc-ex-tags">
-          ${ex.situation ? `<span class="wc-tag">${SL[ex.situation]||ex.situation}</span>` : ''}
-          ${ex.level ? `<span class="wc-tag lvl">${LL[ex.level]||ex.level}</span>` : ''}
-        </div>
-      </div>`;
-    });
-    html += `</div>`;
-  });
-
-  if (e.derivedForms && e.derivedForms.length) {
-    html += `<div class="wc-sec-title">🌱 ${isRo ? 'Cuvinte derivate' : 'Derived words'}</div>
-      <div class="wc-deriv-row">`;
-    e.derivedForms.forEach(d => {
-      html += `<div class="wc-deriv-card">
-        <span class="wc-deriv-ko">${d.ko}</span><span class="wc-deriv-pos">${isRo ? d.pos.ro : d.pos.en}</span>
-        <div class="wc-deriv-meaning">${isRo ? d.meaning.ro : d.meaning.en}</div>
-      </div>`;
-    });
-    html += `</div>`;
-  }
-
-  if (e.idioms && e.idioms.length) {
-    html += `<div class="wc-sec-title">🌀 ${isRo ? 'Metafore & expresii' : 'Metaphors & idioms'}</div>`;
-    e.idioms.forEach(id => {
-      html += `<div class="wc-idiom">
-        <div class="wc-idiom-ko">${id.ko}</div>
-        ${id.romanization ? `<div class="wc-idiom-rom">${id.romanization}</div>` : ''}
-        <div class="wc-idiom-meaning">${isRo ? id.meaning.ro : id.meaning.en}</div>
-        ${id.note ? `<div class="wc-idiom-note">💡 ${isRo ? id.note.ro : id.note.en}</div>` : ''}
-      </div>`;
-    });
-  }
-
-  if (e.related) {
-    html += `<div class="wc-sec-title">🔗 ${isRo ? 'Cuvinte asociate & comparații' : 'Related words & comparisons'}</div>`;
-    const relSection = (label, arr) => {
-      if (!arr || !arr.length) return '';
-      return `<div class="wc-rel-block">
-        <div class="wc-rel-lbl">${label}</div>
-        <div class="wc-rel-row">${arr.map(w => {
-          const clickable = DICT[w] || (vocabIndex && vocabIndex.get(w));
-          return `<span class="wc-rel-chip${clickable?' clickable':''}" ${clickable?`onclick="searchAndFill('${w.replace(/'/g,"\\'")}')"`:''}>${w}</span>`;
-        }).join('')}</div>
-      </div>`;
-    };
-    html += relSection(isRo ? 'Sinonime' : 'Synonyms', e.related.synonyms);
-    html += relSection(isRo ? 'Antonime' : 'Antonyms', e.related.antonyms);
-    html += relSection(isRo ? 'Combinații frecvente' : 'Common collocations', e.related.collocations);
-    if (e.related.commonMistakes && e.related.commonMistakes.length) {
-      html += `<div class="wc-rel-lbl" style="margin-top:8px">${isRo ? '⚠️ Greșeli frecvente' : '⚠️ Common mistakes'}</div>`;
-      e.related.commonMistakes.forEach(m => {
-        html += `<div class="wc-mistake">${isRo ? m.ro : m.en}</div>`;
-      });
-    }
-  }
-
-  if (e.seeAlso && e.seeAlso.length) {
-    html += `<div class="wc-sec-title">✨ ${isRo ? 'Continuă cu' : 'Continue with'}</div>
-      <div class="wc-rel-row">${e.seeAlso.map(w => `<span class="wc-rel-chip clickable" onclick="searchAndFill('${w.replace(/'/g,"\\'")}')">${w}</span>`).join('')}</div>`;
-  }
-
-  html += `</div>`; // /card
-
-  if (e.exercise) {
-    html += renderExercise(e.exercise);
-  }
-
-  document.getElementById('wcResult').innerHTML = html;
-}
-
-function setSitFilter(s) {
-  activeSitFilter = s;
-  if (currentKey) renderCurated(currentKey);
-}
-window.setSitFilter = setSitFilter;
-
-// ── RENDER: mini exercise (shared by curated + generated lessons) ──
-function renderExercise(ex) {
-  if (!ex) return '';
-  const isRo = cLang === 'ro';
-  const templateHtml = ex.template.includes('___')
-    ? ex.template.replace('___', '<span class="blank">＿＿＿</span>')
-    : ex.template;
-  const optsId = 'wcExOpts_' + Math.random().toString(36).slice(2,8);
-  return `<div class="card wc-exercise">
-    <div class="wc-sec-title" style="margin-top:0">✏️ ${isRo ? 'Mini-exercițiu' : 'Mini exercise'}</div>
-    <div class="wc-exercise-prompt">${isRo ? ex.prompt.ro : ex.prompt.en}</div>
-    <div class="wc-exercise-template">${templateHtml}</div>
-    <div class="wc-opt-row" id="${optsId}">
-      ${ex.options.map(o => `<button class="wc-opt-btn" data-opt="${String(o).replace(/"/g,'&quot;')}" onclick="answerExercise(this,'${optsId}','${String(ex.correct).replace(/'/g,"\\'")}','${(isRo?ex.explanation.ro:ex.explanation.en).replace(/'/g,"\\'")}')">${o}</button>`).join('')}
+      ${entry.homonymNote ? `<div class="wc-homonym">⚠️ ${isRo?entry.homonymNote.ro:entry.homonymNote.en}</div>` : ''}
     </div>
-    <div class="wc-exercise-fb" id="${optsId}_fb" style="display:none"></div>
-  </div>`;
+    <div class="wc-zone-e">${zoneHtml('e')}</div>
+    <div class="wc-zone-s">${zoneHtml('s')}</div>
+  </div></div>`;
+
+  const sentences = sense.sentences || [];
+  let sentHtml = `<div class="wc-sent-card card">
+    <div class="wc-sent-head">
+      <div class="wc-sent-title">💬 ${isRo?'Propoziții':'Sentences'} (${sentences.length})</div>
+      <label class="wc-rom-toggle"><input type="checkbox" id="romToggle" ${showRomanization?'checked':''} onchange="toggleRom(this.checked)"> ${isRo?'Romanizare':'Romanization'}</label>
+    </div>
+    <div class="wc-sent-list">`;
+  if (!sentences.length) {
+    sentHtml += `<div class="wc-empty">${isRo?'Niciun exemplu generat pentru acest tip de cuvânt.':'No generated example for this type of word.'}</div>`;
+  }
+  sentences.forEach(s => {
+    sentHtml += `<div class="wc-sent-row">
+      <span class="wc-sent-lvl ${s.level||'easy'}" title="${(isRo?LEVEL_LABEL.ro:LEVEL_LABEL.en)[s.level]||''}"></span>
+      <div class="wc-sent-main">
+        <div class="wc-sent-ko">${renderTokens(s.ko)}</div>
+        ${s.romanization ? `<div class="wc-sent-rom${showRomanization?' show':''}">${s.romanization}</div>` : ''}
+        <div class="wc-sent-ro">${s.ro}</div>
+      </div>
+      <button class="wc-sent-play" onclick="speak('${s.ko.replace(/<[^>]+>/g,'').replace(/'/g,"\\'")}')" title="🔊">🔊</button>
+    </div>`;
+  });
+  sentHtml += `</div>`;
+  if (entry.generated) {
+    sentHtml += `<div class="wc-gen-note">${isRo
+      ? 'Acest cuvânt nu are o hartă scrisă manual — vezi mai sus câteva cuvinte cu ✨ hartă completă.'
+      : "This word doesn't have a hand-written map yet — see the ✨ full-map words above."}</div>`;
+  }
+  sentHtml += `</div>`;
+
+  document.getElementById('wcResult').innerHTML = `<div class="wc-explore">${mapHtml}${sentHtml}</div>`;
 }
 
-function answerExercise(btn, optsId, correct, explanation) {
-  const container = document.getElementById(optsId);
-  const buttons = container.querySelectorAll('.wc-opt-btn');
-  const chosen = btn.getAttribute('data-opt');
-  const isRo = cLang === 'ro';
-  buttons.forEach(b => {
-    b.disabled = true;
-    const opt = b.getAttribute('data-opt');
-    if (opt === correct) b.classList.add('correct');
-    else if (b === btn) b.classList.add('wrong');
-    else b.classList.add('dim');
-  });
-  const fb = document.getElementById(optsId + '_fb');
-  fb.style.display = 'block';
-  const ok = chosen === correct;
-  fb.className = 'wc-exercise-fb ' + (ok ? 'ok' : 'no');
-  fb.innerHTML = (ok
-    ? (isRo ? '✅ Corect! ' : '✅ Correct! ')
-    : (isRo ? `❌ Greșit. Răspunsul corect: <b>${correct}</b>. ` : `❌ Incorrect. Correct answer: <b>${correct}</b>. `)
-  ) + explanation;
+function switchSense(i) { currentSenseIdx = i; renderExplore(); }
+window.switchSense = switchSense;
+
+function toggleRom(checked) {
+  showRomanization = checked;
+  document.querySelectorAll('.wc-sent-rom').forEach(el => el.classList.toggle('show', checked));
 }
-window.answerExercise = answerExercise;
+window.toggleRom = toggleRom;
 
 // ── LANG ─────────────────────────────────────────────────────────
 function applyLang(l) {
   cLang = l;
-  document.getElementById('pgTitle').textContent = l === 'ro' ? '🧩 Cuvântul în Context' : '🧩 Word in Context';
+  document.getElementById('pgTitle').textContent = l === 'ro' ? '🗺️ Harta Cuvântului' : '🗺️ Word Map';
   document.getElementById('pgSub').textContent = l === 'ro'
-    ? 'Caută orice cuvânt din glosarul aplicației și învață-l printr-o micro-lecție'
-    : 'Search any word from the app\'s glossary and learn it through a micro-lesson';
-  document.getElementById('wcSearch').placeholder = l === 'ro' ? 'ex: 가다, 학교, 눈 …' : 'e.g. 가다, 학교, 눈 …';
+    ? 'Introdu un cuvânt și explorează-l printr-o hartă de asocieri și propoziții'
+    : 'Enter a word and explore it through a map of associations and sentences';
+  document.getElementById('wcSearch').placeholder = l === 'ro' ? 'ex: 물, 가다, 학교 …' : 'e.g. 물, 가다, 학교 …';
   const n = VOCAB.length, m = Object.keys(DICT).length;
   document.getElementById('wcHint').innerHTML = l === 'ro'
-    ? `Caută printre <b>${n}</b> cuvinte din glosarul aplicației. <b>${m}</b> dintre ele au o micro-lecție completă (✨); restul primesc exemple generate automat.`
-    : `Search across <b>${n}</b> words from the app's glossary. <b>${m}</b> of them have a full micro-lesson (✨); the rest get auto-generated examples.`;
+    ? `Caută printre <b>${n}</b> cuvinte din glosarul aplicației. <b>${m}</b> au o hartă completă (✨); restul primesc o hartă mai simplă, generată automat.`
+    : `Search across <b>${n}</b> words from the app's glossary. <b>${m}</b> have a full map (✨); the rest get a simpler, auto-generated one.`;
   renderCats();
   renderChips();
   renderSearchResults();
-  if (currentKey) renderCurated(currentKey);
-  else if (currentVocab) renderGenerated(currentVocab);
+  if (currentWord) renderExplore();
 }
 
-if (window.RKLang) {
-  RKLang.init(l => applyLang(l));
-}
+if (window.RKLang) { RKLang.init(l => applyLang(l)); }
 </script>
 </body>
 </html>
