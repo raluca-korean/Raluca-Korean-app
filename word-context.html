@@ -42,13 +42,6 @@ body.dark-mode .wc-search{color:#f0e8ff}
 body.dark-mode .wc-hint{color:rgba(210,170,240,.55)}
 .wc-hint b{color:rgba(255,255,255,.6)}
 body.dark-mode .wc-hint b{color:rgba(240,232,255,.85)}
-.wc-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.wc-chip{
-  padding:4px 10px;border-radius:11px;background:rgba(219,39,119,.10);
-  border:1px solid rgba(219,39,119,.22);font-size:.82rem;cursor:pointer;
-  transition:all .16s;color:#f0abfc;font-family:inherit;font-weight:700;
-}
-.wc-chip:hover{background:rgba(219,39,119,.2);border-color:#db2779}
 .wc-empty{text-align:center;padding:18px 14px;color:rgba(255,255,255,.35);font-size:.88rem;line-height:1.55}
 body.dark-mode .wc-empty{color:rgba(210,170,240,.55)}
 
@@ -154,10 +147,6 @@ body.dark-mode .wc-gen-note{color:rgba(210,170,240,.5)}
       <button class="wc-go" id="wcGo" type="button" title="Analizează">🔍</button>
     </div>
     <div class="wc-hint" id="wcHint"></div>
-    <div id="wcFeatured">
-      <div class="wc-rel-lbl" id="wcFeaturedLbl" style="margin-top:6px;font-size:.72rem;color:rgba(255,255,255,.4);font-weight:700"></div>
-      <div class="wc-chips" id="wcChips"></div>
-    </div>
   </div>
 
   <div id="wcResult"></div>
@@ -224,6 +213,18 @@ function hasBatchim(word) {
 }
 
 // ── CONJUGATION (for generated/non-curated conjugable words) ─────
+// Shared irregular-conjugation word lists — single source of truth, also
+// used by extraSurfaceForms() below when building the click-to-explore
+// reverse lookup.
+const B_IRREGULAR = ['고맙다','춥다','덥다','쉽다','어렵다','가깝다','아름답다','반갑다','귀엽다','무겁다','가볍다',
+  '그립다','놀랍다','두껍다','뜨겁다','맵다','무섭다','미끄럽다','부끄럽다','부드럽다','부럽다','새롭다',
+  '시끄럽다','싱겁다','아쉽다','어둡다','외롭다','자연스럽다','즐겁다','차갑다','굽다','눕다'];
+const BO_WA_EXCEPTIONS = ['돕다', '곱다']; // ㅂ-irregular but use 와 (not 워) since the vowel is ㅗ
+const I_VERB_EXCEPTIONS = ['끓이다','덮이다','모이다','보이다','쌓이다','줄이다']; // real verbs, not the 이다 copula
+const REUL_REGULAR = ['따르다', '들르다', '치르다'];
+const D_IRREGULAR = ['걷다', '듣다'];
+const H_IRREGULAR = ['하얗다','빨갛다','파랗다','까맣다','노랗다','그렇다','이렇다','저렇다','어떻다'];
+
 function conjugate(word) {
   if (!word.endsWith('다')) return null;
   const stem = word.slice(0,-1);
@@ -233,7 +234,7 @@ function conjugate(word) {
   if (code < 0xAC00 || code > 0xD7A3) return null;
   const s = code - 0xAC00, jong = s % 28, jung = Math.floor(s/28) % 21, cho = Math.floor(s/588);
 
-  if (last === '이') {
+  if (last === '이' && !I_VERB_EXCEPTIONS.some(b => word === b || word.endsWith(b))) {
     const base = stem.slice(0,-1);
     return [{ro:'prezent',en:'present', form: base+'예요'}, {ro:'trecut',en:'past', form: base+'이었어요'}];
   }
@@ -241,13 +242,16 @@ function conjugate(word) {
     const base = stem.slice(0,-1);
     return [{ro:'prezent',en:'present', form: base+'해요'}, {ro:'trecut',en:'past', form: base+'했어요'}];
   }
-  const B_IRREGULAR = ['고맙다','춥다','덥다','쉽다','어렵다','가깝다','아름답다','반갑다','귀엽다','무겁다','가볍다'];
+  if (jong === 17 && BO_WA_EXCEPTIONS.includes(word)) {
+    const openSyllable = String.fromCharCode(code - jong);
+    const base = stem.slice(0,-1) + openSyllable;
+    return [{ro:'prezent',en:'present', form: base+'와요'}, {ro:'trecut',en:'past', form: base+'왔어요'}];
+  }
   if (jong === 17 && B_IRREGULAR.includes(word)) {
     const openSyllable = String.fromCharCode(code - jong);
     const base = stem.slice(0,-1) + openSyllable;
     return [{ro:'prezent',en:'present', form: base+'워요'}, {ro:'trecut',en:'past', form: base+'웠어요'}];
   }
-  const REUL_REGULAR = ['따르다', '들르다', '치르다'];
   if (last === '르' && jong === 0 && stem.length >= 2 && !REUL_REGULAR.includes(word)) {
     const preStem = stem.slice(0, -1);
     const preLast = preStem[preStem.length - 1];
@@ -259,8 +263,7 @@ function conjugate(word) {
     const base = preStem.slice(0, -1) + doubled + newSyl;
     return [{ro:'prezent',en:'present', form: base+'요'}, {ro:'trecut',en:'past', form: base.slice(0,-1)+(preBright?'랐':'렀')+'어요'}];
   }
-  const DIGEUT_IRREGULAR_BASES = ['걷다', '듣다'];
-  if (jong === 7 && DIGEUT_IRREGULAR_BASES.some(b => word === b || word.endsWith(b))) {
+  if (jong === 7 && D_IRREGULAR.some(b => word === b || word.endsWith(b))) {
     const base = stem.slice(0,-1) + String.fromCharCode(code + 1);
     const bright = jung === 0 || jung === 8;
     return [{ro:'prezent',en:'present', form: base+(bright?'아요':'어요')}, {ro:'trecut',en:'past', form: base+(bright?'았어요':'었어요')}];
@@ -284,9 +287,88 @@ function conjugate(word) {
       const newJung = preBright ? 0 : 4;
       pres = pre + String.fromCharCode(0xAC00 + cho*588 + newJung*28) + '요';
       past = pre + String.fromCharCode(0xAC00 + cho*588 + newJung*28 + 20) + '어요';
+    } else if (jung===20) {
+      // ㅣ + 어 → 여 contraction (마시다→마셔요, 다니다→다녀요, 보이다→보여요…)
+      pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+6*28) + '요';
+      past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+6*28+20) + '어요';
+    } else if (jung===11) {
+      // ㅚ + 어 → 왜 contraction (되다→돼요)
+      pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+10*28) + '요';
+      past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+10*28+20) + '어요';
     } else { pres = stem+'어요'; past = stem+'었어요'; }
   } else { pres = stem+suf+'요'; past = stem+(aVowel?'았':'었')+'어요'; }
   return [{ro:'prezent',en:'present', form: pres}, {ro:'trecut',en:'past', form: past}];
+}
+
+// Additional inflected forms (honorific, connective, attributive…) used only
+// to build a reverse lookup for click-to-explore; skipped for irregular
+// stems where a naive rule would produce a wrong form.
+function extraSurfaceForms(word, categories) {
+  const forms = [];
+  if (!word.endsWith('다')) return forms;
+  const stem = word.slice(0, -1);
+  const last = stem[stem.length - 1];
+  if (!last) return forms;
+  const code = last.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) return forms;
+  const jong = (code - 0xAC00) % 28;
+  const jung = Math.floor((code - 0xAC00) / 28) % 21;
+  const isAdj = categories && categories.includes('adjectives');
+  const isVerb = categories && categories.includes('verbs');
+
+  const conj = conjugate(word);
+  if (conj && conj[0] && conj[0].form.endsWith('요') && last !== '이') {
+    const pres = conj[0].form;
+    forms.push(pres.slice(0, -1) + '서'); // -아서/어서 (cause/sequence)
+    forms.push(pres.slice(0, -1) + '야'); // -아야/어야 (obligation, "must")
+  }
+  forms.push(stem + '고'); // -고 (and/then) — attaches to the plain stem, always safe
+
+  const isReulIrregular = last === '르' && jong === 0 && stem.length >= 2 && !REUL_REGULAR.includes(word);
+  const isEuIrregular = jong === 0 && jung === 18;
+  const isIrregular = B_IRREGULAR.includes(word) || BO_WA_EXCEPTIONS.includes(word)
+    || D_IRREGULAR.some(b => word === b || word.endsWith(b)) || H_IRREGULAR.includes(word)
+    || isReulIrregular || isEuIrregular || last === '하' || last === '이';
+  if (isIrregular) return forms;
+
+  const rieulFinal = jong === 8;
+  const hasBatchim = jong !== 0;
+
+  if (rieulFinal) forms.push(stem.slice(0, -1) + String.fromCharCode(code - 8) + '세요');
+  else forms.push(stem + (hasBatchim ? '으세요' : '세요'));
+
+  forms.push(stem + (hasBatchim && !rieulFinal ? '으면' : '면'));
+
+  if (rieulFinal) forms.push(stem.slice(0, -1) + String.fromCharCode(code - 8) + '니까');
+  else forms.push(stem + (hasBatchim ? '으니까' : '니까'));
+
+  if (isVerb) {
+    if (rieulFinal) forms.push(stem + '까요');
+    else if (hasBatchim) forms.push(stem + '을까요');
+    else forms.push(stem.slice(0, -1) + String.fromCharCode(code + 8) + '까요');
+    if (rieulFinal) forms.push(stem.slice(0, -1) + String.fromCharCode(code - 8) + '는');
+    else forms.push(stem + '는');
+  }
+  if (isAdj) {
+    if (rieulFinal) forms.push(stem.slice(0, -1) + String.fromCharCode(code - 8 + 4));
+    else if (hasBatchim) forms.push(stem + '은');
+    else forms.push(stem.slice(0, -1) + String.fromCharCode(code + 4));
+  }
+  return forms;
+}
+
+// Reverse lookup: inflected surface form -> dictionary-form vocab word.
+// Lets click-to-explore resolve forms like 있어요/좋은/바빠서/마셔요 back to
+// their headword (있다/좋다/바쁘다/마시다), not just plain particle strips.
+let CONJ_REVERSE = new Map();
+function buildConjReverse() {
+  CONJ_REVERSE = new Map();
+  VOCAB.forEach(e => {
+    if (!isConjugable(e)) return;
+    const conj = conjugate(e.ko);
+    if (conj) conj.forEach(c => { if (c.form && !CONJ_REVERSE.has(c.form)) CONJ_REVERSE.set(c.form, e.ko); });
+    extraSurfaceForms(e.ko, e.categories).forEach(f => { if (f && !CONJ_REVERSE.has(f)) CONJ_REVERSE.set(f, e.ko); });
+  });
 }
 
 // ── LOAD DATA ────────────────────────────────────────────────────
@@ -297,7 +379,7 @@ Promise.all([
   DICT = dict;
   VOCAB = vocab;
   vocabIndex = new Map(vocab.map(e => [e.ko, e]));
-  renderChips();
+  buildConjReverse();
   applyLang(cLang);
 }).catch(() => {
   document.getElementById('wcResult').innerHTML =
@@ -371,10 +453,15 @@ function openWord(word) {
 }
 
 function exploreToken(raw) {
-  const w = stripParticle(raw);
-  if (!w) return;
+  const cleaned = raw.replace(/[.,!?"'”“‘’()]/g,'').trim();
+  if (!cleaned) return;
+  if (vocabIndex && vocabIndex.get(cleaned)) { searchAndFill(cleaned); return; }
+  if (DICT[cleaned]) { searchAndFill(cleaned); return; }
+  if (CONJ_REVERSE.has(cleaned)) { searchAndFill(CONJ_REVERSE.get(cleaned)); return; }
+  const w = stripParticle(cleaned);
   if (vocabIndex && vocabIndex.get(w)) { searchAndFill(w); return; }
   if (DICT[w]) { searchAndFill(w); return; }
+  if (CONJ_REVERSE.has(w)) { searchAndFill(CONJ_REVERSE.get(w)); return; }
   toast(cLang === 'ro' ? `Nu am găsit „${w}” în glosar — încearcă un alt cuvânt.` : `Couldn't find "${w}" in the glossary — try another word.`);
 }
 window.exploreToken = exploreToken;
@@ -396,15 +483,6 @@ function speak(text) {
   if (window.AudioEngine) AudioEngine.speak(clean);
 }
 window.speak = speak;
-
-function renderChips() {
-  const isRo = cLang === 'ro';
-  document.getElementById('wcFeaturedLbl').textContent = isRo
-    ? `✨ Cuvinte cu hartă completă (${Object.keys(DICT).length})`
-    : `✨ Words with a full map (${Object.keys(DICT).length})`;
-  document.getElementById('wcChips').innerHTML = Object.keys(DICT).map(k =>
-    `<button class="wc-chip" onclick="searchAndFill('${k.replace(/'/g,"\\'")}')">${k}</button>`).join('');
-}
 
 function renderNotFound(q) {
   const isRo = cLang === 'ro';
@@ -542,7 +620,6 @@ function applyLang(l) {
   document.getElementById('wcHint').innerHTML = l === 'ro'
     ? `Vocabularul aplicației are <b>${n}</b> cuvinte. <b>${m}</b> au o lecție completă (✨); restul primesc cuvinte înrudite + propoziții generate automat.`
     : `The app's vocabulary has <b>${n}</b> words. <b>${m}</b> have a full lesson (✨); the rest get related words + auto-generated sentences.`;
-  renderChips();
   if (currentWord) renderExplore();
 }
 
