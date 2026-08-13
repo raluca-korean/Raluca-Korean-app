@@ -732,11 +732,11 @@ function verbAdjExtraForms(word) {
 }
 
 const ADVERB_FRAMES = [
-  { ko: adv => `사람들이 <b>${adv}</b> 그렇게 해요.`, ro: 'Oamenii fac asta', en: 'People do it that way', level: 'easy' },
-  { ko: adv => `저는 <b>${adv}</b> 바빠요.`, ro: 'Sunt', ro2: 'ocupat', en: "I'm", en2: 'busy', level: 'easy' },
-  { ko: adv => `그는 <b>${adv}</b> 늦게 왔어요.`, ro: 'A venit', ro2: 'târziu', en: 'He came', en2: 'late', level: 'medium' },
-  { ko: adv => `우리는 <b>${adv}</b> 이야기했어요.`, ro: 'Am vorbit', en: 'We talked', level: 'easy' },
-  { ko: adv => `이 일은 <b>${adv}</b> 중요해요.`, ro: 'Acest lucru e', ro2: 'important', en: 'This matter is', en2: 'important', level: 'medium' },
+  { ko: adv => `사람들이 <b>${adv}</b> 그렇게 해요.`, roTail: 'oamenii fac asta.', enTail: 'people do it that way.', level: 'easy' },
+  { ko: adv => `저는 <b>${adv}</b> 바빠요.`, roTail: 'sunt ocupat.', enTail: "I'm busy.", level: 'easy' },
+  { ko: adv => `그는 <b>${adv}</b> 늦게 왔어요.`, roTail: 'a venit târziu.', enTail: 'he came late.', level: 'medium' },
+  { ko: adv => `우리는 <b>${adv}</b> 이야기했어요.`, roTail: 'am vorbit.', enTail: 'we talked.', level: 'easy' },
+  { ko: adv => `이 일은 <b>${adv}</b> 중요해요.`, roTail: 'acest lucru e important.', enTail: 'this matter is important.', level: 'medium' },
 ];
 
 function buildGeneratedSense(v) {
@@ -789,9 +789,13 @@ function buildGeneratedSense(v) {
     sentences.push({ ko:`이 ${v.ko}<b>${topicExt}</b> 정말 좋아요.`, ro: isRo?`Recomand: ${v.ro}.`:`Recommend: ${v.en}.`, level:'medium' });
     sentences.push({ ko:`그 ${v.ko}<b>${subjExt}</b> 필요해요.`, ro: isRo?`Am nevoie de: ${v.ro}.`:`I need: ${v.en}.`, level:'medium' });
   } else if (isAdverbLike(v)) {
+    // Always lead with the adverb/connector as its own clause, never splice it
+    // mid-sentence — multi-word RO/EN glosses (e.g. "din perspectivă generală")
+    // broke natural word order when inserted between subject and predicate.
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
     ADVERB_FRAMES.forEach(f => {
-      const ro = f.ro2 ? `${f.ro} ${v.ro} ${f.ro2}.` : `${f.ro} ${v.ro}.`;
-      const en = f.en2 ? `${f.en} ${v.en} ${f.en2}.` : `${f.en} ${v.en}.`;
+      const ro = `${cap(v.ro)}, ${f.roTail}`;
+      const en = `${cap(v.en)}, ${f.enTail}`;
       sentences.push({ ko: f.ko(v.ko), ro, en, level: f.level });
     });
   }
