@@ -23,7 +23,8 @@
   color:var(--rk-text,#fff);font-size:1rem;font-family:inherit;
   outline:none;transition:border-color .2s,background .2s;
 }
-.wc-search:focus{background:rgba(255,255,255,.12);border-color:#db2779}
+.wc-search:focus{background:rgba(255,255,255,.12);border-color:#db2779;box-shadow:0 0 0 4px rgba(219,39,119,.14)}
+.wc-search{transition:border-color .2s,background .2s,box-shadow .25s}
 .wc-search::placeholder{color:var(--rk-muted)}
 body.dark-mode .wc-search{color:#f0e8ff}
 body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
@@ -31,14 +32,19 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
   position:absolute;right:38px;top:50%;transform:translateY(-50%);
   background:none;border:none;color:var(--rk-muted);font-size:1.1rem;
   cursor:pointer;padding:3px;line-height:1;box-shadow:none;display:none;
+  transition:color .15s,transform .2s;
 }
 .wc-clear.vis{display:block}
+.wc-clear:hover{color:#f0abfc;transform:translateY(-50%) rotate(90deg)}
+.wc-clear:active{transform:translateY(-50%) rotate(90deg) scale(.88)}
 .wc-go{
   position:absolute;right:6px;top:50%;transform:translateY(-50%);
   background:none;border:none;color:var(--rk-text);font-size:1rem;
   cursor:pointer;padding:4px 6px;line-height:1;box-shadow:none;border-radius:8px;
+  transition:color .15s,background .15s,transform .2s;
 }
-.wc-go:hover{background:rgba(219,39,119,.16);color:#f0abfc}
+.wc-go:hover{background:rgba(219,39,119,.16);color:#f0abfc;transform:translateY(-50%) scale(1.12)}
+.wc-go:active{transform:translateY(-50%) scale(.92)}
 .wc-empty{text-align:center;padding:18px 14px;color:var(--rk-muted);font-size:.88rem;line-height:1.55}
 
 .wc-random-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:10px}
@@ -47,18 +53,26 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
   background:none;border:1px solid rgba(255,255,255,.16);color:var(--rk-text);
   border-radius:50%;width:26px;height:26px;padding:0;font-size:.85rem;
   display:flex;align-items:center;justify-content:center;box-shadow:none;
+  transition:background .15s,color .15s,transform .15s;
 }
-.wc-random-btn:hover{background:rgba(219,39,119,.14);color:#f0abfc;transform:none}
+.wc-random-btn:hover{background:rgba(219,39,119,.14);color:#f0abfc;transform:scale(1.1)}
+.wc-random-btn:active{transform:scale(.88)}
+.wc-random-btn.spinning{animation:wc-spin .4s ease}
 
 /* ── Explore layout: word+related on the left, sentences on the right ── */
 .wc-explore{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;align-items:start}
 @media(max-width:840px){.wc-explore{grid-template-columns:1fr}}
 
 /* ── Word + related words ── */
-.wc-word-card{padding:16px}
+.wc-word-card{padding:16px;transition:box-shadow .25s ease,transform .25s ease}
+.wc-word-card:hover{box-shadow:0 10px 32px var(--rk-shadow);transform:translateY(-2px)}
 .wc-word-head{text-align:center;margin-bottom:10px}
 .wc-map-ko{font-size:2.4rem;font-weight:900;color:#f0abfc;letter-spacing:.02em;cursor:pointer;
-  text-shadow:0 0 22px rgba(219,39,119,.25);line-height:1.05}
+  text-shadow:0 0 22px rgba(219,39,119,.25);line-height:1.05;display:inline-block;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.wc-map-ko:hover{transform:scale(1.06)}
+.wc-map-ko:active{transform:scale(.95)}
+.wc-map-ko.playing{animation:wc-glowPulse .9s ease}
 .wc-map-badges{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:6px}
 .wc-map-pos{font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:9px;
   background:rgba(219,39,119,.18);color:#f0abfc;border:1px solid rgba(219,39,119,.3);white-space:nowrap}
@@ -78,16 +92,30 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
 }
 .wc-word-chip.clickable{cursor:pointer;transition:all .14s}
 .wc-word-chip.clickable:hover{background:rgba(219,39,119,.16);border-color:#db2779;color:#f0abfc;transform:translateY(-1px)}
+.wc-word-chip.clickable:active{transform:translateY(0) scale(.95)}
 .wc-word-chip .g{font-size:.72rem;opacity:.6;font-weight:500;margin-left:5px}
 
 /* ── Sentence panel ── */
-.wc-sent-card{padding:14px}
+.wc-sent-card{padding:14px;transition:box-shadow .25s ease,transform .25s ease}
+.wc-sent-card:hover{box-shadow:0 10px 32px var(--rk-shadow);transform:translateY(-2px)}
 .wc-sent-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
 .wc-sent-title{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rk-muted);font-weight:800}
 .wc-rom-toggle{
-  display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--rk-muted);cursor:pointer;user-select:none;
+  display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--rk-muted);cursor:pointer;user-select:none;
 }
-.wc-rom-toggle input{accent-color:#db2779}
+.wc-rom-toggle input{
+  appearance:none;-webkit-appearance:none;margin:0;flex-shrink:0;cursor:pointer;
+  width:34px;height:20px;border-radius:999px;position:relative;
+  background:var(--rk-border);border:1.5px solid var(--rk-border-b);
+  transition:background .25s,border-color .25s;
+}
+.wc-rom-toggle input::before{
+  content:'';position:absolute;left:1px;top:1px;width:15px;height:15px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);
+  transition:transform .28s cubic-bezier(.34,1.56,.64,1);
+}
+.wc-rom-toggle input:checked{background:#db2777 !important;border-color:#db2779 !important}
+.wc-rom-toggle input:checked::before{transform:translateX(14px)}
 .wc-sent-list{display:flex;flex-direction:column}
 .wc-sent-row{
   padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07);
@@ -112,9 +140,28 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
   flex-shrink:0;background:none;border:1px solid rgba(255,255,255,.16);
   border-radius:50%;width:25px;height:25px;padding:0;font-size:.78rem;
   display:flex;align-items:center;justify-content:center;box-shadow:none;margin-top:2px;
+  transition:background .15s,transform .15s;
 }
-.wc-sent-play:hover{background:rgba(219,39,119,.14);transform:none}
+.wc-sent-play:hover{background:rgba(219,39,119,.14);transform:scale(1.1)}
+.wc-sent-play:active{transform:scale(.9)}
+.wc-sent-play.playing{animation:wc-playPulse .9s ease}
 .wc-gen-note{font-size:.78rem;color:var(--rk-muted);margin-top:8px;line-height:1.45;font-style:italic}
+
+/* ── Motion: entrances + feedback pulses (off for reduced-motion users) ── */
+@media (prefers-reduced-motion: no-preference) {
+  .wc-word-card,.wc-sent-card{animation:wc-cardIn .45s cubic-bezier(.16,1,.3,1) both}
+  .wc-sent-card{animation-delay:.06s}
+  .wc-map-ko{animation:wc-wordPop .4s cubic-bezier(.34,1.56,.64,1) both}
+  .wc-related-list .wc-word-chip,.wc-random-row .wc-word-chip{animation:wc-chipIn .35s cubic-bezier(.16,1,.3,1) both}
+  .wc-sent-row{animation:wc-rowIn .35s cubic-bezier(.16,1,.3,1) both}
+}
+@keyframes wc-cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes wc-wordPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes wc-chipIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+@keyframes wc-rowIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes wc-spin{to{transform:scale(1.1) rotate(360deg)}}
+@keyframes wc-glowPulse{0%,100%{text-shadow:0 0 22px rgba(219,39,119,.25)}50%{text-shadow:0 0 36px rgba(219,39,119,.6)}}
+@keyframes wc-playPulse{0%{box-shadow:0 0 0 0 rgba(219,39,119,.5)}70%{box-shadow:0 0 0 9px rgba(219,39,119,0)}100%{box-shadow:0 0 0 0 rgba(219,39,119,0)}}
 
 .wc-toast{
   position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
@@ -469,13 +516,18 @@ function renderRandomWord() {
   const gloss = isRo ? randomWordEntry.ro : randomWordEntry.en;
   el.innerHTML = `<span class="wc-random-lbl">${isRo ? 'Nu știi ce cuvânt să alegi? Încearcă:' : "Don't know which word to pick? Try:"}</span>
     <span class="wc-word-chip clickable" onclick="searchAndFill('${randomWordEntry.ko.replace(/'/g,"\\'")}')" title="${gloss}">${randomWordEntry.ko}<span class="g">${gloss}</span></span>
-    <button class="wc-random-btn" type="button" onclick="rerollRandomWord()" title="${isRo ? 'Alt cuvânt' : 'Another word'}">🎲</button>`;
+    <button class="wc-random-btn" type="button" onclick="spinRandomWord(this)" title="${isRo ? 'Alt cuvânt' : 'Another word'}">🎲</button>`;
 }
 function rerollRandomWord() {
   randomWordEntry = pickRandomWord();
   renderRandomWord();
 }
 window.rerollRandomWord = rerollRandomWord;
+function spinRandomWord(btn) {
+  btn.classList.add('spinning');
+  setTimeout(rerollRandomWord, 220);
+}
+window.spinRandomWord = spinRandomWord;
 
 function exploreToken(raw) {
   const cleaned = raw.replace(/[.,!?"'”“‘’()]/g,'').trim();
@@ -503,9 +555,13 @@ function renderTokens(koHtml) {
     return `<span class="wc-tok" onclick="exploreToken('${plain.replace(/'/g,"\\'")}')">${chunk}</span>`;
   }).join(' ');
 }
-function speak(text) {
+function speak(text, el) {
   const clean = (text || '').replace(/<\/?b>/g, '');
   if (window.AudioEngine) AudioEngine.speak(clean);
+  if (el) {
+    el.classList.add('playing');
+    setTimeout(() => el.classList.remove('playing'), 900);
+  }
 }
 window.speak = speak;
 
@@ -580,7 +636,7 @@ function renderExplore() {
 
   let mapHtml = `<div class="wc-word-card card">
     <div class="wc-word-head">
-      <span class="wc-map-ko" onclick="speak('${currentWord.replace(/'/g,"\\'")}')">${currentWord}</span>
+      <span class="wc-map-ko" onclick="speak('${currentWord.replace(/'/g,"\\'")}', this)">${currentWord}</span>
       <div class="wc-map-badges">
         ${entry.pos ? `<span class="wc-map-pos">${isRo?entry.pos.ro:entry.pos.en}</span>` : (v.categories && v.categories[0] ? `<span class="wc-map-pos">${(isRo?CAT_LABELS.ro:CAT_LABELS.en)[v.categories[0]]||''}</span>` : '')}
         <span class="wc-map-badge${entry.curated?'':' gen'}">${entry.curated ? (isRo?'lecție completă':'full lesson') : (isRo?'generat automat':'auto-generated')}</span>
@@ -592,9 +648,10 @@ function renderExplore() {
   if (!related.length) {
     mapHtml += `<span style="font-size:.85rem;color:var(--rk-muted)">${isRo?'Niciun cuvânt înrudit găsit.':'No related words found.'}</span>`;
   }
-  related.forEach(w => {
+  related.forEach((w, i) => {
     const gloss = isRo ? w.ro : w.en;
-    mapHtml += `<span class="wc-word-chip clickable" onclick="searchAndFill('${w.ko.replace(/'/g,"\\'")}')" title="${gloss}">${w.ko}<span class="g">${gloss}</span></span>`;
+    const delay = Math.min(i * 0.025, 0.3).toFixed(3);
+    mapHtml += `<span class="wc-word-chip clickable" style="animation-delay:${delay}s" onclick="searchAndFill('${w.ko.replace(/'/g,"\\'")}')" title="${gloss}">${w.ko}<span class="g">${gloss}</span></span>`;
   });
   mapHtml += `</div></div>`;
   let sentHtml = `<div class="wc-sent-card card">
@@ -606,15 +663,16 @@ function renderExplore() {
   if (!sentences.length) {
     sentHtml += `<div class="wc-empty">${isRo?'Niciun exemplu generat pentru acest tip de cuvânt.':'No generated example for this type of word.'}</div>`;
   }
-  sentences.forEach(s => {
-    sentHtml += `<div class="wc-sent-row">
+  sentences.forEach((s, i) => {
+    const delay = Math.min(i * 0.05, 0.3).toFixed(3);
+    sentHtml += `<div class="wc-sent-row" style="animation-delay:${delay}s">
       <span class="wc-sent-lvl ${s.level||'easy'}" title="${(isRo?LEVEL_LABEL.ro:LEVEL_LABEL.en)[s.level]||''}"></span>
       <div class="wc-sent-main">
         <div class="wc-sent-ko">${renderTokens(s.ko)}</div>
         ${s.romanization ? `<div class="wc-sent-rom${showRomanization?' show':''}">${s.romanization}</div>` : ''}
         <div class="wc-sent-ro">${isRo ? s.ro : (s.en || s.ro)}</div>
       </div>
-      <button class="wc-sent-play" onclick="speak('${s.ko.replace(/<[^>]+>/g,'').replace(/'/g,"\\'")}')" title="🔊">🔊</button>
+      <button class="wc-sent-play" onclick="speak('${s.ko.replace(/<[^>]+>/g,'').replace(/'/g,"\\'")}', this)" title="🔊">🔊</button>
     </div>`;
   });
   sentHtml += `</div>`;
