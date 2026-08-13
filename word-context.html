@@ -132,6 +132,7 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
   transform:scale(1.12);
   z-index:4;
 }
+.wc-planet.playing{animation:wc-planetPulse .9s ease}
 .wc-planet-lvl{position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%}
 .wc-planet-lvl.easy{background:#0f5132}
 .wc-planet-lvl.medium{background:#0c4a6e}
@@ -232,6 +233,7 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
 @keyframes wc-spin{to{transform:scale(1.1) rotate(360deg)}}
 @keyframes wc-sunPulse{0%,100%{box-shadow:0 0 0 6px rgba(255,150,80,.12),0 0 44px rgba(255,120,90,.55),0 8px 26px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 10px rgba(255,150,80,.2),0 0 64px rgba(255,120,90,.8),0 8px 26px rgba(0,0,0,.4)}}
 @keyframes wc-playPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.5)}70%{box-shadow:0 0 0 9px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+@keyframes wc-planetPulse{0%{box-shadow:0 0 0 0 var(--pc)}70%{box-shadow:0 0 0 14px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
 
 .wc-toast{
   position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
@@ -757,7 +759,11 @@ function selectSentence(i) {
   selectedSentenceIdx = i;
   document.querySelectorAll('.wc-planet').forEach(p => p.classList.toggle('selected', Number(p.dataset.i) === i));
   const detail = document.getElementById('wcOrbitDetail');
-  if (detail && currentSentences[i]) detail.innerHTML = renderDetailHtml(currentSentences[i], cLang === 'ro');
+  const s = currentSentences[i];
+  if (!s) return;
+  if (detail) detail.innerHTML = renderDetailHtml(s, cLang === 'ro');
+  const planet = document.querySelector(`.wc-planet[data-i="${i}"]`);
+  speak(s.ko.replace(/<[^>]+>/g, ''), planet);
 }
 window.selectSentence = selectSentence;
 
@@ -836,6 +842,14 @@ function renderExplore() {
   relatedHtml += `</div></div>`;
 
   document.getElementById('wcResult').innerHTML = orbitHtml + relatedHtml;
+
+  // Auto-speak the sentence that's already showing in the detail panel
+  // (the first planet), so audio plays as soon as the circles appear —
+  // not only after an extra tap on the play button.
+  if (sentences.length) {
+    const firstPlanet = document.querySelector('.wc-planet[data-i="0"]');
+    speak(sentences[0].ko.replace(/<[^>]+>/g, ''), firstPlanet);
+  }
 }
 
 function toggleRom(checked) {
