@@ -45,6 +45,16 @@ body.dark-mode .wc-hint b{color:rgba(240,232,255,.85)}
 .wc-empty{text-align:center;padding:18px 14px;color:rgba(255,255,255,.35);font-size:.88rem;line-height:1.55}
 body.dark-mode .wc-empty{color:rgba(210,170,240,.55)}
 
+.wc-random-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:10px}
+.wc-random-lbl{font-size:.78rem;color:rgba(255,255,255,.45)}
+body.dark-mode .wc-random-lbl{color:rgba(210,170,240,.6)}
+.wc-random-btn{
+  background:none;border:1px solid rgba(255,255,255,.16);color:rgba(255,255,255,.6);
+  border-radius:50%;width:26px;height:26px;padding:0;font-size:.85rem;
+  display:flex;align-items:center;justify-content:center;box-shadow:none;
+}
+.wc-random-btn:hover{background:rgba(219,39,119,.14);color:#f0abfc;transform:none}
+
 /* ── Explore layout: word+related on the left, sentences on the right ── */
 .wc-explore{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;align-items:start}
 @media(max-width:840px){.wc-explore{grid-template-columns:1fr}}
@@ -147,6 +157,7 @@ body.dark-mode .wc-gen-note{color:rgba(210,170,240,.5)}
       <button class="wc-go" id="wcGo" type="button" title="Analizează">🔍</button>
     </div>
     <div class="wc-hint" id="wcHint"></div>
+    <div class="wc-random-row" id="wcRandomRow"></div>
   </div>
 
   <div id="wcResult"></div>
@@ -435,6 +446,7 @@ document.getElementById('wcClear').addEventListener('click', () => {
   document.getElementById('wcClear').classList.remove('vis');
   document.getElementById('wcResult').innerHTML = '';
   currentWord = null;
+  renderRandomWord();
 });
 
 function searchAndFill(word) {
@@ -450,7 +462,32 @@ function openWord(word) {
   if (!v) { renderNotFound(word); return; }
   currentWord = word;
   renderExplore();
+  renderRandomWord();
 }
+
+// ── RANDOM WORD SUGGESTION ─────────────────────────────────────────
+let randomWordEntry = null;
+function pickRandomWord() {
+  if (!VOCAB.length) return null;
+  return VOCAB[Math.floor(Math.random() * VOCAB.length)];
+}
+function renderRandomWord() {
+  const el = document.getElementById('wcRandomRow');
+  if (!el) return;
+  if (currentWord) { el.innerHTML = ''; return; }
+  if (!randomWordEntry) randomWordEntry = pickRandomWord();
+  if (!randomWordEntry) { el.innerHTML = ''; return; }
+  const isRo = cLang === 'ro';
+  const gloss = isRo ? randomWordEntry.ro : randomWordEntry.en;
+  el.innerHTML = `<span class="wc-random-lbl">${isRo ? 'Nu știi ce cuvânt să alegi? Încearcă:' : "Don't know which word to pick? Try:"}</span>
+    <span class="wc-word-chip clickable" onclick="searchAndFill('${randomWordEntry.ko.replace(/'/g,"\\'")}')" title="${gloss}">${randomWordEntry.ko}<span class="g">${gloss}</span></span>
+    <button class="wc-random-btn" type="button" onclick="rerollRandomWord()" title="${isRo ? 'Alt cuvânt' : 'Another word'}">🎲</button>`;
+}
+function rerollRandomWord() {
+  randomWordEntry = pickRandomWord();
+  renderRandomWord();
+}
+window.rerollRandomWord = rerollRandomWord;
 
 function exploreToken(raw) {
   const cleaned = raw.replace(/[.,!?"'”“‘’()]/g,'').trim();
@@ -490,6 +527,7 @@ function renderNotFound(q) {
     ? `<div class="card"><div class="wc-empty">😕 „<b>${q}</b>” nu există în glosarul aplicației.<br>Caută mai sus în vocabularul aplicației (${VOCAB.length} cuvinte).</div></div>`
     : `<div class="card"><div class="wc-empty">😕 "<b>${q}</b>" isn't in the app's glossary.<br>Search the app's vocabulary above (${VOCAB.length} words).</div></div>`;
   currentWord = null;
+  renderRandomWord();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -621,6 +659,7 @@ function applyLang(l) {
     ? `Vocabularul aplicației are <b>${n}</b> cuvinte. <b>${m}</b> au o lecție completă (✨); restul primesc cuvinte înrudite + propoziții generate automat.`
     : `The app's vocabulary has <b>${n}</b> words. <b>${m}</b> have a full lesson (✨); the rest get related words + auto-generated sentences.`;
   if (currentWord) renderExplore();
+  renderRandomWord();
 }
 
 if (window.RKLang) { RKLang.init(l => applyLang(l)); }
