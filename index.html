@@ -282,7 +282,7 @@ html[data-mode="day"] .mkf-core-halo{
   position:absolute;
   display:flex;flex-direction:column;align-items:center;
   text-decoration:none;cursor:none;
-  opacity:0;
+  opacity:0;padding:8px;
   transform:translate(-50%,-50%) scale(.35);
   pointer-events:none;
   transition:opacity .35s ease,transform .45s cubic-bezier(.34,1.56,.64,1);
@@ -294,7 +294,7 @@ html[data-mode="day"] .mkf-core-halo{
 .org.bloomed .sat:nth-child(3){transition-delay:.16s}
 
 .sat-dot{
-  width:40px;height:40px;position:relative;
+  width:44px;height:44px;position:relative;
   display:flex;align-items:center;justify-content:center;
 }
 .sat-bg{
@@ -628,8 +628,8 @@ const SAT_DATA = {
 // Each fan points toward screen center (away from corner).
 const SAT_CFG = {
   f: { angles:[ 18,  58,  98 ], d:88 },             // top-left  → fan toward lower-right
-  s: { angles:[ 56, 78, 100, 122, 144, 166 ], d:92 },    // top-right → fan toward lower-left
-  p: { angles:[143, 171, 199, 227, 255, 283], d:105 },        // bot-right → fan toward upper-left
+  s: { angles:[ 56, 78, 100, 122, 144, 166 ], d:[90, 124] },    // top-right → fan toward lower-left (zig-zag radius: avoids adjacent-dot overlap)
+  p: { angles:[140, 166, 192, 218, 244, 270, 296], d:[100, 128] },   // bot-right → fan toward upper-left (zig-zag radius)
   a: { angles:[296, 336], d:100 }                      // bot-left  → fan toward upper-right
 };
 
@@ -702,8 +702,9 @@ function buildSatellites() {
     const cfg   = SAT_CFG[id];
     items.forEach((item, i) => {
       const rad = cfg.angles[i] * Math.PI / 180;
-      const dx  = Math.cos(rad) * cfg.d;
-      const dy  = Math.sin(rad) * cfg.d;
+      const r   = Array.isArray(cfg.d) ? cfg.d[i % cfg.d.length] : cfg.d;
+      const dx  = Math.cos(rad) * r;
+      const dy  = Math.sin(rad) * r;
       const a   = document.createElement('a');
       a.className = 'sat';
       a.href = item.href;
