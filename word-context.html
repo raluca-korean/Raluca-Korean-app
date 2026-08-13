@@ -59,29 +59,121 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
 .wc-random-btn:active{transform:scale(.88)}
 .wc-random-btn.spinning{animation:wc-spin .4s ease}
 
-/* ── Explore layout: word+related on the left, sentences on the right ── */
-.wc-explore{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;align-items:start}
-@media(max-width:840px){.wc-explore{grid-template-columns:1fr}}
+/* ══════════════════════════════════════════════════════════════════
+   ORBIT — word in the center, sentences as planets around it
+   Fixed cosmic palette (not theme-adaptive): this section always
+   renders on a dark starfield regardless of the site's light/dark mode.
+   ══════════════════════════════════════════════════════════════════ */
+.wc-orbit-card{
+  background:
+    radial-gradient(1.6px 1.6px at 12% 22%, rgba(255,255,255,.6), transparent 60%),
+    radial-gradient(1.4px 1.4px at 82% 14%, rgba(255,255,255,.5), transparent 60%),
+    radial-gradient(1.8px 1.8px at 68% 80%, rgba(255,255,255,.45), transparent 60%),
+    radial-gradient(1.3px 1.3px at 24% 88%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(1.5px 1.5px at 92% 62%, rgba(255,255,255,.45), transparent 60%),
+    radial-gradient(1.3px 1.3px at 45% 42%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(1.5px 1.5px at 6% 55%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(ellipse 120% 90% at 50% 10%, #2a1560 0%, #170c38 45%, #08041a 100%);
+  border-color:rgba(167,139,250,.28);
+  border-bottom-color:rgba(167,139,250,.4);
+  padding:16px 14px 18px;
+  overflow:hidden;
+}
+.wc-orbit-topbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.wc-orbit-topbar .wc-speed{background:rgba(255,255,255,.08)}
+.wc-orbit-topbar .wc-speed-btn{color:#c9beed}
+.wc-orbit-topbar .wc-speed-btn:hover{color:#fff}
+.wc-orbit-topbar .wc-rom-toggle{color:#c9beed}
+.wc-orbit-topbar .wc-rom-toggle input{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.22)}
 
-/* ── Word + related words ── */
-.wc-word-card{padding:16px;transition:box-shadow .25s ease,transform .25s ease}
-.wc-word-card:hover{box-shadow:0 10px 32px var(--rk-shadow);transform:translateY(-2px)}
-.wc-word-head{text-align:center;margin-bottom:10px}
-.wc-map-ko{font-size:2.4rem;font-weight:900;color:#f0abfc;letter-spacing:.02em;cursor:pointer;
-  text-shadow:0 0 22px rgba(219,39,119,.25);line-height:1.05;display:inline-block;
-  transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
-.wc-map-ko:hover{transform:scale(1.06)}
-.wc-map-ko:active{transform:scale(.95)}
-.wc-map-ko.playing{animation:wc-glowPulse .9s ease}
-.wc-map-badges{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:6px}
-.wc-map-pos{font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:9px;
-  background:rgba(219,39,119,.18);color:#f0abfc;border:1px solid rgba(219,39,119,.3);white-space:nowrap}
-.wc-map-badge{font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:8px;
-  background:rgba(88,204,2,.16);color:#86efac;border:1px solid rgba(88,204,2,.28)}
-.wc-map-badge.gen{background:rgba(28,176,246,.14);color:#7dd3fc;border-color:rgba(28,176,246,.26)}
-.wc-homonym{font-size:.72rem;color:#fcd34d;margin-top:6px;line-height:1.4;text-align:left;
-  background:rgba(245,158,11,.10);border-left:3px solid #f59e0b;padding:6px 10px;border-radius:8px}
+.wc-orbit-stage{display:flex;justify-content:center;padding:6px 0 8px}
+.wc-orbit{position:relative;width:min(540px,94vw);aspect-ratio:1;container-type:inline-size}
+.wc-orbit-ring{
+  position:absolute;top:50%;left:50%;border-radius:50%;
+  width:calc(var(--r) * 2);height:calc(var(--r) * 2);
+  transform:translate(-50%,-50%);
+  border:1px dashed rgba(255,255,255,.16);
+  pointer-events:none;
+}
 
+.wc-orbit-sun{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:clamp(108px,30cqmin,168px);height:clamp(108px,30cqmin,168px);
+  border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:radial-gradient(circle at 32% 28%, #ffe08a 0%, #ff9a3d 38%, #ff4d8d 78%, #d6266f 100%);
+  box-shadow:0 0 0 6px rgba(255,150,80,.12), 0 0 44px rgba(255,120,90,.55), 0 8px 26px rgba(0,0,0,.4);
+  cursor:pointer;text-align:center;padding:8px;z-index:3;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+}
+.wc-orbit-sun:hover{transform:translate(-50%,-50%) scale(1.05)}
+.wc-orbit-sun:active{transform:translate(-50%,-50%) scale(.96)}
+.wc-orbit-sun.playing{animation:wc-sunPulse .9s ease}
+.wc-sun-word{font-size:clamp(1.15rem,7cqmin,1.6rem);font-weight:900;color:#3a1200;letter-spacing:.01em;line-height:1.05}
+.wc-sun-badges{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.wc-sun-tag{font-size:.58rem;font-weight:800;padding:2px 7px;border-radius:8px;
+  background:rgba(20,6,15,.32);color:#fff5e8;white-space:nowrap}
+
+.wc-planet{
+  position:absolute;
+  top:calc(50% + var(--radius) * sin(var(--angle)) - var(--size) / 2);
+  left:calc(50% + var(--radius) * cos(var(--angle)) - var(--size) / 2);
+  width:var(--size);height:var(--size);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:7px;cursor:pointer;color:#0f0a24;font-weight:700;
+  font-size:clamp(.58rem,3.4cqmin,.74rem);line-height:1.22;
+  background:var(--pc);
+  box-shadow:0 3px 12px rgba(0,0,0,.35),0 0 0 2px rgba(255,255,255,.12) inset;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;
+  z-index:2;
+}
+.wc-planet:hover{box-shadow:0 3px 16px rgba(0,0,0,.4),0 0 0 3px rgba(255,255,255,.4) inset}
+.wc-planet.selected{
+  box-shadow:0 0 0 3px #fff,0 0 22px var(--pc),0 4px 16px rgba(0,0,0,.45);
+  transform:scale(1.12);
+  z-index:4;
+}
+.wc-planet-lvl{position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%}
+.wc-planet-lvl.easy{background:#0f5132}
+.wc-planet-lvl.medium{background:#0c4a6e}
+.wc-planet-lvl.complex{background:#4c1d95}
+.wc-planet-txt{
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+
+.wc-orbit-empty{text-align:center;color:#c9beed;font-size:.85rem;padding:20px 10px}
+
+.wc-orbit-detail{
+  margin-top:6px;padding:14px;border-radius:14px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+}
+.wc-detail-head{display:flex;align-items:flex-start;gap:8px}
+.wc-detail-main{flex:1;min-width:0}
+.wc-sent-lvl{flex-shrink:0;width:8px;height:8px;border-radius:50%;margin-top:8px}
+.wc-sent-lvl.easy{background:#4ade80}
+.wc-sent-lvl.medium{background:#38bdf8}
+.wc-sent-lvl.complex{background:#c084fc}
+.wc-sent-ko{font-size:1.05rem;font-weight:700;line-height:1.5;color:#f5f0ff}
+.wc-sent-ko b{color:#ffd36b;background:rgba(255,180,50,.16);padding:0 1px;margin:0 -1px;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.wc-sent-ko .wc-tok{cursor:pointer;border-radius:4px;transition:background .12s}
+.wc-sent-ko .wc-tok:hover{background:rgba(255,255,255,.14)}
+.wc-sent-rom{font-size:.78rem;color:#a99fcf;font-style:italic;margin-top:3px;display:none}
+.wc-sent-rom.show{display:block}
+.wc-sent-ro{font-size:.9rem;color:#d8cfff;margin-top:4px}
+.wc-sent-play{
+  flex-shrink:0;background:none;border:1px solid rgba(255,255,255,.22);color:#fff;
+  border-radius:50%;width:28px;height:28px;padding:0;font-size:.85rem;
+  display:flex;align-items:center;justify-content:center;box-shadow:none;margin-top:2px;
+  transition:background .15s,transform .15s;
+}
+.wc-sent-play:hover{background:rgba(255,255,255,.16);transform:scale(1.1)}
+.wc-sent-play:active{transform:scale(.9)}
+.wc-sent-play.playing{animation:wc-playPulse .9s ease}
+.wc-homonym{font-size:.75rem;color:#ffd977;margin-top:10px;line-height:1.4;text-align:left;
+  background:rgba(255,180,50,.12);border-left:3px solid #ffb703;padding:7px 10px;border-radius:8px}
+.wc-gen-note{font-size:.78rem;color:#a99fcf;margin-top:10px;line-height:1.45;font-style:italic}
+
+/* ── Related words: a calmer belt below the orbit ── */
+.wc-related-card{padding:14px}
 .wc-related-lbl{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:800;
   color:var(--rk-muted);margin-bottom:8px}
 .wc-related-list{display:flex;flex-wrap:wrap;gap:6px}
@@ -94,12 +186,16 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
 .wc-word-chip.clickable:hover{background:rgba(219,39,119,.16);border-color:#db2779;color:#f0abfc;transform:translateY(-1px)}
 .wc-word-chip.clickable:active{transform:translateY(0) scale(.95)}
 .wc-word-chip .g{font-size:.72rem;opacity:.6;font-weight:500;margin-left:5px}
+.wc-related-card .wc-word-chip{background:rgba(56,189,248,.12);border-color:rgba(56,189,248,.28);color:#e4f6ff}
+.wc-related-card .wc-word-chip.clickable:hover{background:rgba(56,189,248,.26);border-color:#38bdf8;color:#fff;transform:translateY(-1px)}
+.wc-related-card .wc-word-chip .g{opacity:.7}
 
-/* ── Sentence panel ── */
-.wc-sent-card{padding:14px;transition:box-shadow .25s ease,transform .25s ease}
-.wc-sent-card:hover{box-shadow:0 10px 32px var(--rk-shadow);transform:translateY(-2px)}
-.wc-sent-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-.wc-sent-title{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rk-muted);font-weight:800}
+.wc-speed{display:flex;background:var(--rk-border);border-radius:999px;padding:2px;gap:2px;flex-shrink:0}
+.wc-speed-btn{
+  background:none;border:none;box-shadow:none;padding:4px 10px;border-radius:999px;
+  font-size:.68rem;font-weight:700;color:var(--rk-muted);cursor:pointer;transition:background .2s,color .2s;
+}
+.wc-speed-btn:hover{color:var(--rk-text);transform:none}
 .wc-rom-toggle{
   display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--rk-muted);cursor:pointer;user-select:none;
 }
@@ -116,58 +212,26 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
 }
 .wc-rom-toggle input:checked{background:#db2777 !important;border-color:#db2779 !important}
 .wc-rom-toggle input:checked::before{transform:translateX(14px)}
-.wc-speed{display:flex;background:var(--rk-border);border-radius:999px;padding:2px;gap:2px;flex-shrink:0}
-.wc-speed-btn{
-  background:none;border:none;box-shadow:none;padding:4px 10px;border-radius:999px;
-  font-size:.68rem;font-weight:700;color:var(--rk-muted);cursor:pointer;transition:background .2s,color .2s;
-}
-.wc-speed-btn:hover{color:var(--rk-text);transform:none}
-.wc-sent-list{display:flex;flex-direction:column}
-.wc-sent-row{
-  padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07);
-  display:flex;align-items:flex-start;gap:8px;
-}
-.wc-sent-row:last-child{border-bottom:none}
-.wc-sent-lvl{
-  flex-shrink:0;width:7px;height:7px;border-radius:50%;margin-top:7px;
-}
-.wc-sent-lvl.easy{background:#58cc02}
-.wc-sent-lvl.medium{background:#1cb0f6}
-.wc-sent-lvl.complex{background:#ce82ff}
-.wc-sent-main{flex:1;min-width:0}
-.wc-sent-ko{font-size:.98rem;font-weight:700;line-height:1.45}
-.wc-sent-ko b{color:#f0abfc;background:rgba(219,39,119,.16);padding:0 1px;margin:0 -1px;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
-.wc-sent-ko .wc-tok{cursor:pointer;border-radius:4px;transition:background .12s}
-.wc-sent-ko .wc-tok:hover{background:rgba(255,255,255,.12)}
-.wc-sent-rom{font-size:.74rem;color:var(--rk-muted);font-style:italic;margin-top:1px;display:none}
-.wc-sent-rom.show{display:block}
-.wc-sent-ro{font-size:.85rem;color:var(--rk-text);margin-top:2px}
-.wc-sent-play{
-  flex-shrink:0;background:none;border:1px solid rgba(255,255,255,.16);
-  border-radius:50%;width:25px;height:25px;padding:0;font-size:.78rem;
-  display:flex;align-items:center;justify-content:center;box-shadow:none;margin-top:2px;
-  transition:background .15s,transform .15s;
-}
-.wc-sent-play:hover{background:rgba(219,39,119,.14);transform:scale(1.1)}
-.wc-sent-play:active{transform:scale(.9)}
-.wc-sent-play.playing{animation:wc-playPulse .9s ease}
-.wc-gen-note{font-size:.78rem;color:var(--rk-muted);margin-top:8px;line-height:1.45;font-style:italic}
 
 /* ── Motion: entrances + feedback pulses (off for reduced-motion users) ── */
 @media (prefers-reduced-motion: no-preference) {
-  .wc-word-card,.wc-sent-card{animation:wc-cardIn .45s cubic-bezier(.16,1,.3,1) both}
-  .wc-sent-card{animation-delay:.06s}
-  .wc-map-ko{animation:wc-wordPop .4s cubic-bezier(.34,1.56,.64,1) both}
+  .wc-orbit-card{animation:wc-cardIn .45s cubic-bezier(.16,1,.3,1) both}
+  .wc-related-card{animation:wc-cardIn .45s cubic-bezier(.16,1,.3,1) both;animation-delay:.08s}
+  .wc-orbit-sun{animation:wc-sunPop .5s cubic-bezier(.34,1.56,.64,1) both,wc-sunFloat 5s ease-in-out 0.5s infinite}
+  .wc-planet{animation:wc-planetIn .4s cubic-bezier(.34,1.56,.64,1) both}
+  .wc-orbit-ring{animation:wc-ringSpin 90s linear infinite}
+  .wc-orbit-ring.r1{animation-direction:reverse;animation-duration:120s}
   .wc-related-list .wc-word-chip,.wc-random-row .wc-word-chip{animation:wc-chipIn .35s cubic-bezier(.16,1,.3,1) both}
-  .wc-sent-row{animation:wc-rowIn .35s cubic-bezier(.16,1,.3,1) both}
 }
 @keyframes wc-cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-@keyframes wc-wordPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes wc-sunPop{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes wc-sunFloat{0%,100%{margin-top:0}50%{margin-top:-6px}}
+@keyframes wc-planetIn{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+@keyframes wc-ringSpin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
 @keyframes wc-chipIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
-@keyframes wc-rowIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
 @keyframes wc-spin{to{transform:scale(1.1) rotate(360deg)}}
-@keyframes wc-glowPulse{0%,100%{text-shadow:0 0 22px rgba(219,39,119,.25)}50%{text-shadow:0 0 36px rgba(219,39,119,.6)}}
-@keyframes wc-playPulse{0%{box-shadow:0 0 0 0 rgba(219,39,119,.5)}70%{box-shadow:0 0 0 9px rgba(219,39,119,0)}100%{box-shadow:0 0 0 0 rgba(219,39,119,0)}}
+@keyframes wc-sunPulse{0%,100%{box-shadow:0 0 0 6px rgba(255,150,80,.12),0 0 44px rgba(255,120,90,.55),0 8px 26px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 10px rgba(255,150,80,.2),0 0 64px rgba(255,120,90,.8),0 8px 26px rgba(0,0,0,.4)}}
+@keyframes wc-playPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.5)}70%{box-shadow:0 0 0 9px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
 
 .wc-toast{
   position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
@@ -221,6 +285,8 @@ let currentWord = null;
 let showRomanization = true;
 let audioSpeed = 'normal';
 let vocabIndex = null;
+let currentSentences = [];
+let selectedSentenceIdx = -1;
 
 const CAT_LABELS = {
   ro:{ nouns:'Substantiv', verbs:'Verb', adjectives:'Adjectiv', adverbs:'Adverb',
@@ -642,6 +708,59 @@ function speedBtnHtml(mode, label) {
   return `<button type="button" class="wc-speed-btn${on?' active':''}" data-speed="${mode}"${style} onclick="setAudioSpeed('${mode}')">${label}</button>`;
 }
 
+// ── ORBIT layout: word in the center, sentences as planets around it ────
+const PLANET_COLORS = ['#22d3ee','#34d399','#fbbf24','#fb7185','#a78bfa','#38bdf8','#f472b6','#4ade80','#fb923c','#c084fc'];
+const RING_CAPACITY = [4, 6, 8, 10, 12];
+
+// Distributes N items across concentric rings, each planet positioned with
+// plain trig (top/left via CSS sin()/cos()) so the math stays unambiguous.
+// The radial gap between rings is always > bubble size, which guarantees
+// zero overlap between adjacent rings no matter how the angles line up
+// (the closest two rings can ever get is when their items share an angle,
+// at which point the gap alone already exceeds one bubble's diameter).
+// Ring capacity is capped low on purpose so several sentences reliably
+// produce more than one ring — the point is concentric circles, not just
+// the tightest possible packing.
+function assignOrbitPositions(n) {
+  if (!n) return { positions: [], size: '19cqmin' };
+  const size = Math.max(11, Math.min(19, 22 - n * 0.8)); // cqmin, shrinks as sentence count grows
+  const gap = size * 1.25;                                // > size ⇒ rings never touch
+  const baseRadius = 20 + size * 0.7;
+  const positions = [];
+  let remaining = n, ring = 0;
+  while (remaining > 0) {
+    const cap = RING_CAPACITY[Math.min(ring, RING_CAPACITY.length - 1)];
+    const count = Math.min(cap, remaining);
+    const radius = (baseRadius + ring * gap).toFixed(2) + 'cqmin';
+    const offset = (ring % 2) * (180 / count);
+    for (let i = 0; i < count; i++) {
+      positions.push({ angle: (360 / count) * i + offset, radius, ring });
+    }
+    remaining -= count; ring++;
+  }
+  return { positions, size: size.toFixed(2) + 'cqmin' };
+}
+
+function renderDetailHtml(s, isRo) {
+  return `<div class="wc-detail-head">
+    <span class="wc-sent-lvl ${s.level||'easy'}" title="${(isRo?LEVEL_LABEL.ro:LEVEL_LABEL.en)[s.level]||''}"></span>
+    <div class="wc-detail-main">
+      <div class="wc-sent-ko">${renderTokens(s.ko)}</div>
+      ${s.romanization ? `<div class="wc-sent-rom${showRomanization?' show':''}">${s.romanization}</div>` : ''}
+      <div class="wc-sent-ro">${isRo ? s.ro : (s.en || s.ro)}</div>
+    </div>
+    <button class="wc-sent-play" onclick="speak('${s.ko.replace(/<[^>]+>/g,'').replace(/'/g,"\\'")}', this)" title="🔊">🔊</button>
+  </div>`;
+}
+
+function selectSentence(i) {
+  selectedSentenceIdx = i;
+  document.querySelectorAll('.wc-planet').forEach(p => p.classList.toggle('selected', Number(p.dataset.i) === i));
+  const detail = document.getElementById('wcOrbitDetail');
+  if (detail && currentSentences[i]) detail.innerHTML = renderDetailHtml(currentSentences[i], cLang === 'ro');
+}
+window.selectSentence = selectSentence;
+
 function renderExplore() {
   const isRo = cLang === 'ro';
   const entry = currentEntry();
@@ -649,63 +768,74 @@ function renderExplore() {
   // Flatten every sense's sentences into one list (no sub-navigation for homonyms).
   const sentences = entry.senses.flatMap(s => s.sentences || []);
   const related = relatedWords(currentWord);
+  currentSentences = sentences;
+  selectedSentenceIdx = sentences.length ? 0 : -1;
 
-  let mapHtml = `<div class="wc-word-card card">
-    <div class="wc-word-head">
-      <span class="wc-map-ko" onclick="speak('${currentWord.replace(/'/g,"\\'")}', this)">${currentWord}</span>
-      <div class="wc-map-badges">
-        ${entry.pos ? `<span class="wc-map-pos">${isRo?entry.pos.ro:entry.pos.en}</span>` : (v.categories && v.categories[0] ? `<span class="wc-map-pos">${(isRo?CAT_LABELS.ro:CAT_LABELS.en)[v.categories[0]]||''}</span>` : '')}
-        <span class="wc-map-badge${entry.curated?'':' gen'}">${entry.curated ? (isRo?'lecție completă':'full lesson') : (isRo?'generat automat':'auto-generated')}</span>
+  const { positions, size } = assignOrbitPositions(sentences.length);
+  const ringRadii = [...new Set(positions.map(p => p.radius))];
+  const ringsHtml = ringRadii.map((r, i) => `<div class="wc-orbit-ring r${i % 2}" style="--r:${r}"></div>`).join('');
+  // Fewer rings ⇒ a smaller stage, so a 2-sentence word isn't lost in a huge empty square.
+  const orbitPx = Math.min(540, 260 + ringRadii.length * 160);
+
+  const planetsHtml = sentences.map((s, i) => {
+    const pos = positions[i];
+    const color = PLANET_COLORS[i % PLANET_COLORS.length];
+    const preview = s.ko.replace(/<\/?b>/g, '');
+    return `<div class="wc-planet${i===0?' selected':''}" data-i="${i}"
+      style="--angle:${pos.angle}deg;--radius:${pos.radius};--size:clamp(56px,${size},112px);--pc:${color};animation-delay:${Math.min(i*0.04,0.4)}s"
+      onclick="selectSentence(${i})" title="${(isRo?LEVEL_LABEL.ro:LEVEL_LABEL.en)[s.level]||''}">
+      <span class="wc-planet-lvl ${s.level||'easy'}"></span>
+      <span class="wc-planet-txt">${preview}</span>
+    </div>`;
+  }).join('');
+
+  const posLabel = entry.pos ? (isRo?entry.pos.ro:entry.pos.en)
+    : (v.categories && v.categories[0] ? (isRo?CAT_LABELS.ro:CAT_LABELS.en)[v.categories[0]] : '');
+
+  const orbitHtml = `<div class="wc-orbit-card card">
+    <div class="wc-orbit-topbar">
+      <div class="wc-speed" role="group" aria-label="${isRo?'Viteză audio':'Audio speed'}">
+        ${speedBtnHtml('normal', 'Normal')}
+        ${speedBtnHtml('slow', isRo?'Lent':'Slow')}
       </div>
-      ${entry.homonymNote ? `<div class="wc-homonym">⚠️ ${isRo?entry.homonymNote.ro:entry.homonymNote.en}</div>` : ''}
+      <label class="wc-rom-toggle"><input type="checkbox" id="romToggle" ${showRomanization?'checked':''} onchange="toggleRom(this.checked)"> ${isRo?'Romanizare':'Romanization'}</label>
     </div>
+    <div class="wc-orbit-stage">
+      <div class="wc-orbit" style="width:min(${orbitPx}px,94vw)">
+        ${ringsHtml}
+        <div class="wc-orbit-sun" onclick="speak('${currentWord.replace(/'/g,"\\'")}', this)">
+          <span class="wc-sun-word">${currentWord}</span>
+          <div class="wc-sun-badges">
+            ${posLabel ? `<span class="wc-sun-tag">${posLabel}</span>` : ''}
+            <span class="wc-sun-tag">${entry.curated ? '✨' : '⚙️'}</span>
+          </div>
+        </div>
+        ${planetsHtml}
+      </div>
+    </div>
+    <div class="wc-orbit-detail" id="wcOrbitDetail">
+      ${sentences.length ? renderDetailHtml(sentences[0], isRo) : `<div class="wc-orbit-empty">${isRo?'Niciun exemplu generat pentru acest tip de cuvânt.':'No generated example for this type of word.'}</div>`}
+    </div>
+    ${entry.homonymNote ? `<div class="wc-homonym">⚠️ ${isRo?entry.homonymNote.ro:entry.homonymNote.en}</div>` : ''}
+    ${entry.generated ? `<div class="wc-gen-note">${isRo
+      ? 'Acest cuvânt nu are o hartă scrisă manual — apasă pe planetele din jur pentru celelalte exemple.'
+      : "This word doesn't have a hand-written map yet — tap the planets around it for more examples."}</div>` : ''}
+  </div>`;
+
+  let relatedHtml = `<div class="wc-related-card card">
     <div class="wc-related-lbl">${isRo?'Cuvinte înrudite':'Related words'} (${related.length})</div>
     <div class="wc-related-list">`;
   if (!related.length) {
-    mapHtml += `<span style="font-size:.85rem;color:var(--rk-muted)">${isRo?'Niciun cuvânt înrudit găsit.':'No related words found.'}</span>`;
+    relatedHtml += `<span style="font-size:.85rem;color:var(--rk-muted)">${isRo?'Niciun cuvânt înrudit găsit.':'No related words found.'}</span>`;
   }
   related.forEach((w, i) => {
     const gloss = isRo ? w.ro : w.en;
     const delay = Math.min(i * 0.025, 0.3).toFixed(3);
-    mapHtml += `<span class="wc-word-chip clickable" style="animation-delay:${delay}s" onclick="searchAndFill('${w.ko.replace(/'/g,"\\'")}')" title="${gloss}">${w.ko}<span class="g">${gloss}</span></span>`;
+    relatedHtml += `<span class="wc-word-chip clickable" style="animation-delay:${delay}s" onclick="searchAndFill('${w.ko.replace(/'/g,"\\'")}')" title="${gloss}">${w.ko}<span class="g">${gloss}</span></span>`;
   });
-  mapHtml += `</div></div>`;
-  let sentHtml = `<div class="wc-sent-card card">
-    <div class="wc-sent-head">
-      <div class="wc-sent-title">💬 ${isRo?'Propoziții':'Sentences'} (${sentences.length})</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="wc-speed" role="group" aria-label="${isRo?'Viteză audio':'Audio speed'}">
-          ${speedBtnHtml('normal', 'Normal')}
-          ${speedBtnHtml('slow', isRo?'Lent':'Slow')}
-        </div>
-        <label class="wc-rom-toggle"><input type="checkbox" id="romToggle" ${showRomanization?'checked':''} onchange="toggleRom(this.checked)"> ${isRo?'Romanizare':'Romanization'}</label>
-      </div>
-    </div>
-    <div class="wc-sent-list">`;
-  if (!sentences.length) {
-    sentHtml += `<div class="wc-empty">${isRo?'Niciun exemplu generat pentru acest tip de cuvânt.':'No generated example for this type of word.'}</div>`;
-  }
-  sentences.forEach((s, i) => {
-    const delay = Math.min(i * 0.05, 0.3).toFixed(3);
-    sentHtml += `<div class="wc-sent-row" style="animation-delay:${delay}s">
-      <span class="wc-sent-lvl ${s.level||'easy'}" title="${(isRo?LEVEL_LABEL.ro:LEVEL_LABEL.en)[s.level]||''}"></span>
-      <div class="wc-sent-main">
-        <div class="wc-sent-ko">${renderTokens(s.ko)}</div>
-        ${s.romanization ? `<div class="wc-sent-rom${showRomanization?' show':''}">${s.romanization}</div>` : ''}
-        <div class="wc-sent-ro">${isRo ? s.ro : (s.en || s.ro)}</div>
-      </div>
-      <button class="wc-sent-play" onclick="speak('${s.ko.replace(/<[^>]+>/g,'').replace(/'/g,"\\'")}', this)" title="🔊">🔊</button>
-    </div>`;
-  });
-  sentHtml += `</div>`;
-  if (entry.generated) {
-    sentHtml += `<div class="wc-gen-note">${isRo
-      ? 'Acest cuvânt nu are o hartă scrisă manual — vezi mai sus câteva cuvinte cu ✨ hartă completă.'
-      : "This word doesn't have a hand-written map yet — see the ✨ full-map words above."}</div>`;
-  }
-  sentHtml += `</div>`;
+  relatedHtml += `</div></div>`;
 
-  document.getElementById('wcResult').innerHTML = `<div class="wc-explore">${mapHtml}${sentHtml}</div>`;
+  document.getElementById('wcResult').innerHTML = orbitHtml + relatedHtml;
 }
 
 function toggleRom(checked) {
