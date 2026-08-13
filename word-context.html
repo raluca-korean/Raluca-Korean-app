@@ -376,7 +376,8 @@ function conjugate(word) {
 
   if (last === '이' && !I_VERB_EXCEPTIONS.some(b => word === b || word.endsWith(b))) {
     const base = stem.slice(0,-1);
-    return [{ro:'prezent',en:'present', form: base+'예요'}, {ro:'trecut',en:'past', form: base+'이었어요'}];
+    const bat = hasBatchim(base);
+    return [{ro:'prezent',en:'present', form: base+(bat?'이에요':'예요')}, {ro:'trecut',en:'past', form: base+'이었어요'}];
   }
   if (last === '하') {
     const base = stem.slice(0,-1);
@@ -512,12 +513,15 @@ function buildConjReverse() {
 }
 
 // ── LOAD DATA ────────────────────────────────────────────────────
+let EXTRA_SENTENCES = {};
 Promise.all([
   fetch('./data/context-words.json').then(r => r.json()),
-  fetch('./data/vocab-korean.json').then(r => r.json())
-]).then(([dict, vocab]) => {
+  fetch('./data/vocab-korean.json').then(r => r.json()),
+  fetch('./data/extra-generated-sentences.json').then(r => r.json()).catch(() => ({}))
+]).then(([dict, vocab, extra]) => {
   DICT = dict;
   VOCAB = vocab;
+  EXTRA_SENTENCES = extra;
   vocabIndex = new Map(vocab.map(e => [e.ko, e]));
   buildConjReverse();
   applyLang(cLang);
@@ -694,10 +698,46 @@ function renderNotFound(q) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// GENERATED (non-curated) content — lighter map + a few sentences
+// GENERATED (non-curated) content — lighter map + at least 5 sentences,
+// built only from mechanically-derived, already-tested conjugation
+// forms (conjugate() / the -고 /-아서/-어서 /-아야/-어야 derivations also
+// used by extraSurfaceForms()) so every generated sentence stays
+// grammatically valid Korean even though it isn't hand-curated.
 // ═══════════════════════════════════════════════════════════════
 function isConjugable(v) { const cats = v.categories || []; return v.ko.endsWith('다') && (cats.includes('verbs') || cats.includes('adjectives')); }
 function isNounLike(v) { const cats = v.categories || []; return !isConjugable(v) && cats.some(c => ['nouns','objects','subjects','places','times'].includes(c)); }
+function isAdverbLike(v) { const cats = v.categories || []; return cats.includes('adverbs') || cats.includes('modifiers'); }
+
+// -고 ("and/then") / -아서/-어서 ("because/glad that") / -아야/-어야 ("must") —
+// derived the same way as extraSurfaceForms(), which is already relied on
+// by click-to-explore. Copula-pattern stems (…적이다, 다행이다, stem ending
+// in 이) don't produce a valid -아서/-아야 by that slice-based method, so
+// they get the equivalent copula forms (-이라서/-이어야) instead.
+function verbAdjExtraForms(word) {
+  const stem = word.slice(0, -1);
+  const last = stem[stem.length - 1];
+  const andForm = stem + '고';
+  const conj = conjugate(word);
+  if (!conj || !conj[0]) return { andForm, causeForm: null, mustForm: null };
+  if (last === '이' && !I_VERB_EXCEPTIONS.some(b => word === b || word.endsWith(b))) {
+    const base = stem.slice(0, -1);
+    const bat = hasBatchim(base);
+    return { andForm, causeForm: base + (bat ? '이라서' : '라서'), mustForm: base + (bat ? '이어야' : '여야') };
+  }
+  if (conj[0].form.endsWith('요')) {
+    const pres = conj[0].form;
+    return { andForm, causeForm: pres.slice(0, -1) + '서', mustForm: pres.slice(0, -1) + '야' };
+  }
+  return { andForm, causeForm: null, mustForm: null };
+}
+
+const ADVERB_FRAMES = [
+  { ko: adv => `사람들이 <b>${adv}</b> 그렇게 해요.`, ro: 'Oamenii fac asta', en: 'People do it that way', level: 'easy' },
+  { ko: adv => `저는 <b>${adv}</b> 바빠요.`, ro: 'Sunt', ro2: 'ocupat', en: "I'm", en2: 'busy', level: 'easy' },
+  { ko: adv => `그는 <b>${adv}</b> 늦게 왔어요.`, ro: 'A venit', ro2: 'târziu', en: 'He came', en2: 'late', level: 'medium' },
+  { ko: adv => `우리는 <b>${adv}</b> 이야기했어요.`, ro: 'Am vorbit', en: 'We talked', level: 'easy' },
+  { ko: adv => `이 일은 <b>${adv}</b> 중요해요.`, ro: 'Acest lucru e', ro2: 'important', en: 'This matter is', en2: 'important', level: 'medium' },
+];
 
 function buildGeneratedSense(v) {
   const cat = v.categories && v.categories[0];
@@ -709,20 +749,51 @@ function buildGeneratedSense(v) {
   ] : [];
 
   let sentences = [];
-  if (isConjugable(v)) {
+  if (EXTRA_SENTENCES[v.ko]) {
+    sentences = EXTRA_SENTENCES[v.ko].map(x => ({ ko: x.ko, ro: isRo ? x.ro : x.en, level: x.level }));
+  } else if (isConjugable(v)) {
     const conj = conjugate(v.ko);
+    const isVerb = (v.categories || []).includes('verbs');
     if (conj) {
-      const frame = (label, t) => label.includes('trecut') || label==='past'
-        ? { ko:`어제 <b>${t}</b>.`, ro: isRo?`Ieri: ${v.ro}.`:`Yesterday: ${v.en}.`, level:'easy' }
-        : { ko:`지금 <b>${t}</b>.`, ro: isRo?`Acum: ${v.ro}.`:`Right now: ${v.en}.`, level:'easy' };
-      conj.forEach(c => sentences.push(frame(c.ro, c.form)));
+      sentences.push({ ko:`지금 <b>${conj[0].form}</b>.`, ro: isRo?`Acum: ${v.ro}.`:`Right now: ${v.en}.`, level:'easy' });
+      sentences.push({ ko:`어제 <b>${conj[1].form}</b>.`, ro: isRo?`Ieri: ${v.ro}.`:`Yesterday: ${v.en}.`, level:'easy' });
+      const { andForm, causeForm, mustForm } = verbAdjExtraForms(v.ko);
+      if (isVerb) {
+        sentences.push({ ko:`<b>${andForm}</b> 싶어요.`, ro: isRo?`Vrea să: ${v.ro}.`:`Wants to: ${v.en}.`, level:'medium' });
+        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋았어요.`, ro: isRo?`Bine că: ${v.ro}.`:`Glad that: ${v.en}.`, level:'medium' });
+        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Trebuie să: ${v.ro}.`:`Must: ${v.en}.`, level:'medium' });
+      } else {
+        sentences.push({ ko:`<b>${andForm}</b> 좋아요.`, ro: isRo?`Și: ${v.ro}.`:`And: ${v.en}.`, level:'medium' });
+        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋아요.`, ro: isRo?`Bine că: ${v.ro}.`:`Good that: ${v.en}.`, level:'medium' });
+        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Trebuie să fie: ${v.ro}.`:`Must be: ${v.en}.`, level:'medium' });
+      }
+      // Copula-pattern stems (or any edge case with no cause/must form) still
+      // need to reach 5 — fill the gap with two more tense-based sentences
+      // rather than ever inventing an unverified grammar construction.
+      while (sentences.length < 5) {
+        const useLast = sentences.length % 2 === 0;
+        sentences.push(useLast
+          ? { ko:`네, <b>${conj[1].form}</b>.`, ro: isRo?`Da: ${v.ro}.`:`Yes: ${v.en}.`, level:'easy' }
+          : { ko:`정말 <b>${conj[0].form}</b>.`, ro: isRo?`Chiar ${v.ro}.`:`Really: ${v.en}.`, level:'easy' });
+      }
     }
   } else if (isNounLike(v)) {
     const bat = hasBatchim(v.ko);
     const copula = bat ? '이에요' : '예요';
-    const ext = bat ? '이' : '가';
+    const subjExt = bat ? '이' : '가';
+    const objExt = bat ? '을' : '를';
+    const topicExt = bat ? '은' : '는';
     sentences.push({ ko:`이것은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Asta e ${v.ro}.`:`This is ${v.en}.`, level:'easy' });
-    sentences.push({ ko:`${v.ko}<b>${ext}</b> 여기 있어요.`, ro: isRo?`E ${v.ro} aici.`:`There's ${v.en} here.`, level:'easy' });
+    sentences.push({ ko:`${v.ko}<b>${subjExt}</b> 여기 있어요.`, ro: isRo?`E ${v.ro} aici.`:`There's ${v.en} here.`, level:'easy' });
+    sentences.push({ ko:`저는 ${v.ko}<b>${objExt}</b> 좋아해요.`, ro: isRo?`Îmi place: ${v.ro}.`:`I like: ${v.en}.`, level:'easy' });
+    sentences.push({ ko:`이 ${v.ko}<b>${topicExt}</b> 정말 좋아요.`, ro: isRo?`Chiar aici: ${v.ro}.`:`Right here: ${v.en}.`, level:'medium' });
+    sentences.push({ ko:`그 ${v.ko}<b>${subjExt}</b> 필요해요.`, ro: isRo?`Am nevoie de: ${v.ro}.`:`I need: ${v.en}.`, level:'medium' });
+  } else if (isAdverbLike(v)) {
+    ADVERB_FRAMES.forEach(f => {
+      const ro = f.ro2 ? `${f.ro} ${v.ro} ${f.ro2}.` : `${f.ro} ${v.ro}.`;
+      const en = f.en2 ? `${f.en} ${v.en} ${f.en2}.` : `${f.en} ${v.en}.`;
+      sentences.push({ ko: f.ko(v.ko), ro, en, level: f.level });
+    });
   }
   return { associations, sentences, generated: true };
 }
