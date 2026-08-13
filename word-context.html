@@ -273,6 +273,8 @@ body.dark-mode .wc-search::placeholder{color:rgba(210,170,240,.55)}
     <div class="wc-random-row" id="wcRandomRow"></div>
   </div>
 
+  <div id="wcStartGallery"></div>
+
   <div id="wcResult"></div>
 
 </div>
@@ -563,6 +565,7 @@ document.getElementById('wcClear').addEventListener('click', () => {
   document.getElementById('wcResult').innerHTML = '';
   currentWord = null;
   renderRandomWord();
+  renderStartGallery();
 });
 
 function searchAndFill(word) {
@@ -579,6 +582,7 @@ function openWord(word) {
   currentWord = word;
   renderExplore();
   renderRandomWord();
+  renderStartGallery();
 }
 
 // ── RANDOM WORD SUGGESTION ─────────────────────────────────────────
@@ -609,6 +613,27 @@ function spinRandomWord(btn) {
   setTimeout(rerollRandomWord, 220);
 }
 window.spinRandomWord = spinRandomWord;
+
+// ── START GALLERY: quick-start chips for every fully-curated word ──────
+function renderStartGallery() {
+  const el = document.getElementById('wcStartGallery');
+  if (!el) return;
+  if (currentWord) { el.innerHTML = ''; return; }
+  const words = Object.keys(DICT || {});
+  if (!words.length) { el.innerHTML = ''; return; }
+  const isRo = cLang === 'ro';
+  let html = `<div class="card">
+    <div class="wc-related-lbl">✨ ${isRo ? 'Cuvinte cu lecție completă' : 'Words with a full lesson'} (${words.length})</div>
+    <div class="wc-related-list">`;
+  words.forEach((w, i) => {
+    const entry = vocabIndex && vocabIndex.get(w);
+    const gloss = entry ? (isRo ? entry.ro : entry.en) : '';
+    const delay = Math.min(i * 0.02, 0.3).toFixed(3);
+    html += `<span class="wc-word-chip clickable" style="animation-delay:${delay}s" onclick="searchAndFill('${w.replace(/'/g,"\\'")}')" title="${gloss}">${w}${gloss ? `<span class="g">${gloss}</span>` : ''}</span>`;
+  });
+  html += `</div></div>`;
+  el.innerHTML = html;
+}
 
 function exploreToken(raw) {
   const cleaned = raw.replace(/[.,!?"'”“‘’()]/g,'').trim();
@@ -653,6 +678,7 @@ function renderNotFound(q) {
     : `<div class="card"><div class="wc-empty">😕 "<b>${q}</b>" isn't in the app's glossary.<br>Search the app's vocabulary above (${VOCAB.length} words).</div></div>`;
   currentWord = null;
   renderRandomWord();
+  renderStartGallery();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -890,6 +916,7 @@ function applyLang(l) {
   document.getElementById('wcSearch').placeholder = l === 'ro' ? 'Scrie un cuvânt coreean și apasă Enter…' : 'Type a Korean word and press Enter…';
   if (currentWord) renderExplore();
   renderRandomWord();
+  renderStartGallery();
 }
 
 if (window.RKLang) { RKLang.init(l => applyLang(l)); }
