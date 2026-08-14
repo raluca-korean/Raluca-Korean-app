@@ -1231,12 +1231,286 @@ function roAdjClause(ro, mood) {
   return { subj:'să fie ', indic:'e ', past:'a fost ' }[mood] + first; // bare adjective, e.g. "obosit"
 }
 
-// English needs no lookup table — "must"/"to be" only care about the bare
-// form, and v.en/v.ro are always stored with their own "to "/"a " marker
-// already, so plain string surgery is enough (unlike Romanian's
-// person-and-verb-specific subjunctive).
-function enBareForm(en) { return en.startsWith('to ') ? en.slice(3) : 'be ' + en; }
-function enToForm(en) { return en.startsWith('to ') ? en : 'to be ' + en; }
+// "Must"/"to be" (used by the Vrea/Trebuie/E bine că/andForm sentences
+// above) only care about the bare form, and v.en is always stored with its
+// own "to " marker already, so plain string surgery is enough there —
+// unlike Romanian's person-and-verb-specific subjunctive, no lookup table
+// needed.
+// firstAlt (defined above) keeps this to one alternate — 146 of the 493
+// verb/adjective glosses have a comma/slash second meaning ("to sing, to
+// call"), which without this leaked straight through into "Wants to sing,
+// to call." instead of "Wants to sing."
+function enBareForm(en) { const f = firstAlt(en).replace(/\s*\([^)]*\)\s*$/, ''); return f.startsWith('to ') ? f.slice(3) : 'be ' + f; }
+function enToForm(en) { const f = firstAlt(en).replace(/\s*\([^)]*\)\s*$/, ''); return f.startsWith('to ') ? f : 'to be ' + f; }
+
+// EN_VERB_CONJ + enClauses() are only for the "Right now/Yesterday" pair,
+// which (unlike Glad/Must/Nice above) needs an actual tense, not just a
+// bare form. Past tense is a genuinely per-verb fact in English (go/went,
+// buy/bought…), same reason Romanian needed RO_VERB_CONJ — hand-built,
+// not guessed. Present tense sidesteps conjugation entirely by using
+// singular "they" as the subject, which takes the bare verb form (no
+// he/she "-s"), so only the past column actually gets used.
+
+const EN_VERB_CONJ = {
+  "accomplish": ["accomplishes", "accomplished"],
+  "allow": ["allows", "allowed"],
+  "analyze": ["analyzes", "analyzed"],
+  "answer": ["answers", "answered"],
+  "apologize": ["apologizes", "apologized"],
+  "appear": ["appears", "appeared"],
+  "apply": ["applies", "applied"],
+  "approach": ["approaches", "approached"],
+  "arise": ["arises", "arose"],
+  "arrive": ["arrives", "arrived"],
+  "ask": ["asks", "asked"],
+  "attempt": ["attempts", "attempted"],
+  "attend": ["attends", "attended"],
+  "be": ["is", "was"],
+  "become": ["becomes", "became"],
+  "believe": ["believes", "believed"],
+  "board": ["boards", "boarded"],
+  "boil": ["boils", "boiled"],
+  "book": ["books", "booked"],
+  "borrow": ["borrows", "borrowed"],
+  "break": ["breaks", "broke"],
+  "bring": ["brings", "brought"],
+  "browse": ["browses", "browsed"],
+  "brush": ["brushes", "brushed"],
+  "burn": ["burns", "burned"],
+  "buy": ["buys", "bought"],
+  "calculate": ["calculates", "calculated"],
+  "call": ["calls", "called"],
+  "cancel": ["cancels", "canceled"],
+  "catch": ["catches", "caught"],
+  "change": ["changes", "changed"],
+  "charge": ["charges", "charged"],
+  "check": ["checks", "checked"],
+  "choose": ["chooses", "chose"],
+  "clean": ["cleans", "cleaned"],
+  "close": ["closes", "closed"],
+  "collapse": ["collapses", "collapsed"],
+  "collect": ["collects", "collected"],
+  "collide": ["collides", "collided"],
+  "come": ["comes", "came"],
+  "compare": ["compares", "compared"],
+  "complete": ["completes", "completed"],
+  "concentrate": ["concentrates", "concentrated"],
+  "confirm": ["confirms", "confirmed"],
+  "congratulate": ["congratulates", "congratulated"],
+  "contact": ["contacts", "contacted"],
+  "cook": ["cooks", "cooked"],
+  "cover": ["covers", "covered"],
+  "cross": ["crosses", "crossed"],
+  "cry": ["cries", "cried"],
+  "cut": ["cuts", "cut"],
+  "dance": ["dances", "danced"],
+  "date": ["dates", "dated"],
+  "decide": ["decides", "decided"],
+  "decrease": ["decreases", "decreased"],
+  "deliver": ["delivers", "delivered"],
+  "depart": ["departs", "departed"],
+  "develop": ["develops", "developed"],
+  "die": ["dies", "died"],
+  "disappear": ["disappears", "disappeared"],
+  "discover": ["discovers", "discovered"],
+  "dislike": ["dislikes", "disliked"],
+  "do": ["does", "did"],
+  "download": ["downloads", "downloaded"],
+  "draw": ["draws", "drew"],
+  "drink": ["drinks", "drank"],
+  "drive": ["drives", "drove"],
+  "eat": ["eats", "ate"],
+  "encounter": ["encounters", "encountered"],
+  "endure": ["endures", "endured"],
+  "enjoy": ["enjoys", "enjoyed"],
+  "enter": ["enters", "entered"],
+  "escape": ["escapes", "escaped"],
+  "exceed": ["exceeds", "exceeded"],
+  "exchange": ["exchanges", "exchanged"],
+  "exercise": ["exercises", "exercised"],
+  "exist": ["exists", "existed"],
+  "expect": ["expects", "expected"],
+  "explain": ["explains", "explained"],
+  "fail": ["fails", "failed"],
+  "fall": ["falls", "fell"],
+  "feel": ["feels", "felt"],
+  "fight": ["fights", "fought"],
+  "find": ["finds", "found"],
+  "finish": ["finishes", "finished"],
+  "fix": ["fixes", "fixed"],
+  "fold": ["folds", "folded"],
+  "follow": ["follows", "followed"],
+  "forget": ["forgets", "forgot"],
+  "forgive": ["forgives", "forgave"],
+  "gather": ["gathers", "gathered"],
+  "get": ["gets", "got"],
+  "give": ["gives", "gave"],
+  "go": ["goes", "went"],
+  "grab": ["grabs", "grabbed"],
+  "graduate": ["graduates", "graduated"],
+  "greet": ["greets", "greeted"],
+  "grill": ["grills", "grilled"],
+  "grow": ["grows", "grew"],
+  "hang": ["hangs", "hung"],
+  "have": ["has", "had"],
+  "hear": ["hears", "heard"],
+  "help": ["helps", "helped"],
+  "hide": ["hides", "hid"],
+  "hit": ["hits", "hit"],
+  "imagine": ["imagines", "imagined"],
+  "improve": ["improves", "improved"],
+  "include": ["includes", "included"],
+  "increase": ["increases", "increased"],
+  "install": ["installs", "installed"],
+  "introduce": ["introduces", "introduced"],
+  "invest": ["invests", "invested"],
+  "invite": ["invites", "invited"],
+  "keep": ["keeps", "kept"],
+  "know": ["knows", "knew"],
+  "laugh": ["laughs", "laughed"],
+  "learn": ["learns", "learned"],
+  "leave": ["leaves", "left"],
+  "lend": ["lends", "lent"],
+  "lie": ["lies", "lay"],
+  "lift": ["lifts", "lifted"],
+  "like": ["likes", "liked"],
+  "listen": ["listens", "listened"],
+  "live": ["lives", "lived"],
+  "log": ["logs", "logged"],
+  "look": ["looks", "looked"],
+  "lose": ["loses", "lost"],
+  "love": ["loves", "loved"],
+  "lower": ["lowers", "lowered"],
+  "make": ["makes", "made"],
+  "meet": ["meets", "met"],
+  "mix": ["mixes", "mixed"],
+  "move": ["moves", "moved"],
+  "obtain": ["obtains", "obtained"],
+  "open": ["opens", "opened"],
+  "order": ["orders", "ordered"],
+  "oversleep": ["oversleeps", "overslept"],
+  "pack": ["packs", "packed"],
+  "pass": ["passes", "passed"],
+  "pay": ["pays", "paid"],
+  "pile": ["piles", "piled"],
+  "play": ["plays", "played"],
+  "practice": ["practices", "practiced"],
+  "prepare": ["prepares", "prepared"],
+  "press": ["presses", "pressed"],
+  "pretend": ["pretends", "pretended"],
+  "produce": ["produces", "produced"],
+  "promise": ["promises", "promised"],
+  "protect": ["protects", "protected"],
+  "pull": ["pulls", "pulled"],
+  "push": ["pushes", "pushed"],
+  "put": ["puts", "put"],
+  "quit": ["quits", "quit"],
+  "rain": ["rains", "rained"],
+  "raise": ["raises", "raised"],
+  "read": ["reads", "read"],
+  "receive": ["receives", "received"],
+  "recommend": ["recommends", "recommended"],
+  "recover": ["recovers", "recovered"],
+  "reduce": ["reduces", "reduced"],
+  "refuse": ["refuses", "refused"],
+  "register": ["registers", "registered"],
+  "regret": ["regrets", "regretted"],
+  "remember": ["remembers", "remembered"],
+  "remove": ["removes", "removed"],
+  "repeat": ["repeats", "repeated"],
+  "research": ["researches", "researched"],
+  "reserve": ["reserves", "reserved"],
+  "rest": ["rests", "rested"],
+  "retire": ["retires", "retired"],
+  "ride": ["rides", "rode"],
+  "ring": ["rings", "rang"],
+  "rub": ["rubs", "rubbed"],
+  "run": ["runs", "ran"],
+  "save": ["saves", "saved"],
+  "search": ["searches", "searched"],
+  "see": ["sees", "saw"],
+  "sell": ["sells", "sold"],
+  "send": ["sends", "sent"],
+  "set": ["sets", "set"],
+  "shake": ["shakes", "shook"],
+  "share": ["shares", "shared"],
+  "shave": ["shaves", "shaved"],
+  "sing": ["sings", "sang"],
+  "sit": ["sits", "sat"],
+  "sleep": ["sleeps", "slept"],
+  "speak": ["speaks", "spoke"],
+  "stand": ["stands", "stood"],
+  "stare": ["stares", "stared"],
+  "start": ["starts", "started"],
+  "stop": ["stops", "stopped"],
+  "study": ["studies", "studied"],
+  "succeed": ["succeeds", "succeeded"],
+  "suit": ["suits", "suited"],
+  "sweat": ["sweats", "sweated"],
+  "swim": ["swims", "swam"],
+  "take": ["takes", "took"],
+  "talk": ["talks", "talked"],
+  "teach": ["teaches", "taught"],
+  "thank": ["thanks", "thanked"],
+  "think": ["thinks", "thought"],
+  "throw": ["throws", "threw"],
+  "tie": ["ties", "tied"],
+  "transfer": ["transfers", "transferred"],
+  "travel": ["travels", "traveled"],
+  "turn": ["turns", "turned"],
+  "understand": ["understands", "understood"],
+  "unfold": ["unfolds", "unfolded"],
+  "untie": ["unties", "untied"],
+  "upload": ["uploads", "uploaded"],
+  "use": ["uses", "used"],
+  "utilize": ["utilizes", "utilized"],
+  "visit": ["visits", "visited"],
+  "wait": ["waits", "waited"],
+  "wake": ["wakes", "woke"],
+  "walk": ["walks", "walked"],
+  "want": ["wants", "wanted"],
+  "wash": ["washes", "washed"],
+  "watch": ["watches", "watched"],
+  "wear": ["wears", "wore"],
+  "win": ["wins", "won"],
+  "wipe": ["wipes", "wiped"],
+  "work": ["works", "worked"],
+  "worry": ["worries", "worried"],
+  "wrap": ["wraps", "wrapped"],
+  "write": ["writes", "wrote"],
+};
+
+// Handles both verbs and the ~50 verb-category glosses phrased as "to be
+// X"/"to feel X" (놀라다 "to be surprised", 개운하다 "to feel refreshed")
+// the same way, plus the 2 negated glosses ("to not know"/"to not have")
+// and the one already-complete clause ("weather is nice"). Returns
+// { present, past } or null if the head verb isn't in EN_VERB_CONJ.
+function enClauses(en) {
+  // firstAlt (defined above, for the RO side) already handles a "/" or ","
+  // inside parentheses correctly ("to stop (rain/snow)" is one alternate,
+  // not two) — reuse it instead of a naive split that would cut mid-note.
+  const first = firstAlt(en).replace(/\s*\([^)]*\)\s*$/, '');
+  let m;
+  if ((m = first.match(/^to not (.+)$/))) return { present: `they don't ${m[1]}`, past: `they didn't ${m[1]}` };
+  if ((m = first.match(/^to feel (.+)$/))) return { present: `they feel ${m[1]}`, past: `they felt ${m[1]}` };
+  if ((m = first.match(/^to miss (.+)$/))) return { present: `they miss ${m[1]}`, past: `they missed ${m[1]}` };
+  if ((m = first.match(/^to be (.+)$/))) return { present: `they're ${m[1]}`, past: `they were ${m[1]}` };
+  // "to rain" has no personal subject in English ("it rains", never
+  // "they rain") — the only weather verb in the current vocab, so a single
+  // targeted exception beats a general impersonal-verb detector.
+  if (first === 'to rain') return { present: 'it rains', past: 'it rained' };
+  if ((m = first.match(/^to (.+)$/))) {
+    const parts = m[1].split(' ');
+    const head = parts[0];
+    let tail = parts.slice(1).join(' ').trim();
+    if (/^\([^)]*\)$/.test(tail)) tail = '';
+    const entry = EN_VERB_CONJ[head];
+    if (!entry) return null;
+    return { present: `they ${head}${tail ? ' ' + tail : ''}`, past: `they ${entry[1]}${tail ? ' ' + tail : ''}` };
+  }
+  if (/\bis\b/.test(first)) return { present: first, past: first.replace(/\bis\b/, 'was') };
+  return { present: `it's ${first}`, past: `it was ${first}` }; // bare adjective, e.g. "possible"
+}
 
 function buildGeneratedSense(v) {
   const associations = categoryFallbackAssociations(v);
@@ -1255,8 +1529,9 @@ function buildGeneratedSense(v) {
       // Vrea/Trebuie/E bine că frames below.
       const nowClause = isVerb ? roClause(v.ro, 'indic') : roAdjClause(v.ro, 'indic');
       const pastClause = isVerb ? roClause(v.ro, 'past') : roAdjClause(v.ro, 'past');
-      sentences.push({ ko:`지금 <b>${conj[0].form}</b>.`, ro: isRo?(nowClause?`Acum ${nowClause}.`:`Acum: ${v.ro}.`):`Right now: ${v.en}.`, level:'easy' });
-      sentences.push({ ko:`어제 <b>${conj[1].form}</b>.`, ro: isRo?(pastClause?`Ieri ${pastClause}.`:`Ieri: ${v.ro}.`):`Yesterday: ${v.en}.`, level:'easy' });
+      const enTense = enClauses(v.en);
+      sentences.push({ ko:`지금 <b>${conj[0].form}</b>.`, ro: isRo?(nowClause?`Acum ${nowClause}.`:`Acum: ${v.ro}.`):(enTense?`Right now, ${enTense.present}.`:`Right now: ${v.en}.`), level:'easy' });
+      sentences.push({ ko:`어제 <b>${conj[1].form}</b>.`, ro: isRo?(pastClause?`Ieri ${pastClause}.`:`Ieri: ${v.ro}.`):(enTense?`Yesterday, ${enTense.past}.`:`Yesterday: ${v.en}.`), level:'easy' });
       const { andForm, causeForm, mustForm } = verbAdjExtraForms(v.ko);
       if (isVerb) {
         // Real conjugation now, not a label workaround: "trebuie să: a se
@@ -1265,8 +1540,8 @@ function buildGeneratedSense(v) {
         // verb isn't in the table (shouldn't happen for the current 328
         // verbs — this is just a safety net against a future vocab add).
         const wantSubj = roClause(v.ro, 'subj'), wantIndic = roClause(v.ro, 'indic');
-        sentences.push({ ko:`<b>${andForm}</b> 싶어요.`, ro: isRo?(wantSubj?`Vrea ${wantSubj}.`:`Vrea: ${v.ro}.`):`Wants ${v.en}.`, level:'medium' });
-        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋았어요.`, ro: isRo?(wantIndic?`E bine că ${wantIndic}.`:`Bucuros: ${v.ro}.`):`Glad ${v.en}.`, level:'medium' });
+        sentences.push({ ko:`<b>${andForm}</b> 싶어요.`, ro: isRo?(wantSubj?`Vrea ${wantSubj}.`:`Vrea: ${v.ro}.`):`Wants ${enToForm(v.en)}.`, level:'medium' });
+        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋았어요.`, ro: isRo?(wantIndic?`E bine că ${wantIndic}.`:`Bucuros: ${v.ro}.`):`Glad ${enToForm(v.en)}.`, level:'medium' });
         if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?(wantSubj?`Trebuie ${wantSubj}.`:`Necesar: ${v.ro}.`):`Must ${enBareForm(v.en)}.`, level:'medium' });
       } else {
         // Same real-conjugation upgrade for adjectives — "fi" always
