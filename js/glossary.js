@@ -19,6 +19,7 @@ let WORDS        = [];
 let CLUSTERS     = [];
 let SENTENCES    = [];   // [{ko, ro, en}] din exercises.json
 let RAW_VOCAB_BY_KO = new Map(); // ko -> {ko, ro, en, categories}, pt. SentenceGenerator (are nevoie de categoriile brute, nu de categoriesRo/En din WORDS)
+let EXTRA_SENTENCES = {}; // ko -> propoziții scrise manual (pronume, 무료, 어느...) — verificat înaintea SentenceGenerator, la fel ca în Harta Cuvântului
 let daily        = [];
 let currentLang  = RKLang.get();
 let filterCat    = "";
@@ -484,6 +485,18 @@ function findExample(ko, max) {
 }
 
 function generatedExamples(ko, max) {
+  // Some words (pronouns like 나/너/저, plus 무료/어느...) can't be produced
+  // correctly by the mechanical generator — Harta Cuvântului already skips
+  // straight to these hand-written overrides for them; this fallback needs
+  // the same check, or it silently regresses to the generic template
+  // ("이것은 너예요." -> "Asta e tu." instead of "Tu ești student?").
+  if (EXTRA_SENTENCES[ko]) {
+    return EXTRA_SENTENCES[ko].slice(0, max || 2).map(x => ({
+      ko: x.ko.replace(/<\/?b>/g, ''),
+      ro: x.ro,
+      en: x.en
+    }));
+  }
   if (!window.SentenceGenerator) return [];
   const v = RAW_VOCAB_BY_KO.get(ko);
   if (!v) return [];
@@ -719,16 +732,18 @@ async function loadVocabulary() {
     `</div>`;
 
   try {
-    const [vocabRes, clustersRes, exRes] = await Promise.all([
+    const [vocabRes, clustersRes, exRes, extraRes] = await Promise.all([
       fetch("./data/vocab-korean.json"),
       fetch("./data/word-clusters.json"),
-      fetch("./data/exercises.json")
+      fetch("./data/exercises.json"),
+      fetch("./data/extra-generated-sentences.json")
     ]);
     if (!vocabRes.ok) throw new Error("HTTP " + vocabRes.status);
     const vocab = await vocabRes.json();
     WORDS = buildWords(vocab);
     RAW_VOCAB_BY_KO = new Map(vocab.map(v => [v.ko, v]));
     if (clustersRes.ok) CLUSTERS = await clustersRes.json();
+    if (extraRes.ok) EXTRA_SENTENCES = await extraRes.json();
     if (exRes.ok) {
       const ex = await exRes.json();
       SENTENCES = [];
