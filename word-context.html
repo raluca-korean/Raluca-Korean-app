@@ -1546,12 +1546,19 @@ function buildGeneratedSense(v) {
       } else {
         // Same real-conjugation upgrade for adjectives — "fi" always
         // conjugates to "e"/"fie" regardless of which adjective follows, so
-        // this needs no per-word table, just roAdjClause() above. andForm
-        // was still "Și: interesant." (a label, not a sentence translating
-        // "재미있고 좋아요") — same fix as the other three frames.
+        // this needs no per-word table, just roAdjClause() above.
+        //
+        // andForm/causeForm used to end in "좋아요" ("...and it's good" /
+        // "glad that...") — nonsensical for any negative-valence adjective
+        // ("억울하고 좋아요" = "wronged, and that's good"; same for sad,
+        // scared, embarrassed, annoyed, tired, bored... 23+ words). "그래요"
+        // ("...and that's how it is" / "...that's why") is a genuinely
+        // idiomatic Korean filler that works after ANY adjective regardless
+        // of valence, so the sentence stops asserting something false.
         const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-        sentences.push({ ko:`<b>${andForm}</b> 좋아요.`, ro: isRo?`${cap(roAdjClause(v.ro,'indic'))} și e bine.`:`Nice ${enToForm(v.en)}.`, level:'medium' });
-        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋아요.`, ro: isRo?`E bine că ${roAdjClause(v.ro,'indic')}.`:`Glad ${enToForm(v.en)}.`, level:'medium' });
+        const enPresent = enClauses(v.en)?.present ?? enBareForm(v.en);
+        sentences.push({ ko:`<b>${andForm}</b> 그래요.`, ro: isRo?`Da, ${roAdjClause(v.ro,'indic')}.`:`Yeah, ${enPresent}.`, level:'medium' });
+        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 그래요.`, ro: isRo?`${cap(roAdjClause(v.ro,'indic'))}, de-aia.`:`${cap(enPresent)}, that's why.`, level:'medium' });
         if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Trebuie ${roAdjClause(v.ro,'subj')}.`:`Must ${enBareForm(v.en)}.`, level:'medium' });
       }
       // Copula-pattern stems (or any edge case with no cause/must form) still
