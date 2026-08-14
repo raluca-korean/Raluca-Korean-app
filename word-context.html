@@ -903,6 +903,326 @@ function categoryFallbackAssociations(v) {
   ] : [];
 }
 
+// ── Romanian subjunctive/indicative conjugation for "Vrea să:"/"Trebuie
+// să:"/"E bine că:" sentences ──────────────────────────────────────────
+// v.ro is stored as an infinitive gloss ("a se spăla", "a analiza"), which
+// can't just be pasted after "să"/"trebuie" (that needs a conjugated verb,
+// not another infinitive — "trebuie să: a se spăla" reads "must to: to
+// wash"). RO_VERB_CONJ is a hand-built table of [indicative 3sg,
+// subjunctive 3sg] for every distinct verb behind these 328 glosses, so
+// "a se spăla" -> "trebuie să se spele" instead.
+const RO_VERB_CONJ = {
+  "absolvi": ["absolvă", "absolve"],
+  "acoperi": ["acoperă", "acopere"],
+  "adormi": ["adoarme", "adoarmă"],
+  "aduce": ["aduce", "aducă"],
+  "aduna": ["adună", "adune"],
+  "agăța": ["agață", "agațe"],
+  "ajunge": ["ajunge", "ajungă"],
+  "ajuta": ["ajută", "ajute"],
+  "alege": ["alege", "aleagă"],
+  "alerga": ["aleargă", "alerge"],
+  "amesteca": ["amestecă", "amestece"],
+  "aminti": ["amintește", "amintească"],
+  "analiza": ["analizează", "analizeze"],
+  "anula": ["anulează", "anuleze"],
+  "aplica": ["aplică", "aplice"],
+  "aprinde": ["aprinde", "aprindă"],
+  "apropia": ["apropie", "apropie"],
+  "apuca": ["apucă", "apuce"],
+  "apărea": ["apare", "apară"],
+  "apăsa": ["apasă", "apese"],
+  "arde": ["arde", "ardă"],
+  "arunca": ["aruncă", "arunce"],
+  "asculta": ["ascultă", "asculte"],
+  "ascunde": ["ascunde", "ascundă"],
+  "autentifica": ["autentifică", "autentifice"],
+  "auzi": ["aude", "audă"],
+  "avansa": ["avansează", "avanseze"],
+  "avea": ["are", "aibă"],
+  "așeza": ["așază", "așeze"],
+  "aștepta": ["așteaptă", "aștepte"],
+  "bea": ["bea", "bea"],
+  "bucura": ["bucură", "bucure"],
+  "bărbieri": ["bărbierește", "bărbierească"],
+  "calcula": ["calculează", "calculeze"],
+  "cerceta": ["cercetează", "cerceteze"],
+  "cere": ["cere", "ceară"],
+  "certa": ["ceartă", "certe"],
+  "ciocni": ["ciocnește", "ciocnească"],
+  "citi": ["citește", "citească"],
+  "coborî": ["coboară", "coboare"],
+  "comanda": ["comandă", "comande"],
+  "compara": ["compară", "compare"],
+  "concentra": ["concentrează", "concentreze"],
+  "conduce": ["conduce", "conducă"],
+  "contacta": ["contactează", "contacteze"],
+  "continua": ["continuă", "continue"],
+  "crede": ["crede", "creadă"],
+  "crește": ["crește", "crească"],
+  "culca": ["culcă", "culce"],
+  "cumpăra": ["cumpără", "cumpere"],
+  "cânta": ["cântă", "cânte"],
+  "câștiga": ["câștigă", "câștige"],
+  "cădea": ["cade", "cadă"],
+  "călători": ["călătorește", "călătorească"],
+  "căsători": ["căsătorește", "căsătorească"],
+  "căuta": ["caută", "caute"],
+  "da": ["dă", "dea"],
+  "dansa": ["dansează", "danseze"],
+  "decide": ["decide", "decidă"],
+  "deconecta": ["deconectează", "deconecteze"],
+  "demisiona": ["demisionează", "demisioneze"],
+  "depăși": ["depășește", "depășească"],
+  "deschide": ["deschide", "deschidă"],
+  "descoperi": ["descoperă", "descopere"],
+  "descărca": ["descarcă", "descarce"],
+  "desena": ["desenează", "deseneze"],
+  "desface": ["desface", "desfacă"],
+  "despărți": ["desparte", "despartă"],
+  "deveni": ["devine", "devină"],
+  "dezbrăca": ["dezbracă", "dezbrace"],
+  "dezlega": ["dezleagă", "dezlege"],
+  "dezvolta": ["dezvoltă", "dezvolte"],
+  "dispărea": ["dispare", "dispară"],
+  "divorța": ["divorțează", "divorțeze"],
+  "dori": ["dorește", "dorească"],
+  "dormi": ["doarme", "doarmă"],
+  "economisi": ["economisește", "economisească"],
+  "epuiza": ["epuizează", "epuizeze"],
+  "exersa": ["exersează", "exerseze"],
+  "exista": ["există", "existe"],
+  "explica": ["explică", "explice"],
+  "eșua": ["eșuează", "eșueze"],
+  "face": ["face", "facă"],
+  "felicita": ["felicită", "felicite"],
+  "fi": ["e", "fie"],
+  "fierbe": ["fierbe", "fiarbă"],
+  "finaliza": ["finalizează", "finalizeze"],
+  "folosi": ["folosește", "folosească"],
+  "fotografia": ["fotografiază", "fotografieze"],
+  "freca": ["freacă", "frece"],
+  "frecventa": ["frecventează", "frecventeze"],
+  "frământa": ["frământă", "frământe"],
+  "gândi": ["gândește", "gândească"],
+  "găsi": ["găsește", "găsească"],
+  "găti": ["gătește", "gătească"],
+  "ierta": ["iartă", "ierte"],
+  "ieși": ["iese", "iasă"],
+  "imagina": ["imaginează", "imagineze"],
+  "include": ["include", "includă"],
+  "instala": ["instalează", "instaleze"],
+  "intra": ["intră", "intre"],
+  "investi": ["investește", "investească"],
+  "invita": ["invită", "invite"],
+  "iubi": ["iubește", "iubească"],
+  "juca": ["joacă", "joace"],
+  "lega": ["leagă", "lege"],
+  "liniști": ["liniștește", "liniștească"],
+  "livra": ["livrează", "livreze"],
+  "lovi": ["lovește", "lovească"],
+  "lua": ["ia", "ia"],
+  "lăsa": ["lasă", "lase"],
+  "machia": ["machiază", "machieze"],
+  "merge": ["merge", "meargă"],
+  "mulțumi": ["mulțumește", "mulțumească"],
+  "munci": ["muncește", "muncească"],
+  "muri": ["moare", "moară"],
+  "muta": ["mută", "mute"],
+  "mânca": ["mănâncă", "mănânce"],
+  "mări": ["mărește", "mărească"],
+  "naște": ["naște", "nască"],
+  "obține": ["obține", "obțină"],
+  "odihni": ["odihnește", "odihnească"],
+  "opri": ["oprește", "oprească"],
+  "participa": ["participă", "participe"],
+  "pensiona": ["pensionează", "pensioneze"],
+  "permite": ["permite", "permită"],
+  "pierde": ["pierde", "piardă"],
+  "pleca": ["pleacă", "plece"],
+  "plimba": ["plimbă", "plimbe"],
+  "ploua": ["plouă", "plouă"],
+  "plânge": ["plânge", "plângă"],
+  "plăcea": ["place", "placă"],
+  "plăti": ["plătește", "plătească"],
+  "potrivi": ["potrivește", "potrivească"],
+  "preda": ["predă", "predea"],
+  "preface": ["preface", "prefacă"],
+  "pregăti": ["pregătește", "pregătească"],
+  "prelua": ["preia", "preia"],
+  "prevedea": ["prevede", "prevadă"],
+  "prezenta": ["prezintă", "prezinte"],
+  "primi": ["primește", "primească"],
+  "produce": ["produce", "producă"],
+  "promite": ["promite", "promită"],
+  "proteja": ["protejează", "protejeze"],
+  "prăji": ["prăjește", "prăjească"],
+  "pune": ["pune", "pună"],
+  "purta": ["poartă", "poarte"],
+  "recomanda": ["recomandă", "recomande"],
+  "recupera": ["recuperează", "recupereze"],
+  "reduce": ["reduce", "reducă"],
+  "refuza": ["refuză", "refuze"],
+  "regreta": ["regretă", "regrete"],
+  "renunța": ["renunță", "renunțe"],
+  "repara": ["repară", "repare"],
+  "repeta": ["repetă", "repete"],
+  "respecta": ["respectă", "respecte"],
+  "reuși": ["reușește", "reușească"],
+  "rezerva": ["rezervă", "rezerve"],
+  "ridica": ["ridică", "ridice"],
+  "ruga": ["roagă", "roage"],
+  "râde": ["râde", "râdă"],
+  "răni": ["rănește", "rănească"],
+  "răsfoi": ["răsfoiește", "răsfoiască"],
+  "răspunde": ["răspunde", "răspundă"],
+  "saluta": ["salută", "salute"],
+  "salva": ["salvează", "salveze"],
+  "schimba": ["schimbă", "schimbe"],
+  "scoate": ["scoate", "scoată"],
+  "scrie": ["scrie", "scrie"],
+  "scutura": ["scutură", "scuture"],
+  "scădea": ["scade", "scadă"],
+  "scăpa": ["scapă", "scape"],
+  "seta": ["setează", "seteze"],
+  "simți": ["simte", "simtă"],
+  "speria": ["sperie", "sperie"],
+  "spăla": ["spală", "spele"],
+  "sta": ["stă", "stea"],
+  "stinge": ["stinge", "stingă"],
+  "strica": ["strică", "strice"],
+  "studia": ["studiază", "studieze"],
+  "suna": ["sună", "sune"],
+  "supăra": ["supără", "supere"],
+  "telefona": ["telefonează", "telefoneze"],
+  "termina": ["termină", "termine"],
+  "trage": ["trage", "tragă"],
+  "transpira": ["transpiră", "transpire"],
+  "traversa": ["traversează", "traverseze"],
+  "trece": ["trece", "treacă"],
+  "trezi": ["trezește", "trezească"],
+  "trimite": ["trimite", "trimită"],
+  "trăi": ["trăiește", "trăiască"],
+  "tăia": ["taie", "taie"],
+  "uita": ["uită", "uite"],
+  "urca": ["urcă", "urce"],
+  "urma": ["urmează", "urmeze"],
+  "utiliza": ["utilizează", "utilizeze"],
+  "vedea": ["vede", "vadă"],
+  "veni": ["vine", "vină"],
+  "verifica": ["verifică", "verifice"],
+  "vinde": ["vinde", "vândă"],
+  "viziona": ["vizionează", "vizioneze"],
+  "vizita": ["vizitează", "viziteze"],
+  "vorbi": ["vorbește", "vorbească"],
+  "îmbolnăvi": ["îmbolnăvește", "îmbolnăvească"],
+  "îmbrăca": ["îmbracă", "îmbrace"],
+  "îmbunătăți": ["îmbunătățește", "îmbunătățească"],
+  "împacheta": ["împachetează", "împacheteze"],
+  "împinge": ["împinge", "împingă"],
+  "împrieteni": ["împrietenește", "împrietenească"],
+  "împrumuta": ["împrumută", "împrumute"],
+  "împăca": ["împacă", "împace"],
+  "împărți": ["împarte", "împartă"],
+  "împături": ["împăturește", "împăturească"],
+  "începe": ["începe", "înceapă"],
+  "încerca": ["încearcă", "încerce"],
+  "închide": ["închide", "închidă"],
+  "încălța": ["încalță", "încalțe"],
+  "încărca": ["încarcă", "încarce"],
+  "îndura": ["îndură", "îndure"],
+  "îngriji": ["îngrijește", "îngrijească"],
+  "înota": ["înoată", "înoate"],
+  "înregistra": ["înregistrează", "înregistreze"],
+  "înrăutăți": ["înrăutățește", "înrăutățească"],
+  "întoarce": ["întoarce", "întoarcă"],
+  "întreba": ["întreabă", "întrebe"],
+  "întâlni": ["întâlnește", "întâlnească"],
+  "învăța": ["învață", "învețe"],
+  "înțelege": ["înțelege", "înțeleagă"],
+  "șterge": ["șterge", "șteargă"],
+  "ști": ["știe", "știe"],
+};
+
+// First "a X, a Y" / "a X / a Y" alternate, WITHOUT splitting on a comma or
+// slash that's inside parentheses — "a se opri (ploaia/ninsoarea)" has only
+// one alternate; the "/" there separates two nouns inside a usage note, not
+// two different meanings, so a naive split(',|/') would truncate mid-
+// parenthesis ("a se opri (ploaia").
+function firstAlt(ro) {
+  let depth = 0;
+  for (let i = 0; i < ro.length; i++) {
+    const c = ro[i];
+    if (c === '(') depth++;
+    else if (c === ')') depth--;
+    else if ((c === ',' || c === '/') && depth === 0) return ro.slice(0, i).trim();
+  }
+  return ro.trim();
+}
+
+// Splits a RO verb gloss into its grammatical marker (reflexive/dative/
+// negation), head verb (the word to conjugate) and any trailing object
+// phrase ("a aduce cuiva" -> head "aduce", tail "cuiva"). Only the first
+// alternate before a comma/slash is used — a single sentence can't
+// represent two different meanings at once.
+function parseRoVerbGloss(ro) {
+  const first = firstAlt(ro);
+  const markers = [[/^a nu-i /, 'nu-i'], [/^a nu /, 'nu'], [/^a-ți /, 'ți'], [/^a-și /, 'și'], [/^a-i /, 'i'], [/^a se /, 'se'], [/^a /, null]];
+  let marker = undefined, rest = first;
+  for (const [re, m] of markers) {
+    if (re.test(first)) { rest = first.replace(re, ''); marker = m; break; }
+  }
+  if (marker === undefined) return null; // doesn't start with "a " at all
+  const parts = rest.split(' ');
+  const head = parts[0];
+  let tail = parts.slice(1).join(' ').trim();
+  // A trailing standalone parenthetical ("(onorific)", "(online)") is a
+  // usage note, not an object — drop it rather than gluing it into a
+  // sentence ("...să mănânce (onorific)." would look broken).
+  if (/^\(.*\)$/.test(tail)) tail = '';
+  return { marker, head, tail };
+}
+
+// mood: 'subj' for "Vrea"/"Trebuie" (needs "să ..."), 'indic' for "E bine
+// că ..." (no "să"). Returns null if the head verb isn't in RO_VERB_CONJ,
+// so callers can fall back to the safe label style instead of guessing.
+function roClause(ro, mood) {
+  const parsed = parseRoVerbGloss(ro);
+  if (!parsed) return null;
+  const { marker, head, tail } = parsed;
+  const entry = RO_VERB_CONJ[head];
+  if (!entry) return null;
+  const form = mood === 'subj' ? entry[1] : entry[0];
+  const suffix = tail ? ' ' + tail : '';
+  const prefix = mood === 'subj'
+    ? { 'se':'să se ', 'și':'să-și ', 'i':'să-i ', 'ți':'să-ți ', 'nu':'să nu ', 'nu-i':'să nu-i ' }[marker] || 'să '
+    : { 'se':'se ', 'și':'își ', 'i':'îi ', 'ți':'îți ', 'nu':'nu ', 'nu-i':'nu-i ' }[marker] || '';
+  return prefix + form + suffix;
+}
+
+// Same idea for the ~99 "a fi X"/"a se simți X"/"a-i fi X" adjective
+// glosses — "fi" only ever conjugates to "e"/"fie" regardless of which
+// adjective follows, so this needs no per-word lookup table at all.
+function roAdjClause(ro, mood) {
+  // Drop a trailing usage note ("(la întâlnire)", "(politicos)") — it reads
+  // fine as an aside on a label, but glued onto a full sentence it looks
+  // like a stray fragment: "E bine că e bucuros (la întâlnire)."
+  const first = firstAlt(ro).replace(/\s*\([^)]*\)\s*$/, '');
+  let m;
+  if ((m = first.match(/^a se simți (.+)$/))) return (mood === 'subj' ? 'să se simtă ' : 'se simte ') + m[1];
+  if ((m = first.match(/^a-i fi (.+)$/))) return (mood === 'subj' ? 'să-i fie ' : 'îi e ') + m[1];
+  if ((m = first.match(/^a-i părea (.+)$/))) return (mood === 'subj' ? 'să-i pară ' : 'îi pare ') + m[1];
+  if ((m = first.match(/^a fi (.+)$/))) return (mood === 'subj' ? 'să fie ' : 'e ') + m[1];
+  return (mood === 'subj' ? 'să fie ' : 'e ') + first; // bare adjective, e.g. "obosit"
+}
+
+// English needs no lookup table — "must"/"to be" only care about the bare
+// form, and v.en/v.ro are always stored with their own "to "/"a " marker
+// already, so plain string surgery is enough (unlike Romanian's
+// person-and-verb-specific subjunctive).
+function enBareForm(en) { return en.startsWith('to ') ? en.slice(3) : 'be ' + en; }
+function enToForm(en) { return en.startsWith('to ') ? en : 'to be ' + en; }
+
 function buildGeneratedSense(v) {
   const associations = categoryFallbackAssociations(v);
   const isRo = cLang === 'ro';
@@ -918,24 +1238,22 @@ function buildGeneratedSense(v) {
       sentences.push({ ko:`어제 <b>${conj[1].form}</b>.`, ro: isRo?`Ieri: ${v.ro}.`:`Yesterday: ${v.en}.`, level:'easy' });
       const { andForm, causeForm, mustForm } = verbAdjExtraForms(v.ko);
       if (isVerb) {
-        // v.ro/v.en already carry their own infinitive marker ("a spăla",
-        // "to wash"), so labels needing a finite clause ("Vrea să" wants a
-        // subjunctive, not an infinitive) produced doubled-up nonsense like
-        // "Trebuie să: a se spăla." ("Must to: to wash."). Neutral noun-style
-        // labels (no "să"/"that") pair with the infinitive gloss cleanly,
-        // same trick as the noun frames' "Recomand: X".
-        sentences.push({ ko:`<b>${andForm}</b> 싶어요.`, ro: isRo?`Vrea: ${v.ro}.`:`Wants: ${v.en}.`, level:'medium' });
-        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋았어요.`, ro: isRo?`Bucuros: ${v.ro}.`:`Glad: ${v.en}.`, level:'medium' });
-        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Necesar: ${v.ro}.`:`Necessary: ${v.en}.`, level:'medium' });
+        // Real conjugation now, not a label workaround: "trebuie să: a se
+        // spăla" -> "trebuie să se spele", using RO_VERB_CONJ + roClause()
+        // above. Falls back to the old neutral-label style only if the head
+        // verb isn't in the table (shouldn't happen for the current 328
+        // verbs — this is just a safety net against a future vocab add).
+        const wantSubj = roClause(v.ro, 'subj'), wantIndic = roClause(v.ro, 'indic');
+        sentences.push({ ko:`<b>${andForm}</b> 싶어요.`, ro: isRo?(wantSubj?`Vrea ${wantSubj}.`:`Vrea: ${v.ro}.`):`Wants ${v.en}.`, level:'medium' });
+        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋았어요.`, ro: isRo?(wantIndic?`E bine că ${wantIndic}.`:`Bucuros: ${v.ro}.`):`Glad ${v.en}.`, level:'medium' });
+        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?(wantSubj?`Trebuie ${wantSubj}.`:`Necesar: ${v.ro}.`):`Must ${enBareForm(v.en)}.`, level:'medium' });
       } else {
-        // Same fix as the verb branch above — 99 of the 169 conjugable
-        // adjectives are also glossed as an infinitive ("a fi leneș", "to be
-        // lazy"), so "Trebuie să fie: a fi leneș." doubled up into "Must be:
-        // to be lazy." Neutral labels work for both the "a fi X" and bare
-        // ("obosit") gloss styles.
+        // Same real-conjugation upgrade for adjectives — "fi" always
+        // conjugates to "e"/"fie" regardless of which adjective follows, so
+        // this needs no per-word table, just roAdjClause() above.
         sentences.push({ ko:`<b>${andForm}</b> 좋아요.`, ro: isRo?`Și: ${v.ro}.`:`And: ${v.en}.`, level:'medium' });
-        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋아요.`, ro: isRo?`Bucuros: ${v.ro}.`:`Glad: ${v.en}.`, level:'medium' });
-        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Necesar: ${v.ro}.`:`Necessary: ${v.en}.`, level:'medium' });
+        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋아요.`, ro: isRo?`E bine că ${roAdjClause(v.ro,'indic')}.`:`Glad ${enToForm(v.en)}.`, level:'medium' });
+        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Trebuie ${roAdjClause(v.ro,'subj')}.`:`Must ${enBareForm(v.en)}.`, level:'medium' });
       }
       // Copula-pattern stems (or any edge case with no cause/must form) still
       // need to reach 5 — fill the gap with two more tense-based sentences
