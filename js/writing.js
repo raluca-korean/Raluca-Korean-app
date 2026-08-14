@@ -345,11 +345,6 @@ function updateTarget() {
   }
 }
 
-function replayStrokes() {
-  const item = pool[idx];
-  if (item) animateStrokes(item.char, "wStrokeArrows");
-}
-
 function speakKo(char) {
   if (!("speechSynthesis" in window)) return;
   const u = new SpeechSynthesisUtterance(char);

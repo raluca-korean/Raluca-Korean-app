@@ -15,11 +15,6 @@
     return 'Notification' in window && 'serviceWorker' in navigator;
   }
 
-  function getPermission() {
-    if (!isSupported()) return 'unsupported';
-    return Notification.permission;
-  }
-
   function registerPeriodicSync(reg) {
     if (!('periodicSync' in reg)) return Promise.resolve();
     return reg.periodicSync.register('rk-daily-reminder', {
@@ -96,5 +91,5 @@
     }
   }
 
-  window.RKNotifications = { isSupported, getPermission, request, syncStudy, renderToggle };
+  window.RKNotifications = { isSupported, request, syncStudy, renderToggle };
 })(window);

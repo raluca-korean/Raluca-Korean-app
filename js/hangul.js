@@ -444,8 +444,6 @@ let visitedChars = new Set();
 
 // Quiz state
 let qDeck = [], qIdx = 0, qCorrect = 0, qTotal = 0, qStreak = 0, qAnswered = false;
-// Write state
-let wDrawing = false, wLastX = 0, wLastY = 0;
 
 // ── AUDIO ─────────────────────────────────────────────────────
 function speakKo(text) {
@@ -898,89 +896,10 @@ function buildSylPanel() {
 }
 
 // animateStrokes → js/stroke-order.js
-
-// ── WRITING RITUAL ────────────────────────────────────────────
-function renderStrokes(char) {
-  const svg    = document.getElementById('mWriteArrows');
-  const data   = SD[char];
-  if (!data || !data.length) { svg.innerHTML = ''; return; }
-  // Resolve colors without CSS variables (SVG attributes don't reliably support them)
-  const isDark = document.body.classList.contains('dark-mode');
-  const stroke = isDark ? '#F472B6' : '#DB2777';
-  const badge  = isDark ? '#818CF8' : '#3730A3';
-  const AID    = 'wArrow2';
-  let h = `<defs><marker id="${AID}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-    <polygon points="0 0,8 3,0 6" fill="${stroke}" opacity=".9"/>
-  </marker></defs>`;
-  data.forEach(s => {
-    if (s.circle) {
-      h += `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}"
-        fill="none" stroke="${stroke}" stroke-width="2.5"
-        stroke-dasharray="6 3" opacity=".70"/>`;
-      h += `<line x1="${s.cx}" y1="${s.cy-s.r}" x2="${s.cx+1}" y2="${s.cy-s.r}"
-        stroke="${stroke}" stroke-width="2" marker-end="url(#${AID})" opacity=".9"/>`;
-      h += numCircle(s.cx, s.cy - s.r - 14, s.n, badge);
-    } else {
-      const [x1,y1] = s.p[0], [x2,y2] = s.p[s.p.length-1];
-      if (s.p.length === 2) {
-        h += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
-          stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"
-          marker-end="url(#${AID})" opacity=".72"/>`;
-      } else {
-        const d = s.p.map((p,i) => `${i?'L':'M'}${p[0]},${p[1]}`).join(' ');
-        h += `<path d="${d}" fill="none" stroke="${stroke}"
-          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-          marker-end="url(#${AID})" opacity=".72"/>`;
-      }
-      h += numCircle(x1, y1, s.n, badge);
-    }
-  });
-  svg.innerHTML = h;
-}
 // numCircle → js/stroke-order.js
 function clearBoard() {
   const c = document.getElementById('wCanvas');
   if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
-}
-function initBoard() {
-  const canvas    = document.getElementById('wCanvas');
-  const ctx       = canvas.getContext('2d');
-  // Canvas cannot resolve CSS custom properties — use computed fallback
-  const drawColor = document.body.classList.contains('dark-mode') ? '#F472B6' : '#DB2777';
-  ctx.strokeStyle = drawColor;
-  ctx.lineWidth   = 9;
-  ctx.lineCap     = 'round';
-  ctx.lineJoin    = 'round';
-  function pos(e) {
-    const r  = canvas.getBoundingClientRect();
-    const sx = canvas.width / r.width, sy = canvas.height / r.height;
-    return [(e.clientX - r.left)*sx, (e.clientY - r.top)*sy];
-  }
-  canvas.onpointerdown = e => {
-    canvas.setPointerCapture(e.pointerId);
-    wDrawing = true;
-    [wLastX, wLastY] = pos(e);
-    ctx.beginPath(); ctx.arc(wLastX, wLastY, 4.5, 0, Math.PI*2);
-    ctx.fillStyle = drawColor; ctx.fill();
-  };
-  canvas.onpointermove = e => {
-    if (!wDrawing) return;
-    const [x,y] = pos(e);
-    ctx.beginPath(); ctx.moveTo(wLastX, wLastY); ctx.lineTo(x,y); ctx.stroke();
-    [wLastX, wLastY] = [x, y];
-  };
-  canvas.onpointerup = canvas.onpointercancel = () => { wDrawing = false; };
-}
-function openWriting(item) {
-  currentItem = item;
-  document.getElementById('mrsWriteChar').textContent = item.char;
-  document.getElementById('mrsWriteRom').textContent  = item.rom;
-  document.getElementById('mrsWriteGuide').textContent= item.char;
-  document.getElementById('mrsWriteHint').textContent = T[lang].writeHint;
-  animateStrokes(item.char);
-  clearBoard();
-  initBoard();
-  document.getElementById('mrsWriteOverlay').classList.add('open');
 }
 
 // ── LANGUAGE ──────────────────────────────────────────────────

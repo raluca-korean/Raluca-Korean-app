@@ -367,18 +367,6 @@ function updateLevelButtons(){
 }
 
 
-function modeLabel(type){
-  if(type === "ko-ro")        return t("modeKoRo");
-  if(type === "particle")     return t("modeParticle");
-  if(type === "particlePlus") return t("modeParticlePlus");
-  if(type === "conjug")       return t("modeConjug");
-  if(type === "puzzle")       return t("modePuzzle");
-  if(type === "chain")        return t("modeChain");
-  if(type === "drill-conjug") return t("modeDrillConjug");
-  if(type === "drill-ext")    return t("modeDrillExt");
-  return t("modeRoKo");
-}
-
 function updateStaticTexts(){
   pageTitleEl.textContent = t("title");
   pageSubtitleEl.textContent = t("subtitle");
