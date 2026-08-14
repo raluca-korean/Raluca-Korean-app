@@ -487,9 +487,21 @@ function conjugate(ro) {
   // no marker (plain verb), or 'i'/'ți'/'nu-i' (dative-experiencer —
   // no natural 6-person subject form; return the bare head-verb paradigm
   // and let the caller decide whether/how to use it).
-  const present = pres.map(f => f + suffix);
-  const viitor = VIITOR_AUX.map(v => v + ' ' + head + suffix);
-  const trecut = part ? AUX_AVEA.map(a => a + ' ' + part + suffix) : null;
+  // "a fi X" glosses ("a fi emoționat") use "fi" as a copula with X as a
+  // predicate ADJECTIVE, not a fixed participle — unlike a real perfect-
+  // compus participle, X must agree in number with a plural subject
+  // ("suntem emoționați", not "suntem emoționat"). Best-effort pluralize a
+  // single-word adjective tail for the 3 plural persons only.
+  const suffixes = [suffix, suffix, suffix, suffix, suffix, suffix];
+  if (head === 'fi' && /^[a-zA-ZăâîșțĂÂÎȘȚ]+$/.test(tail)) {
+    const plural = tail.endsWith('t') ? tail.slice(0, -1) + 'ți'
+      : tail.endsWith('d') ? tail.slice(0, -1) + 'zi'
+      : null;
+    if (plural) { suffixes[3] = suffixes[4] = suffixes[5] = ' ' + plural; }
+  }
+  const present = pres.map((f, i) => f + suffixes[i]);
+  const viitor = VIITOR_AUX.map((v, i) => v + ' ' + head + suffixes[i]);
+  const trecut = part ? AUX_AVEA.map((a, i) => a + ' ' + part + suffixes[i]) : null;
   return { present, trecut, viitor };
 }
 
