@@ -46,6 +46,18 @@ window.Conjugation = {
     return word.slice(0, -1) + String.fromCharCode(44032 + base + 8);
   },
 
+  // ㄹ-irregular: drop a ㄹ batchim before endings starting with ㄴ (-니까,
+  // attributive -는) — e.g. 만들다 → 만드니까/만드는데, not 만들니까/만들는데.
+  // No-op for any other stem (including no-batchim and other-batchim ones).
+  dropRieul(stem){
+    if(!stem) return stem;
+    const code = stem.charCodeAt(stem.length - 1);
+    if(code < 44032 || code > 55203) return stem;
+    const base = code - 44032;
+    if(base % 28 !== 8) return stem;
+    return stem.slice(0, -1) + String.fromCharCode(code - 8);
+  },
+
   // Fuse ㅆ (jong=20) into last syllable (only when no existing batchim)
   addBatchimSS(word){
     if(!word) return word;
@@ -208,9 +220,9 @@ window.Conjugation = {
       case "-고 나서":               return stem + "고 나서";
       case "-기 전에":               return stem + "기 전에";
       case "-(으)면서":              return this.euOrNot(stem) ? stem + "으면서" : stem + "면서";
-      case "-(으)니까":              return this.euOrNot(stem) ? stem + "으니까" : stem + "니까";
+      case "-(으)니까":              return this.euOrNot(stem) ? stem + "으니까" : this.dropRieul(stem) + "니까";
       // Action verbs always use -는데; -(으)ㄴ데 is for adjectives (not in builder DATA)
-      case "-(으)ㄴ/는데":           return stem + "는데";
+      case "-(으)ㄴ/는데":           return this.dropRieul(stem) + "는데";
       case "-지만":                  return stem + "지만";
       case "-아/어도":               return this.aeo(verb) + "도";
       case "-아/어서":               return this.aeo(verb) + "서";
@@ -226,9 +238,9 @@ window.Conjugation = {
       // TOPIK 3
       case "-자마자":               return stem + "자마자";
       case "-다가":                 return stem + "다가";
-      case "-는 동안":              return stem + "는 동안";
-      case "-는 대신에":            return stem + "는 대신에";
-      case "-(으)ㄴ/는데도":        return stem + "는데도";
+      case "-는 동안":              return this.dropRieul(stem) + "는 동안";
+      case "-는 대신에":            return this.dropRieul(stem) + "는 대신에";
+      case "-(으)ㄴ/는데도":        return this.dropRieul(stem) + "는데도";
       case "-(으)ㄹ수록": {
         const d5 = this.decompose(stem.at(-1));
         if(!d5 || d5.jong === 0) return this.addBatchimR(stem) + "수록";
@@ -243,7 +255,7 @@ window.Conjugation = {
         if(d3 && d3.jong !== 0 && d3.jong !== 8) return stem + "으므로";
         return stem + "므로";
       }
-      case "-(으)ㄴ/는 반면에":     return stem + "는 반면에";
+      case "-(으)ㄴ/는 반면에":     return this.dropRieul(stem) + "는 반면에";
       case "-도록":                 return stem + "도록";
       // TOPIK 5-6
       case "-(으)ㄹ 뿐만 아니라": {
@@ -252,8 +264,8 @@ window.Conjugation = {
         if(d4.jong === 8)          return stem + " 뿐만 아니라";
         return stem + "을 뿐만 아니라";
       }
-      case "-(으)ㄴ/는 한":        return stem + "는 한";
-      case "-(으)ㄴ/는 탓에":      return stem + "는 탓에";
+      case "-(으)ㄴ/는 한":        return this.dropRieul(stem) + "는 한";
+      case "-(으)ㄴ/는 탓에":      return this.dropRieul(stem) + "는 탓에";
       default:                      return null;
     }
   },
