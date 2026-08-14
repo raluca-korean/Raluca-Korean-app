@@ -206,6 +206,9 @@
 .wc-related-lbl{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:800;
   color:#a99fcf;margin-bottom:8px}
 .wc-related-list{display:flex;flex-wrap:wrap;gap:6px}
+.wc-assoc-group{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}
+.wc-assoc-lbl{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+  color:#8f84b8;margin-bottom:7px}
 .wc-word-chip{
   padding:5px 11px 5px 9px;border-radius:10px;font-size:.85rem;font-weight:700;
   background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
@@ -851,14 +854,20 @@ const ADVERB_FRAMES = [
   { ko: adv => `이 일은 <b>${adv}</b> 중요해요.`, roTail: 'acest lucru e important.', enTail: 'this matter is important.', level: 'medium' },
 ];
 
-function buildGeneratedSense(v) {
+// Last-resort "related words" for any word with no hand-written associations
+// and no compound-word matches (a same-category sample beats an empty panel).
+function categoryFallbackAssociations(v) {
   const cat = v.categories && v.categories[0];
   const sameCat = cat ? VOCAB.filter(e => e.ko !== v.ko && e.categories?.includes(cat)) : [];
   const sample = sameCat.sort(() => Math.random()-0.5).slice(0,8).map(e => ({ ko:e.ko, ro:e.ro, en:e.en }));
-  const isRo = cLang === 'ro';
-  const associations = sample.length ? [
+  return sample.length ? [
     { zone:'e', label: {ro:'Cuvinte din aceeași categorie',en:'Words from the same category'}, words: sample }
   ] : [];
+}
+
+function buildGeneratedSense(v) {
+  const associations = categoryFallbackAssociations(v);
+  const isRo = cLang === 'ro';
 
   let sentences = [];
   if (EXTRA_SENTENCES[v.ko]) {
@@ -927,9 +936,44 @@ function currentEntry() {
 // Any vocabulary word that contains the searched word (or vice versa) — works
 // mechanically for all 1354 words, not just the curated ones.
 function relatedWords(word) {
-  return VOCAB.filter(e => e.ko !== word && (e.ko.includes(word) || word.includes(e.ko)))
-    .sort((a,b) => a.ko.length - b.ko.length)
-    .slice(0, 24);
+  // A 1-syllable overlap (e.g. "가위" containing "위") is almost never a real
+  // semantic relation — require the shared part to be 2+ characters so this
+  // stays "compound word" matching (학교 -> 대학교/고등학교), not noise. Any
+  // word this rule now excludes still gets the category-based fallback below.
+  return VOCAB.filter(e => {
+    if (e.ko === word) return false;
+    const shorter = e.ko.length < word.length ? e.ko : word;
+    if (shorter.length < 2) return false;
+    return e.ko.includes(word) || word.includes(e.ko);
+  }).sort((a,b) => a.ko.length - b.ko.length).slice(0, 24);
+}
+
+// Curated words carry hand-written associations (Verbe asociate, Substantive
+// asociate, Expresii & metafore…) and generated words carry a same-category
+// sample — both computed in currentEntry()/buildGeneratedSense() but, until
+// now, never actually rendered. relatedWords() alone leaves ~39% of the
+// vocab ("compound-word matches only") with an empty related-words panel,
+// so merge these association zones in as extra grouped sections, skipping
+// anything already shown in the plain related-words list above.
+function relatedAssociationGroups(entry, alreadyShown, isRo) {
+  const shownKo = new Set([currentWord, ...alreadyShown.map(w => w.ko)]);
+  const groupMap = new Map();
+  let assocSource = entry.senses.flatMap(s => s.associations || []);
+  // A few hand-curated words (돈, 시간, 알다…) were written before associations
+  // existed for them — give those the same same-category fallback generated
+  // words get, instead of leaving the panel empty just because they're curated.
+  if (!assocSource.length && entry.v) assocSource = categoryFallbackAssociations(entry.v);
+  assocSource.forEach(g => {
+    const key = isRo ? g.label.ro : g.label.en;
+    if (!groupMap.has(key)) groupMap.set(key, { label: g.label, words: [] });
+    const target = groupMap.get(key);
+    g.words.forEach(w => {
+      if (shownKo.has(w.ko) || target.words.some(x => x.ko === w.ko)) return;
+      shownKo.add(w.ko);
+      target.words.push(w);
+    });
+  });
+  return [...groupMap.values()].filter(g => g.words.length);
 }
 
 // Inline !important is used for the active state because a global dark-mode
@@ -1005,6 +1049,7 @@ function renderExplore() {
   // Flatten every sense's sentences into one list (no sub-navigation for homonyms).
   const sentences = entry.senses.flatMap(s => s.sentences || []);
   const related = relatedWords(currentWord);
+  const assocGroups = relatedAssociationGroups(entry, related, isRo);
   currentSentences = sentences;
   selectedSentenceIdx = sentences.length ? 0 : -1;
 
@@ -1060,19 +1105,35 @@ function renderExplore() {
       : "This word doesn't have a hand-written map yet — tap the planets around it for more examples."}</div>` : ''}
   </div>`;
 
-  let relatedHtml = `<div class="wc-related-card card wc-cosmic-card">
-    <div class="wc-related-lbl">${isRo?'Cuvinte înrudite':'Related words'} (${related.length})</div>
-    <div class="wc-related-list">`;
-  if (!related.length) {
-    relatedHtml += `<span style="font-size:.85rem;color:#a99fcf">${isRo?'Niciun cuvânt înrudit găsit.':'No related words found.'}</span>`;
-  }
-  related.forEach((w, i) => {
+  const chipHtml = (w, i) => {
     const gloss = isRo ? w.ro : w.en;
     const delay = Math.min(i * 0.025, 0.3).toFixed(3);
     const color = PLANET_COLORS[i % PLANET_COLORS.length];
-    relatedHtml += `<span class="wc-word-chip clickable" style="--pc:${color};animation-delay:${delay}s" onclick="searchAndFill('${w.ko.replace(/'/g,"\\'")}')" title="${gloss}">${w.ko}<span class="g">${gloss}</span></span>`;
+    // Some hand-written associations are idioms/words with no standalone
+    // vocab entry (e.g. "마음이 가다", "존재하다") — only wire up the click
+    // when it would actually resolve, so it never dead-ends on "not found".
+    const resolvable = (vocabIndex && vocabIndex.get(w.ko)) || DICT[w.ko];
+    const cls = 'wc-word-chip' + (resolvable ? ' clickable' : '');
+    const onclick = resolvable ? ` onclick="searchAndFill('${w.ko.replace(/'/g,"\\'")}')"` : '';
+    return `<span class="${cls}"${onclick} style="--pc:${color};animation-delay:${delay}s" title="${gloss}">${w.ko}<span class="g">${gloss}</span></span>`;
+  };
+
+  let relatedHtml = `<div class="wc-related-card card wc-cosmic-card">
+    <div class="wc-related-lbl">${isRo?'Cuvinte înrudite':'Related words'} (${related.length})</div>
+    <div class="wc-related-list">`;
+  if (!related.length && !assocGroups.length) {
+    relatedHtml += `<span style="font-size:.85rem;color:#a99fcf">${isRo?'Niciun cuvânt înrudit găsit.':'No related words found.'}</span>`;
+  }
+  related.forEach((w, i) => { relatedHtml += chipHtml(w, i); });
+  relatedHtml += `</div>`;
+  assocGroups.forEach(g => {
+    const label = isRo ? g.label.ro : g.label.en;
+    relatedHtml += `<div class="wc-assoc-group">
+      <div class="wc-assoc-lbl">${label} (${g.words.length})</div>
+      <div class="wc-related-list">${g.words.map((w, i) => chipHtml(w, i)).join('')}</div>
+    </div>`;
   });
-  relatedHtml += `</div></div>`;
+  relatedHtml += `</div>`;
 
   document.getElementById('wcResult').innerHTML = orbitHtml + relatedHtml;
 
