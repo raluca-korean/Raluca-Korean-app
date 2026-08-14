@@ -1198,7 +1198,947 @@ const DATA = [
       {ko:"필승", sentence:"필승의 각오로 경기에 임했어요.", sentence_ro:"A intrat în meci cu hotărârea de a câștiga cu siguranță.", sentence_en:"They entered the game with the determination to definitely win.", ro:"victorie sigură",en:"certain victory"},
       {ko:"승패", sentence:"승패에 관계없이 최선을 다해요.", sentence_ro:"Dăm tot ce avem mai bun indiferent de rezultat.", sentence_en:"We do our best regardless of win or loss.", ro:"victorie sau înfrângere",en:"victory or defeat"}
     ]
-  }
+  },
+  {
+    hanja:"丘", ko_reading:"구", reading:{ro:"구 (gu)",en:"구 (gu)"}, meaning:{ro:"deal, movilă",en:"hill, mound"},
+    etymology:{ro:"Pictogramă a unui deal sau movilă de pământ, tradițional redată ca două înălțimi cu o adâncitură între ele. A fost și numele de naștere al lui Confucius (孔丘), motiv pentru care caracterul era uneori evitat din respect.",en:"A pictogram of a hill or earthen mound, traditionally drawn as two rises with a hollow between them. It was also Confucius's given name (孔丘), which is why the character was sometimes avoided out of respect."},
+    words:[
+      {ko:"구릉", sentence:"이 지역에는 낮은 구릉이 많아요.", sentence_ro:"În această zonă sunt multe dealuri joase.", sentence_en:"There are many low hills in this area.", ro:"deal, colină",en:"hill, hillock"},
+      {ko:"사구", sentence:"바닷가에 커다란 사구가 있어요.", sentence_ro:"Pe malul mării este o dună mare de nisip.", sentence_en:"There is a large sand dune by the seaside.", ro:"dună de nisip",en:"sand dune"},
+      {ko:"청구", sentence:"청구는 한국을 부르던 옛 이름이에요.", sentence_ro:"Cheonggu era un vechi nume folosit pentru Coreea.", sentence_en:"Cheonggu was an old name used for Korea.", ro:"Cheonggu (vechi nume al Coreei)",en:"Cheonggu (old name for Korea)"},
+      {ko:"비구", sentence:"그 절에는 비구와 비구니가 함께 수행해요.", sentence_ro:"La acea mănăstire, călugării și călugărițele budiste practică împreună.", sentence_en:"At that temple, Buddhist monks and nuns practice together.", ro:"călugăr budist",en:"Buddhist monk (bhikkhu)"}
+    ]
+  },
+  {
+    hanja:"井", ko_reading:"정", reading:{ro:"정 (jeong)",en:"정 (jeong)"}, meaning:{ro:"fântână",en:"well"},
+    etymology:{ro:"Pictogramă a unei fântâni văzute de sus, cu rama de lemn în formă de grilaj așezată în jurul gurii puțului. Aceeași formă de grilaj a dat naștere sensului figurat de comunitate strânsă în jurul unei surse comune de apă.",en:"A pictogram of a well seen from above, showing the wooden crossbeam frame laid around its opening. The same grid shape gave rise to the figurative sense of a community gathered around a shared water source."},
+    words:[
+      {ko:"유정", sentence:"이 지역에는 유정이 여러 개 있어요.", sentence_ro:"În această regiune sunt mai multe sonde de petrol.", sentence_en:"There are several oil wells in this region.", ro:"sondă de petrol",en:"oil well"},
+      {ko:"시정", sentence:"시정 사람들은 소문에 밝아요.", sentence_ro:"Oamenii de rând sunt bine informați despre zvonuri.", sentence_en:"Common townsfolk are well informed about rumors.", ro:"târg, oameni de rând",en:"marketplace, common folk"},
+      {ko:"정전제", sentence:"정전제는 고대 중국의 토지 제도였어요.", sentence_ro:"Sistemul câmpurilor-fântână era un vechi sistem funciar chinezesc.", sentence_en:"The well-field system was an ancient Chinese land system.", ro:"sistemul câmpurilor-fântână",en:"well-field system"},
+      {ko:"관정", sentence:"농사를 위해 관정을 새로 팠어요.", sentence_ro:"Au săpat un nou puț forat pentru agricultură.", sentence_en:"They dug a new bore well for farming.", ro:"puț forat",en:"bore well, tube well"}
+    ]
+  },
+  {
+    hanja:"交", ko_reading:"교", reading:{ro:"교 (gyo)",en:"교 (gyo)"}, meaning:{ro:"a face schimb, a se încrucișa",en:"exchange, cross"},
+    etymology:{ro:"Pictogramă a unei persoane cu picioarele încrucișate, redând ideea de intersectare. De aici s-a extins la sensurile de schimb, comunicare și relații între oameni.",en:"A pictogram of a person with crossed legs, depicting the idea of intersecting. From this it extended to meanings of exchange, communication, and relations between people."},
+    words:[
+      {ko:"교환", sentence:"이 옷을 다른 사이즈로 교환하고 싶어요.", sentence_ro:"Aș vrea să schimb aceste haine cu altă mărime.", sentence_en:"I would like to exchange these clothes for a different size.", ro:"schimb",en:"exchange"},
+      {ko:"교통", sentence:"출퇴근 시간에는 교통이 복잡해요.", sentence_ro:"Traficul este aglomerat la orele de vârf.", sentence_en:"Traffic is heavy during rush hour.", ro:"trafic, transport",en:"traffic, transportation"},
+      {ko:"교류", sentence:"두 나라는 문화 교류를 활발히 해요.", sentence_ro:"Cele două țări au un schimb cultural activ.", sentence_en:"The two countries actively engage in cultural exchange.", ro:"schimb, interacțiune",en:"interchange, exchange"},
+      {ko:"외교", sentence:"그는 외교 분야에서 오래 일했어요.", sentence_ro:"El a lucrat mult timp în domeniul diplomatic.", sentence_en:"He has worked in the diplomatic field for a long time.", ro:"diplomație",en:"diplomacy"}
+    ]
+  },
+  {
+    hanja:"仲", ko_reading:"중", reading:{ro:"중 (jung)",en:"중 (jung)"}, meaning:{ro:"al doilea frate; mijlocitor",en:"middle brother; mediator"},
+    etymology:{ro:"Persoană (亻) + mijloc (中) — o persoană aflată la mijloc, între cel mai mare și cel mai mic frate. De aici s-au dezvoltat sensurile de al doilea născut și, prin extensie, de mijlocitor între două părți.",en:"Person (亻) + middle (中) — a person positioned in the middle, between the eldest and youngest sibling. From this developed the meanings of second-born and, by extension, a go-between mediating two parties."},
+    words:[
+      {ko:"중매", sentence:"할머니가 두 사람을 중매하셨어요.", sentence_ro:"Bunica a fost pețitoare pentru cei doi.", sentence_en:"Grandmother acted as a matchmaker for the two of them.", ro:"pețire, mijlocire căsătorie",en:"matchmaking"},
+      {ko:"중재", sentence:"두 회사의 분쟁을 중재로 해결했어요.", sentence_ro:"Disputa dintre cele două companii a fost rezolvată prin mediere.", sentence_en:"The dispute between the two companies was resolved through mediation.", ro:"mediere, arbitraj",en:"mediation, arbitration"},
+      {ko:"중개", sentence:"부동산 중개 수수료가 얼마예요?", sentence_ro:"Cât costă comisionul agenției imobiliare?", sentence_en:"How much is the real estate brokerage fee?", ro:"intermediere",en:"brokerage, intermediation"},
+      {ko:"백중세", sentence:"두 선수의 실력은 백중세예요.", sentence_ro:"Nivelul celor doi sportivi este aproape identic.", sentence_en:"The two athletes' skill levels are nearly equal.", ro:"forțe egale, cap la cap",en:"evenly matched contest"}
+    ]
+  },
+  {
+    hanja:"伏", ko_reading:"복", reading:{ro:"복 (bok)",en:"복 (bok)"}, meaning:{ro:"a se ghemui, a sta ascuns",en:"crouch, lie hidden"},
+    etymology:{ro:"Persoană (亻) + câine (犬) — un câine ghemuit lângă stăpânul său, gata să pândească. Ideograma redă acțiunea de a te lăsa la pământ sau de a te ascunde, pândind.",en:"Person (亻) + dog (犬) — a dog crouching beside its master, ready to watch and wait. The ideogram depicts lying low or hiding while lying in wait."},
+    words:[
+      {ko:"항복", sentence:"결국 적군이 항복했어요.", sentence_ro:"În cele din urmă, armata inamică s-a predat.", sentence_en:"In the end, the enemy army surrendered.", ro:"predare, capitulare",en:"surrender"},
+      {ko:"매복", sentence:"군인들이 숲속에 매복했어요.", sentence_ro:"Soldații au stat la pândă în pădure.", sentence_en:"The soldiers lay in ambush in the forest.", ro:"ambuscadă",en:"ambush"},
+      {ko:"복병", sentence:"이번 대회에는 복병이 많아요.", sentence_ro:"La această competiție sunt mulți concurenți surpriză.", sentence_en:"There are many dark-horse contenders in this competition.", ro:"forță ascunsă, surpriză",en:"hidden threat, dark horse"},
+      {ko:"삼복", sentence:"삼복 더위에는 삼계탕을 먹어요.", sentence_ro:"În zilele caniculare de vară se mănâncă supă de pui cu ginseng.", sentence_en:"During the dog days of summer, people eat ginseng chicken soup.", ro:"cele trei zile caniculare",en:"the dog days of summer"}
+    ]
+  },
+  {
+    hanja:"伯", ko_reading:"백", reading:{ro:"백 (baek)",en:"백 (baek)"}, meaning:{ro:"fratele cel mare; unchi patern mai mare",en:"eldest brother; senior paternal uncle"},
+    etymology:{ro:"Persoană (亻) + alb (白, element fonetic care sugerează și ideea de întâietate) — desemnează inițial pe cel mai mare dintre frați, apoi, prin extensie, unchiul mai mare decât tatăl și un titlu nobiliar feudal (conte).",en:"Person (亻) + white (白, phonetic element that also suggests seniority) — originally denoted the eldest among siblings, later extended to a paternal uncle older than one's father and to a feudal noble rank (earl/count)."},
+    words:[
+      {ko:"백부", sentence:"백부님 댁에 명절 인사를 갔어요.", sentence_ro:"Am mers să-i urez de sărbători unchiului meu mai mare.", sentence_en:"I went to greet my eldest uncle for the holiday.", ro:"unchi (fratele mai mare al tatălui)",en:"father's older brother, uncle"},
+      {ko:"백모", sentence:"백모님이 맛있는 반찬을 챙겨 주셨어요.", sentence_ro:"Mătușa mi-a pregătit garnituri delicioase.", sentence_en:"My aunt prepared delicious side dishes for me.", ro:"mătușă (soția unchiului mai mare)",en:"wife of father's older brother"},
+      {ko:"백작", sentence:"소설 속 주인공은 젊은 백작이에요.", sentence_ro:"Protagonistul romanului este un tânăr conte.", sentence_en:"The novel's protagonist is a young count.", ro:"conte",en:"earl, count"},
+      {ko:"화백", sentence:"그 화백의 그림은 값이 매우 비싸요.", sentence_ro:"Tablourile acelui maestru pictor sunt foarte scumpe.", sentence_en:"That master painter's works are very expensive.", ro:"maestru pictor",en:"master painter"}
+    ]
+  },
+  {
+    hanja:"住", ko_reading:"주", reading:{ro:"주 (ju)",en:"주 (ju)"}, meaning:{ro:"a locui",en:"to reside"},
+    etymology:{ro:"Persoană (亻) + stăpân/flacără fixă (主, element fonetic, provenit dintr-o pictogramă a unei flăcări nemișcate) — o persoană care rămâne pe loc, stabilită într-un anumit spațiu, de unde sensul de a locui.",en:"Person (亻) + lord/fixed flame (主, phonetic element, derived from a pictogram of a steady flame) — a person who stays fixed in one place, hence the meaning to dwell, to reside."},
+    words:[
+      {ko:"주소", sentence:"여기에 주소를 적어 주세요.", sentence_ro:"Vă rog să scrieți adresa aici.", sentence_en:"Please write the address here.", ro:"adresă",en:"address"},
+      {ko:"주민", sentence:"이 동네 주민들은 서로 친해요.", sentence_ro:"Locuitorii acestui cartier sunt apropiați între ei.", sentence_en:"The residents of this neighborhood are close to each other.", ro:"locuitor, rezident",en:"resident"},
+      {ko:"거주", sentence:"저는 서울에 거주하고 있어요.", sentence_ro:"Eu locuiesc în Seul.", sentence_en:"I reside in Seoul.", ro:"a locui, ședere",en:"residence, dwelling"},
+      {ko:"주택", sentence:"이 주택은 마당이 넓어요.", sentence_ro:"Această casă are o curte mare.", sentence_en:"This house has a large yard.", ro:"casă, locuință",en:"house, housing"}
+    ]
+  },
+  {
+    hanja:"佳", ko_reading:"가", reading:{ro:"가 (ga)",en:"가 (ga)"}, meaning:{ro:"bun, frumos",en:"good, fine, beautiful"},
+    etymology:{ro:"Persoană (亻) + jad ritual (圭, element fonetic) — sugerează o persoană la fel de prețioasă și rafinată precum jadul, de unde sensurile de excelent, frumos și plăcut.",en:"Person (亻) + ritual jade tablet (圭, phonetic element) — suggests a person as precious and refined as jade, hence the meanings of excellent, beautiful, and delightful."},
+    words:[
+      {ko:"가작", sentence:"이 작품은 이번 대회에서 가작으로 뽑혔어요.", sentence_ro:"Această lucrare a fost aleasă drept mențiune specială la acest concurs.", sentence_en:"This work was chosen as an honorable mention at this competition.", ro:"lucrare remarcabilă, mențiune",en:"honorable mention, fine work"},
+      {ko:"가인", sentence:"그녀는 마을에서 소문난 가인이에요.", sentence_ro:"Ea este cunoscută în sat ca o femeie frumoasă.", sentence_en:"She is known in the village as a beautiful woman.", ro:"persoană frumoasă",en:"beautiful person"},
+      {ko:"가경", sentence:"이야기는 점점 가경으로 접어들었어요.", sentence_ro:"Povestea a intrat treptat în partea sa cea mai captivantă.", sentence_en:"The story gradually entered its most gripping part.", ro:"punct culminant, priveliște superbă",en:"the best part, splendid scene"},
+      {ko:"가절", sentence:"한가위는 우리 민족의 가절이에요.", sentence_ro:"Chuseok este o sărbătoare de mare bucurie pentru poporul nostru.", sentence_en:"Chuseok is a joyous festive season for our people.", ro:"sărbătoare plăcută",en:"pleasant festive season"}
+    ]
+  },
+  {
+    hanja:"倣", ko_reading:"방", reading:{ro:"방 (bang)",en:"방 (bang)"}, meaning:{ro:"a imita",en:"to imitate"},
+    etymology:{ro:"Persoană (亻) + a elibera, a lăsa liber (放, element fonetic și semantic legat de a urma) — o persoană care își lasă acțiunile să urmeze modelul altcuiva, de unde sensul de a imita.",en:"Person (亻) + to release, let go (放, phonetic element also linked to following) — a person letting their actions follow another's model, hence the meaning to imitate."},
+    words:[
+      {ko:"모방", sentence:"아이들은 어른의 행동을 모방해요.", sentence_ro:"Copiii imită comportamentul adulților.", sentence_en:"Children imitate the behavior of adults.", ro:"imitație",en:"imitation"},
+      {ko:"모방범죄", sentence:"경찰은 모방범죄를 우려하고 있어요.", sentence_ro:"Poliția este îngrijorată de infracțiunile imitative.", sentence_en:"The police are worried about copycat crimes.", ro:"infracțiune imitativă",en:"copycat crime"},
+      {ko:"모방품", sentence:"시장에서 모방품을 조심해야 해요.", sentence_ro:"Trebuie să fii atent la produsele contrafăcute din piață.", sentence_en:"You need to be careful of imitation goods at the market.", ro:"produs contrafăcut",en:"imitation, counterfeit product"},
+      {ko:"모방작", sentence:"이 그림은 유명 화가의 모방작이에요.", sentence_ro:"Acest tablou este o lucrare inspirată dintr-un pictor celebru.", sentence_en:"This painting is an imitation work of a famous painter.", ro:"lucrare imitativă",en:"imitation work"}
+    ]
+  },
+  {
+    hanja:"停", ko_reading:"정", reading:{ro:"정 (jeong)",en:"정 (jeong)"}, meaning:{ro:"a opri, a suspenda",en:"to stop, to suspend"},
+    etymology:{ro:"Persoană (亻) + pavilion de odihnă (亭, element fonetic, el însuși o pictogramă a unei clădiri cu acoperiș pentru popas) — o persoană care se oprește să se odihnească la un pavilion de pe drum.",en:"Person (亻) + rest pavilion (亭, phonetic element, itself a pictogram of a roofed roadside building) — a person stopping to rest at a pavilion along the road."},
+    words:[
+      {ko:"정지", sentence:"차가 신호등 앞에서 정지했어요.", sentence_ro:"Mașina s-a oprit în fața semaforului.", sentence_en:"The car stopped in front of the traffic light.", ro:"oprire",en:"stop, halt"},
+      {ko:"정거장", sentence:"버스 정거장에서 친구를 기다려요.", sentence_ro:"Aștept un prieten la stația de autobuz.", sentence_en:"I'm waiting for a friend at the bus stop.", ro:"stație",en:"station, stop"},
+      {ko:"정전", sentence:"갑자기 정전이 되어서 깜짝 놀랐어요.", sentence_ro:"M-am speriat pentru că a picat curentul brusc.", sentence_en:"I was startled because the power suddenly went out.", ro:"pană de curent",en:"power outage"},
+      {ko:"조정", sentence:"두 사람은 조정을 통해 갈등을 풀었어요.", sentence_ro:"Cei doi și-au rezolvat conflictul prin mediere.", sentence_en:"The two resolved their conflict through mediation.", ro:"mediere",en:"mediation, adjustment"}
+    ]
+  },
+  {
+    hanja:"充", ko_reading:"충", reading:{ro:"충 (chung)",en:"충 (chung)"}, meaning:{ro:"a umple, a fi plin",en:"to fill, to be full"},
+    etymology:{ro:"Pictogramă a unui copil aflat deasupra picioarelor unei persoane, redând creșterea până la maturitate deplină. De aici s-a dezvoltat sensul de a umple, a completa.",en:"A pictogram of a child atop a person's legs, depicting growth to full maturity. From this developed the meaning to fill, to complete."},
+    words:[
+      {ko:"충전", sentence:"휴대폰을 충전해야 해요.", sentence_ro:"Trebuie să-mi încarc telefonul.", sentence_en:"I need to charge my phone.", ro:"încărcare",en:"charging"},
+      {ko:"보충", sentence:"수업이 끝나고 보충 설명을 들었어요.", sentence_ro:"După oră am ascultat explicații suplimentare.", sentence_en:"After class, I listened to supplementary explanations.", ro:"suplimentare, completare",en:"supplement"},
+      {ko:"충분", sentence:"시간은 충분히 있어요.", sentence_ro:"Avem timp suficient.", sentence_en:"We have enough time.", ro:"suficient",en:"sufficient"},
+      {ko:"확충", sentence:"정부는 대중교통을 확충하기로 했어요.", sentence_ro:"Guvernul a decis să extindă transportul public.", sentence_en:"The government decided to expand public transportation.", ro:"extindere",en:"expansion"}
+    ]
+  },
+  {
+    hanja:"兆", ko_reading:"조", reading:{ro:"조 (jo)",en:"조 (jo)"}, meaning:{ro:"semn prevestitor; trilion",en:"omen; trillion"},
+    etymology:{ro:"Pictogramă a crăpăturilor formate pe o carapace de broască țestoasă sau pe un os folosit în divinație — modelul fisurilor era interpretat ca semn prevestitor. Mai târziu, caracterul a fost împrumutat pentru unitatea numerică mare (trilion).",en:"A pictogram of the cracks that formed on a heated tortoise shell or bone used in divination — the pattern of fissures was read as an omen. The character was later borrowed for the large numeral unit (trillion)."},
+    words:[
+      {ko:"징조", sentence:"하늘이 붉어지는 건 폭풍의 징조예요.", sentence_ro:"Cerul care se înroșește este un semn de furtună.", sentence_en:"The sky turning red is a sign of a storm.", ro:"semn, prevestire",en:"omen, sign"},
+      {ko:"조짐", sentence:"경제가 회복되는 조짐이 보여요.", sentence_ro:"Se văd semne de redresare economică.", sentence_en:"There are signs of economic recovery.", ro:"indiciu",en:"indication, sign"},
+      {ko:"전조", sentence:"두통은 감기의 전조일 수 있어요.", sentence_ro:"Durerea de cap poate fi un semn premergător al răcelii.", sentence_en:"A headache can be a precursor sign of a cold.", ro:"semn premergător",en:"precursor, forewarning"},
+      {ko:"조", sentence:"정부 예산이 수백조 원에 달해요.", sentence_ro:"Bugetul guvernului ajunge la sute de trilioane de woni.", sentence_en:"The government budget reaches hundreds of trillions of won.", ro:"trilion (unitate numerică)",en:"trillion (numeral unit)"}
+    ]
+  },
+  {
+    hanja:"先", ko_reading:"선", reading:{ro:"선 (seon)",en:"선 (seon)"}, meaning:{ro:"primul, înainte",en:"first, ahead"},
+    etymology:{ro:"Pictogramă a unui picior (止) aflat deasupra unei persoane (儿) — un pas făcut înaintea corpului, simbolizând ideea de a merge înainte, de a fi primul.",en:"A pictogram of a foot (止) placed above a person (儿) — a step taken ahead of the body, symbolizing the idea of going before, of being first."},
+    words:[
+      {ko:"선생", sentence:"저희 선생님은 아주 친절하세요.", sentence_ro:"Profesorul nostru este foarte amabil.", sentence_en:"Our teacher is very kind.", ro:"profesor",en:"teacher"},
+      {ko:"우선", sentence:"우선 이 문제부터 해결합시다.", sentence_ro:"Să rezolvăm mai întâi această problemă.", sentence_en:"Let's solve this problem first.", ro:"mai întâi, prioritate",en:"first of all, priority"},
+      {ko:"선배", sentence:"선배가 신입생들에게 학교를 소개했어요.", sentence_ro:"Un coleg mai mare le-a prezentat școala boboceilor.", sentence_en:"A senior student introduced the school to the freshmen.", ro:"coleg mai mare, senior",en:"senior (fellow student/colleague)"},
+      {ko:"선불", sentence:"이 요금은 선불로 내야 해요.", sentence_ro:"Această taxă trebuie plătită în avans.", sentence_en:"This fee must be paid in advance.", ro:"plată în avans",en:"prepayment"}
+    ]
+  },
+  {
+    hanja:"克", ko_reading:"극", reading:{ro:"극 (geuk)",en:"극 (geuk)"}, meaning:{ro:"a învinge, a birui",en:"to overcome"},
+    etymology:{ro:"Pictogramă a unei persoane care duce o povară grea pe umeri cu mare efort — imaginea sugerează forța necesară pentru a duce ceva la capăt, de unde sensul de a învinge, a birui.",en:"A pictogram of a person carrying a heavy load on their shoulders with great effort — the image suggests the strength needed to bear something through, hence the meaning to overcome, to conquer."},
+    words:[
+      {ko:"극복", sentence:"그는 어려움을 잘 극복했어요.", sentence_ro:"El a depășit bine greutățile.", sentence_en:"He overcame the difficulties well.", ro:"a depăși, a învinge",en:"to overcome"},
+      {ko:"극기", sentence:"극기 훈련은 정신력을 길러 줘요.", sentence_ro:"Antrenamentul de autodisciplină dezvoltă forța mentală.", sentence_en:"Self-discipline training builds mental strength.", ro:"autodisciplină",en:"self-control, self-discipline"},
+      {ko:"하극상", sentence:"조직에서 하극상은 큰 문제가 돼요.", sentence_ro:"Răsturnarea ierarhiei este o problemă mare într-o organizație.", sentence_en:"Subordinates overriding superiors is a major problem in an organization.", ro:"răsturnarea ierarhiei",en:"insubordination, subordinate overturning superior"},
+      {ko:"상극", sentence:"저 두 사람은 성격이 상극이에요.", sentence_ro:"Cei doi au personalități complet incompatibile.", sentence_en:"The two of them have completely incompatible personalities.", ro:"incompatibilitate",en:"mutual incompatibility, clash"}
+    ]
+  },
+  {
+    hanja:"公", ko_reading:"공", reading:{ro:"공 (gong)",en:"공 (gong)"}, meaning:{ro:"public",en:"public"},
+    etymology:{ro:"Pictogramă a acțiunii de a împărți (八) deasupra a ceva privat, personal (厶) — ideea de a împărți ceea ce era privat între toți, de unde sensul de public, comun, echitabil.",en:"A pictogram of dividing (八) placed above something private, personal (厶) — the idea of sharing out what was private among everyone, hence the meaning public, common, fair."},
+    words:[
+      {ko:"공원", sentence:"주말마다 공원에서 산책해요.", sentence_ro:"Mă plimb prin parc în fiecare weekend.", sentence_en:"I take a walk in the park every weekend.", ro:"parc",en:"park"},
+      {ko:"공공", sentence:"공공 장소에서는 조용히 해 주세요.", sentence_ro:"Vă rugăm să păstrați liniștea în locurile publice.", sentence_en:"Please stay quiet in public places.", ro:"public",en:"public"},
+      {ko:"공무원", sentence:"그는 시청에서 일하는 공무원이에요.", sentence_ro:"El este funcționar public la primărie.", sentence_en:"He is a civil servant working at city hall.", ro:"funcționar public",en:"civil servant"},
+      {ko:"공평", sentence:"심판은 공평하게 판정해야 해요.", sentence_ro:"Arbitrul trebuie să judece în mod echitabil.", sentence_en:"The referee must judge fairly.", ro:"echitabil, imparțial",en:"fair, impartial"}
+    ]
+  },
+  {
+    hanja:"凍", ko_reading:"동", reading:{ro:"동 (dong)",en:"동 (dong)"}, meaning:{ro:"a îngheța",en:"to freeze"},
+    etymology:{ro:"Gheață (冫) + est (東, element fonetic) — radicalul gheții indică sensul de a îngheța, în timp ce 東 oferă pronunția.",en:"Ice (冫) + east (東, phonetic element) — the ice radical carries the meaning to freeze, while 東 lends the pronunciation."},
+    words:[
+      {ko:"냉동", sentence:"이 생선은 냉동 상태로 보관하세요.", sentence_ro:"Păstrați acest pește congelat.", sentence_en:"Keep this fish frozen.", ro:"congelare",en:"freezing, frozen"},
+      {ko:"동결", sentence:"정부는 물가를 동결하기로 했어요.", sentence_ro:"Guvernul a decis să înghețe prețurile.", sentence_en:"The government decided to freeze prices.", ro:"înghețare",en:"freeze (of prices, assets)"},
+      {ko:"동상", sentence:"등산하다가 동상에 걸렸어요.", sentence_ro:"Am făcut degerături în timpul unei drumeții pe munte.", sentence_en:"I got frostbite while hiking.", ro:"degerătură",en:"frostbite"},
+      {ko:"해동", sentence:"냉동 만두는 해동한 후에 요리하세요.", sentence_ro:"Decongelați găluștele congelate înainte de a le găti.", sentence_en:"Thaw the frozen dumplings before cooking them.", ro:"decongelare",en:"thawing, defrosting"}
+    ]
+  },
+  {
+    hanja:"刷", ko_reading:"쇄", reading:{ro:"쇄 (swae)",en:"쇄 (swae)"}, meaning:{ro:"a tipări",en:"to print"},
+    etymology:{ro:"Pânză (巾) + un obiect ținut de o mână care freacă/curăță + cuțit (刂) — inițial redă gestul de a freca și curăța ceva cu o pânză; sensul s-a extins la a tipări, prin mișcarea de a unge o placă cu cerneală.",en:"Cloth (巾) + an implement held to scrub/wipe + knife (刂) — originally depicted scrubbing something clean with a cloth; the meaning extended to printing, via the brushing motion of inking a block."},
+    words:[
+      {ko:"인쇄", sentence:"이 문서를 인쇄해 주세요.", sentence_ro:"Vă rog să printați acest document.", sentence_en:"Please print this document.", ro:"tipărire",en:"printing"},
+      {ko:"인쇄소", sentence:"명함을 인쇄소에 맡겼어요.", sentence_ro:"Am dus cărțile de vizită la tipografie.", sentence_en:"I took the business cards to the print shop.", ro:"tipografie",en:"print shop, printing house"},
+      {ko:"쇄신", sentence:"회사는 이미지 쇄신을 위해 노력했어요.", sentence_ro:"Compania a depus eforturi pentru a-și reînnoi imaginea.", sentence_en:"The company worked hard to renew its image.", ro:"reînnoire",en:"renewal, reform"},
+      {ko:"증쇄", sentence:"인기 소설은 증쇄를 거듭했어요.", sentence_ro:"Romanul popular a trecut prin mai multe tiraje suplimentare.", sentence_en:"The popular novel went through repeated additional print runs.", ro:"tiraj suplimentar",en:"additional print run"}
+    ]
+  },
+  {
+    hanja:"助", ko_reading:"조", reading:{ro:"조 (jo)",en:"조 (jo)"}, meaning:{ro:"a ajuta",en:"to help, to assist"},
+    etymology:{ro:"Și (且, element fonetic, provenit dintr-o pictogramă a cărnii ritualice stivuite pe un altar) + putere (力) — a adăuga propria forță pentru a ajuta pe cineva.",en:"Also (且, phonetic element, derived from a pictogram of ritual meat stacked on an altar) + strength (力) — adding one's own strength to help someone."},
+    words:[
+      {ko:"조수", sentence:"의사에게는 유능한 조수가 필요해요.", sentence_ro:"Un doctor are nevoie de un asistent competent.", sentence_en:"A doctor needs a capable assistant.", ro:"asistent",en:"assistant"},
+      {ko:"협조", sentence:"이번 행사는 여러 기관의 협조로 이루어졌어요.", sentence_ro:"Acest eveniment a avut loc cu cooperarea mai multor instituții.", sentence_en:"This event took place with the cooperation of several institutions.", ro:"cooperare",en:"cooperation"},
+      {ko:"보조", sentence:"학생들은 정부의 보조를 받아요.", sentence_ro:"Studenții primesc subvenții de la guvern.", sentence_en:"Students receive subsidies from the government.", ro:"subvenție, sprijin",en:"subsidy, assistance"},
+      {ko:"조교", sentence:"조교가 실험 방법을 설명해 줬어요.", sentence_ro:"Asistentul universitar a explicat metoda experimentului.", sentence_en:"The teaching assistant explained the experiment method.", ro:"asistent universitar",en:"teaching assistant"}
+    ]
+  },
+  {
+    hanja:"區", ko_reading:"구", reading:{ro:"구 (gu)",en:"구 (gu)"}, meaning:{ro:"zonă, district",en:"area, district, ward"},
+    etymology:{ro:"Pictogramă a mai multor obiecte grupate și delimitate în interiorul unui contur — ideea de a împărți spațiul în secțiuni distincte, de unde sensul de district, zonă, categorie.",en:"A pictogram of several objects grouped and bounded within an outline — the idea of dividing space into distinct sections, hence the meaning district, area, category."},
+    words:[
+      {ko:"구역", sentence:"이곳은 주차 금지 구역이에요.", sentence_ro:"Aceasta este o zonă cu parcarea interzisă.", sentence_en:"This is a no-parking zone.", ro:"zonă",en:"zone, area"},
+      {ko:"구청", sentence:"서류를 떼러 구청에 갔어요.", sentence_ro:"Am mers la primăria de sector pentru un document.", sentence_en:"I went to the district office to get a document.", ro:"primărie de sector",en:"district office"},
+      {ko:"구간", sentence:"이 구간은 공사 중이에요.", sentence_ro:"Această secțiune este în lucrări.", sentence_en:"This section is under construction.", ro:"secțiune, tronson",en:"section, stretch"},
+      {ko:"지역구", sentence:"이번 선거에서 지역구 후보가 당선됐어요.", sentence_ro:"La aceste alegeri a fost ales candidatul de circumscripție.", sentence_en:"The constituency candidate won in this election.", ro:"circumscripție electorală",en:"electoral constituency"}
+    ]
+  },
+  {
+    hanja:"卜", ko_reading:"복", reading:{ro:"복 (bok)",en:"복 (bok)"}, meaning:{ro:"ghicit, prezicere",en:"divination, fortune-telling"},
+    etymology:{ro:"Pictogramă a crăpăturii în formă de T care apărea pe o carapace de broască țestoasă încălzită, folosită în ritualurile antice de divinație — forma caracterului redă direct această fisură.",en:"A pictogram of the T-shaped crack that appeared on a heated tortoise shell, used in ancient divination rituals — the character's shape directly depicts this fissure."},
+    words:[
+      {ko:"복채", sentence:"점을 보고 복채를 드렸어요.", sentence_ro:"Am plătit onorariul ghicitoarei după ce mi-a citit norocul.", sentence_en:"I paid the fortune-teller's fee after having my fortune read.", ro:"onorariul ghicitorului",en:"fortune-teller's fee"},
+      {ko:"점복", sentence:"옛날 사람들은 점복으로 길흉을 판단했어요.", sentence_ro:"Oamenii din vechime judecau norocul prin divinație.", sentence_en:"People in the old days judged fortune through divination.", ro:"divinație",en:"divination, fortune-telling"},
+      {ko:"복술", sentence:"그 노인은 복술에 능하다고 소문났어요.", sentence_ro:"Se zvonește că bătrânul este priceput în arta ghicitului.", sentence_en:"The old man is rumored to be skilled in the art of divination.", ro:"arta ghicitului",en:"art of divination"},
+      {ko:"복자", sentence:"마을 사람들은 복자를 찾아가 물었어요.", sentence_ro:"Sătenii au mers la ghicitor să-l întrebe.", sentence_en:"The villagers went to ask the diviner.", ro:"ghicitor",en:"diviner, fortune-teller"}
+    ]
+  },
+  {
+    hanja:"厄", ko_reading:"액", reading:{ro:"액 (aek)",en:"액 (aek)"}, meaning:{ro:"nenorocire, necaz",en:"adversity, misfortune"},
+    etymology:{ro:"Stâncă/faleză (厂) + o persoană îngenuncheată (㔾) sub ea — redă imaginea unei persoane prinse sau în pericol sub o stâncă, simbolizând nenorocirea și greutățile.",en:"Cliff (厂) + a kneeling person (㔾) beneath it — depicts a person trapped or in danger under a cliff, symbolizing misfortune and hardship."},
+    words:[
+      {ko:"액운", sentence:"새해에는 액운이 사라지길 바라요.", sentence_ro:"Sper ca ghinionul să dispară în noul an.", sentence_en:"I hope bad luck disappears in the new year.", ro:"ghinion",en:"bad luck, misfortune"},
+      {ko:"재액", sentence:"마을 사람들은 재액을 막기 위해 굿을 했어요.", sentence_ro:"Sătenii au făcut un ritual pentru a preveni dezastrele.", sentence_en:"The villagers performed a ritual to prevent disasters.", ro:"dezastru, calamitate",en:"calamity, disaster"},
+      {ko:"액땜", sentence:"작은 사고를 액땜했다고 생각하기로 했어요.", sentence_ro:"Am decis să cred că micul accident a ținut departe un ghinion mai mare.", sentence_en:"I decided to think of the small accident as warding off worse bad luck.", ro:"a scăpa de un ghinion mai mare",en:"warding off bad luck"},
+      {ko:"횡액", sentence:"갑작스러운 횡액을 당했어요.", sentence_ro:"A avut parte de un necaz neașteptat.", sentence_en:"They suffered an unexpected misfortune.", ro:"necaz neașteptat",en:"unexpected mishap"}
+    ]
+  },
+  {
+    hanja:"商", ko_reading:"상", reading:{ro:"상 (sang)",en:"상 (sang)"}, meaning:{ro:"comercial",en:"commercial"},
+    etymology:{ro:"Pictogramă legată inițial de tejgheaua unui negustor sau de gestul de a discuta prețurile; a ajuns să însemne comerț și, în plus, numele dinastiei Shang, cunoscută pentru negustorii săi ambulanți.",en:"A pictogram originally connected to a merchant's stall or the act of discussing prices; it came to mean trade, and also gave its name to the Shang dynasty, known for its traveling merchants."},
+    words:[
+      {ko:"상인", sentence:"시장에는 상인들이 많아요.", sentence_ro:"Sunt mulți negustori în piață.", sentence_en:"There are many merchants at the market.", ro:"negustor",en:"merchant"},
+      {ko:"상점", sentence:"이 상점은 아홉 시에 열어요.", sentence_ro:"Acest magazin se deschide la ora nouă.", sentence_en:"This shop opens at nine o'clock.", ro:"magazin",en:"shop, store"},
+      {ko:"상업", sentence:"이 도시는 상업이 발달했어요.", sentence_ro:"Comerțul este dezvoltat în acest oraș.", sentence_en:"Commerce is well developed in this city.", ro:"comerț",en:"commerce, business"},
+      {ko:"협상", sentence:"양측은 오랜 협상 끝에 합의했어요.", sentence_ro:"Cele două părți au ajuns la un acord după negocieri îndelungate.", sentence_en:"The two sides reached an agreement after lengthy negotiations.", ro:"negociere",en:"negotiation"}
+    ]
+  },
+  {
+    hanja:"回", ko_reading:"회", reading:{ro:"회 (hoe)",en:"회 (hoe)"}, meaning:{ro:"a se întoarce; dată, oară",en:"return, turn; a time, occurrence"},
+    etymology:{ro:"Pictogramă a unui vârtej sau spirală, cu forme concentrice ce redau mișcarea de rotație — de aici sensurile de a se întoarce, a se roti, și de contor pentru numărul de ori.",en:"A pictogram of a spiral or whirlpool, with concentric shapes depicting turning motion — hence the meanings to return, to turn around, and a counter for occurrences."},
+    words:[
+      {ko:"회복", sentence:"수술 후에 빨리 회복하고 있어요.", sentence_ro:"Se recuperează repede după operație.", sentence_en:"They are recovering quickly after the surgery.", ro:"recuperare",en:"recovery"},
+      {ko:"회전", sentence:"이 문은 회전하며 열려요.", sentence_ro:"Această ușă se deschide rotindu-se.", sentence_en:"This door opens by rotating.", ro:"rotație",en:"rotation, turning"},
+      {ko:"횟수", sentence:"방문 횟수를 기록해 두세요.", sentence_ro:"Notați numărul de vizite.", sentence_en:"Please keep a record of the number of visits.", ro:"numărul de ori",en:"number of times"},
+      {ko:"순회", sentence:"가수가 전국 순회공연을 시작했어요.", sentence_ro:"Cântărețul și-a început turneul național.", sentence_en:"The singer started a nationwide tour.", ro:"turneu",en:"tour, circuit"}
+    ]
+  },
+  {
+    hanja:"城", ko_reading:"성", reading:{ro:"성 (seong)",en:"성 (seong)"}, meaning:{ro:"cetate, oraș fortificat",en:"castle, fortified town"},
+    etymology:{ro:"Pământ (土) + a împlini, a termina (成, element fonetic) — un zid de pământ dus la bun sfârșit în jurul unei așezări, de unde sensul de zid de cetate, oraș fortificat.",en:"Earth (土) + to complete, accomplish (成, phonetic element) — an earthen wall built to completion around a settlement, hence the meaning castle wall, fortified town."},
+    words:[
+      {ko:"성곽", sentence:"수원에는 아름다운 성곽이 있어요.", sentence_ro:"Suwon are ziduri de cetate foarte frumoase.", sentence_en:"Suwon has beautiful fortress walls.", ro:"ziduri de cetate",en:"castle walls, fortress walls"},
+      {ko:"도성", sentence:"옛날에는 도성 안에서만 살 수 있었어요.", sentence_ro:"Odinioară se putea locui doar în interiorul zidurilor capitalei.", sentence_en:"In the past, one could only live inside the capital's walls.", ro:"capitala fortificată",en:"walled capital city"},
+      {ko:"만리장성", sentence:"중국에 가면 만리장성을 꼭 보고 싶어요.", sentence_ro:"Dacă merg în China, vreau neapărat să văd Marele Zid.", sentence_en:"If I go to China, I really want to see the Great Wall.", ro:"Marele Zid Chinezesc",en:"the Great Wall of China"},
+      {ko:"성벽", sentence:"성벽 위에서 마을을 내려다봤어요.", sentence_ro:"Am privit satul de sus, de pe zidul cetății.", sentence_en:"I looked down at the village from atop the city wall.", ro:"zid de cetate",en:"city/castle wall"}
+    ]
+  },
+  {
+    hanja:"堂", ko_reading:"당", reading:{ro:"당 (dang)",en:"당 (dang)"}, meaning:{ro:"sală, clădire; oficiu guvernamental",en:"hall, building; government office"},
+    etymology:{ro:"Pământ bătătorit (土) sub un acoperiș măreț, element care indică și pronunția (尚, „venerat, înălțat”) — o platformă ridicată pe care se construia o sală mare, folosită pentru ceremonii și adunări.",en:"Packed earth (土) beneath a grand roof, whose component also lends the sound (尚, \"esteemed, exalted\") — a raised platform on which a great hall was built, used for ceremonies and gatherings."},
+    words:[
+      {ko:"식당", sentence:"학교 식당에서 친구들과 점심을 먹어요.", sentence_ro:"Mănânc prânzul cu prietenii la cantina școlii.", sentence_en:"I eat lunch with my friends at the school cafeteria.", ro:"restaurant, cantină",en:"restaurant, cafeteria"},
+      {ko:"강당", sentence:"오늘 강당에서 졸업식이 열려요.", sentence_ro:"Astăzi are loc festivitatea de absolvire în amfiteatru.", sentence_en:"Today the graduation ceremony is held in the auditorium.", ro:"amfiteatru, sală mare",en:"auditorium, assembly hall"},
+      {ko:"성당", sentence:"저는 일요일마다 성당에 가요.", sentence_ro:"Merg la catedrală în fiecare duminică.", sentence_en:"I go to the cathedral every Sunday.", ro:"catedrală, biserică",en:"cathedral, church"},
+      {ko:"서당", sentence:"옛날 아이들은 서당에서 한자를 배웠어요.", sentence_ro:"Pe vremuri, copiii învățau caracterele chinezești la școala sătească.", sentence_en:"In the old days, children learned Chinese characters at the village school.", ro:"școală sătească tradițională",en:"traditional village school"}
+    ]
+  },
+  {
+    hanja:"墓", ko_reading:"묘", reading:{ro:"묘 (myo)",en:"묘 (myo)"}, meaning:{ro:"mormânt, groapă",en:"grave, tomb"},
+    etymology:{ro:"Iarbă și soare care apune (莫, „amurg”, element fonetic) deasupra pământului (土) — locul unde cineva este coborât în pământ, la fel cum soarele coboară în iarbă la asfințit.",en:"Grass and a setting sun (莫, \"dusk\", phonetic element) above earth (土) — the place where someone is lowered into the ground, just as the sun sinks into the grass at dusk."},
+    words:[
+      {ko:"묘지", sentence:"할아버지의 묘지는 산 위에 있어요.", sentence_ro:"Mormântul bunicului este pe deal.", sentence_en:"Grandfather's grave is on the hill.", ro:"cimitir, mormânt",en:"grave, cemetery"},
+      {ko:"성묘", sentence:"추석에는 가족들이 성묘를 가요.", sentence_ro:"De Chuseok, familia merge să viziteze mormintele strămoșilor.", sentence_en:"At Chuseok, families go to visit their ancestors' graves.", ro:"vizitarea mormintelor strămoșilor",en:"visiting ancestral graves"},
+      {ko:"묘비", sentence:"묘비에 할머니의 이름이 새겨져 있어요.", sentence_ro:"Numele bunicii este gravat pe piatra funerară.", sentence_en:"Grandmother's name is engraved on the tombstone.", ro:"piatră funerară",en:"tombstone, gravestone"},
+      {ko:"묘소", sentence:"매년 우리는 조상님의 묘소를 찾아가요.", sentence_ro:"În fiecare an vizităm mormântul strămoșilor noștri.", sentence_en:"Every year we visit our ancestors' grave site.", ro:"loc de mormânt",en:"gravesite"}
+    ]
+  },
+  {
+    hanja:"墳", ko_reading:"분", reading:{ro:"분 (bun)",en:"분 (bun)"}, meaning:{ro:"movilă funerară, mormânt",en:"grave mound, tomb"},
+    etymology:{ro:"Pământ (土) + un element care sugerează umflare sau proeminență (賁, element fonetic) — un morman de pământ ridicat deasupra unui mormânt, ca o umflătură a solului.",en:"Earth (土) + a component suggesting swelling or prominence (賁, phonetic element) — a mound of earth raised over a grave, like a bulge in the ground."},
+    words:[
+      {ko:"고분", sentence:"경주에는 신라 시대의 고분이 많아요.", sentence_ro:"În Gyeongju sunt multe morminte antice din epoca Silla.", sentence_en:"There are many ancient tombs from the Silla era in Gyeongju.", ro:"movilă funerară antică",en:"ancient tomb, tumulus"},
+      {ko:"분묘", sentence:"그 지역에는 오래된 분묘가 발견됐어요.", sentence_ro:"În acea zonă a fost descoperit un mormânt vechi.", sentence_en:"An old grave was discovered in that area.", ro:"mormânt",en:"grave, tomb"},
+      {ko:"봉분", sentence:"산소에 봉분을 새로 만들었어요.", sentence_ro:"Au construit o movilă funerară nouă la mormânt.", sentence_en:"They built a new burial mound at the grave.", ro:"movilă de pământ peste mormânt",en:"burial mound"},
+      {ko:"고분군", sentence:"그 마을 근처에 고분군이 있어요.", sentence_ro:"Lângă acel sat se află un grup de morminte antice.", sentence_en:"Near that village there is a cluster of ancient tombs.", ro:"grup de morminte antice",en:"cluster of ancient tombs"}
+    ]
+  },
+  {
+    hanja:"壯", ko_reading:"장", reading:{ro:"장 (jang)",en:"장 (jang)"}, meaning:{ro:"mare, robust, măreț",en:"big, robust, grand"},
+    etymology:{ro:"Un bărbat puternic (士) alături de un element fonetic care amintește de un pat sau o scândură despicată (爿) — desemna inițial un tânăr robust, apoi a ajuns să însemne „măreț, impunător”.",en:"A strong man (士) alongside a phonetic component resembling a split plank or bed frame (爿) — originally denoted a robust young man, later coming to mean \"grand, imposing\"."},
+    words:[
+      {ko:"장관", sentence:"설악산의 단풍은 정말 장관이에요.", sentence_ro:"Frunzele de toamnă de pe muntele Seorak sunt cu adevărat impresionante.", sentence_en:"The autumn leaves on Mt. Seorak are truly a magnificent sight.", ro:"priveliște măreață",en:"grand spectacle, magnificent sight"},
+      {ko:"장년", sentence:"그는 장년이 되어서도 매일 운동해요.", sentence_ro:"Chiar și ajuns la vârsta mijlocie, el face sport în fiecare zi.", sentence_en:"Even now in his prime of life, he exercises every day.", ro:"vârsta mijlocie, floarea vârstei",en:"prime of life, middle age"},
+      {ko:"건장하다", sentence:"그 군인은 키가 크고 건장해요.", sentence_ro:"Acel soldat este înalt și robust.", sentence_en:"That soldier is tall and sturdily built.", ro:"robust, voinic",en:"sturdy, robust"},
+      {ko:"장사", sentence:"그는 마을에서 유명한 장사예요.", sentence_ro:"El este un bărbat puternic cunoscut în sat.", sentence_en:"He is a well-known strong man in the village.", ro:"bărbat puternic și viteaz",en:"strong, brave man"}
+    ]
+  },
+  {
+    hanja:"威", ko_reading:"위", reading:{ro:"위 (wi)",en:"위 (wi)"}, meaning:{ro:"putere, autoritate, măreție",en:"power, might, authority"},
+    etymology:{ro:"O femeie (女) și o armă (戌) — potrivit dicționarului Shuowen Jiezi, caracterul desemna inițial autoritatea unei soacre în gospodărie, extinzându-se apoi la sensul de putere impunătoare și măreție.",en:"A woman (女) and a weapon (戌) — according to the Shuowen Jiezi dictionary, the character originally denoted a mother-in-law's authority in the household, later extending to mean imposing power and majesty."},
+    words:[
+      {ko:"위협", sentence:"그 소식은 우리에게 큰 위협이 됐어요.", sentence_ro:"Vestea aceea a devenit o mare amenințare pentru noi.", sentence_en:"That news became a great threat to us.", ro:"amenințare",en:"threat"},
+      {ko:"위엄", sentence:"선생님은 위엄 있는 목소리로 말씀하셨어요.", sentence_ro:"Profesorul a vorbit cu o voce plină de demnitate.", sentence_en:"The teacher spoke with a dignified voice.", ro:"demnitate, măreție",en:"dignity, majesty"},
+      {ko:"권위", sentence:"그 교수님은 이 분야에서 권위가 있어요.", sentence_ro:"Acel profesor are autoritate în acest domeniu.", sentence_en:"That professor has authority in this field.", ro:"autoritate",en:"authority"},
+      {ko:"위력", sentence:"태풍의 위력이 정말 대단했어요.", sentence_ro:"Forța taifunului a fost cu adevărat impresionantă.", sentence_en:"The power of the typhoon was truly tremendous.", ro:"putere, forță",en:"might, power"}
+    ]
+  },
+  {
+    hanja:"定", ko_reading:"정", reading:{ro:"정 (jeong)",en:"정 (jeong)"}, meaning:{ro:"a decide, a stabili",en:"to decide, to settle"},
+    etymology:{ro:"Un acoperiș (宀) deasupra caracterului „drept, corect” (正) — o casă în care lucrurile sunt puse la punct corect, de unde sensul de „a stabili, a decide”.",en:"A roof (宀) above the character for \"straight, correct\" (正) — a household where things are set right, hence the meaning \"to settle, to decide\"."},
+    words:[
+      {ko:"결정", sentence:"우리는 내일 여행 날짜를 결정할 거예요.", sentence_ro:"Mâine vom decide data călătoriei.", sentence_en:"We will decide the date of the trip tomorrow.", ro:"decizie",en:"decision"},
+      {ko:"예정", sentence:"회의는 세 시에 열릴 예정이에요.", sentence_ro:"Se plănuiește ca ședința să înceapă la ora trei.", sentence_en:"The meeting is scheduled to start at three o'clock.", ro:"plan, program",en:"schedule, plan"},
+      {ko:"안정", sentence:"이제 마음이 좀 안정이 됐어요.", sentence_ro:"Acum mintea mi s-a liniștit puțin.", sentence_en:"Now my mind has calmed down a bit.", ro:"stabilitate, liniște",en:"stability, calm"},
+      {ko:"정하다", sentence:"약속 시간을 다시 정해요.", sentence_ro:"Hai să stabilim din nou ora întâlnirii.", sentence_en:"Let's set the meeting time again.", ro:"a stabili, a decide",en:"to decide, to fix"}
+    ]
+  },
+  {
+    hanja:"展", ko_reading:"전", reading:{ro:"전 (jeon)",en:"전 (jeon)"}, meaning:{ro:"a desfășura, a expune, a se dezvolta",en:"to unfold, to exhibit, to develop"},
+    etymology:{ro:"Vechile forme oraculare arată o persoană întorcându-se sau desfășurând o pânză — de aici sensul de „a se desfășura, a se întinde”, extins la „a expune” și „a dezvolta”.",en:"Ancient oracle-bone forms show a person turning over or unrolling a piece of cloth — hence the meaning \"to unfold, to spread out\", extended to \"to exhibit\" and \"to develop\"."},
+    words:[
+      {ko:"전시", sentence:"박물관에서 특별 전시가 열리고 있어요.", sentence_ro:"La muzeu are loc o expoziție specială.", sentence_en:"A special exhibition is being held at the museum.", ro:"expoziție",en:"exhibition"},
+      {ko:"발전", sentence:"한국 경제는 빠르게 발전했어요.", sentence_ro:"Economia Coreei s-a dezvoltat rapid.", sentence_en:"The Korean economy developed rapidly.", ro:"dezvoltare",en:"development"},
+      {ko:"전개", sentence:"이야기가 흥미롭게 전개되고 있어요.", sentence_ro:"Povestea se desfășoară într-un mod captivant.", sentence_en:"The story is unfolding in an interesting way.", ro:"desfășurare",en:"unfolding, development"},
+      {ko:"전망", sentence:"이 방에서는 바다 전망이 아름다워요.", sentence_ro:"Din camera aceasta, priveliștea spre mare este frumoasă.", sentence_en:"The view of the sea from this room is beautiful.", ro:"priveliște; perspectivă",en:"view; outlook, prospect"}
+    ]
+  },
+  {
+    hanja:"岸", ko_reading:"안", reading:{ro:"안 (an)",en:"안 (an)"}, meaning:{ro:"mal, țărm, coastă",en:"bank, shore, coast"},
+    etymology:{ro:"Un munte (山) și o stâncă abruptă (厂), cu 干 ca element fonetic — o faleză abruptă la marginea apei, adică un mal sau un țărm.",en:"A mountain (山) and a steep cliff (厂), with 干 as the phonetic element — a steep bluff at the water's edge, i.e., a riverbank or coastline."},
+    words:[
+      {ko:"해안", sentence:"우리는 동해안을 따라 여행했어요.", sentence_ro:"Am călătorit de-a lungul coastei de est.", sentence_en:"We traveled along the east coast.", ro:"coastă, țărm",en:"coast, shore"},
+      {ko:"연안", sentence:"이 물고기는 연안에서 많이 잡혀요.", sentence_ro:"Acest pește este pescuit mult în zona de coastă.", sentence_en:"This fish is caught a lot in the coastal area.", ro:"zonă de coastă",en:"coastal area"},
+      {ko:"대안", sentence:"강 대안에 작은 마을이 있어요.", sentence_ro:"Pe malul opus al râului există un sat mic.", sentence_en:"There is a small village on the opposite bank of the river.", ro:"malul opus",en:"opposite bank/shore"},
+      {ko:"피안", sentence:"그는 피안의 세계를 꿈꿔요.", sentence_ro:"El visează la lumea de dincolo (nirvana).", sentence_en:"He dreams of the world beyond (nirvana).", ro:"țărmul celălalt (nirvana)",en:"the other shore (nirvana, Buddhist term)"}
+    ]
+  },
+  {
+    hanja:"帳", ko_reading:"장", reading:{ro:"장 (jang)",en:"장 (jang)"}, meaning:{ro:"cort, perdea; registru",en:"tent, curtain; ledger, notebook"},
+    etymology:{ro:"Pânză (巾) + elementul fonetic 長 („lung”) — o bucată lungă de pânză atârnată, adică o perdea sau un cort; sensul s-a extins apoi la „registru”, ca niște foi legate laolaltă precum o draperie.",en:"Cloth (巾) + the phonetic element 長 (\"long\") — a long piece of cloth hung up, i.e., a curtain or tent; the meaning later extended to \"ledger, notebook\", as bound sheets resembling a hung drape."},
+    words:[
+      {ko:"통장", sentence:"은행에서 새 통장을 만들었어요.", sentence_ro:"Mi-am făcut un carnet de bancă nou la bancă.", sentence_en:"I made a new bankbook at the bank.", ro:"carnet de bancă",en:"bankbook"},
+      {ko:"장부", sentence:"사장님이 장부를 꼼꼼히 확인했어요.", sentence_ro:"Directorul a verificat registrul contabil cu atenție.", sentence_en:"The boss carefully checked the ledger.", ro:"registru contabil",en:"account book, ledger"},
+      {ko:"모기장", sentence:"여름에는 모기장이 꼭 필요해요.", sentence_ro:"Vara este absolut necesară o plasă de țânțari.", sentence_en:"In summer, a mosquito net is absolutely necessary.", ro:"plasă de țânțari",en:"mosquito net"},
+      {ko:"일기장", sentence:"저는 매일 밤 일기장에 하루를 기록해요.", sentence_ro:"În fiecare seară îmi notez ziua în jurnal.", sentence_en:"Every night I write down my day in my diary.", ro:"jurnal, carnet de însemnări",en:"diary, journal notebook"}
+    ]
+  },
+  {
+    hanja:"庫", ko_reading:"고", reading:{ro:"고 (go)",en:"고 (go)"}, meaning:{ro:"depozit, magazie, tezaur",en:"storehouse, warehouse, treasury"},
+    etymology:{ro:"Un adăpost (广) sub care se află un car (車) — potrivit dicționarului Shuowen, o magazie în care erau păstrate carele și armele de război.",en:"A shelter (广) beneath which sits a cart (車) — according to the Shuowen dictionary, a shed where war chariots and weapons were kept."},
+    words:[
+      {ko:"창고", sentence:"물건들이 창고에 가득 쌓여 있어요.", sentence_ro:"Lucrurile sunt îngrămădite din plin în depozit.", sentence_en:"Things are piled up full in the warehouse.", ro:"depozit",en:"warehouse"},
+      {ko:"금고", sentence:"중요한 서류는 금고에 보관해요.", sentence_ro:"Documentele importante se păstrează în seif.", sentence_en:"Important documents are kept in the safe.", ro:"seif",en:"safe, vault"},
+      {ko:"차고", sentence:"자동차를 차고에 주차했어요.", sentence_ro:"Am parcat mașina în garaj.", sentence_en:"I parked the car in the garage.", ro:"garaj",en:"garage"},
+      {ko:"재고", sentence:"이 제품은 재고가 없어요.", sentence_ro:"Acest produs nu mai are stoc.", sentence_en:"This product is out of stock.", ro:"stoc",en:"stock, inventory"}
+    ]
+  },
+  {
+    hanja:"廣", ko_reading:"광", reading:{ro:"광 (gwang)",en:"광 (gwang)"}, meaning:{ro:"larg, vast, întins",en:"broad, wide, vast"},
+    etymology:{ro:"Un adăpost fără pereți laterali (广) + elementul fonetic 黃 („galben”) — desemna inițial o sală mare deschisă, de unde sensul de „larg, vast, întins”.",en:"A shelter without side walls (广) + the phonetic element 黃 (\"yellow\") — originally denoted a large open hall, hence the meaning \"broad, vast, extensive\"."},
+    words:[
+      {ko:"광장", sentence:"사람들이 광장에 모여 있어요.", sentence_ro:"Oamenii s-au adunat în piață.", sentence_en:"People have gathered in the plaza.", ro:"piață publică",en:"plaza, public square"},
+      {ko:"광고", sentence:"텔레비전에서 새 광고가 나와요.", sentence_ro:"La televizor rulează o nouă reclamă.", sentence_en:"A new advertisement is airing on television.", ro:"reclamă",en:"advertisement"},
+      {ko:"광범위", sentence:"이 문제는 영향이 광범위해요.", sentence_ro:"Această problemă are un impact extins.", sentence_en:"This problem has a wide-ranging impact.", ro:"extins, vast",en:"wide-ranging, extensive"},
+      {ko:"광대하다", sentence:"몽골의 초원은 정말 광대해요.", sentence_ro:"Stepele Mongoliei sunt cu adevărat vaste.", sentence_en:"The Mongolian steppes are truly vast.", ro:"vast, imens",en:"vast, immense"}
+    ]
+  },
+  {
+    hanja:"式", ko_reading:"식", reading:{ro:"식 (sik)",en:"식 (sik)"}, meaning:{ro:"stil, formă; ceremonie",en:"style, form; ceremony"},
+    etymology:{ro:"Un țăruș folosit ca reper (弋, element fonetic) alături de unealtă/lucru (工) — un model sau tipar folosit ca standard, de unde „stil, formă, ceremonie”.",en:"A marker stake (弋, phonetic element) alongside a tool/work component (工) — a pattern or model used as a standard, hence \"style, form, ceremony\"."},
+    words:[
+      {ko:"형식", sentence:"이 편지는 형식에 맞게 써야 해요.", sentence_ro:"Această scrisoare trebuie scrisă respectând formatul cerut.", sentence_en:"This letter must be written according to the proper format.", ro:"format, formă",en:"form, format"},
+      {ko:"방식", sentence:"요즘 사람들은 새로운 방식으로 일해요.", sentence_ro:"Astăzi oamenii lucrează într-un mod nou.", sentence_en:"These days people work in a new way.", ro:"mod, metodă",en:"method, way"},
+      {ko:"결혼식", sentence:"다음 달에 친구의 결혼식이 있어요.", sentence_ro:"Luna viitoare are loc nunta unui prieten.", sentence_en:"Next month there is a friend's wedding ceremony.", ro:"nuntă",en:"wedding ceremony"},
+      {ko:"공식", sentence:"이 문제는 수학 공식을 이용해서 풀어요.", sentence_ro:"Această problemă se rezolvă folosind o formulă matematică.", sentence_en:"This problem is solved using a mathematical formula.", ro:"formulă; oficial",en:"formula; official"}
+    ]
+  },
+  {
+    hanja:"德", ko_reading:"덕", reading:{ro:"덕 (deok)",en:"덕 (deok)"}, meaning:{ro:"virtute, caracter moral",en:"virtue, moral character"},
+    etymology:{ro:"A merge (彳) pe un drum drept (直) cu o inimă (心) sinceră — a păși pe calea cea dreaptă cu inima curată, imaginea virtuții și a integrității morale.",en:"To walk (彳) a straight path (直) with an honest heart (心) — treading the right way with a pure heart, the image of virtue and moral integrity."},
+    words:[
+      {ko:"도덕", sentence:"학교에서 도덕 수업을 들어요.", sentence_ro:"La școală urmez orele de morală.", sentence_en:"I take moral education classes at school.", ro:"morală",en:"morality, ethics"},
+      {ko:"미덕", sentence:"겸손은 중요한 미덕이에요.", sentence_ro:"Modestia este o virtute importantă.", sentence_en:"Modesty is an important virtue.", ro:"virtute",en:"virtue"},
+      {ko:"덕분", sentence:"선생님 덕분에 시험에 합격했어요.", sentence_ro:"Datorită profesorului am reușit la examen.", sentence_en:"Thanks to the teacher, I passed the exam.", ro:"datorită, mulțumită",en:"thanks to, owing to"},
+      {ko:"인덕", sentence:"그분은 인덕이 많아서 사람들이 좋아해요.", sentence_ro:"Acea persoană are mult suflet bun, de aceea lumea o place.", sentence_en:"That person has a lot of good virtue, so people like him.", ro:"bunătate de suflet, virtute personală",en:"personal virtue, benevolence"}
+    ]
+  },
+  {
+    hanja:"懷", ko_reading:"회", reading:{ro:"회 (hoe)",en:"회 (hoe)"}, meaning:{ro:"sân, suflet; a purta în inimă",en:"bosom, heart; to harbor, to embrace"},
+    etymology:{ro:"Inima (忄) alături de un element care înfățișează haine înfășurate în jurul unui ochi plângând (褱) — a purta pe cineva aproape de inimă, a tânji, a păstra sentimente sau a purta un copil în pântece.",en:"The heart (忄) alongside a component depicting clothing wrapped around a weeping eye (褱) — to hold someone close to one's heart, to yearn, to harbor feelings, or to carry a child in one's womb."},
+    words:[
+      {ko:"감회", sentence:"고향에 돌아오니 감회가 새로워요.", sentence_ro:"Întorcându-mă acasă, simt o emoție profundă și nouă.", sentence_en:"Coming back to my hometown, I feel a deep, fresh emotion.", ro:"emoție profundă, amintire",en:"deep emotion, reminiscence"},
+      {ko:"회포", sentence:"오랜만에 만난 친구와 회포를 풀었어요.", sentence_ro:"M-am revăzut cu un prieten vechi și ne-am descărcat sufletul.", sentence_en:"I met an old friend after a long time and we shared our pent-up feelings.", ro:"sentimente acumulate",en:"pent-up feelings"},
+      {ko:"소회", sentence:"그는 은퇴하면서 소회를 밝혔어요.", sentence_ro:"El și-a exprimat gândurile cu ocazia pensionării.", sentence_en:"He shared his reflections upon retiring.", ro:"gânduri, reflecții personale",en:"one's thoughts, reflections"},
+      {ko:"회임", sentence:"그녀는 첫 회임 소식을 가족에게 전했어요.", sentence_ro:"Ea a anunțat familiei vestea primei sarcini.", sentence_en:"She shared the news of her first pregnancy with her family.", ro:"sarcină",en:"pregnancy"}
+    ]
+  },
+  {
+    hanja:"招", ko_reading:"초", reading:{ro:"초 (cho)",en:"초 (cho)"}, meaning:{ro:"a chema, a invita, a recruta",en:"to beckon, to summon, to recruit"},
+    etymology:{ro:"O mână (扌) + elementul fonetic 召 („a chema”) — gestul mâinii care cheamă pe cineva mai aproape, de unde „a invita, a chema, a recruta”.",en:"A hand (扌) + the phonetic element 召 (\"to call\") — the hand gesture beckoning someone closer, hence \"to invite, to summon, to recruit\"."},
+    words:[
+      {ko:"초대", sentence:"생일 파티에 친구들을 초대했어요.", sentence_ro:"Mi-am invitat prietenii la petrecerea de ziua mea.", sentence_en:"I invited my friends to my birthday party.", ro:"invitație",en:"invitation"},
+      {ko:"초청", sentence:"그 교수님은 강연을 위해 초청을 받았어요.", sentence_ro:"Acel profesor a fost invitat oficial să susțină o prelegere.", sentence_en:"That professor was formally invited to give a lecture.", ro:"invitație oficială",en:"formal invitation"},
+      {ko:"초래", sentence:"작은 실수가 큰 문제를 초래했어요.", sentence_ro:"O mică greșeală a provocat o problemă mare.", sentence_en:"A small mistake brought about a big problem.", ro:"a provoca, a aduce",en:"to bring about, to cause"},
+      {ko:"초빙", sentence:"학교는 유명한 학자를 초빙했어요.", sentence_ro:"Școala a angajat oficial un savant renumit.", sentence_en:"The school formally engaged a famous scholar.", ro:"a angaja oficial, a recruta",en:"to formally invite/engage"}
+    ]
+  },
+  {
+    hanja:"拾", ko_reading:"습", reading:{ro:"습 (seup)",en:"습 (seup)"}, meaning:{ro:"a culege, a aduna; (formal) zece",en:"to pick up, to gather; (formal) ten"},
+    etymology:{ro:"O mână (扌) + elementul fonetic 合 („a uni”) — mâna care adună lucrurile împreună, de unde „a culege, a strânge”; folosit și ca formă oficială, greu de falsificat, a cifrei zece (十) în documente financiare.",en:"A hand (扌) + the phonetic element 合 (\"to unite\") — the hand gathering things together, hence \"to pick up, to collect\"; also used as the formal, fraud-resistant way of writing the numeral ten (十) in financial documents."},
+    words:[
+      {ko:"습득", sentence:"길에서 지갑을 습득했어요.", sentence_ro:"Am găsit un portofel pe stradă.", sentence_en:"I found a wallet on the street.", ro:"a găsi, a dobândi",en:"to find, to acquire"},
+      {ko:"수습", sentence:"회사는 문제를 빨리 수습했어요.", sentence_ro:"Compania a rezolvat repede problema.", sentence_en:"The company quickly sorted out the problem.", ro:"a rezolva, a remedia",en:"to sort out, to remedy"},
+      {ko:"수습생", sentence:"그는 회사에서 수습생으로 일하고 있어요.", sentence_ro:"El lucrează la companie ca angajat stagiar.", sentence_en:"He is working at the company as a trainee.", ro:"stagiar",en:"trainee, apprentice"},
+      {ko:"습득물", sentence:"경찰서에 습득물을 맡겼어요.", sentence_ro:"Am predat obiectul găsit la secția de poliție.", sentence_en:"I handed in the found item at the police station.", ro:"obiect găsit",en:"found item, lost property"}
+    ]
+  },
+  {
+    hanja:"排", ko_reading:"배", reading:{ro:"배 (bae)",en:"배 (bae)"}, meaning:{ro:"a aranja în rând, a alinia",en:"to arrange in a row, to line up"},
+    etymology:{ro:"O mână (扌) + elementul fonetic 非 („nu”, care înfățișa inițial și două aripi desfăcute) — mâinile care așază lucrurile în șir sau le împing la o parte, de unde „a aranja” și „a exclude”.",en:"A hand (扌) + the phonetic element 非 (\"not\", which originally also depicted two wings spread apart) — hands arranging things into rows or pushing them apart, hence \"to arrange\" and \"to exclude\"."},
+    words:[
+      {ko:"배열", sentence:"책상 위에 책들을 순서대로 배열했어요.", sentence_ro:"Am aranjat cărțile pe birou în ordine.", sentence_en:"I arranged the books on the desk in order.", ro:"aranjare",en:"arrangement"},
+      {ko:"배출", sentence:"공장은 매연을 많이 배출해요.", sentence_ro:"Fabrica emite mult fum poluant.", sentence_en:"The factory emits a lot of smoke/pollution.", ro:"emisie, evacuare",en:"emission, discharge"},
+      {ko:"배제", sentence:"그 계획에서 위험 요소를 배제했어요.", sentence_ro:"Am eliminat factorii de risc din acel plan.", sentence_en:"We excluded the risk factors from that plan.", ro:"excludere",en:"exclusion"},
+      {ko:"배구", sentence:"우리 반은 방과 후에 배구를 해요.", sentence_ro:"Clasa noastră joacă volei după ore.", sentence_en:"Our class plays volleyball after school.", ro:"volei",en:"volleyball"}
+    ]
+  },
+  {
+    hanja:"敦", ko_reading:"돈", reading:{ro:"돈 (don)",en:"돈 (don)"}, meaning:{ro:"cinstit, sincer, cald la suflet",en:"sincere, honest, warm-hearted"},
+    etymology:{ro:"O ofrandă generoasă (享) alături de o mână cu un băț (攴), care sugerează acțiunea — legat inițial de daruri generoase, caracterul a ajuns să însemne „sincer, cinstit, cald la suflet”.",en:"A generous offering (享) alongside a hand holding a rod (攴), suggesting action — originally linked to generous gift-giving, the character came to mean \"sincere, honest, warm-hearted\"."},
+    words:[
+      {ko:"돈독하다", sentence:"우리 가족은 사이가 아주 돈독해요.", sentence_ro:"Relațiile din familia noastră sunt foarte strânse și calde.", sentence_en:"The relationships in our family are very close and warm.", ro:"strâns, cald (despre relații)",en:"close, warm (of relationships)"},
+      {ko:"돈후하다", sentence:"그분은 성격이 돈후하고 너그러워요.", sentence_ro:"Acea persoană are un caracter cald și generos.", sentence_en:"That person has a warm and generous character.", ro:"cald și generos",en:"warm-hearted and generous"},
+      {ko:"돈목", sentence:"이웃 간의 돈목을 위해 잔치를 열었어요.", sentence_ro:"Au organizat o petrecere pentru armonia dintre vecini.", sentence_en:"They held a feast for harmony among neighbors.", ro:"armonie, prietenie",en:"harmony, amity"},
+      {ko:"돈화문", sentence:"창덕궁의 정문은 돈화문이에요.", sentence_ro:"Poarta principală a Palatului Changdeokgung este Donhwamun.", sentence_en:"The main gate of Changdeokgung Palace is Donhwamun.", ro:"Poarta Donhwamun (nume propriu)",en:"Donhwamun Gate (proper noun)"}
+    ]
+  },
+  {
+    hanja:"易", ko_reading:"역", reading:{ro:"역 (yeok)",en:"역 (yeok)"}, meaning:{ro:"schimbare; ușor",en:"change; easy"},
+    etymology:{ro:"Există două teorii clasice: fie o șopârlă care își schimbă culoarea (simbol al transformării), fie soarele (日) și luna alternând — ambele explică de ce 易 înseamnă „schimbare”, dar și „ușor”, fiind caracterul din numele Cărții Schimbărilor (易經).",en:"Two classical theories exist: either a lizard changing color (a symbol of transformation), or the sun (日) and moon alternating — both explain why 易 means \"change\", as well as \"easy\", and it is the character in the title of the Book of Changes (易經)."},
+    words:[
+      {ko:"무역", sentence:"이 회사는 중국과 무역을 해요.", sentence_ro:"Această companie face comerț cu China.", sentence_en:"This company trades with China.", ro:"comerț exterior",en:"trade"},
+      {ko:"교역", sentence:"두 나라는 오랫동안 교역을 해 왔어요.", sentence_ro:"Cele două țări au făcut schimburi comerciale de multă vreme.", sentence_en:"The two countries have been trading with each other for a long time.", ro:"schimb comercial",en:"commerce, exchange"},
+      {ko:"용이하다", sentence:"이 프로그램은 사용이 용이해요.", sentence_ro:"Acest program este ușor de utilizat.", sentence_en:"This program is easy to use.", ro:"ușor, facil",en:"easy, facile"},
+      {ko:"주역", sentence:"주역은 고대 중국의 철학책이에요.", sentence_ro:"Cartea Schimbărilor este o carte de filosofie din China antică.", sentence_en:"The Book of Changes is an ancient Chinese philosophical text.", ro:"Cartea Schimbărilor (I Ching)",en:"Book of Changes (I Ching)"}
+    ]
+  },
+  {
+    hanja:"曉", ko_reading:"효", reading:{ro:"효 (hyo)",en:"효 (hyo)"}, meaning:{ro:"zori, revărsatul zorilor; a înțelege clar",en:"dawn, daybreak; to understand clearly"},
+    etymology:{ro:"Soarele (日) + elementul fonetic 堯 („înalt, măreț”) — soarele care se ridică sus în zori, de unde „revărsatul zorilor”; sensul s-a extins metaforic la „a înțelege limpede”, așa cum se luminează totul odată cu zorii.",en:"The sun (日) + the phonetic element 堯 (\"high, lofty\") — the sun rising high at daybreak, hence \"dawn\"; the meaning extended metaphorically to \"to understand clearly\", just as everything becomes clear with the morning light."},
+    words:[
+      {ko:"통효", sentence:"그는 여러 외국어에 통효해요.", sentence_ro:"El stăpânește pe deplin mai multe limbi străine.", sentence_en:"He has a thorough command of several foreign languages.", ro:"a înțelege pe deplin",en:"to understand thoroughly"},
+      {ko:"효유", sentence:"왕은 백성들에게 효유하는 글을 내렸어요.", sentence_ro:"Regele a emis un decret pentru a lămuri poporul.", sentence_en:"The king issued a proclamation to instruct the people clearly.", ro:"a lămuri, a instrui clar",en:"to instruct/admonish clearly"},
+      {ko:"원효대사", sentence:"원효대사는 신라의 유명한 승려였어요.", sentence_ro:"Maestrul Wonhyo a fost un călugăr renumit din regatul Silla.", sentence_en:"Master Wonhyo was a famous monk of the Silla kingdom.", ro:"Maestrul Wonhyo (călugăr budist celebru)",en:"Venerable Wonhyo (famous Buddhist monk)"},
+      {ko:"효성", sentence:"시인은 효성을 바라보며 시를 지었어요.", sentence_ro:"Poetul a compus o poezie privind la luceafărul de dimineață.", sentence_en:"The poet composed a poem while gazing at the morning star.", ro:"luceafărul de dimineață (poetic)",en:"morning star (literary)"}
+    ]
+  },
+  {
+    hanja:"服", ko_reading:"복", reading:{ro:"복 (bok)",en:"복 (bok)"}, meaning:{ro:"haine; a purta, a se supune",en:"clothes; to wear, to submit"},
+    etymology:{ro:"Vechile forme înfățișează o mână (又) supunând o persoană îngenuncheată — sensul inițial de „a se supune” s-a extins la „haine” (ceea ce este potrivit pe corp) și la „a lua” (un medicament).",en:"Ancient forms depict a hand (又) subduing a kneeling person — the original meaning \"to submit\" extended to \"clothing\" (what is fitted onto the body) and to \"to take\" (medicine)."},
+    words:[
+      {ko:"의복", sentence:"계절에 맞는 의복을 준비하세요.", sentence_ro:"Pregătiți-vă haine potrivite pentru sezon.", sentence_en:"Please prepare clothing suitable for the season.", ro:"haine, îmbrăcăminte",en:"clothing"},
+      {ko:"교복", sentence:"우리 학교 교복은 파란색이에요.", sentence_ro:"Uniforma școlii noastre este albastră.", sentence_en:"Our school uniform is blue.", ro:"uniformă școlară",en:"school uniform"},
+      {ko:"복용", sentence:"이 약은 하루 세 번 복용하세요.", sentence_ro:"Luați acest medicament de trei ori pe zi.", sentence_en:"Take this medicine three times a day.", ro:"administrare (a unui medicament)",en:"taking (medicine)"},
+      {ko:"항복", sentence:"결국 적군은 항복했어요.", sentence_ro:"În cele din urmă, armata inamică s-a predat.", sentence_en:"In the end, the enemy army surrendered.", ro:"predare, capitulare",en:"surrender"}
+    ]
+  },
+  {
+    hanja:"李", ko_reading:"이", reading:{ro:"이 (i)",en:"이 (i)"}, meaning:{ro:"prun; nume de familie (Lee)",en:"plum tree; surname (Lee)"},
+    etymology:{ro:"Un pom (木) + copil/rod (子, element fonetic și de sens) — un pom care poartă rod, prunul; a devenit unul dintre cele mai răspândite nume de familie coreene, fiind și numele dinastiei regale Joseon.",en:"A tree (木) + child/fruit (子, phonetic and semantic element) — a fruit-bearing tree, the plum; it became one of the most common Korean surnames, and was also the name of the Joseon royal dynasty."},
+    words:[
+      {ko:"이씨", sentence:"이씨는 한국에서 가장 흔한 성씨 중 하나예요.", sentence_ro:"Numele de familie Lee este unul dintre cele mai comune din Coreea.", sentence_en:"The surname Lee is one of the most common family names in Korea.", ro:"familia/numele Lee",en:"the Lee (Yi) family name"},
+      {ko:"도리", sentence:"선생님은 평생 도리를 심는 마음으로 가르쳤어요.", sentence_ro:"Profesorul a predat toată viața cu gândul de a-și forma discipoli valoroși.", sentence_en:"The teacher taught his whole life with the heart of cultivating worthy disciples.", ro:"discipoli, protejați (idiom clasic)",en:"one's disciples/proteges (classical idiom)"},
+      {ko:"이화", sentence:"봄이 되니 이화가 하얗게 피었어요.", sentence_ro:"Odată cu venirea primăverii, florile de prun au înflorit alb.", sentence_en:"With the arrival of spring, the plum blossoms bloomed white.", ro:"floare de prun (poetic)",en:"plum blossom (poetic)"},
+      {ko:"이하부정관", sentence:"이하부정관이라는 말처럼 그는 의심받을 행동을 피했어요.", sentence_ro:"Așa cum spune vorba «nu-ți îndrepta pălăria sub prun», el a evitat orice acțiune suspectă.", sentence_en:"As the saying 'don't adjust your hat under a plum tree' goes, he avoided any suspicious behavior.", ro:"evită orice bănuială (idiom clasic)",en:"avoid suspicion (classical idiom)"}
+    ]
+  },
+  {
+    hanja:"栽", ko_reading:"재", reading:{ro:"재 (jae)",en:"재 (jae)"}, meaning:{ro:"a planta, a cultiva",en:"to plant, to cultivate"},
+    etymology:{ro:"Copacul (木) alături de un element fonetic legat de tăiere (𢦏, cu 戈 „armă”) — desemna inițial scândurile folosite pentru a susține pereții de pământ bătut, sens extins apoi la „a planta, a îngriji plante”.",en:"The tree (木) alongside a phonetic component related to cutting (𢦏, containing 戈 \"weapon\") — originally denoted the boards used to support rammed-earth walls during construction, a meaning later extended to \"to plant, to cultivate\"."},
+    words:[
+      {ko:"재배", sentence:"이 지역에서는 사과를 많이 재배해요.", sentence_ro:"În această regiune se cultivă mult mere.", sentence_en:"In this region, a lot of apples are cultivated.", ro:"cultivare",en:"cultivation"},
+      {ko:"분재", sentence:"할아버지는 분재를 취미로 키우세요.", sentence_ro:"Bunicul are ca hobby cultivarea bonsailor.", sentence_en:"Grandfather grows bonsai as a hobby.", ro:"bonsai",en:"bonsai"},
+      {ko:"재배지", sentence:"이 산 아래에는 넓은 인삼 재배지가 있어요.", sentence_ro:"La poalele acestui munte se află o zonă întinsă de cultivare a ginsengului.", sentence_en:"At the foot of this mountain there is a wide ginseng cultivation area.", ro:"zonă de cultivare",en:"cultivation area, field"},
+      {ko:"식재", sentence:"공원에 새로운 나무를 식재했어요.", sentence_ro:"Au plantat copaci noi în parc.", sentence_en:"New trees were planted in the park.", ro:"plantare (de copaci)",en:"planting (of trees/vegetation)"}
+    ]
+  },
+  {
+    hanja:"梅", ko_reading:"매", reading:{ro:"매 (mae)",en:"매 (mae)"}, meaning:{ro:"floare de prun, prun",en:"plum blossom, plum tree"},
+    etymology:{ro:"Copacul (木) + elementul fonetic 每 („fiecare”, care înfățișa inițial o femeie cu un ac de păr) — prunul, prețuit în cultura est-asiatică pentru că înflorește iarna târziu, înaintea celorlalți copaci, simbol al perseverenței și purității.",en:"The tree (木) + the phonetic element 每 (\"every\", which originally depicted a woman with a hairpin) — the plum tree, prized in East Asian culture for blooming in late winter before other trees, a symbol of perseverance and purity."},
+    words:[
+      {ko:"매화", sentence:"봄이 되면 매화가 가장 먼저 피어요.", sentence_ro:"Odată cu venirea primăverii, florile de prun înfloresc primele.", sentence_en:"When spring comes, plum blossoms bloom first.", ro:"floare de prun",en:"plum blossom"},
+      {ko:"매실", sentence:"매실로 만든 차는 새콤달콤해요.", sentence_ro:"Ceaiul făcut din prune este acrișor-dulce.", sentence_en:"Tea made from plums is sweet and sour.", ro:"prună (fruct)",en:"plum (fruit)"},
+      {ko:"매화나무", sentence:"정원에 매화나무 한 그루를 심었어요.", sentence_ro:"Am plantat un prun în grădină.", sentence_en:"I planted a plum tree in the garden.", ro:"prun (copac)",en:"plum tree"},
+      {ko:"설중매", sentence:"설중매는 인내와 절개를 상징해요.", sentence_ro:"Floarea de prun în zăpadă simbolizează răbdarea și integritatea.", sentence_en:"The plum blossom in snow symbolizes patience and integrity.", ro:"floare de prun în zăpadă (simbol)",en:"plum blossom in the snow (symbol of resilience)"}
+    ]
+  },
+  {
+    hanja:"標", ko_reading:"표", reading:{ro:"표 (pyo)",en:"표 (pyo)"}, meaning:{ro:"semn, marcaj",en:"mark, sign"},
+    etymology:{ro:"Copac (木) + 票 (element fonetic, care înfățișa inițial o flacără) — a însemnat inițial vârful unui copac, apoi s-a extins la sensul de semn sau marcaj care iese în evidență.",en:"Tree (木) + 票 (phonetic element, originally depicting a spark or flame) — originally meant the tip or top of a tree, later extended to mean a mark or sign that stands out."},
+    words:[
+      {ko:"목표", sentence:"저는 올해 목표를 세웠어요.", sentence_ro:"Anul acesta mi-am stabilit un obiectiv.", sentence_en:"This year I set a goal.", ro:"obiectiv, țel",en:"goal, objective"},
+      {ko:"표시", sentence:"지도에 위치를 표시해 주세요.", sentence_ro:"Vă rog marcați locația pe hartă.", sentence_en:"Please mark the location on the map.", ro:"marcare, semn",en:"mark, indication"},
+      {ko:"표준", sentence:"이 제품은 국제 표준을 따라요.", sentence_ro:"Acest produs respectă standardele internaționale.", sentence_en:"This product follows international standards.", ro:"standard",en:"standard"},
+      {ko:"상표", sentence:"이 가방은 유명한 상표예요.", sentence_ro:"Această geantă este de la o marcă renumită.", sentence_en:"This bag is a famous brand.", ro:"marcă, brand",en:"trademark, brand"}
+    ]
+  },
+  {
+    hanja:"欄", ko_reading:"란", reading:{ro:"란 (ran)",en:"란 (ran)"}, meaning:{ro:"balustradă, rubrică",en:"railing, column"},
+    etymology:{ro:"Lemn (木) + 闌 (element fonetic, care înseamnă barieră sau poartă) — desemna inițial un gard sau o balustradă din lemn, extins apoi la sensul de rubrică sau coloană într-un text tipărit.",en:"Wood (木) + 闌 (phonetic element meaning barrier or gate) — originally denoted a wooden fence or railing, later extended to mean a column or section in a printed text."},
+    words:[
+      {ko:"난간", sentence:"계단 난간을 꼭 잡으세요.", sentence_ro:"Vă rog țineți-vă bine de balustrada scărilor.", sentence_en:"Please hold the stair railing tightly.", ro:"balustradă",en:"railing, banister"},
+      {ko:"광고란", sentence:"신문 광고란에 새 소식이 실렸어요.", sentence_ro:"O veste nouă a apărut în rubrica de publicitate a ziarului.", sentence_en:"New news was printed in the newspaper's advertisement column.", ro:"rubrica de publicitate",en:"advertisement column"},
+      {ko:"독자란", sentence:"독자란에 제 의견을 보냈어요.", sentence_ro:"Mi-am trimis părerea la rubrica cititorilor.", sentence_en:"I sent my opinion to the reader's column.", ro:"rubrica cititorilor",en:"reader's column"},
+      {ko:"스포츠난", sentence:"아버지는 매일 스포츠난을 읽으세요.", sentence_ro:"Tata citește rubrica de sport în fiecare zi.", sentence_en:"Father reads the sports section every day.", ro:"rubrica de sport",en:"sports column"}
+    ]
+  },
+  {
+    hanja:"歌", ko_reading:"가", reading:{ro:"가 (ga)",en:"가 (ga)"}, meaning:{ro:"cântec, a cânta",en:"song, to sing"},
+    etymology:{ro:"哥 (element fonetic, o formă veche legată de a chema în mod repetat) + 欠 (gură deschisă, a respira) — înfățișează o persoană cu gura deschisă, cântând sau strigând versuri.",en:"哥 (phonetic element, an old form suggesting repeated calling) + 欠 (open mouth, to breathe or yawn) — depicts a person with an open mouth, singing or chanting verses."},
+    words:[
+      {ko:"가수", sentence:"저 가수는 노래를 정말 잘 불러요.", sentence_ro:"Cântărețul acela cântă foarte bine.", sentence_en:"That singer sings really well.", ro:"cântăreț",en:"singer"},
+      {ko:"가요", sentence:"요즘 이 가요가 인기가 많아요.", sentence_ro:"În ultima vreme, acest cântec este foarte popular.", sentence_en:"These days this song is very popular.", ro:"cântec (muzică populară)",en:"song, popular tune"},
+      {ko:"가사", sentence:"이 노래의 가사가 정말 아름다워요.", sentence_ro:"Versurile acestui cântec sunt cu adevărat frumoase.", sentence_en:"This song's lyrics are truly beautiful.", ro:"versuri",en:"lyrics"},
+      {ko:"애국가", sentence:"운동회에서 애국가를 함께 불렀어요.", sentence_ro:"Am cântat împreună imnul național la ziua sportului.", sentence_en:"We sang the national anthem together at the sports day.", ro:"imn național",en:"national anthem"}
+    ]
+  },
+  {
+    hanja:"歲", ko_reading:"세", reading:{ro:"세 (se)",en:"세 (se)"}, meaning:{ro:"an, vârstă",en:"year, age"},
+    etymology:{ro:"Provine din numele planetei Jupiter (歲星), al cărei ciclu de aproximativ 12 ani era folosit pentru a număra anii; caracterul combină 步 (a păși) cu un element care sugerează mișcare periodică, reflectând trecerea timpului an de an.",en:"Originally referred to Jupiter (歲星), whose roughly 12-year orbital cycle was used to count years; the character combines 步 (to step, walk) with an element suggesting periodic movement, reflecting the passage of time year by year."},
+    words:[
+      {ko:"세월", sentence:"세월이 참 빠르게 흘러요.", sentence_ro:"Timpul chiar trece repede.", sentence_en:"Time really flows quickly.", ro:"timp, ani ce trec",en:"time, years passing"},
+      {ko:"만세", sentence:"사람들이 크게 만세를 외쳤어요.", sentence_ro:"Oamenii au strigat tare ura.", sentence_en:"People shouted hurray loudly.", ro:"ura, trăiască",en:"hurray, long live"},
+      {ko:"세배", sentence:"설날 아침에 할머니께 세배를 드렸어요.", sentence_ro:"În dimineața de Anul Nou am făcut plecăciunea de respect bunicii.", sentence_en:"On New Year's morning, I gave a bow of respect to grandmother.", ro:"plecăciune de Anul Nou",en:"New Year's bow"},
+      {ko:"연세", sentence:"할아버지 연세가 어떻게 되세요?", sentence_ro:"Câți ani are bunicul, dacă îmi permiteți să întreb?", sentence_en:"How old is grandfather, if I may ask?", ro:"vârstă (onorific)",en:"age (honorific)"}
+    ]
+  },
+  {
+    hanja:"淨", ko_reading:"정", reading:{ro:"정 (jeong)",en:"정 (jeong)"}, meaning:{ro:"curat, pur",en:"pure, clean"},
+    etymology:{ro:"Apă (水/氵) + 爭 (element fonetic, a te lupta sau a contesta) — sugerează apa limpezită printr-o luptă cu impuritățile, de unde sensul de curat, purificat.",en:"Water (水/氵) + 爭 (phonetic element, to contend or struggle) — suggests water cleared through a struggle against impurities, hence the meaning of clean, purified."},
+    words:[
+      {ko:"청정", sentence:"이 지역은 공기가 청정해요.", sentence_ro:"În această regiune, aerul este curat.", sentence_en:"The air in this area is pristine.", ro:"curat, nepoluat",en:"clean, pristine"},
+      {ko:"정화", sentence:"이 기계는 물을 정화해요.", sentence_ro:"Acest aparat purifică apa.", sentence_en:"This machine purifies water.", ro:"purificare",en:"purification"},
+      {ko:"정수기", sentence:"부엌에 정수기를 새로 놓았어요.", sentence_ro:"Am instalat un purificator de apă nou în bucătărie.", sentence_en:"We newly installed a water purifier in the kitchen.", ro:"purificator de apă",en:"water purifier"},
+      {ko:"세정", sentence:"이 비누는 세정 효과가 좋아요.", sentence_ro:"Acest săpun are un efect bun de curățare.", sentence_en:"This soap has a good cleansing effect.", ro:"curățare, spălare",en:"cleansing, washing"}
+    ]
+  },
+  {
+    hanja:"猶", ko_reading:"유", reading:{ro:"유 (yu)",en:"유 (yu)"}, meaning:{ro:"asemănător; încă, totuși",en:"like, similar; still, yet"},
+    etymology:{ro:"Reprezenta inițial un tip de maimuță considerată prudentă și ezitantă; din acest comportament șovăielnic au derivat sensurile de asemănător, ca și cum și încă, totuși.",en:"Originally depicted a type of monkey believed to be cautious and hesitant; from this wavering behavior came the meanings of similar to, as if, and still, yet."},
+    words:[
+      {ko:"유예", sentence:"세금 납부를 한 달 유예해 주세요.", sentence_ro:"Vă rog amânați plata impozitului cu o lună.", sentence_en:"Please postpone the tax payment by one month.", ro:"amânare",en:"postponement, grace period"},
+      {ko:"집행유예", sentence:"그는 집행유예 판결을 받았어요.", sentence_ro:"El a primit o condamnare cu suspendare.", sentence_en:"He received a suspended sentence.", ro:"condamnare cu suspendare",en:"suspended sentence"},
+      {ko:"과유불급", sentence:"과유불급이니까 운동도 적당히 하세요.", sentence_ro:"Cum excesul e la fel de rău ca lipsa, faceți și sport cu moderație.", sentence_en:"Since excess is as bad as deficiency, please exercise in moderation too.", ro:"excesul e la fel de rău ca lipsa (proverb)",en:"excess is as bad as deficiency (idiom)"},
+      {ko:"유대인", sentence:"유대인들은 고유한 전통을 지키고 있어요.", sentence_ro:"Evreii își păstrează tradițiile proprii.", sentence_en:"Jewish people preserve their unique traditions.", ro:"evreu",en:"Jewish person"}
+    ]
+  },
+  {
+    hanja:"玉", ko_reading:"옥", reading:{ro:"옥 (ok)",en:"옥 (ok)"}, meaning:{ro:"jad, piatră prețioasă",en:"jade, precious stone"},
+    etymology:{ro:"Pictogramă a trei bucăți de jad înșirate pe o sfoară — trei linii orizontale străpunse de o linie verticală. Un punct suplimentar îl deosebește de caracterul 王 (rege), cu care se aseamănă izbitor.",en:"A pictograph of three pieces of jade strung on a cord — three horizontal strokes crossed by one vertical line. An extra dot distinguishes it from the strikingly similar character 王 (king)."},
+    words:[
+      {ko:"옥수수", sentence:"여름에는 옥수수가 정말 맛있어요.", sentence_ro:"Vara, porumbul este foarte gustos.", sentence_en:"In summer, corn is really delicious.", ro:"porumb",en:"corn, maize"},
+      {ko:"옥새", sentence:"옥새는 왕의 권위를 상징했어요.", sentence_ro:"Sigiliul regal de jad simboliza autoritatea regelui.", sentence_en:"The royal jade seal symbolized the king's authority.", ro:"sigiliu regal de jad",en:"royal jade seal"},
+      {ko:"옥토", sentence:"이 지역은 넓은 옥토로 유명해요.", sentence_ro:"Această regiune este renumită pentru pământul său fertil și întins.", sentence_en:"This region is famous for its wide fertile land.", ro:"pământ fertil",en:"fertile land"},
+      {ko:"백옥", sentence:"그녀의 피부는 백옥처럼 하얘요.", sentence_ro:"Pielea ei este albă ca jadul alb.", sentence_en:"Her skin is as white as white jade.", ro:"jad alb",en:"white jade"}
+    ]
+  },
+  {
+    hanja:"矢", ko_reading:"시", reading:{ro:"시 (si)",en:"시 (si)"}, meaning:{ro:"săgeată",en:"arrow"},
+    etymology:{ro:"Pictogramă a unei săgeți, cu vârful, tija și penele vizibile. Una dintre cele mai simple și vechi pictograme, păstrată aproape neschimbată din vremea scrierii pe oase oraculare.",en:"A pictograph of an arrow, showing its head, shaft, and feathers. One of the simplest and oldest pictograms, preserved almost unchanged since oracle bone script."},
+    words:[
+      {ko:"효시", sentence:"이 소설은 한국 추리 문학의 효시로 알려져 있어요.", sentence_ro:"Acest roman este cunoscut drept originea literaturii polițiste coreene.", sentence_en:"This novel is known as the origin of Korean detective literature.", ro:"origine, precedent",en:"origin, precedent"},
+      {ko:"궁시", sentence:"옛날 병사들은 궁시를 능숙하게 다뤘어요.", sentence_ro:"Pe vremuri, soldații mânuiau arcul și săgeata cu îndemânare.", sentence_en:"In the old days, soldiers handled the bow and arrow skillfully.", ro:"arc și săgeată",en:"bow and arrow"},
+      {ko:"독시", sentence:"사냥꾼은 독시로 짐승을 잡았어요.", sentence_ro:"Vânătorul a prins animalul cu o săgeată otrăvită.", sentence_en:"The hunter caught the beast with a poison arrow.", ro:"săgeată otrăvită",en:"poison arrow"},
+      {ko:"유시", sentence:"장군은 전투 중 유시에 맞아 부상을 입었어요.", sentence_ro:"Generalul a fost rănit de o săgeată rătăcită în timpul luptei.", sentence_en:"The general was wounded by a stray arrow during the battle.", ro:"săgeată rătăcită",en:"stray arrow"}
+    ]
+  },
+  {
+    hanja:"硬", ko_reading:"경", reading:{ro:"경 (gyeong)",en:"경 (gyeong)"}, meaning:{ro:"tare, ferm",en:"hard, firm"},
+    etymology:{ro:"Piatră (石) + 更 (element fonetic, a schimba sau din nou) — sugerează duritatea specifică pietrei, extinsă la sensul general de tare, ferm, rigid.",en:"Stone (石) + 更 (phonetic element, to change or again) — suggests the hardness specific to stone, extended to the general meaning of hard, firm, rigid."},
+    words:[
+      {ko:"강경", sentence:"정부는 강경한 태도를 보였어요.", sentence_ro:"Guvernul a arătat o atitudine fermă, de linie dură.", sentence_en:"The government showed a hardline attitude.", ro:"linie dură, fermitate",en:"hardline, firm"},
+      {ko:"경직", sentence:"오래 앉아 있었더니 어깨가 경직됐어요.", sentence_ro:"După ce am stat mult timp jos, umerii mi s-au înțepenit.", sentence_en:"After sitting for a long time, my shoulders became stiff.", ro:"înțepenit, rigid",en:"stiff, rigid"},
+      {ko:"경화", sentence:"동맥 경화는 건강에 위험해요.", sentence_ro:"Arterioscleroza este periculoasă pentru sănătate.", sentence_en:"Arteriosclerosis is dangerous to health.", ro:"întărire, scleroză",en:"hardening"},
+      {ko:"생경", sentence:"새 학교의 분위기가 아직 생경해요.", sentence_ro:"Atmosfera de la noua școală încă mi se pare nefamiliară.", sentence_en:"The atmosphere of the new school still feels unfamiliar.", ro:"nefamiliar, stângaci",en:"unfamiliar, awkward"}
+    ]
+  },
+  {
+    hanja:"秘", ko_reading:"비", reading:{ro:"비 (bi)",en:"비 (bi)"}, meaning:{ro:"secret, misterios",en:"secret, mysterious"},
+    etymology:{ro:"Cereale (禾) + 必 (element fonetic, cu siguranță) — legat inițial de ritualuri divine ținute secrete; sensul s-a extins ulterior la tot ce este ascuns sau misterios.",en:"Grain (禾) + 必 (phonetic element, surely, certainly) — originally linked to divine rituals kept hidden; the meaning later extended to anything concealed or mysterious."},
+    words:[
+      {ko:"비밀", sentence:"이건 우리 둘만의 비밀이에요.", sentence_ro:"Acesta este un secret doar între noi doi.", sentence_en:"This is a secret just between the two of us.", ro:"secret",en:"secret"},
+      {ko:"비서", sentence:"사장님의 비서가 회의를 준비해요.", sentence_ro:"Secretara directorului pregătește ședința.", sentence_en:"The president's secretary prepares the meeting.", ro:"secretar/ă",en:"secretary"},
+      {ko:"비법", sentence:"할머니의 김치 비법을 배우고 싶어요.", sentence_ro:"Vreau să învăț rețeta secretă de kimchi a bunicii.", sentence_en:"I want to learn grandmother's secret kimchi recipe.", ro:"rețetă secretă, metodă secretă",en:"secret method, recipe"},
+      {ko:"신비", sentence:"우주는 여전히 신비로 가득해요.", sentence_ro:"Universul este încă plin de mister.", sentence_en:"The universe is still full of mystery.", ro:"mister",en:"mystery"}
+    ]
+  },
+  {
+    hanja:"純", ko_reading:"순", reading:{ro:"순 (sun)",en:"순 (sun)"}, meaning:{ro:"pur, curat",en:"pure, clean"},
+    etymology:{ro:"Mătase (糸) + 屯 (element fonetic) — desemna inițial firul de mătase brută, nevopsită, adică neamestecată; de aici sensul de pur, curat.",en:"Silk thread (糸) + 屯 (phonetic element) — originally denoted raw, undyed silk thread, i.e., unmixed; hence the meaning of pure, unadulterated."},
+    words:[
+      {ko:"순수", sentence:"아이들의 순수한 웃음이 좋아요.", sentence_ro:"Îmi place râsul pur al copiilor.", sentence_en:"I like children's pure laughter.", ro:"pur, curat",en:"pure, innocent"},
+      {ko:"순진", sentence:"그는 너무 순진해서 잘 속아요.", sentence_ro:"Este atât de naiv încât e ușor de păcălit.", sentence_en:"He is so naive that he gets deceived easily.", ro:"naiv, inocent",en:"naive, innocent"},
+      {ko:"단순", sentence:"이 문제는 생각보다 단순해요.", sentence_ro:"Această problemă este mai simplă decât pare.", sentence_en:"This problem is simpler than expected.", ro:"simplu",en:"simple"},
+      {ko:"순금", sentence:"이 반지는 순금으로 만들었어요.", sentence_ro:"Acest inel este făcut din aur pur.", sentence_en:"This ring is made of pure gold.", ro:"aur pur",en:"pure gold"}
+    ]
+  },
+  {
+    hanja:"肉", ko_reading:"육", reading:{ro:"육 (yuk)",en:"육 (yuk)"}, meaning:{ro:"carne",en:"flesh, meat"},
+    etymology:{ro:"Pictogramă a unei bucăți de carne — o secțiune transversală care arată fibrele și marginile curbate. Unul dintre cele mai vechi radicali, folosit în numeroși hanja legați de corp.",en:"A pictograph of a piece of flesh or meat — a cross-section showing the fibers and curved edges. One of the oldest radicals, used in many hanja related to the body."},
+    words:[
+      {ko:"육류", sentence:"이 식당은 육류 요리가 유명해요.", sentence_ro:"Acest restaurant este renumit pentru preparatele din carne.", sentence_en:"This restaurant is famous for its meat dishes.", ro:"carne (categorie de alimente)",en:"meat (category)"},
+      {ko:"근육", sentence:"운동을 하면 근육이 생겨요.", sentence_ro:"Când faci sport, îți formezi mușchi.", sentence_en:"When you exercise, muscles form.", ro:"mușchi",en:"muscle"},
+      {ko:"육체", sentence:"건강한 육체에 건강한 정신이 깃들어요.", sentence_ro:"O minte sănătoasă sălășluiește într-un corp sănătos.", sentence_en:"A healthy mind dwells in a healthy body.", ro:"corp, trup",en:"body, flesh"},
+      {ko:"정육점", sentence:"정육점에서 신선한 고기를 샀어요.", sentence_ro:"Am cumpărat carne proaspătă de la măcelărie.", sentence_en:"I bought fresh meat at the butcher shop.", ro:"măcelărie",en:"butcher shop"}
+    ]
+  },
+  {
+    hanja:"苦", ko_reading:"고", reading:{ro:"고 (go)",en:"고 (go)"}, meaning:{ro:"amar, suferință",en:"bitter, suffering"},
+    etymology:{ro:"Iarbă (艸/艹) + 古 (element fonetic, vechi) — desemna inițial o plantă cu gust amar; sensul s-a extins metaforic la amărăciune, suferință și greutățile vieții.",en:"Grass (艸/艹) + 古 (phonetic element, old) — originally denoted a bitter-tasting plant; the meaning extended metaphorically to bitterness, suffering, and life's hardships."},
+    words:[
+      {ko:"고생", sentence:"부모님이 저를 위해 많이 고생하셨어요.", sentence_ro:"Părinții mei au trecut prin multe greutăți pentru mine.", sentence_en:"My parents went through a lot of hardship for me.", ro:"greutăți, trudă",en:"hardship, suffering"},
+      {ko:"고통", sentence:"그는 심한 고통을 참고 있어요.", sentence_ro:"El îndură o durere puternică.", sentence_en:"He is enduring severe pain.", ro:"durere, chin",en:"pain, agony"},
+      {ko:"고민", sentence:"요즘 진로 문제로 고민이 많아요.", sentence_ro:"În ultima vreme am multe frământări legate de carieră.", sentence_en:"These days I have a lot of worries about my career path.", ro:"frământare, grijă",en:"worry, agonizing"},
+      {ko:"고난", sentence:"그 가족은 여러 고난을 함께 이겨냈어요.", sentence_ro:"Acea familie a depășit împreună multe încercări grele.", sentence_en:"That family overcame many hardships together.", ro:"încercare grea, calvar",en:"tribulation, hardship"}
+    ]
+  },
+  {
+    hanja:"茂", ko_reading:"무", reading:{ro:"무 (mu)",en:"무 (mu)"}, meaning:{ro:"des, luxuriant",en:"lush, dense"},
+    etymology:{ro:"Iarbă (艸/艹) + 戊 (element fonetic) — sugerează plantele care cresc dens și luxuriant; sensul s-a extins și la o persoană cu talente bogate, care înflorește.",en:"Grass (艸/艹) + 戊 (phonetic element) — suggests plants growing thick and lush; the meaning also extended to a person of abundant talent, one who flourishes."},
+    words:[
+      {ko:"무성", sentence:"여름이 되자 나뭇잎이 무성해졌어요.", sentence_ro:"Odată cu venirea verii, frunzele au devenit luxuriante.", sentence_en:"As summer came, the leaves became lush.", ro:"luxuriant, des",en:"lush, dense"},
+      {ko:"번무", sentence:"정원의 장미가 번무하게 자랐어요.", sentence_ro:"Trandafirii din grădină au crescut luxuriant.", sentence_en:"The roses in the garden grew luxuriantly.", ro:"a crește luxuriant",en:"to flourish luxuriantly"},
+      {ko:"무림", sentence:"산속 무림에 온갖 새들이 살아요.", sentence_ro:"Tot felul de păsări trăiesc în pădurea deasă din munte.", sentence_en:"All kinds of birds live in the dense mountain forest.", ro:"pădure deasă",en:"dense forest"},
+      {ko:"무재", sentence:"옛날에는 뛰어난 젊은이를 무재라고 불렀어요.", sentence_ro:"Pe vremuri, un tânăr excepțional era numit mujae.", sentence_en:"In the old days, an outstanding young person was called mujae.", ro:"tânăr talentat (arhaic)",en:"talented youth (archaic)"}
+    ]
+  },
+  {
+    hanja:"蜜", ko_reading:"밀", reading:{ro:"밀 (mil)",en:"밀 (mil)"}, meaning:{ro:"miere",en:"honey"},
+    etymology:{ro:"Insectă (虫) + 宓 (element fonetic, liniștit sau ascuns) — albinele (insecte) care produc ceva păstrat în secret în stup: mierea.",en:"Insect (虫) + 宓 (phonetic element, quiet or hidden) — bees (insects) producing something kept hidden away in the hive: honey."},
+    words:[
+      {ko:"밀월", sentence:"신혼부부가 하와이로 밀월여행을 떠났어요.", sentence_ro:"Cuplul proaspăt căsătorit a plecat în luna de miere în Hawaii.", sentence_en:"The newlywed couple went on a honeymoon trip to Hawaii.", ro:"luna de miere",en:"honeymoon"},
+      {ko:"밀랍", sentence:"이 초는 밀랍으로 만들었어요.", sentence_ro:"Această lumânare este făcută din ceară de albine.", sentence_en:"This candle is made of beeswax.", ro:"ceară de albine",en:"beeswax"},
+      {ko:"당밀", sentence:"이 빵에는 당밀이 들어가요.", sentence_ro:"În această pâine se pune melasă.", sentence_en:"Molasses goes into this bread.", ro:"melasă",en:"molasses"},
+      {ko:"밀원", sentence:"아카시아는 대표적인 밀원식물이에요.", sentence_ro:"Salcâmul este o plantă nectariferă reprezentativă.", sentence_en:"Acacia is a representative nectar-source plant.", ro:"sursă de nectar",en:"nectar source"}
+    ]
+  },
+  {
+    hanja:"裕", ko_reading:"유", reading:{ro:"유 (yu)",en:"유 (yu)"}, meaning:{ro:"bogat, îndestulat",en:"abundant, well-off"},
+    etymology:{ro:"Haină (衣) + 谷 (element fonetic, vale) — însemna inițial a avea haine din belșug, adică abundență materială; sensul s-a extins la bogat, generos, cu resurse.",en:"Clothing (衣) + 谷 (phonetic element, valley) — originally meant having plenty of clothing, i.e., material abundance; the meaning extended to rich, ample, well-off."},
+    words:[
+      {ko:"여유", sentence:"요즘 시간에 여유가 좀 있어요.", sentence_ro:"În ultima vreme am ceva timp liber.", sentence_en:"These days I have a bit of leisure time.", ro:"timp liber, răgaz",en:"leisure, margin"},
+      {ko:"부유", sentence:"그 가족은 아주 부유해요.", sentence_ro:"Acea familie este foarte bogată.", sentence_en:"That family is very wealthy.", ro:"bogat",en:"wealthy"},
+      {ko:"유복", sentence:"그는 유복한 가정에서 자랐어요.", sentence_ro:"El a crescut într-o familie înstărită.", sentence_en:"He grew up in a well-off family.", ro:"înstărit, binecuvântat",en:"well-off, blessed"},
+      {ko:"유여", sentence:"그의 살림살이가 유여해 보였어요.", sentence_ro:"Gospodăria lui părea îndestulată și liniștită.", sentence_en:"His household finances seemed ample and easy.", ro:"îndestulat, lejer (literar)",en:"ample, at ease (literary)"}
+    ]
+  },
+  {
+    hanja:"襲", ko_reading:"습", reading:{ro:"습 (seup)",en:"습 (seup)"}, meaning:{ro:"atac; a moșteni",en:"raid; to inherit"},
+    etymology:{ro:"龍 (element care sugerează un model bogat, ca solzii de dragon) + 衣 (haină) — însemna inițial a purta haină peste haină, de unde au derivat sensurile de a prelua sau moșteni (a prelua rolul cuiva) și de a ataca prin surprindere (a cădea peste cineva pe neașteptate).",en:"Dragon (龍, suggesting a rich, layered pattern like dragon scales) + clothing (衣) — originally meant to put on garment over garment, from which came the meanings of to inherit or succeed (taking over someone's role) and to attack by surprise (falling upon someone unexpectedly, like a sudden layer)."},
+    words:[
+      {ko:"습격", sentence:"적군이 새벽에 마을을 습격했어요.", sentence_ro:"Armata inamică a atacat satul în zori.", sentence_en:"The enemy army raided the village at dawn.", ro:"atac, raid",en:"raid, attack"},
+      {ko:"기습", sentence:"기습 공격에 병사들이 당황했어요.", sentence_ro:"Soldații au fost luați prin surprindere de atacul neașteptat.", sentence_en:"The soldiers were flustered by the surprise attack.", ro:"atac surpriză",en:"surprise attack"},
+      {ko:"세습", sentence:"그 나라는 왕위를 세습으로 물려줘요.", sentence_ro:"Acea țară transmite tronul prin moștenire.", sentence_en:"That country passes down the throne by hereditary succession.", ro:"moștenire (ereditară)",en:"hereditary succession"},
+      {ko:"답습", sentence:"낡은 방식을 답습하지 말고 새롭게 시도해 보세요.", sentence_ro:"Nu urmați orbește vechile metode, încercați ceva nou.", sentence_en:"Don't just follow the old ways, try something new.", ro:"a urma orbește (o convenție)",en:"to follow old conventions"}
+    ]
+  },
+  {
+    hanja:"親", ko_reading:"친", reading:{ro:"친 (chin)",en:"친 (chin)"}, meaning:{ro:"rudă, apropiat",en:"kin, intimate"},
+    etymology:{ro:"Ochi/a vedea (見) + 亲 (element fonetic, care înfățișa inițial un copac tânăr) — sugerează ideea de a sta aproape și a privi cu atenție pe cineva drag, de unde sensurile de rudă, părinte și apropiat.",en:"To see (見) + 亲 (phonetic element, originally depicting a young tree) — suggests the idea of standing close and watching someone dear attentively, hence the meanings of kin, parent, and intimate, close."},
+    words:[
+      {ko:"친구", sentence:"저는 어릴 때부터 친한 친구가 많아요.", sentence_ro:"Am mulți prieteni apropiați încă din copilărie.", sentence_en:"I've had many close friends since childhood.", ro:"prieten",en:"friend"},
+      {ko:"친절", sentence:"직원들이 정말 친절했어요.", sentence_ro:"Angajații au fost foarte amabili.", sentence_en:"The staff were really kind.", ro:"amabilitate",en:"kindness"},
+      {ko:"친척", sentence:"명절에는 친척들이 모두 모여요.", sentence_ro:"De sărbători, toate rudele se adună.", sentence_en:"On holidays, all the relatives gather.", ro:"rude",en:"relatives"},
+      {ko:"부친", sentence:"그분의 부친은 유명한 의사였어요.", sentence_ro:"Tatăl acelei persoane a fost un medic celebru.", sentence_en:"That person's father was a famous doctor.", ro:"tată (formal)",en:"father (formal)"}
+    ]
+  },
+  {
+    hanja:"設", ko_reading:"설", reading:{ro:"설 (seol)",en:"설 (seol)"}, meaning:{ro:"a construi, a înființa",en:"to build, establish"},
+    etymology:{ro:"Cuvânt/vorbire (言) + 殳 (mână cu o unealtă, acțiune) — sugerează ideea de a organiza sau ridica ceva atât prin plan și vorbe, cât și prin acțiune concretă, de unde sensul de a construi, a înființa.",en:"Speech, words (言) + 殳 (a hand holding a tool, action) — suggests the idea of arranging or erecting something through both planning and words, and concrete action, hence the meaning of to build, to establish."},
+    words:[
+      {ko:"설치", sentence:"새 에어컨을 설치했어요.", sentence_ro:"Am instalat un aparat de aer condiționat nou.", sentence_en:"We installed a new air conditioner.", ro:"instalare",en:"installation"},
+      {ko:"건설", sentence:"새 다리를 건설하고 있어요.", sentence_ro:"Se construiește un pod nou.", sentence_en:"They are constructing a new bridge.", ro:"construcție",en:"construction"},
+      {ko:"시설", sentence:"이 헬스장은 시설이 아주 좋아요.", sentence_ro:"Această sală de fitness are dotări foarte bune.", sentence_en:"This gym's facilities are very good.", ro:"dotare, facilitate",en:"facility"},
+      {ko:"설립", sentence:"이 학교는 1950년에 설립됐어요.", sentence_ro:"Această școală a fost înființată în 1950.", sentence_en:"This school was established in 1950.", ro:"înființare",en:"establishment, founding"}
+    ]
+  },
+  {
+    hanja:"試", ko_reading:"시", reading:{ro:"시 (si)",en:"시 (si)"}, meaning:{ro:"test, a încerca",en:"test, to try"},
+    etymology:{ro:"Cuvânt/vorbire (言) + 式 (element fonetic, formă sau model) — sugerează a examina sau a pune la încercare ceva după un anumit tipar, de unde sensul de test, încercare.",en:"Speech, words (言) + 式 (phonetic element, form, pattern) — suggests examining or putting something to the test according to a certain pattern, hence the meaning of test, trial."},
+    words:[
+      {ko:"시험", sentence:"내일 한국어 시험이 있어요.", sentence_ro:"Mâine este un test de limba coreeană.", sentence_en:"Tomorrow there's a Korean language test.", ro:"test, examen",en:"test, exam"},
+      {ko:"시도", sentence:"새로운 방법을 시도해 봤어요.", sentence_ro:"Am încercat o metodă nouă.", sentence_en:"I tried a new method.", ro:"încercare",en:"attempt"},
+      {ko:"시식", sentence:"마트에서 새 과자를 시식했어요.", sentence_ro:"Am gustat noile biscuiți la supermarket.", sentence_en:"I tasted the new snack at the mart.", ro:"degustare",en:"food tasting"},
+      {ko:"시운전", sentence:"새 차를 사기 전에 시운전을 해 봤어요.", sentence_ro:"Am făcut un test drive înainte de a cumpăra mașina nouă.", sentence_en:"I did a test drive before buying the new car.", ro:"test de conducere",en:"test drive"}
+    ]
+  },
+  {
+    hanja:"詩", ko_reading:"시", reading:{ro:"시 (si)",en:"시 (si)"}, meaning:{ro:"poezie",en:"poetry"},
+    etymology:{ro:"Cuvânt/vorbire (言) + 寺 (element fonetic, care însemna inițial a reglementa sau a ține) — sugerează vorbirea ordonată și măsurată, adică poezia.",en:"Speech, words (言) + 寺 (phonetic element, originally meaning to regulate or hold) — suggests ordered, measured speech, that is, poetry."},
+    words:[
+      {ko:"시인", sentence:"그녀는 유명한 시인이에요.", sentence_ro:"Ea este o poetă renumită.", sentence_en:"She is a famous poet.", ro:"poet",en:"poet"},
+      {ko:"시집", sentence:"이 시집에는 아름다운 시가 많아요.", sentence_ro:"Acest volum de poezii conține multe poeme frumoase.", sentence_en:"This poetry collection has many beautiful poems.", ro:"volum de poezii",en:"poetry collection"},
+      {ko:"동시", sentence:"아이들은 동시를 즐겨 읽어요.", sentence_ro:"Copiilor le place să citească poezii pentru copii.", sentence_en:"Children enjoy reading children's poems.", ro:"poezie pentru copii",en:"children's poem"},
+      {ko:"서정시", sentence:"그는 자연을 노래하는 서정시를 많이 썼어요.", sentence_ro:"El a scris multe poezii lirice care cântă natura.", sentence_en:"He wrote many lyric poems singing of nature.", ro:"poezie lirică",en:"lyric poem"}
+    ]
+  },
+  {
+    hanja:"認", ko_reading:"인", reading:{ro:"인 (in)",en:"인 (in)"}, meaning:{ro:"a recunoaște",en:"to recognize"},
+    etymology:{ro:"Cuvânt/vorbire (言) + 忍 (element fonetic, a răbda) — sugerează a confirma sau a accepta ceva printr-o examinare atentă și răbdătoare, de unde sensul de a recunoaște.",en:"Speech, words (言) + 忍 (phonetic element, to endure) — suggests affirming or accepting something through careful, patient examination, hence the meaning of to recognize, acknowledge."},
+    words:[
+      {ko:"인정", sentence:"그는 자신의 실수를 인정했어요.", sentence_ro:"El și-a recunoscut propria greșeală.", sentence_en:"He acknowledged his own mistake.", ro:"recunoaștere",en:"acknowledgment, recognition"},
+      {ko:"확인", sentence:"예약 시간을 다시 확인해 주세요.", sentence_ro:"Vă rog confirmați din nou ora rezervării.", sentence_en:"Please confirm the reservation time again.", ro:"confirmare",en:"confirmation"},
+      {ko:"인식", sentence:"사람들의 환경 인식이 높아졌어요.", sentence_ro:"Conștientizarea oamenilor privind mediul a crescut.", sentence_en:"People's awareness of the environment has increased.", ro:"conștientizare, percepție",en:"awareness, perception"},
+      {ko:"승인", sentence:"신청서가 드디어 승인됐어요.", sentence_ro:"Cererea a fost în sfârșit aprobată.", sentence_en:"The application was finally approved.", ro:"aprobare",en:"approval"}
+    ]
+  },
+  {
+    hanja:"誤", ko_reading:"오", reading:{ro:"오 (o)",en:"오 (o)"}, meaning:{ro:"greșeală, eroare",en:"error, mistake"},
+    etymology:{ro:"Cuvânt/vorbire (言) + 吳 (element fonetic, numele unui vechi regat) — legat inițial de o vorbire exagerată sau deformată, sensul s-a extins la eroare, greșeală.",en:"Speech, words (言) + 吳 (phonetic element, the name of an ancient state) — originally linked to exaggerated or distorted speech, the meaning extended to error, mistake."},
+    words:[
+      {ko:"오해", sentence:"우리 사이에 오해가 생겼어요.", sentence_ro:"A apărut o neînțelegere între noi.", sentence_en:"A misunderstanding arose between us.", ro:"neînțelegere",en:"misunderstanding"},
+      {ko:"오류", sentence:"프로그램에 오류가 있어요.", sentence_ro:"Există o eroare în program.", sentence_en:"There is an error in the program.", ro:"eroare",en:"error"},
+      {ko:"오차", sentence:"이 측정에는 약간의 오차가 있어요.", sentence_ro:"Există o mică marjă de eroare la această măsurătoare.", sentence_en:"There is a slight margin of error in this measurement.", ro:"marjă de eroare",en:"margin of error"},
+      {ko:"착오", sentence:"서류에 약간의 착오가 있었어요.", sentence_ro:"A existat o mică greșeală în documente.", sentence_en:"There was a slight mistake in the document.", ro:"greșeală, eroare",en:"mistake, error"}
+    ]
+  },
+  {
+    hanja:"誰", ko_reading:"수", reading:{ro:"수 (su)",en:"수 (su)"}, meaning:{ro:"cine?",en:"who?"},
+    etymology:{ro:"Compus din 言 (vorbire, a spune) și 隹 (pasăre, folosit aici ca element fonetic) — radicalul vorbirii arată că este o întrebare rostită, iar 隹 oferă sunetul. Rezultatul este pronumele interogativ „cine”.",en:"Composed of 言 (speech, to say) and 隹 (bird, used here as a phonetic component) — the speech radical marks it as a spoken question, while 隹 supplies the sound, together forming the interrogative pronoun “who.”"},
+    words:[
+      {ko:"수하", sentence:"보초가 어두운 길목에서 수하를 외쳤어요.", sentence_ro:"Santinela a strigat somația la răscrucea întunecată.", sentence_en:"The guard called out the challenge at the dark crossroads.", ro:"somație, cine e acolo",en:"challenge, who goes there"},
+      {ko:"수모", sentence:"옛날이야기에서는 주인공을 수모라고만 불러요.", sentence_ro:"În poveștile vechi, personajul principal este numit adesea „cutare”.", sentence_en:"In old tales, the protagonist is often just called ‘so-and-so.’", ro:"cutare, cineva",en:"so-and-so, a certain person"},
+      {ko:"수원수구", sentence:"자기 잘못이니 수원수구할 수 없어요.", sentence_ro:"Este propria lui greșeală, așa că nu poate da vina pe nimeni altcineva.", sentence_en:"It's his own fault, so he can't blame anyone else.", ro:"pe cine să învinuiești, pe cine să acuzi",en:"whom to blame, whom to reproach"},
+      {ko:"수득수실", sentence:"이 논쟁에서는 수득수실을 가리기 어려워요.", sentence_ro:"În această dispută, e greu de spus cine câștigă și cine pierde.", sentence_en:"In this dispute, it's hard to tell who gains and who loses.", ro:"cine câștigă, cine pierde",en:"who gains, who loses"}
+    ]
+  },
+  {
+    hanja:"論", ko_reading:"론", reading:{ro:"론 (ron)",en:"론 (ron)"}, meaning:{ro:"a discuta, teorie",en:"to discuss, theory"},
+    etymology:{ro:"Compus din 言 (vorbire) și 侖 (a aranja în ordine, element fonetic ce sugerează și structura organizată) — ideea de a pune cuvintele în ordine logică, adică a discuta, a argumenta.",en:"Composed of 言 (speech) and 侖 (to arrange in order, a phonetic component that also suggests organized structure) — the idea of putting words into logical order, i.e. to discuss or argue a point."},
+    words:[
+      {ko:"토론", sentence:"오늘 수업에서 환경 문제에 대해 토론했어요.", sentence_ro:"Astăzi, la curs, am dezbătut despre problemele de mediu.", sentence_en:"Today in class, we debated about environmental issues.", ro:"dezbatere, discuție",en:"discussion, debate"},
+      {ko:"이론", sentence:"이 이론은 아직 증명되지 않았어요.", sentence_ro:"Această teorie nu a fost încă demonstrată.", sentence_en:"This theory hasn't been proven yet.", ro:"teorie",en:"theory"},
+      {ko:"논문", sentence:"다음 달까지 졸업 논문을 제출해야 해요.", sentence_ro:"Trebuie să predau lucrarea de licență până luna viitoare.", sentence_en:"I have to submit my graduation thesis by next month.", ro:"lucrare de licență, teză",en:"thesis, academic paper"},
+      {ko:"결론", sentence:"회의 끝에 우리는 결론을 내렸어요.", sentence_ro:"La sfârșitul ședinței, am ajuns la o concluzie.", sentence_en:"At the end of the meeting, we reached a conclusion.", ro:"concluzie",en:"conclusion"}
+    ]
+  },
+  {
+    hanja:"謹", ko_reading:"근", reading:{ro:"근 (geun)",en:"근 (geun)"}, meaning:{ro:"prudent, respectuos",en:"prudent, respectful"},
+    etymology:{ro:"Compus din 言 (vorbire) și 堇 (lut galben, greu de lucrat — element fonetic ce sugerează și ideea de economie sau dificultate) — a fi zgârcit și atent cu vorbele tale, adică prudent, respectuos și circumspect.",en:"Composed of 言 (speech) and 堇 (yellow clay, hard to work — a phonetic element that also suggests scarcity or difficulty) — being sparing and careful with one's words, hence prudent, respectful, and cautious."},
+    words:[
+      {ko:"근신", sentence:"그는 실수를 반성하며 근신하고 있어요.", sentence_ro:"El reflectează la greșeala lui și se comportă cu reținere.", sentence_en:"He is reflecting on his mistake and behaving with restraint.", ro:"autodisciplină, reținere",en:"self-restraint, discretion"},
+      {ko:"근조", sentence:"화환에 근조라고 쓰여 있었어요.", sentence_ro:"Pe coroana de flori era scris cuvântul de condoleanțe.", sentence_en:"The wreath had the word of condolence written on it.", ro:"condoleanțe",en:"condolences"},
+      {ko:"근하신년", sentence:"연하장에 근하신년이라고 적었어요.", sentence_ro:"Am scris felicitarea formală de Anul Nou pe cartea poștală.", sentence_en:"I wrote the formal New Year's greeting on the card.", ro:"La mulți ani! (urare formală de Anul Nou)",en:"Happy New Year (formal greeting)"},
+      {ko:"근정", sentence:"책 첫 장에 근정이라고 서명했어요.", sentence_ro:"Pe prima pagină a cărții a semnat cu formula respectuoasă „oferit cu respect”.", sentence_en:"On the first page of the book, he signed with the respectful phrase ‘respectfully presented.’", ro:"oferit respectuos",en:"respectfully presented/given"}
+    ]
+  },
+  {
+    hanja:"谷", ko_reading:"곡", reading:{ro:"곡 (gok)",en:"곡 (gok)"}, meaning:{ro:"vale",en:"valley"},
+    etymology:{ro:"Pictogramă care înfățișează o deschidere între doi munți din care țâșnește apa — gura unei văi. Formele care se despart în partea de sus sugerează pantele muntoase, iar gura de jos, cursul apei.",en:"A pictograph depicting an opening between two mountains from which water flows out — the mouth of a valley. The diverging shapes at the top suggest mountain slopes, while the mouth below represents the flowing water."},
+    words:[
+      {ko:"계곡", sentence:"여름에는 계곡에서 물놀이를 해요.", sentence_ro:"Vara, ne jucăm în apă la vale.", sentence_en:"In summer, we play in the water at the valley stream.", ro:"vale, canion cu pârâu",en:"valley, ravine (with stream)"},
+      {ko:"협곡", sentence:"그랜드 캐니언은 세계에서 가장 유명한 협곡이에요.", sentence_ro:"Marele Canion este cel mai faimos canion din lume.", sentence_en:"The Grand Canyon is the most famous canyon in the world.", ro:"canion, chei",en:"gorge, canyon"},
+      {ko:"산곡", sentence:"산곡을 따라 안개가 피어올랐어요.", sentence_ro:"Ceața s-a ridicat de-a lungul văii muntoase.", sentence_en:"Fog rose along the mountain valley.", ro:"vale montană",en:"mountain valley"},
+      {ko:"곡풍", sentence:"낮에는 곡풍이 산 위쪽으로 불어요.", sentence_ro:"Ziua, vântul de vale suflă spre vârful muntelui.", sentence_en:"During the day, the valley wind blows up toward the mountain top.", ro:"vânt de vale",en:"valley wind"}
+    ]
+  },
+  {
+    hanja:"走", ko_reading:"주", reading:{ro:"주 (ju)",en:"주 (ju)"}, meaning:{ro:"a merge, a alerga",en:"to walk, to run"},
+    etymology:{ro:"Compus din 夭 (o persoană aplecată, alergând cu brațele întinse) și 止 (picior) — înfățișează o persoană surprinsă în plină mișcare, alergând cu pași mari.",en:"Composed of 夭 (a person leaning forward, running with arms swinging) and 止 (foot) — depicting a person captured mid-stride, running with long steps."},
+    words:[
+      {ko:"주행", sentence:"이 차는 고속도로 주행에 적합해요.", sentence_ro:"Această mașină este potrivită pentru condusul pe autostradă.", sentence_en:"This car is suitable for highway driving.", ro:"deplasare, condus",en:"driving, running (of a vehicle)"},
+      {ko:"도주", sentence:"범인은 경찰을 피해 도주했어요.", sentence_ro:"Infractorul a fugit ca să scape de poliție.", sentence_en:"The criminal fled to escape the police.", ro:"fugă, evadare",en:"escape, flight"},
+      {ko:"질주", sentence:"자동차가 도로를 질주했어요.", sentence_ro:"Mașina a gonit pe șosea.", sentence_en:"The car sped down the road.", ro:"goană, viteză mare",en:"dash, sprint"},
+      {ko:"경주", sentence:"학교 운동회에서 100미터 경주를 했어요.", sentence_ro:"La ziua sportivă a școlii, am participat la o cursă de 100 de metri.", sentence_en:"At the school sports day, we had a 100-meter race.", ro:"cursă (alergare)",en:"race (footrace)"}
+    ]
+  },
+  {
+    hanja:"透", ko_reading:"투", reading:{ro:"투 (tu)",en:"투 (tu)"}, meaning:{ro:"a pătrunde, transparent",en:"to penetrate, transparent"},
+    etymology:{ro:"Compus din 辶 (a merge, mișcare) și 秀 (a excela, a se remarca — element fonetic) — ideea de a trece complet prin ceva sau dincolo de el, de unde sensurile de „a pătrunde” și „transparent”.",en:"Composed of 辶 (to move, walk) and 秀 (to excel, stand out — a phonetic component) — the idea of moving completely through or past something, giving the meanings “to penetrate” and “transparent.”"},
+    words:[
+      {ko:"투명", sentence:"이 유리컵은 아주 투명해요.", sentence_ro:"Acest pahar de sticlă este foarte transparent.", sentence_en:"This glass cup is very transparent.", ro:"transparent",en:"transparent"},
+      {ko:"투과", sentence:"자외선은 유리를 투과하지 못해요.", sentence_ro:"Razele ultraviolete nu pot trece prin sticlă.", sentence_en:"Ultraviolet rays cannot pass through glass.", ro:"trecere prin, penetrare",en:"penetration, transmission (of light)"},
+      {ko:"침투", sentence:"물이 벽 틈으로 침투했어요.", sentence_ro:"Apa a pătruns prin crăpăturile peretelui.", sentence_en:"Water seeped through the cracks in the wall.", ro:"infiltrare, pătrundere",en:"infiltration, seepage"},
+      {ko:"투시", sentence:"의사는 엑스레이로 몸속을 투시했어요.", sentence_ro:"Doctorul a văzut prin corp cu ajutorul razelor X.", sentence_en:"The doctor saw through the body using X-rays.", ro:"vedere prin, radioscopie",en:"seeing through, X-ray vision"}
+    ]
+  },
+  {
+    hanja:"邊", ko_reading:"변", reading:{ro:"변 (byeon)",en:"변 (byeon)"}, meaning:{ro:"margine, latură",en:"edge, side"},
+    etymology:{ro:"Compus din 辶 (mișcare, a merge) și 臱 (element care sugerează o regiune îndepărtată, folosit fonetic) — inițial desemna o regiune de graniță îndepărtată, sens extins ulterior la „margine, latură, bordură”.",en:"Composed of 辶 (movement, to go) and 臱 (a component suggesting a remote region, used phonetically) — originally referring to a remote border region, later extended to mean “edge, side, border.”"},
+    words:[
+      {ko:"주변", sentence:"집 주변에 공원이 있어요.", sentence_ro:"Există un parc în jurul casei.", sentence_en:"There is a park around the house.", ro:"împrejurimi, jur",en:"surroundings, vicinity"},
+      {ko:"해변", sentence:"여름휴가에 해변에서 수영했어요.", sentence_ro:"În vacanța de vară, am înotat pe plajă.", sentence_en:"During summer vacation, we swam at the beach.", ro:"plajă, țărm",en:"seaside, beach"},
+      {ko:"신변", sentence:"그는 자신의 신변을 보호해 달라고 요청했어요.", sentence_ro:"El a cerut să i se protejeze siguranța personală.", sentence_en:"He requested protection for his personal safety.", ro:"persoana proprie, siguranță personală",en:"one's own person, personal safety"},
+      {ko:"노변", sentence:"노변에 작은 카페가 있어요.", sentence_ro:"Există o cafenea mică pe marginea drumului.", sentence_en:"There is a small café by the roadside.", ro:"marginea drumului",en:"roadside"}
+    ]
+  },
+  {
+    hanja:"邪", ko_reading:"사", reading:{ro:"사 (sa)",en:"사 (sa)"}, meaning:{ro:"rău, deviant",en:"wrong, evil, depraved"},
+    etymology:{ro:"Compus din 阝 (regiune, așezare) și 牙 (dinte, element fonetic) — inițial numele unui vechi ținut chinez (琅邪), caracterul a fost împrumutat fonetic pentru a exprima ideea de „rău, corupt, eretic”.",en:"Composed of 阝 (region, settlement) and 牙 (tooth, a phonetic component) — originally the name of an ancient Chinese region (琅邪), the character was borrowed phonetically to express the idea of “evil, deviant, heterodox.”"},
+    words:[
+      {ko:"사악", sentence:"그 이야기에 나오는 마법사는 사악해요.", sentence_ro:"Vrăjitorul din povestea aceea este malefic.", sentence_en:"The wizard in that story is evil.", ro:"rău, malefic",en:"evil, wicked"},
+      {ko:"간사", sentence:"그는 간사한 말로 사람들을 속였어요.", sentence_ro:"El a înșelat oamenii cu vorbe viclene.", sentence_en:"He deceived people with cunning words.", ro:"viclean, șiret",en:"cunning, sly, deceitful"},
+      {ko:"사교", sentence:"경찰이 사교 집단을 조사하고 있어요.", sentence_ro:"Poliția investighează un grup de sectă.", sentence_en:"The police are investigating a cult group.", ro:"sectă, cult eretic",en:"heretical cult, deviant religion"},
+      {ko:"사념", sentence:"명상을 하면서 사념을 떨쳐 버렸어요.", sentence_ro:"Meditând, am alungat gândurile rele.", sentence_en:"While meditating, I cast away evil thoughts.", ro:"gând rău, gând necurat",en:"evil/wicked thought"}
+    ]
+  },
+  {
+    hanja:"鄉", ko_reading:"향", reading:{ro:"향 (hyang)",en:"향 (hyang)"}, meaning:{ro:"sat, loc natal",en:"countryside, hometown"},
+    etymology:{ro:"Pictogramă veche care înfățișa două persoane așezate față în față în jurul unui vas comun de hrană (皀) — imaginea unei comunități care își împarte masa. De aici, sensul s-a extins la „sat, ținut natal, loc de baștină”.",en:"An ancient pictograph showing two people seated facing each other around a shared food vessel (皀) — the image of a community sharing a meal. From this, the meaning extended to “village, home region, native place.”"},
+    words:[
+      {ko:"고향", sentence:"명절에는 고향에 내려가요.", sentence_ro:"De sărbători, mă duc în orașul natal.", sentence_en:"During holidays, I go down to my hometown.", ro:"loc natal, oraș natal",en:"hometown"},
+      {ko:"향수", sentence:"외국에 살면서 가끔 향수를 느껴요.", sentence_ro:"Locuind în străinătate, uneori simt dor de casă.", sentence_en:"Living abroad, I sometimes feel homesick.", ro:"dor de casă, nostalgie",en:"homesickness, nostalgia"},
+      {ko:"향토", sentence:"이 음식은 이 지역의 향토 요리예요.", sentence_ro:"Acest fel de mâncare este o specialitate locală a regiunii.", sentence_en:"This dish is a local specialty of the region.", ro:"local, autohton",en:"local, native (regional)"},
+      {ko:"타향", sentence:"그는 타향에서 오랫동안 혼자 살았어요.", sentence_ro:"El a trăit multă vreme singur, departe de casă.", sentence_en:"He lived alone for a long time in a foreign land.", ro:"loc străin, departe de casă",en:"foreign land, a place away from home"}
+    ]
+  },
+  {
+    hanja:"量", ko_reading:"량", reading:{ro:"량 (ryang)",en:"량 (ryang)"}, meaning:{ro:"a măsura, cantitate",en:"to measure, quantity"},
+    etymology:{ro:"Vechea formă înfățișa un vas-pâlnie folosit pentru a măsura cerealele, cu o gură deschisă (旦) deasupra unei greutăți (重/里) — instrumentul de măsurat capacitatea. De aici sensul de „a măsura, cantitate”.",en:"The ancient form depicted a funnel-shaped vessel used to measure grain, with an open mouth (旦) above a weight (重/里) — the instrument used to gauge capacity. From this comes the meaning “to measure, quantity.”"},
+    words:[
+      {ko:"수량", sentence:"창고에 있는 수량을 확인해 주세요.", sentence_ro:"Vă rog verificați cantitatea din depozit.", sentence_en:"Please check the quantity in the warehouse.", ro:"cantitate, număr",en:"quantity, amount"},
+      {ko:"용량", sentence:"이 가방은 용량이 커요.", sentence_ro:"Această geantă are o capacitate mare.", sentence_en:"This bag has a large capacity.", ro:"capacitate, volum",en:"capacity, volume"},
+      {ko:"대량", sentence:"공장에서 제품을 대량으로 생산해요.", sentence_ro:"Fabrica produce produse în cantitate mare.", sentence_en:"The factory produces products in large quantities.", ro:"cantitate mare, în masă",en:"large quantity, mass (production)"},
+      {ko:"중량", sentence:"이 상자의 중량을 재 보세요.", sentence_ro:"Vă rog cântăriți greutatea acestei cutii.", sentence_en:"Please weigh this box.", ro:"greutate",en:"weight"}
+    ]
+  },
+  {
+    hanja:"附", ko_reading:"부", reading:{ro:"부 (bu)",en:"부 (bu)"}, meaning:{ro:"a atașa, a se lipi",en:"to adhere, to append"},
+    etymology:{ro:"Compus din 阝 (阜, deal, movilă) și 付 (a preda, a înmâna — element fonetic) — inițial se referea la o movilă mică alipită uneia mai mari, de unde sensul de „a atașa, a adăuga, a se lipi de”.",en:"Composed of 阝 (阜, mound, hill) and 付 (to hand over, give — a phonetic component) — originally referring to a small mound attached to a larger one, giving the meaning “to attach, append, adhere to.”"},
+    words:[
+      {ko:"부착", sentence:"벽에 포스터를 부착했어요.", sentence_ro:"Am lipit un poster pe perete.", sentence_en:"I attached a poster to the wall.", ro:"lipire, atașare",en:"attaching, affixing"},
+      {ko:"첨부", sentence:"이메일에 파일을 첨부했어요.", sentence_ro:"Am atașat un fișier la e-mail.", sentence_en:"I attached a file to the email.", ro:"atașament, atașare",en:"attachment"},
+      {ko:"부록", sentence:"잡지 부록으로 달력을 받았어요.", sentence_ro:"Am primit un calendar ca supliment al revistei.", sentence_en:"I received a calendar as a supplement to the magazine.", ro:"anexă, supliment",en:"appendix, supplement"},
+      {ko:"부근", sentence:"학교 부근에 편의점이 많아요.", sentence_ro:"Există multe magazine non-stop în apropierea școlii.", sentence_en:"There are many convenience stores near the school.", ro:"apropiere, vecinătate",en:"vicinity, nearby area"}
+    ]
+  },
+  {
+    hanja:"降", ko_reading:"강", reading:{ro:"강 (gang)",en:"강 (gang)"}, meaning:{ro:"a coborî",en:"to descend"},
+    etymology:{ro:"Compus din 阝 (阜, deal, trepte) și 夅 (element care înfățișează două picioare orientate în jos) — imaginea unor picioare care coboară o pantă sau niște trepte, de unde sensul de „a coborî”.",en:"Composed of 阝 (阜, hill, steps) and 夅 (a component depicting two feet pointing downward) — the image of feet descending a slope or steps, giving the meaning “to descend, go down.”"},
+    words:[
+      {ko:"강수", sentence:"이번 주말에는 강수 확률이 높아요.", sentence_ro:"Weekendul acesta, probabilitatea de precipitații este mare.", sentence_en:"This weekend, the chance of precipitation is high.", ro:"precipitații",en:"precipitation"},
+      {ko:"강림", sentence:"전설에 따르면 신이 산에 강림했어요.", sentence_ro:"Conform legendei, un zeu a coborât pe munte.", sentence_en:"According to legend, a god descended onto the mountain.", ro:"coborâre (a unei divinități), venire",en:"descent (of a deity), advent"},
+      {ko:"하강", sentence:"비행기가 서서히 하강하기 시작했어요.", sentence_ro:"Avionul a început să coboare încet.", sentence_en:"The airplane began to descend slowly.", ro:"coborâre, descensiune",en:"descent, going down"},
+      {ko:"강설", sentence:"오늘 밤부터 강설이 예상돼요.", sentence_ro:"Se așteaptă ninsoare începând de în seara asta.", sentence_en:"Snowfall is expected starting tonight.", ro:"ninsoare, cădere de zăpadă",en:"snowfall"}
+    ]
+  },
+  {
+    hanja:"陳", ko_reading:"진", reading:{ro:"진 (jin)",en:"진 (jin)"}, meaning:{ro:"a expune, a relata",en:"to exhibit, to state"},
+    etymology:{ro:"Compus din 阝 (阜, deal) și 東 (est; înfățișează și un sac legat la ambele capete, folosit fonetic) — inițial numele unui vechi stat chinez, caracterul a ajuns să însemne „a aranja, a expune” (bunuri așezate ordonat), apoi „a expune verbal, a relata”.",en:"Composed of 阝 (阜, mound) and 東 (east; also depicting a sack tied at both ends, used phonetically) — originally the name of an ancient Chinese state, the character came to mean “to arrange, display” (goods laid out in order), and later “to state, relate.”"},
+    words:[
+      {ko:"진열", sentence:"상점에 새 상품이 진열되어 있어요.", sentence_ro:"Produsele noi sunt expuse în magazin.", sentence_en:"New products are displayed in the store.", ro:"expunere, aranjare",en:"display, arrangement (of goods)"},
+      {ko:"진술", sentence:"목격자가 경찰에게 진술했어요.", sentence_ro:"Martorul a dat o declarație poliției.", sentence_en:"The witness gave a statement to the police.", ro:"declarație, mărturie",en:"statement, testimony"},
+      {ko:"진부", sentence:"그 영화의 줄거리는 너무 진부해요.", sentence_ro:"Scenariul acelui film este prea banal.", sentence_en:"That movie's plot is too clichéd.", ro:"banal, uzat, învechit",en:"stale, trite, hackneyed"},
+      {ko:"진정", sentence:"주민들이 시청에 진정을 냈어요.", sentence_ro:"Locuitorii au depus o petiție la primărie.", sentence_en:"The residents filed a petition with the city hall.", ro:"petiție, plângere formală",en:"petition, formal appeal"}
+    ]
+  },
+  {
+    hanja:"隱", ko_reading:"은", reading:{ro:"은 (eun)",en:"은 (eun)"}, meaning:{ro:"a ascunde, secret",en:"to hide, hidden"},
+    etymology:{ro:"Compus din 阝 (阜, deal) și 㥁 (element care conține inima 心, sugerând neliniște sau ceva ținut ascuns înăuntru) — ideea de a te ascunde în spatele unui deal, departe de privirile altora, de unde sensul de „ascuns, secret”.",en:"Composed of 阝 (阜, hill) and 㥁 (a component containing the heart 心, suggesting inner unease or something kept hidden within) — the idea of hiding behind a hill, out of others' sight, giving the meaning “hidden, secret.”"},
+    words:[
+      {ko:"은둔", sentence:"그는 도시를 떠나 산속에서 은둔 생활을 하고 있어요.", sentence_ro:"El a părăsit orașul și trăiește retras în munți.", sentence_en:"He left the city and lives in seclusion in the mountains.", ro:"retragere, viață izolată",en:"seclusion, reclusion"},
+      {ko:"은퇴", sentence:"그 선수는 작년에 은퇴했어요.", sentence_ro:"Acel sportiv s-a retras anul trecut.", sentence_en:"That athlete retired last year.", ro:"retragere (din activitate)",en:"retirement"},
+      {ko:"은밀", sentence:"그들은 은밀하게 계획을 세웠어요.", sentence_ro:"Ei au pus la cale un plan în secret.", sentence_en:"They made a plan secretly.", ro:"secret, tainic",en:"secret, covert"},
+      {ko:"은신", sentence:"도둑은 창고에 은신했어요.", sentence_ro:"Hoțul s-a ascuns în depozit.", sentence_en:"The thief hid in the warehouse.", ro:"ascundere",en:"hiding oneself, concealment"}
+    ]
+  },
+  {
+    hanja:"雅", ko_reading:"아", reading:{ro:"아 (a)",en:"아 (a)"}, meaning:{ro:"elegant, rafinat",en:"elegant, graceful"},
+    etymology:{ro:"Compus din 隹 (pasăre, aici o cioară) și 牙 (dinte, element fonetic) — inițial desemna un tip de pasăre, caracterul fiind împrumutat fonetic pentru sensul de „corect, standard” (limbaj cult), extins ulterior la „elegant, rafinat”.",en:"Composed of 隹 (bird, here a crow) and 牙 (tooth, a phonetic component) — originally denoting a type of bird, the character was borrowed phonetically for the meaning “correct, standard” (refined language), later extended to “elegant, refined.”"},
+    words:[
+      {ko:"우아", sentence:"그녀는 우아하게 춤을 췄어요.", sentence_ro:"Ea a dansat cu grație.", sentence_en:"She danced elegantly.", ro:"elegant, grațios",en:"elegant, graceful"},
+      {ko:"아취", sentence:"이 정원은 아취가 느껴져요.", sentence_ro:"Această grădină are un farmec rafinat.", sentence_en:"This garden has a refined charm.", ro:"farmec rafinat, gust elevat",en:"refined charm, elegant taste"},
+      {ko:"단아", sentence:"그녀의 옷차림은 단아했어요.", sentence_ro:"Ținuta ei era demnă și elegantă.", sentence_en:"Her outfit was neat and dignified.", ro:"demn și elegant, cumpătat",en:"neat, dignified and elegant"},
+      {ko:"아호", sentence:"그 화가는 아호로 작품에 서명해요.", sentence_ro:"Acel pictor semnează lucrările cu numele său de artă.", sentence_en:"That painter signs his works with his pen name.", ro:"nume de artă, pseudonim literar",en:"pen name, literary pseudonym"}
+    ]
+  },
+  {
+    hanja:"雜", ko_reading:"잡", reading:{ro:"잡 (jap)",en:"잡 (jap)"}, meaning:{ro:"amestecat",en:"mixed, blended"},
+    etymology:{ro:"Compus din 衣 (haină) și 集 (a aduna, imagine a păsărilor 隹 adunate pe un copac 木) — inițial sugera o haină cusută din petice de material de culori diferite, adunate laolaltă, de unde sensul de „amestecat, divers”.",en:"Composed of 衣 (clothing) and 集 (to gather, an image of birds 隹 gathered on a tree 木) — originally suggesting a garment sewn from patches of different colored fabric gathered together, giving the meaning “mixed, miscellaneous.”"},
+    words:[
+      {ko:"잡지", sentence:"미용실에서 잡지를 읽었어요.", sentence_ro:"Am citit o revistă la salonul de coafură.", sentence_en:"I read a magazine at the hair salon.", ro:"revistă",en:"magazine"},
+      {ko:"복잡", sentence:"서울의 지하철은 출퇴근 시간에 복잡해요.", sentence_ro:"Metroul din Seul este aglomerat la orele de vârf.", sentence_en:"Seoul's subway is crowded during rush hour.", ro:"complicat, aglomerat",en:"complicated, crowded"},
+      {ko:"잡담", sentence:"우리는 커피를 마시며 잡담을 나눴어요.", sentence_ro:"Am stat la povești bând cafea.", sentence_en:"We chatted casually over coffee.", ro:"vorbă goală, taifas",en:"small talk, chitchat"},
+      {ko:"혼잡", sentence:"명절에는 고속도로가 혼잡해요.", sentence_ro:"De sărbători, autostrada este aglomerată.", sentence_en:"During holidays, the highway is congested.", ro:"aglomerație, congestie",en:"congestion, crowdedness"}
+    ]
+  },
+  {
+    hanja:"靑", ko_reading:"청", reading:{ro:"청 (cheong)",en:"청 (cheong)"}, meaning:{ro:"albastru, verde",en:"blue, green"},
+    etymology:{ro:"Compus din 生 (a crește, viață) deasupra unui element care sugerează un mineral colorant sau o fântână (丹/井) — culoarea albastru-verzuie a plantelor tinere care încolțesc, simbolizând vitalitatea și prospețimea naturii.",en:"Composed of 生 (to grow, life) above a component suggesting a coloring mineral or a well (丹/井) — the blue-green color of young sprouting plants, symbolizing the vitality and freshness of nature."},
+    words:[
+      {ko:"청년", sentence:"그 청년은 꿈을 이루기 위해 열심히 노력해요.", sentence_ro:"Acel tânăr muncește din greu pentru a-și îndeplini visul.", sentence_en:"That young man works hard to achieve his dream.", ro:"tânăr",en:"young person, youth"},
+      {ko:"청소년", sentence:"청소년들은 스마트폰을 많이 사용해요.", sentence_ro:"Adolescenții folosesc mult telefonul inteligent.", sentence_en:"Teenagers use smartphones a lot.", ro:"adolescent",en:"adolescent, teenager"},
+      {ko:"청바지", sentence:"저는 청바지를 즐겨 입어요.", sentence_ro:"Îmi place să port blugi.", sentence_en:"I like to wear blue jeans.", ro:"blugi",en:"blue jeans"},
+      {ko:"청록", sentence:"바다는 청록색으로 반짝였어요.", sentence_ro:"Marea sclipea într-o culoare albastru-verzuie.", sentence_en:"The sea sparkled in a blue-green color.", ro:"albastru-verzui, turcoaz",en:"blue-green, teal"}
+    ]
+  },
+  {
+    hanja:"韓", ko_reading:"한", reading:{ro:"한 (han)",en:"한 (han)"}, meaning:{ro:"Coreea",en:"Korea"},
+    etymology:{ro:"Compus din 倝 (soarele răsărind, strălucire) și 韋 (înconjurare; inițial piele tăbăcită, element fonetic) — a fost numele vechilor state coreene, cele Trei Han (三韓, Samhan), și este folosit din antichitate ca denumire pentru Coreea.",en:"Composed of 倝 (the rising sun, brightness) and 韋 (enclosure; originally tanned hide, a phonetic component) — this was the name of the ancient Korean states, the Three Han (三韓, Samhan), and has been used since antiquity as the name for Korea."},
+    words:[
+      {ko:"한국", sentence:"저는 한국에서 태어났어요.", sentence_ro:"M-am născut în Coreea.", sentence_en:"I was born in Korea.", ro:"Coreea",en:"Korea"},
+      {ko:"한식", sentence:"오늘 저녁에는 한식을 먹었어요.", sentence_ro:"Astă-seară am mâncat mâncare coreeană.", sentence_en:"Tonight I ate Korean food.", ro:"mâncare coreeană",en:"Korean food"},
+      {ko:"한복", sentence:"명절에는 한복을 입어요.", sentence_ro:"De sărbători, purtăm hanbok.", sentence_en:"During holidays, we wear hanbok.", ro:"hanbok, costum tradițional coreean",en:"hanbok, traditional Korean dress"},
+      {ko:"방한", sentence:"외국 대통령이 방한했어요.", sentence_ro:"Un președinte străin a vizitat Coreea.", sentence_en:"A foreign president visited Korea.", ro:"vizită în Coreea",en:"visit to Korea"}
+    ]
+  },
+  {
+    hanja:"須", ko_reading:"수", reading:{ro:"수 (su)",en:"수 (su)"}, meaning:{ro:"neapărat necesar",en:"must, necessary"},
+    etymology:{ro:"Pictogramă care înfățișează 頁 (capul, fața) cu 彡 (fire de păr) — sensul original era „barbă, favoriți”. Prin împrumut fonetic și extindere de sens, caracterul a ajuns să însemne „neapărat necesar” și, în combinația 須臾, „o clipă scurtă”.",en:"A pictograph combining 頁 (head, face) with 彡 (strands of hair) — the original meaning was “beard, whiskers.” Through phonetic borrowing and semantic extension, the character came to mean “absolutely necessary” and, in the compound 須臾, “a brief moment.”"},
+    words:[
+      {ko:"필수", sentence:"물은 생명에 필수예요.", sentence_ro:"Apa este esențială pentru viață.", sentence_en:"Water is essential for life.", ro:"esențial, obligatoriu",en:"essential, required"},
+      {ko:"필수품", sentence:"여행 갈 때 필수품을 챙겼어요.", sentence_ro:"Am pregătit lucrurile esențiale pentru călătorie.", sentence_en:"I packed the essentials for the trip.", ro:"obiect de strictă necesitate",en:"necessity, essential item"},
+      {ko:"수유", sentence:"행복은 수유에 불과할 때가 많아요.", sentence_ro:"Fericirea este adesea doar o clipă trecătoare.", sentence_en:"Happiness is often just a fleeting moment.", ro:"clipă, moment scurt",en:"a moment, an instant"},
+      {ko:"수지", sentence:"안내문에 여행 수지가 적혀 있어요.", sentence_ro:"Pe afiș sunt scrise lucrurile de știut pentru călătorie.", sentence_en:"The notice lists the things travelers must know.", ro:"lucruri necesare de știut",en:"things one must know, notice"}
+    ]
+  },
+  {
+    hanja:"頗", ko_reading:"파", reading:{ro:"파 (pa)",en:"파 (pa)"}, meaning:{ro:"părtinitor, destul de",en:"biased, rather"},
+    etymology:{ro:"Compus din 頁 (cap) și 皮 (piele, element fonetic) — înfățișează inițial un cap înclinat într-o parte, adică „strâmb, aplecat”, de unde sensul de „părtinitor”. Prin extindere adverbială a ajuns să însemne și „destul de, considerabil”.",en:"Composed of 頁 (head) and 皮 (skin, a phonetic component) — originally depicting a head tilted to one side, i.e. “crooked, leaning,” which gave the meaning “biased.” Through adverbial extension it also came to mean “quite, rather considerably.”"},
+    words:[
+      {ko:"편파", sentence:"그 신문은 편파 보도로 비판받았어요.", sentence_ro:"Acel ziar a fost criticat pentru relatări părtinitoare.", sentence_en:"That newspaper was criticized for biased reporting.", ro:"parțialitate, favoritism",en:"bias, partiality"},
+      {ko:"편파적", sentence:"심판의 판정이 편파적이었어요.", sentence_ro:"Decizia arbitrului a fost părtinitoare.", sentence_en:"The referee's decision was biased.", ro:"părtinitor, subiectiv",en:"biased, one-sided"},
+      {ko:"편파성", sentence:"이 기사는 편파성이 있다는 비판을 받았어요.", sentence_ro:"Acest articol a fost criticat pentru caracterul său părtinitor.", sentence_en:"This article was criticized for its biased nature.", ro:"caracter părtinitor",en:"biased nature, partiality"},
+      {ko:"파다하다", sentence:"그 배우에 대한 소문이 파다해요.", sentence_ro:"Zvonurile despre acel actor sunt larg răspândite.", sentence_en:"Rumors about that actor are widespread.", ro:"a fi larg răspândit",en:"to be widespread, rife (of rumors)"}
+    ]
+  },
+  {
+    hanja:"髮", ko_reading:"발", reading:{ro:"발 (bal)",en:"발 (bal)"}, meaning:{ro:"păr",en:"hair"},
+    etymology:{ro:"Compus din 髟 (păr lung și atârnat, radicalul folosit pentru caracterele legate de păr) și 犮 (câine alergând repede, element fonetic) — imaginea părului lung și fluturând, de unde sensul de „păr” (în special de pe cap).",en:"Composed of 髟 (long, hanging hair, the radical used for hair-related characters) and 犮 (a dog running swiftly, a phonetic component) — the image of long, flowing hair, giving the meaning “hair” (especially head hair)."},
+    words:[
+      {ko:"이발", sentence:"아버지는 한 달에 한 번 이발해요.", sentence_ro:"Tata se tunde o dată pe lună.", sentence_en:"Father gets a haircut once a month.", ro:"tuns, tunsoare",en:"haircut"},
+      {ko:"두발", sentence:"우리 학교는 두발 규정이 엄격해요.", sentence_ro:"Regulile privind părul la școala noastră sunt stricte.", sentence_en:"Our school's hair regulations are strict.", ro:"păr (de pe cap)",en:"head hair"},
+      {ko:"백발", sentence:"할아버지의 백발이 인상적이에요.", sentence_ro:"Părul alb al bunicului este impresionant.", sentence_en:"Grandfather's white hair is impressive.", ro:"păr alb, păr cărunt",en:"white/gray hair"},
+      {ko:"금발", sentence:"그녀는 금발 머리를 가지고 있어요.", sentence_ro:"Ea are păr blond.", sentence_en:"She has blonde hair.", ro:"păr blond",en:"blonde hair"}
+    ]
+  },
+  {
+    hanja:"鳴", ko_reading:"명", reading:{ro:"명 (myeong)",en:"명 (myeong)"}, meaning:{ro:"a striga, a suna",en:"to cry (bird/animal), to sound"},
+    etymology:{ro:"Compus din 鳥 (pasăre) și 口 (gură) — pictogramă simplă a ciocului unei păsări scoțând un sunet. Sensul de bază, „ciripit, țipăt de pasăre”, s-a extins la orice sunet sau strigăt, chiar și cel scos de oameni sau obiecte.",en:"Composed of 鳥 (bird) and 口 (mouth) — a simple pictograph of a bird's beak making a sound. The basic meaning, “bird's cry, chirp,” extended to any sound or cry, even one made by people or objects."},
+    words:[
+      {ko:"비명", sentence:"그녀는 놀라서 비명을 질렀어요.", sentence_ro:"Ea a țipat de spaimă.", sentence_en:"She screamed in shock.", ro:"țipăt, strigăt",en:"scream, shriek"},
+      {ko:"공명", sentence:"그의 연설은 많은 사람들의 공명을 얻었어요.", sentence_ro:"Discursul lui a stârnit rezonanță în mulți oameni.", sentence_en:"His speech resonated with many people.", ro:"rezonanță, simpatie",en:"resonance, empathy"},
+      {ko:"자명종", sentence:"자명종이 울려서 잠에서 깼어요.", sentence_ro:"M-am trezit din somn când a sunat ceasul deșteptător.", sentence_en:"I woke up when the alarm clock rang.", ro:"ceas deșteptător",en:"alarm clock"},
+      {ko:"명금", sentence:"숲속에서 명금이 아름답게 지저귀었어요.", sentence_ro:"Pasărea cântătoare a ciripit frumos în pădure.", sentence_en:"The songbird chirped beautifully in the forest.", ro:"pasăre cântătoare",en:"songbird"}
+    ]
+  },
+  {
+    hanja:"麗", ko_reading:"려", reading:{ro:"려 (ryeo)",en:"려 (ryeo)"}, meaning:{ro:"frumos, minunat",en:"beautiful, magnificent"},
+    etymology:{ro:"Formă veche care înfățișa un cerb (鹿) cu o pereche de coarne ornamentale deasupra capului. Simetria și grația coarnelor perechi au ajuns să simbolizeze frumusețea și eleganța, de unde sensul de „frumos, minunat”.",en:"An ancient form depicting a deer (鹿) with a pair of ornamental antlers above its head. The symmetry and grace of the paired antlers came to symbolize beauty and elegance, giving the meaning “beautiful, magnificent.”"},
+    words:[
+      {ko:"화려", sentence:"그 드레스는 정말 화려해요.", sentence_ro:"Rochia aceea este într-adevăr somptuoasă.", sentence_en:"That dress is truly gorgeous.", ro:"somptuos, strălucitor",en:"splendid, gorgeous"},
+      {ko:"고려", sentence:"고려는 한국 역사의 중요한 왕조예요.", sentence_ro:"Goryeo este o dinastie importantă din istoria Coreei.", sentence_en:"Goryeo is an important dynasty in Korean history.", ro:"Goryeo (dinastie coreeană istorică)",en:"Goryeo (historical Korean dynasty)"},
+      {ko:"미려", sentence:"그의 문장은 미려하기로 유명해요.", sentence_ro:"Stilul lui de scriere este renumit pentru frumusețea sa.", sentence_en:"His writing style is famous for its beauty.", ro:"frumos, elegant (stil)",en:"beautiful, exquisite (style)"},
+      {ko:"수려", sentence:"이 지역은 경치가 수려해요.", sentence_ro:"Peisajul din această regiune este deosebit de frumos.", sentence_en:"The scenery in this region is exceptionally beautiful.", ro:"frumos și grațios (peisaj)",en:"graceful and beautiful (scenery)"}
+    ]
+  },
 ];
 
 /* ═══════════════════════════════════════════════════════════
