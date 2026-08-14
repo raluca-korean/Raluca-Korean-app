@@ -918,13 +918,24 @@ function buildGeneratedSense(v) {
       sentences.push({ ko:`어제 <b>${conj[1].form}</b>.`, ro: isRo?`Ieri: ${v.ro}.`:`Yesterday: ${v.en}.`, level:'easy' });
       const { andForm, causeForm, mustForm } = verbAdjExtraForms(v.ko);
       if (isVerb) {
-        sentences.push({ ko:`<b>${andForm}</b> 싶어요.`, ro: isRo?`Vrea să: ${v.ro}.`:`Wants to: ${v.en}.`, level:'medium' });
-        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋았어요.`, ro: isRo?`Bine că: ${v.ro}.`:`Glad that: ${v.en}.`, level:'medium' });
-        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Trebuie să: ${v.ro}.`:`Must: ${v.en}.`, level:'medium' });
+        // v.ro/v.en already carry their own infinitive marker ("a spăla",
+        // "to wash"), so labels needing a finite clause ("Vrea să" wants a
+        // subjunctive, not an infinitive) produced doubled-up nonsense like
+        // "Trebuie să: a se spăla." ("Must to: to wash."). Neutral noun-style
+        // labels (no "să"/"that") pair with the infinitive gloss cleanly,
+        // same trick as the noun frames' "Recomand: X".
+        sentences.push({ ko:`<b>${andForm}</b> 싶어요.`, ro: isRo?`Vrea: ${v.ro}.`:`Wants: ${v.en}.`, level:'medium' });
+        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋았어요.`, ro: isRo?`Bucuros: ${v.ro}.`:`Glad: ${v.en}.`, level:'medium' });
+        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Necesar: ${v.ro}.`:`Necessary: ${v.en}.`, level:'medium' });
       } else {
+        // Same fix as the verb branch above — 99 of the 169 conjugable
+        // adjectives are also glossed as an infinitive ("a fi leneș", "to be
+        // lazy"), so "Trebuie să fie: a fi leneș." doubled up into "Must be:
+        // to be lazy." Neutral labels work for both the "a fi X" and bare
+        // ("obosit") gloss styles.
         sentences.push({ ko:`<b>${andForm}</b> 좋아요.`, ro: isRo?`Și: ${v.ro}.`:`And: ${v.en}.`, level:'medium' });
-        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋아요.`, ro: isRo?`Bine că: ${v.ro}.`:`Good that: ${v.en}.`, level:'medium' });
-        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Trebuie să fie: ${v.ro}.`:`Must be: ${v.en}.`, level:'medium' });
+        if (causeForm) sentences.push({ ko:`<b>${causeForm}</b> 좋아요.`, ro: isRo?`Bucuros: ${v.ro}.`:`Glad: ${v.en}.`, level:'medium' });
+        if (mustForm) sentences.push({ ko:`<b>${mustForm}</b> 해요.`, ro: isRo?`Necesar: ${v.ro}.`:`Necessary: ${v.en}.`, level:'medium' });
       }
       // Copula-pattern stems (or any edge case with no cause/must form) still
       // need to reach 5 — fill the gap with two more tense-based sentences
@@ -933,7 +944,7 @@ function buildGeneratedSense(v) {
         const useLast = sentences.length % 2 === 0;
         sentences.push(useLast
           ? { ko:`네, <b>${conj[1].form}</b>.`, ro: isRo?`Da: ${v.ro}.`:`Yes: ${v.en}.`, level:'easy' }
-          : { ko:`정말 <b>${conj[0].form}</b>.`, ro: isRo?`Chiar ${v.ro}.`:`Really: ${v.en}.`, level:'easy' });
+          : { ko:`정말 <b>${conj[0].form}</b>.`, ro: isRo?`Chiar: ${v.ro}.`:`Really: ${v.en}.`, level:'easy' });
       }
     }
   } else if (isNounLike(v)) {
