@@ -531,19 +531,32 @@ Promise.all([
 });
 
 // ── SEARCH ─────────────────────────────────────────────────────
+// Most people type Romanian without diacritics (no ă/â/î/ș/ț on their
+// keyboard) — strip them from both sides so "scoala"/"mancare"/"caine"
+// still find "școală"/"mâncare"/"câine".
+function stripDiacritics(s) {
+  return s
+    .replace(/[ăâ]/g, 'a')
+    .replace(/î/g, 'i')
+    .replace(/[șş]/g, 's')
+    .replace(/[țţ]/g, 't')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
 function scoreEntry(entry, q) {
   if (!q) return 0;
   const qL = q.toLowerCase();
+  const qN = stripDiacritics(qL);
   const koJ = toJamo(entry.ko);
   const qJ  = toJamo(qL);
   const koL = entry.ko.toLowerCase();
   const ro  = entry.ro.toLowerCase();
+  const roN = stripDiacritics(ro);
   const en  = entry.en.toLowerCase();
-  if (koL === qL || ro === qL || en === qL) return 100;
+  if (koL === qL || ro === qL || roN === qN || en === qL) return 100;
   if (koL.startsWith(qL) || koJ.startsWith(qJ)) return 80;
-  if (ro.startsWith(qL) || en.startsWith(qL)) return 70;
+  if (ro.startsWith(qL) || roN.startsWith(qN) || en.startsWith(qL)) return 70;
   if (koL.includes(qL) || koJ.includes(qJ)) return 50;
-  if (ro.includes(qL) || en.includes(qL)) return 40;
+  if (ro.includes(qL) || roN.includes(qN) || en.includes(qL)) return 40;
   return 0;
 }
 // Best fuzzy match for a typed word that isn't an exact vocab entry.
