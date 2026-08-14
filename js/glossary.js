@@ -18,6 +18,7 @@ const glsVeil      = document.getElementById("glsVeil");
 let WORDS        = [];
 let CLUSTERS     = [];
 let SENTENCES    = [];   // [{ko, ro, en}] din exercises.json
+let RAW_VOCAB_BY_KO = new Map(); // ko -> {ko, ro, en, categories}, pt. SentenceGenerator (are nevoie de categoriile brute, nu de categoriesRo/En din WORDS)
 let daily        = [];
 let currentLang  = RKLang.get();
 let filterCat    = "";
@@ -464,15 +465,39 @@ function getAssociated(ko) {
 }
 
 function findExample(ko, max) {
-  if (!SENTENCES.length) return [];
   const needle = (ko.endsWith("다") && ko.length > 2) ? ko.slice(0, -1) : ko;
-  if (needle.length < 2) return [];
-  const hits = SENTENCES.filter(s => s.ko.includes(needle));
-  for (let i = hits.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [hits[i], hits[j]] = [hits[j], hits[i]];
+  if (SENTENCES.length && needle.length >= 2) {
+    const hits = SENTENCES.filter(s => s.ko.includes(needle));
+    if (hits.length) {
+      for (let i = hits.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [hits[i], hits[j]] = [hits[j], hits[i]];
+      }
+      return hits.slice(0, max || 2);
+    }
   }
-  return hits.slice(0, max || 2);
+  // No curated sentence in exercises.json mentions this word (~most of the
+  // 1511-word vocab isn't covered by the ~200 curated exercise sentences) —
+  // fall back to the same generator Harta Cuvântului uses, so every word
+  // still gets grammatically-correct examples instead of an empty panel.
+  return generatedExamples(ko, max);
+}
+
+function generatedExamples(ko, max) {
+  if (!window.SentenceGenerator) return [];
+  const v = RAW_VOCAB_BY_KO.get(ko);
+  if (!v) return [];
+  const roGen = SentenceGenerator.generate(v, 'ro');
+  const enGen = SentenceGenerator.generate(v, 'en');
+  // Generated sentences use <b>...</b> to bold the inflected word — fine for
+  // Harta Cuvântului's raw innerHTML render, but here it would hit
+  // sanitizeHTML() and show up as literal "<b>" text, so strip it to match
+  // the plain-text style of the curated exercises.json examples.
+  return roGen.slice(0, max || 2).map((s, i) => ({
+    ko: s.ko.replace(/<\/?b>/g, ''),
+    ro: s.ro,
+    en: (enGen[i] && (enGen[i].en || enGen[i].ro)) || s.ro
+  }));
 }
 
 function _renderPanel(word) {
@@ -702,6 +727,7 @@ async function loadVocabulary() {
     if (!vocabRes.ok) throw new Error("HTTP " + vocabRes.status);
     const vocab = await vocabRes.json();
     WORDS = buildWords(vocab);
+    RAW_VOCAB_BY_KO = new Map(vocab.map(v => [v.ko, v]));
     if (clustersRes.ok) CLUSTERS = await clustersRes.json();
     if (exRes.ok) {
       const ex = await exRes.json();
