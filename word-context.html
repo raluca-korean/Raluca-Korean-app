@@ -103,6 +103,15 @@
 .wc-orbit-topbar .wc-speed-btn:hover{color:#fff}
 .wc-orbit-topbar .wc-rom-toggle{color:#c9beed}
 .wc-orbit-topbar .wc-rom-toggle input{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.22)}
+.wc-word-actions{display:flex;gap:6px;margin-right:auto}
+.wc-action-btn{
+  display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;
+  padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.08);color:#c9beed;cursor:pointer;transition:background .15s,color .15s,border-color .15s;
+}
+.wc-action-btn:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+.wc-action-btn.active{background:#db2777;border-color:#db2779;color:#fff}
+.wc-action-ico{font-size:.9rem}
 
 .wc-orbit-stage{display:flex;justify-content:center;padding:6px 0 8px}
 .wc-orbit{position:relative;width:min(540px,94vw);aspect-ratio:1;container-type:inline-size}
@@ -308,6 +317,44 @@ let audioSpeed = 'normal';
 let vocabIndex = null;
 let currentSentences = [];
 let selectedSentenceIdx = -1;
+
+// ── FAVORITES / LEARNED (shared with Glossary + Flashcards) ────────
+// Same localStorage keys as js/glossary.js — toggling here shows up
+// there too, and RK_FAV_WORDS is what feeds the Flashcards deck filter.
+function getFavSet()     { return new Set(JSON.parse(localStorage.getItem('RK_FAV_WORDS') || '[]')); }
+function getLearnedSet() { return new Set(JSON.parse(localStorage.getItem('RK_LEARNED')    || '[]')); }
+function isFav(ko)     { return getFavSet().has(ko); }
+function isLearnedWord(ko) { return getLearnedSet().has(ko); }
+function toggleFav(ko) {
+  const s = getFavSet();
+  s.has(ko) ? s.delete(ko) : s.add(ko);
+  localStorage.setItem('RK_FAV_WORDS', JSON.stringify([...s]));
+  refreshWordActions();
+}
+window.toggleFav = toggleFav;
+function toggleLearnedWord(ko) {
+  const s = getLearnedSet();
+  s.has(ko) ? s.delete(ko) : s.add(ko);
+  localStorage.setItem('RK_LEARNED', JSON.stringify([...s]));
+  refreshWordActions();
+}
+window.toggleLearnedWord = toggleLearnedWord;
+function wordActionsHtml(ko, isRo) {
+  const fav = isFav(ko), learned = isLearnedWord(ko);
+  return `<div class="wc-word-actions" id="wcWordActions">
+    <button type="button" class="wc-action-btn${fav?' active':''}" onclick="toggleFav('${ko.replace(/'/g,"\\'")}')">
+      <span class="wc-action-ico">${fav?'◆':'◇'}</span>${isRo?'Favorit':'Favorite'}
+    </button>
+    <button type="button" class="wc-action-btn${learned?' active':''}" onclick="toggleLearnedWord('${ko.replace(/'/g,"\\'")}')">
+      <span class="wc-action-ico">${learned?'✓':'○'}</span>${isRo?'Memorat':'Learned'}
+    </button>
+  </div>`;
+}
+function refreshWordActions() {
+  const el = document.getElementById('wcWordActions');
+  if (!el || !currentWord) return;
+  el.outerHTML = wordActionsHtml(currentWord, cLang === 'ro');
+}
 
 const CAT_LABELS = {
   ro:{ nouns:'Substantiv', verbs:'Verb', adjectives:'Adjectiv', adverbs:'Adverb',
@@ -932,6 +979,7 @@ function renderExplore() {
 
   const orbitHtml = `<div class="wc-orbit-card card">
     <div class="wc-orbit-topbar">
+      ${wordActionsHtml(currentWord, isRo)}
       <div class="wc-speed" role="group" aria-label="${isRo?'Viteză audio':'Audio speed'}">
         ${speedBtnHtml('normal', 'Normal')}
         ${speedBtnHtml('slow', isRo?'Lent':'Slow')}
