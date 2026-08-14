@@ -346,6 +346,7 @@
 <script src="./js/core/lang-picker.js"></script>
 <script src="./js/core/dark-mode.js"></script>
 <script src="./js/core/audio.js"></script>
+<script src="./js/core/verb-conjugator.js"></script>
 <script src="./js/core/register-sw.js"></script>
 <script>
 // ── STATE ────────────────────────────────────────────────────────
@@ -453,101 +454,10 @@ function toJamo(text) {
   return r;
 }
 
-function hasBatchim(word) {
-  const last = word[word.length - 1];
-  const code = last ? last.charCodeAt(0) : 0;
-  if (code < 0xAC00 || code > 0xD7A3) return true;
-  return ((code - 0xAC00) % 28) !== 0;
-}
-
 // ── CONJUGATION (for generated/non-curated conjugable words) ─────
-// Shared irregular-conjugation word lists — single source of truth, also
-// used by extraSurfaceForms() below when building the click-to-explore
-// reverse lookup.
-const B_IRREGULAR = ['고맙다','춥다','덥다','쉽다','어렵다','가깝다','아름답다','반갑다','귀엽다','무겁다','가볍다',
-  '그립다','놀랍다','두껍다','뜨겁다','맵다','무섭다','미끄럽다','부끄럽다','부드럽다','부럽다','새롭다',
-  '시끄럽다','싱겁다','아쉽다','어둡다','외롭다','자연스럽다','즐겁다','차갑다','굽다','눕다'];
-const BO_WA_EXCEPTIONS = ['돕다', '곱다']; // ㅂ-irregular but use 와 (not 워) since the vowel is ㅗ
-const I_VERB_EXCEPTIONS = ['끓이다','덮이다','모이다','보이다','쌓이다','줄이다']; // real verbs, not the 이다 copula
-const REUL_REGULAR = ['따르다', '들르다', '치르다'];
-const D_IRREGULAR = ['걷다', '듣다'];
-const H_IRREGULAR = ['하얗다','빨갛다','파랗다','까맣다','노랗다','그렇다','이렇다','저렇다','어떻다'];
-
-function conjugate(word) {
-  if (!word.endsWith('다')) return null;
-  const stem = word.slice(0,-1);
-  const last = stem[stem.length-1];
-  if (!last) return null;
-  const code = last.charCodeAt(0);
-  if (code < 0xAC00 || code > 0xD7A3) return null;
-  const s = code - 0xAC00, jong = s % 28, jung = Math.floor(s/28) % 21, cho = Math.floor(s/588);
-
-  if (last === '이' && !I_VERB_EXCEPTIONS.some(b => word === b || word.endsWith(b))) {
-    const base = stem.slice(0,-1);
-    const bat = hasBatchim(base);
-    return [{ro:'prezent',en:'present', form: base+(bat?'이에요':'예요')}, {ro:'trecut',en:'past', form: base+'이었어요'}];
-  }
-  if (last === '하') {
-    const base = stem.slice(0,-1);
-    return [{ro:'prezent',en:'present', form: base+'해요'}, {ro:'trecut',en:'past', form: base+'했어요'}];
-  }
-  if (jong === 17 && BO_WA_EXCEPTIONS.includes(word)) {
-    const openSyllable = String.fromCharCode(code - jong);
-    const base = stem.slice(0,-1) + openSyllable;
-    return [{ro:'prezent',en:'present', form: base+'와요'}, {ro:'trecut',en:'past', form: base+'왔어요'}];
-  }
-  if (jong === 17 && B_IRREGULAR.includes(word)) {
-    const openSyllable = String.fromCharCode(code - jong);
-    const base = stem.slice(0,-1) + openSyllable;
-    return [{ro:'prezent',en:'present', form: base+'워요'}, {ro:'trecut',en:'past', form: base+'웠어요'}];
-  }
-  if (last === '르' && jong === 0 && stem.length >= 2 && !REUL_REGULAR.includes(word)) {
-    const preStem = stem.slice(0, -1);
-    const preLast = preStem[preStem.length - 1];
-    const pCode = preLast.charCodeAt(0);
-    const pJung = Math.floor((pCode - 0xAC00) / 28) % 21;
-    const preBright = pJung === 0 || pJung === 8;
-    const doubled = String.fromCharCode(pCode + 8);
-    const newSyl = preBright ? '라' : '러';
-    const base = preStem.slice(0, -1) + doubled + newSyl;
-    return [{ro:'prezent',en:'present', form: base+'요'}, {ro:'trecut',en:'past', form: base.slice(0,-1)+(preBright?'랐':'렀')+'어요'}];
-  }
-  if (jong === 7 && D_IRREGULAR.some(b => word === b || word.endsWith(b))) {
-    const base = stem.slice(0,-1) + String.fromCharCode(code + 1);
-    const bright = jung === 0 || jung === 8;
-    return [{ro:'prezent',en:'present', form: base+(bright?'아요':'어요')}, {ro:'trecut',en:'past', form: base+(bright?'았어요':'었어요')}];
-  }
-
-  const aVowel = jung===0||jung===8;
-  const suf = aVowel ? '아':'어';
-  let pres, past;
-  if (jong===0) {
-    if (jung===0) { pres = stem+'요'; past = stem.slice(0,-1) + String.fromCharCode(code+20) + '어요'; }
-    else if (jung===8) { pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+9*28) + '요'; past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+9*28+20) + '어요'; }
-    else if (jung===13) { pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+14*28) + '요'; past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+14*28+20) + '어요'; }
-    else if (jung===18) {
-      const pre = stem.slice(0, -1);
-      const preLast = pre[pre.length-1];
-      let preBright = false;
-      if (preLast) {
-        const pc = preLast.charCodeAt(0);
-        if (pc >= 0xAC00 && pc <= 0xD7A3) { const pj = Math.floor((pc-0xAC00)/28)%21; preBright = pj===0||pj===8; }
-      }
-      const newJung = preBright ? 0 : 4;
-      pres = pre + String.fromCharCode(0xAC00 + cho*588 + newJung*28) + '요';
-      past = pre + String.fromCharCode(0xAC00 + cho*588 + newJung*28 + 20) + '어요';
-    } else if (jung===20) {
-      // ㅣ + 어 → 여 contraction (마시다→마셔요, 다니다→다녀요, 보이다→보여요…)
-      pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+6*28) + '요';
-      past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+6*28+20) + '어요';
-    } else if (jung===11) {
-      // ㅚ + 어 → 왜 contraction (되다→돼요)
-      pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+10*28) + '요';
-      past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+10*28+20) + '어요';
-    } else { pres = stem+'어요'; past = stem+'었어요'; }
-  } else { pres = stem+suf+'요'; past = stem+(aVowel?'았':'었')+'어요'; }
-  return [{ro:'prezent',en:'present', form: pres}, {ro:'trecut',en:'past', form: past}];
-}
+// hasBatchim/conjugate + the irregular word lists now live in
+// js/core/verb-conjugator.js (window.VerbConjugator) so other pages can
+// reuse the same general-purpose engine instead of duplicating it.
 
 // Additional inflected forms (honorific, connective, attributive…) used only
 // to build a reverse lookup for click-to-explore; skipped for irregular
@@ -565,7 +475,7 @@ function extraSurfaceForms(word, categories) {
   const isAdj = categories && categories.includes('adjectives');
   const isVerb = categories && categories.includes('verbs');
 
-  const conj = conjugate(word);
+  const conj = VerbConjugator.conjugate(word);
   if (conj && conj[0] && conj[0].form.endsWith('요') && last !== '이') {
     const pres = conj[0].form;
     forms.push(pres.slice(0, -1) + '서'); // -아서/어서 (cause/sequence)
@@ -573,10 +483,10 @@ function extraSurfaceForms(word, categories) {
   }
   forms.push(stem + '고'); // -고 (and/then) — attaches to the plain stem, always safe
 
-  const isReulIrregular = last === '르' && jong === 0 && stem.length >= 2 && !REUL_REGULAR.includes(word);
+  const isReulIrregular = last === '르' && jong === 0 && stem.length >= 2 && !VerbConjugator.REUL_REGULAR.includes(word);
   const isEuIrregular = jong === 0 && jung === 18;
-  const isIrregular = B_IRREGULAR.includes(word) || BO_WA_EXCEPTIONS.includes(word)
-    || D_IRREGULAR.some(b => word === b || word.endsWith(b)) || H_IRREGULAR.includes(word)
+  const isIrregular = VerbConjugator.B_IRREGULAR.includes(word) || VerbConjugator.BO_WA_EXCEPTIONS.includes(word)
+    || VerbConjugator.D_IRREGULAR.some(b => word === b || word.endsWith(b)) || VerbConjugator.H_IRREGULAR.includes(word)
     || isReulIrregular || isEuIrregular || last === '하' || last === '이';
   if (isIrregular) return forms;
 
@@ -614,7 +524,7 @@ function buildConjReverse() {
   CONJ_REVERSE = new Map();
   VOCAB.forEach(e => {
     if (!isConjugable(e)) return;
-    const conj = conjugate(e.ko);
+    const conj = VerbConjugator.conjugate(e.ko);
     if (conj) conj.forEach(c => { if (c.form && !CONJ_REVERSE.has(c.form)) CONJ_REVERSE.set(c.form, e.ko); });
     extraSurfaceForms(e.ko, e.categories).forEach(f => { if (f && !CONJ_REVERSE.has(f)) CONJ_REVERSE.set(f, e.ko); });
   });
@@ -878,11 +788,11 @@ function verbAdjExtraForms(word) {
   const stem = word.slice(0, -1);
   const last = stem[stem.length - 1];
   const andForm = stem + '고';
-  const conj = conjugate(word);
+  const conj = VerbConjugator.conjugate(word);
   if (!conj || !conj[0]) return { andForm, causeForm: null, mustForm: null };
-  if (last === '이' && !I_VERB_EXCEPTIONS.some(b => word === b || word.endsWith(b))) {
+  if (last === '이' && !VerbConjugator.I_VERB_EXCEPTIONS.some(b => word === b || word.endsWith(b))) {
     const base = stem.slice(0, -1);
-    const bat = hasBatchim(base);
+    const bat = VerbConjugator.hasBatchim(base);
     return { andForm, causeForm: base + (bat ? '이라서' : '라서'), mustForm: base + (bat ? '이어야' : '여야') };
   }
   if (conj[0].form.endsWith('요')) {
@@ -1528,7 +1438,7 @@ function buildGeneratedSense(v) {
   if (EXTRA_SENTENCES[v.ko]) {
     sentences = EXTRA_SENTENCES[v.ko].map(x => ({ ko: x.ko, ro: isRo ? x.ro : x.en, level: x.level }));
   } else if (isConjugable(v)) {
-    const conj = conjugate(v.ko);
+    const conj = VerbConjugator.conjugate(v.ko);
     const isVerb = (v.categories || []).includes('verbs');
     if (conj) {
       // "Acum: a spăla."/"Ieri: a spăla." read as flashcard labels, not
@@ -1586,7 +1496,7 @@ function buildGeneratedSense(v) {
     // word itself used as an abstract noun ("Roșu e stilul meu" — colors
     // default to masculine when used as nouns in Romanian) to avoid
     // gender/number agreement mismatches EN never has this problem with.
-    const bat = hasBatchim(v.ko);
+    const bat = VerbConjugator.hasBatchim(v.ko);
     const copula = bat ? '이에요' : '예요';
     const subjExt = bat ? '이' : '가';
     const objExt = bat ? '을' : '를';
@@ -1601,7 +1511,7 @@ function buildGeneratedSense(v) {
     sentences.push({ ko:`오늘 하늘은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Azi cerul e ${disp}.`:`Today the sky is ${disp}.`, level:'medium' });
     sentences.push({ ko:`${v.ko}<b>${subjExt}</b> 제 취향이에요.`, ro: isRo?`${cap(disp)} e stilul meu.`:`${cap(disp)} is my style.`, level:'medium' });
   } else if (isNounLike(v)) {
-    const bat = hasBatchim(v.ko);
+    const bat = VerbConjugator.hasBatchim(v.ko);
     const copula = bat ? '이에요' : '예요';
     const subjExt = bat ? '이' : '가';
     const objExt = bat ? '을' : '를';
