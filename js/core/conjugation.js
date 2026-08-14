@@ -102,6 +102,14 @@ window.Conjugation = {
   // A/EO ENGINE
   // =====================
   aeo(verb){
+    // Same gap as present()/past(): this module's own rules below don't
+    // know ㅂ/르/ㄷ/ㅎ irregulars, nor ㅣ+어→여 / ㅚ+어→왜 contractions
+    // (e.g. gives "가지어" instead of "가져" for 가지다) — delegate to
+    // VerbConjugator first, same as present()/past() above.
+    if(window.VerbConjugator){
+      const a = window.VerbConjugator.aeo(verb);
+      if(a) return a;
+    }
     if(verb === "하다") return "해";
     const stem = this.stem(verb);
     // 하다 compounds: 공부하다 → 공부해
