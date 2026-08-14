@@ -2466,7 +2466,7 @@
     return '' +
       '<div class="tableField ' + (active ? '' : 'off') + '">' +
         '<button class="tableToggle ' + (active ? 'active' : '') + '" data-toggle-cell="' + clauseIndex + ':' + col.key + '" type="button">✓</button>' +
-        '<div class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + (conjugated ? ' is-conjugated' : '') + (isNew ? ' is-new' : '') + '" data-kind="' + escapeHtml(col.kind) + '">' +
+        '<div class="tableMainBtn ' + (item && item.ko ? '' : 'is-empty') + (conjugated ? ' is-conjugated' : '') + (isNew ? ' is-new' : '') + '" data-kind="' + escapeHtml(col.kind) + '" data-cycle-field="' + clauseIndex + ':' + col.key + '">' +
           '<div class="tableMeta">' + escapeHtml(fieldLabel(col.key)) + '</div>' +
           '<input class="tableKoInput" type="text"' +
             ' data-field-input="' + clauseIndex + ':' + col.key + '"' +
@@ -3679,7 +3679,10 @@
           return;
         }
 
-        var cycleBtn = event.target.closest('[data-cycle-field]');
+        // A click on the input itself is for typing/searching, not cycling —
+        // only clicks elsewhere on the card (label, translation line, empty
+        // padding) advance to the next option.
+        var cycleBtn = !event.target.closest('.tableKoInput') && event.target.closest('[data-cycle-field]');
         if(cycleBtn){
           event.preventDefault();
 
@@ -3693,9 +3696,9 @@
           return;
         }
 
-        // Click anywhere on the cell body → focus its input
+        // Click directly on the cell's input → focus it for typing/search
         var cellBody = event.target.closest('.tableMainBtn');
-        if(cellBody && !event.target.closest('.tableKoInput')){
+        if(cellBody && event.target.closest('.tableKoInput')){
           var inp = cellBody.querySelector('.tableKoInput');
           if(inp){ inp.focus(); inp.select(); }
         }
