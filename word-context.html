@@ -858,7 +858,15 @@ function renderNotFound(q) {
 // grammatically valid Korean even though it isn't hand-curated.
 // ═══════════════════════════════════════════════════════════════
 function isConjugable(v) { const cats = v.categories || []; return v.ko.endsWith('다') && (cats.includes('verbs') || cats.includes('adjectives')); }
-function isNounLike(v) { const cats = v.categories || []; return !isConjugable(v) && cats.some(c => ['nouns','objects','subjects','places','times'].includes(c)); }
+// Color words (갈색, 빨간색...) are tagged both 'adjectives' and 'nouns' —
+// grammatically Korean nouns (색 + copula), but their RO/EN glosses are bare
+// adjectives ("maro", "brown"), not countable objects. Routing them through
+// isNounLike produced nonsense like "Aici avem: maro." / "Am nevoie de: maro."
+// (lit. "Here we have: brown." / "I need: brown.") — a category mismatch, not
+// a translation error. Must be checked before isNounLike so these 11 words
+// get their own templates instead.
+function isColorLike(v) { const cats = v.categories || []; return !isConjugable(v) && cats.includes('adjectives') && cats.includes('nouns'); }
+function isNounLike(v) { const cats = v.categories || []; return !isConjugable(v) && !isColorLike(v) && cats.some(c => ['nouns','objects','subjects','places','times'].includes(c)); }
 function isAdverbLike(v) { const cats = v.categories || []; return cats.includes('adverbs') || cats.includes('modifiers'); }
 
 // -고 ("and/then") / -아서/-어서 ("because/glad that") / -아야/-어야 ("must") —
@@ -1571,6 +1579,27 @@ function buildGeneratedSense(v) {
           : { ko:`정말 <b>${conj[0].form}</b>.`, ro: isRo?`Chiar: ${v.ro}.`:`Really: ${v.en}.`, level:'easy' });
       }
     }
+  } else if (isColorLike(v)) {
+    // RO color glosses are stored as bare masculine-singular forms only
+    // ("negru", not "neagră"/"negri"/"negre"), so every subject here is
+    // deliberately masculine/neuter singular (cer, perete) or the color
+    // word itself used as an abstract noun ("Roșu e stilul meu" — colors
+    // default to masculine when used as nouns in Romanian) to avoid
+    // gender/number agreement mismatches EN never has this problem with.
+    const bat = hasBatchim(v.ko);
+    const copula = bat ? '이에요' : '예요';
+    const subjExt = bat ? '이' : '가';
+    const objExt = bat ? '을' : '를';
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    // firstAlt() drops comma alternates ("violet, mov" -> "violet") and the
+    // trailing strip drops disambiguator notes ("orange (color)" -> "orange")
+    // — both read fine in a word list but awkward mid-sentence.
+    const disp = firstAlt(isRo ? v.ro : v.en).replace(/\s*\([^)]*\)\s*$/, '');
+    sentences.push({ ko:`이것은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Asta e ${disp}.`:`This is ${disp}.`, level:'easy' });
+    sentences.push({ ko:`제 방 벽은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Peretele din camera mea e ${disp}.`:`My room's wall is ${disp}.`, level:'easy' });
+    sentences.push({ ko:`저는 ${v.ko}<b>${objExt}</b> 좋아해요.`, ro: isRo?`Îmi place ${disp}.`:`I like ${disp}.`, level:'easy' });
+    sentences.push({ ko:`오늘 하늘은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Azi cerul e ${disp}.`:`Today the sky is ${disp}.`, level:'medium' });
+    sentences.push({ ko:`${v.ko}<b>${subjExt}</b> 제 취향이에요.`, ro: isRo?`${cap(disp)} e stilul meu.`:`${cap(disp)} is my style.`, level:'medium' });
   } else if (isNounLike(v)) {
     const bat = hasBatchim(v.ko);
     const copula = bat ? '이에요' : '예요';
