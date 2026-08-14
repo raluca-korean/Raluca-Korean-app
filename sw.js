@@ -54,6 +54,7 @@ const STATIC = [
   './js/core/audio.js',
   './js/core/conjugation.js',
   './js/core/verb-conjugator.js',
+  './js/core/ro-conjugator.js',
   './js/core/sentence-generator.js',
   './js/core/dark-mode.js',
   './js/core/gamification.js',

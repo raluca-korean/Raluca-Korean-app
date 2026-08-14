@@ -27,6 +27,16 @@ window.VerbConjugator = {
     return ((code - 0xAC00) % 28) !== 0;
   },
 
+  // The "아/어-attached stem" (before 요/었어요 is added) — e.g. 가지다 → 가져,
+  // 마시다 → 마셔, 돕다 → 도와. Every conjugate() branch below builds its
+  // present-tense form as exactly this stem + "요", so stripping that one
+  // trailing character reuses the same validated logic instead of
+  // re-deriving vowel contractions separately.
+  aeo(word) {
+    const c = this.conjugate(word);
+    return c ? c[0].form.slice(0, -1) : null;
+  },
+
   conjugate(word) {
     if (!word.endsWith('다')) return null;
     const stem = word.slice(0,-1);
