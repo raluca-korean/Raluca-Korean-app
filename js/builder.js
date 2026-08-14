@@ -2829,6 +2829,45 @@
     return out;
   }
 
+  // Position of the second distinct verb mention in (already normalizeLatin'd)
+  // text, or -1 if there's only one (or none). Mirrors findAllMatches' own
+  // longest-candidate-wins matching, kept separate because that function
+  // discards match positions once it dedupes to a plain item list.
+  function findSecondVerbSplitPos(normalizedSegText){
+    var options = getOptionsForField('verb');
+    var normalizedText = ' ' + normalizedSegText + ' ';
+    var hits = [];
+
+    for(var i=0;i<options.length;i++){
+      var item = options[i];
+      if(!item || !item.ko) continue;
+      var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
+      var bestPos = -1, bestLen = 0;
+      for(var j=0;j<candidates.length;j++){
+        var candidate = normalizeLatin(candidates[j]);
+        if(!candidate) continue;
+        var pos = normalizedText.indexOf(' ' + candidate + ' ');
+        if(pos !== -1 && candidate.length > bestLen){ bestPos = pos; bestLen = candidate.length; }
+      }
+      if(bestPos !== -1) hits.push({ item: item, pos: bestPos, len: bestLen });
+    }
+
+    hits.sort(function(a,b){ return a.pos - b.pos; });
+
+    // Same-position ties happen for real (e.g. 드시다, the honorific of 먹다,
+    // shares 먹다's conjugated Romanian aliases since both gloss "a mânca") —
+    // skip any hit whose span overlaps the first match, not just same-ko ones,
+    // so a tied duplicate at position 0 doesn't masquerade as "the second verb".
+    var first = null;
+    for(var h=0; h<hits.length; h++){
+      if(!first){ first = hits[h]; continue; }
+      if(hits[h].pos < first.pos + first.len){ continue; }
+      // -1 to undo the leading padding space added to normalizedText above.
+      return hits[h].pos - 1;
+    }
+    return -1;
+  }
+
   function splitIntoSegments(text){
     var _COMMA_PH = 'xcommax';
     var working = ' ' + normalizeLatin(text.replace(/,/g, ' ' + _COMMA_PH + ' ')) + ' ';
@@ -2932,6 +2971,26 @@
       if(segments.length > 0 && (!segments[0].connector || segments[0].connector === 'none')){
         segments[0].connector = _leadConn;
         segments[0].leadingConnector = true;
+      }
+    }
+
+    // A leading connector ("dacă X Y") implies two clauses, but without a comma
+    // or a second connector word there was no split point above, so the whole
+    // rest of the sentence landed in one segment. Only for THIS narrow, already-
+    // two-clauses-implied case, look for a second, distinct verb mention and
+    // split the text right before it — e.g. "dacă mananc mere sunt fericit" ->
+    // "mananc mere" | "sunt fericit". Scoped to leadingConnector segments only,
+    // so plain single-clause sentences are never affected by this heuristic.
+    for(var li = 0; li < segments.length; li++){
+      if(!segments[li].leadingConnector || !segments[li].text) continue;
+      var splitAt = findSecondVerbSplitPos(segments[li].text);
+      if(splitAt > 0){
+        var firstPart = segments[li].text.slice(0, splitAt).trim();
+        var secondPart = segments[li].text.slice(splitAt).trim();
+        if(firstPart && secondPart){
+          segments[li].text = firstPart;
+          segments.splice(li + 1, 0, { text: secondPart, connector: 'none' });
+        }
       }
     }
 
