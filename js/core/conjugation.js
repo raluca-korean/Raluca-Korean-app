@@ -123,6 +123,16 @@ window.Conjugation = {
   present(verb){
     if(!verb) return "";
     if(this.irregularPresent[verb]) return this.irregularPresent[verb];
+    // Below this table (built by hand for Builder's own ~50-verb set), this
+    // module's own aeo()-based fallback doesn't know about ㅂ/르/ㄷ/ㅎ
+    // irregulars (e.g. gives "고맙어요" instead of "고마워요") — delegate to
+    // VerbConjugator (js/core/verb-conjugator.js), which handles those via
+    // Hangul decomposition instead of a fixed word list, so any verb outside
+    // this table still conjugates correctly.
+    if(window.VerbConjugator){
+      const c = window.VerbConjugator.conjugate(verb);
+      if(c && c[0]) return c[0].form;
+    }
     const stem = this.stem(verb);
     // 하다 compounds: 공부하다 → 공부해요
     if(stem.endsWith("하")) return stem.slice(0, -1) + "해요";
@@ -140,6 +150,11 @@ window.Conjugation = {
   past(verb){
     if(!verb) return "";
     if(this.irregularPast[verb]) return this.irregularPast[verb];
+    // Same delegation as present() above, for the same reason.
+    if(window.VerbConjugator){
+      const c = window.VerbConjugator.conjugate(verb);
+      if(c && c[1]) return c[1].form;
+    }
     const stem = this.stem(verb);
     // 하다 compounds: 공부하다 → 공부했어요
     if(stem.endsWith("하")) return stem.slice(0, -1) + "했어요";
