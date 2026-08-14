@@ -16,7 +16,64 @@ function isConjugable(v) { const cats = v.categories || []; return v.ko.endsWith
 // a translation error. Must be checked before isNounLike so these 11 words
 // get their own templates instead.
 function isColorLike(v) { const cats = v.categories || []; return !isConjugable(v) && cats.includes('adjectives') && cats.includes('nouns'); }
-function isNounLike(v) { const cats = v.categories || []; return !isConjugable(v) && !isColorLike(v) && cats.some(c => ['nouns','objects','subjects','places','times'].includes(c)); }
+
+// 'times' words (내일, 매일, 당장...) are deictic/adverbial — "Aici avem:
+// mâine." ("Here we have: tomorrow.") is nonsense no matter how the article
+// is fixed, because "tomorrow" isn't an object that can be "here". Checked
+// before isNounLike so these get their own templates.
+function isTimeLike(v) { const cats = v.categories || []; return !isConjugable(v) && !isColorLike(v) && cats.includes('times'); }
+
+// Relative/positional words (위/아래/앞/뒤/안/밖/옆/오른쪽/왼쪽/사이/이쪽/사방/
+// 전국/이곳/그곳) are tagged 'places' but aren't countable nouns — "Am nevoie
+// de: dreapta." ("I need: right [side].") is meaningless. Identified by ko
+// value (not category) since 'places' also holds ordinary nouns like 학교.
+const POSITION_WORDS = new Set(['위','아래','앞','뒤','안','밖','옆','오른쪽','왼쪽','사이','이쪽','사방','전국','이곳','그곳']);
+function isPositionLike(v) { return POSITION_WORDS.has(v.ko); }
+
+// ── Regular countable nouns (isNounLike branch) ─────────────────────────
+// RO glosses are stored as bare dictionary forms with no gender marker, but
+// "Asta e: pix." ("This is: pen.") is broken Romanian without "un/o" — and
+// picking the wrong one ("o pix" for masculine "pix") would just trade one
+// error for another. Romanian neuter behaves as masculine in the singular,
+// so this list only needs to name the FEMININE nouns — everything else
+// defaults to "un" correctly. Hand-classified (not derived from a suffix
+// rule: multi-word glosses like "deget de la mână" take their gender from
+// the first/head word, not whichever word ends the phrase, so a blind
+// last-letter heuristic silently produces wrong output on phrases).
+const RO_NOUN_FEM = new Set(['가능성','가방','가설','가을','가정','가족','가치','간호사','감기','감사','감정','강의','개발','거리','거울','걱정','건강','겨울','경쟁력','경제','경찰서','경험','계층','고기','고모','고양이','고추장','공동체','과학','관계','관찰','광고','광장','교실','교육','교육 기관','교차로','교회','구조','국','국제 사회','귀','규칙','귤','기대','기분','기쁨','기술','기술 발전','기억','기업','기업 조직','기차역','기회','꽃','나라','나이','날씨','냄비','넥타이','노동','노인','놀람','누나','눈','눈썹','능력','다양성','단계','닭','닭고기','대학교','대화','도서관','돌','동기','동물원','돼지고기','된장','된장찌개','두려움','두통','등산','딸','마당','맥주','며느리','모양','모자','목소리','몸무게','무게','문','문제','문화','물','미역국','바나나','바다','반찬','발목','발전','발톱','발표','밤','밥맛','방','방법','방향','배','배터리','버섯','법','베개','벨트','변화','별','병','보험','복숭아','봄','부동산','부엌','분석','분위기','불평등','불행','비','비밀번호','비자','빗자루','빵','사거리','사람','사랑','사진','사탕','사회','사회 구조','산업','산업 사회','삼겹살','삼계탕','상처','상태','상황','새','색깔','샐러드','생수','생활','서점','선택','설명','섬','성격','성과','성장','성적','세계','세상','세탁기','셔츠','소','소고기','소금','소식','소파','속도','속옷','손','손녀','손톱','수술','수영장','숙소','숙제','순서','숟가락','숲','슬픔','승진','시장','신뢰','실력','실수','심장','아내','아르바이트','아버지','아이디어','아이스크림','아침','안개','알람','앱','약국','양파','어려움','어머니','언니','얼굴','얼음','여동생','여름','여자','여행','역','연구','연구팀','열쇠','열정','영수증','영향','오렌지','오리','오염','오전','오토바이','오후','온도','외국어','우산','우정','원숭이','원피스','월세','위기','유치원','은행','음식','음악','응급실','이론','이마','이모','이불','이슬','이야기','이자','인구','일','입','입학','잎','자동차','자세','자신감','자전거','잠옷','잡지','재킷','저녁','전략','전세','절반','접시','정류장','정보','정보 사회','정부 기관','정책','조건','조사','졸업','종이','주사','주소','주유소','주차장','지도','지도부','지식','지역','지역 사회','지우개','지출','지하철역','직업','질문','집','쪽','찌개','차이','창문','채식','채용','책','책임','체육관','초등학교','초콜릿','추세','출장','측정','치마','치약','치즈','칠판','칫솔','카메라','카페','커튼','커피','크기','키','탄산수','태도','태블릿','택배','테이블','토마토','특징','편지','평가','평균','폭풍','프라이팬','프린터','피부','피자','필요','학교','할머니','할인','해변','허리','헬스장','혀','혁신','현대 사회','화','화장실','회사','회의','횡단보도','희망','힘']);
+
+// Pronouns, native-Korean numbers, a proper noun (부산), and glosses that
+// are already grammatically complete/definite phrases (한국어 "limba
+// coreeană", 마지막 "ultimul", 손목 "încheietura mâinii") — injecting "un/o"
+// in front of any of these is wrong ("un acesta", "o ultimul"), so they get
+// a bare-noun template instead. All are grammatically singular.
+const NOUN_NO_ARTICLE = new Set(['그것','나','너','넷','누구','다들','다섯','달빛','당신','둘','마지막','만','무엇','백','부산','삶','셋','손목','아홉','여덟','여섯','열','오랜만','우리','우체국','이것','일곱','저','저것','천','하나','학계','한국어','한마디','햇빛']);
+
+// Glosses that are inherently plural in RO and/or EN (바지 "pantaloni"/
+// "pants", 안경 "ochelari"/"glasses") — "un/o" or "a/an" in front of a
+// plural noun is ungrammatical in both languages, so these use plural-safe
+// verb forms ("sunt"/"are") instead of the singular-article templates.
+const NOUN_PLURAL_BOTH = new Set(['가위','갈비','계단','과자','구두','국수','귀걸이','냉면','라면','만두','바지','반바지','부모','선글라스','선생님들','신발','안경','양말','업무','예의','옷','운동화','이어폰','인간 관계','입술','자료','장갑','젓가락','지도자들','채소','책들','파스타','포도','학생들','형제']);
+
+// RO gloss is a regular singular noun (needs un/o normally) but the EN
+// gloss is a mass noun that never takes "a/an" in English (news, pajamas,
+// underwear) — English-only exception, RO stays in the regular fem branch.
+const EN_NOUN_BARE = new Set(['소식','잠옷','속옷']);
+
+// "a" vs "an" by the spelling of the first letter is right almost always;
+// the exceptions found in this vocabulary are consonant-sound loanwords
+// starting with a vowel letter ("a university", not "an university") and
+// one silent-h word ("an hourly wage", not "a hourly wage").
+const EN_ARTICLE_FORCE_A = new Set(['university','university student','user']);
+const EN_ARTICLE_FORCE_AN = new Set(['hourly wage']);
+function enArticle(disp) {
+  const key = disp.toLowerCase();
+  if (EN_ARTICLE_FORCE_A.has(key)) return 'a';
+  if (EN_ARTICLE_FORCE_AN.has(key)) return 'an';
+  return /^[aeiou]/i.test(disp) ? 'an' : 'a';
+}
+
+function isNounLike(v) { const cats = v.categories || []; return !isConjugable(v) && !isColorLike(v) && !isTimeLike(v) && !isPositionLike(v) && cats.some(c => ['nouns','objects','subjects','places','times'].includes(c)); }
 function isAdverbLike(v) { const cats = v.categories || []; return cats.includes('adverbs') || cats.includes('modifiers'); }
 
 // -고 ("and/then") / -아서/-어서 ("because/glad that") / -아야/-어야 ("must") —
@@ -741,11 +798,79 @@ function generate(v, lang) {
       const subjExt = bat ? '이' : '가';
       const objExt = bat ? '을' : '를';
       const topicExt = bat ? '은' : '는';
-      sentences.push({ ko:`이것은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Asta e: ${v.ro}.`:`This is: ${v.en}.`, level:'easy' });
-      sentences.push({ ko:`${v.ko}<b>${subjExt}</b> 여기 있어요.`, ro: isRo?`Aici avem: ${v.ro}.`:`Here we have: ${v.en}.`, level:'easy' });
-      sentences.push({ ko:`저는 ${v.ko}<b>${objExt}</b> 좋아해요.`, ro: isRo?`Îmi place: ${v.ro}.`:`I like: ${v.en}.`, level:'easy' });
-      sentences.push({ ko:`이 ${v.ko}<b>${topicExt}</b> 정말 좋아요.`, ro: isRo?`Recomand: ${v.ro}.`:`Recommend: ${v.en}.`, level:'medium' });
-      sentences.push({ ko:`그 ${v.ko}<b>${subjExt}</b> 필요해요.`, ro: isRo?`Am nevoie de: ${v.ro}.`:`I need: ${v.en}.`, level:'medium' });
+      const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+      const dispRo = firstAlt(v.ro).replace(/\s*\([^)]*\)\s*$/, '');
+      const dispEn = firstAlt(v.en).replace(/\s*\([^)]*\)\s*$/, '');
+      const d = isRo ? dispRo : dispEn;
+      if (NOUN_NO_ARTICLE.has(v.ko)) {
+        // Pronouns, numbers, a proper noun, and already-definite phrases —
+        // bare, no article. "e"/"place" stay invariant regardless of the
+        // referent's gender (only adjectives agree in RO, and none are used
+        // here), so this stays correct even for the feminine ones in the set
+        // (삶 "viața", 한국어 "limba coreeană"...).
+        sentences.push({ ko:`이것은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Asta e ${d}.`:`This is ${d}.`, level:'easy' });
+        sentences.push({ ko:`${v.ko}<b>${subjExt}</b> 여기 있어요.`, ro: isRo?`${cap(d)} e aici.`:`${cap(d)} is here.`, level:'easy' });
+        sentences.push({ ko:`저는 ${v.ko}<b>${objExt}</b> 좋아해요.`, ro: isRo?`Îmi place ${d}.`:`I like ${d}.`, level:'easy' });
+        sentences.push({ ko:`이 ${v.ko}<b>${topicExt}</b> 정말 좋아요.`, ro: isRo?`Mă gândesc mult la ${d}.`:`I think about ${d} a lot.`, level:'medium' });
+        sentences.push({ ko:`그 ${v.ko}<b>${subjExt}</b> 필요해요.`, ro: isRo?`Am nevoie de ${d}.`:`I need ${d}.`, level:'medium' });
+      } else if (NOUN_PLURAL_BOTH.has(v.ko)) {
+        // Inherently plural gloss (바지 "pantaloni"/"pants") — "sunt"/"plac"
+        // are plural-invariant verb forms (no gender agreement in RO), so no
+        // per-word gender is needed here either.
+        sentences.push({ ko:`이것은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Astea sunt ${d}.`:`These are ${d}.`, level:'easy' });
+        sentences.push({ ko:`${v.ko}<b>${subjExt}</b> 여기 있어요.`, ro: isRo?`Sunt ${d} aici.`:`There are ${d} here.`, level:'easy' });
+        sentences.push({ ko:`저는 ${v.ko}<b>${objExt}</b> 좋아해요.`, ro: isRo?`Îmi plac ${d}.`:`I like ${d}.`, level:'easy' });
+        sentences.push({ ko:`이 ${v.ko}<b>${topicExt}</b> 정말 좋아요.`, ro: isRo?`Mă gândesc mult la ${d}.`:`I think about ${d} a lot.`, level:'medium' });
+        sentences.push({ ko:`그 ${v.ko}<b>${subjExt}</b> 필요해요.`, ro: isRo?`Am nevoie de ${d}.`:`I need ${d}.`, level:'medium' });
+      } else {
+        const isFem = RO_NOUN_FEM.has(v.ko);
+        const art = isFem ? 'o' : 'un';
+        const enArt = EN_NOUN_BARE.has(v.ko) ? '' : enArticle(dispEn) + ' ';
+        sentences.push({ ko:`이것은 <b>${v.ko}${copula}</b>.`, ro: isRo?`Asta e ${art} ${dispRo}.`:`This is ${enArt}${dispEn}.`, level:'easy' });
+        sentences.push({ ko:`${v.ko}<b>${subjExt}</b> 여기 있어요.`, ro: isRo?`E ${art} ${dispRo} aici.`:`There's ${enArt}${dispEn} here.`, level:'easy' });
+        sentences.push({ ko:`저는 ${v.ko}<b>${objExt}</b> 좋아해요.`, ro: isRo?`Îmi place ${art} ${dispRo}.`:`I like ${enArt}${dispEn}.`, level:'easy' });
+        sentences.push({ ko:`이 ${v.ko}<b>${topicExt}</b> 정말 좋아요.`, ro: isRo?`${isFem?'Această':'Acest'} ${dispRo} e chiar bun${isFem?'ă':''}.`:`This ${dispEn} is really good.`, level:'medium' });
+        sentences.push({ ko:`그 ${v.ko}<b>${subjExt}</b> 필요해요.`, ro: isRo?`Am nevoie de ${isFem?'acea':'acel'} ${dispRo}.`:`I need that ${dispEn}.`, level:'medium' });
+      }
+    } else if (isTimeLike(v)) {
+      // Deictic time words (내일, 그저께...) can't be pinned to one tense —
+      // "tomorrow" needs future, "the day before yesterday" needs past, and a
+      // single template can't match both. "Talking/asking/writing about X" is
+      // tense-safe for any of them: the ACT of discussing happens now,
+      // regardless of when X itself refers to.
+      const bat = VerbConjugator.hasBatchim(v.ko);
+      const subjExt = bat ? '이' : '가';
+      const objExt = bat ? '을' : '를';
+      const d = firstAlt(isRo ? v.ro : v.en).replace(/\s*\([^)]*\)\s*$/, '');
+      // A few RO glosses already carry their own preposition (매일 "în fiecare
+      // zi", 요즘 "în zilele noastre") — stacking "despre"/"de" in front would
+      // double up ("despre în fiecare zi"), so those drop the extra preposition.
+      const prepLed = isRo && /^(în|la|pe|cu|de)\s/.test(d);
+      sentences.push({ ko:`<b>${v.ko}</b>에 대해 이야기해요.`, ro: isRo?`Vorbim ${prepLed?'':'despre '}${d}.`:`We're talking about ${d}.`, level:'easy' });
+      sentences.push({ ko:`${v.ko}<b>${subjExt}</b> 궁금해요.`, ro: isRo?`Sunt curios ${prepLed?'':'de '}${d}.`:`I'm curious about ${d}.`, level:'easy' });
+      sentences.push({ ko:`<b>${v.ko}</b>에 대해 물어봤어요.`, ro: isRo?`Am întrebat ${prepLed?'':'despre '}${d}.`:`I asked about ${d}.`, level:'easy' });
+      sentences.push({ ko:`${v.ko}<b>${objExt}</b> 적어 놨어요.`, ro: isRo?`Am notat ${d}.`:`I wrote down ${d}.`, level:'medium' });
+      sentences.push({ ko:`<b>${v.ko}</b>에 대해 배우고 있어요.`, ro: isRo?`Învăț ${prepLed?'':'despre '}${d}.`:`I'm learning about ${d}.`, level:'medium' });
+    } else if (isPositionLike(v)) {
+      // 위/아래/앞/뒤/안/밖/옆... are grammatical location words, not
+      // countable nouns — no article of any kind fits, so every template
+      // here uses the stored adverbial gloss bare.
+      const bat = VerbConjugator.hasBatchim(v.ko);
+      const objExt = bat ? '을' : '를';
+      const topicExt = bat ? '은' : '는';
+      const dirExt = bat ? '으로' : '로';
+      const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+      // 앞/뒤's RO gloss stores "body part / positional phrase" ("față / în
+      // față", "spate / în spate") — firstAlt() picks the first slash-alt,
+      // which is the body part ("față" = face, "spate" = back), not the
+      // position this branch needs. Override to the positional alternate.
+      const POSITION_RO_OVERRIDE = { '앞': 'în față', '뒤': 'în spate' };
+      const d = POSITION_RO_OVERRIDE[v.ko] && isRo ? POSITION_RO_OVERRIDE[v.ko] : firstAlt(isRo ? v.ro : v.en).replace(/\s*\([^)]*\)\s*$/, '');
+      sentences.push({ ko:`<b>${v.ko}</b>에 있어요.`, ro: isRo?`E ${d}.`:`It's ${d}.`, level:'easy' });
+      sentences.push({ ko:`${v.ko}<b>${objExt}</b> 봐요.`, ro: isRo?`Mă uit ${d}.`:`I'm looking ${d}.`, level:'easy' });
+      sentences.push({ ko:`${v.ko}<b>${dirExt}</b> 가요.`, ro: isRo?`Mă duc ${d}.`:`I'm heading ${d}.`, level:'medium' });
+      sentences.push({ ko:`${v.ko}<b>${topicExt}</b> 조용해요.`, ro: isRo?`${cap(d)} e liniște.`:`It's quiet ${d}.`, level:'medium' });
+      sentences.push({ ko:`<b>${v.ko}</b>에서 기다려요.`, ro: isRo?`Aștept ${d}.`:`I'm waiting ${d}.`, level:'medium' });
     } else if (isAdverbLike(v)) {
       // Always lead with the adverb/connector as its own clause, never splice it
       // mid-sentence — multi-word RO/EN glosses (e.g. "din perspectivă generală")
@@ -760,6 +885,6 @@ function generate(v, lang) {
   return sentences;
 }
 
-return { isConjugable, isColorLike, isNounLike, isAdverbLike, generate };
+return { isConjugable, isColorLike, isTimeLike, isPositionLike, isNounLike, isAdverbLike, generate };
 
 })();
