@@ -348,6 +348,9 @@ function wordActionsHtml(ko, isRo) {
     <button type="button" class="wc-action-btn${learned?' active':''}" onclick="toggleLearnedWord('${ko.replace(/'/g,"\\'")}')">
       <span class="wc-action-ico">${learned?'✓':'○'}</span>${isRo?'Memorat':'Learned'}
     </button>
+    <button type="button" class="wc-action-btn" id="wcShareBtn" onclick="copyWordLink(this)">
+      <span class="wc-action-ico">🔗</span>${isRo?'Copiază link':'Copy link'}
+    </button>
   </div>`;
 }
 function refreshWordActions() {
@@ -355,6 +358,23 @@ function refreshWordActions() {
   if (!el || !currentWord) return;
   el.outerHTML = wordActionsHtml(currentWord, cLang === 'ro');
 }
+function copyWordLink(btn) {
+  if (!currentWord) return;
+  const url = new URL(location.href);
+  url.searchParams.set('word', currentWord);
+  const isRo = cLang === 'ro';
+  const done = () => {
+    const original = btn.innerHTML;
+    btn.innerHTML = `<span class="wc-action-ico">✅</span>${isRo?'Copiat!':'Copied!'}`;
+    setTimeout(() => { if (document.body.contains(btn)) btn.innerHTML = original; }, 1600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url.href).then(done).catch(() => window.prompt(isRo?'Copiază linkul:':'Copy this link:', url.href));
+  } else {
+    window.prompt(isRo?'Copiază linkul:':'Copy this link:', url.href);
+  }
+}
+window.copyWordLink = copyWordLink;
 
 const CAT_LABELS = {
   ro:{ nouns:'Substantiv', verbs:'Verb', adjectives:'Adjectiv', adverbs:'Adverb',
@@ -572,6 +592,8 @@ Promise.all([
   vocabIndex = new Map(vocab.map(e => [e.ko, e]));
   buildConjReverse();
   applyLang(cLang);
+  const initialWord = new URLSearchParams(location.search).get('word');
+  if (initialWord && vocabIndex.get(initialWord)) searchAndFill(initialWord);
 }).catch(() => {
   document.getElementById('wcResult').innerHTML =
     '<div class="card"><div class="wc-empty">⚠️ Nu s-au putut încărca datele.</div></div>';
@@ -639,6 +661,7 @@ document.getElementById('wcClear').addEventListener('click', () => {
   document.getElementById('wcClear').classList.remove('vis');
   document.getElementById('wcResult').innerHTML = '';
   currentWord = null;
+  updateUrlForWord(null);
   renderRandomWord();
   renderStartGallery();
 });
@@ -655,10 +678,39 @@ function openWord(word) {
   const v = vocabIndex && vocabIndex.get(word);
   if (!v) { renderNotFound(word); return; }
   currentWord = word;
+  updateUrlForWord(word);
   renderExplore();
   renderRandomWord();
   renderStartGallery();
 }
+
+// ── DEEP LINKING (?word=학교) ────────────────────────────────────
+// Lets people share/bookmark a link straight to one word instead of
+// always landing on the gallery, and makes browser back/forward step
+// through the words they've explored.
+function updateUrlForWord(word) {
+  const url = new URL(location.href);
+  if (word) url.searchParams.set('word', word); else url.searchParams.delete('word');
+  if (url.href !== location.href) history.pushState({ word: word || null }, '', url);
+}
+window.addEventListener('popstate', e => {
+  const word = (e.state && e.state.word) || new URLSearchParams(location.search).get('word');
+  if (word && vocabIndex && vocabIndex.get(word)) {
+    document.getElementById('wcSearch').value = word;
+    document.getElementById('wcClear').classList.add('vis');
+    currentWord = word;
+    renderExplore();
+    renderRandomWord();
+    renderStartGallery();
+  } else {
+    document.getElementById('wcSearch').value = '';
+    document.getElementById('wcClear').classList.remove('vis');
+    document.getElementById('wcResult').innerHTML = '';
+    currentWord = null;
+    renderRandomWord();
+    renderStartGallery();
+  }
+});
 
 // ── RANDOM WORD SUGGESTION ─────────────────────────────────────────
 let randomWordEntry = null;
