@@ -631,6 +631,39 @@ body{
 .nl-badge-label{font-size:9px;font-weight:700;color:var(--gold);letter-spacing:.6px;text-transform:uppercase;margin-bottom:2px}
 .nl-badge-name{font-size:14px;font-weight:900;color:#fff}
 
+/* ── NEURAL'S FATE ──────────────────────────────────────────── */
+.nl-fate-overlay{
+  position:fixed;inset:0;z-index:10000;display:none;
+  align-items:center;justify-content:center;padding:20px;
+  background:rgba(2,2,18,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.nl-fate-overlay.show{display:flex;animation:fateFadeIn .35s ease}
+@keyframes fateFadeIn{from{opacity:0}to{opacity:1}}
+.nl-fate-modal{
+  max-width:480px;width:100%;background:var(--panel);border:1px solid var(--glass-c);
+  border-radius:22px;padding:26px 22px;box-shadow:0 20px 80px rgba(0,0,0,.6);
+  animation:fateRise .4s cubic-bezier(.22,.68,0,1.2);
+}
+@keyframes fateRise{from{transform:translateY(30px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+.nl-fate-hdr{text-align:center;margin-bottom:20px}
+.nl-fate-ico{font-size:44px;margin-bottom:8px;filter:drop-shadow(0 0 14px var(--cyan-glow))}
+.nl-fate-ttl{font-size:18px;font-weight:900;color:var(--hi);margin-bottom:6px;line-height:1.3}
+.nl-fate-sub{font-size:13px;color:var(--mid);line-height:1.5}
+.nl-fate-choices{display:flex;flex-direction:column;gap:10px}
+.nl-fate-choice{
+  display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;
+  background:var(--glass);border:1px solid var(--glass-b);cursor:pointer;text-align:left;
+  transition:all .18s;
+}
+.nl-fate-choice:hover{border-color:var(--cyan-glow);background:var(--cyan-d);transform:translateY(-1px)}
+.nl-fate-choice-ico{font-size:26px;flex-shrink:0}
+.nl-fate-choice-ttl{font-size:14px;font-weight:800;color:var(--hi)}
+.nl-fate-choice-desc{font-size:11.5px;color:var(--mid);margin-top:2px;line-height:1.4}
+.nl-fate-ending{
+  text-align:center;font-size:10.5px;font-weight:800;letter-spacing:.4px;
+  color:var(--gold);margin-top:-6px;margin-bottom:10px;
+}
+
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
 @media(max-width:380px){
   .nl-cr-ko{font-size:32px}
@@ -1028,6 +1061,18 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
   </div>
 </div>
 
+<!-- Neural's Fate — shown once, when all 100 lessons are done -->
+<div class="nl-fate-overlay" id="fateOverlay">
+  <div class="nl-fate-modal">
+    <div class="nl-fate-hdr">
+      <div class="nl-fate-ico">🌌</div>
+      <div class="nl-fate-ttl" id="fateTitle">Neural a învățat tot ce știi.</div>
+      <div class="nl-fate-sub" id="fateSub">100 din 100 lecții completate. E timpul să decizi soarta lui Neural.</div>
+    </div>
+    <div class="nl-fate-choices" id="fateChoices"></div>
+  </div>
+</div>
+
 <div class="nl-wrap">
 
 <!-- ══════════════════════════════════════
@@ -1244,6 +1289,7 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
       BONUS · Companion de învățare
       <div class="nl-chdot"></div>
     </div>
+    <div class="nl-fate-ending" id="fateEnding" style="display:none"></div>
 
     <div class="nl-creature-wrap">
       <svg viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
@@ -4053,6 +4099,7 @@ function applyLang(){
   });
   renderLesson(curLesson);
   if(typeof updateCommandPanel==='function')updateCommandPanel();
+  applyNeuralFate();
 }
 
 // ── SPEECH ────────────────────────────────────────────────────
@@ -4069,6 +4116,80 @@ function markDone(idx){
   const next=LESSONS.findIndex((_,i)=>!doneSet.has(i));
   if(next!==-1)renderLesson(next,true);
   updateCommandPanel();
+  checkNeuralFate();
+}
+
+// ── NEURAL'S FATE ───────────────────────────────────────────────
+// One-time narrative beat when every one of the 100 lessons is done:
+// the companion has absorbed everything you taught it, and you choose
+// what it becomes. Purely cosmetic (title pill + one XP bonus) — no
+// gameplay is gated behind it.
+const FATE_KEY='RK_NEURAL_FATE';
+const FATE_XP=100;
+const FATES={
+  explorer:{
+    ico:'🌌',ro:'Exploratorul',en:'The Explorer',
+    ttl_ro:'Neural pleacă să exploreze universul cunoașterii.',
+    ttl_en:'Neural sets off to explore the universe of knowledge.',
+    desc_ro:'Va reveni mereu cu întrebări noi pentru tine.',
+    desc_en:'It will always come back with new questions for you.'
+  },
+  mentor:{
+    ico:'🎓',ro:'Mentorul',en:'The Mentor',
+    ttl_ro:'Neural rămâne alături de tine, pentru totdeauna.',
+    ttl_en:'Neural stays by your side, forever.',
+    desc_ro:'Va ajuta pe fiecare cursant nou care va veni după tine.',
+    desc_en:'It will help every new learner who comes after you.'
+  },
+  fusion:{
+    ico:'⚡',ro:'Contopirea',en:'The Fusion',
+    ttl_ro:'Neural se contopește cu tine.',
+    ttl_en:'Neural merges with you.',
+    desc_ro:'Cunoștințele lui devin ale tale, pentru totdeauna.',
+    desc_en:'Its knowledge becomes yours, forever.'
+  }
+};
+function loadNeuralFate(){try{return JSON.parse(localStorage.getItem(FATE_KEY)||'null');}catch(e){return null;}}
+function saveNeuralFate(choice){try{localStorage.setItem(FATE_KEY,JSON.stringify({choice,date:new Date().toISOString()}));}catch(e){}}
+
+function checkNeuralFate(){
+  if(doneSet.size<LESSONS.length)return;
+  if(loadNeuralFate())return;
+  showFateModal();
+}
+function showFateModal(){
+  const isRo=lang==='ro';
+  document.getElementById('fateTitle').textContent=isRo?'Neural a învățat tot ce știi.':'Neural has learned everything you know.';
+  document.getElementById('fateSub').textContent=isRo?'100 din 100 lecții completate. E timpul să decizi soarta lui Neural.':"100 of 100 lessons complete. It's time to decide Neural's fate.";
+  const grid=document.getElementById('fateChoices');
+  grid.innerHTML=Object.keys(FATES).map(key=>{
+    const f=FATES[key];
+    return `<div class="nl-fate-choice" role="button" tabindex="0" onclick="chooseFate('${key}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();chooseFate('${key}');}">
+      <div class="nl-fate-choice-ico">${f.ico}</div>
+      <div>
+        <div class="nl-fate-choice-ttl">${isRo?f.ttl_ro:f.ttl_en}</div>
+        <div class="nl-fate-choice-desc">${isRo?f.desc_ro:f.desc_en}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('fateOverlay').classList.add('show');
+}
+function chooseFate(key){
+  saveNeuralFate(key);
+  document.getElementById('fateOverlay').classList.remove('show');
+  bumpXP(FATE_XP);
+  const f=FATES[key];
+  showToast((lang==='ro'?'Soarta lui Neural: ':"Neural's fate: ")+(lang==='ro'?f.ro:f.en)+' · +'+FATE_XP+' XP');
+  applyNeuralFate();
+}
+function applyNeuralFate(){
+  const el=document.getElementById('fateEnding');
+  if(!el)return;
+  const rec=loadNeuralFate();
+  const f=rec&&FATES[rec.choice];
+  if(!f){el.style.display='none';return;}
+  el.style.display='block';
+  el.textContent=f.ico+' '+(lang==='ro'?f.ro:f.en);
 }
 
 // ── PRONUNCIATION ─────────────────────────────────────────────
@@ -4376,6 +4497,7 @@ syncXPDisplay();
 document.getElementById('langLbl').textContent=lang.toUpperCase();
 setTimeout(()=>document.querySelector(`.nl-lesson-pill[data-idx="${curLesson}"]`)?.scrollIntoView({inline:'center',block:'nearest'}),200);
 setTimeout(initCommandPanel,300);
+checkNeuralFate();
 
 </script>
 
