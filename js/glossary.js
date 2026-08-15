@@ -10,6 +10,7 @@ const catFilterEl  = document.getElementById("catFilter");
 const favFilterBtn = document.getElementById("favFilterBtn");
 const glsCatDots   = document.getElementById("glsCatDots");
 const dailyCard    = document.getElementById("dailyCard");
+const recentCard   = document.getElementById("recentCard");
 const glsPanel     = document.getElementById("glsPanel");
 const glsPanelBody = document.getElementById("glsPanelBody");
 const glsVeil      = document.getElementById("glsVeil");
@@ -21,6 +22,8 @@ let SENTENCES    = [];   // [{ko, ro, en}] din exercises.json
 let RAW_VOCAB_BY_KO = new Map(); // ko -> {ko, ro, en, categories}, pt. SentenceGenerator (are nevoie de categoriile brute, nu de categoriesRo/En din WORDS)
 let EXTRA_SENTENCES = {}; // ko -> propoziții scrise manual (pronume, 무료, 어느...) — verificat înaintea SentenceGenerator, la fel ca în Harta Cuvântului
 let daily        = [];
+const RECENT_KEY = "RK_DICT_RECENT"; // same key the retired dictionary.html used, so history carries over
+let recent       = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
 let currentLang  = RKLang.get();
 let filterCat    = "";
 let filterFavs   = false;
@@ -89,7 +92,9 @@ const UI = {
     sortUnknown: "Necunoscute primul",
     sortFavs:    "Favorite primul",
     sortCat:     "După categorie",
-    example:     "EXEMPLU"
+    example:     "EXEMPLU",
+    conjug:      "CONJUGARE",
+    recent:      "CĂUTĂRI RECENTE"
   },
   en: {
     search:  "Search",
@@ -112,7 +117,9 @@ const UI = {
     sortUnknown: "Unknown first",
     sortFavs:    "Favorites first",
     sortCat:     "By category",
-    example:     "EXAMPLE"
+    example:     "EXAMPLE",
+    conjug:      "CONJUGATION",
+    recent:      "RECENT SEARCHES"
   }
 };
 
@@ -426,6 +433,7 @@ function focusWord(ko, speak = true, pushHistory = false) {
   const word = WORDS.find(w => w.ko === ko);
   if (!word) return;
 
+  trackRecent(ko);
   if (speak) speakKO(ko);
   _renderPanel(word);
   glsPanel.classList.add("open");
@@ -524,6 +532,10 @@ function _renderPanel(word) {
   // Example sentences
   const examples = findExample(word.ko);
 
+  // Conjugation table (verbs/adjectives only — VerbConjugator.conjugate()
+  // returns null for anything that isn't a plain 다-form word)
+  const conj = window.VerbConjugator ? VerbConjugator.conjugate(word.ko) : null;
+
   const hasHistory = panelHistory.length > 0;
 
   glsPanelBody.innerHTML =
@@ -555,6 +567,14 @@ function _renderPanel(word) {
         `<span class="gls-panel-btn-ico">▶</span>${t("youglish")}` +
       `</button>` +
     `</div>` +
+
+    (conj
+      ? `<div class="gls-panel-hdg gls-panel-hdg-ex">${t("conjug")}</div>` +
+        `<div class="gls-panel-conj">${conj.map(row =>
+          `<span class="gls-conj-lbl">${sanitizeHTML(currentLang === "ro" ? row.ro : row.en)}</span>` +
+          `<span class="gls-conj-form">${sanitizeHTML(row.form)}</span>`
+        ).join("")}</div>`
+      : "") +
 
     (examples.length
       ? `<div class="gls-panel-hdg gls-panel-hdg-ex">${t("example")}</div>` +
@@ -673,6 +693,32 @@ function renderDailyView() {
 
 function refreshDaily() { pickDaily(); renderDailyView(); }
 
+// ── Recent searches ──
+function trackRecent(ko) {
+  recent = [ko, ...recent.filter(x => x !== ko)].slice(0, 8);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+  renderRecentView();
+}
+
+function renderRecentView() {
+  if (!recentCard) return;
+  const words = recent.map(ko => WORDS.find(w => w.ko === ko)).filter(Boolean);
+  if (!words.length) { recentCard.innerHTML = ""; return; }
+
+  recentCard.innerHTML =
+    `<div class="gls-daily-top">` +
+      `<span class="gls-daily-label">${t("recent")}</span>` +
+    `</div>` +
+    `<div class="gls-daily-chips">` +
+      words.map(w =>
+        `<div class="gls-daily-chip" onclick="focusWord('${esc(w.ko)}')">` +
+          `<div class="gls-daily-ko" style="color:${getCatColor(w)}">${sanitizeHTML(w.ko)}</div>` +
+          `<div class="gls-daily-tr">${sanitizeHTML(getMeaning(w))}</div>` +
+        `</div>`
+      ).join("") +
+    `</div>`;
+}
+
 // ── Language switch ──
 function setLanguage(lang) {
   closePanel();
@@ -682,6 +728,7 @@ function setLanguage(lang) {
   searchInput.placeholder = t("search");
   buildCatDots();
   renderDailyView();
+  renderRecentView();
   render(false);
 }
 
@@ -758,6 +805,7 @@ async function loadVocabulary() {
     pickDaily();
     buildCatDots();
     renderDailyView();
+    renderRecentView();
     render(true);
     updateExportBtn();
     setTimeout(showDailyPopup, 300);
