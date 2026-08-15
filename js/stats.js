@@ -58,7 +58,7 @@ const BACKUP_KEYS = [
   // hanja
   "RK_HJ_LEARNED","RK_HJ_QUEUE","RK_HJ_SRS","RK_HJ_STREAK",
   // lectură, povești, atelier de propoziții
-  "RK_RD_READ","RK_RD_SAVED","RK_RD_FONT","RK_STORIES","RK_SFP_DONE","RK_SFP_SHOWN",
+  "RK_RD_READ","RK_RD_SAVED","RK_RD_FONT","RK_STORIES","RK_SFP_DONE","RK_SFP_SHOWN","RK_SLOT_SPINS",
   // examen & conversație
   "RK_EXAM_HISTORY","RK_CONV_SCORES","RK_SPOKE_EVER",
   // preferințe

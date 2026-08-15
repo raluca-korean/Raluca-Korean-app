@@ -386,6 +386,7 @@ html[data-mode="day"] .sm-picker-item-ko { color: #1a0533; }
 </div>
 
 <script src="./js/core/storage.js"></script>
+<script src="./js/core/streak.js"></script>
 <script src="./js/core/lang-picker.js"></script>
 <script src="./js/core/audio.js"></script>
 <script src="./js/core/verb-conjugator.js"></script>
@@ -548,7 +549,8 @@ function verbTranslation(verb, subjKo, tense, lang) {
 }
 
 /* ── STATE ────────────────────────────────────────────────── */
-let tense = 'present', spins = 0, spinning = false;
+const SPINS_KEY = 'RK_SLOT_SPINS';
+let tense = 'present', spins = parseInt(localStorage.getItem(SPINS_KEY) || '0', 10) || 0, spinning = false;
 const ST = {};
 REELS.forEach(r => { ST[r.id] = { idx: 0, locked: false }; });
 function cur(id) {
@@ -807,9 +809,11 @@ function doSpin() {
 function finishSpin() {
   spinning = false;
   spins++;
+  localStorage.setItem(SPINS_KEY, String(spins));
+  const streakDays = window.RKStreak ? RKStreak.touch().days : 0;
   document.getElementById('smSpinBtn').disabled = false;
   document.getElementById('statSpins').textContent = spins;
-  document.getElementById('statStreak').textContent = spins;
+  document.getElementById('statStreak').textContent = streakDays;
   document.getElementById('smTotal').textContent = spins;
   showResult();
   setTimeout(() => {
@@ -864,6 +868,10 @@ function showResult() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('smReels').innerHTML =
     '<div style="grid-column:1/-1;text-align:center;padding:24px;opacity:.35;font-size:12px;font-weight:700">Se încarcă vocabularul…</div>';
+
+  document.getElementById('statSpins').textContent = spins;
+  document.getElementById('statStreak').textContent = window.RKStreak ? RKStreak.get().days : 0;
+  document.getElementById('smTotal').textContent = spins;
 
   loadVocab();
 
