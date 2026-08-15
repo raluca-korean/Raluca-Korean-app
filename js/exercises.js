@@ -995,7 +995,15 @@ function showHint(){
   hintCount++;
   hintUsed = true;
   puzzleLine = correct.slice(0, hintCount);
-  puzzleBank = shuffle(correct.slice(hintCount));
+  // Rebuild the bank from the item's full tile set minus what's now placed
+  // in puzzleLine — not from `correct` alone, which silently dropped any
+  // distractor tile whenever item.tiles.length !== item.correct.length.
+  const remaining = [...item.tiles];
+  puzzleLine.forEach(tile => {
+    const idx = remaining.indexOf(tile);
+    if(idx !== -1) remaining.splice(idx, 1);
+  });
+  puzzleBank = shuffle(remaining);
   renderPuzzleUI();
   updateHintBtn(item);
 }
