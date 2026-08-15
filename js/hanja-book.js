@@ -2442,9 +2442,12 @@ function render(animate) {
   var isLearned = learned.indexOf(idx) >= 0;
 
   /* Nucleus */
-  document.getElementById('hanjaGlyph').textContent   = item.hanja;
-  document.getElementById('glyphReading').textContent = item.reading[lang];
-  document.getElementById('glyphMeaning').textContent = item.meaning[lang];
+  document.getElementById('hanjaGlyph').textContent    = item.hanja;
+  var hanjaSylEl = document.getElementById('hanjaSyllable');
+  hanjaSylEl.textContent = item.ko_reading.split(' ').join('/');
+  hanjaSylEl.classList.toggle('multi', item.ko_reading.indexOf(' ') !== -1);
+  document.getElementById('glyphReading').textContent  = item.reading[lang];
+  document.getElementById('glyphMeaning').textContent  = item.meaning[lang];
 
   var nuc = document.getElementById('nucleus');
   nuc.classList.toggle('learned', isLearned);
@@ -2921,9 +2924,12 @@ function _nextQuizQ() {
 function _renderQuiz() {
   var item = DATA[quizQ.dataIdx];
 
-  document.getElementById('hanjaGlyph').textContent   = item.hanja;
-  document.getElementById('glyphReading').textContent = item.reading[lang];
-  document.getElementById('glyphMeaning').textContent = quizDone ? item.meaning[lang] : '?';
+  document.getElementById('hanjaGlyph').textContent    = item.hanja;
+  var hanjaSylEl = document.getElementById('hanjaSyllable');
+  hanjaSylEl.textContent = item.ko_reading.split(' ').join('/');
+  hanjaSylEl.classList.toggle('multi', item.ko_reading.indexOf(' ') !== -1);
+  document.getElementById('glyphReading').textContent  = item.reading[lang];
+  document.getElementById('glyphMeaning').textContent  = quizDone ? item.meaning[lang] : '?';
 
   var nuc = document.getElementById('nucleus');
   nuc.classList.remove('learned', 'nova');
