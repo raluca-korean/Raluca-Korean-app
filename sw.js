@@ -1,13 +1,15 @@
-const CACHE = 'rk-v114';
+const CACHE = 'rk-v115';
 
 const STATIC = [
   './',
   './index.html',
   './exercises.html',
   './lessons.html',
+  './lesson-neural.html',
   './glossary.html',
   './builder.html',
   './flashcards.html',
+  './slot-machine.html',
   './hangul.html',
   './hanja-book.html',
   './stories.html',
@@ -45,6 +47,7 @@ const STATIC = [
   './js/flashcards.js',
   './js/glossary.js',
   './js/hangul.js',
+  './js/stroke-order.js',
   './js/hanja-book.js',
   './js/stories.js',
   './js/writing.js',
@@ -71,6 +74,7 @@ const STATIC = [
   './data/vocab-korean.json',
   './data/reading-texts.json',
   './data/word-clusters.json',
+  './data/context-words.json',
   './data/extra-generated-sentences.json',
   './data/hanja.json',
   './data/builder-vocab.json',

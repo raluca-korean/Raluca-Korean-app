@@ -133,14 +133,22 @@
       '<button id="rkBackupLaterBtn" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit">' + T.later + '</button>';
 
     document.body.appendChild(bar);
+    // Reserve space so the fixed banner never sits on top of page content
+    // (buttons, cards) near the bottom of the viewport.
+    var prevPadding = document.body.style.paddingBottom;
+    document.body.style.paddingBottom = (bar.offsetHeight + 34) + 'px';
+    function dismiss() {
+      bar.remove();
+      document.body.style.paddingBottom = prevPadding;
+    }
 
     document.getElementById('rkBackupNowBtn').addEventListener('click', function () {
       exportNow();
-      bar.remove();
+      dismiss();
     });
     document.getElementById('rkBackupLaterBtn').addEventListener('click', function () {
       dismissReminder();
-      bar.remove();
+      dismiss();
     });
   }
 
