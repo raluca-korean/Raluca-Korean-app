@@ -209,6 +209,69 @@ window.Conjugation = {
     return this.addBatchimR(stem) + " 거예요";
   },
 
+  // Irregular-aware stem+[으]+ending for the vowel-initial "-(으)X" family
+  // (으니까/으면/으려고/...). connector()'s plain euOrNot()/dropRieul() pair
+  // only knows about batchim presence, not about ㅂ/ㄷ/ㅎ irregulars — which
+  // change differently before a VOWEL-initial ending than before a
+  // consonant-initial one (걷다: 걷고/걷는데 keep ㄷ, but 걸으니까/걸으면 turn
+  // it into ㄹ+으). Delegates to VerbConjugator's irregular word lists so
+  // this stays in sync with present()/past()'s own irregular handling.
+  euAttach(verb, ending){
+    const stem = this.stem(verb);
+    const VC = window.VerbConjugator;
+    const last = stem.at(-1);
+    const d = this.decompose(last);
+    if(VC && d && d.jong === 17 && (VC.B_IRREGULAR.includes(verb) || VC.BO_WA_EXCEPTIONS.includes(verb) || verb.endsWith('스럽다'))){
+      const open = String.fromCharCode(last.charCodeAt(0) - d.jong);
+      return stem.slice(0, -1) + open + "우" + ending;
+    }
+    if(VC && d && d.jong === 7 && VC.D_IRREGULAR.some(b => verb === b || verb.endsWith(b))){
+      const asRieul = String.fromCharCode(last.charCodeAt(0) + 1); // ㄷ(7) -> ㄹ(8)
+      return stem.slice(0, -1) + asRieul + "으" + ending;
+    }
+    if(VC && d && d.jong === 27 && VC.H_IRREGULAR.includes(verb)){
+      const open = String.fromCharCode(last.charCodeAt(0) - d.jong);
+      return stem.slice(0, -1) + open + ending; // open syllable, no 으 needed
+    }
+    return this.euOrNot(stem) ? stem + "으" + ending : this.dropRieul(stem) + ending;
+  },
+
+  // Adjective attributive -(으)ㄴ ("가까운", "바쁜", "좋은") — distinct from
+  // action verbs' -는 (dropRieul-based, handled separately below). Only
+  // used for descriptive-verb (adjective) contrast/relative clauses.
+  adjAttributive(verb){
+    const stem = this.stem(verb);
+    // 있다/없다 and their compounds (맛있다, 재미없다, 멋있다...) are
+    // grammatically stative, but their attributive marker is the ACTION-verb
+    // -는, not the true-adjective -(으)ㄴ: "재미있는 영화", never "재미있은 영화".
+    if(verb.endsWith('있다') || verb.endsWith('없다')) return stem + "는";
+    // "-나다" ("to arise/occur") compounds are grammatically action verbs
+    // despite translating as "to be X" (화나다 "to become angry", 짜증나다
+    // "to become annoyed") — also take -는, not -(으)ㄴ: 화나는데, not 화난데.
+    if(verb.endsWith('나다') && verb !== '나다') return stem + "는";
+    const VC = window.VerbConjugator;
+    const last = stem.at(-1);
+    const d = this.decompose(last);
+    if(VC && d && d.jong === 17 && (VC.B_IRREGULAR.includes(verb) || VC.BO_WA_EXCEPTIONS.includes(verb) || verb.endsWith('스럽다'))){
+      const open = String.fromCharCode(last.charCodeAt(0) - d.jong);
+      return stem.slice(0, -1) + open + "운";
+    }
+    if(VC && d && d.jong === 7 && VC.D_IRREGULAR.some(b => verb === b || verb.endsWith(b))){
+      const asRieul = String.fromCharCode(last.charCodeAt(0) + 1);
+      return stem.slice(0, -1) + asRieul + "은";
+    }
+    if(VC && d && d.jong === 27 && VC.H_IRREGULAR.includes(verb)){
+      const open = String.fromCharCode(last.charCodeAt(0) - d.jong);
+      return stem.slice(0, -1) + String.fromCharCode(open.charCodeAt(0) + 4); // fuse ㄴ batchim onto the open syllable
+    }
+    if(!d || d.jong === 0) return stem.slice(0, -1) + String.fromCharCode(last.charCodeAt(0) + 4); // open syllable: fuse ㄴ (바쁘다 -> 바쁜)
+    if(d.jong === 8){ // true ㄹ-final: drop ㄹ, fuse ㄴ onto the now-open syllable (길다 -> 긴)
+      const open = String.fromCharCode(last.charCodeAt(0) - 8);
+      return stem.slice(0, -1) + String.fromCharCode(open.charCodeAt(0) + 4);
+    }
+    return stem + "은"; // other batchim: 좋다 -> 좋은, 작다 -> 작은
+  },
+
   // =====================
   // CONNECTORS (TOPIK)
   // =====================
@@ -220,7 +283,7 @@ window.Conjugation = {
       case "-고 나서":               return stem + "고 나서";
       case "-기 전에":               return stem + "기 전에";
       case "-(으)면서":              return this.euOrNot(stem) ? stem + "으면서" : stem + "면서";
-      case "-(으)니까":              return this.euOrNot(stem) ? stem + "으니까" : this.dropRieul(stem) + "니까";
+      case "-(으)니까":              return this.euAttach(verb, "니까");
       // Action verbs always use -는데; -(으)ㄴ데 is for adjectives (not in builder DATA)
       case "-(으)ㄴ/는데":           return this.dropRieul(stem) + "는데";
       case "-지만":                  return stem + "지만";
