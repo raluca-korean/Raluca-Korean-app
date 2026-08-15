@@ -390,6 +390,7 @@ html[data-mode="day"] .sm-picker-item-ko { color: #1a0533; }
 <script src="./js/core/audio.js"></script>
 <script src="./js/core/verb-conjugator.js"></script>
 <script src="./js/core/conjugation.js"></script>
+<script src="./js/core/ro-conjugator.js"></script>
 <script src="./js/core/dark-mode.js"></script>
 <script>
 /* ── EMOJI MAP ────────────────────────────────────────────── */
@@ -533,6 +534,52 @@ function conj(verbBase, tense) {
   if (tense === 'past')   return Conjugation.past(verbBase);
   if (tense === 'future') return Conjugation.future(verbBase);
   return Conjugation.present(verbBase);
+}
+
+// Traducerea verbului trebuie să urmeze timpul coreean (present/past/
+// future), altfel propoziția coreeană se conjugă dar traducerea rămâne
+// mereu la infinitiv ("a mânca"/"to eat") — RO folosește RoConjugator,
+// EN un tabel mic doar pentru cele 13 verbe fixe din CORES.
+const VERB_EN = {
+  '공부하다': ['studies', 'studied'],
+  '듣다':     ['hears',   'heard'],
+  '마시다':   ['drinks',  'drank'],
+  '만들다':   ['makes',   'made'],
+  '먹다':     ['eats',    'ate'],
+  '배우다':   ['learns',  'learned'],
+  '보다':     ['sees',    'saw'],
+  '사다':     ['buys',    'bought'],
+  '쓰다':     ['writes',  'wrote'],
+  '요리하다': ['cooks',   'cooked'],
+  '읽다':     ['reads',   'read'],
+  '준비하다': ['prepares','prepared'],
+  '하다':     ['does',    'did'],
+};
+function roPersonIdx(subjKo) {
+  if (subjKo === '저' || subjKo === '나') return 0; // eu
+  if (subjKo === '너') return 1;                    // tu
+  if (subjKo === '우리') return 3;                  // noi
+  return 2;                                         // el/ea (subiect la persoana a 3-a)
+}
+function verbTranslation(verb, subjKo, tense, lang) {
+  if (lang === 'en') {
+    const base = (verb.en || '').replace(/^to\s+/, '');
+    const pair = VERB_EN[verb.ko];
+    const isFirstSecond = subjKo === '저' || subjKo === '나' || subjKo === '너' || subjKo === '우리';
+    if (tense === 'past')   return pair ? pair[1] : (verb.en || '');
+    if (tense === 'future') return base ? `will ${base}` : (verb.en || '');
+    return (isFirstSecond || !pair) ? (base || verb.en) : pair[0];
+  }
+  if (window.RoConjugator) {
+    const c = RoConjugator.conjugate(verb.ro);
+    if (c) {
+      const idx = roPersonIdx(subjKo);
+      if (tense === 'past')   return c.trecut[idx]  || verb.ro;
+      if (tense === 'future') return c.viitor[idx]  || verb.ro;
+      return c.present[idx]  || verb.ro;
+    }
+  }
+  return verb.ro;
 }
 
 /* ── STATE ────────────────────────────────────────────────── */
@@ -805,7 +852,7 @@ function showResult() {
     { ko: time.ko,  ptcl: '',               color:'#fbbf24', lbl:'시간',   tr: time[lang]  },
     { ko: loc.ko,   ptcl: '에서',           color:'#38bdf8', lbl:'장소',   tr: loc[lang]   },
     { ko: obj.ko,   ptcl: objectP(obj.ko),  color:'#4ade80', lbl:'목적어', tr: obj[lang]   },
-    { ko: verbConj, ptcl: '',               color:'#a78bfa', lbl:'동사',   tr: verb[lang]  },
+    { ko: verbConj, ptcl: '',               color:'#a78bfa', lbl:'동사',   tr: verbTranslation(verb, subj.ko, tense, lang) },
   ];
 
   document.getElementById('smSentence').innerHTML = chips.map(c => `
