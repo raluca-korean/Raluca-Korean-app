@@ -108,6 +108,10 @@ window.VerbConjugator = {
         // ㅚ + 어 → 왜 contraction (되다→돼요)
         pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+10*28) + '요';
         past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+10*28+20) + '어요';
+      } else if (jung===1 || jung===5) {
+        // ㅐ/ㅔ + 어 → merges into the same vowel, written form unchanged
+        // (보내다→보내요/보냈어요, 매다→매요/맸어요, not 보내어요/매어요)
+        pres = stem+'요'; past = stem.slice(0,-1) + String.fromCharCode(code+20) + '어요';
       } else { pres = stem+'어요'; past = stem+'었어요'; }
     } else { pres = stem+suf+'요'; past = stem+(aVowel?'았':'었')+'어요'; }
     return [{ro:'prezent',en:'present', form: pres}, {ro:'trecut',en:'past', form: past}];
