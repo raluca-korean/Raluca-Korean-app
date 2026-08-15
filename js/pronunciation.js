@@ -207,7 +207,12 @@ function buildCard(s) {
   /* Start recording */
   function startRec() {
     if (state.recording) { stopRec(); return; }
-    getWhisper(); /* preîncarcă modelul în fundal */
+    // Only preload the Whisper fallback (~75MB from a CDN) when the browser
+    // has no native SpeechRecognition — most users (Chrome/Edge/Android)
+    // never need it, and fetching it unconditionally here made every
+    // recording attempt pull that model over the network for them too,
+    // breaking offline use for no benefit.
+    if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) getWhisper();
     navigator.mediaDevices.getUserMedia({audio: true}).then(function(stream) {
       var chunks = [];
       var mt = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'

@@ -27,10 +27,6 @@ let flipped     = false;
 let filterFav   = false;
 let _answerLocked = false;
 
-const imgCache = (() => {
-  try { return JSON.parse(sessionStorage.getItem("FC_IMG") || "{}"); } catch { return {}; }
-})();
-
 // ── UI strings ───────────────────────────────────────────────
 const UI = {
   ro:{
@@ -144,28 +140,6 @@ function getDiffDot(ko){
   if(r > 0.2) return `<span class="diff-dot diff-med">●</span>`;
   return `<span class="diff-dot diff-easy">●</span>`;
 }
-
-function imgKey(word){
-  return word.en.split(/[,;/(]/)[0].trim().replace(/^to\s+/i,"").toLowerCase();
-}
-
-// ── Image loading (prefetch only, not displayed in Helioform) ─
-async function getWordImage(key){
-  if(key in imgCache) return imgCache[key];
-  if(!key || key.startsWith("-") || key.length < 2 || /^(a|an|the|to|in|on|at|by|of)$/.test(key)){
-    imgCache[key] = null; return null;
-  }
-  try{
-    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(key)}`);
-    const d = await r.json();
-    const src = d.thumbnail?.source || null;
-    imgCache[key] = src;
-    try{ sessionStorage.setItem("FC_IMG", JSON.stringify(imgCache)); }catch{}
-    return src;
-  } catch { imgCache[key] = null; return null; }
-}
-function loadCardImage(word){ getWordImage(imgKey(word)); }
-function preloadNext(idx){ if(idx < deck.length) getWordImage(imgKey(deck[idx])); }
 
 // ── Memory glow: nucleus light reflects SRS strength ─────────
 // Returns 0 (unknown/new) → 1 (mastered)
@@ -479,9 +453,6 @@ function renderFC() {
 
   // Apply memory-strength glow to nucleus
   applyMemoryGlow(word.ko);
-
-  loadCardImage(word);
-  preloadNext(cardIndex + 1);
 }
 
 // ── Flip: meaning erupts from the nucleus ────────────────────
