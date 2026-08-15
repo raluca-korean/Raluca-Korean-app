@@ -52,9 +52,31 @@ var SENTENCES = [
   {id:8,  topik:2, text:'한국 음식이 맛있어요',             rom:'hanguk eumsigi massseoyo',                ro:'Mâncarea coreeană e delicioasă',      en:'Korean food is delicious'},
   {id:9,  topik:2, text:'지금 어디에 가요?',               rom:'jigeum eodie gayo',                       ro:'Unde mergi acum?',                    en:'Where are you going now?'},
   {id:10, topik:2, text:'저는 서울에 살아요',               rom:'jeoneun seoure sarayo',                   ro:'Locuiesc în Seul',                    en:'I live in Seoul'},
+  {id:13, topik:2, text:'주말에 친구를 만나요',             rom:'jumare chinguleul mannayo',               ro:'Mă întâlnesc cu un prieten în weekend',en:'I meet a friend on the weekend'},
   // TOPIK 3
   {id:11, topik:3, text:'한국어를 배우는 것이 재미있어요',  rom:'hangugeoreul baeuneun geosi jaemiisseoyo',ro:'A învăța coreeana e interesant',      en:'Learning Korean is fun'},
-  {id:12, topik:3, text:'서울에서 태어났어요',              rom:'seoureseo taeeonansseoyo',                ro:'M-am născut în Seul',                 en:'I was born in Seoul'}
+  {id:12, topik:3, text:'서울에서 태어났어요',              rom:'seoureseo taeeonansseoyo',                ro:'M-am născut în Seul',                 en:'I was born in Seoul'},
+  {id:14, topik:3, text:'저는 매일 아침에 운동을 해요',      rom:'jeoneun maeil achime undongeul haeyo',    ro:'Fac sport în fiecare dimineață',      en:'I exercise every morning'},
+  {id:15, topik:3, text:'이 영화는 정말 재미있었어요',       rom:'i yeonghwaneun jeongmal jaemiisseosseoyo',ro:'Filmul acesta a fost chiar interesant',en:'This movie was really interesting'},
+  {id:16, topik:3, text:'시간이 있으면 같이 가요',           rom:'sigani isseumyeon gachi gayo',            ro:'Dacă ai timp, hai să mergem împreună',en:"If you have time, let's go together"},
+  // TOPIK 4
+  {id:17, topik:4, text:'저는 한국 드라마를 보면서 한국어를 배웠어요', rom:'jeoneun hanguk deuramareul bomyeonseo hangugeoreul baewosseoyo', ro:'Am învățat coreeana în timp ce mă uitam la drame coreene', en:'I learned Korean while watching Korean dramas'},
+  {id:18, topik:4, text:'비가 올 것 같아서 우산을 가져왔어요', rom:'biga ol geot gataseo usaneul gajyeowasseoyo', ro:'Am adus umbrela pentru că părea că va ploua', en:'I brought an umbrella because it looked like it would rain'},
+  {id:19, topik:4, text:'그 사람은 친절할 뿐만 아니라 똑똑해요', rom:'geu sarameun chinjeolhal ppunman anira ttokttokhaeyo', ro:'Persoana aceea nu doar că e amabilă, dar e și deșteaptă', en:'That person is not only kind but also smart'},
+  {id:20, topik:4, text:'아무리 바빠도 운동은 꼭 해요',       rom:'amuri bappado undongeun kkok haeyo',      ro:'Oricât de ocupat(ă) aș fi, fac mereu sport', en:'No matter how busy I am, I always exercise'},
+  {id:21, topik:4, text:'저는 내년에 유학을 가기로 했어요',   rom:'jeoneun naenyeone yuhageul gagiro haesseoyo', ro:'Am decis să studiez în străinătate anul viitor', en:'I decided to study abroad next year'},
+  // TOPIK 5
+  {id:22, topik:5, text:'환경 보호를 위해 일회용품 사용을 줄여야 합니다', rom:'hwangyeong bohoreul wihae ilhoeyongpum sayongeul jurirya hamnida', ro:'Trebuie să reducem folosirea produselor de unică folosință pentru a proteja mediul', en:'We must reduce the use of disposable products to protect the environment'},
+  {id:23, topik:5, text:'경제가 어려워질수록 소비자들은 더 신중해집니다', rom:'gyeongjega eoryeowojilsurok sobijadeureun deo sinjunghaejimnida', ro:'Cu cât economia devine mai dificilă, cu atât consumatorii devin mai prudenți', en:'The harder the economy gets, the more cautious consumers become'},
+  {id:24, topik:5, text:'이 문제는 개인의 노력만으로는 해결되기 어렵습니다', rom:'i munjeneun gaeinui noryeongmaneuroneun haegyeoldwegi eoryeopseumnida', ro:'Această problemă e greu de rezolvat doar prin efortul individual', en:'This problem is hard to solve through individual effort alone'},
+  {id:25, topik:5, text:'정부는 새로운 정책을 도입하기로 결정했습니다', rom:'jeongbuneun saeroun jeongchaegeul doipagiro gyeoljeonghaetseumnida', ro:'Guvernul a decis să introducă o nouă politică', en:'The government decided to introduce a new policy'},
+  {id:26, topik:5, text:'노력한 만큼 결과가 따라올 것입니다', rom:'noryeokhan mankeum gyeolgwaga ttarawol geosimnida', ro:'Rezultatele vor veni pe măsura efortului depus', en:'The results will follow according to the effort put in'},
+  // TOPIK 6
+  {id:27, topik:6, text:'세월이 흐를수록 그 시절이 더욱 그리워집니다', rom:'seworyi heureulsurok geu sijeori deouk geuriwojimnida', ro:'Cu cât trece timpul, cu atât îmi este mai dor de acea perioadă', en:'As time passes, I miss that period even more'},
+  {id:28, topik:6, text:'그의 발언은 많은 논란을 불러일으켰습니다', rom:'geuui bareoneun maneun nollaneul bulleoireukyeotseumnida', ro:'Declarația lui a stârnit multă controversă', en:'His remarks sparked a lot of controversy'},
+  {id:29, topik:6, text:'위기를 기회로 삼아야 합니다',       rom:'wigireul gihoero samaya hamnida',          ro:'Trebuie să transformăm criza într-o oportunitate', en:'We must turn the crisis into an opportunity'},
+  {id:30, topik:6, text:'사공이 많으면 배가 산으로 간다는 말이 있습니다', rom:'sagongi manheumyeon baega saneuro gandaneun mari itseumnida', ro:'Există o zicală: dacă sunt prea mulți cârmaci, barca ajunge pe munte', en:"There's a saying: too many cooks spoil the broth"},
+  {id:31, topik:6, text:'그는 어려운 환경에도 불구하고 성공을 거두었습니다', rom:'geuneun eoryeoun hwangyeongedo bulguhago seonggongeul geodueotseumnida', ro:'El a reușit în ciuda condițiilor dificile', en:'He succeeded despite difficult circumstances'}
 ];
 
 var I18N = {
@@ -411,7 +433,7 @@ function buildCard(s, onChecked) {
 function renderFilter() {
   var row = document.getElementById('filterRow');
   row.innerHTML = '';
-  var levels = [0, 1, 2, 3];
+  var levels = [0, 1, 2, 3, 4, 5, 6];
   levels.forEach(function(lvl) {
     var btn = document.createElement('button');
     btn.className = 'filter-btn' + (lvl === FILTER ? ' active' : '');
