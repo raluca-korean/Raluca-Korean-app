@@ -4,9 +4,11 @@
              attention creates gravitational vortices.
 ══════════════════════════════════════════════════════════════ */
 
-// Apply saved theme before any rendering to avoid flash
+// Apply saved theme before any rendering to avoid flash.
+// Default is dark (matches every other page's convention in dark-mode.js) —
+// only an explicit 'light' preference should turn dark mode off.
 (function() {
-  if (localStorage.getItem('RK_THEME') === 'dark') {
+  if (localStorage.getItem('RK_THEME') !== 'light') {
     document.body.classList.add('dark-mode');
   }
 })();
@@ -822,6 +824,9 @@ function showQSummary() {
   const qChar = document.getElementById('mrsQChar');
   qChar.textContent = '◎';
   qChar.style.color = 'var(--mrs-q-fill)';
+  if (window.RKGamification && qDeck.length) {
+    RKGamification.addXPBonus(Math.max(5, Math.round(qCorrect / qDeck.length * 20)));
+  }
   document.getElementById('mrsQPrompt').textContent   = t.qDone(qCorrect, qDeck.length);
   document.getElementById('mrsQFeedback').textContent = '';
   document.getElementById('mrsQOpts').innerHTML       = '';

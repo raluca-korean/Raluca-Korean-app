@@ -2795,6 +2795,7 @@ function _markLearned() {
     /* Validează → adaugă în learned și avansează */
     learned.push(idx);
     localStorage.setItem('RK_HJ_LEARNED', JSON.stringify(learned));
+    if (window.RKGamification) RKGamification.addXPBonus(10);
 
     var current = queue.splice(queuePos, 1)[0];
     if (!srsData[current]) _updateSRS(current, true);
@@ -2971,7 +2972,11 @@ function _answerQuiz(wi) {
   var chosen  = quizQ.options[wi];
   var correct = quizQ.correctMeaning;
   var isRight = chosen === correct;
-  if (isRight) { quizScore.ok++; _bumpStreak(); }
+  if (isRight) {
+    quizScore.ok++;
+    _bumpStreak();
+    if (window.RKGamification) RKGamification.addXPBonus(3);
+  }
 
   document.getElementById('orb' + wi).classList.add(isRight ? 'quiz-correct' : 'quiz-wrong');
 

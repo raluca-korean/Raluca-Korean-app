@@ -201,6 +201,7 @@ body.dark-mode .cv-action-btn.sec{background:#1a0e2e;color:#eef0ff}
 </div>
 
 <script src="./js/core/storage.js"></script>
+<script src="./js/core/gamification.js"></script>
 <script src="./js/core/lang-picker.js"></script>
 <script>
 'use strict';
@@ -1111,6 +1112,8 @@ function endScenario(){
   clearOptions();
   var pct = userTurns ? Math.round(score/userTurns*100) : 0;
   saveScore(currentScenario.id, pct);
+  var xpGained = Math.max(10, Math.round(pct/100*25));
+  if(window.RKGamification) RKGamification.addXPBonus(xpGained);
   var l=L();
   var icon,badge,sub,cls;
   if(pct===100){ icon='🎉'; badge=l.perfect; sub=l.perfectSub; cls='badge-perfect'; }
@@ -1124,7 +1127,7 @@ function endScenario(){
     cv.style.display='block';
     document.getElementById('cIcon').textContent=icon;
     document.getElementById('cNum').textContent=score+' / '+userTurns;
-    document.getElementById('cSub').textContent=l.scoreOf+' '+userTurns+' '+l.scoreSuffix;
+    document.getElementById('cSub').textContent=l.scoreOf+' '+userTurns+' '+l.scoreSuffix+' · +'+xpGained+' XP';
     document.getElementById('cBadge').textContent=badge;
     document.getElementById('cBadge').className='cv-score-badge '+cls;
     document.getElementById('retryBtn').textContent=l.retry;
