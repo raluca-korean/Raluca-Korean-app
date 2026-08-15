@@ -656,6 +656,6 @@ function generate(v, lang) {
   return sentences;
 }
 
-return { isConjugable, isColorLike, isTimeLike, isPositionLike, isNounLike, isAdverbLike, generate };
+return { isConjugable, isColorLike, isTimeLike, isPositionLike, isNounLike, isAdverbLike, generate, enVerbConj: EN_VERB_CONJ };
 
 })();

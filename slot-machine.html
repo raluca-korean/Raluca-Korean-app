@@ -391,6 +391,7 @@ html[data-mode="day"] .sm-picker-item-ko { color: #1a0533; }
 <script src="./js/core/verb-conjugator.js"></script>
 <script src="./js/core/conjugation.js"></script>
 <script src="./js/core/ro-conjugator.js"></script>
+<script src="./js/core/sentence-generator.js"></script>
 <script src="./js/core/dark-mode.js"></script>
 <script>
 /* ── EMOJI MAP ────────────────────────────────────────────── */
@@ -449,82 +450,6 @@ const EXTRAS = {
   '주말에':{ ko:'주말에',ro:'în weekend',   en:'on weekends',    categories:['times']    },
 };
 
-/* ── NUCLEE SEMANTICE: loc + obj + verb mereu coerente ───── */
-const CORES = [
-  // ☕ CAFENEA
-  { loc:'카페',   obj:'커피',   verb:'마시다'    },
-  { loc:'카페',   obj:'차',     verb:'마시다'    },
-  { loc:'카페',   obj:'주스',   verb:'마시다'    },
-  { loc:'카페',   obj:'책',     verb:'읽다'      },
-  { loc:'카페',   obj:'음악',   verb:'듣다'      },
-  // 🍽️ RESTAURANT
-  { loc:'식당',   obj:'밥',     verb:'먹다'      },
-  { loc:'식당',   obj:'과일',   verb:'먹다'      },
-  // 🏠 CASĂ
-  { loc:'집',     obj:'밥',     verb:'먹다'      },
-  { loc:'집',     obj:'과일',   verb:'먹다'      },
-  { loc:'집',     obj:'책',     verb:'읽다'      },
-  { loc:'집',     obj:'음악',   verb:'듣다'      },
-  { loc:'집',     obj:'영화',   verb:'보다'      },
-  { loc:'집',     obj:'한국어', verb:'공부하다'   },
-  { loc:'집',     obj:'숙제',   verb:'하다'      },
-  { loc:'집',     obj:'운동',   verb:'하다'      },
-  { loc:'집',     obj:'편지',   verb:'쓰다'      },
-  // 🍳 BUCĂTĂRIE
-  { loc:'부엌',   obj:'밥',     verb:'요리하다'   },
-  { loc:'부엌',   obj:'밥',     verb:'만들다'     },
-  // 🛋️ SUFRAGERIE
-  { loc:'거실',   obj:'영화',   verb:'보다'      },
-  { loc:'거실',   obj:'음악',   verb:'듣다'      },
-  // 📚 BIBLIOTECĂ
-  { loc:'도서관', obj:'책',     verb:'읽다'      },
-  { loc:'도서관', obj:'한국어', verb:'공부하다'   },
-  // 🏫 ȘCOALĂ
-  { loc:'학교',   obj:'한국어', verb:'배우다'     },
-  { loc:'학교',   obj:'숙제',   verb:'하다'      },
-  // 🏢 SERVICIU
-  { loc:'회사',   obj:'커피',   verb:'마시다'    },
-  { loc:'회사',   obj:'자료',   verb:'준비하다'   },
-  // 🌳 PARC
-  { loc:'공원',   obj:'운동',   verb:'하다'      },
-  { loc:'공원',   obj:'음악',   verb:'듣다'      },
-  // 🏪 MAGAZIN DE PROXIMITATE
-  { loc:'편의점', obj:'커피',   verb:'사다'      },
-  { loc:'편의점', obj:'물',     verb:'사다'      },
-  { loc:'편의점', obj:'우산',   verb:'사다'      },
-  // 🏬 MALL
-  { loc:'백화점', obj:'옷',     verb:'사다'      },
-  { loc:'백화점', obj:'신발',   verb:'사다'      },
-  { loc:'백화점', obj:'시계',   verb:'사다'      },
-  { loc:'백화점', obj:'선물',   verb:'사다'      },
-  // 🏥 SPITAL
-  { loc:'병원',   obj:'약',     verb:'사다'      },
-  // 🏖️ PLAJĂ
-  { loc:'해변',   obj:'음악',   verb:'듣다'      },
-  // 🛏️ DORMITOR
-  { loc:'침실',   obj:'음악',   verb:'듣다'      },
-  // 📚 BIBLIOTECĂ / ȘCOALĂ (extindere vocabular)
-  { loc:'도서관', obj:'책',     verb:'찾다'      },
-  { loc:'학교',   obj:'한국어', verb:'가르치다'   },
-  { loc:'집',     obj:'한국어', verb:'연습하다'   },
-  // ☕ ÎNTÂLNIRI
-  { loc:'카페',   obj:'친구',   verb:'만나다'    },
-  // 🎤 MUZICĂ
-  { loc:'집',     obj:'노래',   verb:'부르다'    },
-  { loc:'거실',   obj:'노래',   verb:'부르다'    },
-  // 📸 FOTOGRAFII
-  { loc:'공원',   obj:'사진',   verb:'찍다'      },
-  { loc:'해변',   obj:'사진',   verb:'찍다'      },
-  // 🏢 BIROU
-  { loc:'회사',   obj:'이메일', verb:'보내다'    },
-  // 🎨 CASĂ / HOBBY
-  { loc:'집',     obj:'그림',   verb:'그리다'    },
-  { loc:'집',     obj:'방',     verb:'청소하다'  },
-  { loc:'집',     obj:'손',     verb:'씻다'      },
-  // 🏪 MAGAZIN DE PROXIMITATE
-  { loc:'편의점', obj:'과일',   verb:'사다'      },
-];
-
 /* ── STRUCTURA RELELOR (items populat din vocab) ─────────── */
 const REELS = [
   { id:'subject',  color:'#f472b6', label:{ ro:'Subiect',  en:'Subject'  }, items:[] },
@@ -559,47 +484,56 @@ function conj(verbBase, tense) {
 
 // Traducerea verbului trebuie să urmeze timpul coreean (present/past/
 // future), altfel propoziția coreeană se conjugă dar traducerea rămâne
-// mereu la infinitiv ("a mânca"/"to eat") — RO folosește RoConjugator,
-// EN un tabel mic doar pentru verbele fixe din CORES.
-const VERB_EN = {
-  '공부하다':   ['studies',      'studied'],
-  '듣다':       ['hears',        'heard'],
-  '마시다':     ['drinks',       'drank'],
-  '만들다':     ['makes',        'made'],
-  '먹다':       ['eats',         'ate'],
-  '배우다':     ['learns',       'learned'],
-  '보다':       ['sees',         'saw'],
-  '사다':       ['buys',         'bought'],
-  '쓰다':       ['writes',       'wrote'],
-  '요리하다':   ['cooks',        'cooked'],
-  '읽다':       ['reads',        'read'],
-  '준비하다':   ['prepares',     'prepared'],
-  '하다':       ['does',         'did'],
-  '찾다':       ['looks for',    'looked for'],
-  '가르치다':   ['teaches',      'taught'],
-  '연습하다':   ['practices',    'practiced'],
-  '만나다':     ['meets',        'met'],
-  '부르다':     ['sings',        'sang'],
-  '찍다':       ['takes a photo','took a photo'],
-  '보내다':     ['sends',        'sent'],
-  '그리다':     ['draws',        'drew'],
-  '청소하다':   ['cleans',       'cleaned'],
-  '씻다':       ['washes',       'washed'],
-};
+// mereu la infinitiv ("a mânca"/"to eat"). RO folosește RoConjugator
+// (motor general, acoperă orice glosă RO din vocab). EN reutilizează
+// tabelul deja existent SentenceGenerator.enVerbConj (~226 verbe de bază,
+// acoperă practic tot vocabularul de verbe) în loc să-l dubleze aici.
 function roPersonIdx(subjKo) {
   if (subjKo === '저' || subjKo === '나') return 0; // eu
   if (subjKo === '너') return 1;                    // tu
   if (subjKo === '우리') return 3;                  // noi
   return 2;                                         // el/ea (subiect la persoana a 3-a)
 }
+// Descompune o glosă EN ("to buy", "to look for", "to be busy"…) în formele
+// de bază / persoana a 3-a / trecut, folosind tabelul comun pentru capul
+// verbului. Restul de gramatică specială (be/feel/not/rain) e cazul rar
+// din vocab (~6%), tratat separat aici — pattern-ul e mic și izolat,
+// tabelul mare de date rămâne unic în sentence-generator.js.
+function enVerbForms(enGloss) {
+  const conj = (window.SentenceGenerator && window.SentenceGenerator.enVerbConj) || {};
+  const first = (enGloss || '').split(',')[0].split(';')[0].trim().replace(/\s*\([^)]*\)\s*$/, '');
+  let m;
+  if ((m = first.match(/^to not (.+)$/)))  return { negated: true, base: m[1] };
+  if ((m = first.match(/^to feel (.+)$/))) return { base: `feel ${m[1]}`, third: `feels ${m[1]}`, past: `felt ${m[1]}` };
+  if ((m = first.match(/^to be (.+)$/)))   return { beVerb: true, tail: m[1] };
+  if (first === 'to rain') return { base: 'rain', third: 'rains', past: 'rained' };
+  if ((m = first.match(/^to (.+)$/))) {
+    const parts = m[1].split(' ');
+    const head = parts[0], tail = parts.slice(1).join(' ');
+    const pair = conj[head];
+    if (!pair) return { base: m[1], third: m[1], past: m[1] };
+    return { base: m[1], third: tail ? `${pair[0]} ${tail}` : pair[0], past: tail ? `${pair[1]} ${tail}` : pair[1] };
+  }
+  return { base: first, third: first, past: first };
+}
 function verbTranslation(verb, subjKo, tense, lang) {
   if (lang === 'en') {
-    const base = (verb.en || '').replace(/^to\s+/, '');
-    const pair = VERB_EN[verb.ko];
     const isFirstSecond = subjKo === '저' || subjKo === '나' || subjKo === '너' || subjKo === '우리';
-    if (tense === 'past')   return pair ? pair[1] : (verb.en || '');
-    if (tense === 'future') return base ? `will ${base}` : (verb.en || '');
-    return (isFirstSecond || !pair) ? (base || verb.en) : pair[0];
+    const f = enVerbForms(verb.en);
+    if (f.negated) {
+      if (tense === 'past')   return `didn't ${f.base}`;
+      if (tense === 'future') return `won't ${f.base}`;
+      return isFirstSecond ? `don't ${f.base}` : `doesn't ${f.base}`;
+    }
+    if (f.beVerb) {
+      if (tense === 'past')   return `was ${f.tail}`;
+      if (tense === 'future') return `will be ${f.tail}`;
+      if (subjKo === '저' || subjKo === '나') return `am ${f.tail}`;
+      return isFirstSecond ? `are ${f.tail}` : `is ${f.tail}`;
+    }
+    if (tense === 'past')   return f.past;
+    if (tense === 'future') return `will ${f.base}`;
+    return isFirstSecond ? f.base : f.third;
   }
   if (window.RoConjugator) {
     const c = RoConjugator.conjugate(verb.ro);
@@ -632,11 +566,15 @@ async function loadVocab() {
     console.warn('Vocabularul nu s-a putut încărca, folosesc cuvintele de bază.');
   }
 
+  // Vocabularul separă alternativele fie prin ",", fie prin "/" (niciodată
+  // ambele în aceeași glosă) — ex. "to wipe / to clean" pentru 닦다. Fără
+  // split pe "/" aici, coada rămasă ("/ to clean") se scurgea în traducerea
+  // conjugată a verbului.
   function makeItem(ko, cat) {
     const v = byKo[ko];
     if (!v) return { ko, emoji: emj(ko, cat), ro: ko, en: ko };
-    const ro = (v.ro || ko).split(',')[0].split(';')[0].trim();
-    const en = (v.en || ko).split(',')[0].split(';')[0].trim();
+    const ro = (v.ro || ko).split(',')[0].split(';')[0].split('/')[0].trim();
+    const en = (v.en || ko).split(',')[0].split(';')[0].split('/')[0].trim();
     return { ko, emoji: emj(ko, cat), ro, en };
   }
 
@@ -656,10 +594,38 @@ async function loadVocab() {
     .sort((a,b) => a.ko.localeCompare(b.ko))
     .forEach(d => timeKos.push(d.ko));
 
-  // LOCURI / OBIECTE / VERBE: derivate din CORES
-  const locKos  = [...new Set(CORES.map(c => c.loc))];
-  const objKos  = [...new Set(CORES.map(c => c.obj))];
-  const verbKos = [...new Set(CORES.map(c => c.verb))];
+  // LOCURI / OBIECTE: toate din vocab (categoriile 'places'/'objects')
+  const locKos = Object.values(byKo)
+    .filter(d => d.categories && d.categories.includes('places'))
+    .map(d => d.ko);
+  const objKos = Object.values(byKo)
+    .filter(d => d.categories && d.categories.includes('objects'))
+    .map(d => d.ko);
+
+  // VERBE: toate din vocab, cu excluderi necesare pentru propoziții
+  // gramatical corecte (rolele se combină independent, fără nicio logică
+  // de potrivire semantică sau de registru):
+  //  1) verbele onorifice/smerite (계시다, 주무시다 etc.) presupun un
+  //     subiect anume (persoană cu statut superior / vorbitorul însuși),
+  //     dar subiectul e ales independent aici;
+  //  2) glosele "to be/to feel/to not X" sunt de fapt adjective-predicat
+  //     în coreeană — nu iau obiect direct cu 을/를 ca restul verbelor din
+  //     tiparul fix subiect+timp+loc+obiect+verb — iar "to rain" e
+  //     impersonal (fără subiect uman);
+  //  3) 싫어하다: singura glosă RO din tot vocabularul de verbe scrisă ca
+  //     construcție dativă negată ("a nu-i plăcea") — RoConjugator nu o
+  //     parsează corect (îi pierde negația, inversând sensul în "place"/
+  //     "a plăcut"). Vocabul are și "a detesta" ca alternativă, dar e a
+  //     doua opțiune din listă; mai simplu de exclus aici decât de reparat
+  //     parserul general pentru un singur cuvânt.
+  const SKIP_VERB = new Set(['계시다','주무시다','말씀하시다','드리다','돌아가시다','뵈다','싫어하다']);
+  function isSlotVerb(d) {
+    const en = (d.en || '').split(',')[0].split(';')[0].trim();
+    return en !== 'to rain' && /^to (?!not |feel |be )\S/.test(en);
+  }
+  const verbKos = Object.values(byKo)
+    .filter(d => d.categories && d.categories.includes('verbs') && !SKIP_VERB.has(d.ko) && isSlotVerb(d))
+    .map(d => d.ko);
 
   REELS.find(r => r.id === 'subject').items  = subjKos.map(ko => makeItem(ko, 'subjects'));
   REELS.find(r => r.id === 'time').items     = timeKos.map(ko => makeItem(ko, 'times'));
@@ -817,29 +783,16 @@ function doSpin() {
   const total = REELS.filter(r => !ST[r.id].locked).length || 0;
   if (total === 0) { spinning = false; document.getElementById('smSpinBtn').disabled = false; return; }
 
-  // Filtrăm nuclee compatibile cu relele blocate
-  let pool = CORES.slice();
-  if (ST.location.locked) pool = pool.filter(c => c.loc === cur('location').ko);
-  if (ST.object.locked)   pool = pool.filter(c => c.obj === cur('object').ko);
-  if (ST.verb.locked)     pool = pool.filter(c => c.verb === cur('verb').ko);
-  if (pool.length === 0)  pool = CORES.slice();
-  const core = pool[Math.floor(Math.random() * pool.length)];
-
-  function idxOf(reelId, ko) {
-    return REELS.find(r => r.id === reelId).items.findIndex(it => it.ko === ko);
-  }
-
-  const targets = {
-    subject:  Math.floor(Math.random() * REELS.find(r => r.id === 'subject').items.length),
-    time:     Math.floor(Math.random() * REELS.find(r => r.id === 'time').items.length),
-    location: idxOf('location', core.loc),
-    object:   idxOf('object',   core.obj),
-    verb:     idxOf('verb',     core.verb),
-  };
-  ['subject','time'].forEach(id => {
-    const len = REELS.find(r => r.id === id).items.length;
-    if (targets[id] === ST[id].idx && len > 1)
-      targets[id] = (ST[id].idx + 1 + Math.floor(Math.random() * (len - 1))) % len;
+  // Fiecare rolă trage independent din tot vocabularul ei — nu mai există
+  // o listă fixă de combinații "coerente" (vezi loadVocab), deci fiecare
+  // rolă blocată rămâne pur și simplu neschimbată, restul se rotesc liber.
+  const targets = {};
+  REELS.forEach(def => {
+    const len = def.items.length;
+    let t = Math.floor(Math.random() * len);
+    if (t === ST[def.id].idx && len > 1)
+      t = (ST[def.id].idx + 1 + Math.floor(Math.random() * (len - 1))) % len;
+    targets[def.id] = t;
   });
 
   REELS.forEach((def, i) => {
