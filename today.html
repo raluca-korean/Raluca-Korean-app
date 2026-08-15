@@ -99,8 +99,7 @@ var UI = {
     vocabTitle:'Vocabular', vocabSub:'Cuvinte scadente în Flashcards',
     hanjaTitle:'Hanja', hanjaSub:'Caractere scadente pentru recapitulare',
     exTitle:'Exerciții', exSub:'Exerciții scadente (SRS)',
-    wrongTitle:'Greșeli', wrongSub:'Itemi din jurnalul de greșeli',
-    goVocab:'Recapitulează →', goHanja:'Recapitulează →', goEx:'Practică →', goWrong:'Vezi greșelile →',
+    goVocab:'Recapitulează →', goHanja:'Recapitulează →', goEx:'Practică →',
     nothingDue:'0 azi',
     allDoneTitle:'Totul e la zi! 🎉', allDoneSub:'Nimic scadent azi — revino mâine sau explorează liber o funcționalitate.',
     itemsSingular:'item', itemsPlural:'itemi'
@@ -112,8 +111,7 @@ var UI = {
     vocabTitle:'Vocabulary', vocabSub:'Words due in Flashcards',
     hanjaTitle:'Hanja', hanjaSub:'Characters due for review',
     exTitle:'Exercises', exSub:'Exercises due (SRS)',
-    wrongTitle:'Mistakes', wrongSub:'Items in your mistake log',
-    goVocab:'Review →', goHanja:'Review →', goEx:'Practice →', goWrong:'See mistakes →',
+    goVocab:'Review →', goHanja:'Review →', goEx:'Practice →',
     nothingDue:'0 today',
     allDoneTitle:"You're all caught up! 🎉", allDoneSub:'Nothing due today — come back tomorrow, or explore any feature freely.',
     itemsSingular:'item', itemsPlural:'items'
@@ -130,11 +128,6 @@ function dueCount(key){
   Object.keys(data).forEach(function(k){ if(data[k] && data[k].due <= now) n++; });
   return n;
 }
-function wrongCount(){
-  try { return (JSON.parse(localStorage.getItem('RK_WRONG_LOG') || '[]')).length; }
-  catch(e){ return 0; }
-}
-
 function render(){
   var l = L();
   document.getElementById('pageTitle').textContent = l.title;
@@ -143,8 +136,7 @@ function render(){
   var vocab = dueCount('RK_FC_SRS');
   var hanja = dueCount('RK_HJ_SRS');
   var ex    = dueCount('RK_EX_SRS');
-  var wrong = wrongCount();
-  var total = vocab + hanja + ex + wrong;
+  var total = vocab + hanja + ex;
 
   var streak = window.RKStreak ? RKStreak.get() : {days:0};
   var xpData = window.RKGamification ? RKGamification.getXPData() : {total:0};
@@ -154,7 +146,6 @@ function render(){
     { icon:'🃏', title:l.vocabTitle, sub:l.vocabSub, count:vocab, href:'flashcards.html',   cta:l.goVocab },
     { icon:'漢', title:l.hanjaTitle, sub:l.hanjaSub, count:hanja, href:'hanja-book.html',   cta:l.goHanja },
     { icon:'📝', title:l.exTitle,    sub:l.exSub,    count:ex,    href:'exercises.html',    cta:l.goEx    },
-    { icon:'❌', title:l.wrongTitle, sub:l.wrongSub, count:wrong, href:'mistakes.html',     cta:l.goWrong },
   ];
 
   var html = '';
