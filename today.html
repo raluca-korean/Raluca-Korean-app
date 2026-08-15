@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Azi</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#db2777">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+/* ── HERO STRIP ───────────────────────────────────────── */
+.td-hero{
+  text-align:center;padding:22px 16px 20px;
+}
+.td-hero-num{font-size:44px;font-weight:900;color:var(--rk-heading);line-height:1}
+.td-hero-lbl{font-size:13px;color:var(--rk-muted);margin-top:6px;font-weight:600}
+.td-hero-done{font-size:15px;color:var(--rk-muted);padding:10px 0}
+
+/* ── STATUS STRIP (streak / xp / level) ──────────────────── */
+.td-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.td-metric{background:var(--rk-card);border:2px solid var(--rk-stroke);border-bottom:4px solid var(--rk-stroke-b);border-radius:14px;padding:12px 10px;text-align:center;box-shadow:0 4px 14px var(--rk-shadow)}
+.td-metric-val{font-size:20px;font-weight:900;color:var(--rk-heading)}
+.td-metric-lbl{font-size:10px;color:var(--rk-muted);margin-top:2px;font-weight:600;letter-spacing:.03em}
+
+/* ── QUEUE CARDS ──────────────────────────────────────── */
+.td-queue{display:flex;flex-direction:column;gap:10px}
+.td-item{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;border-radius:14px;
+  background:var(--rk-card);border:2px solid var(--rk-stroke);border-bottom:4px solid var(--rk-stroke-b);
+  box-shadow:0 4px 14px var(--rk-shadow);
+  text-decoration:none;transition:transform .12s,border-color .15s;
+}
+.td-item:hover{transform:translateY(-1px);border-color:rgba(219,39,119,.35)}
+.td-item.empty{opacity:.5}
+.td-icon{font-size:26px;width:40px;text-align:center;flex-shrink:0}
+.td-info{flex:1;min-width:0}
+.td-title{font-size:15px;font-weight:800;color:var(--rk-heading)}
+.td-sub{font-size:12px;color:var(--rk-muted);margin-top:2px}
+.td-count{
+  font-size:18px;font-weight:900;color:#fff;
+  background:linear-gradient(135deg,#db2777,#7c3aed);
+  border-radius:12px;min-width:34px;text-align:center;
+  padding:4px 9px;flex-shrink:0;
+}
+.td-item.empty .td-count{background:var(--rk-bg-flat);color:var(--rk-muted-ui)}
+.td-arrow{color:var(--rk-muted-ui);font-size:18px;flex-shrink:0}
+
+/* ── ALL DONE ─────────────────────────────────────────── */
+.td-alldone{text-align:center;padding:36px 20px}
+.td-alldone-icon{font-size:52px;line-height:1;margin-bottom:12px}
+.td-alldone-title{font-size:16px;font-weight:700;color:var(--rk-heading);margin-bottom:6px}
+.td-alldone-sub{font-size:13px;color:var(--rk-muted)}
+
+/* ── DARK MODE ────────────────────────────────────────── */
+body.dark-mode .td-metric,body.dark-mode .td-item{background:#1a0e2e;border-color:rgba(219,39,119,.22)}
+body.dark-mode .td-item.empty .td-count{background:rgba(255,255,255,.06)}
+
+@media(max-width:500px){
+  .td-hero-num{font-size:34px}
+  .td-metric-val{font-size:16px}
+}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <h1 id="pageTitle">🗓️ Azi</h1>
+      <div class="sub" id="pageSubtitle">Tot ce ai de recapitulat, într-un singur loc</div>
+    </div>
+    <div id="pageControls"></div>
+  </div>
+</div>
+
+<div id="mainContent"></div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/srs.js"></script>
+<script src="./js/core/gamification.js"></script>
+<script src="./js/core/streak.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script>
+'use strict';
+
+var LANG = RKLang.get();
+
+var UI = {
+  ro:{
+    title:'🗓️ Azi', sub:'Tot ce ai de recapitulat, într-un singur loc',
+    heroLbl:'de recapitulat azi', heroLblOne:'de recapitulat azi',
+    streak:'Streak', xp:'XP', level:'Nivel',
+    vocabTitle:'Vocabular', vocabSub:'Cuvinte scadente în Flashcards',
+    hanjaTitle:'Hanja', hanjaSub:'Caractere scadente pentru recapitulare',
+    exTitle:'Exerciții', exSub:'Exerciții scadente (SRS)',
+    wrongTitle:'Greșeli', wrongSub:'Itemi din jurnalul de greșeli',
+    goVocab:'Recapitulează →', goHanja:'Recapitulează →', goEx:'Practică →', goWrong:'Vezi greșelile →',
+    nothingDue:'0 azi',
+    allDoneTitle:'Totul e la zi! 🎉', allDoneSub:'Nimic scadent azi — revino mâine sau explorează liber o funcționalitate.',
+    itemsSingular:'item', itemsPlural:'itemi'
+  },
+  en:{
+    title:'🗓️ Today', sub:'Everything due for review, in one place',
+    heroLbl:'due today', heroLblOne:'due today',
+    streak:'Streak', xp:'XP', level:'Level',
+    vocabTitle:'Vocabulary', vocabSub:'Words due in Flashcards',
+    hanjaTitle:'Hanja', hanjaSub:'Characters due for review',
+    exTitle:'Exercises', exSub:'Exercises due (SRS)',
+    wrongTitle:'Mistakes', wrongSub:'Items in your mistake log',
+    goVocab:'Review →', goHanja:'Review →', goEx:'Practice →', goWrong:'See mistakes →',
+    nothingDue:'0 today',
+    allDoneTitle:"You're all caught up! 🎉", allDoneSub:'Nothing due today — come back tomorrow, or explore any feature freely.',
+    itemsSingular:'item', itemsPlural:'items'
+  }
+};
+function L(){ return UI[LANG]; }
+
+// ── DUE COUNTS (reads the same SRS/mistake data every feature already keeps) ──
+function dueCount(key){
+  if(!window.RKSrs) return 0;
+  var data = RKSrs.load(key);
+  var now = Date.now();
+  var n = 0;
+  Object.keys(data).forEach(function(k){ if(data[k] && data[k].due <= now) n++; });
+  return n;
+}
+function wrongCount(){
+  try { return (JSON.parse(localStorage.getItem('RK_WRONG_LOG') || '[]')).length; }
+  catch(e){ return 0; }
+}
+
+function render(){
+  var l = L();
+  document.getElementById('pageTitle').textContent = l.title;
+  document.getElementById('pageSubtitle').textContent = l.sub;
+
+  var vocab = dueCount('RK_FC_SRS');
+  var hanja = dueCount('RK_HJ_SRS');
+  var ex    = dueCount('RK_EX_SRS');
+  var wrong = wrongCount();
+  var total = vocab + hanja + ex + wrong;
+
+  var streak = window.RKStreak ? RKStreak.get() : {days:0};
+  var xpData = window.RKGamification ? RKGamification.getXPData() : {total:0};
+  var lvl    = window.RKGamification ? RKGamification.getLevelInfo(xpData.total) : {current:{level:1}};
+
+  var items = [
+    { icon:'🃏', title:l.vocabTitle, sub:l.vocabSub, count:vocab, href:'flashcards.html',   cta:l.goVocab },
+    { icon:'漢', title:l.hanjaTitle, sub:l.hanjaSub, count:hanja, href:'hanja-book.html',   cta:l.goHanja },
+    { icon:'📝', title:l.exTitle,    sub:l.exSub,    count:ex,    href:'exercises.html',    cta:l.goEx    },
+    { icon:'❌', title:l.wrongTitle, sub:l.wrongSub, count:wrong, href:'mistakes.html',     cta:l.goWrong },
+  ];
+
+  var html = '';
+
+  html += '<div class="card td-hero">' +
+    '<div class="td-hero-num">' + total + '</div>' +
+    '<div class="td-hero-lbl">' + (LANG==='ro' ? l.heroLbl : (total===1 ? l.heroLblOne : l.heroLbl)) + '</div>' +
+  '</div>';
+
+  html += '<div class="td-strip">' +
+    '<div class="td-metric"><div class="td-metric-val">🔥' + streak.days + '</div><div class="td-metric-lbl">' + l.streak + '</div></div>' +
+    '<div class="td-metric"><div class="td-metric-val">' + xpData.total + '</div><div class="td-metric-lbl">' + l.xp + '</div></div>' +
+    '<div class="td-metric"><div class="td-metric-val">Lv.' + lvl.current.level + '</div><div class="td-metric-lbl">' + l.level + '</div></div>' +
+  '</div>';
+
+  if(total === 0){
+    html += '<div class="card td-alldone">' +
+      '<div class="td-alldone-icon">🌿</div>' +
+      '<div class="td-alldone-title">' + l.allDoneTitle + '</div>' +
+      '<div class="td-alldone-sub">' + l.allDoneSub + '</div>' +
+    '</div>';
+  } else {
+    html += '<div class="card"><div class="td-queue">';
+    items.forEach(function(it){
+      var empty = it.count === 0;
+      html += '<a class="td-item' + (empty ? ' empty' : '') + '" href="' + it.href + '">' +
+        '<div class="td-icon">' + it.icon + '</div>' +
+        '<div class="td-info">' +
+          '<div class="td-title">' + it.title + '</div>' +
+          '<div class="td-sub">' + (empty ? it.sub : it.cta) + '</div>' +
+        '</div>' +
+        '<div class="td-count">' + it.count + '</div>' +
+      '</a>';
+    });
+    html += '</div></div>';
+  }
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+RKLang.init(function(lang){ LANG = lang; render(); });
+render();
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+</body>
+</html>
