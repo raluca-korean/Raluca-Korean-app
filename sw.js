@@ -1,4 +1,4 @@
-const CACHE = 'rk-v109';
+const CACHE = 'rk-v110';
 
 const STATIC = [
   './',
@@ -50,6 +50,7 @@ const STATIC = [
   './js/pronunciation.js',
   './js/stats.js',
   './js/core/audio.js',
+  './js/core/backup.js',
   './js/core/conjugation.js',
   './js/core/verb-conjugator.js',
   './js/core/ro-conjugator.js',

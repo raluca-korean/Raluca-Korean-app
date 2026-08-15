@@ -43,28 +43,6 @@ const UI = {
   }
 };
 
-/* Every RK_ localStorage key except RK_SCHEMA_VER, which storage.js
-   deliberately excludes so a restored backup re-runs migrations. */
-const BACKUP_KEYS = [
-  // exerciții & progres general
-  "RK_STATS","RK_LESSON_DONE","RK_LEARNED_EX","RK_LEARNED","RK_LEVEL",
-  "RK_EX_SRS","RK_WRONG_LOG","RK_SPEED","RK_DONE_NEURAL","RK_STREAK",
-  // gamification
-  "RK_XP","RK_BADGES","RK_DAILY_QUEST","RK_DAILY_POPUP",
-  // vocabular & glosar
-  "RK_FAV_WORDS","RK_VOCAB_USER","RK_WORD_USAGE","RK_DICT_RECENT","RK_SAVED_SENTENCES",
-  // flashcards
-  "RK_FC_SRS","RK_FC_SORT","RK_FC_STATS","RK_FC_DAY_STREAK","RK_FC_LAST_DATE",
-  // hanja
-  "RK_HJ_LEARNED","RK_HJ_QUEUE","RK_HJ_SRS","RK_HJ_STREAK",
-  // lectură, povești, atelier de propoziții
-  "RK_RD_READ","RK_RD_SAVED","RK_RD_FONT","RK_STORIES","RK_SFP_DONE","RK_SFP_SHOWN","RK_SLOT_SPINS",
-  // examen & conversație
-  "RK_EXAM_HISTORY","RK_CONV_SCORES","RK_SPOKE_EVER",
-  // preferințe
-  "RK_LANG","RK_THEME"
-];
-
 function t(k){ return UI[currentLang][k]; }
 function pct(c, tot){ return tot === 0 ? 0 : Math.round(c/tot*100); }
 
@@ -76,44 +54,17 @@ function showBackupMsg(msg, ok){
 }
 
 function exportData(){
-  const payload = { version:1, exported:new Date().toISOString() };
-  BACKUP_KEYS.forEach(k => {
-    const v = localStorage.getItem(k);
-    if(v !== null) payload[k] = v;
-  });
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = `raluca-korean-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  RKBackup.exportNow();
   showBackupMsg(t("exportDone"), true);
 }
 
 function importFile(file){
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    try {
-      const data = JSON.parse(e.target.result);
-      if(!data.version) throw new Error("not a backup");
-      let count = 0;
-      BACKUP_KEYS.forEach(k => {
-        if(data[k] !== undefined){
-          localStorage.setItem(k, data[k]);
-          count++;
-        }
-      });
-      showBackupMsg(t("importOk")(count), true);
-      setTimeout(() => location.reload(), 1400);
-    } catch(_){
-      showBackupMsg(t("importBad"), false);
-    }
-  };
-  reader.readAsText(file);
+  RKBackup.importFromFile(file, (err, count) => {
+    if(err){ showBackupMsg(t("importBad"), false); return; }
+    showBackupMsg(t("importOk")(count), true);
+    setTimeout(() => location.reload(), 1400);
+  });
 }
 
 function render(){
