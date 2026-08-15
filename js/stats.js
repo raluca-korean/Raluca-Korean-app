@@ -43,10 +43,26 @@ const UI = {
   }
 };
 
+/* Every RK_ localStorage key except RK_SCHEMA_VER, which storage.js
+   deliberately excludes so a restored backup re-runs migrations. */
 const BACKUP_KEYS = [
-  "RK_STATS","RK_LESSON_DONE","RK_LEARNED_EX",
-  "RK_FAV_WORDS","RK_FC_SRS","RK_FC_SORT","RK_FC_STATS",
-  "RK_HJ_LEARNED","RK_LEARNED","RK_LEVEL","RK_LANG","RK_THEME"
+  // exerciții & progres general
+  "RK_STATS","RK_LESSON_DONE","RK_LEARNED_EX","RK_LEARNED","RK_LEVEL",
+  "RK_EX_SRS","RK_WRONG_LOG","RK_SPEED","RK_DONE_NEURAL","RK_STREAK_DAYS",
+  // gamification
+  "RK_XP","RK_BADGES","RK_DAILY_QUEST","RK_DAILY_POPUP",
+  // vocabular & glosar
+  "RK_FAV_WORDS","RK_VOCAB_USER","RK_WORD_USAGE","RK_DICT_RECENT","RK_SAVED_SENTENCES",
+  // flashcards
+  "RK_FC_SRS","RK_FC_SORT","RK_FC_STATS","RK_FC_DAY_STREAK","RK_FC_LAST_DATE",
+  // hanja
+  "RK_HJ_LEARNED","RK_HJ_QUEUE","RK_HJ_SRS","RK_HJ_STREAK",
+  // lectură, povești, atelier de propoziții
+  "RK_RD_READ","RK_RD_SAVED","RK_RD_FONT","RK_STORIES","RK_SFP_DONE","RK_SFP_SHOWN",
+  // examen & conversație
+  "RK_EXAM_HISTORY","RK_CONV_SCORES","RK_SPOKE_EVER",
+  // preferințe
+  "RK_LANG","RK_THEME"
 ];
 
 function t(k){ return UI[currentLang][k]; }
