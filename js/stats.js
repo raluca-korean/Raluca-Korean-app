@@ -48,7 +48,7 @@ const UI = {
 const BACKUP_KEYS = [
   // exerciții & progres general
   "RK_STATS","RK_LESSON_DONE","RK_LEARNED_EX","RK_LEARNED","RK_LEVEL",
-  "RK_EX_SRS","RK_WRONG_LOG","RK_SPEED","RK_DONE_NEURAL","RK_STREAK_DAYS",
+  "RK_EX_SRS","RK_WRONG_LOG","RK_SPEED","RK_DONE_NEURAL","RK_STREAK",
   // gamification
   "RK_XP","RK_BADGES","RK_DAILY_QUEST","RK_DAILY_POPUP",
   // vocabular & glosar

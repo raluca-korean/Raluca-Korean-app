@@ -13,7 +13,7 @@
  * that a restored backup triggers re-migration on the next page load.
  */
 (function () {
-  var CURRENT = 3;
+  var CURRENT = 4;
 
   /* ── v1 → v2 ────────────────────────────────────────────────────────
      RK_STATS gained a `byType` object for per-type accuracy tracking.
@@ -53,12 +53,60 @@
     });
   }
 
+  /* ── v3 → v4 ────────────────────────────────────────────────────────
+     Unified the app's scattered daily streaks (flashcards' RK_FC_DAY_STREAK,
+     lesson-neural's RK_STREAK_DAYS, hanja-book's RK_HJ_STREAK) into one
+     shared RK_STREAK, read/written by js/core/streak.js. Seeds it from
+     whichever legacy source has the longest streak, so nobody's progress
+     resets to zero because of this change.
+  */
+  function toISODate(d) {
+    try {
+      var t = new Date(d);
+      if (isNaN(t.getTime())) return '';
+      return t.toISOString().slice(0, 10);
+    } catch(e) { return ''; }
+  }
+
+  function migrateV3toV4() {
+    try {
+      if (localStorage.getItem('RK_STREAK')) return;
+      var candidates = [];
+
+      var fcDays = parseInt(localStorage.getItem('RK_FC_DAY_STREAK') || '0', 10);
+      if (fcDays > 0) {
+        candidates.push({ days: fcDays, best: fcDays, lastDate: toISODate(localStorage.getItem('RK_FC_LAST_DATE')) });
+      }
+
+      var nlDays = parseInt(localStorage.getItem('RK_STREAK_DAYS') || '0', 10);
+      var nlBest = parseInt(localStorage.getItem('RK_STREAK_BEST') || '0', 10);
+      if (nlDays > 0 || nlBest > 0) {
+        candidates.push({ days: nlDays, best: Math.max(nlDays, nlBest), lastDate: localStorage.getItem('RK_STREAK_LAST_DATE') || '' });
+      }
+
+      var hj = JSON.parse(localStorage.getItem('RK_HJ_STREAK') || 'null');
+      if (hj && hj.streak > 0) {
+        candidates.push({ days: hj.streak, best: hj.streak, lastDate: hj.lastDate || '' });
+      }
+
+      if (!candidates.length) return;
+      candidates.sort(function(a, b) { return b.days - a.days; });
+      var winner = candidates[0];
+      localStorage.setItem('RK_STREAK', JSON.stringify({
+        days: winner.days,
+        best: Math.max(winner.days, winner.best),
+        lastDate: winner.lastDate
+      }));
+    } catch(e) {}
+  }
+
   function run() {
     try {
       var ver = parseInt(localStorage.getItem('RK_SCHEMA_VER') || '1', 10);
       if (ver >= CURRENT) return;
       if (ver < 2) migrateV1toV2();
       if (ver < 3) migrateV2toV3();
+      if (ver < 4) migrateV3toV4();
       localStorage.setItem('RK_SCHEMA_VER', String(CURRENT));
     } catch(e) {}
   }

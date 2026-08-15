@@ -557,6 +557,7 @@
     var XP = 15;
     markDone(currentStory.id, currentEp.id);
     if (window.RKGamification) RKGamification.addXPBonus(XP);
+    if (window.RKStreak) RKStreak.touch();
 
     showState('stateComplete');
     document.getElementById('completePulse').textContent = '✦';

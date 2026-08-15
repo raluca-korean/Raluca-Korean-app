@@ -563,6 +563,7 @@ function doCheck() {
     pct>=65?t.excellent:pct>=42?t.good:pct>=22?t.tryAgain:t.wrong;
 
   if (pct>=60 && window.RKGamification) RKGamification.addXPBonus(5);
+  if (pct>=60 && window.RKStreak) RKStreak.touch();
 
   // Pt cuvinte/propoziții: arată canvas-ul original lat, nu versiunea normalizată
   const multiChar = (mode==="words"||mode==="sentences") && chars.length>1;

@@ -1487,6 +1487,7 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/gamification.js"></script>
+<script src="./js/core/streak.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════
    NEURAL LESSON ENGINE · JS
@@ -1576,22 +1577,8 @@ let doneSet=new Set(JSON.parse(localStorage.getItem('RK_DONE_NEURAL')||'[]'));
 let chalActive=false, chalDone=false;
 let spokeEver = !!localStorage.getItem('RK_SPOKE_EVER');
 
-// ── STREAK (real, calendar-day based — replaces the old static display) ──
-function touchStreak(){
-  const today=new Date().toISOString().slice(0,10);
-  const lastDate=localStorage.getItem('RK_STREAK_LAST_DATE');
-  let days=parseInt(localStorage.getItem('RK_STREAK_DAYS')||'0')||0;
-  if(lastDate!==today){
-    const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
-    days = lastDate===yesterday ? days+1 : 1;
-    localStorage.setItem('RK_STREAK_DAYS',String(days));
-    localStorage.setItem('RK_STREAK_LAST_DATE',today);
-  }
-  const best=Math.max(days,parseInt(localStorage.getItem('RK_STREAK_BEST')||'0')||0);
-  localStorage.setItem('RK_STREAK_BEST',String(best));
-  return {days,best};
-}
-const streakInfo=touchStreak();
+// ── STREAK (shared app-wide streak — js/core/streak.js) ──
+const streakInfo = window.RKStreak ? RKStreak.touch() : {days:0, best:0};
 let streakDays=streakInfo.days, streakBest=streakInfo.best;
 
 // ── LESSONS DATA ─────────────────────────────────────────────

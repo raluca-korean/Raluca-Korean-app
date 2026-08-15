@@ -850,21 +850,9 @@ let sessionCombo = 0;
 let dayStreak    = 0;
 
 function initGamification() {
-  const today = new Date().toDateString();
-  const last  = localStorage.getItem("RK_FC_LAST_DATE") || "";
-  const saved = parseInt(localStorage.getItem("RK_FC_DAY_STREAK") || "0");
-  const yest  = new Date(Date.now() - 86400000).toDateString();
-
-  if (last === today) {
-    dayStreak = saved;
-  } else if (last === yest) {
-    dayStreak = saved + 1;
-    localStorage.setItem("RK_FC_DAY_STREAK", dayStreak);
-  } else {
-    dayStreak = 1;
-    localStorage.setItem("RK_FC_DAY_STREAK", dayStreak);
-  }
-  localStorage.setItem("RK_FC_LAST_DATE", today);
+  // Shared app-wide streak (js/core/streak.js) — replaces the old
+  // flashcards-only RK_FC_DAY_STREAK/RK_FC_LAST_DATE tracking.
+  dayStreak = window.RKStreak ? RKStreak.touch().days : 0;
   updateGamificationDisplay();
 }
 

@@ -9,9 +9,10 @@ var lang        = localStorage.getItem('RK_LANG') || 'ro';
 var learned     = JSON.parse(localStorage.getItem('RK_HJ_LEARNED') || '[]');
 var bloomActive = -1;
 
-/* Streak + daily goal */
+/* Daily goal (today's review count — the app-wide streak itself now lives
+   in js/core/streak.js / RK_STREAK, shared with every other page). */
 var DAILY_GOAL  = 10;
-var streakData  = JSON.parse(localStorage.getItem('RK_HJ_STREAK') || '{"streak":0,"lastDate":"","today":0}');
+var streakData  = JSON.parse(localStorage.getItem('RK_HJ_STREAK') || '{"today":0,"lastDate":""}');
 
 function _todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -21,8 +22,6 @@ function _checkAndUpdateStreak() {
   var today = _todayStr();
   if (streakData.lastDate === today) return;
   /* New day */
-  var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-  streakData.streak = (streakData.lastDate === yesterday) ? streakData.streak : 0;
   streakData.today  = 0;
   streakData.lastDate = today;
   localStorage.setItem('RK_HJ_STREAK', JSON.stringify(streakData));
@@ -32,8 +31,6 @@ function _bumpStreak() {
   _checkAndUpdateStreak();
   streakData.today++;
   if (streakData.today === DAILY_GOAL) {
-    /* Goal reached today — increment streak */
-    streakData.streak++;
     var row = document.getElementById('streakRow');
     if (row) { row.classList.add('goal-reached'); setTimeout(function() { row.classList.remove('goal-reached'); }, 500); }
   }
@@ -46,7 +43,7 @@ function _renderStreak() {
   var gv = document.getElementById('goalVal');
   var gm = document.getElementById('goalMark');
   if (!sv) return;
-  sv.textContent = streakData.streak;
+  sv.textContent = window.RKStreak ? RKStreak.get().days : 0;
   gv.textContent = streakData.today + '/' + DAILY_GOAL;
   gm.textContent = streakData.today >= DAILY_GOAL ? ' ✓' : '';
 }
@@ -963,6 +960,7 @@ function boot() {
   });
 
   _checkAndUpdateStreak();
+  if (window.RKStreak) RKStreak.touch();
   _renderStreak();
   _sortQueueByDue();
   initCanvas();

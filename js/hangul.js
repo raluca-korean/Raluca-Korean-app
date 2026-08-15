@@ -827,6 +827,7 @@ function showQSummary() {
   if (window.RKGamification && qDeck.length) {
     RKGamification.addXPBonus(Math.max(5, Math.round(qCorrect / qDeck.length * 20)));
   }
+  if (window.RKStreak) RKStreak.touch();
   document.getElementById('mrsQPrompt').textContent   = t.qDone(qCorrect, qDeck.length);
   document.getElementById('mrsQFeedback').textContent = '';
   document.getElementById('mrsQOpts').innerHTML       = '';

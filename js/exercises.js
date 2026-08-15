@@ -497,6 +497,7 @@ function syncStudyToSW(currentStreak) {
 }
 
 function saveStats(isCorrect, type){
+  if (window.RKStreak) RKStreak.touch();
   const today = new Date().toISOString().slice(0, 10);
   let s;
   try { s = JSON.parse(localStorage.getItem("RK_STATS") || "null"); } catch(e){ s = null; }
