@@ -71,7 +71,10 @@ var I18N = {
     check:     'Verifică',
     shadow:    'Shadow',
     yousaid:   'Ai spus: ',
-    unavail:   'Recunoaștere vocală indisponibilă în browser'
+    unavail:   'Recunoaștere vocală indisponibilă în browser',
+    dailyTitle: 'Provocarea zilnică',
+    dailySub:   'Nimerește peste 70% pentru un bonus de XP',
+    dailyBadge: '🎯 Azi'
   },
   en: {
     title:     'Speaking',
@@ -86,9 +89,15 @@ var I18N = {
     check:     'Check',
     shadow:    'Shadow',
     yousaid:   'You said: ',
-    unavail:   'Speech recognition not supported in this browser'
+    unavail:   'Speech recognition not supported in this browser',
+    dailyTitle: 'Daily Challenge',
+    dailySub:   'Score 70%+ for a bonus XP',
+    dailyBadge: '🎯 Today'
   }
 };
+
+var DAILY_THRESHOLD = 0.7;
+var DAILY_XP = 15;
 
 function t(k) { return I18N[LANG][k]; }
 
@@ -140,8 +149,70 @@ function playTTS(text, rate) {
   speechSynthesis.speak(u);
 }
 
+/* ── DAILY CHALLENGE ────────────────────────────────── */
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+function loadDailyPron() {
+  try { return JSON.parse(localStorage.getItem('RK_DAILY_PRON') || 'null'); }
+  catch (e) { return null; }
+}
+function saveDailyPron(data) {
+  try { localStorage.setItem('RK_DAILY_PRON', JSON.stringify(data)); } catch (e) {}
+}
+
+function pickDailySentence() {
+  var epochDay = Math.floor(Date.now() / 86400000);
+  return SENTENCES[epochDay % SENTENCES.length];
+}
+
+function isDailyDoneToday() {
+  var rec = loadDailyPron();
+  return !!(rec && rec.date === todayISO() && rec.done);
+}
+
+function onDailyChecked(score) {
+  var pct = Math.round(score * 100);
+  if (score >= DAILY_THRESHOLD && !isDailyDoneToday()) {
+    saveDailyPron({ date: todayISO(), done: true, score: pct });
+    if (window.RKGamification) RKGamification.addXPBonus(DAILY_XP);
+    if (window.RKStreak) RKStreak.touch();
+    updateDailyBadge();
+  }
+}
+
+function updateDailyBadge() {
+  var badge = document.getElementById('dailyBadge');
+  if (!badge) return;
+  if (isDailyDoneToday()) {
+    badge.textContent = '✅ +' + DAILY_XP + ' XP';
+    badge.className = 'daily-badge done';
+  } else {
+    badge.textContent = t('dailyBadge');
+    badge.className = 'daily-badge';
+  }
+}
+
+function renderDailyChallenge() {
+  var wrap = document.getElementById('dailyChallenge');
+  if (!wrap) return;
+  wrap.innerHTML =
+    '<div class="card daily-card">' +
+      '<div class="daily-head">' +
+        '<span class="daily-icon">🎯</span>' +
+        '<div>' +
+          '<div class="daily-title">' + t('dailyTitle') + '</div>' +
+          '<div class="daily-sub">' + t('dailySub') + '</div>' +
+        '</div>' +
+        '<span class="daily-badge" id="dailyBadge"></span>' +
+      '</div>' +
+      '<div id="dailyCardBody"></div>' +
+    '</div>';
+  document.getElementById('dailyCardBody').appendChild(buildCard(pickDailySentence(), onDailyChecked));
+  updateDailyBadge();
+}
+
 /* ── BUILD CARD ─────────────────────────────────────── */
-function buildCard(s) {
+function buildCard(s, onChecked) {
   var div = document.createElement('div');
   div.className = 's-card';
 
@@ -293,6 +364,7 @@ function buildCard(s) {
       highlight.innerHTML  = '';
     }
     resDiv.classList.add('on');
+    if (typeof onChecked === 'function') onChecked(score);
   }
 
   btnCheck.onclick = function() {
@@ -368,6 +440,7 @@ function applyLang(lang) {
   document.documentElement.lang = lang;
   document.getElementById('pageTitle').textContent = t('title');
   document.getElementById('pageSub').textContent   = t('sub');
+  renderDailyChallenge();
   renderFilter();
   renderCards();
 }
