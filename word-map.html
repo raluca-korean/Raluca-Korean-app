@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Constelații</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+.app{max-width:1180px}
+
+/* ── Starfield backdrop (same cosmic gradient language as Harta Cuvântului) ── */
+.wm-sky{
+  position:relative;border-radius:16px;overflow:hidden;
+  background:
+    radial-gradient(1.6px 1.6px at 12% 25%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(1.3px 1.3px at 78% 60%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(1.5px 1.5px at 40% 80%, rgba(255,255,255,.35), transparent 60%),
+    radial-gradient(1.4px 1.4px at 92% 20%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(1.3px 1.3px at 60% 15%, rgba(255,255,255,.4), transparent 60%),
+    radial-gradient(1.5px 1.5px at 25% 55%, rgba(255,255,255,.35), transparent 60%),
+    linear-gradient(180deg,#1c1044 0%,#100a28 100%);
+  color:#f5f0ff;padding:16px;
+}
+.wm-sky .sub{color:#a99fcf}
+
+/* ── Search ── */
+.wm-search{
+  width:100%;padding:11px 40px 11px 14px;border-radius:11px;margin-top:10px;
+  background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);
+  color:#f5f0ff;font-size:.95rem;font-family:inherit;outline:none;
+}
+.wm-search:focus{background:rgba(255,255,255,.12);border-color:#a78bfa}
+.wm-search::placeholder{color:#a99fcf}
+
+/* ── Cluster grid (overview) ─────────────────────────────── */
+.wm-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:10px;margin-top:14px;
+}
+.wm-node{
+  border-radius:14px;padding:14px 10px;text-align:center;cursor:pointer;
+  background:rgba(255,255,255,.06);border:1.5px solid var(--nc,rgba(167,139,250,.35));
+  transition:transform .15s,background .15s,box-shadow .2s;
+}
+.wm-node:hover{transform:translateY(-2px);background:rgba(255,255,255,.11);box-shadow:0 0 22px var(--ncs,rgba(167,139,250,.25))}
+.wm-node-dot{width:10px;height:10px;border-radius:50%;background:var(--nc,#a78bfa);margin:0 auto 8px;box-shadow:0 0 10px var(--nc,#a78bfa)}
+.wm-node-lbl{font-size:12.5px;font-weight:700;line-height:1.25;color:#f5f0ff}
+.wm-node-count{font-size:10px;color:#a99fcf;margin-top:5px}
+.wm-empty{grid-column:1/-1;text-align:center;color:#a99fcf;padding:24px;font-size:.85rem}
+
+/* ── Detail (constellation) ──────────────────────────────── */
+.wm-detail{display:none;margin-top:14px}
+.wm-detail.on{display:block}
+.wm-back{
+  display:inline-flex;align-items:center;gap:6px;background:none;border:none;
+  color:#c9beed;font-size:.82rem;font-weight:700;cursor:pointer;padding:6px 0;font-family:inherit;
+}
+.wm-back:hover{color:#fff}
+.wm-sun{
+  text-align:center;margin:14px 0 18px;
+}
+.wm-sun-lbl{
+  display:inline-block;padding:10px 22px;border-radius:20px;font-weight:900;font-size:1.05rem;
+  background:linear-gradient(135deg,var(--nc,#a78bfa),rgba(255,255,255,.08));
+  color:#fff;box-shadow:0 0 30px var(--ncs,rgba(167,139,250,.4));
+}
+.wm-orbit-words{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+}
+.wm-word{
+  padding:7px 14px;border-radius:14px;cursor:pointer;
+  background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.14);
+  transition:all .15s;font-size:.92rem;font-weight:600;color:#f5f0ff;
+  display:flex;align-items:center;gap:6px;
+}
+.wm-word:hover{background:var(--ncs,rgba(167,139,250,.22));border-color:var(--nc,#a78bfa)}
+.wm-word.fav{border-color:#f59e0b}
+.wm-word-star{font-size:.78rem;opacity:.85;color:#f59e0b}
+
+/* ── Word popup panel ─────────────────────────────────────── */
+.wm-panel{
+  margin-top:14px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);
+  border-radius:14px;padding:16px;animation:wm-fadeup .22s ease;
+}
+@keyframes wm-fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.wm-panel-ko{font-size:1.7rem;font-weight:900;color:#f5f0ff;display:flex;align-items:center;gap:10px}
+.wm-panel-tr{font-size:.92rem;color:#c9beed;margin-top:4px}
+.wm-panel-acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.wm-panel-btn{
+  padding:6px 13px;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);
+  background:none;color:#c9beed;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;gap:5px;transition:all .15s;
+}
+.wm-panel-btn:hover{background:rgba(255,255,255,.08);color:#fff}
+.wm-panel-btn.fav-on{background:rgba(245,158,11,.15);border-color:#f59e0b;color:#fcd34d}
+.wm-panel-hdg{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#a99fcf;margin:14px 0 8px;font-weight:700}
+.wm-rel-row{display:flex;flex-wrap:wrap;gap:7px}
+.wm-rel-chip{
+  padding:5px 12px;border-radius:12px;font-size:.8rem;font-weight:700;cursor:pointer;
+  background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.14);color:#f5f0ff;
+  transition:all .15s;
+}
+.wm-rel-chip:hover{background:rgba(167,139,250,.25);border-color:#a78bfa}
+
+@media(max-width:500px){
+  .wm-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .wm-panel-ko{font-size:1.4rem}
+}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <h1 id="pageTitle">🌌 Constelații</h1>
+      <div class="sub" id="pageSubtitle">Explorează vocabularul pe legături de sens</div>
+    </div>
+    <div id="pageControls"></div>
+  </div>
+</div>
+
+<div class="card wm-sky">
+  <div class="sub" id="skySub">64 de constelații de cuvinte înrudite — atinge una ca s-o explorezi.</div>
+  <input type="search" class="wm-search" id="wmSearch" autocomplete="off" spellcheck="false">
+
+  <div class="wm-grid" id="wmGrid"></div>
+
+  <div class="wm-detail" id="wmDetail">
+    <button class="wm-back" id="wmBack">← <span id="wmBackLbl">Toate constelațiile</span></button>
+    <div class="wm-sun" id="wmSun"></div>
+    <div class="wm-orbit-words" id="wmWords"></div>
+    <div id="wmPanel"></div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script src="./js/core/audio.js"></script>
+<script>
+'use strict';
+
+var LANG = RKLang.get();
+var CLUSTERS = [];        // [{label:{ro,en}, words:[ko,...]}]
+var VOCAB_BY_KO = new Map();  // ko -> {ko,ro,en,categories}
+var WORD_TO_CLUSTERS = new Map(); // ko -> [clusterIdx,...]
+var activeCluster = -1;
+var activeWord = null;
+
+var UI = {
+  ro:{
+    title:'🌌 Constelații', sub:'Explorează vocabularul pe legături de sens',
+    skySub:function(n){ return n + ' constelații de cuvinte înrudite — atinge una ca s-o explorezi.'; },
+    searchPh:'Caută o constelație…',
+    back:'Toate constelațiile',
+    speak:'Pronunță', favLbl:'Favorit', alsoIn:'DE ASEMENEA ÎN',
+    noResults:'Nicio constelație găsită.'
+  },
+  en:{
+    title:'🌌 Constellations', sub:'Explore the vocabulary through meaning',
+    skySub:function(n){ return n + ' constellations of related words — tap one to explore it.'; },
+    searchPh:'Search a constellation…',
+    back:'All constellations',
+    speak:'Speak', favLbl:'Favorite', alsoIn:'ALSO IN',
+    noResults:'No constellation found.'
+  }
+};
+function L(){ return UI[LANG]; }
+
+var PALETTE = ['#a78bfa','#38bdf8','#4ade80','#fbbf24','#f472b6','#fb923c','#2dd4bf','#c084fc'];
+function clusterColor(i){ return PALETTE[i % PALETTE.length]; }
+function hexToRgba(hex, a){
+  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+
+function getFavs(){ try { return new Set(JSON.parse(localStorage.getItem('RK_FAV_WORDS') || '[]')); } catch(e){ return new Set(); } }
+function toggleFav(ko){
+  var favs = getFavs();
+  if(favs.has(ko)) favs.delete(ko); else favs.add(ko);
+  localStorage.setItem('RK_FAV_WORDS', JSON.stringify([...favs]));
+}
+
+function meaning(entry){ return LANG === 'ro' ? entry.ro : entry.en; }
+
+function renderGrid(filter){
+  var grid = document.getElementById('wmGrid');
+  var q = (filter || '').trim().toLowerCase();
+  var html = '';
+  CLUSTERS.forEach(function(c, i){
+    var lbl = c.label[LANG] || c.label.ro;
+    if(q && lbl.toLowerCase().indexOf(q) === -1) return;
+    var color = clusterColor(i);
+    html += '<div class="wm-node" style="--nc:' + color + ';--ncs:' + hexToRgba(color,.28) + '" data-idx="' + i + '">' +
+      '<div class="wm-node-dot"></div>' +
+      '<div class="wm-node-lbl">' + lbl + '</div>' +
+      '<div class="wm-node-count">' + c.words.length + '</div>' +
+    '</div>';
+  });
+  if(!html) html = '<div class="wm-empty">' + L().noResults + '</div>';
+  grid.innerHTML = html;
+  grid.querySelectorAll('.wm-node').forEach(function(n){
+    n.addEventListener('click', function(){ openCluster(parseInt(n.dataset.idx, 10)); });
+  });
+}
+
+function openCluster(idx){
+  activeCluster = idx;
+  activeWord = null;
+  var c = CLUSTERS[idx];
+  var color = clusterColor(idx);
+  var favs = getFavs();
+
+  document.getElementById('wmGrid').style.display = 'none';
+  document.getElementById('wmSearch').style.display = 'none';
+  document.getElementById('wmDetail').classList.add('on');
+
+  document.getElementById('wmSun').innerHTML =
+    '<span class="wm-sun-lbl" style="--nc:' + color + ';--ncs:' + hexToRgba(color,.45) + '">' + (c.label[LANG] || c.label.ro) + '</span>';
+
+  var wordsHtml = c.words.map(function(ko){
+    var entry = VOCAB_BY_KO.get(ko);
+    var isFav = favs.has(ko);
+    return '<div class="wm-word' + (isFav ? ' fav' : '') + '" style="--nc:' + color + ';--ncs:' + hexToRgba(color,.22) + '" data-ko="' + ko.replace(/"/g,'&quot;') + '">' +
+      (isFav ? '<span class="wm-word-star">★</span>' : '') + ko +
+    '</div>';
+  }).join('');
+  document.getElementById('wmWords').innerHTML = wordsHtml;
+  document.getElementById('wmWords').querySelectorAll('.wm-word').forEach(function(w){
+    w.addEventListener('click', function(){ openWord(w.dataset.ko); });
+  });
+  document.getElementById('wmPanel').innerHTML = '';
+  document.getElementById('wmDetail').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function closeCluster(){
+  activeCluster = -1;
+  activeWord = null;
+  document.getElementById('wmDetail').classList.remove('on');
+  document.getElementById('wmGrid').style.display = '';
+  document.getElementById('wmSearch').style.display = '';
+}
+
+function openWord(ko){
+  activeWord = ko;
+  var entry = VOCAB_BY_KO.get(ko);
+  var favs = getFavs();
+  var isFav = favs.has(ko);
+  var l = L();
+
+  var otherClusters = (WORD_TO_CLUSTERS.get(ko) || []).filter(function(i){ return i !== activeCluster; });
+
+  var html = '<div class="wm-panel">' +
+    '<div class="wm-panel-ko">' + ko + '</div>' +
+    '<div class="wm-panel-tr">' + (entry ? meaning(entry) : '—') + '</div>' +
+    '<div class="wm-panel-acts">' +
+      '<button class="wm-panel-btn" id="wmSpeakBtn">🔊 ' + l.speak + '</button>' +
+      '<button class="wm-panel-btn' + (isFav ? ' fav-on' : '') + '" id="wmFavBtn">' + (isFav ? '★' : '☆') + ' ' + l.favLbl + '</button>' +
+    '</div>';
+
+  if(otherClusters.length){
+    html += '<div class="wm-panel-hdg">' + l.alsoIn + '</div><div class="wm-rel-row">' +
+      otherClusters.map(function(i){
+        var color = clusterColor(i);
+        return '<span class="wm-rel-chip" style="border-color:' + hexToRgba(color,.4) + '" data-idx="' + i + '">' + (CLUSTERS[i].label[LANG] || CLUSTERS[i].label.ro) + '</span>';
+      }).join('') +
+    '</div>';
+  }
+  html += '</div>';
+
+  document.getElementById('wmPanel').innerHTML = html;
+  document.getElementById('wmSpeakBtn').addEventListener('click', function(){
+    if(window.AudioEngine) AudioEngine.speak(ko);
+  });
+  document.getElementById('wmFavBtn').addEventListener('click', function(){
+    toggleFav(ko);
+    openCluster(activeCluster); // re-render words (star state) then reopen word panel
+    openWord(ko);
+  });
+  document.getElementById('wmPanel').querySelectorAll('.wm-rel-chip').forEach(function(chip){
+    chip.addEventListener('click', function(){ openCluster(parseInt(chip.dataset.idx, 10)); });
+  });
+}
+
+function applyLang(){
+  var l = L();
+  document.getElementById('pageTitle').textContent = l.title;
+  document.getElementById('pageSubtitle').textContent = l.sub;
+  document.getElementById('skySub').textContent = l.skySub(CLUSTERS.length);
+  document.getElementById('wmSearch').placeholder = l.searchPh;
+  document.getElementById('wmBackLbl').textContent = l.back;
+  renderGrid(document.getElementById('wmSearch').value);
+  if(activeCluster >= 0) openCluster(activeCluster);
+}
+
+document.getElementById('wmSearch').addEventListener('input', function(e){
+  renderGrid(e.target.value);
+});
+document.getElementById('wmBack').addEventListener('click', closeCluster);
+
+Promise.all([
+  fetch('./data/word-clusters.json').then(function(r){ return r.json(); }),
+  fetch('./data/vocab-korean.json').then(function(r){ return r.json(); })
+]).then(function(results){
+  CLUSTERS = results[0];
+  results[1].forEach(function(v){ VOCAB_BY_KO.set(v.ko, v); });
+  CLUSTERS.forEach(function(c, i){
+    c.words.forEach(function(ko){
+      if(!WORD_TO_CLUSTERS.has(ko)) WORD_TO_CLUSTERS.set(ko, []);
+      WORD_TO_CLUSTERS.get(ko).push(i);
+    });
+  });
+  applyLang();
+}).catch(function(){
+  document.getElementById('wmGrid').innerHTML = '<div class="wm-empty">⚠️</div>';
+});
+
+RKLang.init(function(lang){ LANG = lang; applyLang(); });
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+</body>
+</html>
