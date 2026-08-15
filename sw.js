@@ -1,4 +1,4 @@
-const CACHE = 'rk-v97';
+const CACHE = 'rk-v98';
 
 const STATIC = [
   './',
@@ -65,7 +65,8 @@ const STATIC = [
   './data/reading-texts.json',
   './data/word-clusters.json',
   './data/extra-generated-sentences.json',
-  './data/hanja.json'
+  './data/hanja.json',
+  './data/builder-vocab.json'
 ];
 
 /* ── Install: cache each file individually so one slow/missing file
