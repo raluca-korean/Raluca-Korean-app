@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Compunere ghidată</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#db2777">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+/* ── HUB ────────────────────────────────────────────── */
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:4px}
+.cp-card{
+  background:var(--rk-card);border:2px solid var(--rk-stroke);border-bottom:4px solid var(--rk-stroke-b);
+  border-radius:18px;padding:20px 18px;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;
+  box-shadow:0 4px 14px var(--rk-shadow);text-decoration:none;display:block;color:inherit;
+}
+.cp-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(219,39,119,.18);border-color:rgba(219,39,119,.35)}
+.cp-card-icon{font-size:36px;line-height:1;margin-bottom:10px}
+.cp-card-title{font-size:15px;font-weight:900;color:var(--rk-heading);margin-bottom:4px}
+.cp-card-desc{font-size:12px;color:var(--rk-muted);line-height:1.4}
+.cp-card-meta{display:flex;align-items:center;gap:8px;margin-top:10px}
+.cp-lvl{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(124,58,237,.12);color:var(--rk-violet);text-transform:uppercase}
+.cp-done{font-size:12px;color:#16a34a;font-weight:700}
+
+/* ── WRITE VIEW ─────────────────────────────────────── */
+#writeView{display:none}
+.cp-back-btn{
+  background:none;border:1.5px solid var(--rk-stroke);border-radius:20px;
+  padding:6px 14px;font-size:13px;font-weight:700;color:var(--rk-text);
+  cursor:pointer;box-shadow:none;transition:border-color .15s;margin-bottom:14px;
+}
+.cp-back-btn:hover{border-color:rgba(219,39,119,.5);transform:none}
+.cp-prompt-instr{font-size:14px;color:var(--rk-text);line-height:1.55;margin:10px 0 14px}
+.cp-bank{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.cp-chip{
+  padding:6px 12px;border-radius:20px;border:1.5px solid var(--rk-stroke);
+  background:var(--rk-bg-flat);color:var(--rk-heading);font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .15s;font-family:inherit;box-shadow:none;
+}
+.cp-chip:hover{border-color:rgba(219,39,119,.45);background:rgba(219,39,119,.08);transform:translateY(-1px)}
+.cp-textarea{
+  width:100%;min-height:140px;padding:14px;border-radius:14px;border:2px solid var(--rk-stroke);
+  background:var(--rk-bg-flat);color:var(--rk-heading);font-family:'Noto Sans KR',sans-serif;
+  font-size:16px;line-height:1.6;resize:vertical;box-sizing:border-box;
+}
+.cp-textarea:focus{outline:none;border-color:rgba(219,39,119,.5)}
+.cp-meta-row{display:flex;justify-content:space-between;font-size:11px;color:var(--rk-muted-ui);margin:6px 2px 18px;font-weight:600}
+
+.cp-checklist{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.cp-check-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;
+  background:var(--rk-bg-flat);border:1.5px solid var(--rk-stroke);font-size:13px;font-weight:600;
+  color:var(--rk-text);transition:all .2s;
+}
+.cp-check-item.ok{border-color:rgba(22,163,74,.4);background:rgba(22,163,74,.08);color:#166534}
+body.dark-mode .cp-check-item.ok{color:#4ade80}
+.cp-check-ico{font-size:15px;flex-shrink:0}
+
+.cp-success{
+  display:none;text-align:center;padding:22px 18px;border-radius:16px;margin-top:6px;
+  background:linear-gradient(135deg,rgba(22,163,74,.10),rgba(88,204,2,.06));
+  border:1.5px solid rgba(22,163,74,.35);
+}
+.cp-success.show{display:block}
+.cp-success-icon{font-size:40px;margin-bottom:8px}
+.cp-success-title{font-size:15px;font-weight:900;color:#166534;margin-bottom:4px}
+body.dark-mode .cp-success-title{color:#4ade80}
+.cp-success-sub{font-size:12px;color:var(--rk-muted)}
+
+/* ── DARK MODE ──────────────────────────────────────── */
+body.dark-mode .cp-card{background:#1a0e2e;border-color:rgba(219,39,119,.22)}
+body.dark-mode .cp-chip{background:rgba(255,255,255,.05);border-color:rgba(219,39,119,.20);color:#eef0ff}
+body.dark-mode .cp-textarea{background:rgba(255,255,255,.04);border-color:rgba(219,39,119,.20);color:#eef0ff}
+body.dark-mode .cp-check-item{background:rgba(255,255,255,.04);border-color:rgba(219,39,119,.18)}
+
+@media(max-width:480px){
+  .cp-grid{grid-template-columns:1fr 1fr}
+  .cp-card-icon{font-size:28px}
+}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<!-- ══════════════════ HUB ══════════════════ -->
+<div id="hubView">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h1 id="pageTitle">✍️ Compunere ghidată</h1>
+        <div class="sub" id="pageSubtitle">Scrie propoziții în coreeană, cu un ghid de cerințe</div>
+      </div>
+      <div id="pageControls"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3 id="hubTitle" style="margin-bottom:14px">Alege o temă</h3>
+    <div class="cp-grid" id="promptGrid"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ WRITE ══════════════════ -->
+<div id="writeView">
+  <button class="cp-back-btn" id="backBtn">← Înapoi</button>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span id="writeIcon" style="font-size:26px"></span>
+      <h2 id="writeTitle" style="margin:0"></h2>
+      <span class="cp-lvl" id="writeLvl"></span>
+    </div>
+    <div class="cp-prompt-instr" id="writeInstr"></div>
+
+    <div class="cp-bank" id="wordBank"></div>
+
+    <textarea class="cp-textarea" id="compInput" placeholder="여기에 써 보세요…"></textarea>
+    <div class="cp-meta-row">
+      <span id="metaSentences"></span>
+      <span id="metaHangul"></span>
+    </div>
+
+    <div class="cp-checklist" id="checklist"></div>
+
+    <div class="cp-success" id="successBox">
+      <div class="cp-success-icon">🎉</div>
+      <div class="cp-success-title" id="successTitle"></div>
+      <div class="cp-success-sub" id="successSub"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/gamification.js"></script>
+<script src="./js/core/streak.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script>
+'use strict';
+
+var LANG = RKLang.get();
+var PROMPTS = [];
+var currentPrompt = null;
+
+var UI = {
+  ro:{
+    title:'✍️ Compunere ghidată', sub:'Scrie propoziții în coreeană, cu un ghid de cerințe',
+    hubTitle:'Alege o temă', topik:'TOPIK', done:'✓ Completat', back:'← Înapoi',
+    metaSentences:function(n){ return n + (n===1?' propoziție':' propoziții'); },
+    metaHangul:function(n){ return n + ' caractere coreene'; },
+    successTitle:'Compunere validată!', successSub:function(xp){ return 'Ai bifat toate cerințele · +' + xp + ' XP'; }
+  },
+  en:{
+    title:'✍️ Guided Composition', sub:'Write Korean sentences, guided by a requirement checklist',
+    hubTitle:'Choose a topic', topik:'TOPIK', done:'✓ Completed', back:'← Back',
+    metaSentences:function(n){ return n + (n===1?' sentence':' sentences'); },
+    metaHangul:function(n){ return n + ' Korean characters'; },
+    successTitle:'Composition validated!', successSub:function(xp){ return 'You met every requirement · +' + xp + ' XP'; }
+  }
+};
+function L(){ return UI[LANG]; }
+
+var COMP_XP = 20;
+var COMP_KEY = 'RK_COMPOSITIONS';
+
+function loadCompositions(){ try{ return JSON.parse(localStorage.getItem(COMP_KEY) || '{}'); } catch(e){ return {}; } }
+function saveComposition(id, patch){
+  try{
+    var all = loadCompositions();
+    var prev = all[id] || {};
+    var next = { text: patch.text, completed: patch.completed, date: patch.date, everCompleted: prev.everCompleted || false };
+    if(patch.completed) next.everCompleted = true;
+    all[id] = next;
+    localStorage.setItem(COMP_KEY, JSON.stringify(all));
+    return next;
+  } catch(e){ return null; }
+}
+
+// ── RULE-BASED CHECKER (no external AI, no API key) ─────────────────
+function splitSentences(text){
+  return text.split(/[.!?。！？\n]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+}
+function countHangul(text){
+  var m = text.match(/[가-힣]/g);
+  return m ? m.length : 0;
+}
+function endsPolite(sentence){
+  return /(요|습니다|ㅂ니다)$/.test(sentence.trim());
+}
+function checkRequirement(req, text){
+  var sentences = splitSentences(text);
+  switch(req.type){
+    case 'minSentences':   return sentences.length >= req.value;
+    case 'includesAny':    return req.value.some(function(w){ return text.indexOf(w) !== -1; });
+    case 'includesAll':    return req.value.every(function(w){ return text.indexOf(w) !== -1; });
+    case 'usesConnector':  return req.value.some(function(w){ return text.indexOf(w) !== -1; });
+    case 'endsWithPolite': return sentences.length > 0 && sentences.every(endsPolite);
+    case 'minHangulChars': return countHangul(text) >= req.value;
+    default: return false;
+  }
+}
+
+// ── HUB ───────────────────────────────────────────────────────────
+function renderHub(){
+  var l = L();
+  document.getElementById('pageTitle').textContent = l.title;
+  document.getElementById('pageSubtitle').textContent = l.sub;
+  document.getElementById('hubTitle').textContent = l.hubTitle;
+
+  var done = loadCompositions();
+  var grid = document.getElementById('promptGrid');
+  grid.innerHTML = '';
+  PROMPTS.forEach(function(p){
+    var isDone = done[p.id] && done[p.id].everCompleted;
+    var card = document.createElement('div');
+    card.className = 'cp-card';
+    card.innerHTML =
+      '<div class="cp-card-icon">' + p.icon + '</div>' +
+      '<div class="cp-card-title">' + p.title[LANG] + '</div>' +
+      '<div class="cp-card-desc">' + p.prompt[LANG] + '</div>' +
+      '<div class="cp-card-meta">' +
+        '<span class="cp-lvl">' + l.topik + ' ' + p.topik + '</span>' +
+        (isDone ? '<span class="cp-done">' + l.done + '</span>' : '') +
+      '</div>';
+    card.addEventListener('click', function(){ openPrompt(p); });
+    grid.appendChild(card);
+  });
+}
+
+// ── WRITE VIEW ────────────────────────────────────────────────────
+function openPrompt(p){
+  currentPrompt = p;
+  document.getElementById('hubView').style.display = 'none';
+  document.getElementById('writeView').style.display = 'block';
+
+  document.getElementById('writeIcon').textContent = p.icon;
+  document.getElementById('writeTitle').textContent = p.title[LANG];
+  document.getElementById('writeLvl').textContent = L().topik + ' ' + p.topik;
+  document.getElementById('writeInstr').textContent = p.prompt[LANG];
+
+  var bank = document.getElementById('wordBank');
+  bank.innerHTML = '';
+  p.wordBank.forEach(function(w){
+    var chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'cp-chip';
+    chip.textContent = w;
+    chip.addEventListener('click', function(){
+      var ta = document.getElementById('compInput');
+      ta.value = ta.value.length ? (ta.value.replace(/\s+$/,'') + ' ' + w + ' ') : (w + ' ');
+      ta.focus();
+      updateChecklist();
+    });
+    bank.appendChild(chip);
+  });
+
+  var saved = loadCompositions()[p.id];
+  var ta = document.getElementById('compInput');
+  ta.value = saved ? saved.text : '';
+  document.getElementById('successBox').classList.remove('show');
+  updateChecklist();
+}
+
+function updateChecklist(){
+  var p = currentPrompt;
+  if(!p) return;
+  var l = L();
+  var text = document.getElementById('compInput').value;
+
+  document.getElementById('metaSentences').textContent = l.metaSentences(splitSentences(text).length);
+  document.getElementById('metaHangul').textContent = l.metaHangul(countHangul(text));
+
+  var list = document.getElementById('checklist');
+  list.innerHTML = '';
+  var allOk = text.trim().length > 0;
+  p.requirements.forEach(function(req){
+    var ok = checkRequirement(req, text);
+    if(!ok) allOk = false;
+    var row = document.createElement('div');
+    row.className = 'cp-check-item' + (ok ? ' ok' : '');
+    row.innerHTML = '<span class="cp-check-ico">' + (ok ? '✅' : '⭕') + '</span><span>' + req.label[LANG] + '</span>';
+    list.appendChild(row);
+  });
+
+  var already = loadCompositions()[p.id];
+  var wasEverCompleted = already && already.everCompleted;
+
+  if(allOk){
+    saveComposition(p.id, { text: text, completed: true, date: new Date().toISOString() });
+    document.getElementById('successTitle').textContent = l.successTitle;
+    document.getElementById('successSub').textContent = l.successSub(COMP_XP);
+    document.getElementById('successBox').classList.add('show');
+    if(!wasEverCompleted){
+      if(window.RKGamification) RKGamification.addXPBonus(COMP_XP);
+      if(window.RKStreak) RKStreak.touch();
+    }
+  } else {
+    saveComposition(p.id, { text: text, completed: false, date: new Date().toISOString() });
+    document.getElementById('successBox').classList.remove('show');
+  }
+}
+
+document.getElementById('compInput').addEventListener('input', updateChecklist);
+
+document.getElementById('backBtn').addEventListener('click', function(){
+  document.getElementById('writeView').style.display = 'none';
+  document.getElementById('hubView').style.display = 'block';
+  renderHub();
+});
+
+// ── LANG ──────────────────────────────────────────────────────────
+RKLang.init(function(lang){
+  LANG = lang;
+  if(document.getElementById('writeView').style.display === 'block' && currentPrompt){
+    openPrompt(currentPrompt);
+  } else {
+    renderHub();
+  }
+});
+
+// ── LOAD DATA ─────────────────────────────────────────────────────
+fetch('./data/composition-prompts.json')
+  .then(function(r){ return r.json(); })
+  .then(function(data){ PROMPTS = data; renderHub(); })
+  .catch(function(){ PROMPTS = []; renderHub(); });
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+</body>
+</html>
