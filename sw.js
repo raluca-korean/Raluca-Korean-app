@@ -1,4 +1,4 @@
-const CACHE = 'rk-v119';
+const CACHE = 'rk-v120';
 
 const STATIC = [
   './',
@@ -27,6 +27,7 @@ const STATIC = [
   './pronunciation.html',
   './listening.html',
   './numbers.html',
+  './lyrics.html',
   './stats.html',
   './keyboard.html',
   './theme-anime.css',
@@ -43,6 +44,7 @@ const STATIC = [
   './pronunciation.css',
   './listening.css',
   './numbers.css',
+  './lyrics.css',
   './flag.svg',
   './manifest.json',
   './icons/icon.svg',
@@ -58,6 +60,7 @@ const STATIC = [
   './js/pronunciation.js',
   './js/listening.js',
   './js/numbers.js',
+  './js/lyrics.js',
   './js/stats.js',
   './js/core/audio.js',
   './js/core/backup.js',
@@ -86,7 +89,8 @@ const STATIC = [
   './data/builder-vocab.json',
   './data/composition-prompts.json',
   './data/listening.json',
-  './data/numbers.json'
+  './data/numbers.json',
+  './data/lyrics.json'
 ];
 
 /* ── Install: cache each file individually so one slow/missing file
