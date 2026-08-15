@@ -48,6 +48,21 @@
 .td-item.empty .td-count{background:var(--rk-bg-flat);color:var(--rk-muted-ui)}
 .td-arrow{color:var(--rk-muted-ui);font-size:18px;flex-shrink:0}
 
+/* ── STREAK CARD ──────────────────────────────────────── */
+.td-card-section{text-align:center}
+.td-card-section h3{margin-bottom:12px}
+.td-card-preview-wrap{display:flex;justify-content:center;margin-bottom:14px}
+.td-card-preview-img{
+  width:100%;max-width:240px;border-radius:18px;
+  box-shadow:0 10px 30px rgba(219,39,119,.28);display:block;
+}
+.td-card-btn{
+  display:inline-block;padding:11px 22px;border-radius:20px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#db2777,#7c3aed);color:#fff;font-weight:700;font-size:14px;
+  font-family:inherit;box-shadow:0 4px 16px rgba(219,39,119,.28);transition:opacity .2s;
+}
+.td-card-btn:hover{opacity:.85}
+
 /* ── ALL DONE ─────────────────────────────────────────── */
 .td-alldone{text-align:center;padding:36px 20px}
 .td-alldone-icon{font-size:52px;line-height:1;margin-bottom:12px}
@@ -103,7 +118,11 @@ var UI = {
     goVocab:'Recapitulează →', goHanja:'Recapitulează →', goEx:'Practică →',
     nothingDue:'0 azi',
     allDoneTitle:'Totul e la zi! 🎉', allDoneSub:'Nimic scadent azi — revino mâine sau explorează liber o funcționalitate.',
-    itemsSingular:'item', itemsPlural:'itemi'
+    itemsSingular:'item', itemsPlural:'itemi',
+    cardTitle:'🖼️ Cardul tău de streak', cardBtn:'⬇ Descarcă imaginea',
+    cardApp:'RALUCA KOREAN', cardStreakOne:'zi la rând', cardStreakMany:'zile la rând',
+    cardBest:function(n){ return 'Record: ' + n + (n===1?' zi':' zile'); },
+    cardDateLocale:'ro-RO'
   },
   en:{
     title:'🗓️ Today', sub:'Everything due for review, in one place',
@@ -115,7 +134,11 @@ var UI = {
     goVocab:'Review →', goHanja:'Review →', goEx:'Practice →',
     nothingDue:'0 today',
     allDoneTitle:"You're all caught up! 🎉", allDoneSub:'Nothing due today — come back tomorrow, or explore any feature freely.',
-    itemsSingular:'item', itemsPlural:'items'
+    itemsSingular:'item', itemsPlural:'items',
+    cardTitle:'🖼️ Your streak card', cardBtn:'⬇ Download image',
+    cardApp:'RALUCA KOREAN', cardStreakOne:'day streak', cardStreakMany:'day streak',
+    cardBest:function(n){ return 'Record: ' + n + (n===1?' day':' days'); },
+    cardDateLocale:'en-US'
   }
 };
 function L(){ return UI[LANG]; }
@@ -162,6 +185,12 @@ function render(){
     '<div class="td-metric"><div class="td-metric-val">Lv.' + lvl.current.level + '</div><div class="td-metric-lbl">' + l.level + '</div></div>' +
   '</div>';
 
+  html += '<div class="card td-card-section">' +
+    '<h3>' + l.cardTitle + '</h3>' +
+    '<div class="td-card-preview-wrap"><img class="td-card-preview-img" id="streakCardImg" alt="Streak card"></div>' +
+    '<button class="td-card-btn" id="streakCardBtn">' + l.cardBtn + '</button>' +
+  '</div>';
+
   if(total === 0){
     html += '<div class="card td-alldone">' +
       '<div class="td-alldone-icon">🌿</div>' +
@@ -185,6 +214,95 @@ function render(){
   }
 
   document.getElementById('mainContent').innerHTML = html;
+  setupStreakCard(streak, xpData, lvl);
+}
+
+// ── STREAK CARD (canvas-drawn, shareable PNG) ─────────────────────
+function drawStreakCard(streak, xpData, lvl){
+  var l = L();
+  var W = 1080, H = 1350;
+  var canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext('2d');
+
+  var grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, '#db2777');
+  grad.addColorStop(1, '#7c3aed');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.globalAlpha = .12;
+  ctx.fillStyle = '#fff';
+  [[150, 180, 90], [930, 220, 60], [880, 1160, 140], [120, 1060, 70]].forEach(function(c){
+    ctx.beginPath(); ctx.arc(c[0], c[1], c[2], 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  ctx.font = '700 32px "Noto Sans KR", sans-serif';
+  ctx.fillText(l.cardApp, W / 2, 110);
+
+  ctx.font = '90px "Noto Sans KR", sans-serif';
+  ctx.fillText('🔥', W / 2, 310);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 300px "Noto Sans KR", sans-serif';
+  ctx.fillText(String(streak.days || 0), W / 2, 650);
+
+  ctx.font = '700 46px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  ctx.fillText((streak.days || 0) === 1 ? l.cardStreakOne : l.cardStreakMany, W / 2, 720);
+
+  ctx.strokeStyle = 'rgba(255,255,255,.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(180, 800); ctx.lineTo(W - 180, 800); ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.font = '700 44px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.fillText((xpData.total || 0) + ' XP', 180, 890);
+
+  ctx.textAlign = 'right';
+  var lvlTitle = LANG === 'ro' ? lvl.current.title_ro : lvl.current.title_en;
+  ctx.fillText('Lv.' + lvl.current.level + (lvlTitle ? ' · ' + lvlTitle : ''), W - 180, 890);
+
+  ctx.textAlign = 'center';
+  ctx.font = '400 32px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.75)';
+  ctx.fillText(l.cardBest(streak.best || 0), W / 2, 965);
+
+  ctx.font = '400 28px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.55)';
+  ctx.fillText(new Date().toLocaleDateString(l.cardDateLocale, { year: 'numeric', month: 'long', day: 'numeric' }), W / 2, H - 70);
+
+  return canvas;
+}
+
+function setupStreakCard(streak, xpData, lvl){
+  var img = document.getElementById('streakCardImg');
+  var btn = document.getElementById('streakCardBtn');
+  if(!img || !btn) return;
+
+  function renderCard(){
+    var canvas = drawStreakCard(streak, xpData, lvl);
+    var url = canvas.toDataURL('image/png');
+    img.src = url;
+    btn.onclick = function(){
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'raluca-korean-streak-' + new Date().toISOString().slice(0, 10) + '.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+  }
+
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(renderCard);
+  } else {
+    renderCard();
+  }
 }
 
 RKLang.init(function(lang){ LANG = lang; render(); });
