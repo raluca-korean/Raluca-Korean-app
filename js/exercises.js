@@ -90,37 +90,22 @@ function recordCheck(elapsed, type, isCorrect){
 const EX_SRS_KEY = 'RK_EX_SRS';
 const EX_SRS_NEW_CAP = 10;
 
+// Algorithm lives in js/core/srs.js (shared with flashcards.js) — this file
+// just points it at the exercises-specific storage key.
 function exSrsLoad() {
-  try { return JSON.parse(localStorage.getItem(EX_SRS_KEY) || '{}'); } catch { return {}; }
+  return RKSrs.load(EX_SRS_KEY);
 }
 function exSrsSave(s) {
-  try { localStorage.setItem(EX_SRS_KEY, JSON.stringify(s)); } catch {}
+  RKSrs.save(EX_SRS_KEY, s);
 }
 
 function exSrsUpdate(exerciseKey, quality) {
   // quality: 1=wrong, 2=hint-assisted, 4=correct (SM-2 adapted)
-  const s = exSrsLoad();
-  const c = s[exerciseKey] || { n:0, I:1, EF:2.5, due:0 };
-  if (quality >= 3) {
-    if      (c.n === 0) c.I = 1;
-    else if (c.n === 1) c.I = 6;
-    else                c.I = Math.round(c.I * c.EF);
-    c.n++;
-  } else {
-    c.n = 0;
-    c.I = 1;
-  }
-  c.EF  = Math.max(1.3, c.EF + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-  c.due = Date.now() + c.I * 86400000;
-  s[exerciseKey] = c;
-  exSrsSave(s);
-  return c;
+  return RKSrs.updateClassic(EX_SRS_KEY, exerciseKey, quality);
 }
 
 function exSrsStatus(exerciseKey) {
-  const c = exSrsLoad()[exerciseKey];
-  if (!c) return 'new';
-  return c.due <= Date.now() ? 'due' : 'learning';
+  return RKSrs.statusClassic(EX_SRS_KEY, exerciseKey);
 }
 
 // Called after each answer — skips drills and wrongMode

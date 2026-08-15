@@ -1213,10 +1213,24 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     var words = getSavedWords();
     var idx   = words.findIndex ? words.findIndex(function (w) { return w.ko === tok.ko; })
                                 : (function () { for (var i=0;i<words.length;i++) if (words[i].ko===tok.ko) return i; return -1; })();
+    var justSaved = idx === -1;
     if (idx !== -1) { words.splice(idx, 1); }
     else            { words.push({ ko: tok.ko, ro: tok.ro || '', en: tok.en || '' }); }
     localStorage.setItem(RD_SAVED_KEY, JSON.stringify(words));
-    return idx === -1; /* true = just saved */
+    // Also add to the shared favorites pool (RK_FAV_WORDS) so words saved
+    // while reading show up in Glosar and enter the Flashcards SRS deck —
+    // only a one-way add on save, never removed here, since the word may
+    // also be favorited independently elsewhere.
+    if (justSaved) {
+      try {
+        var favs = JSON.parse(localStorage.getItem('RK_FAV_WORDS') || '[]');
+        if (favs.indexOf(tok.ko) === -1) {
+          favs.push(tok.ko);
+          localStorage.setItem('RK_FAV_WORDS', JSON.stringify(favs));
+        }
+      } catch (e) {}
+    }
+    return justSaved; /* true = just saved */
   }
   function updateSaveBtnState(saved) {
     if (!popSave || !popSaveLabel) return;

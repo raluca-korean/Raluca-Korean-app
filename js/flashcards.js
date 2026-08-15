@@ -75,30 +75,17 @@ function t(k){ return UI[currentLang][k] || k; }
 // ── SM-2 ─────────────────────────────────────────────────────
 const SRS_KEY = "RK_FC_SRS";
 
+// Algorithm lives in js/core/srs.js (shared with exercises.js) — this file
+// just points it at the flashcards-specific storage key.
 function srsLoad() {
-  try { return JSON.parse(localStorage.getItem(SRS_KEY) || "{}"); } catch { return {}; }
+  return RKSrs.load(SRS_KEY);
 }
 function srsSave(s) {
-  try { localStorage.setItem(SRS_KEY, JSON.stringify(s)); } catch {}
+  RKSrs.save(SRS_KEY, s);
 }
 
 function srsUpdate(ko, quality) {
-  const s = srsLoad();
-  const c = s[ko] || { n: 0, I: 1, EF: 2.5, due: 0 };
-  if (quality >= 3) {
-    if      (c.n === 0) c.I = 1;
-    else if (c.n === 1) c.I = 6;
-    else                c.I = Math.round(c.I * c.EF);
-    c.n++;
-  } else {
-    c.n = 0;
-    c.I = 1;
-  }
-  c.EF  = Math.max(1.3, c.EF + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-  c.due = Date.now() + c.I * 86400000;
-  s[ko] = c;
-  srsSave(s);
-  return c;
+  return RKSrs.updateClassic(SRS_KEY, ko, quality);
 }
 
 function srsBuildDeck(pool) {

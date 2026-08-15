@@ -2753,24 +2753,11 @@ function _srsInsertPos(di) {
 }
 
 function _updateSRS(di, correct) {
-  var s   = _getSRS(di);
-  var MIN = 60000;
-  var DAY = 86400000;
-  if (correct) {
-    s.reps++;
-    if      (s.reps === 1) { s.interval = 1; s.due = Date.now() + 10 * MIN; }
-    else if (s.reps === 2) { s.interval = 1; s.due = Date.now() + DAY; }
-    else {
-      s.interval = Math.round(s.interval * s.ease);
-      s.ease     = Math.min(2.9, s.ease + 0.05);
-      s.due      = Date.now() + s.interval * DAY;
-    }
-  } else {
-    s.ease = Math.max(1.3, s.ease - 0.15);
-    s.reps = 0; s.interval = 1;
-    s.due  = Date.now() + MIN;
-  }
-  srsData[di] = s;
+  // Algorithm lives in js/core/srs.js (stepWithLearningSteps — shares the
+  // module with exercises.js/flashcards.js's plain SM-2, but keeps hanja's
+  // own early learning-step timing); this file just keeps its local cache
+  // and localStorage write exactly as before.
+  srsData[di] = RKSrs.stepWithLearningSteps(_getSRS(di), correct);
   localStorage.setItem('RK_HJ_SRS', JSON.stringify(srsData));
 }
 
