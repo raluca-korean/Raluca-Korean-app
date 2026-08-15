@@ -460,8 +460,8 @@ const VIITOR_AUX = ['voi','vei','va','vom','veți','vor'];
 // patterns; words that don't fit any (idioms, disguised nouns like "frig"/
 // "păcat" used impersonally, or genuinely irregular plurals) get an
 // explicit lexical entry here rather than a guessed suffix rule.
-const ADJ_PLURAL_INVARIABLE = new Set(['aproape','departe','jos','gata','vioi','eficace']);
-const ADJ_PLURAL_IRREGULAR = { moale: 'moi' };
+const ADJ_PLURAL_INVARIABLE = new Set(['aproape','departe','gata','vioi','eficace']);
+const ADJ_PLURAL_IRREGULAR = { moale: 'moi', tânăr: 'tineri' };
 function pluralAdjective(tail) {
   if (ADJ_PLURAL_IRREGULAR[tail]) return ADJ_PLURAL_IRREGULAR[tail];
   if (ADJ_PLURAL_INVARIABLE.has(tail)) return tail;
@@ -475,6 +475,38 @@ function pluralAdjective(tail) {
   if (tail.endsWith('u')) return tail.slice(0, -1) + 'i';      // greu -> grei, acru -> acri
   if (tail.endsWith('e')) return tail.slice(0, -1) + 'i';      // dulce -> dulci, mare -> mari
   return tail + 'i';                                            // bun -> buni, alb -> albi
+}
+
+// Feminine singular/plural agreement for the same "a fi X" adjective tail
+// ("obosit"->"obosită"/"obosite", "cald"->"caldă"/"calde"). Feminine forms
+// diverge from the masculine-plural sound changes above in real Romanian —
+// the z/ț/ș consonant mutations are masculine-plural-only (cald->calzi but
+// caldă/calde stay plain) — so this is its own rule cascade, not a reuse.
+const ADJ_FEM_IRREGULAR = {
+  tânăr: {sg:'tânără', pl:'tinere'},
+  vioi: {sg:'vioaie', pl:'vioaie'},
+  greu: {sg:'grea', pl:'grele'},
+  rău: {sg:'rea', pl:'rele'},
+  acru: {sg:'acră', pl:'acre'},
+  nou: {sg:'nouă', pl:'noi'},
+};
+function feminineSingular(tail) {
+  if (ADJ_FEM_IRREGULAR[tail]) return ADJ_FEM_IRREGULAR[tail].sg;
+  if (ADJ_PLURAL_INVARIABLE.has(tail)) return tail;                       // gata: invariant across all 4 forms
+  if (tail.endsWith('tor')) return tail.slice(0, -3) + 'toare';           // recunoscător -> recunoscătoare
+  if (tail.endsWith('os')) return tail.slice(0, -2) + 'oasă';             // delicios -> delicioasă
+  if (tail.endsWith('e')) return tail;                                    // dulce/mare/fierbinte: gender-invariant
+  if (tail.endsWith('u')) return tail.slice(0, -1) + 'ă';                 // simplu -> simplă, acru -> acră (diphthong -eu/-ău/-ou tails are caught by ADJ_FEM_IRREGULAR above)
+  return tail + 'ă';                                                      // bun -> bună, obosit -> obosită, cald -> caldă
+}
+function femininePlural(tail) {
+  if (ADJ_FEM_IRREGULAR[tail]) return ADJ_FEM_IRREGULAR[tail].pl;
+  if (ADJ_PLURAL_INVARIABLE.has(tail)) return tail;
+  if (tail.endsWith('tor')) return tail.slice(0, -3) + 'toare';           // recunoscătoare (same as fem sg)
+  if (tail.endsWith('os')) return tail.slice(0, -2) + 'oase';             // delicioase
+  if (tail.endsWith('e')) return pluralAdjective(tail);                   // dulci/mari/fierbinți: shared with masc plural
+  if (tail.endsWith('u')) return tail.slice(0, -1) + 'e';                 // simplu -> simple, acru -> acre
+  return tail + 'e';                                                      // bune, obosite, calde
 }
 
 // Public API: given a full RO gloss ("a mânca", "a se odihni", "a aduce
@@ -525,6 +557,6 @@ function conjugate(ro) {
   return { present, trecut, viitor };
 }
 
-return { RO_VERB_CONJ, IRREGULAR, conjugatePresent, participle, parseRoVerbGloss, firstAlt, conjugate, pluralAdjective };
+return { RO_VERB_CONJ, IRREGULAR, conjugatePresent, participle, parseRoVerbGloss, firstAlt, conjugate, pluralAdjective, feminineSingular, femininePlural };
 
 })();
