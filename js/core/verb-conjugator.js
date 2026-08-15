@@ -60,10 +60,21 @@ window.VerbConjugator = {
       const base = stem.slice(0,-1) + openSyllable;
       return [{ro:'prezent',en:'present', form: base+'와요'}, {ro:'trecut',en:'past', form: base+'왔어요'}];
     }
-    if (jong === 17 && this.B_IRREGULAR.includes(word)) {
+    if (jong === 17 && (this.B_IRREGULAR.includes(word) || word.endsWith('스럽다'))) {
       const openSyllable = String.fromCharCode(code - jong);
       const base = stem.slice(0,-1) + openSyllable;
       return [{ro:'prezent',en:'present', form: base+'워요'}, {ro:'trecut',en:'past', form: base+'웠어요'}];
+    }
+    if (jong === 27 && this.H_IRREGULAR.includes(word)) {
+      // ㅎ-irregular (color/demonstrative adjectives): batchim ㅎ drops and
+      // the vowel collapses to ㅐ/ㅒ regardless of its original quality —
+      // 하얗다→하얘요 (ㅑ->ㅒ), 그렇다→그래요 (ㅓ->ㅐ, not ㅔ), 까맣다→까매요 (ㅏ->ㅐ).
+      const H_VOWEL_MERGE = {0:1, 2:3, 4:1};
+      const newJung = H_VOWEL_MERGE[jung];
+      const pre = stem.slice(0,-1);
+      const base = pre + String.fromCharCode(0xAC00 + cho*588 + newJung*28);
+      const past = pre + String.fromCharCode(0xAC00 + cho*588 + newJung*28 + 20) + '어요';
+      return [{ro:'prezent',en:'present', form: base+'요'}, {ro:'trecut',en:'past', form: past}];
     }
     if (last === '르' && jong === 0 && stem.length >= 2 && !this.REUL_REGULAR.includes(word)) {
       const preStem = stem.slice(0, -1);

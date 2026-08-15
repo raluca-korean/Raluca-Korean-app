@@ -455,6 +455,28 @@ const CLITIC = {
 const AUX_AVEA = ['am','ai','a','am','ați','au']; // perfect compus auxiliary (distinct from "avea" as a full verb)
 const VIITOR_AUX = ['voi','vei','va','vom','veți','vor'];
 
+// Masculine-plural agreement for a single-word predicate adjective behind
+// "a fi X" ("obosit"->"obosiți", "cald"->"calzi"). Covers the regular sound
+// patterns; words that don't fit any (idioms, disguised nouns like "frig"/
+// "păcat" used impersonally, or genuinely irregular plurals) get an
+// explicit lexical entry here rather than a guessed suffix rule.
+const ADJ_PLURAL_INVARIABLE = new Set(['aproape','departe','jos','gata','vioi','eficace']);
+const ADJ_PLURAL_IRREGULAR = { moale: 'moi' };
+function pluralAdjective(tail) {
+  if (ADJ_PLURAL_IRREGULAR[tail]) return ADJ_PLURAL_IRREGULAR[tail];
+  if (ADJ_PLURAL_INVARIABLE.has(tail)) return tail;
+  if (tail.endsWith('st')) return tail.slice(0, -2) + 'ști';   // îngust -> îngușți
+  if (tail.endsWith('te')) return tail.slice(0, -2) + 'ți';    // fierbinte -> fierbinți, iute -> iuți
+  if (tail.endsWith('ul') || tail.endsWith('ol')) return tail.slice(0, -1) + 'i'; // sătul -> sătui
+  if (tail.endsWith('t')) return tail.slice(0, -1) + 'ți';     // obosit -> obosiți
+  if (tail.endsWith('d')) return tail.slice(0, -1) + 'zi';     // cald -> calzi
+  if (tail.endsWith('s')) return tail.slice(0, -1) + 'și';     // gras -> grași
+  if (tail.endsWith('ș')) return tail + 'i';                   // leneș -> leneși
+  if (tail.endsWith('u')) return tail.slice(0, -1) + 'i';      // greu -> grei, acru -> acri
+  if (tail.endsWith('e')) return tail.slice(0, -1) + 'i';      // dulce -> dulci, mare -> mari
+  return tail + 'i';                                            // bun -> buni, alb -> albi
+}
+
 // Public API: given a full RO gloss ("a mânca", "a se odihni", "a aduce
 // cuiva"), return {present:[6], trecut:[6], viitor:[6]}, each already
 // including the clitic pronoun where the marker has a natural 6-person
@@ -494,9 +516,7 @@ function conjugate(ro) {
   // single-word adjective tail for the 3 plural persons only.
   const suffixes = [suffix, suffix, suffix, suffix, suffix, suffix];
   if (head === 'fi' && /^[a-zA-ZăâîșțĂÂÎȘȚ]+$/.test(tail)) {
-    const plural = tail.endsWith('t') ? tail.slice(0, -1) + 'ți'
-      : tail.endsWith('d') ? tail.slice(0, -1) + 'zi'
-      : null;
+    const plural = pluralAdjective(tail);
     if (plural) { suffixes[3] = suffixes[4] = suffixes[5] = ' ' + plural; }
   }
   const present = pres.map((f, i) => f + suffixes[i]);
@@ -505,6 +525,6 @@ function conjugate(ro) {
   return { present, trecut, viitor };
 }
 
-return { RO_VERB_CONJ, IRREGULAR, conjugatePresent, participle, parseRoVerbGloss, firstAlt, conjugate };
+return { RO_VERB_CONJ, IRREGULAR, conjugatePresent, participle, parseRoVerbGloss, firstAlt, conjugate, pluralAdjective };
 
 })();
