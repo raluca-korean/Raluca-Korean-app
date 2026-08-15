@@ -1,4 +1,4 @@
-const CACHE = 'rk-v121';
+const CACHE = 'rk-v122';
 
 const STATIC = [
   './',
@@ -29,6 +29,7 @@ const STATIC = [
   './numbers.html',
   './lyrics.html',
   './journal.html',
+  './honorifics.html',
   './stats.html',
   './keyboard.html',
   './theme-anime.css',
@@ -47,6 +48,7 @@ const STATIC = [
   './numbers.css',
   './lyrics.css',
   './journal.css',
+  './honorifics.css',
   './flag.svg',
   './manifest.json',
   './icons/icon.svg',
@@ -64,6 +66,7 @@ const STATIC = [
   './js/numbers.js',
   './js/lyrics.js',
   './js/journal.js',
+  './js/honorifics.js',
   './js/stats.js',
   './js/core/audio.js',
   './js/core/backup.js',
@@ -94,7 +97,8 @@ const STATIC = [
   './data/listening.json',
   './data/numbers.json',
   './data/lyrics.json',
-  './data/journal-prompts.json'
+  './data/journal-prompts.json',
+  './data/honorifics.json'
 ];
 
 /* ── Install: cache each file individually so one slow/missing file
