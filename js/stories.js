@@ -129,6 +129,21 @@
 (function () {
   'use strict';
 
+  /* Makes a custom (non-<button>) element keyboard-activatable: focusable,
+     announced as a button, and triggered by both click and Enter/Space —
+     these interactions were previously mouse/touch-only. */
+  function makeActivatable(el, handler) {
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.addEventListener('click', handler);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handler();
+      }
+    });
+  }
+
   /* ── State ── */
   var STORIES      = [];
   var lang         = 'ro';
@@ -326,7 +341,7 @@
         '</div>',
       ].join('');
 
-      node.addEventListener('click', function () {
+      makeActivatable(node, function () {
         renderConstellation(s);
       });
       container.appendChild(node);
@@ -380,7 +395,7 @@
       ].join('');
 
       if (!wp.classList.contains('wp-locked')) {
-        wp.addEventListener('click', function () {
+        makeActivatable(wp, function () {
           var epObj = story.episodes.find(function (e) { return e.id === wp.dataset.epId; });
           if (epObj) startImmersion(story, epObj);
         });
@@ -495,7 +510,7 @@
       var chip = document.createElement('div');
       chip.className   = 'rf-fragment';
       chip.textContent = ko;
-      chip.addEventListener('click', function () {
+      makeActivatable(chip, function () {
         if (answered) return;
         bank.splice(idx, 1);
         line.push(ko);
@@ -508,7 +523,7 @@
       var chip = document.createElement('div');
       chip.className   = 'rf-fragment rf-placed';
       chip.textContent = ko;
-      chip.addEventListener('click', function () {
+      makeActivatable(chip, function () {
         if (answered) return;
         line.splice(idx, 1);
         bank.push(ko);

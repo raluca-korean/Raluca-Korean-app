@@ -1131,7 +1131,7 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
           <span>▶</span> <span id="speakLbl">Ascultă</span>
         </button>
         <button class="nl-done-btn" id="doneBtn" onclick="markDone(curLesson)">✓ <span id="doneLbl">Gata</span></button>
-        <div class="nl-orb-btn" onclick="toggleOrb()" title="Pronunciation Orb">🎙</div>
+        <div class="nl-orb-btn" role="button" tabindex="0" onclick="toggleOrb()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleOrb();}" title="Pronunciation Orb">🎙</div>
       </div>
     </div>
   </div>
@@ -1329,11 +1329,11 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
     </div>
 
     <div class="nl-emo-row">
-      <div class="nl-emo on" data-emo="happy" onclick="setEmo('happy')">😊</div>
-      <div class="nl-emo" data-emo="excited" onclick="setEmo('excited')">🤩</div>
-      <div class="nl-emo" data-emo="think" onclick="setEmo('think')">🤔</div>
-      <div class="nl-emo" data-emo="love" onclick="setEmo('love')">🥰</div>
-      <div class="nl-emo" data-emo="cool" onclick="setEmo('cool')">😎</div>
+      <div class="nl-emo on" data-emo="happy" role="button" tabindex="0" onclick="setEmo('happy')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setEmo('happy');}">😊</div>
+      <div class="nl-emo" data-emo="excited" role="button" tabindex="0" onclick="setEmo('excited')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setEmo('excited');}">🤩</div>
+      <div class="nl-emo" data-emo="think" role="button" tabindex="0" onclick="setEmo('think')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setEmo('think');}">🤔</div>
+      <div class="nl-emo" data-emo="love" role="button" tabindex="0" onclick="setEmo('love')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setEmo('love');}">🥰</div>
+      <div class="nl-emo" data-emo="cool" role="button" tabindex="0" onclick="setEmo('cool')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setEmo('cool');}">😎</div>
     </div>
   </div>
 </section>
@@ -3860,7 +3860,10 @@ function buildPicker(){
     pill.dataset.idx=String(i);
     pill.className='nl-lesson-pill'+(i===curLesson?' active':'')+(doneSet.has(i)?' done':'');
     pill.innerHTML=`<div class="nl-lp-num">P${L.id}</div><div class="nl-lp-ko">${L.short}</div>`;
+    pill.setAttribute('role','button');
+    pill.tabIndex=0;
     pill.onclick=()=>renderLesson(i,true);
+    pill.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();renderLesson(i,true);}});
     picker.appendChild(pill);
   });
 }
@@ -4026,7 +4029,8 @@ function buildCards(cards){
     const memTxt=lang==='ro'?d.mem:(d.mem_en||d.mem);
     const expDiv=`<div class="nl-card-div"></div><div class="nl-card-explain">${expTxt}</div>`;
     const memDiv=`<div class="nl-card-mem">💭 ${memTxt}</div>`;
-    c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div>${trDiv}${expDiv}<div class="nl-card-actions"><div class="nl-card-audio" onclick="speak('${d.ko.replace(/'/g,"\\'")}')">🔊</div><div class="nl-card-pron" onclick="challengeCard('${d.ko.replace(/'/g,"\\'")}')">🎤</div>${memDiv}</div>`;
+    const koEsc=d.ko.replace(/'/g,"\\'");
+    c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div>${trDiv}${expDiv}<div class="nl-card-actions"><div class="nl-card-audio" role="button" tabindex="0" onclick="speak('${koEsc}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();speak('${koEsc}');}">🔊</div><div class="nl-card-pron" role="button" tabindex="0" onclick="challengeCard('${koEsc}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();challengeCard('${koEsc}');}">🎤</div>${memDiv}</div>`;
     track.appendChild(c);
     const dot=document.createElement('div');dot.className='nl-dot'+(i===0?' on':'');dots.appendChild(dot);
   });
