@@ -456,16 +456,55 @@ function makeRef(char, sz=160) {
   const cx=c.getContext("2d");
   // Micșorează fontul până încape tot textul în lățimea canvas-ului
   let fs=Math.round(sz*0.78);
-  cx.font=`900 ${fs}px system-ui,sans-serif`;
+  // Grosime 400 (nu 900): apropie forma de referință de o linie scrisă de
+  // mână — un font extra-bold are traseele mult mai groase decât orice
+  // penel/deget real, ceea ce distorsiona scorul (vezi compare()).
+  cx.font=`400 ${fs}px 'Noto Sans KR',system-ui,sans-serif`;
   while(cx.measureText(char).width > sz*0.92 && fs > 12) {
     fs -= 2;
-    cx.font=`900 ${fs}px system-ui,sans-serif`;
+    cx.font=`400 ${fs}px 'Noto Sans KR',system-ui,sans-serif`;
   }
   cx.fillStyle="#000";
   cx.textAlign="center"; cx.textBaseline="middle";
   cx.fillText(char,sz/2,sz/2+sz*0.04);
   return c;
 }
+
+// Filtru de maxim separabil (2 treceri 1D) — folosit pentru a "dilata"
+// măștile de cerneală cu o toleranță de câțiva pixeli înainte de
+// comparație, ca o trasare corectă dar ușor imprecisă (normal la scris de
+// mână) să nu fie respinsă doar pentru că nu cade pixel-perfect pe traseu.
+function dilateMask(mask, w, h, r) {
+  if (r <= 0) return mask;
+  const tmp = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = 0;
+      for (let dx = -r; dx <= r && !v; dx++) {
+        const nx = x + dx;
+        if (nx >= 0 && nx < w && mask[y * w + nx]) v = 1;
+      }
+      tmp[y * w + x] = v;
+    }
+  }
+  const out = new Uint8Array(w * h);
+  for (let x = 0; x < w; x++) {
+    for (let y = 0; y < h; y++) {
+      let v = 0;
+      for (let dy = -r; dy <= r && !v; dy++) {
+        const ny = y + dy;
+        if (ny >= 0 && ny < h && tmp[ny * w + x]) v = 1;
+      }
+      out[y * w + x] = v;
+    }
+  }
+  return out;
+}
+
+// Toleranță în pixeli (la scara normalizată 160×160) pentru comparație.
+// Absoarbe imprecizia normală a scrisului de mână, fără să anuleze
+// diferența dintre o formă corectă și una greșită.
+const MATCH_TOLERANCE = 6;
 
 function compare(userCvs, targetChar) {
   const SZ=160;
@@ -476,13 +515,23 @@ function compare(userCvs, targetChar) {
   if (!nr) return {score:0};
   const rp=nr.getContext("2d").getImageData(0,0,SZ,SZ).data;
   const up=nu.getContext("2d").getImageData(0,0,SZ,SZ).data;
-  let rN=0,uN=0,both=0;
-  for (let i=3;i<rp.length;i+=4) {
-    const r=rp[i]>32, u=up[i]>32;
-    if(r)rN++; if(u)uN++; if(r&&u)both++;
+
+  const rMask=new Uint8Array(SZ*SZ), uMask=new Uint8Array(SZ*SZ);
+  let rN=0,uN=0;
+  for (let i=0,p=3;i<SZ*SZ;i++,p+=4) {
+    if (rp[p]>32) { rMask[i]=1; rN++; }
+    if (up[p]>32) { uMask[i]=1; uN++; }
   }
   if (!rN||!uN) return {score:0};
-  const prec=both/uN, rec=both/rN;
+
+  const rDil=dilateMask(rMask,SZ,SZ,MATCH_TOLERANCE);
+  const uDil=dilateMask(uMask,SZ,SZ,MATCH_TOLERANCE);
+  let hitsPrec=0, hitsRec=0;
+  for (let i=0;i<SZ*SZ;i++) {
+    if (uMask[i] && rDil[i]) hitsPrec++; // cerneala ta e lângă traseul corect?
+    if (rMask[i] && uDil[i]) hitsRec++;  // ai acoperit traseul corect?
+  }
+  const prec=hitsPrec/uN, rec=hitsRec/rN;
   const f1=prec+rec>0 ? 2*prec*rec/(prec+rec) : 0;
   return {score:f1, nu, nr};
 }
