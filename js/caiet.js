@@ -22,6 +22,7 @@
       clear: '↺ Curăță',
       download: '⬇ Descarcă',
       remove: '🗑 Șterge',
+      expand: '⛶ Mărește',
       confirmRemove: 'Ștergi această pagină din caiet?',
       saved: 'Salvat ✓',
       hint: 'Scrie direct pe pagină cu mouse-ul, degetul sau un stylus. Fiecare căsuță are un ghidaj punctat în cruce, ca în caietele coreene reale, ca să poți poziționa corect componentele silabei.',
@@ -41,6 +42,7 @@
       clear: '↺ Clear',
       download: '⬇ Download',
       remove: '🗑 Remove',
+      expand: '⛶ Enlarge',
       confirmRemove: 'Remove this page from the notebook?',
       saved: 'Saved ✓',
       hint: 'Write directly on the page with your mouse, finger, or a stylus. Every cell has a dotted cross guide, just like real Korean notebooks, to help you position the parts of each syllable.',
@@ -176,7 +178,7 @@
   }
 
   // ── DRAWING INTERACTION ─────────────────────────────────────────
-  function wireDrawing(canvas) {
+  function wireDrawing(canvas, onEnd) {
     var drawing = false;
     var lastX = 0, lastY = 0;
 
@@ -217,7 +219,7 @@
       if (!drawing) return;
       drawing = false;
       try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
-      scheduleSave();
+      if (onEnd) onEnd(); else scheduleSave();
     }
     canvas.addEventListener('pointerup', endStroke);
     canvas.addEventListener('pointercancel', endStroke);
@@ -235,6 +237,7 @@
       '<div class="nb-page-bar">' +
         '<span class="nb-page-tag ' + level + '">' + t('tag' + level.charAt(0).toUpperCase() + level.slice(1)) + '</span>' +
         '<div class="nb-page-btns">' +
+          '<button type="button" class="nb-mini-btn" data-act="expand">' + t('expand') + '</button>' +
           '<button type="button" class="nb-mini-btn" data-act="download">' + t('download') + '</button>' +
           '<button type="button" class="nb-mini-btn" data-act="clear">' + t('clear') + '</button>' +
           '<button type="button" class="nb-mini-btn danger" data-act="remove">' + t('remove') + '</button>' +
@@ -262,6 +265,7 @@
     var cssW = cols * cfg.cell, cssH = cfg.rows * cfg.cell;
     inner.style.width = cssW + 'px';
     inner.style.height = cssH + 'px';
+    pageEl.dataset.cols = cols;
 
     drawGuide(guide, cols, cfg.rows, cfg.cell, cfg);
     sizeInkCanvas(ink, cssW, cssH, inkDataUrl);
@@ -311,9 +315,143 @@
           }
         } else if (act === 'download') {
           downloadPage(pageEl);
+        } else if (act === 'expand') {
+          openModal(pageEl);
         }
       });
     });
+  }
+
+  // ── FULLSCREEN MODAL (enlarged writing view) ────────────────────
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function ensureModal() {
+    var modal = document.getElementById('nbModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'nbModal';
+    modal.className = 'nb-modal';
+    modal.innerHTML =
+      '<div class="nb-modal-bar">' +
+        '<span class="nb-modal-tag" id="nbModalTag"></span>' +
+        '<div class="nb-modal-btns">' +
+          '<button type="button" class="nb-mini-btn" id="nbModalDownload"></button>' +
+          '<button type="button" class="nb-mini-btn" id="nbModalClear"></button>' +
+          '<button type="button" class="nb-mini-btn nb-modal-close" id="nbModalClose" aria-label="Close">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="nb-modal-canvas-wrap">' +
+        '<div class="nb-modal-canvas-inner">' +
+          '<canvas class="nb-guide-canvas"></canvas>' +
+          '<canvas class="nb-ink-canvas"></canvas>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    document.getElementById('nbModalClose').addEventListener('click', closeModal);
+    document.getElementById('nbModalClear').addEventListener('click', function () {
+      var ink = modal.querySelector('.nb-ink-canvas');
+      var ctx = ink.getContext('2d');
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, ink.width, ink.height);
+      ctx.restore();
+      ink.dataset.hasInk = '0';
+      syncModalToSource();
+      scheduleSave();
+    });
+    document.getElementById('nbModalDownload').addEventListener('click', function () {
+      if (modal._sourcePage) downloadPage(modal._sourcePage);
+    });
+    return modal;
+  }
+
+  function renderModalCanvas() {
+    var modal = document.getElementById('nbModal');
+    if (!modal || !modal._sourcePage) return;
+    var pageEl = modal._sourcePage;
+    var cfg = LEVELS[pageEl.dataset.level];
+    var cols = parseInt(pageEl.dataset.cols, 10) || 4;
+    var guide = modal.querySelector('.nb-guide-canvas');
+    var ink = modal.querySelector('.nb-ink-canvas');
+    var inner = modal.querySelector('.nb-modal-canvas-inner');
+    var wrap = modal.querySelector('.nb-modal-canvas-wrap');
+
+    var availW = wrap.clientWidth - 24;
+    var availH = wrap.clientHeight - 24;
+    var cellSize = Math.max(24, Math.floor(Math.min(availW / cols, availH / cfg.rows)));
+    var cssW = cols * cellSize, cssH = cfg.rows * cellSize;
+    inner.style.width = cssW + 'px';
+    inner.style.height = cssH + 'px';
+
+    drawGuide(guide, cols, cfg.rows, cellSize, cfg);
+
+    var srcInk = pageEl.querySelector('.nb-ink-canvas');
+    var hasInk = srcInk.dataset.hasInk === '1';
+    sizeInkCanvas(ink, cssW, cssH, hasInk ? srcInk.toDataURL('image/png') : null);
+    if (!hasInk) ink.dataset.hasInk = '0';
+
+    if (!ink.dataset.modalWired) {
+      wireDrawing(ink, function () { syncModalToSource(); scheduleSave(); });
+      ink.dataset.modalWired = '1';
+    }
+  }
+
+  function syncModalToSource() {
+    var modal = document.getElementById('nbModal');
+    if (!modal || !modal._sourcePage) return;
+    var pageEl = modal._sourcePage;
+    var modalInk = modal.querySelector('.nb-ink-canvas');
+    var srcInk = pageEl.querySelector('.nb-ink-canvas');
+    var ctx = srcInk.getContext('2d');
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, srcInk.width, srcInk.height);
+    ctx.restore();
+    var hasInk = modalInk.dataset.hasInk === '1';
+    if (hasInk) {
+      var cssW = parseFloat(srcInk.style.width);
+      var cssH = parseFloat(srcInk.style.height);
+      ctx.drawImage(modalInk, 0, 0, cssW, cssH);
+    }
+    srcInk.dataset.hasInk = hasInk ? '1' : '0';
+  }
+
+  function onModalResize() {
+    var modal = document.getElementById('nbModal');
+    if (!modal || !modal.classList.contains('open')) return;
+    clearTimeout(window.__nbModalResizeT);
+    window.__nbModalResizeT = setTimeout(function () {
+      syncModalToSource();
+      renderModalCanvas();
+    }, 200);
+  }
+
+  function openModal(pageEl) {
+    var modal = ensureModal();
+    modal._sourcePage = pageEl;
+    var level = pageEl.dataset.level;
+
+    var tag = document.getElementById('nbModalTag');
+    tag.textContent = t('tag' + capitalize(level));
+    tag.className = 'nb-modal-tag ' + level;
+    document.getElementById('nbModalDownload').textContent = t('download');
+    document.getElementById('nbModalClear').textContent = t('clear');
+
+    modal.classList.add('open');
+    document.body.classList.add('nb-modal-lock');
+    renderModalCanvas();
+    window.addEventListener('resize', onModalResize);
+  }
+
+  function closeModal() {
+    var modal = document.getElementById('nbModal');
+    if (!modal || !modal.classList.contains('open')) return;
+    syncModalToSource();
+    scheduleSave();
+    modal.classList.remove('open');
+    document.body.classList.remove('nb-modal-lock');
+    window.removeEventListener('resize', onModalResize);
+    modal._sourcePage = null;
   }
 
   function downloadPage(pageEl) {
@@ -372,8 +510,17 @@
         if (act === 'clear') b.textContent = t('clear');
         else if (act === 'remove') b.textContent = t('remove');
         else if (act === 'download') b.textContent = t('download');
+        else if (act === 'expand') b.textContent = t('expand');
       });
     });
+    var modal = document.getElementById('nbModal');
+    if (modal) {
+      document.getElementById('nbModalDownload').textContent = t('download');
+      document.getElementById('nbModalClear').textContent = t('clear');
+      if (modal._sourcePage) {
+        document.getElementById('nbModalTag').textContent = t('tag' + capitalize(modal._sourcePage.dataset.level));
+      }
+    }
   }
 
   function onLangChange(l) {
@@ -391,6 +538,8 @@
       var cols = Math.round(parseInt(inner.style.width, 10) / cfg.cell);
       drawGuide(guide, cols, cfg.rows, cfg.cell, cfg);
     });
+    var modal = document.getElementById('nbModal');
+    if (modal && modal.classList.contains('open')) renderModalCanvas();
   }
 
   var themeObserver = new MutationObserver(function () { redrawAllGuides(); });
@@ -421,6 +570,10 @@
     });
     document.getElementById('btnPrint').addEventListener('click', function () {
       window.print();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeModal();
     });
 
     window.addEventListener('resize', function () {
