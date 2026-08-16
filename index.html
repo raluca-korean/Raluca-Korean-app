@@ -520,7 +520,7 @@ html[data-mode="day"] .prog-track{background:rgba(0,0,0,.07)}
         </div>
         <div class="org-lbl">
           <span class="org-name" id="ln-p">Practică</span>
-          <span class="org-sub"  id="ls-p">Azi · Planificator · Exerciții · Slot Machine · Builder · Atelier · Stories · Versuri · Examen · Conversații · Compunere · Jurnal · Numere</span>
+          <span class="org-sub"  id="ls-p">Azi · Exerciții · Slot Machine · Builder · Atelier · Stories · Versuri · Examen · Conversații · Compunere · Jurnal · Numere</span>
         </div>
       </div>
     </div>
@@ -615,7 +615,6 @@ const SAT_DATA = {
   ],
   p: [
     { icon:'🗓️', href:'today.html',             ro:'Azi',          en:'Today'       },
-    { icon:'📅', href:'planner.html',           ro:'Planificator', en:'Planner'     },
     { icon:'📝', href:'exercises.html',         ro:'Exerciții',    en:'Exercises'   },
     { icon:'🎰', href:'slot-machine.html',      ro:'Slot Machine', en:'Slot Machine'},
     { icon:'🏗', href:'builder.html',           ro:'Builder',      en:'Builder'     },
@@ -641,7 +640,7 @@ const SAT_DATA = {
 const SAT_CFG = {
   f: { angles:[ 18,  58,  98 ], d:88 },             // top-left  → fan toward lower-right
   s: { angles:[ 56, 74, 93, 111, 129, 148, 166 ], d:[90, 124] },    // top-right → fan toward lower-left (zig-zag radius: avoids adjacent-dot overlap)
-  p: { angles:[140, 157, 175, 192, 209, 227, 244, 261, 279, 296, 313, 331, 348], d:[100, 128] },   // bot-right → fan toward upper-left (zig-zag radius)
+  p: { angles:[140, 159, 178, 197, 216, 235, 253, 272, 291, 310, 329, 348], d:[100, 128] },   // bot-right → fan toward upper-left (zig-zag radius)
   a: { angles:[280, 304, 328, 352], d:[100, 124] }      // bot-left  → fan toward upper-right (zig-zag radius)
 };
 
@@ -649,14 +648,14 @@ const SAT_CFG = {
 const LABELS = {
   ro:{ f:'Fundamentale', fSub:'Hangul · Hanja Book · Caiet',
        s:'Studiu',       sSub:'Lecții · Glosar · Flashcards · Neural · Harta Cuvântului · Constelații · Onorifice',
-       p:'Practică',     pSub:'Azi · Planificator · Exerciții · Slot Machine · Builder · Atelier · Stories · Versuri · Examen · Conversații · Compunere · Jurnal · Numere',
+       p:'Practică',     pSub:'Azi · Exerciții · Slot Machine · Builder · Atelier · Stories · Versuri · Examen · Conversații · Compunere · Jurnal · Numere',
        a:'Abilități',    aSub:'Lectură & Speaking · Pronunție · Ascultare · Greșeli',
-       progress:'Progres total', today:'Azi', streak:'Streak' },
+       progress:'Progres total', progressLink:'Vezi azi →' },
   en:{ f:'Fundamentals', fSub:'Hangul · Hanja Book · Notebook',
        s:'Study',         sSub:'Lessons · Glossary · Flashcards · Neural · Word Map · Constellations · Honorifics',
-       p:'Practice',      pSub:'Today · Planner · Exercises · Slot Machine · Builder · Workshop · Stories · Lyrics · Exam · Conversations · Composition · Journal · Numbers',
+       p:'Practice',      pSub:'Today · Exercises · Slot Machine · Builder · Workshop · Stories · Lyrics · Exam · Conversations · Composition · Journal · Numbers',
        a:'Skills',        aSub:'Reading & Speaking · Pronunciation · Listening · Mistakes',
-       progress:'Total progress', today:'Today', streak:'Streak' }
+       progress:'Total progress', progressLink:'See today →' }
 };
 
 // ── MODE ──────────────────────────────────────────────────────
@@ -924,16 +923,14 @@ function renderProgress() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem('RK_STATS')||'null'); } catch(e){}
   if (!s || !s.total) return;
-  const pct    = Math.min(100, Math.round(s.correct/s.total*100));
-  const today  = new Date().toISOString().slice(0,10);
-  const todayN = s.today === today ? (s.todayTotal||0) : 0;
+  const pct = Math.min(100, Math.round(s.correct/s.total*100));
   const L = LABELS[lang];
   setTimeout(() => {
     document.getElementById('progFill').style.width = pct+'%';
     document.getElementById('progNode').style.left  = 'calc('+pct+'% - 3.5px)';
   }, 2000);
   document.getElementById('progDetail').innerHTML =
-    L.today+': <b>'+todayN+'</b> &nbsp; '+L.streak+': <b>🔥'+(s.bestStreak||0)+'</b>';
+    '<a href="today.html" style="color:inherit;text-decoration:none">'+L.progressLink+'</a>';
 }
 
 // ── MOBILE TOUCH ──────────────────────────────────────────────

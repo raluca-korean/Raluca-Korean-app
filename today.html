@@ -69,13 +69,58 @@
 .td-alldone-title{font-size:16px;font-weight:700;color:var(--rk-heading);margin-bottom:6px}
 .td-alldone-sub{font-size:13px;color:var(--rk-muted)}
 
+/* ── PLANNER (TOPIK exam plan) ───────────────────────────── */
+.pl-level-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:14px 0}
+.pl-level-btn{
+  padding:12px 4px;border-radius:12px;text-align:center;cursor:pointer;
+  background:var(--rk-bg-flat);border:2px solid var(--rk-stroke);
+  font-weight:800;font-size:14px;color:var(--rk-heading);transition:all .15s;
+}
+.pl-level-btn:hover{border-color:rgba(219,39,119,.35)}
+.pl-level-btn.on{background:linear-gradient(135deg,#db2777,#7c3aed);color:#fff;border-color:transparent}
+.pl-field-lbl{font-size:12px;font-weight:700;color:var(--rk-muted);margin:16px 0 6px;letter-spacing:.02em}
+.pl-date-input{
+  width:100%;padding:12px 14px;border-radius:12px;font-size:15px;font-family:inherit;
+  background:var(--rk-bg-flat);border:2px solid var(--rk-stroke);color:var(--rk-heading);
+}
+.pl-save-btn{
+  display:block;width:100%;margin-top:18px;padding:13px;border-radius:14px;border:none;
+  background:linear-gradient(135deg,#db2777,#7c3aed);color:#fff;font-weight:800;font-size:15px;
+  cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(219,39,119,.28);
+}
+.pl-save-btn:disabled{opacity:.4;cursor:not-allowed}
+.pl-countdown{text-align:center;padding:22px 16px 18px}
+.pl-cd-num{font-size:44px;font-weight:900;color:var(--rk-heading);line-height:1}
+.pl-cd-lbl{font-size:13px;color:var(--rk-muted);margin-top:6px;font-weight:600}
+.pl-cd-date{font-size:12px;color:var(--rk-muted-ui);margin-top:4px}
+.pl-edit-link{font-size:12px;color:var(--rk-violet);text-decoration:none;font-weight:700;display:inline-block;margin-top:10px}
+.pl-prog-row{margin-bottom:16px}
+.pl-prog-row:last-child{margin-bottom:0}
+.pl-prog-head{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:700;color:var(--rk-heading);margin-bottom:6px}
+.pl-prog-count{font-size:12px;font-weight:700;color:var(--rk-muted)}
+.pl-bar-bg{height:10px;background:rgba(0,0,0,.07);border-radius:6px;overflow:hidden}
+.pl-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,#db2777,#7c3aed);transition:width .8s cubic-bezier(.4,0,.2,1)}
+.pl-pace{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pl-pace-tile{background:var(--rk-card);border:2px solid var(--rk-stroke);border-bottom:4px solid var(--rk-stroke-b);border-radius:14px;padding:16px 10px;text-align:center;box-shadow:0 4px 14px var(--rk-shadow)}
+.pl-pace-num{font-size:26px;font-weight:900;color:var(--rk-pink)}
+.pl-pace-lbl{font-size:11px;color:var(--rk-muted);margin-top:4px;font-weight:600}
+.pl-done{text-align:center;padding:36px 20px}
+.pl-done-icon{font-size:52px;line-height:1;margin-bottom:12px}
+.pl-done-title{font-size:16px;font-weight:700;color:var(--rk-heading);margin-bottom:6px}
+.pl-done-sub{font-size:13px;color:var(--rk-muted)}
+
 /* ── DARK MODE ────────────────────────────────────────── */
 body.dark-mode .td-metric,body.dark-mode .td-item{background:#1a0e2e;border-color:rgba(219,39,119,.22)}
 body.dark-mode .td-item.empty .td-count{background:rgba(255,255,255,.06)}
+body.dark-mode .pl-level-btn,body.dark-mode .pl-date-input{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)}
+body.dark-mode .pl-pace-tile{background:#1a0e2e;border-color:rgba(219,39,119,.22)}
+body.dark-mode .pl-bar-bg{background:rgba(255,255,255,.09)}
 
 @media(max-width:500px){
   .td-hero-num{font-size:34px}
   .td-metric-val{font-size:16px}
+  .pl-cd-num{font-size:34px}
+  .pl-pace-num{font-size:20px}
 }
 </style>
 </head>
@@ -106,10 +151,11 @@ body.dark-mode .td-item.empty .td-count{background:rgba(255,255,255,.06)}
 'use strict';
 
 var LANG = RKLang.get();
+var GOAL_KEY = 'RK_TOPIK_GOAL';
 
 var UI = {
   ro:{
-    title:'🗓️ Azi', sub:'Tot ce ai de recapitulat, într-un singur loc',
+    title:'🗓️ Azi', sub:'Recapitularea de azi și planul tău TOPIK, într-un singur loc',
     heroLbl:'de recapitulat azi', heroLblOne:'de recapitulat azi',
     streak:'Streak', xp:'XP', level:'Nivel',
     vocabTitle:'Vocabular', vocabSub:'Cuvinte scadente în Flashcards',
@@ -122,10 +168,22 @@ var UI = {
     cardTitle:'🖼️ Cardul tău de streak', cardBtn:'⬇ Descarcă imaginea',
     cardApp:'RALUCA KOREAN', cardStreakOne:'zi la rând', cardStreakMany:'zile la rând',
     cardBest:function(n){ return 'Record: ' + n + (n===1?' zi':' zile'); },
-    cardDateLocale:'ro-RO'
+    cardDateLocale:'ro-RO',
+    plTitle:'📅 Planificator TOPIK',
+    plSetupTitle:'Ce nivel TOPIK vizezi?', plSetupSub:'Alege nivelul examenului și data la care îl susții.',
+    plLevelLbl:'Nivel TOPIK', plDateLbl:'Data examenului', plSaveBtn:'Salvează planul',
+    plDaysLbl:'zile până la examen', plDayLbl:'zi până la examen',
+    plExamToday:'Examenul e azi! 🎯', plExamPassed:'Data examenului a trecut — actualizează planul',
+    plLessons:'Lecții', plExercises:'Exerciții',
+    plTodayLbl:'Ca să termini la timp, azi ai de făcut:',
+    plNewLessons:'lecții noi', plNewExercises:'exerciții',
+    plChangeGoal:'✎ Schimbă planul',
+    plAllDoneTitle:'Ai acoperit tot conținutul! 🎉',
+    plAllDoneSub:'Toate lecțiile și exercițiile până la nivelul ales sunt parcurse cel puțin o dată.',
+    plLoadErr:'Nu s-au putut încărca datele.'
   },
   en:{
-    title:'🗓️ Today', sub:'Everything due for review, in one place',
+    title:'🗓️ Today', sub:"Today's review and your TOPIK plan, in one place",
     heroLbl:'due today', heroLblOne:'due today',
     streak:'Streak', xp:'XP', level:'Level',
     vocabTitle:'Vocabulary', vocabSub:'Words due in Flashcards',
@@ -138,10 +196,44 @@ var UI = {
     cardTitle:'🖼️ Your streak card', cardBtn:'⬇ Download image',
     cardApp:'RALUCA KOREAN', cardStreakOne:'day streak', cardStreakMany:'day streak',
     cardBest:function(n){ return 'Record: ' + n + (n===1?' day':' days'); },
-    cardDateLocale:'en-US'
+    cardDateLocale:'en-US',
+    plTitle:'📅 TOPIK Planner',
+    plSetupTitle:'Which TOPIK level are you aiming for?', plSetupSub:'Pick your target level and exam date.',
+    plLevelLbl:'TOPIK level', plDateLbl:'Exam date', plSaveBtn:'Save plan',
+    plDaysLbl:'days until the exam', plDayLbl:'day until the exam',
+    plExamToday:"It's exam day! 🎯", plExamPassed:'Exam date has passed — update your plan',
+    plLessons:'Lessons', plExercises:'Exercises',
+    plTodayLbl:'To finish in time, today you should do:',
+    plNewLessons:'new lessons', plNewExercises:'exercises',
+    plChangeGoal:'✎ Change plan',
+    plAllDoneTitle:"You've covered everything! 🎉",
+    plAllDoneSub:'Every lesson and exercise up to your chosen level has been attempted at least once.',
+    plLoadErr:'Could not load the data.'
   }
 };
 function L(){ return UI[LANG]; }
+
+function getGoal(){
+  try { return JSON.parse(localStorage.getItem(GOAL_KEY) || 'null'); }
+  catch(e){ return null; }
+}
+function saveGoal(level, examDate){
+  localStorage.setItem(GOAL_KEY, JSON.stringify({ level: level, examDate: examDate }));
+}
+function clearGoal(){ localStorage.removeItem(GOAL_KEY); }
+
+// Same key format exercises.js uses for RK_EX_SRS, replicated so we can
+// tell which exercise items already have a review record.
+function exerciseKey(type, item){
+  if(type === "ko-ro")      return "ko-ro||" + (item.q || "");
+  if(type === "ro-ko")      return "ro-ko||" + (item.correct || "");
+  if(type === "particle")   return "particle||" + (item.template || "") + "|" + (item.correct || "");
+  if(type === "particlePlus") return "pp||" + (item.template || "") + "|" + (Array.isArray(item.correct) ? item.correct.join() : item.correct || "");
+  if(type === "conjug")     return "conjug||" + (item.correct || "");
+  if(type === "puzzle")     return "puzzle||" + (Array.isArray(item.correct) ? item.correct[0] : "");
+  if(type === "chain")      return "chain||" + (Array.isArray(item.correct) ? item.correct[0] : "");
+  return type + "||" + JSON.stringify(item.correct);
+}
 
 // ── DUE COUNTS (reads the same SRS/mistake data every feature already keeps) ──
 function dueCount(key){
@@ -213,8 +305,152 @@ function render(){
     html += '</div></div>';
   }
 
+  html += '<div id="plannerSection"></div>';
+
   document.getElementById('mainContent').innerHTML = html;
   setupStreakCard(streak, xpData, lvl);
+  renderPlanner();
+}
+
+// ── TOPIK PLANNER (merged from planner.html) ──────────────────
+function renderPlanner(){
+  var goal = getGoal();
+  if(goal) renderPlannerDashboard(goal); else renderPlannerSetup();
+}
+
+function renderPlannerSetup(){
+  var l = L();
+  var chosenLevel = 1;
+  var html =
+    '<div class="card">' +
+      '<h2 style="margin:0 0 4px">' + l.plSetupTitle + '</h2>' +
+      '<p class="sub" style="margin:0">' + l.plSetupSub + '</p>' +
+      '<div class="pl-field-lbl">' + l.plLevelLbl + '</div>' +
+      '<div class="pl-level-row" id="plLevels">' +
+        [1,2,3,4,5,6].map(function(n){
+          return '<div class="pl-level-btn' + (n===1?' on':'') + '" data-level="' + n + '">' + n + '</div>';
+        }).join('') +
+      '</div>' +
+      '<div class="pl-field-lbl">' + l.plDateLbl + '</div>' +
+      '<input type="date" class="pl-date-input" id="plDate">' +
+      '<button class="pl-save-btn" id="plSaveBtn" disabled>' + l.plSaveBtn + '</button>' +
+    '</div>';
+  document.getElementById('plannerSection').innerHTML = html;
+
+  document.querySelectorAll('.pl-level-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.pl-level-btn').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      chosenLevel = parseInt(btn.dataset.level, 10);
+    });
+  });
+
+  var dateInput = document.getElementById('plDate');
+  var saveBtn = document.getElementById('plSaveBtn');
+  var todayIso = new Date().toISOString().slice(0,10);
+  dateInput.min = todayIso;
+  dateInput.addEventListener('input', function(){
+    saveBtn.disabled = !dateInput.value;
+  });
+  saveBtn.addEventListener('click', function(){
+    if(!dateInput.value) return;
+    saveGoal(chosenLevel, dateInput.value);
+    renderPlanner();
+  });
+}
+
+function renderPlannerDashboard(goal){
+  var l = L();
+  Promise.all([
+    fetch('./data/lessons.json').then(function(r){ return r.json(); }),
+    fetch('./data/exercises.json').then(function(r){ return r.json(); })
+  ]).then(function(results){
+    var lessons = results[0], exJson = results[1];
+
+    var lessonsInScope = lessons.filter(function(ls){ return ls.topik <= goal.level; });
+    var doneLessons = JSON.parse(localStorage.getItem('RK_LESSON_DONE') || '[]');
+    var lessonsDone = lessonsInScope.filter(function(ls){ return doneLessons.indexOf(ls.id) !== -1; }).length;
+
+    var exSrs = window.RKSrs ? RKSrs.load('RK_EX_SRS') : {};
+    var exTotal = 0, exDone = 0;
+    Object.keys(exJson).forEach(function(type){
+      exJson[type].forEach(function(item){
+        if(item.topik > goal.level) return;
+        exTotal++;
+        if(exSrs[exerciseKey(type, item)]) exDone++;
+      });
+    });
+
+    var now = new Date();
+    var examDate = new Date(goal.examDate + 'T23:59:59');
+    var msLeft = examDate - now;
+    var daysLeft = Math.ceil(msLeft / 86400000);
+
+    var lessonsLeft = Math.max(0, lessonsInScope.length - lessonsDone);
+    var exLeft = Math.max(0, exTotal - exDone);
+    var allDone = lessonsLeft === 0 && exLeft === 0;
+    var effectiveDays = Math.max(1, daysLeft);
+    var lessonsPerDay = Math.ceil(lessonsLeft / effectiveDays);
+    var exPerDay = Math.ceil(exLeft / effectiveDays);
+
+    var html = '<div class="card" style="margin-bottom:0"><h2 style="margin:0">' + l.plTitle + '</h2></div>';
+
+    html += '<div class="card pl-countdown">';
+    if(daysLeft > 1){
+      html += '<div class="pl-cd-num">' + daysLeft + '</div><div class="pl-cd-lbl">' + l.plDaysLbl + '</div>';
+    } else if(daysLeft === 1){
+      html += '<div class="pl-cd-num">1</div><div class="pl-cd-lbl">' + l.plDayLbl + '</div>';
+    } else if(daysLeft === 0){
+      html += '<div class="pl-cd-num">🎯</div><div class="pl-cd-lbl">' + l.plExamToday + '</div>';
+    } else {
+      html += '<div class="pl-cd-num">⏰</div><div class="pl-cd-lbl">' + l.plExamPassed + '</div>';
+    }
+    html += '<div class="pl-cd-date">TOPIK ' + goal.level + ' · ' + goal.examDate + '</div>';
+    html += '<a href="#" class="pl-edit-link" id="plChangeGoal">' + l.plChangeGoal + '</a>';
+    html += '</div>';
+
+    if(allDone){
+      html += '<div class="card pl-done">' +
+        '<div class="pl-done-icon">🌿</div>' +
+        '<div class="pl-done-title">' + l.plAllDoneTitle + '</div>' +
+        '<div class="pl-done-sub">' + l.plAllDoneSub + '</div>' +
+      '</div>';
+    } else {
+      var lessonsPct = lessonsInScope.length ? Math.round(lessonsDone / lessonsInScope.length * 100) : 100;
+      var exPct = exTotal ? Math.round(exDone / exTotal * 100) : 100;
+
+      html += '<div class="card">' +
+        '<div class="pl-prog-row">' +
+          '<div class="pl-prog-head"><span>' + l.plLessons + '</span><span class="pl-prog-count">' + lessonsDone + '/' + lessonsInScope.length + '</span></div>' +
+          '<div class="pl-bar-bg"><div class="pl-bar" style="width:' + lessonsPct + '%"></div></div>' +
+        '</div>' +
+        '<div class="pl-prog-row">' +
+          '<div class="pl-prog-head"><span>' + l.plExercises + '</span><span class="pl-prog-count">' + exDone + '/' + exTotal + '</span></div>' +
+          '<div class="pl-bar-bg"><div class="pl-bar" style="width:' + exPct + '%"></div></div>' +
+        '</div>' +
+      '</div>';
+
+      if(daysLeft >= 0){
+        html += '<div class="card">' +
+          '<div class="pl-field-lbl" style="margin-top:0">' + l.plTodayLbl + '</div>' +
+          '<div class="pl-pace">' +
+            '<div class="pl-pace-tile"><div class="pl-pace-num">' + lessonsPerDay + '</div><div class="pl-pace-lbl">' + l.plNewLessons + '</div></div>' +
+            '<div class="pl-pace-tile"><div class="pl-pace-num">' + exPerDay + '</div><div class="pl-pace-lbl">' + l.plNewExercises + '</div></div>' +
+          '</div>' +
+        '</div>';
+      }
+    }
+
+    document.getElementById('plannerSection').innerHTML = html;
+    document.getElementById('plChangeGoal').addEventListener('click', function(e){
+      e.preventDefault();
+      clearGoal();
+      renderPlanner();
+    });
+  }).catch(function(){
+    document.getElementById('plannerSection').innerHTML =
+      '<div class="card"><div class="pl-done-sub">' + l.plLoadErr + '</div></div>';
+  });
 }
 
 // ── STREAK CARD (canvas-drawn, shareable PNG) ─────────────────────
