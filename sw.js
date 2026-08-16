@@ -1,4 +1,4 @@
-const CACHE = 'rk-v126';
+const CACHE = 'rk-v127';
 
 const STATIC = [
   './',
@@ -27,7 +27,6 @@ const STATIC = [
   './writing.html',
   './pronunciation.html',
   './listening.html',
-  './numbers.html',
   './journal.html',
   './stats.html',
   './keyboard.html',
@@ -45,7 +44,6 @@ const STATIC = [
   './writing.css',
   './pronunciation.css',
   './listening.css',
-  './numbers.css',
   './journal.css',
   './flag.svg',
   './manifest.json',
@@ -62,7 +60,6 @@ const STATIC = [
   './js/writing.js',
   './js/pronunciation.js',
   './js/listening.js',
-  './js/numbers.js',
   './js/journal.js',
   './js/stats.js',
   './js/core/audio.js',

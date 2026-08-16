@@ -204,6 +204,8 @@ let drillConjQueue = [];
 let drillExtQueue  = [];
 let drillHonorQueue = [];
 let DRILL_HONOR = []; // fetched from data/honorifics.json in loadExercises()
+let drillNumbersQueue = [];
+let DRILL_NUMBERS = []; // fetched from data/numbers.json in loadExercises()
 
 const DRILL_TENSE_LABELS = {
   pres: {ro:'PREZENT', en:'PRESENT'},
@@ -284,9 +286,11 @@ const UI_TEXT = {
     modeDrillConjug: "🔤 Drill Conjugare",
     modeDrillExt: "🔗 Drill Extindere",
     modeDrillHonor: "🙏 Drill Onorifice",
+    modeDrillNumbers: "🔢 Drill Numere",
     chooseDrillConjug: "Alege forma conjugată:",
     chooseDrillExt: "Combină propozițiile cu conectorul:",
     chooseDrillHonor: "Alege forma politicoasă corectă:",
+    chooseDrillNumbers: "Completează spațiul liber:",
   },
   en: {
     title: "TOPIK Exercises",
@@ -333,9 +337,11 @@ const UI_TEXT = {
     modeDrillConjug: "🔤 Drill Conjugation",
     modeDrillExt: "🔗 Drill Extension",
     modeDrillHonor: "🙏 Honorifics Drill",
+    modeDrillNumbers: "🔢 Numbers Drill",
     chooseDrillConjug: "Choose the conjugated form:",
     chooseDrillExt: "Combine the sentences using the connector:",
     chooseDrillHonor: "Choose the correct polite form:",
+    chooseDrillNumbers: "Fill in the blank:",
   }
 };
 
@@ -388,9 +394,11 @@ function updateStaticTexts(){
   const optDrillConjug = typeSelect.querySelector('option[value="drill-conjug"]');
   const optDrillExt    = typeSelect.querySelector('option[value="drill-ext"]');
   const optDrillHonor  = typeSelect.querySelector('option[value="drill-honor"]');
+  const optDrillNumbers = typeSelect.querySelector('option[value="drill-numbers"]');
   if(optDrillConjug) optDrillConjug.textContent = t("modeDrillConjug");
   if(optDrillExt)    optDrillExt.textContent    = t("modeDrillExt");
   if(optDrillHonor)  optDrillHonor.textContent  = t("modeDrillHonor");
+  if(optDrillNumbers) optDrillNumbers.textContent = t("modeDrillNumbers");
 
   const cfgTrigger = document.getElementById("lmn-config-trigger");
   if(cfgTrigger) cfgTrigger.setAttribute("aria-label", currentLang==="ro" ? "Configurare exerciții" : "Exercise settings");
@@ -697,6 +705,13 @@ async function loadExercises(){
       console.error("Honorifics drill load error:", honorError);
     }
 
+    try {
+      const numbersResponse = await fetch("./data/numbers.json");
+      if(numbersResponse.ok) DRILL_NUMBERS = await numbersResponse.json();
+    } catch(numbersError) {
+      console.error("Numbers drill load error:", numbersError);
+    }
+
     render();
   } catch (error) {
     console.error("Exercises load error:", error);
@@ -727,6 +742,10 @@ function getFilteredList(){
   if(type === 'drill-honor'){
     if(!drillHonorQueue.length) drillHonorQueue = shuffle([...DRILL_HONOR]);
     return drillHonorQueue;
+  }
+  if(type === 'drill-numbers'){
+    if(!drillNumbersQueue.length) drillNumbersQueue = shuffle([...DRILL_NUMBERS]);
+    return drillNumbersQueue;
   }
   let list = allExercises[type] || [];
   if(lessonParam){
@@ -911,6 +930,17 @@ function render(){
     return;
   }
 
+  if(typeSelect.value === "drill-numbers"){
+    const n = item;
+    questionEl.innerHTML = GrammarColor.colorize(n.template.replace("___", "【 ___ 】"));
+    helperEl.textContent = t("chooseDrillNumbers");
+    document.getElementById("drillContext").style.display = "";
+    document.getElementById("drillContext").innerHTML =
+      `<div class="drill-sent-tr" style="text-align:center">${n.context[currentLang]}</div>`;
+    renderAnswerOptions(n.options);
+    return;
+  }
+
   document.getElementById("drillContext").style.display = "none";
 
   if(typeSelect.value === "ko-ro"){
@@ -1053,6 +1083,7 @@ function getCorrectAnswer(item){
   if(typeSelect.value === "drill-conjug") return drillGetForm(item.verb.ko, item.tense);
   if(typeSelect.value === "drill-ext")    return item.correct;
   if(typeSelect.value === "drill-honor")  return item.options[item.correct];
+  if(typeSelect.value === "drill-numbers") return item.options[item.correct];
   return item.correct;
 }
 
@@ -1227,6 +1258,7 @@ typeSelect.addEventListener("change", () => {
   if(typeSelect.value === 'drill-conjug') drillConjQueue = [];
   if(typeSelect.value === 'drill-ext')    drillExtQueue  = [];
   if(typeSelect.value === 'drill-honor')  drillHonorQueue = [];
+  if(typeSelect.value === 'drill-numbers') drillNumbersQueue = [];
   const isDrill = typeSelect.value.startsWith('drill-');
   document.getElementById('levelRow').style.display = isDrill ? 'none' : '';
   render();
