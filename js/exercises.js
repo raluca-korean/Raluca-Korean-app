@@ -1128,10 +1128,6 @@ function checkCurrentAnswer(){
     ? t("correctAnswer")
     : `${t("wrongAnswer")} — ${correctAnswer}`;
 
-  if(typeSelect.value === "drill-honor" && item.note){
-    feedbackEl.textContent += '  ·  ' + item.note[currentLang];
-  }
-
   total++;
 
   if(isCorrect){
