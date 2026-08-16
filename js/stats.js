@@ -13,8 +13,6 @@ const UI = {
     noData:"Nu există date încă. Fă câteva exerciții mai întâi!",
     goExercise:"Mergi la exerciții →",
     types:{ "ko-ro":"KO→RO","ro-ko":"RO→KO","particle":"Particulă (1)","particlePlus":"Particule multiple","conjug":"Conjugare","puzzle":"Puzzle","chain":"Chain" },
-    backupTitle:"Backup & Restaurare",
-    backupSub:"Exportă progresul înainte de a șterge browserul, sau importă un backup anterior.",
     exportBtn:"⬇ Exportă JSON",
     importBtn:"⬆ Importă JSON",
     importOk:n => `✓ ${n} chei restaurate. Reîncărcând…`,
@@ -33,8 +31,6 @@ const UI = {
     noData:"No data yet. Do some exercises first!",
     goExercise:"Go to exercises →",
     types:{ "ko-ro":"KO→RO","ro-ko":"RO→KO","particle":"Particle (1)","particlePlus":"Multiple particles","conjug":"Conjugation","puzzle":"Puzzle","chain":"Chain" },
-    backupTitle:"Backup & Restore",
-    backupSub:"Export your progress before clearing the browser, or import a previous backup.",
     exportBtn:"⬇ Export JSON",
     importBtn:"⬆ Import JSON",
     importOk:n => `✓ ${n} keys restored. Reloading…`,
@@ -176,8 +172,6 @@ function render(){
 
   el.innerHTML = statsHtml + `
     <div class="card">
-      <h2>${t("backupTitle")}</h2>
-      <p class="sub" style="margin:0 0 14px">${t("backupSub")}</p>
       <div class="backup-row">
         <button type="button" id="exportBtn">${t("exportBtn")}</button>
         <button type="button" id="importBtn">${t("importBtn")}</button>
