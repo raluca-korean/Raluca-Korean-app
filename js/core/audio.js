@@ -8,6 +8,26 @@ window.AudioEngine = {
   _utterance: null, // kept as a live reference — Safari/WebKit can silently
                      // garbage-collect an utterance before it fires otherwise
 
+  _pickKoreanVoice(){
+    const voices = speechSynthesis.getVoices();
+    const ko = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("ko"));
+    if(!ko.length) return null;
+    // Prefer whichever installed voice is the higher-quality one — plain
+    // lang-match alone often grabs a robotic default over a better voice
+    // the OS also offers (iOS "Enhanced/Premium" Siri voices, Chrome's
+    // network-backed "Google" voice, Edge's "Online (Natural)" voices).
+    const score = v => {
+      const n = (v.name || "").toLowerCase();
+      let s = 0;
+      if(n.includes("enhanced") || n.includes("premium")) s += 3;
+      if(n.includes("neural") || n.includes("natural")) s += 3;
+      if(n.includes("google")) s += 2;
+      if(!v.localService) s += 1;
+      return s;
+    };
+    return ko.slice().sort((a, b) => score(b) - score(a))[0];
+  },
+
   speak(text, options = {}){
     if(!("speechSynthesis" in window)) return;
 
@@ -16,16 +36,12 @@ window.AudioEngine = {
 
     const slow = options.slow ?? this.slow;
     const repeat = options.repeat ?? this.repeat;
+    const voice = this._pickKoreanVoice();
 
-    const speakOnce = (rate=1)=>{
+    const speakOnce = ()=>{
       const u = new SpeechSynthesisUtterance(clean);
       u.lang = "ko-KR";
-
-      const voices = speechSynthesis.getVoices();
-      const ko = voices.find(v => v.lang && v.lang.includes("ko"));
-
-      if(ko) u.voice = ko;
-
+      if(voice) u.voice = voice;
       u.rate = slow ? 0.7 : 1;
       this._utterance = u;
       speechSynthesis.speak(u);

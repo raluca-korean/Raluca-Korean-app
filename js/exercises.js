@@ -785,6 +785,47 @@ function cleanConjugPrompt(prompt){
   return prompt;
 }
 
+// Shared option renderer for every MC-style exercise (regular types + all
+// drills) — any option containing Hangul gets its own 🔊 button so learners
+// can hear it read aloud without that click also selecting it as the answer.
+function renderAnswerOptions(options){
+  options.forEach(option => {
+    const el = document.createElement("div");
+    el.className = "answer";
+    const isKorean = /[가-힣]/.test(option);
+    if(isKorean){
+      el.innerHTML = GrammarColor.colorize(option);
+    } else {
+      el.textContent = option;
+    }
+
+    if(isKorean){
+      el.classList.add("has-speak");
+      const speakBtn = document.createElement("button");
+      speakBtn.type = "button";
+      speakBtn.className = "ans-speak";
+      speakBtn.textContent = "🔊";
+      speakBtn.setAttribute("aria-label", currentLang === "ro" ? "Ascultă" : "Listen");
+      speakBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        speakKorean(option);
+      });
+      el.appendChild(speakBtn);
+    }
+
+    el.addEventListener("click", () => {
+      if(answered) return;
+      document.querySelectorAll("#answers .answer").forEach(node => node.classList.remove("selected"));
+      el.classList.add("selected");
+      selectedAnswer = option;
+    });
+
+    answersEl.appendChild(el);
+  });
+
+  updateBadges();
+}
+
 function render(){
   selectedAnswer = null;
   answered = false;
@@ -832,19 +873,8 @@ function render(){
       `<br><span class="tenseTag ${q.tense}">${tLabel}</span>`;
     helperEl.textContent = t("chooseDrillConjug");
     document.getElementById("drillContext").style.display = "none";
-    data.options.forEach(opt => {
-      const el = document.createElement("div");
-      el.className = "answer";
-      el.textContent = opt;
-      el.addEventListener("click", () => {
-        if(answered) return;
-        document.querySelectorAll("#answers .answer").forEach(n => n.classList.remove("selected"));
-        el.classList.add("selected");
-        selectedAnswer = opt;
-      });
-      answersEl.appendChild(el);
-    });
-    updateBadges();
+    speakKorean(q.verb.ko);
+    renderAnswerOptions(data.options);
     return;
   }
 
@@ -860,19 +890,8 @@ function render(){
         `<div class="drill-sent-box"><div class="drill-sent-ko">${ex.s2_ko}</div><div class="drill-sent-tr">${ex['s2_'+currentLang]}</div></div>` +
       `</div>` +
       `<span class="drill-conn-tag">${ex.conn} — ${ex['conn_'+currentLang]}</span>`;
-    extOpts.forEach(opt => {
-      const el = document.createElement("div");
-      el.className = "answer";
-      el.textContent = opt;
-      el.addEventListener("click", () => {
-        if(answered) return;
-        document.querySelectorAll("#answers .answer").forEach(n => n.classList.remove("selected"));
-        el.classList.add("selected");
-        selectedAnswer = opt;
-      });
-      answersEl.appendChild(el);
-    });
-    updateBadges();
+    speakKorean(ex.s1_ko + '. ' + ex.s2_ko);
+    renderAnswerOptions(extOpts);
     return;
   }
 
@@ -887,19 +906,8 @@ function render(){
         `<div class="drill-sent-ko" style="margin-top:6px;font-size:17px">${h.casual}</div>` +
       `</div>` +
       `<span class="drill-conn-tag" style="margin-top:10px">반말 → ?</span>`;
-    h.options.forEach(opt => {
-      const el = document.createElement("div");
-      el.className = "answer";
-      el.textContent = opt;
-      el.addEventListener("click", () => {
-        if(answered) return;
-        document.querySelectorAll("#answers .answer").forEach(n => n.classList.remove("selected"));
-        el.classList.add("selected");
-        selectedAnswer = opt;
-      });
-      answersEl.appendChild(el);
-    });
-    updateBadges();
+    speakKorean(h.casual);
+    renderAnswerOptions(h.options);
     return;
   }
 
@@ -961,34 +969,15 @@ function render(){
 
   if(typeSelect.value === "ko-ro" || typeSelect.value === "particle" || typeSelect.value === "particlePlus"){
     speakKorean(questionText);
+  } else if(typeSelect.value === "conjug"){
+    // questionText mixes the Korean verb with a RO/EN gloss ("가다 → prezent
+    // politicos") — only the verb before the arrow is safe to feed to ko-KR TTS.
+    speakKorean(questionText.split("→")[0].trim());
   }
 
   if(hintBtnMC && MC_TYPES.has(typeSelect.value) && !isWrongMode) hintBtnMC.style.display = "";
 
-  options.forEach(option => {
-    const el = document.createElement("div");
-    el.className = "answer";
-    if(/[가-힣]/.test(option)){
-      el.innerHTML = GrammarColor.colorize(option);
-    } else {
-      el.textContent = option;
-    }
-
-    el.addEventListener("click", () => {
-      if(answered) return;
-
-      document.querySelectorAll("#answers .answer").forEach(node => {
-        node.classList.remove("selected");
-      });
-
-      el.classList.add("selected");
-      selectedAnswer = option;
-    });
-
-    answersEl.appendChild(el);
-  });
-
-  updateBadges();
+  renderAnswerOptions(options);
 }
 
 function renderPuzzleUI(){
@@ -1080,6 +1069,8 @@ function checkCurrentAnswer(){
     const item = currentList[currentIndex];
     const isRight = JSON.stringify(puzzleLine) === JSON.stringify(item.correct);
     const sep = typeSelect.value === "chain" ? " → " : " ";
+    const speechSep = typeSelect.value === "chain" ? ". " : " ";
+    speakKorean(item.correct.join(speechSep));
     const effectiveRight = isRight && !hintUsed;
     if(isRight && hintUsed){
       feedbackEl.textContent = t("hintAssisted");
