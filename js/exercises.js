@@ -202,6 +202,8 @@ const DRILL_EXT = [
 
 let drillConjQueue = [];
 let drillExtQueue  = [];
+let drillHonorQueue = [];
+let DRILL_HONOR = []; // fetched from data/honorifics.json in loadExercises()
 
 const DRILL_TENSE_LABELS = {
   pres: {ro:'PREZENT', en:'PRESENT'},
@@ -281,8 +283,10 @@ const UI_TEXT = {
     allLevels: "Toate nivelele",
     modeDrillConjug: "🔤 Drill Conjugare",
     modeDrillExt: "🔗 Drill Extindere",
+    modeDrillHonor: "🙏 Drill Onorifice",
     chooseDrillConjug: "Alege forma conjugată:",
     chooseDrillExt: "Combină propozițiile cu conectorul:",
+    chooseDrillHonor: "Alege forma politicoasă corectă:",
   },
   en: {
     title: "TOPIK Exercises",
@@ -328,8 +332,10 @@ const UI_TEXT = {
     wrongModeLabel: "Mistakes Mode",
     modeDrillConjug: "🔤 Drill Conjugation",
     modeDrillExt: "🔗 Drill Extension",
+    modeDrillHonor: "🙏 Honorifics Drill",
     chooseDrillConjug: "Choose the conjugated form:",
     chooseDrillExt: "Combine the sentences using the connector:",
+    chooseDrillHonor: "Choose the correct polite form:",
   }
 };
 
@@ -381,8 +387,10 @@ function updateStaticTexts(){
   if(optionChain)      optionChain.textContent      = t("modeChain");
   const optDrillConjug = typeSelect.querySelector('option[value="drill-conjug"]');
   const optDrillExt    = typeSelect.querySelector('option[value="drill-ext"]');
+  const optDrillHonor  = typeSelect.querySelector('option[value="drill-honor"]');
   if(optDrillConjug) optDrillConjug.textContent = t("modeDrillConjug");
   if(optDrillExt)    optDrillExt.textContent    = t("modeDrillExt");
+  if(optDrillHonor)  optDrillHonor.textContent  = t("modeDrillHonor");
 
   const cfgTrigger = document.getElementById("lmn-config-trigger");
   if(cfgTrigger) cfgTrigger.setAttribute("aria-label", currentLang==="ro" ? "Configurare exerciții" : "Exercise settings");
@@ -680,6 +688,13 @@ async function loadExercises(){
       "chain": Array.isArray(data["chain"]) ? data["chain"] : []
     };
 
+    try {
+      const honorResponse = await fetch("./data/honorifics.json");
+      if(honorResponse.ok) DRILL_HONOR = await honorResponse.json();
+    } catch(honorError) {
+      console.error("Honorifics drill load error:", honorError);
+    }
+
     render();
   } catch (error) {
     console.error("Exercises load error:", error);
@@ -706,6 +721,10 @@ function getFilteredList(){
   if(type === 'drill-ext'){
     if(!drillExtQueue.length) drillExtQueue = shuffle([...DRILL_EXT]);
     return drillExtQueue;
+  }
+  if(type === 'drill-honor'){
+    if(!drillHonorQueue.length) drillHonorQueue = shuffle([...DRILL_HONOR]);
+    return drillHonorQueue;
   }
   let list = allExercises[type] || [];
   if(lessonParam){
@@ -840,6 +859,33 @@ function render(){
       `</div>` +
       `<span class="drill-conn-tag">${ex.conn} — ${ex['conn_'+currentLang]}</span>`;
     extOpts.forEach(opt => {
+      const el = document.createElement("div");
+      el.className = "answer";
+      el.textContent = opt;
+      el.addEventListener("click", () => {
+        if(answered) return;
+        document.querySelectorAll("#answers .answer").forEach(n => n.classList.remove("selected"));
+        el.classList.add("selected");
+        selectedAnswer = opt;
+      });
+      answersEl.appendChild(el);
+    });
+    updateBadges();
+    return;
+  }
+
+  if(typeSelect.value === "drill-honor"){
+    const h = item;
+    questionEl.textContent = t("chooseDrillHonor");
+    helperEl.textContent = "";
+    document.getElementById("drillContext").style.display = "";
+    document.getElementById("drillContext").innerHTML =
+      `<div class="drill-sent-box" style="max-width:420px;margin:0 auto">` +
+        `<div class="drill-sent-tr">${h.context[currentLang]}</div>` +
+        `<div class="drill-sent-ko" style="margin-top:6px;font-size:17px">${h.casual}</div>` +
+      `</div>` +
+      `<span class="drill-conn-tag" style="margin-top:10px">반말 → ?</span>`;
+    h.options.forEach(opt => {
       const el = document.createElement("div");
       el.className = "answer";
       el.textContent = opt;
@@ -1015,6 +1061,7 @@ function getCorrectAnswer(item){
   if(typeSelect.value === "particlePlus") return Array.isArray(item.correct) ? item.correct.join(" · ") : item.correct;
   if(typeSelect.value === "drill-conjug") return drillGetForm(item.verb.ko, item.tense);
   if(typeSelect.value === "drill-ext")    return item.correct;
+  if(typeSelect.value === "drill-honor")  return item.options[item.correct];
   return item.correct;
 }
 
@@ -1080,6 +1127,10 @@ function checkCurrentAnswer(){
   feedbackEl.textContent = isCorrect
     ? t("correctAnswer")
     : `${t("wrongAnswer")} — ${correctAnswer}`;
+
+  if(typeSelect.value === "drill-honor" && item.note){
+    feedbackEl.textContent += '  ·  ' + item.note[currentLang];
+  }
 
   total++;
 
@@ -1186,6 +1237,7 @@ typeSelect.addEventListener("change", () => {
   currentIndex = 0;
   if(typeSelect.value === 'drill-conjug') drillConjQueue = [];
   if(typeSelect.value === 'drill-ext')    drillExtQueue  = [];
+  if(typeSelect.value === 'drill-honor')  drillHonorQueue = [];
   const isDrill = typeSelect.value.startsWith('drill-');
   document.getElementById('levelRow').style.display = isDrill ? 'none' : '';
   render();
