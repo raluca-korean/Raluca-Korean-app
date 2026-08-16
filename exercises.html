@@ -108,7 +108,6 @@
             aria-label="Configurare exerciții" aria-expanded="false">
       <span class="lmn-config-glyph">⊙</span>
       <span class="lmn-config-label" id="lmn-config-label">Exerciții</span>
-      <span class="lmn-config-readout" id="lmn-config-readout">KO → RO · T1</span>
     </button>
     <div class="lmn-config-body" role="region" aria-label="Setări exerciții">
       <div class="lmn-config-row">
@@ -176,17 +175,8 @@
 <script src="./js/core/register-sw.js"></script>
 
 <script>
-/* Config readout updater — cosmetic only, no interaction with exercises.js */
+/* Config panel level highlight + outside-click close — cosmetic only, no interaction with exercises.js */
 (function () {
-  function updateReadout() {
-    var el = document.getElementById('lmn-config-readout');
-    if (!el) return;
-    var typeEl = document.getElementById('type');
-    var typeTxt = typeEl ? typeEl.options[typeEl.selectedIndex].text.slice(0, 12) : '';
-    var activeBtn = document.querySelector('#levelBtns button.lmn-level-active');
-    var lvl = activeBtn ? 'T' + (activeBtn.dataset.level === 'test' ? '∞' : activeBtn.dataset.level) : '';
-    el.textContent = typeTxt + (lvl ? ' · ' + lvl : '');
-  }
   function markActiveLevel() {
     document.querySelectorAll('#levelBtns button[data-level]').forEach(function (b) {
       b.classList.remove('lmn-level-active');
@@ -194,12 +184,9 @@
     var stored = localStorage.getItem('RK_LEVEL') || '1';
     var active = document.querySelector('#levelBtns button[data-level="' + stored + '"]');
     if (active) active.classList.add('lmn-level-active');
-    updateReadout();
   }
   document.addEventListener('DOMContentLoaded', function () {
     markActiveLevel();
-    var typeEl = document.getElementById('type');
-    if (typeEl) typeEl.addEventListener('change', updateReadout);
     var levelBtnsEl = document.getElementById('levelBtns');
     if (levelBtnsEl) levelBtnsEl.addEventListener('click', function (e) {
       if (e.target.dataset.level) setTimeout(markActiveLevel, 30);
