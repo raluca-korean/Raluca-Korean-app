@@ -395,7 +395,7 @@ function updateStaticTexts(){
   const cfgTrigger = document.getElementById("lmn-config-trigger");
   if(cfgTrigger) cfgTrigger.setAttribute("aria-label", currentLang==="ro" ? "Configurare exerciții" : "Exercise settings");
   const cfgLabel = document.getElementById("lmn-config-label");
-  if(cfgLabel) cfgLabel.textContent = currentLang==="ro" ? "Exerciții:" : "Exercises:";
+  if(cfgLabel) cfgLabel.textContent = currentLang==="ro" ? "Exerciții" : "Exercises";
   const cfgBody = document.querySelector(".lmn-config-body");
   if(cfgBody) cfgBody.setAttribute("aria-label", currentLang==="ro" ? "Setări exerciții" : "Exercise settings");
 }
