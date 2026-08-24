@@ -635,10 +635,10 @@ const SAT_DATA = {
 // Satellite radial angles (CSS: 0°=right, 90°=down) relative to organism center.
 // Each fan points toward screen center (away from corner).
 const SAT_CFG = {
-  f: { angles:[ 22, 46, 70, 94 ], d:[88, 108] },    // top-left  → fan toward lower-right (zig-zag radius)
-  s: { angles:[ 56, 74, 93, 111, 129, 148, 166 ], d:[90, 124] },    // top-right → fan toward lower-left (zig-zag radius: avoids adjacent-dot overlap)
-  p: { angles:[140, 166, 192, 218, 244, 270, 296, 322, 348], d:[100, 128] },   // bot-right → fan toward upper-left (zig-zag radius)
-  a: { angles:[271, 289, 307, 325, 343, 361], d:[100, 124] }      // bot-left  → fan toward upper-right (zig-zag radius)
+  f: { angles:[ 22, 46, 70, 94 ], d:[78, 125] },    // top-left  → fan toward lower-right (wide zig-zag radius)
+  s: { angles:[ 56, 74, 93, 111, 129, 148, 166 ], d:[82, 135] },    // top-right → fan toward lower-left (wide zig-zag radius: avoids adjacent-dot overlap)
+  p: { angles:[130, 153, 176, 199, 222, 245, 268, 291], d:[88, 130] },   // bot-right → fan toward up-left, kept clear of screen edges (incl. landscape)
+  a: { angles:[271, 289, 307, 325, 343, 361], d:[88, 135] }      // bot-left  → fan toward upper-right (wide zig-zag radius)
 };
 
 // ── LANGUAGE STRINGS ──────────────────────────────────────────
@@ -702,17 +702,34 @@ window.setLang = setLang;
 
 // ── SATELLITES ─────────────────────────────────────────────────
 function buildSatellites() {
+  const centerX = innerWidth/2, centerY = innerHeight/2;
   ['f','s','p','a'].forEach(id => {
     const org = document.querySelector('.org[data-id="'+id+'"');
     if (!org) return;
     org.querySelectorAll('.sat').forEach(el => el.remove());
     const items = SAT_DATA[id];
     const cfg   = SAT_CFG[id];
+    // Cap the fan radius at a fraction of the org's own distance to screen
+    // center so satellites stay spread out but never overshoot on small screens.
+    const orgX = parseFloat(org.style.left) || centerX;
+    const orgY = parseFloat(org.style.top)  || centerY;
+    const maxR = Math.hypot(orgX - centerX, orgY - centerY) * 0.80;
+    const margin = 20;
     items.forEach((item, i) => {
       const rad = cfg.angles[i] * Math.PI / 180;
-      const r   = Array.isArray(cfg.d) ? cfg.d[i % cfg.d.length] : cfg.d;
-      const dx  = Math.cos(rad) * r;
-      const dy  = Math.sin(rad) * r;
+      const rBase = Array.isArray(cfg.d) ? cfg.d[i % cfg.d.length] : cfg.d;
+      const cosA = Math.cos(rad), sinA = Math.sin(rad);
+      // Clamp this dot's own radius to stay on-screen and not overshoot
+      // past the viewport center — keeps the spread wide without any one
+      // outlier satellite forcing the whole fan to shrink together.
+      let r = Math.min(rBase, maxR);
+      if (cosA > .001) r = Math.min(r, (innerWidth - margin - orgX) / cosA);
+      else if (cosA < -.001) r = Math.min(r, (orgX - margin) / -cosA);
+      if (sinA > .001) r = Math.min(r, (innerHeight - margin - orgY) / sinA);
+      else if (sinA < -.001) r = Math.min(r, (orgY - margin) / -sinA);
+      r = Math.max(r, 0);
+      const dx  = cosA * r;
+      const dy  = sinA * r;
       const a   = document.createElement('a');
       a.className = 'sat';
       a.href = item.href;
@@ -755,7 +772,7 @@ function positionOrganisms() {
 }
 
 positionOrganisms();
-window.addEventListener('resize', () => { positionOrganisms(); resizeCanvas(); });
+window.addEventListener('resize', () => { positionOrganisms(); buildSatellites(); resizeCanvas(); });
 
 // ── BLOOM INTERACTION (distance-based) ────────────────────────
 const BLOOM_R = 112; // px from organism center
