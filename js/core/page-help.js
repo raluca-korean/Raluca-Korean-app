@@ -11,26 +11,6 @@
   var SEEN_PREFIX = 'RK_HELP_SEEN_';
 
   var CONTENT = {
-    index: {
-      ro: {
-        title: 'Meniul principal',
-        lead: 'Pagina de start — de aici accesezi toate secțiunile aplicației.',
-        steps: [
-          'Alege un card pentru a intra în secțiunea dorită (exerciții, lecții, glosar, builder etc.).',
-          'Progresul tău se salvează automat, local, în browser.',
-          'Poți reveni oricând aici apăsând sigla / titlul aplicației.'
-        ]
-      },
-      en: {
-        title: 'Main menu',
-        lead: 'The home page — the starting point for every section of the app.',
-        steps: [
-          'Tap a card to open the section you want (exercises, lessons, glossary, builder, etc.).',
-          'Your progress is saved automatically, locally, in your browser.',
-          'You can always come back here from the app logo / title.'
-        ]
-      }
-    },
     exercises: {
       ro: {
         title: 'Exerciții TOPIK',
