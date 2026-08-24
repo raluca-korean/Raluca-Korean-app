@@ -1,4 +1,4 @@
-const CACHE = 'rk-v127';
+const CACHE = 'rk-v128';
 
 const STATIC = [
   './',
@@ -74,6 +74,7 @@ const STATIC = [
   './js/core/lang-picker.js',
   './js/core/notifications.js',
   './js/core/register-sw.js',
+  './js/core/page-help.js',
   './js/core/storage.js',
   './js/core/srs.js',
   './js/core/streak.js',
