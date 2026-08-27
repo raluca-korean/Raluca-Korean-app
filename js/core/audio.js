@@ -4,7 +4,7 @@
 
 window.AudioEngine = {
   slow: false,
-  repeat: 2,
+  repeat: 1,
   _utterance: null, // kept as a live reference — Safari/WebKit can silently
                      // garbage-collect an utterance before it fires otherwise
 
