@@ -353,12 +353,8 @@
   var _sentenceSpeakTimer = null;
 
   function speakText(text, rate){
-    if(!('speechSynthesis' in window) || !text) return;
-    window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ko-KR';
-    u.rate = rate || 0.9;
-    window.speechSynthesis.speak(u);
+    if(!text) return;
+    AudioEngine.speak(text, {rate: rate || 0.9});
   }
 
   function autoSpeakWord(ko){
@@ -445,15 +441,7 @@
     var lines = savedSentences.map(function(s, i){
       return (i + 1) + '. ' + s.ko + (s.tr ? '\n   ' + s.tr : '');
     }).join('\n\n');
-    var blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'raluca-korean.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    RKUtils.downloadTextFile('raluca-korean.txt', lines);
   }
 
   /* ============================================================
@@ -598,12 +586,7 @@
   }
 
   function escapeHtml(str){
-    return String(str || '')
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#039;');
+    return RKUtils.escapeHtml(str);
   }
 
   function normalizeLatin(str){
@@ -2730,29 +2713,24 @@
       return;
     }
 
-    window.speechSynthesis.cancel();
-
-    var utter = new SpeechSynthesisUtterance(built.korean);
-    utter.lang = 'ko-KR';
-    utter.rate = 0.9;
-
     var activeIndex = -1;
     var wordEls = els.sentenceWords ? els.sentenceWords.querySelectorAll('.word') : [];
 
-    utter.onboundary = function(){
-      activeIndex += 1;
-      for(var i=0;i<wordEls.length;i++){
-        wordEls[i].classList.toggle('active', i === activeIndex);
+    AudioEngine.speak(built.korean, {
+      rate: 0.9,
+      repeat: 1,
+      onboundary: function(){
+        activeIndex += 1;
+        for(var i=0;i<wordEls.length;i++){
+          wordEls[i].classList.toggle('active', i === activeIndex);
+        }
+      },
+      onend: function(){
+        for(var i=0;i<wordEls.length;i++){
+          wordEls[i].classList.remove('active');
+        }
       }
-    };
-
-    utter.onend = function(){
-      for(var i=0;i<wordEls.length;i++){
-        wordEls[i].classList.remove('active');
-      }
-    };
-
-    window.speechSynthesis.speak(utter);
+    });
   }
 
   function detectMimeType(){

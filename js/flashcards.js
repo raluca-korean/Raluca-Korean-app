@@ -244,10 +244,7 @@ function buildDeck(){
 
 // ── Speech ───────────────────────────────────────────────────
 function speakKO(text){
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = "ko-KR"; utt.rate = 0.9;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utt);
+  AudioEngine.speak(text, {rate: 0.9});
 }
 
 // ── CRF: Set interface state ─────────────────────────────────

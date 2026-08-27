@@ -15,7 +15,7 @@ var DAILY_GOAL  = 10;
 var streakData  = JSON.parse(localStorage.getItem('RK_HJ_STREAK') || '{"today":0,"lastDate":""}');
 
 function _todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return RKUtils.todayISO();
 }
 
 function _checkAndUpdateStreak() {
@@ -424,11 +424,7 @@ function _closeEtym() {
 
 /* ── AUDIO ─────────────────────────────────────────────── */
 function _speak(text) {
-  window.speechSynthesis.cancel();
-  var u  = new SpeechSynthesisUtterance(text);
-  u.lang = 'ko-KR';
-  u.rate = 0.85;
-  window.speechSynthesis.speak(u);
+  AudioEngine.speak(text, {rate: 0.85});
 }
 
 /* ── SEARCH ────────────────────────────────────────────── */
@@ -667,12 +663,7 @@ function _markLearned() {
 
 /* ── QUIZ ──────────────────────────────────────────────── */
 function _shuffled(arr) {
-  var a = arr.slice();
-  for (var i = a.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var t = a[i]; a[i] = a[j]; a[j] = t;
-  }
-  return a;
+  return RKUtils.shuffle(arr);
 }
 
 function _startQuiz() {

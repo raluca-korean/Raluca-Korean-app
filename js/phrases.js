@@ -26,11 +26,7 @@ function t(k) { return I18N[LANG][k]; }
 
 /* ── TTS ────────────────────────────────────────────── */
 function playTTS(text) {
-  if (!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
-  var u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ko-KR';
-  speechSynthesis.speak(u);
+  AudioEngine.speak(text);
 }
 
 /* ── MODE TABS ──────────────────────────────────────── */

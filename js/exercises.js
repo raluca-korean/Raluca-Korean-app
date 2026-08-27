@@ -516,7 +516,7 @@ function syncStudyToSW(currentStreak) {
 
 function saveStats(isCorrect, type){
   if (window.RKStreak) RKStreak.touch();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = RKUtils.todayISO();
   let s;
   try { s = JSON.parse(localStorage.getItem("RK_STATS") || "null"); } catch(e){ s = null; }
   if(!s) s = { total:0, correct:0, bestStreak:0, today, todayTotal:0, todayCorrect:0, byType:{} };
@@ -541,7 +541,7 @@ function trackWrong(item){
   try {
     const log = JSON.parse(localStorage.getItem('RK_WRONG_LOG') || '[]');
     const ekey = getExerciseKey(type, item);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = RKUtils.todayISO();
     const idx = log.findIndex(e => e.key === ekey);
     if(idx >= 0){
       log[idx].count = (log[idx].count || 1) + 1;
@@ -675,7 +675,7 @@ function setLanguage(lang){
 
 
 function shuffle(array){
-  return [...array].sort(() => Math.random() - 0.5);
+  return RKUtils.shuffle(array);
 }
 
 async function loadExercises(){

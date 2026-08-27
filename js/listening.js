@@ -34,15 +34,11 @@ function t(k) { return I18N[LANG][k]; }
 
 /* ── TTS ────────────────────────────────────────────── */
 function playTTS(text, rate) {
-  speechSynthesis.cancel();
-  var u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ko-KR';
-  u.rate = rate || 1;
-  speechSynthesis.speak(u);
+  AudioEngine.speak(text, {rate: rate || 1});
 }
 
 /* ── DAILY CHALLENGE ────────────────────────────────── */
-function todayISO() { return new Date().toISOString().slice(0, 10); }
+function todayISO() { return RKUtils.todayISO(); }
 
 function loadDaily() {
   try { return JSON.parse(localStorage.getItem('RK_DAILY_LISTEN') || 'null'); }

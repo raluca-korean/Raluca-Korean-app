@@ -82,7 +82,7 @@ function render(){
         </div>
       </div>`;
   } else {
-    const todayDate    = new Date().toISOString().slice(0,10);
+    const todayDate    = RKUtils.todayISO();
     const todayTotal   = s.today === todayDate ? s.todayTotal   : 0;
     const todayCorrect = s.today === todayDate ? s.todayCorrect : 0;
 

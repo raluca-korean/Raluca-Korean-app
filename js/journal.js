@@ -34,7 +34,7 @@ var STARTERS = ['오늘은', '저는 오늘', '왜냐하면', '기분이 좋아�
 
 function t(k) { return I18N[LANG][k]; }
 
-function todayISO() { return new Date().toISOString().slice(0, 10); }
+function todayISO() { return RKUtils.todayISO(); }
 
 function countHangul(text) {
   var m = text.match(/[가-힣]/g);

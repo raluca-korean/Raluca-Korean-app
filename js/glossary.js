@@ -160,16 +160,9 @@ function _refreshDailyChip(ko) {
 }
 
 // ── Speech ──
-let _speakTimer = null;
 function speakKO(text) {
-  if (!text || !window.speechSynthesis) return;
-  clearTimeout(_speakTimer);
-  speechSynthesis.cancel();
-  _speakTimer = setTimeout(() => {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ko-KR"; u.rate = 0.9;
-    speechSynthesis.speak(u);
-  }, 80);
+  if (!text) return;
+  AudioEngine.speak(text, {rate: 0.9});
 }
 
 function openYouGlish(w) {
@@ -179,9 +172,9 @@ function openYouGlish(w) {
 // ── Helpers ──
 function getMeaning(w)   { return currentLang === "ro" ? w.ro : w.en; }
 function getCats(w)      { return currentLang === "ro" ? w.categoriesRo : w.categoriesEn; }
-function shuffle(a)      { return [...a].sort(() => Math.random() - 0.5); }
+function shuffle(a)      { return RKUtils.shuffle(a); }
 function esc(s)          { return s.replace(/'/g, "\\'"); }
-function sanitizeHTML(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function sanitizeHTML(s) { return RKUtils.escapeHtml(s); }
 
 function getCatColor(w) {
   for (const c of getCats(w)) {
@@ -759,11 +752,7 @@ function exportFavorites() {
     const w = WORDS.find(x => x.ko === ko);
     return w ? `${w.ko}\t${w.ro}\t${w.en}` : ko;
   });
-  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "glosar-favorite.txt"; a.click();
-  URL.revokeObjectURL(url);
+  RKUtils.downloadTextFile("glosar-favorite.txt", lines.join("\n"));
 }
 function updateExportBtn() {
   if (exportFavBtn) exportFavBtn.style.display = _f().size ? "" : "none";

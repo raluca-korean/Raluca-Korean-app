@@ -164,15 +164,11 @@ function highlightText(exp, recog) {
 
 /* ── TTS ────────────────────────────────────────────── */
 function playTTS(text, rate) {
-  speechSynthesis.cancel();
-  var u = new SpeechSynthesisUtterance(text);
-  u.lang = 'ko-KR';
-  u.rate = rate || 1;
-  speechSynthesis.speak(u);
+  AudioEngine.speak(text, {rate: rate || 1});
 }
 
 /* ── DAILY CHALLENGE ────────────────────────────────── */
-function todayISO() { return new Date().toISOString().slice(0, 10); }
+function todayISO() { return RKUtils.todayISO(); }
 
 function loadDailyPron() {
   try { return JSON.parse(localStorage.getItem('RK_DAILY_PRON') || 'null'); }
@@ -414,16 +410,15 @@ function buildCard(s, onChecked) {
 
   /* Shadow: TTS slow → auto-record after audio ends */
   btnShadow.onclick = function() {
-    speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(s.text);
-    u.lang = 'ko-KR';
-    u.rate = 0.7;
-    u.onend = function() {
-      setTimeout(function() {
-        if (!state.recording) startRec();
-      }, 400);
-    };
-    speechSynthesis.speak(u);
+    AudioEngine.speak(s.text, {
+      rate: 0.7,
+      repeat: 1,
+      onend: function() {
+        setTimeout(function() {
+          if (!state.recording) startRec();
+        }, 400);
+      }
+    });
   };
 
   return div;

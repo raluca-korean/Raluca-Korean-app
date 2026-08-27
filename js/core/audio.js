@@ -36,13 +36,16 @@ window.AudioEngine = {
 
     const slow = options.slow ?? this.slow;
     const repeat = options.repeat ?? this.repeat;
+    const rate = options.rate ?? (slow ? 0.7 : 1);
     const voice = this._pickKoreanVoice();
 
     const speakOnce = ()=>{
       const u = new SpeechSynthesisUtterance(clean);
       u.lang = "ko-KR";
       if(voice) u.voice = voice;
-      u.rate = slow ? 0.7 : 1;
+      u.rate = rate;
+      if(options.onboundary) u.onboundary = options.onboundary;
+      if(options.onend) u.onend = options.onend;
       this._utterance = u;
       speechSynthesis.speak(u);
     };

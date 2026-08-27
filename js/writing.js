@@ -346,17 +346,11 @@ function updateTarget() {
 }
 
 function speakKo(char) {
-  if (!("speechSynthesis" in window)) return;
-  const u = new SpeechSynthesisUtterance(char);
-  u.lang = "ko-KR"; speechSynthesis.cancel(); speechSynthesis.speak(u);
+  AudioEngine.speak(char);
 }
 
 function speakTarget() {
-  if (!("speechSynthesis" in window)) return;
-  const u = new SpeechSynthesisUtterance(pool[idx].char);
-  u.lang = "ko-KR";
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+  AudioEngine.speak(pool[idx].char);
 }
 
 // ── CANVAS ────────────────────────────────────────────────────

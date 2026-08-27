@@ -449,13 +449,8 @@ let qDeck = [], qIdx = 0, qCorrect = 0, qTotal = 0, qStreak = 0, qAnswered = fal
 
 // ── AUDIO ─────────────────────────────────────────────────────
 function speakKo(text) {
-  if (!('speechSynthesis' in window) || !text) return;
-  speechSynthesis.cancel();
-  setTimeout(() => {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ko-KR';
-    speechSynthesis.speak(u);
-  }, 80);
+  if (!text) return;
+  AudioEngine.speak(text);
 }
 
 // ── BACKGROUND PARTICLE FIELD ─────────────────────────────────
@@ -734,12 +729,7 @@ function deactivateEcho() {
 // ── QUIZ (ATTUNEMENT) ─────────────────────────────────────────
 const QUIZ_POOL = ALL_CHARS;
 function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+  return RKUtils.shuffle(arr);
 }
 
 function initQuiz() {
