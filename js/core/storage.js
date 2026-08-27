@@ -12,6 +12,18 @@
  * RK_SCHEMA_VER is intentionally excluded from the backup manifest so
  * that a restored backup triggers re-migration on the next page load.
  */
+window.RKStorage = {
+  get(key, defaultValue) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw === null ? defaultValue : JSON.parse(raw);
+    } catch(e) { return defaultValue; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch(e) { return false; }
+  }
+};
+
 (function () {
   var CURRENT = 4;
 

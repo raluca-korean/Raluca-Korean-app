@@ -35,35 +35,29 @@
   ];
 
   function getXPData() {
-    try { return JSON.parse(localStorage.getItem('RK_XP') || 'null') || {total:0}; }
-    catch(e) { return {total:0}; }
+    return RKStorage.get('RK_XP', null) || {total:0};
   }
   function saveXPData(d) {
-    try { localStorage.setItem('RK_XP', JSON.stringify(d)); } catch(e) {}
+    RKStorage.set('RK_XP', d);
   }
 
   function getEarnedBadges() {
-    try { return JSON.parse(localStorage.getItem('RK_BADGES') || '[]'); }
-    catch(e) { return []; }
+    return RKStorage.get('RK_BADGES', []);
   }
   function saveEarnedBadges(list) {
-    try { localStorage.setItem('RK_BADGES', JSON.stringify(list)); } catch(e) {}
+    RKStorage.set('RK_BADGES', list);
   }
 
   function getQuestData() {
     var today = new Date().toISOString().slice(0, 10);
-    try {
-      var d = JSON.parse(localStorage.getItem('RK_DAILY_QUEST') || 'null');
-      if (!d || d.date !== today) {
-        return {date:today, done:0, completedToday:false, questsDone: d ? (d.questsDone||0) : 0};
-      }
-      return d;
-    } catch(e) {
-      return {date:today, done:0, completedToday:false, questsDone:0};
+    var d = RKStorage.get('RK_DAILY_QUEST', null);
+    if (!d || d.date !== today) {
+      return {date:today, done:0, completedToday:false, questsDone: d ? (d.questsDone||0) : 0};
     }
+    return d;
   }
   function saveQuestData(d) {
-    try { localStorage.setItem('RK_DAILY_QUEST', JSON.stringify(d)); } catch(e) {}
+    RKStorage.set('RK_DAILY_QUEST', d);
   }
 
   function getLevelInfo(xp) {

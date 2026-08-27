@@ -377,14 +377,11 @@
   var savedSentences = [];
 
   function loadSavedSentences(){
-    try{
-      var raw = localStorage.getItem(SAVED_KEY);
-      if(raw) savedSentences = JSON.parse(raw);
-    }catch(e){ savedSentences = []; }
+    savedSentences = RKStorage.get(SAVED_KEY, []);
   }
 
   function persistSaved(){
-    try{ localStorage.setItem(SAVED_KEY, JSON.stringify(savedSentences)); }catch(e){}
+    RKStorage.set(SAVED_KEY, savedSentences);
   }
 
   function renderSavedPanel(){
@@ -540,14 +537,11 @@
   var wordUsage = {};
 
   function loadWordUsage(){
-    try{
-      var raw = localStorage.getItem(USAGE_KEY);
-      if(raw) wordUsage = JSON.parse(raw);
-    }catch(e){ wordUsage = {}; }
+    wordUsage = RKStorage.get(USAGE_KEY, {});
   }
 
   function saveWordUsage(){
-    try{ localStorage.setItem(USAGE_KEY, JSON.stringify(wordUsage)); }catch(e){}
+    RKStorage.set(USAGE_KEY, wordUsage);
   }
 
   function markWordUsed(fieldKey, item){

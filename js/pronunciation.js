@@ -171,11 +171,10 @@ function playTTS(text, rate) {
 function todayISO() { return RKUtils.todayISO(); }
 
 function loadDailyPron() {
-  try { return JSON.parse(localStorage.getItem('RK_DAILY_PRON') || 'null'); }
-  catch (e) { return null; }
+  return RKStorage.get('RK_DAILY_PRON', null);
 }
 function saveDailyPron(data) {
-  try { localStorage.setItem('RK_DAILY_PRON', JSON.stringify(data)); } catch (e) {}
+  RKStorage.set('RK_DAILY_PRON', data);
 }
 
 function pickDailySentence() {

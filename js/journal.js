@@ -42,11 +42,10 @@ function countHangul(text) {
 }
 
 function loadJournal() {
-  try { return JSON.parse(localStorage.getItem(JOURNAL_KEY) || '{}'); }
-  catch (e) { return {}; }
+  return RKStorage.get(JOURNAL_KEY, {});
 }
 function saveJournal(all) {
-  try { localStorage.setItem(JOURNAL_KEY, JSON.stringify(all)); } catch (e) {}
+  RKStorage.set(JOURNAL_KEY, all);
 }
 
 function pickTodayPrompt() {

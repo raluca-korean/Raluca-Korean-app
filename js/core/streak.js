@@ -21,15 +21,13 @@
   }
 
   function load() {
-    try {
-      var s = JSON.parse(localStorage.getItem(KEY) || 'null');
-      if (s && typeof s.days === 'number') return s;
-    } catch (e) {}
+    var s = RKStorage.get(KEY, null);
+    if (s && typeof s.days === 'number') return s;
     return { days: 0, best: 0, lastDate: '' };
   }
 
   function save(s) {
-    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+    RKStorage.set(KEY, s);
   }
 
   /* Call on any real study activity. No-ops after the first call each day. */

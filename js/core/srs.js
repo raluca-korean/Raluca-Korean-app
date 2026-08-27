@@ -17,12 +17,10 @@
   'use strict';
 
   function load(key) {
-    try { return JSON.parse(localStorage.getItem(key) || '{}'); }
-    catch (e) { return {}; }
+    return RKStorage.get(key, {});
   }
   function save(key, data) {
-    try { localStorage.setItem(key, JSON.stringify(data)); }
-    catch (e) {}
+    RKStorage.set(key, data);
   }
 
   /* Classic SM-2. quality: 1=wrong, 2=hint/partial, 4=correct, 5=perfect. */

@@ -41,11 +41,10 @@ function playTTS(text, rate) {
 function todayISO() { return RKUtils.todayISO(); }
 
 function loadDaily() {
-  try { return JSON.parse(localStorage.getItem('RK_DAILY_LISTEN') || 'null'); }
-  catch (e) { return null; }
+  return RKStorage.get('RK_DAILY_LISTEN', null);
 }
 function saveDaily(data) {
-  try { localStorage.setItem('RK_DAILY_LISTEN', JSON.stringify(data)); } catch (e) {}
+  RKStorage.set('RK_DAILY_LISTEN', data);
 }
 function pickDailyItem() {
   var epochDay = Math.floor(Date.now() / 86400000);
@@ -97,8 +96,7 @@ function renderDailyChallenge() {
 function saveStats(isCorrect) {
   if (window.RKStreak) RKStreak.touch();
   var today = todayISO();
-  var s;
-  try { s = JSON.parse(localStorage.getItem('RK_STATS') || 'null'); } catch (e) { s = null; }
+  var s = RKStorage.get('RK_STATS', null);
   if (!s) s = { total: 0, correct: 0, bestStreak: 0, today: today, todayTotal: 0, todayCorrect: 0, byType: {} };
   if (s.today !== today) { s.today = today; s.todayTotal = 0; s.todayCorrect = 0; }
   s.total++;
@@ -108,7 +106,7 @@ function saveStats(isCorrect) {
   if (!s.byType.listening) s.byType.listening = { total: 0, correct: 0 };
   s.byType.listening.total++;
   if (isCorrect) s.byType.listening.correct++;
-  localStorage.setItem('RK_STATS', JSON.stringify(s));
+  RKStorage.set('RK_STATS', s);
   if (isCorrect && window.RKGamification) RKGamification.addXP(streak);
 }
 

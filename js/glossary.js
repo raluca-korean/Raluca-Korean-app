@@ -23,7 +23,7 @@ let RAW_VOCAB_BY_KO = new Map(); // ko -> {ko, ro, en, categories}, pt. Sentence
 let EXTRA_SENTENCES = {}; // ko -> propoziții scrise manual (pronume, 무료, 어느...) — verificat înaintea SentenceGenerator, la fel ca în Harta Cuvântului
 let daily        = [];
 const RECENT_KEY = "RK_DICT_RECENT"; // same key the retired dictionary.html used, so history carries over
-let recent       = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+let recent       = RKStorage.get(RECENT_KEY, []);
 let currentLang  = RKLang.get();
 let filterCat    = "";
 let filterFavs   = false;
@@ -127,14 +127,14 @@ function t(k) { return UI[currentLang][k]; }
 
 // ── Storage ──
 let _fSet = null, _lSet = null;
-function _f() { if (!_fSet) _fSet = new Set(JSON.parse(localStorage.getItem("RK_FAV_WORDS") || "[]")); return _fSet; }
-function _l() { if (!_lSet) _lSet = new Set(JSON.parse(localStorage.getItem("RK_LEARNED")   || "[]")); return _lSet; }
+function _f() { if (!_fSet) _fSet = new Set(RKStorage.get("RK_FAV_WORDS", [])); return _fSet; }
+function _l() { if (!_lSet) _lSet = new Set(RKStorage.get("RK_LEARNED", [])); return _lSet; }
 function isFav(ko)     { return _f().has(ko); }
 function isLearned(ko) { return _l().has(ko); }
 
 function toggleFav(ko) {
   const s = _f(); s.has(ko) ? s.delete(ko) : s.add(ko);
-  localStorage.setItem("RK_FAV_WORDS", JSON.stringify([...s]));
+  RKStorage.set("RK_FAV_WORDS", [...s]);
   _refreshRowIcons(ko);
   if (focusedKo === ko) _renderPanel(WORDS.find(w => w.ko === ko));
   _refreshDailyChip(ko);
@@ -143,7 +143,7 @@ function toggleFav(ko) {
 
 function toggleLearned(ko) {
   const s = _l(); s.has(ko) ? s.delete(ko) : s.add(ko);
-  localStorage.setItem("RK_LEARNED", JSON.stringify([...s]));
+  RKStorage.set("RK_LEARNED", [...s]);
   _refreshRowIcons(ko);
   if (focusedKo === ko) _renderPanel(WORDS.find(w => w.ko === ko));
 }
@@ -689,7 +689,7 @@ function refreshDaily() { pickDaily(); renderDailyView(); }
 // ── Recent searches ──
 function trackRecent(ko) {
   recent = [ko, ...recent.filter(x => x !== ko)].slice(0, 8);
-  localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+  RKStorage.set(RECENT_KEY, recent);
   renderRecentView();
 }
 

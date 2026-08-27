@@ -67,9 +67,8 @@ function render(){
   document.getElementById("pageTitle").textContent    = t("title");
   document.getElementById("pageSubtitle").textContent = t("subtitle");
 
-  let s;
-  try { s = JSON.parse(localStorage.getItem("RK_STATS") || "null"); } catch(e){ s = null; }
-  const favCount = (JSON.parse(localStorage.getItem("RK_FAV_WORDS") || "[]")).length;
+  const s = RKStorage.get("RK_STATS", null);
+  const favCount = RKStorage.get("RK_FAV_WORDS", []).length;
   const el = document.getElementById("mainStats");
 
   let statsHtml;

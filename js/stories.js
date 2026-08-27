@@ -215,9 +215,9 @@
 
   /* ── Progress ── */
   function loadProg() {
-    try { return JSON.parse(localStorage.getItem('RK_STORIES') || '{}'); } catch (e) { return {}; }
+    return RKStorage.get('RK_STORIES', {});
   }
-  function saveProg(p) { localStorage.setItem('RK_STORIES', JSON.stringify(p)); }
+  function saveProg(p) { RKStorage.set('RK_STORIES', p); }
 
   function isDone(sid, eid) {
     var p = loadProg();

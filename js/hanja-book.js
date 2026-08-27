@@ -6,13 +6,13 @@ var DATA = []; // populated from data/hanja.json — see the fetch + boot() call
    ═══════════════════════════════════════════════════════════ */
 
 var lang        = localStorage.getItem('RK_LANG') || 'ro';
-var learned     = JSON.parse(localStorage.getItem('RK_HJ_LEARNED') || '[]');
+var learned     = RKStorage.get('RK_HJ_LEARNED', []);
 var bloomActive = -1;
 
 /* Daily goal (today's review count — the app-wide streak itself now lives
    in js/core/streak.js / RK_STREAK, shared with every other page). */
 var DAILY_GOAL  = 10;
-var streakData  = JSON.parse(localStorage.getItem('RK_HJ_STREAK') || '{"today":0,"lastDate":""}');
+var streakData  = RKStorage.get('RK_HJ_STREAK', {today:0,lastDate:""});
 
 function _todayStr() {
   return RKUtils.todayISO();
@@ -24,7 +24,7 @@ function _checkAndUpdateStreak() {
   /* New day */
   streakData.today  = 0;
   streakData.lastDate = today;
-  localStorage.setItem('RK_HJ_STREAK', JSON.stringify(streakData));
+  RKStorage.set('RK_HJ_STREAK', streakData);
 }
 
 function _bumpStreak() {
@@ -34,7 +34,7 @@ function _bumpStreak() {
     var row = document.getElementById('streakRow');
     if (row) { row.classList.add('goal-reached'); setTimeout(function() { row.classList.remove('goal-reached'); }, 500); }
   }
-  localStorage.setItem('RK_HJ_STREAK', JSON.stringify(streakData));
+  RKStorage.set('RK_HJ_STREAK', streakData);
   _renderStreak();
 }
 
@@ -49,7 +49,7 @@ function _renderStreak() {
 }
 
 /* SRS data: {reps, ease, interval(days), due(ms timestamp)} */
-var srsData = JSON.parse(localStorage.getItem('RK_HJ_SRS') || '{}');
+var srsData = RKStorage.get('RK_HJ_SRS', {});
 
 /* Silabe frecvente din vocabular care nu apar în cei 100 hanja principali */
 var HANJA_SUPPLEMENT = {
@@ -147,11 +147,8 @@ var quizInitialSize = 0;
 /* Study queue: unlearned hanja first; marking learned sends them to the back */
 var queue = [];
 function _buildQueue() {
-  var saved = localStorage.getItem('RK_HJ_QUEUE');
-  if (saved) {
-    var q = JSON.parse(saved);
-    if (q.length === DATA.length) return q;
-  }
+  var saved = RKStorage.get('RK_HJ_QUEUE', null);
+  if (saved && saved.length === DATA.length) return saved;
   var q = [];
   for (var i = 0; i < DATA.length; i++) q.push(i);
   return q;
@@ -612,7 +609,7 @@ function _updateSRS(di, correct) {
   // own early learning-step timing); this file just keeps its local cache
   // and localStorage write exactly as before.
   srsData[di] = RKSrs.stepWithLearningSteps(_getSRS(di), correct);
-  localStorage.setItem('RK_HJ_SRS', JSON.stringify(srsData));
+  RKStorage.set('RK_HJ_SRS', srsData);
 }
 
 function _sortQueueByDue() {
@@ -625,7 +622,7 @@ function _sortQueueByDue() {
   var p = queue.indexOf(idx);
   queuePos = p >= 0 ? p : 0;
   idx = queue[queuePos];
-  localStorage.setItem('RK_HJ_QUEUE', JSON.stringify(queue));
+  RKStorage.set('RK_HJ_QUEUE', queue);
 }
 
 /* ── MARK LEARNED ──────────────────────────────────────── */
@@ -635,7 +632,7 @@ function _markLearned() {
   if (pos < 0) {
     /* Validează → adaugă în learned și avansează */
     learned.push(idx);
-    localStorage.setItem('RK_HJ_LEARNED', JSON.stringify(learned));
+    RKStorage.set('RK_HJ_LEARNED', learned);
     if (window.RKGamification) RKGamification.addXPBonus(10);
 
     var current = queue.splice(queuePos, 1)[0];
@@ -645,7 +642,7 @@ function _markLearned() {
     if (ins <= queuePos) queuePos++;
     if (queuePos >= queue.length) queuePos = queue.length - 1;
     idx = queue[queuePos];
-    localStorage.setItem('RK_HJ_QUEUE', JSON.stringify(queue));
+    RKStorage.set('RK_HJ_QUEUE', queue);
 
     _bumpStreak();
 
@@ -656,7 +653,7 @@ function _markLearned() {
   } else {
     /* De-validează → scoate din learned, rămâne pe același hanja */
     learned.splice(pos, 1);
-    localStorage.setItem('RK_HJ_LEARNED', JSON.stringify(learned));
+    RKStorage.set('RK_HJ_LEARNED', learned);
     render(false);
   }
 }

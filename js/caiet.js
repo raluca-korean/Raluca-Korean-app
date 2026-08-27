@@ -76,11 +76,7 @@
 
   // ── STORAGE ────────────────────────────────────────────────────
   function loadState() {
-    try {
-      var raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (e) { return null; }
+    return RKStorage.get(STORE_KEY, null);
   }
 
   var saveTimer = null;
@@ -100,10 +96,9 @@
         ink: hasInk ? ink.toDataURL('image/png') : null
       });
     });
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ selectedLevel: selectedLevel, pages: pages }));
+    if (RKStorage.set(STORE_KEY, { selectedLevel: selectedLevel, pages: pages })) {
       flashSaved();
-    } catch (e) { /* quota exceeded — silently skip persistence */ }
+    } /* else: quota exceeded — silently skip persistence */
   }
 
   var flashTimer = null;

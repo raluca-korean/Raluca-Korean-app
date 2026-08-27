@@ -51,8 +51,8 @@ const SPEED_KEY = 'RK_SPEED';
 let exStartTime = 0;
 let timerInterval = null;
 
-function speedLoad(){ try{ return JSON.parse(localStorage.getItem(SPEED_KEY)||'{}'); }catch{ return {}; } }
-function speedSave(d){ try{ localStorage.setItem(SPEED_KEY,JSON.stringify(d)); }catch{} }
+function speedLoad(){ return RKStorage.get(SPEED_KEY, {}); }
+function speedSave(d){ RKStorage.set(SPEED_KEY, d); }
 
 function timerStart(){
   clearInterval(timerInterval);
@@ -424,13 +424,24 @@ function updateBadges(){
   if(meterFill) meterFill.style.width = percent + "%";
 }
 
+// Restarts a toast's CSS "show" animation even if it's still mid-animation
+// from a previous trigger (the offsetWidth read forces a reflow between the
+// remove and re-add so the browser doesn't coalesce them into a no-op).
+function retriggerShow(el, autoHideMs){
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  if(autoHideMs){
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => el.classList.remove('show'), autoHideMs);
+  }
+}
+
 function showXPToast(amount){
   const el = document.getElementById('xpToast');
   if(!el) return;
   el.textContent = '+' + amount + ' XP' + (amount >= 20 ? ' ⚡' : '');
-  el.classList.remove('show');
-  void el.offsetWidth;
-  el.classList.add('show');
+  retriggerShow(el);
 }
 
 function showBadgeNotif(badge){
@@ -439,11 +450,7 @@ function showBadgeNotif(badge){
   document.getElementById('badgeNotifIcon').textContent = badge.icon;
   document.getElementById('badgeNotifLabel').textContent = currentLang === 'ro' ? '🏅 Badge obținut!' : '🏅 Badge unlocked!';
   document.getElementById('badgeNotifTitle').textContent = badge['title_' + currentLang] || badge.title_ro;
-  el.classList.remove('show');
-  void el.offsetWidth;
-  el.classList.add('show');
-  clearTimeout(el._hideTimer);
-  el._hideTimer = setTimeout(() => el.classList.remove('show'), 3400);
+  retriggerShow(el, 3400);
 }
 
 function showLevelUp(newLevel, levelInfo){
@@ -460,11 +467,7 @@ function showQuestComplete(){
   const el = document.getElementById('questCompleteToast');
   if(!el) return;
   el.textContent = currentLang === 'ro' ? '🎯 Misiunea zilei completată! +50 XP bonus' : '🎯 Daily quest done! +50 XP bonus';
-  el.classList.remove('show');
-  void el.offsetWidth;
-  el.classList.add('show');
-  clearTimeout(el._hideTimer);
-  el._hideTimer = setTimeout(() => el.classList.remove('show'), 4500);
+  retriggerShow(el, 4500);
   if(window.RKGamification){
     RKGamification.addXPBonus(50);
     updateBadges();
@@ -491,8 +494,7 @@ function processGamification(wasCorrect){
   const quest = G.incrementQuest();
   if(quest.completed) setTimeout(showQuestComplete, 500);
 
-  let stats;
-  try { stats = JSON.parse(localStorage.getItem('RK_STATS') || '{}'); } catch(e){ stats = {}; }
+  const stats = RKStorage.get('RK_STATS', {});
   const newBadges = G.checkBadges(stats, xpResult.total, quest.total);
   const badgeDelay = quest.completed ? 2000 : (xpResult.levelUp ? 3200 : 800);
   newBadges.forEach((badge, i) => {
@@ -502,11 +504,10 @@ function processGamification(wasCorrect){
 
 function markLessonDone(lessonId){
   if(!lessonId) return;
-  let done;
-  try { done = JSON.parse(localStorage.getItem("RK_LESSON_DONE") || "[]"); } catch(e){ done = []; }
+  const done = RKStorage.get("RK_LESSON_DONE", []);
   if(!done.includes(lessonId)){
     done.push(lessonId);
-    localStorage.setItem("RK_LESSON_DONE", JSON.stringify(done));
+    RKStorage.set("RK_LESSON_DONE", done);
   }
 }
 
@@ -517,8 +518,7 @@ function syncStudyToSW(currentStreak) {
 function saveStats(isCorrect, type){
   if (window.RKStreak) RKStreak.touch();
   const today = RKUtils.todayISO();
-  let s;
-  try { s = JSON.parse(localStorage.getItem("RK_STATS") || "null"); } catch(e){ s = null; }
+  let s = RKStorage.get("RK_STATS", null);
   if(!s) s = { total:0, correct:0, bestStreak:0, today, todayTotal:0, todayCorrect:0, byType:{} };
   if(s.today !== today){ s.today = today; s.todayTotal = 0; s.todayCorrect = 0; }
   s.total++;
@@ -528,7 +528,7 @@ function saveStats(isCorrect, type){
   if(!s.byType[type]) s.byType[type] = { total:0, correct:0 };
   s.byType[type].total++;
   if(isCorrect) s.byType[type].correct++;
-  localStorage.setItem("RK_STATS", JSON.stringify(s));
+  RKStorage.set("RK_STATS", s);
   if(isCorrect) syncStudyToSW(streak);
   updateTypeStats();
 }
@@ -539,7 +539,7 @@ function trackWrong(item){
   if(!wrongsByType[type].includes(item)) wrongsByType[type].push(item);
   // Persist for mistakes.html
   try {
-    const log = JSON.parse(localStorage.getItem('RK_WRONG_LOG') || '[]');
+    const log = RKStorage.get('RK_WRONG_LOG', []);
     const ekey = getExerciseKey(type, item);
     const today = RKUtils.todayISO();
     const idx = log.findIndex(e => e.key === ekey);
@@ -552,14 +552,14 @@ function trackWrong(item){
       log.unshift({ type, key: ekey, topik: item.topik || 0, date: today, count: 1 });
     }
     if(log.length > 150) log.splice(150);
-    localStorage.setItem('RK_WRONG_LOG', JSON.stringify(log));
+    RKStorage.set('RK_WRONG_LOG', log);
   } catch(e) {}
 }
 
 // ── PERSISTENT MISTAKES ────────────────────────────────────────────────────
 function getPersistentWrongs(type) {
   try {
-    const log = JSON.parse(localStorage.getItem('RK_WRONG_LOG') || '[]');
+    const log = RKStorage.get('RK_WRONG_LOG', []);
     const items = allExercises[type] || [];
     const seen = new Set();
     return log
@@ -602,7 +602,7 @@ function updateTypeStats() {
   const type = typeSelect.value;
   if (type.startsWith('drill-')) { el.textContent = ''; return; }
   try {
-    const s = JSON.parse(localStorage.getItem('RK_STATS') || '{}');
+    const s = RKStorage.get('RK_STATS', {});
     const bt = (s.byType || {})[type];
     if (!bt || !bt.total) { el.textContent = currentLang === 'ro' ? '— fără statistici' : '— no stats yet'; return; }
     const pct = Math.round((bt.correct / bt.total) * 100);
@@ -1297,7 +1297,7 @@ function speakKorean(text){
 }
 
 function getLearnedEx(){
-  return JSON.parse(localStorage.getItem("RK_LEARNED_EX") || "[]");
+  return RKStorage.get("RK_LEARNED_EX", []);
 }
 function getExerciseKey(type, item){
   if(type === "ko-ro")      return "ko-ro||" + (item.q || "");
@@ -1316,7 +1316,7 @@ function toggleLearnedEx(type, item){
   const key = getExerciseKey(type, item);
   const list = getLearnedEx();
   const next = list.includes(key) ? list.filter(k => k !== key) : [...list, key];
-  localStorage.setItem("RK_LEARNED_EX", JSON.stringify(next));
+  RKStorage.set("RK_LEARNED_EX", next);
   updateLearnBtn();
 }
 function updateLearnBtn(){

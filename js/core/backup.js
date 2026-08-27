@@ -71,17 +71,15 @@
   }
 
   function hasMeaningfulData() {
-    try {
-      var stats = JSON.parse(localStorage.getItem('RK_STATS') || 'null');
-      if (stats && stats.total > 0) return true;
-      if (parseInt(localStorage.getItem('RK_XP') || '0', 10) > 0) return true;
-      var streak = JSON.parse(localStorage.getItem('RK_STREAK') || 'null');
-      if (streak && streak.days > 0) return true;
-      var fc = JSON.parse(localStorage.getItem('RK_FC_SRS') || '{}');
-      if (Object.keys(fc).length) return true;
-      var hj = JSON.parse(localStorage.getItem('RK_HJ_SRS') || '{}');
-      if (Object.keys(hj).length) return true;
-    } catch (e) {}
+    var stats = RKStorage.get('RK_STATS', null);
+    if (stats && stats.total > 0) return true;
+    if (RKStorage.get('RK_XP', {total:0}).total > 0) return true;
+    var streak = RKStorage.get('RK_STREAK', null);
+    if (streak && streak.days > 0) return true;
+    var fc = RKStorage.get('RK_FC_SRS', {});
+    if (Object.keys(fc).length) return true;
+    var hj = RKStorage.get('RK_HJ_SRS', {});
+    if (Object.keys(hj).length) return true;
     return false;
   }
 
