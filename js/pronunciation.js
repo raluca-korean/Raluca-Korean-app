@@ -451,15 +451,12 @@ function renderCards() {
   data.forEach(function(s) { list.appendChild(buildCard(s)); });
 }
 
+// Mounted as the "Antrenament" tab inside reading.html, which owns the
+// shared header (title/subtitle) and the single RKLang.init() call — it
+// invokes applyLang() itself on load and on every language switch.
 function applyLang(lang) {
   LANG = lang;
-  document.documentElement.lang = lang;
-  document.getElementById('pageTitle').textContent = t('title');
-  document.getElementById('pageSub').textContent   = t('sub');
   renderDailyChallenge();
   renderFilter();
   renderCards();
 }
-
-RKLang.init(applyLang);
-applyLang(LANG);

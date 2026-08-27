@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Raluca Korean — Texte de Lectură</title>
+<title>Raluca Korean — Lectură & Speaking</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#7c3aed">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./theme-anime.css">
+<link rel="stylesheet" href="./pronunciation.css">
 <style>
 /* ── READING PAGE ─────────────────────────────────────────────── */
 
@@ -102,6 +103,8 @@ body.dark-mode .rd-header {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding: 16px 0 4px;
+  flex-wrap: wrap;
 }
 
 /* ── TEXT CARDS ───────────────────────────────────────────────── */
@@ -546,92 +549,37 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
   flex-shrink: 0;
 }
 
-/* ── RECORDING BUTTON ─────────────────────────────────────────── */
-.rd-rec-btn {
-  flex-shrink: 0;
-  width: 32px; height: 32px;
-  border-radius: 50%;
+/* ── TABS ─────────────────────────────────────────────────────── */
+.rd-tabs {
+  display: flex;
+  gap: 6px;
+}
+.rd-tab-btn {
+  flex: 1;
+  padding: 9px 14px;
+  border-radius: 12px;
   border: 2px solid var(--rk-stroke);
   background: transparent;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .15s ease;
+  font-size: 13px;
+  font-weight: 800;
   color: var(--rk-muted-ui);
-  margin-top: 3px;
+  cursor: pointer;
+  transition: all .18s ease;
   font-family: inherit;
-}
-.rd-rec-btn:hover {
-  background: #db2777;
-  border-color: #db2777;
-  color: #fff;
-  transform: scale(1.08);
-}
-.rd-rec-btn.recording {
-  background: #db2777;
-  border-color: #db2777;
-  color: #fff;
-  animation: rd-rec-pulse .9s ease-in-out infinite;
-}
-.rd-rec-btn.has-rec {
-  border-color: #db2777;
-  color: #db2777;
-}
-@keyframes rd-rec-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(219,39,119,.5); }
-  50%       { box-shadow: 0 0 0 7px rgba(219,39,119,0); }
-}
-
-/* ── INLINE WAVEFORM BARS ─────────────────────────────────────── */
-.rd-wavebars {
   display: flex;
   align-items: center;
-  gap: 2px;
-  height: 22px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .2s;
-  flex-shrink: 0;
-  margin-top: 5px;
-  margin-right: 4px;
+  justify-content: center;
+  gap: 6px;
 }
-.rd-wavebars.on { opacity: 1; }
-.rd-wbar {
-  width: 3px;
-  background: #db2777;
-  border-radius: 2px;
-  animation: rd-wbar .75s ease-in-out infinite;
+.rd-tab-btn:hover {
+  border-color: var(--rk-violet);
+  color: var(--rk-violet);
 }
-.rd-wbar:nth-child(1) { height: 6px;  animation-delay: 0s; }
-.rd-wbar:nth-child(2) { height: 13px; animation-delay: .12s; }
-.rd-wbar:nth-child(3) { height: 20px; animation-delay: .24s; }
-.rd-wbar:nth-child(4) { height: 13px; animation-delay: .36s; }
-.rd-wbar:nth-child(5) { height: 6px;  animation-delay: .48s; }
-@keyframes rd-wbar {
-  0%, 100% { transform: scaleY(1); opacity: .75; }
-  50% { transform: scaleY(.28); opacity: 1; }
-}
-
-/* ── SPEECH FEEDBACK ──────────────────────────────────────────── */
-.rd-speech-feedback {
-  display: none;
-  font-size: 12px; font-weight: 700;
-  margin-top: 5px; padding: 3px 10px;
-  border-radius: 20px;
-  width: fit-content;
-  animation: rd-slide-in .15s ease;
-}
-.rd-speech-feedback.ok {
-  display: inline-block;
-  background: rgba(88,204,2,.12);
-  color: #58CC02;
-  border: 1.5px solid rgba(88,204,2,.4);
-}
-.rd-speech-feedback.err {
-  display: inline-block;
-  background: rgba(219,39,119,.1);
-  color: #db2777;
-  border: 1.5px solid rgba(219,39,119,.35);
+.rd-tab-btn.active {
+  background: var(--rk-violet);
+  border-color: var(--rk-violet);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(124,58,237,.35);
 }
 
 </style>
@@ -653,11 +601,19 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
   <header class="rd-header">
     <div class="rd-header-top">
       <div class="rd-title-block">
-        <h1 id="pageTitle">Texte de Lectură</h1>
+        <h1 id="pageTitle">Lectură & Speaking</h1>
         <div class="rd-sub" id="pageSub">Apasă pe fiecare cuvânt · TOPIK 1–6</div>
       </div>
       <div id="pageControls"></div>
     </div>
+    <div class="rd-tabs" id="rdTabs" role="tablist" aria-label="Secțiune">
+      <button class="rd-tab-btn active" data-tab="read" role="tab" aria-selected="true" type="button">📖 <span id="tabLabelRead">Citește</span></button>
+      <button class="rd-tab-btn" data-tab="speak" role="tab" aria-selected="false" type="button">🎙️ <span id="tabLabelSpeak">Antrenament</span></button>
+    </div>
+  </header>
+
+  <!-- TAB: READ -->
+  <section id="tabRead">
     <!-- Level buttons + progress + font size -->
     <div class="rd-controls-row">
       <div class="rd-levels" id="levelBtns" role="tablist" aria-label="Nivel TOPIK">
@@ -673,12 +629,19 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
       <button class="rd-font-btn" id="fontDecBtn" title="Micșorează textul">A−</button>
       <button class="rd-font-btn" id="fontIncBtn" title="Mărește textul">A+</button>
     </div>
-  </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="rd-main" id="rdMain">
-    <div class="rk-spinner" id="rdSpinner">Se încarcă textele…</div>
-  </main>
+    <!-- MAIN CONTENT -->
+    <main class="rd-main" id="rdMain">
+      <div class="rk-spinner" id="rdSpinner">Se încarcă textele…</div>
+    </main>
+  </section>
+
+  <!-- TAB: SPEAK (drill deck, reused from pronunciation.js) -->
+  <section id="tabSpeak" style="display:none">
+    <div id="dailyChallenge"></div>
+    <div class="filter-row" id="filterRow"></div>
+    <div id="cardList"></div>
+  </section>
 
 </div><!-- .rd-viewport -->
 
@@ -730,8 +693,10 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     currentLang = RKLang.get();
     RKLang.init(function (lang) {
       currentLang = lang;
+      document.documentElement.lang = lang;
       updateLangUI();
       renderTexts();
+      if (window.applyLang) window.applyLang(lang); // Antrenament tab (js/pronunciation.js)
     });
 
     fontIdx = parseInt(localStorage.getItem(RD_FONT_KEY) || '1', 10);
@@ -739,7 +704,9 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     wireLevel();
     wireFontSize();
     wirePopup();
+    wireTabs();
     loadData();
+    if (window.applyLang) window.applyLang(currentLang); // initial render of Antrenament tab
   });
 
   /* ── DATA ────────────────────────────────────────────────────── */
@@ -770,11 +737,7 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     var lbl = document.getElementById('levelLabel');
     if (lbl) lbl.textContent = LEVEL_LABELS[currentLang][currentLvl] || '';
 
-    /* subtitle */
-    var sub = document.getElementById('pageSub');
-    if (sub) sub.textContent = currentLang === 'ro'
-      ? 'Apasă pe fiecare cuvânt · TOPIK 1–6'
-      : 'Tap each word · TOPIK 1–6';
+    updateSubtitle();
 
     if (!texts.length) {
       main.insertAdjacentHTML('beforeend',
@@ -874,19 +837,6 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
       speakText(sent.full, sndBtn);
     });
 
-    /* Record button */
-    var recBtn = document.createElement('button');
-    recBtn.className = 'rd-rec-btn';
-    recBtn.type = 'button';
-    recBtn.title = currentLang === 'ro' ? 'Practică pronunția' : 'Practice pronunciation';
-    recBtn.innerHTML = '🎙';
-    (function(capturedSent, capturedRecBtn) {
-      capturedRecBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        rdHandleRecClick(capturedSent.full, capturedRecBtn, capturedRecBtn._waveBars, capturedRecBtn._feedbackEl);
-      });
-    })(sent, recBtn);
-
     /* Sentence body */
     var sentBody = document.createElement('div');
     sentBody.className = 'rd-sent-body';
@@ -917,24 +867,7 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
       tokWrap.appendChild(span);
     });
 
-    /* Waveform bars (inside tokens row, shown when recording) */
-    var waveBars = document.createElement('div');
-    waveBars.className = 'rd-wavebars';
-    for (var wi = 0; wi < 5; wi++) {
-      var wb = document.createElement('div');
-      wb.className = 'rd-wbar';
-      waveBars.appendChild(wb);
-    }
-    tokRow.appendChild(waveBars);
     tokRow.appendChild(tokWrap);
-
-    /* Speech feedback */
-    var feedbackEl = document.createElement('div');
-    feedbackEl.className = 'rd-speech-feedback';
-
-    /* Link waveform + feedback to recBtn for click handler access */
-    recBtn._waveBars  = waveBars;
-    recBtn._feedbackEl = feedbackEl;
 
     /* Translation toggle (Feature 1) */
     if (sent.translation) {
@@ -962,14 +895,11 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
       tokRow.appendChild(transBtn);
       sentBody.appendChild(tokRow);
       sentBody.appendChild(tranDiv);
-      sentBody.appendChild(feedbackEl);
     } else {
       sentBody.appendChild(tokRow);
-      sentBody.appendChild(feedbackEl);
     }
 
     row.appendChild(sndBtn);
-    row.appendChild(recBtn);
     row.appendChild(sentBody);
     return row;
   }
@@ -1159,6 +1089,13 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
 
   /* ── LANG UI UPDATE ──────────────────────────────────────────── */
   function updateLangUI() {
+    /* update tab labels + subtitle */
+    var tabLabelRead  = document.getElementById('tabLabelRead');
+    var tabLabelSpeak = document.getElementById('tabLabelSpeak');
+    if (tabLabelRead)  tabLabelRead.textContent  = currentLang === 'ro' ? 'Citește' : 'Read';
+    if (tabLabelSpeak) tabLabelSpeak.textContent = currentLang === 'ro' ? 'Antrenament' : 'Practice';
+    updateSubtitle();
+
     /* update visible sentence translations */
     document.querySelectorAll('.rd-translation').forEach(function (div) {
       div.textContent = currentLang === 'ro' ? div.getAttribute('data-ro') : div.getAttribute('data-en');
@@ -1263,206 +1200,49 @@ body.dark-mode .rd-card-footer { border-color: rgba(124,58,237,.2); }
     badge.style.borderColor = done === total && total > 0 ? '#58CC02' : '';
   }
 
-  /* ── SPEAKING / RECORDING ─────────────────────────────────────── */
-  var rdCurrentAudio = null;
-  var rdRec = {
-    active:    false,
-    sessId:    0,
-    recog:     null,
-    mrec:      null,
-    stream:    null,
-    recBtn:    null,
-    waveBars:  null,
-    feedbackEl: null,
-    targetFull: null
-  };
-
-  function rdHandleRecClick(sentFull, recBtn, waveBars, feedbackEl) {
-    /* Stop active recording for this button */
-    if (rdRec.active && rdRec.recBtn === recBtn) {
-      rdStopRec(false);
-      return;
-    }
-    /* Play back existing recording for this button */
-    if (recBtn._recUrl) {
-      if (rdCurrentAudio) { rdCurrentAudio.pause(); rdCurrentAudio.currentTime = 0; }
-      rdCurrentAudio = new Audio(recBtn._recUrl);
-      rdCurrentAudio.play().catch(function () {});
-      return;
-    }
-    /* Reset previous recording button if different */
-    if (rdRec.recBtn && rdRec.recBtn !== recBtn) {
-      var prev = rdRec.recBtn;
-      prev.classList.remove('recording', 'has-rec');
-      prev.innerHTML = '🎙';
-      prev.title = currentLang === 'ro' ? 'Practică pronunția' : 'Practice pronunciation';
-      if (prev._recUrl) { URL.revokeObjectURL(prev._recUrl); prev._recUrl = null; }
-      if (prev._waveBars) prev._waveBars.classList.remove('on');
-    }
-    rdStopRec(false);
-    rdStartRec(sentFull, recBtn, waveBars, feedbackEl);
+  /* ── TABS (Citește / Antrenament) ─────────────────────────────── */
+  function activeTab() {
+    var btn = document.querySelector('.rd-tab-btn.active');
+    return btn ? btn.getAttribute('data-tab') : 'read';
   }
 
-  function rdStartRec(sentFull, recBtn, waveBars, feedbackEl) {
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      rdShowFeedback(feedbackEl, false,
-        currentLang === 'ro' ? 'Folosiți Chrome pentru vorbire' : 'Use Chrome for speech');
-      return;
-    }
+  function updateSubtitle() {
+    var sub = document.getElementById('pageSub');
+    if (!sub) return;
+    sub.textContent = activeTab() === 'read'
+      ? (currentLang === 'ro' ? 'Apasă pe fiecare cuvânt · TOPIK 1–6' : 'Tap each word · TOPIK 1–6')
+      : (currentLang === 'ro' ? 'Ascultă, repetă, verifică pronunția' : 'Listen, repeat, check your pronunciation');
+  }
 
-    rdRec.active     = true;
-    rdRec.targetFull = sentFull;
-    rdRec.recBtn     = recBtn;
-    rdRec.waveBars   = waveBars;
-    rdRec.feedbackEl = feedbackEl;
-    var mySession    = ++rdRec.sessId;
+  function wireTabs() {
+    var tabBtns  = document.querySelectorAll('.rd-tab-btn');
+    var tabRead  = document.getElementById('tabRead');
+    var tabSpeak = document.getElementById('tabSpeak');
 
-    recBtn.classList.add('recording');
-    recBtn.innerHTML = '⏹';
-    waveBars.classList.add('on');
-
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      .then(function (stream) {
-        if (rdRec.sessId !== mySession) {
-          stream.getTracks().forEach(function (t) { t.stop(); });
-          if (rdRec.recBtn === recBtn && !recBtn._recUrl) { recBtn.classList.remove('recording'); recBtn.innerHTML = '🎙'; }
-          return;
-        }
-        rdRec.stream = stream;
-
-        var mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg',
-                    'audio/mp4;codecs=mp4a.40.2', 'audio/mp4']
-          .filter(function (t) { return MediaRecorder.isTypeSupported(t); })[0] || '';
-        try {
-          var mchunks = [];
-          var m = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
-          rdRec.mrec = m;
-          m.ondataavailable = function (e) {
-            if (e.data && e.data.size > 0) mchunks.push(e.data);
-          };
-          m.onstop = function () {
-            stream.getTracks().forEach(function (t) { t.stop(); });
-            if (rdRec.stream === stream) rdRec.stream = null;
-            if (mchunks.length && rdRec.recBtn === recBtn) {
-              recBtn._recUrl = URL.createObjectURL(new Blob(mchunks, { type: m.mimeType || 'audio/webm' }));
-              recBtn.innerHTML = '▶';
-              recBtn.classList.add('has-rec');
-              recBtn.title = currentLang === 'ro' ? 'Redă înregistrarea' : 'Play recording';
-            }
-          };
-          m.start(100);
-        } catch (e) { rdRec.mrec = null; }
-
-        setTimeout(function () {
-          if (rdRec.sessId !== mySession) return;
-          var r = new SR();
-          rdRec.recog = r;
-          r.lang = 'ko-KR'; r.continuous = false; r.interimResults = false;
-          r.onresult = function (e) {
-            if (rdRec.recog !== r) return;
-            rdRec.recog = null;
-            rdFinishMrec();
-            rdEvaluate(e.results[0][0].transcript, mySession);
-          };
-          r.onend = function () {
-            if (rdRec.recog === r && rdRec.sessId === mySession) {
-              rdRec.recog = null;
-              rdFinishMrec();
-              rdStopUi();
-            }
-          };
-          r.onerror = function (e) {
-            if (rdRec.recog !== r) return;
-            rdRec.recog = null;
-            rdFinishMrec(); rdStopUi();
-            if (e.error !== 'no-speech' && e.error !== 'aborted')
-              rdShowFeedback(feedbackEl, false, e.error);
-          };
-          try { r.start(); } catch (e) { rdRec.recog = null; rdFinishMrec(); rdStopUi(); }
-        }, 80);
-      })
-      .catch(function () {
-        rdRec.active = false;
-        recBtn.classList.remove('recording');
-        recBtn.innerHTML = '🎙';
-        waveBars.classList.remove('on');
-        rdShowFeedback(feedbackEl, false,
-          currentLang === 'ro' ? 'Microfon refuzat' : 'Mic denied');
+    tabBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tab = btn.getAttribute('data-tab');
+        tabBtns.forEach(function (b) {
+          var active = b === btn;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        tabRead.style.display  = tab === 'read'  ? '' : 'none';
+        tabSpeak.style.display = tab === 'speak' ? '' : 'none';
+        updateSubtitle();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
-  }
-
-  function rdFinishMrec() {
-    if (rdRec.mrec && rdRec.mrec.state !== 'inactive') {
-      try { rdRec.mrec.requestData(); } catch (e) {}
-      var m = rdRec.mrec;
-      setTimeout(function () { if (m.state !== 'inactive') try { m.stop(); } catch (e) {} }, 60);
-    }
-  }
-
-  function rdStopUi() {
-    rdRec.active = false;
-    if (rdRec.waveBars) rdRec.waveBars.classList.remove('on');
-    if (rdRec.recBtn) {
-      rdRec.recBtn.classList.remove('recording');
-      if (!rdRec.recBtn._recUrl) rdRec.recBtn.innerHTML = '🎙';
-    }
-  }
-
-  function rdStopRec(resetBtn) {
-    rdRec.sessId++;
-    rdRec.active = false;
-    if (rdRec.recog) { try { rdRec.recog.abort(); } catch (e) {} rdRec.recog = null; }
-    if (rdRec.stream) { try { rdRec.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} rdRec.stream = null; }
-    rdFinishMrec();
-    if (rdRec.waveBars) rdRec.waveBars.classList.remove('on');
-    if (rdRec.recBtn) {
-      rdRec.recBtn.classList.remove('recording');
-      if (resetBtn || !rdRec.recBtn._recUrl) rdRec.recBtn.innerHTML = '🎙';
-    }
-  }
-
-  function rdEvaluate(transcript, sessionId) {
-    if (rdRec.sessId !== sessionId) return;
-    rdStopUi();
-    var target     = rdRec.targetFull;
-    var feedbackEl = rdRec.feedbackEl;
-    if (!target || !feedbackEl) return;
-
-    var clean = function (s) { return s.replace(/[^가-힣]/g, ''); };
-    var tClean = clean(target);
-    var hClean = clean(transcript);
-
-    /* character overlap score */
-    var overlap = 0;
-    var hArr = hClean.split('');
-    tClean.split('').forEach(function (ch) {
-      var i = hArr.indexOf(ch);
-      if (i !== -1) { overlap++; hArr.splice(i, 1); }
     });
-    var score = tClean.length > 0 ? Math.round((overlap / tClean.length) * 100) : 0;
-    var ok = score >= 65 || transcript.includes(target) || hClean === tClean;
-
-    if (ok) {
-      rdShowFeedback(feedbackEl, true,
-        (currentLang === 'ro' ? '✓ Excelent! ' : '✓ Excellent! ') + score + '%');
-    } else {
-      var heard = transcript.length > 22 ? transcript.slice(0, 22) + '…' : transcript;
-      rdShowFeedback(feedbackEl, false,
-        (currentLang === 'ro' ? 'Auzit: ' : 'Heard: ') + (heard || '—'));
-    }
-  }
-
-  function rdShowFeedback(el, ok, msg) {
-    if (!el) return;
-    el.textContent = msg;
-    el.className = 'rd-speech-feedback ' + (ok ? 'ok' : 'err');
-    clearTimeout(el._hideT);
-    el._hideT = setTimeout(function () { el.className = 'rd-speech-feedback'; }, 4500);
   }
 
 })();
 </script>
+<script src="./js/core/gamification.js"></script>
+<script src="./js/core/streak.js"></script>
+<script src="./js/core/audio.js"></script>
+<script src="./js/core/utils.js"></script>
+<script src="./js/pronunciation.js"></script>
+<script src="./js/core/register-sw.js"></script>
 <script src="./js/core/page-help.js"></script>
 </body>
 </html>

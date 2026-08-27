@@ -1,4 +1,4 @@
-const CACHE = 'rk-v128';
+const CACHE = 'rk-v129';
 
 const STATIC = [
   './',
@@ -25,7 +25,6 @@ const STATIC = [
   './word-map.html',
   './sentence-formation.html',
   './writing.html',
-  './pronunciation.html',
   './listening.html',
   './journal.html',
   './stats.html',

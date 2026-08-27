@@ -175,21 +175,21 @@
     },
     reading: {
       ro: {
-        title: 'Texte de Lectură',
-        lead: 'Texte în coreeană organizate pe niveluri TOPIK, cu traducere disponibilă.',
+        title: 'Lectură & Speaking',
+        lead: 'Texte în coreeană organizate pe niveluri TOPIK, plus antrenament de pronunție.',
         steps: [
-          'Alege nivelul TOPIK potrivit ție.',
-          'Citește textul; folosește butoanele de mărire/micșorare a fontului.',
-          'Verifică traducerea când ai nevoie de sprijin.'
+          'Tab „Citește": alege nivelul TOPIK, apasă pe cuvinte pentru traducere și salvează-le.',
+          'Tab „Antrenament": ascultă o propoziție, înregistrează-te și verifică scorul pronunției.',
+          'Provocarea zilnică din Antrenament oferă un bonus de XP.'
         ]
       },
       en: {
-        title: 'Reading texts',
-        lead: 'Korean texts organized by TOPIK level, with translation available.',
+        title: 'Reading & Speaking',
+        lead: 'Korean texts by TOPIK level, plus pronunciation practice.',
         steps: [
-          'Pick the TOPIK level that fits you.',
-          'Read the text; use the font size buttons if needed.',
-          'Check the translation whenever you need help.'
+          '"Read" tab: pick a TOPIK level, tap words for translation, save the ones you want.',
+          '"Practice" tab: listen to a sentence, record yourself, and check your pronunciation score.',
+          'The daily challenge in Practice gives a bonus XP.'
         ]
       }
     },
@@ -210,26 +210,6 @@
           'Press play and listen to the recording.',
           'Answer the comprehension questions.',
           'Replay it as many times as you need before answering.'
-        ]
-      }
-    },
-    pronunciation: {
-      ro: {
-        title: 'Speaking — Pronunție',
-        lead: 'Exersează pronunția cuvintelor și propozițiilor coreene.',
-        steps: [
-          'Ascultă modelul audio pentru cuvântul/propoziția afișată.',
-          'Repetă cu voce tare, imitând intonația.',
-          'Treci la exemplul următor și repetă exercițiul.'
-        ]
-      },
-      en: {
-        title: 'Speaking practice',
-        lead: 'Practice pronouncing Korean words and sentences.',
-        steps: [
-          'Listen to the audio model for the shown word/sentence.',
-          'Repeat it out loud, imitating the intonation.',
-          'Move to the next example and repeat the exercise.'
         ]
       }
     },
