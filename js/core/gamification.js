@@ -4,16 +4,16 @@
   var DAILY_GOAL = 10;
 
   var XP_LEVELS = [
-    {level:1,  min:0,     title_ro:'Începător',    title_en:'Beginner'},
-    {level:2,  min:100,   title_ro:'Student',      title_en:'Student'},
-    {level:3,  min:300,   title_ro:'Explorator',   title_en:'Explorer'},
-    {level:4,  min:600,   title_ro:'Practician',   title_en:'Practitioner'},
-    {level:5,  min:1000,  title_ro:'Cunoscător',   title_en:'Enthusiast'},
-    {level:6,  min:1500,  title_ro:'Avansat',      title_en:'Advanced'},
-    {level:7,  min:2200,  title_ro:'Expert TOPIK', title_en:'TOPIK Expert'},
-    {level:8,  min:3000,  title_ro:'Master',       title_en:'Master'},
-    {level:9,  min:5000,  title_ro:'Grand Master', title_en:'Grand Master'},
-    {level:10, min:10000, title_ro:'Korean Guru',  title_en:'Korean Guru'},
+    {level:1,  min:0,     title_ro:'🌱 Începător Hangul',    title_en:'🌱 Hangul Beginner'},
+    {level:2,  min:100,   title_ro:'☕ Cafeneaua Coreeană',   title_en:'☕ Korean Café'},
+    {level:3,  min:300,   title_ro:'🛍 Cumpărături în Seul',  title_en:'🛍 Seoul Shopping'},
+    {level:4,  min:600,   title_ro:'🚇 Exploratorul Seulului', title_en:'🚇 Seoul Explorer'},
+    {level:5,  min:1000,  title_ro:'🎤 Fan K-Pop',            title_en:'🎤 K-Pop Fan'},
+    {level:6,  min:1500,  title_ro:'🏠 Viață Coreeană',       title_en:'🏠 Korean Life'},
+    {level:7,  min:2200,  title_ro:'🎓 Expert TOPIK',         title_en:'🎓 TOPIK Expert'},
+    {level:8,  min:3000,  title_ro:'💼 Profesionist în Seul', title_en:'💼 Seoul Professional'},
+    {level:9,  min:5000,  title_ro:'🗣 Vorbitor de Coreeană', title_en:'🗣 Korean Speaker'},
+    {level:10, min:10000, title_ro:'🏯 Maestru Coreean',      title_en:'🏯 Korean Master'},
   ];
 
   var BADGE_DEFS = [
