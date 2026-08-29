@@ -29,6 +29,7 @@
   --mid:         rgba(255,255,255,.50);
   --lo:          rgba(255,255,255,.26);
   --core:        #00d4ff;
+  --core-rgb:    0,212,255;
   --g1:          #ff9600;  /* fundamentale */
   --g2:          #1cb0f6;  /* studiu */
   --g3:          #58cc02;  /* practică */
@@ -47,6 +48,7 @@ html[data-mode="day"]{
   --mid:         rgba(8,6,28,.50);
   --lo:          rgba(8,6,28,.26);
   --core:        #0077aa;
+  --core-rgb:    0,119,170;
   --g1:          #c06800;
   --g2:          #006da0;
   --g3:          #368000;
@@ -98,6 +100,36 @@ html[data-mode="day"] .cur-dot{mix-blend-mode:multiply}
 .mkf-identity-sub  {font-size:9px;letter-spacing:.55em;text-transform:uppercase;color:var(--lo);margin-bottom:5px}
 .mkf-identity-name {font-size:21px;font-weight:300;color:var(--hi);letter-spacing:.06em;line-height:1}
 .mkf-identity-ko   {font-size:12px;color:var(--core);letter-spacing:.14em;margin-top:5px;opacity:.7}
+
+/* ── CONTINUE CTA ────────────────────────────────────────────── */
+.mkf-cta{
+  position:fixed;top:30px;left:50%;z-index:110;
+  transform:translateX(-50%);
+  display:flex;align-items:center;gap:14px;
+  padding:12px 22px 12px 16px;border-radius:20px;
+  background:linear-gradient(135deg, rgba(var(--core-rgb),.16), rgba(168,85,247,.12));
+  border:1px solid rgba(var(--core-rgb),.45);
+  box-shadow:0 8px 26px rgba(var(--core-rgb),.20);
+  text-decoration:none;cursor:none;
+  opacity:0;animation:cta-fade .9s ease .3s both, cta-pulse 3.2s ease-in-out 1.4s infinite;
+  transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.mkf-cta:hover{transform:translateX(-50%) translateY(-2px);border-color:rgba(var(--core-rgb),.8);box-shadow:0 10px 34px rgba(var(--core-rgb),.32)}
+@keyframes cta-fade{from{opacity:0}to{opacity:1}}
+@keyframes cta-pulse{0%,100%{box-shadow:0 8px 26px rgba(var(--core-rgb),.20)}50%{box-shadow:0 8px 30px rgba(var(--core-rgb),.38)}}
+.mkf-cta-flame{font-size:24px;line-height:1;min-width:30px;text-align:center}
+.mkf-cta-flame b{display:block;font-size:16px;font-weight:900;color:var(--core);margin-top:1px}
+.mkf-cta-text{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.mkf-cta-title{font-size:13px;font-weight:700;letter-spacing:.03em;color:var(--hi)}
+.mkf-cta-sub{font-size:10px;letter-spacing:.05em;color:var(--mid)}
+.mkf-cta-arrow{font-size:16px;color:var(--core);margin-left:2px}
+@media(pointer:coarse){ .mkf-cta{cursor:pointer} }
+@media(max-width:600px){
+  .mkf-cta{top:auto;bottom:118px;left:50%;transform:translateX(-50%);padding:10px 16px 10px 12px;gap:10px}
+  .mkf-cta:hover{transform:translateX(-50%) translateY(-2px)}
+  .mkf-cta-title{font-size:12px}
+  .mkf-cta-sub{font-size:9px}
+}
 
 /* ── MODE TOGGLE ─────────────────────────────────────────────── */
 .mkf-mode{
@@ -425,6 +457,16 @@ html[data-mode="day"] .prog-track{background:rgba(0,0,0,.07)}
     <div class="mkf-identity-ko">배움의 세계</div>
   </div>
 
+  <!-- Continue CTA — primary entry point, always visible, no hover needed -->
+  <a class="mkf-cta" id="ctaBtn" href="today.html">
+    <span class="mkf-cta-flame" id="ctaFlame">✨</span>
+    <span class="mkf-cta-text">
+      <span class="mkf-cta-title" id="ctaTitle">Continuă antrenamentul</span>
+      <span class="mkf-cta-sub" id="ctaSub">Prima ta sesiune de azi</span>
+    </span>
+    <span class="mkf-cta-arrow">→</span>
+  </a>
+
   <!-- Mode toggle -->
   <button class="mkf-mode" id="modeBtn" aria-label="Toggle day/night mode">
     <span class="mkf-mode-lbl" id="modeLbl">NIGHT</span>
@@ -573,6 +615,7 @@ html[data-mode="day"] .prog-track{background:rgba(0,0,0,.07)}
 </div><!-- /field -->
 
 <script src="./js/core/storage.js"></script>
+<script src="./js/core/streak.js"></script>
 <script src="./js/core/gamification.js"></script>
 <script src="./js/core/notifications.js"></script>
 <script src="./js/core/backup.js"></script>
@@ -647,12 +690,16 @@ const LABELS = {
        s:'Studiu',       sSub:'Lecții · Glosar · Flashcards · Neural · Harta Cuvântului · Constelații',
        p:'Practică',     pSub:'Azi · Exerciții · Slot Machine · Builder · Atelier · Stories · Examen · Conversații',
        a:'Abilități',    aSub:'Lectură & Speaking · Ascultare · Compunere · Jurnal · Greșeli',
-       progress:'Progres total', progressLink:'Vezi azi →' },
+       progress:'Progres total', progressLink:'Vezi azi →',
+       ctaTitle:'Continuă antrenamentul', ctaStart:'Prima ta sesiune de azi',
+       ctaKeep:function(d){ return 'Nu-ți pierde seria de '+d+' '+(d===1?'zi':'zile'); } },
   en:{ f:'Fundamentals', fSub:'Hangul · Hanja Book · Notebook',
        s:'Study',         sSub:'Lessons · Glossary · Flashcards · Neural · Word Map · Constellations',
        p:'Practice',      pSub:'Today · Exercises · Slot Machine · Builder · Workshop · Stories · Exam · Conversations',
        a:'Skills',        aSub:'Reading & Speaking · Listening · Composition · Journal · Mistakes',
-       progress:'Total progress', progressLink:'See today →' }
+       progress:'Total progress', progressLink:'See today →',
+       ctaTitle:'Continue training', ctaStart:'Your first session today',
+       ctaKeep:function(d){ return "Don't lose your "+d+'-day streak'; } }
 };
 
 // ── MODE ──────────────────────────────────────────────────────
@@ -695,7 +742,29 @@ function applyLang(l) {
   document.getElementById('progLbl').textContent = L.progress;
   buildSatellites();
   renderProgress();
+  renderCTA();
 }
+
+// ── CONTINUE CTA ────────────────────────────────────────────────
+function renderCTA() {
+  const L = LABELS[lang];
+  const s = window.RKStreak ? RKStreak.get() : { days: 0 };
+  const flameEl = document.getElementById('ctaFlame');
+  const subEl   = document.getElementById('ctaSub');
+  document.getElementById('ctaTitle').textContent = L.ctaTitle;
+  if (s.days > 0) {
+    flameEl.innerHTML = '🔥<b>' + s.days + '</b>';
+    subEl.textContent = L.ctaKeep(s.days);
+  } else {
+    flameEl.innerHTML = '✨';
+    subEl.textContent = L.ctaStart;
+  }
+}
+
+document.getElementById('ctaBtn').addEventListener('click', e => {
+  e.preventDefault();
+  navigateTo('today.html');
+});
 
 function setLang(l) { applyLang(l); }
 window.setLang = setLang;
