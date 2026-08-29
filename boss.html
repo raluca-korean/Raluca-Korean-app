@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Grammar Boss</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+/* ── LEVEL TABS ───────────────────────────────────────── */
+.bs-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:0}
+.bs-tab{
+  padding:10px 4px;border-radius:12px;text-align:center;cursor:pointer;
+  background:var(--rk-bg-flat);border:2px solid var(--rk-stroke);
+  font-weight:800;font-size:13px;color:var(--rk-heading);transition:all .15s;
+}
+.bs-tab.on{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border-color:transparent}
+
+/* ── BOSS LIST ────────────────────────────────────────── */
+.bs-list{display:flex;flex-direction:column;gap:10px}
+.bs-item{
+  display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;
+  background:var(--rk-card);border:2px solid var(--rk-stroke);border-bottom:4px solid var(--rk-stroke-b);
+  box-shadow:0 4px 14px var(--rk-shadow);
+}
+.bs-item-icon{font-size:28px;width:40px;text-align:center;flex-shrink:0}
+.bs-item-info{flex:1;min-width:0}
+.bs-item-title{font-size:14px;font-weight:800;color:var(--rk-heading)}
+.bs-item-sub{font-size:11px;color:var(--rk-muted);margin-top:2px}
+.bs-item-badge{font-size:10px;font-weight:800;color:#16a34a;background:rgba(34,197,94,.14);padding:2px 8px;border-radius:8px;margin-top:4px;display:inline-block}
+.bs-fight-btn{
+  flex-shrink:0;border:none;border-radius:12px;padding:10px 16px;
+  background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;font-weight:800;font-size:13px;
+  font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,.28);white-space:nowrap;
+}
+.bs-empty{text-align:center;padding:30px 16px;color:var(--rk-muted);font-size:13px}
+
+/* ── BATTLE VIEW ──────────────────────────────────────── */
+.bs-battle-head{text-align:center;padding:6px 0 16px}
+.bs-boss-icon{font-size:52px;line-height:1}
+.bs-boss-name{font-size:18px;font-weight:900;color:var(--rk-heading);margin-top:6px}
+.bs-hp-bg{height:16px;background:rgba(0,0,0,.08);border-radius:10px;overflow:hidden;margin-top:14px;display:flex;gap:3px;padding:3px}
+body.dark-mode .bs-hp-bg{background:rgba(255,255,255,.08)}
+.bs-hp-seg{flex:1;border-radius:6px;background:rgba(0,0,0,.12)}
+body.dark-mode .bs-hp-seg{background:rgba(255,255,255,.12)}
+.bs-hp-seg.alive{background:linear-gradient(135deg,#ef4444,#f59e0b)}
+.bs-hp-lbl{font-size:11px;color:var(--rk-muted);margin-top:6px;font-weight:700}
+
+.bs-question{font-size:17px;font-weight:800;color:var(--rk-heading);text-align:center;margin-bottom:18px;line-height:1.5}
+.bs-blank{color:var(--rk-pink,#db2777)}
+.bs-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bs-opt{
+  padding:14px 10px;border-radius:12px;text-align:center;cursor:pointer;font-size:15px;font-weight:700;
+  background:var(--rk-bg-flat);border:2px solid var(--rk-stroke);color:var(--rk-heading);transition:all .12s;
+}
+.bs-opt:hover{border-color:rgba(124,58,237,.4)}
+.bs-opt.correct{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:transparent}
+.bs-opt.wrong{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:transparent}
+.bs-feedback{text-align:center;font-weight:800;font-size:14px;margin-top:16px;min-height:20px}
+.bs-exit-link{display:block;text-align:center;margin-top:18px;font-size:12px;color:var(--rk-muted);text-decoration:none}
+
+/* ── RESULT ───────────────────────────────────────────── */
+.bs-result{text-align:center;padding:20px 10px}
+.bs-result-icon{font-size:60px;line-height:1;margin-bottom:10px}
+.bs-result-title{font-size:20px;font-weight:900;color:var(--rk-heading)}
+.bs-result-sub{font-size:13px;color:var(--rk-muted);margin-top:6px}
+.bs-result-reward{font-size:15px;font-weight:800;color:var(--rk-pink,#db2777);margin-top:10px}
+.bs-result-actions{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.bs-result-btn{
+  border:none;border-radius:12px;padding:11px 20px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;
+  background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.28);
+}
+.bs-result-btn.secondary{background:var(--rk-bg-flat);color:var(--rk-heading);box-shadow:none}
+
+@keyframes bsShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.bs-shake{animation:bsShake .3s ease}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <h1 id="pageTitle">👹 Grammar Boss</h1>
+      <div class="sub" id="pageSubtitle">Învinge fiecare structură gramaticală</div>
+    </div>
+    <div id="pageControls"></div>
+  </div>
+</div>
+
+<div class="card" id="bossTabsCard">
+  <div class="bs-tabs" id="bossTabs">
+    <div class="bs-tab" data-level="1">T1</div>
+    <div class="bs-tab" data-level="2">T2</div>
+    <div class="bs-tab" data-level="3">T3</div>
+    <div class="bs-tab" data-level="4">T4</div>
+    <div class="bs-tab" data-level="5">T5</div>
+    <div class="bs-tab" data-level="6">T6</div>
+  </div>
+</div>
+
+<div class="card" id="mainCard"></div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/gamification.js"></script>
+<script src="./js/core/streak.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script>
+'use strict';
+
+var LANG = RKLang.get();
+var UI = {
+  ro:{
+    title:'👹 Grammar Boss', sub:'Învinge fiecare structură gramaticală',
+    questions:function(n){ return n + ' întrebări'; },
+    defeated:'🏆 Învins', fight:'⚔️ Luptă',
+    empty:'Niciun boss disponibil la acest nivel.',
+    hp:function(cur,max){ return 'HP boss: ' + cur + ' / ' + max; },
+    hit:'💥 Lovitură!', resist:'🛡️ Boss rezistă!',
+    victoryTitle:'BOSS ÎNVINS! 🏆', victorySub:'Ai stăpânit această structură gramaticală.',
+    reward:function(xp,coins){ return '⭐ +' + xp + ' XP · 🪙 +' + coins; },
+    retryTitle:'Aproape! 💪', retrySub:'Boss-ul mai are HP — mai exersează puțin și încearcă din nou.',
+    fightAgain:'⚔️ Luptă din nou', backToList:'← Alți boss', exit:'✕ Ieși din luptă'
+  },
+  en:{
+    title:'👹 Grammar Boss', sub:'Defeat every grammar structure',
+    questions:function(n){ return n + ' questions'; },
+    defeated:'🏆 Defeated', fight:'⚔️ Fight',
+    empty:'No boss available at this level.',
+    hp:function(cur,max){ return 'Boss HP: ' + cur + ' / ' + max; },
+    hit:'💥 Hit!', resist:'🛡️ Boss resists!',
+    victoryTitle:'BOSS DEFEATED! 🏆', victorySub:"You've mastered this grammar structure.",
+    reward:function(xp,coins){ return '⭐ +' + xp + ' XP · 🪙 +' + coins; },
+    retryTitle:'Almost! 💪', retrySub:'The boss still has HP left — practice a bit more and try again.',
+    fightAgain:'⚔️ Fight again', backToList:'← Other bosses', exit:'✕ Exit battle'
+  }
+};
+function L(){ return UI[LANG]; }
+
+var MAX_QUESTIONS = 6;
+var REWARD_XP = 100, REWARD_COINS = 30;
+
+var _lessons = [], _pool = {}; // pool[lessonId] = [items]
+var currentLevel = parseInt(new URLSearchParams(location.search).get('level'), 10) || 1;
+var battle = null; // {lessonId, title, items, idx, hp, maxHp}
+
+function getDefeated(){ return RKStorage.get('RK_BOSSES_DEFEATED', []); }
+function markDefeated(lessonId){
+  var d = getDefeated();
+  if(d.indexOf(lessonId) === -1){ d.push(lessonId); RKStorage.set('RK_BOSSES_DEFEATED', d); }
+}
+
+function loadData(){
+  return Promise.all([
+    fetch('./data/lessons.json').then(function(r){ return r.json(); }),
+    fetch('./data/exercises.json').then(function(r){ return r.json(); })
+  ]).then(function(results){
+    _lessons = results[0];
+    var exJson = results[1];
+    _pool = {};
+    ['particle','conjug'].forEach(function(type){
+      (exJson[type] || []).forEach(function(item){
+        if(!item.lessonId) return;
+        if(!_pool[item.lessonId]) _pool[item.lessonId] = [];
+        _pool[item.lessonId].push(Object.assign({_type:type}, item));
+      });
+    });
+  });
+}
+
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function renderTabs(){
+  document.querySelectorAll('.bs-tab').forEach(function(tab){
+    tab.classList.toggle('on', parseInt(tab.dataset.level, 10) === currentLevel);
+  });
+}
+
+function renderList(){
+  var l = L();
+  document.getElementById('pageTitle').textContent = l.title;
+  document.getElementById('pageSubtitle').textContent = l.sub;
+  document.getElementById('bossTabsCard').style.display = '';
+  renderTabs();
+
+  var defeated = getDefeated();
+  var bosses = _lessons.filter(function(ls){
+    return ls.topik === currentLevel && _pool[ls.id] && _pool[ls.id].length >= 2;
+  });
+
+  var html;
+  if(!bosses.length){
+    html = '<div class="bs-empty">' + l.empty + '</div>';
+  } else {
+    html = '<div class="bs-list">';
+    bosses.forEach(function(ls){
+      var isDefeated = defeated.indexOf(ls.id) !== -1;
+      var title = ls.title ? (ls.title[LANG] || ls.title.ro) : ls.id;
+      html += '<div class="bs-item">' +
+        '<div class="bs-item-icon">👹</div>' +
+        '<div class="bs-item-info">' +
+          '<div class="bs-item-title">' + title + '</div>' +
+          '<div class="bs-item-sub">' + l.questions(Math.min(_pool[ls.id].length, MAX_QUESTIONS)) + '</div>' +
+          (isDefeated ? '<span class="bs-item-badge">' + l.defeated + '</span>' : '') +
+        '</div>' +
+        '<button type="button" class="bs-fight-btn" data-lesson="' + ls.id + '">' + l.fight + '</button>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+  document.getElementById('mainCard').innerHTML = html;
+
+  document.querySelectorAll('.bs-fight-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ startBattle(btn.dataset.lesson); });
+  });
+}
+
+function startBattle(lessonId){
+  var lesson = _lessons.filter(function(ls){ return ls.id === lessonId; })[0];
+  var pool = shuffle(_pool[lessonId] || []).slice(0, MAX_QUESTIONS);
+  battle = {
+    lessonId: lessonId,
+    title: lesson && lesson.title ? (lesson.title[LANG] || lesson.title.ro) : lessonId,
+    items: pool,
+    idx: 0,
+    hp: pool.length,
+    maxHp: pool.length
+  };
+  document.getElementById('bossTabsCard').style.display = 'none';
+  renderBattle();
+}
+
+function questionText(item){
+  if(item._type === 'particle' && item.template){
+    return item.template.replace('___', '<span class="bs-blank">___</span>');
+  }
+  if(item.prompt) return item.prompt[LANG] || item.prompt.ro;
+  return item.template || '';
+}
+
+function renderBattle(){
+  var l = L();
+  if(battle.idx >= battle.items.length){
+    renderResult();
+    return;
+  }
+  var item = battle.items[battle.idx];
+  var aliveSegs = '';
+  for(var i = 0; i < battle.maxHp; i++){
+    aliveSegs += '<div class="bs-hp-seg' + (i < battle.hp ? ' alive' : '') + '"></div>';
+  }
+
+  var html =
+    '<div class="bs-battle-head">' +
+      '<div class="bs-boss-icon">👹</div>' +
+      '<div class="bs-boss-name">' + battle.title + '</div>' +
+      '<div class="bs-hp-bg">' + aliveSegs + '</div>' +
+      '<div class="bs-hp-lbl">' + l.hp(battle.hp, battle.maxHp) + '</div>' +
+    '</div>' +
+    '<div class="bs-question">' + questionText(item) + '</div>' +
+    '<div class="bs-options" id="bsOptions">' +
+      item.options.map(function(opt){
+        return '<div class="bs-opt" data-opt="' + escapeAttr(opt) + '">' + opt + '</div>';
+      }).join('') +
+    '</div>' +
+    '<div class="bs-feedback" id="bsFeedback"></div>' +
+    '<a href="#" class="bs-exit-link" id="bsExitLink">' + l.exit + '</a>';
+
+  document.getElementById('mainCard').innerHTML = html;
+
+  document.querySelectorAll('.bs-opt').forEach(function(btn){
+    btn.addEventListener('click', function(){ answerBattle(btn, item); });
+  });
+  document.getElementById('bsExitLink').addEventListener('click', function(e){
+    e.preventDefault();
+    battle = null;
+    renderList();
+  });
+}
+
+function escapeAttr(s){
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+}
+
+function answerBattle(btn, item){
+  var l = L();
+  document.querySelectorAll('.bs-opt').forEach(function(b){ b.style.pointerEvents = 'none'; });
+  var correct = btn.dataset.opt === String(item.correct);
+  var feedback = document.getElementById('bsFeedback');
+  if(correct){
+    btn.classList.add('correct');
+    battle.hp = Math.max(0, battle.hp - 1);
+    feedback.textContent = l.hit;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.bs-opt').forEach(function(b){
+      if(b.dataset.opt === String(item.correct)) b.classList.add('correct');
+    });
+    feedback.textContent = l.resist;
+    document.getElementById('mainCard').classList.add('bs-shake');
+  }
+  setTimeout(function(){
+    document.getElementById('mainCard').classList.remove('bs-shake');
+    battle.idx++;
+    renderBattle();
+  }, 1100);
+}
+
+function renderResult(){
+  var l = L();
+  var victory = battle.hp === 0;
+  var html;
+  if(victory){
+    markDefeated(battle.lessonId);
+    var xpResult = { xpGained: REWARD_XP, coinsGained: REWARD_COINS };
+    if(window.RKGamification){
+      if(window.RKStreak) RKStreak.touch();
+      RKGamification.addXPBonus(REWARD_XP);
+      RKGamification.addCoins(REWARD_COINS);
+    }
+    html = '<div class="bs-result">' +
+      '<div class="bs-result-icon">🏆</div>' +
+      '<div class="bs-result-title">' + l.victoryTitle + '</div>' +
+      '<div class="bs-result-sub">' + l.victorySub + '</div>' +
+      '<div class="bs-result-reward">' + l.reward(xpResult.xpGained, xpResult.coinsGained) + '</div>' +
+      '<div class="bs-result-actions">' +
+        '<button type="button" class="bs-result-btn secondary" id="bsBackBtn">' + l.backToList + '</button>' +
+      '</div>' +
+    '</div>';
+  } else {
+    html = '<div class="bs-result">' +
+      '<div class="bs-result-icon">💪</div>' +
+      '<div class="bs-result-title">' + l.retryTitle + '</div>' +
+      '<div class="bs-result-sub">' + l.retrySub + '</div>' +
+      '<div class="bs-result-actions">' +
+        '<button type="button" class="bs-result-btn" id="bsRetryBtn">' + l.fightAgain + '</button>' +
+        '<button type="button" class="bs-result-btn secondary" id="bsBackBtn">' + l.backToList + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+  document.getElementById('mainCard').innerHTML = html;
+  var retryBtn = document.getElementById('bsRetryBtn');
+  if(retryBtn) retryBtn.addEventListener('click', function(){ startBattle(battle.lessonId); });
+  document.getElementById('bsBackBtn').addEventListener('click', function(){
+    battle = null;
+    document.getElementById('bossTabsCard').style.display = '';
+    renderList();
+  });
+}
+
+document.querySelectorAll('.bs-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    currentLevel = parseInt(tab.dataset.level, 10);
+    renderList();
+  });
+});
+
+RKLang.init(function(lang){ LANG = lang; if(battle) renderBattle(); else renderList(); });
+loadData().then(renderList);
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+<script src="./js/core/page-help.js"></script>
+</body>
+</html>
