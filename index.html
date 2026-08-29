@@ -100,6 +100,41 @@ html[data-mode="day"] .cur-dot{mix-blend-mode:multiply}
 .mkf-identity-sub  {font-size:9px;letter-spacing:.55em;text-transform:uppercase;color:var(--lo);margin-bottom:5px}
 .mkf-identity-name {font-size:21px;font-weight:300;color:var(--hi);letter-spacing:.06em;line-height:1}
 .mkf-identity-ko   {font-size:12px;color:var(--core);letter-spacing:.14em;margin-top:5px;opacity:.7}
+.mkf-persona-badge{
+  display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:5px 12px;border-radius:999px;
+  background:rgba(var(--core-rgb),.10);border:1px solid rgba(var(--core-rgb),.3);
+  font-size:11px;font-weight:700;color:var(--hi);cursor:none;text-decoration:none;
+}
+@media(pointer:coarse){ .mkf-persona-badge{cursor:pointer} }
+.mkf-persona-badge:hover{background:rgba(var(--core-rgb),.18)}
+
+/* ── PERSONA MODAL ────────────────────────────────────── */
+.mkf-persona-overlay{
+  position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.65);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+}
+.mkf-persona-overlay.show{opacity:1;pointer-events:auto}
+.mkf-persona-card{
+  background:var(--rk-card,#1a0533);border-radius:22px;padding:28px 24px;max-width:480px;width:100%;
+  border:1px solid rgba(var(--core-rgb),.25);box-shadow:0 20px 60px rgba(0,0,0,.5);
+  max-height:86vh;overflow-y:auto;
+}
+:root[data-mode="day"] .mkf-persona-card{background:#fff}
+.mkf-persona-title{font-size:17px;font-weight:800;color:var(--hi);text-align:center}
+.mkf-persona-sub{font-size:12px;color:var(--mid);text-align:center;margin-top:6px;margin-bottom:18px}
+.mkf-persona-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mkf-persona-opt{
+  display:flex;flex-direction:column;gap:3px;padding:14px 12px;border-radius:14px;cursor:none;text-align:left;
+  background:rgba(var(--core-rgb),.06);border:1px solid rgba(var(--core-rgb),.18);transition:all .12s;
+}
+@media(pointer:coarse){ .mkf-persona-opt{cursor:pointer} }
+.mkf-persona-opt:hover{border-color:rgba(var(--core-rgb),.5);transform:translateY(-1px)}
+.mkf-persona-opt-icon{font-size:22px}
+.mkf-persona-opt-name{font-size:13px;font-weight:800;color:var(--hi)}
+.mkf-persona-opt-sub{font-size:10px;color:var(--mid)}
+.mkf-persona-skip{display:block;text-align:center;margin-top:16px;font-size:11px;color:var(--mid);text-decoration:none;cursor:none}
+@media(pointer:coarse){ .mkf-persona-skip{cursor:pointer} }
 
 /* ── CONTINUE CTA ────────────────────────────────────────────── */
 .mkf-cta{
@@ -455,6 +490,17 @@ html[data-mode="day"] .prog-track{background:rgba(0,0,0,.07)}
     <div class="mkf-identity-sub">한국어 학습</div>
     <div class="mkf-identity-name">Raluca Korean</div>
     <div class="mkf-identity-ko">배움의 세계</div>
+    <a href="#" class="mkf-persona-badge" id="personaBadge"></a>
+  </div>
+
+  <!-- Persona picker — "what kind of Korean learner are you?" -->
+  <div class="mkf-persona-overlay" id="personaOverlay">
+    <div class="mkf-persona-card">
+      <div class="mkf-persona-title" id="personaTitle"></div>
+      <div class="mkf-persona-sub" id="personaSub"></div>
+      <div class="mkf-persona-grid" id="personaGrid"></div>
+      <a href="#" class="mkf-persona-skip" id="personaSkip"></a>
+    </div>
   </div>
 
   <!-- Continue CTA — primary entry point, always visible, no hover needed -->
@@ -747,6 +793,7 @@ function applyLang(l) {
   buildSatellites();
   renderProgress();
   renderCTA();
+  renderPersonaBadge();
 }
 
 // ── CONTINUE CTA ────────────────────────────────────────────────
@@ -769,6 +816,78 @@ document.getElementById('ctaBtn').addEventListener('click', e => {
   e.preventDefault();
   navigateTo('today.html');
 });
+
+// ── KOREAN PERSONA ───────────────────────────────────────────────
+const PERSONAS = [
+  { id:'cafe',         icon:'☕', ro:'Café Korean',         en:'Café Korean',         subRo:'Cafenele, comenzi, small talk',        subEn:'Cafés, ordering, small talk' },
+  { id:'kpop',         icon:'🎤', ro:'K-Pop Korean',        en:'K-Pop Korean',        subRo:'Versuri, fandom, cultură pop',         subEn:'Lyrics, fandom, pop culture' },
+  { id:'travel',       icon:'✈️', ro:'Travel Korean',       en:'Travel Korean',       subRo:'Aeroport, cazare, indicații',          subEn:'Airport, lodging, directions' },
+  { id:'business',     icon:'💼', ro:'Business Korean',     en:'Business Korean',     subRo:'Politețe, birou, formal',              subEn:'Politeness, office, formal' },
+  { id:'drama',        icon:'🎬', ro:'K-Drama Korean',      en:'K-Drama Korean',      subRo:'Dialoguri, emoții, drame',             subEn:'Dialogue, emotion, drama' },
+  { id:'conversation', icon:'🗣', ro:'Conversation Korean', en:'Conversation Korean', subRo:'Vorbire zilnică, prietenii',           subEn:'Everyday speech, friendships' },
+];
+const PERSONA_LABELS = {
+  ro:{ title:'🇰🇷 Ce fel de învățător de coreeană ești?', sub:'Alege ce te descrie — asta dă un ton propriu călătoriei tale.',
+       pick:'Alege stilul tău →', skip:'Poate mai târziu' },
+  en:{ title:'🇰🇷 What kind of Korean learner are you?', sub:'Pick what fits — it gives your journey its own flavor.',
+       pick:'Pick your style →', skip:'Maybe later' }
+};
+
+function getPersona(){ return localStorage.getItem('RK_PERSONA') || ''; }
+
+function renderPersonaBadge(){
+  const pl = PERSONA_LABELS[lang];
+  const badge = document.getElementById('personaBadge');
+  const chosen = PERSONAS.find(p => p.id === getPersona());
+  badge.textContent = chosen ? chosen.icon + ' ' + (lang === 'ro' ? chosen.ro : chosen.en) : pl.pick;
+}
+
+function renderPersonaModal(){
+  const pl = PERSONA_LABELS[lang];
+  document.getElementById('personaTitle').textContent = pl.title;
+  document.getElementById('personaSub').textContent = pl.sub;
+  document.getElementById('personaSkip').textContent = pl.skip;
+  document.getElementById('personaGrid').innerHTML = PERSONAS.map(p =>
+    '<div class="mkf-persona-opt" data-persona="' + p.id + '">' +
+      '<span class="mkf-persona-opt-icon">' + p.icon + '</span>' +
+      '<span class="mkf-persona-opt-name">' + (lang === 'ro' ? p.ro : p.en) + '</span>' +
+      '<span class="mkf-persona-opt-sub">' + (lang === 'ro' ? p.subRo : p.subEn) + '</span>' +
+    '</div>'
+  ).join('');
+  document.querySelectorAll('.mkf-persona-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      localStorage.setItem('RK_PERSONA', el.dataset.persona);
+      localStorage.setItem('RK_PERSONA_ASKED', '1');
+      closePersonaModal();
+      renderPersonaBadge();
+    });
+  });
+}
+
+function openPersonaModal(){
+  renderPersonaModal();
+  document.getElementById('personaOverlay').classList.add('show');
+}
+function closePersonaModal(){
+  document.getElementById('personaOverlay').classList.remove('show');
+}
+
+document.getElementById('personaBadge').addEventListener('click', e => {
+  e.preventDefault();
+  openPersonaModal();
+});
+document.getElementById('personaSkip').addEventListener('click', e => {
+  e.preventDefault();
+  localStorage.setItem('RK_PERSONA_ASKED', '1');
+  closePersonaModal();
+});
+document.getElementById('personaOverlay').addEventListener('click', e => {
+  if (e.target.id === 'personaOverlay') closePersonaModal();
+});
+
+if (!getPersona() && !localStorage.getItem('RK_PERSONA_ASKED')) {
+  setTimeout(openPersonaModal, 1100);
+}
 
 function setLang(l) { applyLang(l); }
 window.setLang = setLang;
