@@ -133,5 +133,9 @@
     return load();
   }
 
-  window.RKStreak = { touch: touch, get: get, getFreezes: getFreezeCount, addFreeze: addFreeze };
+  window.RKStreak = {
+    touch: touch, get: get, getFreezes: getFreezeCount, addFreeze: addFreeze,
+    MILESTONES: Object.keys(MILESTONE_XP).map(Number).sort(function(a,b){ return a - b; }),
+    getEarnedMilestones: getEarnedMilestones
+  };
 })(window);
