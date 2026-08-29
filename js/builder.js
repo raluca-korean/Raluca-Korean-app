@@ -18,7 +18,10 @@
       quizCheck: "✓ Verifică",
       quizExit: "✕ Ieși",
       quizCorrect: "🎉 Corect!",
-      quizWrong: "✗ Greșit",
+      quizPerfect: "🎉 PERFECT!",
+      quizReward: function(xp, coins){ return '⭐ +' + xp + ' XP · 🪙 +' + coins; },
+      quizCombo: function(n){ return '🔥 Combo ×' + n; },
+      quizWrong: "✗ Aproape! Combo-ul se resetează.",
       quizAnswer: "Răspuns corect:",
       quizNoBuild: "Construiește mai întâi o propoziție."
     },
@@ -38,7 +41,10 @@
       quizCheck: "✓ Check",
       quizExit: "✕ Exit",
       quizCorrect: "🎉 Correct!",
-      quizWrong: "✗ Wrong",
+      quizPerfect: "🎉 PERFECT!",
+      quizReward: function(xp, coins){ return '⭐ +' + xp + ' XP · 🪙 +' + coins; },
+      quizCombo: function(n){ return '🔥 Combo ×' + n; },
+      quizWrong: "✗ Almost! Combo reset.",
       quizAnswer: "Correct answer:",
       quizNoBuild: "Build a sentence first."
     }
@@ -446,6 +452,7 @@
   ============================================================ */
   var quizMode   = false;
   var quizTarget = null;
+  var quizCombo  = 0;
 
   function updateQuizBar(){
     var bar      = document.getElementById('quizBar');
@@ -459,16 +466,16 @@
     if(!bar) return;
 
     if(quizMode && quizTarget){
-      bar.classList.add('active');
+      bar.classList.add('show');
       if(labelEl)  labelEl.textContent  = currentUI().quizLabel;
       if(targetEl) targetEl.textContent = quizTarget.tr || quizTarget.ko;
       if(checkBtn) checkBtn.textContent = currentUI().quizCheck;
       if(exitBtn)  exitBtn.textContent  = currentUI().quizExit;
       if(resultEl){ resultEl.textContent = ''; resultEl.className = 'quizResultEl'; }
-      if(quizBtn)  quizBtn.classList.add('quizActive');
+      if(quizBtn)  quizBtn.classList.add('active');
     } else {
-      bar.classList.remove('active');
-      if(quizBtn) quizBtn.classList.remove('quizActive');
+      bar.classList.remove('show');
+      if(quizBtn) quizBtn.classList.remove('active');
     }
   }
 
@@ -510,11 +517,23 @@
     var correct = current === target;
 
     var resultEl = document.getElementById('quizResultEl');
-    if(resultEl){
-      if(correct){
-        resultEl.innerHTML = currentUI().quizCorrect;
+    if(correct){
+      quizCombo++;
+      var xpResult = { xpGained: 0, coinsGained: 0 };
+      if(window.RKGamification){
+        if(window.RKStreak) RKStreak.touch();
+        xpResult = RKGamification.addXP(quizCombo);
+      }
+      if(resultEl){
+        resultEl.innerHTML = currentUI().quizPerfect +
+          '<div class="quizAnswerLine">' + currentUI().quizReward(xpResult.xpGained, xpResult.coinsGained) +
+          (quizCombo >= 2 ? ' · ' + currentUI().quizCombo(quizCombo) : '') + '</div>';
         resultEl.className = 'quizResultEl visible correct';
-      } else {
+      }
+      showToast(currentUI().quizPerfect);
+    } else {
+      quizCombo = 0;
+      if(resultEl){
         resultEl.innerHTML =
           currentUI().quizWrong +
           '<div class="quizAnswerLine">' + currentUI().quizAnswer +
@@ -522,8 +541,6 @@
         resultEl.className = 'quizResultEl visible wrong';
       }
     }
-
-    if(correct) showToast(currentUI().quizCorrect);
   }
 
   var pickerState = {
