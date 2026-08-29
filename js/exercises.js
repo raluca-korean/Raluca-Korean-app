@@ -21,6 +21,8 @@ const wrongBtn = document.getElementById("wrongBtn");
 const lessonParam = new URLSearchParams(window.location.search).get("lesson");
 
 let currentLang = RKLang.get();
+const _urlLevel = new URLSearchParams(location.search).get("level");
+if(_urlLevel) localStorage.setItem("RK_LEVEL", _urlLevel);
 let currentLevel = localStorage.getItem("RK_LEVEL") || "1";
 if(currentLevel === "0") currentLevel = "test";
 let allExercises = { "ko-ro": [], "ro-ko": [], "particle": [], "particlePlus": [], "conjug": [], "puzzle": [], "chain": [] };
