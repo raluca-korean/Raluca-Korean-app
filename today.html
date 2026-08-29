@@ -26,6 +26,8 @@
 .td-journey-streak b{font-size:18px}
 .td-journey-level{font-size:13px;font-weight:700;color:var(--rk-muted)}
 .td-journey-xplbl{font-size:11px;color:var(--rk-muted-ui);margin-top:6px;text-align:right;font-weight:600}
+.td-journey-coins{font-size:13px;font-weight:800;color:var(--rk-heading);text-decoration:none;background:var(--rk-bg-flat);padding:4px 10px;border-radius:10px;flex-shrink:0}
+.td-journey-coins:hover{opacity:.8}
 
 /* ── QUEUE CARDS ──────────────────────────────────────── */
 .td-queue{display:flex;flex-direction:column;gap:10px}
@@ -171,7 +173,7 @@ var UI = {
     nothingDue:'0 azi',
     allDoneTitle:'Totul e la zi! 🎉', allDoneSub:'Nimic scadent azi — revino mâine sau explorează liber o funcționalitate.',
     missionDoneTitle:'Misiune completată! 🏆', missionDoneSub:'Ai terminat tot ce aveai de recapitulat azi.',
-    missionDoneBonus:function(n){ return '⭐ Bonus: +' + n + ' XP'; },
+    missionDoneBonus:function(xp,coins){ return '⭐ Bonus: +' + xp + ' XP · 🪙+' + coins; },
     missionOverlayTitle:'MISIUNE COMPLETATĂ!', missionOverlayTap:'Atinge oriunde pentru a continua',
     itemsSingular:'item', itemsPlural:'itemi',
     cardTitle:'🖼️ Cardul tău de streak', cardBtn:'⬇ Descarcă imaginea',
@@ -205,7 +207,7 @@ var UI = {
     nothingDue:'0 today',
     allDoneTitle:"You're all caught up! 🎉", allDoneSub:'Nothing due today — come back tomorrow, or explore any feature freely.',
     missionDoneTitle:'Mission complete! 🏆', missionDoneSub:"You've cleared everything due today.",
-    missionDoneBonus:function(n){ return '⭐ Bonus: +' + n + ' XP'; },
+    missionDoneBonus:function(xp,coins){ return '⭐ Bonus: +' + xp + ' XP · 🪙+' + coins; },
     missionOverlayTitle:'MISSION COMPLETE!', missionOverlayTap:'Tap anywhere to continue',
     itemsSingular:'item', itemsPlural:'items',
     cardTitle:'🖼️ Your streak card', cardBtn:'⬇ Download image',
@@ -275,14 +277,17 @@ function render(){
   // bar below reflects it immediately instead of a stale pre-bonus value.
   var todayIso = new Date().toISOString().slice(0,10);
   var bonusAmount = 50;
+  var coinBonusAmount = 20;
   var justCompleted = total === 0 && streak.lastDate === todayIso &&
     RKStorage.get('RK_MISSION_BONUS_DATE', '') !== todayIso;
   if(justCompleted && window.RKGamification){
     RKGamification.addXPBonus(bonusAmount);
+    RKGamification.addCoins(coinBonusAmount);
     RKStorage.set('RK_MISSION_BONUS_DATE', todayIso);
   }
 
   var xpData = window.RKGamification ? RKGamification.getXPData() : {total:0};
+  var coins  = window.RKGamification ? RKGamification.getCoins() : 0;
   var lvl    = window.RKGamification ? RKGamification.getLevelInfo(xpData.total) : {current:{level:1}};
   var levelTitle = lvl.current ? (LANG==='ro' ? lvl.current.title_ro : lvl.current.title_en) : '';
   var pct = lvl.next ? Math.max(0, Math.min(100, Math.round((xpData.total - lvl.current.min) / (lvl.next.min - lvl.current.min) * 100))) : 100;
@@ -308,7 +313,10 @@ function render(){
       '<div class="td-journey-level">Lv.' + lvl.current.level + ' · ' + levelTitle + '</div>' +
     '</div>' +
     '<div class="pl-bar-bg"><div class="pl-bar" style="width:' + pct + '%"></div></div>' +
-    '<div class="td-journey-xplbl">' + xpLine + '</div>' +
+    '<div class="td-journey-row" style="margin-top:8px;margin-bottom:0">' +
+      '<div class="td-journey-xplbl" style="text-align:left;margin-top:0">' + xpLine + '</div>' +
+      '<a href="shop.html" class="td-journey-coins">🪙 ' + coins + '</a>' +
+    '</div>' +
   '</div>';
 
   if(total === 0){
@@ -316,7 +324,7 @@ function render(){
       '<div class="td-alldone-icon">' + (justCompleted ? '🏆' : '🌿') + '</div>' +
       '<div class="td-alldone-title">' + (justCompleted ? l.missionDoneTitle : l.allDoneTitle) + '</div>' +
       '<div class="td-alldone-sub">' + (justCompleted ? l.missionDoneSub : l.allDoneSub) + '</div>' +
-      (justCompleted ? '<div class="td-alldone-sub" style="margin-top:8px;font-weight:800;color:var(--rk-pink,#db2777)">' + l.missionDoneBonus(bonusAmount) + '</div>' : '') +
+      (justCompleted ? '<div class="td-alldone-sub" style="margin-top:8px;font-weight:800;color:var(--rk-pink,#db2777)">' + l.missionDoneBonus(bonusAmount, coinBonusAmount) + '</div>' : '') +
     '</div>';
   } else {
     html += '<div class="card"><div class="td-queue">';
@@ -345,11 +353,11 @@ function render(){
   document.getElementById('mainContent').innerHTML = html;
   setupStreakCard(streak, xpData, lvl);
   renderPlanner();
-  if(justCompleted) setTimeout(function(){ celebrateMission(bonusAmount); }, 400);
+  if(justCompleted) setTimeout(function(){ celebrateMission(bonusAmount, coinBonusAmount); }, 400);
 }
 
 // ── MISSION-COMPLETE CELEBRATION (self-contained, mirrors streak.js) ──
-function celebrateMission(xpGained){
+function celebrateMission(xpGained, coinsGained){
   var l = L();
   if(!document.getElementById('tdMissionStyle')){
     var style = document.createElement('style');
@@ -369,7 +377,7 @@ function celebrateMission(xpGained){
   card.innerHTML =
     '<div style="font-size:52px;line-height:1">🏆</div>' +
     '<div style="font-size:24px;font-weight:900;margin-top:6px">' + l.missionOverlayTitle + '</div>' +
-    '<div style="font-size:15px;opacity:.9;margin-top:8px">' + l.missionDoneBonus(xpGained) + '</div>' +
+    '<div style="font-size:15px;opacity:.9;margin-top:8px">' + l.missionDoneBonus(xpGained, coinsGained) + '</div>' +
     '<div style="font-size:12px;opacity:.7;margin-top:14px">' + l.missionOverlayTap + '</div>';
   backdrop.appendChild(card);
   document.body.appendChild(backdrop);

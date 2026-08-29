@@ -41,6 +41,48 @@
     RKStorage.set('RK_XP', d);
   }
 
+  // ── SEOUL COINS ──────────────────────────────────────────────────
+  function getCoins() {
+    return RKStorage.get('RK_COINS', 0) || 0;
+  }
+  function addCoins(amount) {
+    if (!amount || amount <= 0) return getCoins();
+    var total = getCoins() + amount;
+    RKStorage.set('RK_COINS', total);
+    return total;
+  }
+  function spendCoins(amount) {
+    var total = getCoins();
+    if (amount <= 0 || total < amount) return false;
+    RKStorage.set('RK_COINS', total - amount);
+    return true;
+  }
+  function computeCoinGain(currentStreak) {
+    if (currentStreak >= 20) return 6;
+    if (currentStreak >= 10) return 5;
+    if (currentStreak >= 5)  return 4;
+    if (currentStreak >= 3)  return 3;
+    return 2;
+  }
+
+  // ── XP BOOST (2x XP for a limited number of correct answers) ─────
+  function getXPBoost() {
+    return RKStorage.get('RK_XP_BOOST', {usesLeft:0}) || {usesLeft:0};
+  }
+  function addXPBoostUses(n) {
+    var b = getXPBoost();
+    b.usesLeft = (b.usesLeft || 0) + n;
+    RKStorage.set('RK_XP_BOOST', b);
+    return b;
+  }
+  function consumeXPBoostIfActive() {
+    var b = getXPBoost();
+    if (!b.usesLeft || b.usesLeft <= 0) return false;
+    b.usesLeft -= 1;
+    RKStorage.set('RK_XP_BOOST', b);
+    return true;
+  }
+
   function getEarnedBadges() {
     return RKStorage.get('RK_BADGES', []);
   }
@@ -79,6 +121,8 @@
 
   function addXP(currentStreak, onLevelUp) {
     var gain = computeXPGain(currentStreak || 0);
+    var boosted = consumeXPBoostIfActive();
+    if (boosted) gain *= 2;
     var data = getXPData();
     var oldLevel = getLevelInfo(data.total).current.level;
     data.total += gain;
@@ -88,7 +132,9 @@
     if (newLevel > oldLevel && typeof onLevelUp === 'function') {
       onLevelUp(newLevel, newLvlInfo.current);
     }
-    return {xpGained:gain, total:data.total, levelUp:newLevel > oldLevel, newLevel:newLevel};
+    var coinsGained = computeCoinGain(currentStreak || 0);
+    addCoins(coinsGained);
+    return {xpGained:gain, total:data.total, levelUp:newLevel > oldLevel, newLevel:newLevel, boosted:boosted, coinsGained:coinsGained};
   }
 
   function addXPBonus(amount) {
@@ -140,6 +186,11 @@
     incrementQuest:  incrementQuest,
     getQuestData:    getQuestData,
     getEarnedBadges: getEarnedBadges,
+    getCoins:          getCoins,
+    addCoins:          addCoins,
+    spendCoins:        spendCoins,
+    getXPBoost:        getXPBoost,
+    addXPBoostUses:    addXPBoostUses,
   };
 
 })(window);

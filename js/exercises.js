@@ -437,10 +437,10 @@ function retriggerShow(el, autoHideMs){
   }
 }
 
-function showXPToast(amount){
+function showXPToast(amount, coins, boosted){
   const el = document.getElementById('xpToast');
   if(!el) return;
-  el.textContent = '+' + amount + ' XP' + (amount >= 20 ? ' ⚡' : '');
+  el.textContent = '+' + amount + ' XP' + (boosted ? ' ⚡2x' : '') + (coins ? ' · 🪙+' + coins : '');
   retriggerShow(el);
 }
 
@@ -489,7 +489,7 @@ function processGamification(wasCorrect){
     bXP.querySelector('span:last-child').textContent = '⭐ ' + xpResult.total + ' XP · Lv.' + lvl.current.level;
   }
 
-  showXPToast(xpResult.xpGained);
+  showXPToast(xpResult.xpGained, xpResult.coinsGained, xpResult.boosted);
 
   const quest = G.incrementQuest();
   if(quest.completed) setTimeout(showQuestComplete, 500);

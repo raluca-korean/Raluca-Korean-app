@@ -16,7 +16,24 @@
 
   var KEY = 'RK_STREAK';
   var MILESTONES_KEY = 'RK_STREAK_MILESTONES';
+  var FREEZES_KEY = 'RK_STREAK_FREEZES';
   var MILESTONE_XP = { 3:15, 7:40, 14:70, 30:120, 50:200, 100:400, 365:1500 };
+  var MILESTONE_COINS = { 3:5, 7:15, 14:25, 30:50, 50:80, 100:150, 365:500 };
+
+  function getFreezeCount() {
+    return RKStorage.get(FREEZES_KEY, 0) || 0;
+  }
+  function addFreeze(n) {
+    var count = getFreezeCount() + (n || 1);
+    RKStorage.set(FREEZES_KEY, count);
+    return count;
+  }
+  function useFreeze() {
+    var count = getFreezeCount();
+    if (count <= 0) return false;
+    RKStorage.set(FREEZES_KEY, count - 1);
+    return true;
+  }
 
   function todayStr() {
     return new Date().toISOString().slice(0, 10);
@@ -39,7 +56,7 @@
   /* Self-contained toast — no dependency on any page's CSS, so it works
      identically from every one of the ~15 call sites (flashcards, exercises,
      hangul, listening, journal, ...). */
-  function celebrateMilestone(days, xpGained, lang) {
+  function celebrateMilestone(days, xpGained, coinsGained, lang) {
     var isRo = lang !== 'en';
     if (!document.getElementById('rkStreakMilestoneStyle')) {
       var style = document.createElement('style');
@@ -59,7 +76,7 @@
     card.innerHTML =
       '<div style="font-size:52px;line-height:1">🔥</div>' +
       '<div style="font-size:28px;font-weight:900;margin-top:6px">' + (isRo ? days + ' ' + (days===1?'ZI':'ZILE') + ' LA RÂND!' : days + '-DAY STREAK!') + '</div>' +
-      '<div style="font-size:15px;opacity:.9;margin-top:8px">' + (isRo ? 'Ai câștigat' : 'You earned') + ' +' + xpGained + ' XP</div>' +
+      '<div style="font-size:15px;opacity:.9;margin-top:8px">' + (isRo ? 'Ai câștigat' : 'You earned') + ' +' + xpGained + ' XP · 🪙+' + coinsGained + '</div>' +
       '<div style="font-size:12px;opacity:.7;margin-top:14px">' + (isRo ? 'Atinge oriunde pentru a continua' : 'Tap anywhere to continue') + '</div>';
     backdrop.appendChild(card);
     document.body.appendChild(backdrop);
@@ -78,10 +95,14 @@
     earned.push(days);
     RKStorage.set(MILESTONES_KEY, earned);
     var xpGained = MILESTONE_XP[days];
-    if (window.RKGamification) RKGamification.addXPBonus(xpGained);
+    var coinsGained = MILESTONE_COINS[days] || 0;
+    if (window.RKGamification) {
+      RKGamification.addXPBonus(xpGained);
+      RKGamification.addCoins(coinsGained);
+    }
     var lang = localStorage.getItem('RK_LANG') || 'ro';
     /* Defer so it never fights a page's own initial-render/animation work. */
-    setTimeout(function () { celebrateMilestone(days, xpGained, lang); }, 400);
+    setTimeout(function () { celebrateMilestone(days, xpGained, coinsGained, lang); }, 400);
   }
 
   /* Call on any real study activity. No-ops after the first call each day. */
@@ -91,7 +112,16 @@
     if (s.lastDate === today) return s;
 
     var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    s.days = (s.lastDate === yesterday) ? s.days + 1 : 1;
+    var twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10);
+
+    if (s.lastDate === yesterday) {
+      s.days = s.days + 1;
+    } else if (s.lastDate === twoDaysAgo && useFreeze()) {
+      /* Missed exactly one day but had a Streak Freeze (bought in the shop) — covers the gap. */
+      s.days = s.days + 1;
+    } else {
+      s.days = 1;
+    }
     s.lastDate = today;
     s.best = Math.max(s.days, s.best || 0);
     save(s);
@@ -103,5 +133,5 @@
     return load();
   }
 
-  window.RKStreak = { touch: touch, get: get };
+  window.RKStreak = { touch: touch, get: get, getFreezes: getFreezeCount, addFreeze: addFreeze };
 })(window);
