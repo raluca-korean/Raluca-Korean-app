@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Memory</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#22c55e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+.mm-start{text-align:center;padding:20px 10px}
+.mm-start-icon{font-size:56px;line-height:1;margin-bottom:10px}
+.mm-start-title{font-size:20px;font-weight:900;color:var(--rk-heading)}
+.mm-start-sub{font-size:13px;color:var(--rk-muted);margin:8px 0 20px}
+.mm-best{font-size:12px;color:var(--rk-muted-ui);margin-bottom:16px}
+.mm-start-btn{
+  border:none;border-radius:14px;padding:14px 28px;font-weight:900;font-size:15px;cursor:pointer;font-family:inherit;
+  background:linear-gradient(135deg,#22c55e,#0ea5a5);color:#fff;box-shadow:0 6px 20px rgba(34,197,94,.32);
+}
+
+.mm-hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font-size:12px;font-weight:800;color:var(--rk-muted)}
+
+.mm-word-zone{text-align:center;padding:20px 10px 26px}
+.mm-word{font-size:40px;font-weight:900;color:var(--rk-heading);min-height:52px}
+.mm-word.hidden-word{color:var(--rk-muted-ui);font-size:32px}
+.mm-peek-lbl{font-size:12px;color:var(--rk-muted);margin-top:10px;font-weight:700}
+.mm-peek-bar-bg{height:6px;background:rgba(0,0,0,.08);border-radius:4px;overflow:hidden;margin-top:10px;max-width:200px;margin-left:auto;margin-right:auto}
+body.dark-mode .mm-peek-bar-bg{background:rgba(255,255,255,.1)}
+.mm-peek-bar{height:100%;background:linear-gradient(90deg,#22c55e,#0ea5a5);width:100%;transition:width linear}
+
+.mm-question{font-size:14px;font-weight:700;color:var(--rk-muted);text-align:center;margin-bottom:14px}
+.mm-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mm-opt{
+  padding:14px 10px;border-radius:12px;text-align:center;cursor:pointer;font-size:14px;font-weight:700;
+  background:var(--rk-bg-flat);border:2px solid var(--rk-stroke);color:var(--rk-heading);transition:all .12s;
+}
+.mm-opt.correct{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:transparent}
+.mm-opt.wrong{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:transparent}
+
+.mm-result{text-align:center;padding:20px 10px}
+.mm-result-icon{font-size:60px;line-height:1;margin-bottom:10px}
+.mm-result-num{font-size:44px;font-weight:900;color:var(--rk-heading);line-height:1}
+.mm-result-lbl{font-size:13px;color:var(--rk-muted);margin-top:6px}
+.mm-result-best{font-size:12px;color:var(--rk-muted-ui);margin-top:10px}
+.mm-result-reward{font-size:15px;font-weight:800;color:var(--rk-pink,#db2777);margin-top:12px}
+.mm-result-actions{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.mm-result-btn{
+  border:none;border-radius:12px;padding:11px 20px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;
+  background:linear-gradient(135deg,#22c55e,#0ea5a5);color:#fff;box-shadow:0 4px 14px rgba(34,197,94,.28);
+}
+.mm-result-btn.secondary{background:var(--rk-bg-flat);color:var(--rk-heading);box-shadow:none}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <h1 id="pageTitle">🧠 Memory</h1>
+      <div class="sub" id="pageSubtitle">Ține minte cuvântul înainte să dispară</div>
+    </div>
+    <div id="pageControls"></div>
+  </div>
+</div>
+
+<div class="card" id="mainCard"></div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/gamification.js"></script>
+<script src="./js/core/streak.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script>
+'use strict';
+
+var LANG = RKLang.get();
+var UI = {
+  ro:{
+    title:'🧠 Memory', sub:'Ține minte cuvântul înainte să dispară',
+    startTitle:'Ești pregătit?', startSub:'Vezi un cuvânt coreean, apoi dispare. Alege ce înseamnă din memorie. 10 runde.',
+    best:function(n){ return 'Record: ' + n + '/10'; }, start:'▶ START',
+    round:function(i,n){ return 'Runda ' + i + ' / ' + n; },
+    peek:'Ține minte...', question:'Ce înseamnă?',
+    resultLbl:'din 10', newBest:'🏆 Record nou!', best2:function(n){ return 'Recordul tău: ' + n + '/10'; },
+    reward:function(xp,coins){ return '⭐ +' + xp + ' XP · 🪙 +' + coins; },
+    again:'🧠 Joacă din nou', home:'← Alte jocuri'
+  },
+  en:{
+    title:'🧠 Memory', sub:'Remember the word before it disappears',
+    startTitle:'Ready?', startSub:'See a Korean word, then it vanishes. Pick what it means from memory. 10 rounds.',
+    best:function(n){ return 'Best: ' + n + '/10'; }, start:'▶ START',
+    round:function(i,n){ return 'Round ' + i + ' / ' + n; },
+    peek:'Remember...', question:'What does it mean?',
+    resultLbl:'out of 10', newBest:'🏆 New best!', best2:function(n){ return 'Your best: ' + n + '/10'; },
+    reward:function(xp,coins){ return '⭐ +' + xp + ' XP · 🪙 +' + coins; },
+    again:'🧠 Play again', home:'← Other games'
+  }
+};
+function L(){ return UI[LANG]; }
+
+var ROUNDS = 10;
+var PEEK_MS = 2200;
+var _vocab = [];
+var game = null;
+
+function getBest(){ return RKStorage.get('RK_MEMORY_BEST', 0); }
+
+function loadVocab(){
+  return fetch('./data/vocab-korean.json').then(function(r){ return r.json(); }).then(function(v){ _vocab = v; });
+}
+
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function meaning(entry){ return entry[LANG] || entry.ro; }
+
+function renderStart(){
+  var l = L();
+  document.getElementById('pageTitle').textContent = l.title;
+  document.getElementById('pageSubtitle').textContent = l.sub;
+  document.getElementById('mainCard').innerHTML =
+    '<div class="mm-start">' +
+      '<div class="mm-start-icon">🧠</div>' +
+      '<div class="mm-start-title">' + l.startTitle + '</div>' +
+      '<div class="mm-start-sub">' + l.startSub + '</div>' +
+      '<div class="mm-best">' + l.best(getBest()) + '</div>' +
+      '<button type="button" class="mm-start-btn" id="mmStartBtn">' + l.start + '</button>' +
+    '</div>';
+  document.getElementById('mmStartBtn').addEventListener('click', startGame);
+}
+
+function startGame(){
+  game = { round: 0, score: 0, queue: shuffle(_vocab).slice(0, ROUNDS) };
+  nextRound();
+}
+
+function nextRound(){
+  if(game.round >= ROUNDS){ endGame(); return; }
+  var target = game.queue[game.round];
+  var distractors = shuffle(_vocab.filter(function(v){ return v !== target; })).slice(0, 3);
+  var options = shuffle([target].concat(distractors));
+
+  var l = L();
+  document.getElementById('mainCard').innerHTML =
+    '<div class="mm-hud"><span>' + l.round(game.round + 1, ROUNDS) + '</span><span>★ ' + game.score + '</span></div>' +
+    '<div class="mm-word-zone">' +
+      '<div class="mm-word" id="mmWord">' + target.ko + '</div>' +
+      '<div class="mm-peek-lbl" id="mmPeekLbl">' + l.peek + '</div>' +
+      '<div class="mm-peek-bar-bg"><div class="mm-peek-bar" id="mmPeekBar"></div></div>' +
+    '</div>' +
+    '<div id="mmQA" style="display:none">' +
+      '<div class="mm-question">' + l.question + '</div>' +
+      '<div class="mm-options" id="mmOptions">' +
+        options.map(function(opt){
+          return '<div class="mm-opt" data-correct="' + (opt === target ? '1' : '0') + '">' + meaning(opt) + '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+
+  var bar = document.getElementById('mmPeekBar');
+  requestAnimationFrame(function(){
+    bar.style.transition = 'width ' + PEEK_MS + 'ms linear';
+    bar.style.width = '0%';
+  });
+
+  setTimeout(function(){
+    document.getElementById('mmWord').textContent = '❓';
+    document.getElementById('mmWord').classList.add('hidden-word');
+    document.getElementById('mmPeekLbl').style.display = 'none';
+    document.getElementById('mmPeekBar').parentElement.style.display = 'none';
+    document.getElementById('mmQA').style.display = '';
+    document.querySelectorAll('.mm-opt').forEach(function(btn){
+      btn.addEventListener('click', function(){ answerRound(btn); });
+    });
+  }, PEEK_MS);
+}
+
+function answerRound(btn){
+  document.querySelectorAll('.mm-opt').forEach(function(b){ b.style.pointerEvents = 'none'; });
+  var correct = btn.dataset.correct === '1';
+  if(correct){
+    btn.classList.add('correct');
+    game.score++;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.mm-opt').forEach(function(b){
+      if(b.dataset.correct === '1') b.classList.add('correct');
+    });
+  }
+  setTimeout(function(){
+    game.round++;
+    nextRound();
+  }, 900);
+}
+
+function endGame(){
+  var l = L();
+  var best = getBest();
+  var isNewBest = game.score > best;
+  if(isNewBest) RKStorage.set('RK_MEMORY_BEST', game.score);
+
+  var xpGained = game.score * 8;
+  var coinsGained = Math.round(game.score / 3);
+  if(xpGained > 0 && window.RKGamification){
+    if(window.RKStreak) RKStreak.touch();
+    RKGamification.addXPBonus(xpGained);
+    RKGamification.addCoins(coinsGained);
+  }
+
+  document.getElementById('mainCard').innerHTML =
+    '<div class="mm-result">' +
+      '<div class="mm-result-icon">' + (isNewBest ? '🏆' : '🧠') + '</div>' +
+      '<div class="mm-result-num">' + game.score + '</div>' +
+      '<div class="mm-result-lbl">' + l.resultLbl + '</div>' +
+      (isNewBest ? '<div class="mm-result-best">' + l.newBest + '</div>' : '<div class="mm-result-best">' + l.best2(getBest()) + '</div>') +
+      (xpGained > 0 ? '<div class="mm-result-reward">' + l.reward(xpGained, coinsGained) + '</div>' : '') +
+      '<div class="mm-result-actions">' +
+        '<button type="button" class="mm-result-btn" id="mmAgainBtn">' + l.again + '</button>' +
+        '<a class="mm-result-btn secondary" href="play.html" style="text-decoration:none;display:inline-flex;align-items:center">' + l.home + '</a>' +
+      '</div>' +
+    '</div>';
+  document.getElementById('mmAgainBtn').addEventListener('click', function(){
+    game = null;
+    renderStart();
+  });
+}
+
+RKLang.init(function(lang){ LANG = lang; if(!game) renderStart(); });
+loadVocab().then(renderStart);
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+<script src="./js/core/page-help.js"></script>
+</body>
+</html>

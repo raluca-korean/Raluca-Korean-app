@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Quick 60</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#f59e0b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+.q6-start{text-align:center;padding:20px 10px}
+.q6-start-icon{font-size:56px;line-height:1;margin-bottom:10px}
+.q6-start-title{font-size:20px;font-weight:900;color:var(--rk-heading)}
+.q6-start-sub{font-size:13px;color:var(--rk-muted);margin:8px 0 20px}
+.q6-best{font-size:12px;color:var(--rk-muted-ui);margin-bottom:16px}
+.q6-start-btn{
+  border:none;border-radius:14px;padding:14px 28px;font-weight:900;font-size:15px;cursor:pointer;font-family:inherit;
+  background:linear-gradient(135deg,#f59e0b,#db2777);color:#fff;box-shadow:0 6px 20px rgba(245,158,11,.32);
+}
+
+.q6-hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.q6-timer{font-size:26px;font-weight:900;color:var(--rk-heading)}
+.q6-timer.low{color:#ef4444}
+.q6-score{font-size:14px;font-weight:800;color:var(--rk-muted)}
+
+.q6-question{font-size:17px;font-weight:800;color:var(--rk-heading);text-align:center;margin-bottom:16px;line-height:1.5}
+.q6-blank{color:var(--rk-pink,#db2777)}
+.q6-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.q6-opt{
+  padding:13px 10px;border-radius:12px;text-align:center;cursor:pointer;font-size:14px;font-weight:700;
+  background:var(--rk-bg-flat);border:2px solid var(--rk-stroke);color:var(--rk-heading);transition:all .1s;
+}
+.q6-opt.correct{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:transparent}
+.q6-opt.wrong{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:transparent}
+
+.q6-result{text-align:center;padding:20px 10px}
+.q6-result-icon{font-size:60px;line-height:1;margin-bottom:10px}
+.q6-result-num{font-size:44px;font-weight:900;color:var(--rk-heading);line-height:1}
+.q6-result-lbl{font-size:13px;color:var(--rk-muted);margin-top:6px}
+.q6-result-best{font-size:12px;color:var(--rk-muted-ui);margin-top:10px}
+.q6-result-reward{font-size:15px;font-weight:800;color:var(--rk-pink,#db2777);margin-top:12px}
+.q6-result-actions{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.q6-result-btn{
+  border:none;border-radius:12px;padding:11px 20px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;
+  background:linear-gradient(135deg,#f59e0b,#db2777);color:#fff;box-shadow:0 4px 14px rgba(245,158,11,.28);
+}
+.q6-result-btn.secondary{background:var(--rk-bg-flat);color:var(--rk-heading);box-shadow:none}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <h1 id="pageTitle">⚡ Quick 60</h1>
+      <div class="sub" id="pageSubtitle">Câte poți rezolva în 60 de secunde?</div>
+    </div>
+    <div id="pageControls"></div>
+  </div>
+</div>
+
+<div class="card" id="mainCard"></div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/gamification.js"></script>
+<script src="./js/core/streak.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script>
+'use strict';
+
+var LANG = RKLang.get();
+var UI = {
+  ro:{
+    title:'⚡ Quick 60', sub:'Câte poți rezolva în 60 de secunde?',
+    startTitle:'Ești pregătit?', startSub:'Răspunde cât mai repede la întrebări din toate nivelurile. Fiecare răspuns corect contează.',
+    best:function(n){ return 'Record: ' + n; }, start:'▶ START',
+    score:function(n){ return 'Scor: ' + n; },
+    resultTitle:function(n){ return n + ' corecte!'; }, resultLbl:'în 60 de secunde',
+    newBest:'🏆 Record nou!', best2:function(n){ return 'Recordul tău: ' + n; },
+    reward:function(xp,coins){ return '⭐ +' + xp + ' XP · 🪙 +' + coins; },
+    again:'⚡ Joacă din nou', home:'← Alte jocuri'
+  },
+  en:{
+    title:'⚡ Quick 60', sub:'How many can you solve in 60 seconds?',
+    startTitle:'Ready?', startSub:'Answer as many questions as you can from every level. Every correct answer counts.',
+    best:function(n){ return 'Best: ' + n; }, start:'▶ START',
+    score:function(n){ return 'Score: ' + n; },
+    resultTitle:function(n){ return n + ' correct!'; }, resultLbl:'in 60 seconds',
+    newBest:'🏆 New best!', best2:function(n){ return 'Your best: ' + n; },
+    reward:function(xp,coins){ return '⭐ +' + xp + ' XP · 🪙 +' + coins; },
+    again:'⚡ Play again', home:'← Other games'
+  }
+};
+function L(){ return UI[LANG]; }
+
+var DURATION = 60;
+var _pool = [];
+var game = null; // {timeLeft, score, timerId, current}
+
+function getBest(){ return RKStorage.get('RK_QUICK60_BEST', 0); }
+
+function loadPool(){
+  return fetch('./data/exercises.json').then(function(r){ return r.json(); }).then(function(exJson){
+    _pool = [];
+    ['particle','conjug','ro-ko'].forEach(function(type){
+      (exJson[type] || []).forEach(function(item){
+        _pool.push(Object.assign({_type:type}, item));
+      });
+    });
+  });
+}
+
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function renderStart(){
+  var l = L();
+  document.getElementById('pageTitle').textContent = l.title;
+  document.getElementById('pageSubtitle').textContent = l.sub;
+  document.getElementById('mainCard').innerHTML =
+    '<div class="q6-start">' +
+      '<div class="q6-start-icon">⚡</div>' +
+      '<div class="q6-start-title">' + l.startTitle + '</div>' +
+      '<div class="q6-start-sub">' + l.startSub + '</div>' +
+      '<div class="q6-best">' + l.best(getBest()) + '</div>' +
+      '<button type="button" class="q6-start-btn" id="q6StartBtn">' + l.start + '</button>' +
+    '</div>';
+  document.getElementById('q6StartBtn').addEventListener('click', startGame);
+}
+
+function questionText(item){
+  if(item._type === 'particle' && item.template){
+    return item.template.replace('___', '<span class="q6-blank">___</span>');
+  }
+  if(item.prompt) return item.prompt[LANG] || item.prompt.ro;
+  return '';
+}
+
+function startGame(){
+  game = { timeLeft: DURATION, score: 0, queue: shuffle(_pool) };
+  renderRound();
+  game.timerId = setInterval(tick, 1000);
+}
+
+function tick(){
+  game.timeLeft--;
+  var timerEl = document.getElementById('q6Timer');
+  if(timerEl){
+    timerEl.textContent = game.timeLeft;
+    timerEl.classList.toggle('low', game.timeLeft <= 10);
+  }
+  if(game.timeLeft <= 0){
+    clearInterval(game.timerId);
+    endGame();
+  }
+}
+
+function nextItem(){
+  if(!game.queue.length) game.queue = shuffle(_pool);
+  return game.queue.pop();
+}
+
+function renderRound(){
+  var l = L();
+  game.current = nextItem();
+  var item = game.current;
+  document.getElementById('mainCard').innerHTML =
+    '<div class="q6-hud">' +
+      '<div class="q6-timer' + (game.timeLeft <= 10 ? ' low' : '') + '" id="q6Timer">' + game.timeLeft + '</div>' +
+      '<div class="q6-score" id="q6Score">' + l.score(game.score) + '</div>' +
+    '</div>' +
+    '<div class="q6-question">' + questionText(item) + '</div>' +
+    '<div class="q6-options" id="q6Options">' +
+      item.options.map(function(opt){
+        return '<div class="q6-opt" data-opt="' + String(opt).replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' + opt + '</div>';
+      }).join('') +
+    '</div>';
+
+  document.querySelectorAll('.q6-opt').forEach(function(btn){
+    btn.addEventListener('click', function(){ answerRound(btn, item); });
+  });
+}
+
+function answerRound(btn, item){
+  if(!game || game.timeLeft <= 0) return;
+  document.querySelectorAll('.q6-opt').forEach(function(b){ b.style.pointerEvents = 'none'; });
+  var correct = btn.dataset.opt === String(item.correct);
+  if(correct){
+    btn.classList.add('correct');
+    game.score++;
+  } else {
+    btn.classList.add('wrong');
+  }
+  setTimeout(function(){
+    if(game && game.timeLeft > 0) renderRound();
+  }, correct ? 180 : 500);
+}
+
+function endGame(){
+  var l = L();
+  var best = getBest();
+  var isNewBest = game.score > best;
+  if(isNewBest) RKStorage.set('RK_QUICK60_BEST', game.score);
+
+  var xpGained = game.score * 3;
+  var coinsGained = Math.round(game.score / 2);
+  if(xpGained > 0 && window.RKGamification){
+    if(window.RKStreak) RKStreak.touch();
+    RKGamification.addXPBonus(xpGained);
+    RKGamification.addCoins(coinsGained);
+  }
+
+  document.getElementById('mainCard').innerHTML =
+    '<div class="q6-result">' +
+      '<div class="q6-result-icon">' + (isNewBest ? '🏆' : '⚡') + '</div>' +
+      '<div class="q6-result-num">' + game.score + '</div>' +
+      '<div class="q6-result-lbl">' + l.resultLbl + '</div>' +
+      (isNewBest ? '<div class="q6-result-best">' + l.newBest + '</div>' : '<div class="q6-result-best">' + l.best2(getBest()) + '</div>') +
+      (xpGained > 0 ? '<div class="q6-result-reward">' + l.reward(xpGained, coinsGained) + '</div>' : '') +
+      '<div class="q6-result-actions">' +
+        '<button type="button" class="q6-result-btn" id="q6AgainBtn">' + l.again + '</button>' +
+        '<a class="q6-result-btn secondary" href="play.html" style="text-decoration:none;display:inline-flex;align-items:center">' + l.home + '</a>' +
+      '</div>' +
+    '</div>';
+  document.getElementById('q6AgainBtn').addEventListener('click', function(){
+    game = null;
+    renderStart();
+  });
+}
+
+RKLang.init(function(lang){ LANG = lang; if(!game) renderStart(); });
+loadPool().then(renderStart);
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+<script src="./js/core/page-help.js"></script>
+</body>
+</html>
