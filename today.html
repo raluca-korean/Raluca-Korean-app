@@ -14,15 +14,18 @@
 .td-hero{
   text-align:center;padding:22px 16px 20px;
 }
+.td-mission-eyebrow{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--rk-pink,#db2777);margin-bottom:4px}
 .td-hero-num{font-size:44px;font-weight:900;color:var(--rk-heading);line-height:1}
 .td-hero-lbl{font-size:13px;color:var(--rk-muted);margin-top:6px;font-weight:600}
 .td-hero-done{font-size:15px;color:var(--rk-muted);padding:10px 0}
 
-/* ── STATUS STRIP (streak / xp / level) ──────────────────── */
-.td-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.td-metric{background:var(--rk-card);border:2px solid var(--rk-stroke);border-bottom:4px solid var(--rk-stroke-b);border-radius:14px;padding:12px 10px;text-align:center;box-shadow:0 4px 14px var(--rk-shadow)}
-.td-metric-val{font-size:20px;font-weight:900;color:var(--rk-heading)}
-.td-metric-lbl{font-size:10px;color:var(--rk-muted);margin-top:2px;font-weight:600;letter-spacing:.03em}
+/* ── JOURNEY CARD (streak / level / xp-to-next-level) ────── */
+.td-journey{padding:18px 18px 16px;margin-bottom:14px}
+.td-journey-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.td-journey-streak{font-size:15px;font-weight:800;color:var(--rk-heading)}
+.td-journey-streak b{font-size:18px}
+.td-journey-level{font-size:13px;font-weight:700;color:var(--rk-muted)}
+.td-journey-xplbl{font-size:11px;color:var(--rk-muted-ui);margin-top:6px;text-align:right;font-weight:600}
 
 /* ── QUEUE CARDS ──────────────────────────────────────── */
 .td-queue{display:flex;flex-direction:column;gap:10px}
@@ -157,13 +160,19 @@ var UI = {
   ro:{
     title:'🗓️ Azi', sub:'Recapitularea de azi și planul tău TOPIK, într-un singur loc',
     heroLbl:'de recapitulat azi', heroLblOne:'de recapitulat azi',
+    missionEyebrow:'Misiunea de azi',
     streak:'Streak', xp:'XP', level:'Nivel',
+    xpToNext:function(cur,need){ return cur + ' / ' + need + ' XP până la nivelul următor'; },
+    maxLevelLbl:'Nivel maxim atins',
     vocabTitle:'Vocabular', vocabSub:'Cuvinte scadente în Flashcards',
     hanjaTitle:'Hanja', hanjaSub:'Caractere scadente pentru recapitulare',
     exTitle:'Exerciții', exSub:'Exerciții scadente (SRS)',
     goVocab:'Recapitulează →', goHanja:'Recapitulează →', goEx:'Practică →',
     nothingDue:'0 azi',
     allDoneTitle:'Totul e la zi! 🎉', allDoneSub:'Nimic scadent azi — revino mâine sau explorează liber o funcționalitate.',
+    missionDoneTitle:'Misiune completată! 🏆', missionDoneSub:'Ai terminat tot ce aveai de recapitulat azi.',
+    missionDoneBonus:function(n){ return '⭐ Bonus: +' + n + ' XP'; },
+    missionOverlayTitle:'MISIUNE COMPLETATĂ!', missionOverlayTap:'Atinge oriunde pentru a continua',
     itemsSingular:'item', itemsPlural:'itemi',
     cardTitle:'🖼️ Cardul tău de streak', cardBtn:'⬇ Descarcă imaginea',
     cardApp:'RALUCA KOREAN', cardStreakOne:'zi la rând', cardStreakMany:'zile la rând',
@@ -185,13 +194,19 @@ var UI = {
   en:{
     title:'🗓️ Today', sub:"Today's review and your TOPIK plan, in one place",
     heroLbl:'due today', heroLblOne:'due today',
+    missionEyebrow:"Today's mission",
     streak:'Streak', xp:'XP', level:'Level',
+    xpToNext:function(cur,need){ return cur + ' / ' + need + ' XP to next level'; },
+    maxLevelLbl:'Max level reached',
     vocabTitle:'Vocabulary', vocabSub:'Words due in Flashcards',
     hanjaTitle:'Hanja', hanjaSub:'Characters due for review',
     exTitle:'Exercises', exSub:'Exercises due (SRS)',
     goVocab:'Review →', goHanja:'Review →', goEx:'Practice →',
     nothingDue:'0 today',
     allDoneTitle:"You're all caught up! 🎉", allDoneSub:'Nothing due today — come back tomorrow, or explore any feature freely.',
+    missionDoneTitle:'Mission complete! 🏆', missionDoneSub:"You've cleared everything due today.",
+    missionDoneBonus:function(n){ return '⭐ Bonus: +' + n + ' XP'; },
+    missionOverlayTitle:'MISSION COMPLETE!', missionOverlayTap:'Tap anywhere to continue',
     itemsSingular:'item', itemsPlural:'items',
     cardTitle:'🖼️ Your streak card', cardBtn:'⬇ Download image',
     cardApp:'RALUCA KOREAN', cardStreakOne:'day streak', cardStreakMany:'day streak',
@@ -255,8 +270,23 @@ function render(){
   var total = vocab + hanja + ex;
 
   var streak = window.RKStreak ? RKStreak.get() : {days:0};
+
+  // Grant the once-per-day mission bonus BEFORE reading XP, so the journey
+  // bar below reflects it immediately instead of a stale pre-bonus value.
+  var todayIso = new Date().toISOString().slice(0,10);
+  var bonusAmount = 50;
+  var justCompleted = total === 0 && streak.lastDate === todayIso &&
+    RKStorage.get('RK_MISSION_BONUS_DATE', '') !== todayIso;
+  if(justCompleted && window.RKGamification){
+    RKGamification.addXPBonus(bonusAmount);
+    RKStorage.set('RK_MISSION_BONUS_DATE', todayIso);
+  }
+
   var xpData = window.RKGamification ? RKGamification.getXPData() : {total:0};
   var lvl    = window.RKGamification ? RKGamification.getLevelInfo(xpData.total) : {current:{level:1}};
+  var levelTitle = lvl.current ? (LANG==='ro' ? lvl.current.title_ro : lvl.current.title_en) : '';
+  var pct = lvl.next ? Math.max(0, Math.min(100, Math.round((xpData.total - lvl.current.min) / (lvl.next.min - lvl.current.min) * 100))) : 100;
+  var xpLine = lvl.next ? l.xpToNext(xpData.total - lvl.current.min, lvl.next.min - lvl.current.min) : l.maxLevelLbl;
 
   var items = [
     { icon:'🃏', title:l.vocabTitle, sub:l.vocabSub, count:vocab, href:'flashcards.html',   cta:l.goVocab },
@@ -267,27 +297,26 @@ function render(){
   var html = '';
 
   html += '<div class="card td-hero">' +
+    '<div class="td-mission-eyebrow">🎯 ' + l.missionEyebrow + '</div>' +
     '<div class="td-hero-num">' + total + '</div>' +
     '<div class="td-hero-lbl">' + (LANG==='ro' ? l.heroLbl : (total===1 ? l.heroLblOne : l.heroLbl)) + '</div>' +
   '</div>';
 
-  html += '<div class="td-strip">' +
-    '<div class="td-metric"><div class="td-metric-val">🔥' + streak.days + '</div><div class="td-metric-lbl">' + l.streak + '</div></div>' +
-    '<div class="td-metric"><div class="td-metric-val">' + xpData.total + '</div><div class="td-metric-lbl">' + l.xp + '</div></div>' +
-    '<div class="td-metric"><div class="td-metric-val">Lv.' + lvl.current.level + '</div><div class="td-metric-lbl">' + l.level + '</div></div>' +
-  '</div>';
-
-  html += '<div class="card td-card-section">' +
-    '<h3>' + l.cardTitle + '</h3>' +
-    '<div class="td-card-preview-wrap"><img class="td-card-preview-img" id="streakCardImg" alt="Streak card"></div>' +
-    '<button class="td-card-btn" id="streakCardBtn">' + l.cardBtn + '</button>' +
+  html += '<div class="card td-journey">' +
+    '<div class="td-journey-row">' +
+      '<div class="td-journey-streak">🔥 <b>' + streak.days + '</b> ' + l.streak + '</div>' +
+      '<div class="td-journey-level">Lv.' + lvl.current.level + ' · ' + levelTitle + '</div>' +
+    '</div>' +
+    '<div class="pl-bar-bg"><div class="pl-bar" style="width:' + pct + '%"></div></div>' +
+    '<div class="td-journey-xplbl">' + xpLine + '</div>' +
   '</div>';
 
   if(total === 0){
     html += '<div class="card td-alldone">' +
-      '<div class="td-alldone-icon">🌿</div>' +
-      '<div class="td-alldone-title">' + l.allDoneTitle + '</div>' +
-      '<div class="td-alldone-sub">' + l.allDoneSub + '</div>' +
+      '<div class="td-alldone-icon">' + (justCompleted ? '🏆' : '🌿') + '</div>' +
+      '<div class="td-alldone-title">' + (justCompleted ? l.missionDoneTitle : l.allDoneTitle) + '</div>' +
+      '<div class="td-alldone-sub">' + (justCompleted ? l.missionDoneSub : l.allDoneSub) + '</div>' +
+      (justCompleted ? '<div class="td-alldone-sub" style="margin-top:8px;font-weight:800;color:var(--rk-pink,#db2777)">' + l.missionDoneBonus(bonusAmount) + '</div>' : '') +
     '</div>';
   } else {
     html += '<div class="card"><div class="td-queue">';
@@ -305,11 +334,51 @@ function render(){
     html += '</div></div>';
   }
 
+  html += '<div class="card td-card-section">' +
+    '<h3>' + l.cardTitle + '</h3>' +
+    '<div class="td-card-preview-wrap"><img class="td-card-preview-img" id="streakCardImg" alt="Streak card"></div>' +
+    '<button class="td-card-btn" id="streakCardBtn">' + l.cardBtn + '</button>' +
+  '</div>';
+
   html += '<div id="plannerSection"></div>';
 
   document.getElementById('mainContent').innerHTML = html;
   setupStreakCard(streak, xpData, lvl);
   renderPlanner();
+  if(justCompleted) setTimeout(function(){ celebrateMission(bonusAmount); }, 400);
+}
+
+// ── MISSION-COMPLETE CELEBRATION (self-contained, mirrors streak.js) ──
+function celebrateMission(xpGained){
+  var l = L();
+  if(!document.getElementById('tdMissionStyle')){
+    var style = document.createElement('style');
+    style.id = 'tdMissionStyle';
+    style.textContent =
+      '@keyframes tdMissionPop{0%{opacity:0;transform:scale(.7)}60%{opacity:1;transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}' +
+      '@keyframes tdMissionFade{from{opacity:1}to{opacity:0}}';
+    document.head.appendChild(style);
+  }
+  var backdrop = document.createElement('div');
+  backdrop.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(10,6,4,.7);' +
+    'display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;cursor:pointer';
+  var card = document.createElement('div');
+  card.style.cssText = 'background:linear-gradient(145deg,#db2777,#7c3aed);border-radius:24px;' +
+    'padding:36px 44px;text-align:center;color:#fff;box-shadow:0 20px 60px rgba(124,58,237,.5);' +
+    'animation:tdMissionPop .5s cubic-bezier(.34,1.56,.64,1) both;max-width:90vw';
+  card.innerHTML =
+    '<div style="font-size:52px;line-height:1">🏆</div>' +
+    '<div style="font-size:24px;font-weight:900;margin-top:6px">' + l.missionOverlayTitle + '</div>' +
+    '<div style="font-size:15px;opacity:.9;margin-top:8px">' + l.missionDoneBonus(xpGained) + '</div>' +
+    '<div style="font-size:12px;opacity:.7;margin-top:14px">' + l.missionOverlayTap + '</div>';
+  backdrop.appendChild(card);
+  document.body.appendChild(backdrop);
+  function dismiss(){
+    backdrop.style.animation = 'tdMissionFade .3s ease both';
+    setTimeout(function(){ backdrop.remove(); }, 300);
+  }
+  backdrop.addEventListener('click', dismiss);
+  setTimeout(dismiss, 5000);
 }
 
 // ── TOPIK PLANNER (merged from planner.html) ──────────────────
