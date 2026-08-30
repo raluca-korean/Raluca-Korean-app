@@ -123,11 +123,11 @@
       'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;' +
       'max-width:92vw;width:480px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;' +
       'padding:12px 16px;border-radius:16px;font-family:inherit;font-size:13px;color:#fff;' +
-      'background:linear-gradient(135deg,#db2777,#7c3aed);box-shadow:0 10px 30px rgba(0,0,0,.35);' +
+      'background:linear-gradient(135deg,#2f6b53,#1c4a3a);box-shadow:0 10px 30px rgba(0,0,0,.35);' +
       'animation:rkBackupIn .3s ease;';
     bar.innerHTML =
       '<span style="flex:1;min-width:200px;line-height:1.4">' + T.msg + '</span>' +
-      '<button id="rkBackupNowBtn" style="background:#fff;color:#7c3aed;border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit">' + T.now + '</button>' +
+      '<button id="rkBackupNowBtn" style="background:#fff;color:#1c4a3a;border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit">' + T.now + '</button>' +
       '<button id="rkBackupLaterBtn" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit">' + T.later + '</button>';
 
     document.body.appendChild(bar);
