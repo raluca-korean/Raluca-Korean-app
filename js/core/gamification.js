@@ -111,14 +111,29 @@
      Goals AND task set scale with audience (RK_AUDIENCE: 'student'|'adult'):
      students get vocab+sentences (shorter targets); adults also get a
      grammar target, which students don't see (their grammar practice comes
-     through the Hangul daily challenge instead, rendered separately). */
+     through the Hangul daily challenge instead, rendered separately).
+     Goals additionally scale with the session length chosen in onboarding
+     (RK_ONBOARD_TIME, minutes) — a real per-user setting, not a fabricated
+     estimate — so a 5-minute user gets a genuinely smaller daily mission
+     than a 30-minute one. */
+  var STUDENT_TIME_SCALE = {
+    5:  { vocab: 3,  sentences: 2 },
+    10: { vocab: 5,  sentences: 3 },
+    15: { vocab: 8,  sentences: 4 }
+  };
+  var ADULT_TIME_SCALE = {
+    5:  { vocab: 5,  sentences: 2, grammar: 1 },
+    10: { vocab: 10, sentences: 3, grammar: 3 },
+    20: { vocab: 15, sentences: 5, grammar: 5 },
+    30: { vocab: 20, sentences: 6, grammar: 6 }
+  };
   function dailyTaskGoals() {
-    // RK_AUDIENCE is a plain string flag (like RK_LANG/RK_THEME) — not JSON, so
-    // read it with a raw localStorage lookup rather than RKStorage.get.
+    // RK_AUDIENCE / RK_ONBOARD_TIME are plain string flags (like RK_LANG) —
+    // not JSON — so read them with a raw localStorage lookup.
     var audience = localStorage.getItem('RK_AUDIENCE') || 'adult';
-    return audience === 'student'
-      ? { vocab: 5, sentences: 3 }
-      : { vocab: 10, sentences: 3, grammar: 3 };
+    var time = parseInt(localStorage.getItem('RK_ONBOARD_TIME'), 10);
+    var scale = audience === 'student' ? STUDENT_TIME_SCALE : ADULT_TIME_SCALE;
+    return scale[time] || (audience === 'student' ? scale[10] : scale[10]);
   }
 
   function getDailyTasks() {

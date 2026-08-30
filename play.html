@@ -21,6 +21,14 @@
 .pl-card-icon{font-size:34px;line-height:1}
 .pl-card-title{font-size:15px;font-weight:800;color:var(--rk-heading)}
 .pl-card-sub{font-size:12px;color:var(--rk-muted)}
+.pl-surprise{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;font-family:inherit;
+  padding:16px 18px;border-radius:16px;margin-bottom:12px;border:none;
+  background:linear-gradient(135deg,#db2777,#7c3aed);color:#fff;box-shadow:0 6px 18px rgba(124,58,237,.3);
+}
+.pl-surprise-icon{font-size:28px;flex-shrink:0}
+.pl-surprise-title{font-size:15px;font-weight:900}
+.pl-surprise-sub{font-size:12px;opacity:.85;margin-top:2px}
 .app{padding-bottom:80px}
 .pl-nav{
   position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:space-around;
@@ -45,6 +53,13 @@
 </div>
 
 <div class="card">
+  <button class="pl-surprise" id="surpriseBtn" type="button" style="display:none">
+    <span class="pl-surprise-icon">🎲</span>
+    <span>
+      <span class="pl-surprise-title" id="surpriseTitle"></span>
+      <div class="pl-surprise-sub" id="surpriseSub"></div>
+    </span>
+  </button>
   <div class="pl-grid" id="playGrid"></div>
 </div>
 
@@ -59,14 +74,19 @@
 </nav>
 
 <script src="./js/core/storage.js"></script>
+<script src="./js/core/srs.js"></script>
+<script src="./js/core/gamification.js"></script>
 <script src="./js/core/lang-picker.js"></script>
 <script>
 'use strict';
 
 var LANG = RKLang.get();
+var AUDIENCE = localStorage.getItem('RK_AUDIENCE') || 'adult';
 var UI = {
   ro:{
-    title:'🎮 Play', sub:'Alege un tip de joc',
+    title:'🎮 Play',
+    sub: AUDIENCE === 'student' ? 'Alege o provocare' : 'Alege un tip de joc',
+    surpriseTitle:'Surprinde-mă', surpriseSub:'Alegem noi ce exersezi azi, pe baza progresului tău real',
     games:[
       {icon:'⚡', href:'quick60.html', title:'Quick 60', sub:'60 de secunde, cât de multe rezolvi?'},
       {icon:'🧠', href:'memory.html', title:'Memory', sub:'Ține minte cuvântul înainte să dispară'},
@@ -85,7 +105,9 @@ var UI = {
     ]
   },
   en:{
-    title:'🎮 Play', sub:'Choose a game type',
+    title:'🎮 Play',
+    sub: AUDIENCE === 'student' ? 'Pick a challenge' : 'Choose a game type',
+    surpriseTitle:'Surprise me', surpriseSub:"We'll pick what to practice today, based on your real progress",
     games:[
       {icon:'⚡', href:'quick60.html', title:'Quick 60', sub:'60 seconds, how many can you solve?'},
       {icon:'🧠', href:'memory.html', title:'Memory', sub:'Remember the word before it disappears'},
@@ -111,6 +133,60 @@ var NAV_LABELS = {
   en:{home:'Home', learn:'Learn', practice:'Practice', speak:'Speak', progress:'Progress'}
 };
 
+/* ── ADULT "SURPRISE ME" ─────────────────────────────────────────
+   Picks a real next activity from actual progress signals — never a
+   literal random page. Weighted so more urgent/incomplete things come
+   up more often, with just enough variety across repeat clicks. */
+function dueCount(key){
+  if(!window.RKSrs) return 0;
+  var data = RKSrs.load(key);
+  var now = Date.now();
+  var n = 0;
+  Object.keys(data).forEach(function(k){ if(data[k] && data[k].due <= now) n++; });
+  return n;
+}
+function isDailyFlagDone(key){
+  try {
+    var d = JSON.parse(localStorage.getItem(key) || 'null');
+    var today = new Date().toISOString().slice(0,10);
+    return !!(d && d.date === today && d.done);
+  } catch(e){ return false; }
+}
+function surpriseMe(){
+  var pool = [];
+  var add = function(href, weight){ for(var i=0;i<weight;i++) pool.push(href); };
+
+  var dueTotal = dueCount('RK_FC_SRS') + dueCount('RK_HJ_SRS') + dueCount('RK_EX_SRS');
+  if(dueTotal >= 5) add('review.html', 3);
+
+  if(window.RKGamification){
+    var goals = RKGamification.getDailyTaskGoals();
+    var tasks = RKGamification.getDailyTasks();
+    if(tasks.vocab < goals.vocab) add('exercises.html?type=ko-ro', 2);
+    if(goals.grammar && tasks.grammar < goals.grammar) add('exercises.html?type=particle', 2);
+    if(tasks.sentences < goals.sentences) add('exercises.html?type=puzzle', 2);
+  }
+  if(!isDailyFlagDone('RK_DAILY_LISTEN')) add('listening.html', 2);
+  if(!isDailyFlagDone('RK_DAILY_PRON')) add('reading.html', 2);
+
+  var stats = window.RKStorage ? RKStorage.get('RK_STATS', {byType:{}}) : {byType:{}};
+  var weakest = null, weakestPct = 100;
+  Object.keys(stats.byType || {}).forEach(function(t){
+    var d = stats.byType[t];
+    if(d && d.total >= 5){
+      var pct = d.correct / d.total * 100;
+      if(pct < weakestPct){ weakestPct = pct; weakest = t; }
+    }
+  });
+  if(weakest && weakestPct < 70) add('exercises.html?type=' + weakest, 2);
+
+  // Always-available variety fallback, kept light so it never dominates.
+  add('conversation.html', 1);
+  add('stories.html', 1);
+
+  location.href = pool[Math.floor(Math.random() * pool.length)];
+}
+
 function render(){
   var l = L();
   document.getElementById('pageTitle').textContent = l.title;
@@ -128,7 +204,17 @@ function render(){
       '<div class="pl-card-sub">' + g.sub + '</div>' +
     '</a>';
   }).join('');
+
+  var surpriseBtn = document.getElementById('surpriseBtn');
+  if(AUDIENCE === 'adult'){
+    surpriseBtn.style.display = '';
+    document.getElementById('surpriseTitle').textContent = l.surpriseTitle;
+    document.getElementById('surpriseSub').textContent = l.surpriseSub;
+  } else {
+    surpriseBtn.style.display = 'none';
+  }
 }
+document.getElementById('surpriseBtn').addEventListener('click', surpriseMe);
 
 RKLang.init(function(lang){ LANG = lang; render(); });
 render();
