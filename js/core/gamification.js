@@ -102,32 +102,36 @@
     RKStorage.set('RK_DAILY_QUEST', d);
   }
 
-  /* Today's Mission — the literal daily checklist (vocab/sentences/
-     listening/speaking). Vocab and sentences are counted here from real
-     correct exercise answers; listening and speaking reuse the daily-
-     challenge flags listening.js and pronunciation.js already track
-     (RK_DAILY_LISTEN / RK_DAILY_PRON), read directly by the pages that
-     render the mission — nothing here fabricates those two.
-     Goals scale with audience (RK_AUDIENCE: 'student'|'adult') — students
-     get a shorter 5-word target, adults the fuller 10-word review the
-     dual-audience spec asks for. Same tracked data either way. */
+  /* Today's Mission — the literal daily checklist. Vocab/sentences/grammar
+     are counted here from real correct exercise answers; listening/speaking/
+     hangul reuse the daily-challenge flags listening.js, pronunciation.js and
+     hangul.js already track (RK_DAILY_LISTEN / RK_DAILY_PRON / RK_DAILY_HANGUL),
+     read directly by the pages that render the mission — nothing here
+     fabricates those.
+     Goals AND task set scale with audience (RK_AUDIENCE: 'student'|'adult'):
+     students get vocab+sentences (shorter targets); adults also get a
+     grammar target, which students don't see (their grammar practice comes
+     through the Hangul daily challenge instead, rendered separately). */
   function dailyTaskGoals() {
     // RK_AUDIENCE is a plain string flag (like RK_LANG/RK_THEME) — not JSON, so
     // read it with a raw localStorage lookup rather than RKStorage.get.
     var audience = localStorage.getItem('RK_AUDIENCE') || 'adult';
-    return audience === 'student' ? { vocab: 5, sentences: 3 } : { vocab: 10, sentences: 3 };
+    return audience === 'student'
+      ? { vocab: 5, sentences: 3 }
+      : { vocab: 10, sentences: 3, grammar: 3 };
   }
 
   function getDailyTasks() {
     var today = new Date().toISOString().slice(0, 10);
     var d = RKStorage.get('RK_DAILY_TASKS', null);
-    if (!d || d.date !== today) return { date: today, vocab: 0, sentences: 0 };
+    if (!d || d.date !== today) return { date: today, vocab: 0, sentences: 0, grammar: 0 };
     return d;
   }
   function incrementDailyTask(category) {
     var goals = dailyTaskGoals();
     if (!goals[category]) return getDailyTasks();
     var d = getDailyTasks();
+    if (!d[category]) d[category] = 0;
     if (d[category] < goals[category]) d[category]++;
     RKStorage.set('RK_DAILY_TASKS', d);
     return d;

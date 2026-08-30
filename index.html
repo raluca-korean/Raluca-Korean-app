@@ -65,6 +65,12 @@ a{color:inherit}
   display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);
   border-radius:12px;padding:7px 12px;font-size:13px;font-weight:700;box-shadow:0 2px 8px var(--shadow);
 }
+/* Student mode: same component, a touch more visible — gamification is
+   allowed to be louder here, still the brand palette, no new colors. */
+body.audience-student .dash-stat{
+  background:linear-gradient(135deg,var(--lavender-soft),var(--pink-soft));
+  border-color:transparent;
+}
 
 /* ── CARDS ────────────────────────────────────────────── */
 .dash-card{
@@ -235,6 +241,7 @@ a{color:inherit}
 
 var LANG = localStorage.getItem('RK_LANG') || 'ro';
 var AUDIENCE = localStorage.getItem('RK_AUDIENCE') || 'adult';
+if(AUDIENCE === 'student') document.body.classList.add('audience-student');
 
 var UI = {
   ro:{
@@ -246,7 +253,10 @@ var UI = {
     missionCta:'Vezi progresul complet →', missionDoneCta:'Misiune completă azi! ✨',
     missionVocab:function(n,goal){ return n + '/' + goal + (AUDIENCE==='student' ? ' cuvinte noi' : ' cuvinte de recapitulat'); },
     missionSentences:function(n,goal){ return n + '/' + goal + ' propoziții'; },
+    missionGrammar:function(n,goal){ return n + '/' + goal + ' exerciții de gramatică'; },
+    missionHangul:'1 provocare Hangul',
     missionListening:'2 minute de ascultare',
+    missionListeningGame:'1 joc de ascultare',
     missionSpeaking:'1 exercițiu de vorbire',
     missionCompleteTitle:'MISIUNE COMPLETĂ!',
     missionCompleteSub:function(xp){ return 'Ai câștigat +' + xp + ' XP · Streak-ul continuă! 🔥'; },
@@ -283,7 +293,10 @@ var UI = {
     missionCta:'See full progress →', missionDoneCta:'Daily mission complete! ✨',
     missionVocab:function(n,goal){ return n + '/' + goal + (AUDIENCE==='student' ? ' new words' : ' words to review'); },
     missionSentences:function(n,goal){ return n + '/' + goal + ' sentences'; },
+    missionGrammar:function(n,goal){ return n + '/' + goal + ' grammar exercises'; },
+    missionHangul:'1 Hangul challenge',
     missionListening:'2 minutes of listening',
+    missionListeningGame:'1 listening game',
     missionSpeaking:'1 speaking exercise',
     missionCompleteTitle:'MISSION COMPLETE!',
     missionCompleteSub:function(xp){ return 'You earned +' + xp + ' XP · Streak continued! 🔥'; },
@@ -458,19 +471,32 @@ function renderMission(){
   var l = L();
   document.getElementById('missionTitle').textContent = l.missionTitle;
 
-  var goals = window.RKGamification ? RKGamification.getDailyTaskGoals() : {vocab:10, sentences:3};
-  var tasks = window.RKGamification ? RKGamification.getDailyTasks() : {vocab:0, sentences:0};
+  var goals = window.RKGamification ? RKGamification.getDailyTaskGoals() : {vocab:10, sentences:3, grammar:3};
+  var tasks = window.RKGamification ? RKGamification.getDailyTasks() : {vocab:0, sentences:0, grammar:0};
   var vocabDone = tasks.vocab >= goals.vocab;
   var sentDone = tasks.sentences >= goals.sentences;
   var listenDone = isDailyFlagDone('RK_DAILY_LISTEN');
-  var speakDone = isDailyFlagDone('RK_DAILY_PRON');
 
-  var items = [
-    { done: vocabDone, label: l.missionVocab(Math.min(tasks.vocab,goals.vocab), goals.vocab), href: 'exercises.html?type=ko-ro' },
-    { done: sentDone, label: l.missionSentences(Math.min(tasks.sentences,goals.sentences), goals.sentences), href: 'exercises.html?type=puzzle' },
-    { done: listenDone, label: l.missionListening, href: 'listening.html' },
-    { done: speakDone, label: l.missionSpeaking, href: 'reading.html' }
-  ];
+  var items;
+  if(AUDIENCE === 'student'){
+    var hangulDone = isDailyFlagDone('RK_DAILY_HANGUL');
+    items = [
+      { done: vocabDone, label: l.missionVocab(Math.min(tasks.vocab,goals.vocab), goals.vocab), href: 'exercises.html?type=ko-ro' },
+      { done: hangulDone, label: l.missionHangul, href: 'hangul.html' },
+      { done: sentDone, label: l.missionSentences(Math.min(tasks.sentences,goals.sentences), goals.sentences), href: 'exercises.html?type=puzzle' },
+      { done: listenDone, label: l.missionListeningGame, href: 'listening.html' }
+    ];
+  } else {
+    var grammarDone = tasks.grammar >= goals.grammar;
+    var speakDone = isDailyFlagDone('RK_DAILY_PRON');
+    items = [
+      { done: vocabDone, label: l.missionVocab(Math.min(tasks.vocab,goals.vocab), goals.vocab), href: 'exercises.html?type=ko-ro' },
+      { done: grammarDone, label: l.missionGrammar(Math.min(tasks.grammar,goals.grammar), goals.grammar), href: 'exercises.html?type=particle' },
+      { done: sentDone, label: l.missionSentences(Math.min(tasks.sentences,goals.sentences), goals.sentences), href: 'exercises.html?type=puzzle' },
+      { done: listenDone, label: l.missionListening, href: 'listening.html' },
+      { done: speakDone, label: l.missionSpeaking, href: 'reading.html' }
+    ];
+  }
 
   document.getElementById('missionList').innerHTML = items.map(function(it){
     return '<a class="dash-mission-item' + (it.done ? ' done' : '') + '" href="' + it.href + '">' +

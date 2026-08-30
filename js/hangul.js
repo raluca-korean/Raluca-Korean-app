@@ -740,6 +740,26 @@ function initQuiz() {
   updateQHud();
 }
 
+/* ── DAILY HANGUL CHALLENGE ── same {date,done} pattern as listening.js's
+   RK_DAILY_LISTEN / pronunciation.js's RK_DAILY_PRON, so index.html's Daily
+   Mission can check it the same honest way — no fabricated completion. */
+var HANGUL_DAILY_XP = 15;
+var HANGUL_DAILY_THRESHOLD = 5;
+function todayISO() { return RKUtils.todayISO(); }
+function loadDailyHangul() { return RKStorage.get('RK_DAILY_HANGUL', null); }
+function saveDailyHangul(data) { RKStorage.set('RK_DAILY_HANGUL', data); }
+function isDailyHangulDoneToday() {
+  var rec = loadDailyHangul();
+  return !!(rec && rec.date === todayISO() && rec.done);
+}
+function checkDailyHangul() {
+  if (qCorrect >= HANGUL_DAILY_THRESHOLD && !isDailyHangulDoneToday()) {
+    saveDailyHangul({ date: todayISO(), done: true });
+    if (window.RKGamification) RKGamification.addXPBonus(HANGUL_DAILY_XP);
+    if (window.RKStreak) RKStreak.touch();
+  }
+}
+
 function renderQ() {
   const q = qDeck[qIdx];
   const t = T[lang];
@@ -783,6 +803,7 @@ function checkQ(btn, chosen, correct, speak) {
   if (chosen === correct) {
     btn.classList.add('q-ok');
     qCorrect++; qStreak++;
+    checkDailyHangul();
     fb.textContent = t.qCorrect;
     fb.className = 'mrs-q-feedback ok';
     speakKo(speak);

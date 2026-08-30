@@ -479,7 +479,10 @@ function showQuestComplete(){
   launchFireworks();
 }
 
-const DAILY_TASK_TYPE_MAP = { 'ko-ro':'vocab', 'ro-ko':'vocab', 'puzzle':'sentences', 'chain':'sentences' };
+const DAILY_TASK_TYPE_MAP = {
+  'ko-ro':'vocab', 'ro-ko':'vocab', 'puzzle':'sentences', 'chain':'sentences',
+  'particle':'grammar', 'particlePlus':'grammar', 'conjug':'grammar'
+};
 
 function processGamification(wasCorrect, exType){
   if(!wasCorrect || isWrongMode || !window.RKGamification) return;
