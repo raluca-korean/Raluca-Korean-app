@@ -313,26 +313,6 @@
         ]
       }
     },
-    stats: {
-      ro: {
-        title: 'Statistici',
-        lead: 'Progresul tău: exerciții rezolvate, acuratețe, streak-uri, evoluție pe niveluri.',
-        steps: [
-          'Consultă graficele pentru a vedea unde ai nevoie de mai mult exercițiu.',
-          'Urmărește streak-ul zilnic ca motivație.',
-          'Revino aici periodic, ca reper al progresului.'
-        ]
-      },
-      en: {
-        title: 'Statistics',
-        lead: 'Your progress: exercises solved, accuracy, streaks, level evolution.',
-        steps: [
-          'Check the charts to see where you need more practice.',
-          'Track your daily streak for motivation.',
-          'Come back here regularly, as a progress checkpoint.'
-        ]
-      }
-    },
     today: {
       ro: {
         title: 'Azi — Planificator TOPIK',

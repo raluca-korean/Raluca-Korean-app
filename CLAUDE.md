@@ -41,7 +41,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 ### Fără build tools — reguli de bază
 
-- Nu adăuga pagini noi fără să le legi în cel puțin un hub (`index`/`learn`/`play`/`explore`) — o pagină nelegată nicăieri devine moartă (ex: `stats.html` a rămas orfană după restructurarea meniului).
+- Nu adăuga pagini noi fără să le legi în cel puțin un hub (`index`/`learn`/`play`/`explore`) — o pagină nelegată nicăieri devine moartă (așa a rămas orfană `stats.html`, ștearsă ulterior).
 - Orice pagină nouă care trebuie cache-uită offline se adaugă în `STATIC` din `sw.js`, cu bump de versiune la `CACHE`.
 
 ---
