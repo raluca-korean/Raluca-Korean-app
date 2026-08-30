@@ -354,10 +354,10 @@ function t(key){
 }
 
 function updateLevelButtons(){
-  const activeStyle = "linear-gradient(135deg,#db2777,#7c3aed)";
-  const inactiveStyle = "linear-gradient(160deg,#fff,#fdf4ff)";
-  const activeShadow = "0 8px 20px rgba(219,39,119,.28)";
-  const inactiveShadow = "0 4px 12px rgba(219,39,119,.10)";
+  const activeStyle = "linear-gradient(135deg,#c9922e,#a8791f)";
+  const inactiveStyle = "linear-gradient(160deg,#fff,#faf3e3)";
+  const activeShadow = "0 8px 20px rgba(201,146,46,.28)";
+  const inactiveShadow = "0 4px 12px rgba(201,146,46,.10)";
 
   levelBtnsEl.querySelectorAll("button[data-level]").forEach(btn => {
     const isActive = btn.dataset.level === currentLevel;
@@ -798,7 +798,7 @@ function renderInfoBadge(item){
   if (!type.startsWith('drill-') && !isWrongMode) {
     const status = exSrsStatus(getExerciseKey(type, item));
     if (status === 'new') {
-      parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.28);font-weight:900;font-size:11px;color:#7c3aed">✨ ${currentLang === 'ro' ? 'NOU' : 'NEW'}</span>`);
+      parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(201,146,46,.14);border:1px solid rgba(201,146,46,.32);font-weight:900;font-size:11px;color:#a8791f">✨ ${currentLang === 'ro' ? 'NOU' : 'NEW'}</span>`);
     } else if (status === 'due') {
       parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.28);font-weight:900;font-size:11px;color:#b45309">📅 ${currentLang === 'ro' ? 'DE AZI' : 'DUE'}</span>`);
     }
