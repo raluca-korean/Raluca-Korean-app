@@ -69,10 +69,10 @@
 
   function guideColors() {
     return isDark()
-      ? { border: 'rgba(167,139,250,.30)', cross: 'rgba(167,139,250,.55)' }
-      : { border: 'rgba(124,58,237,.22)',  cross: 'rgba(124,58,237,.48)' };
+      ? { border: 'rgba(61,138,106,.30)', cross: 'rgba(61,138,106,.55)' }
+      : { border: 'rgba(28,74,58,.22)',  cross: 'rgba(28,74,58,.48)' };
   }
-  function inkColor() { return isDark() ? '#f0e8ff' : '#1a0533'; }
+  function inkColor() { return isDark() ? '#f0e6d0' : '#2a2118'; }
 
   // ── STORAGE ────────────────────────────────────────────────────
   function loadState() {
