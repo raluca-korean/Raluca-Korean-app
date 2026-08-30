@@ -36,10 +36,17 @@
 .mp-card-name{font-size:15px;font-weight:800;color:var(--rk-heading)}
 .mp-card-ko{font-size:12px;color:var(--rk-muted-ui);font-weight:600}
 .mp-card-theme{font-size:12px;color:var(--rk-muted);margin-top:2px;margin-bottom:10px}
-.mp-progress-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.mp-progress-row .pl-bar-bg{flex:1}
-.mp-progress-pct{font-size:11px;font-weight:800;color:var(--rk-muted);flex-shrink:0;min-width:32px;text-align:right}
+.mp-bar-bg{flex:1;height:8px;background:rgba(0,0,0,.07);border-radius:5px;overflow:hidden}
+body.dark-mode .mp-bar-bg{background:rgba(255,255,255,.09)}
+.mp-bar{height:100%;border-radius:5px;background:linear-gradient(90deg,#db2777,#7c3aed);transition:width .8s cubic-bezier(.4,0,.2,1)}
 .mp-done-badge{font-size:10px;font-weight:800;color:#16a34a;background:rgba(34,197,94,.14);padding:2px 8px;border-radius:8px}
+
+/* ── SKILL BREAKDOWN (TOPIK Mode fused into the map) ─────── */
+.mp-skills{margin-bottom:10px}
+.mp-skill-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.mp-skill-row:last-child{margin-bottom:0}
+.mp-skill-lbl{font-size:10px;font-weight:700;color:var(--rk-muted);width:64px;flex-shrink:0}
+.mp-skill-pct{font-size:10px;font-weight:800;color:var(--rk-muted-ui);flex-shrink:0;min-width:28px;text-align:right}
 .mp-actions{display:flex;gap:8px;flex-wrap:wrap}
 .mp-action{
   font-size:12px;font-weight:700;text-decoration:none;color:var(--rk-heading);
@@ -97,6 +104,7 @@ var UI = {
     summaryLbl:'cartiere explorate',
     lessons:'📗 Lecții', exercises:'📝 Exerciții', glossary:'📚 Glosar', boss:'👹 Boss',
     done:'✓ Gata', exam:'🎓 Susține testul',
+    vocab:'Vocabular', grammar:'Gramatică', sentences:'Propoziții',
     capstoneName:'Namsan Tower', capstoneKo:'남산타워', capstoneTheme:'Testul final TOPIK — încununarea călătoriei tale'
   },
   en:{
@@ -104,6 +112,7 @@ var UI = {
     summaryLbl:'neighborhoods explored',
     lessons:'📗 Lessons', exercises:'📝 Exercises', glossary:'📚 Glossary', boss:'👹 Boss',
     done:'✓ Done', exam:'🎓 Take the test',
+    vocab:'Vocabulary', grammar:'Grammar', sentences:'Sentences',
     capstoneName:'Namsan Tower', capstoneKo:'남산타워', capstoneTheme:'The final TOPIK test — the peak of your journey'
   }
 };
@@ -130,27 +139,48 @@ function exerciseKey(type, item){
   return type + "||" + JSON.stringify(item.correct);
 }
 
+function coverage(types, zone, exJson, exSrs){
+  var total = 0, done = 0;
+  types.forEach(function(type){
+    (exJson[type] || []).forEach(function(item){
+      if(item.topik !== zone.level) return;
+      total++;
+      if(exSrs[exerciseKey(type, item)]) done++;
+    });
+  });
+  return { total: total, done: done, pct: total ? Math.round(done / total * 100) : 0 };
+}
+
 function computeZoneProgress(zone, lessons, exJson, doneLessons, exSrs){
   var lessonsInZone = lessons.filter(function(ls){ return ls.topik === zone.level; });
   var lessonsDone = lessonsInZone.filter(function(ls){ return doneLessons.indexOf(ls.id) !== -1; }).length;
 
-  var exTotal = 0, exDone = 0;
-  Object.keys(exJson).forEach(function(type){
-    exJson[type].forEach(function(item){
-      if(item.topik !== zone.level) return;
-      exTotal++;
-      if(exSrs[exerciseKey(type, item)]) exDone++;
-    });
-  });
+  var vocab = coverage(['ko-ro','ro-ko'], zone, exJson, exSrs);
+  var grammarEx = coverage(['particle','particlePlus','conjug'], zone, exJson, exSrs);
+  var grammar = {
+    total: grammarEx.total + lessonsInZone.length,
+    done: grammarEx.done + lessonsDone,
+  };
+  grammar.pct = grammar.total ? Math.round(grammar.done / grammar.total * 100) : 0;
+  var sentences = coverage(['puzzle','chain'], zone, exJson, exSrs);
 
-  var total = lessonsInZone.length + exTotal;
-  var done = lessonsDone + exDone;
+  var total = vocab.total + grammar.total + sentences.total;
+  var done = vocab.done + grammar.done + sentences.done;
   var pct = total ? Math.round(done / total * 100) : 0;
-  return pct;
+  return { pct: pct, vocab: vocab, grammar: grammar, sentences: sentences };
 }
 
-function renderZone(zone, pct){
+function skillRow(label, data){
+  return '<div class="mp-skill-row">' +
+    '<span class="mp-skill-lbl">' + label + '</span>' +
+    '<div class="mp-bar-bg"><div class="mp-bar" style="width:' + data.pct + '%"></div></div>' +
+    '<span class="mp-skill-pct">' + data.pct + '%</span>' +
+  '</div>';
+}
+
+function renderZone(zone, progress){
   var l = L();
+  var pct = progress.pct;
   var name = LANG === 'ro' ? zone.ro : zone.en;
   var theme = LANG === 'ro' ? zone.theme_ro : zone.theme_en;
   return '<div class="mp-stop">' +
@@ -161,10 +191,14 @@ function renderZone(zone, pct){
     '<div class="mp-card">' +
       '<div class="mp-card-head">' +
         '<div><span class="mp-card-name">' + name + '</span> <span class="mp-card-ko">' + zone.ko + '</span></div>' +
-        (pct === 100 ? '<span class="mp-done-badge">' + l.done + '</span>' : '') +
+        (pct === 100 ? '<span class="mp-done-badge">' + l.done + '</span>' : '<span class="mp-skill-pct">' + pct + '%</span>') +
       '</div>' +
       '<div class="mp-card-theme">' + theme + '</div>' +
-      '<div class="mp-progress-row"><div class="pl-bar-bg"><div class="pl-bar" style="width:' + pct + '%"></div></div><span class="mp-progress-pct">' + pct + '%</span></div>' +
+      '<div class="mp-skills">' +
+        skillRow(l.vocab, progress.vocab) +
+        skillRow(l.grammar, progress.grammar) +
+        skillRow(l.sentences, progress.sentences) +
+      '</div>' +
       '<div class="mp-actions">' +
         '<a class="mp-action" href="lessons.html?level=' + zone.level + '">' + l.lessons + '</a>' +
         '<a class="mp-action" href="exercises.html?level=' + zone.level + '">' + l.exercises + '</a>' +
@@ -211,10 +245,10 @@ function render(){
     var completedZones = 0;
     var lastPct = 0;
     ZONES.forEach(function(zone){
-      var pct = computeZoneProgress(zone, lessons, exJson, doneLessons, exSrs);
-      if(pct === 100) completedZones++;
-      lastPct = pct;
-      html += renderZone(zone, pct);
+      var progress = computeZoneProgress(zone, lessons, exJson, doneLessons, exSrs);
+      if(progress.pct === 100) completedZones++;
+      lastPct = progress.pct;
+      html += renderZone(zone, progress);
     });
     html += renderCapstone(lastPct);
 
