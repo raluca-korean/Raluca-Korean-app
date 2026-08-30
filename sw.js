@@ -1,8 +1,20 @@
-const CACHE = 'rk-v129';
+const CACHE = 'rk-v130';
 
 const STATIC = [
   './',
   './index.html',
+  './explore.html',
+  './onboarding.html',
+  './learn.html',
+  './play.html',
+  './review.html',
+  './profile.html',
+  './map.html',
+  './shop.html',
+  './boss.html',
+  './quick60.html',
+  './memory.html',
+  './phrases.html',
   './exercises.html',
   './lessons.html',
   './lesson-neural.html',
@@ -44,6 +56,7 @@ const STATIC = [
   './pronunciation.css',
   './listening.css',
   './journal.css',
+  './phrases.css',
   './flag.svg',
   './manifest.json',
   './icons/icon.svg',
@@ -61,6 +74,8 @@ const STATIC = [
   './js/listening.js',
   './js/journal.js',
   './js/stats.js',
+  './js/phrases.js',
+  './js/core/utils.js',
   './js/core/audio.js',
   './js/core/backup.js',
   './js/core/conjugation.js',
@@ -91,7 +106,8 @@ const STATIC = [
   './data/listening.json',
   './data/numbers.json',
   './data/journal-prompts.json',
-  './data/honorifics.json'
+  './data/honorifics.json',
+  './data/phrases.json'
 ];
 
 /* ── Install: cache each file individually so one slow/missing file

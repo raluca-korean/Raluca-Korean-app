@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Bun venit</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#8b7cd8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f6fb; --card:#ffffff; --text:#1f2430; --text-mid:#6b6f80; --text-low:#9a9dae;
+  --border:#ececf3; --shadow:rgba(31,36,48,.06);
+  --lavender:#8b7cd8; --lavender-soft:#efe9ff; --pink:#e08bb0;
+}
+body.dark-mode{
+  --bg:#12131c; --card:#1a1c29; --text:#eeeef4; --text-mid:#9a9db0; --text-low:#6b6f80;
+  --border:rgba(255,255,255,.08); --shadow:rgba(0,0,0,.3);
+  --lavender:#a99bf0; --lavender-soft:rgba(169,155,240,.14); --pink:#e6a4c2;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+}
+.wrap{max-width:460px;margin:0 auto;padding:20px 20px 32px;flex:1;display:flex;flex-direction:column;width:100%}
+
+.top{display:flex;align-items:center;justify-content:space-between}
+.dots{display:flex;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.dot.on{background:var(--lavender);width:20px;border-radius:4px;transition:all .25s ease}
+.skip{font-size:12px;color:var(--text-low);text-decoration:none;font-weight:700;background:none;border:none;cursor:pointer;font-family:inherit}
+
+.screen{display:none;flex:1;flex-direction:column;justify-content:center;text-align:center;animation:fadeIn .35s ease both}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.s-icon{font-size:52px}
+.s-title{font-size:24px;font-weight:900;margin-top:14px;line-height:1.3}
+.s-sub{font-size:14px;color:var(--text-mid);margin-top:10px;line-height:1.5}
+
+.options{display:flex;flex-direction:column;gap:10px;margin-top:28px;text-align:left}
+.opt{
+  display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;cursor:pointer;
+  background:var(--card);border:2px solid var(--border);font-weight:700;font-size:14px;color:var(--text);
+  transition:all .15s;
+}
+.opt.on{border-color:var(--lavender);background:var(--lavender-soft);color:var(--lavender)}
+.opt-check{width:18px;height:18px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px}
+.opt.on .opt-check{background:var(--lavender);border-color:var(--lavender);color:#fff}
+.opt-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0}
+.opt.on .opt-radio{border-color:var(--lavender);background:radial-gradient(circle,var(--lavender) 0 40%,transparent 44%)}
+
+.btn{
+  margin-top:28px;border:none;border-radius:14px;padding:15px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;
+  background:linear-gradient(90deg,var(--lavender),var(--pink));color:#fff;box-shadow:0 8px 22px rgba(139,124,216,.3);
+}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div class="dots">
+      <div class="dot" data-dot="0"></div>
+      <div class="dot" data-dot="1"></div>
+      <div class="dot" data-dot="2"></div>
+      <div class="dot" data-dot="3"></div>
+    </div>
+    <button class="skip" id="skipBtn" type="button"></button>
+  </div>
+
+  <div class="screen active" id="screen0">
+    <div class="s-icon">🇰🇷</div>
+    <div class="s-title" id="s0Title">Learn Korean differently.</div>
+    <div class="s-sub" id="s0Sub">A calm, clear path through TOPIK Korean — no clutter, no pressure.</div>
+    <button class="btn" id="btn0" type="button"></button>
+  </div>
+
+  <div class="screen" id="screen1">
+    <div class="s-title" id="s1Title">What do you want to improve?</div>
+    <div class="s-sub" id="s1Sub">Pick as many as you like.</div>
+    <div class="options" id="focusOptions"></div>
+    <button class="btn" id="btn1" type="button"></button>
+  </div>
+
+  <div class="screen" id="screen2">
+    <div class="s-title" id="s2Title">How much time do you have?</div>
+    <div class="s-sub" id="s2Sub">We'll shape your daily mission around it.</div>
+    <div class="options" id="timeOptions"></div>
+    <button class="btn" id="btn2" type="button"></button>
+  </div>
+
+  <div class="screen" id="screen3">
+    <div class="s-icon">✨</div>
+    <div class="s-title" id="s3Title">Your Korean journey starts here.</div>
+    <div class="s-sub" id="s3Sub">You can change any of this later.</div>
+    <button class="btn" id="btn3" type="button"></button>
+  </div>
+</div>
+
+<script src="./js/core/storage.js"></script>
+<script>
+'use strict';
+
+var LANG = localStorage.getItem('RK_LANG') || 'ro';
+var UI = {
+  ro:{
+    skip:'Sari peste',
+    s0Title:'Învață coreeană altfel.', s0Sub:'Un traseu clar și calm prin coreeana pentru TOPIK — fără aglomerație, fără presiune.', btn0:'Continuă →',
+    s1Title:'Ce vrei să îmbunătățești?', s1Sub:'Alege oricâte vrei.', btn1:'Continuă →',
+    focus:[
+      {id:'speaking', label:'🗣️ Vorbire'}, {id:'vocabulary', label:'📖 Vocabular'}, {id:'grammar', label:'🧠 Gramatică'},
+      {id:'listening', label:'🎧 Ascultare'}, {id:'reading', label:'📗 Citire'}, {id:'writing', label:'✍️ Scriere'}
+    ],
+    s2Title:'Cât timp ai la dispoziție?', s2Sub:'Îți conturăm misiunea zilnică în funcție de asta.', btn2:'Continuă →',
+    time:[{id:5,label:'5 minute'},{id:10,label:'10 minute'},{id:20,label:'20 minute'},{id:30,label:'30+ minute'}],
+    s3Title:'Călătoria ta coreeană începe aici.', s3Sub:'Poți schimba oricând aceste alegeri.', btn3:'START →'
+  },
+  en:{
+    skip:'Skip',
+    s0Title:'Learn Korean differently.', s0Sub:'A calm, clear path through TOPIK Korean — no clutter, no pressure.', btn0:'Continue →',
+    s1Title:'What do you want to improve?', s1Sub:'Pick as many as you like.', btn1:'Continue →',
+    focus:[
+      {id:'speaking', label:'🗣️ Speaking'}, {id:'vocabulary', label:'📖 Vocabulary'}, {id:'grammar', label:'🧠 Grammar'},
+      {id:'listening', label:'🎧 Listening'}, {id:'reading', label:'📗 Reading'}, {id:'writing', label:'✍️ Writing'}
+    ],
+    s2Title:'How much time do you have?', s2Sub:"We'll shape your daily mission around it.", btn2:'Continue →',
+    time:[{id:5,label:'5 min'},{id:10,label:'10 min'},{id:20,label:'20 min'},{id:30,label:'30+ min'}],
+    s3Title:'Your Korean journey starts here.', s3Sub:'You can change any of this later.', btn3:'START →'
+  }
+};
+function L(){ return UI[LANG]; }
+
+var step = 0;
+var focusSelected = [];
+var timeSelected = null;
+
+function renderText(){
+  var l = L();
+  document.getElementById('skipBtn').textContent = l.skip;
+  document.getElementById('s0Title').textContent = l.s0Title;
+  document.getElementById('s0Sub').textContent = l.s0Sub;
+  document.getElementById('btn0').textContent = l.btn0;
+  document.getElementById('s1Title').textContent = l.s1Title;
+  document.getElementById('s1Sub').textContent = l.s1Sub;
+  document.getElementById('btn1').textContent = l.btn1;
+  document.getElementById('s2Title').textContent = l.s2Title;
+  document.getElementById('s2Sub').textContent = l.s2Sub;
+  document.getElementById('btn2').textContent = l.btn2;
+  document.getElementById('s3Title').textContent = l.s3Title;
+  document.getElementById('s3Sub').textContent = l.s3Sub;
+  document.getElementById('btn3').textContent = l.btn3;
+
+  document.getElementById('focusOptions').innerHTML = l.focus.map(function(f){
+    var on = focusSelected.indexOf(f.id) !== -1;
+    return '<div class="opt' + (on ? ' on' : '') + '" data-focus="' + f.id + '">' +
+      '<span class="opt-check">' + (on ? '✓' : '') + '</span><span>' + f.label + '</span>' +
+    '</div>';
+  }).join('');
+  document.querySelectorAll('[data-focus]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var id = el.dataset.focus;
+      var i = focusSelected.indexOf(id);
+      if(i === -1) focusSelected.push(id); else focusSelected.splice(i, 1);
+      renderText();
+    });
+  });
+
+  document.getElementById('timeOptions').innerHTML = l.time.map(function(tOpt){
+    var on = timeSelected === tOpt.id;
+    return '<div class="opt' + (on ? ' on' : '') + '" data-time="' + tOpt.id + '">' +
+      '<span class="opt-radio"></span><span>' + tOpt.label + '</span>' +
+    '</div>';
+  }).join('');
+  document.querySelectorAll('[data-time]').forEach(function(el){
+    el.addEventListener('click', function(){
+      timeSelected = parseInt(el.dataset.time, 10);
+      renderText();
+    });
+  });
+}
+
+function goTo(n){
+  step = n;
+  document.querySelectorAll('.screen').forEach(function(s, i){ s.classList.toggle('active', i === n); });
+  document.querySelectorAll('.dot').forEach(function(d, i){ d.classList.toggle('on', i === n); });
+}
+
+function finish(){
+  localStorage.setItem('RK_ONBOARD_FOCUS', JSON.stringify(focusSelected));
+  if(timeSelected) localStorage.setItem('RK_ONBOARD_TIME', String(timeSelected));
+  localStorage.setItem('RK_ONBOARDED', '1');
+  location.href = 'index.html';
+}
+
+document.getElementById('btn0').addEventListener('click', function(){ goTo(1); });
+document.getElementById('btn1').addEventListener('click', function(){ goTo(2); });
+document.getElementById('btn2').addEventListener('click', function(){ goTo(3); });
+document.getElementById('btn3').addEventListener('click', finish);
+document.getElementById('skipBtn').addEventListener('click', finish);
+
+(function initTheme(){
+  var theme = localStorage.getItem('RK_THEME');
+  var isDark = theme === 'dark' || theme === null;
+  document.body.classList.toggle('dark-mode', isDark);
+})();
+
+renderText();
+</script>
+</body>
+</html>

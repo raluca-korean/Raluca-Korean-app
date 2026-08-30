@@ -3,6 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* First-ever visit (no onboarding flag, no existing progress) -> onboarding.
+   Anyone with real history is treated as already onboarded, so returning
+   users are never sent through this. Runs before anything paints. */
+(function(){
+  if(localStorage.getItem('RK_ONBOARDED')) return;
+  var hasHistory = localStorage.getItem('RK_XP') || localStorage.getItem('RK_STREAK') || localStorage.getItem('RK_LESSON_DONE');
+  if(hasHistory){ localStorage.setItem('RK_ONBOARDED','1'); }
+  else { location.replace('onboarding.html'); }
+})();
+</script>
 <title>Raluca Korean</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#8b7cd8">
@@ -164,6 +175,12 @@ a{color:inherit}
     <div class="dash-cta" id="continueCta">CONTINUE →</div>
   </a>
 
+  <a class="dash-card" id="focusCard" href="#" style="display:none">
+    <div class="dash-card-eyebrow" id="focusEyebrow">FOCUS TODAY</div>
+    <div class="dash-continue-title" id="focusTitle"></div>
+    <div class="dash-cta" id="focusCta"></div>
+  </a>
+
   <div class="dash-card">
     <div class="dash-card-eyebrow">🇰🇷 <span id="missionTitle">TODAY'S MISSION</span></div>
     <div class="dash-mission-list" id="missionList"></div>
@@ -225,6 +242,16 @@ var UI = {
     hanjaItem:function(n){ return n + ' caractere hanja de recapitulat'; },
     exItem:function(n){ return n + ' exerciții de recapitulat'; },
     allCaughtUp:'Totul e la zi azi',
+    focusEyebrow:'FOCUS AZI', focusCta:'Începe →',
+    focusReview:'Ai multe de recapitulat — hai să le prindem din urmă.',
+    focusMap:{
+      speaking:{icon:'🗣️', href:'reading.html', title:'Practică vorbirea'},
+      vocabulary:{icon:'📖', href:'flashcards.html', title:'Recapitulează vocabularul'},
+      grammar:{icon:'🧠', href:'lessons.html', title:'Exersează gramatica'},
+      listening:{icon:'🎧', href:'listening.html', title:'Exersează ascultarea'},
+      reading:{icon:'📗', href:'reading.html', title:'Citește un text'},
+      writing:{icon:'✍️', href:'builder.html', title:'Construiește o propoziție'}
+    },
     quickTitle:'PRACTICĂ RAPIDĂ',
     quick:[
       {icon:'🧠', lbl:'REVIEW', href:'review.html'},
@@ -248,6 +275,16 @@ var UI = {
     hanjaItem:function(n){ return n + ' hanja characters to review'; },
     exItem:function(n){ return n + ' exercises to review'; },
     allCaughtUp:"You're all caught up today",
+    focusEyebrow:'FOCUS TODAY', focusCta:'Start →',
+    focusReview:"You've got a lot to review — let's catch up.",
+    focusMap:{
+      speaking:{icon:'🗣️', href:'reading.html', title:'Practice speaking'},
+      vocabulary:{icon:'📖', href:'flashcards.html', title:'Review vocabulary'},
+      grammar:{icon:'🧠', href:'lessons.html', title:'Practice grammar'},
+      listening:{icon:'🎧', href:'listening.html', title:'Practice listening'},
+      reading:{icon:'📗', href:'reading.html', title:'Read a text'},
+      writing:{icon:'✍️', href:'builder.html', title:'Build a sentence'}
+    },
     quickTitle:'QUICK PRACTICE',
     quick:[
       {icon:'🧠', lbl:'REVIEW', href:'review.html'},
@@ -282,6 +319,7 @@ function applyLang(){
   document.getElementById('navProgress').textContent = l.navProgress;
   renderQuick();
   renderContinue();
+  renderFocus();
   renderMission();
   renderWordOfDay();
   renderProgress();
@@ -416,6 +454,51 @@ function renderMission(){
   var pct = Math.min(100, Math.round((quest.done || 0) / goal * 100));
   document.getElementById('missionBar').style.width = pct + '%';
   document.getElementById('missionCta').textContent = quest.completedToday ? l.missionDoneCta : l.missionCta;
+}
+
+/* ── PERSONALIZED "FOCUS TODAY" (section 23) ──────────────────
+   Priority: real urgent review load > the user's own onboarding pick.
+   Shows nothing if neither signal exists -- no fabricated personalization. */
+function countHardExercises(){
+  if(!window.RKStorage) return 0;
+  var srs = RKStorage.get('RK_EX_SRS', {});
+  var n = 0;
+  Object.keys(srs).forEach(function(key){
+    var c = srs[key];
+    if(c && c.n >= 1 && c.EF < 2.2) n++;
+  });
+  return n;
+}
+function renderFocus(){
+  var l = L();
+  var card = document.getElementById('focusCard');
+  var reviewTotal = dueCount('RK_FC_SRS') + dueCount('RK_HJ_SRS') + countHardExercises();
+
+  if(reviewTotal >= 8){
+    card.style.display = '';
+    document.getElementById('focusEyebrow').textContent = '🧠 ' + l.focusEyebrow;
+    document.getElementById('focusTitle').textContent = l.focusReview;
+    document.getElementById('focusCta').textContent = l.focusCta;
+    card.href = 'review.html';
+    return;
+  }
+
+  var picks = [];
+  try { picks = JSON.parse(localStorage.getItem('RK_ONBOARD_FOCUS') || '[]'); } catch(e){}
+  if(picks.length){
+    var epochDay = Math.floor(Date.now() / 86400000);
+    var choice = l.focusMap[picks[epochDay % picks.length]];
+    if(choice){
+      card.style.display = '';
+      document.getElementById('focusEyebrow').textContent = choice.icon + ' ' + l.focusEyebrow;
+      document.getElementById('focusTitle').textContent = choice.title;
+      document.getElementById('focusCta').textContent = l.focusCta;
+      card.href = choice.href;
+      return;
+    }
+  }
+
+  card.style.display = 'none';
 }
 
 /* ── WORD OF THE DAY (real phrases.json data — ko/romanization/ro/en, nothing invented) ── */
