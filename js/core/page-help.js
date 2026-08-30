@@ -153,26 +153,6 @@
         ]
       }
     },
-    keyboard: {
-      ro: {
-        title: '자판 연습 — Tastatură coreeană',
-        lead: 'Exersează scrierea pe tastatura coreeană (layout 2-beolsik).',
-        steps: [
-          'Urmărește litera/silaba indicată pe ecran.',
-          'Tastează-o folosind tastatura fizică sau cea virtuală afișată.',
-          'Repetă pentru a-ți crește viteza și precizia.'
-        ]
-      },
-      en: {
-        title: '자판 연습 — Korean keyboard',
-        lead: 'Practice typing on the Korean keyboard (2-beolsik layout).',
-        steps: [
-          'Watch the letter/syllable shown on screen.',
-          'Type it using your physical keyboard or the on-screen virtual one.',
-          'Repeat to build up speed and accuracy.'
-        ]
-      }
-    },
     reading: {
       ro: {
         title: 'Lectură & Speaking',
