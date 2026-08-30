@@ -37,7 +37,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 ### Date (`data/`)
 
-`exercises.json` (7 tipuri × 30 ex.), `lessons.json`, `vocab-korean.json`, `phrases.json`, `stories.json`, `hanja.json`, `reading-texts.json`, `listening.json`, `numbers.json`, `honorifics.json`, `journal-prompts.json`, `composition-prompts.json`, `context-words.json`, `word-clusters.json`, `builder-vocab.json`, `extra-generated-sentences.json`, `culture-notes.json` (note culturale K-Drama/K-Pop — termeni + explicații scrise de noi, niciodată versuri/replici reale, ca să nu existe risc de copyright).
+`exercises.json` (7 tipuri × 30 ex.), `lessons.json`, `vocab-korean.json`, `phrases.json`, `stories.json`, `hanja.json`, `reading-texts.json`, `listening.json`, `numbers.json`, `honorifics.json`, `journal-prompts.json`, `composition-prompts.json`, `context-words.json`, `word-clusters.json`, `builder-vocab.json`, `extra-generated-sentences.json`.
 
 ### Fără build tools — reguli de bază
 

@@ -173,14 +173,6 @@ a{color:inherit}
 }
 .dash-wod-btn.saved{background:var(--pink-soft);color:var(--pink)}
 
-/* ── CULTURE NOTE (original phrases + explanations — no lyrics/dialogue) ── */
-.dash-culture-row{display:flex;align-items:center;gap:12px;margin-top:10px}
-.dash-culture-mascot{font-size:30px;line-height:1;flex-shrink:0}
-.dash-culture-ko{font-family:'Noto Sans KR',sans-serif;font-size:20px;font-weight:900}
-.dash-culture-rom{font-size:12px;color:var(--text-low);margin-top:2px;font-style:italic}
-.dash-culture-meaning{font-size:14px;font-weight:700;color:var(--text);margin-top:10px}
-.dash-culture-note{font-size:13px;color:var(--text-mid);margin-top:6px;line-height:1.5}
-
 /* ── PROGRESS PREVIEW ─────────────────────────────────── */
 .dash-skill{margin-top:12px}
 .dash-skill:first-of-type{margin-top:14px}
@@ -285,19 +277,6 @@ a{color:inherit}
   </div>
 
   <div class="dash-card">
-    <div class="dash-card-eyebrow" id="cultureTitle">CULTURĂ K</div>
-    <div class="dash-culture-row">
-      <span class="dash-culture-mascot" aria-hidden="true">🎬</span>
-      <div>
-        <div class="dash-culture-ko kr" id="cultureKo"></div>
-        <div class="dash-culture-rom" id="cultureRom"></div>
-      </div>
-    </div>
-    <div class="dash-culture-meaning" id="cultureMeaning"></div>
-    <div class="dash-culture-note" id="cultureNote"></div>
-  </div>
-
-  <div class="dash-card">
     <div class="dash-card-eyebrow" id="progressTitle">YOUR KOREAN</div>
     <div id="progressBars"></div>
     <a class="dash-cta-link" href="profile.html" id="progressLink">Full progress →</a>
@@ -365,7 +344,7 @@ var UI = {
     vocab:'Vocabular', grammar:'Gramatică', sentences:'Propoziții', listening:'Ascultare',
     exploreLink:'🧭 Vezi toate funcțiile',
     flipHint:'Atinge pentru traducere', flipNext:'Cardul următor →',
-    cultureTitle:'CULTURĂ K', romLbl:'Rom'
+    romLbl:'Rom'
   },
   en:{
     greetSub: AUDIENCE === 'student' ? 'Ready for today\'s challenge? 🎒' : 'Ready for today\'s Korean?',
@@ -408,7 +387,7 @@ var UI = {
     vocab:'Vocabulary', grammar:'Grammar', sentences:'Sentences', listening:'Listening',
     exploreLink:'🧭 See every feature',
     flipHint:'Tap to reveal', flipNext:'Next card →',
-    cultureTitle:'K-CULTURE', romLbl:'Rom'
+    romLbl:'Rom'
   }
 };
 function L(){ return UI[LANG]; }
@@ -431,7 +410,6 @@ function applyLang(){
   renderMission();
   renderWordOfDay();
   renderFlipCard();
-  renderCultureNote();
   applyRomVisibility();
   renderProgress();
 }
@@ -803,36 +781,15 @@ function toggleFlipCard(){
   document.getElementById('flipInner').classList.toggle('flipped');
 }
 
-/* ── ROMANIZATION TOGGLE (shared by Word of Day / Flip Card / Culture Note) ── */
+/* ── ROMANIZATION TOGGLE (shared by Word of Day / Flip Card) ── */
 function getShowRom(){ return localStorage.getItem('RK_SHOW_ROM') !== '0'; }
 function applyRomVisibility(){
+  document.getElementById('romToggleLbl').textContent = L().romLbl;
   var show = getShowRom();
-  ['wodRom','flipRom','cultureRom'].forEach(function(id){
+  ['wodRom','flipRom'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.style.display = show ? '' : 'none';
   });
-}
-
-/* ── K-CULTURE NOTE (original phrases + explanations we wrote ourselves —
-   never lyrics or dialogue from a specific show/song, to stay copyright-safe) ── */
-var _culturePool = null;
-function renderCultureNote(){
-  document.getElementById('cultureTitle').textContent = L().cultureTitle;
-  document.getElementById('romToggleLbl').textContent = L().romLbl;
-  if(!_culturePool){
-    fetch('./data/culture-notes.json').then(function(r){ return r.json(); }).then(function(data){
-      _culturePool = data.notes || [];
-      renderCultureNote();
-    });
-    return;
-  }
-  if(!_culturePool.length) return;
-  var epochDay = Math.floor(Date.now() / 86400000);
-  var note = _culturePool[(epochDay + 5) % _culturePool.length];
-  document.getElementById('cultureKo').textContent = note.ko;
-  document.getElementById('cultureRom').textContent = note.rom || '';
-  document.getElementById('cultureMeaning').textContent = note[LANG] || note.ro;
-  document.getElementById('cultureNote').textContent = note['note_' + LANG] || note.note_ro;
 }
 
 /* ── PROGRESS PREVIEW (same real RK_STATS.byType data as profile.html) ── */
