@@ -993,7 +993,7 @@ function init() {
   function syncThemeBtn(isDark) {
     const btn = el('mrsThemeBtn');
     btn.innerHTML = isDark ? SVG_MOON : SVG_SUN;
-    btn.style.background = isDark ? 'rgba(28,4,50,.95)' : 'rgba(255,255,255,.92)';
+    btn.style.background = isDark ? 'rgba(33,29,23,.95)' : 'rgba(255,255,255,.92)';
     btn.style.color      = isDark ? '#f5f5f7' : '#374151';
   }
   syncThemeBtn(document.body.classList.contains('dark-mode'));

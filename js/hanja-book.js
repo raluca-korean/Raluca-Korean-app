@@ -504,7 +504,7 @@ function _openStroke() {
       height:               200,
       padding:              16,
       showOutline:          true,
-      strokeColor:          isLight ? '#1e1b2e' : '#e8e0ff',
+      strokeColor:          isLight ? '#2a2118' : '#f0e6d0',
       outlineColor:         isLight ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.1)',
       drawingColor:         '#9B6DFF',
       highlightColor:       '#FFB347',

@@ -1215,7 +1215,7 @@ function launchFireworks(){
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  const colors = ["#db2777","#7c3aed","#0ea5e9","#f59e0b","#10b981","#f43f5e","#a855f7","#06b6d4"];
+  const colors = ["#c9922e","#1c4a3a","#0ea5e9","#f59e0b","#10b981","#f43f5e","#3d8a6a","#06b6d4"];
   const particles = [];
 
   for(let b = 0; b < 6; b++){
