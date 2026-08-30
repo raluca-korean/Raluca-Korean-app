@@ -30,13 +30,6 @@
 .pl-surprise-title{font-size:15px;font-weight:900}
 .pl-surprise-sub{font-size:12px;opacity:.85;margin-top:2px}
 .app{padding-bottom:80px}
-.pl-nav{
-  position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:space-around;
-  background:var(--rk-card);border-top:1px solid var(--rk-stroke);padding:8px 4px calc(8px + env(safe-area-inset-bottom));
-}
-.pl-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:var(--rk-muted-ui);font-size:10px;font-weight:700;padding:4px 10px;border-radius:10px}
-.pl-nav-item.active{color:#7c3aed}
-.pl-nav-icon{font-size:18px}
 </style>
 </head>
 <body class="theme-anime">
@@ -65,18 +58,13 @@
 
 </div><!-- /app -->
 
-<nav class="pl-nav">
-  <a href="index.html" class="pl-nav-item"><span class="pl-nav-icon">🏠</span><span id="navHome">Home</span></a>
-  <a href="learn.html" class="pl-nav-item"><span class="pl-nav-icon">📚</span><span id="navLearn">Learn</span></a>
-  <a href="play.html" class="pl-nav-item active"><span class="pl-nav-icon">🎯</span><span id="navPractice">Practice</span></a>
-  <a href="reading.html" class="pl-nav-item"><span class="pl-nav-icon">🗣️</span><span id="navSpeak">Speak</span></a>
-  <a href="profile.html" class="pl-nav-item"><span class="pl-nav-icon">👤</span><span id="navProgress">Progress</span></a>
-</nav>
+<div id="rkBottomNav"></div>
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/srs.js"></script>
 <script src="./js/core/gamification.js"></script>
 <script src="./js/core/lang-picker.js"></script>
+<script src="./js/core/bottom-nav.js"></script>
 <script>
 'use strict';
 
@@ -127,11 +115,6 @@ var UI = {
   }
 };
 function L(){ return UI[LANG]; }
-
-var NAV_LABELS = {
-  ro:{home:'Acasă', learn:'Învață', practice:'Practică', speak:'Vorbește', progress:'Progres'},
-  en:{home:'Home', learn:'Learn', practice:'Practice', speak:'Speak', progress:'Progress'}
-};
 
 /* ── ADULT "SURPRISE ME" ─────────────────────────────────────────
    Picks a real next activity from actual progress signals — never a
@@ -191,12 +174,7 @@ function render(){
   var l = L();
   document.getElementById('pageTitle').textContent = l.title;
   document.getElementById('pageSubtitle').textContent = l.sub;
-  var nl = NAV_LABELS[LANG];
-  document.getElementById('navHome').textContent = nl.home;
-  document.getElementById('navLearn').textContent = nl.learn;
-  document.getElementById('navPractice').textContent = nl.practice;
-  document.getElementById('navSpeak').textContent = nl.speak;
-  document.getElementById('navProgress').textContent = nl.progress;
+  RKNav.setLang(LANG);
   document.getElementById('playGrid').innerHTML = l.games.map(function(g){
     return '<a class="pl-card" href="' + g.href + '">' +
       '<div class="pl-card-icon">' + g.icon + '</div>' +
@@ -216,6 +194,7 @@ function render(){
 }
 document.getElementById('surpriseBtn').addEventListener('click', surpriseMe);
 
+RKNav.init('practice');
 RKLang.init(function(lang){ LANG = lang; render(); });
 render();
 </script>

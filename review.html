@@ -22,13 +22,6 @@ body.dark-mode{
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:96px}
 .wrap{max-width:560px;margin:0 auto;padding:0 16px}
-.nav{
-  position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:space-around;
-  background:var(--card);border-top:1px solid var(--border);padding:8px 4px calc(8px + env(safe-area-inset-bottom));
-}
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:var(--text-low);font-size:10px;font-weight:700;padding:4px 10px;border-radius:10px}
-.nav-item.active{color:var(--lavender)}
-.nav-icon{font-size:18px}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
 .brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;text-decoration:none;color:var(--text)}
 .icon-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--text-mid)}
@@ -80,20 +73,16 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
   <div id="body"></div>
 </div>
 
-<nav class="nav">
-  <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span><span id="navHome">Home</span></a>
-  <a href="learn.html" class="nav-item"><span class="nav-icon">📚</span><span id="navLearn">Learn</span></a>
-  <a href="play.html" class="nav-item active"><span class="nav-icon">🎯</span><span id="navPractice">Practice</span></a>
-  <a href="reading.html" class="nav-item"><span class="nav-icon">🗣️</span><span id="navSpeak">Speak</span></a>
-  <a href="profile.html" class="nav-item"><span class="nav-icon">👤</span><span id="navProgress">Progress</span></a>
-</nav>
+<div id="rkBottomNav"></div>
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/srs.js"></script>
+<script src="./js/core/bottom-nav.js"></script>
 <script>
 'use strict';
 
 var LANG = localStorage.getItem('RK_LANG') || 'ro';
+RKNav.init('practice');
 var UI = {
   ro:{
     totalLbl:'itemi de recapitulat',
@@ -101,8 +90,7 @@ var UI = {
     hanjaTitle:'Hanja uitată', hanjaSub:function(n){ return n + ' caractere scadente'; },
     hardTitle:'Exerciții dificile', hardSub:function(n){ return n + ' exerciții pe care le greșești des'; },
     reviewNow:'REVIEW NOW →', seeAll:'Vezi toate greșelile →',
-    allDoneTitle:'Ești la zi! ✨', allDoneSub:'Nu ai nimic de recapitulat acum — revino mai târziu.',
-    navHome:'Acasă', navLearn:'Învață', navPractice:'Practică', navSpeak:'Vorbește', navProgress:'Progres'
+    allDoneTitle:'Ești la zi! ✨', allDoneSub:'Nu ai nimic de recapitulat acum — revino mai târziu.'
   },
   en:{
     totalLbl:'items to review',
@@ -110,8 +98,7 @@ var UI = {
     hanjaTitle:'Forgotten Hanja', hanjaSub:function(n){ return n + ' characters due'; },
     hardTitle:'Difficult exercises', hardSub:function(n){ return n + ' exercises you often get wrong'; },
     reviewNow:'REVIEW NOW →', seeAll:'See all mistakes →',
-    allDoneTitle:"You're all caught up! ✨", allDoneSub:'Nothing to review right now — check back later.',
-    navHome:'Home', navLearn:'Learn', navPractice:'Practice', navSpeak:'Speak', navProgress:'Progress'
+    allDoneTitle:"You're all caught up! ✨", allDoneSub:'Nothing to review right now — check back later.'
   }
 };
 function L(){ return UI[LANG]; }
@@ -157,11 +144,7 @@ function render(){
 
   document.getElementById('totalNum').textContent = total;
   document.getElementById('totalLbl').textContent = l.totalLbl;
-  document.getElementById('navHome').textContent = l.navHome;
-  document.getElementById('navLearn').textContent = l.navLearn;
-  document.getElementById('navPractice').textContent = l.navPractice;
-  document.getElementById('navSpeak').textContent = l.navSpeak;
-  document.getElementById('navProgress').textContent = l.navProgress;
+  RKNav.setLang(LANG);
 
   var html = '';
   if(total === 0){

@@ -47,13 +47,6 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .item-count{font-size:11px;color:var(--text-low);margin-top:6px;font-weight:700}
 .item-arrow{font-size:16px;color:var(--text-low);flex-shrink:0}
 
-.nav{
-  position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:space-around;
-  background:var(--card);border-top:1px solid var(--border);padding:8px 4px calc(8px + env(safe-area-inset-bottom));
-}
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:var(--text-low);font-size:10px;font-weight:700;padding:4px 10px;border-radius:10px}
-.nav-item.active{color:var(--lavender)}
-.nav-icon{font-size:18px}
 </style>
 </head>
 <body class="theme-anime">
@@ -76,25 +69,20 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
   <div class="grid" id="grid"></div>
 </div>
 
-<nav class="nav">
-  <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span><span id="navHome">Home</span></a>
-  <a href="learn.html" class="nav-item active"><span class="nav-icon">📚</span><span id="navLearn">Learn</span></a>
-  <a href="play.html" class="nav-item"><span class="nav-icon">🎯</span><span id="navPractice">Practice</span></a>
-  <a href="reading.html" class="nav-item"><span class="nav-icon">🗣️</span><span id="navSpeak">Speak</span></a>
-  <a href="profile.html" class="nav-item"><span class="nav-icon">👤</span><span id="navProgress">Progress</span></a>
-</nav>
+<div id="rkBottomNav"></div>
 
 <script src="./js/core/storage.js"></script>
+<script src="./js/core/bottom-nav.js"></script>
 <script>
 'use strict';
 
 var LANG = localStorage.getItem('RK_LANG') || 'ro';
+RKNav.init('learn');
 var AUDIENCE = localStorage.getItem('RK_AUDIENCE') || 'adult';
 var UI = {
   ro:{
     title:'Învață coreeană',
     sub: AUDIENCE === 'student' ? 'Alege ce vrei să exersezi azi 🎒' : 'Tot ce poți studia, într-un singur loc',
-    navHome:'Acasă', navLearn:'Învață', navPractice:'Practică', navSpeak:'Vorbește', navProgress:'Progres',
     items:[
       {icon:'🧠', key:'grammar', title:'Gramatică', desc:'Structuri gramaticale pe niveluri TOPIK', href:'lessons.html'},
       {icon:'📖', key:null, title:'Vocabular', desc:'Glosar cu căutare și favorite', href:'glossary.html'},
@@ -112,7 +100,6 @@ var UI = {
   en:{
     title:'Learn Korean',
     sub: AUDIENCE === 'student' ? 'Pick what to practice today 🎒' : 'Everything you can study, in one place',
-    navHome:'Home', navLearn:'Learn', navPractice:'Practice', navSpeak:'Speak', navProgress:'Progress',
     items:[
       {icon:'🧠', key:'grammar', title:'Grammar', desc:'Grammar structures across TOPIK levels', href:'lessons.html'},
       {icon:'📖', key:null, title:'Vocabulary', desc:'Searchable glossary with favorites', href:'glossary.html'},
@@ -140,11 +127,7 @@ function render(){
   var l = L();
   document.getElementById('pgTitle').textContent = l.title;
   document.getElementById('pgSub').textContent = l.sub;
-  document.getElementById('navHome').textContent = l.navHome;
-  document.getElementById('navLearn').textContent = l.navLearn;
-  document.getElementById('navPractice').textContent = l.navPractice;
-  document.getElementById('navSpeak').textContent = l.navSpeak;
-  document.getElementById('navProgress').textContent = l.navProgress;
+  RKNav.setLang(LANG);
 
   var doneLessons = JSON.parse(localStorage.getItem('RK_LESSON_DONE') || '[]');
   var vocabTouched = dueOrTouchedCount('RK_FC_SRS');

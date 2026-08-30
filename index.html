@@ -134,18 +134,6 @@ body.audience-student .dash-stat{
 }
 
 /* ── BOTTOM NAV ───────────────────────────────────────── */
-.dash-nav{
-  position:fixed;left:0;right:0;bottom:0;z-index:50;
-  display:flex;justify-content:space-around;
-  background:var(--card);border-top:1px solid var(--border);
-  padding:8px 4px calc(8px + env(safe-area-inset-bottom));
-}
-.dash-nav-item{
-  display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:var(--text-low);
-  font-size:10px;font-weight:700;padding:4px 10px;border-radius:10px;
-}
-.dash-nav-item.active{color:var(--lavender)}
-.dash-nav-icon{font-size:18px}
 
 @media(max-width:380px){
   .dash-quick-lbl{font-size:10px}
@@ -223,25 +211,21 @@ body.audience-student .dash-stat{
 
 </div><!-- /dash -->
 
-<nav class="dash-nav">
-  <a href="index.html" class="dash-nav-item active"><span class="dash-nav-icon">🏠</span><span id="navHome">Home</span></a>
-  <a href="learn.html" class="dash-nav-item"><span class="dash-nav-icon">📚</span><span id="navLearn">Learn</span></a>
-  <a href="play.html" class="dash-nav-item"><span class="dash-nav-icon">🎯</span><span id="navPractice">Practice</span></a>
-  <a href="reading.html" class="dash-nav-item"><span class="dash-nav-icon">🗣️</span><span id="navSpeak">Speak</span></a>
-  <a href="profile.html" class="dash-nav-item"><span class="dash-nav-icon">👤</span><span id="navProgress">Progress</span></a>
-</nav>
+<div id="rkBottomNav"></div>
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/srs.js"></script>
 <script src="./js/core/gamification.js"></script>
 <script src="./js/core/streak.js"></script>
 <script src="./js/core/audio.js"></script>
+<script src="./js/core/bottom-nav.js"></script>
 <script>
 'use strict';
 
 var LANG = localStorage.getItem('RK_LANG') || 'ro';
 var AUDIENCE = localStorage.getItem('RK_AUDIENCE') || 'adult';
 if(AUDIENCE === 'student') document.body.classList.add('audience-student');
+RKNav.init('home');
 
 var UI = {
   ro:{
@@ -281,8 +265,7 @@ var UI = {
     play:'🔊 Ascultă', save:'☆ Salvează', saved:'★ Salvat',
     progressTitle:'CUNOȘTINȚELE TALE', progressLink:'Progres complet →',
     vocab:'Vocabular', grammar:'Gramatică', sentences:'Propoziții', listening:'Ascultare',
-    exploreLink:'🧭 Vezi toate funcțiile',
-    navHome:'Acasă', navLearn:'Învață', navPractice:'Practică', navSpeak:'Vorbește', navProgress:'Progres'
+    exploreLink:'🧭 Vezi toate funcțiile'
   },
   en:{
     greetSub: AUDIENCE === 'student' ? 'Ready for today\'s challenge? 🎒' : 'Ready for today\'s Korean?',
@@ -321,8 +304,7 @@ var UI = {
     play:'🔊 Listen', save:'☆ Save', saved:'★ Saved',
     progressTitle:'YOUR KOREAN', progressLink:'Full progress →',
     vocab:'Vocabulary', grammar:'Grammar', sentences:'Sentences', listening:'Listening',
-    exploreLink:'🧭 See every feature',
-    navHome:'Home', navLearn:'Learn', navPractice:'Practice', navSpeak:'Speak', navProgress:'Progress'
+    exploreLink:'🧭 See every feature'
   }
 };
 function L(){ return UI[LANG]; }
@@ -338,11 +320,7 @@ function applyLang(){
   document.getElementById('progressTitle').textContent = l.progressTitle;
   document.getElementById('progressLink').textContent = l.progressLink;
   document.getElementById('exploreLink').textContent = l.exploreLink;
-  document.getElementById('navHome').textContent = l.navHome;
-  document.getElementById('navLearn').textContent = l.navLearn;
-  document.getElementById('navPractice').textContent = l.navPractice;
-  document.getElementById('navSpeak').textContent = l.navSpeak;
-  document.getElementById('navProgress').textContent = l.navProgress;
+  RKNav.setLang(LANG);
   renderQuick();
   renderContinue();
   renderFocus();
