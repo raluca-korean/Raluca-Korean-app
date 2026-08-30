@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Learn</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#8b7cd8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f6fb; --card:#ffffff; --text:#1f2430; --text-mid:#6b6f80; --text-low:#9a9dae;
+  --border:#ececf3; --shadow:rgba(31,36,48,.06);
+  --lavender:#8b7cd8; --lavender-soft:#efe9ff; --pink:#e08bb0; --bar-bg:#eeecf5;
+}
+body.dark-mode{
+  --bg:#12131c; --card:#1a1c29; --text:#eeeef4; --text-mid:#9a9db0; --text-low:#6b6f80;
+  --border:rgba(255,255,255,.08); --shadow:rgba(0,0,0,.3);
+  --lavender:#a99bf0; --lavender-soft:rgba(169,155,240,.14); --pink:#e6a4c2; --bar-bg:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:96px}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
+.brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;text-decoration:none;color:var(--text)}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.lang{display:flex;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:var(--card)}
+.lang button{border:none;background:none;padding:7px 12px;font-size:11px;font-weight:800;color:var(--text-low);cursor:pointer;font-family:inherit}
+.lang button.active{background:var(--lavender);color:#fff}
+.icon-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--text-mid)}
+
+.title{font-size:22px;font-weight:900;margin-top:14px}
+.sub{font-size:13px;color:var(--text-mid);margin-top:4px;margin-bottom:16px}
+
+.grid{display:flex;flex-direction:column;gap:12px}
+.item{
+  display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+  background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 3px 14px var(--shadow);
+}
+.item-icon{font-size:26px;width:40px;text-align:center;flex-shrink:0}
+.item-body{flex:1;min-width:0}
+.item-title{font-size:15px;font-weight:800}
+.item-desc{font-size:12px;color:var(--text-mid);margin-top:2px}
+.item-bar-bg{height:5px;background:var(--bar-bg);border-radius:4px;overflow:hidden;margin-top:8px;max-width:160px}
+.item-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--lavender),var(--pink))}
+.item-count{font-size:11px;color:var(--text-low);margin-top:6px;font-weight:700}
+.item-arrow{font-size:16px;color:var(--text-low);flex-shrink:0}
+
+.nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:space-around;
+  background:var(--card);border-top:1px solid var(--border);padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:var(--text-low);font-size:10px;font-weight:700;padding:4px 10px;border-radius:10px}
+.nav-item.active{color:var(--lavender)}
+.nav-icon{font-size:18px}
+</style>
+</head>
+<body class="theme-anime">
+
+<div class="wrap">
+  <div class="topbar">
+    <a href="index.html" class="brand">← Raluca Korean</a>
+    <div class="topbar-actions">
+      <div class="lang">
+        <button id="btnRo" type="button">RO</button>
+        <button id="btnEn" type="button">EN</button>
+      </div>
+      <button class="icon-btn" id="darkToggle" type="button" aria-label="Toggle dark mode">🌙</button>
+    </div>
+  </div>
+
+  <div class="title" id="pgTitle">Learn Korean</div>
+  <div class="sub" id="pgSub">Everything you can study, in one place</div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<nav class="nav">
+  <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span><span id="navHome">Home</span></a>
+  <a href="learn.html" class="nav-item active"><span class="nav-icon">📚</span><span id="navLearn">Learn</span></a>
+  <a href="play.html" class="nav-item"><span class="nav-icon">🎯</span><span id="navPractice">Practice</span></a>
+  <a href="reading.html" class="nav-item"><span class="nav-icon">🗣️</span><span id="navSpeak">Speak</span></a>
+  <a href="profile.html" class="nav-item"><span class="nav-icon">👤</span><span id="navProgress">Progress</span></a>
+</nav>
+
+<script src="./js/core/storage.js"></script>
+<script>
+'use strict';
+
+var LANG = localStorage.getItem('RK_LANG') || 'ro';
+var UI = {
+  ro:{
+    title:'Învață coreeană', sub:'Tot ce poți studia, într-un singur loc',
+    navHome:'Acasă', navLearn:'Învață', navPractice:'Practică', navSpeak:'Vorbește', navProgress:'Progres',
+    items:[
+      {icon:'🧠', key:'grammar', title:'Gramatică', desc:'Structuri gramaticale pe niveluri TOPIK', href:'lessons.html'},
+      {icon:'📖', key:null, title:'Vocabular', desc:'Glosar cu căutare și favorite', href:'glossary.html'},
+      {icon:'🎴', key:'vocab', title:'Flashcards', desc:'Recapitulare cu repetiție spațiată', href:'flashcards.html'},
+      {icon:'가', key:null, title:'Hangul', desc:'Alfabetul coreean', href:'hangul.html'},
+      {icon:'漢', key:'hanja', title:'Hanja', desc:'Caractere chinezești folosite în coreeană', href:'hanja-book.html'},
+      {icon:'🌌', key:null, title:'Word Universe', desc:'Constelații de cuvinte conectate', href:'word-map.html'},
+      {icon:'🗺️', key:null, title:'Harta Cuvântului', desc:'Explorează relațiile dintre cuvinte', href:'word-context.html'},
+      {icon:'💬', key:null, title:'Expresii', desc:'Fraze uzuale pe situații', href:'phrases.html'},
+      {icon:'📓', key:null, title:'Caiet', desc:'Notele tale personale', href:'caiet.html'},
+      {icon:'⚡', key:null, title:'Neural', desc:'Lecții adaptive', href:'lesson-neural.html'},
+      {icon:'🙏', key:null, title:'Onorifice', desc:'Registrul politicos coreean', href:'exercises.html?type=drill-honor'}
+    ]
+  },
+  en:{
+    title:'Learn Korean', sub:'Everything you can study, in one place',
+    navHome:'Home', navLearn:'Learn', navPractice:'Practice', navSpeak:'Speak', navProgress:'Progress',
+    items:[
+      {icon:'🧠', key:'grammar', title:'Grammar', desc:'Grammar structures across TOPIK levels', href:'lessons.html'},
+      {icon:'📖', key:null, title:'Vocabulary', desc:'Searchable glossary with favorites', href:'glossary.html'},
+      {icon:'🎴', key:'vocab', title:'Flashcards', desc:'Spaced-repetition review', href:'flashcards.html'},
+      {icon:'가', key:null, title:'Hangul', desc:'The Korean alphabet', href:'hangul.html'},
+      {icon:'漢', key:'hanja', title:'Hanja', desc:'Chinese characters used in Korean', href:'hanja-book.html'},
+      {icon:'🌌', key:null, title:'Word Universe', desc:'Constellations of connected words', href:'word-map.html'},
+      {icon:'🗺️', key:null, title:'Word Map', desc:'Explore relationships between words', href:'word-context.html'},
+      {icon:'💬', key:null, title:'Phrases', desc:'Common expressions by situation', href:'phrases.html'},
+      {icon:'📓', key:null, title:'Notebook', desc:'Your personal notes', href:'caiet.html'},
+      {icon:'⚡', key:null, title:'Neural', desc:'Adaptive lessons', href:'lesson-neural.html'},
+      {icon:'🙏', key:null, title:'Honorifics', desc:'Korean polite register', href:'exercises.html?type=drill-honor'}
+    ]
+  }
+};
+function L(){ return UI[LANG]; }
+
+function dueOrTouchedCount(srsKey){
+  if(!window.RKStorage) return 0;
+  var data = RKStorage.get(srsKey, {});
+  return Object.keys(data).length;
+}
+
+function render(){
+  var l = L();
+  document.getElementById('pgTitle').textContent = l.title;
+  document.getElementById('pgSub').textContent = l.sub;
+  document.getElementById('navHome').textContent = l.navHome;
+  document.getElementById('navLearn').textContent = l.navLearn;
+  document.getElementById('navPractice').textContent = l.navPractice;
+  document.getElementById('navSpeak').textContent = l.navSpeak;
+  document.getElementById('navProgress').textContent = l.navProgress;
+
+  var doneLessons = JSON.parse(localStorage.getItem('RK_LESSON_DONE') || '[]');
+  var vocabTouched = dueOrTouchedCount('RK_FC_SRS');
+  var hanjaTouched = dueOrTouchedCount('RK_HJ_SRS');
+
+  Promise.all([
+    fetch('./data/lessons.json').then(function(r){ return r.json(); }).catch(function(){ return []; })
+  ]).then(function(results){
+    var lessons = results[0];
+    var lessonsPct = lessons.length ? Math.round(doneLessons.length / lessons.length * 100) : 0;
+
+    document.getElementById('grid').innerHTML = l.items.map(function(it){
+      var extra = '';
+      if(it.key === 'grammar'){
+        extra = '<div class="item-bar-bg"><div class="item-bar" style="width:' + lessonsPct + '%"></div></div>' +
+                '<div class="item-count">' + doneLessons.length + '/' + lessons.length + '</div>';
+      } else if(it.key === 'vocab' && vocabTouched > 0){
+        extra = '<div class="item-count">' + vocabTouched + ' ' + (LANG === 'ro' ? 'cuvinte în progres' : 'words in progress') + '</div>';
+      } else if(it.key === 'hanja' && hanjaTouched > 0){
+        extra = '<div class="item-count">' + hanjaTouched + ' ' + (LANG === 'ro' ? 'caractere în progres' : 'characters in progress') + '</div>';
+      }
+      return '<a class="item" href="' + it.href + '">' +
+        '<span class="item-icon">' + it.icon + '</span>' +
+        '<span class="item-body">' +
+          '<span class="item-title">' + it.title + '</span>' +
+          '<div class="item-desc">' + it.desc + '</div>' +
+          extra +
+        '</span>' +
+        '<span class="item-arrow">→</span>' +
+      '</a>';
+    }).join('');
+  });
+}
+
+document.getElementById('btnRo').addEventListener('click', function(){ LANG='ro'; localStorage.setItem('RK_LANG','ro'); document.getElementById('btnRo').classList.add('active'); document.getElementById('btnEn').classList.remove('active'); render(); });
+document.getElementById('btnEn').addEventListener('click', function(){ LANG='en'; localStorage.setItem('RK_LANG','en'); document.getElementById('btnEn').classList.add('active'); document.getElementById('btnRo').classList.remove('active'); render(); });
+document.getElementById('btn' + (LANG === 'en' ? 'En' : 'Ro')).classList.add('active');
+
+(function initTheme(){
+  var theme = localStorage.getItem('RK_THEME');
+  var isDark = theme === 'dark' || theme === null;
+  document.body.classList.toggle('dark-mode', isDark);
+  document.getElementById('darkToggle').textContent = isDark ? '☀️' : '🌙';
+})();
+document.getElementById('darkToggle').addEventListener('click', function(){
+  var nowDark = !document.body.classList.contains('dark-mode');
+  document.body.classList.toggle('dark-mode', nowDark);
+  localStorage.setItem('RK_THEME', nowDark ? 'dark' : 'light');
+  document.getElementById('darkToggle').textContent = nowDark ? '☀️' : '🌙';
+});
+
+render();
+</script>
+<script src="./js/core/register-sw.js"></script>
+</body>
+</html>
