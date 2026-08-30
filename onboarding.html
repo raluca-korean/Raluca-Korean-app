@@ -53,6 +53,12 @@ body{
 .opt-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0}
 .opt.on .opt-radio{border-color:var(--lavender);background:radial-gradient(circle,var(--lavender) 0 40%,transparent 44%)}
 
+.opt-big{align-items:flex-start;padding:18px;gap:14px}
+.opt-big-icon{font-size:28px;line-height:1}
+.opt-big-title{font-size:15px;font-weight:800}
+.opt-big-desc{font-size:12px;color:var(--text-mid);font-weight:600;margin-top:2px}
+.opt.on .opt-big-desc{color:var(--lavender)}
+
 .btn{
   margin-top:28px;border:none;border-radius:14px;padding:15px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;
   background:linear-gradient(90deg,var(--lavender),var(--pink));color:#fff;box-shadow:0 8px 22px rgba(139,124,216,.3);
@@ -69,11 +75,20 @@ body{
       <div class="dot" data-dot="1"></div>
       <div class="dot" data-dot="2"></div>
       <div class="dot" data-dot="3"></div>
+      <div class="dot" data-dot="4"></div>
     </div>
     <button class="skip" id="skipBtn" type="button"></button>
   </div>
 
-  <div class="screen active" id="screen0">
+  <div class="screen active" id="screenA">
+    <div class="s-icon">🇰🇷</div>
+    <div class="s-title" id="sATitle">Welcome to Raluca Korean</div>
+    <div class="s-sub" id="sASub">How do you want to learn?</div>
+    <div class="options" id="audienceOptions"></div>
+    <button class="btn" id="btnA" type="button" disabled></button>
+  </div>
+
+  <div class="screen" id="screen0">
     <div class="s-icon">🇰🇷</div>
     <div class="s-title" id="s0Title">Learn Korean differently.</div>
     <div class="s-sub" id="s0Sub">A calm, clear path through TOPIK Korean — no clutter, no pressure.</div>
@@ -110,6 +125,12 @@ var LANG = localStorage.getItem('RK_LANG') || 'ro';
 var UI = {
   ro:{
     skip:'Sari peste',
+    sATitle:'Bine ai venit la Raluca Korean', sASub:'Cum vrei să înveți?',
+    audience:[
+      {id:'student', icon:'🎒', title:'Sunt elev', desc:'Pentru elevi de gimnaziu'},
+      {id:'adult', icon:'🌿', title:'Sunt adult', desc:'Pentru cursanți independenți'}
+    ],
+    btnA:'Continuă →',
     s0Title:'Învață coreeană altfel.', s0Sub:'Un traseu clar și calm prin coreeana pentru TOPIK — fără aglomerație, fără presiune.', btn0:'Continuă →',
     s1Title:'Ce vrei să îmbunătățești?', s1Sub:'Alege oricâte vrei.', btn1:'Continuă →',
     focus:[
@@ -122,6 +143,12 @@ var UI = {
   },
   en:{
     skip:'Skip',
+    sATitle:'Welcome to Raluca Korean', sASub:'How do you want to learn?',
+    audience:[
+      {id:'student', icon:'🎒', title:"I'm a student", desc:'For middle school students'},
+      {id:'adult', icon:'🌿', title:"I'm an adult", desc:'For independent learners'}
+    ],
+    btnA:'Continue →',
     s0Title:'Learn Korean differently.', s0Sub:'A calm, clear path through TOPIK Korean — no clutter, no pressure.', btn0:'Continue →',
     s1Title:'What do you want to improve?', s1Sub:'Pick as many as you like.', btn1:'Continue →',
     focus:[
@@ -138,10 +165,30 @@ function L(){ return UI[LANG]; }
 var step = 0;
 var focusSelected = [];
 var timeSelected = null;
+var audienceSelected = null;
 
 function renderText(){
   var l = L();
   document.getElementById('skipBtn').textContent = l.skip;
+  document.getElementById('sATitle').textContent = l.sATitle;
+  document.getElementById('sASub').textContent = l.sASub;
+  document.getElementById('btnA').textContent = l.btnA;
+  document.getElementById('audienceOptions').innerHTML = l.audience.map(function(a){
+    var on = audienceSelected === a.id;
+    return '<div class="opt opt-big' + (on ? ' on' : '') + '" data-audience="' + a.id + '">' +
+      '<span class="opt-big-icon">' + a.icon + '</span>' +
+      '<span><span class="opt-big-title">' + a.title + '</span>' +
+      '<div class="opt-big-desc">' + a.desc + '</div></span>' +
+    '</div>';
+  }).join('');
+  document.querySelectorAll('[data-audience]').forEach(function(el){
+    el.addEventListener('click', function(){
+      audienceSelected = el.dataset.audience;
+      document.getElementById('btnA').disabled = false;
+      renderText();
+    });
+  });
+
   document.getElementById('s0Title').textContent = l.s0Title;
   document.getElementById('s0Sub').textContent = l.s0Sub;
   document.getElementById('btn0').textContent = l.btn0;
@@ -191,15 +238,17 @@ function goTo(n){
 }
 
 function finish(){
+  localStorage.setItem('RK_AUDIENCE', audienceSelected || 'adult');
   localStorage.setItem('RK_ONBOARD_FOCUS', JSON.stringify(focusSelected));
   if(timeSelected) localStorage.setItem('RK_ONBOARD_TIME', String(timeSelected));
   localStorage.setItem('RK_ONBOARDED', '1');
   location.href = 'index.html';
 }
 
-document.getElementById('btn0').addEventListener('click', function(){ goTo(1); });
-document.getElementById('btn1').addEventListener('click', function(){ goTo(2); });
-document.getElementById('btn2').addEventListener('click', function(){ goTo(3); });
+document.getElementById('btnA').addEventListener('click', function(){ goTo(1); });
+document.getElementById('btn0').addEventListener('click', function(){ goTo(2); });
+document.getElementById('btn1').addEventListener('click', function(){ goTo(3); });
+document.getElementById('btn2').addEventListener('click', function(){ goTo(4); });
 document.getElementById('btn3').addEventListener('click', finish);
 document.getElementById('skipBtn').addEventListener('click', finish);
 

@@ -234,16 +234,18 @@ a{color:inherit}
 'use strict';
 
 var LANG = localStorage.getItem('RK_LANG') || 'ro';
+var AUDIENCE = localStorage.getItem('RK_AUDIENCE') || 'adult';
 
 var UI = {
   ro:{
-    greetSub:'Gata pentru coreeana de azi?',
+    greetSub: AUDIENCE === 'student' ? 'Gata de o nouă provocare? 🎒' : 'Gata pentru coreeana de azi?',
     continueEyebrow:'CONTINUĂ ÎNVĂȚAREA', continueCta:'CONTINUĂ →',
     startTitle:'ÎNCEPE CĂLĂTORIA TA COREEANĂ', startSub:'Prima ta lecție te așteaptă.', startCta:'START →',
     levelDoneTitle:'Nivel complet! 🎉', levelDoneSub:'Ai parcurs toate lecțiile de la acest nivel.',
-    missionTitle:"MISIUNEA DE AZI", missionCta:'Vezi progresul complet →', missionDoneCta:'Misiune completă azi! ✨',
-    missionVocab:function(n){ return n + '/5 cuvinte noi'; },
-    missionSentences:function(n){ return n + '/3 propoziții'; },
+    missionTitle: AUDIENCE === 'student' ? "MISIUNEA ZILEI" : "MISIUNEA DE AZI",
+    missionCta:'Vezi progresul complet →', missionDoneCta:'Misiune completă azi! ✨',
+    missionVocab:function(n,goal){ return n + '/' + goal + (AUDIENCE==='student' ? ' cuvinte noi' : ' cuvinte de recapitulat'); },
+    missionSentences:function(n,goal){ return n + '/' + goal + ' propoziții'; },
     missionListening:'2 minute de ascultare',
     missionSpeaking:'1 exercițiu de vorbire',
     missionCompleteTitle:'MISIUNE COMPLETĂ!',
@@ -273,13 +275,14 @@ var UI = {
     navHome:'Acasă', navLearn:'Învață', navPractice:'Practică', navSpeak:'Vorbește', navProgress:'Progres'
   },
   en:{
-    greetSub:'Ready for today\'s Korean?',
+    greetSub: AUDIENCE === 'student' ? 'Ready for today\'s challenge? 🎒' : 'Ready for today\'s Korean?',
     continueEyebrow:'CONTINUE LEARNING', continueCta:'CONTINUE →',
     startTitle:'START YOUR KOREAN JOURNEY', startSub:'Your first lesson is waiting.', startCta:'START →',
     levelDoneTitle:'Level complete! 🎉', levelDoneSub:"You've covered every lesson at this level.",
-    missionTitle:"TODAY'S MISSION", missionCta:'See full progress →', missionDoneCta:'Daily mission complete! ✨',
-    missionVocab:function(n){ return n + '/5 new words'; },
-    missionSentences:function(n){ return n + '/3 sentences'; },
+    missionTitle: AUDIENCE === 'student' ? "TODAY'S CHALLENGE" : "TODAY'S MISSION",
+    missionCta:'See full progress →', missionDoneCta:'Daily mission complete! ✨',
+    missionVocab:function(n,goal){ return n + '/' + goal + (AUDIENCE==='student' ? ' new words' : ' words to review'); },
+    missionSentences:function(n,goal){ return n + '/' + goal + ' sentences'; },
     missionListening:'2 minutes of listening',
     missionSpeaking:'1 speaking exercise',
     missionCompleteTitle:'MISSION COMPLETE!',
@@ -455,15 +458,16 @@ function renderMission(){
   var l = L();
   document.getElementById('missionTitle').textContent = l.missionTitle;
 
+  var goals = window.RKGamification ? RKGamification.getDailyTaskGoals() : {vocab:10, sentences:3};
   var tasks = window.RKGamification ? RKGamification.getDailyTasks() : {vocab:0, sentences:0};
-  var vocabDone = tasks.vocab >= 5;
-  var sentDone = tasks.sentences >= 3;
+  var vocabDone = tasks.vocab >= goals.vocab;
+  var sentDone = tasks.sentences >= goals.sentences;
   var listenDone = isDailyFlagDone('RK_DAILY_LISTEN');
   var speakDone = isDailyFlagDone('RK_DAILY_PRON');
 
   var items = [
-    { done: vocabDone, label: l.missionVocab(Math.min(tasks.vocab,5)), href: 'exercises.html?type=ko-ro' },
-    { done: sentDone, label: l.missionSentences(Math.min(tasks.sentences,3)), href: 'exercises.html?type=puzzle' },
+    { done: vocabDone, label: l.missionVocab(Math.min(tasks.vocab,goals.vocab), goals.vocab), href: 'exercises.html?type=ko-ro' },
+    { done: sentDone, label: l.missionSentences(Math.min(tasks.sentences,goals.sentences), goals.sentences), href: 'exercises.html?type=puzzle' },
     { done: listenDone, label: l.missionListening, href: 'listening.html' },
     { done: speakDone, label: l.missionSpeaking, href: 'reading.html' }
   ];
