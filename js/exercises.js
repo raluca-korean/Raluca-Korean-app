@@ -542,7 +542,7 @@ function saveStats(isCorrect, type){
   updateTypeStats();
 }
 
-function trackWrong(item){
+function trackWrong(item, userAnswer, correctAnswer){
   const type = typeSelect.value;
   if(!wrongsByType[type]) wrongsByType[type] = [];
   if(!wrongsByType[type].includes(item)) wrongsByType[type].push(item);
@@ -552,13 +552,23 @@ function trackWrong(item){
     const ekey = getExerciseKey(type, item);
     const today = RKUtils.todayISO();
     const idx = log.findIndex(e => e.key === ekey);
+    const detail = {
+      wrong: userAnswer != null ? String(userAnswer) : null,
+      correct: correctAnswer != null ? String(correctAnswer) : null,
+      why: (item.hint && (item.hint[currentLang] || item.hint.ro || item.hint.en)) ||
+           (item.context && (item.context[currentLang] || item.context.ro || item.context.en)) || null
+    };
     if(idx >= 0){
       log[idx].count = (log[idx].count || 1) + 1;
       log[idx].date  = today;
+      log[idx].wrong = detail.wrong;
+      log[idx].correct = detail.correct;
+      log[idx].why = detail.why;
       const entry = log.splice(idx, 1)[0];
       log.unshift(entry);
     } else {
-      log.unshift({ type, key: ekey, topik: item.topik || 0, date: today, count: 1 });
+      log.unshift({ type, key: ekey, topik: item.topik || 0, date: today, count: 1,
+        wrong: detail.wrong, correct: detail.correct, why: detail.why });
     }
     if(log.length > 150) log.splice(150);
     RKStorage.set('RK_WRONG_LOG', log);
@@ -1121,7 +1131,7 @@ function checkCurrentAnswer(){
     }
     total++;
     if(effectiveRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
-    else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item); }
+    else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item, puzzleLine.join(sep), item.correct.join(sep)); }
     if(!isWrongMode) saveStats(effectiveRight, typeSelect.value);
     recordCheck(elapsed, typeSelect.value, effectiveRight);
     updateExSrs(typeSelect.value, item, isRight, hintUsed);
@@ -1171,7 +1181,7 @@ function checkCurrentAnswer(){
   } else {
     if(streak > 0) launchFireworks();
     streak = 0;
-    if(!isWrongMode) trackWrong(item);
+    if(!isWrongMode) trackWrong(item, selectedAnswer, correctAnswer);
   }
 
   if(!isWrongMode) saveStats(isCorrect, typeSelect.value);

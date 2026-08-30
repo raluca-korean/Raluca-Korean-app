@@ -65,6 +65,14 @@
 .mk-log-date{font-size:10px;color:var(--rk-muted-ui);font-weight:700;min-width:36px}
 .mk-log-text{flex:1;font-size:13px;font-weight:600;color:var(--rk-heading);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mk-log-count{font-size:11px;font-weight:900;color:var(--rk-red);background:rgba(239,68,68,.10);border-radius:12px;padding:1px 6px}
+.mk-log-item-full{display:block}
+.mk-log-item-top{display:flex;align-items:center;gap:10px}
+.mk-log-detail{margin-top:8px;padding-top:8px;border-top:1px dashed var(--rk-stroke);display:flex;flex-direction:column;gap:4px}
+.mk-log-row{display:flex;gap:6px;font-size:12px;align-items:baseline;flex-wrap:wrap}
+.mk-log-lbl{font-weight:800;color:var(--rk-muted-ui);flex-shrink:0}
+.mk-log-wrong{color:var(--rk-red)}
+.mk-log-correct{color:#22c55e}
+.mk-log-practice{display:inline-block;margin-top:4px;font-size:11px;font-weight:900;color:var(--rk-violet);text-decoration:none}
 
 /* ── EXAM HISTORY ─────────────────────────────────────── */
 .mk-exam-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:10px;background:var(--rk-bg-flat);border:1.5px solid var(--rk-stroke);margin-bottom:7px;font-size:13px}
@@ -152,7 +160,8 @@ var UI = {
       'particlePlus':'Particule +','conjug':'Conjugare','puzzle':'Puzzle','chain':'Chain'
     },
     efLabel:'EF',
-    hardDesc:'Exerciții la care ai greșit frecvent (SRS Ease Factor scăzut)'
+    hardDesc:'Exerciții la care ai greșit frecvent (SRS Ease Factor scăzut)',
+    wrongLbl:'Răspunsul tău', correctLbl:'Corect', whyLbl:'De ce'
   },
   en:{
     title:'❌ My Mistakes', sub:'Weak spot analysis',
@@ -175,7 +184,8 @@ var UI = {
       'particlePlus':'Multi-particle','conjug':'Conjugation','puzzle':'Puzzle','chain':'Chain'
     },
     efLabel:'EF',
-    hardDesc:'Exercises you frequently miss (low SRS Ease Factor)'
+    hardDesc:'Exercises you frequently miss (low SRS Ease Factor)',
+    wrongLbl:'Your answer', correctLbl:'Correct', whyLbl:'Why'
   }
 };
 function L(){ return UI[LANG]; }
@@ -330,18 +340,29 @@ function render(){
   html+='<a class="mk-cta" href="exercises.html">'+l.practiceLink+'</a>';
   html+='</div>';
 
-  // ── Wrong log ──
+  // ── Wrong log ── (Wrong → Correct → Why → Practice again per mistake, when that
+  // detail was captured; older entries saved before this only have the question text.)
   if(log.length){
     html+='<div class="card"><div class="sec-title"><h3>'+l.secLog+'</h3><span class="sec-count">'+Math.min(log.length,20)+'</span></div>';
     log.slice(0,20).forEach(function(entry){
       var parsed=parseKey(entry.key);
+      var etype=entry.type||parsed.type;
       html+=
-        '<div class="mk-log-item">'+
-          '<span class="mk-log-date">'+fmtDate(entry.date)+'</span>'+
-          '<span class="mk-type-chip '+TYPE_CHIP[entry.type||parsed.type]+'" style="flex-shrink:0">'+
-            l.types[entry.type||parsed.type]+'</span>'+
-          '<span class="mk-log-text">'+escHtml(parsed.text)+'</span>'+
-          (entry.count&&entry.count>1?'<span class="mk-log-count">×'+entry.count+'</span>':'')+
+        '<div class="mk-log-item mk-log-item-full">'+
+          '<div class="mk-log-item-top">'+
+            '<span class="mk-log-date">'+fmtDate(entry.date)+'</span>'+
+            '<span class="mk-type-chip '+TYPE_CHIP[etype]+'" style="flex-shrink:0">'+l.types[etype]+'</span>'+
+            '<span class="mk-log-text">'+escHtml(parsed.text)+'</span>'+
+            (entry.count&&entry.count>1?'<span class="mk-log-count">×'+entry.count+'</span>':'')+
+          '</div>'+
+          (entry.wrong||entry.correct?
+            '<div class="mk-log-detail">'+
+              (entry.wrong?'<div class="mk-log-row"><span class="mk-log-lbl mk-log-wrong">✗ '+l.wrongLbl+'</span><span>'+escHtml(entry.wrong)+'</span></div>':'')+
+              (entry.correct?'<div class="mk-log-row"><span class="mk-log-lbl mk-log-correct">✓ '+l.correctLbl+'</span><span>'+escHtml(entry.correct)+'</span></div>':'')+
+              (entry.why?'<div class="mk-log-row"><span class="mk-log-lbl">💡 '+l.whyLbl+'</span><span>'+escHtml(entry.why)+'</span></div>':'')+
+              '<a class="mk-log-practice" href="exercises.html?type='+etype+'">'+l.practiceLink+'</a>'+
+            '</div>'
+          :'')+
         '</div>';
     });
     html+='</div>';
