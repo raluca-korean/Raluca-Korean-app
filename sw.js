@@ -1,4 +1,4 @@
-const CACHE = 'rk-v131';
+const CACHE = 'rk-v132';
 
 const STATIC = [
   './',
@@ -10,7 +10,6 @@ const STATIC = [
   './review.html',
   './profile.html',
   './map.html',
-  './shop.html',
   './boss.html',
   './quick60.html',
   './memory.html',

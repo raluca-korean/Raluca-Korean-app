@@ -56,7 +56,12 @@
   /* Self-contained toast — no dependency on any page's CSS, so it works
      identically from every one of the ~15 call sites (flashcards, exercises,
      hangul, listening, journal, ...). */
-  function celebrateMilestone(days, xpGained, coinsGained, lang) {
+  /* Every milestone grants a Streak Freeze; the bigger ones also grant an
+     XP Boost. These used to be shop purchases — now they're earned purely
+     by showing up, no currency or storefront involved. */
+  var MILESTONE_BOOST = { 7:true, 30:true, 100:true, 365:true };
+
+  function celebrateMilestone(days, xpGained, coinsGained, lang, freezeGained, boostGained) {
     var isRo = lang !== 'en';
     if (!document.getElementById('rkStreakMilestoneStyle')) {
       var style = document.createElement('style');
@@ -73,10 +78,13 @@
     card.style.cssText = 'background:linear-gradient(145deg,#ff9600,#c84b2f);border-radius:24px;' +
       'padding:36px 44px;text-align:center;color:#fff;box-shadow:0 20px 60px rgba(200,75,47,.5);' +
       'animation:rkStreakPop .5s cubic-bezier(.34,1.56,.64,1) both;max-width:90vw';
+    var rewardLine = (isRo ? 'Ai câștigat' : 'You earned') + ' +' + xpGained + ' XP · 🪙+' + coinsGained;
+    if (freezeGained) rewardLine += ' · 🧊+1';
+    if (boostGained) rewardLine += ' · ⚡×10';
     card.innerHTML =
       '<div style="font-size:52px;line-height:1">🔥</div>' +
       '<div style="font-size:28px;font-weight:900;margin-top:6px">' + (isRo ? days + ' ' + (days===1?'ZI':'ZILE') + ' LA RÂND!' : days + '-DAY STREAK!') + '</div>' +
-      '<div style="font-size:15px;opacity:.9;margin-top:8px">' + (isRo ? 'Ai câștigat' : 'You earned') + ' +' + xpGained + ' XP · 🪙+' + coinsGained + '</div>' +
+      '<div style="font-size:15px;opacity:.9;margin-top:8px">' + rewardLine + '</div>' +
       '<div style="font-size:12px;opacity:.7;margin-top:14px">' + (isRo ? 'Atinge oriunde pentru a continua' : 'Tap anywhere to continue') + '</div>';
     backdrop.appendChild(card);
     document.body.appendChild(backdrop);
@@ -100,9 +108,12 @@
       RKGamification.addXPBonus(xpGained);
       RKGamification.addCoins(coinsGained);
     }
+    addFreeze(1);
+    var boostGained = !!MILESTONE_BOOST[days];
+    if (boostGained && window.RKGamification) RKGamification.addXPBoostUses(10);
     var lang = localStorage.getItem('RK_LANG') || 'ro';
     /* Defer so it never fights a page's own initial-render/animation work. */
-    setTimeout(function () { celebrateMilestone(days, xpGained, coinsGained, lang); }, 400);
+    setTimeout(function () { celebrateMilestone(days, xpGained, coinsGained, lang, true, boostGained); }, 400);
   }
 
   /* Call on any real study activity. No-ops after the first call each day. */
@@ -117,7 +128,7 @@
     if (s.lastDate === yesterday) {
       s.days = s.days + 1;
     } else if (s.lastDate === twoDaysAgo && useFreeze()) {
-      /* Missed exactly one day but had a Streak Freeze (bought in the shop) — covers the gap. */
+      /* Missed exactly one day but had a Streak Freeze (earned at a streak milestone) — covers the gap. */
       s.days = s.days + 1;
     } else {
       s.days = 1;
