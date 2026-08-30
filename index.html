@@ -119,6 +119,31 @@ body.audience-student .dash-stat{
 .dash-quick-icon{font-size:20px}
 .dash-quick-lbl{font-size:11px;font-weight:700;text-align:center}
 
+/* ── QUICK FLASHCARD (flip teaser, links out to flashcards.html) ── */
+.dash-flip-card{perspective:1000px;cursor:pointer}
+.dash-flip-inner{
+  position:relative;min-height:130px;transition:transform .5s cubic-bezier(.4,.2,.2,1);
+  transform-style:preserve-3d;
+}
+.dash-flip-inner.flipped{transform:rotateY(180deg)}
+.dash-flip-face{
+  position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:0 4px 18px var(--shadow);
+  padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;
+}
+.dash-flip-back{transform:rotateY(180deg)}
+.dash-flip-kr{font-family:'Noto Sans KR',sans-serif;font-size:26px;font-weight:900}
+.dash-flip-hint{font-size:11px;color:var(--text-low);font-weight:700}
+.dash-flip-rom{font-size:13px;color:var(--text-low);font-style:italic}
+.dash-flip-meaning{font-size:16px;font-weight:800;color:var(--text)}
+.dash-flip-next{
+  display:block;margin:10px auto 0;background:none;border:none;color:var(--lavender);
+  font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;padding:6px;
+}
+@media (prefers-reduced-motion: reduce){
+  .dash-flip-inner{transition:none}
+}
+
 /* ── WORD OF THE DAY ──────────────────────────────────── */
 .dash-wod-tag{font-size:11px;color:var(--text-low);font-weight:700;margin-top:2px}
 .dash-wod-ko{font-family:'Noto Sans KR',sans-serif;font-size:24px;font-weight:900;margin-top:10px}
@@ -200,6 +225,20 @@ body.audience-student .dash-stat{
   <div class="dash-section-title" id="quickTitle">QUICK PRACTICE</div>
   <div class="dash-quick-grid" id="quickGrid"></div>
 
+  <div class="dash-flip-card" id="flipCard" role="button" tabindex="0">
+    <div class="dash-flip-inner" id="flipInner">
+      <div class="dash-flip-face dash-flip-front">
+        <div class="dash-flip-kr kr" id="flipKo"></div>
+        <div class="dash-flip-hint" id="flipHint">Tap to reveal</div>
+      </div>
+      <div class="dash-flip-face dash-flip-back">
+        <div class="dash-flip-rom" id="flipRom"></div>
+        <div class="dash-flip-meaning" id="flipMeaning"></div>
+      </div>
+    </div>
+  </div>
+  <button class="dash-flip-next" id="flipNextBtn" type="button">Next card →</button>
+
   <div class="dash-card">
     <div class="dash-card-eyebrow">오늘의 표현</div>
     <div class="dash-wod-tag" id="wodTag"></div>
@@ -276,7 +315,8 @@ var UI = {
     play:'🔊 Ascultă', save:'☆ Salvează', saved:'★ Salvat',
     progressTitle:'CUNOȘTINȚELE TALE', progressLink:'Progres complet →',
     vocab:'Vocabular', grammar:'Gramatică', sentences:'Propoziții', listening:'Ascultare',
-    exploreLink:'🧭 Vezi toate funcțiile'
+    exploreLink:'🧭 Vezi toate funcțiile',
+    flipHint:'Atinge pentru traducere', flipNext:'Cardul următor →'
   },
   en:{
     greetSub: AUDIENCE === 'student' ? 'Ready for today\'s challenge? 🎒' : 'Ready for today\'s Korean?',
@@ -315,7 +355,8 @@ var UI = {
     play:'🔊 Listen', save:'☆ Save', saved:'★ Saved',
     progressTitle:'YOUR KOREAN', progressLink:'Full progress →',
     vocab:'Vocabulary', grammar:'Grammar', sentences:'Sentences', listening:'Listening',
-    exploreLink:'🧭 See every feature'
+    exploreLink:'🧭 See every feature',
+    flipHint:'Tap to reveal', flipNext:'Next card →'
   }
 };
 function L(){ return UI[LANG]; }
@@ -337,10 +378,16 @@ function applyLang(){
   renderFocus();
   renderMission();
   renderWordOfDay();
+  renderFlipCard();
   renderProgress();
 }
 document.getElementById('btnRo').addEventListener('click', function(){ LANG = 'ro'; localStorage.setItem('RK_LANG','ro'); applyLang(); });
 document.getElementById('btnEn').addEventListener('click', function(){ LANG = 'en'; localStorage.setItem('RK_LANG','en'); applyLang(); });
+document.getElementById('flipCard').addEventListener('click', toggleFlipCard);
+document.getElementById('flipCard').addEventListener('keydown', function(e){
+  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleFlipCard(); }
+});
+document.getElementById('flipNextBtn').addEventListener('click', function(e){ e.stopPropagation(); nextFlipCard(); });
 
 function applyDarkIcon(){
   document.getElementById('darkToggle').textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
@@ -618,13 +665,15 @@ function renderFocus(){
   card.style.display = 'none';
 }
 
-/* ── WORD OF THE DAY (real phrases.json data — ko/romanization/ro/en, nothing invented) ── */
+/* ── WORD OF THE DAY (real phrases.json data — ko/romanization/ro/en, nothing invented) ──
+   _phrasePool is shared with the Quick Flashcard widget below; loadPhrasePool()
+   fetches it exactly once so both stay in sync instead of racing. */
 var _phrasePool = null;
-function saveKey(){ return 'RK_SAVED_PHRASES'; }
-function renderWordOfDay(){
-  var l = L();
-  if(!_phrasePool){
-    fetch('./data/phrases.json').then(function(r){ return r.json(); }).then(function(data){
+var _phrasePoolPromise = null;
+function loadPhrasePool(cb){
+  if(_phrasePool){ cb(); return; }
+  if(!_phrasePoolPromise){
+    _phrasePoolPromise = fetch('./data/phrases.json').then(function(r){ return r.json(); }).then(function(data){
       var pool = [];
       (data.situations || []).forEach(function(sit){
         (sit.items || []).forEach(function(item){
@@ -632,10 +681,14 @@ function renderWordOfDay(){
         });
       });
       _phrasePool = pool;
-      renderWordOfDay();
     });
-    return;
   }
+  _phrasePoolPromise.then(cb);
+}
+function saveKey(){ return 'RK_SAVED_PHRASES'; }
+function renderWordOfDay(){
+  var l = L();
+  if(!_phrasePool){ loadPhrasePool(renderWordOfDay); return; }
   if(!_phrasePool.length) return;
   var epochDay = Math.floor(Date.now() / 86400000);
   var phrase = _phrasePool[epochDay % _phrasePool.length];
@@ -661,6 +714,34 @@ function renderWordOfDay(){
     localStorage.setItem(saveKey(), JSON.stringify(list));
     renderWordOfDay();
   };
+}
+
+/* ── QUICK FLASHCARD (flip teaser — reuses the Word of the Day pool,
+   picks a different random item so it doesn't just repeat that card) ── */
+var _flipItem = null;
+function renderFlipCard(){
+  var l = L();
+  document.getElementById('flipHint').textContent = l.flipHint;
+  document.getElementById('flipNextBtn').textContent = l.flipNext;
+  if(!_phrasePool){ loadPhrasePool(renderFlipCard); return; }
+  if(!_phrasePool.length) return;
+  if(!_flipItem) _flipItem = _phrasePool[Math.floor(Math.random() * _phrasePool.length)];
+  document.getElementById('flipKo').textContent = _flipItem.ko;
+  document.getElementById('flipRom').textContent = _flipItem.rom || '';
+  document.getElementById('flipMeaning').textContent = _flipItem[LANG] || _flipItem.ro;
+}
+function nextFlipCard(){
+  document.getElementById('flipInner').classList.remove('flipped');
+  var pool = _phrasePool || [];
+  if(pool.length > 1){
+    var next;
+    do { next = pool[Math.floor(Math.random() * pool.length)]; } while(next === _flipItem);
+    _flipItem = next;
+  }
+  renderFlipCard();
+}
+function toggleFlipCard(){
+  document.getElementById('flipInner').classList.toggle('flipped');
 }
 
 /* ── PROGRESS PREVIEW (same real RK_STATS.byType data as profile.html) ── */
