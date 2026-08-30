@@ -303,7 +303,14 @@
     var container = document.getElementById('rfNodes');
     container.innerHTML = '';
 
-    STORIES.forEach(function (s) {
+    // Student mode: nothing hidden, just reordered so adult-context stories
+    // (workplace, banking) sink below the ones actually relevant to a
+    // middle-school student.
+    var audience = localStorage.getItem('RK_AUDIENCE') || 'adult';
+    var orderedStories = audience === 'student'
+      ? STORIES.slice().sort(function(a,b){ return (a.adult?1:0) - (b.adult?1:0); })
+      : STORIES;
+    orderedStories.forEach(function (s) {
       var done  = doneCount(s);
       var total = s.episodes.length;
       var pct   = total > 0 ? Math.round(done / total * 100) : 0;

@@ -745,7 +745,7 @@ var SCENARIOS = [
   ]
 },
 {
-  id:'bank', icon:'🏦', topik:2,
+  id:'bank', icon:'🏦', topik:2, adult:true,
   title:{ ro:'La bancă', en:'At the bank' },
   desc:{ ro:'Deschide un cont și schimbă bani', en:'Open an account and exchange money' },
   role:{ ro:'Casier', en:'Teller' },
@@ -880,7 +880,7 @@ var SCENARIOS = [
   ]
 },
 {
-  id:'job_interview', icon:'💼', topik:3,
+  id:'job_interview', icon:'💼', topik:3, adult:true,
   title:{ ro:'Interviu de angajare', en:'Job interview' },
   desc:{ ro:'Răspunde la întrebările unui interviu', en:'Answer questions in a job interview' },
   role:{ ro:'Intervievator', en:'Interviewer' },
@@ -1105,7 +1105,7 @@ var SCENARIOS = [
   ]
 },
 {
-  id:'apartment', icon:'🏠', topik:4,
+  id:'apartment', icon:'🏠', topik:4, adult:true,
   title:{ ro:'La agenția imobiliară', en:'At the real estate agency' },
   desc:{ ro:'Caută un apartament de închiriat', en:'Look for an apartment to rent' },
   role:{ ro:'Agent imobiliar', en:'Real estate agent' },
@@ -1471,7 +1471,7 @@ var SCENARIOS = [
   ]
 },
 {
-  id:'roommate', icon:'🧹', topik:2,
+  id:'roommate', icon:'🧹', topik:2, adult:true,
   title:{ ro:'Curățenie cu colegul de cameră', en:'Cleaning with a roommate' },
   desc:{ ro:'Organizați curățenia în casă', en:"You're organizing housework together" },
   role:{ ro:'Coleg de cameră', en:'Roommate' },
@@ -1516,7 +1516,7 @@ var SCENARIOS = [
   ]
 },
 {
-  id:'parking', icon:'🚗', topik:3,
+  id:'parking', icon:'🚗', topik:3, adult:true,
   title:{ ro:'Probleme de parcare', en:'Parking trouble' },
   desc:{ ro:'Ai parcat greșit, un paznic te oprește', en:'You parked wrong, an attendant stops you' },
   role:{ ro:'Paznic parcare', en:'Parking attendant' },
@@ -2121,7 +2121,7 @@ var SCENARIOS = [
   ]
 },
 {
-  id:'moving_day', icon:'📦', topik:3,
+  id:'moving_day', icon:'📦', topik:3, adult:true,
   title:{ ro:'Ziua mutării', en:'Moving day' },
   desc:{ ro:'Un prieten te ajută cu mutarea', en:'A friend is helping you move' },
   role:{ ro:'Prieten', en:'Friend' },
@@ -2332,7 +2332,7 @@ var SCENARIOS = [
   ]
 },
 {
-  id:'night_out', icon:'🍺', topik:3,
+  id:'night_out', icon:'🍺', topik:3, adult:true,
   title:{ ro:'Seară cu colegii', en:'A night out with colleagues' },
   desc:{ ro:'Refuzi politicos un pahar în plus', en:'Politely declining another drink' },
   role:{ ro:'Coleg', en:'Colleague' },
@@ -2368,7 +2368,7 @@ var SCENARIOS = [
   ]
 },
 {
-  id:'quit_smoking', icon:'🚭', topik:3,
+  id:'quit_smoking', icon:'🚭', topik:3, adult:true,
   title:{ ro:'Îl sprijini pe un prieten să renunțe la fumat', en:'Supporting a friend to quit smoking' },
   desc:{ ro:'Un prieten vrea să se lase de fumat', en:'A friend wants to quit smoking' },
   role:{ ro:'Prieten', en:'Friend' },
@@ -2650,7 +2650,14 @@ function renderHub(){
   var scores=loadScores();
   var grid=document.getElementById('scenarioGrid');
   grid.innerHTML='';
-  SCENARIOS.forEach(function(sc){
+  // Student mode: nothing is hidden or removed, just reordered so the
+  // adult-context scenarios (job interviews, banking, renting, drinking...)
+  // sink below the ones actually relevant to a middle-school student.
+  var audience = localStorage.getItem('RK_AUDIENCE') || 'adult';
+  var ordered = audience === 'student'
+    ? SCENARIOS.slice().sort(function(a,b){ return (a.adult?1:0) - (b.adult?1:0); })
+    : SCENARIOS;
+  ordered.forEach(function(sc){
     var userTurnCount=sc.lines.filter(function(ln){return ln.sp==='you';}).length;
     var prev=scorePct(scores[sc.id]);
     var doneHtml=prev!=null?'<span class="cv-done">✓ '+prev+'%</span>':'';

@@ -1134,6 +1134,16 @@ let _lang        = RKLang.get();
 let _bloomId     = null;
 let _animating   = false;
 
+// Student mode shows a plain-language explanation where one has been
+// hand-written (lesson.simple) — currently the TOPIK-1 set — and falls
+// back to the regular technical explanation everywhere else, so nothing
+// is ever missing or fabricated for lessons that don't have one yet.
+function explanationFor(lesson){
+  var audience = localStorage.getItem('RK_AUDIENCE') || 'adult';
+  if(audience === 'student' && lesson.simple && lesson.simple[_lang]) return lesson.simple[_lang];
+  return lesson.explanation[_lang];
+}
+
 // ── DOM Refs ──────────────────────────────────────────────────
 const fieldEl   = document.getElementById('sb-field');
 const svgEl     = document.getElementById('sb-svg');
@@ -1484,7 +1494,7 @@ function _populateBloom(lesson) {
 
     // ── Tab 0: Theory ──────────────────────────────────────
     '<div class="sb-tab-panel sb-tp-active" id="sbt-0">' +
-      '<p class="sb-bloom-exp">' + _esc(lesson.explanation[_lang]) + '</p>' +
+      '<p class="sb-bloom-exp">' + _esc(explanationFor(lesson)) + '</p>' +
       '<div class="sb-bloom-struct"><b>' + t('struct') + ':</b> ' + _esc(lesson.structure) + '</div>' +
       '<div class="sb-section-label">' + t('examples') + '</div>' +
       '<div class="sb-examples" id="sb-ex-list">' +
