@@ -2633,9 +2633,10 @@ function L(){ return UI[LANG]; }
 
 var SCORES_KEY = 'RK_CONV_SCORES';
 function loadScores(){ try{return JSON.parse(localStorage.getItem(SCORES_KEY)||'{}');}catch(e){return {};} }
-function saveScore(id, pct){
+function scorePct(entry){ return (entry && typeof entry === 'object') ? entry.pct : entry; }
+function saveScore(id, pct, correct, total){
   try{
-    var s=loadScores(); s[id]=pct;
+    var s=loadScores(); s[id]={ pct:pct, correct:correct, total:total };
     localStorage.setItem(SCORES_KEY,JSON.stringify(s));
   }catch(e){}
 }
@@ -2651,7 +2652,7 @@ function renderHub(){
   grid.innerHTML='';
   SCENARIOS.forEach(function(sc){
     var userTurnCount=sc.lines.filter(function(ln){return ln.sp==='you';}).length;
-    var prev=scores[sc.id];
+    var prev=scorePct(scores[sc.id]);
     var doneHtml=prev!=null?'<span class="cv-done">✓ '+prev+'%</span>':'';
     var card=document.createElement('div');
     card.className='cv-card';
@@ -2912,7 +2913,7 @@ function calcSpeechScore(expected, recognized){
 function endScenario(){
   clearOptions();
   var pct = userTurns ? Math.round(score/userTurns*100) : 0;
-  saveScore(currentScenario.id, pct);
+  saveScore(currentScenario.id, pct, score, userTurns);
   var xpGained = Math.max(10, Math.round(pct/100*25));
   if(window.RKGamification) RKGamification.addXPBonus(xpGained);
   if(window.RKStreak) RKStreak.touch();

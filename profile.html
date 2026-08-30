@@ -95,6 +95,7 @@ var UI = {
     skillsTitle:'Abilități', achTitle:'Realizări',
     achCount:function(n,total){ return n + ' din ' + total + ' deblocate'; },
     vocab:'Vocabular', grammar:'Gramatică', sentences:'Propoziții', listening:'Ascultare',
+    speaking:'Vorbire', reading:'Citire', writing:'Scriere',
     noData:'—',
     streakAch:function(n){ return n + ' zile la rând'; }
   },
@@ -104,6 +105,7 @@ var UI = {
     skillsTitle:'Skills', achTitle:'Achievements',
     achCount:function(n,total){ return n + ' of ' + total + ' unlocked'; },
     vocab:'Vocabulary', grammar:'Grammar', sentences:'Sentences', listening:'Listening',
+    speaking:'Speaking', reading:'Reading', writing:'Writing',
     noData:'—',
     streakAch:function(n){ return n + '-day streak'; }
   }
@@ -126,6 +128,36 @@ function skillPct(stats, types){
     if(bt){ total += bt.total; correct += bt.correct; }
   });
   return { total: total, correct: correct, pct: total ? Math.round(correct / total * 100) : 0 };
+}
+
+// Total counts for static content pools (mirrors the fixed data sets in
+// reading-texts.json / composition-prompts.json — not fetched here to
+// avoid pulling a quarter-megabyte JSON file just to read its length).
+var READING_TEXTS_TOTAL = 24;
+var COMPOSITION_PROMPTS_TOTAL = 9;
+
+function speakingSkill(){
+  var scores = RKStorage.get('RK_CONV_SCORES', {});
+  var correct = 0, total = 0;
+  Object.keys(scores).forEach(function(id){
+    var e = scores[id];
+    if(e && typeof e === 'object' && typeof e.total === 'number'){
+      correct += e.correct; total += e.total;
+    }
+  });
+  return { total: total, correct: correct, pct: total ? Math.round(correct / total * 100) : 0 };
+}
+
+function readingSkill(){
+  var read = RKStorage.get('RK_RD_READ', []);
+  var n = Array.isArray(read) ? read.length : 0;
+  return { total: READING_TEXTS_TOTAL, correct: n, pct: Math.round(n / READING_TEXTS_TOTAL * 100) };
+}
+
+function writingSkill(){
+  var comps = RKStorage.get('RK_COMPOSITIONS', {});
+  var n = Object.keys(comps).filter(function(id){ return comps[id] && comps[id].everCompleted; }).length;
+  return { total: COMPOSITION_PROMPTS_TOTAL, correct: n, pct: Math.round(n / COMPOSITION_PROMPTS_TOTAL * 100) };
 }
 
 function renderSkillRow(label, data){
@@ -174,12 +206,18 @@ function render(){
   var grammar  = skillPct(stats, ['particle','particlePlus','conjug']);
   var sentences = skillPct(stats, ['puzzle','chain']);
   var listening = skillPct(stats, ['listening']);
+  var speaking = speakingSkill();
+  var reading  = readingSkill();
+  var writing  = writingSkill();
 
   document.getElementById('skillsBody').innerHTML =
     renderSkillRow(l.vocab, vocab) +
     renderSkillRow(l.grammar, grammar) +
     renderSkillRow(l.sentences, sentences) +
-    renderSkillRow(l.listening, listening);
+    renderSkillRow(l.listening, listening) +
+    renderSkillRow(l.speaking, speaking) +
+    renderSkillRow(l.reading, reading) +
+    renderSkillRow(l.writing, writing);
 
   // ── ACHIEVEMENTS (badges + streak milestones already tracked by gamification.js/streak.js) ──
   var earnedBadges = window.RKGamification ? RKGamification.getEarnedBadges() : [];
