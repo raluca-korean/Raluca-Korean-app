@@ -479,13 +479,18 @@ function showQuestComplete(){
   launchFireworks();
 }
 
-function processGamification(wasCorrect){
+const DAILY_TASK_TYPE_MAP = { 'ko-ro':'vocab', 'ro-ko':'vocab', 'puzzle':'sentences', 'chain':'sentences' };
+
+function processGamification(wasCorrect, exType){
   if(!wasCorrect || isWrongMode || !window.RKGamification) return;
   const G = RKGamification;
 
   const xpResult = G.addXP(streak, function(newLevel, levelInfo){
     showLevelUp(newLevel, levelInfo);
   });
+
+  const taskCategory = DAILY_TASK_TYPE_MAP[exType];
+  if(taskCategory) G.incrementDailyTask(taskCategory);
 
   const bXP = document.getElementById('bXP');
   if(bXP){
@@ -1121,7 +1126,7 @@ function checkCurrentAnswer(){
     recordCheck(elapsed, typeSelect.value, effectiveRight);
     updateExSrs(typeSelect.value, item, isRight, hintUsed);
     appendSrsInfo(typeSelect.value, item, effectiveRight);
-    processGamification(effectiveRight);
+    processGamification(effectiveRight, typeSelect.value);
     if(!isWrongMode) checkLevelSuggestion(effectiveRight);
     answered = true;
     const hb = document.getElementById("hintBtn");
@@ -1173,7 +1178,7 @@ function checkCurrentAnswer(){
   recordCheck(elapsed, typeSelect.value, isCorrect);
   updateExSrs(typeSelect.value, item, isCorrect, hintUsed);
   appendSrsInfo(typeSelect.value, item, isCorrect);
-  processGamification(isCorrect);
+  processGamification(isCorrect, typeSelect.value);
   if(!isWrongMode) checkLevelSuggestion(isCorrect);
   answered = true;
   if(hintBtnMC) hintBtnMC.style.display = "none";

@@ -102,6 +102,28 @@
     RKStorage.set('RK_DAILY_QUEST', d);
   }
 
+  /* Today's Mission — the literal 4-task daily checklist (vocab/sentences/
+     listening/speaking). Vocab and sentences are counted here from real
+     correct exercise answers; listening and speaking reuse the daily-
+     challenge flags listening.js and pronunciation.js already track
+     (RK_DAILY_LISTEN / RK_DAILY_PRON), read directly by the pages that
+     render the mission — nothing here fabricates those two. */
+  var DAILY_TASK_GOALS = { vocab: 5, sentences: 3 };
+
+  function getDailyTasks() {
+    var today = new Date().toISOString().slice(0, 10);
+    var d = RKStorage.get('RK_DAILY_TASKS', null);
+    if (!d || d.date !== today) return { date: today, vocab: 0, sentences: 0 };
+    return d;
+  }
+  function incrementDailyTask(category) {
+    if (!DAILY_TASK_GOALS[category]) return getDailyTasks();
+    var d = getDailyTasks();
+    if (d[category] < DAILY_TASK_GOALS[category]) d[category]++;
+    RKStorage.set('RK_DAILY_TASKS', d);
+    return d;
+  }
+
   function getLevelInfo(xp) {
     var info = XP_LEVELS[0];
     for (var i = 0; i < XP_LEVELS.length; i++) {
@@ -175,6 +197,7 @@
 
   window.RKGamification = {
     DAILY_GOAL:      DAILY_GOAL,
+    DAILY_TASK_GOALS: DAILY_TASK_GOALS,
     XP_LEVELS:       XP_LEVELS,
     BADGE_DEFS:      BADGE_DEFS,
     getXPData:       getXPData,
@@ -185,6 +208,8 @@
     checkBadges:     checkBadges,
     incrementQuest:  incrementQuest,
     getQuestData:    getQuestData,
+    getDailyTasks:   getDailyTasks,
+    incrementDailyTask: incrementDailyTask,
     getEarnedBadges: getEarnedBadges,
     getCoins:          getCoins,
     addCoins:          addCoins,

@@ -82,8 +82,12 @@ a{color:inherit}
 .dash-cta{display:flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;font-weight:800;color:var(--lavender)}
 
 /* ── DAILY MISSION ────────────────────────────────────── */
-.dash-mission-list{margin-top:10px;display:flex;flex-direction:column;gap:8px}
-.dash-mission-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text)}
+.dash-mission-list{margin-top:10px;display:flex;flex-direction:column;gap:2px}
+.dash-mission-item{
+  display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);
+  text-decoration:none;padding:7px 4px;border-radius:10px;margin:0 -4px;transition:background .15s;
+}
+.dash-mission-item:hover{background:var(--lavender-soft)}
 .dash-mission-item.done{color:var(--text-low);text-decoration:line-through}
 .dash-mission-check{font-size:15px;flex-shrink:0}
 .dash-cta-link{display:inline-block;margin-top:14px;font-size:13px;font-weight:800;color:var(--lavender);text-decoration:none}
@@ -237,11 +241,14 @@ var UI = {
     continueEyebrow:'CONTINUĂ ÎNVĂȚAREA', continueCta:'CONTINUĂ →',
     startTitle:'ÎNCEPE CĂLĂTORIA TA COREEANĂ', startSub:'Prima ta lecție te așteaptă.', startCta:'START →',
     levelDoneTitle:'Nivel complet! 🎉', levelDoneSub:'Ai parcurs toate lecțiile de la acest nivel.',
-    missionTitle:"MISIUNEA DE AZI", missionCta:'Deschide misiunea de azi →', missionDoneCta:'Misiune completă azi! ✨',
-    vocabItem:function(n){ return n + ' cuvinte de recapitulat'; },
-    hanjaItem:function(n){ return n + ' caractere hanja de recapitulat'; },
-    exItem:function(n){ return n + ' exerciții de recapitulat'; },
-    allCaughtUp:'Totul e la zi azi',
+    missionTitle:"MISIUNEA DE AZI", missionCta:'Vezi progresul complet →', missionDoneCta:'Misiune completă azi! ✨',
+    missionVocab:function(n){ return n + '/5 cuvinte noi'; },
+    missionSentences:function(n){ return n + '/3 propoziții'; },
+    missionListening:'2 minute de ascultare',
+    missionSpeaking:'1 exercițiu de vorbire',
+    missionCompleteTitle:'MISIUNE COMPLETĂ!',
+    missionCompleteSub:function(xp){ return 'Ai câștigat +' + xp + ' XP · Streak-ul continuă! 🔥'; },
+    missionCompleteTap:'Atinge oriunde pentru a continua',
     focusEyebrow:'FOCUS AZI', focusCta:'Începe →',
     focusReview:'Ai multe de recapitulat — hai să le prindem din urmă.',
     focusMap:{
@@ -270,11 +277,14 @@ var UI = {
     continueEyebrow:'CONTINUE LEARNING', continueCta:'CONTINUE →',
     startTitle:'START YOUR KOREAN JOURNEY', startSub:'Your first lesson is waiting.', startCta:'START →',
     levelDoneTitle:'Level complete! 🎉', levelDoneSub:"You've covered every lesson at this level.",
-    missionTitle:"TODAY'S MISSION", missionCta:"Open today's mission →", missionDoneCta:'Daily mission complete! ✨',
-    vocabItem:function(n){ return n + ' words to review'; },
-    hanjaItem:function(n){ return n + ' hanja characters to review'; },
-    exItem:function(n){ return n + ' exercises to review'; },
-    allCaughtUp:"You're all caught up today",
+    missionTitle:"TODAY'S MISSION", missionCta:'See full progress →', missionDoneCta:'Daily mission complete! ✨',
+    missionVocab:function(n){ return n + '/5 new words'; },
+    missionSentences:function(n){ return n + '/3 sentences'; },
+    missionListening:'2 minutes of listening',
+    missionSpeaking:'1 speaking exercise',
+    missionCompleteTitle:'MISSION COMPLETE!',
+    missionCompleteSub:function(xp){ return 'You earned +' + xp + ' XP · Streak continued! 🔥'; },
+    missionCompleteTap:'Tap anywhere to continue',
     focusEyebrow:'FOCUS TODAY', focusCta:'Start →',
     focusReview:"You've got a lot to review — let's catch up.",
     focusMap:{
@@ -419,7 +429,13 @@ function renderContinue(){
   }
 }
 
-/* ── DAILY MISSION (reuses the exact SRS due-counts + daily quest already tracked app-wide) ── */
+/* ── DAILY MISSION ─────────────────────────────────────────
+   The literal 4-task daily ritual: 5 vocab, 3 sentences, one
+   listening session, one speaking exercise. Vocab/sentences come
+   from real correct answers tracked in RK_DAILY_TASKS (see
+   gamification.js); listening/speaking reuse the daily-challenge
+   flags listening.js and pronunciation.js already set — nothing
+   here is a fabricated stat. */
 function dueCount(key){
   if(!window.RKSrs) return 0;
   var data = RKSrs.load(key);
@@ -428,32 +444,88 @@ function dueCount(key){
   Object.keys(data).forEach(function(k){ if(data[k] && data[k].due <= now) n++; });
   return n;
 }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function isDailyFlagDone(key){
+  try {
+    var d = JSON.parse(localStorage.getItem(key) || 'null');
+    return !!(d && d.date === todayStr() && d.done);
+  } catch(e){ return false; }
+}
 function renderMission(){
   var l = L();
   document.getElementById('missionTitle').textContent = l.missionTitle;
 
-  var vocab = dueCount('RK_FC_SRS');
-  var hanja = dueCount('RK_HJ_SRS');
-  var ex = dueCount('RK_EX_SRS');
+  var tasks = window.RKGamification ? RKGamification.getDailyTasks() : {vocab:0, sentences:0};
+  var vocabDone = tasks.vocab >= 5;
+  var sentDone = tasks.sentences >= 3;
+  var listenDone = isDailyFlagDone('RK_DAILY_LISTEN');
+  var speakDone = isDailyFlagDone('RK_DAILY_PRON');
+
   var items = [
-    { count: vocab, label: l.vocabItem(vocab) },
-    { count: hanja, label: l.hanjaItem(hanja) },
-    { count: ex, label: l.exItem(ex) }
+    { done: vocabDone, label: l.missionVocab(Math.min(tasks.vocab,5)), href: 'exercises.html?type=ko-ro' },
+    { done: sentDone, label: l.missionSentences(Math.min(tasks.sentences,3)), href: 'exercises.html?type=puzzle' },
+    { done: listenDone, label: l.missionListening, href: 'listening.html' },
+    { done: speakDone, label: l.missionSpeaking, href: 'reading.html' }
   ];
 
   document.getElementById('missionList').innerHTML = items.map(function(it){
-    var done = it.count === 0;
-    return '<div class="dash-mission-item' + (done ? ' done' : '') + '">' +
-      '<span class="dash-mission-check">' + (done ? '☑' : '☐') + '</span>' +
+    return '<a class="dash-mission-item' + (it.done ? ' done' : '') + '" href="' + it.href + '">' +
+      '<span class="dash-mission-check">' + (it.done ? '☑' : '☐') + '</span>' +
       '<span>' + it.label + '</span>' +
-    '</div>';
-  }).join('') || '<div class="dash-mission-item done"><span class="dash-mission-check">✨</span><span>' + l.allCaughtUp + '</span></div>';
+    '</a>';
+  }).join('');
 
-  var quest = window.RKGamification ? RKGamification.getQuestData() : {done:0};
-  var goal = window.RKGamification ? RKGamification.DAILY_GOAL : 10;
-  var pct = Math.min(100, Math.round((quest.done || 0) / goal * 100));
+  var doneCount = items.filter(function(it){ return it.done; }).length;
+  var pct = Math.round(doneCount / items.length * 100);
   document.getElementById('missionBar').style.width = pct + '%';
-  document.getElementById('missionCta').textContent = quest.completedToday ? l.missionDoneCta : l.missionCta;
+
+  var allDone = doneCount === items.length;
+  var ctaEl = document.getElementById('missionCta');
+  ctaEl.textContent = allDone ? l.missionDoneCta : l.missionCta;
+  ctaEl.href = allDone ? 'profile.html' : (items.filter(function(it){ return !it.done; })[0] || {}).href || 'today.html';
+
+  if(allDone) maybeAwardMissionComplete(l);
+}
+
+var MISSION_XP_BONUS = 50;
+function maybeAwardMissionComplete(l){
+  if(!window.RKGamification) return;
+  var flagKey = 'RK_DAILY_MISSION_AWARDED';
+  var rec = null;
+  try { rec = JSON.parse(localStorage.getItem(flagKey) || 'null'); } catch(e){}
+  if(rec && rec.date === todayStr()) return;
+  localStorage.setItem(flagKey, JSON.stringify({date: todayStr()}));
+  RKGamification.addXPBonus(MISSION_XP_BONUS);
+  if(window.RKStreak) RKStreak.touch();
+  showMissionCompleteOverlay(l);
+}
+
+function showMissionCompleteOverlay(l){
+  var backdrop = document.createElement('div');
+  backdrop.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(18,19,28,.55);' +
+    'backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;cursor:pointer;' +
+    'animation:dashFadeIn .25s ease both';
+  var card = document.createElement('div');
+  card.style.cssText = 'background:var(--card);border-radius:24px;padding:36px 32px;text-align:center;' +
+    'max-width:320px;width:88vw;box-shadow:0 20px 60px rgba(0,0,0,.25);' +
+    'animation:dashPop .4s cubic-bezier(.34,1.56,.64,1) both';
+  card.innerHTML =
+    '<div style="font-size:48px;line-height:1">🎉</div>' +
+    '<div style="font-size:20px;font-weight:900;margin-top:12px;color:var(--text);letter-spacing:.02em">' + l.missionCompleteTitle + '</div>' +
+    '<div style="font-size:14px;color:var(--text-mid);margin-top:8px">' + l.missionCompleteSub(MISSION_XP_BONUS) + '</div>' +
+    '<div style="font-size:11px;color:var(--text-low);margin-top:16px">' + l.missionCompleteTap + '</div>';
+  if(!document.getElementById('dashMissionKeyframes')){
+    var style = document.createElement('style');
+    style.id = 'dashMissionKeyframes';
+    style.textContent =
+      '@keyframes dashFadeIn{from{opacity:0}to{opacity:1}}' +
+      '@keyframes dashPop{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:scale(1)}}';
+    document.head.appendChild(style);
+  }
+  backdrop.appendChild(card);
+  document.body.appendChild(backdrop);
+  backdrop.addEventListener('click', function(){ backdrop.remove(); });
+  setTimeout(function(){ if(backdrop.parentNode) backdrop.remove(); }, 4500);
 }
 
 /* ── PERSONALIZED "FOCUS TODAY" (section 23) ──────────────────
