@@ -1,4 +1,4 @@
-const CACHE = 'rk-v135';
+const CACHE = 'rk-v136';
 
 const STATIC = [
   './',
@@ -103,7 +103,8 @@ const STATIC = [
   './data/numbers.json',
   './data/journal-prompts.json',
   './data/honorifics.json',
-  './data/phrases.json'
+  './data/phrases.json',
+  './data/culture-notes.json'
 ];
 
 /* ── Install: cache each file individually so one slow/missing file

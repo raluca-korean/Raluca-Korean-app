@@ -95,6 +95,9 @@ a{color:inherit}
   padding:20px;margin-top:16px;box-shadow:0 4px 18px var(--shadow);
 }
 .dash-card-eyebrow{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--lavender)}
+.dash-card-eyebrow-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dash-rom-toggle{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--text-low);cursor:pointer;text-transform:none;letter-spacing:0}
+.dash-rom-toggle input{accent-color:var(--lavender);width:28px;height:16px;cursor:pointer}
 .dash-bar-bg{height:8px;background:var(--bar-bg);border-radius:5px;overflow:hidden;margin-top:12px}
 .dash-bar{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--lavender),var(--pink));transition:width .8s cubic-bezier(.4,0,.2,1)}
 
@@ -160,6 +163,14 @@ a{color:inherit}
   padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;
 }
 .dash-wod-btn.saved{background:var(--pink-soft);color:var(--pink)}
+
+/* ── CULTURE NOTE (original phrases + explanations — no lyrics/dialogue) ── */
+.dash-culture-row{display:flex;align-items:center;gap:12px;margin-top:10px}
+.dash-culture-mascot{font-size:30px;line-height:1;flex-shrink:0}
+.dash-culture-ko{font-family:'Noto Sans KR',sans-serif;font-size:20px;font-weight:900}
+.dash-culture-rom{font-size:12px;color:var(--text-low);margin-top:2px;font-style:italic}
+.dash-culture-meaning{font-size:14px;font-weight:700;color:var(--text);margin-top:10px}
+.dash-culture-note{font-size:13px;color:var(--text-mid);margin-top:6px;line-height:1.5}
 
 /* ── PROGRESS PREVIEW ─────────────────────────────────── */
 .dash-skill{margin-top:12px}
@@ -247,7 +258,13 @@ a{color:inherit}
   <button class="dash-flip-next" id="flipNextBtn" type="button">Next card →</button>
 
   <div class="dash-card">
-    <div class="dash-card-eyebrow">오늘의 표현</div>
+    <div class="dash-card-eyebrow-row">
+      <span class="dash-card-eyebrow">오늘의 표현</span>
+      <label class="dash-rom-toggle">
+        <span id="romToggleLbl">Rom</span>
+        <input type="checkbox" id="romToggle">
+      </label>
+    </div>
     <div class="dash-wod-tag" id="wodTag"></div>
     <div class="dash-wod-ko kr" id="wodKo"></div>
     <div class="dash-wod-rom" id="wodRom"></div>
@@ -256,6 +273,19 @@ a{color:inherit}
       <button class="dash-wod-btn" id="wodPlayBtn" type="button">🔊 Listen</button>
       <button class="dash-wod-btn" id="wodSaveBtn" type="button">☆ Save</button>
     </div>
+  </div>
+
+  <div class="dash-card">
+    <div class="dash-card-eyebrow" id="cultureTitle">CULTURĂ K</div>
+    <div class="dash-culture-row">
+      <span class="dash-culture-mascot" aria-hidden="true">🎬</span>
+      <div>
+        <div class="dash-culture-ko kr" id="cultureKo"></div>
+        <div class="dash-culture-rom" id="cultureRom"></div>
+      </div>
+    </div>
+    <div class="dash-culture-meaning" id="cultureMeaning"></div>
+    <div class="dash-culture-note" id="cultureNote"></div>
   </div>
 
   <div class="dash-card">
@@ -323,7 +353,8 @@ var UI = {
     progressTitle:'CUNOȘTINȚELE TALE', progressLink:'Progres complet →',
     vocab:'Vocabular', grammar:'Gramatică', sentences:'Propoziții', listening:'Ascultare',
     exploreLink:'🧭 Vezi toate funcțiile',
-    flipHint:'Atinge pentru traducere', flipNext:'Cardul următor →'
+    flipHint:'Atinge pentru traducere', flipNext:'Cardul următor →',
+    cultureTitle:'CULTURĂ K', romLbl:'Rom'
   },
   en:{
     greetSub: AUDIENCE === 'student' ? 'Ready for today\'s challenge? 🎒' : 'Ready for today\'s Korean?',
@@ -363,7 +394,8 @@ var UI = {
     progressTitle:'YOUR KOREAN', progressLink:'Full progress →',
     vocab:'Vocabulary', grammar:'Grammar', sentences:'Sentences', listening:'Listening',
     exploreLink:'🧭 See every feature',
-    flipHint:'Tap to reveal', flipNext:'Next card →'
+    flipHint:'Tap to reveal', flipNext:'Next card →',
+    cultureTitle:'K-CULTURE', romLbl:'Rom'
   }
 };
 function L(){ return UI[LANG]; }
@@ -386,6 +418,8 @@ function applyLang(){
   renderMission();
   renderWordOfDay();
   renderFlipCard();
+  renderCultureNote();
+  applyRomVisibility();
   renderProgress();
 }
 document.getElementById('btnRo').addEventListener('click', function(){ LANG = 'ro'; localStorage.setItem('RK_LANG','ro'); applyLang(); });
@@ -395,6 +429,11 @@ document.getElementById('flipCard').addEventListener('keydown', function(e){
   if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleFlipCard(); }
 });
 document.getElementById('flipNextBtn').addEventListener('click', function(e){ e.stopPropagation(); nextFlipCard(); });
+document.getElementById('romToggle').checked = getShowRom();
+document.getElementById('romToggle').addEventListener('change', function(e){
+  localStorage.setItem('RK_SHOW_ROM', e.target.checked ? '1' : '0');
+  applyRomVisibility();
+});
 
 function applyDarkIcon(){
   document.getElementById('darkToggle').textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
@@ -749,6 +788,38 @@ function nextFlipCard(){
 }
 function toggleFlipCard(){
   document.getElementById('flipInner').classList.toggle('flipped');
+}
+
+/* ── ROMANIZATION TOGGLE (shared by Word of Day / Flip Card / Culture Note) ── */
+function getShowRom(){ return localStorage.getItem('RK_SHOW_ROM') !== '0'; }
+function applyRomVisibility(){
+  var show = getShowRom();
+  ['wodRom','flipRom','cultureRom'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = show ? '' : 'none';
+  });
+}
+
+/* ── K-CULTURE NOTE (original phrases + explanations we wrote ourselves —
+   never lyrics or dialogue from a specific show/song, to stay copyright-safe) ── */
+var _culturePool = null;
+function renderCultureNote(){
+  document.getElementById('cultureTitle').textContent = L().cultureTitle;
+  document.getElementById('romToggleLbl').textContent = L().romLbl;
+  if(!_culturePool){
+    fetch('./data/culture-notes.json').then(function(r){ return r.json(); }).then(function(data){
+      _culturePool = data.notes || [];
+      renderCultureNote();
+    });
+    return;
+  }
+  if(!_culturePool.length) return;
+  var epochDay = Math.floor(Date.now() / 86400000);
+  var note = _culturePool[(epochDay + 5) % _culturePool.length];
+  document.getElementById('cultureKo').textContent = note.ko;
+  document.getElementById('cultureRom').textContent = note.rom || '';
+  document.getElementById('cultureMeaning').textContent = note[LANG] || note.ro;
+  document.getElementById('cultureNote').textContent = note['note_' + LANG] || note.note_ro;
 }
 
 /* ── PROGRESS PREVIEW (same real RK_STATS.byType data as profile.html) ── */
