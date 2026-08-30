@@ -1,4 +1,4 @@
-const CACHE = 'rk-v130';
+const CACHE = 'rk-v131';
 
 const STATIC = [
   './',
@@ -112,8 +112,12 @@ const STATIC = [
 
 /* ── Install: cache each file individually so one slow/missing file
    can't abort the whole installation (addAll is atomic and would
-   leave the user with zero cache on a flaky mobile connection). ── */
+   leave the user with zero cache on a flaky mobile connection). ──
+   Also record whether a previous SW version was already active, so
+   activate can tell a real update apart from a brand-new install. */
+let hadPreviousVersion = false;
 self.addEventListener('install', event => {
+  hadPreviousVersion = !!self.registration.active;
   event.waitUntil(
     caches.open(CACHE).then(cache =>
       Promise.allSettled(
@@ -126,7 +130,10 @@ self.addEventListener('install', event => {
 });
 
 /* ── Activate: clean up old caches, but keep the study-meta cache
-   so push-notification data survives SW updates. ── */
+   so push-notification data survives SW updates. Only reload open
+   tabs when this is an actual update over a previous version — a
+   brand-new install has nothing to reload for, and reloading anyway
+   silently doubled every first-visit network request. ── */
 self.addEventListener('activate', event => {
   const KEEP = new Set([CACHE, 'rk-study-meta']);
   event.waitUntil(
@@ -135,9 +142,12 @@ self.addEventListener('activate', event => {
         keys.filter(k => !KEEP.has(k)).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
-      .then(() => self.clients.matchAll({ type: 'window' }).then(clients =>
-        clients.forEach(c => c.postMessage({ type: 'SW_UPDATED' }))
-      ))
+      .then(() => {
+        if (!hadPreviousVersion) return;
+        return self.clients.matchAll({ type: 'window' }).then(clients =>
+          clients.forEach(c => c.postMessage({ type: 'SW_UPDATED' }))
+        );
+      })
   );
 });
 
