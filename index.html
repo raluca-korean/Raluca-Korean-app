@@ -71,6 +71,17 @@ body.audience-student .dash-stat{
   background:linear-gradient(135deg,var(--lavender-soft),var(--pink-soft));
   border-color:transparent;
 }
+.dash-flame{display:inline-block;transform-origin:50% 85%}
+.dash-flame.lit{animation:dashFlameFlicker 1.6s ease-in-out infinite}
+@keyframes dashFlameFlicker{
+  0%,100%{transform:scale(1) rotate(0deg);filter:brightness(1) drop-shadow(0 0 0 rgba(249,115,22,0))}
+  25%{transform:scale(1.08) rotate(-3deg);filter:brightness(1.15) drop-shadow(0 0 4px rgba(249,115,22,.5))}
+  50%{transform:scale(0.97) rotate(2deg);filter:brightness(1.05) drop-shadow(0 0 2px rgba(249,115,22,.35))}
+  75%{transform:scale(1.05) rotate(-1deg);filter:brightness(1.2) drop-shadow(0 0 5px rgba(249,115,22,.55))}
+}
+@media (prefers-reduced-motion: reduce){
+  .dash-flame.lit{animation:none}
+}
 
 /* ── CARDS ────────────────────────────────────────────── */
 .dash-card{
@@ -159,7 +170,7 @@ body.audience-student .dash-stat{
     <div class="dash-greet-kr kr">안녕하세요! 👋</div>
     <div class="dash-greet-sub" id="greetSub">Ready for today's Korean?</div>
     <div class="dash-stats">
-      <div class="dash-stat">🔥 <span id="statStreak">0</span></div>
+      <div class="dash-stat"><span class="dash-flame" id="statFlame">🔥</span> <span id="statStreak">0</span></div>
       <div class="dash-stat">⭐ <span id="statXp">0</span> XP</div>
       <div class="dash-stat">🎯 Lv.<span id="statLevel">1</span></div>
     </div>
@@ -355,6 +366,7 @@ function renderStats(){
   document.getElementById('statStreak').textContent = streak.days;
   document.getElementById('statXp').textContent = xpData.total;
   document.getElementById('statLevel').textContent = lvl.current.level;
+  document.getElementById('statFlame').classList.toggle('lit', streak.days > 0);
 }
 
 /* ── QUICK PRACTICE ───────────────────────────────────── */
@@ -527,13 +539,38 @@ function showMissionCompleteOverlay(l){
     style.id = 'dashMissionKeyframes';
     style.textContent =
       '@keyframes dashFadeIn{from{opacity:0}to{opacity:1}}' +
-      '@keyframes dashPop{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:scale(1)}}';
+      '@keyframes dashPop{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:scale(1)}}' +
+      '@keyframes dashConfettiFall{' +
+        '0%{transform:translateY(0) rotate(0deg);opacity:1}' +
+        '100%{transform:translateY(var(--fall)) rotate(var(--spin));opacity:0}' +
+      '}';
     document.head.appendChild(style);
   }
   backdrop.appendChild(card);
+  fireConfetti(backdrop);
   document.body.appendChild(backdrop);
   backdrop.addEventListener('click', function(){ backdrop.remove(); });
   setTimeout(function(){ if(backdrop.parentNode) backdrop.remove(); }, 4500);
+}
+
+function fireConfetti(container){
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var colors = ['#db2777','#8b7cd8','#f59e0b','#22c55e','#3b82f6'];
+  for(var i = 0; i < 36; i++){
+    var piece = document.createElement('div');
+    var color = colors[i % colors.length];
+    var left = Math.random() * 100;
+    var fall = 60 + Math.random() * 30;
+    var spin = (Math.random() > 0.5 ? 1 : -1) * (180 + Math.random() * 360);
+    var duration = 1.6 + Math.random() * 1.2;
+    var delay = Math.random() * 0.3;
+    piece.style.cssText =
+      'position:absolute;top:-10px;left:' + left + '%;width:8px;height:8px;background:' + color + ';' +
+      (i % 3 === 0 ? 'border-radius:50%;' : '') +
+      '--fall:' + fall + 'vh;--spin:' + spin + 'deg;' +
+      'animation:dashConfettiFall ' + duration + 's ease-in ' + delay + 's both';
+    container.appendChild(piece);
+  }
 }
 
 /* ── PERSONALIZED "FOCUS TODAY" (section 23) ──────────────────
