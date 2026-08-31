@@ -22,8 +22,8 @@ window.RKNav = (function () {
 
   // Self-contained styling: several host pages (index/learn/profile/review)
   // don't load theme-anime.css, so the rule can't live there. Constant
-  // forest-green bar regardless of page/theme (brand element, like the
-  // hero cards) — var(--forest) lets a page override it, #1c4a3a is the
+  // Seoul Violet bar regardless of page/theme (brand element, like the
+  // hero cards) — var(--forest) lets a page override it, #6C5CE7 is the
   // fallback for pages (e.g. play.html) that don't define that token.
   function _ensureStyle() {
     if (document.getElementById('rkNavStyle')) return;
@@ -31,13 +31,31 @@ window.RKNav = (function () {
     style.id = 'rkNavStyle';
     style.textContent =
       '.rk-nav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:space-around;' +
-      'background:var(--forest,#1c4a3a);border-top:none;' +
+      'background:var(--forest,#6C5CE7);border-top:none;' +
       'padding:8px 4px calc(8px + env(safe-area-inset-bottom))}' +
       '.rk-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;' +
       'color:rgba(255,255,255,.65);font-size:10px;font-weight:700;padding:4px 10px;border-radius:10px}' +
-      '.rk-nav-item.active{color:var(--gold,#d9ae52)}' +
-      '.rk-nav-icon{font-size:18px}';
+      '.rk-nav-item.active{color:var(--gold,#F4C95D)}' +
+      '.rk-nav-icon{font-size:18px;transition:transform .3s ease}' +
+      /* Student mode: playful pop on the active icon. Adult mode stays calm/static —
+         same brand colors either way, only the animation intensity differs. */
+      'body.audience-student .rk-nav-item.active .rk-nav-icon{animation:rk-nav-pop .4s ease}' +
+      '@keyframes rk-nav-pop{0%{transform:scale(1)}45%{transform:scale(1.22)}100%{transform:scale(1)}}' +
+      /* Adult mode: same Seoul Bloom palette, pink dialed back to a quiet accent
+         instead of a loud highlight (student keeps the full-saturation default). */
+      'body.audience-adult{--pink:#D98BAA;--rk-pink:#D98BAA}' +
+      'body.audience-adult.dark-mode{--pink:#D9A0B7;--rk-pink:#D9A0B7}';
     document.head.appendChild(style);
+  }
+
+  // RK_AUDIENCE ('student'|'adult', set in onboarding.html / toggled in
+  // profile.html) already drives content elsewhere (gamification goals,
+  // stories, conversation). Here it only flips a body class so CSS can
+  // dial the same brand palette's intensity up/down — no new content.
+  function _applyAudience() {
+    var aud = localStorage.getItem('RK_AUDIENCE') === 'student' ? 'student' : 'adult';
+    document.body.classList.remove('audience-student', 'audience-adult');
+    document.body.classList.add('audience-' + aud);
   }
 
   function render(lang) {
@@ -55,6 +73,7 @@ window.RKNav = (function () {
   function init(key) {
     activeKey = key;
     render(localStorage.getItem('RK_LANG') || 'ro');
+    _applyAudience();
   }
 
   function setLang(lang) {
