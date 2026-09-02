@@ -8,7 +8,9 @@ const ROLE_COLORS = {
   "Adverb":"#8e44ad",
   "Modificator":"#d4ac0d","Modifier":"#d4ac0d",
   "Conector":"#e67e22","Connector":"#e67e22",
-  "Gramatică":"#1abc9c","Grammar":"#1abc9c"
+  "Gramatică":"#1abc9c","Grammar":"#1abc9c",
+  "Loc":"#2ecc71","Place":"#2ecc71",
+  "Timp":"#f39c12","Time":"#f39c12"
 };
 const NEW_PER_SESSION = 20;
 
@@ -702,7 +704,7 @@ async function loadVocab() {
     if (!resp.ok) throw new Error("HTTP " + resp.status);
     const vocab = await resp.json();
     const map   = new Map();
-    const cats  = ["subjects","nouns","objects","verbs","adjectives","adverbs","modifiers","connectors","grammar"];
+    const cats  = ["subjects","nouns","objects","verbs","adjectives","adverbs","modifiers","connectors","grammar","places","times"];
     const catLabels = {
       subjects:   {ro:"Subiect",   en:"Subject"},
       nouns:      {ro:"Substantiv",en:"Noun"},
@@ -712,7 +714,9 @@ async function loadVocab() {
       adverbs:    {ro:"Adverb",    en:"Adverb"},
       modifiers:  {ro:"Modificator",en:"Modifier"},
       connectors: {ro:"Conector",  en:"Connector"},
-      grammar:    {ro:"Gramatică", en:"Grammar"}
+      grammar:    {ro:"Gramatică", en:"Grammar"},
+      places:     {ro:"Loc",       en:"Place"},
+      times:      {ro:"Timp",      en:"Time"}
     };
     // Support both flat array (new) and nested object (old) format
     const flat = Array.isArray(vocab) ? vocab : cats.flatMap(cat =>
@@ -806,9 +810,33 @@ const CAT_EMOJI = {
   "Adverb":"⚡",
   "Modificator":"🔧", "Modifier":"🔧",
   "Conector":"🔗", "Connector":"🔗",
-  "Gramatică":"📚", "Grammar":"📚"
+  "Gramatică":"📚", "Grammar":"📚",
+  "Loc":"📍", "Place":"📍",
+  "Timp":"⏰", "Time":"⏰"
+};
+// Word-specific overrides — some concrete nouns (animals) get a generic
+// category icon (📖) that doesn't fit the word at all; give those a
+// recognizable emoji instead, keyed by the Korean headword.
+const WORD_EMOJI = {
+  "개":"🐶", "강아지":"🐶",
+  "고양이":"🐱",
+  "닭":"🐔",
+  "돼지":"🐷",
+  "물고기":"🐟", "생선":"🐟",
+  "새":"🐦",
+  "소":"🐄",
+  "말":"🐴",
+  "사자":"🦁",
+  "호랑이":"🐯",
+  "코끼리":"🐘",
+  "원숭이":"🐵",
+  "토끼":"🐰",
+  "곰":"🐻",
+  "뱀":"🐍",
+  "오리":"🦆"
 };
 function getWordEmoji(word) {
+  if (word.ko && WORD_EMOJI[word.ko]) return WORD_EMOJI[word.ko];
   const cat = getCat(word);
   return cat ? (CAT_EMOJI[cat] || "💬") : "💬";
 }
