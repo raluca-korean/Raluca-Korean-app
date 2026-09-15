@@ -52,6 +52,21 @@
 .td-item.empty .td-count{background:var(--rk-bg-flat);color:var(--rk-muted-ui)}
 .td-arrow{color:var(--rk-muted-ui);font-size:18px;flex-shrink:0}
 
+/* ── TOPIK CURRICULUM CARD (auto level + daily cross-page stops) ── */
+.td-level-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.td-level-badge{font-size:15px;font-weight:900;color:var(--rk-heading)}
+.td-level-pct{font-size:12px;font-weight:700;color:var(--rk-muted)}
+.td-level-maxed{font-size:13px;font-weight:700;color:var(--rk-muted);text-align:center;padding:6px 0}
+.td-stops{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.td-stop{
+  display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;
+  background:var(--rk-bg-flat);border:1.5px solid var(--rk-stroke);
+  font-size:12px;font-weight:700;color:var(--rk-heading);text-decoration:none;
+  transition:border-color .15s,transform .12s;
+}
+.td-stop:hover{border-color:rgba(28,74,58,.4);transform:translateY(-1px)}
+.td-stop-ico{font-size:14px}
+
 /* ── STREAK CARD ──────────────────────────────────────── */
 .td-card-section{text-align:center}
 .td-card-section h3{margin-bottom:12px}
@@ -116,6 +131,7 @@
 /* ── DARK MODE ────────────────────────────────────────── */
 body.dark-mode .td-metric,body.dark-mode .td-item{background:#211d17;border-color:rgba(217,174,82,.22)}
 body.dark-mode .td-item.empty .td-count{background:rgba(255,255,255,.06)}
+body.dark-mode .td-stop{background:rgba(255,255,255,.05);border-color:rgba(217,174,82,.20)}
 body.dark-mode .pl-level-btn,body.dark-mode .pl-date-input{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)}
 body.dark-mode .pl-pace-tile{background:#211d17;border-color:rgba(217,174,82,.22)}
 body.dark-mode .pl-bar-bg{background:rgba(255,255,255,.09)}
@@ -147,6 +163,7 @@ body.dark-mode .pl-bar-bg{background:rgba(255,255,255,.09)}
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/srs.js"></script>
+<script src="./js/core/level-progress.js"></script>
 <script src="./js/core/gamification.js"></script>
 <script src="./js/core/streak.js"></script>
 <script src="./js/core/lang-picker.js"></script>
@@ -190,7 +207,15 @@ var UI = {
     plChangeGoal:'✎ Schimbă planul',
     plAllDoneTitle:'Ai acoperit tot conținutul! 🎉',
     plAllDoneSub:'Toate lecțiile și exercițiile până la nivelul ales sunt parcurse cel puțin o dată.',
-    plLoadErr:'Nu s-au putut încărca datele.'
+    plLoadErr:'Nu s-au putut încărca datele.',
+    curTitle:'🗺️ Nivelul tău TOPIK',
+    curSub:'Fiecare zi adaugă puțin la lecții, exerciții, ascultare și citire — nivelul crește singur',
+    curPct:function(pct){ return pct + '% parcurs'; },
+    curMaxed:'Ai atins nivelul maxim — TOPIK 6! 🏯',
+    curStopLessons:'📖 Lecții', curStopExercises:'📝 Exerciții', curStopListening:'🎧 Ascultare', curStopReading:'📕 Citire',
+    curLevelUpTitle:function(lvl){ return 'Nivel nou: TOPIK ' + lvl + '! 🎉'; },
+    curLevelUpSub:'Ai parcurs destul din nivelul anterior — conținutul de azi e la noul nivel.',
+    curLevelUpTap:'Atinge oriunde pentru a continua'
   },
   en:{
     title:'🗓️ Today', sub:"Today's review and your TOPIK plan, in one place",
@@ -224,7 +249,15 @@ var UI = {
     plChangeGoal:'✎ Change plan',
     plAllDoneTitle:"You've covered everything! 🎉",
     plAllDoneSub:'Every lesson and exercise up to your chosen level has been attempted at least once.',
-    plLoadErr:'Could not load the data.'
+    plLoadErr:'Could not load the data.',
+    curTitle:'🗺️ Your TOPIK level',
+    curSub:"Every day adds a bit to lessons, exercises, listening and reading — the level climbs on its own",
+    curPct:function(pct){ return pct + '% cleared'; },
+    curMaxed:"You've reached the top — TOPIK 6! 🏯",
+    curStopLessons:'📖 Lessons', curStopExercises:'📝 Exercises', curStopListening:'🎧 Listening', curStopReading:'📕 Reading',
+    curLevelUpTitle:function(lvl){ return 'New level: TOPIK ' + lvl + '! 🎉'; },
+    curLevelUpSub:"You've cleared enough of the last level — today's content is at the new one.",
+    curLevelUpTap:'Tap anywhere to continue'
   }
 };
 function L(){ return UI[LANG]; }
@@ -306,6 +339,8 @@ function render(){
     '<div class="td-hero-lbl">' + (LANG==='ro' ? l.heroLbl : (total===1 ? l.heroLblOne : l.heroLbl)) + '</div>' +
   '</div>';
 
+  html += '<div id="curriculumSection"></div>';
+
   html += '<div class="card td-journey">' +
     '<div class="td-journey-row">' +
       '<div class="td-journey-streak">🔥 <b>' + streak.days + '</b> ' + l.streak + '</div>' +
@@ -352,7 +387,95 @@ function render(){
   document.getElementById('mainContent').innerHTML = html;
   setupStreakCard(streak, xpData, lvl);
   renderPlanner();
+  renderCurriculum();
   if(justCompleted) setTimeout(function(){ celebrateMission(bonusAmount, coinBonusAmount); }, 400);
+}
+
+// ── TOPIK CURRICULUM (auto level 1→6 + daily cross-page stops) ────────
+function renderCurriculum(){
+  var l = L();
+  Promise.all([
+    fetch('./data/lessons.json').then(function(r){ return r.json(); }),
+    fetch('./data/exercises.json').then(function(r){ return r.json(); })
+  ]).then(function(results){
+    if(!window.RKLevelProgress) return;
+    var lessons = results[0], exJson = results[1];
+    var result = RKLevelProgress.checkAdvance(lessons, exJson);
+    var level = result.level;
+    var pct = Math.min(100, Math.round(result.stats.pct * 100));
+
+    var html = '<div class="card">' +
+      '<div class="td-level-head">' +
+        '<div>' +
+          '<h3 style="margin:0">' + l.curTitle + '</h3>' +
+          '<div class="sub" style="margin-top:2px">' + l.curSub + '</div>' +
+        '</div>' +
+      '</div>';
+
+    if(level >= RKLevelProgress.MAX_LEVEL && result.stats.pct >= RKLevelProgress.ADVANCE_THRESHOLD){
+      html += '<div class="td-level-maxed">' + l.curMaxed + '</div>';
+    } else {
+      html += '<div class="td-level-head" style="margin-top:8px;margin-bottom:6px">' +
+          '<span class="td-level-badge">TOPIK ' + level + '</span>' +
+          '<span class="td-level-pct">' + l.curPct(pct) + '</span>' +
+        '</div>' +
+        '<div class="pl-bar-bg"><div class="pl-bar" style="width:' + pct + '%"></div></div>';
+    }
+
+    var stops = [
+      { icon:'📖', label:l.curStopLessons,   href:'lessons.html?level='   + level },
+      { icon:'📝', label:l.curStopExercises, href:'exercises.html?level=' + level },
+      { icon:'🎧', label:l.curStopListening, href:'listening.html?level=' + level },
+      { icon:'📕', label:l.curStopReading,   href:'reading.html?level='   + level },
+    ];
+    html += '<div class="td-stops">' + stops.map(function(s){
+      return '<a class="td-stop" href="' + s.href + '"><span class="td-stop-ico">' + s.icon + '</span>' + s.label + '</a>';
+    }).join('') + '</div>';
+
+    html += '</div>';
+    document.getElementById('curriculumSection').innerHTML = html;
+
+    if(result.leveledUp){
+      var celebratedKey = 'RK_LEVELUP_CELEBRATED';
+      var lastCelebrated = parseInt(RKStorage.get(celebratedKey, 0), 10) || 0;
+      if(level > lastCelebrated){
+        RKStorage.set(celebratedKey, level);
+        setTimeout(function(){ celebrateLevelUp(level); }, 400);
+      }
+    }
+  }).catch(function(){});
+}
+
+function celebrateLevelUp(level){
+  var l = L();
+  if(!document.getElementById('tdMissionStyle')){
+    var style = document.createElement('style');
+    style.id = 'tdMissionStyle';
+    style.textContent =
+      '@keyframes tdMissionPop{0%{opacity:0;transform:scale(.7)}60%{opacity:1;transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}' +
+      '@keyframes tdMissionFade{from{opacity:1}to{opacity:0}}';
+    document.head.appendChild(style);
+  }
+  var backdrop = document.createElement('div');
+  backdrop.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(10,6,4,.7);' +
+    'display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;cursor:pointer';
+  var card = document.createElement('div');
+  card.style.cssText = 'background:linear-gradient(145deg,#1c4a3a,#c9922e);border-radius:24px;' +
+    'padding:36px 44px;text-align:center;color:#fff;box-shadow:0 20px 60px rgba(28,74,58,.5);' +
+    'animation:tdMissionPop .5s cubic-bezier(.34,1.56,.64,1) both;max-width:90vw';
+  card.innerHTML =
+    '<div style="font-size:52px;line-height:1">🗺️</div>' +
+    '<div style="font-size:22px;font-weight:900;margin-top:6px">' + l.curLevelUpTitle(level) + '</div>' +
+    '<div style="font-size:14px;opacity:.9;margin-top:8px;max-width:360px">' + l.curLevelUpSub + '</div>' +
+    '<div style="font-size:12px;opacity:.7;margin-top:14px">' + l.curLevelUpTap + '</div>';
+  backdrop.appendChild(card);
+  document.body.appendChild(backdrop);
+  function dismiss(){
+    backdrop.style.animation = 'tdMissionFade .3s ease both';
+    setTimeout(function(){ backdrop.remove(); }, 300);
+  }
+  backdrop.addEventListener('click', dismiss);
+  setTimeout(dismiss, 5000);
 }
 
 // ── MISSION-COMPLETE CELEBRATION (self-contained, mirrors streak.js) ──

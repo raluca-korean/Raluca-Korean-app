@@ -682,7 +682,8 @@ body.dark-mode .rd-card-footer { border-color: rgba(74,144,164,.2); }
 
   /* ── STATE ───────────────────────────────────────────────────── */
   var allTexts    = [];
-  var currentLvl  = 1;
+  var currentLvl  = parseInt(new URLSearchParams(location.search).get('level'), 10) || 1;
+  if (currentLvl < 1 || currentLvl > 6) currentLvl = 1;
   var currentLang = 'ro';
   var activeToken = null;
   var popupToken  = null;
@@ -1079,6 +1080,9 @@ body.dark-mode .rd-card-footer { border-color: rgba(74,144,164,.2); }
   function wireLevel() {
     var btns = document.querySelectorAll('.rd-lvl-btn');
     btns.forEach(function (btn) {
+      var lvl = parseInt(btn.getAttribute('data-level'), 10);
+      btn.classList.toggle('active', lvl === currentLvl);
+      btn.setAttribute('aria-selected', lvl === currentLvl ? 'true' : 'false');
       btn.addEventListener('click', function () {
         var lvl = parseInt(btn.getAttribute('data-level'), 10);
         if (lvl === currentLvl) return;

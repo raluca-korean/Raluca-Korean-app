@@ -1,5 +1,8 @@
 var LANG = RKLang.get();
-var FILTER = 0;
+var FILTER = (function () {
+  var lvl = parseInt(new URLSearchParams(location.search).get('level'), 10);
+  return (lvl >= 1 && lvl <= 6) ? lvl : 0;
+})();
 var DATA = [];
 var streak = 0;
 

@@ -1,4 +1,4 @@
-const CACHE = 'rk-v144';
+const CACHE = 'rk-v145';
 
 const STATIC = [
   './',
@@ -90,6 +90,7 @@ const STATIC = [
   './js/core/page-help.js',
   './js/core/storage.js',
   './js/core/srs.js',
+  './js/core/level-progress.js',
   './js/core/streak.js',
   './data/exercises.json',
   './data/lessons.json',
