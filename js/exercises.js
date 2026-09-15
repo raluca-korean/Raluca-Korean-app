@@ -273,6 +273,8 @@ const UI_TEXT = {
     answerFirst: "Alege mai întâi un răspuns.",
     noExercises: "Nu există exerciții pentru acest mod.",
     noLessonExercises: "Nu există exerciții pentru această lecție.",
+    lessonMastered: "🎉 Ai stăpânit toate exercițiile acestei lecții — răspuns corect de 3 ori la rând, la fiecare!",
+    lessonMasteredReset: "🔄 Exersează din nou",
     noVocabType: "Modul VOCAB e disponibil doar pentru KO→RO și RO→KO.",
     next: "Următorul",
     check: "Verifică",
@@ -324,6 +326,8 @@ const UI_TEXT = {
     answerFirst: "Choose an answer first.",
     noExercises: "No exercises available for this mode.",
     noLessonExercises: "No exercises available for this lesson.",
+    lessonMastered: "🎉 You've mastered every exercise in this lesson — 3 correct answers in a row, each!",
+    lessonMasteredReset: "🔄 Practice again",
     noVocabType: "VOCAB mode is only available for KO→RO and RO→KO.",
     next: "Next",
     check: "Check",
@@ -750,6 +754,78 @@ async function loadExercises(){
   }
 }
 
+// ── LESSON PRACTICE MASTERY (3-in-a-row) ─────────────────────────────────
+// When arriving via "Practică lecția" (?lesson=X), a single exercise type
+// for one lessonId often has only 1-4 items in exercises.json. We widen the
+// session pool to at least LESSON_POOL_MIN items (padding with same-topik
+// items when needed) and track a per-item consecutive-correct streak, keyed
+// per lesson so the same exercise can be "fresh" again in a different
+// lesson's session. Once an item hits LESSON_MASTERY_TARGET in a row it's
+// retired from the pool; a wrong answer resets its streak to 0.
+const LESSON_POOL_MIN = 10;
+const LESSON_MASTERY_TARGET = 3;
+const LESSON_MASTERY_KEY = "RK_LESSON_MASTERY";
+
+let lessonAllMastered = false;
+let lessonPoolCache = { key: null, pool: [] };
+
+function lessonMasteryLoad(){ return RKStorage.get(LESSON_MASTERY_KEY, {}); }
+function lessonMasterySave(m){ RKStorage.set(LESSON_MASTERY_KEY, m); }
+
+function lessonMasteryKey(type, item){
+  return lessonParam + "||" + getExerciseKey(type, item);
+}
+
+function lessonMasteryStreak(type, item){
+  return lessonMasteryLoad()[lessonMasteryKey(type, item)] || 0;
+}
+
+function lessonMasteryRecord(type, item, isRight){
+  if(!lessonParam) return;
+  const m = lessonMasteryLoad();
+  const key = lessonMasteryKey(type, item);
+  const streak = isRight ? (m[key] || 0) + 1 : 0;
+  if(streak <= 0) delete m[key]; else m[key] = streak;
+  lessonMasterySave(m);
+}
+
+function lessonMasteryReset(){
+  if(!lessonParam) return;
+  const m = lessonMasteryLoad();
+  const prefix = lessonParam + "||";
+  Object.keys(m).forEach(k => { if(k.startsWith(prefix)) delete m[k]; });
+  lessonMasterySave(m);
+}
+
+function lessonTopikLevel(){
+  const match = /^T(\d)/.exec(lessonParam || "");
+  return match ? Number(match[1]) : null;
+}
+
+function buildLessonPool(type){
+  const cacheKey = lessonParam + "||" + type;
+  if(lessonPoolCache.key === cacheKey) return lessonPoolCache.pool;
+
+  const list = allExercises[type] || [];
+  const core = list.filter(item => item.lessonId === lessonParam);
+  const pool = [...core];
+
+  if(pool.length < LESSON_POOL_MIN){
+    const topik = core.length ? core[0].topik : lessonTopikLevel();
+    if(topik != null){
+      const already = new Set(pool);
+      const padCandidates = shuffle(list.filter(item => item.topik === topik && !already.has(item)));
+      for(const item of padCandidates){
+        if(pool.length >= LESSON_POOL_MIN) break;
+        pool.push(item);
+      }
+    }
+  }
+
+  lessonPoolCache = { key: cacheKey, pool };
+  return pool;
+}
+
 function getFilteredList(){
   if(isWrongMode) return wrongModeItems;
   const type = typeSelect.value;
@@ -769,10 +845,18 @@ function getFilteredList(){
     if(!drillNumbersQueue.length) drillNumbersQueue = shuffle([...DRILL_NUMBERS]);
     return drillNumbersQueue;
   }
-  let list = allExercises[type] || [];
+
   if(lessonParam){
-    list = list.filter(item => item.lessonId === lessonParam);
-  } else if(currentLevel !== "test"){
+    lessonAllMastered = false;
+    const pool = buildLessonPool(type);
+    if(pool.length === 0) return [];
+    const active = pool.filter(item => lessonMasteryStreak(type, item) < LESSON_MASTERY_TARGET && !isLearnedEx(type, item));
+    if(active.length === 0){ lessonAllMastered = true; return []; }
+    return shuffle(active);
+  }
+
+  let list = allExercises[type] || [];
+  if(currentLevel !== "test"){
     list = list.filter(item => String(item.topik) === currentLevel);
   }
   // SRS ordering: due → new (capped) → learning → manually-learned
@@ -806,6 +890,11 @@ function renderInfoBadge(item){
 
   if(item.lessonId){
     parts.push(`<span style="padding:6px 10px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.20);font-weight:900">${t("lesson")}: ${item.lessonId}</span>`);
+  }
+
+  if(lessonParam && !type.startsWith('drill-') && !isWrongMode){
+    const streak = lessonMasteryStreak(type, item);
+    parts.push(`<span style="padding:6px 10px;border-radius:999px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.24);font-weight:900">🔥 ${streak}/${LESSON_MASTERY_TARGET}</span>`);
   }
 
   parts.push(`<span style="padding:6px 10px;border-radius:999px;background:rgba(34,211,238,.10);border:1px solid rgba(34,211,238,.20);font-weight:900">#${currentIndex + 1}/${currentList.length}</span>`);
@@ -886,10 +975,14 @@ function render(){
   currentList = getFilteredList();
 
   if(currentList.length === 0){
-    questionEl.textContent = lessonParam ? t("noLessonExercises") : t("noExercises");
-    helperEl.textContent = "";
-    badgeEl.innerHTML = "";
-    answersEl.innerHTML = "";
+    if(lessonParam && lessonAllMastered){
+      renderLessonMasteredState();
+    } else {
+      questionEl.textContent = lessonParam ? t("noLessonExercises") : t("noExercises");
+      helperEl.textContent = "";
+      badgeEl.innerHTML = "";
+      answersEl.innerHTML = "";
+    }
     return;
   }
 
@@ -1032,6 +1125,27 @@ function render(){
   renderAnswerOptions(options);
 }
 
+function renderLessonMasteredState(){
+  questionEl.textContent = t("lessonMastered");
+  helperEl.textContent = "";
+  badgeEl.innerHTML = "";
+  feedbackEl.textContent = "";
+  document.getElementById("puzzleUI").style.display = "none";
+  answersEl.style.display = "";
+  answersEl.innerHTML = "";
+
+  const resetBtn = document.createElement("button");
+  resetBtn.type = "button";
+  resetBtn.className = "primary";
+  resetBtn.textContent = t("lessonMasteredReset");
+  resetBtn.addEventListener("click", () => {
+    lessonMasteryReset();
+    currentIndex = 0;
+    render();
+  });
+  answersEl.appendChild(resetBtn);
+}
+
 function renderPuzzleUI(){
   const bankEl = document.getElementById("bank");
   const lineEl = document.getElementById("line");
@@ -1110,7 +1224,7 @@ function getCorrectAnswer(item){
 }
 
 function checkCurrentAnswer(){
-  if(answered) return;
+  if(answered || currentList.length === 0) return;
   const elapsed = timerStop();
 
   if(typeSelect.value === "puzzle" || typeSelect.value === "chain"){
@@ -1135,6 +1249,7 @@ function checkCurrentAnswer(){
     total++;
     if(effectiveRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
     else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item, puzzleLine.join(sep), item.correct.join(sep)); }
+    if(!isWrongMode && lessonParam) lessonMasteryRecord(typeSelect.value, item, effectiveRight);
     if(!isWrongMode) saveStats(effectiveRight, typeSelect.value);
     recordCheck(elapsed, typeSelect.value, effectiveRight);
     updateExSrs(typeSelect.value, item, isRight, hintUsed);
@@ -1187,6 +1302,7 @@ function checkCurrentAnswer(){
     if(!isWrongMode) trackWrong(item, selectedAnswer, correctAnswer);
   }
 
+  if(!isWrongMode && lessonParam) lessonMasteryRecord(typeSelect.value, item, isCorrect);
   if(!isWrongMode) saveStats(isCorrect, typeSelect.value);
   recordCheck(elapsed, typeSelect.value, isCorrect);
   updateExSrs(typeSelect.value, item, isCorrect, hintUsed);
