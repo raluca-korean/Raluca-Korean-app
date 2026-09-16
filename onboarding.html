@@ -64,6 +64,11 @@ body.dark-mode .s-icon-logo .ascent{stroke:#F3CB69}
 .opt-big-title{font-size:15px;font-weight:800}
 .opt-big-desc{font-size:12px;color:var(--text-mid);font-weight:600;margin-top:2px}
 .opt.on .opt-big-desc{color:var(--lavender)}
+.lvl-tag{
+  flex-shrink:0;min-width:64px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.02em;
+  padding:5px 8px;border-radius:8px;background:var(--lavender-soft);color:var(--lavender);
+}
+.opt:not(.on) .lvl-tag{background:var(--bar-bg,var(--border));color:var(--text-mid)}
 
 .btn{
   margin-top:28px;border:none;border-radius:14px;padding:15px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;
@@ -82,6 +87,7 @@ body.dark-mode .s-icon-logo .ascent{stroke:#F3CB69}
       <div class="dot" data-dot="2"></div>
       <div class="dot" data-dot="3"></div>
       <div class="dot" data-dot="4"></div>
+      <div class="dot" data-dot="5"></div>
     </div>
     <button class="skip" id="skipBtn" type="button"></button>
   </div>
@@ -118,6 +124,13 @@ body.dark-mode .s-icon-logo .ascent{stroke:#F3CB69}
     <button class="btn" id="btn2" type="button"></button>
   </div>
 
+  <div class="screen" id="screenL">
+    <div class="s-title" id="sLTitle">What's your level right now?</div>
+    <div class="s-sub" id="sLSub">We'll start your lessons there, not from zero.</div>
+    <div class="options" id="levelOptions"></div>
+    <button class="btn" id="btnL" type="button" disabled></button>
+  </div>
+
   <div class="screen" id="screen3">
     <div class="s-icon">✨</div>
     <div class="s-title" id="s3Title">Your Korean journey starts here.</div>
@@ -150,6 +163,15 @@ var UI = {
     timeStudent:[{id:5,label:'5 minute'},{id:10,label:'10 minute'},{id:15,label:'15 minute'}],
     timeAdult:[{id:5,label:'5 minute'},{id:10,label:'10 minute'},{id:20,label:'20 minute'},{id:30,label:'30+ minute'}],
     timeFor:function(aud){ return aud === 'student' ? this.timeStudent : this.timeAdult; },
+    sLTitle:'Care e nivelul tău acum?', sLSub:'Pornim lecțiile de acolo, nu de la zero.', btnL:'Continuă →',
+    levels:[
+      {id:1, tag:'TOPIK 1', title:'Începător', desc:'Abia încep — hangul, cuvinte de bază'},
+      {id:2, tag:'TOPIK 2', title:'Elementar', desc:'Știu noțiuni de bază, propoziții simple'},
+      {id:3, tag:'TOPIK 3', title:'Intermediar', desc:'Pot purta conversații uzuale'},
+      {id:4, tag:'TOPIK 4', title:'Intermediar avansat', desc:'Înțeleg majoritatea textelor uzuale'},
+      {id:5, tag:'TOPIK 5', title:'Avansat', desc:'Vorbesc fluent în context uzual'},
+      {id:6, tag:'TOPIK 6', title:'Foarte avansat', desc:'Aproape de nivel nativ'}
+    ],
     s3Title:'Călătoria ta coreeană începe aici.', s3Sub:'Poți schimba oricând aceste alegeri.', btn3:'START →'
   },
   en:{
@@ -170,6 +192,15 @@ var UI = {
     timeStudent:[{id:5,label:'5 min'},{id:10,label:'10 min'},{id:15,label:'15 min'}],
     timeAdult:[{id:5,label:'5 min'},{id:10,label:'10 min'},{id:20,label:'20 min'},{id:30,label:'30+ min'}],
     timeFor:function(aud){ return aud === 'student' ? this.timeStudent : this.timeAdult; },
+    sLTitle:"What's your level right now?", sLSub:"We'll start your lessons there, not from zero.", btnL:'Continue →',
+    levels:[
+      {id:1, tag:'TOPIK 1', title:'Beginner', desc:'Just starting out — hangul, basic words'},
+      {id:2, tag:'TOPIK 2', title:'Elementary', desc:'I know the basics, simple sentences'},
+      {id:3, tag:'TOPIK 3', title:'Intermediate', desc:'I can hold everyday conversations'},
+      {id:4, tag:'TOPIK 4', title:'Upper-Intermediate', desc:'I understand most everyday text'},
+      {id:5, tag:'TOPIK 5', title:'Advanced', desc:'I speak fluently in everyday contexts'},
+      {id:6, tag:'TOPIK 6', title:'Highly Advanced', desc:'Near-native'}
+    ],
     s3Title:'Your Korean journey starts here.', s3Sub:'You can change any of this later.', btn3:'START →'
   }
 };
@@ -179,6 +210,7 @@ var step = 0;
 var focusSelected = [];
 var timeSelected = null;
 var audienceSelected = null;
+var levelSelected = null;
 
 function renderText(){
   var l = L();
@@ -242,6 +274,25 @@ function renderText(){
       renderText();
     });
   });
+
+  document.getElementById('sLTitle').textContent = l.sLTitle;
+  document.getElementById('sLSub').textContent = l.sLSub;
+  document.getElementById('btnL').textContent = l.btnL;
+  document.getElementById('levelOptions').innerHTML = l.levels.map(function(lv){
+    var on = levelSelected === lv.id;
+    return '<div class="opt opt-big' + (on ? ' on' : '') + '" data-level="' + lv.id + '">' +
+      '<span class="lvl-tag">' + lv.tag + '</span>' +
+      '<span><span class="opt-big-title">' + lv.title + '</span>' +
+      '<div class="opt-big-desc">' + lv.desc + '</div></span>' +
+    '</div>';
+  }).join('');
+  document.querySelectorAll('[data-level]').forEach(function(el){
+    el.addEventListener('click', function(){
+      levelSelected = parseInt(el.dataset.level, 10);
+      document.getElementById('btnL').disabled = false;
+      renderText();
+    });
+  });
 }
 
 function goTo(n){
@@ -254,6 +305,7 @@ function finish(){
   localStorage.setItem('RK_AUDIENCE', audienceSelected || 'adult');
   localStorage.setItem('RK_ONBOARD_FOCUS', JSON.stringify(focusSelected));
   if(timeSelected) localStorage.setItem('RK_ONBOARD_TIME', String(timeSelected));
+  localStorage.setItem('RK_LEVEL', String(levelSelected || 1));
   localStorage.setItem('RK_ONBOARDED', '1');
   location.href = 'index.html';
 }
@@ -262,6 +314,7 @@ document.getElementById('btnA').addEventListener('click', function(){ goTo(1); }
 document.getElementById('btn0').addEventListener('click', function(){ goTo(2); });
 document.getElementById('btn1').addEventListener('click', function(){ goTo(3); });
 document.getElementById('btn2').addEventListener('click', function(){ goTo(4); });
+document.getElementById('btnL').addEventListener('click', function(){ goTo(5); });
 document.getElementById('btn3').addEventListener('click', finish);
 document.getElementById('skipBtn').addEventListener('click', finish);
 

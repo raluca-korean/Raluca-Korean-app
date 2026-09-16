@@ -549,7 +549,8 @@ function renderContinue(){
   var doneLessons = JSON.parse(localStorage.getItem('RK_LESSON_DONE') || '[]');
   var goal = null;
   try { goal = JSON.parse(localStorage.getItem('RK_TOPIK_GOAL') || 'null'); } catch(e){}
-  var level = (goal && goal.level) || 1;
+  var storedLevel = parseInt(localStorage.getItem('RK_LEVEL'), 10);
+  var level = (goal && goal.level) || (storedLevel >= 1 && storedLevel <= 6 ? storedLevel : 1);
 
   var lessonsInLevel = _lessons.filter(function(ls){ return ls.topik === level; });
   var lessonsDone = lessonsInLevel.filter(function(ls){ return doneLessons.indexOf(ls.id) !== -1; });
@@ -567,11 +568,11 @@ function renderContinue(){
   if(doneLessons.length === 0){
     eyebrow.textContent = '';
     title.textContent = l.startTitle;
-    sub.textContent = l.startSub;
+    sub.textContent = 'TOPIK ' + level + ' · ' + l.startSub;
     barWrap.style.display = 'none';
     pctEl.textContent = '';
     cta.textContent = l.startCta;
-    card.href = 'lessons.html';
+    card.href = 'lessons.html?level=' + level;
   } else if(!nextLesson){
     eyebrow.textContent = l.continueEyebrow;
     title.textContent = l.levelDoneTitle;
