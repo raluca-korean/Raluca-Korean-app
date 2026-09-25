@@ -768,6 +768,7 @@ const LESSON_MASTERY_KEY = "RK_LESSON_MASTERY";
 
 let lessonAllMastered = false;
 let lessonPoolCache = { key: null, pool: [] };
+let lessonOrderCache = { key: null, order: [] };
 
 function lessonMasteryLoad(){ return RKStorage.get(LESSON_MASTERY_KEY, {}); }
 function lessonMasterySave(m){ RKStorage.set(LESSON_MASTERY_KEY, m); }
@@ -826,6 +827,23 @@ function buildLessonPool(type){
   return pool;
 }
 
+// render() calls getFilteredList() on every single question (not just when
+// the pool changes), so shuffling the active items fresh each time makes
+// "next" look almost random — with only ~10 items that means the same 1-2
+// sentences resurface constantly and a session can feel like it only has a
+// couple of distinct exercises. Instead we keep one shuffled order per
+// *set* of currently-active items and only reshuffle when that set actually
+// changes (an item gets mastered/retired, or mastery is reset) — so "next"
+// walks through every distinct item once before any repeat.
+function getLessonActiveOrder(type, pool){
+  const active = pool.filter(item => lessonMasteryStreak(type, item) < LESSON_MASTERY_TARGET && !isLearnedEx(type, item));
+  const signature = lessonParam + "||" + type + "||" + active.map(item => getExerciseKey(type, item)).sort().join(",");
+  if(lessonOrderCache.key !== signature){
+    lessonOrderCache = { key: signature, order: shuffle(active) };
+  }
+  return lessonOrderCache.order;
+}
+
 function getFilteredList(){
   if(isWrongMode) return wrongModeItems;
   const type = typeSelect.value;
@@ -850,9 +868,9 @@ function getFilteredList(){
     lessonAllMastered = false;
     const pool = buildLessonPool(type);
     if(pool.length === 0) return [];
-    const active = pool.filter(item => lessonMasteryStreak(type, item) < LESSON_MASTERY_TARGET && !isLearnedEx(type, item));
-    if(active.length === 0){ lessonAllMastered = true; return []; }
-    return shuffle(active);
+    const order = getLessonActiveOrder(type, pool);
+    if(order.length === 0){ lessonAllMastered = true; return []; }
+    return order;
   }
 
   let list = allExercises[type] || [];
