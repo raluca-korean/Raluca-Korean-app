@@ -51,84 +51,60 @@ function _renderStreak() {
 /* SRS data: {reps, ease, interval(days), due(ms timestamp)} */
 var srsData = RKStorage.get('RK_HJ_SRS', {});
 
-/* Silabe frecvente din vocabular care nu apar în cei 100 hanja principali */
-var HANJA_SUPPLEMENT = {
-  '교': {hanja:'校', meaning:{ro:'școală',en:'school'}},
-  '분': {hanja:'分', meaning:{ro:'parte / a împărți',en:'part / divide'}},
-  '습': {hanja:'習', meaning:{ro:'practică / obicei',en:'practice / habit'}},
-  '영': {hanja:'英', meaning:{ro:'Anglia / erou',en:'England / hero'}},
-  '한': {hanja:'韓', meaning:{ro:'Coreea',en:'Korea'}},
-  '관': {hanja:'觀', meaning:{ro:'a observa',en:'to observe'}},
-  '리': {hanja:'理', meaning:{ro:'principiu / rațiune',en:'principle / reason'}},
-  '안': {hanja:'安', meaning:{ro:'siguranță / pace',en:'safety / peace'}},
-  '급': {hanja:'給', meaning:{ro:'salariu / a furniza',en:'salary / to give'}},
-  '작': {hanja:'作', meaning:{ro:'a crea',en:'to create'}},
-  '당': {hanja:'當', meaning:{ro:'potrivit',en:'suitable / party'}},
-  '본': {hanja:'本', meaning:{ro:'origine / bază',en:'origin / basis'}},
-  '매': {hanja:'每', meaning:{ro:'fiecare',en:'every'}},
-  '요': {hanja:'曜', meaning:{ro:'zi a săptămânii',en:'day of the week'}},
-  '탄': {hanja:'誕', meaning:{ro:'naștere',en:'birth'}},
-  '친': {hanja:'親', meaning:{ro:'aproape / rudă',en:'close / relative'}},
-  '조': {hanja:'祖', meaning:{ro:'strămoș',en:'ancestor'}},
-  '청': {hanja:'靑', meaning:{ro:'albastru / tânăr',en:'blue / young'}},
-  '형': {hanja:'形', meaning:{ro:'formă',en:'form / shape'}},
-  '위': {hanja:'偉', meaning:{ro:'măreț',en:'great'}},
-  '단': {hanja:'單', meaning:{ro:'simplu / individual',en:'single / simple'}},
-  '언': {hanja:'言', meaning:{ro:'vorbire / cuvânt',en:'speech / word'}},
-  '하': {hanja:'下', meaning:{ro:'jos / sub',en:'below / under'}},
-  '발': {hanja:'發', meaning:{ro:'a emite / pornire',en:'to emit / departure'}},
-  '상': {hanja:'上', meaning:{ro:'sus / deasupra',en:'above / top'}},
-  '족': {hanja:'族', meaning:{ro:'trib / neam',en:'tribe / clan'}},
-  '재': {hanja:'才', meaning:{ro:'talent',en:'talent'}},
-  '등': {hanja:'登', meaning:{ro:'a urca',en:'to climb'}},
-  '악': {hanja:'樂', meaning:{ro:'muzică',en:'music'}},
-  '흑': {hanja:'黑', meaning:{ro:'negru',en:'black'}},
-  '유': {hanja:'有', meaning:{ro:'a exista / a avea',en:'to have / exist'}},
-  '결': {hanja:'結', meaning:{ro:'a lega / rezultat',en:'to tie / result'}},
-  '채': {hanja:'彩', meaning:{ro:'culoare / nuanță',en:'color / hue'}},
-  '락': {hanja:'樂', meaning:{ro:'plăcere',en:'pleasure'}},
-  '족': {hanja:'族', meaning:{ro:'clan / familie',en:'clan / family'}},
-};
-
-/* Lookup: silabă coreeană → {hanja, meaning} — construit din DATA odată încărcat */
-var _hanjaByReading = {};
-function _buildHanjaByReading() {
-  var map = {};
-  for (var syl in HANJA_SUPPLEMENT) map[syl] = HANJA_SUPPLEMENT[syl];
-  for (var i = 0; i < DATA.length; i++) {
-    var item = DATA[i];
-    var parts = item.ko_reading.split(' ');
-    for (var r = 0; r < parts.length; r++) {
-      var syl = parts[r].trim();
-      if (syl && !map[syl]) map[syl] = {hanja: item.hanja, meaning: item.meaning};
-    }
-  }
-  return map;
+/* Descompunere pe silabe (hanja1 + hanja2 = cuvânt), pentru panoul de
+   detaliu al cuvântului. NU deducem niciodată perechea hanja-silabă dintr-o
+   silabă coreeană izolată — o silabă are de regulă 3-5 hanja omofone
+   posibile în acest set, iar "unic în cele 214 rădăcini" nu dovedește
+   deloc că acela e hanja-ul real al cuvântului (ex.: 학교 nu e 學+交, ci
+   學+校, iar 校 nici nu e printre cele 214 rădăcini). De aceea folosim
+   exclusiv data/verified-breakdowns.js — perechi verificate manual,
+   cuvânt cu cuvânt — la fel ca în aplicația Korean by Hanja; un cuvânt
+   fără intrare acolo pur și simplu nu arată descompunere, în loc să
+   ghicim. data/extra-hanja.js completează doar AFIȘAREA acestor
+   descompuneri cu hanja din afara celor 214 rădăcini predate — nu extinde
+   setul de rădăcini din tab-ul Studiu/Quiz. */
+var hanjaIndex = {}; // hanja -> DATA entry, construit după încărcarea datelor
+function buildHanjaIndex() {
+  hanjaIndex = {};
+  DATA.forEach(function(item) { hanjaIndex[item.hanja] = item; });
+}
+function primaryReading(item) {
+  return item.ko_reading.split(' ')[0];
+}
+function resolveHanja(h) {
+  var core = hanjaIndex[h];
+  if (core) return { hanja: h, reading: primaryReading(core), meaning: core.meaning };
+  var extra = (typeof EXTRA_HANJA !== 'undefined') ? EXTRA_HANJA[h] : null;
+  if (extra) return { hanja: h, reading: extra.reading.split(' ')[0], meaning: extra.meaning };
+  return null;
+}
+function wordBreakdown(word) {
+  if (typeof VERIFIED_BREAKDOWNS === 'undefined') return null;
+  var hanjaChars = VERIFIED_BREAKDOWNS[word];
+  if (!hanjaChars) return null;
+  var chars = word.split('');
+  if (chars.length !== hanjaChars.length) return null;
+  var syllables = hanjaChars.map(resolveHanja);
+  if (syllables.some(function(s) { return !s; })) return null;
+  return { chars: chars, syllables: syllables };
 }
 
 function _renderMorphemes(word) {
   var el = document.getElementById('bloomMorphemes');
   if (!el) return;
-  var syllables = Array.from(word);
-  var found = syllables.some(function(s) { return !!_hanjaByReading[s]; });
-  if (!found) { el.classList.add('hidden'); return; }
+  var breakdown = wordBreakdown(word);
+  if (!breakdown) { el.classList.add('hidden'); return; }
 
   var html = '';
-  for (var i = 0; i < syllables.length; i++) {
+  for (var i = 0; i < breakdown.chars.length; i++) {
     if (i > 0) html += '<span class="morph-sep">+</span>';
-    var syl   = syllables[i];
-    var entry = _hanjaByReading[syl];
-    if (entry) {
-      html += '<div class="morph-chip known">'
-            + '<span class="mc-hanja">' + entry.hanja + '</span>'
-            + '<span class="mc-syl">'   + syl          + '</span>'
-            + '<span class="mc-mean">'  + entry.meaning[lang] + '</span>'
-            + '</div>';
-    } else {
-      html += '<div class="morph-chip">'
-            + '<span class="mc-syl">' + syl + '</span>'
-            + '</div>';
-    }
+    var syl   = breakdown.chars[i];
+    var entry = breakdown.syllables[i];
+    html += '<div class="morph-chip known">'
+          + '<span class="mc-hanja">' + entry.hanja + '</span>'
+          + '<span class="mc-syl">'   + syl          + '</span>'
+          + '<span class="mc-mean">'  + (entry.meaning[lang] || entry.meaning.ro) + '</span>'
+          + '</div>';
   }
   el.innerHTML = html;
   el.classList.remove('hidden');
@@ -965,7 +941,7 @@ fetch('./data/hanja.json')
   .then(function(r) { return r.json(); })
   .then(function(data) {
     DATA = data;
-    _hanjaByReading = _buildHanjaByReading();
+    buildHanjaIndex();
     queue = _buildQueue();
     idx = queue[queuePos];
     boot();

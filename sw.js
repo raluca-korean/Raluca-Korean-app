@@ -1,4 +1,4 @@
-const CACHE = 'rk-v145';
+const CACHE = 'rk-v146';
 
 const STATIC = [
   './',
@@ -101,6 +101,8 @@ const STATIC = [
   './data/context-words.json',
   './data/extra-generated-sentences.json',
   './data/hanja.json',
+  './data/extra-hanja.js',
+  './data/verified-breakdowns.js',
   './data/builder-vocab.json',
   './data/composition-prompts.json',
   './data/listening.json',
