@@ -340,6 +340,13 @@ function render(animate) {
     qb.disabled = (learned.length === 0);
     qb.title    = learned.length === 0 ? 'Marchează cel puțin un hanja ca învățat pentru a începe' : '';
   }
+
+  /* Puzzle button — same gate as Quiz */
+  var pzb = document.getElementById('puzzleBtn');
+  if (pzb) {
+    pzb.disabled = (learned.length === 0);
+    pzb.title    = learned.length === 0 ? 'Marchează cel puțin un hanja ca învățat pentru a începe' : '';
+  }
 }
 
 /* ── WORD BLOOM ────────────────────────────────────────── */
@@ -815,6 +822,136 @@ function _answerQuiz(wi) {
   quizTimer = setTimeout(_nextQuizQ, isRight ? 900 : 1500);
 }
 
+/* ── PUZZLE MODE — build the word from hanja tiles ────────
+   Ported from the standalone Korean by Hanja app: pick a real
+   example word for a learned hanja, break it into its Hangul
+   syllable tiles, mix in a few decoy syllables pulled from other
+   real words in DATA, shuffle, and tap the tiles back in the
+   correct order. The root hanja is shown only as a small hint chip
+   (syllable + hanja tag), never a recognition target — this game
+   tests word-syllable order, not hanja identity, so it needs no
+   VERIFIED_BREAKDOWNS entry to be sound: any word from DATA works.
+   Decoys are always real syllables from real words, nothing
+   fabricated even among the wrong tiles. */
+var puzzleDeck    = [];
+var puzzleCurrent = null; // { di, item, word, answerLen, tiles:[{id,ch}], placed:[id,...] }
+var puzzleLocked  = false;
+
+function _randomDecoySyllables(excludeWord, n) {
+  var pool = [];
+  DATA.forEach(function(e) {
+    e.words.forEach(function(w) {
+      if (w.ko !== excludeWord) w.ko.split('').forEach(function(ch) { pool.push(ch); });
+    });
+  });
+  return _shuffled(pool).slice(0, n);
+}
+
+function _buildPuzzleQuestion(di) {
+  var item = DATA[di];
+  var word = item.words[Math.floor(Math.random() * item.words.length)];
+  var answerChars = word.ko.split('');
+  var decoyCount  = answerChars.length <= 2 ? 4 : (answerChars.length === 3 ? 3 : 2);
+  var pool  = answerChars.concat(_randomDecoySyllables(word.ko, decoyCount));
+  var tiles = pool.map(function(ch, i) { return {id: i, ch: ch}; });
+  return {di: di, item: item, word: word, answerLen: answerChars.length, tiles: _shuffled(tiles), placed: []};
+}
+
+function _openPuzzle() {
+  if (learned.length === 0) return;
+  puzzleDeck = _shuffled(learned);
+  _nextPuzzleQ();
+  document.getElementById('puzzlePanel').classList.remove('hidden');
+}
+
+function _closePuzzle() {
+  document.getElementById('puzzlePanel').classList.add('hidden');
+  puzzleCurrent = null;
+}
+
+function _nextPuzzleQ() {
+  if (!puzzleDeck.length) puzzleDeck = _shuffled(learned);
+  var di = puzzleDeck.shift();
+  puzzleLocked  = false;
+  puzzleCurrent = _buildPuzzleQuestion(di);
+  document.getElementById('puzzleFeedback').textContent = '';
+  document.getElementById('puzzleFeedback').className   = 'puzzleFeedback';
+  document.getElementById('puzzleNextBtn').classList.add('hidden');
+  document.getElementById('puzzleSpeak').classList.add('hidden');
+  _renderPuzzle();
+}
+
+function _renderPuzzle() {
+  var c    = puzzleCurrent;
+  var item = c.item;
+
+  document.getElementById('puzzleHintChip').innerHTML =
+    '<span class="phcRoot">' + item.reading[lang] + '</span> · <span class="phcTag">' + item.hanja + '</span>';
+  document.getElementById('puzzlePrompt').textContent = c.word[lang] || c.word.ro;
+
+  var slots = [];
+  for (var i = 0; i < c.answerLen; i++) {
+    if (i >= c.placed.length) { slots.push('<div class="pzSlot"></div>'); continue; }
+    var id = c.placed[i];
+    var t  = c.tiles.filter(function(x) { return x.id === id; })[0];
+    slots.push('<div class="pzSlot filled" data-id="' + t.id + '">' + t.ch + '</div>');
+  }
+  document.getElementById('puzzleAnswerSlots').innerHTML = slots.join('');
+
+  document.getElementById('puzzleTileBank').innerHTML = c.tiles.map(function(tile) {
+    var used = c.placed.indexOf(tile.id) >= 0;
+    return '<button type="button" class="pzTile' + (used ? ' used' : '') + '" data-id="' + tile.id + '">' + tile.ch + '</button>';
+  }).join('');
+
+  document.getElementById('puzzleProgress').textContent =
+    puzzleDeck.length + ' ' + (lang === 'en' ? 'left' : 'rămase');
+  document.getElementById('puzzleNextBtn').textContent = lang === 'en' ? 'Next →' : 'Următorul →';
+}
+
+function _placePzTile(id) {
+  if (puzzleLocked) return;
+  var c = puzzleCurrent;
+  if (c.placed.indexOf(id) >= 0 || c.placed.length >= c.answerLen) return;
+  c.placed.push(id);
+  _renderPuzzle();
+  if (c.placed.length === c.answerLen) _checkPuzzle();
+}
+
+function _removePzTile(id) {
+  var c = puzzleCurrent;
+  var i = c.placed.indexOf(id);
+  if (i >= 0) { c.placed.splice(i, 1); _renderPuzzle(); }
+}
+
+function _checkPuzzle() {
+  puzzleLocked = true;
+  var c = puzzleCurrent;
+  var attempt = c.placed.map(function(id) {
+    return c.tiles.filter(function(t) { return t.id === id; })[0].ch;
+  }).join('');
+  var isCorrect = attempt === c.word.ko;
+
+  Array.prototype.forEach.call(document.getElementById('puzzleAnswerSlots').children, function(el) {
+    el.classList.add(isCorrect ? 'correct' : 'wrong');
+  });
+  Array.prototype.forEach.call(document.getElementById('puzzleTileBank').children, function(el) {
+    el.disabled = true;
+  });
+
+  _updateSRS(c.di, isCorrect);
+  if (isCorrect) { _bumpStreak(); if (window.RKGamification) RKGamification.addXPBonus(3); }
+
+  var fb = document.getElementById('puzzleFeedback');
+  fb.textContent = isCorrect
+    ? (lang === 'en' ? '✓ Correct!' : '✓ Corect!')
+    : (lang === 'en' ? '✕ Wrong — ' : '✕ Greșit — ') + c.word.ko;
+  fb.className = 'puzzleFeedback show ' + (isCorrect ? 'ok' : 'bad');
+  document.getElementById('puzzleNextBtn').classList.remove('hidden');
+  document.getElementById('puzzleSpeak').classList.remove('hidden');
+
+  _speak(c.word.ko);
+}
+
 /* ── BOOT ──────────────────────────────────────────────── */
 function boot() {
   _applyTheme();
@@ -847,6 +984,25 @@ function boot() {
     _hideQuizResult();
     _exitQuiz();
   });
+
+  document.getElementById('puzzleBtn').addEventListener('click', _openPuzzle);
+  document.getElementById('puzzleClose').addEventListener('click', _closePuzzle);
+  document.getElementById('puzzlePanel').addEventListener('click', function(e) { if (e.target === this) _closePuzzle(); });
+  document.getElementById('puzzleTileBank').addEventListener('click', function(e) {
+    var btn = e.target.closest('.pzTile');
+    if (btn && !btn.classList.contains('used')) _placePzTile(Number(btn.dataset.id));
+  });
+  document.getElementById('puzzleAnswerSlots').addEventListener('click', function(e) {
+    var slot = e.target.closest('.pzSlot.filled');
+    if (slot && !puzzleLocked) _removePzTile(Number(slot.dataset.id));
+  });
+  document.getElementById('puzzleSpeak').addEventListener('click', function() {
+    if (puzzleCurrent) _speak(puzzleCurrent.word.ko);
+  });
+  document.getElementById('puzzleNextBtn').addEventListener('click', function() {
+    if (puzzleLocked) _nextPuzzleQ();
+  });
+
   document.getElementById('etymBtn').addEventListener('click', _openEtym);
   document.getElementById('searchBtn').addEventListener('click', function(e) { e.stopPropagation(); _openSearch(); });
   document.getElementById('searchClear').addEventListener('click', function() { document.getElementById('searchInput').value = ''; document.getElementById('searchResults').innerHTML = ''; });
@@ -900,7 +1056,7 @@ function boot() {
     if (e.key === '/') { if (!document.getElementById('searchOverlay').classList.contains('hidden')) return; e.preventDefault(); _openSearch(); }
     if (e.key === 'ArrowRight') { if (!document.getElementById('searchOverlay').classList.contains('hidden')) return; _navigate(1); }
     if (e.key === 'ArrowLeft')  { if (!document.getElementById('searchOverlay').classList.contains('hidden')) return; _navigate(-1); }
-    if (e.key === 'Escape')     { if (quizMode) { _exitQuiz(); } else { _closeBloom(); _closeEtym(); _closeStroke(); _closeSearch(); } }
+    if (e.key === 'Escape')     { if (quizMode) { _exitQuiz(); } else { _closeBloom(); _closeEtym(); _closeStroke(); _closeSearch(); _closePuzzle(); } }
   });
 
   /* Swipe */

@@ -1,4 +1,4 @@
-const CACHE = 'rk-v146';
+const CACHE = 'rk-v147';
 
 const STATIC = [
   './',
