@@ -358,10 +358,10 @@ function t(key){
 }
 
 function updateLevelButtons(){
-  const activeStyle = "linear-gradient(135deg,#c9922e,#a8791f)";
+  const activeStyle = "linear-gradient(135deg,#E96A9A,#D9548A)";
   const inactiveStyle = "linear-gradient(160deg,#fff,#faf3e3)";
-  const activeShadow = "0 8px 20px rgba(201,146,46,.28)";
-  const inactiveShadow = "0 4px 12px rgba(201,146,46,.10)";
+  const activeShadow = "0 8px 20px rgba(233,106,154,.28)";
+  const inactiveShadow = "0 4px 12px rgba(233,106,154,.10)";
 
   levelBtnsEl.querySelectorAll("button[data-level]").forEach(btn => {
     const isActive = btn.dataset.level === currentLevel;
@@ -914,7 +914,7 @@ function renderInfoBadge(item){
   if (!type.startsWith('drill-') && !isWrongMode) {
     const status = exSrsStatus(getExerciseKey(type, item));
     if (status === 'new') {
-      parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(201,146,46,.14);border:1px solid rgba(201,146,46,.32);font-weight:900;font-size:11px;color:#a8791f">✨ ${currentLang === 'ro' ? 'NOU' : 'NEW'}</span>`);
+      parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(233,106,154,.14);border:1px solid rgba(233,106,154,.32);font-weight:900;font-size:11px;color:#D9548A">✨ ${currentLang === 'ro' ? 'NOU' : 'NEW'}</span>`);
     } else if (status === 'due') {
       parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.28);font-weight:900;font-size:11px;color:#b45309">📅 ${currentLang === 'ro' ? 'DE AZI' : 'DUE'}</span>`);
     }
@@ -1365,7 +1365,7 @@ function launchFireworks(){
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  const colors = ["#c9922e","#1c4a3a","#0ea5e9","#f59e0b","#10b981","#f43f5e","#3d8a6a","#06b6d4"];
+  const colors = ["#E96A9A","#6C5CE7","#0ea5e9","#f59e0b","#10b981","#f43f5e","#8B7CFF","#06b6d4"];
   const particles = [];
 
   for(let b = 0; b < 6; b++){

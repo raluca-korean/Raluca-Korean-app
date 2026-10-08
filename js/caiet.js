@@ -69,10 +69,10 @@
 
   function guideColors() {
     return isDark()
-      ? { border: 'rgba(61,138,106,.30)', cross: 'rgba(61,138,106,.55)' }
-      : { border: 'rgba(28,74,58,.22)',  cross: 'rgba(28,74,58,.48)' };
+      ? { border: 'rgba(139,124,255,.30)', cross: 'rgba(139,124,255,.55)' }
+      : { border: 'rgba(108,92,231,.22)',  cross: 'rgba(108,92,231,.48)' };
   }
-  function inkColor() { return isDark() ? '#f0e6d0' : '#2a2118'; }
+  function inkColor() { return isDark() ? '#F7F4FA' : '#20264A'; }
 
   // ── STORAGE ────────────────────────────────────────────────────
   function loadState() {
@@ -456,7 +456,7 @@
     out.width = guide.width;
     out.height = guide.height;
     var ctx = out.getContext('2d');
-    ctx.fillStyle = '#fffdf8';
+    ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, out.width, out.height);
     ctx.drawImage(guide, 0, 0);
     ctx.drawImage(ink, 0, 0);

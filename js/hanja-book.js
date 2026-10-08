@@ -504,7 +504,7 @@ function _openStroke() {
       height:               200,
       padding:              16,
       showOutline:          true,
-      strokeColor:          isLight ? '#2a2118' : '#f0e6d0',
+      strokeColor:          isLight ? '#20264A' : '#F7F4FA',
       outlineColor:         isLight ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.1)',
       drawingColor:         '#9B6DFF',
       highlightColor:       '#FFB347',
@@ -535,7 +535,7 @@ function _applyTheme() {
   var isLight = theme === 'light';
   document.body.classList.toggle('light-mode', isLight);
   var mc = document.getElementById('themeColorMeta');
-  if (mc) mc.content = isLight ? '#F0EAD6' : '#030308';
+  if (mc) mc.content = isLight ? '#F7F4FA' : '#030308';
   var btn = document.getElementById('themeBtn');
   if (btn) btn.innerHTML = isLight ? _SVG_SUN : _SVG_MOON;
 }
