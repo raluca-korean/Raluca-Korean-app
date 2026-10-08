@@ -532,6 +532,7 @@ function markLessonDone(lessonId){
   if(!done.includes(lessonId)){
     done.push(lessonId);
     RKStorage.set("RK_LESSON_DONE", done);
+    localStorage.setItem("RK_LESSON_TODAY", new Date().toISOString().slice(0,10));
   }
 }
 
