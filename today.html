@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Raluca Korean — Azi</title>
+<title>Raluca Korean — Plan TOPIK</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#1c4a3a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -82,6 +82,9 @@
 }
 .td-card-btn:hover{opacity:.85}
 
+/* ── LINK BACK TO HOME MISSION ── */
+.td-home-link{display:block;text-decoration:none;font-size:13px;font-weight:800;color:var(--rk-violet);padding:14px 18px}
+
 /* ── ALL DONE ─────────────────────────────────────────── */
 .td-alldone{text-align:center;padding:36px 20px}
 .td-alldone-icon{font-size:52px;line-height:1;margin-bottom:12px}
@@ -150,8 +153,8 @@ body.dark-mode .pl-bar-bg{background:rgba(255,255,255,.09)}
 <div class="card">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
     <div>
-      <h1 id="pageTitle">🗓️ Azi</h1>
-      <div class="sub" id="pageSubtitle">Tot ce ai de recapitulat, într-un singur loc</div>
+      <h1 id="pageTitle">📅 Planul TOPIK</h1>
+      <div class="sub" id="pageSubtitle">Nivelul tău, data examenului și ritmul zilnic</div>
     </div>
     <div id="pageControls"></div>
   </div>
@@ -176,7 +179,8 @@ var GOAL_KEY = 'RK_TOPIK_GOAL';
 
 var UI = {
   ro:{
-    title:'🗓️ Azi', sub:'Recapitularea de azi și planul tău TOPIK, într-un singur loc',
+    title:'📅 Planul TOPIK', sub:'Nivelul tău, data examenului și ritmul zilnic',
+    homeLink:'🏠 Misiunea de azi e pe pagina Acasă →',
     heroLbl:'de recapitulat azi', heroLblOne:'de recapitulat azi',
     missionEyebrow:'Misiunea de azi',
     streak:'Streak', xp:'XP', level:'Nivel',
@@ -212,13 +216,14 @@ var UI = {
     curSub:'Fiecare zi adaugă puțin la lecții, exerciții, ascultare și citire — nivelul crește singur',
     curPct:function(pct){ return pct + '% parcurs'; },
     curMaxed:'Ai atins nivelul maxim — TOPIK 6! 🏯',
-    curStopLessons:'📖 Lecții', curStopExercises:'📝 Exerciții', curStopListening:'🎧 Ascultare', curStopReading:'📕 Citire',
+    curStopLessons:'Lecții', curStopExercises:'Exerciții', curStopListening:'Ascultare', curStopReading:'Citire',
     curLevelUpTitle:function(lvl){ return 'Nivel nou: TOPIK ' + lvl + '! 🎉'; },
     curLevelUpSub:'Ai parcurs destul din nivelul anterior — conținutul de azi e la noul nivel.',
     curLevelUpTap:'Atinge oriunde pentru a continua'
   },
   en:{
-    title:'🗓️ Today', sub:"Today's review and your TOPIK plan, in one place",
+    title:'📅 TOPIK plan', sub:'Your level, exam date and daily pace',
+    homeLink:"🏠 Today's mission is on the Home page →",
     heroLbl:'due today', heroLblOne:'due today',
     missionEyebrow:"Today's mission",
     streak:'Streak', xp:'XP', level:'Level',
@@ -254,7 +259,7 @@ var UI = {
     curSub:"Every day adds a bit to lessons, exercises, listening and reading — the level climbs on its own",
     curPct:function(pct){ return pct + '% cleared'; },
     curMaxed:"You've reached the top — TOPIK 6! 🏯",
-    curStopLessons:'📖 Lessons', curStopExercises:'📝 Exercises', curStopListening:'🎧 Listening', curStopReading:'📕 Reading',
+    curStopLessons:'Lessons', curStopExercises:'Exercises', curStopListening:'Listening', curStopReading:'Reading',
     curLevelUpTitle:function(lvl){ return 'New level: TOPIK ' + lvl + '! 🎉'; },
     curLevelUpSub:"You've cleared enough of the last level — today's content is at the new one.",
     curLevelUpTap:'Tap anywhere to continue'
@@ -284,111 +289,31 @@ function exerciseKey(type, item){
   return type + "||" + JSON.stringify(item.correct);
 }
 
-// ── DUE COUNTS (reads the same SRS/mistake data every feature already keeps) ──
-function dueCount(key){
-  if(!window.RKSrs) return 0;
-  var data = RKSrs.load(key);
-  var now = Date.now();
-  var n = 0;
-  Object.keys(data).forEach(function(k){ if(data[k] && data[k].due <= now) n++; });
-  return n;
-}
 function render(){
   var l = L();
   document.getElementById('pageTitle').textContent = l.title;
   document.getElementById('pageSubtitle').textContent = l.sub;
 
-  var vocab = dueCount('RK_FC_SRS');
-  var hanja = dueCount('RK_HJ_SRS');
-  var ex    = dueCount('RK_EX_SRS');
-  var total = vocab + hanja + ex;
-
+  // The daily mission (and its once-a-day bonus) lives only on Home now —
+  // this page is just the TOPIK plan: level, exam countdown, streak card.
   var streak = window.RKStreak ? RKStreak.get() : {days:0};
-
-  // Grant the once-per-day mission bonus BEFORE reading XP, so the journey
-  // bar below reflects it immediately instead of a stale pre-bonus value.
-  var todayIso = new Date().toISOString().slice(0,10);
-  var bonusAmount = 50;
-  var coinBonusAmount = 20;
-  var justCompleted = total === 0 && streak.lastDate === todayIso &&
-    RKStorage.get('RK_MISSION_BONUS_DATE', '') !== todayIso;
-  if(justCompleted && window.RKGamification){
-    RKGamification.addXPBonus(bonusAmount);
-    RKGamification.addCoins(coinBonusAmount);
-    RKStorage.set('RK_MISSION_BONUS_DATE', todayIso);
-  }
-
   var xpData = window.RKGamification ? RKGamification.getXPData() : {total:0};
-  var coins  = window.RKGamification ? RKGamification.getCoins() : 0;
   var lvl    = window.RKGamification ? RKGamification.getLevelInfo(xpData.total) : {current:{level:1}};
-  var levelTitle = lvl.current ? (LANG==='ro' ? lvl.current.title_ro : lvl.current.title_en) : '';
-  var pct = lvl.next ? Math.max(0, Math.min(100, Math.round((xpData.total - lvl.current.min) / (lvl.next.min - lvl.current.min) * 100))) : 100;
-  var xpLine = lvl.next ? l.xpToNext(xpData.total - lvl.current.min, lvl.next.min - lvl.current.min) : l.maxLevelLbl;
-
-  var items = [
-    { icon:'🃏', title:l.vocabTitle, sub:l.vocabSub, count:vocab, href:'flashcards.html',   cta:l.goVocab },
-    { icon:'漢', title:l.hanjaTitle, sub:l.hanjaSub, count:hanja, href:'hanja-book.html',   cta:l.goHanja },
-    { icon:'📝', title:l.exTitle,    sub:l.exSub,    count:ex,    href:'exercises.html',    cta:l.goEx    },
-  ];
 
   var html = '';
-
-  html += '<div class="card td-hero">' +
-    '<div class="td-mission-eyebrow">🎯 ' + l.missionEyebrow + '</div>' +
-    '<div class="td-hero-num">' + total + '</div>' +
-    '<div class="td-hero-lbl">' + (LANG==='ro' ? l.heroLbl : (total===1 ? l.heroLblOne : l.heroLbl)) + '</div>' +
-  '</div>';
-
+  html += '<a class="card td-home-link" href="index.html">' + l.homeLink + '</a>';
   html += '<div id="curriculumSection"></div>';
-
-  html += '<div class="card td-journey">' +
-    '<div class="td-journey-row">' +
-      '<div class="td-journey-streak">🔥 <b>' + streak.days + '</b> ' + l.streak + '</div>' +
-      '<div class="td-journey-level">Lv.' + lvl.current.level + ' · ' + levelTitle + '</div>' +
-    '</div>' +
-    '<div class="pl-bar-bg"><div class="pl-bar" style="width:' + pct + '%"></div></div>' +
-    '<div class="td-journey-row" style="margin-top:8px;margin-bottom:0">' +
-      '<div class="td-journey-xplbl" style="text-align:left;margin-top:0">' + xpLine + '</div>' +
-      '<span class="td-journey-coins">🪙 ' + coins + '</span>' +
-    '</div>' +
-  '</div>';
-
-  if(total === 0){
-    html += '<div class="card td-alldone">' +
-      '<div class="td-alldone-icon">' + (justCompleted ? '🏆' : '🌿') + '</div>' +
-      '<div class="td-alldone-title">' + (justCompleted ? l.missionDoneTitle : l.allDoneTitle) + '</div>' +
-      '<div class="td-alldone-sub">' + (justCompleted ? l.missionDoneSub : l.allDoneSub) + '</div>' +
-      (justCompleted ? '<div class="td-alldone-sub" style="margin-top:8px;font-weight:800;color:var(--rk-pink,#c9922e)">' + l.missionDoneBonus(bonusAmount, coinBonusAmount) + '</div>' : '') +
-    '</div>';
-  } else {
-    html += '<div class="card"><div class="td-queue">';
-    items.forEach(function(it){
-      var empty = it.count === 0;
-      html += '<a class="td-item' + (empty ? ' empty' : '') + '" href="' + it.href + '">' +
-        '<div class="td-icon">' + it.icon + '</div>' +
-        '<div class="td-info">' +
-          '<div class="td-title">' + it.title + '</div>' +
-          '<div class="td-sub">' + (empty ? it.sub : it.cta) + '</div>' +
-        '</div>' +
-        '<div class="td-count">' + it.count + '</div>' +
-      '</a>';
-    });
-    html += '</div></div>';
-  }
-
+  html += '<div id="plannerSection"></div>';
   html += '<div class="card td-card-section">' +
     '<h3>' + l.cardTitle + '</h3>' +
     '<div class="td-card-preview-wrap"><img class="td-card-preview-img" id="streakCardImg" alt="Streak card"></div>' +
     '<button class="td-card-btn" id="streakCardBtn">' + l.cardBtn + '</button>' +
   '</div>';
 
-  html += '<div id="plannerSection"></div>';
-
   document.getElementById('mainContent').innerHTML = html;
   setupStreakCard(streak, xpData, lvl);
   renderPlanner();
   renderCurriculum();
-  if(justCompleted) setTimeout(function(){ celebrateMission(bonusAmount, coinBonusAmount); }, 400);
 }
 
 // ── TOPIK CURRICULUM (auto level 1→6 + daily cross-page stops) ────────
@@ -468,39 +393,6 @@ function celebrateLevelUp(level){
     '<div style="font-size:22px;font-weight:900;margin-top:6px">' + l.curLevelUpTitle(level) + '</div>' +
     '<div style="font-size:14px;opacity:.9;margin-top:8px;max-width:360px">' + l.curLevelUpSub + '</div>' +
     '<div style="font-size:12px;opacity:.7;margin-top:14px">' + l.curLevelUpTap + '</div>';
-  backdrop.appendChild(card);
-  document.body.appendChild(backdrop);
-  function dismiss(){
-    backdrop.style.animation = 'tdMissionFade .3s ease both';
-    setTimeout(function(){ backdrop.remove(); }, 300);
-  }
-  backdrop.addEventListener('click', dismiss);
-  setTimeout(dismiss, 5000);
-}
-
-// ── MISSION-COMPLETE CELEBRATION (self-contained, mirrors streak.js) ──
-function celebrateMission(xpGained, coinsGained){
-  var l = L();
-  if(!document.getElementById('tdMissionStyle')){
-    var style = document.createElement('style');
-    style.id = 'tdMissionStyle';
-    style.textContent =
-      '@keyframes tdMissionPop{0%{opacity:0;transform:scale(.7)}60%{opacity:1;transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}' +
-      '@keyframes tdMissionFade{from{opacity:1}to{opacity:0}}';
-    document.head.appendChild(style);
-  }
-  var backdrop = document.createElement('div');
-  backdrop.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(10,6,4,.7);' +
-    'display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;cursor:pointer';
-  var card = document.createElement('div');
-  card.style.cssText = 'background:linear-gradient(145deg,#1c4a3a,#c9922e);border-radius:24px;' +
-    'padding:36px 44px;text-align:center;color:#fff;box-shadow:0 20px 60px rgba(28,74,58,.5);' +
-    'animation:tdMissionPop .5s cubic-bezier(.34,1.56,.64,1) both;max-width:90vw';
-  card.innerHTML =
-    '<div style="font-size:52px;line-height:1">🏆</div>' +
-    '<div style="font-size:24px;font-weight:900;margin-top:6px">' + l.missionOverlayTitle + '</div>' +
-    '<div style="font-size:15px;opacity:.9;margin-top:8px">' + l.missionDoneBonus(xpGained, coinsGained) + '</div>' +
-    '<div style="font-size:12px;opacity:.7;margin-top:14px">' + l.missionOverlayTap + '</div>';
   backdrop.appendChild(card);
   document.body.appendChild(backdrop);
   function dismiss(){
@@ -693,19 +585,23 @@ function drawStreakCard(streak, xpData, lvl){
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(180, 800); ctx.lineTo(W - 180, 800); ctx.stroke();
 
-  ctx.textAlign = 'left';
+  // XP and level on separate centered lines — a long level title would
+  // otherwise run into the XP figure.
+  ctx.textAlign = 'center';
   ctx.font = '700 44px "Noto Sans KR", sans-serif';
   ctx.fillStyle = '#fff';
-  ctx.fillText((xpData.total || 0) + ' XP', 180, 890);
-
-  ctx.textAlign = 'right';
   var lvlTitle = LANG === 'ro' ? lvl.current.title_ro : lvl.current.title_en;
-  ctx.fillText('Lv.' + lvl.current.level + (lvlTitle ? ' · ' + lvlTitle : ''), W - 180, 890);
+  ctx.fillText((xpData.total || 0) + ' XP · Lv.' + lvl.current.level, W / 2, 880);
+  if(lvlTitle){
+    ctx.font = '400 36px "Noto Sans KR", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.fillText(lvlTitle, W / 2, 935);
+  }
 
   ctx.textAlign = 'center';
   ctx.font = '400 32px "Noto Sans KR", sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,.75)';
-  ctx.fillText(l.cardBest(streak.best || 0), W / 2, 965);
+  ctx.fillText(l.cardBest(streak.best || 0), W / 2, 1010);
 
   ctx.font = '400 28px "Noto Sans KR", sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,.55)';

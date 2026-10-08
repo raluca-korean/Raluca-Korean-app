@@ -315,21 +315,21 @@
     },
     today: {
       ro: {
-        title: 'Azi — Planificator TOPIK',
-        lead: 'Planul tău zilnic de studiu, pe baza progresului și a obiectivului tău.',
+        title: 'Planul TOPIK',
+        lead: 'Nivelul tău TOPIK, data examenului și cât ai de făcut pe zi ca să termini la timp.',
         steps: [
-          'Configurează obiectivul: nivelul TOPIK țintă și data examenului.',
-          'Urmează planul zilnic sugerat de aplicație.',
-          'Bifează activitățile terminate pentru a-ți urmări progresul.'
+          'Alege nivelul TOPIK țintă și data examenului.',
+          'Vezi câte lecții și exerciții ai de făcut pe zi.',
+          'Misiunea zilnică o găsești pe pagina Acasă.'
         ]
       },
       en: {
-        title: 'Today — TOPIK planner',
-        lead: 'Your daily study plan, based on your progress and goal.',
+        title: 'TOPIK plan',
+        lead: 'Your TOPIK level, exam date and how much to do per day to finish on time.',
         steps: [
-          'Set your goal: target TOPIK level and exam date.',
-          'Follow the daily plan the app suggests.',
-          'Check off finished activities to track your progress.'
+          'Pick your target TOPIK level and exam date.',
+          'See how many lessons and exercises to do per day.',
+          "Your daily mission is on the Home page."
         ]
       }
     },
