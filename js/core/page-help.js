@@ -335,21 +335,21 @@
     },
     'word-context': {
       ro: {
-        title: 'Harta Cuvântului',
-        lead: 'Explorează contextul de utilizare al unui cuvânt coreean.',
+        title: 'Harta Cuvintelor',
+        lead: 'Caută un cuvânt coreean sau explorează vocabularul pe constelații de sens.',
         steps: [
-          'Scrie un cuvânt coreean în câmpul de căutare și apasă Enter.',
-          'Vezi exemple de utilizare, cuvinte înrudite și pronunția.',
-          'Apasă pe un cuvânt înrudit pentru a-l explora mai departe.'
+          '🔍 Caută un cuvânt: scrie-l și apasă Enter — vezi exemple, cuvinte înrudite și pronunția.',
+          '🌌 Constelații: alege un grup de cuvinte înrudite (mâncare, vreme, școală…).',
+          'Din constelație, „Harta cuvântului” deschide analiza completă a cuvântului ales.'
         ]
       },
       en: {
-        title: 'Word context map',
-        lead: 'Explore the usage context of a Korean word.',
+        title: 'Word Map',
+        lead: 'Look up a Korean word or explore the vocabulary through constellations of meaning.',
         steps: [
-          'Type a Korean word in the search field and press Enter.',
-          'See usage examples, related words and pronunciation.',
-          'Tap a related word to explore it further.'
+          '🔍 Find a word: type it and press Enter — see examples, related words and pronunciation.',
+          '🌌 Constellations: pick a group of related words (food, weather, school…).',
+          'From a constellation, "Word map" opens the full analysis of the chosen word.'
         ]
       }
     },
