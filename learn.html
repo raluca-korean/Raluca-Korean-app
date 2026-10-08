@@ -55,6 +55,11 @@ body.dark-mode .rk-logo .ascent{stroke:#F3CB69}
 .item-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--lavender),var(--pink))}
 .item-count{font-size:11px;color:var(--text-low);margin-top:6px;font-weight:700}
 .item-arrow{font-size:16px;color:var(--text-low);flex-shrink:0}
+.sec-title{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-low);margin:26px 4px 12px}
+.more{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:999px;text-decoration:none;background:var(--card);border:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text);box-shadow:0 2px 8px var(--shadow)}
+.chip:hover{border-color:var(--lavender)}
+.item-icon{width:48px;height:48px;border-radius:15px;background:var(--lavender-soft);display:flex;align-items:center;justify-content:center}
 
 </style>
 </head>
@@ -82,6 +87,8 @@ body.dark-mode .rk-logo .ascent{stroke:#F3CB69}
   <div class="sub" id="pgSub">Everything you can study, in one place</div>
 
   <div class="grid" id="grid"></div>
+  <div class="sec-title" id="moreTitle"></div>
+  <div class="more" id="more"></div>
 </div>
 
 <div id="rkBottomNav"></div>
@@ -101,16 +108,16 @@ var UI = {
     title:'Învață coreeană',
     sub: AUDIENCE === 'student' ? 'Alege ce vrei să exersezi azi 🎒' : 'Tot ce poți studia, într-un singur loc',
     items:[
-      {icon:'🧠', key:'grammar', title:'Gramatică', desc:'Structuri gramaticale pe niveluri TOPIK', href:'lessons.html'},
-      {icon:'📖', key:null, title:'Vocabular', desc:'Glosar cu căutare și favorite', href:'glossary.html'},
-      {icon:'🎴', key:'vocab', title:'Flashcards', desc:'Recapitulare cu repetiție spațiată', href:'flashcards.html'},
-      {icon:'가', key:null, title:'Hangul', desc:'Alfabetul coreean', href:'hangul.html'},
+      {icon:'🧠', key:'grammar', title:'Gramatică', main:true, desc:'Structuri gramaticale pe niveluri TOPIK', href:'lessons.html'},
+      {icon:'📖', key:null, title:'Vocabular', main:true, desc:'Glosar cu căutare și favorite', href:'glossary.html'},
+      {icon:'🎴', key:'vocab', title:'Flashcards', main:true, desc:'Recapitulare cu repetiție spațiată', href:'flashcards.html'},
+      {icon:'가', key:null, title:'Hangul', main:true, desc:'Alfabetul coreean', href:'hangul.html'},
       {icon:'漢', key:'hanja', title:'Hanja', desc:'Caractere chinezești folosite în coreeană', href:'hanja-book.html'},
-      {icon:'🌌', key:null, title:'Word Universe', desc:'Constelații de cuvinte conectate', href:'word-map.html'},
+      {icon:'🌌', key:null, title:'Constelații', desc:'Constelații de cuvinte conectate', href:'word-map.html'},
       {icon:'🗺️', key:null, title:'Harta Cuvântului', desc:'Explorează relațiile dintre cuvinte', href:'word-context.html'},
       {icon:'💬', key:null, title:'Expresii', desc:'Fraze uzuale pe situații', href:'phrases.html'},
       {icon:'📓', key:null, title:'Caiet', desc:'Notele tale personale', href:'caiet.html'},
-      {icon:'⚡', key:null, title:'Neural', desc:'Lecții adaptive', href:'lesson-neural.html'},
+      {icon:'⚡', key:null, title:'Lecție interactivă', desc:'무엇이에요? — lecție demo', href:'lesson-neural.html'},
       {icon:'🙏', key:null, title:'Onorifice', desc:'Registrul politicos coreean', href:'exercises.html?type=drill-honor'}
     ]
   },
@@ -118,16 +125,16 @@ var UI = {
     title:'Learn Korean',
     sub: AUDIENCE === 'student' ? 'Pick what to practice today 🎒' : 'Everything you can study, in one place',
     items:[
-      {icon:'🧠', key:'grammar', title:'Grammar', desc:'Grammar structures across TOPIK levels', href:'lessons.html'},
-      {icon:'📖', key:null, title:'Vocabulary', desc:'Searchable glossary with favorites', href:'glossary.html'},
-      {icon:'🎴', key:'vocab', title:'Flashcards', desc:'Spaced-repetition review', href:'flashcards.html'},
-      {icon:'가', key:null, title:'Hangul', desc:'The Korean alphabet', href:'hangul.html'},
+      {icon:'🧠', key:'grammar', title:'Grammar', main:true, desc:'Grammar structures across TOPIK levels', href:'lessons.html'},
+      {icon:'📖', key:null, title:'Vocabulary', main:true, desc:'Searchable glossary with favorites', href:'glossary.html'},
+      {icon:'🎴', key:'vocab', title:'Flashcards', main:true, desc:'Spaced-repetition review', href:'flashcards.html'},
+      {icon:'가', key:null, title:'Hangul', main:true, desc:'The Korean alphabet', href:'hangul.html'},
       {icon:'漢', key:'hanja', title:'Hanja', desc:'Chinese characters used in Korean', href:'hanja-book.html'},
-      {icon:'🌌', key:null, title:'Word Universe', desc:'Constellations of connected words', href:'word-map.html'},
+      {icon:'🌌', key:null, title:'Constellations', desc:'Constellations of connected words', href:'word-map.html'},
       {icon:'🗺️', key:null, title:'Word Map', desc:'Explore relationships between words', href:'word-context.html'},
       {icon:'💬', key:null, title:'Phrases', desc:'Common expressions by situation', href:'phrases.html'},
       {icon:'📓', key:null, title:'Notebook', desc:'Your personal notes', href:'caiet.html'},
-      {icon:'⚡', key:null, title:'Neural', desc:'Adaptive lessons', href:'lesson-neural.html'},
+      {icon:'⚡', key:null, title:'Interactive lesson', desc:'무엇이에요? — demo lesson', href:'lesson-neural.html'},
       {icon:'🙏', key:null, title:'Honorifics', desc:'Korean polite register', href:'exercises.html?type=drill-honor'}
     ]
   }
@@ -156,7 +163,11 @@ function render(){
     var lessons = results[0];
     var lessonsPct = lessons.length ? Math.round(doneLessons.length / lessons.length * 100) : 0;
 
-    document.getElementById('grid').innerHTML = l.items.map(function(it){
+    document.getElementById('moreTitle').textContent = LANG === 'ro' ? 'MAI MULTE' : 'MORE';
+    document.getElementById('more').innerHTML = l.items.filter(function(it){ return !it.main; }).map(function(it){
+      return '<a class="chip" href="' + it.href + '" title="' + it.desc + '"><span>' + it.icon + '</span>' + it.title + '</a>';
+    }).join('');
+    document.getElementById('grid').innerHTML = l.items.filter(function(it){ return it.main; }).map(function(it){
       var extra = '';
       if(it.key === 'grammar'){
         extra = '<div class="item-bar-bg"><div class="item-bar" style="width:' + lessonsPct + '%"></div></div>' +

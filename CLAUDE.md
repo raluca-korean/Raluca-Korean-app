@@ -8,7 +8,7 @@ Stack: **Vanilla JS, HTML, CSS** — fără build tools, fără npm.
 
 ## Structura fișierelor
 
-Aplicația a crescut mult peste cele 5 pagini inițiale — sunt ~37 pagini `.html` la rădăcină. Nu toate importă `theme-anime.css`: cele 5 hub-uri din navigarea de jos (`index`, `learn`, `profile`, `review`) au stiluri proprii inline în `<style>`, doar `play.html` folosește `theme-anime.css`. Restul paginilor (cele mai vechi) îl importă normal.
+Aplicația a crescut mult peste cele 5 pagini inițiale — sunt ~37 pagini `.html` la rădăcină. Nu toate importă `theme-anime.css`: hub-urile din navigarea de jos (`index`, `learn`, `play`, `profile`, `review`) au stiluri proprii inline în `<style>` (aceleași token-uri: violet `#6C5CE7`, roz `#E96A9A`, auriu `#F4C95D`, fundal întunecat `#101426`). Restul paginilor (cele mai vechi) importă `theme-anime.css`. Paleta veche verde/auriu (`#1c4a3a`/`#c9922e`) și tonurile maro/crem au fost retrase — nu le reintroduce.
 
 ### Navigare (bottom nav, 5 taburi)
 
@@ -18,7 +18,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 ### Hub-uri secundare
 
-- `today.html` — misiunea zilnică / planificator (include fostul `planner.html`, acum doar un redirect-stub)
+- `today.html` — **Planul TOPIK** (nivel, data examenului, ritm zilnic, card de streak; include fostul `planner.html`, acum redirect-stub). Legat din Progres. **Misiunea zilnică există doar pe `index.html`** (un singur bonus/zi: `RK_DAILY_MISSION_AWARDED`).
 - `explore.html` — index complet al tuturor funcțiilor (catch-all, util când o pagină nouă nu e încă în niciun meniu)
 - `onboarding.html` — flow de prim-contact (Student/Adult, focus, timp disponibil), cu buton „Sari peste"
 - `review.html`, `mistakes.html` — recapitulare greșeli/SRS
@@ -38,6 +38,12 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 ### Date (`data/`)
 
 `exercises.json` (7 tipuri × 30 ex.), `lessons.json`, `vocab-korean.json`, `phrases.json`, `stories.json`, `hanja.json`, `reading-texts.json`, `listening.json`, `numbers.json`, `honorifics.json`, `journal-prompts.json`, `composition-prompts.json`, `context-words.json`, `word-clusters.json`, `builder-vocab.json`, `extra-generated-sentences.json`.
+
+### Hub-uri: structură
+
+- `index.html`: card „Azi” (inel de progres + un singur buton), „Drumul de azi” (pași), quiz rapid inline (contează la sarcina zilnică `vocab`), expresia zilei.
+- `play.html` / `learn.html`: câteva carduri mari + restul ca chip-uri „Mai multe”. Nu adăuga carduri mari noi — pune paginile noi ca chip.
+- `tools/`: scripturi Python de generare a exercițiilor (nu fac parte din aplicație).
 
 ### Fără build tools — reguli de bază
 
