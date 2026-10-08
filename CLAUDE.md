@@ -44,6 +44,11 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 - `index.html`: card „Azi” (inel de progres + un singur buton), „Drumul de azi” (pași), quiz rapid inline (contează la sarcina zilnică `vocab`), expresia zilei.
 - `play.html` / `learn.html`: câteva carduri mari + restul ca chip-uri „Mai multe”. Nu adăuga carduri mari noi — pune paginile noi ca chip.
 - `tools/`: scripturi Python de generare a exercițiilor (nu fac parte din aplicație).
+- **Lecțiile** se deschid în `lesson-neural.html` (stilul interactiv), în două moduri:
+  - `?lesson=T1-03` / `?topik=<nivel>` / `?topik` — **Gramatică TOPIK**: citește `data/lessons.json`, o convertește prin `fromLessonsJson()` (romanizare automată, plăcuțe gramaticale din `structure`), iar „Gata” scrie în `RK_LESSON_DONE` + `RK_LESSON_TODAY` (progresul principal). Butonul „Exersează” → `exercises.html?lesson=ID`.
+  - fără parametri — **Fraze utile**: cele 100 de lecții-tipar scrise în `LESSONS` din pagină, progres separat în `RK_DONE_NEURAL`.
+  - `lessons.html` rămâne ca „Harta lecțiilor” (vedere de ansamblu + quiz), cu buton spre modul interactiv.
+- `word-context.html` = **Harta Cuvintelor**, cu 2 taburi: căutare cuvânt + Constelații (`?view=stars`). `word-map.html` e doar redirect.
 
 ### Fără build tools — reguli de bază
 

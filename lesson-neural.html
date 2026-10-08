@@ -729,6 +729,16 @@ body{
 .nl-done-btn.is-done{opacity:.40;cursor:default}
 .nl-done-btn.is-done:hover{transform:none;background:rgba(0,180,110,.10)}
 
+/* ── MODE SWITCH (TOPIK grammar curriculum ⇄ phrase lessons) ── */
+.nl-mode{display:flex;gap:8px;padding:10px 18px 0;background:rgba(2,2,18,.94)}
+.nl-mode a{flex:1;text-align:center;text-decoration:none;padding:8px 10px;border-radius:999px;
+  font-size:12px;font-weight:700;color:var(--lo);background:var(--glass);border:1px solid var(--glass-b);transition:all .2s ease}
+.nl-mode a.on{color:#fff;background:linear-gradient(135deg,#6C5CE7,#E96A9A);border-color:transparent;box-shadow:0 4px 14px rgba(108,92,231,.35)}
+html[data-mode=day] .nl-mode{background:var(--deep)}
+.nl-prac-link{display:block;margin-top:14px;padding:12px 16px;border-radius:14px;text-align:center;text-decoration:none;
+  font-size:14px;font-weight:800;color:#fff;background:linear-gradient(135deg,#6C5CE7,#E96A9A);box-shadow:0 6px 18px rgba(108,92,231,.35)}
+.nl-prac-link:hover{filter:brightness(1.08)}
+
 /* ── GRAM NOTE ──────────────────────────────────────────────── */
 .nl-gram-note{
   font-size:11px;color:var(--lo);text-align:center;
@@ -1088,7 +1098,7 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
       <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>
     </a>
     <div class="nl-badge">
-      <div class="nl-badge-code">T1-05 · Pattern Lesson</div>
+      <div class="nl-badge-code" id="hdCode">Pattern Lesson</div>
       <div class="nl-badge-title" id="hdTitle">Întrebări de bază</div>
     </div>
     <!-- Language toggle — single pill -->
@@ -1126,6 +1136,7 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
 <!-- ══════════════════════════════════════
      LESSON PICKER
 ══════════════════════════════════════ -->
+<div class="nl-mode" id="nlMode"></div>
 <div class="nl-picker" id="lessonPicker"></div>
 
 <!-- ══════════════════════════════════════
@@ -1182,6 +1193,7 @@ html[data-mode=day] .nl-cmd-level-name{color:var(--hi)}
         <button class="nl-done-btn" id="doneBtn" onclick="markDone(curLesson)">✓ <span id="doneLbl">Gata</span></button>
         <div class="nl-orb-btn" role="button" tabindex="0" onclick="toggleOrb()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleOrb();}" title="Pronunciation Orb">🎙</div>
       </div>
+      <a class="nl-prac-link" id="pracLink" href="#" style="display:none">📝 <span id="pracLbl">Exersează</span> →</a>
     </div>
   </div>
 </section>
@@ -1624,6 +1636,11 @@ setTimeout(()=>{
 // ── LANGUAGE + STATE ──────────────────────────────────────────
 let lang = localStorage.getItem('RK_LANG')||'ro';
 let curLesson = 6;
+// TOPIK mode: ?lesson=T1-03 (or ?topik=1) shows the main grammar curriculum
+// (data/lessons.json) in this same interface; progress then goes to the
+// app-wide RK_LESSON_DONE instead of this page's own RK_DONE_NEURAL.
+const NL_PARAMS = new URLSearchParams(location.search);
+const TOPIK_MODE = NL_PARAMS.has('lesson') || NL_PARAMS.has('topik');
 let doneSet=new Set(JSON.parse(localStorage.getItem('RK_DONE_NEURAL')||'[]'));
 let chalActive=false, chalDone=false;
 let spokeEver = !!localStorage.getItem('RK_SPOKE_EVER');
@@ -4035,7 +4052,7 @@ function buildPicker(){
     const pill=document.createElement('div');
     pill.dataset.idx=String(i);
     pill.className='nl-lesson-pill'+(i===curLesson?' active':'')+(doneSet.has(i)?' done':'');
-    pill.innerHTML=`<div class="nl-lp-num">P${L.id}</div><div class="nl-lp-ko">${L.short}</div>`;
+    pill.innerHTML=`<div class="nl-lp-num">${TOPIK_MODE?L.id:'P'+L.id}</div><div class="nl-lp-ko">${L.short}</div>`;
     pill.setAttribute('role','button');
     pill.tabIndex=0;
     pill.onclick=()=>renderLesson(i,true);
@@ -4100,6 +4117,19 @@ function renderLesson(idx,doScroll){
   document.getElementById('aiFb').classList.remove('show');
   const db=document.getElementById('doneBtn');
   if(db)db.classList.toggle('is-done',doneSet.has(idx));
+  document.getElementById('hdCode').textContent=TOPIK_MODE?(L.id+' · TOPIK '+L.level):('P'+L.id+' · Pattern Lesson');
+  const pl=document.getElementById('pracLink');
+  if(pl){
+    pl.style.display=TOPIK_MODE?'':'none';
+    pl.href='exercises.html?lesson='+encodeURIComponent(L.id);
+    document.getElementById('pracLbl').textContent=isRo?'Exersează':'Practice';
+  }
+  if(TOPIK_MODE)document.getElementById('lblExamples').textContent=isRo?'Exemple':'Examples';
+  if(TOPIK_MODE){
+    const u=new URL(location.href);
+    u.searchParams.delete('topik');u.searchParams.set('lesson',L.id);
+    if(u.href!==location.href)history.replaceState(null,'',u);
+  }
   if(doScroll)window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -4211,8 +4241,8 @@ function buildCards(cards){
     const trDiv=lang==='ro'?`<div class="nl-card-ro">${d.ro}</div>`:`<div class="nl-card-en">${d.en}</div>`;
     const expTxt=lang==='ro'?d.exp:(d.exp_en||d.exp);
     const memTxt=lang==='ro'?d.mem:(d.mem_en||d.mem);
-    const expDiv=`<div class="nl-card-div"></div><div class="nl-card-explain">${expTxt}</div>`;
-    const memDiv=`<div class="nl-card-mem">💭 ${memTxt}</div>`;
+    const expDiv=expTxt?`<div class="nl-card-div"></div><div class="nl-card-explain">${expTxt}</div>`:'';
+    const memDiv=memTxt?`<div class="nl-card-mem">💭 ${memTxt}</div>`:'';
     const koEsc=d.ko.replace(/'/g,"\\'");
     c.innerHTML=`<div class="nl-card-top"><span class="nl-card-tag">${tag}</span></div><div class="nl-card-ko">${d.ko}</div><div class="nl-card-rom">${d.rom}</div>${trDiv}${expDiv}<div class="nl-card-actions"><div class="nl-card-audio" role="button" tabindex="0" onclick="speak('${koEsc}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();speak('${koEsc}');}">🔊</div><div class="nl-card-pron" role="button" tabindex="0" onclick="challengeCard('${koEsc}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();challengeCard('${koEsc}');}">🎤</div>${memDiv}</div>`;
     track.appendChild(c);
@@ -4236,6 +4266,7 @@ function applyLang(){
     const el=document.getElementById(id);if(el&&u[id]!==undefined)el.textContent=u[id];
   });
   renderLesson(curLesson);
+  if(typeof renderModeSwitch==='function')renderModeSwitch();
   if(typeof updateCommandPanel==='function')updateCommandPanel();
   applyNeuralFate();
 }
@@ -4247,12 +4278,21 @@ function toggleOrb(){document.getElementById('pronOrb').classList.toggle('show')
 function markDone(idx){
   if(doneSet.has(idx))return;
   doneSet.add(idx);
-  localStorage.setItem('RK_DONE_NEURAL',JSON.stringify([...doneSet]));
+  if(TOPIK_MODE){
+    const ids=JSON.parse(localStorage.getItem('RK_LESSON_DONE')||'[]');
+    if(ids.indexOf(LESSONS[idx].id)===-1)ids.push(LESSONS[idx].id);
+    localStorage.setItem('RK_LESSON_DONE',JSON.stringify(ids));
+    localStorage.setItem('RK_LESSON_TODAY',todayISO());
+  } else {
+    localStorage.setItem('RK_DONE_NEURAL',JSON.stringify([...doneSet]));
+  }
   logDailyLesson();
   const pill=document.querySelector(`.nl-lesson-pill[data-idx="${idx}"]`);
   if(pill){pill.classList.add('done');document.getElementById('lessonPicker').appendChild(pill);}
   const db=document.getElementById('doneBtn');if(db)db.classList.add('is-done');
-  const next=LESSONS.findIndex((_,i)=>!doneSet.has(i));
+  // TOPIK mode follows the curriculum order: the next unfinished lesson after this one.
+  let next=TOPIK_MODE?LESSONS.findIndex((_,i)=>i>idx&&!doneSet.has(i)):-1;
+  if(next===-1)next=LESSONS.findIndex((_,i)=>!doneSet.has(i));
   if(next!==-1)renderLesson(next,true);
   updateCommandPanel();
   checkNeuralFate();
@@ -4292,6 +4332,7 @@ function loadNeuralFate(){try{return JSON.parse(localStorage.getItem(FATE_KEY)||
 function saveNeuralFate(choice){try{localStorage.setItem(FATE_KEY,JSON.stringify({choice,date:new Date().toISOString()}));}catch(e){}}
 
 function checkNeuralFate(){
+  if(TOPIK_MODE)return;
   if(doneSet.size<LESSONS.length)return;
   if(loadNeuralFate())return;
   showFateModal();
@@ -4653,14 +4694,114 @@ function updateCommandPanel(){
   buildWeekBars();
 }
 
+// ── TOPIK CURRICULUM ADAPTER (data/lessons.json → this page's lesson shape) ──
+// Hangul → syllable-by-syllable Revised Romanization, the same hyphenated
+// style the hand-written lessons above use (no sound-change rules).
+const RR_L=['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
+const RR_V=['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','wo','we','wi','yu','eu','ui','i'];
+const RR_T=['','k','k','k','n','n','n','t','l','k','m','l','l','l','p','l','m','p','p','t','t','ng','t','t','k','t','p','t'];
+function romanize(text){
+  return String(text||'').split(/(\s+)/).map(word=>{
+    const out=[];let buf='';
+    for(const ch of word){
+      const c=ch.charCodeAt(0)-0xAC00;
+      if(c>=0&&c<11172){
+        if(buf){out.push(buf);buf='';}
+        out.push(RR_L[Math.floor(c/588)]+RR_V[Math.floor((c%588)/28)]+RR_T[c%28]);
+      } else buf+=ch;
+    }
+    if(buf)out.push(buf);
+    // hyphen only between syllables, not before punctuation
+    return out.reduce((acc,part,i)=>acc+(i&&/^[a-z]/.test(part)&&/[a-z]$/.test(out[i-1])?'-':'')+part,'');
+  }).join('');
+}
+const STRUCT_EN=[['Rădăcina verbului','Verb stem'],['Radacina verbului','Verb stem'],['Substantiv','Noun'],['substantiv','noun'],
+  ['adjectiv','adjective'],['Adjectiv','Adjective'],['prezent','present'],['trecut','past'],['după consoană finală','after a final consonant'],
+  ['dupa consoana','after a consonant'],['după consoană','after a consonant'],['după vocală sau ㄹ','after a vowel or ㄹ'],
+  ['dupa vocala','after a vowel'],['după vocală','after a vowel'],['sau','or'],['nominalizat','nominalized'],['Loc','Place'],
+  ['altă propoziție','another clause'],['alta actiune','another action'],['consecință','consequence'],['consecinta','consequence'],
+  ['expresie principală','main clause'],['propoziție contrastantă','contrasting clause'],['rezultat negativ','negative result'],
+  ['rezultat neașteptat','unexpected result'],['acțiune justificată','justified action'],['reacție spontană a vorbitorului',"speaker's spontaneous reaction"],
+  ['clauza cu condiție sau contrast','clause with condition or contrast'],['neschimbată','unchanged'],['logică','logical'],['inevitabila','inevitable'],
+  ['principal','main']];
+function structEn(t){let r=t;for(const[a,b]of STRUCT_EN)r=r.split(a).join(b);return r;}
+const BASES={N:['[N]','Substantiv','Noun'],V:['[V]','Verb','Verb'],A:['[A]','Adjectiv','Adjective'],VA:['[V/A]','Verb / adj.','Verb / adj.'],
+  NV:['[N/V]','Subst. / verb','Noun / verb'],LOC:['[Loc]','Loc','Place']};
+function baseTile(text){
+  const t=String(text||'').replace(/\(.*?\)/g,'').toLowerCase();
+  const hasV=/verb|radacina|rădăcina/.test(t),hasA=/adj/.test(t),hasN=/substantiv/.test(t);
+  const k=hasN&&hasV?'NV':hasV&&hasA?'VA':hasV?'V':hasA?'A':hasN?'N':/loc/.test(t)?'LOC':'N';
+  const b=BASES[k];return {ko:b[0],type:'noun',lbl_ro:b[1],lbl_en:b[2]};
+}
+const HANGUL=/[가-힣ㄱ-ㆎ]/;
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fromLessonsJson(list){
+  return list.map(l=>{
+    const tRo=(l.title&&l.title.ro)||l.id, tEn=(l.title&&l.title.en)||tRo;
+    const ko=tRo.split(' — ')[0].trim();
+    const meanRo=tRo.split(' — ').slice(1).join(' — ')||tRo, meanEn=tEn.split(' — ').slice(1).join(' — ')||tEn;
+    const parts=String(l.structure||'').split(' + ');
+    const end={ko:ko,type:'end',lbl_ro:'Gramatică',lbl_en:'Grammar'};
+    const tiles=HANGUL.test(parts[0]||'')?[end,baseTile(parts[1])]:[baseTile(parts[0]),end];
+    const ex=l.examples||[];
+    const notesRo=(l.notes&&l.notes.ro)||[], notesEn=(l.notes&&l.notes.en)||notesRo;
+    const simpleRo=(l.simple&&l.simple.ro)||'', simpleEn=(l.simple&&l.simple.en)||simpleRo;
+    const explRo=(l.explanation&&l.explanation.ro)||'', explEn=(l.explanation&&l.explanation.en)||explRo;
+    const tutor=(a,b)=>(a?'<b style="color:var(--cyan)">'+esc(a)+'</b>':'')+(a&&b&&a!==b?'<br>':'')+(b&&b!==a?esc(b):'');
+    const sp=ex[1]||ex[0]||{ko:ko,ro:meanRo,en:meanEn};
+    return {
+      id:l.id, level:l.topik, short:ko, ko:ko, rom:romanize(ko), ro:meanRo, en:meanEn,
+      titleRo:tRo, titleEn:tEn, topik:'TOPIK '+(l.topik<=2?'I':'II')+' · Lv. '+l.topik,
+      gramTiles:tiles,
+      note_ro:esc(l.structure||''), note_en:esc(structEn(l.structure||'')),
+      notes_ro:notesRo.map(esc), notes_en:notesEn.map(esc),
+      tutorRo:tutor(simpleRo,explRo), tutorEn:tutor(simpleEn,explEn),
+      chalKo:(ex[0]&&ex[0].ko)||ko,
+      crSpeech:{ko:sp.ko,tr_ro:sp.ro,tr_en:sp.en,tip_ro:esc(notesRo[0]||simpleRo),tip_en:esc(notesEn[0]||simpleEn)},
+      cards:ex.map((e,i)=>({ko:e.ko,rom:romanize(e.ko),ro:e.ro,en:e.en,
+        tag_ro:'Exemplu '+(i+1),tag_en:'Example '+(i+1),exp:'',exp_en:'',mem:'',mem_en:''}))
+    };
+  });
+}
+
+function renderModeSwitch(){
+  const el=document.getElementById('nlMode');if(!el)return;
+  const isRo=lang==='ro';
+  el.innerHTML=`<a href="lesson-neural.html?topik" class="${TOPIK_MODE?'on':''}">📘 ${isRo?'Gramatică TOPIK':'TOPIK grammar'}</a>`+
+    `<a href="lesson-neural.html" class="${TOPIK_MODE?'':'on'}">💬 ${isRo?'Fraze utile':'Useful phrases'}</a>`;
+}
+
 // ── BOOT ──────────────────────────────────────────────────────
-buildPicker();
-applyLang();
-syncXPDisplay();
-document.getElementById('langLbl').textContent=lang.toUpperCase();
-setTimeout(()=>document.querySelector(`.nl-lesson-pill[data-idx="${curLesson}"]`)?.scrollIntoView({inline:'center',block:'nearest'}),200);
-setTimeout(initCommandPanel,300);
-checkNeuralFate();
+function boot(){
+  buildPicker();
+  applyLang();
+  renderModeSwitch();
+  syncXPDisplay();
+  document.getElementById('langLbl').textContent=lang.toUpperCase();
+  setTimeout(()=>document.querySelector(`.nl-lesson-pill[data-idx="${curLesson}"]`)?.scrollIntoView({inline:'center',block:'nearest'}),200);
+  setTimeout(initCommandPanel,300);
+  checkNeuralFate();
+}
+if(TOPIK_MODE){
+  fetch('./data/lessons.json').then(r=>r.json()).then(data=>{
+    const conv=fromLessonsJson(data);
+    LESSONS.length=0;conv.forEach(x=>LESSONS.push(x));
+    const doneIds=JSON.parse(localStorage.getItem('RK_LESSON_DONE')||'[]');
+    doneSet=new Set(LESSONS.map((x,i)=>doneIds.indexOf(x.id)!==-1?i:-1).filter(i=>i>=0));
+    const want=NL_PARAMS.get('lesson');
+    const lvl=parseInt(NL_PARAMS.get('topik'),10);
+    let idx=want?LESSONS.findIndex(x=>x.id===want):-1;
+    if(idx===-1){
+      const pool=LESSONS.map((x,i)=>i).filter(i=>!lvl||LESSONS[i].level===lvl);
+      idx=pool.find(i=>!doneSet.has(i));
+      if(idx===undefined)idx=pool[0]||0;
+    }
+    curLesson=idx;
+    boot();
+  }).catch(()=>{ location.replace('lessons.html'); });
+} else {
+  boot();
+}
 
 </script>
 
