@@ -113,11 +113,45 @@ function _renderMorphemes(word) {
 /* Quiz state */
 var quizMode  = false;
 var quizScore = {ok: 0, total: 0};
-var quizQ     = null;   /* {dataIdx, correctMeaning, options:[str×4]} */
+var quizQ     = null;   /* {type, item, di, wordUsed, breakdownMeanings, correctKey, correctLabel, options:[{key,label,sub?}×4]} */
 var quizDone  = false;
 var quizTimer = null;
 var quizDeck  = [];     /* deck de parcurs: greșelile revin la coadă */
 var quizInitialSize = 0;
+
+/* Quiz lesson/cumulative round state — ported from Korean by Hanja's
+   lessonRoundActive/lessonRoundMode/etc. The free-roam ⚡ Quiz above
+   (quizDeck-driven, wrong answers requeue until every learned hanja
+   is answered right) stays untouched; a round is a SEPARATE, fixed-
+   length pass (each entry answered exactly once, real score, no
+   requeue) over either just the current hanja ('single') or every
+   learned hanja ('cumulative' — this app already tracks `learned`
+   explicitly, so that's a cleaner cumulative pool than Korean by
+   Hanja's position-based "0..learnPos" proxy). */
+var quizRoundActive = false;
+var quizRoundMode   = null; // 'single' | 'cumulative'
+var quizRoundDi     = null;
+var quizRoundQueue  = [];
+var quizRoundIndex  = 0;
+var quizRoundScore  = {ok: 0, total: 0};
+
+/* Same idea, for Puzzle — one tile-building question per word
+   instead of Quiz's 5 question types, so a single-root round is
+   usually shorter than QUIZ_ROUND_SIZE (exactly that root's own 4
+   words), left short rather than padded; a cumulative round across
+   many learned roots hits the same cap. The free/infinite 🧩 Puzzle
+   (puzzleDeck-driven, reshuffles forever) stays untouched. */
+var puzzleRoundActive = false;
+var puzzleRoundMode   = null;
+var puzzleRoundDi     = null;
+var puzzleRoundQueue  = [];
+var puzzleRoundIndex  = 0;
+var puzzleRoundScore  = {ok: 0, total: 0};
+
+/* Which kind of completion the shared #quizResult overlay is
+   currently showing, so its Retry/Exit buttons dispatch to the right
+   pair of functions regardless of which mode/round finished. */
+var resultKind = null; // 'quiz-free' | 'quiz-round' | 'puzzle-round'
 
 
 /* Study queue: unlearned hanja first; marking learned sends them to the back */
@@ -347,6 +381,25 @@ function render(animate) {
     pzb.disabled = (learned.length === 0);
     pzb.title    = learned.length === 0 ? 'Marchează cel puțin un hanja ca învățat pentru a începe' : '';
   }
+
+  /* Cumulative round triggers — same "at least 1 learned" gate as
+     Quiz/Puzzle above; the lesson-round triggers (🎯) need no gate,
+     since they test the hanja currently on screen, not `learned`. */
+  var gateMsg = 'Marchează cel puțin un hanja ca învățat pentru a începe';
+  var qcb = document.getElementById('quizCumulativeBtn');
+  if (qcb) {
+    qcb.disabled = (learned.length === 0);
+    qcb.title = learned.length === 0 ? gateMsg : (lang === 'en' ? 'General review' : 'Recapitulare generală');
+  }
+  var pcb = document.getElementById('puzzleCumulativeBtn');
+  if (pcb) {
+    pcb.disabled = (learned.length === 0);
+    pcb.title = learned.length === 0 ? gateMsg : (lang === 'en' ? 'General review — Puzzle' : 'Recapitulare generală — Puzzle');
+  }
+  var qlb = document.getElementById('quizLessonBtn');
+  if (qlb) qlb.title = lang === 'en' ? 'Practice this lesson' : 'Exersează lecția asta';
+  var plb = document.getElementById('puzzleLessonBtn');
+  if (plb) plb.title = lang === 'en' ? "Build this lesson's words" : 'Formează cuvintele lecției';
 }
 
 /* ── WORD BLOOM ────────────────────────────────────────── */
@@ -649,6 +702,7 @@ function _shuffled(arr) {
 function _startQuiz() {
   if (learned.length === 0) return;
   quizMode        = true;
+  quizRoundActive = false;
   quizScore       = {ok: 0, total: 0};
   quizDeck        = _shuffled(learned);
   quizInitialSize = quizDeck.length;
@@ -661,13 +715,183 @@ function _exitQuiz() {
   quizQ    = null;
   quizDone = false;
   quizDeck = [];
+  quizRoundActive = false;
+  quizRoundQueue  = [];
   _hideQuizResult();
   document.getElementById('stage').classList.remove('quiz-mode');
-  document.getElementById('learnBtn').style.display    = '';
-  document.getElementById('quizBtn').style.display     = '';
-  document.getElementById('quizExitBtn').style.display = 'none';
+  document.getElementById('learnBtn').style.display         = '';
+  document.getElementById('quizBtn').style.display          = '';
+  document.getElementById('quizLessonBtn').style.display    = '';
+  document.getElementById('quizCumulativeBtn').style.display = '';
+  document.getElementById('quizExitBtn').style.display      = 'none';
   _sortQueueByDue();
   render(false);
+}
+
+/* ── QUIZ — question types (ported from Korean by Hanja's TYPES /
+   buildQuestionFor) ───────────────────────────────────────────
+   root-meaning / meaning-root test the hanja itself; word-meaning /
+   meaning-word / breakdown-word test its 4 example words. All five
+   reuse the SAME nucleus (prompt) + 4-orbital-node (options) layout
+   that originally only showed root-meaning — see _renderQuiz(). */
+var QUIZ_TYPES      = ['root-meaning', 'meaning-root', 'word-meaning', 'meaning-word', 'breakdown-word'];
+var QUIZ_ROUND_SIZE = 20;
+
+function _distractMeanings(di, n) {
+  var correct = DATA[di].meaning[lang];
+  var indices = _shuffled(DATA.map(function(_, i) { return i; }).filter(function(i) { return i !== di; }));
+  var seen = {}; seen[correct] = true;
+  var out = [];
+  for (var i = 0; i < indices.length && out.length < n; i++) {
+    var m = DATA[indices[i]].meaning[lang];
+    if (m && !seen[m]) { seen[m] = true; out.push({key: m, label: m}); }
+  }
+  return out;
+}
+
+function _distractRoots(di, n) {
+  var indices = _shuffled(DATA.map(function(_, i) { return i; }).filter(function(i) { return i !== di; }));
+  var out = [];
+  for (var i = 0; i < indices.length && out.length < n; i++) {
+    var ri = indices[i];
+    out.push({key: ri, label: DATA[ri].hanja, sub: DATA[ri].reading[lang]});
+  }
+  return out;
+}
+
+function _distractWords(correctKey, n) {
+  var flat = [];
+  DATA.forEach(function(e, di) {
+    e.words.forEach(function(w) {
+      var key = di + '_' + w.ko;
+      if (key !== correctKey) flat.push({key: key, label: w.ko});
+    });
+  });
+  var pool = _shuffled(flat);
+  var seen = {}; var out = [];
+  for (var i = 0; i < pool.length && out.length < n; i++) {
+    if (!seen[pool[i].label]) { seen[pool[i].label] = true; out.push(pool[i]); }
+  }
+  return out;
+}
+
+function _distractWordMeanings(correctMeaning, n) {
+  var flat = [];
+  DATA.forEach(function(e) {
+    e.words.forEach(function(w) {
+      var m = w[lang];
+      if (m && m !== correctMeaning) flat.push(m);
+    });
+  });
+  var pool = _shuffled(flat);
+  var seen = {}; var out = [];
+  for (var i = 0; i < pool.length && out.length < n; i++) {
+    if (!seen[pool[i]]) { seen[pool[i]] = true; out.push({key: pool[i], label: pool[i]}); }
+  }
+  return out;
+}
+
+function _shuffleOptions(options) {
+  var arr = options.slice();
+  for (var i = arr.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+
+function _quizBreakdownWords(di) {
+  return DATA[di].words.filter(function(w) { return !!wordBreakdown(w.ko); });
+}
+
+function _quizTypesFor(di) {
+  return _quizBreakdownWords(di).length ? QUIZ_TYPES : QUIZ_TYPES.filter(function(ty) { return ty !== 'breakdown-word'; });
+}
+
+function _buildQuizQuestionFor(di, type, forcedWord) {
+  var item = DATA[di];
+  var correctKey, correctLabel, options, wordUsed = null, breakdownMeanings = null;
+
+  if (type === 'root-meaning') {
+    correctLabel = item.meaning[lang];
+    correctKey = correctLabel;
+    options = _distractMeanings(di, 3).concat([{key: correctKey, label: correctLabel}]);
+  } else if (type === 'meaning-root') {
+    correctKey = di;
+    correctLabel = item.hanja;
+    options = _distractRoots(di, 3).concat([{key: di, label: item.hanja, sub: item.reading[lang]}]);
+  } else if (type === 'word-meaning') {
+    wordUsed = forcedWord || item.words[Math.floor(Math.random() * item.words.length)];
+    correctLabel = wordUsed[lang];
+    correctKey = correctLabel;
+    options = _distractWordMeanings(correctLabel, 3).concat([{key: correctKey, label: correctLabel}]);
+  } else if (type === 'breakdown-word') {
+    var breakdownWords = _quizBreakdownWords(di);
+    wordUsed = forcedWord || breakdownWords[Math.floor(Math.random() * breakdownWords.length)];
+    var bd = wordBreakdown(wordUsed.ko);
+    breakdownMeanings = bd.syllables.map(function(s) { return s.meaning[lang]; }).join(' + ');
+    correctKey = di + '_' + wordUsed.ko;
+    correctLabel = wordUsed.ko;
+    options = _distractWords(correctKey, 3).concat([{key: correctKey, label: correctLabel}]);
+  } else { // meaning-word
+    wordUsed = forcedWord || item.words[Math.floor(Math.random() * item.words.length)];
+    correctKey = di + '_' + wordUsed.ko;
+    correctLabel = wordUsed.ko;
+    options = _distractWords(correctKey, 3).concat([{key: correctKey, label: correctLabel}]);
+  }
+
+  return {
+    type: type, item: item, di: di, wordUsed: wordUsed,
+    breakdownMeanings: breakdownMeanings,
+    correctKey: correctKey, correctLabel: correctLabel,
+    options: _shuffleOptions(options)
+  };
+}
+
+/* All (type[, word]) combinations available across a set of roots —
+   2 root-level + 2 per word + 1 breakdown-word per word with a
+   verified breakdown — shuffled and capped. Mirrors
+   buildRoundQueue(diList) in Korean by Hanja's app.js. */
+function _buildQuizRoundQueue(diList) {
+  var combos = [];
+  diList.forEach(function(di) {
+    var item = DATA[di];
+    combos.push({di: di, type: 'root-meaning'});
+    combos.push({di: di, type: 'meaning-root'});
+    item.words.forEach(function(w) {
+      combos.push({di: di, type: 'word-meaning', word: w});
+      combos.push({di: di, type: 'meaning-word', word: w});
+    });
+    _quizBreakdownWords(di).forEach(function(w) {
+      combos.push({di: di, type: 'breakdown-word', word: w});
+    });
+  });
+  return _shuffled(combos).slice(0, QUIZ_ROUND_SIZE);
+}
+
+function _startQuizLessonRound(di) {
+  quizRoundActive = true;
+  quizRoundMode   = 'single';
+  quizRoundDi     = di;
+  quizRoundQueue  = _buildQuizRoundQueue([di]);
+  quizRoundIndex  = 0;
+  quizRoundScore  = {ok: 0, total: 0};
+  quizMode = true;
+  quizDeck = [];
+  _nextQuizQ();
+}
+
+function _startQuizCumulativeRound() {
+  if (learned.length === 0) return;
+  quizRoundActive = true;
+  quizRoundMode   = 'cumulative';
+  quizRoundDi     = null;
+  quizRoundQueue  = _buildQuizRoundQueue(learned.slice());
+  quizRoundIndex  = 0;
+  quizRoundScore  = {ok: 0, total: 0};
+  quizMode = true;
+  quizDeck = [];
+  _nextQuizQ();
 }
 
 var QUIZ_MSGS = {
@@ -685,8 +909,12 @@ var QUIZ_MSGS = {
   ]
 };
 
-function _showQuizResult() {
-  var pct  = quizInitialSize > 0 ? Math.round((quizScore.ok / quizInitialSize) * 100) : 0;
+/* Shared by the free-roam Quiz's completion, Quiz rounds, and Puzzle
+   rounds — `kind` records which one, so qrRetry/qrExit (wired in
+   boot()) know which pair of start/exit functions to call. */
+function _showQuizResult(kind, ok, total) {
+  resultKind = kind;
+  var pct  = total > 0 ? Math.round((ok / total) * 100) : 0;
   var msgs = QUIZ_MSGS[lang] || QUIZ_MSGS.ro;
   var found = msgs[msgs.length - 1];
   for (var i = 0; i < msgs.length; i++) {
@@ -694,7 +922,7 @@ function _showQuizResult() {
   }
   document.getElementById('qrEmoji').textContent = found.emoji;
   document.getElementById('qrMsg').textContent   = found.msg;
-  document.getElementById('qrScore').textContent = quizScore.ok + ' / ' + quizInitialSize;
+  document.getElementById('qrScore').textContent = ok + ' / ' + total;
   document.getElementById('qrRetry').textContent = lang === 'en' ? '↺ Again'  : '↺ Din nou';
   document.getElementById('qrExit').textContent  = lang === 'en' ? '← Back'   : '← Înapoi';
   document.getElementById('quizResult').classList.remove('hidden');
@@ -706,41 +934,50 @@ function _hideQuizResult() {
 
 function _nextQuizQ() {
   if (!quizMode) return;
-  if (quizDeck.length === 0) { _showQuizResult(); return; }
+
+  if (quizRoundActive) {
+    if (quizRoundIndex >= quizRoundQueue.length) {
+      _showQuizResult('quiz-round', quizRoundScore.ok, quizRoundScore.total);
+      return;
+    }
+    quizDone  = false;
+    quizTimer = null;
+    var entry = quizRoundQueue[quizRoundIndex];
+    quizQ = _buildQuizQuestionFor(entry.di, entry.type, entry.word);
+    _renderQuiz();
+    return;
+  }
+
+  if (quizDeck.length === 0) { _showQuizResult('quiz-free', quizScore.ok, quizInitialSize); return; }
   quizDone  = false;
   quizTimer = null;
 
   var dataIdx = quizDeck[0];
-  var correct = DATA[dataIdx].meaning[lang];
-
-  var distractors = [];
-  var used = new Set([dataIdx]);
-  var attempts = 0;
-  while (distractors.length < 3 && attempts < 300) {
-    attempts++;
-    var ri = Math.floor(Math.random() * DATA.length);
-    if (!used.has(ri) && DATA[ri].meaning[lang] !== correct) {
-      used.add(ri);
-      distractors.push(DATA[ri].meaning[lang]);
-    }
-  }
-
-  var opts = [correct].concat(distractors);
-  for (var i = 3; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var t = opts[i]; opts[i] = opts[j]; opts[j] = t;
-  }
-
-  quizQ = {dataIdx: dataIdx, correctMeaning: correct, options: opts};
+  var types = _quizTypesFor(dataIdx);
+  var type  = types[Math.floor(Math.random() * types.length)];
+  quizQ = _buildQuizQuestionFor(dataIdx, type, null);
   _renderQuiz();
 }
 
 function _renderQuiz() {
-  var item = DATA[quizQ.dataIdx];
+  var c    = quizQ;
+  var item = c.item;
 
-  document.getElementById('hanjaGlyph').textContent   = item.hanja;
-  document.getElementById('glyphReading').textContent = item.reading[lang];
-  document.getElementById('glyphMeaning').textContent = quizDone ? item.meaning[lang] : '?';
+  var glyphEl = document.getElementById('hanjaGlyph');
+  var readEl  = document.getElementById('glyphReading');
+  var meanEl  = document.getElementById('glyphMeaning');
+
+  /* The root's own hanja stays visible as context for every type
+     except meaning-root, where the glyph itself is the answer. */
+  glyphEl.textContent = (c.type === 'meaning-root') ? '？' : item.hanja;
+
+  if (c.type === 'root-meaning')      readEl.textContent = item.reading[lang];
+  else if (c.type === 'meaning-root') readEl.textContent = item.meaning[lang];
+  else if (c.type === 'word-meaning') readEl.textContent = c.wordUsed.ko;
+  else if (c.type === 'meaning-word') readEl.textContent = c.wordUsed[lang];
+  else                                 readEl.textContent = c.breakdownMeanings; // breakdown-word
+
+  meanEl.textContent = quizDone ? c.correctLabel : '?';
 
   var nuc = document.getElementById('nucleus');
   nuc.classList.remove('learned', 'nova');
@@ -753,9 +990,11 @@ function _renderQuiz() {
   for (var i = 0; i < 4; i++) {
     var shell = document.getElementById('osh' + i);
     var node  = document.getElementById('orb' + i);
+    var opt   = c.options[i];
     shell.style.opacity = '1';
-    node.querySelector('.orbKo').textContent = quizQ.options[i];
-    node.querySelector('.orbTr').textContent = '';
+    node.querySelector('.orbKo').textContent = opt ? opt.label : '';
+    node.querySelector('.orbTr').textContent = opt && opt.sub ? opt.sub : '';
+    node.dataset.key = opt ? opt.key : '';
     node.classList.remove('lit', 'quiz-correct', 'quiz-wrong');
     node.style.setProperty('--node-color', 'var(' + ORB_CSS_VARS[i] + ')');
     if (shell) {
@@ -765,56 +1004,80 @@ function _renderQuiz() {
   }
 
   document.getElementById('stage').classList.add('quiz-mode');
-  document.getElementById('learnBtn').style.display    = 'none';
-  document.getElementById('etymBtn').style.visibility  = 'hidden';
-  document.getElementById('navPrev').disabled          = true;
-  document.getElementById('navNext').disabled          = true;
-  document.getElementById('quizBtn').style.display     = 'none';
-  document.getElementById('quizExitBtn').style.display = 'inline-flex';
+  document.getElementById('learnBtn').style.display          = 'none';
+  document.getElementById('etymBtn').style.visibility        = 'hidden';
+  document.getElementById('navPrev').disabled                = true;
+  document.getElementById('navNext').disabled                = true;
+  document.getElementById('quizBtn').style.display           = 'none';
+  document.getElementById('quizLessonBtn').style.display     = 'none';
+  document.getElementById('quizCumulativeBtn').style.display = 'none';
+  document.getElementById('quizExitBtn').style.display       = 'inline-flex';
 
-  document.getElementById('kLearned').textContent = quizScore.ok;
-  document.getElementById('kTotal').textContent   = quizScore.total;
-  var pct = quizScore.total > 0 ? (quizScore.ok / quizScore.total) * 100 : 0;
+  var ok  = quizRoundActive ? quizRoundScore.ok    : quizScore.ok;
+  var tot = quizRoundActive ? quizRoundScore.total : quizScore.total;
+  document.getElementById('kLearned').textContent = ok;
+  document.getElementById('kTotal').textContent   = tot;
+  var pct = tot > 0 ? (ok / tot) * 100 : 0;
   document.getElementById('kFill').style.width    = pct + '%';
-  document.getElementById('posIdx').textContent   = quizInitialSize - quizDeck.length + 1;
-  document.getElementById('posTotal').textContent = quizInitialSize;
+
+  if (quizRoundActive) {
+    document.getElementById('posIdx').textContent   = Math.min(quizRoundIndex + 1, quizRoundQueue.length);
+    document.getElementById('posTotal').textContent = quizRoundQueue.length;
+  } else {
+    document.getElementById('posIdx').textContent   = quizInitialSize - quizDeck.length + 1;
+    document.getElementById('posTotal').textContent = quizInitialSize;
+  }
 }
 
 function _answerQuiz(wi) {
   if (quizDone) return;
   quizDone = true;
-  quizScore.total++;
 
-  var chosen  = quizQ.options[wi];
-  var correct = quizQ.correctMeaning;
-  var isRight = chosen === correct;
+  var node      = document.getElementById('orb' + wi);
+  var chosenKey = node.dataset.key;
+  var isRight   = String(chosenKey) === String(quizQ.correctKey);
+
+  if (quizRoundActive) {
+    quizRoundScore.total++;
+    if (isRight) quizRoundScore.ok++;
+  } else {
+    quizScore.total++;
+    if (isRight) quizScore.ok++;
+  }
   if (isRight) {
-    quizScore.ok++;
     _bumpStreak();
     if (window.RKGamification) RKGamification.addXPBonus(3);
   }
 
-  document.getElementById('orb' + wi).classList.add(isRight ? 'quiz-correct' : 'quiz-wrong');
+  node.classList.add(isRight ? 'quiz-correct' : 'quiz-wrong');
 
   if (!isRight) {
     for (var i = 0; i < 4; i++) {
-      if (quizQ.options[i] === correct) {
-        document.getElementById('orb' + i).classList.add('quiz-correct');
-        break;
-      }
+      var oNode = document.getElementById('orb' + i);
+      if (String(oNode.dataset.key) === String(quizQ.correctKey)) { oNode.classList.add('quiz-correct'); break; }
     }
   }
 
-  document.getElementById('glyphMeaning').textContent = correct;
-  _speak(DATA[quizQ.dataIdx].ko_reading || DATA[quizQ.dataIdx].reading[lang].split(' ')[0]);
+  document.getElementById('glyphMeaning').textContent = quizQ.correctLabel;
 
-  document.getElementById('kLearned').textContent = quizScore.ok;
-  document.getElementById('kTotal').textContent   = quizScore.total;
-  var pct = (quizScore.ok / quizScore.total) * 100;
+  var item = quizQ.item;
+  var say = (quizQ.type === 'word-meaning' || quizQ.type === 'meaning-word' || quizQ.type === 'breakdown-word')
+    ? quizQ.wordUsed.ko
+    : (item.ko_reading || item.reading[lang].split(' ')[0]);
+  _speak(say);
+
+  var ok  = quizRoundActive ? quizRoundScore.ok    : quizScore.ok;
+  var tot = quizRoundActive ? quizRoundScore.total : quizScore.total;
+  document.getElementById('kLearned').textContent = ok;
+  document.getElementById('kTotal').textContent   = tot;
+  var pct = tot > 0 ? (ok / tot) * 100 : 0;
   document.getElementById('kFill').style.width = pct + '%';
 
-  _updateSRS(quizQ.dataIdx, isRight);
-  if (isRight) {
+  _updateSRS(quizQ.di, isRight);
+
+  if (quizRoundActive) {
+    quizRoundIndex++;
+  } else if (isRight) {
     quizDeck.shift();
   } else {
     quizDeck.push(quizDeck.shift());
@@ -847,9 +1110,8 @@ function _randomDecoySyllables(excludeWord, n) {
   return _shuffled(pool).slice(0, n);
 }
 
-function _buildPuzzleQuestion(di) {
+function _buildPuzzleQuestionFor(di, word) {
   var item = DATA[di];
-  var word = item.words[Math.floor(Math.random() * item.words.length)];
   var answerChars = word.ko.split('');
   var decoyCount  = answerChars.length <= 2 ? 4 : (answerChars.length === 3 ? 3 : 2);
   var pool  = answerChars.concat(_randomDecoySyllables(word.ko, decoyCount));
@@ -857,8 +1119,63 @@ function _buildPuzzleQuestion(di) {
   return {di: di, item: item, word: word, answerLen: answerChars.length, tiles: _shuffled(tiles), placed: []};
 }
 
+function _buildPuzzleQuestion(di) {
+  var word = DATA[di].words[Math.floor(Math.random() * DATA[di].words.length)];
+  return _buildPuzzleQuestionFor(di, word);
+}
+
+/* ── PUZZLE — lesson / cumulative rounds ──────────────────
+   Mirrors the round system added to Practice/Puzzle in Korean by
+   Hanja: a bounded, non-repeating pass over one root's own 4 words
+   ('single') or every learned root's words ('cumulative'), each word
+   asked exactly once, scored, and summarized via the same shared
+   #quizResult overlay Quiz's rounds use. The free/infinite 🧩 Puzzle
+   (puzzleDeck-driven, reshuffles forever, never scores) is untouched. */
+function _buildPuzzleRoundQueue(diList) {
+  var combos = [];
+  diList.forEach(function(di) {
+    DATA[di].words.forEach(function(w) { combos.push({di: di, word: w}); });
+  });
+  return _shuffled(combos).slice(0, QUIZ_ROUND_SIZE);
+}
+
+function _startPuzzleLessonRound(di) {
+  puzzleRoundActive = true;
+  puzzleRoundMode   = 'single';
+  puzzleRoundDi     = di;
+  puzzleRoundQueue  = _buildPuzzleRoundQueue([di]);
+  puzzleRoundIndex  = 0;
+  puzzleRoundScore  = {ok: 0, total: 0};
+  document.getElementById('puzzlePanel').classList.remove('hidden');
+  _nextPuzzleQ();
+}
+
+function _startPuzzleCumulativeRound() {
+  if (learned.length === 0) return;
+  puzzleRoundActive = true;
+  puzzleRoundMode   = 'cumulative';
+  puzzleRoundDi     = null;
+  puzzleRoundQueue  = _buildPuzzleRoundQueue(learned.slice());
+  puzzleRoundIndex  = 0;
+  puzzleRoundScore  = {ok: 0, total: 0};
+  document.getElementById('puzzlePanel').classList.remove('hidden');
+  _nextPuzzleQ();
+}
+
+function _restartPuzzleRound() {
+  if (puzzleRoundMode === 'cumulative') _startPuzzleCumulativeRound();
+  else _startPuzzleLessonRound(puzzleRoundDi);
+}
+
+function _exitPuzzleRound() {
+  puzzleRoundActive = false;
+  puzzleRoundQueue  = [];
+  _hideQuizResult();
+}
+
 function _openPuzzle() {
   if (learned.length === 0) return;
+  puzzleRoundActive = false;
   puzzleDeck = _shuffled(learned);
   _nextPuzzleQ();
   document.getElementById('puzzlePanel').classList.remove('hidden');
@@ -867,13 +1184,25 @@ function _openPuzzle() {
 function _closePuzzle() {
   document.getElementById('puzzlePanel').classList.add('hidden');
   puzzleCurrent = null;
+  puzzleRoundActive = false;
 }
 
 function _nextPuzzleQ() {
-  if (!puzzleDeck.length) puzzleDeck = _shuffled(learned);
-  var di = puzzleDeck.shift();
-  puzzleLocked  = false;
-  puzzleCurrent = _buildPuzzleQuestion(di);
+  if (puzzleRoundActive) {
+    if (puzzleRoundIndex >= puzzleRoundQueue.length) {
+      _closePuzzle();
+      _showQuizResult('puzzle-round', puzzleRoundScore.ok, puzzleRoundScore.total);
+      return;
+    }
+    var entry = puzzleRoundQueue[puzzleRoundIndex];
+    puzzleLocked  = false;
+    puzzleCurrent = _buildPuzzleQuestionFor(entry.di, entry.word);
+  } else {
+    if (!puzzleDeck.length) puzzleDeck = _shuffled(learned);
+    var di = puzzleDeck.shift();
+    puzzleLocked  = false;
+    puzzleCurrent = _buildPuzzleQuestion(di);
+  }
   document.getElementById('puzzleFeedback').textContent = '';
   document.getElementById('puzzleFeedback').className   = 'puzzleFeedback';
   document.getElementById('puzzleNextBtn').classList.add('hidden');
@@ -903,8 +1232,9 @@ function _renderPuzzle() {
     return '<button type="button" class="pzTile' + (used ? ' used' : '') + '" data-id="' + tile.id + '">' + tile.ch + '</button>';
   }).join('');
 
-  document.getElementById('puzzleProgress').textContent =
-    puzzleDeck.length + ' ' + (lang === 'en' ? 'left' : 'rămase');
+  document.getElementById('puzzleProgress').textContent = puzzleRoundActive
+    ? (lang === 'en' ? 'Round: ' : 'Rundă: ') + Math.min(puzzleRoundIndex + 1, puzzleRoundQueue.length) + ' / ' + puzzleRoundQueue.length
+    : puzzleDeck.length + ' ' + (lang === 'en' ? 'left' : 'rămase');
   document.getElementById('puzzleNextBtn').textContent = lang === 'en' ? 'Next →' : 'Următorul →';
 }
 
@@ -941,6 +1271,12 @@ function _checkPuzzle() {
   _updateSRS(c.di, isCorrect);
   if (isCorrect) { _bumpStreak(); if (window.RKGamification) RKGamification.addXPBonus(3); }
 
+  if (puzzleRoundActive) {
+    puzzleRoundScore.total++;
+    if (isCorrect) puzzleRoundScore.ok++;
+    puzzleRoundIndex++;
+  }
+
   var fb = document.getElementById('puzzleFeedback');
   fb.textContent = isCorrect
     ? (lang === 'en' ? '✓ Correct!' : '✓ Corect!')
@@ -974,18 +1310,34 @@ function boot() {
   document.getElementById('navNext').addEventListener('click', function() { _navigate(1); });
   document.getElementById('learnBtn').addEventListener('click', _markLearned);
   document.getElementById('quizBtn').addEventListener('click', _startQuiz);
+  document.getElementById('quizLessonBtn').addEventListener('click', function() { _startQuizLessonRound(idx); });
+  document.getElementById('quizCumulativeBtn').addEventListener('click', _startQuizCumulativeRound);
   document.getElementById('quizExitBtn').addEventListener('click', _exitQuiz);
   document.getElementById('qrRetry').addEventListener('click', function() {
     _hideQuizResult();
-    _exitQuiz();
-    setTimeout(_startQuiz, 50);
+    if (resultKind === 'quiz-round') {
+      var mode = quizRoundMode, di = quizRoundDi;
+      _exitQuiz();
+      setTimeout(function() {
+        if (mode === 'cumulative') _startQuizCumulativeRound();
+        else _startQuizLessonRound(di);
+      }, 50);
+    } else if (resultKind === 'puzzle-round') {
+      _restartPuzzleRound();
+    } else {
+      _exitQuiz();
+      setTimeout(_startQuiz, 50);
+    }
   });
   document.getElementById('qrExit').addEventListener('click', function() {
     _hideQuizResult();
+    if (resultKind === 'puzzle-round') { _exitPuzzleRound(); return; }
     _exitQuiz();
   });
 
   document.getElementById('puzzleBtn').addEventListener('click', _openPuzzle);
+  document.getElementById('puzzleLessonBtn').addEventListener('click', function() { _startPuzzleLessonRound(idx); });
+  document.getElementById('puzzleCumulativeBtn').addEventListener('click', _startPuzzleCumulativeRound);
   document.getElementById('puzzleClose').addEventListener('click', _closePuzzle);
   document.getElementById('puzzlePanel').addEventListener('click', function(e) { if (e.target === this) _closePuzzle(); });
   document.getElementById('puzzleTileBank').addEventListener('click', function(e) {
