@@ -393,7 +393,8 @@
   border-radius:14px;padding:16px;animation:wm-fadeup .22s ease;
 }
 @keyframes wm-fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.wm-panel-ko{font-size:1.7rem;font-weight:900;color:#F7F4FA;display:flex;align-items:center;gap:10px}
+.wm-panel-ko{font-size:1.7rem;font-weight:900;color:#F7F4FA;display:inline-flex;align-items:center;gap:10px;cursor:pointer}
+.wm-word.on{background:var(--ncs,rgba(139,124,255,.22));border-color:var(--nc,#8B7CFF)}
 .wm-panel-tr{font-size:.92rem;color:#B8B9C5;margin-top:4px}
 .wm-panel-acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .wm-panel-btn{
@@ -1300,7 +1301,8 @@ function openCluster(idx){
   }).join('');
   document.getElementById('wmWords').innerHTML = wordsHtml;
   document.getElementById('wmWords').querySelectorAll('.wm-word').forEach(function(w){
-    w.addEventListener('click', function(){ openWord(w.dataset.ko); });
+    // Tapping a word both opens its panel and pronounces it.
+    w.addEventListener('click', function(){ openWord(w.dataset.ko); speakWord(w.dataset.ko); });
   });
   document.getElementById('wmPanel').innerHTML = '';
   document.getElementById('wmDetail').scrollIntoView({behavior:'smooth', block:'start'});
@@ -1314,6 +1316,8 @@ function closeCluster(){
   document.getElementById('wmSearch').style.display = '';
 }
 
+function speakWord(ko){ if(window.AudioEngine) AudioEngine.speak(ko); }
+
 function openWord(ko){
   activeWord = ko;
   var entry = VOCAB_BY_KO.get(ko);
@@ -1324,10 +1328,9 @@ function openWord(ko){
   var otherClusters = (WORD_TO_CLUSTERS.get(ko) || []).filter(function(i){ return i !== activeCluster; });
 
   var html = '<div class="wm-panel">' +
-    '<div class="wm-panel-ko">' + ko + '</div>' +
+    '<div class="wm-panel-ko" id="wmPanelKo" role="button" tabindex="0" title="' + l.speak + '">' + ko + '</div>' +
     '<div class="wm-panel-tr">' + (entry ? meaning(entry) : '—') + '</div>' +
     '<div class="wm-panel-acts">' +
-      '<button class="wm-panel-btn" id="wmSpeakBtn">🔊 ' + l.speak + '</button>' +
       '<button class="wm-panel-btn' + (isFav ? ' fav-on' : '') + '" id="wmFavBtn">' + (isFav ? '★' : '☆') + ' ' + l.favLbl + '</button>' +
       '<button class="wm-panel-btn wm-explore-btn" id="wmExploreBtn">🗺️ ' + l.explore + '</button>' +
     '</div>';
@@ -1343,9 +1346,10 @@ function openWord(ko){
   html += '</div>';
 
   document.getElementById('wmPanel').innerHTML = html;
-  document.getElementById('wmSpeakBtn').addEventListener('click', function(){
-    if(window.AudioEngine) AudioEngine.speak(ko);
-  });
+  var koEl = document.getElementById('wmPanelKo');
+  koEl.addEventListener('click', function(){ speakWord(ko); });
+  koEl.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); speakWord(ko); } });
+  document.querySelectorAll('#wmWords .wm-word').forEach(function(w){ w.classList.toggle('on', w.dataset.ko === ko); });
   document.getElementById('wmExploreBtn').addEventListener('click', function(){
     // Jump to the full word map (associations + sentences) in the other tab.
     if(window.WCTabs) WCTabs.show('search');
