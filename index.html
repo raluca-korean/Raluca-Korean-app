@@ -151,27 +151,6 @@ body.dark-mode .rk-logo .ascent{stroke:#F3CB69}
   color:var(--text);font-size:12.5px;font-weight:800;border-radius:12px;padding:9px 10px;cursor:pointer;text-decoration:none}
 .lvl-btn.primary{background:var(--lavender-soft);color:var(--lavender);border-color:transparent}
 .lvl-pin{font-size:11px;font-weight:800;color:var(--gold);margin-top:2px}
-.lvl-sheet{position:fixed;inset:0;z-index:9999;background:rgba(18,19,28,.55);backdrop-filter:blur(3px);
-  display:flex;align-items:flex-end;justify-content:center}
-.lvl-sheet[hidden]{display:none}
-.lvl-panel{background:var(--card);color:var(--text);width:100%;max-width:560px;border-radius:24px 24px 0 0;
-  padding:18px 16px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto;animation:lvlUp .25s ease both}
-@keyframes lvlUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-.lvl-panel h3{margin:4px 4px 2px;font-size:17px;font-weight:900}
-.lvl-panel p{margin:0 4px 14px;font-size:12.5px;color:var(--text-mid)}
-.lvl-opt{width:100%;display:flex;align-items:center;gap:12px;text-align:left;border:1.5px solid var(--border);background:var(--card);
-  color:var(--text);border-radius:14px;padding:11px 12px;margin-bottom:8px;cursor:pointer;font:inherit}
-.lvl-opt.on{border-color:var(--lavender);background:var(--lavender-soft)}
-.lvl-opt-badge{flex-shrink:0;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
-  font-size:15px;font-weight:900;color:#fff;background:linear-gradient(135deg,var(--lavender),var(--pink))}
-.lvl-opt-badge.auto{background:linear-gradient(135deg,var(--mint),var(--denim));font-size:20px}
-.lvl-opt-txt{flex:1;min-width:0}
-.lvl-opt-title{font-size:14px;font-weight:800}
-.lvl-opt-sub{font-size:12px;color:var(--text-mid);margin-top:2px}
-.lvl-opt-mini{height:4px;background:var(--bar-bg);border-radius:3px;overflow:hidden;margin-top:6px}
-.lvl-opt-mini i{display:block;height:100%;background:linear-gradient(90deg,var(--lavender),var(--pink));border-radius:3px}
-.lvl-opt-check{flex-shrink:0;font-size:16px;color:var(--lavender);font-weight:900}
-.lvl-close{width:100%;border:none;background:none;color:var(--text-low);font:inherit;font-weight:800;font-size:13px;padding:10px;cursor:pointer}
 .sec-title{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-low);margin:26px 4px 12px}
 .sec-title small{font-size:12px;letter-spacing:0;text-transform:none;color:var(--text-mid)}
 .path{position:relative;display:flex;flex-direction:column;gap:10px}
@@ -369,7 +348,6 @@ body.dark-mode .rk-logo .ascent{stroke:#F3CB69}
   </section>
 
   <div class="lvl" id="lvlCard" hidden></div>
-  <div class="lvl-sheet" id="lvlSheet" hidden></div>
 
   <div class="sec-title"><span id="pathTitle"></span><small id="pathCount"></small></div>
   <div class="path" id="path"></div>
@@ -411,6 +389,7 @@ body.dark-mode .rk-logo .ascent{stroke:#F3CB69}
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/srs.js"></script>
 <script src="./js/core/level-progress.js"></script>
+<script src="./js/core/level-picker.js"></script>
 <script src="./js/core/gamification.js"></script>
 <script src="./js/core/streak.js"></script>
 <script src="./js/core/audio.js"></script>
@@ -441,10 +420,6 @@ var UI = {
     lvlMaxed:'Ai stăpânit toate nivelurile! 🏆',
     reviewLevel:function(n){ return 'Recapitulează TOPIK ' + n; }, reviewLevelSub:'Reia lecțiile nivelului',
     lvlChange:'🎚️ Schimbă nivelul', lvlDetails:'Planul TOPIK →', lvlPinned:'📌 Ales de tine',
-    pickTitle:'Alege nivelul TOPIK', pickSub:'Lecțiile și exercițiile zilnice vor fi de nivelul ales. Poți reveni oricând la modul automat.',
-    pickAuto:'Automat (recomandat)', pickAutoSub:'Pornești de la primul nivel nestăpânit și urci singur',
-    pickMastered:'✓ Stăpânit', pickProgress:function(p){ return 'În curs · ' + p + '%'; }, pickNew:'Nou',
-    pickClose:'Închide', pickLevelName:['Începător','Începător+','Intermediar','Intermediar+','Avansat','Avansat+'],
     lvlLessons:function(d,n){ return '📖 Lecții ' + d + '/' + n; }, lvlEx:function(d,n){ return '📝 Exerciții corecte ' + d + '/' + n; },
     levelUpTitle:function(n){ return 'TOPIK ' + n + ' DEBLOCAT!'; },
     levelUpSub:function(n){ return 'Ai stăpânit TOPIK ' + (n-1) + '. De azi, lecțiile și exercițiile zilnice sunt de nivel ' + n + '.'; },
@@ -479,10 +454,6 @@ var UI = {
     lvlMaxed:'You mastered every level! 🏆',
     reviewLevel:function(n){ return 'Review TOPIK ' + n; }, reviewLevelSub:'Go over the level\'s lessons again',
     lvlChange:'🎚️ Change level', lvlDetails:'TOPIK plan →', lvlPinned:'📌 Chosen by you',
-    pickTitle:'Choose your TOPIK level', pickSub:'Daily lessons and exercises will match the level you pick. You can switch back to automatic anytime.',
-    pickAuto:'Automatic (recommended)', pickAutoSub:'Start at your first unmastered level and climb on your own',
-    pickMastered:'✓ Mastered', pickProgress:function(p){ return 'In progress · ' + p + '%'; }, pickNew:'New',
-    pickClose:'Close', pickLevelName:['Beginner','Beginner+','Intermediate','Intermediate+','Advanced','Advanced+'],
     lvlLessons:function(d,n){ return '📖 Lessons ' + d + '/' + n; }, lvlEx:function(d,n){ return '📝 Correct exercises ' + d + '/' + n; },
     levelUpTitle:function(n){ return 'TOPIK ' + n + ' UNLOCKED!'; },
     levelUpSub:function(n){ return 'You mastered TOPIK ' + (n-1) + '. From today, your daily lessons and exercises are level ' + n + '.'; },
@@ -654,57 +625,10 @@ function renderLevelCard(){
   document.getElementById('lvlChangeBtn').onclick = openLevelPicker;
 }
 
-/* ── LEVEL PICKER (bottom sheet) ── */
+/* ── LEVEL PICKER (shared bottom sheet, js/core/level-picker.js) ── */
 function openLevelPicker(){
-  if(!_lessons || !window.RKLevelProgress) return;
-  var l = L(), sheet = document.getElementById('lvlSheet');
-  var cur = curLevel(), pinned = RKLevelProgress.isPinned();
-  var html = '<div class="lvl-panel" role="dialog" aria-modal="true" aria-labelledby="lvlPickTitle">' +
-    '<h3 id="lvlPickTitle">' + l.pickTitle + '</h3><p>' + l.pickSub + '</p>' +
-    '<button type="button" class="lvl-opt" data-auto="1">' +
-      '<span class="lvl-opt-badge auto">🔄</span>' +
-      '<span class="lvl-opt-txt"><div class="lvl-opt-title">' + l.pickAuto + '</div><div class="lvl-opt-sub">' + l.pickAutoSub + '</div></span>' +
-    '</button>';
-  for(var n = 1; n <= 6; n++){
-    var st = RKLevelProgress.computeLevelStats(n, _lessons, _exJson);
-    var p = Math.round(st.pct * 100);
-    var status = st.mastered ? l.pickMastered : (p > 0 ? l.pickProgress(p) : l.pickNew);
-    var on = n === cur;
-    html += '<button type="button" class="lvl-opt' + (on ? ' on' : '') + '" data-level="' + n + '"' + (on ? ' aria-current="true"' : '') + '>' +
-      '<span class="lvl-opt-badge">' + n + '</span>' +
-      '<span class="lvl-opt-txt"><div class="lvl-opt-title">TOPIK ' + n + ' · ' + l.pickLevelName[n-1] + '</div>' +
-        '<div class="lvl-opt-sub">' + status + ' · ' + st.lessonsTotal + ' ' + (LANG === 'ro' ? 'lecții' : 'lessons') + '</div>' +
-        '<div class="lvl-opt-mini"><i style="width:' + Math.min(100, p) + '%"></i></div></span>' +
-      '<span class="lvl-opt-check">' + (on ? '✓' : '') + '</span>' +
-    '</button>';
-  }
-  html += '<button type="button" class="lvl-close" data-close="1">' + l.pickClose + '</button></div>';
-  sheet.innerHTML = html;
-  sheet.hidden = false;
-  if(!pinned) sheet.querySelector('[data-auto]').classList.add('on');
-  sheet.onclick = function(e){
-    var b = e.target.closest('button');
-    if(e.target === sheet || (b && b.dataset.close)){ closeLevelPicker(); return; }
-    if(!b) return;
-    if(b.dataset.auto) RKLevelProgress.resumeAuto(_lessons, _exJson);
-    else if(b.dataset.level) RKLevelProgress.chooseLevel(parseInt(b.dataset.level, 10), _lessons, _exJson);
-    else return;
-    var lv = RKLevelProgress.getLevel();
-    localStorage.setItem('RK_LEVELUP_CELEBRATED', String(Math.max(lv, parseInt(localStorage.getItem('RK_LEVELUP_CELEBRATED'), 10) || 0)));
-    localStorage.setItem('RK_LEVEL', String(lv)); // exercises.html opens on the same level
-    closeLevelPicker();
-    refreshLevel();
-    renderToday();
-  };
-  document.addEventListener('keydown', lvlEsc);
-  var first = sheet.querySelector('.lvl-opt.on') || sheet.querySelector('.lvl-opt');
-  if(first) first.focus();
-}
-function lvlEsc(e){ if(e.key === 'Escape') closeLevelPicker(); }
-function closeLevelPicker(){
-  var sheet = document.getElementById('lvlSheet');
-  sheet.hidden = true; sheet.innerHTML = '';
-  document.removeEventListener('keydown', lvlEsc);
+  if(!_lessons || !window.RKLevelPicker) return;
+  RKLevelPicker.open({ lessons:_lessons, exJson:_exJson, lang:LANG, onChange:function(){ refreshLevel(); renderToday(); } });
 }
 
 /* ── TODAY: build the step list, then render hero + path from it ── */

@@ -57,6 +57,15 @@
 .td-level-badge{font-size:15px;font-weight:900;color:var(--rk-heading)}
 .td-level-pct{font-size:12px;font-weight:700;color:var(--rk-muted)}
 .td-level-maxed{font-size:13px;font-weight:700;color:var(--rk-muted);text-align:center;padding:6px 0}
+.td-lvl-reqs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.td-lvl-req{font-size:11.5px;font-weight:700;color:var(--rk-muted);background:rgba(108,92,231,.10);border-radius:999px;padding:4px 10px}
+.td-lvl-req.ok{background:rgba(47,182,124,.14);color:#2FB67C}
+.td-lvl-pin{font-size:11px;font-weight:800;color:#C99A1E;margin-left:6px}
+body.dark-mode .td-lvl-pin{color:#F3CB69}
+.td-lvl-change{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;padding:10px 12px;border-radius:12px;cursor:pointer;
+  font-size:13px;font-weight:800;color:#6C5CE7;background:rgba(108,92,231,.10);border:1px solid rgba(108,92,231,.22);user-select:none}
+.td-lvl-change:hover{background:rgba(108,92,231,.16)}
+body.dark-mode .td-lvl-change{color:#B3A8FF;background:rgba(139,124,255,.16);border-color:rgba(139,124,255,.28)}
 .td-stops{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .td-stop{
   display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;
@@ -167,6 +176,7 @@ body.dark-mode .pl-bar-bg{background:rgba(255,255,255,.09)}
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/srs.js"></script>
 <script src="./js/core/level-progress.js"></script>
+<script src="./js/core/level-picker.js"></script>
 <script src="./js/core/gamification.js"></script>
 <script src="./js/core/streak.js"></script>
 <script src="./js/core/lang-picker.js"></script>
@@ -213,6 +223,8 @@ var UI = {
     plAllDoneSub:'Toate lecțiile și exercițiile până la nivelul ales sunt parcurse cel puțin o dată.',
     plLoadErr:'Nu s-au putut încărca datele.',
     curTitle:'🗺️ Nivelul tău TOPIK',
+    curChange:'🎚️ Schimbă nivelul', curPinned:'📌 Ales de tine',
+    curLessons:function(d,n){ return '📖 Lecții ' + d + '/' + n; }, curEx:function(d,n){ return '📝 Exerciții corecte ' + d + '/' + n; },
     curSub:'Treci la nivelul următor când termini 80% din lecții și rezolvi corect 70% din exercițiile nivelului',
     curPct:function(pct){ return pct + '% parcurs'; },
     curMaxed:'Ai atins nivelul maxim — TOPIK 6! 🏯',
@@ -256,6 +268,8 @@ var UI = {
     plAllDoneSub:'Every lesson and exercise up to your chosen level has been attempted at least once.',
     plLoadErr:'Could not load the data.',
     curTitle:'🗺️ Your TOPIK level',
+    curChange:'🎚️ Change level', curPinned:'📌 Chosen by you',
+    curLessons:function(d,n){ return '📖 Lessons ' + d + '/' + n; }, curEx:function(d,n){ return '📝 Correct exercises ' + d + '/' + n; },
     curSub:"You move up once you finish 80% of the lessons and get 70% of the level's exercises right",
     curPct:function(pct){ return pct + '% cleared'; },
     curMaxed:"You've reached the top — TOPIK 6! 🏯",
@@ -340,12 +354,20 @@ function renderCurriculum(){
     if(level >= RKLevelProgress.MAX_LEVEL && result.stats.mastered){
       html += '<div class="td-level-maxed">' + l.curMaxed + '</div>';
     } else {
+      var st = result.stats;
+      var lessOk = st.lessonsDone >= st.lessonsNeeded, exOk = st.exDone >= st.exNeeded;
       html += '<div class="td-level-head" style="margin-top:8px;margin-bottom:6px">' +
-          '<span class="td-level-badge">TOPIK ' + level + '</span>' +
+          '<span class="td-level-badge">TOPIK ' + level + (result.pinned ? '<span class="td-lvl-pin">' + l.curPinned + '</span>' : '') + '</span>' +
           '<span class="td-level-pct">' + l.curPct(pct) + '</span>' +
         '</div>' +
-        '<div class="pl-bar-bg"><div class="pl-bar" style="width:' + pct + '%"></div></div>';
+        '<div class="pl-bar-bg"><div class="pl-bar" style="width:' + pct + '%"></div></div>' +
+        '<div class="td-lvl-reqs">' +
+          '<span class="td-lvl-req' + (lessOk ? ' ok' : '') + '">' + l.curLessons(Math.min(st.lessonsDone, st.lessonsNeeded), st.lessonsNeeded) + (lessOk ? ' ✓' : '') + '</span>' +
+          '<span class="td-lvl-req' + (exOk ? ' ok' : '') + '">' + l.curEx(Math.min(st.exDone, st.exNeeded), st.exNeeded) + (exOk ? ' ✓' : '') + '</span>' +
+        '</div>';
     }
+    // div[role=button]: theme-anime.css forces dark-mode <button> colours with !important.
+    html += '<div class="td-lvl-change" id="tdLvlChange" role="button" tabindex="0">' + l.curChange + '</div>';
 
     var stops = [
       { icon:'📖', label:l.curStopLessons,   href:'lesson-neural.html?topik=' + level },
@@ -359,6 +381,13 @@ function renderCurriculum(){
 
     html += '</div>';
     document.getElementById('curriculumSection').innerHTML = html;
+    var chg = document.getElementById('tdLvlChange');
+    var openPicker = function(){
+      if(!window.RKLevelPicker) return;
+      RKLevelPicker.open({ lessons:lessons, exJson:exJson, lang:LANG, onChange:function(){ renderCurriculum(); } });
+    };
+    chg.addEventListener('click', openPicker);
+    chg.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openPicker(); } });
 
     if(result.leveledUp){
       var celebratedKey = 'RK_LEVELUP_CELEBRATED';
