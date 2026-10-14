@@ -11,7 +11,7 @@
      storage.js deliberately excludes so a restored backup re-runs
      migrations on the next load. */
   var KEYS = [
-    'RK_STATS','RK_LESSON_DONE','RK_LEARNED_EX','RK_LEARNED','RK_LEVEL',
+    'RK_STATS','RK_LESSON_DONE','RK_LEARNED_EX','RK_LEARNED','RK_LEVEL','RK_TOPIK_PROGRESS','RK_LEVELUP_CELEBRATED',
     'RK_EX_SRS','RK_WRONG_LOG','RK_SPEED','RK_DONE_NEURAL','RK_STREAK',
     'RK_XP','RK_BADGES','RK_DAILY_QUEST','RK_DAILY_POPUP',
     'RK_FAV_WORDS','RK_VOCAB_USER','RK_WORD_USAGE','RK_DICT_RECENT','RK_SAVED_SENTENCES',

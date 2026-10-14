@@ -42,6 +42,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 ### Hub-uri: structură
 
 - `index.html`: card „Azi” (inel de progres + un singur buton), „Drumul de azi” (pași), quiz rapid inline (contează la sarcina zilnică `vocab`), expresia zilei.
+- **Nivel TOPIK progresiv** (`js/core/level-progress.js`, cheia `RK_TOPIK_PROGRESS`, separată de selectorul `RK_LEVEL` din exerciții): lecția zilnică și exercițiile din „Drumul de azi” sunt de nivelul curent; se trece la nivelul următor doar când ≥80% din lecțiile nivelului sunt gata și ≥70% din exercițiile lui au fost rezolvate corect (`RK_EX_SRS` reps ≥ 1 sau `RK_LEARNED_EX`). Nivelul nu scade. Cardul de nivel e pe `index.html`, detaliile în `today.html`. `RK_TOPIK_GOAL` rămâne doar ținta examenului.
 - `play.html` / `learn.html`: câteva carduri mari + restul ca chip-uri „Mai multe”. Nu adăuga carduri mari noi — pune paginile noi ca chip.
 - `tools/`: scripturi Python de generare a exercițiilor (nu fac parte din aplicație).
 - **Lecțiile** se deschid în `lesson-neural.html` (stilul interactiv), în două moduri:

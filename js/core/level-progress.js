@@ -1,24 +1,37 @@
 /**
- * RKLevelProgress — automatic TOPIK level (1-6) that advances on its own as
- * the learner clears enough of the current level's lessons + exercises.
+ * RKLevelProgress — the learner's TOPIK progression level (1-6).
  *
- * Reuses RK_LEVEL, the plain (non-JSON) localStorage key exercises.html/
- * js/exercises.js already reads/writes for its own level selector — so
- * picking a level there (or here) is the same "current level" everywhere.
+ * It only goes up, and only when the current level is actually mastered:
+ *   - LESSON_THRESHOLD of the level's grammar lessons are finished (RK_LESSON_DONE), and
+ *   - EXERCISE_THRESHOLD of the level's exercises were last answered correctly
+ *     (RK_EX_SRS reps >= 1) or marked as learned (RK_LEARNED_EX).
+ *
+ * Stored in RK_TOPIK_PROGRESS, separate from RK_LEVEL (the level selector in
+ * exercises.html), so browsing a harder level there never skips ahead here.
+ * The first read seeds it from RK_LEVEL — the placement level picked in onboarding.
  */
 (function (window) {
   'use strict';
 
-  var LEVEL_KEY = 'RK_LEVEL';
+  var PROGRESS_KEY = 'RK_TOPIK_PROGRESS';
   var MAX_LEVEL = 6;
-  var ADVANCE_THRESHOLD = 0.8;
+  var LESSON_THRESHOLD = 0.8;
+  var EXERCISE_THRESHOLD = 0.7;
+  // Kept for callers that compare the combined pct (today.html "maxed" check).
+  var ADVANCE_THRESHOLD = 0.75;
+
+  function clamp(v) { return (v >= 1 && v <= MAX_LEVEL) ? v : null; }
 
   function getLevel() {
-    var v = parseInt(localStorage.getItem(LEVEL_KEY), 10);
-    return (v >= 1 && v <= MAX_LEVEL) ? v : 1;
+    var v = clamp(parseInt(localStorage.getItem(PROGRESS_KEY), 10));
+    if (v) return v;
+    var seed = clamp(parseInt(localStorage.getItem('RK_LEVEL'), 10)) || 1;
+    localStorage.setItem(PROGRESS_KEY, String(seed));
+    return seed;
   }
   function setLevel(n) {
-    localStorage.setItem(LEVEL_KEY, String(n));
+    var v = clamp(n);
+    if (v) localStorage.setItem(PROGRESS_KEY, String(v));
   }
 
   // Same key format exercises.js/today.html use for RK_EX_SRS.
@@ -33,51 +46,88 @@
     return type + "||" + JSON.stringify(item.correct);
   }
 
+  function readJSON(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fallback : v; }
+    catch (e) { return fallback; }
+  }
+
+  function isMastered(type, item, exSrs, learned) {
+    var k = exerciseKey(type, item);
+    var c = exSrs[k];
+    return (c && c.reps >= 1) || learned.indexOf(k) !== -1;
+  }
+
   function computeLevelStats(level, lessons, exJson) {
-    var lessonsInLevel = lessons.filter(function (l) { return l.topik === level; });
-    var doneLessons = JSON.parse(localStorage.getItem('RK_LESSON_DONE') || '[]');
+    var lessonsInLevel = (lessons || []).filter(function (l) { return l.topik === level; });
+    var doneLessons = readJSON('RK_LESSON_DONE', []);
     var lessonsDone = lessonsInLevel.filter(function (l) { return doneLessons.indexOf(l.id) !== -1; }).length;
 
-    var exSrs = window.RKSrs ? RKSrs.load('RK_EX_SRS') : {};
+    var exSrs = window.RKSrs ? RKSrs.load('RK_EX_SRS') : readJSON('RK_EX_SRS', {});
+    var learned = readJSON('RK_LEARNED_EX', []);
     var exTotal = 0, exDone = 0;
     Object.keys(exJson || {}).forEach(function (type) {
       (exJson[type] || []).forEach(function (item) {
         if (item.topik !== level) return;
         exTotal++;
-        if (exSrs[exerciseKey(type, item)]) exDone++;
+        if (isMastered(type, item, exSrs, learned)) exDone++;
       });
     });
 
-    var total = lessonsInLevel.length + exTotal;
-    var done = lessonsDone + exDone;
+    var lessonPct = lessonsInLevel.length ? lessonsDone / lessonsInLevel.length : 1;
+    var exPct = exTotal ? exDone / exTotal : 1;
+    // Progress bar: each requirement counts until it is met, so 100% == ready to advance.
+    var pct = (Math.min(1, lessonPct / LESSON_THRESHOLD) + Math.min(1, exPct / EXERCISE_THRESHOLD)) / 2;
     return {
       lessonsDone: lessonsDone, lessonsTotal: lessonsInLevel.length,
       exDone: exDone, exTotal: exTotal,
-      pct: total ? done / total : 1
+      lessonsNeeded: Math.ceil(lessonsInLevel.length * LESSON_THRESHOLD),
+      exNeeded: Math.ceil(exTotal * EXERCISE_THRESHOLD),
+      lessonPct: lessonPct, exPct: exPct,
+      pct: pct,
+      mastered: lessonPct >= LESSON_THRESHOLD && exPct >= EXERCISE_THRESHOLD
     };
   }
 
-  // Call once per page load with the level-tagged datasets already fetched.
-  // Advances RK_LEVEL by one when the current level is mostly cleared.
+  // First lesson of the level that still has unmastered exercises (for "practice" suggestions).
+  function weakestLesson(level, lessons, exJson) {
+    var exSrs = window.RKSrs ? RKSrs.load('RK_EX_SRS') : readJSON('RK_EX_SRS', {});
+    var learned = readJSON('RK_LEARNED_EX', []);
+    var open = {};
+    Object.keys(exJson || {}).forEach(function (type) {
+      (exJson[type] || []).forEach(function (item) {
+        if (item.topik === level && item.lessonId && !isMastered(type, item, exSrs, learned)) {
+          open[item.lessonId] = (open[item.lessonId] || 0) + 1;
+        }
+      });
+    });
+    var inLevel = (lessons || []).filter(function (l) { return l.topik === level && open[l.id]; });
+    return inLevel.length ? inLevel[0] : null;
+  }
+
+  // Call with the level-tagged datasets already fetched. Advances while the
+  // current level is mastered; never goes down.
   function checkAdvance(lessons, exJson) {
-    var level = getLevel();
+    var start = getLevel();
+    var level = start;
     var stats = computeLevelStats(level, lessons, exJson);
-    if (level < MAX_LEVEL && stats.pct >= ADVANCE_THRESHOLD) {
+    while (level < MAX_LEVEL && stats.mastered) {
       level += 1;
-      setLevel(level);
       stats = computeLevelStats(level, lessons, exJson);
-      return { level: level, leveledUp: true, from: level - 1, stats: stats };
     }
-    return { level: level, leveledUp: false, stats: stats };
+    if (level !== start) setLevel(level);
+    return { level: level, leveledUp: level > start, from: start, stats: stats };
   }
 
   window.RKLevelProgress = {
     MAX_LEVEL: MAX_LEVEL,
     ADVANCE_THRESHOLD: ADVANCE_THRESHOLD,
+    LESSON_THRESHOLD: LESSON_THRESHOLD,
+    EXERCISE_THRESHOLD: EXERCISE_THRESHOLD,
     getLevel: getLevel,
     setLevel: setLevel,
     exerciseKey: exerciseKey,
     computeLevelStats: computeLevelStats,
+    weakestLesson: weakestLesson,
     checkAdvance: checkAdvance
   };
 })(window);

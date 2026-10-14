@@ -131,6 +131,21 @@ body.dark-mode .rk-logo .ascent{stroke:#F3CB69}
 .today-cta-ico{font-size:18px}
 
 /* ── PATH — today's steps as a vertical trail ─────────── */
+/* ── TOPIK LEVEL CARD ── */
+.lvl{display:block;text-decoration:none;color:var(--text);background:var(--card);border:1px solid var(--border);
+  border-radius:18px;padding:14px 16px;margin-top:14px;box-shadow:0 4px 14px var(--shadow)}
+.lvl-head{display:flex;align-items:center;gap:10px}
+.lvl-badge{flex-shrink:0;font-size:12px;font-weight:900;letter-spacing:.04em;color:#fff;border-radius:10px;padding:6px 10px;
+  background:linear-gradient(135deg,var(--lavender),var(--pink))}
+.lvl-txt{flex:1;min-width:0}
+.lvl-title{font-size:14px;font-weight:800}
+.lvl-sub{font-size:12px;color:var(--text-mid);margin-top:2px}
+.lvl-next{flex-shrink:0;font-size:12px;font-weight:800;color:var(--text-low)}
+.lvl-bar{height:8px;background:var(--bar-bg);border-radius:6px;overflow:hidden;margin-top:12px}
+.lvl-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--lavender),var(--pink),var(--gold));border-radius:6px;transition:width .6s ease}
+.lvl-reqs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lvl-req{font-size:11.5px;font-weight:700;color:var(--text-mid);background:var(--lavender-soft);border-radius:999px;padding:4px 10px}
+.lvl-req.ok{background:var(--mint-soft);color:var(--mint)}
 .sec-title{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-low);margin:26px 4px 12px}
 .sec-title small{font-size:12px;letter-spacing:0;text-transform:none;color:var(--text-mid)}
 .path{position:relative;display:flex;flex-direction:column;gap:10px}
@@ -327,6 +342,8 @@ body.dark-mode .rk-logo .ascent{stroke:#F3CB69}
     <a class="today-cta" id="todayCta" href="lessons.html"><span class="today-cta-ico" id="todayCtaIco">▶</span><span id="todayCtaLbl"></span></a>
   </section>
 
+  <a class="lvl" id="lvlCard" href="today.html" hidden></a>
+
   <div class="sec-title"><span id="pathTitle"></span><small id="pathCount"></small></div>
   <div class="path" id="path"></div>
 
@@ -366,6 +383,7 @@ body.dark-mode .rk-logo .ascent{stroke:#F3CB69}
 
 <script src="./js/core/storage.js"></script>
 <script src="./js/core/srs.js"></script>
+<script src="./js/core/level-progress.js"></script>
 <script src="./js/core/gamification.js"></script>
 <script src="./js/core/streak.js"></script>
 <script src="./js/core/audio.js"></script>
@@ -389,7 +407,14 @@ var UI = {
     allDoneCta:'Vezi progresul',
     startCta:'Începe', continueCta:'Continuă',
     pathTitle:'DRUMUL DE AZI', pathCount:function(d,t){ return d + ' din ' + t; },
-    lessonStep:'Lecția de azi', lessonStart:'Prima ta lecție', levelDone:'Nivel complet! 🎉', levelDoneSub:'Încearcă harta Seoul',
+    lessonStep:'Lecția de azi', lessonStart:'Prima ta lecție', levelDone:'Ai terminat TOPIK 6! 🏯', levelDoneSub:'Încearcă harta Seoul',
+    masterTitle:function(n){ return 'Stăpânește TOPIK ' + n; }, masterSub:function(t){ return 'Exersează: ' + t; },
+    lvlTitle:function(n){ return n >= 6 ? 'Nivelul tău: TOPIK 6' : 'Nivelul tău: TOPIK ' + n; },
+    lvlSub:function(n){ return n >= 6 ? 'Ultimul nivel — stăpânește-l complet' : 'Stăpânește-l ca să treci la TOPIK ' + (n+1); },
+    lvlMaxed:'Ai stăpânit toate nivelurile! 🏆',
+    lvlLessons:function(d,n){ return '📖 Lecții ' + d + '/' + n; }, lvlEx:function(d,n){ return '📝 Exerciții corecte ' + d + '/' + n; },
+    levelUpTitle:function(n){ return 'TOPIK ' + n + ' DEBLOCAT!'; },
+    levelUpSub:function(n){ return 'Ai stăpânit TOPIK ' + (n-1) + '. De azi, lecțiile și exercițiile zilnice sunt de nivel ' + n + '.'; },
     reviewStep:'Recapitulare', reviewSub:function(n){ return n + ' carduri te așteaptă'; },
     missionVocab:function(n,goal){ return (AUDIENCE==='student' ? 'Cuvinte noi' : 'Cuvinte') + ' · ' + n + '/' + goal; },
     missionSentences:function(n,goal){ return 'Propoziții · ' + n + '/' + goal; },
@@ -414,7 +439,14 @@ var UI = {
     allDoneCta:'See progress',
     startCta:'Start', continueCta:'Continue',
     pathTitle:"TODAY'S PATH", pathCount:function(d,t){ return d + ' of ' + t; },
-    lessonStep:"Today's lesson", lessonStart:'Your first lesson', levelDone:'Level complete! 🎉', levelDoneSub:'Try the Seoul map',
+    lessonStep:"Today's lesson", lessonStart:'Your first lesson', levelDone:'TOPIK 6 complete! 🏯', levelDoneSub:'Try the Seoul map',
+    masterTitle:function(n){ return 'Master TOPIK ' + n; }, masterSub:function(t){ return 'Practice: ' + t; },
+    lvlTitle:function(n){ return 'Your level: TOPIK ' + n; },
+    lvlSub:function(n){ return n >= 6 ? 'Final level — master it fully' : 'Master it to move up to TOPIK ' + (n+1); },
+    lvlMaxed:'You mastered every level! 🏆',
+    lvlLessons:function(d,n){ return '📖 Lessons ' + d + '/' + n; }, lvlEx:function(d,n){ return '📝 Correct exercises ' + d + '/' + n; },
+    levelUpTitle:function(n){ return 'TOPIK ' + n + ' UNLOCKED!'; },
+    levelUpSub:function(n){ return 'You mastered TOPIK ' + (n-1) + '. From today, your daily lessons and exercises are level ' + n + '.'; },
     reviewStep:'Review', reviewSub:function(n){ return n + ' cards waiting'; },
     missionVocab:function(n,goal){ return (AUDIENCE==='student' ? 'New words' : 'Words') + ' · ' + n + '/' + goal; },
     missionSentences:function(n,goal){ return 'Sentences · ' + n + '/' + goal; },
@@ -490,32 +522,86 @@ function isDailyFlagDone(key){
 }
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
-/* ── LESSON STEP (real lessons.json + RK_LESSON_DONE) ── */
-var _lessons = null;
+/* ── LESSON STEP: follows the TOPIK progression level (js/core/level-progress.js) ── */
+var _lessons = null, _exJson = null, _levelRes = null, _levelLoading = false;
+function loadLevelData(){
+  if(_levelLoading) return;
+  _levelLoading = true;
+  Promise.all([
+    fetch('./data/lessons.json').then(function(r){ return r.json(); }),
+    fetch('./data/exercises.json').then(function(r){ return r.json(); })
+  ]).then(function(res){
+    _lessons = res[0]; _exJson = res[1];
+    refreshLevel();
+    renderToday();
+  }).catch(function(){ _lessons = []; _exJson = {}; renderToday(); });
+}
+function refreshLevel(){
+  if(!_lessons || !window.RKLevelProgress) return;
+  _levelRes = RKLevelProgress.checkAdvance(_lessons, _exJson);
+  if(_levelRes.leveledUp){
+    var key = 'RK_LEVELUP_CELEBRATED';
+    var last = parseInt(localStorage.getItem(key), 10) || 0;
+    if(_levelRes.level > last){
+      localStorage.setItem(key, String(_levelRes.level));
+      setTimeout(function(){ showLevelUpOverlay(L(), _levelRes.level); }, 500);
+    }
+  }
+}
+function curLevel(){
+  return _levelRes ? _levelRes.level : (window.RKLevelProgress ? RKLevelProgress.getLevel() : 1);
+}
 function lessonStep(){
   var l = L();
   if(!_lessons) return null;
   var doneLessons = JSON.parse(localStorage.getItem('RK_LESSON_DONE') || '[]');
-  var goal = null;
-  try { goal = JSON.parse(localStorage.getItem('RK_TOPIK_GOAL') || 'null'); } catch(e){}
-  var storedLevel = parseInt(localStorage.getItem('RK_LEVEL'), 10);
-  var level = (goal && goal.level) || (storedLevel >= 1 && storedLevel <= 6 ? storedLevel : 1);
+  var level = curLevel();
   var inLevel = _lessons.filter(function(ls){ return ls.topik === level; });
   var doneIn = inLevel.filter(function(ls){ return doneLessons.indexOf(ls.id) !== -1; });
   var next = inLevel.filter(function(ls){ return doneLessons.indexOf(ls.id) === -1; })[0];
   var pct = inLevel.length ? Math.round(doneIn.length / inLevel.length * 100) : 0;
+  var tl = function(x){ return x.title ? (x.title[LANG] || x.title.ro) : x.id; };
 
   // "Done today" = a lesson was finished today (lesson-neural / lessons.html / exercises.js stamp RK_LESSON_TODAY)
   var doneToday = localStorage.getItem('RK_LESSON_TODAY') === todayStr();
   if(!next){
+    // Every lesson of the level is read, but the level isn't mastered yet → practise its weakest lesson.
+    var weak = window.RKLevelProgress ? RKLevelProgress.weakestLesson(level, _lessons, _exJson) : null;
+    if(weak && !(_levelRes && _levelRes.stats.mastered)){
+      return { icon:'💪', title:l.masterTitle(level), sub:'TOPIK ' + level + ' · ' + l.masterSub(tl(weak)),
+        href:'exercises.html?lesson=' + encodeURIComponent(weak.id), done:doneToday, pct:Math.round((_levelRes ? _levelRes.stats.pct : 0) * 100) };
+    }
     return { icon:'🏯', title:l.levelDone, sub:l.levelDoneSub, href:'map.html', done:doneToday, pct:100 };
   }
-  var title = next.title ? (next.title[LANG] || next.title.ro) : next.id;
+  var title = tl(next);
   return {
     icon:'📖', title: doneLessons.length ? title : l.lessonStart,
     sub: 'TOPIK ' + level + ' · ' + (doneLessons.length ? l.lessonStep : title),
     href:'lesson-neural.html?lesson=' + encodeURIComponent(next.id), done:doneToday, pct:pct, isLesson:true
   };
+}
+
+/* ── TOPIK LEVEL CARD ── */
+function renderLevelCard(){
+  var el = document.getElementById('lvlCard');
+  if(!_levelRes){ el.hidden = true; return; }
+  var l = L(), lv = _levelRes.level, st = _levelRes.stats;
+  var maxed = lv >= 6 && st.mastered;
+  var pct = maxed ? 100 : Math.round(st.pct * 100);
+  var lessOk = st.lessonsDone >= st.lessonsNeeded, exOk = st.exDone >= st.exNeeded;
+  el.innerHTML =
+    '<div class="lvl-head">' +
+      '<span class="lvl-badge">TOPIK ' + lv + '</span>' +
+      '<span class="lvl-txt"><div class="lvl-title">' + esc(maxed ? l.lvlMaxed : l.lvlTitle(lv)) + '</div>' +
+        '<div class="lvl-sub">' + esc(maxed ? '' : l.lvlSub(lv)) + '</div></span>' +
+      '<span class="lvl-next">' + (lv < 6 ? pct + '% → ' + (lv + 1) : pct + '%') + '</span>' +
+    '</div>' +
+    '<div class="lvl-bar"><i style="width:' + pct + '%"></i></div>' +
+    (maxed ? '' : '<div class="lvl-reqs">' +
+      '<span class="lvl-req' + (lessOk ? ' ok' : '') + '">' + l.lvlLessons(Math.min(st.lessonsDone, st.lessonsNeeded), st.lessonsNeeded) + (lessOk ? ' ✓' : '') + '</span>' +
+      '<span class="lvl-req' + (exOk ? ' ok' : '') + '">' + l.lvlEx(Math.min(st.exDone, st.exNeeded), st.exNeeded) + (exOk ? ' ✓' : '') + '</span>' +
+    '</div>');
+  el.hidden = false;
 }
 
 /* ── TODAY: build the step list, then render hero + path from it ── */
@@ -524,6 +610,7 @@ function buildSteps(){
   var goals = window.RKGamification ? RKGamification.getDailyTaskGoals() : {vocab:10, sentences:3, grammar:3};
   var tasks = window.RKGamification ? RKGamification.getDailyTasks() : {vocab:0, sentences:0, grammar:0};
   var listenDone = isDailyFlagDone('RK_DAILY_LISTEN');
+  var lvl = curLevel();
   var steps = [];
 
   var reviewTotal = dueCount('RK_FC_SRS') + dueCount('RK_HJ_SRS') + countHardExercises();
@@ -536,16 +623,16 @@ function buildSteps(){
   var mission;
   if(AUDIENCE === 'student'){
     mission = [
-      { icon:'🃏', done: tasks.vocab >= goals.vocab, title: l.missionVocab(Math.min(tasks.vocab,goals.vocab), goals.vocab), sub:l.vocabSub, href:'exercises.html?type=ko-ro', pct: Math.round(Math.min(tasks.vocab,goals.vocab)/goals.vocab*100) },
+      { icon:'🃏', done: tasks.vocab >= goals.vocab, title: l.missionVocab(Math.min(tasks.vocab,goals.vocab), goals.vocab), sub:l.vocabSub, href:'exercises.html?type=ko-ro&level=' + lvl, pct: Math.round(Math.min(tasks.vocab,goals.vocab)/goals.vocab*100) },
       { icon:'가', done: isDailyFlagDone('RK_DAILY_HANGUL'), title: l.missionHangul, sub:l.hangulSub, href:'hangul.html' },
-      { icon:'🧩', done: tasks.sentences >= goals.sentences, title: l.missionSentences(Math.min(tasks.sentences,goals.sentences), goals.sentences), sub:l.sentSub, href:'exercises.html?type=puzzle' },
+      { icon:'🧩', done: tasks.sentences >= goals.sentences, title: l.missionSentences(Math.min(tasks.sentences,goals.sentences), goals.sentences), sub:l.sentSub, href:'exercises.html?type=puzzle&level=' + lvl },
       { icon:'🎧', done: listenDone, title: l.missionListeningGame, sub:l.listenSub, href:'listening.html' }
     ];
   } else {
     mission = [
-      { icon:'🃏', done: tasks.vocab >= goals.vocab, title: l.missionVocab(Math.min(tasks.vocab,goals.vocab), goals.vocab), sub:l.vocabSub, href:'exercises.html?type=ko-ro', pct: Math.round(Math.min(tasks.vocab,goals.vocab)/goals.vocab*100) },
-      { icon:'🎯', done: tasks.grammar >= goals.grammar, title: l.missionGrammar(Math.min(tasks.grammar,goals.grammar), goals.grammar), sub:l.grammarSub, href:'exercises.html?type=particle' },
-      { icon:'🧩', done: tasks.sentences >= goals.sentences, title: l.missionSentences(Math.min(tasks.sentences,goals.sentences), goals.sentences), sub:l.sentSub, href:'exercises.html?type=puzzle' },
+      { icon:'🃏', done: tasks.vocab >= goals.vocab, title: l.missionVocab(Math.min(tasks.vocab,goals.vocab), goals.vocab), sub:l.vocabSub, href:'exercises.html?type=ko-ro&level=' + lvl, pct: Math.round(Math.min(tasks.vocab,goals.vocab)/goals.vocab*100) },
+      { icon:'🎯', done: tasks.grammar >= goals.grammar, title: l.missionGrammar(Math.min(tasks.grammar,goals.grammar), goals.grammar), sub:l.grammarSub, href:'exercises.html?type=particle&level=' + lvl },
+      { icon:'🧩', done: tasks.sentences >= goals.sentences, title: l.missionSentences(Math.min(tasks.sentences,goals.sentences), goals.sentences), sub:l.sentSub, href:'exercises.html?type=puzzle&level=' + lvl },
       { icon:'🎧', done: listenDone, title: l.missionListening, sub:l.listenSub, href:'listening.html' },
       { icon:'🗣️', done: isDailyFlagDone('RK_DAILY_PRON'), title: l.missionSpeaking, sub:l.speakSub, href:'reading.html' }
     ];
@@ -556,9 +643,8 @@ function buildSteps(){
 var _lastMissionDone = null;
 function renderToday(){
   var l = L();
-  if(!_lessons){
-    fetch('./data/lessons.json').then(function(r){ return r.json(); }).then(function(d){ _lessons = d; renderToday(); }).catch(function(){ _lessons = []; renderToday(); });
-  }
+  if(!_lessons) loadLevelData();
+  renderLevelCard();
   var built = buildSteps();
   var steps = built.steps;
   var doneCount = steps.filter(function(s){ return s.done; }).length;
@@ -654,6 +740,27 @@ function showMissionCompleteOverlay(l){
   document.body.appendChild(backdrop);
   backdrop.addEventListener('click', function(){ backdrop.remove(); });
   setTimeout(function(){ if(backdrop.parentNode) backdrop.remove(); }, 4500);
+}
+function showLevelUpOverlay(l, level){
+  ensureKeyframes();
+  var backdrop = document.createElement('div');
+  backdrop.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(18,19,28,.6);' +
+    'backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;cursor:pointer;' +
+    'animation:dashFadeIn .25s ease both';
+  var card = document.createElement('div');
+  card.style.cssText = 'background:var(--card);border-radius:24px;padding:36px 28px;text-align:center;' +
+    'max-width:330px;width:88vw;box-shadow:0 20px 60px rgba(0,0,0,.25);' +
+    'animation:dashPop .4s cubic-bezier(.34,1.56,.64,1) both';
+  card.innerHTML =
+    '<div style="display:inline-block;font-size:22px;font-weight:900;color:#fff;border-radius:16px;padding:12px 18px;' +
+      'background:linear-gradient(135deg,#6C5CE7,#E96A9A)">TOPIK ' + level + '</div>' +
+    '<div style="font-size:20px;font-weight:900;margin-top:16px;color:var(--text);letter-spacing:.02em">' + l.levelUpTitle(level) + '</div>' +
+    '<div style="font-size:14px;color:var(--text-mid);margin-top:8px">' + l.levelUpSub(level) + '</div>' +
+    '<div style="font-size:11px;color:var(--text-low);margin-top:16px">' + l.missionCompleteTap + '</div>';
+  backdrop.appendChild(card);
+  fireConfetti(backdrop, 60);
+  document.body.appendChild(backdrop);
+  backdrop.addEventListener('click', function(){ backdrop.remove(); });
 }
 function fireConfetti(container, count){
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
