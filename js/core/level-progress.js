@@ -9,11 +9,16 @@
  * Stored in RK_TOPIK_PROGRESS, separate from RK_LEVEL (the level selector in
  * exercises.html), so browsing a harder level there never skips ahead here.
  * The first read seeds it from RK_LEVEL — the placement level picked in onboarding.
+ *
+ * The learner can also pick a level by hand (chooseLevel). Picking a level that is
+ * already mastered pins it (RK_TOPIK_PINNED) so auto-advance doesn't undo the choice;
+ * resumeAuto() clears the pin and lets the mastery rule decide again.
  */
 (function (window) {
   'use strict';
 
   var PROGRESS_KEY = 'RK_TOPIK_PROGRESS';
+  var PIN_KEY = 'RK_TOPIK_PINNED';
   var MAX_LEVEL = 6;
   var LESSON_THRESHOLD = 0.8;
   var EXERCISE_THRESHOLD = 0.7;
@@ -104,18 +109,42 @@
     return inLevel.length ? inLevel[0] : null;
   }
 
+  function isPinned() { return localStorage.getItem(PIN_KEY) === '1'; }
+
+  // Manual pick from the level picker. Returns the level actually set.
+  function chooseLevel(n, lessons, exJson) {
+    var v = clamp(n);
+    if (!v) return getLevel();
+    setLevel(v);
+    var mastered = lessons ? computeLevelStats(v, lessons, exJson).mastered : false;
+    if (mastered) localStorage.setItem(PIN_KEY, '1');
+    else localStorage.removeItem(PIN_KEY);
+    // A manual change should not trigger the "level unlocked" celebration.
+    localStorage.setItem('RK_LEVELUP_CELEBRATED', String(Math.max(v, parseInt(localStorage.getItem('RK_LEVELUP_CELEBRATED'), 10) || 0)));
+    return v;
+  }
+
+  // Back to automatic: restart from the first level that isn't mastered yet.
+  function resumeAuto(lessons, exJson) {
+    localStorage.removeItem(PIN_KEY);
+    var level = 1;
+    while (level < MAX_LEVEL && computeLevelStats(level, lessons, exJson).mastered) level++;
+    setLevel(level);
+    return level;
+  }
+
   // Call with the level-tagged datasets already fetched. Advances while the
-  // current level is mastered; never goes down.
+  // current level is mastered (unless the learner pinned it); never goes down.
   function checkAdvance(lessons, exJson) {
     var start = getLevel();
     var level = start;
     var stats = computeLevelStats(level, lessons, exJson);
-    while (level < MAX_LEVEL && stats.mastered) {
+    while (!isPinned() && level < MAX_LEVEL && stats.mastered) {
       level += 1;
       stats = computeLevelStats(level, lessons, exJson);
     }
     if (level !== start) setLevel(level);
-    return { level: level, leveledUp: level > start, from: start, stats: stats };
+    return { level: level, leveledUp: level > start, from: start, stats: stats, pinned: isPinned() };
   }
 
   window.RKLevelProgress = {
@@ -128,6 +157,9 @@
     exerciseKey: exerciseKey,
     computeLevelStats: computeLevelStats,
     weakestLesson: weakestLesson,
+    chooseLevel: chooseLevel,
+    resumeAuto: resumeAuto,
+    isPinned: isPinned,
     checkAdvance: checkAdvance
   };
 })(window);
