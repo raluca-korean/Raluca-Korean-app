@@ -25,7 +25,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 ### Pagini de conținut/exerciții (reprezentativ, nu exhaustiv)
 
-`exercises.html` (7 tipuri, vezi mai jos) · `lessons.html` / `lesson-neural.html` · `glossary.html` · `flashcards.html` · `builder.html` · `hangul.html` · `hanja-book.html` · `caiet.html` · `stories.html` · `conversation.html` · `composition.html` · `exam.html` · `word-context.html` / `word-map.html` · `phrases.html` · `basics.html` (Propoziții de bază — ghid de conversație după cuprinsul cărții: 12 capitole, unitățile cărții = `group`, secțiunile = `units`; date în `data/basic-sentences.json`, bife în `RK_BASICS_KNOWN` după textul `ko`; romanizarea propozițiilor noi se generează cu `tools/romanize_ko.py`) · `journal.html` · `listening.html` · `writing.html` · `sentence-formation.html` · `slot-machine.html`
+`exercises.html` (7 tipuri, vezi mai jos) · `lessons.html` / `lesson-neural.html` · `glossary.html` · `flashcards.html` · `builder.html` · `hangul.html` · `hanja-book.html` · `caiet.html` · `stories.html` · `conversation.html` · `composition.html` · `exam.html` · `word-context.html` / `word-map.html` · `phrases.html` · `basics.html` (Propoziții de bază — ghid de conversație în 12 capitole proprii (titluri și ordine diferite de manualul folosit ca sursă), grupele de unități = `group`, secțiunile = `units`; date în `data/basic-sentences.json`, bife în `RK_BASICS_KNOWN` după textul `ko`; romanizarea propozițiilor noi se generează cu `tools/romanize_ko.py`) · `journal.html` · `listening.html` · `writing.html` · `sentence-formation.html` · `slot-machine.html`
 
 ### Jocuri (hub Play)
 
