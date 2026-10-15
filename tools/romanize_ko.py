@@ -124,6 +124,7 @@ def romanize(text):
             if p.strip(): prev = ''
             out += p.replace('.', '').replace('!', '!').replace('…', '')
     out = re.sub(r'\s+', ' ', out).strip()
+    out = re.sub(r'l su\b', 'l ssu', out)          # -(으)ㄹ 수 있다 -> hal ssu
     return out
 
 if __name__ == '__main__':
