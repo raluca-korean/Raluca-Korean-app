@@ -161,6 +161,12 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function 
 
 function load(key, fb) { try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fb : v; } catch (e) { return fb; } }
 var known = load(KNOWN_KEY, []);
+// Ticks are keyed by the Korean text: carry them over to sentences whose names were changed.
+var RENAMED = {"저는 김지나입니다.": "저는 윤하린입니다.", "성희 씨, 김준호 씨 아세요?": "소라 씨, 강태오 씨 아세요?", "박진수라고 합니다.": "문도현이라고 합니다.", "김준호 씨의 친구입니다.": "강태오 씨의 친구입니다.", "저는 AB 회사에 다닙니다.": "저는 한빛전자에 다닙니다.", "저는 한국대학 4학년입니다.": "저는 새솔대학교 4학년입니다.", "안녕하세요, 김지나라고 합니다.": "안녕하세요, 윤하린이라고 합니다.", "그냥 지나라고 불러 주세요.": "그냥 하린이라고 불러 주세요.", "안녕하세요, 저는 지미의 친구 김지나입니다.": "안녕하세요, 저는 소라의 친구 윤하린입니다.", "김지나 씨 계세요?": "윤하린 씨 계세요?"};
+if (known.some(function (k) { return RENAMED[k]; })) {
+  known = known.map(function (k) { return RENAMED[k] || k; });
+  localStorage.setItem(KNOWN_KEY, JSON.stringify(known));
+}
 var prefs = Object.assign({ mode: 'learn', rom: true, chapter: 0 }, load(PREF_KEY, {}));
 function savePrefs() { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); }
 function isKnown(ko) { return known.indexOf(ko) !== -1; }
