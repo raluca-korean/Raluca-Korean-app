@@ -217,8 +217,7 @@ function renderContent() {
     if (!key || key !== lastGroup) groupNo++;
     lastGroup = key;
   }
-  DATA.chapters.slice(0, prefs.chapter).forEach(function (c) { lastGroup = null; c.units.forEach(nextGroup); });
-  lastGroup = null;
+  // Numbering restarts in every chapter, like the book (Unit 1, Unit 2…).
 
   var html = '<div class="bs-chapter"><span>' + l.chapter(ch.num) + '</span><strong>' + esc(tr(ch)) + '</strong></div>';
   var practice = prefs.mode === 'practice';
@@ -227,8 +226,8 @@ function renderContent() {
   var groups = [];
   ch.units.forEach(function (u) { if (u.group && groups.every(function (g) { return g.key !== tr(u.group); })) groups.push({ key: tr(u.group), id: u.id }); });
   if (groups.length > 1) {
-    html += '<div class="bs-groups">' + groups.map(function (g) {
-      return '<div class="bs-group" role="button" tabindex="0" data-jump="' + g.id + '">' + esc(g.key) + '</div>';
+    html += '<div class="bs-groups">' + groups.map(function (g, gi) {
+      return '<div class="bs-group" role="button" tabindex="0" data-jump="' + g.id + '">' + (gi + 1) + '. ' + esc(g.key) + '</div>';
     }).join('') + '</div>';
   }
 
@@ -240,7 +239,7 @@ function renderContent() {
     var k = u.items.filter(function (it) { return isKnown(it.ko); }).length;
     html += '<section class="card bs-unit" data-unit="' + u.id + '">' +
       '<div class="bs-unit-head"><div>' +
-        '<div class="bs-unit-kicker">' + l.unit(groupNo) + (u.group ? ' · ' + esc(tr(u.group)) : '') + '</div>' +
+        '<div class="bs-unit-kicker">' + l.unit(groupNo) + (u.group && tr(u.group) !== tr(u) ? ' · ' + esc(tr(u.group)) : '') + '</div>' +
         '<div class="bs-unit-title">' + esc(tr(u)) + '</div>' +
         '<div class="bs-unit-meta">' + l.unitMeta(k, u.items.length) + '</div>' +
       '</div>' + (practice ? '' : '<div class="bs-btn" role="button" tabindex="0" data-play="' + u.id + '">' + l.playAll + '</div>') + '</div>';
