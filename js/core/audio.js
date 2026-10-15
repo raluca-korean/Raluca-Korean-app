@@ -88,7 +88,8 @@ window.AudioEngine = {
 
     // First call after load: Chrome fills the voice list asynchronously, so wait
     // briefly for it instead of speaking with the default (often non-Korean) voice.
-    if(!speechSynthesis.getVoices().length && !options._waited){
+    if(!speechSynthesis.getVoices().length && !options._waited && !this._voiceWaitDone){
+      this._voiceWaitDone = true; // only once per page — some devices have no voices at all
       let done = false;
       const go = ()=>{ if(done) return; done = true; speechSynthesis.removeEventListener && speechSynthesis.removeEventListener("voiceschanged", go); this.speak(clean, Object.assign({}, options, { _waited: true })); };
       if(speechSynthesis.addEventListener) speechSynthesis.addEventListener("voiceschanged", go);
