@@ -66,6 +66,13 @@ body.dark-mode .bs-btn{color:#B3A8FF;background:rgba(139,124,255,.16);border-col
 .bs-ko .spk{font-size:15px;margin-left:6px;opacity:.55}
 .bs-rom{font-size:13px;color:var(--rk-muted);margin-top:3px;letter-spacing:.01em}
 body.no-rom .bs-rom{display:none}
+.bs-alt{margin-top:6px}
+.bs-alt .bs-ko{font-size:19px;margin-top:0}
+.bs-groups{display:flex;gap:6px;flex-wrap:wrap;margin:0 2px 12px}
+.bs-group{cursor:pointer;user-select:none;font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px;
+  color:#6C5CE7;background:rgba(108,92,231,.10);border:1px solid rgba(108,92,231,.2)}
+body.dark-mode .bs-group{color:#B3A8FF;background:rgba(139,124,255,.14);border-color:rgba(139,124,255,.26)}
+.bs-group:focus-visible{outline:3px solid #8B7CFF;outline-offset:2px}
 .bs-tip{margin-top:8px;font-size:12.5px;line-height:1.45;color:var(--rk-muted);padding:7px 10px;border-radius:10px;background:rgba(244,201,93,.14);border-left:3px solid #F4C95D}
 .bs-tip b{color:#B8860B;margin-right:4px}
 body.dark-mode .bs-tip b{color:#F3CB69}
@@ -203,22 +210,37 @@ function renderTop() {
 function renderContent() {
   var l = L();
   var ch = DATA.chapters[prefs.chapter] || DATA.chapters[0];
-  var unitNo = 0;
-  DATA.chapters.slice(0, prefs.chapter).forEach(function (c) { unitNo += c.units.length; });
+  // Units sharing a "group" (a book unit like Greetings) share one number.
+  var groupNo = 0, lastGroup = null;
+  function nextGroup(u) {
+    var key = u.group ? tr(u.group) : null;
+    if (!key || key !== lastGroup) groupNo++;
+    lastGroup = key;
+  }
+  DATA.chapters.slice(0, prefs.chapter).forEach(function (c) { lastGroup = null; c.units.forEach(nextGroup); });
+  lastGroup = null;
 
   var html = '<div class="bs-chapter"><span>' + l.chapter(ch.num) + '</span><strong>' + esc(tr(ch)) + '</strong></div>';
   var practice = prefs.mode === 'practice';
   var shown = 0;
 
+  var groups = [];
+  ch.units.forEach(function (u) { if (u.group && groups.every(function (g) { return g.key !== tr(u.group); })) groups.push({ key: tr(u.group), id: u.id }); });
+  if (groups.length > 1) {
+    html += '<div class="bs-groups">' + groups.map(function (g) {
+      return '<div class="bs-group" role="button" tabindex="0" data-jump="' + g.id + '">' + esc(g.key) + '</div>';
+    }).join('') + '</div>';
+  }
+
   ch.units.forEach(function (u) {
-    unitNo++;
+    nextGroup(u);
     var items = practice ? u.items.filter(function (it) { return !isKnown(it.ko); }) : u.items;
     if (practice && !items.length) return;
     shown += items.length;
     var k = u.items.filter(function (it) { return isKnown(it.ko); }).length;
     html += '<section class="card bs-unit" data-unit="' + u.id + '">' +
       '<div class="bs-unit-head"><div>' +
-        '<div class="bs-unit-kicker">' + l.unit(unitNo) + '</div>' +
+        '<div class="bs-unit-kicker">' + l.unit(groupNo) + (u.group ? ' · ' + esc(tr(u.group)) : '') + '</div>' +
         '<div class="bs-unit-title">' + esc(tr(u)) + '</div>' +
         '<div class="bs-unit-meta">' + l.unitMeta(k, u.items.length) + '</div>' +
       '</div>' + (practice ? '' : '<div class="bs-btn" role="button" tabindex="0" data-play="' + u.id + '">' + l.playAll + '</div>') + '</div>';
@@ -232,6 +254,10 @@ function renderContent() {
           (open
             ? '<div class="bs-ko" role="button" tabindex="0" lang="ko" data-say="' + esc(it.ko) + '">' + esc(it.ko) + '<span class="spk" aria-hidden="true">🔊</span></div>' +
               '<div class="bs-rom">' + esc(it.rom) + '</div>' +
+              (it.alt || []).map(function (a) {
+                return '<div class="bs-alt"><div class="bs-ko" role="button" tabindex="0" lang="ko" data-say="' + esc(a.ko) + '">' + esc(a.ko) + '<span class="spk" aria-hidden="true">🔊</span></div>' +
+                  '<div class="bs-rom">' + esc(a.rom) + '</div></div>';
+              }).join('') +
               (it.tip ? '<div class="bs-tip"><b>' + l.tip + '</b>' + esc(tr(it.tip)) + '</div>' : '') +
               (practice ? '<div class="bs-grade">' +
                 '<div class="bs-btn" role="button" tabindex="0" data-grade="0" data-k="' + esc(it.ko) + '">' + l.notYet + '</div>' +
@@ -244,10 +270,10 @@ function renderContent() {
 
   if (practice && !shown) html += '<div class="card bs-empty">' + l.allKnown + '</div>';
 
-  if (ch.info) {
+  (ch.infos || []).forEach(function (info) {
     html += '<div class="card bs-info"><div class="bs-info-kicker">' + l.info + '</div>' +
-      '<h3>' + esc(tr(ch.info.title)) + '</h3><p>' + esc(tr(ch.info)) + '</p></div>';
-  }
+      '<h3>' + esc(tr(info.title)) + '</h3><p>' + esc(tr(info)) + '</p></div>';
+  });
   document.getElementById('content').innerHTML = html;
 }
 
@@ -293,8 +319,13 @@ function playUnit(id, btn) {
 
 /* ── EVENTS ───────────────────────────────────────────── */
 function handle(e) {
-  var t = e.target.closest('[data-tab],[data-ch],[data-play],[data-check],[data-say],[data-reveal],[data-grade]');
+  var t = e.target.closest('[data-tab],[data-ch],[data-play],[data-check],[data-say],[data-reveal],[data-grade],[data-jump]');
   if (!t) return;
+  if (t.dataset.jump) {
+    var sec = document.querySelector('.bs-unit[data-unit="' + t.dataset.jump + '"]');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
   if (t.dataset.tab) {
     if (t.dataset.tab === 'rom') prefs.rom = !prefs.rom;
     else { prefs.mode = t.dataset.tab; revealed = {}; }
