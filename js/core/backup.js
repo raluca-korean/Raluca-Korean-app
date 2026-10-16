@@ -11,7 +11,7 @@
      storage.js deliberately excludes so a restored backup re-runs
      migrations on the next load. */
   var KEYS = [
-    'RK_STATS','RK_LESSON_DONE','RK_LEARNED_EX','RK_LEARNED','RK_LEVEL',
+    'RK_STATS','RK_LESSON_DONE','RK_LEARNED_EX','RK_LEARNED','RK_LEVEL','RK_TOPIK_PROGRESS','RK_TOPIK_PINNED','RK_LEVELUP_CELEBRATED','RK_BASICS_KNOWN','RK_BASICS_PREFS',
     'RK_EX_SRS','RK_WRONG_LOG','RK_SPEED','RK_DONE_NEURAL','RK_STREAK',
     'RK_XP','RK_BADGES','RK_DAILY_QUEST','RK_DAILY_POPUP',
     'RK_FAV_WORDS','RK_VOCAB_USER','RK_WORD_USAGE','RK_DICT_RECENT','RK_SAVED_SENTENCES',
@@ -123,11 +123,11 @@
       'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;' +
       'max-width:92vw;width:480px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;' +
       'padding:12px 16px;border-radius:16px;font-family:inherit;font-size:13px;color:#fff;' +
-      'background:linear-gradient(135deg,#2f6b53,#1c4a3a);box-shadow:0 10px 30px rgba(0,0,0,.35);' +
+      'background:linear-gradient(135deg,#2f6b53,#6C5CE7);box-shadow:0 10px 30px rgba(0,0,0,.35);' +
       'animation:rkBackupIn .3s ease;';
     bar.innerHTML =
       '<span style="flex:1;min-width:200px;line-height:1.4">' + T.msg + '</span>' +
-      '<button id="rkBackupNowBtn" style="background:#fff;color:#1c4a3a;border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit">' + T.now + '</button>' +
+      '<button id="rkBackupNowBtn" style="background:#fff;color:#6C5CE7;border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit">' + T.now + '</button>' +
       '<button id="rkBackupLaterBtn" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit">' + T.later + '</button>';
 
     document.body.appendChild(bar);

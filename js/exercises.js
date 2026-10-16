@@ -358,10 +358,10 @@ function t(key){
 }
 
 function updateLevelButtons(){
-  const activeStyle = "linear-gradient(135deg,#c9922e,#a8791f)";
+  const activeStyle = "linear-gradient(135deg,#E96A9A,#D9548A)";
   const inactiveStyle = "linear-gradient(160deg,#fff,#faf3e3)";
-  const activeShadow = "0 8px 20px rgba(201,146,46,.28)";
-  const inactiveShadow = "0 4px 12px rgba(201,146,46,.10)";
+  const activeShadow = "0 8px 20px rgba(233,106,154,.28)";
+  const inactiveShadow = "0 4px 12px rgba(233,106,154,.10)";
 
   levelBtnsEl.querySelectorAll("button[data-level]").forEach(btn => {
     const isActive = btn.dataset.level === currentLevel;
@@ -374,7 +374,9 @@ function updateLevelButtons(){
 
 function updateStaticTexts(){
   pageTitleEl.textContent = t("title");
-  pageSubtitleEl.textContent = t("subtitle");
+  pageSubtitleEl.textContent = lessonParam
+    ? (currentLang === "ro" ? "Lecția " : "Lesson ") + lessonParam + (currentLang === "ro" ? " · toate tipurile de exerciții" : " · every exercise type")
+    : t("subtitle");
   checkBtn.textContent = t("check");
   nextBtn.textContent = t("next");
 
@@ -414,6 +416,12 @@ function updateStaticTexts(){
   if(cfgLabel) cfgLabel.textContent = currentLang==="ro" ? "Exerciții" : "Exercises";
   const cfgBody = document.querySelector(".lmn-config-body");
   if(cfgBody) cfgBody.setAttribute("aria-label", currentLang==="ro" ? "Setări exerciții" : "Exercise settings");
+
+  // Lesson practice always mixes every exercise type tied to that lesson —
+  // the type/level picker has nothing to filter, so hide it to avoid a
+  // dead control.
+  const cfgPanel = document.getElementById("lmn-config");
+  if(cfgPanel) cfgPanel.style.display = lessonParam ? "none" : "";
 }
 
 function updateBadges(){
@@ -524,6 +532,7 @@ function markLessonDone(lessonId){
   if(!done.includes(lessonId)){
     done.push(lessonId);
     RKStorage.set("RK_LESSON_DONE", done);
+    localStorage.setItem("RK_LESSON_TODAY", new Date().toISOString().slice(0,10));
   }
 }
 
@@ -550,7 +559,7 @@ function saveStats(isCorrect, type){
 }
 
 function trackWrong(item, userAnswer, correctAnswer){
-  const type = typeSelect.value;
+  const type = itemType(item);
   if(!wrongsByType[type]) wrongsByType[type] = [];
   if(!wrongsByType[type].includes(item)) wrongsByType[type].push(item);
   // Persist for mistakes.html
@@ -596,6 +605,10 @@ function getPersistentWrongs(type) {
 }
 
 function updateWrongBtn(){
+  // In lesson mode wrong answers already resurface via the mastery streak
+  // (see LESSON PRACTICE MASTERY above), and the per-type wrong bucket
+  // below doesn't apply cleanly once a session mixes several exercise types.
+  if(lessonParam){ wrongBtn.style.display = 'none'; return; }
   const isDrill = typeSelect.value.startsWith('drill-');
   if(isDrill){ wrongBtn.style.display = 'none'; return; }
   const type = typeSelect.value;
@@ -645,7 +658,7 @@ function exitWrongMode(){
 // ── DIFFICULTY ADAPTIVĂ ──────────────────────────────────────────────────
 
 function checkLevelSuggestion(isCorrect) {
-  if (isWrongMode || typeSelect.value.startsWith('drill-')) return;
+  if (lessonParam || isWrongMode || typeSelect.value.startsWith('drill-')) return;
   const lvl = parseInt(currentLevel);
   if (isNaN(lvl) || lvl >= 6) return;
   if (isCorrect) {
@@ -756,18 +769,32 @@ async function loadExercises(){
 
 // ── LESSON PRACTICE MASTERY (3-in-a-row) ─────────────────────────────────
 // When arriving via "Practică lecția" (?lesson=X), a single exercise type
-// for one lessonId often has only 1-4 items in exercises.json. We widen the
-// session pool to at least LESSON_POOL_MIN items (padding with same-topik
-// items when needed) and track a per-item consecutive-correct streak, keyed
-// per lesson so the same exercise can be "fresh" again in a different
-// lesson's session. Once an item hits LESSON_MASTERY_TARGET in a row it's
-// retired from the pool; a wrong answer resets its streak to 0.
-const LESSON_POOL_MIN = 10;
+// for one lessonId often has only 1-4 items in exercises.json — nowhere
+// near enough for a real practice session. Rather than padding with
+// unrelated exercises from other lessons (which defeats the point of
+// practicing *this* lesson), we pool every exercise TYPE tagged with this
+// exact lessonId (ko-ro, ro-ko, particle, particlePlus, conjug, puzzle,
+// chain) into one mixed session — every item shown is guaranteed to
+// actually be about this lesson. Each item is tagged with its own
+// `_exType` so rendering/checking can resolve the right format per item
+// instead of relying on the (now hidden, in lesson mode) type dropdown.
+// A per-item consecutive-correct streak is tracked per lesson: once an
+// item hits LESSON_MASTERY_TARGET in a row it's retired from the pool; a
+// wrong answer resets its streak to 0.
 const LESSON_MASTERY_TARGET = 3;
 const LESSON_MASTERY_KEY = "RK_LESSON_MASTERY";
+const LESSON_TYPES = ["ko-ro", "ro-ko", "particle", "particlePlus", "conjug", "puzzle", "chain"];
 
 let lessonAllMastered = false;
 let lessonPoolCache = { key: null, pool: [] };
+let lessonOrderCache = { key: null, order: [] };
+
+// Resolves the real exercise type for an item: lesson-mode items carry
+// their own `_exType` (since a lesson session mixes several types), while
+// everything else falls back to whatever the type dropdown is set to.
+function itemType(item){
+  return (item && item._exType) ? item._exType : typeSelect.value;
+}
 
 function lessonMasteryLoad(){ return RKStorage.get(LESSON_MASTERY_KEY, {}); }
 function lessonMasterySave(m){ RKStorage.set(LESSON_MASTERY_KEY, m); }
@@ -797,33 +824,38 @@ function lessonMasteryReset(){
   lessonMasterySave(m);
 }
 
-function lessonTopikLevel(){
-  const match = /^T(\d)/.exec(lessonParam || "");
-  return match ? Number(match[1]) : null;
-}
+function buildLessonPool(){
+  if(lessonPoolCache.key === lessonParam) return lessonPoolCache.pool;
 
-function buildLessonPool(type){
-  const cacheKey = lessonParam + "||" + type;
-  if(lessonPoolCache.key === cacheKey) return lessonPoolCache.pool;
-
-  const list = allExercises[type] || [];
-  const core = list.filter(item => item.lessonId === lessonParam);
-  const pool = [...core];
-
-  if(pool.length < LESSON_POOL_MIN){
-    const topik = core.length ? core[0].topik : lessonTopikLevel();
-    if(topik != null){
-      const already = new Set(pool);
-      const padCandidates = shuffle(list.filter(item => item.topik === topik && !already.has(item)));
-      for(const item of padCandidates){
-        if(pool.length >= LESSON_POOL_MIN) break;
+  const pool = [];
+  LESSON_TYPES.forEach(t => {
+    (allExercises[t] || []).forEach(item => {
+      if(item.lessonId === lessonParam){
+        item._exType = t;
         pool.push(item);
       }
-    }
-  }
+    });
+  });
 
-  lessonPoolCache = { key: cacheKey, pool };
+  lessonPoolCache = { key: lessonParam, pool };
   return pool;
+}
+
+// render() calls getFilteredList() on every single question (not just when
+// the pool changes), so shuffling the active items fresh each time makes
+// "next" look almost random — with only a handful of items that means the
+// same 1-2 sentences resurface constantly and a session can feel like it
+// only has a couple of distinct exercises. Instead we keep one shuffled
+// order per *set* of currently-active items and only reshuffle when that
+// set actually changes (an item gets mastered/retired, or mastery is
+// reset) — so "next" walks through every distinct item once before repeat.
+function getLessonActiveOrder(pool){
+  const active = pool.filter(item => lessonMasteryStreak(item._exType, item) < LESSON_MASTERY_TARGET && !isLearnedEx(item._exType, item));
+  const signature = lessonParam + "||" + active.map(item => item._exType + ":" + getExerciseKey(item._exType, item)).sort().join(",");
+  if(lessonOrderCache.key !== signature){
+    lessonOrderCache = { key: signature, order: shuffle(active) };
+  }
+  return lessonOrderCache.order;
 }
 
 function getFilteredList(){
@@ -848,11 +880,11 @@ function getFilteredList(){
 
   if(lessonParam){
     lessonAllMastered = false;
-    const pool = buildLessonPool(type);
+    const pool = buildLessonPool();
     if(pool.length === 0) return [];
-    const active = pool.filter(item => lessonMasteryStreak(type, item) < LESSON_MASTERY_TARGET && !isLearnedEx(type, item));
-    if(active.length === 0){ lessonAllMastered = true; return []; }
-    return shuffle(active);
+    const order = getLessonActiveOrder(pool);
+    if(order.length === 0){ lessonAllMastered = true; return []; }
+    return order;
   }
 
   let list = allExercises[type] || [];
@@ -878,11 +910,11 @@ function renderInfoBadge(item){
   const parts = [];
 
   // SRS status badge
-  const type = typeSelect.value;
+  const type = itemType(item);
   if (!type.startsWith('drill-') && !isWrongMode) {
     const status = exSrsStatus(getExerciseKey(type, item));
     if (status === 'new') {
-      parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(201,146,46,.14);border:1px solid rgba(201,146,46,.32);font-weight:900;font-size:11px;color:#a8791f">✨ ${currentLang === 'ro' ? 'NOU' : 'NEW'}</span>`);
+      parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(233,106,154,.14);border:1px solid rgba(233,106,154,.32);font-weight:900;font-size:11px;color:#D9548A">✨ ${currentLang === 'ro' ? 'NOU' : 'NEW'}</span>`);
     } else if (status === 'due') {
       parts.push(`<span style="padding:5px 10px;border-radius:999px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.28);font-weight:900;font-size:11px;color:#b45309">📅 ${currentLang === 'ro' ? 'DE AZI' : 'DUE'}</span>`);
     }
@@ -991,13 +1023,14 @@ function render(){
   }
 
   const item = currentList[currentIndex];
+  const type = itemType(item);
   renderInfoBadge(item);
 
   let questionText = "";
   let helperText = "";
   let options = [];
 
-  if(typeSelect.value === "drill-conjug"){
+  if(type === "drill-conjug"){
     const q = item;
     const data = buildDrillConjOptions(q.verb.ko, q.tense);
     const tLabel = DRILL_TENSE_LABELS[q.tense][currentLang];
@@ -1012,7 +1045,7 @@ function render(){
     return;
   }
 
-  if(typeSelect.value === "drill-ext"){
+  if(type === "drill-ext"){
     const ex = item;
     const extOpts = shuffle([ex.correct, ...ex.wrongs]);
     questionEl.textContent = t("chooseDrillExt");
@@ -1029,7 +1062,7 @@ function render(){
     return;
   }
 
-  if(typeSelect.value === "drill-honor"){
+  if(type === "drill-honor"){
     const h = item;
     questionEl.textContent = t("chooseDrillHonor");
     helperEl.textContent = "";
@@ -1045,7 +1078,7 @@ function render(){
     return;
   }
 
-  if(typeSelect.value === "drill-numbers"){
+  if(type === "drill-numbers"){
     const n = item;
     questionEl.innerHTML = GrammarColor.colorize(n.template.replace("___", "【 ___ 】"));
     helperEl.textContent = t("chooseDrillNumbers");
@@ -1058,24 +1091,24 @@ function render(){
 
   document.getElementById("drillContext").style.display = "none";
 
-  if(typeSelect.value === "ko-ro"){
+  if(type === "ko-ro"){
     questionText = item.q;
     helperText = t("chooseCorrectTranslation");
     options = shuffle(item.answers[currentLang] || []);
-  } else if(typeSelect.value === "particle"){
+  } else if(type === "particle"){
     questionText = item.template.replace("___", "【 ___ 】");
     helperText = t("chooseParticle");
     options = shuffle(item.options || []);
-  } else if(typeSelect.value === "particlePlus"){
+  } else if(type === "particlePlus"){
     let n = 0;
     questionText = item.template.replace(/___/g, () => `【${++n}】`);
     helperText = t("chooseParticlePlus");
     options = shuffle((item.options || []).map(opt => Array.isArray(opt) ? opt.join(" · ") : opt));
-  } else if(typeSelect.value === "conjug"){
+  } else if(type === "conjug"){
     questionText = cleanConjugPrompt(item.prompt[currentLang]);
     helperText = t("chooseConjug");
     options = shuffle(item.options || []);
-  } else if(typeSelect.value === "puzzle"){
+  } else if(type === "puzzle"){
     answersEl.style.display = "none";
     document.getElementById("puzzleUI").style.display = "";
     questionEl.textContent = item.hint ? item.hint[currentLang] : "";
@@ -1087,7 +1120,7 @@ function render(){
     updateHintBtn(item);
     updateBadges();
     return;
-  } else if(typeSelect.value === "chain"){
+  } else if(type === "chain"){
     answersEl.style.display = "none";
     document.getElementById("puzzleUI").style.display = "";
     questionEl.textContent = item.context ? item.context[currentLang] : "";
@@ -1112,15 +1145,15 @@ function render(){
   }
   helperEl.textContent = helperText;
 
-  if(typeSelect.value === "ko-ro" || typeSelect.value === "particle" || typeSelect.value === "particlePlus"){
+  if(type === "ko-ro" || type === "particle" || type === "particlePlus"){
     speakKorean(questionText);
-  } else if(typeSelect.value === "conjug"){
+  } else if(type === "conjug"){
     // questionText mixes the Korean verb with a RO/EN gloss ("가다 → prezent
     // politicos") — only the verb before the arrow is safe to feed to ko-KR TTS.
     speakKorean(questionText.split("→")[0].trim());
   }
 
-  if(hintBtnMC && MC_TYPES.has(typeSelect.value) && !isWrongMode) hintBtnMC.style.display = "";
+  if(hintBtnMC && MC_TYPES.has(type) && !isWrongMode) hintBtnMC.style.display = "";
 
   renderAnswerOptions(options);
 }
@@ -1214,29 +1247,31 @@ function showHint(){
 document.getElementById("hintBtn").addEventListener("click", showHint);
 
 function getCorrectAnswer(item){
-  if(typeSelect.value === "ko-ro")        return item.correct[currentLang];
-  if(typeSelect.value === "particlePlus") return Array.isArray(item.correct) ? item.correct.join(" · ") : item.correct;
-  if(typeSelect.value === "drill-conjug") return drillGetForm(item.verb.ko, item.tense);
-  if(typeSelect.value === "drill-ext")    return item.correct;
-  if(typeSelect.value === "drill-honor")  return item.options[item.correct];
-  if(typeSelect.value === "drill-numbers") return item.options[item.correct];
+  const type = itemType(item);
+  if(type === "ko-ro")        return item.correct[currentLang];
+  if(type === "particlePlus") return Array.isArray(item.correct) ? item.correct.join(" · ") : item.correct;
+  if(type === "drill-conjug") return drillGetForm(item.verb.ko, item.tense);
+  if(type === "drill-ext")    return item.correct;
+  if(type === "drill-honor")  return item.options[item.correct];
+  if(type === "drill-numbers") return item.options[item.correct];
   return item.correct;
 }
 
 function checkCurrentAnswer(){
   if(answered || currentList.length === 0) return;
   const elapsed = timerStop();
+  const item = currentList[currentIndex];
+  const type = itemType(item);
 
-  if(typeSelect.value === "puzzle" || typeSelect.value === "chain"){
-    const emptyMsg = typeSelect.value === "chain" ? t("placeChain") : t("placeTiles");
+  if(type === "puzzle" || type === "chain"){
+    const emptyMsg = type === "chain" ? t("placeChain") : t("placeTiles");
     if(puzzleLine.length === 0){
       feedbackEl.textContent = emptyMsg;
       return;
     }
-    const item = currentList[currentIndex];
     const isRight = JSON.stringify(puzzleLine) === JSON.stringify(item.correct);
-    const sep = typeSelect.value === "chain" ? " → " : " ";
-    const speechSep = typeSelect.value === "chain" ? ". " : " ";
+    const sep = type === "chain" ? " → " : " ";
+    const speechSep = type === "chain" ? ". " : " ";
     speakKorean(item.correct.join(speechSep));
     const effectiveRight = isRight && !hintUsed;
     if(isRight && hintUsed){
@@ -1248,13 +1283,13 @@ function checkCurrentAnswer(){
     }
     total++;
     if(effectiveRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
-    else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !typeSelect.value.startsWith('drill-')) trackWrong(item, puzzleLine.join(sep), item.correct.join(sep)); }
-    if(!isWrongMode && lessonParam) lessonMasteryRecord(typeSelect.value, item, effectiveRight);
-    if(!isWrongMode) saveStats(effectiveRight, typeSelect.value);
-    recordCheck(elapsed, typeSelect.value, effectiveRight);
-    updateExSrs(typeSelect.value, item, isRight, hintUsed);
-    appendSrsInfo(typeSelect.value, item, effectiveRight);
-    processGamification(effectiveRight, typeSelect.value);
+    else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !type.startsWith('drill-')) trackWrong(item, puzzleLine.join(sep), item.correct.join(sep)); }
+    if(!isWrongMode && lessonParam) lessonMasteryRecord(type, item, effectiveRight);
+    if(!isWrongMode) saveStats(effectiveRight, type);
+    recordCheck(elapsed, type, effectiveRight);
+    updateExSrs(type, item, isRight, hintUsed);
+    appendSrsInfo(type, item, effectiveRight);
+    processGamification(effectiveRight, type);
     if(!isWrongMode) checkLevelSuggestion(effectiveRight);
     answered = true;
     const hb = document.getElementById("hintBtn");
@@ -1272,7 +1307,6 @@ function checkCurrentAnswer(){
     return;
   }
 
-  const item = currentList[currentIndex];
   const correctAnswer = getCorrectAnswer(item);
   const answerNodes = [...document.querySelectorAll("#answers .answer")];
 
@@ -1302,12 +1336,12 @@ function checkCurrentAnswer(){
     if(!isWrongMode) trackWrong(item, selectedAnswer, correctAnswer);
   }
 
-  if(!isWrongMode && lessonParam) lessonMasteryRecord(typeSelect.value, item, isCorrect);
-  if(!isWrongMode) saveStats(isCorrect, typeSelect.value);
-  recordCheck(elapsed, typeSelect.value, isCorrect);
-  updateExSrs(typeSelect.value, item, isCorrect, hintUsed);
-  appendSrsInfo(typeSelect.value, item, isCorrect);
-  processGamification(isCorrect, typeSelect.value);
+  if(!isWrongMode && lessonParam) lessonMasteryRecord(type, item, isCorrect);
+  if(!isWrongMode) saveStats(isCorrect, type);
+  recordCheck(elapsed, type, isCorrect);
+  updateExSrs(type, item, isCorrect, hintUsed);
+  appendSrsInfo(type, item, isCorrect);
+  processGamification(isCorrect, type);
   if(!isWrongMode) checkLevelSuggestion(isCorrect);
   answered = true;
   if(hintBtnMC) hintBtnMC.style.display = "none";
@@ -1331,7 +1365,7 @@ function launchFireworks(){
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  const colors = ["#c9922e","#1c4a3a","#0ea5e9","#f59e0b","#10b981","#f43f5e","#3d8a6a","#06b6d4"];
+  const colors = ["#E96A9A","#6C5CE7","#0ea5e9","#f59e0b","#10b981","#f43f5e","#8B7CFF","#06b6d4"];
   const particles = [];
 
   for(let b = 0; b < 6; b++){
@@ -1460,9 +1494,9 @@ function toggleLearnedEx(type, item){
 function updateLearnBtn(){
   const btn = document.getElementById("learnBtn");
   if(!btn) return;
-  const type = typeSelect.value;
   const item = currentList[currentIndex];
   if(!item) return;
+  const type = itemType(item);
   const learned = isLearnedEx(type, item);
   btn.textContent = learned ? "✓ Învățat" : "○ Marchează";
   btn.style.background = learned ? "#22c55e" : "rgba(255,255,255,.1)";
@@ -1482,7 +1516,6 @@ const MC_TYPES = new Set(['ko-ro','ro-ko','particle','particlePlus','conjug']);
 
 function showHintMC() {
   if (answered || hintUsed) return;
-  const type = typeSelect.value;
   const item = currentList[currentIndex];
   if (!item) return;
   const correct = getCorrectAnswer(item);
@@ -1503,7 +1536,7 @@ document.addEventListener("keydown", function(e){
   if(e.ctrlKey || e.metaKey || e.altKey) return;
   if(document.getElementById("langPicker").classList.contains("open")) return;
 
-  const type = typeSelect.value;
+  const type = itemType(currentList[currentIndex]);
   const isPuzzleChain = type === "puzzle" || type === "chain";
 
   if(e.key === "Enter"){

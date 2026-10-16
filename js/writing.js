@@ -359,7 +359,7 @@ const ctx  = cvs.getContext("2d");
 let drawing=false, lx=0, ly=0, pmx=0, pmy=0, lastMs=0;
 
 function drawColor() {
-  return document.body.classList.contains("dark-mode") ? "#8fd4b8" : "#2a2118";
+  return document.body.classList.contains("dark-mode") ? "#C4BAFF" : "#20264A";
 }
 
 function cPos(e) {
@@ -611,7 +611,7 @@ function doCheck() {
   // Pt cuvinte/propoziții: arată canvas-ul original lat, nu versiunea normalizată
   const multiChar = (mode==="words"||mode==="sentences") && chars.length>1;
   paintFbCanvas("fbUserCv", multiChar ? cvs : nu, drawColor());
-  paintFbCanvas("fbRefCv",  multiChar ? makeWideRef(item.char,chars) : nr, "#1c4a3a");
+  paintFbCanvas("fbRefCv",  multiChar ? makeWideRef(item.char,chars) : nr, "#6C5CE7");
 
   const fb=document.getElementById("fbCard");
   fb.style.display="";

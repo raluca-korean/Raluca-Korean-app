@@ -315,41 +315,41 @@
     },
     today: {
       ro: {
-        title: 'Azi — Planificator TOPIK',
-        lead: 'Planul tău zilnic de studiu, pe baza progresului și a obiectivului tău.',
+        title: 'Planul TOPIK',
+        lead: 'Nivelul tău TOPIK, data examenului și cât ai de făcut pe zi ca să termini la timp.',
         steps: [
-          'Configurează obiectivul: nivelul TOPIK țintă și data examenului.',
-          'Urmează planul zilnic sugerat de aplicație.',
-          'Bifează activitățile terminate pentru a-ți urmări progresul.'
+          'Alege nivelul TOPIK țintă și data examenului.',
+          'Vezi câte lecții și exerciții ai de făcut pe zi.',
+          'Misiunea zilnică o găsești pe pagina Acasă.'
         ]
       },
       en: {
-        title: 'Today — TOPIK planner',
-        lead: 'Your daily study plan, based on your progress and goal.',
+        title: 'TOPIK plan',
+        lead: 'Your TOPIK level, exam date and how much to do per day to finish on time.',
         steps: [
-          'Set your goal: target TOPIK level and exam date.',
-          'Follow the daily plan the app suggests.',
-          'Check off finished activities to track your progress.'
+          'Pick your target TOPIK level and exam date.',
+          'See how many lessons and exercises to do per day.',
+          "Your daily mission is on the Home page."
         ]
       }
     },
     'word-context': {
       ro: {
-        title: 'Harta Cuvântului',
-        lead: 'Explorează contextul de utilizare al unui cuvânt coreean.',
+        title: 'Harta Cuvintelor',
+        lead: 'Caută un cuvânt coreean sau explorează vocabularul pe constelații de sens.',
         steps: [
-          'Scrie un cuvânt coreean în câmpul de căutare și apasă Enter.',
-          'Vezi exemple de utilizare, cuvinte înrudite și pronunția.',
-          'Apasă pe un cuvânt înrudit pentru a-l explora mai departe.'
+          '🔍 Caută un cuvânt: scrie-l și apasă Enter — vezi exemple, cuvinte înrudite și pronunția.',
+          '🌌 Constelații: alege un grup de cuvinte înrudite (mâncare, vreme, școală…).',
+          'Din constelație, „Harta cuvântului” deschide analiza completă a cuvântului ales.'
         ]
       },
       en: {
-        title: 'Word context map',
-        lead: 'Explore the usage context of a Korean word.',
+        title: 'Word Map',
+        lead: 'Look up a Korean word or explore the vocabulary through constellations of meaning.',
         steps: [
-          'Type a Korean word in the search field and press Enter.',
-          'See usage examples, related words and pronunciation.',
-          'Tap a related word to explore it further.'
+          '🔍 Find a word: type it and press Enter — see examples, related words and pronunciation.',
+          '🌌 Constellations: pick a group of related words (food, weather, school…).',
+          'From a constellation, "Word map" opens the full analysis of the chosen word.'
         ]
       }
     },
@@ -490,30 +490,30 @@
       + '.rk-ph-fab{position:fixed;left:18px;bottom:18px;width:46px;height:46px;border-radius:50%;'
       + 'border:none;cursor:pointer;z-index:100000;display:flex;align-items:center;justify-content:center;'
       + 'font:800 20px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;'
-      + 'background:linear-gradient(135deg,#2f6b53,#1c4a3a);'
-      + 'box-shadow:0 8px 24px rgba(28,74,58,.45);transition:transform .15s ease,box-shadow .15s ease;}'
-      + '.rk-ph-fab:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 12px 30px rgba(28,74,58,.55);}'
+      + 'background:linear-gradient(135deg,#2f6b53,#6C5CE7);'
+      + 'box-shadow:0 8px 24px rgba(108,92,231,.45);transition:transform .15s ease,box-shadow .15s ease;}'
+      + '.rk-ph-fab:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 12px 30px rgba(108,92,231,.55);}'
       + '.rk-ph-overlay{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;'
       + 'padding:20px;background:rgba(10,9,6,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}'
       + '.rk-ph-overlay[hidden]{display:none;}'
       + '.rk-ph-card{width:100%;max-width:420px;max-height:85vh;overflow-y:auto;border-radius:20px;'
-      + 'background:#1a1712;color:#f0e6d0;padding:22px 22px 20px;position:relative;'
+      + 'background:#181D32;color:#F7F4FA;padding:22px 22px 20px;position:relative;'
       + 'box-shadow:0 24px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08);'
       + 'font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}'
       + '.rk-ph-topbar{position:absolute;top:14px;right:14px;display:flex;gap:6px;align-items:center;}'
-      + '.rk-ph-langbtn{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#f0e6d0;'
+      + '.rk-ph-langbtn{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#F7F4FA;'
       + 'border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800;cursor:pointer;}'
-      + '.rk-ph-langbtn.active{background:linear-gradient(135deg,#2f6b53,#1c4a3a);border-color:transparent;}'
-      + '.rk-ph-close{border:none;background:rgba(255,255,255,.08);color:#f0e6d0;width:26px;height:26px;'
+      + '.rk-ph-langbtn.active{background:linear-gradient(135deg,#2f6b53,#6C5CE7);border-color:transparent;}'
+      + '.rk-ph-close{border:none;background:rgba(255,255,255,.08);color:#F7F4FA;width:26px;height:26px;'
       + 'border-radius:50%;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;}'
       + '.rk-ph-close:hover{background:rgba(255,255,255,.16);}'
       + '.rk-ph-title{font-size:19px;font-weight:900;margin:0 40px 8px 0;}'
-      + '.rk-ph-lead{margin:0 0 14px;color:rgba(240,230,208,.78);}'
+      + '.rk-ph-lead{margin:0 0 14px;color:rgba(247,244,250,.78);}'
       + '.rk-ph-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;}'
-      + '.rk-ph-steps li{color:rgba(240,230,208,.92);}'
+      + '.rk-ph-steps li{color:rgba(247,244,250,.92);}'
       + '.rk-ph-ok{margin-top:18px;width:100%;border:none;border-radius:999px;padding:11px 16px;font-weight:900;'
-      + 'cursor:pointer;color:#fff;background:linear-gradient(135deg,#2f6b53,#1c4a3a);'
-      + 'box-shadow:0 8px 20px rgba(28,74,58,.3);font-size:14px;}'
+      + 'cursor:pointer;color:#fff;background:linear-gradient(135deg,#2f6b53,#6C5CE7);'
+      + 'box-shadow:0 8px 20px rgba(108,92,231,.3);font-size:14px;}'
       + '@media(max-width:480px){.rk-ph-fab{left:12px;bottom:12px;width:42px;height:42px;font-size:18px;}}';
     var style = document.createElement('style');
     style.setAttribute('data-rk-page-help', '');

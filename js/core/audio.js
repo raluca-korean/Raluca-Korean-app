@@ -32,11 +32,74 @@ window.AudioEngine = {
     return ko.slice().sort((a, b) => score(b) - score(a))[0];
   },
 
+  // Browsers (Chrome, Safari/iOS) silently drop speechSynthesis.speak() until the
+  // user has touched the page — and a link click on the previous page doesn't
+  // count. So an auto-played first prompt (e.g. exercises.html question 1) would
+  // be lost. Instead it waits here and plays on the first tap, unless that tap
+  // already triggers its own speak() call.
+  _pending: null,
+  _gateReady: false,
+  _hasActivation(){
+    const ua = navigator.userActivation;
+    return ua ? ua.hasBeenActive : this._gateReady;
+  },
+  _initGate(){
+    if(this._gateInit) return;
+    this._gateInit = true;
+    const onGesture = ()=>{
+      this._gateReady = true;
+      // Let the tap's own click handlers run first: if they speak, _pending is cleared.
+      setTimeout(()=>{
+        const p = this._pending;
+        this._pending = null;
+        this._hideHint();
+        if(p) this.speak(p.text, p.options);
+      }, 0);
+      ["click","keydown","touchend"].forEach(ev => window.removeEventListener(ev, onGesture, true));
+    };
+    ["click","keydown","touchend"].forEach(ev => window.addEventListener(ev, onGesture, true));
+  },
+  _showHint(){
+    if(this._hintEl || !document.body) return;
+    const ro = (localStorage.getItem("RK_LANG") || "ro") !== "en";
+    const el = document.createElement("div");
+    el.setAttribute("role", "status");
+    el.textContent = ro ? "🔊 Atinge ecranul ca să auzi pronunția" : "🔊 Tap the screen to hear the audio";
+    el.style.cssText = "position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);white-space:nowrap;" +
+      "z-index:99998;background:rgba(24,29,50,.92);color:#fff;font:700 13px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;" +
+      "padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none;max-width:90vw;text-align:center";
+    document.body.appendChild(el);
+    this._hintEl = el;
+    setTimeout(()=>this._hideHint(), 5000);
+  },
+  _hideHint(){
+    if(this._hintEl){ this._hintEl.remove(); this._hintEl = null; }
+  },
+
   speak(text, options = {}){
     if(!("speechSynthesis" in window)) return;
 
     const clean = (text || "").trim();
     if(!clean) return;
+
+    this._initGate();
+    this._pending = null;
+    if(!this._hasActivation()){
+      this._pending = { text: clean, options };
+      this._showHint();
+      return;
+    }
+
+    // First call after load: Chrome fills the voice list asynchronously, so wait
+    // briefly for it instead of speaking with the default (often non-Korean) voice.
+    if(!speechSynthesis.getVoices().length && !options._waited && !this._voiceWaitDone){
+      this._voiceWaitDone = true; // only once per page — some devices have no voices at all
+      let done = false;
+      const go = ()=>{ if(done) return; done = true; speechSynthesis.removeEventListener && speechSynthesis.removeEventListener("voiceschanged", go); this.speak(clean, Object.assign({}, options, { _waited: true })); };
+      if(speechSynthesis.addEventListener) speechSynthesis.addEventListener("voiceschanged", go);
+      setTimeout(go, 700);
+      return;
+    }
 
     const slow = options.slow ?? this.slow;
     const repeat = options.repeat ?? this.repeat;

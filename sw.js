@@ -1,4 +1,4 @@
-const CACHE = 'rk-v147';
+const CACHE = 'rk-v177';
 
 const STATIC = [
   './',
@@ -14,6 +14,7 @@ const STATIC = [
   './quick60.html',
   './memory.html',
   './phrases.html',
+  './basics.html',
   './exercises.html',
   './lessons.html',
   './lesson-neural.html',
@@ -91,6 +92,7 @@ const STATIC = [
   './js/core/storage.js',
   './js/core/srs.js',
   './js/core/level-progress.js',
+  './js/core/level-picker.js',
   './js/core/streak.js',
   './data/exercises.json',
   './data/lessons.json',
@@ -109,7 +111,8 @@ const STATIC = [
   './data/numbers.json',
   './data/journal-prompts.json',
   './data/honorifics.json',
-  './data/phrases.json'
+  './data/phrases.json',
+  './data/basic-sentences.json'
 ];
 
 /* ── Install: cache each file individually so one slow/missing file

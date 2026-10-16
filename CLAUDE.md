@@ -8,7 +8,7 @@ Stack: **Vanilla JS, HTML, CSS** — fără build tools, fără npm.
 
 ## Structura fișierelor
 
-Aplicația a crescut mult peste cele 5 pagini inițiale — sunt ~37 pagini `.html` la rădăcină. Nu toate importă `theme-anime.css`: cele 5 hub-uri din navigarea de jos (`index`, `learn`, `profile`, `review`) au stiluri proprii inline în `<style>`, doar `play.html` folosește `theme-anime.css`. Restul paginilor (cele mai vechi) îl importă normal.
+Aplicația a crescut mult peste cele 5 pagini inițiale — sunt ~37 pagini `.html` la rădăcină. Nu toate importă `theme-anime.css`: hub-urile din navigarea de jos (`index`, `learn`, `play`, `profile`, `review`) au stiluri proprii inline în `<style>` (aceleași token-uri: violet `#6C5CE7`, roz `#E96A9A`, auriu `#F4C95D`, fundal întunecat `#101426`). Restul paginilor (cele mai vechi) importă `theme-anime.css`. Paleta veche verde/auriu (`#1c4a3a`/`#c9922e`) și tonurile maro/crem au fost retrase — nu le reintroduce.
 
 ### Navigare (bottom nav, 5 taburi)
 
@@ -18,14 +18,14 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 ### Hub-uri secundare
 
-- `today.html` — misiunea zilnică / planificator (include fostul `planner.html`, acum doar un redirect-stub)
+- `today.html` — **Planul TOPIK** (nivel, data examenului, ritm zilnic, card de streak; include fostul `planner.html`, acum redirect-stub). Legat din Progres. **Misiunea zilnică există doar pe `index.html`** (un singur bonus/zi: `RK_DAILY_MISSION_AWARDED`).
 - `explore.html` — index complet al tuturor funcțiilor (catch-all, util când o pagină nouă nu e încă în niciun meniu)
 - `onboarding.html` — flow de prim-contact (Student/Adult, focus, timp disponibil), cu buton „Sari peste"
 - `review.html`, `mistakes.html` — recapitulare greșeli/SRS
 
 ### Pagini de conținut/exerciții (reprezentativ, nu exhaustiv)
 
-`exercises.html` (7 tipuri, vezi mai jos) · `lessons.html` / `lesson-neural.html` · `glossary.html` · `flashcards.html` · `builder.html` · `hangul.html` · `hanja-book.html` · `caiet.html` · `stories.html` · `conversation.html` · `composition.html` · `exam.html` · `word-context.html` / `word-map.html` · `phrases.html` · `journal.html` · `listening.html` · `writing.html` · `sentence-formation.html` · `slot-machine.html`
+`exercises.html` (7 tipuri, vezi mai jos) · `lessons.html` / `lesson-neural.html` · `glossary.html` · `flashcards.html` · `builder.html` · `hangul.html` · `hanja-book.html` · `caiet.html` · `stories.html` · `conversation.html` · `composition.html` · `exam.html` · `word-context.html` / `word-map.html` · `phrases.html` · `basics.html` (Propoziții de bază — ghid de conversație în 12 capitole proprii (titluri și ordine diferite de manualul folosit ca sursă), grupele de unități = `group`, secțiunile = `units`; date în `data/basic-sentences.json`, bife în `RK_BASICS_KNOWN` după textul `ko`; romanizarea propozițiilor noi se generează cu `tools/romanize_ko.py`) · `journal.html` · `listening.html` · `writing.html` · `sentence-formation.html` · `slot-machine.html`
 
 ### Jocuri (hub Play)
 
@@ -37,7 +37,19 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 ### Date (`data/`)
 
-`exercises.json` (7 tipuri × 30 ex.), `lessons.json`, `vocab-korean.json`, `phrases.json`, `stories.json`, `hanja.json`, `reading-texts.json`, `listening.json`, `numbers.json`, `honorifics.json`, `journal-prompts.json`, `composition-prompts.json`, `context-words.json`, `word-clusters.json`, `builder-vocab.json`, `extra-generated-sentences.json`.
+`exercises.json` (7 tipuri × 30 ex.), `lessons.json`, `vocab-korean.json`, `phrases.json`, `stories.json`, `hanja.json`, `reading-texts.json`, `listening.json`, `numbers.json`, `honorifics.json`, `journal-prompts.json`, `composition-prompts.json`, `context-words.json`, `word-clusters.json`, `builder-vocab.json`, `extra-generated-sentences.json`, `basic-sentences.json`.
+
+### Hub-uri: structură
+
+- `index.html`: card „Azi” (inel de progres + un singur buton), „Drumul de azi” (pași), quiz rapid inline (contează la sarcina zilnică `vocab`), expresia zilei.
+- **Nivel TOPIK progresiv** (`js/core/level-progress.js`, cheia `RK_TOPIK_PROGRESS`, separată de selectorul `RK_LEVEL` din exerciții): lecția zilnică și exercițiile din „Drumul de azi” sunt de nivelul curent; se trece la nivelul următor doar când ≥80% din lecțiile nivelului sunt gata și ≥70% din exercițiile lui au fost rezolvate corect (`RK_EX_SRS` reps ≥ 1 sau `RK_LEARNED_EX`). Nivelul nu scade singur, dar se poate alege manual din butonul „Schimbă nivelul” (pe `index.html` și `today.html`, foaia comună `js/core/level-picker.js`) (`RKLevelProgress.chooseLevel`; un nivel deja stăpânit rămâne fixat prin `RK_TOPIK_PINNED` până la „Automat”, `resumeAuto`). Cardul de nivel e pe `index.html`, detaliile în `today.html`. `RK_TOPIK_GOAL` rămâne doar ținta examenului.
+- `play.html` / `learn.html`: câteva carduri mari + restul ca chip-uri „Mai multe”. Nu adăuga carduri mari noi — pune paginile noi ca chip.
+- `tools/`: scripturi Python de generare a exercițiilor (nu fac parte din aplicație).
+- **Lecțiile** se deschid în `lesson-neural.html` (stilul interactiv), în două moduri:
+  - `?lesson=T1-03` / `?topik=<nivel>` / `?topik` — **Gramatică TOPIK**: citește `data/lessons.json`, o convertește prin `fromLessonsJson()` (romanizare automată, plăcuțe gramaticale din `structure`), iar „Gata” scrie în `RK_LESSON_DONE` + `RK_LESSON_TODAY` (progresul principal). Butonul „Exersează” → `exercises.html?lesson=ID`.
+  - fără parametri — **Fraze utile**: cele 100 de lecții-tipar scrise în `LESSONS` din pagină, progres separat în `RK_DONE_NEURAL`.
+  - `lessons.html` rămâne ca „Harta lecțiilor” (vedere de ansamblu + quiz), cu buton spre modul interactiv.
+- `word-context.html` = **Harta Cuvintelor**, cu 2 taburi: căutare cuvânt + Constelații (`?view=stars`). `word-map.html` e doar redirect.
 
 ### Fără build tools — reguli de bază
 

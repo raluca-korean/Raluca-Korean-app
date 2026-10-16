@@ -181,7 +181,7 @@ function getCatColor(w) {
     const k = LABEL_KEY[c];
     if (k && CAT_COLORS[k]) return CAT_COLORS[k];
   }
-  return "#1c4a3a";
+  return "#6C5CE7";
 }
 
 function _iconsHTML(ko) {
@@ -542,7 +542,7 @@ function _renderPanel(word) {
     `<div class="gls-panel-tr">${sanitizeHTML(getMeaning(word))}</div>` +
 
     `<div class="gls-panel-cats">${cats.map(c => {
-      const k = LABEL_KEY[c]; const cc = (k && CAT_COLORS[k]) || "#1c4a3a";
+      const k = LABEL_KEY[c]; const cc = (k && CAT_COLORS[k]) || "#6C5CE7";
       return `<span class="gls-panel-cat" style="background:${cc}1a;color:${cc}">${sanitizeHTML(c)}</span>`;
     }).join("")}</div>` +
 
@@ -641,7 +641,7 @@ function buildCatDots() {
   const allClass = "gls-dot" + (!filterCat ? " on" : "");
   glsCatDots.innerHTML =
     `<button class="${allClass}" title="${t("allCats")}" onclick="setCatFilter('')"` +
-      ` style="background:linear-gradient(135deg,#1c4a3a,#c9922e)"></button>` +
+      ` style="background:linear-gradient(135deg,#6C5CE7,#E96A9A)"></button>` +
     Object.keys(CAT_LABELS).map(k => {
       const lbl   = CAT_LABELS[k][currentLang];
       const color = CAT_COLORS[k];

@@ -72,11 +72,11 @@
       document.head.appendChild(style);
     }
     var backdrop = document.createElement('div');
-    backdrop.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(10,6,4,.7);' +
+    backdrop.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(10,12,24,.7);' +
       'display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;cursor:pointer';
     var card = document.createElement('div');
-    card.style.cssText = 'background:linear-gradient(145deg,#ff9600,#c84b2f);border-radius:24px;' +
-      'padding:36px 44px;text-align:center;color:#fff;box-shadow:0 20px 60px rgba(200,75,47,.5);' +
+    card.style.cssText = 'background:linear-gradient(145deg,#ff9600,#6C5CE7);border-radius:24px;' +
+      'padding:36px 44px;text-align:center;color:#fff;box-shadow:0 20px 60px rgba(108,92,231,.5);' +
       'animation:rkStreakPop .5s cubic-bezier(.34,1.56,.64,1) both;max-width:90vw';
     var rewardLine = (isRo ? 'Ai câștigat' : 'You earned') + ' +' + xpGained + ' XP · 🪙+' + coinsGained;
     if (freezeGained) rewardLine += ' · 🧊+1';
