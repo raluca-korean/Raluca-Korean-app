@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raluca Korean — Test sunet</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#6C5CE7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./theme-anime.css">
+<style>
+.st-btns{display:grid;gap:10px;margin:6px 0 4px}
+.st-btn{font:inherit;font-weight:900;font-size:16px;padding:16px;border-radius:14px;border:0;color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,#6C5CE7,#E96A9A);box-shadow:0 6px 18px rgba(108,92,231,.28);text-align:left}
+.st-btn small{display:block;font-weight:600;font-size:12px;opacity:.85;margin-top:3px}
+.st-log{font:13px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-word;background:var(--rk-bg-flat);
+  border:1.5px solid var(--rk-stroke);border-radius:12px;padding:12px;min-height:60px;color:var(--rk-text-ui)}
+.st-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--rk-stroke);font-size:14px}
+.st-row b{color:var(--rk-heading)}
+.ok{color:#22c55e}.bad{color:#ef4444}.warn{color:#f59e0b}
+.st-tips li{margin:6px 0}
+</style>
+</head>
+<body class="theme-anime">
+<div class="app">
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <h1 id="pageTitle">🔊 Test sunet</h1>
+      <div class="sub" id="pageSubtitle">Verifică de ce nu se aude pronunția</div>
+    </div>
+    <div id="pageControls"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="st-btns">
+    <button class="st-btn" id="t1" type="button"><span id="t1l">1 · Voce coreeană implicită</span><small id="t1s">Direct prin browser, fără alegere de voce</small></button>
+    <button class="st-btn" id="t2" type="button"><span id="t2l">2 · Ca în aplicație</span><small id="t2s">Prin motorul de sunet al aplicației</small></button>
+    <button class="st-btn" id="t3" type="button"><span id="t3l">3 · Voce română / engleză</span><small id="t3s">Arată dacă problema e doar vocea coreeană</small></button>
+  </div>
+</div>
+
+<div class="card">
+  <h2 id="stateH" style="margin-top:0">Stare</h2>
+  <div id="state"></div>
+</div>
+
+<div class="card">
+  <h2 id="logH" style="margin-top:0">Jurnal</h2>
+  <div class="st-log" id="log"></div>
+</div>
+
+<div class="card">
+  <h2 id="tipsH" style="margin-top:0">Dacă nu se aude nimic</h2>
+  <ul class="st-tips" id="tips"></ul>
+</div>
+
+</div><!-- /app -->
+
+<script src="./js/core/storage.js"></script>
+<script src="./js/core/lang-picker.js"></script>
+<script src="./js/core/audio.js"></script>
+<script>
+(function(){
+  const T = {
+    ro: {
+      title:"🔊 Test sunet", sub:"Verifică de ce nu se aude pronunția",
+      t1:"1 · Voce coreeană implicită", t1s:"Direct prin browser, fără alegere de voce",
+      t2:"2 · Ca în aplicație", t2s:"Prin motorul de sunet al aplicației",
+      t3:"3 · Voce română / engleză", t3s:"Arată dacă problema e doar vocea coreeană",
+      stateH:"Stare", logH:"Jurnal", tipsH:"Dacă nu se aude nimic",
+      api:"Sinteză vocală în browser", voices:"Voci instalate", ko:"Voci coreene", dev:"Dispozitiv",
+      yes:"da", no:"nu", none:"niciuna",
+      started:"a pornit", ended:"s-a terminat", error:"eroare", nostart:"terminat fără să pornească (nu s-a auzit)",
+      timeout:"nicio reacție după 4 s — browserul a ignorat cererea",
+      tips:[
+        "Modul silențios: deschide Control Center și oprește clopoțelul tăiat (Silent). Pe iPad-urile cu comutator lateral, pune comutatorul pe sonor.",
+        "Volumul: apasă butonul de volum + în timp ce testul vorbește (controlează volumul media, nu soneria).",
+        "Vocea coreeană: Setări → Accesibilitate → Conținut vorbit → Voci → Coreeană → descarcă o voce (ex. Yuna).",
+        "Bluetooth: dacă sunt conectate căști, sunetul merge acolo.",
+        "Închide tab-ul complet și redeschide aplicația — Safari blochează uneori vocea până la redeschidere."
+      ]
+    },
+    en: {
+      title:"🔊 Sound test", sub:"Find out why pronunciation can't be heard",
+      t1:"1 · Default Korean voice", t1s:"Straight through the browser, no voice chosen",
+      t2:"2 · Like the app", t2s:"Through the app's sound engine",
+      t3:"3 · English voice", t3s:"Shows whether only the Korean voice is the problem",
+      stateH:"Status", logH:"Log", tipsH:"If nothing can be heard",
+      api:"Browser speech synthesis", voices:"Installed voices", ko:"Korean voices", dev:"Device",
+      yes:"yes", no:"no", none:"none",
+      started:"started", ended:"ended", error:"error", nostart:"ended without starting (silent)",
+      timeout:"no reaction after 4 s — the browser ignored the request",
+      tips:[
+        "Silent mode: open Control Center and turn off the crossed-out bell (Silent). On iPads with a side switch, set it to ring.",
+        "Volume: press volume + while the test is speaking (it controls media volume, not the ringer).",
+        "Korean voice: Settings → Accessibility → Spoken Content → Voices → Korean → download a voice (e.g. Yuna).",
+        "Bluetooth: if headphones are connected, the sound goes there.",
+        "Close the tab completely and reopen the app — Safari sometimes blocks speech until reopened."
+      ]
+    }
+  };
+  let lang = localStorage.getItem("RK_LANG") === "en" ? "en" : "ro";
+  const $ = id => document.getElementById(id);
+  const logEl = $("log");
+  function log(msg, cls){
+    const t = new Date().toTimeString().slice(0,8);
+    const line = document.createElement("div");
+    if(cls) line.className = cls;
+    line.textContent = t + "  " + msg;
+    logEl.prepend(line);
+  }
+
+  const has = "speechSynthesis" in window;
+  function isIOS(){ return window.AudioEngine ? AudioEngine._isIOS() : false; }
+
+  function renderState(){
+    const L = T[lang];
+    const voices = has ? speechSynthesis.getVoices() : [];
+    const ko = voices.filter(v => (v.lang||"").toLowerCase().replace("_","-").startsWith("ko"));
+    const rows = [
+      [L.api, has ? `<span class="ok">${L.yes}</span>` : `<span class="bad">${L.no}</span>`],
+      [L.voices, String(voices.length)],
+      [L.ko, ko.length ? `<span class="ok">${ko.map(v => v.name + (v.localService ? "" : " ☁︎")).join(", ")}</span>` : `<span class="bad">${L.none}</span>`],
+      [L.dev, (isIOS() ? "iOS / iPadOS · " : "") + (navigator.userAgent.match(/(Version\/[\d.]+|Chrome\/[\d.]+|Firefox\/[\d.]+)/)||[""])[0]]
+    ];
+    $("state").innerHTML = rows.map(r => `<div class="st-row"><span>${r[0]}</span><b>${r[1]}</b></div>`).join("");
+  }
+
+  function watch(u, label){
+    const L = T[lang];
+    let started = false, done = false;
+    u.onstart = () => { started = true; log(label + ": " + L.started, "ok"); };
+    u.onend = () => { done = true; log(label + ": " + (started ? L.ended : L.nostart), started ? "ok" : "bad"); };
+    u.onerror = e => { done = true; log(label + ": " + L.error + " — " + (e.error || "?"), "bad"); };
+    setTimeout(() => { if(!started && !done) log(label + ": " + L.timeout, "warn"); }, 4000);
+  }
+
+  function raw(text, code, label){
+    if(!has){ log(T[lang].api + ": " + T[lang].no, "bad"); return; }
+    try { if(speechSynthesis.paused) speechSynthesis.resume(); } catch(e){}
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = code;
+    watch(u, label);
+    speechSynthesis.speak(u);   // synchronous, inside the tap
+  }
+
+  $("t1").addEventListener("click", () => raw("안녕하세요. 한국어 소리 테스트입니다.", "ko-KR", "Test 1"));
+  $("t3").addEventListener("click", () => lang === "en"
+    ? raw("Hello. This is a sound test.", "en-US", "Test 3")
+    : raw("Bună ziua. Acesta este un test de sunet.", "ro-RO", "Test 3"));
+  $("t2").addEventListener("click", () => {
+    if(!window.AudioEngine){ log("AudioEngine lipsește / missing", "bad"); return; }
+    AudioEngine.speak("만나서 반가워요.", {
+      onend: () => log("Test 2: " + (AudioEngine.lastStatus || "end"), AudioEngine.lastStatus === "end" ? "ok" : "bad"),
+      onerror: e => log("Test 2: " + T[lang].error + " — " + (e.error || "?"), "bad")
+    });
+    log("Test 2 → " + (AudioEngine._hasActivation() ? "speak()" : "pending"));
+    setTimeout(() => { if(!AudioEngine.lastStatus) log("Test 2: " + T[lang].timeout, "warn"); }, 4000);
+  });
+
+  function setLanguage(l){
+    lang = l === "en" ? "en" : "ro";
+    const L = T[lang];
+    $("pageTitle").textContent = L.title; $("pageSubtitle").textContent = L.sub;
+    $("t1l").textContent = L.t1; $("t1s").textContent = L.t1s;
+    $("t2l").textContent = L.t2; $("t2s").textContent = L.t2s;
+    $("t3l").textContent = L.t3; $("t3s").textContent = L.t3s;
+    $("stateH").textContent = L.stateH; $("logH").textContent = L.logH; $("tipsH").textContent = L.tipsH;
+    $("tips").innerHTML = L.tips.map(t => `<li>${t}</li>`).join("");
+    document.documentElement.lang = lang;
+    renderState();
+  }
+
+  if(has && "onvoiceschanged" in speechSynthesis) speechSynthesis.addEventListener("voiceschanged", renderState);
+  setTimeout(renderState, 800);
+  if(window.RKLang) RKLang.init(setLanguage); else setLanguage(lang);
+  setLanguage(lang);
+})();
+</script>
+<script src="./js/core/dark-mode.js"></script>
+<script src="./js/core/register-sw.js"></script>
+</body>
+</html>

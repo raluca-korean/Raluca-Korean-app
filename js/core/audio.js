@@ -12,14 +12,29 @@ window.AudioEngine = {
                       // (see speak() below — this is what the 30ms cancel-
                       // then-speak delay used to break on rapid repeat taps)
 
+  // iPhone/iPad — iPadOS Safari reports itself as "Macintosh", so touch support
+  // tells the two apart.
+  _isIOS(){
+    const ua = navigator.userAgent || "";
+    return /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  },
+
+  // Apple's novelty voices (Eddy, Flo, Grandma...) are listed for Korean too, and
+  // on iOS they can be listed without being downloaded — assigning one gives silence.
+  _NOVELTY: /\b(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox)\b/i,
+
   _pickKoreanVoice(){
+    // iOS: the most reliable path is lang="ko-KR" with no explicit voice — the OS
+    // then uses the Korean voice chosen in Settings → Accessibility → Spoken
+    // Content. An explicitly assigned voice object can play silently there.
+    if(this._isIOS()) return null;
     const voices = speechSynthesis.getVoices();
-    const ko = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("ko"));
+    const ko = voices.filter(v => v.lang && v.lang.toLowerCase().replace("_","-").startsWith("ko") && !this._NOVELTY.test(v.name || ""));
     if(!ko.length) return null;
     // Prefer whichever installed voice is the higher-quality one — plain
     // lang-match alone often grabs a robotic default over a better voice
-    // the OS also offers (iOS "Enhanced/Premium" Siri voices, Chrome's
-    // network-backed "Google" voice, Edge's "Online (Natural)" voices).
+    // the OS also offers (Chrome's network-backed "Google" voice, Edge's
+    // "Online (Natural)" voices).
     const score = v => {
       const n = (v.name || "").toLowerCase();
       let s = 0;
@@ -32,6 +47,9 @@ window.AudioEngine = {
     return ko.slice().sort((a, b) => score(b) - score(a))[0];
   },
 
+  // Last utterance outcome, for the sound test page (sound-test.html).
+  lastStatus: null,
+
   // Browsers (Chrome, Safari/iOS) silently drop speechSynthesis.speak() until the
   // user has touched the page — and a link click on the previous page doesn't
   // count. So an auto-played first prompt (e.g. exercises.html question 1) would
@@ -40,8 +58,11 @@ window.AudioEngine = {
   _pending: null,
   _gateReady: false,
   _hasActivation(){
+    if(this._gateReady) return true;
     const ua = navigator.userActivation;
-    return ua ? ua.hasBeenActive : this._gateReady;
+    // isActive = a tap is happening right now; hasBeenActive alone is not trusted
+    // until the gate has actually run once (iOS needs a speak() inside a tap).
+    return ua ? (ua.isActive || (ua.hasBeenActive && !this._gateInit)) : false;
   },
   _initGate(){
     if(this._gateInit) return;
@@ -121,7 +142,22 @@ window.AudioEngine = {
       if(voice) u.voice = voice;
       u.rate = rate;
       if(options.onboundary) u.onboundary = options.onboundary;
-      if(options.onend) u.onend = options.onend;
+      u.onstart = ()=>{ this.lastStatus = "start"; };
+      u.onend = (e)=>{ this.lastStatus = this.lastStatus === "start" ? "end" : "end-without-start"; if(options.onend) options.onend(e); };
+      u.onerror = (e)=>{
+        const err = (e && e.error) || "error";
+        this.lastStatus = "error:" + err;
+        // The browser refused speech outside a tap: wait for the next tap and say
+        // it then (instead of staying silent for good).
+        if(err === "not-allowed" && myToken === this._token){
+          this._gateReady = false;
+          this._gateInit = false;
+          this._pending = { text: clean, options };
+          this._initGate();
+          this._showHint();
+        }
+        if(options.onerror) options.onerror(e);
+      };
       this._utterance = u;
       speechSynthesis.speak(u);
     };
