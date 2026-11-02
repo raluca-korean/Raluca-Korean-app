@@ -4272,7 +4272,8 @@ function applyLang(){
 }
 
 // ── SPEECH ────────────────────────────────────────────────────
-function speak(txt){speechSynthesis.cancel();setTimeout(function(){const u=new SpeechSynthesisUtterance(txt);u.lang='ko-KR';u.rate=0.9;speechSynthesis.speak(u);},50);}
+// Shared engine (js/core/audio.js): speaks inside the tap, which iOS Safari requires.
+function speak(txt){if(window.AudioEngine){AudioEngine.speak(txt,{rate:0.9});return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='ko-KR';u.rate=0.9;speechSynthesis.speak(u);}
 function speakPattern(){const btn=document.getElementById('speakBtn');btn.classList.add('speaking');speak(LESSONS[curLesson].ko.replace(/[\[\]]/g,''));setTimeout(()=>btn.classList.remove('speaking'),2500);}
 function toggleOrb(){document.getElementById('pronOrb').classList.toggle('show');}
 function markDone(idx){

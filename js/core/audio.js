@@ -48,6 +48,14 @@ window.AudioEngine = {
     this._gateInit = true;
     const onGesture = ()=>{
       this._gateReady = true;
+      // iOS Safari only lets speech start inside a touch/click. Speaking a silent
+      // utterance right here "unlocks" the engine, so later speak() calls made a
+      // few ms after a tap (or from a timer) are allowed too.
+      try {
+        const u = new SpeechSynthesisUtterance(" ");
+        u.volume = 0;
+        speechSynthesis.speak(u);
+      } catch(e) {}
       // Let the tap's own click handlers run first: if they speak, _pending is cleared.
       setTimeout(()=>{
         const p = this._pending;
@@ -90,16 +98,10 @@ window.AudioEngine = {
       return;
     }
 
-    // First call after load: Chrome fills the voice list asynchronously, so wait
-    // briefly for it instead of speaking with the default (often non-Korean) voice.
-    if(!speechSynthesis.getVoices().length && !options._waited && !this._voiceWaitDone){
-      this._voiceWaitDone = true; // only once per page — some devices have no voices at all
-      let done = false;
-      const go = ()=>{ if(done) return; done = true; speechSynthesis.removeEventListener && speechSynthesis.removeEventListener("voiceschanged", go); this.speak(clean, Object.assign({}, options, { _waited: true })); };
-      if(speechSynthesis.addEventListener) speechSynthesis.addEventListener("voiceschanged", go);
-      setTimeout(go, 700);
-      return;
-    }
+    // Chrome fills the voice list asynchronously; asking for it warms it up. We
+    // don't wait for it: lang="ko-KR" still picks a Korean voice, and waiting would
+    // move the speak() call outside the user's tap, which iOS Safari blocks.
+    speechSynthesis.getVoices();
 
     const slow = options.slow ?? this.slow;
     const repeat = options.repeat ?? this.repeat;
@@ -118,6 +120,25 @@ window.AudioEngine = {
       speechSynthesis.speak(u);
     };
 
+    const startRepeats = ()=>{
+      let i = 1;
+      const interval = setInterval(()=>{
+        if(myToken !== this._token || i >= repeat){
+          clearInterval(interval);
+          return;
+        }
+        speakOnce();
+        i++;
+      }, 900);
+    };
+
+    // Nothing playing: speak right now, still inside the tap (needed on iOS).
+    if(!speechSynthesis.speaking && !speechSynthesis.pending){
+      speakOnce();
+      startRepeats();
+      return;
+    }
+
     speechSynthesis.cancel();
 
     // iOS Safari can silently drop a speak() call made in the same tick as
@@ -133,16 +154,12 @@ window.AudioEngine = {
     setTimeout(() => {
       if(myToken !== this._token) return;
       speakOnce();
-
-      let i = 1;
-      const interval = setInterval(()=>{
-        if(myToken !== this._token || i >= repeat){
-          clearInterval(interval);
-          return;
-        }
-        speakOnce();
-        i++;
-      }, 900);
+      startRepeats();
     }, 30);
   }
 };
+
+// Listen for the first tap from page load on: if the gate were armed lazily inside
+// the first speak() call, that same tap would not count yet on browsers without
+// navigator.userActivation (older iOS Safari).
+if ("speechSynthesis" in window) window.AudioEngine._initGate();
