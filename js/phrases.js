@@ -85,6 +85,7 @@ function buildPhraseCard(item) {
       '<div class="ph-ko">' + item.ko + '</div>',
       '<div class="ph-rom">' + item.rom + '</div>',
       '<div class="ph-tr">' + item[LANG] + '</div>',
+      (item.note ? '<div class="ph-note">' + (item.note[LANG] || item.note.ro) + '</div>' : ''),
     '</div>'
   ].join('');
   div.querySelector('.ph-play').onclick = function() { playTTS(item.ko); };
