@@ -1465,7 +1465,10 @@ let soundOn = true;
 
 function speakKorean(text){
   if(!soundOn || !text) return;
-  AudioEngine.speak(text);
+  // Blank markers (【 ___ 】, 【1】) are display-only — TTS would read them aloud
+  // as symbols/numbers, so they become a short pause instead.
+  const spoken = String(text).replace(/【[^】]*】/g, " , ").replace(/_{2,}/g, " , ").replace(/\s+/g, " ").trim();
+  if(spoken) AudioEngine.speak(spoken);
 }
 
 function getLearnedEx(){

@@ -1,4 +1,4 @@
-const CACHE = 'rk-v180';
+const CACHE = 'rk-v181';
 
 const STATIC = [
   './',
@@ -127,7 +127,9 @@ self.addEventListener('install', event => {
     caches.open(CACHE).then(cache =>
       Promise.allSettled(
         STATIC.map(url =>
-          cache.add(url).catch(() => {}) // non-fatal per-file
+          // cache:'reload' bypasses the browser HTTP cache (GitHub Pages sends
+          // max-age=600), so an update never re-caches the previous JS.
+          cache.add(new Request(url, { cache: 'reload' })).catch(() => {}) // non-fatal per-file
         )
       )
     ).then(() => self.skipWaiting())

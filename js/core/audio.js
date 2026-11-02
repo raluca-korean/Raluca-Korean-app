@@ -48,21 +48,24 @@ window.AudioEngine = {
     this._gateInit = true;
     const onGesture = ()=>{
       this._gateReady = true;
-      // iOS Safari only lets speech start inside a touch/click. Speaking a silent
-      // utterance right here "unlocks" the engine, so later speak() calls made a
-      // few ms after a tap (or from a timer) are allowed too.
+      this._hideHint();
+      // iOS Safari only lets speech start inside a touch/click, and only the first
+      // speak() made inside the gesture unlocks the engine. So a waiting prompt is
+      // spoken right here, synchronously; with nothing waiting, a silent utterance
+      // does the unlocking. If the tap's own click handler then speaks, its speak()
+      // simply cancels and replaces this one.
+      const p = this._pending;
+      this._pending = null;
       try {
-        const u = new SpeechSynthesisUtterance(" ");
-        u.volume = 0;
-        speechSynthesis.speak(u);
+        if(speechSynthesis.paused) speechSynthesis.resume();
+        if(p){
+          this.speak(p.text, p.options);
+        } else {
+          const u = new SpeechSynthesisUtterance(" ");
+          u.volume = 0;
+          speechSynthesis.speak(u);
+        }
       } catch(e) {}
-      // Let the tap's own click handlers run first: if they speak, _pending is cleared.
-      setTimeout(()=>{
-        const p = this._pending;
-        this._pending = null;
-        this._hideHint();
-        if(p) this.speak(p.text, p.options);
-      }, 0);
       ["click","keydown","touchend"].forEach(ev => window.removeEventListener(ev, onGesture, true));
     };
     ["click","keydown","touchend"].forEach(ev => window.addEventListener(ev, onGesture, true));
@@ -102,6 +105,9 @@ window.AudioEngine = {
     // don't wait for it: lang="ko-KR" still picks a Korean voice, and waiting would
     // move the speak() call outside the user's tap, which iOS Safari blocks.
     speechSynthesis.getVoices();
+    // iOS Safari leaves the engine paused after the tab was in the background or
+    // the screen locked — every later speak() then queues silently, forever.
+    if(speechSynthesis.paused) speechSynthesis.resume();
 
     const slow = options.slow ?? this.slow;
     const repeat = options.repeat ?? this.repeat;
