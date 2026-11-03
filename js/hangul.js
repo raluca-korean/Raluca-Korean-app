@@ -578,8 +578,8 @@ function openVortex(item) {
 
   speakKo(item.speak);
 
-  buildVortexNodes(item);
   buildEchoPanel(item);
+  buildVortexNodes(item);
   activateEcho(item);
   animateStrokes(item.char, 'mrsVStroke');
 }
@@ -629,7 +629,9 @@ function buildVortexNodes(item) {
   if (item.type === 'cons' || item.type === 'tensed') {
     const brow = BATCHIM_ROWS[lang].find(r => r.chars.includes(item.char));
     if (brow) {
-      const exHtml = brow.exs.map(e =>
+      // Narrow phone: a shorter list so the box fits without covering the letter.
+      const exList = W < 500 ? brow.exs.slice(0, 3) : brow.exs;
+      const exHtml = exList.map(e =>
         `<span style="opacity:.6">${e.ch}:</span> <strong>${e.word}</strong> <span style="opacity:.7">(${e.rom})</span> ${e.gloss}`
       ).join('<br>');
       defs.push({ angle: 290, delay: 0.15, title: t.nodeBatchim, body: `${brow.chars} → <strong>${brow.sound}</strong><br><span class="mrs-v-node-small">${exHtml}</span>` });
@@ -678,6 +680,22 @@ function buildVortexNodes(item) {
   // up/down instead of crowding the letter; on a wide tablet they spread sideways.
   const rx = W * 0.32, ry = H * 0.30;
 
+  // Areas the boxes must not cover: the letter column and the bottom bar.
+  const coreEl = document.getElementById('mrsVCore');
+  const cw = coreEl.offsetWidth, ch = coreEl.offsetHeight;
+  const core = { left: cx - cw / 2, right: cx + cw / 2, top: coreEl.offsetTop, bottom: coreEl.offsetTop + ch };
+  const echoEl = document.getElementById('mrsVEcho');
+  const btnsEl = document.querySelector('.mrs-v-btns');
+  const bottomLimit = Math.min(
+    echoEl && echoEl.style.display !== 'none' && echoEl.offsetHeight ? echoEl.offsetTop : H,
+    btnsEl ? btnsEl.offsetTop : H);
+
+  // Boxes slide around anything already here — starting with the ✕ close button.
+  const placed = [];
+  const closeEl = document.getElementById('mrsVClose');
+  if (closeEl) { const r = closeEl.getBoundingClientRect(); placed.push({ left: r.left, right: r.right, top: r.top, bottom: r.bottom }); }
+  placed.push(core);
+
   // Tall phone screen: the left-hand box (family) would sit beside the letter and
   // cover it, so drop it to the lower left, next to the stroke diagram instead.
   const tall = H > W * 1.25;
@@ -694,7 +712,6 @@ function buildVortexNodes(item) {
     node.className = 'mrs-v-node';
     node.style.cssText = `
       left:${nx}px; top:${ny}px;
-      transform: translate(-50%,-50%);
       --ndelay:${d.delay}s; --nox:${ox}; --noy:${oy};
     `;
     node.innerHTML = `
@@ -710,11 +727,27 @@ function buildVortexNodes(item) {
     // Bigger text means bigger boxes: nudge any node that would spill off-screen back in.
     // offsetWidth/Height ignore the scale() entry animation, unlike getBoundingClientRect.
     const w = node.offsetWidth, h = node.offsetHeight, m = 12;
-    const r = { left: nx - w / 2, right: nx + w / 2, top: ny - h / 2, bottom: ny + h / 2 };
-    let dx = 0, dy = 0;
-    if (r.left < m) dx = m - r.left; else if (r.right > W - m) dx = (W - m) - r.right;
-    if (r.top < m) dy = m - r.top; else if (r.bottom > H - m) dy = (H - m) - r.bottom;
-    if (dx || dy) { node.style.left = (nx + dx) + 'px'; node.style.top = (ny + dy) + 'px'; }
+    let x = nx, y = ny;
+    // Beside the letter column, never on top of it.
+    if (x + w / 2 > core.left - m && x - w / 2 < core.right + m && y + h / 2 > core.top && y - h / 2 < core.bottom) {
+      x = x < cx ? core.left - m - w / 2 : core.right + m + w / 2;
+    }
+    // Inside the screen, above the resonance bar / Write button.
+    const clampX = v => Math.min(Math.max(v, m + w / 2), W - m - w / 2);
+    const clampY = v => Math.min(Math.max(v, m + h / 2), bottomLimit - m - h / 2);
+    x = clampX(x); y = clampY(y);
+    // Not on top of a box placed before it: slide away vertically, or outward if there's no room.
+    for (let k = 0; k < 12; k++) {
+      const hit = placed.find(p => x - w / 2 < p.right + m && x + w / 2 > p.left - m && y - h / 2 < p.bottom + m && y + h / 2 > p.top - m);
+      if (!hit) break;
+      const ny2 = clampY(y >= (hit.top + hit.bottom) / 2 ? hit.bottom + m + h / 2 : hit.top - m - h / 2);
+      if (ny2 !== y && !(ny2 - h / 2 < hit.bottom + m && ny2 + h / 2 > hit.top - m)) { y = ny2; continue; }
+      x = clampX(x >= cx ? hit.right + m + w / 2 : hit.left - m - w / 2);
+    }
+    placed.push({ left: x - w / 2, right: x + w / 2, top: y - h / 2, bottom: y + h / 2 });
+    // left/top are the box's top-left corner: the entry animation sets its own
+    // transform, so a translate(-50%,-50%) centring would be overridden.
+    node.style.left = (x - w / 2) + 'px'; node.style.top = (y - h / 2) + 'px';
   });
 }
 
@@ -978,9 +1011,8 @@ function init() {
     if (!currentItem) return;
     window.location.href = `./writing.html?char=${encodeURIComponent(currentItem.char)}`;
   };
-  el('mrsVortex').addEventListener('click', e => {
-    if (e.target === el('mrsVortex')) closeVortex();
-  });
+  // No close-on-background-tap: with the larger layout it was too easy to hit by
+  // accident and kicked you back to the alphabet. ✕ and Escape close the letter view.
 
   // Quiz exit
   el('mrsQExit').onclick = () => {
@@ -1045,7 +1077,11 @@ function init() {
 
   applyLang();
 
-  window.addEventListener('resize', () => { buildCosmos(); initBg(); });
+  window.addEventListener('resize', () => {
+    buildCosmos(); initBg();
+    // Safari's toolbar showing/hiding resizes the page: re-place the boxes around the letter.
+    if (currentItem) buildVortexNodes(currentItem);
+  });
 }
 
 // Start when DOM is ready
