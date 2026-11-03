@@ -12,6 +12,7 @@ var FILTER = (function () {
   return (lvl >= 1 && lvl <= 6) ? lvl : MY_LEVEL;
 })();
 var EVAL_COUNT = 12;   // questions in the general evaluation
+var LEVEL_COUNT = 10;  // questions per level round (picked at random from the level's pool)
 var BEST_KEY = 'RK_LISTEN_BEST';
 var session = null;    // { items, index, correct, byLevel }
 var DATA = [];
@@ -223,7 +224,7 @@ function renderFilter() {
     var btn = document.createElement('button');
     btn.className = 'filter-btn' + (lvl === FILTER ? ' active' : '') + (lvl === 0 ? ' filter-eval' : '');
     var n = DATA.filter(function (x) { return x.topik === lvl; }).length;
-    var done = lvl && best[lvl] != null && best[lvl] >= Math.ceil(n * 0.8);
+    var done = lvl && best[lvl] != null && best[lvl] >= Math.ceil(Math.min(n, LEVEL_COUNT) * 0.8);
     btn.innerHTML = lvl === 0 ? esc(t('evalAll'))
       : 'TOPIK ' + lvl + (done ? ' ✓' : '') + (lvl === MY_LEVEL ? '<span class="filter-mine">' + esc(t('yourLevel')) + '</span>' : '');
     btn.onclick = function () { FILTER = lvl; renderFilter(); startSession(); };
@@ -238,7 +239,7 @@ function startSession() {
     ? [1, 2, 3, 4, 5, 6].reduce(function (acc, L) {
         return acc.concat(shuffle(DATA.filter(function (x) { return x.topik === L; })).slice(0, perLevel));
       }, [])
-    : shuffle(DATA.filter(function (x) { return x.topik === FILTER; }));
+    : shuffle(DATA.filter(function (x) { return x.topik === FILTER; })).slice(0, LEVEL_COUNT);
   session = { level: FILTER, items: items, index: 0, correct: 0, byLevel: {} };
   renderQuestion();
 }
