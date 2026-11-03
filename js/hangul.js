@@ -622,7 +622,7 @@ function buildVortexNodes(item) {
   // Family resonance node (left)
   if (family.length) {
     const famHtml = family.join('&emsp;');
-    defs.push({ angle: 200, delay: 0.10, title: t.nodeFamily, body: `<span style="font-size:20px;font-weight:900;">${famHtml}</span>` });
+    defs.push({ angle: 200, delay: 0.10, title: t.nodeFamily, body: `<span class="mrs-v-node-fam">${famHtml}</span>` });
   }
 
   // Batchim node (bottom-left) — consonants only
@@ -632,7 +632,7 @@ function buildVortexNodes(item) {
       const exHtml = brow.exs.map(e =>
         `<span style="opacity:.6">${e.ch}:</span> <strong>${e.word}</strong> <span style="opacity:.7">(${e.rom})</span> ${e.gloss}`
       ).join('<br>');
-      defs.push({ angle: 290, delay: 0.15, title: t.nodeBatchim, body: `${brow.chars} → <strong>${brow.sound}</strong><br><small style="display:block;margin-top:4px;line-height:1.65">${exHtml}</small>` });
+      defs.push({ angle: 290, delay: 0.15, title: t.nodeBatchim, body: `${brow.chars} → <strong>${brow.sound}</strong><br><span class="mrs-v-node-small">${exHtml}</span>` });
     }
   }
 
@@ -641,14 +641,14 @@ function buildVortexNodes(item) {
     const bright = ['ㅏ','ㅗ','ㅑ','ㅛ','ㅘ','ㅙ'];
     const isB = bright.includes(item.char);
     const harmonyRo = isB
-      ? `<div style="font-size:11px;line-height:1.7;margin-top:5px">
+      ? `<div class="mrs-v-node-harmony">
           <span style="color:#F472B6">☀ Pozitive (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
           → verb + <strong>-아요</strong>: 가다→가요, 오다→와요
           <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
           <span style="opacity:.55">● Negative (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
           → verb + <strong>-어요</strong>: 먹다→먹어요
         </div>`
-      : `<div style="font-size:11px;line-height:1.7;margin-top:5px">
+      : `<div class="mrs-v-node-harmony">
           <span style="color:#818CF8">● Negative (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
           → verb + <strong>-어요</strong>: 먹다→먹어요, 쓰다→써요
           <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
@@ -656,14 +656,14 @@ function buildVortexNodes(item) {
           → verb + <strong>-아요</strong>: 가다→가요
         </div>`;
     const harmonyEn = isB
-      ? `<div style="font-size:11px;line-height:1.7;margin-top:5px">
+      ? `<div class="mrs-v-node-harmony">
           <span style="color:#F472B6">☀ Bright (양성 모음)</span>: ㅏ ㅗ ㅑ ㅛ ㅘ ㅙ<br>
           → verb + <strong>-아요</strong>: 가다→가요, 오다→와요
           <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
           <span style="opacity:.55">● Dark (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
           → verb + <strong>-어요</strong>: 먹다→먹어요
         </div>`
-      : `<div style="font-size:11px;line-height:1.7;margin-top:5px">
+      : `<div class="mrs-v-node-harmony">
           <span style="color:#818CF8">● Dark (음성 모음)</span>: ㅓ ㅜ ㅡ ㅣ ㅔ ㅐ…<br>
           → verb + <strong>-어요</strong>: 먹다→먹어요, 쓰다→써요
           <div style="border-top:1px solid rgba(255,255,255,.12);margin:6px 0"></div>
@@ -674,13 +674,19 @@ function buildVortexNodes(item) {
     defs.push({ angle: 310, delay: 0.15, title: t.nodeHarmony, body: harmony });
   }
 
-  // Calculate orbital radius as fraction of screen
-  const radius = Math.min(W, H) * 0.32;
+  // Elliptical orbit as a fraction of the screen: on a tall phone the boxes spread
+  // up/down instead of crowding the letter; on a wide tablet they spread sideways.
+  const rx = W * 0.32, ry = H * 0.30;
+
+  // Tall phone screen: the left-hand box (family) would sit beside the letter and
+  // cover it, so drop it to the lower left, next to the stroke diagram instead.
+  const tall = H > W * 1.25;
 
   defs.forEach(d => {
-    const rad = d.angle * Math.PI / 180;
-    const nx  = cx + Math.cos(rad) * radius;
-    const ny  = cy + Math.sin(rad) * radius;
+    const angle = (tall && d.angle === 200) ? 140 : d.angle;
+    const rad = angle * Math.PI / 180;
+    const nx  = cx + Math.cos(rad) * rx;
+    const ny  = cy + Math.sin(rad) * ry;
     const ox  = (Math.cos(rad) * 40).toFixed(0) + 'px';
     const oy  = (Math.sin(rad) * 40).toFixed(0) + 'px';
 
@@ -701,6 +707,14 @@ function buildVortexNodes(item) {
       });
     });
     container.appendChild(node);
+    // Bigger text means bigger boxes: nudge any node that would spill off-screen back in.
+    // offsetWidth/Height ignore the scale() entry animation, unlike getBoundingClientRect.
+    const w = node.offsetWidth, h = node.offsetHeight, m = 12;
+    const r = { left: nx - w / 2, right: nx + w / 2, top: ny - h / 2, bottom: ny + h / 2 };
+    let dx = 0, dy = 0;
+    if (r.left < m) dx = m - r.left; else if (r.right > W - m) dx = (W - m) - r.right;
+    if (r.top < m) dy = m - r.top; else if (r.bottom > H - m) dy = (H - m) - r.bottom;
+    if (dx || dy) { node.style.left = (nx + dx) + 'px'; node.style.top = (ny + dy) + 'px'; }
   });
 }
 
