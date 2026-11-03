@@ -69,6 +69,7 @@ window.AudioEngine = {
     this._gateInit = true;
     const onGesture = ()=>{
       this._gateReady = true;
+      this._unmuteIOS();
       this._hideHint();
       // iOS Safari only lets speech start inside a touch/click, and only the first
       // speak() made inside the gesture unlocks the engine. So a waiting prompt is
@@ -90,6 +91,35 @@ window.AudioEngine = {
       ["click","keydown","touchend"].forEach(ev => window.removeEventListener(ev, onGesture, true));
     };
     ["click","keydown","touchend"].forEach(ev => window.addEventListener(ev, onGesture, true));
+  },
+  // iPad/iPhone in silent mode mute web speech on the speaker (headphones still
+  // work), because Safari plays it as "ambient" sound. Media playback — like
+  // Netflix — is not muted. Asking for the "playback" audio session, and keeping
+  // a silent <audio> element playing, moves the page into that media category.
+  _unmuteIOS(){
+    if(this._unmuted) return;
+    this._unmuted = true;
+    try { if(navigator.audioSession) navigator.audioSession.type = "playback"; } catch(e) {}
+    try {
+      // 0.5 s of silence, 8 kHz 8-bit mono WAV, built in memory.
+      const n = 4000, buf = new Uint8Array(44 + n), v = new DataView(buf.buffer);
+      const str = (o, t)=>{ for(let i = 0; i < t.length; i++) buf[o + i] = t.charCodeAt(i); };
+      str(0, "RIFF"); v.setUint32(4, 36 + n, true); str(8, "WAVEfmt ");
+      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+      str(36, "data"); v.setUint32(40, n, true); buf.fill(128, 44);
+      let bin = ""; for(let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+      const a = document.createElement("audio");
+      a.setAttribute("x-webkit-airplay", "deny");
+      a.setAttribute("playsinline", "");
+      a.loop = true;
+      a.src = "data:audio/wav;base64," + btoa(bin);
+      const play = ()=>{ const r = a.play(); if(r && r.catch) r.catch(()=>{}); };
+      play();
+      // Pause in the background so the phone doesn't show a "now playing" item; resume on return.
+      document.addEventListener("visibilitychange", ()=>{ if(document.hidden) a.pause(); else play(); });
+      this._silentAudio = a;
+    } catch(e) {}
   },
   _showHint(){
     if(this._hintEl || !document.body) return;
