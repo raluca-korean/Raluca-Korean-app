@@ -47,27 +47,6 @@ html[data-mode="day"] .sm-nav { background: rgba(240,240,250,.93); border-bottom
 }
 html[data-mode="day"] .sm-nav-sub { color: rgba(108,92,231,.5); -webkit-text-fill-color: rgba(108,92,231,.5); }
 
-/* TENSE BAR */
-.sm-tense-bar {
-  display: flex; gap: 6px; padding: 10px 14px;
-  overflow-x: auto; scrollbar-width: none;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-}
-.sm-tense-bar::-webkit-scrollbar { display: none; }
-html[data-mode="day"] .sm-tense-bar { border-bottom-color: rgba(0,0,0,.06); }
-.tense-btn {
-  flex-shrink: 0; padding: 7px 14px; border-radius: 999px;
-  border: 1.5px solid rgba(255,255,255,.12); background: transparent;
-  color: rgba(255,255,255,.5); font-size: 12px; font-weight: 700;
-  cursor: pointer; white-space: nowrap; transition: all .2s;
-}
-html[data-mode="day"] .tense-btn { color: rgba(0,0,0,.45); border-color: rgba(0,0,0,.14); }
-.tense-btn.active {
-  background: linear-gradient(135deg, #6C5CE7, #E96A9A);
-  border-color: transparent; color: white;
-  box-shadow: 0 3px 12px rgba(108,92,231,.3);
-}
-
 /* STRUCTURE LABEL */
 .sm-structure {
   text-align: center; padding: 8px 14px 2px;
@@ -81,9 +60,10 @@ html[data-mode="day"] .sm-structure { color: rgba(0,0,0,.28); }
 .sm-reels-wrap { padding: 10px 10px 0; overflow-x: auto; scrollbar-width: none; }
 .sm-reels-wrap::-webkit-scrollbar { display: none; }
 .sm-reels {
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: repeat(6, 1fr);
   gap: 6px; min-width: 330px;
 }
+@media (max-width: 560px) { .sm-reels { grid-template-columns: repeat(3, 1fr); min-width: 0; } }
 
 /* SINGLE REEL */
 .sm-reel {
@@ -297,6 +277,13 @@ html[data-mode="day"] .sm-picker-item-ko { color: #20264A; }
 .sm-picker-item-tr { font-size: 8px; opacity: .4; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* RESPONSIVE */
+.sm-picker-list.wide { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.sm-picker-list.wide .sm-picker-item { align-items: flex-start; text-align: left; padding: 9px 11px; height: auto !important; max-height: none !important; }
+.sm-picker-list.wide .sm-picker-item > span { flex-shrink: 0; }
+.sm-picker-list.wide .sm-picker-item-emoji { display: none; }
+.sm-picker-list.wide .sm-picker-item-ko { font-size: 14px; white-space: normal; text-align: left; }
+.sm-picker-list.wide .sm-picker-item-tr { font-size: 11.5px; opacity: .7; white-space: normal; }
+.sm-picker-group { grid-column: 1 / -1; width: 100%; margin: 10px 2px 2px; font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; opacity: .65; }
 @media (max-width: 400px) {
   .sm-chip-ko { font-size: 17px; }
   .sm-spin-btn { padding: 13px 26px; font-size: 14px; }
@@ -327,18 +314,14 @@ html[data-mode="day"] .sm-picker-item-ko { color: #20264A; }
     <div id="pageControls" data-no-home></div>
   </nav>
 
-  <div class="sm-tense-bar" role="tablist">
-    <button class="tense-btn active" data-tense="present" role="tab" aria-selected="true">현재 · Prezent</button>
-    <button class="tense-btn" data-tense="past"    role="tab" aria-selected="false">과거 · Trecut</button>
-    <button class="tense-btn" data-tense="future"  role="tab" aria-selected="false">미래 · Viitor</button>
-  </div>
 
   <div class="sm-structure">
     <b style="color:#f472b6">주어</b> +
     <b style="color:#fbbf24">시간</b> +
     <b style="color:#38bdf8">장소</b> +
     <b style="color:#4ade80">목적어</b> +
-    <b style="color:#a78bfa">동사</b>
+    <b style="color:#a78bfa">동사</b> +
+    <b style="color:#fb923c">어미</b>
   </div>
 
   <div class="sm-reels-wrap">
@@ -459,7 +442,166 @@ const REELS = [
   { id:'location', color:'#38bdf8', label:{ ro:'Loc',      en:'Location' }, items:[] },
   { id:'object',   color:'#4ade80', label:{ ro:'Obiect',   en:'Object'   }, items:[] },
   { id:'verb',     color:'#a78bfa', label:{ ro:'Verb',     en:'Verb'     }, items:[] },
+  { id:'ending',   color:'#fb923c', label:{ ro:'Terminație', en:'Ending' }, items:[] },
 ];
+
+/* ── TERMINAȚII (rola 6) ──────────────────────────────────────
+   Fiecare terminație primește verbul de dicționar (먹다) și întoarce forma
+   finală (먹고 싶어요). Helperii de mai jos lipesc corect -(으)-, batchim-ul
+   ㄴ/ㄹ/ㅂ și tratează rădăcinile în ㄹ (만들다: 만드세요, 만들면, 만든, 만듭니다)
+   și neregulatele (prin Conjugation.euAttach / aeo). */
+const CJ = () => window.Conjugation;
+function stemOf(v) { return CJ().stem(v); }
+function isRStem(st) { const d = CJ().decompose(st.at(-1)); return !!d && d.jong === 8; }
+function hasJong(st) { const d = CJ().decompose(st.at(-1)); return !!d && d.jong !== 0; }
+function fuseJ(w, jong) {
+  const c = w.charCodeAt(w.length - 1);
+  if (c < 44032 || c > 55203 || (c - 44032) % 28 !== 0) return w;
+  return w.slice(0, -1) + String.fromCharCode(c + jong);
+}
+const J_N = 4, J_R = 8, J_B = 17;
+function dropR(v) { return CJ().dropRieul(stemOf(v)); }
+// -(으)X: ㄹ cade doar înaintea lui ㄴ/ㅅ/ㅂ (만드세요, 만드니까), altfel rămâne (만들면).
+function eu(v, ending) {
+  const st = stemOf(v);
+  if (isRStem(st)) return /^[니세시습]/.test(ending) ? CJ().dropRieul(st) + ending : st + ending;
+  return CJ().euAttach(v, ending);
+}
+// -(으) + batchim ㄴ/ㄹ/ㅂ: 간/갈, 먹은/먹을, 만든/만들, 도운/도울, 들은/들을
+function euJ(v, jong, rest) {
+  const st = stemOf(v);
+  const base = isRStem(st) ? CJ().dropRieul(st) : CJ().euAttach(v, '');
+  return fuseJ(base, jong) + (rest || '');
+}
+function aeo(v) { return CJ().aeo(v); }
+function formalB(v, rest) { // -(스)ㅂ니다 / -(스)ㅂ니까
+  const st = stemOf(v);
+  return (hasJong(st) && !isRStem(st)) ? st + '습' + rest : fuseJ(CJ().dropRieul(st), J_B) + rest;
+}
+function nda(v) { // -ㄴ/는다 (vorbire indirectă, verbe de acțiune)
+  const st = stemOf(v);
+  return (hasJong(st) && !isRStem(st)) ? st + '는다' : fuseJ(CJ().dropRieul(st), J_N) + '다';
+}
+function negPre(v, adv) { // 안 / 못 + verb; 공부하다 → 공부 안 해요
+  if (v.length > 2 && v.endsWith('하다')) return v.slice(0, -2) + ' ' + adv + ' 해요';
+  return adv + ' ' + CJ().present(v);
+}
+const pastStem = v => CJ().past(v).replace(/어요$/, '');   // 먹었어요 → 먹었
+
+const ENDING_GROUPS = {
+  basic: { emoji:'🧱', ro:'Terminații de bază',          en:'Basic endings' },
+  ask:   { emoji:'❓', ro:'Întrebări și verificări',      en:'Questions and checking' },
+  want:  { emoji:'💪', ro:'Dorință, abilitate, obligație', en:'Want, ability, necessity' },
+  neg:   { emoji:'⛔', ro:'Negație',                      en:'Negation' },
+  plan:  { emoji:'🎯', ro:'Planuri și intenții',          en:'Plans and intentions' },
+  exp:   { emoji:'🧪', ro:'Încercare și experiență',      en:'Trying and experience' },
+  guess: { emoji:'💭', ro:'Presupunere și posibilitate',  en:'Guessing and possibility' },
+  said:  { emoji:'🗣️', ro:'Vorbire indirectă',            en:'Reported speech' },
+};
+const E = (g, ko, ro, en, f, tense) => ({ g, ko, ro, en, f, tense, emoji: ENDING_GROUPS[g].emoji });
+const ENDINGS = [
+  E('basic','-아요/어요',      'prezent politicos',      'polite present',          v => CJ().present(v), 'present'),
+  E('basic','-았/었어요',      'trecut',                 'past',                    v => CJ().past(v), 'past'),
+  E('basic','-(으)ㄹ 거예요',  'viitor',                 'future',                  v => CJ().future(v), 'future'),
+  E('basic','-(스)ㅂ니다',     'prezent formal',         'formal statement',        v => formalB(v, '니다'), 'present'),
+  E('basic','-아/어',          'prezent familiar (반말)', 'casual present',          v => aeo(v), 'present'),
+  E('basic','-고 있어요',      'face chiar acum',        'is doing',                v => stemOf(v) + '고 있어요'),
+  E('basic','-겠어요',         'voi / probabil',         'will / probably',         v => stemOf(v) + '겠어요'),
+  E('basic','-네요',           'aha! (constatare)',      'oh! (realization)',       v => dropR(v) + '네요'),
+  E('basic','-는군요',         'aha, deci…',             'I see!',                  v => dropR(v) + '는군요'),
+  E('basic','-잖아요',         'doar știi că',           'you know',                v => stemOf(v) + '잖아요'),
+  E('basic','-거든요',         'păi, să știi',           'the thing is',            v => stemOf(v) + '거든요'),
+  E('basic','-는데요',         'păi… (context)',         'well… (context)',         v => dropR(v) + '는데요'),
+  E('basic','-더라고요',       'am observat că',         'I noticed that',          v => stemOf(v) + '더라고요'),
+  E('ask',  '-(스)ㅂ니까?',    'întrebare formală',      'formal question',         v => formalB(v, '니까?')),
+  E('ask',  '-죠?',            'nu-i așa?',              'right?',                  v => stemOf(v) + '죠?'),
+  E('ask',  '-(으)ㄹ까요?',    'să…? / oare?',           'shall we? / I wonder',    v => euJ(v, J_R, '까요?')),
+  E('ask',  '-나요?',          'oare…? (blând)',         'soft question',           v => dropR(v) + '나요?'),
+  E('ask',  '-는 거예요?',     'adică…?',                'are you saying…?',        v => dropR(v) + '는 거예요?'),
+  E('ask',  '-(으)ㄹ래요?',    'vrei să…?',              'do you want to…?',        v => euJ(v, J_R, '래요?')),
+  E('ask',  '-아/어 줄래요?',  'îmi faci…?',             'could you… for me?',      v => aeo(v) + ' 줄래요?'),
+  E('ask',  '-(으)면 어때요?', 'ce-ar fi dacă…?',        'how about if…?',          v => eu(v, '면 어때요?')),
+  E('ask',  '-ㄴ/는다고요?',   'ai zis că…?',            'you said…?',              v => nda(v) + '고요?'),
+  E('ask',  '-냐고요?',        'ai întrebat dacă…?',     'are you asking…?',        v => dropR(v) + '냐고요?'),
+  E('want', '-고 싶어요',      'vreau să',               'want to',                 v => stemOf(v) + '고 싶어요'),
+  E('want', '-고 싶어 해요',   '(el/ea) vrea să',        '(someone) wants to',      v => stemOf(v) + '고 싶어 해요'),
+  E('want', '-(으)ㄹ 수 있어요','poate să',              'can',                     v => euJ(v, J_R, ' 수 있어요')),
+  E('want', '-(으)ㄹ 수 없어요','nu poate să',           'cannot',                  v => euJ(v, J_R, ' 수 없어요')),
+  E('want', '-(으)ㄹ 줄 알아요','știe să',               'knows how to',            v => euJ(v, J_R, ' 줄 알아요')),
+  E('want', '-(으)ㄹ 줄 몰라요','nu știe să',            "doesn't know how to",     v => euJ(v, J_R, ' 줄 몰라요')),
+  E('want', '-아/어야 해요',   'trebuie să',             'must',                    v => aeo(v) + '야 해요'),
+  E('want', '-아/어야 돼요',   'trebuie să (vorbit)',    'need to',                 v => aeo(v) + '야 돼요'),
+  E('want', '-아/어도 돼요',   'are voie să',            'may / it\'s okay to',     v => aeo(v) + '도 돼요'),
+  E('want', '-(으)면 안 돼요', 'n-are voie să',          'must not',                v => eu(v, '면 안 돼요')),
+  E('want', '-지 않아도 돼요', 'nu e nevoie să',         "doesn't have to",         v => stemOf(v) + '지 않아도 돼요'),
+  E('want', '-아/어야겠어요',  'ar trebui să (hotărăsc)', 'I should',               v => aeo(v) + '야겠어요'),
+  E('want', '-(으)면 좋겠어요','ar fi bine dacă',        'I hope / it would be nice', v => eu(v, '면 좋겠어요')),
+  E('want', '-(으)ㅂ시다',     'hai să (politicos)',     "let's (polite)",          v => euJ(v, J_B, '시다')),
+  E('want', '-자',             'hai să (familiar)',      "let's (casual)",          v => stemOf(v) + '자'),
+  E('want', '-(으)세요',       'vă rog (faceți)',        'please do',               v => eu(v, '세요')),
+  E('want', '-아/어 주세요',   'vă rog, pentru mine',    'please do for me',        v => aeo(v) + ' 주세요'),
+  E('want', '-아/어 주실래요?','ați putea să…?',         'could you please…?',      v => aeo(v) + ' 주실래요?'),
+  E('want', '-지 마세요',      'nu faceți',              "please don't",            v => stemOf(v) + '지 마세요'),
+  E('want', '-지 마',          'nu face! (familiar)',    "don't (casual)",          v => stemOf(v) + '지 마'),
+  E('neg',  '안 + verb',       'nu (simplu)',            "don't / not",             v => negPre(v, '안')),
+  E('neg',  '-지 않아요',      'nu (sufix)',             'do not',                  v => stemOf(v) + '지 않아요'),
+  E('neg',  '못 + verb',       'nu poate',               'cannot',                  v => negPre(v, '못')),
+  E('neg',  '-지 못해요',      'nu reușește să',         'unable to',               v => stemOf(v) + '지 못해요'),
+  E('neg',  '-지 않을래요',    'nu vreau să',            "won't / don't want to",   v => stemOf(v) + '지 않을래요'),
+  E('neg',  '-는 건 아니에요', 'nu e vorba că',          "it's not that…",          v => dropR(v) + '는 건 아니에요'),
+  E('neg',  '-지는 않아요',    'nu chiar / nu neapărat', 'not exactly',             v => stemOf(v) + '지는 않아요'),
+  E('neg',  '-(으)ㄹ 수가 없어요','n-are cum să',        'there\'s no way to',      v => euJ(v, J_R, ' 수가 없어요')),
+  E('neg',  '-(으)ㄴ 적이 없어요','n-a făcut niciodată', 'have never done',         v => euJ(v, J_N, ' 적이 없어요')),
+  E('neg',  '-아/어 본 적이 없어요','n-a încercat niciodată','have never tried',    v => aeo(v) + ' 본 적이 없어요'),
+  E('plan', '-(으)ㄹ게요',     'o să… (promit)',         "I'll… (promise)",         v => euJ(v, J_R, '게요')),
+  E('plan', '-(으)려고 해요',  'intenționez să',         'intend to',               v => eu(v, '려고 해요')),
+  E('plan', '-(으)ㄹ 생각이에요','am de gând să',        'plan to',                 v => euJ(v, J_R, ' 생각이에요')),
+  E('plan', '-(으)ㄹ 예정이에요','e programat să',       'scheduled to',            v => euJ(v, J_R, ' 예정이에요')),
+  E('plan', '-기로 했어요',    'am hotărât să',          'decided to',              v => stemOf(v) + '기로 했어요'),
+  E('plan', '-기로 마음먹었어요','m-am hotărât ferm să', 'made up my mind to',      v => stemOf(v) + '기로 마음먹었어요'),
+  E('plan', '-(으)ㄹ까 해요',  'mă gândesc să',          "I'm thinking of",         v => euJ(v, J_R, '까 해요')),
+  E('plan', '-(으)ㄹ까 봐요',  'mă tem că / poate',      "I'm worried that / maybe", v => euJ(v, J_R, '까 봐요')),
+  E('plan', '-아/어 보려고 해요','vreau să încerc',      'plan to try',             v => aeo(v) + ' 보려고 해요'),
+  E('plan', '-(으)ㄹ 뻔했어요','era cât pe ce să',       'almost did',              v => euJ(v, J_R, ' 뻔했어요')),
+  E('plan', '-고 말았어요',    'a ajuns totuși să',      'ended up doing',          v => stemOf(v) + '고 말았어요'),
+  E('exp',  '-아/어 봐요',     'încearcă / încerc',      'try doing',               v => aeo(v) + ' 봐요'),
+  E('exp',  '-(으)ㄴ 적이 있어요','a mai făcut',         'have done before',        v => euJ(v, J_N, ' 적이 있어요')),
+  E('exp',  '-아/어 본 적이 있어요','a încercat deja',   'have tried',              v => aeo(v) + ' 본 적이 있어요'),
+  E('exp',  '-아/어 놓았어요', 'a făcut dinainte',       'did and left it',         v => aeo(v) + ' 놓았어요'),
+  E('exp',  '-아/어 뒀어요',   'a pregătit din timp',    'did in advance',          v => aeo(v) + ' 뒀어요'),
+  E('exp',  '-아/어 버렸어요', 'a făcut de tot',         'did completely',          v => aeo(v) + ' 버렸어요'),
+  E('exp',  '-게 됐어요',      'a ajuns să',             'came to / ended up',      v => stemOf(v) + '게 됐어요'),
+  E('exp',  '-아/어 냈어요',   'a reușit să',            'managed to',              v => aeo(v) + ' 냈어요'),
+  E('exp',  '-아/어 왔어요',   'a tot făcut (până acum)', 'has been doing',         v => aeo(v) + ' 왔어요'),
+  E('exp',  '-아/어 가요',     'continuă să',            'keeps on',                v => aeo(v) + ' 가요'),
+  E('exp',  '-(으)ㄹ 만해요',  'merită să',              'worth doing',             v => euJ(v, J_R, ' 만해요')),
+  E('exp',  '-기 시작했어요',  'a început să',           'started doing',           v => stemOf(v) + '기 시작했어요'),
+  E('exp',  '-기 싫어요',      'n-am chef să',           "don't want to",           v => stemOf(v) + '기 싫어요'),
+  E('exp',  '-기 쉬워요',      'e ușor de',              'easy to',                 v => stemOf(v) + '기 쉬워요'),
+  E('exp',  '-기 어려워요',    'e greu de',              'hard to',                 v => stemOf(v) + '기 어려워요'),
+  E('exp',  '-는 게 좋아요',   'e bine să',              "it's good to",            v => dropR(v) + '는 게 좋아요'),
+  E('guess','-(으)ㄹ 것 같아요','cred că va…',           'I think / it seems',      v => euJ(v, J_R, ' 것 같아요')),
+  E('guess','-는 것 같아요',   'se pare că face',        'seems to be doing',       v => dropR(v) + '는 것 같아요'),
+  E('guess','-(으)ㄴ 것 같아요','se pare că a făcut',    'seems to have done',      v => euJ(v, J_N, ' 것 같아요')),
+  E('guess','-(으)ㄹ 수도 있어요','s-ar putea să',       'might',                   v => euJ(v, J_R, ' 수도 있어요')),
+  E('guess','-(으)ㄹ지도 몰라요','poate că',             'may possibly',            v => euJ(v, J_R, '지도 몰라요')),
+  E('guess','-나 봐요',        'se pare că',             'it seems / apparently',   v => dropR(v) + '나 봐요'),
+  E('guess','-(으)ㄹ 리가 없어요','nu se poate să',      'there\'s no way that',    v => euJ(v, J_R, ' 리가 없어요')),
+  E('guess','-(으)ㄹ걸요',     'probabil că',            'probably',                v => euJ(v, J_R, '걸요')),
+  E('guess','-겠네요',         'pesemne că',             'looks like',              v => stemOf(v) + '겠네요'),
+  E('guess','-나 싶어요',      'mă întreb dacă',         'I wonder if',             v => dropR(v) + '나 싶어요'),
+  E('guess','-(으)ㄹ 텐데요',  'probabil…, dar',         'probably…, but',          v => euJ(v, J_R, ' 텐데요')),
+  E('said', '-ㄴ/는다고 해요', 'zice că face',           'says that (does)',        v => nda(v) + '고 해요'),
+  E('said', '-았/었다고 해요', 'zice că a făcut',        'says they did',           v => pastStem(v) + '다고 해요'),
+  E('said', '-(으)ㄹ 거라고 해요','zice că va face',     'says they will',          v => euJ(v, J_R, ' 거라고 해요')),
+  E('said', '-냐고 해요',      'întreabă dacă',          'asks whether',            v => dropR(v) + '냐고 해요'),
+  E('said', '-(으)라고 해요',  'zice să (ordin)',        'tells someone to',        v => eu(v, '라고 해요')),
+  E('said', '-자고 해요',      'propune să',             'suggests doing',          v => stemOf(v) + '자고 해요'),
+];
+function endingForm(verbKo) {
+  const e = cur('ending');
+  try { return e && e.f ? e.f(verbKo) : CJ().present(verbKo); } catch (_) { return CJ().present(verbKo); }
+}
 
 /* ── PARTICLES ────────────────────────────────────────────── */
 function hasBatchim(w) {
@@ -474,14 +616,6 @@ function particle(def, item) {
   if (def.id === 'location') return '에서';
   if (def.id === 'object')   return objectP(item.ko);
   return '';
-}
-
-/* ── CONJUGATION ──────────────────────────────────────────── */
-function conj(verbBase, tense) {
-  if (!window.Conjugation) return verbBase;
-  if (tense === 'past')   return Conjugation.past(verbBase);
-  if (tense === 'future') return Conjugation.future(verbBase);
-  return Conjugation.present(verbBase);
 }
 
 // Traducerea verbului trebuie să urmeze timpul coreean (present/past/
@@ -551,7 +685,7 @@ function verbTranslation(verb, subjKo, tense, lang) {
 
 /* ── STATE ────────────────────────────────────────────────── */
 const SPINS_KEY = 'RK_SLOT_SPINS';
-let tense = 'present', spins = parseInt(localStorage.getItem(SPINS_KEY) || '0', 10) || 0, spinning = false;
+let spins = parseInt(localStorage.getItem(SPINS_KEY) || '0', 10) || 0, spinning = false;
 const ST = {};
 REELS.forEach(r => { ST[r.id] = { idx: 0, locked: false }; });
 function cur(id) {
@@ -635,6 +769,7 @@ async function loadVocab() {
   REELS.find(r => r.id === 'location').items = locKos.map(ko  => makeItem(ko, 'places'));
   REELS.find(r => r.id === 'object').items   = objKos.map(ko  => makeItem(ko, 'objects'));
   REELS.find(r => r.id === 'verb').items     = verbKos.map(ko => makeItem(ko, 'verbs'));
+  REELS.find(r => r.id === 'ending').items   = ENDINGS;
 
   REELS.forEach(r => { ST[r.id].idx = Math.floor(Math.random() * r.items.length); });
   buildReels();
@@ -724,7 +859,16 @@ function openPicker(reelId) {
 
   const list = document.getElementById('smPickerList');
   list.innerHTML = '';
+  list.classList.toggle('wide', reelId === 'ending');
+  let lastGroup = null;
   def.items.forEach((item, idx) => {
+    if (item.g && item.g !== lastGroup) {
+      lastGroup = item.g;
+      const h = document.createElement('div');
+      h.className = 'sm-picker-group';
+      h.textContent = ENDING_GROUPS[item.g].emoji + ' ' + ENDING_GROUPS[item.g][lang];
+      list.appendChild(h);
+    }
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'sm-picker-item' + (idx === ST[reelId].idx ? ' active' : '');
@@ -781,7 +925,7 @@ function doSpin() {
   spinning = true;
   document.getElementById('smSpinBtn').disabled = true;
 
-  const delays = [0, 90, 180, 270, 360];
+  const delays = [0, 90, 180, 270, 360, 450];
   let done = 0;
   const total = REELS.filter(r => !ST[r.id].locked).length || 0;
   if (total === 0) { spinning = false; document.getElementById('smSpinBtn').disabled = false; return; }
@@ -826,7 +970,7 @@ function finishSpin() {
 function buildKoSentence() {
   const subj = cur('subject'), time = cur('time'),
         loc  = cur('location'), obj = cur('object'), verb = cur('verb');
-  const verbConj = conj(verb.ko, tense);
+  const verbConj = endingForm(verb.ko);
   return `${subj.ko}${topicP(subj.ko)} ${time.ko} ${loc.ko}에서 ${obj.ko}${objectP(obj.ko)} ${verbConj}`;
 }
 
@@ -834,14 +978,16 @@ function showResult() {
   const lang = window.RKLang ? RKLang.get() : 'ro';
   const subj = cur('subject'), time = cur('time'),
         loc  = cur('location'), obj = cur('object'), verb = cur('verb');
-  const verbConj = conj(verb.ko, tense);
+  const verbConj = endingForm(verb.ko);
+  const end = cur('ending');
+  const verbTr = end.tense ? verbTranslation(verb, subj.ko, end.tense, lang) : `${end[lang]} (${verb[lang]})`;
 
   const chips = [
     { ko: subj.ko,  ptcl: topicP(subj.ko),  color:'#f472b6', lbl:'주어',   tr: subj[lang]  },
     { ko: time.ko,  ptcl: '',               color:'#fbbf24', lbl:'시간',   tr: time[lang]  },
     { ko: loc.ko,   ptcl: '에서',           color:'#38bdf8', lbl:'장소',   tr: loc[lang]   },
     { ko: obj.ko,   ptcl: objectP(obj.ko),  color:'#4ade80', lbl:'목적어', tr: obj[lang]   },
-    { ko: verbConj, ptcl: '',               color:'#a78bfa', lbl:'동사',   tr: verbTranslation(verb, subj.ko, tense, lang) },
+    { ko: verbConj, ptcl: '',               color:'#a78bfa', lbl:'동사 + 어미', tr: verbTr },
   ];
 
   document.getElementById('smSentence').innerHTML = chips.map(c => `
@@ -876,14 +1022,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadVocab();
 
-  document.querySelectorAll('.tense-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tense-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
-      btn.classList.add('active'); btn.setAttribute('aria-selected','true');
-      tense = btn.dataset.tense;
-      if (spins > 0) showResult();
-    });
-  });
 
   document.getElementById('smSpinBtn').addEventListener('click', doSpin);
 

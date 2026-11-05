@@ -379,8 +379,8 @@
         lead: 'Exersează combinații de cuvinte și particule, în format de joc.',
         steps: [
           'Apasă butonul de spin pentru a genera o combinație nouă.',
-          'Verifică dacă propoziția rezultată este corectă gramatical.',
-          'Repetă pentru cât mai multe combinații diferite.'
+          'Ultima rolă, Terminație, schimbă finalul verbului: prezent, trecut, viitor, „vreau să", „trebuie să", vorbire indirectă și multe altele.',
+          'Atinge o rolă ca să alegi singur cuvântul sau terminația, și 🔓 ca s-o blochezi.'
         ]
       },
       en: {
@@ -388,8 +388,8 @@
         lead: 'Practice word and particle combinations, in a game format.',
         steps: [
           'Press spin to generate a new combination.',
-          'Check whether the resulting sentence is grammatically correct.',
-          'Repeat for as many different combinations as you like.'
+          'The last reel, Ending, changes how the verb ends: present, past, future, "want to", "must", reported speech and many more.',
+          'Tap a reel to pick the word or ending yourself, and 🔓 to lock it.'
         ]
       }
     },
