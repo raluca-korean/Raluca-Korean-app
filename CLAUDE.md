@@ -37,7 +37,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 ### Date (`data/`)
 
-`exercises.json` (7 tipuri × 30 ex.), `lessons.json`, `vocab-korean.json`, `phrases.json`, `stories.json`, `hanja.json`, `reading-texts.json`, `listening.json`, `numbers.json`, `honorifics.json`, `journal-prompts.json`, `composition-prompts.json`, `context-words.json`, `word-clusters.json`, `builder-vocab.json`, `extra-generated-sentences.json`, `basic-sentences.json`.
+`exercises.json` (7 tipuri; fiecare exercițiu are `lessonId` = lecția din `lessons.json` pe care o exersează — nu folosi ID-uri fără lecție, răspunsul marchează lecția ca făcută; dialogurile generale `chain` n-au `lessonId`), `lessons.json`, `vocab-korean.json`, `phrases.json`, `stories.json`, `hanja.json`, `reading-texts.json`, `listening.json`, `numbers.json`, `honorifics.json`, `journal-prompts.json`, `composition-prompts.json`, `context-words.json`, `word-clusters.json`, `builder-vocab.json`, `extra-generated-sentences.json`, `basic-sentences.json`.
 
 ### Hub-uri: structură
 
