@@ -180,6 +180,15 @@
       xp:            function (xp) { return '+' + xp + ' XP'; },
       nextEp:        'Episodul următor →',
       backStory:     '← Înapoi la poveste',
+      quizTitle:     'Ai înțeles?',
+      quizQ:         function (i, n) { return 'Întrebarea ' + i + ' din ' + n; },
+      quizMeaning:   'Ce înseamnă replica aceasta?',
+      quizHeard:     'Ascultă și alege ce ai auzit:',
+      quizWho:       function (ko) { return 'Cine spune: „' + ko + '”?'; },
+      quizNext:      'Mai departe →',
+      quizRight:     '✓ Corect!',
+      quizWrong:     function (a) { return '✗ Răspunsul corect: ' + a; },
+      quizScore:     function (c, n) { return 'Înțelegere: ' + c + ' / ' + n; },
     },
     en: {
       fieldTitle:    'Stories',
@@ -204,6 +213,15 @@
       xp:            function (xp) { return '+' + xp + ' XP'; },
       nextEp:        'Next episode →',
       backStory:     '← Back to story',
+      quizTitle:     'Did you get it?',
+      quizQ:         function (i, n) { return 'Question ' + i + ' of ' + n; },
+      quizMeaning:   'What does this line mean?',
+      quizHeard:     'Listen and pick what you heard:',
+      quizWho:       function (ko) { return 'Who says: "' + ko + '"?'; },
+      quizNext:      'Next →',
+      quizRight:     '✓ Correct!',
+      quizWrong:     function (a) { return '✗ Correct answer: ' + a; },
+      quizScore:     function (c, n) { return 'Comprehension: ' + c + ' / ' + n; },
     },
   };
 
@@ -548,7 +566,7 @@
       fb.className   = 'fb-ok';
       seq.classList.add('seq-ok');
       answered = true;
-      setTimeout(showComplete, 800);
+      setTimeout(startQuiz, 800);
     } else {
       fb.textContent = t('err');
       fb.className   = 'fb-err';
@@ -568,10 +586,84 @@
   }
 
   /* ══════════════════════════════════════════════
+     STATE 4b: QUIZ — 3 quick comprehension questions built from the episode:
+     what a line means, which line you heard (audio only), who said it.
+  ══════════════════════════════════════════════ */
+  var quiz = null;
+  function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function charName(sp) { var c = currentStory.characters && currentStory.characters[sp]; return c ? (c[lang] || sp) : sp; }
+  function buildQuiz() {
+    var lines = currentEp.lines;
+    var pool  = currentStory.episodes.reduce(function (a, e) { return a.concat(e.lines); }, []);
+    var picks = shuffle(lines.slice()).slice(0, 3);
+    var speakers = Object.keys(currentStory.characters || {});
+    return picks.map(function (l, i) {
+      var others = shuffle(pool.filter(function (o) { return o.ko !== l.ko && o[lang] !== l[lang]; }));
+      var kind = i % 3;
+      if (kind === 2 && speakers.length < 2) kind = 0;
+      if (kind === 0) return { kind: 0, line: l, answer: l[lang],
+        options: shuffle([l[lang]].concat(others.slice(0, 3).map(function (o) { return o[lang]; }))) };
+      if (kind === 1) return { kind: 1, line: l, answer: l.ko,
+        options: shuffle([l.ko].concat(others.slice(0, 3).map(function (o) { return o.ko; }))) };
+      return { kind: 2, line: l, answer: charName(l.speaker),
+        options: shuffle(speakers.map(charName)).slice(0, 4) };
+    });
+  }
+  function startQuiz() {
+    quiz = { qs: buildQuiz(), i: 0, correct: 0 };
+    if (!quiz.qs.length) { showComplete(0); return; }
+    showState('stateQuiz');
+    renderQuiz();
+  }
+  function renderQuiz() {
+    var q = quiz.qs[quiz.i], n = quiz.qs.length;
+    var prompt = q.kind === 0 ? t('quizMeaning') : q.kind === 1 ? t('quizHeard') : t('quizWho', q.line.ko);
+    var wrap = document.getElementById('quizWrap');
+    wrap.innerHTML =
+      '<div class="rf-quiz-head">' + esc(t('quizTitle')) + ' · ' + esc(t('quizQ', quiz.i + 1, n)) + '</div>' +
+      '<div class="rf-quiz-prompt">' + esc(prompt) + '</div>' +
+      (q.kind === 0 ? '<div class="rf-quiz-ko">' + esc(q.line.ko) + '</div>' : '') +
+      (q.kind !== 2 ? '<button type="button" class="rf-secondary-btn rf-quiz-play">🔊</button>' : '') +
+      '<div class="rf-quiz-opts">' + q.options.map(function (o, k) {
+        return '<button type="button" class="rf-fragment rf-quiz-opt" data-k="' + k + '">' + esc(o) + '</button>';
+      }).join('') + '</div>' +
+      '<div class="rf-quiz-fb" id="quizFb"></div>';
+    var play = wrap.querySelector('.rf-quiz-play');
+    if (play) play.onclick = function () { speakKorean(q.line.ko); };
+    if (q.kind === 1) speakKorean(q.line.ko);
+    var done = false;
+    Array.prototype.forEach.call(wrap.querySelectorAll('.rf-quiz-opt'), function (b) {
+      b.onclick = function () {
+        if (done) return; done = true;
+        var pick = q.options[+b.getAttribute('data-k')];
+        var ok = pick === q.answer;
+        if (ok) quiz.correct++;
+        Array.prototype.forEach.call(wrap.querySelectorAll('.rf-quiz-opt'), function (x) {
+          var v = q.options[+x.getAttribute('data-k')];
+          if (v === q.answer) x.classList.add('rf-quiz-right');
+          else if (x === b) x.classList.add('rf-quiz-wrong');
+        });
+        var fb = document.getElementById('quizFb');
+        fb.textContent = ok ? t('quizRight') : t('quizWrong', q.answer);
+        fb.className = 'rf-quiz-fb ' + (ok ? 'fb-ok' : 'fb-err');
+        if (q.kind !== 1) speakKorean(q.line.ko);
+        var next = document.createElement('button');
+        next.type = 'button'; next.className = 'rf-nucleus-btn rf-quiz-next';
+        next.textContent = t('quizNext');
+        next.onclick = function () {
+          quiz.i++;
+          if (quiz.i < quiz.qs.length) renderQuiz(); else showComplete(quiz.correct, quiz.qs.length);
+        };
+        wrap.appendChild(next);
+      };
+    });
+  }
+
+  /* ══════════════════════════════════════════════
      STATE 5: COMPLETE
   ══════════════════════════════════════════════ */
-  function showComplete() {
-    var XP = 15;
+  function showComplete(qc, qn) {
+    var XP = 15 + 5 * (qc || 0);
     markDone(currentStory.id, currentEp.id);
     if (window.RKGamification) RKGamification.addXPBonus(XP);
     if (window.RKStreak) RKStreak.touch();
@@ -579,7 +671,7 @@
     showState('stateComplete');
     document.getElementById('completePulse').textContent = '✦';
     document.getElementById('completeTitle').textContent  = t('completeTitle');
-    document.getElementById('completeXP').textContent     = t('xp', XP);
+    document.getElementById('completeXP').textContent     = t('xp', XP) + (qn ? ' · ' + t('quizScore', qc, qn) : '');
 
     var epIdx  = currentStory.episodes.findIndex(function (e) { return e.id === currentEp.id; });
     var nextEp = currentStory.episodes[epIdx + 1] || null;
