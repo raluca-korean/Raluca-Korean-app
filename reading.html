@@ -522,6 +522,20 @@ body.dark-mode .rd-card-footer { border-color: rgba(74,144,164,.2); }
 .rd-read-btn:hover { border-color: #55A878; color: #55A878; }
 .rd-read-btn.read { background: #55A878; border-color: #55A878; color: #fff; }
 
+/* ── COMPREHENSION QUIZ ─────────────────────────────────────── */
+.rd-quiz { padding: 0 20px 6px; }
+.rd-quiz-toggle { display: inline-block; cursor: pointer; font-size: 13px; font-weight: 800; color: #6C5CE7; padding: 8px 0; }
+body.dark-mode .rd-quiz-toggle { color: #A99BFF; }
+.rd-quiz-body { display: flex; flex-direction: column; gap: 14px; padding: 6px 0 10px; }
+.rd-quiz-body[hidden] { display: none; }
+.rd-quiz-qtext { font-weight: 800; font-size: 14px; margin-bottom: 6px; }
+.rd-quiz-ko { font-family: 'Noto Sans KR', sans-serif; font-size: 15px; margin: 2px 0 8px; opacity: .9; }
+.rd-quiz-opt { cursor: pointer; padding: 10px 12px; margin-top: 6px; border-radius: 12px; border: 1.5px solid var(--rk-stroke); font-size: 13.5px; line-height: 1.4; transition: border-color .15s; }
+.rd-quiz-opt:hover { border-color: #6C5CE7; }
+.rd-quiz-opt.ok { border-color: #55A878; background: rgba(85,168,120,.15); }
+.rd-quiz-opt.bad { border-color: #E5534B; background: rgba(229,83,75,.12); }
+.rd-quiz-score { font-weight: 800; font-size: 14px; color: #55A878; }
+
 /* ── HEADER EXTRAS (progress + font) ─────────────────────────── */
 .rd-mode-spacer { flex: 1; min-width: 4px; }
 
@@ -809,6 +823,7 @@ body.dark-mode .rd-card-footer { border-color: rgba(74,144,164,.2); }
     });
 
     card.appendChild(sentWrap);
+    card.appendChild(buildQuiz(text));
 
     /* Footer — read progress */
     var footer = document.createElement('div');
@@ -832,6 +847,80 @@ body.dark-mode .rd-card-footer { border-color: rgba(74,144,164,.2); }
     card.appendChild(footer);
 
     return card;
+  }
+
+  /* Comprehension check: the text's own questions, or (older texts) two
+     "what does this sentence mean?" questions built from its translations. */
+  function quizFor(text) {
+    var L = currentLang;
+    if (text.questions && text.questions.length) {
+      return text.questions.map(function (q) {
+        return { q: q.q[L] || q.q.ro, ko: null,
+                 options: q.options.map(function (o) { return o[L] || o.ro; }), correct: q.correct };
+      });
+    }
+    var sents = text.sentences.filter(function (x) { return x.translation; });
+    if (sents.length < 3) return [];
+    var picks = sents.slice().sort(function () { return Math.random() - .5; }).slice(0, 2);
+    return picks.map(function (x) {
+      var right = x.translation[L] || x.translation.ro;
+      var others = sents.filter(function (o) { return o !== x; })
+        .map(function (o) { return o.translation[L] || o.translation.ro; })
+        .sort(function () { return Math.random() - .5; }).slice(0, 3);
+      var opts = [right].concat(others).sort(function () { return Math.random() - .5; });
+      return { q: L === 'ro' ? 'Ce înseamnă propoziția?' : 'What does this sentence mean?', ko: x.full,
+               options: opts, correct: opts.indexOf(right) };
+    });
+  }
+  function buildQuiz(text) {
+    var wrap = document.createElement('div');
+    wrap.className = 'rd-quiz';
+    var qs = quizFor(text);
+    if (!qs.length) return wrap;
+    var toggle = document.createElement('div');
+    toggle.className = 'rd-quiz-toggle'; toggle.setAttribute('role', 'button'); toggle.tabIndex = 0;
+    toggle.textContent = currentLang === 'ro' ? '❓ Verifică dacă ai înțeles (' + qs.length + ' întrebări)'
+                                              : '❓ Check your understanding (' + qs.length + ' questions)';
+    var body = document.createElement('div');
+    body.className = 'rd-quiz-body'; body.hidden = true;
+    var right = 0, answered = 0;
+    var score = document.createElement('div'); score.className = 'rd-quiz-score';
+    qs.forEach(function (q, qi) {
+      var box = document.createElement('div'); box.className = 'rd-quiz-q';
+      var h = document.createElement('div'); h.className = 'rd-quiz-qtext';
+      h.textContent = (qi + 1) + '. ' + q.q;
+      box.appendChild(h);
+      if (q.ko) { var k = document.createElement('div'); k.className = 'rd-quiz-ko'; k.textContent = q.ko; box.appendChild(k); }
+      var done = false;
+      q.options.forEach(function (o, oi) {
+        var b = document.createElement('div');
+        b.className = 'rd-quiz-opt'; b.setAttribute('role', 'button'); b.tabIndex = 0;
+        b.textContent = o;
+        b.addEventListener('click', function () {
+          if (done) return; done = true; answered++;
+          if (oi === q.correct) right++;
+          box.querySelectorAll('.rd-quiz-opt').forEach(function (x, xi) {
+            if (xi === q.correct) x.classList.add('ok'); else if (x === b) x.classList.add('bad');
+          });
+          if (answered === qs.length) {
+            score.textContent = (currentLang === 'ro' ? 'Rezultat: ' : 'Score: ') + right + ' / ' + qs.length +
+              (right === qs.length ? (currentLang === 'ro' ? ' — perfect! 🎉' : ' — perfect! 🎉') : '');
+            if (right === qs.length && getReadTexts().indexOf(text.id) === -1) {
+              toggleRead(text.id);
+              var rb = wrap.parentNode && wrap.parentNode.querySelector('.rd-read-btn');
+              if (rb) { rb.classList.add('read'); rb.textContent = currentLang === 'ro' ? '✓ Citit' : '✓ Read'; }
+            }
+            if (window.RKGamification && right) RKGamification.addXPBonus(right * 3);
+          }
+        });
+        box.appendChild(b);
+      });
+      body.appendChild(box);
+    });
+    body.appendChild(score);
+    toggle.addEventListener('click', function () { body.hidden = !body.hidden; });
+    wrap.appendChild(toggle); wrap.appendChild(body);
+    return wrap;
   }
 
   function buildSentence(sent) {
