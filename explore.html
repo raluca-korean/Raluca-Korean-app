@@ -338,7 +338,7 @@ html[data-mode="day"] .mkf-core-halo{
   max-width:190px;margin-left:auto;margin-right:auto;white-space:normal;
 }
 .org.bloomed .org-name{color:var(--hi)}
-.org.bloomed .org-sub{opacity:.55;transform:translateY(0)}
+.org.bloomed .org-sub{opacity:0;transform:translateY(0)}
 .org[data-id="f"].bloomed .org-name{color:var(--g1)}
 .org[data-id="s"].bloomed .org-name{color:var(--g2)}
 .org[data-id="p"].bloomed .org-name{color:var(--g3)}
@@ -390,7 +390,7 @@ html[data-mode="day"] .mkf-core-halo{
 .sat-name{
   text-align:center;margin-top:6px;
   font-size:8px;letter-spacing:.28em;text-transform:uppercase;
-  color:var(--mid);white-space:nowrap;transition:color .3s;
+  color:var(--mid);white-space:normal;max-width:96px;line-height:1.35;transition:color .3s;
 }
 .sat:hover .sat-name{color:var(--hi)}
 
@@ -732,14 +732,6 @@ const SAT_DATA = {
   ]
 };
 
-// Satellite radial angles (CSS: 0°=right, 90°=down) relative to organism center.
-// Each fan points toward screen center (away from corner).
-const SAT_CFG = {
-  f: { angles:[ 22, 46, 70, 94 ], d:[78, 125] },    // top-left  → fan toward lower-right (wide zig-zag radius)
-  s: { angles:[ 56, 74, 93, 111, 129, 148, 166 ], d:[82, 135] },    // top-right → fan toward lower-left (wide zig-zag radius: avoids adjacent-dot overlap)
-  p: { angles:[130, 153, 176, 199, 222, 245, 268, 291], d:[88, 130] },   // bot-right → fan toward up-left, kept clear of screen edges (incl. landscape)
-  a: { angles:[271, 289, 307, 325, 343], d:[88, 135] }      // bot-left  → fan toward upper-right (wide zig-zag radius)
-};
 
 // ── LANGUAGE STRINGS ──────────────────────────────────────────
 const LABELS = {
@@ -900,6 +892,67 @@ function setLang(l) { applyLang(l); }
 window.setLang = setLang;
 
 // ── SATELLITES ─────────────────────────────────────────────────
+// Satellites sit on concentric arcs fanned toward the screen centre. Each
+// arc holds as many dots as fit with a minimum gap, so any number of pages
+// gets a spot (a fixed angle list used to drop everything past its length —
+// Hangul/Hanja vanished that way) and dots never pile up. Candidates that
+// fall off-screen, onto another organism or onto the centre core are skipped.
+function satLayout(id, ox, oy, n) {
+  const W = innerWidth, H = innerHeight, cx = W/2, cy = H/2;
+  const small = Math.min(W, H) < 600;
+  const dir = Math.atan2(cy - oy, cx - ox);
+  const others = [];
+  document.querySelectorAll('.org').forEach(o => {
+    if (o.getAttribute('data-id') === id) return;
+    others.push({ x: parseFloat(o.style.left), y: parseFloat(o.style.top) });
+  });
+  // Fixed UI the dots must not cover (title + buttons, CTA, day/night, footer).
+  const blocks = [];
+  ['.mkf-identity', '.mkf-cta', '.mkf-mode', '.mkf-lang', '.mkf-progress'].forEach(sel => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (r.width && r.height) blocks.push(r);
+  });
+  // A satellite occupies its dot (44px) plus a label below it.
+  const hits = (x, y) => blocks.some(r =>
+    x + 46 > r.left - 6 && x - 46 < r.right + 6 && y + 50 > r.top - 6 && y - 24 < r.bottom + 6);
+  const tryLayout = (gap, level) => {
+    // level 0: avoid everything · 1: may cover the core · 2: may also sit near other organisms
+    const r0 = Math.max(small ? 84 : 104, gap * 1.08), step = gap * .86;
+    const pts = [];
+    for (let ring = 0; pts.length < n && ring < 16; ring++) {
+      const r = r0 + ring * step;
+      const span = Math.PI * 1.5;            // ~270° fan, centred on the core
+      const count = Math.max(1, Math.floor(r * span / gap));
+      const offs = [];
+      for (let j = 0; j < count; j++) offs.push(count === 1 ? 0 : (j / (count - 1) - .5) * span);
+      offs.sort((p, q) => Math.abs(p) - Math.abs(q));
+      for (const off of offs) {
+        if (pts.length >= n) break;
+        const x = ox + Math.cos(dir + off) * r, y = oy + Math.sin(dir + off) * r;
+        if (x < 44 || x > W - 44 || y < 30 || y > H - 56) continue;
+        if (hits(x, y)) continue;
+        if (level < 1 && Math.hypot(x - cx, y - cy) < 95) continue;
+        if (level < 2 && others.some(o => Math.hypot(x - o.x, y - o.y) < gap)) continue;
+        if (pts.some(p => Math.hypot(p.x - x, p.y - y) < gap)) continue;
+        pts.push({ x, y });
+      }
+    }
+    return pts.length >= n ? pts : null;
+  };
+  const gaps = small ? [74, 68, 62, 56, 50] : [100, 92, 84, 76, 68, 60];
+  for (const level of [0, 1, 2]) for (const g of gaps) {
+    const pts = tryLayout(g, level);
+    if (pts) return pts;
+  }
+  // Last resort: ignore the fixed UI too, but never return holes.
+  blocks.length = 0;
+  const pts = tryLayout(gaps[gaps.length - 1], 2) || [];
+  while (pts.length < n) pts.push({ x: ox, y: oy });
+  return pts;
+}
+
 function buildSatellites() {
   const centerX = innerWidth/2, centerY = innerHeight/2;
   ['f','s','p','a'].forEach(id => {
@@ -907,28 +960,13 @@ function buildSatellites() {
     if (!org) return;
     org.querySelectorAll('.sat').forEach(el => el.remove());
     const items = SAT_DATA[id];
-    const cfg   = SAT_CFG[id];
-    // Cap the fan radius at a fraction of the org's own distance to screen
-    // center so satellites stay spread out but never overshoot on small screens.
     const orgX = parseFloat(org.style.left) || centerX;
     const orgY = parseFloat(org.style.top)  || centerY;
-    const maxR = Math.hypot(orgX - centerX, orgY - centerY) * 0.80;
-    const margin = 20;
+    const pts = satLayout(id, orgX, orgY, items.length);
+    org._satR = Math.max(112, ...pts.map(p => Math.hypot(p.x - orgX, p.y - orgY) + 45));
     items.forEach((item, i) => {
-      const rad = cfg.angles[i] * Math.PI / 180;
-      const rBase = Array.isArray(cfg.d) ? cfg.d[i % cfg.d.length] : cfg.d;
-      const cosA = Math.cos(rad), sinA = Math.sin(rad);
-      // Clamp this dot's own radius to stay on-screen and not overshoot
-      // past the viewport center — keeps the spread wide without any one
-      // outlier satellite forcing the whole fan to shrink together.
-      let r = Math.min(rBase, maxR);
-      if (cosA > .001) r = Math.min(r, (innerWidth - margin - orgX) / cosA);
-      else if (cosA < -.001) r = Math.min(r, (orgX - margin) / -cosA);
-      if (sinA > .001) r = Math.min(r, (innerHeight - margin - orgY) / sinA);
-      else if (sinA < -.001) r = Math.min(r, (orgY - margin) / -sinA);
-      r = Math.max(r, 0);
-      const dx  = cosA * r;
-      const dy  = sinA * r;
+      const dx = pts[i].x - orgX;
+      const dy = pts[i].y - orgY;
       const a   = document.createElement('a');
       a.className = 'sat';
       a.href = item.href;
@@ -978,7 +1016,15 @@ const BLOOM_R = 112; // px from organism center
 
 function updateBloom() {
   let nearestEl = null, nearestD = BLOOM_R;
+  // Keep an open organism open while the pointer is anywhere over its
+  // satellite fan (outer arcs reach well past BLOOM_R).
   orgPos.forEach(({x, y, el}) => {
+    if (el.classList.contains('bloomed') && el._satR && Math.hypot(mx - x, my - y) < el._satR) {
+      nearestEl = el; nearestD = -1;
+    }
+  });
+  orgPos.forEach(({x, y, el}) => {
+    if (nearestD < 0) return;
     const d = Math.hypot(mx - x, my - y);
     if (d < nearestD) { nearestD = d; nearestEl = el; }
   });
