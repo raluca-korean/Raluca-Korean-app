@@ -413,6 +413,26 @@
         ]
       }
     },
+    'topik-test': {
+      ro: {
+        title: 'Test TOPIK simulat',
+        lead: 'Un test cu structura, timpul și punctajul examenului real.',
+        steps: [
+          'Alege TOPIK I (nivelurile 1–2) sau TOPIK II (3–6), apoi Mini sau Complet.',
+          'Fiecare secțiune (ascultare, scriere, citire) are cronometrul ei; la ascultare poți asculta de cel mult 2 ori.',
+          'La final vezi punctajul (din 200 / 300), nivelul obținut după pragurile oficiale și greșelile.'
+        ]
+      },
+      en: {
+        title: 'TOPIK mock test',
+        lead: 'A test with the real exam’s structure, timing and scoring.',
+        steps: [
+          'Choose TOPIK I (levels 1–2) or TOPIK II (3–6), then Mini or Full.',
+          'Each section (listening, writing, reading) has its own timer; listening plays at most twice.',
+          'At the end you get your score (out of 200 / 300), the level by official pass marks and your mistakes.'
+        ]
+      }
+    },
     exam: {
       ro: {
         title: 'Examen TOPIK',
