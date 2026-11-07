@@ -122,6 +122,12 @@ FIX = {
   '남다': ('a rămâne (a fi rest)', 'to remain, be left'),
   '머무르다': ('a sta, a rămâne (undeva)', 'to stay (somewhere)'),
   '토마토': ('roșie (legumă)', 'tomato'),
+  '경찰관': ('polițist (persoana)', 'police officer'),
+  '경찰': ('poliție, polițist', 'police'),
+  '그림': ('desen, pictură (tabloul)', 'drawing, painting'),
+  '그림 그리기': ('a desena, pictatul (hobby)', 'drawing (hobby)'),
+  '노트': ('caiet, notițe', 'notes, notebook'),
+  '공책': ('caiet (de școală)', 'exercise book'),
   '바다': ('mare, ocean', 'sea, ocean'),
 }
 CATS = {'무료': ['nouns'], '어느': ['modifiers']}

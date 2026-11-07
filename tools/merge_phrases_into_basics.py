@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""One-off (already applied; data/phrases.json was then deleted): fold phrases into basics.
+"""One-off (already applied; data/phrases.json was then deleted; chapter 14 later moved to the
+vocabulary by tools/move_theme_words_to_vocab.py): fold phrases into basics.
 
 "Expresii pe situații" and "Propoziții de bază" were the same kind of content
 (Korean phrases + romanisation + translation, grouped by theme). The phrases
