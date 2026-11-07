@@ -18,18 +18,18 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 ### Hub-uri secundare
 
-- `today.html` — **Planul TOPIK** (nivel, data examenului, ritm zilnic, card de streak; include fostul `planner.html`, acum redirect-stub). Legat din Progres. **Misiunea zilnică există doar pe `index.html`** (un singur bonus/zi: `RK_DAILY_MISSION_AWARDED`).
+- `today.html` — **Planul TOPIK** (nivel, data examenului, ritm zilnic, card de streak; a înglobat fostul `planner.html`, șters). Legat din Progres. **Misiunea zilnică există doar pe `index.html`** (un singur bonus/zi: `RK_DAILY_MISSION_AWARDED`).
 - `explore.html` — index complet al tuturor funcțiilor (catch-all, util când o pagină nouă nu e încă în niciun meniu)
 - `onboarding.html` — flow de prim-contact (Student/Adult, focus, timp disponibil), cu buton „Sari peste"
 - `review.html`, `mistakes.html` — recapitulare greșeli/SRS; `review.html` include și propozițiile salvate din builder (SRS în `RK_SENT_SRS`, repetate în `builder.html?review=1`)
 
 ### Pagini de conținut/exerciții (reprezentativ, nu exhaustiv)
 
-`exercises.html` (7 tipuri, vezi mai jos) · `lessons.html` / `lesson-neural.html` · `glossary.html` · `flashcards.html` · `builder.html` · `hangul.html` · `hanja-book.html` · `caiet.html` (caiet de scris de mână; `caiet.html?text=…&tr=…` adaugă o pagină cu propoziția estompată de urmărit — o folosește builderul) · `stories.html` (după ordonarea replicilor urmează un mini-test de înțelegere din 3 întrebări, generat din episod — sens / ce ai auzit / cine spune; +5 XP pe răspuns corect) · `conversation.html` · `composition.html` · `exam.html` · `topik-test.html` (Test TOPIK simulat: TOPIK I = 듣기+읽기 /200, TOPIK II = 듣기+쓰기+읽기 /300, Mini sau Complet, cronometru pe secțiune, nivel după pragurile oficiale; întrebări din `listening.json`, `reading-texts.json` (câmpul `questions`), `exercises.json`, sarcina de scris din `composition-prompts.json`; istoric în `RK_TOPIK_MOCK`) · `word-context.html` / `word-map.html` · `phrases.html` · `basics.html` (Propoziții de bază — ghid de conversație în 12 capitole proprii (titluri și ordine diferite de manualul folosit ca sursă), grupele de unități = `group`, secțiunile = `units`; date în `data/basic-sentences.json`, bife în `RK_BASICS_KNOWN` după textul `ko`; romanizarea propozițiilor noi se generează cu `tools/romanize_ko.py`) · `journal.html` · `listening.html` (runde fixe de câte 15 întrebări pe nivel, scor în `RK_LISTEN_BEST` cheie `nivel-rundă`) · `writing.html` · `sentence-formation.html` · `slot-machine.html` (6 role: subiect, timp, loc, obiect, verb, **terminație** — lista `ENDINGS` din pagină, grupată ca fișele de gramatică; înlocuiește vechiul selector de timp)
+`exercises.html` (7 tipuri, vezi mai jos) · `lessons.html` / `lesson-neural.html` · `glossary.html` · `flashcards.html` · `builder.html` · `hangul.html` · `hanja-book.html` · `caiet.html` (caiet de scris de mână; `caiet.html?text=…&tr=…` adaugă o pagină cu propoziția estompată de urmărit — o folosește builderul) · `stories.html` (după ordonarea replicilor urmează un mini-test de înțelegere din 3 întrebări, generat din episod — sens / ce ai auzit / cine spune; +5 XP pe răspuns corect) · `conversation.html` · `composition.html` · `topik-test.html` (singurul examen — vechiul `exam.html` a fost șters; Test TOPIK simulat: TOPIK I = 듣기+읽기 /200, TOPIK II = 듣기+쓰기+읽기 /300, Mini sau Complet, cronometru pe secțiune, nivel după pragurile oficiale; întrebări din `listening.json`, `reading-texts.json` (câmpul `questions`), `exercises.json`, sarcina de scris din `composition-prompts.json`; istoric în `RK_TOPIK_MOCK`) · `word-context.html` · `phrases.html` · `basics.html` (Propoziții de bază — ghid de conversație în 12 capitole proprii (titluri și ordine diferite de manualul folosit ca sursă), grupele de unități = `group`, secțiunile = `units`; date în `data/basic-sentences.json`, bife în `RK_BASICS_KNOWN` după textul `ko`; romanizarea propozițiilor noi se generează cu `tools/romanize_ko.py`) · `journal.html` · `listening.html` (runde fixe de câte 15 întrebări pe nivel, scor în `RK_LISTEN_BEST` cheie `nivel-rundă`) · `writing.html` · `sentence-formation.html` · `slot-machine.html` (6 role: subiect, timp, loc, obiect, verb, **terminație** — lista `ENDINGS` din pagină, grupată ca fișele de gramatică; înlocuiește vechiul selector de timp)
 
 ### Jocuri (hub Play)
 
-`map.html` (Seoul Map), `boss.html` (Boss Battle), `quick60.html`, `memory.html`
+`map.html` (Aventura în Seul), `boss.html` (Boss Battle), `quick60.html`, `memory.html`
 
 ### Module JS comune (`js/core/`)
 
@@ -50,8 +50,8 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 - **Lecțiile** se deschid în `lesson-neural.html` (stilul interactiv), în două moduri:
   - `?lesson=T1-03` / `?topik=<nivel>` / `?topik` — **Gramatică TOPIK**: citește `data/lessons.json`, o convertește prin `fromLessonsJson()` (romanizare automată, plăcuțe gramaticale din `structure`), iar „Gata” scrie în `RK_LESSON_DONE` + `RK_LESSON_TODAY` (progresul principal). Butonul „Exersează” → `exercises.html?lesson=ID`.
   - fără parametri — **Fraze utile**: cele 100 de lecții-tipar scrise în `LESSONS` din pagină, progres separat în `RK_DONE_NEURAL`.
-  - `lessons.html` rămâne ca „Harta lecțiilor” (vedere de ansamblu + quiz), cu buton spre modul interactiv.
-- `word-context.html` = **Harta Cuvintelor**, cu 2 taburi: căutare cuvânt + Constelații (`?view=stars`). `word-map.html` e doar redirect.
+  - `lessons.html` rămâne ca „Toate lecțiile” (vedere de ansamblu + quiz), cu buton spre modul interactiv.
+- `word-context.html` = **Harta Cuvintelor**, cu 2 taburi: căutare cuvânt + Constelații (`?view=stars`). (fostul `word-map.html` a fost șters).
 
 ### Fără build tools — reguli de bază
 

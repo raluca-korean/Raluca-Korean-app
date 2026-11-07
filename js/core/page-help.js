@@ -435,26 +435,6 @@
         ]
       }
     },
-    exam: {
-      ro: {
-        title: 'Examen TOPIK',
-        lead: 'Simulează un examen TOPIK cronometrat.',
-        steps: [
-          'Alege nivelul TOPIK și durata examenului.',
-          'Citește structura examenului înainte de a începe.',
-          'Răspunde la întrebări în timpul alocat, apoi vezi rezultatul și revizuiește greșelile.'
-        ]
-      },
-      en: {
-        title: 'TOPIK exam',
-        lead: 'Simulate a timed TOPIK exam.',
-        steps: [
-          'Pick the TOPIK level and exam duration.',
-          'Read the exam structure before you start.',
-          'Answer within the allotted time, then check your result and review mistakes.'
-        ]
-      }
-    },
     caiet: {
       ro: {
         title: 'Caiet coreean',
