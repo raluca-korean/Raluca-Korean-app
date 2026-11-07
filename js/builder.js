@@ -2978,10 +2978,13 @@
           if(!n || n.length < 3) return;
           var entry = { e: e, kind: kind };
           if(!lx.word[n]) lx.word[n] = entry;
+          if(pair[0] === 'ro' && n.indexOf(' ') === -1 && (kind === 'adj' || kind === 'color')){
+            roAdjForms(n).forEach(function(f){ if(f.length >= 3 && !lx.word[f]) lx.word[f] = entry; });
+          }
           if(pair[0] === 'ro' && n.indexOf(' ') === -1){
             if(kind === 'verb'){
               var st = n.replace(/(ea|a|i|e|u)$/, '');
-              if(st.length >= 3) lx.stems.push({ stem: st, entry: entry });
+              if(st.length >= 3) roStemVariants(st).forEach(function(v){ lx.stems.push({ stem: v, entry: entry }); });
             } else if((kind === 'adj' || kind === 'color') && n.length >= 4){
               lx.stems.push({ stem: n.replace(/(os|oasa|a|e|i|u)$/, ''), entry: entry });
             }
@@ -2991,6 +2994,35 @@
     });
     lx.stems.sort(function(a, b){ return b.stem.length - a.stem.length; });
     return lx;
+  }
+  // Romanian adjective forms from the masculine singular: negru → neagră, negri, negre;
+  // frumos → frumoasă…; roșu → roșie, roșii; nou → nouă, noi; verde → verzi
+  function roAdjForms(b){
+    var out = [];
+    var alt = function(st){   // e→ea / o→oa in the last syllable (negr → neagr, mort → moart)
+      var m = /^(.*)([eo])([^aeiou]*)$/.exec(st);
+      return m ? m[1] + (m[2] === 'e' ? 'ea' : 'oa') + m[3] : null;
+    };
+    var add = function(){ for(var i = 0; i < arguments.length; i++) if(arguments[i]) out.push(arguments[i]); };
+    if(/os$/.test(b)){ var r = b.slice(0, -2); add(r + 'oasa', r + 'oase', r + 'osi'); }
+    else if(/or$/.test(b)){ var r2 = b.slice(0, -2); add(r2 + 'oara', r2 + 'oare', r2 + 'ori'); }
+    else if(/(s|i)u$/.test(b)){ var r3 = b.slice(0, -1); add(r3 + 'ie', r3 + 'ii'); }
+    else if(/ou$/.test(b)){ var r4 = b.slice(0, -1); add(r4 + 'ua', r4 + 'i'); }
+    else if(/u$/.test(b)){ var r5 = b.slice(0, -1); var a5 = alt(r5); add(r5 + 'a', a5 && a5 + 'a', r5 + 'i', r5 + 'e'); }
+    else if(/e$/.test(b)){ var r6 = b.slice(0, -1); add(r6 + 'i', r6.replace(/d$/, 'z') + 'i', r6.replace(/t$/, 't') + 'i'); }
+    else if(/[^aeiou]$/.test(b)){ var a7 = alt(b); add(b + 'a', a7 && a7 + 'a', b + 'i', b + 'e', b.replace(/t$/, 't') + 'i'); }
+    return out;
+  }
+  // verb stem with the usual vowel alternations: purt → port/poart, juc → joc/joac, ved → vad
+  function roStemVariants(st){
+    var out = [st];
+    var m = /^(.*)([aeiou])([^aeiou]*)$/.exec(st);
+    if(m){
+      if(m[2] === 'u') out.push(m[1] + 'o' + m[3], m[1] + 'oa' + m[3]);
+      if(m[2] === 'o') out.push(m[1] + 'oa' + m[3]);
+      if(m[2] === 'e') out.push(m[1] + 'ea' + m[3], m[1] + 'a' + m[3]);
+    }
+    return out.filter(function(v){ return v.length >= 3; });
   }
   function lexLookup(tok){
     if(!LEX || !tok || tok.length < 3 || FUNC_WORDS[tok]) return null;
@@ -3202,6 +3234,27 @@
       var objects  = findAllMatches('object1', cd.text, 2);
       var descs    = findAllMatches('adverb', cd.text, 2);
       var verb     = findBestMatch('verb', cd.text);
+      // "Am o rochie albă" / "Cumpăr o mașină scumpă": an adjective right after a noun
+      // is that noun's modifier (하얀 원피스) when the sentence has another verb
+      var _adjMod = null;
+      (function(){
+        var tk = cd.text.split(' ');
+        for(var a = 1; a < tk.length; a++){
+          var av = findBestMatch('verb', tk[a]);
+          if(!av || !isDescriptive(av) || av.ko.indexOf(' ') !== -1) continue;
+          var nn = findBestMatch('object1', tk[a - 1]) || findBestMatch('topic', tk[a - 1]);
+          if(!nn){ var lnn = lexLookup(tk[a - 1]); if(lnn && lnn.kind === 'noun') nn = lexItem(lnn, 'object1'); }
+          if(!nn) continue;
+          var rest = tk.slice(0, a).concat(tk.slice(a + 1)).join(' ');
+          var other = findBestMatch('verb', rest);
+          if(!other || other.ko === av.ko) continue;
+          var dsc = findBestMatch('adverb', tk[a]);
+          _adjMod = { noun: nn, ko: (dsc && dsc.modifiesSubject) ? null : window.Conjugation.adjAttributive(av.ko) };
+          verb = other;
+          break;
+        }
+      })();
+
       // "vorbesc coreeana" → 한국어를 해요 (with a language, 하다 is the natural verb)
       if(verb && verb.ko === '말하다' && objects[0] && /어를$/.test(objects[0].ko)) verb = speakLang(verb);
       // Inherit verb from previous clause when this segment had none explicitly
@@ -3235,13 +3288,14 @@
         if(!hit && ci === 0 && normalizeLatin(String(raw).trim().split(/\s+/)[0]) === tok) return;
         if(!hit && _unknown.indexOf(tok) === -1) _unknown.push(tok);
       });
+      if(_adjMod && _adjMod.ko) _nounMods.push({ noun: null, nounKo: _adjMod.noun.ko, ko: _adjMod.ko });
       if(_nounMods.length){
         var _modify = function(list){
           return list.map(function(it){
             for(var m = 0; m < _nounMods.length; m++){
               var nm0 = _nounMods[m];
-              var same = it.srcTok === nm0.noun;
-              if(!same){ var f = findBestMatch('object1', nm0.noun) || findBestMatch('topic', nm0.noun); same = !!(f && f.ko === it.ko); }
+              var same = (nm0.noun && it.srcTok === nm0.noun) || (nm0.nounKo && koBase(nm0.nounKo) === koBase(it.ko));
+              if(!same && nm0.noun){ var f = findBestMatch('object1', nm0.noun) || findBestMatch('topic', nm0.noun); same = !!(f && f.ko === it.ko); }
               if(same){ var c = {}; for(var k in it) c[k] = it[k]; c.ko = nm0.ko + ' ' + it.ko; return c; }
             }
             return it;
@@ -3249,6 +3303,15 @@
         };
         objects = _modify(objects);
         subjects = _modify(subjects);
+        // compound verb that contains the (now modified) object: 음악을 듣다 + 조용한 음악을 → 듣다
+        if(verb && verb.ko && verb.ko.indexOf(' ') > 0){
+          var _vo = verb.ko.split(' ')[0];
+          if(objects.some(function(o){ return o.ko !== _vo && o.ko.slice(-_vo.length) === _vo; })){
+            var _vc = {}; for(var vk2 in verb) _vc[vk2] = verb[vk2];
+            _vc.ko = verb.ko.split(' ').slice(1).join(' '); _vc.forms = null; _vc.final = null;
+            verb = _vc;
+          }
+        }
       }
 
       // "parola de la telefon" → 전화 비밀번호를 (Y's X)
@@ -3416,6 +3479,7 @@
       // "frumoasă" read both as adverb (예쁘게) and predicate (예쁘다): keep the predicate
       if(verb && verb.ko && window.Conjugation){
         var _vs = window.Conjugation.stem(verb.ko);
+        if(_vs.length >= 3) _vs = _vs.slice(0, -1);      // 깨끗하 → 깨끗 (깨끗이)
         descs = descs.filter(function(d){ return !(d && d.ko && d.ko.indexOf(_vs) === 0 && d.ko !== verb.ko); });
       }
       if(verb && INTRANSITIVE_VERBS[verb.ko] && !MOTION_NOOBJ[verb.ko] && !subjects.length && objects[0] && !clause.__count){
