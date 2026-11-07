@@ -3417,12 +3417,10 @@ let currentCh  = 0;
 let currentStep= 0;
 const STEPS = [
   { ro:'Conjugare',    en:'Conjugation' },
-  { hidden:true },   // former „Extindere” — removed; kept as a slot so saved progress (indices 2,3) stays valid
   { ro:'Construiește', en:'Build'       },
   { ro:'Conversație',  en:'Dialogue'    }
 ];
-// Internal step indices stay 0..3 (saved progress uses them); step 1 is hidden.
-const VISIBLE_STEPS = STEPS.map((s,i)=>i).filter(i=>!STEPS[i].hidden);
+const LAST_STEP = STEPS.length - 1;
 const doneSteps   = {};   // doneSteps[chId][step] = true
 const shownCells  = {};   // shownCells[chId][step][key] = true
 
@@ -3438,9 +3436,22 @@ function loadState(){
     const s=localStorage.getItem('RK_SFP_SHOWN');
     if(d){ const p=JSON.parse(d); Object.keys(p).forEach(k=>{ doneSteps[k]=p[k]; }); }
     if(s){ const p=JSON.parse(s); Object.keys(p).forEach(k=>{ shownCells[k]=p[k]; }); }
+    // One-time move from the old 4-step layout (0 conj · 1 extindere · 2 recap · 3 dialog)
+    // to 3 steps (0 conj · 1 construiește · 2 dialog).
+    if(localStorage.getItem('RK_SFP_LAYOUT')!=='3'){
+      [doneSteps, shownCells].forEach(store=>Object.keys(store).forEach(ch=>{
+        const o=store[ch]||{}, n={};
+        if(o[0]!==undefined) n[0]=o[0];
+        if(o[2]!==undefined) n[1]=o[2];
+        if(o[3]!==undefined) n[2]=o[3];
+        store[ch]=n;
+      }));
+      localStorage.setItem('RK_SFP_LAYOUT','3');
+      saveState();
+    }
   } catch(e){}
 }
-function isChapterDone(chIdx){ return !!(doneSteps[chIdx]&&doneSteps[chIdx][3]); }
+function isChapterDone(chIdx){ return !!(doneSteps[chIdx]&&doneSteps[chIdx][LAST_STEP]); }
 
 function markDone(step){
   if(!doneSteps[currentCh])doneSteps[currentCh]={};
@@ -3525,16 +3536,15 @@ function renderChapters(){
 function renderStepper(){
   const el=document.getElementById('sfpStepper');
   let html='';
-  VISIBLE_STEPS.forEach((i,pos)=>{
-    const s=STEPS[i];
+  STEPS.forEach((s,i)=>{
     const done=isDone(i);
     const active=i===currentStep;
     const cls=active?'active':done?'done':'';
     html+=`<div class="step-node ${cls}" role="tab" aria-selected="${active}" onclick="goStep(${i})">
-      <div class="step-num">${done&&!active?'✓':pos+1}</div>
+      <div class="step-num">${done&&!active?'✓':i+1}</div>
       <div class="step-lbl">${t(s)}</div>
     </div>`;
-    if(pos<VISIBLE_STEPS.length-1) html+=`<div class="step-line"></div>`;
+    if(i<LAST_STEP) html+=`<div class="step-line"></div>`;
   });
   el.innerHTML=html;
 }
@@ -3547,8 +3557,8 @@ function renderNav(){
   const next=document.getElementById('navNext');
   const dots=document.getElementById('navDots');
   prev.disabled=currentStep===0;
-  next.textContent=currentStep===3?(lang==='ro'?'Capitol următor →':'Next Chapter →'):(lang==='ro'?'Continuă →':'Continue →');
-  dots.innerHTML=VISIBLE_STEPS.map(i=>{
+  next.textContent=currentStep===LAST_STEP?(lang==='ro'?'Capitol următor →':'Next Chapter →'):(lang==='ro'?'Continuă →':'Continue →');
+  dots.innerHTML=STEPS.map((_,i)=>{
     const cls=i===currentStep?'active':isDone(i)?'done':'';
     return `<div class="nav-dot ${cls}"></div>`;
   }).join('');
@@ -3746,7 +3756,7 @@ function buildExtChoices(step){
 }
 
 /* ═══════════════════════════════════════════════
-   RENDER REVIEW (Step 2) — fill blanks
+   RENDER BUILD / REVIEW (Step 1) — fill blanks
 ═══════════════════════════════════════════════ */
 function renderReview(){
   const ch=CHAPTERS[currentCh];
@@ -3766,7 +3776,7 @@ function renderReview(){
 
   ext.steps.forEach((step,si)=>{
     const key=`rv-${si}`;
-    const shown=wasShown(2,key);
+    const shown=wasShown(1,key);
     const inputClass=shown?'review-input shown':'review-input';
     const inputVal=shown?step.res.ko:'';
     html+=`<div class="flow-step-card visible-step" id="rfc-${si}">
@@ -3797,7 +3807,7 @@ function renderReview(){
 
   // Final review
   const fkey='rv-final';
-  const fShown=wasShown(2,fkey);
+  const fShown=wasShown(1,fkey);
   html+=`<div class="final-card">
     <div class="final-label">⭐ ${lang==='ro'?'Fraza finală — completează:':'Final Sentence — complete:'}</div>
     <div style="margin-bottom:8px">
@@ -3857,7 +3867,7 @@ function revealReview(si,ans){
   const inp=document.getElementById(id);
   if(!inp)return;
   inp.value=ans; inp.classList.remove('correct','wrong'); inp.classList.add('shown');
-  if(si!=='final') setShown(2,`rv-${si}`); else setShown(2,'rv-final');
+  if(si!=='final') setShown(1,`rv-${si}`); else setShown(1,'rv-final');
   speakKo(ans);
   checkReviewDone();
 }
@@ -3879,12 +3889,12 @@ function checkReviewDone(){
   });
   const finp=document.getElementById('ri-final');
   if(finp&&(finp.classList.contains('correct')||finp.classList.contains('shown')))done++;
-  if(done===total)markDone(2);
+  if(done===total)markDone(1);
   renderStepper(); renderNav();
 }
 
 /* ═══════════════════════════════════════════════
-   RENDER DIALOGUE (Step 3)
+   RENDER DIALOGUE (Step 2)
 ═══════════════════════════════════════════════ */
 function renderDialogue(){
   const ch=CHAPTERS[currentCh];
@@ -3906,7 +3916,7 @@ function renderDialogue(){
       </div>`;
     } else {
       const key=`dlg-${bi}`;
-      const shown=wasShown(3,key);
+      const shown=wasShown(2,key);
       const ans=turn.ans;
       bi++;
       html+=`<div class="dlg-turn spk-b">
@@ -3960,7 +3970,7 @@ function revealDlg(i,ans){
   speakKo(ans);
   const ch=CHAPTERS[currentCh];
   let bi=0;
-  ch.dlg.forEach(t=>{ if(t.spk==='B'){ if(bi===i)setShown(3,`dlg-${bi}`); bi++; } });
+  ch.dlg.forEach(t=>{ if(t.spk==='B'){ if(bi===i)setShown(2,`dlg-${bi}`); bi++; } });
   checkDlgDone();
 }
 function checkDlgDone(){
@@ -3971,7 +3981,7 @@ function checkDlgDone(){
     const inp=document.getElementById(`di-${i}`);
     if(inp&&(inp.classList.contains('correct')||inp.classList.contains('shown')))done++;
   }
-  if(done===total)markDone(3);
+  if(done===total)markDone(2);
   renderStepper(); renderNav();
 }
 
@@ -4032,8 +4042,8 @@ function renderPanel(){
   let html='<div class="sfp-panel active">';
   switch(currentStep){
     case 0: html+=renderConjugation(); break;
-    case 2: html+=renderReview();      break;
-    case 3: html+=renderDialogue();    break;
+    case 1: html+=renderReview();      break;
+    case 2: html+=renderDialogue();    break;
   }
   html+='</div>';
   el.innerHTML=html;
@@ -4045,22 +4055,19 @@ function renderPanel(){
    NAVIGATION
 ═══════════════════════════════════════════════ */
 function goStep(n){
-  currentStep=Math.max(0,Math.min(3,n));
-  if(STEPS[currentStep].hidden) currentStep=2;
+  currentStep=Math.max(0,Math.min(LAST_STEP,n));
   renderStepper(); renderPanel(); renderNav();
 }
 function navigate(dir){
   if(dir==='next'){
-    if(currentStep===3){
+    if(currentStep===LAST_STEP){
       // next chapter or wrap
       if(currentCh<CHAPTERS.length-1){ switchChapter(currentCh+1); return; }
       currentStep=0; renderStepper(); renderPanel(); renderNav(); return;
     }
-    const pos=VISIBLE_STEPS.indexOf(currentStep);
-    goStep(VISIBLE_STEPS[Math.min(pos+1,VISIBLE_STEPS.length-1)]);
+    goStep(currentStep+1);
   } else {
-    const pos=VISIBLE_STEPS.indexOf(currentStep);
-    goStep(VISIBLE_STEPS[Math.max(pos-1,0)]);
+    goStep(currentStep-1);
   }
 }
 function switchChapter(idx){
