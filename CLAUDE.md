@@ -53,6 +53,19 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
   - `lessons.html` rămâne ca „Toate lecțiile” (vedere de ansamblu + quiz), cu buton spre modul interactiv.
 - `word-context.html` = **Harta Cuvintelor**, cu 2 taburi: căutare cuvânt + Constelații (`?view=stars`). (fostul `word-map.html` a fost șters).
 
+### Pagini unite prin taburi (`js/core/page-tabs.js`)
+
+Perechi de pagini înrudite apar ca **o singură pagină cu 2 taburi**: pagina-gazdă își păstrează conținutul în primul tab, a doua pagină se încarcă în al doilea tab (iframe `?embed=1`, fără antet/🏠/limbă/fundal proprii). În meniuri apare doar gazda; linkurile directe folosesc `gazdă.html?tab=<id>` (parametrii în plus se transmit tabului).
+
+| Gazdă (tab 1) | Tab 2 |
+|---|---|
+| `writing.html` — Exersează după model | `caiet.html` — Caietul meu (`?tab=caiet`; builderul trimite `writing.html?tab=caiet&text=…&tr=…`) |
+| `basics.html` — Propoziții de bază | `phrases.html` — Expresii pe situații (`?tab=phrases`) |
+| `composition.html` — Compunere ghidată | `journal.html` — Jurnal (`?tab=journal`) |
+| `review.html` — De repetat | `mistakes.html` — Greșelile mele (`?tab=mistakes`) |
+
+Paginile din tab 2 nu se leagă direct din hub-uri. Pentru o pereche nouă: include `page-tabs.js` în `<head>` pe ambele pagini și apelează `RKTabs.init({ tabs: [...] })` la finalul gazdei.
+
 ### Fără build tools — reguli de bază
 
 - Nu adăuga pagini noi fără să le legi în cel puțin un hub (`index`/`learn`/`play`/`explore`) — o pagină nelegată nicăieri devine moartă (așa a rămas orfană `stats.html`, ștearsă ulterior).

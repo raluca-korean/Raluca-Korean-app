@@ -474,7 +474,7 @@
       .map(function(k){ return { ko: k, tr: d[k].tr || '' }; });
   }
   function openInCaiet(s){
-    location.href = 'caiet.html?text=' + encodeURIComponent(s.ko) + (s.tr ? '&tr=' + encodeURIComponent(s.tr) : '');
+    location.href = 'writing.html?tab=caiet&text=' + encodeURIComponent(s.ko) + (s.tr ? '&tr=' + encodeURIComponent(s.tr) : '');
   }
 
   var srQueue = [], srIdx = 0, srShown = false;
