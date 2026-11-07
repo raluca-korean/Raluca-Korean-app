@@ -358,6 +358,55 @@
   var _wordSpeakTimer = null;
   var _sentenceSpeakTimer = null;
 
+  // Romanian (and simple Latin) personal names → Hangul, loanword-style.
+  function hangulName(name){
+    var s = String(name || '').toLowerCase()
+      .replace(/[ăâ]/g, function(c){ return c === 'ă' ? 'ă' : 'î'; })
+      .replace(/[șş]/g, 'ș').replace(/[țţ]/g, 'ț');
+    var V = { a:0, 'ă':4, e:5, i:20, 'î':18, o:8, u:13, y:20 };           // ㅏ ㅓ ㅔ ㅣ ㅡ ㅗ ㅜ
+    var ON = { b:7, c:15, d:3, f:17, g:0, h:18, j:12, k:15, l:5, m:6, n:2, p:17, q:15, r:5, s:9, t:16, v:7, w:11, z:12,
+               'ș':9, 'ț':14, C:14, G:12, K:15, H:0 };                     // initial jamo indices
+    // digraphs: che/chi → K, ghe/ghi → H(g), ce/ci → C(ch), ge/gi → G(j); ci/gi + vowel: the i is silent
+    s = s.replace(/ch(?=[ei])/g, 'K').replace(/gh(?=[ei])/g, 'H')
+         .replace(/^ci(?=[aăouî])/, 'C').replace(/^gi(?=[aăouî])/, 'G')
+         .replace(/ce(?=[oau])/g, 'C').replace(/ge(?=[oau])/g, 'G')
+         .replace(/c(?=[ei])/g, 'C').replace(/g(?=[ei])/g, 'G').replace(/x/g, 'ks').replace(/qu/g, 'kv');
+    var isV = function(ch){ return V.hasOwnProperty(ch); };
+    var out = [];                       // syllables as {on, v, coda}
+    var SH = { a:'샤', e:'셰', i:'시', o:'쇼', u:'슈', 'ă':'셔', 'î':'슈' };
+    for(var i = 0; i < s.length; i++){
+      var ch = s[i], nx = s[i + 1];
+      if(isV(ch)){ out.push({ on:11, v:V[ch], coda:0 }); continue; }          // bare vowel → ㅇ onset
+      if(!ON.hasOwnProperty(ch)) continue;
+      if(nx && isV(nx)){
+        // intervocalic l: previous open syllable takes ㄹ batchim (엘레나, 랄루카)
+        // l after a vowel or after a consonant+ㅡ (블라드, 플로린): previous syllable takes ㄹ batchim
+        if(ch === 'l' && out.length && !out[out.length - 1].raw && out[out.length - 1].coda === 0 && i > 0 && (isV(s[i - 1]) || out[out.length - 1].v === 18)) out[out.length - 1].coda = 8;
+        if(ch === 'ș'){ out.push({ raw: SH[nx] || '시' }); i++; continue; }
+        out.push({ on: ON[ch], v: V[nx], coda: 0 }); i++; continue;
+      }
+      // consonant not followed by a vowel: n / m / l (and k before s, from x) close the previous syllable
+      var prev = out[out.length - 1];
+      var CODA = { n:4, m:16, l:8 };
+      if(prev && !prev.raw && prev.coda === 0 && CODA[ch] && !(ch === 'n' && nx === 'g' && false)){ prev.coda = CODA[ch]; continue; }
+      if(prev && !prev.raw && prev.coda === 0 && ch === 'k' && nx === 's'){ prev.coda = 1; continue; }   // 알렉산드루
+      if(prev && !prev.raw && prev.coda === 0 && prev.v !== 18 && (ch === 'c' || ch === 'k') && nx && !isV(nx) && nx !== 'r' && nx !== 'l'){ prev.coda = 1; continue; }   // 빅토르
+      if(ch === 'ș'){ out.push({ raw:'슈' }); continue; }
+      if(ch === 'ț'){ out.push({ raw:'츠' }); continue; }
+      if(ch === 'C'){ out.push({ raw:'치' }); continue; }
+      if(ch === 'G' || ch === 'j' || ch === 'z'){ out.push({ raw:'즈' }); continue; }
+      out.push({ on: ON[ch], v: 18, coda: 0 });                                  // C + ㅡ (크, 드, 브…)
+    }
+    return out.map(function(x){ return x.raw || String.fromCharCode(0xAC00 + (x.on * 21 + x.v) * 28 + x.coda); }).join('') || name;
+  }
+  // Name + topic particle chosen from the Hangul spelling (아나는 / 단은)
+  function nameWithTopic(name){
+    var h = hangulName(name);
+    var c = h.charCodeAt(h.length - 1);
+    var batchim = c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0;
+    return h + (batchim ? '은' : '는');
+  }
+
   function speakText(text, rate){
     if(!text) return;
     AudioEngine.speak(text, {rate: rate || 0.9});
@@ -1451,7 +1500,7 @@
     if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
     // Comitative (와/과): person you do the action with — placed right after topic
     if(associate && associate.ko) parts.push(associate.ko);
-    else if(clause.__companion) parts.push(clause.__companion + '하고 같이');
+    else if(clause.__companion) parts.push(hangulName(clause.__companion) + '하고 같이');
     if(time && time.ko) parts.push(time.ko);
     // Motion-to verbs (가다/오다/도착하다) take destination particle 에, not 에서
     var MOTION_TO = { '가다': 1, '오다': 1, '도착하다': 1 };
@@ -1994,6 +2043,12 @@
           }
           // "o să / am să / vreau să / pot să / trebuie să + verb" = future or
           // modal + MAIN verb, not a purpose verb ("merg la piață să cumpăr").
+          // an alias that itself starts with "to " ("to buy") in mid-sentence is an
+          // English purpose infinitive ("go to the market to buy fruit")
+          if(/^to /.test(candidate) && before.trim().length){
+            if(candidate.length > bestSaLen){ bestSa = item; bestSaLen = candidate.length; }
+            continue;
+          }
           var auxBeforeSa = prevWord === 'sa' && /^(o|am|ai|are|avem|aveti|au|vreau|vrei|vrea|vrem|vreti|vor|pot|poti|poate|putem|puteti|trebuie|incerc|incerci|incearca|reusesc|sper|vom|voi|vei|va|vor)$/.test(beforeWords[beforeWords.length - 1] || '');
           if((prevWord === 'sa' || prevWord === 'to') && !auxBeforeSa){
             if(candidate.length > bestSaLen){ bestSa = item; bestSaLen = candidate.length; }
@@ -2327,7 +2382,7 @@
                    // verbe TOPIK 5-6
                    'reusit','esuat','predat','renuntat','progresat','schimbat','decis','devenit',
                    'trebuit','muncit','obtinut','rezolvat','participat','contribuit',
-                   'trezit','inteles'];
+                   'trezit','inteles','stat'];
     // Word-boundary check: prevents 'studiat' matching inside 'studiati', etc.
     var _nn = ' ' + n + ' ';
     for(var i=0;i<roParts.length;i++){
@@ -2473,15 +2528,14 @@
           var ow = rawWords[pw];
           if(ow && /^[A-ZĂÎȘȚ]/.test(ow)){
             var owNorm = normalizeLatin(ow);
-            if(owNorm.length < 2 || /^(cred|sper|stiu|poate|azi|maine|ieri|acum|apoi|dar|deci|in|la|pe|cu|si|pot|poti|putem|vreau|vrei|vrem|nu|da|am|ai|ne|ma|te|eu|tu|el|ea|noi|voi|ei|ele|trebuie|vom|vor|va)$/.test(owNorm)) continue;
+            if(owNorm.length < 2 || /^(cred|sper|stiu|poate|azi|maine|ieri|acum|apoi|dar|deci|in|la|pe|cu|si|pot|poti|putem|vreau|vrei|vrem|nu|da|am|ai|ne|ma|te|eu|tu|el|ea|noi|voi|ei|ele|trebuie|vom|vor|va|to|the|a|an|my|we|he|she|it|they|you|this|that)$/.test(owNorm)) continue;
             if(clause.__companion && owNorm === normalizeLatin(clause.__companion)) continue;
             if(cd.text.indexOf(owNorm) !== -1 &&
                !findBestMatch('departure', owNorm) &&
                !findBestMatch('time', owNorm) &&
                !findBestMatch('verb', owNorm) &&
                !findBestMatch('object1', owNorm)){
-              var ptcl = 'aeiou'.indexOf(ow[ow.length-1].toLowerCase()) >= 0 ? '는' : '은';
-              subjects = [{ key:'topic', kind:'topic', ko: ow+ptcl, ro: ow, en: ow, isProperName: true }];
+              subjects = [{ key:'topic', kind:'topic', ko: nameWithTopic(ow.replace(/[.,!?;:]+$/, '')), ro: ow, en: ow, isProperName: true }];
               break;
             }
           }
@@ -2497,8 +2551,7 @@
           if(/^(cu|with)$/.test(nm[1])){
             // companion already handled above
           } else {
-            var nmPt = 'aeiou'.indexOf(nm[2].slice(-1).toLowerCase()) >= 0 ? '는' : '은';
-            subjects.push({ key:'topic', kind:'topic', ko: nm[2] + nmPt, ro: nm[2], en: nm[2], isProperName: true });
+            subjects.push({ key:'topic', kind:'topic', ko: nameWithTopic(nm[2]), ro: nm[2], en: nm[2], isProperName: true });
           }
         }
       }
@@ -2583,6 +2636,9 @@
         // "go home": the same noun as place and object (집에 + 집을) → keep only the place
         var _base = function(k){ return String(k || '').replace(/(에서|에|을|를|이|가|은|는)$/, ''); };
         if(objects[0] && places[0] && _base(objects[0].ko) === _base(places[0].ko)) objects = objects.slice(1);
+        if(objects[1] && objects[0] && objects[1].ko === objects[0].ko) objects = [objects[0]];   // same word matched twice
+        // compound verbs that already contain their object ("커피를 마시다") — don't repeat it
+        if(verb && verb.ko) objects = objects.filter(function(o){ return !(o && o.ko && verb.ko.indexOf(o.ko + ' ') === 0); });
         if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
         if(objects[1])  setFieldItem(clause, 'object2', objects[1]);
         if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
