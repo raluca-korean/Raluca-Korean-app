@@ -93,7 +93,9 @@
       pages.push({
         id: pageEl.dataset.id,
         level: pageEl.dataset.level,
-        ink: hasInk ? ink.toDataURL('image/png') : null
+        ink: hasInk ? ink.toDataURL('image/png') : null,
+        trace: pageEl.dataset.trace || null,
+        traceTr: pageEl.dataset.traceTr || null
       });
     });
     if (RKStorage.set(STORE_KEY, { selectedLevel: selectedLevel, pages: pages })) {
@@ -117,7 +119,7 @@
   }
 
   // ── GUIDE DRAWING ─────────────────────────────────────────────
-  function drawGuide(canvas, cols, rows, cellSize, cfg) {
+  function drawGuide(canvas, cols, rows, cellSize, cfg, trace) {
     var dpr = window.devicePixelRatio || 1;
     var cssW = cols * cellSize, cssH = rows * cellSize;
     canvas.width = cssW * dpr;
@@ -154,6 +156,23 @@
       }
     }
     ctx.setLineDash([]);
+
+    // model sentence to trace (sent from the builder): faint syllables, one per cell,
+    // repeated row after row so the whole page can be traced
+    if (trace) {
+      var chars = Array.from(String(trace).replace(/\s+/g, ' ').trim() + ' ');
+      ctx.fillStyle = isDark() ? 'rgba(247,244,250,.22)' : 'rgba(32,38,74,.18)';
+      ctx.font = Math.round(cellSize * .66) + 'px "Noto Sans KR", "Apple SD Gothic Neo", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var k = 0;
+      for (var tr = 0; tr < rows; tr++) {
+        for (var tc = 0; tc < cols; tc++) {
+          var ch = chars[k++ % chars.length];
+          if (ch !== ' ') ctx.fillText(ch, tc * cellSize + cellSize / 2, tr * cellSize + cellSize / 2 + cellSize * .03);
+        }
+      }
+    }
   }
 
   function sizeInkCanvas(canvas, cssW, cssH, preserveDataUrl) {
@@ -222,15 +241,19 @@
   }
 
   // ── PAGE BUILDING ────────────────────────────────────────────
-  function buildPageShell(id, level) {
+  function buildPageShell(id, level, trace, traceTr) {
     var cfg = LEVELS[level];
     var el = document.createElement('div');
     el.className = 'nb-page';
     el.dataset.id = id;
     el.dataset.level = level;
+    if (trace) el.dataset.trace = trace;
+    if (traceTr) el.dataset.traceTr = traceTr;
+    var esc = function (x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     el.innerHTML =
       '<div class="nb-page-bar">' +
         '<span class="nb-page-tag ' + level + '">' + t('tag' + level.charAt(0).toUpperCase() + level.slice(1)) + '</span>' +
+        (trace ? '<span class="nb-page-trace" title="' + esc(traceTr || '') + '">✍️ ' + esc(trace) + (traceTr ? ' <small>· ' + esc(traceTr) + '</small>' : '') + '</span>' : '') +
         '<div class="nb-page-btns">' +
           '<button type="button" class="nb-mini-btn" data-act="expand">' + t('expand') + '</button>' +
           '<button type="button" class="nb-mini-btn" data-act="download">' + t('download') + '</button>' +
@@ -262,7 +285,7 @@
     inner.style.height = cssH + 'px';
     pageEl.dataset.cols = cols;
 
-    drawGuide(guide, cols, cfg.rows, cfg.cell, cfg);
+    drawGuide(guide, cols, cfg.rows, cfg.cell, cfg, pageEl.dataset.trace);
     sizeInkCanvas(ink, cssW, cssH, inkDataUrl);
     if (!inkDataUrl) ink.dataset.hasInk = '0';
 
@@ -272,9 +295,9 @@
     }
   }
 
-  function addPage(level, inkDataUrl, skipSave) {
+  function addPage(level, inkDataUrl, skipSave, trace, traceTr) {
     var id = 'p' + (++pageSeq) + '_' + Date.now();
-    var el = buildPageShell(id, level);
+    var el = buildPageShell(id, level, trace, traceTr);
     document.getElementById('notebookPages').appendChild(el);
     renderPageCanvases(el, inkDataUrl);
     wirePageButtons(el);
@@ -378,7 +401,7 @@
     inner.style.width = cssW + 'px';
     inner.style.height = cssH + 'px';
 
-    drawGuide(guide, cols, cfg.rows, cellSize, cfg);
+    drawGuide(guide, cols, cfg.rows, cellSize, cfg, pageEl.dataset.trace);
 
     var srcInk = pageEl.querySelector('.nb-ink-canvas');
     var hasInk = srcInk.dataset.hasInk === '1';
@@ -531,7 +554,7 @@
       var guide = pageEl.querySelector('.nb-guide-canvas');
       var inner = pageEl.querySelector('.nb-canvas-inner');
       var cols = Math.round(parseInt(inner.style.width, 10) / cfg.cell);
-      drawGuide(guide, cols, cfg.rows, cfg.cell, cfg);
+      drawGuide(guide, cols, cfg.rows, cfg.cell, cfg, pageEl.dataset.trace);
     });
     var modal = document.getElementById('nbModal');
     if (modal && modal.classList.contains('open')) renderModalCanvas();
@@ -550,7 +573,7 @@
       selectedLevel = LEVEL_ORDER.indexOf(state.selectedLevel) !== -1 ? state.selectedLevel : 'large';
       state.pages.forEach(function (p) {
         var level = LEVELS[p.level] ? p.level : 'large';
-        addPage(level, p.ink, true);
+        addPage(level, p.ink, true, p.trace, p.traceTr);
       });
     } else if (state === null) {
       // First-ever visit: show the large → medium → small progression.
@@ -559,6 +582,15 @@
     }
     syncLevelButtons();
     applyTexts();
+
+    // caiet.html?text=…&tr=… — a sentence sent from the builder: new page with it to trace
+    var qs = new URLSearchParams(location.search);
+    if (qs.get('text')) {
+      var lvl = Array.from(qs.get('text')).length > 12 ? 'medium' : 'large';
+      var pg = addPage(lvl, null, false, qs.get('text').slice(0, 120), (qs.get('tr') || '').slice(0, 160));
+      history.replaceState(null, '', location.pathname);
+      setTimeout(function () { pg.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+    }
 
     document.getElementById('btnAddPage').addEventListener('click', function () {
       addPage(selectedLevel, null);

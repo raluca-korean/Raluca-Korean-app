@@ -439,11 +439,136 @@
     RKStorage.set(SAVED_KEY, savedSentences);
   }
 
+  /* ============================================================
+     SENTENCE REVIEW (SRS) — saved sentences come back on a schedule
+     (RO → KO recall). Due ones also show up in review.html.
+  ============================================================ */
+  var SENT_SRS_KEY = 'RK_SENT_SRS';
+  var SR_TXT = {
+    ro: { caiet: 'Scrie în caiet', srsOn: 'Scoate din repetare', srsOff: 'Adaugă la repetare', added: 'Adăugată la repetare 🔁',
+          removed: 'Scoasă din repetare', review: function(n){ return '🔁 Repetă' + (n ? ' (' + n + ')' : ''); }, none: 'Nicio propoziție de repetat acum ✨',
+          prompt: 'Spune în coreeană:', show: 'Arată răspunsul', hard: 'Greu', good: 'Bine', easy: 'Ușor', close: '✕ Închide',
+          done: 'Gata! Ai repetat toate propozițiile scadente.', noTr: '(fără traducere — citește și spune sensul)' },
+    en: { caiet: 'Write in notebook', srsOn: 'Remove from review', srsOff: 'Add to review', added: 'Added to review 🔁',
+          removed: 'Removed from review', review: function(n){ return '🔁 Review' + (n ? ' (' + n + ')' : ''); }, none: 'Nothing to review right now ✨',
+          prompt: 'Say it in Korean:', show: 'Show answer', hard: 'Hard', good: 'Good', easy: 'Easy', close: '✕ Close',
+          done: 'Done! You reviewed every due sentence.', noTr: '(no translation — read it and say what it means)' }
+  };
+  function srT(){ return SR_TXT[state.lang === 'en' ? 'en' : 'ro']; }
+  function sentSrs(){ return RKStorage.get(SENT_SRS_KEY, {}) || {}; }
+  function saveSentSrs(d){ RKStorage.set(SENT_SRS_KEY, d); }
+  function addToSentSrs(s){
+    var d = sentSrs();
+    if(!d[s.ko]) d[s.ko] = { n: 0, I: 1, EF: 2.5, due: Date.now(), tr: s.tr || '' };
+    saveSentSrs(d);
+  }
+  function toggleSentSrs(s){
+    var d = sentSrs();
+    if(d[s.ko]){ delete d[s.ko]; saveSentSrs(d); showToast(srT().removed); }
+    else { addToSentSrs(s); showToast(srT().added); }
+    renderSavedPanel();
+  }
+  function dueSentences(){
+    var d = sentSrs(), now = Date.now();
+    return Object.keys(d).filter(function(k){ return d[k] && d[k].due <= now; })
+      .map(function(k){ return { ko: k, tr: d[k].tr || '' }; });
+  }
+  function openInCaiet(s){
+    location.href = 'caiet.html?text=' + encodeURIComponent(s.ko) + (s.tr ? '&tr=' + encodeURIComponent(s.tr) : '');
+  }
+
+  var srQueue = [], srIdx = 0, srShown = false;
+  function startSentenceReview(){
+    srQueue = dueSentences();
+    if(!srQueue.length){ showToast(srT().none); return; }
+    srIdx = 0; srShown = false;
+    var ov = document.getElementById('sentReview');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'sentReview';
+      ov.className = 'sr-overlay';
+      ov.innerHTML = '<div class="sr-card" role="dialog" aria-modal="true"></div>';
+      document.body.appendChild(ov);
+      ov.addEventListener('click', function(e){
+        var b = e.target.closest('[data-sr]');
+        if(e.target === ov){ closeSentenceReview(); return; }
+        if(!b) return;
+        var act = b.getAttribute('data-sr');
+        if(act === 'close') closeSentenceReview();
+        else if(act === 'show'){ srShown = true; renderSentenceReview(); speakText(srQueue[srIdx].ko, 0.9); }
+        else if(act === 'play') speakText(srQueue[srIdx].ko, 0.9);
+        else rateSentence(Number(act));
+      });
+    }
+    ov.classList.add('open');
+    renderSentenceReview();
+  }
+  function closeSentenceReview(){
+    var ov = document.getElementById('sentReview');
+    if(ov) ov.classList.remove('open');
+    renderSavedPanel();
+  }
+  function renderSentenceReview(){
+    var ov = document.getElementById('sentReview');
+    if(!ov) return;
+    var card = ov.querySelector('.sr-card');
+    var t = srT();
+    if(srIdx >= srQueue.length){
+      card.innerHTML = '<div class="sr-done">🎉 ' + escapeHtml(t.done) + '</div>' +
+        '<div class="sr-actions"><button type="button" class="btn-primary sr-btn" data-sr="close">OK</button></div>';
+      return;
+    }
+    var s = srQueue[srIdx];
+    card.innerHTML =
+      '<div class="sr-top"><span class="sr-count">' + (srIdx + 1) + ' / ' + srQueue.length + '</span>' +
+        '<button type="button" class="btn-secondary sr-close" data-sr="close">' + escapeHtml(t.close) + '</button></div>' +
+      '<div class="sr-label">' + escapeHtml(t.prompt) + '</div>' +
+      '<div class="sr-tr">' + escapeHtml(s.tr || t.noTr) + '</div>' +
+      (srShown
+        ? '<div class="sr-ko">' + escapeHtml(s.ko) + ' <button type="button" class="roundIconBtn sr-play" data-sr="play" aria-label="▶">🔊</button></div>' +
+          '<div class="sr-actions">' +
+            '<button type="button" class="btn-secondary sr-btn" data-sr="1">' + escapeHtml(t.hard) + '</button>' +
+            '<button type="button" class="btn-secondary sr-btn" data-sr="4">' + escapeHtml(t.good) + '</button>' +
+            '<button type="button" class="btn-primary sr-btn" data-sr="5">' + escapeHtml(t.easy) + '</button>' +
+          '</div>'
+        : (!s.tr ? '<div class="sr-ko">' + escapeHtml(s.ko) + '</div>' : '') +
+          '<div class="sr-actions"><button type="button" class="btn-primary sr-btn" data-sr="show">' + escapeHtml(t.show) + '</button></div>');
+  }
+  function rateSentence(q){
+    var s = srQueue[srIdx];
+    var d = sentSrs();
+    var cur = d[s.ko] || { tr: s.tr };
+    var next = window.RKSrs ? RKSrs.stepClassic(cur, q) : cur;
+    next.tr = cur.tr || s.tr || '';
+    d[s.ko] = next;
+    saveSentSrs(d);
+    if(q >= 4 && window.RKGamification && RKGamification.addXPBonus) RKGamification.addXPBonus(2);
+    srIdx++; srShown = false;
+    renderSentenceReview();
+  }
+
   function renderSavedPanel(){
     var panel = document.getElementById('savedPanel');
     var list  = document.getElementById('savedList');
     var title = document.getElementById('savedTitle');
     if(!panel || !list) return;
+
+    // "Repetă (N)" — next to the export button
+    var revBtn = document.getElementById('srsReviewBtn');
+    var exp = document.getElementById('exportBtn');
+    if(!revBtn && exp){
+      revBtn = document.createElement('button');
+      revBtn.id = 'srsReviewBtn';
+      revBtn.type = 'button';
+      revBtn.className = 'btn-secondary msf-archive-review';
+      revBtn.addEventListener('click', startSentenceReview);
+      exp.parentNode.insertBefore(revBtn, exp);
+    }
+    if(revBtn){
+      var deckSize = Object.keys(sentSrs()).length;
+      revBtn.hidden = !deckSize;
+      revBtn.textContent = srT().review(dueSentences().length);
+    }
 
     if(!savedSentences.length){
       panel.classList.remove('has-items');
@@ -459,6 +584,8 @@
           '<div class="savedItemKo">' + escapeHtml(s.ko) + '</div>' +
           (s.tr ? '<div class="savedItemTr">' + escapeHtml(s.tr) + '</div>' : '') +
         '</div>' +
+        '<button class="savedItemAct roundIconBtn" type="button" data-caiet-idx="' + i + '" title="' + escapeHtml(srT().caiet) + '" aria-label="' + escapeHtml(srT().caiet) + '">✍️</button>' +
+        '<button class="savedItemAct roundIconBtn' + (sentSrs()[s.ko] ? ' on' : '') + '" type="button" data-srs-idx="' + i + '" title="' + escapeHtml(sentSrs()[s.ko] ? srT().srsOn : srT().srsOff) + '" aria-label="' + escapeHtml(sentSrs()[s.ko] ? srT().srsOn : srT().srsOff) + '">🔁</button>' +
         '<button class="savedItemDel" type="button" data-del-idx="' + i + '" title="Șterge">×</button>' +
       '</div>';
     }).join('');
@@ -478,8 +605,9 @@
     }
     savedSentences.unshift({ ko: built.korean, tr: built.translation || '', ts: Date.now() });
     persistSaved();
+    addToSentSrs(savedSentences[0]);          // saved sentences come back in the review
     renderSavedPanel();
-    showToast(currentUI().saved);
+    showToast(currentUI().saved + ' · 🔁');
   }
 
   function deleteSavedSentence(idx){
@@ -4188,6 +4316,10 @@
         return;
       }
 
+      var cBtn = event.target.closest('[data-caiet-idx]');
+      if(cBtn){ var cs = savedSentences[Number(cBtn.getAttribute('data-caiet-idx'))]; if(cs) openInCaiet(cs); return; }
+      var rBtn = event.target.closest('[data-srs-idx]');
+      if(rBtn){ var rs = savedSentences[Number(rBtn.getAttribute('data-srs-idx'))]; if(rs) toggleSentSrs(rs); return; }
       var delBtn = event.target.closest('[data-del-idx]');
       if(delBtn){
         deleteSavedSentence(Number(delBtn.getAttribute('data-del-idx')));
@@ -4219,6 +4351,7 @@
     renderSavedPanel();
 
     window.ralucaBuilderState = state;
+    if(/[?&]review=1\b/.test(location.search)) setTimeout(startSentenceReview, 300);
     window.ralucaBuilderRender = renderAll;
   }
 
