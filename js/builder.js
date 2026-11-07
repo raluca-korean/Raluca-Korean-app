@@ -1357,8 +1357,8 @@
 
     var cKey = connectorKey(clause);
     // negated 있다 (and 맛있다, 재미있다…) is 없다: "nu am bani" → 돈이 없어요
-    if(/있다$/.test(verb.ko) && (clause.negated || cKey === 'tense_neg' || cKey === 'tense_neg_past') && window.Conjugation){
-      var vNo = verb.ko.replace(/있다$/, '없다');
+    if((/있다$/.test(verb.ko) || verb.ko === '알다') && (clause.negated || cKey === 'tense_neg' || cKey === 'tense_neg_past') && window.Conjugation){
+      var vNo = verb.ko === '알다' ? '모르다' : verb.ko.replace(/있다$/, '없다');
       if(cKey === 'tense_neg')      return window.Conjugation.present(vNo);
       if(cKey === 'tense_neg_past') return window.Conjugation.past(vNo);
       var px = Object.create(clause);
@@ -1660,6 +1660,7 @@
     if(object2 && object2.ko) parts.push(object2.ko);
     // "ne ducem puțin" = go for a bit: with a motion verb 조금 (a small amount) → 잠깐
     mannerAdvs.forEach(function(ko){ parts.push(isMotionTo && ko === '조금' ? '잠깐' : ko); });
+    if(clause.__meansKo) parts.push(clause.__meansKo);
     // Purpose clause: motion verb → -(으)러 (보러 가다); other → -(으)려고 (벌려고 일하다)
     if(!skipVerb && clause.__purposeVerbItem){
       var pv = clause.__purposeVerbItem;
@@ -1680,6 +1681,10 @@
     }
 
     var result = cleanSentenceText(parts.join(' '));
+    // gapped object list: "am un câine și o pisică" → 개하고 고양이가 있어요
+    if(skipVerb && !useLocChain && object1 && object1.ko && !(departure && departure.ko) && !(time && time.ko) && /(을|를|이|가)$/.test(result)){
+      return result.replace(/(을|를|이|가)$/, '하고');
+    }
     return (skipVerb && !useLocChain) ? result + ',' : result;
   }
 
@@ -1793,6 +1798,19 @@
 
     if(els.translationText && document.activeElement !== els.translationText){
       els.translationText.textContent = built.translation || currentUI().defaultTranslation;
+    }
+
+    var unkEl = document.getElementById('unknownWords');
+    if(!unkEl && warnEl){
+      unkEl = document.createElement('div');
+      unkEl.id = 'unknownWords';
+      unkEl.className = 'grammar-warning unknown-words';
+      warnEl.parentNode.insertBefore(unkEl, warnEl.nextSibling);
+    }
+    if(unkEl){
+      var unk = (state.text && state.__unknown) || [];
+      unkEl.hidden = !unk.length;
+      unkEl.textContent = unk.length ? ((state.lang === 'en' ? '❓ Words the builder doesn\'t know yet: ' : '❓ Cuvinte pe care builderul nu le cunoaște încă: ') + unk.join(', ')) : '';
     }
 
     if(korean) autoSpeakSentence(korean);
@@ -2569,6 +2587,7 @@
     if(!m) return null;
     return { text: raw.slice(0, m.index) + (repl == null ? ' ' : repl) + raw.slice(m.index + m[0].length), m: m };
   }
+  var MOTION_NOOBJ = { '가다':1, '오다':1, '도착하다':1, '떠나다':1, '돌아오다':1, '산책하다':1, '달리다':1 };
   var NUM_RE = '\\d{1,3}|unu|una|doi|doua|trei|patru|cinci|sase|sapte|opt|noua|zece|unsprezece|doisprezece|douasprezece|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve';
   var NUM_WORDS = { un:1, o:1, a:1, an:1, unu:1, una:1, one:1, doi:2, doua:2, two:2, trei:3, three:3, patru:4, four:4, cinci:5, five:5, sase:6, six:6,
                     sapte:7, seven:7, opt:8, eight:8, noua:9, nine:9, zece:10, ten:10, unsprezece:11, eleven:11, doisprezece:12, douasprezece:12, twelve:12 };
@@ -2712,11 +2731,12 @@
     var n = normalizeLatin(w);
     if(!n || REL_AUX[n] || REL_CLITIC[n]) return null;
     var it = findBestMatch('topic', n) || findBestMatch('object1', n) || findBestMatch('departure', n);
+    if(!it){ var lh = lexLookup(n); if(lh && (lh.kind === 'noun' || lh.kind === 'place')) it = lexItem(lh, lh.kind === 'place' ? 'departure' : 'object1'); }
     return it && it.ko && !NOM_PRONOUN[it.ko] ? it : null;
   }
   function relAttr(verb, tense, neg){
     var conj = window.Conjugation, v = verb.ko;
-    if(neg && /있다$/.test(v)){ v = v.replace(/있다$/, '없다'); neg = false; verb = { ko: v, ro: verb.ro }; }
+    if(neg && (/있다$/.test(v) || v === '알다')){ v = v === '알다' ? '모르다' : v.replace(/있다$/, '없다'); neg = false; verb = { ko: v, ro: verb.ro }; }
     var desc = isDescriptive(verb) && !/(있|없)다$/.test(v);
     if(neg) return conj.stem(v) + (tense === 'past' ? '지 않은' : desc ? '지 않은' : '지 않는');
     if(tense === 'past')   return (desc || /(있|없)다$/.test(v)) ? pastStem(v) + '던' : pastAttr(v);
@@ -2725,12 +2745,56 @@
     return conj.dropRieul(conj.stem(v)) + '는';
   }
   function speakLang(v){ var c = {}; for(var k in v) c[k] = v[k]; c.ko = '하다'; c.forms = null; return c; }
-  function buildRelKo(relText, head){
+  // implied subject of a Romanian relative from the verb's person: "pe care o citesc" → 제가
+  function personSubject(rn){
+    var toks = rn.trim().split(' ');
+    for(var i = 0; i < toks.length; i++){
+      var w = toks[i];
+      if(REL_CLITIC[w] && w !== 'a') continue;
+      if(/^(am|ai|a|au|ati)$/.test(w) && toks[i + 1] && tokenVerb(toks[i + 1])){
+        if(w === 'am') return toks[i - 1] === 'ne' ? '우리가' : '제가';
+        return { ai: '네가', ati: '여러분이' }[w] || null;
+      }
+      if(tokenVerb(w)){
+        if(w.length > 3 && /(am|em|im|um)$/.test(w)) return '우리가';
+        if(/esti$/.test(w)) return '네가';
+        if(/(ati|eti|iti|ati)$/.test(w)) return '여러분이';
+        if(/i$/.test(w))  return '네가';
+        if(/[aei]$/.test(w) || /a$/.test(w)) return null;
+        return '제가';
+      }
+    }
+    return null;
+  }
+  function buildRelKo(relText, head, marker){
+    // a relative inside the relative ("cartea pe care am scris-o" inside "omul care a citit …")
+    var inner = extractRelatives(relText);
+    relText = inner.text;
+    // a nested relative we could not read: drop it rather than let its verb take over
+    var _nm = /\s(pe care|care|unde|who|whom|which|that|where)\s/.exec(' ' + foldKeep(relText) + ' ');
+    if(_nm) relText = relText.slice(0, Math.max(0, _nm.index - 1));
+    var withMods = function(it){
+      if(!it || !it.ko) return it;
+      for(var mi = 0; mi < inner.mods.length; mi++){
+        if(koBase(it.ko) === inner.mods[mi].base){ var c = {}; for(var k in it) c[k] = it[k]; c.ko = inner.mods[mi].ko + ' ' + it.ko; return c; }
+      }
+      return it;
+    };
     var rn = ' ' + normalizeLatin(relText) + ' ';
     var hb = koBase(head.ko);
     var other = function(it){ return it && it.ko && koBase(it.ko) !== hb ? it : null; };
     var langa = /\b(langa|next to|near|aproape de)\b/.test(rn);
     var verb = findBestMatch('verb', rn.replace(/\b(langa|aproape de)\b/g, ' '));
+    // the relative's own verb is the first one in it ("care cântă melodia…")
+    var _rt = rn.trim().split(' ');
+    for(var ri = 0; ri < _rt.length; ri++){
+      var fv = tokenVerb(_rt[ri]);
+      if(fv){ if(verb && verb.ko !== fv.ko && verb.ko.slice(-fv.ko.length) !== fv.ko && fv.ko.slice(-verb.ko.length) !== verb.ko) verb = fv; break; }
+    }
+    if(!verb){
+      var _uv = uncoveredTokens(rn.trim());
+      for(var vi = 0; vi < _uv.length && !verb; vi++){ var lv = lexLookup(_uv[vi].t); if(lv && (lv.kind === 'verb' || lv.kind === 'adj')) verb = lexItem(lv, 'verb'); }
+    }
     if((!verb || verb.ko === '있다') && (/\b(este|e|is|are|sunt|se afla)\b/.test(rn) || langa)) verb = { ko: '있다', ro: 'a fi', en: 'to be' };
     if(!verb || !verb.ko || verb.isPhrase) return null;
     var tense = detectTenseFromText(rn);
@@ -2743,12 +2807,17 @@
     var time = findBestMatch('time', rn);
     var loc  = other(findBestMatch('departure', rn));
     var obj  = other(findBestMatch('object1', rn));
+    if(!obj){   // dictionary fallback for the relative's object
+      var _ut = uncoveredTokens(rn.trim());
+      for(var ui = 0; ui < _ut.length && !obj; ui++){ var lh = lexLookup(_ut[ui].t); if(lh && lh.kind === 'noun') obj = other(lexItem(lh, 'object1')); }
+    }
     if(obj && verb.ko.indexOf(' ') > 0 && verb.ko.indexOf(koBase(obj.ko)) === 0) obj = null;
     if(obj && subj && koBase(obj.ko) === koBase(subj.ko)) obj = null;
     if(loc && obj && koBase(loc.ko) === koBase(obj.ko)) obj = null;
     var parts = [];
-    if(subj) parts.push(koNom(subj.ko));
-    else if(tense === 'past' && /\b(mi ai|ti ai|ai) [a-z]+t\b/.test(rn)) parts.push('네가');   // "pe care mi-ai dat-o"
+    subj = withMods(subj); loc = withMods(loc); obj = withMods(obj);
+    if(subj) parts.push(subj.ko.indexOf(' ') > 0 ? subj.ko.replace(/(\S+)$/, function(w){ return koNom(w); }) : koNom(subj.ko));
+    else if(marker && marker !== 'care' && marker !== 'who'){ var ps = personSubject(rn); if(ps) parts.push(ps); }
     if(time && time.ko) parts.push(time.ko);
     if(loc){
       var toEi = { '가다':1, '오다':1, '있다':1, '살다':1, '도착하다':1 };
@@ -2783,15 +2852,17 @@
         if(stop) endIdx = Math.max(0, stop.index - 1);
       } else {
         // relative sits inside the subject: it ends where the main predicate starts
-        var firstV = null;
+        var firstV = null, pendingInner = 0;
         for(var k = 0; k < toks.length; k++){
           var nw = normalizeLatin(toks[k].w);
+          if(/^(care|who|which|that|unde|where|whom)$/.test(nw)){ pendingInner++; continue; }
           if(k > 0 && REL_COPULA[nw]){
             var st = toks[k].i;
             if(nw === 'fost' && /^(a|au|am|ai)$/.test(normalizeLatin(toks[k - 1].w))) st = toks[k - 1].i;
             endIdx = st; break;
           }
           var tv = tokenVerb(toks[k].w);
+          if(tv && pendingInner > 0){ pendingInner--; continue; }   // that verb belongs to the nested relative
           if(tv){
             if(!firstV) firstV = tv;
             else if(tv.ko !== firstV.ko){ endIdx = toks[k].i; break; }
@@ -2800,13 +2871,136 @@
         if(comma !== -1 && comma < endIdx) endIdx = comma;
       }
       var relText = afterF.slice(0, endIdx);
-      var relKo = relText.trim() ? buildRelKo(relText, head) : null;
+      var relKo = relText.trim() ? buildRelKo(relText, head, mk[1]) : null;
       if(!relKo) break;
       var rest = res.text.slice(afterStart + endIdx).replace(/^\s*,\s*/, ' ');
       res.text = res.text.slice(0, mk.index) + ' ' + rest;
       res.mods.push({ base: koBase(head.ko), ko: relKo });
     }
     return res;
+  }
+
+  // ---- fallback lexicon: data/vocab-korean.json (the app's 1500-word dictionary) ----
+  // Words the builder's own vocabulary doesn't know are looked up here, so
+  // "Cumpăr o umbrelă" still finds 우산. Whatever is still unknown is listed
+  // under the sentence instead of being silently dropped.
+  var LEX = null;
+  var ALIAS_SET = null;
+  var FUNC_WORDS = {};
+  ('eu tu el ea noi voi ei ele ma te se ne va il o ii le mi ti si sau dar iar ca sa de la in pe cu din pentru prin spre fara dupa pana langa ' +
+   'un una niste acest aceasta acel aceea acesta asta ala foarte mai tot toti toate nu da cel cea cei cele al ai ale lui lor meu mea mei mele tau ta ' +
+   'sau ori nici fie deja inca doar chiar cam prea cat cate care ce cine unde cum cand daca deci apoi atunci acum aici acolo am ai a au ati are avem aveti ' +
+   'sunt esti e este suntem sunteti fost fi fie vom vor voi vei the an to of on at for with and or but is are was were be been being do does did ' +
+   'i you he she we they it my your his her our their me him them us this that these those not very so too also just only then there here have has had ' +
+   'will would can could should must may might as by from into about than what who whom which where when why how some any all no yes xfearx xcommax ' +
+   'ora ore ani anul luni luna zile zi saptamani saptamana jumatate clock year years month months day days week weeks hour hours').split(' ')
+    .forEach(function(w){ if(w) FUNC_WORDS[w] = 1; });
+
+  function buildAliasSet(){
+    ALIAS_SET = {};
+    Object.keys(DATA || {}).forEach(function(b){
+      (Array.isArray(DATA[b]) ? DATA[b] : []).forEach(function(it){
+        if(!it) return;
+        [it.ko, it.ro, it.en].concat(it.aliases || []).forEach(function(a){
+          var n = normalizeLatin(a); if(n) ALIAS_SET[n] = 1;
+        });
+      });
+    });
+  }
+  var NOUN_ENDS = ['urilor','urile','ului','ilor','elor','lor','uri','ele','ile','ul','le','ua','ea','ii','a','i','e','s','es'];
+  function buildLex(list){
+    var lx = { word: {}, stems: [] };
+    (list || []).forEach(function(e){
+      if(!e || !e.ko) return;
+      var cats = e.categories || [];
+      if(cats.indexOf('grammar') !== -1 || cats.indexOf('connectors') !== -1 || /^-/.test(e.ko)) return;
+      var kind = cats.indexOf('verbs') !== -1 ? 'verb' : cats.indexOf('adjectives') !== -1 ? 'adj'
+               : (cats.indexOf('adverbs') !== -1 || cats.indexOf('modifiers') !== -1) ? 'adv'
+               : cats.indexOf('times') !== -1 ? 'time' : cats.indexOf('places') !== -1 ? 'place' : 'noun';
+      if(kind === 'adj' && /색$/.test(e.ko)) kind = 'color';
+      if((kind === 'verb' || kind === 'adj') && !/다$/.test(e.ko)) kind = 'noun';
+      [['ro', e.ro], ['en', e.en]].forEach(function(pair){
+        String(pair[1] || '').replace(/\([^)]*\)/g, ' ').split(/[\/,;]/).forEach(function(g){
+          var n = normalizeLatin(g);
+          if(kind === 'verb' || kind === 'adj') n = n.replace(/^(a fi|a se|a|to be|to)\s+/, '');
+          if(!n || n.length < 3) return;
+          var entry = { e: e, kind: kind };
+          if(!lx.word[n]) lx.word[n] = entry;
+          if(pair[0] === 'ro' && n.indexOf(' ') === -1){
+            if(kind === 'verb'){
+              var st = n.replace(/(ea|a|i|e|u)$/, '');
+              if(st.length >= 3) lx.stems.push({ stem: st, entry: entry });
+            } else if((kind === 'adj' || kind === 'color') && n.length >= 4){
+              lx.stems.push({ stem: n.replace(/(os|oasa|a|e|i|u)$/, ''), entry: entry });
+            }
+          }
+        });
+      });
+    });
+    lx.stems.sort(function(a, b){ return b.stem.length - a.stem.length; });
+    return lx;
+  }
+  function lexLookup(tok){
+    if(!LEX || !tok || tok.length < 3 || FUNC_WORDS[tok]) return null;
+    if(LEX.word[tok]) return LEX.word[tok];
+    // feminine job nouns: doctoriță → doctor, profesoară → profesor
+    var fem = tok.replace(/(ita|ite|itei)$/, '').replace(/oara$|oare$|oarei$/, 'or');
+    if(fem !== tok && fem.length >= 3 && LEX.word[fem] && LEX.word[fem].kind !== 'verb') return LEX.word[fem];
+    for(var i = 0; i < NOUN_ENDS.length; i++){
+      var en = NOUN_ENDS[i];
+      if(tok.length - en.length < 3 || tok.slice(-en.length) !== en) continue;
+      var b = tok.slice(0, -en.length);
+      var tries = [b, b + 'a', b + 'e', b + 'u', b + 'i'];
+      for(var j = 0; j < tries.length; j++){
+        var hit = LEX.word[tries[j]];
+        if(hit && (hit.kind === 'noun' || hit.kind === 'place')) return hit;
+      }
+    }
+    for(var k = 0; k < LEX.stems.length; k++){
+      var s = LEX.stems[k];
+      if(tok.indexOf(s.stem) === 0 && tok.length - s.stem.length <= 4) return s.entry;
+    }
+    return null;
+  }
+  // adjective / colour reading of a word ("roșie" after a noun = red, not tomato)
+  function lexAdj(tok){
+    if(!LEX || !tok || FUNC_WORDS[tok]) return null;
+    var w = LEX.word[tok];
+    if(w && (w.kind === 'adj' || w.kind === 'color')) return w;
+    for(var k = 0; k < LEX.stems.length; k++){
+      var s = LEX.stems[k];
+      if((s.entry.kind === 'adj' || s.entry.kind === 'color') && tok.indexOf(s.stem) === 0 && tok.length - s.stem.length <= 4) return s.entry;
+    }
+    return null;
+  }
+  function adjModifierKo(hit){
+    var ko = hit.e.ko;
+    if(hit.kind === 'color') return /^(빨간|노란|파란|하얀|까만|검은)색$/.test(ko) ? ko.slice(0, -1) : ko;
+    return window.Conjugation ? window.Conjugation.adjAttributive(ko) : ko;
+  }
+  // tokens of a clause that no builder vocabulary entry covers
+  function uncoveredTokens(text){
+    if(!ALIAS_SET) buildAliasSet();
+    var toks = String(text || '').split(' ').filter(Boolean);
+    var cov = toks.map(function(){ return false; });
+    for(var i = 0; i < toks.length; i++){
+      for(var len = Math.min(6, toks.length - i); len >= 1; len--){
+        if(ALIAS_SET[toks.slice(i, i + len).join(' ')]){ for(var c = i; c < i + len; c++) cov[c] = true; break; }
+      }
+    }
+    var out = [];
+    toks.forEach(function(t, idx){
+      if(!cov[idx] && !FUNC_WORDS[t] && t.length >= 3 && !/^\d+$/.test(t) && !NUM_WORDS[t]) out.push({ t: t, prev: toks[idx - 1] || '', prevCovered: idx > 0 && cov[idx - 1] });
+    });
+    return out;
+  }
+  function lexItem(hit, field){
+    var e = hit.e, ko = e.ko;
+    var hb = window.Conjugation && window.Conjugation.hasBatchim(ko);
+    if(field === 'object1')   ko = ko + (hb ? '을' : '를');
+    if(field === 'departure') ko = ko + '에서';
+    if(field === 'time')      ko = /(에|에는)$/.test(ko) ? ko : ko + '에';
+    return { key: field, kind: field, ko: ko, ro: e.ro, en: e.en, fromLexicon: true, aliases: [] };
   }
 
   function parseTextIntoClauses(){
@@ -2823,6 +3017,7 @@
     raw = FR.text;
     var REL = extractRelatives(raw);
     raw = REL.text;
+    var _unknown = [];
     state.__question = FR.question;
 
     var detectedTense = detectTenseFromText(raw);
@@ -2926,6 +3121,87 @@
         verb = findBestMatch('verb', clauseData[ci - 1].text);
       }
 
+      // words the builder vocabulary doesn't know → the app dictionary, else report them
+      var _rawCaps = {};
+      String(raw).split(/\s+/).forEach(function(w, wi){ if(wi > 0 && /^[A-ZĂÂÎȘŞȚŢ]/.test(w)) _rawCaps[normalizeLatin(w)] = 1; });
+      var _nounMods = [], _colorPred = null;
+      uncoveredTokens(cd.text).forEach(function(ut){
+        var tok = ut.t;
+        if(_rawCaps[tok]) return;                       // a name in mid-sentence
+        // adjective right after a noun → modifier ("rochie roșie" → 빨간 원피스)
+        var adj = lexAdj(tok);
+        var prevNoun = ut.prev && !FUNC_WORDS[ut.prev] && (findBestMatch('object1', ut.prev) || findBestMatch('topic', ut.prev) || (lexLookup(ut.prev) && lexLookup(ut.prev).kind === 'noun'));
+        if(adj && prevNoun){ _nounMods.push({ noun: ut.prev, ko: adjModifierKo(adj) }); return; }
+        if(adj && !verb && /^(e|este|sunt|esti|suntem|sunteti|foarte|is|are|was|very|nu|fost)$/.test(ut.prev)){
+          if(adj.kind === 'adj'){ verb = lexItem(adj, 'verb'); return; }
+          _colorPred = adj.e.ko; return;                  // "mașina e roșie" → 빨간색이에요
+        }
+        var hit = lexLookup(tok);
+        if(hit && (hit.kind === 'verb' || hit.kind === 'adj')){ if(!verb){ verb = lexItem(hit, 'verb'); return; } }
+        else if(hit && hit.kind === 'adv'){ if(descs.length < 2){ descs.push(lexItem(hit, 'adverb')); return; } }
+        else if(hit && hit.kind === 'time'){ if(!times.length){ times.push(lexItem(hit, 'time')); return; } }
+        else if(hit && hit.kind === 'place'){ if(!places.length){ places.push(lexItem(hit, 'departure')); return; } }
+        else if(hit){ if(objects.length < 2){ var lo = lexItem(hit, 'object1'); lo.srcTok = tok; objects.push(lo); return; } }
+        // a capitalised first word that is not in any dictionary is a name — the fallback below handles it
+        if(!hit && ci === 0 && normalizeLatin(String(raw).trim().split(/\s+/)[0]) === tok) return;
+        if(!hit && _unknown.indexOf(tok) === -1) _unknown.push(tok);
+      });
+      if(_nounMods.length){
+        var _modify = function(list){
+          return list.map(function(it){
+            for(var m = 0; m < _nounMods.length; m++){
+              var nm0 = _nounMods[m];
+              var same = it.srcTok === nm0.noun;
+              if(!same){ var f = findBestMatch('object1', nm0.noun) || findBestMatch('topic', nm0.noun); same = !!(f && f.ko === it.ko); }
+              if(same){ var c = {}; for(var k in it) c[k] = it[k]; c.ko = nm0.ko + ' ' + it.ko; return c; }
+            }
+            return it;
+          });
+        };
+        objects = _modify(objects);
+        subjects = _modify(subjects);
+      }
+
+      // "parola de la telefon" → 전화 비밀번호를 (Y's X)
+      var _dl = /(\S+) de la (\S+)/.exec(cd.text);
+      if(_dl && objects.length >= 2){
+        var _objOf = function(w){
+          for(var q = 0; q < objects.length; q++){
+            var o = objects[q];
+            if(o.srcTok === w) return q;
+            var f = findBestMatch('object1', w); if(f && f.ko === o.ko) return q;
+          }
+          return -1;
+        };
+        var _hI = _objOf(_dl[1]), _gI = _objOf(_dl[2]);
+        if(_hI >= 0 && _gI >= 0 && _hI !== _gI){
+          var _mg = {}; for(var mk2 in objects[_hI]) _mg[mk2] = objects[_hI][mk2];
+          _mg.ko = koBase(objects[_gI].ko) + ' ' + objects[_hI].ko;
+          objects = [_mg].concat(objects.filter(function(o, q){ return q !== _hI && q !== _gI; }));
+        }
+      }
+
+      // means of transport: "cu trenul" → 기차로
+      var _tr = /\b(?:cu|by|with the|with)\s+(trenul|tren|train|autobuzul|autobuz|bus|avionul|avion|plane|masina|masinii|car|metroul|metrou|subway|taxiul|taxi|bicicleta|bicicleta|bike|bicycle|vaporul|vapor|ship)\b/.exec(' ' + cd.text + ' ');
+      if(_tr){
+        var _tk = /^tren|^train/.test(_tr[1]) ? '기차' : /^autobuz|^bus/.test(_tr[1]) ? '버스' : /^avion|^plane/.test(_tr[1]) ? '비행기'
+                : /^masin|^car/.test(_tr[1]) ? '차' : /^metro|^subway/.test(_tr[1]) ? '지하철' : /^taxi/.test(_tr[1]) ? '택시'
+                : /^bicicl|^bike|^bicycle/.test(_tr[1]) ? '자전거' : '배';
+        var _tj = _jong(_tk.slice(-1));
+        clause.__meansKo = _tk + (_tj > 0 && _tj !== 8 ? '으로' : '로');
+        objects = objects.filter(function(o){ return koBase(o.ko) !== _tk; });
+      } else if(/\b(pe jos|on foot)\b/.test(cd.text)){
+        clause.__meansKo = '걸어서';
+      }
+      // a city / country the vocabulary doesn't know: "la Busan" → 부산에
+      if(!places.length){
+        var _pl = String(raw).match(/(?:^|\s)(?:la|în|in|to|din|from|spre)\s+([A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ\-]+)/);
+        if(_pl && (' ' + cd.text + ' ').indexOf(' ' + normalizeLatin(_pl[1]) + ' ') !== -1 && !findBestMatch('departure', normalizeLatin(_pl[1]))){
+          places = [{ key:'departure', kind:'departure', ko: hangulName(_pl[1]) + '에서', ro: _pl[1], en: _pl[1], isProperName: true }];
+          _rawCaps[normalizeLatin(_pl[1])] = 1;
+        }
+      }
+
       // ---- hour ("la ora șapte" → 일곱 시에), duration ("de doi ani" → 2년 동안), counted nouns ("două pisici" → 고양이 두 마리) ----
       var _ct = ' ' + cd.text + ' ';
       var _timeExtra = [];
@@ -2961,11 +3237,18 @@
         if(cpm){
           var after = _ct.slice(cpm.index + cpm[0].length);
           var pn = findBestMatch('topic', after) || findBestMatch('object1', after);
+          if(!pn) pn = objects.filter(function(o){ return o.fromLexicon && (' ' + after + ' ').indexOf(' ' + o.srcTok + ' ') !== -1; })[0] || null;
+          if(!pn && _colorPred) pn = { ko: _colorPred };
           if(pn && pn.ko && !/^(저는|나는|너는|우리는|그는|그녀는|그들은)$/.test(pn.ko)){
             clause.__copula = { base: pn.ko.replace(/(을|를|이|가|은|는)$/, ''), neg: !!(cpm[1] || cpm[3]), past: /fost|was|were/.test(cpm[2]) };
             subjects = subjects.filter(function(x){ return x.ko !== pn.ko; });
             objects  = objects.filter(function(x){ return x.ko !== pn.ko; });
             _copulaFirstPerson = /^(sunt|i m|i am)$/.test(cpm[2]);
+            // "Mașina mea e roșie": the noun before the copula is its subject
+            if(!subjects.length && objects.length){
+              subjects = [{ key:'topic', kind:'topic', ko: koNom(objects[0].ko), ro: objects[0].ro, en: objects[0].en }];
+              objects = objects.slice(1);
+            }
           }
         }
       }
@@ -2985,7 +3268,8 @@
             var owNorm = normalizeLatin(ow);
             if(owNorm.length < 2 || /^(cred|sper|stiu|poate|azi|maine|ieri|acum|apoi|dar|deci|in|la|pe|cu|si|pot|poti|putem|vreau|vrei|vrem|nu|da|am|ai|ne|ma|te|eu|tu|el|ea|noi|voi|ei|ele|trebuie|vom|vor|va|to|the|a|an|my|we|he|she|it|they|you|this|that|sunt|esti|e|este|suntem|sunteti|imi|iti|ii|mi|ti|se|si|probabil|datorita|multumita|din|hai|haideti|asa|niciodata|vreodata|please|let|lets|im|dont|do|does|did|is|are|was|n|de|ca|o|un|una|daca|cand|fiindca|pentru|dupa|inainte|imediat|chiar|desi|mai|foarte|tot|toti|fiecare|ce|cine|unde|cum|de ce|care|aici|acolo|sa)$/.test(owNorm)) continue;
             if(clause.__companion && owNorm === normalizeLatin(clause.__companion)) continue;
-            if(cd.text.indexOf(owNorm) !== -1 &&
+            if(places.some(function(p){ return p.isProperName && normalizeLatin(p.ro) === owNorm; })) continue;
+            if(cd.text.indexOf(owNorm) !== -1 && !lexLookup(owNorm) &&
                !findBestMatch('departure', owNorm) &&
                !findBestMatch('time', owNorm) &&
                !findBestMatch('verb', owNorm) &&
@@ -3037,6 +3321,15 @@
       if(verb && isDescriptive(verb) && !subjects.length && !objects.length && places[0]){
         objects = [{ key:'object1', kind:'object1', ko: koBase(places[0].ko), ro: places[0].ro, en: places[0].en }];
         places = places.slice(1);
+      }
+      // "frumoasă" read both as adverb (예쁘게) and predicate (예쁘다): keep the predicate
+      if(verb && verb.ko && window.Conjugation){
+        var _vs = window.Conjugation.stem(verb.ko);
+        descs = descs.filter(function(d){ return !(d && d.ko && d.ko.indexOf(_vs) === 0 && d.ko !== verb.ko); });
+      }
+      if(verb && INTRANSITIVE_VERBS[verb.ko] && !MOTION_NOOBJ[verb.ko] && !subjects.length && objects[0] && !clause.__count){
+        subjects = [{ key:'topic', kind:'topic', ko: koNom(objects[0].ko), ro: objects[0].ro, en: objects[0].en }];
+        objects = objects.slice(1);
       }
       if(verb && isDescriptive(verb) && !subjects.length && objects[0] && !clause.__count){
         var dBase = objects[0].ko.replace(/(을|를|이|가|은|는)$/, '');
@@ -3184,6 +3477,9 @@
       });
     });
 
+    state.__unknown = _unknown.filter(function(u){
+      return !newClauses.some(function(cl){ var t = itemOf(cl, 'topic'); return t && t.isProperName && normalizeLatin(t.ro) === u; });
+    });
     state.clauses = newClauses;
 
     // For multi-clause sentences, tense detected globally can bleed from an earlier
@@ -3746,6 +4042,13 @@
     .then(function(data){
       DATA = data;
       init();
+      fetch('./data/vocab-korean.json')
+        .then(function(r){ return r.json(); })
+        .then(function(list){
+          LEX = buildLex(list);
+          if(state.text && String(state.text).trim()) parseTextIntoClauses();
+        })
+        .catch(function(){});
     })
     .catch(function(err){
       console.error('Failed to load builder vocabulary', err);
