@@ -823,7 +823,7 @@ function renderQ() {
   document.getElementById('mrsQFeedback').className   = 'mrs-q-feedback';
   document.getElementById('mrsQFill').style.width = `${(qIdx / qDeck.length) * 100}%`;
 
-  const wrongs  = shuffle(QUIZ_POOL.filter(x => x.rom !== q.rom)).slice(0, 3).map(x => x.rom);
+  const wrongs  = [...new Set(shuffle(QUIZ_POOL.filter(x => x.rom !== q.rom)).map(x => x.rom))].slice(0, 3);
   const options = shuffle([q.rom, ...wrongs]);
 
   const grid = document.getElementById('mrsQOpts');

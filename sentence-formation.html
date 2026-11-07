@@ -3733,24 +3733,44 @@ function shuffleArr(arr){
   return a;
 }
 
+// Grammar-ending swaps used to build wrong-but-plausible variants: the
+// learner has to notice the ending, not spot a stray period. Each pair is
+// tried on the LAST occurrence of the pattern in the correct sentence.
+const ENDING_SWAPS = [
+  ['야 돼요','도 돼요'], ['도 돼요','야 돼요'], ['야 해요','도 돼요'],
+  ['고 싶어요','고 있어요'], ['고 있어요','고 싶어요'],
+  ['지 마세요','세요'], ['으세요','었어요'], ['세요','셨어요'],
+  ['ㄹ 거예요','어요'], ['을 거예요','었어요'], [' 거예요','어요'],
+  ['었어요','어요'], ['았어요','아요'], ['했어요','해요'], ['였어요','예요'],
+  ['어요','었어요'], ['아요','았어요'], ['해요','했어요'],
+  ['니까 ','지만 '], ['지만 ','니까 '], ['아서 ','지만 '], ['어서 ','지만 '], ['해서 ','하지만 '],
+  ['는데 ','고 '], ['은데 ','고 '], ['ㄴ데 ','고 '], ['면 ','지만 '], ['고 ','서 '], ['서 ','고 '],
+  ['기 전에','은 후에'], ['은 후에','기 전에'], ['ㄴ 후에','기 전에'],
+  ['은','는'], ['는','은'], ['을','를'], ['를','을'], ['이','가'], ['가','이'], ['에서','에']
+];
+function normKo(x){ return String(x).replace(/[.,!?·\s]/g,''); }
 function buildExtChoices(step){
   const correct=step.res.ko;
-  const wrong1=step.from[0]; // base (didn't apply grammar)
-  let wrong2=null;
-  if(step.type==='combine' && step.from.length>=2){
-    wrong2=step.from[0]+' '+step.from[step.from.length-1];
-  } else {
-    for(const [key,val] of Object.entries(WORD_CONFUSERS)){
-      if(correct.includes(key)){
-        const candidate=correct.replace(key,val);
-        if(candidate!==correct&&candidate!==wrong1){wrong2=candidate;break;}
-      }
-    }
+  const seen=new Set([normKo(correct)]);
+  const pool=[correct];
+  const add=c=>{ if(c && !seen.has(normKo(c))){ seen.add(normKo(c)); pool.push(c); } };
+  add(step.from[0]);                                   // base form: grammar not applied
+  if(step.type==='combine' && step.from.length>=2) add(step.from[0]+' '+step.from[step.from.length-1]);
+  for(const [key,val] of Object.entries(WORD_CONFUSERS)){
+    if(pool.length>=3) break;
+    if(correct.includes(key)) add(correct.replace(key,val));
   }
-  const pool=[correct,wrong1];
-  if(wrong2&&wrong2!==correct&&wrong2!==wrong1) pool.push(wrong2);
-  while(pool.length<3) pool.push(pool[0]+'.');
-  return shuffleArr([...new Set(pool)].slice(0,3));
+  for(const [from,to] of ENDING_SWAPS){
+    if(pool.length>=3) break;
+    const i=correct.lastIndexOf(from);
+    if(i>=0) add(correct.slice(0,i)+to+correct.slice(i+from.length));
+  }
+  // last resort: another result from this chapter (never a copy of the answer)
+  const ch=CHAPTERS[currentCh];
+  if(pool.length<3 && ch && ch.ext && ch.ext.steps){
+    ch.ext.steps.forEach(st=>{ if(pool.length<3 && st.res) add(st.res.ko); });
+  }
+  return shuffleArr(pool.slice(0,3));
 }
 
 function isExtAnswered(si){ return !!(extAnswered[currentCh]&&extAnswered[currentCh][si]); }

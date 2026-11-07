@@ -867,11 +867,13 @@ body.dark-mode .rd-quiz-toggle { color: #A99BFF; }
       var right = x.translation[L] || x.translation.ro;
       var others = sents.filter(function (o) { return o !== x; })
         .map(function (o) { return o.translation[L] || o.translation.ro; })
+        .filter(function (o, i, arr) { return o !== right && arr.indexOf(o) === i; })
         .sort(function () { return Math.random() - .5; }).slice(0, 3);
+      if (others.length < 3) return null;
       var opts = [right].concat(others).sort(function () { return Math.random() - .5; });
       return { q: L === 'ro' ? 'Ce înseamnă propoziția?' : 'What does this sentence mean?', ko: x.full,
                options: opts, correct: opts.indexOf(right) };
-    });
+    }).filter(Boolean);
   }
   function buildQuiz(text) {
     var wrap = document.createElement('div');

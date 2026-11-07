@@ -148,7 +148,12 @@ function startGame(){
 function nextRound(){
   if(game.round >= ROUNDS){ endGame(); return; }
   var target = game.queue[game.round];
-  var distractors = shuffle(_vocab.filter(function(v){ return v !== target; })).slice(0, 3);
+  // Distractors must READ differently from the answer and from each other
+  // (several vocab entries share a gloss, e.g. two words for "a vorbi").
+  var seenM = {}; seenM[meaning(target)] = true;
+  var distractors = shuffle(_vocab.filter(function(v){ return v !== target; })).filter(function(v){
+    var m = meaning(v); if (seenM[m]) return false; seenM[m] = true; return true;
+  }).slice(0, 3);
   var options = shuffle([target].concat(distractors));
 
   var l = L();

@@ -605,6 +605,32 @@
     fab.addEventListener('click', function () { openHelp(key); });
     document.body.appendChild(fab);
 
+    // Never sit on top of another control (e.g. a fixed "← Înapoi" bar or the
+    // bottom nav in the same corner): if something clickable is under the
+    // button, lift it just above that control.
+    function clearOfControls() {
+      fab.style.bottom = '';
+      var r = fab.getBoundingClientRect();
+      var pts = [[r.left + 4, r.top + 4], [r.right - 4, r.top + 4], [r.left + 4, r.bottom - 4],
+                 [r.right - 4, r.bottom - 4], [r.left + r.width / 2, r.top + r.height / 2]];
+      var lift = 0;
+      pts.forEach(function (p) {
+        (document.elementsFromPoint ? document.elementsFromPoint(p[0], p[1]) : []).forEach(function (el) {
+          if (el === fab || fab.contains(el)) return;
+          var c = el.closest && el.closest('button, a, [role="button"], input, select, textarea, nav, #rkBottomNav');
+          if (!c || c === fab) return;
+          var cs = getComputedStyle(c);
+          if (cs.visibility === 'hidden' || cs.display === 'none') return;
+          var cr = c.getBoundingClientRect();
+          lift = Math.max(lift, window.innerHeight - cr.top + 10);
+        });
+      });
+      if (lift) fab.style.bottom = lift + 'px';
+    }
+    setTimeout(clearOfControls, 600);
+    setTimeout(clearOfControls, 2000);
+    window.addEventListener('resize', function () { setTimeout(clearOfControls, 100); });
+
     var seenKey = SEEN_PREFIX + key;
     if (!localStorage.getItem(seenKey)) {
       localStorage.setItem(seenKey, '1');

@@ -598,7 +598,12 @@
     var picks = shuffle(lines.slice()).slice(0, 3);
     var speakers = Object.keys(currentStory.characters || {});
     return picks.map(function (l, i) {
-      var others = shuffle(pool.filter(function (o) { return o.ko !== l.ko && o[lang] !== l[lang]; }));
+      // unique by what is shown, so no two options read the same
+      var seenT = {}, seenK = {}; seenT[l[lang]] = seenK[l.ko] = true;
+      var others = shuffle(pool).filter(function (o) {
+        if (seenT[o[lang]] || seenK[o.ko]) return false;
+        seenT[o[lang]] = seenK[o.ko] = true; return true;
+      });
       var kind = i % 3;
       if (kind === 2 && speakers.length < 2) kind = 0;
       if (kind === 0) return { kind: 0, line: l, answer: l[lang],
