@@ -706,6 +706,7 @@
       forms: item.forms || {},
       isPhrase: item.isPhrase || false,
       modifiesSubject: item.modifiesSubject || false,
+      fromDictionary: item.fromDictionary || false,
       raw: item
     };
   }
@@ -1735,6 +1736,22 @@
   // Quotative verbs take -다고 (reported speech/thought); all others use -다는 걸 (nominalized)
   var QUOTATIVE_VERBS = { '말하다':1, '생각하다':1 };
 
+  // the whole sentence again with another final ending (for an ambiguous reading)
+  function buildAltOutput(tenseKey){
+    var last = state.clauses[state.clauses.length - 1];
+    if(!last) return '';
+    var entry = null, idx = 0;
+    for(var i = 0; i < DATA.connector.length; i++) if(DATA.connector[i].id === tenseKey){ entry = DATA.connector[i]; idx = i; break; }
+    if(!entry) return '';
+    var saved = last.__picked ? last.__picked.connector : null;
+    var savedConn = last.connector ? { enabled: last.connector.enabled, index: last.connector.index } : null;
+    setFieldItem(last, 'connector', normalizeItem(entry, 'connector', idx));
+    var out = buildFullOutput().korean;
+    last.__picked.connector = saved;
+    if(savedConn){ last.connector.enabled = savedConn.enabled; last.connector.index = savedConn.index; }
+    return out;
+  }
+
   function renderPreview(){
     var built = buildFullOutput();
     var korean = built.korean || '';
@@ -1798,6 +1815,24 @@
 
     if(els.translationText && document.activeElement !== els.translationText){
       els.translationText.textContent = built.translation || currentUI().defaultTranslation;
+    }
+
+    var altEl = document.getElementById('altReading');
+    if(!altEl && warnEl){
+      altEl = document.createElement('div');
+      altEl.id = 'altReading';
+      altEl.className = 'grammar-warning alt-reading';
+      warnEl.parentNode.insertBefore(altEl, warnEl.nextSibling);
+    }
+    if(altEl){
+      var altKo = state.text && state.__altKey ? buildAltOutput(state.__altKey) : '';
+      altEl.hidden = !altKo;
+      if(altKo){
+        var noneed = state.__altKey === 'tense_noneed';
+        altEl.textContent = state.lang === 'en'
+          ? '💡 “nu trebuie să” can also mean ' + (noneed ? '“no need to”: ' : '“must not”: ') + altKo
+          : '💡 „nu trebuie să” poate însemna și ' + (noneed ? '„nu e nevoie să”: ' : '„n-ai voie să”: ') + altKo;
+      }
     }
 
     var unkEl = document.getElementById('unknownWords');
@@ -2156,6 +2191,9 @@
 
     for(var i=0;i<options.length;i++){
       var item = options[i];
+      // app-dictionary words: in the pickers, but matched in typed text only by the
+      // context-aware dictionary fallback (so "pot" stays a modal, not 냄비)
+      if(item && item.fromDictionary) continue;
       var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
 
       for(var j=0;j<candidates.length;j++){
@@ -2218,7 +2256,7 @@
 
     for(var i=0;i<options.length;i++){
       var item = options[i];
-      if(!item || !item.ko) continue;
+      if(!item || !item.ko || item.fromDictionary) continue;
 
       var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
       var bestPos = -1;
@@ -2294,7 +2332,7 @@
 
     for(var i=0;i<options.length;i++){
       var item = options[i];
-      if(!item || !item.ko) continue;
+      if(!item || !item.ko || item.fromDictionary) continue;
       var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
       var bestPos = -1, bestLen = 0;
       for(var j=0;j<candidates.length;j++){
@@ -2459,7 +2497,7 @@
     // the wrong text in the main clause slot.
     var SWAP_KEYS = {
       cause1:true, cause2:true,
-      after:true, before:true, concede:true, concede2:true, while:true, asap:true, fear:true, because_of:true, when:true
+      after:true, before:true, concede:true, concede2:true, while:true, asap:true, fear:true, because_of:true, when:true, condition:true
     };
     for(var pi = 0; pi < segments.length - 1; pi++){
       if(!segments[pi].leadingConnector && SWAP_KEYS[segments[pi].connector]){
@@ -2596,7 +2634,7 @@
   var COUNTERS = { '고양이':'마리', '개':'마리', '강아지':'마리', '새':'마리', '물고기':'마리', '책':'권', '공책':'권',
                    '친구':'명', '사람':'명', '학생':'명', '아이':'명', '커피':'잔', '맥주':'잔', '주스':'잔', '표':'장', '사진':'장', '티켓':'장', '종이':'장' };
   var GRAMMAR_FRAMES = [
-    { re: /\bnu (?:e|este|i) (?:nevoie|necesar|obligatoriu) (?:ca )?sa\b|\b(?:don'?t|do not|doesn'?t|does not) (?:have|need) to\b/, t: 'tense_noneed' },
+    { re: /\bnu trebuie (?:neaparat|obligatoriu) sa\b|\bnu trebuie sa(?=.*\bdaca nu (?:vrei|vreti|vrea|poti|puteti|ai chef|ai timp)\b)|\bnu (?:e|este|i) (?:nevoie|necesar|obligatoriu) (?:ca )?sa\b|\b(?:don'?t|do not|doesn'?t|does not) (?:have|need) to\b/, t: 'tense_noneed' },
     { re: /\bnu (?:ai|aveti|am|are|avem|au) voie(?: sa)?\b|\bnu (?:e|este) voie(?: sa)?\b|\b(?:is |are )?not allowed to\b/, t: 'tense_mustnot' },
     { re: /\b(?:ai|aveti|am|are|avem|au) voie(?: sa)?\b|\b(?:e|este) voie(?: sa)?\b|\b(?:is |are )?allowed to\b|\byou may\b/, t: 'tense_may' },
     { re: /\bnu (?:stiu|stii|stie|stim|stiti) (?:cum )?sa\b|\b(?:don'?t|doesn'?t|do not|does not) know how to\b/, t: 'tense_knowhow_not' },
@@ -2900,7 +2938,7 @@
     ALIAS_SET = {};
     Object.keys(DATA || {}).forEach(function(b){
       (Array.isArray(DATA[b]) ? DATA[b] : []).forEach(function(it){
-        if(!it) return;
+        if(!it || it.fromDictionary) return;
         [it.ko, it.ro, it.en].concat(it.aliases || []).forEach(function(a){
           var n = normalizeLatin(a); if(n) ALIAS_SET[n] = 1;
         });
@@ -3001,6 +3039,42 @@
     if(field === 'departure') ko = ko + '에서';
     if(field === 'time')      ko = /(에|에는)$/.test(ko) ? ko : ko + '에';
     return { key: field, kind: field, ko: ko, ro: e.ro, en: e.en, fromLexicon: true, aliases: [] };
+  }
+
+  function mergeAppDictionary(list){
+    if(!Array.isArray(list) || !DATA) return;
+    var known = {};
+    ['subject','object','location','time','description','verb'].forEach(function(b){
+      (DATA[b] || []).forEach(function(it){ if(it && it.ko){ known[it.ko] = 1; known[koBase(it.ko)] = 1; } });
+    });
+    var glossAliases = function(e, isVerb){
+      var out = [];
+      [e.ro, e.en].forEach(function(g){
+        String(g || '').replace(/\([^)]*\)/g, ' ').split(/[\/,;]/).forEach(function(p){
+          var n = normalizeLatin(p);
+          if(isVerb) n = n.replace(/^(a fi|a se|a|to be|to)\s+/, '');
+          if(n && n.length >= 3 && !FUNC_WORDS[n] && out.indexOf(n) === -1) out.push(n);
+        });
+      });
+      return out;
+    };
+    var NO_EI = /^(오늘|내일|어제|지금|매일|매주|매달|매년|요즘|항상|가끔|자주)$/;
+    list.forEach(function(e){
+      if(!e || !e.ko || /^-/.test(e.ko) || known[e.ko]) return;
+      var c = e.categories || [];
+      if(c.indexOf('grammar') !== -1 || c.indexOf('connectors') !== -1) return;
+      var hb = window.Conjugation && window.Conjugation.hasBatchim(e.ko);
+      var isV = /다$/.test(e.ko) && (c.indexOf('verbs') !== -1 || c.indexOf('adjectives') !== -1);
+      var item = { ko: e.ko, ro: e.ro, en: e.en, aliases: glossAliases(e, isV), fromDictionary: true };
+      if(isV){ item.ro = /^a /.test(e.ro) ? e.ro : (c.indexOf('adjectives') !== -1 ? 'a fi ' : 'a ') + e.ro; DATA.verb.push(item); }
+      else if(c.indexOf('adverbs') !== -1 || c.indexOf('modifiers') !== -1) DATA.description.push(item);
+      else if(c.indexOf('times') !== -1){ item.ko = NO_EI.test(e.ko) ? e.ko : e.ko + '에'; DATA.time.push(item); }
+      else if(c.indexOf('places') !== -1){ item.ko = e.ko + '에서'; DATA.location.push(item); }
+      else if(c.indexOf('subjects') !== -1 && c.indexOf('objects') === -1){ item.ko = e.ko + (hb ? '은' : '는'); DATA.subject.push(item); }
+      else { item.ko = e.ko + (hb ? '을' : '를'); DATA.object.push(item); }
+      known[e.ko] = 1;
+    });
+    ALIAS_SET = null;
   }
 
   function parseTextIntoClauses(){
@@ -3215,8 +3289,10 @@
         var dn = numVal(dm2[1]) || 1;
         var du = /^(ani|an|anul|year)/.test(dm2[2]) ? '년' : /^(luni|luna|month)/.test(dm2[2]) ? '개월' : /^(zile|zi|day)/.test(dm2[2]) ? '일' : /^(saptaman|week)/.test(dm2[2]) ? '주' : '시간';
         _timeExtra.push(dn + du + ' 동안'); _ct = _ct.replace(dm2[0], ' ');
+        if(/^de\s/.test(dm2[0].trim())) clause.__ongoing = true;
       }
       if(_timeExtra.length){
+        times = findAllMatches('time', _ct, 1);           // "de trei luni" is a duration, not Monday
         var tBase = times[0] ? times[0].ko + ' ' : '';
         times = [{ key:'time', kind:'time', ko: tBase + _timeExtra.join(' '), ro: cd.text, en: cd.text }];
       }
@@ -3511,6 +3587,8 @@
     for(var ni = 0; ni < newClauses.length - 1; ni++){
       if(clauseData[ni]){
         var clTns = detectTenseFromText(clauseData[ni].text);
+        // "dacă nu vrei" — plain negated 'want' (no "să + verb" after it)
+        if((clTns === 'notwish' || clTns === 'cannot') && !/\b(sa|to)\b/.test(normalizeLatin(clauseData[ni].text))) clTns = 'neg';
         if(clTns === 'neg'){
           newClauses[ni].negated = true;
           // If the negated clause also contains a past participle (e.g. "nu am mâncat"),
@@ -3527,6 +3605,7 @@
 
     // Grammar frames / questions decide the final ending
     var lastParsed = state.clauses[state.clauses.length - 1];
+    state.__altKey = null;
     var lastTxt = clauseData[clauseData.length - 1].text;
     if(detectedTenseKey === 'tense_neg'){
       var _ns = normalizeLatin(lastTxt).replace(/\bnu\b/g, ' ').replace(/(^| )n (?=(am|ai|a|au|ati)\b)/g, ' ');
@@ -3546,6 +3625,33 @@
         detectedTenseKey = 'tense_suggest';
       }
     }
+
+    // "Nu trebuie să vii" is ambiguous in Romanian: "you must not" (default) or
+    // "you don't have to" — show the other reading too.
+    var _fAll = foldKeep(state.text || '');
+    if(detectedTenseKey === 'tense_mustnot' && /\bnu (?:mai )?trebuie\b/.test(_fAll) && !/\bvoie\b/.test(_fAll)) state.__altKey = 'tense_noneed';
+    else if(detectedTenseKey === 'tense_noneed' && /\bnu trebuie sa\b/.test(_fAll) && !/\b(neaparat|obligatoriu|daca nu)\b/.test(_fAll)) state.__altKey = 'tense_mustnot';
+
+    // "Locuiesc în Seul de doi ani" — present + "de <durată>" is still going on: -고 있어요
+    if(detectedTenseKey === 'tense_pres' && newClauses.some(function(c){ return c.__ongoing; })) detectedTenseKey = 'tense_progressive';
+
+    // subject particle: subjects of subordinate clauses and of reported speech take 이/가
+    // (제가 피곤해서…, 엄마가 먹으라고 했어요); main-clause topics keep 은/는
+    var SUBORD = { condition:1, when:1, cause1:1, cause2:1, so:1, because_of:1, while:1, after:1, before:1, asap:1, fear:1,
+                   concede:1, concede2:1, formal_cause:1, informal_cause:1, during:1, aslong:1, extent:1, proportion:1, purpose:1, purpose2:1 };
+    var _toNom = function(cl){
+      var tp = itemOf(cl, 'topic');
+      if(!tp || !tp.ko || !/(은|는)$/.test(tp.ko)) return;
+      var cp = {}; for(var k in tp) cp[k] = tp[k];
+      cp.ko = tp.ko.indexOf(' ') > 0 ? tp.ko.replace(/(\S+)$/, function(w){ return koNom(w); }) : koNom(tp.ko);
+      setFieldItem(cl, 'topic', cp);
+    };
+    newClauses.forEach(function(cl, i){
+      if(i === newClauses.length - 1) return;
+      var cn = itemOf(cl, 'connector');
+      if(cn && SUBORD[cn.key || cn.id]) _toNom(cl);
+    });
+    if(detectedTenseKey === 'tense_said' || detectedTenseKey === 'tense_said_cmd') _toNom(lastParsed);
 
     // Set detected tense on the last clause
     var tenseEntry = null;
@@ -4037,18 +4143,18 @@
   // DATA used to be a ~850-line vocabulary literal baked into this file; it
   // now lives in data/builder-vocab.json like every other feature's data,
   // fetched once here before init() (and everything it calls) runs.
-  fetch('./data/builder-vocab.json')
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      DATA = data;
+  // ONE dictionary for the whole app: every word of data/vocab-korean.json is
+  // also a builder word. builder-vocab.json only adds the grammar layer
+  // (particles, conjugated aliases, connectors) — see tools/sync_builder_vocab.py.
+  Promise.all([
+    fetch('./data/builder-vocab.json').then(function(r){ return r.json(); }),
+    fetch('./data/vocab-korean.json').then(function(r){ return r.json(); }).catch(function(){ return []; })
+  ])
+    .then(function(res){
+      DATA = res[0];
+      mergeAppDictionary(res[1]);
+      LEX = buildLex(res[1]);
       init();
-      fetch('./data/vocab-korean.json')
-        .then(function(r){ return r.json(); })
-        .then(function(list){
-          LEX = buildLex(list);
-          if(state.text && String(state.text).trim()) parseTextIntoClauses();
-        })
-        .catch(function(){});
     })
     .catch(function(err){
       console.error('Failed to load builder vocabulary', err);

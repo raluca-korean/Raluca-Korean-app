@@ -39,6 +39,8 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 `exercises.json` (7 tipuri; fiecare exercițiu are `lessonId` = lecția din `lessons.json` pe care o exersează — nu folosi ID-uri fără lecție, răspunsul marchează lecția ca făcută; dialogurile generale `chain` n-au `lessonId`), `lessons.json`, `vocab-korean.json`, `phrases.json`, `stories.json`, `hanja.json`, `reading-texts.json`, `listening.json`, `numbers.json`, `honorifics.json`, `journal-prompts.json`, `composition-prompts.json`, `context-words.json`, `word-clusters.json`, `builder-vocab.json`, `extra-generated-sentences.json`, `basic-sentences.json`.
 
+**Un singur dicționar:** `vocab-korean.json` e dicționarul întregii aplicații (glosar, flashcards, memory, slot, harta cuvintelor **și builder** — builderul îl încarcă integral). `builder-vocab.json` adaugă doar stratul gramatical al builderului (particule, forme conjugate ca alias-uri, conectori). După ce adaugi cuvinte în `builder-vocab.json`, rulează `python3 tools/sync_builder_vocab.py`, ca să ajungă și în dicționar.
+
 ### Hub-uri: structură
 
 - `index.html`: card „Azi” (inel de progres + un singur buton), „Drumul de azi” (pași), quiz rapid inline (contează la sarcina zilnică `vocab`), expresia zilei.
