@@ -896,14 +896,17 @@ document.getElementById('quizSay').addEventListener('click', function(){
   if(_quizItem && window.AudioEngine) AudioEngine.speak(_quizItem.ko);
 });
 
-/* ── PHRASE OF THE DAY (real phrases.json) ── */
+/* ── PHRASE OF THE DAY (data/basic-sentences.json — Propoziții de bază, sentences only) ── */
 var _phrasePool = null;
 function renderWordOfDay(){
   if(!_phrasePool){
-    fetch('./data/phrases.json').then(function(r){ return r.json(); }).then(function(data){
+    fetch('./data/basic-sentences.json').then(function(r){ return r.json(); }).then(function(data){
       var pool = [];
-      (data.situations || []).forEach(function(sit){
-        (sit.items || []).forEach(function(item){ pool.push(Object.assign({ _situation: sit }, item)); });
+      (data.chapters || []).forEach(function(ch){
+        if(ch.id === 'ch14') return;                       // "Cuvinte pe teme" = single words, not phrases
+        (ch.units || []).forEach(function(u){
+          (u.items || []).forEach(function(item){ pool.push(Object.assign({ _situation: u }, item)); });
+        });
       });
       _phrasePool = pool;
       renderWordOfDay();
@@ -913,7 +916,7 @@ function renderWordOfDay(){
   if(!_phrasePool.length) return;
   var epochDay = Math.floor(Date.now() / 86400000);
   var phrase = _phrasePool[epochDay % _phrasePool.length];
-  document.getElementById('wodTag').textContent = (phrase._situation.icon || '') + ' ' + (phrase._situation[LANG] || phrase._situation.ro || '');
+  document.getElementById('wodTag').textContent = String(phrase._situation[LANG] || phrase._situation.ro || '').replace(/\s*[①-⑳]$/, '');
   document.getElementById('wodKo').textContent = phrase.ko;
   document.getElementById('wodRom').textContent = phrase.rom || '';
   document.getElementById('wodRom').style.display = localStorage.getItem('RK_SHOW_ROM') === '0' ? 'none' : '';

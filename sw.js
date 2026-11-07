@@ -1,4 +1,4 @@
-const CACHE = 'rk-v226';
+const CACHE = 'rk-v227';
 
 const STATIC = [
   './',
@@ -13,7 +13,6 @@ const STATIC = [
   './boss.html',
   './quick60.html',
   './memory.html',
-  './phrases.html',
   './basics.html',
   './exercises.html',
   './lessons.html',
@@ -53,7 +52,6 @@ const STATIC = [
   './pronunciation.css',
   './listening.css',
   './journal.css',
-  './phrases.css',
   './flag.svg',
   './manifest.json',
   './icons/icon.svg',
@@ -70,7 +68,6 @@ const STATIC = [
   './js/pronunciation.js',
   './js/listening.js',
   './js/journal.js',
-  './js/phrases.js',
   './js/core/utils.js',
   './js/core/audio.js',
   './sound-test.html',
@@ -112,7 +109,6 @@ const STATIC = [
   './data/numbers.json',
   './data/journal-prompts.json',
   './data/honorifics.json',
-  './data/phrases.json',
   './data/basic-sentences.json'
 ];
 
