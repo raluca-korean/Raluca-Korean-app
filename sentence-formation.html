@@ -700,13 +700,7 @@ html[data-mode="day"] .cc-final-trans { color: rgba(0,0,0,.45); }
   color: white;
 }
 
-/* ── EXT QUIZ CHOICES ─────────────────────────────────────── */
-.ext-choices {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin: 10px 0 4px;
-}
+/* ── VARIANTE (choices under a „Construiește” step) ───────── */
 .ext-choice-btn {
   width: 100%;
   text-align: left;
@@ -735,32 +729,6 @@ html[data-mode="day"] .ext-choice-btn {
 html[data-mode="day"] .ext-choice-btn:hover:not(:disabled) {
   background: rgba(0,0,0,.05);
 }
-.ext-choice-btn.correct-choice {
-  border-color: #58CC02 !important;
-  background: rgba(88,204,2,.1) !important;
-  color: #58CC02 !important;
-  cursor: default;
-}
-.ext-choice-btn.wrong-choice {
-  border-color: #FF4B4B !important;
-  background: rgba(255,75,75,.08) !important;
-  color: #FF4B4B !important;
-  animation: shake-choice .35s ease;
-}
-@keyframes shake-choice {
-  0%,100% { transform: translateX(0); }
-  20%      { transform: translateX(-7px); }
-  40%      { transform: translateX(7px); }
-  60%      { transform: translateX(-4px); }
-  80%      { transform: translateX(4px); }
-}
-.ext-result-wrap { display: none; }
-.ext-result-wrap.revealed {
-  display: block;
-  animation: sfpFade .3s ease;
-}
-.ext-final-hidden { display: none; }
-
 /* ── VOCAB POPUP ───────────────────────────────────────────── */
 .vocab-popup-overlay {
   position: fixed;
@@ -3449,7 +3417,7 @@ let currentCh  = 0;
 let currentStep= 0;
 const STEPS = [
   { ro:'Conjugare',    en:'Conjugation' },
-  { ro:'Extindere',    en:'Extension', hidden:true }, // merged into step 2 (button „Variante”)
+  { hidden:true },   // former „Extindere” — removed; kept as a slot so saved progress (indices 2,3) stays valid
   { ro:'Construiește', en:'Build'       },
   { ro:'Conversație',  en:'Dialogue'    }
 ];
@@ -3714,10 +3682,8 @@ function checkAllDone(){
 }
 
 /* ═══════════════════════════════════════════════
-   EXT QUIZ — state + helpers
+   VARIANTE — distractor helpers (button „Variante” in step „Construiește”)
 ═══════════════════════════════════════════════ */
-const extAnswered = {}; // extAnswered[chIdx][stepIdx] = true
-
 const WORD_CONFUSERS = {
   '너무':'조금', '조금':'너무',
   '열심히':'천천히', '천천히':'빨리',
@@ -3779,116 +3745,6 @@ function buildExtChoices(step){
   return shuffleArr(pool.slice(0,3));
 }
 
-function isExtAnswered(si){ return !!(extAnswered[currentCh]&&extAnswered[currentCh][si]); }
-
-function checkExtChoice(si,btn,isCorrect){
-  if(isExtAnswered(si)) return;
-  if(isCorrect){
-    btn.classList.add('correct-choice');
-    const stepEl=document.getElementById('ext-step-'+si);
-    if(stepEl){
-      stepEl.querySelectorAll('.ext-choice-btn').forEach(b=>{b.disabled=true;});
-      const res=stepEl.querySelector('.ext-result-wrap');
-      if(res) res.classList.add('revealed');
-    }
-    if(!extAnswered[currentCh]) extAnswered[currentCh]={};
-    extAnswered[currentCh][si]=true;
-    const ch=CHAPTERS[currentCh];
-    speakKo(ch.ext.steps[si].res.ko);
-    // reveal next step progressively
-    const nextEl=document.getElementById('ext-step-'+(si+1));
-    if(nextEl){
-      nextEl.style.display='';
-      nextEl.style.animation='sfpFade .4s ease';
-      setTimeout(()=>nextEl.scrollIntoView({behavior:'smooth',block:'nearest'}),200);
-    }
-    if(ch.ext.steps.every((_,i)=>isExtAnswered(i))){
-      const fc=document.getElementById('ext-final-card');
-      if(fc){
-        fc.classList.remove('ext-final-hidden');
-        fc.style.display='';
-        setTimeout(()=>fc.scrollIntoView({behavior:'smooth',block:'nearest'}),300);
-      }
-      markDone(1);
-    }
-  } else {
-    btn.classList.add('wrong-choice');
-    setTimeout(()=>btn.classList.remove('wrong-choice'),400);
-  }
-}
-
-/* ═══════════════════════════════════════════════
-   RENDER EXTENSION (Step 1) — progressive quiz
-═══════════════════════════════════════════════ */
-function renderExtension(){
-  const ch=CHAPTERS[currentCh];
-  const ext=ch.ext;
-  if(isDone(1)){
-    if(!extAnswered[currentCh]) extAnswered[currentCh]={};
-    ext.steps.forEach((_,i)=>{ extAnswered[currentCh][i]=true; });
-  }
-  const allDone=ext.steps.every((_,i)=>isExtAnswered(i));
-  // first step that hasn't been answered yet
-  const firstUnanswered=ext.steps.findIndex((_,i)=>!isExtAnswered(i));
-
-  let html=`<div class="panel-heading">
-    <h2>${lang==='ro'?'Extindere':'Extension'}</h2>
-    <p>${lang==='ro'?'Alege varianta corectă pentru fiecare pas.':'Choose the correct result for each step.'}</p>
-  </div>
-  <div class="flow-starts">`;
-  ext.starts.forEach(s=>{
-    html+=`<div class="start-bubble" onclick="speakKo('${s.ko}')">
-      <span>${s.ko}</span>
-      <span class="sb-trans">${t(s.tr)}</span>
-    </div>`;
-  });
-  html+='</div>';
-
-  ext.steps.forEach((step,si)=>{
-    const answered=isExtAnswered(si);
-    // hide steps that come after the first unanswered one
-    const hidden=!answered && si>firstUnanswered;
-    const choices=buildExtChoices(step);
-    html+=`<div class="flow-step-card visible-step" id="ext-step-${si}"${hidden?' style="display:none"':''}>
-      <div class="fsc-header">
-        <span class="op-badge ${step.type}">${step.badge}</span>
-        <span class="fsc-grammar">${step.grammar}</span>
-        <span class="fsc-instruction">${t(step.inst)}</span>
-      </div>
-      <div class="fsc-from">${lang==='ro'?'Din:':'From:'}
-        ${step.from.map(f=>`<span class="from-pill" onclick="speakKo('${f}')">${f}</span>`).join(' + ')}
-      </div>
-      <div class="fsc-arrow">↓</div>`;
-
-    if(answered){
-      html+=`<div class="fsc-result-ko">${step.res.ko} <button class="fsc-speak" onclick="speakKo('${step.res.ko}')">🔊</button></div>
-        <div class="fsc-result-trans">${t(step.res.tr)}</div>`;
-    } else {
-      html+=`<div class="ext-choices">`;
-      choices.forEach(choice=>{
-        const isC=(choice===step.res.ko);
-        html+=`<button class="ext-choice-btn" onclick="checkExtChoice(${si},this,${isC})">${choice}</button>`;
-      });
-      html+=`</div>
-        <div class="ext-result-wrap">
-          <div class="fsc-result-ko">${step.res.ko} <button class="fsc-speak" onclick="speakKo('${step.res.ko}')">🔊</button></div>
-          <div class="fsc-result-trans">${t(step.res.tr)}</div>
-        </div>`;
-    }
-    html+=`</div>`;
-  });
-
-  html+=`<div class="final-card${allDone?'':' ext-final-hidden'}" id="ext-final-card"${allDone?'':' style="display:none"'}>
-    <div class="final-label">⭐ ${lang==='ro'?'Fraza finală':'Final Sentence'}</div>
-    <div class="final-ko">${ext.final.ko}</div>
-    <div class="final-trans">${t(ext.final.tr)}</div>
-    <button class="final-speak-btn" onclick="speakKo('${ext.final.ko}')">🔊 ${lang==='ro'?'Ascultă':'Listen'}</button>
-  </div>`;
-
-  if(allDone) markDone(1);
-  return html;
-}
-
 /* ═══════════════════════════════════════════════
    RENDER REVIEW (Step 2) — fill blanks
 ═══════════════════════════════════════════════ */
@@ -3917,6 +3773,7 @@ function renderReview(){
       <div class="fsc-header">
         <span class="op-badge ${step.type}">${step.badge}</span>
         <span class="fsc-grammar">${step.grammar}</span>
+        <span class="fsc-instruction">${t(step.inst)}</span>
       </div>
       <div class="fsc-from">${lang==='ro'?'Din:':'From:'}
         ${step.from.map(f=>`<span class="from-pill" onclick="speakKo('${f}')">${f}</span>`).join(' + ')}
@@ -4175,7 +4032,6 @@ function renderPanel(){
   let html='<div class="sfp-panel active">';
   switch(currentStep){
     case 0: html+=renderConjugation(); break;
-    case 1: html+=renderExtension();   break;
     case 2: html+=renderReview();      break;
     case 3: html+=renderDialogue();    break;
   }
