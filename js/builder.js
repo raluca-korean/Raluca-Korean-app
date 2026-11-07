@@ -1643,6 +1643,8 @@
       var v0 = verb.ko;
       if(cKey === 'tense_neg_past')     return conj.stem(v0) + '지 않았어요';
       if(cKey === 'tense_decide')       return conj.stem(v0) + '기로 했어요';
+      if(cKey === 'tense_prepare')      return futAttr(v0) + ' 준비를 해요';
+      if(cKey === 'tense_prepare_past') return futAttr(v0) + ' 준비를 했어요';
       if(cKey === 'tense_consider')     return futAttr(v0) + '까 해요';
       if(cKey === 'tense_exp_yes')      return conj.aeo(v0) + ' 본 적이 있어요';
       if(cKey === 'tense_exp_no')       return conj.aeo(v0) + ' 본 적이 없어요';
@@ -2783,6 +2785,8 @@
     { re: /\b(?:stiu|stii|stie|stim|stiti) (?:cum )?sa\b|\bknows? how to\b/, t: 'tense_knowhow' },
     { re: /\b(?:(?:am|ai|a|ati|au|m-am|ne-am|s-a|s-au) (?:hotarat|decis)|(?:hotarasc|hotaram|decid|decidem)) sa\b|\bdecided to\b/, t: 'tense_decide' },
     { re: /\b(?:ma|ne|te|se) gand(?:esc|im|esti|este|iti) (?:daca )?sa\b|\b(?:thinking|think) (?:of|about)\b/, t: 'tense_consider' },
+    { re: /\b(?:m-am|te-ai|s-a|ne-am|v-ati|s-au) pregatit (?:sa|de)\b|\bgot ready to\b|\bprepared to\b/, t: 'tense_prepare_past' },
+    { re: /\b(?:ma|te|se|ne|va) pregat(?:esc|esti|este|im|iti) (?:sa|de)\b|\b(?:getting|get) ready to\b|\bpreparing to\b/, t: 'tense_prepare' },
     { re: /\b(?:am|ai|a|ati|au) incercat sa\b|\btried to\b/, t: 'tense_try_past' },
     { re: /\b(?:incerc|incerci|incearca|incercam|incercati) sa\b|\b(?:try|tries) to\b/, t: 'tense_try' },
     { re: /\bse pare ca\b|\bit seems(?: that| like)?\b|\bseems? (?:that|like)\b/, t: 'seem' },
@@ -3458,6 +3462,25 @@
           var _mg = {}; for(var mk2 in objects[_hI]) _mg[mk2] = objects[_hI][mk2];
           _mg.ko = koBase(objects[_gI].ko) + ' ' + objects[_hI].ko;
           objects = [_mg].concat(objects.filter(function(o, q){ return q !== _hI && q !== _gI; }));
+        }
+      }
+
+      // "academia de scrimă" → 펜싱 학원, "școala de muzică" → 음악 학교 (place + "de" + noun)
+      if(places[0]){
+        var _pdRe = /(\S+) de (\S+)/g, _pd = null, _pm;
+        while((_pm = _pdRe.exec(cd.text))){
+          if(_pm[2] !== 'la' && !NUM_WORDS[_pm[2]] && !/^\d/.test(_pm[2]) && findBestMatch('departure', _pm[1]) && findBestMatch('departure', _pm[1]).ko === places[0].ko){ _pd = _pm; break; }
+          _pdRe.lastIndex = _pm.index + _pm[1].length + 1;
+        }
+        if(_pd){
+          var _pn = findBestMatch('object1', _pd[2]);
+          if(!_pn){ var _pl2 = lexLookup(_pd[2]); if(_pl2 && _pl2.kind === 'noun') _pn = lexItem(_pl2, 'object1'); }
+          if(_pn){
+            var _pc = {}; for(var pk2 in places[0]) _pc[pk2] = places[0][pk2];
+            _pc.ko = koBase(_pn.ko) + ' ' + places[0].ko;
+            places = [_pc].concat(places.slice(1));
+            objects = objects.filter(function(o){ return koBase(o.ko) !== koBase(_pn.ko); });
+          }
         }
       }
 
