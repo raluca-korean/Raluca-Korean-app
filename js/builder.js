@@ -1348,6 +1348,7 @@
     return window.Conjugation.euAttach(v, '세요');
   }
 
+  var SEQ_SEO = { '가다':1, '오다':1, '돌아오다':1, '돌아가다':1, '들어가다':1, '나가다':1 };
   function renderVerbKo(clause){
     var verb = itemOf(clause, 'verb');
     if(!verb || !verb.ko) return '';
@@ -1355,6 +1356,20 @@
     if(verb.isPhrase) return verb.final || verb.ko;
 
     var cKey = connectorKey(clause);
+    // negated 있다 (and 맛있다, 재미있다…) is 없다: "nu am bani" → 돈이 없어요
+    if(/있다$/.test(verb.ko) && (clause.negated || cKey === 'tense_neg' || cKey === 'tense_neg_past') && window.Conjugation){
+      var vNo = verb.ko.replace(/있다$/, '없다');
+      if(cKey === 'tense_neg')      return window.Conjugation.present(vNo);
+      if(cKey === 'tense_neg_past') return window.Conjugation.past(vNo);
+      var px = Object.create(clause);
+      px.negated = false;
+      px.__picked = {};
+      for(var pk in (clause.__picked || {})) px.__picked[pk] = clause.__picked[pk];
+      var vc = {}; for(var vk in verb) vc[vk] = verb[vk];
+      vc.ko = vNo; vc.forms = null; vc.final = null;
+      px.__picked.verb = vc;
+      return renderVerbKo(px);
+    }
     var conj = window.Conjugation;
 
     if(cKey === 'tense_past') return conj ? conj.past(verb.ko)   : (verb.final || verb.ko);
@@ -1429,14 +1444,15 @@
         var psEu = conj.euOrNot(ps);
         if(cKey === 'condition') return ps + (psEu ? '으면' : '면');
         // For seq (고), only the last verb takes past tense — use plain 고 form
-        if(cKey === 'seq')       return conj.connector(verb.ko, '-고');
+        if(cKey === 'seq')       return SEQ_SEO[verb.ko] ? conj.aeo(verb.ko) + '서' : conj.connector(verb.ko, '-고');
         if(cKey === 'cause2')    return ps + (psEu ? '으니까' : '니까');
         if(cKey === 'contrast1') return ps + '지만';
         if(cKey === 'contrast2') return ps + '는데';
         if(cKey === 'concede')   return ps + '어도';
       }
 
-      if(cKey === 'seq')       return conj.connector(verb.ko, '-고');
+      // "merg la piață și cumpăr" — the next action happens there: 가서 / 와서, not 가고
+      if(cKey === 'seq')       return SEQ_SEO[verb.ko] ? conj.aeo(verb.ko) + '서' : conj.connector(verb.ko, '-고');
       if(cKey === 'cause1')    return conj.connector(verb.ko, '-아/어서');
       if(cKey === 'cause2')    return conj.connector(verb.ko, '-(으)니까');
       if(cKey === 'contrast1') return conj.connector(verb.ko, '-지만');
@@ -2317,6 +2333,7 @@
       {key:'fear',          phrases:['xfearx']},
       {key:'so',            phrases:['asa ca','așa că','de aceea','that s why','xcommax so','and so','deci']},
       {key:'condition',     phrases:['daca','dacă','if']},
+      {key:'when',          phrases:['atunci cand','atunci când','cand','când','when']},
       {key:'contrast1',     phrases:['dar','insa','însă','but','however']},
       {key:'contrast2',     phrases:['iar']},
       {key:'or',            phrases:['sau','or']},
@@ -2424,7 +2441,7 @@
     // the wrong text in the main clause slot.
     var SWAP_KEYS = {
       cause1:true, cause2:true,
-      after:true, before:true, concede:true, concede2:true, while:true, asap:true, fear:true, because_of:true
+      after:true, before:true, concede:true, concede2:true, while:true, asap:true, fear:true, because_of:true, when:true
     };
     for(var pi = 0; pi < segments.length - 1; pi++){
       if(!segments[pi].leadingConnector && SWAP_KEYS[segments[pi].connector]){
@@ -2666,6 +2683,132 @@
     return out;
   }
 
+  // ---- relative clauses ("care / pe care / unde / who / that / which") --------
+  // "Prietenul care locuiește în Seul vine mâine" → 서울에 사는 친구는 내일 와요.
+  // The relative clause is cut out of the sentence and turned into a Korean
+  // attributive (-는 / -(으)ㄴ / -(으)ㄹ) placed before its head noun.
+  var REL_CLITIC = { l:1, o:1, i:1, mi:1, ti:1, ne:1, va:1, le:1, s:1, m:1, n:1, se:1, ma:1, te:1, il:1, si:1 };
+  var REL_AUX = { am:1, ai:1, a:1, au:1, ati:1, are:1, avem:1, aveti:1, este:1, e:1, sunt:1, suntem:1, sunteti:1, fost:1,
+                  is:1, was:1, were:1, has:1, have:1, had:1, will:1, vor:1, va:1, voi:1, vom:1, o:1, sa:1, me:1, you:1 };
+  var REL_COPULA = { este:1, e:1, sunt:1, is:1, was:1, are:1, were:1, fost:1 };
+  var NOM_PRONOUN = { '저는':'제가', '나는':'내가', '너는':'네가', '우리는':'우리가', '그는':'그가', '그녀는':'그녀가', '그들은':'그들이' };
+  function koBase(ko){ return String(ko || '').replace(/(에서|에|으로|로|을|를|이|가|은|는)$/, ''); }
+  function koNom(ko){
+    if(NOM_PRONOUN[ko]) return NOM_PRONOUN[ko];
+    var b = koBase(ko);
+    return b + ((window.Conjugation && window.Conjugation.hasBatchim(b)) ? '이' : '가');
+  }
+  function relTokens(str){
+    var out = [], re = /[^\s,.;!?]+/g, m;
+    while((m = re.exec(str))) out.push({ w: m[0], i: m.index });
+    return out;
+  }
+  // the verb a single token stands for, ignoring clitics and auxiliaries ("l-am" → none, "dat-o" → 주다)
+  function tokenVerb(w){
+    var pieces = normalizeLatin(w).split(' ').filter(function(p){ return p && !REL_CLITIC[p] && !REL_AUX[p]; });
+    return pieces.length ? findBestMatch('verb', pieces.join(' ')) : null;
+  }
+  function nounItem(w){
+    var n = normalizeLatin(w);
+    if(!n || REL_AUX[n] || REL_CLITIC[n]) return null;
+    var it = findBestMatch('topic', n) || findBestMatch('object1', n) || findBestMatch('departure', n);
+    return it && it.ko && !NOM_PRONOUN[it.ko] ? it : null;
+  }
+  function relAttr(verb, tense, neg){
+    var conj = window.Conjugation, v = verb.ko;
+    if(neg && /있다$/.test(v)){ v = v.replace(/있다$/, '없다'); neg = false; verb = { ko: v, ro: verb.ro }; }
+    var desc = isDescriptive(verb) && !/(있|없)다$/.test(v);
+    if(neg) return conj.stem(v) + (tense === 'past' ? '지 않은' : desc ? '지 않은' : '지 않는');
+    if(tense === 'past')   return (desc || /(있|없)다$/.test(v)) ? pastStem(v) + '던' : pastAttr(v);
+    if(tense === 'future') return futAttr(v);
+    if(desc) return conj.adjAttributive(v);
+    return conj.dropRieul(conj.stem(v)) + '는';
+  }
+  function speakLang(v){ var c = {}; for(var k in v) c[k] = v[k]; c.ko = '하다'; c.forms = null; return c; }
+  function buildRelKo(relText, head){
+    var rn = ' ' + normalizeLatin(relText) + ' ';
+    var hb = koBase(head.ko);
+    var other = function(it){ return it && it.ko && koBase(it.ko) !== hb ? it : null; };
+    var langa = /\b(langa|next to|near|aproape de)\b/.test(rn);
+    var verb = findBestMatch('verb', rn.replace(/\b(langa|aproape de)\b/g, ' '));
+    if((!verb || verb.ko === '있다') && (/\b(este|e|is|are|sunt|se afla)\b/.test(rn) || langa)) verb = { ko: '있다', ro: 'a fi', en: 'to be' };
+    if(!verb || !verb.ko || verb.isPhrase) return null;
+    var tense = detectTenseFromText(rn);
+    var neg = /\bnu\b|\b(don t|doesn t|didn t|not)\b|(^| )n (am|ai|a|au)\b/.test(rn);
+    if(tense === 'neg' || tense === 'cannot' || tense === 'notwish' || tense === 'mustnot'){
+      tense = detectTenseFromText(rn.replace(/\bnu\b|\bnot\b/g, ' '));
+    }
+    if(verb.ko === '말하다' && /(어|어를) /.test((findBestMatch('object1', rn) || {}).ko + ' ')) verb = speakLang(verb);
+    var subj = other(findBestMatch('topic', rn));
+    var time = findBestMatch('time', rn);
+    var loc  = other(findBestMatch('departure', rn));
+    var obj  = other(findBestMatch('object1', rn));
+    if(obj && verb.ko.indexOf(' ') > 0 && verb.ko.indexOf(koBase(obj.ko)) === 0) obj = null;
+    if(obj && subj && koBase(obj.ko) === koBase(subj.ko)) obj = null;
+    if(loc && obj && koBase(loc.ko) === koBase(obj.ko)) obj = null;
+    var parts = [];
+    if(subj) parts.push(koNom(subj.ko));
+    else if(tense === 'past' && /\b(mi ai|ti ai|ai) [a-z]+t\b/.test(rn)) parts.push('네가');   // "pe care mi-ai dat-o"
+    if(time && time.ko) parts.push(time.ko);
+    if(loc){
+      var toEi = { '가다':1, '오다':1, '있다':1, '살다':1, '도착하다':1 };
+      parts.push(langa ? koBase(loc.ko) + ' 옆에' : (toEi[verb.ko] ? loc.ko.replace(/에서$/, '에') : loc.ko));
+    }
+    if(obj) parts.push(verb.ko === '있다' ? koNom(obj.ko) : obj.ko);
+    parts.push(relAttr(verb, tense, neg));
+    return parts.join(' ');
+  }
+  function extractRelatives(raw){
+    var res = { text: raw, mods: [] };
+    for(var guard = 0; guard < 3; guard++){
+      var F = foldKeep(res.text);
+      var mk = /\s(pe care|care|unde|who|whom|which|that|where)\s/.exec(F);
+      if(!mk) break;
+      var preToks = relTokens(F.slice(0, mk.index));
+      if(!preToks.length) break;
+      // "Sora mea, care…" — skip the possessive to reach the noun
+      var hIdx = preToks.length - 1;
+      if(hIdx > 0 && /^(meu|mea|mei|mele|tau|ta|tai|tale|lui|ei|lor|nostru|noastra|noastre|vostru|voastra)$/.test(normalizeLatin(preToks[hIdx].w))) hIdx--;
+      var head = nounItem(preToks[hIdx].w);
+      if(!head) break;
+      var afterStart = mk.index + mk[0].length;
+      var afterF = F.slice(afterStart);
+      var toks = relTokens(afterF);
+      var preHasVerb = preToks.slice(0, -1).some(function(t){ return !!findBestMatch('verb', normalizeLatin(t.w)); });
+      var endIdx = afterF.length;
+      var comma = afterF.indexOf(',');
+      if(preHasVerb){
+        // main verb already said: the relative runs to the next comma / connector
+        var stop = /,|\s(si|dar|iar|and|but|apoi|then)\s/.exec(' ' + afterF);
+        if(stop) endIdx = Math.max(0, stop.index - 1);
+      } else {
+        // relative sits inside the subject: it ends where the main predicate starts
+        var firstV = null;
+        for(var k = 0; k < toks.length; k++){
+          var nw = normalizeLatin(toks[k].w);
+          if(k > 0 && REL_COPULA[nw]){
+            var st = toks[k].i;
+            if(nw === 'fost' && /^(a|au|am|ai)$/.test(normalizeLatin(toks[k - 1].w))) st = toks[k - 1].i;
+            endIdx = st; break;
+          }
+          var tv = tokenVerb(toks[k].w);
+          if(tv){
+            if(!firstV) firstV = tv;
+            else if(tv.ko !== firstV.ko){ endIdx = toks[k].i; break; }
+          }
+        }
+        if(comma !== -1 && comma < endIdx) endIdx = comma;
+      }
+      var relText = afterF.slice(0, endIdx);
+      var relKo = relText.trim() ? buildRelKo(relText, head) : null;
+      if(!relKo) break;
+      var rest = res.text.slice(afterStart + endIdx).replace(/^\s*,\s*/, ' ');
+      res.text = res.text.slice(0, mk.index) + ' ' + rest;
+      res.mods.push({ base: koBase(head.ko), ko: relKo });
+    }
+    return res;
+  }
+
   function parseTextIntoClauses(){
     var raw = state.text || '';
 
@@ -2678,6 +2821,8 @@
 
     var FR = applyGrammarFrames(raw);
     raw = FR.text;
+    var REL = extractRelatives(raw);
+    raw = REL.text;
     state.__question = FR.question;
 
     var detectedTense = detectTenseFromText(raw);
@@ -2750,6 +2895,15 @@
     // Fallback: treat whole text as one clause
     if(!clauseData.length) clauseData = [{ text: raw, connKey: 'none' }];
 
+    // "Merg la școală, dar mai întâi beau cafea" — the 'first' action goes first in Korean
+    for(var fi = 1; fi < clauseData.length; fi++){
+      if(/\b(mai intai|intai|in primul rand|first of all|first)\b/.test(clauseData[fi].text)){
+        clauseData = clauseData.splice(fi).concat(clauseData);
+        clauseData.forEach(function(c, i){ c.connKey = i < clauseData.length - 1 ? 'seq' : 'none'; c.inheritVerb = false; });
+        break;
+      }
+    }
+
     // Build one clause per detected verb segment
     var newClauses = [];
     var lastSubjectKo = null;
@@ -2764,6 +2918,8 @@
       var objects  = findAllMatches('object1', cd.text, 2);
       var descs    = findAllMatches('adverb', cd.text, 2);
       var verb     = findBestMatch('verb', cd.text);
+      // "vorbesc coreeana" → 한국어를 해요 (with a language, 하다 is the natural verb)
+      if(verb && verb.ko === '말하다' && objects[0] && /어를$/.test(objects[0].ko)) verb = speakLang(verb);
       // Inherit verb from previous clause when this segment had none explicitly
       // (e.g. "și seara la restaurant" after "dimineața merg la piață")
       if(!verb && cd.inheritVerb && ci > 0){
@@ -2816,7 +2972,8 @@
 
       // "cu Mihai" / "with Mihai" → companion (Mihai하고 같이), never the subject
       var cmp = String(raw).match(/(?:^|\s)(?:cu|with)\s+([A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ\-]+)/);
-      if(cmp && !/^(cred|sper|azi|maine|ieri)$/.test(normalizeLatin(cmp[1]))) clause.__companion = cmp[1];
+      if(cmp && !/^(cred|sper|azi|maine|ieri)$/.test(normalizeLatin(cmp[1])) &&
+         /(^| )(cu|with) /.test(' ' + cd.text) && (' ' + cd.text + ' ').indexOf(' ' + normalizeLatin(cmp[1]) + ' ') !== -1) clause.__companion = cmp[1];
 
       // Proper noun fallback: if no vocab subject found, look for a capitalized word
       // in the original text that isn't already matched by another category
@@ -2845,6 +3002,7 @@
       if(subjects.length < 2){
         var NAME_STOP = {cred:1,sper:1,stiu:1,poate:1,azi:1,maine:1,ieri:1,acum:1,apoi:1,dar:1,deci:1,eu:1,tu:1,el:1,ea:1,noi:1,voi:1,ei:1,ele:1,i:1,we:1,you:1};
         var nm = String(raw).match(/(?:^|\s)(și|şi|si|cu|and|with)\s+([A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ\-]+)/);
+        if(nm && (' ' + cd.text + ' ').indexOf(' ' + normalizeLatin(nm[2]) + ' ') === -1) nm = null;
         if(nm && !NAME_STOP[normalizeLatin(nm[2])] && !subjects.some(function(sj){ return normalizeLatin(sj.ro || '') === normalizeLatin(nm[2]); })){
           if(/^(cu|with)$/.test(nm[1])){
             // companion already handled above
@@ -2854,8 +3012,32 @@
         }
       }
 
+      // the same noun matched as subject AND object ("prieten"): before the verb → subject, after → object
+      if(subjects[0] && objects.length && verb){
+        var _sb = koBase(subjects[0].ko);
+        var _di = -1;
+        for(var _oi = 0; _oi < objects.length; _oi++) if(koBase(objects[_oi].ko) === _sb) _di = _oi;
+        if(_di >= 0){
+          var _tk = relTokens(cd.text), _vPos = -1, _nPos = -1;
+          for(var _t = 0; _t < _tk.length; _t++){
+            if(_vPos < 0 && findBestMatch('verb', normalizeLatin(_tk[_t].w))) _vPos = _t;
+            if(_nPos < 0){ var _ni = nounItem(_tk[_t].w); if(_ni && koBase(_ni.ko) === _sb) _nPos = _t; }
+          }
+          if(_nPos >= 0 && _vPos >= 0 && _nPos > _vPos) subjects = subjects.slice(1);
+          else objects.splice(_di, 1);
+        }
+      }
+      if(!verb && subjects[0]){
+        var _sb2 = koBase(subjects[0].ko);
+        objects = objects.filter(function(o){ return koBase(o.ko) !== _sb2; });
+      }
       if(_copulaFirstPerson && !subjects.length) subjects = [{ key:'topic', kind:'topic', ko:'저는', ro:'eu', en:'I' }];
       // adjective predicate: "Mâncarea e gustoasă" → 음식이 맛있어요 (the noun is the subject, not an object)
+      // "Restaurantul unde mâncăm este mare" — a place can be the adjective's subject too
+      if(verb && isDescriptive(verb) && !subjects.length && !objects.length && places[0]){
+        objects = [{ key:'object1', kind:'object1', ko: koBase(places[0].ko), ro: places[0].ro, en: places[0].en }];
+        places = places.slice(1);
+      }
       if(verb && isDescriptive(verb) && !subjects.length && objects[0] && !clause.__count){
         var dBase = objects[0].ko.replace(/(을|를|이|가|은|는)$/, '');
         var dHb = window.Conjugation && window.Conjugation.hasBatchim(dBase);
@@ -2984,6 +3166,23 @@
       }
     }
     state.detectedFields = ALL_FIELD_KEYS.filter(function(fk){ return detectedSet[fk]; });
+
+    // relative clauses: put the attributive before its head noun (서울에 사는 친구는)
+    REL.mods.forEach(function(md){
+      var done = false;
+      newClauses.forEach(function(cl){
+        ['topic','topic2','object1','object2','departure','transit'].forEach(function(f){
+          if(done) return;
+          var it = itemOf(cl, f);
+          if(it && it.ko && koBase(it.ko) === md.base){
+            var cp = {}; for(var key in it) cp[key] = it[key];
+            cp.ko = md.ko + ' ' + it.ko;
+            setFieldItem(cl, f, cp); done = true;
+          }
+        });
+        if(!done && cl.__copula && cl.__copula.base === md.base){ cl.__copula.base = md.ko + ' ' + cl.__copula.base; done = true; }
+      });
+    });
 
     state.clauses = newClauses;
 

@@ -80,7 +80,8 @@
         steps: [
           'Selectează piesele (subiect, particule, verb etc.) în ordinea corectă.',
           'Aplicația verifică structura gramaticală pe măsură ce alegi.',
-          'Vezi traducerea propoziției formate la final.'
+          'Vezi traducerea propoziției formate la final.',
+          'Sau scrie direct o propoziție în română/engleză — și lungă, cu „care”, „când”, „dacă”, „așa că” — și builderul o transformă în coreeană.'
         ]
       },
       en: {
@@ -89,7 +90,8 @@
         steps: [
           'Select the pieces (subject, particles, verb, etc.) in the right order.',
           'The app checks the grammatical structure as you choose.',
-          'See the translation of the finished sentence at the end.'
+          'See the translation of the finished sentence at the end.',
+          'Or type a whole sentence in Romanian/English — even a long one with "who", "when", "if", "so" — and the builder turns it into Korean.'
         ]
       }
     },
