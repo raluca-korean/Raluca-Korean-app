@@ -640,6 +640,9 @@ html[data-mode="day"] .nav-dot { background: rgba(0,0,0,.2); }
 /* ── SMALL BTNS ───────────────────────────────────────────── */
 .sm-check { padding:6px 12px; border-radius:999px; border:none; background:linear-gradient(135deg,#6C5CE7,#E96A9A); color:white; font-size:11px; font-weight:700; cursor:pointer; transition:transform .1s; }
 .sm-check:hover { transform:translateY(-1px); }
+.sm-variants { padding:6px 11px; border-radius:999px; font-size:11px; font-weight:700; cursor:pointer; }
+.rv-variants { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+.rv-variants[hidden] { display:none; }
 .sm-reveal { padding:6px 11px; border-radius:999px; border:1.5px solid rgba(255,255,255,.14); background:transparent; color:rgba(255,255,255,.5); font-size:11px; font-weight:700; cursor:pointer; }
 html[data-mode="day"] .sm-reveal { border-color:rgba(0,0,0,.14); color:rgba(0,0,0,.45); }
 .sm-speak { padding:5px 9px; border-radius:8px; border:1px solid rgba(28,176,246,.25); background:transparent; color:rgba(28,176,246,.6); font-size:12px; cursor:pointer; }
@@ -3446,10 +3449,12 @@ let currentCh  = 0;
 let currentStep= 0;
 const STEPS = [
   { ro:'Conjugare',    en:'Conjugation' },
-  { ro:'Extindere',    en:'Extension'   },
-  { ro:'Recapitulare', en:'Review'      },
+  { ro:'Extindere',    en:'Extension', hidden:true }, // merged into step 2 (button „Variante”)
+  { ro:'Construiește', en:'Build'       },
   { ro:'Conversație',  en:'Dialogue'    }
 ];
+// Internal step indices stay 0..3 (saved progress uses them); step 1 is hidden.
+const VISIBLE_STEPS = STEPS.map((s,i)=>i).filter(i=>!STEPS[i].hidden);
 const doneSteps   = {};   // doneSteps[chId][step] = true
 const shownCells  = {};   // shownCells[chId][step][key] = true
 
@@ -3552,15 +3557,16 @@ function renderChapters(){
 function renderStepper(){
   const el=document.getElementById('sfpStepper');
   let html='';
-  STEPS.forEach((s,i)=>{
+  VISIBLE_STEPS.forEach((i,pos)=>{
+    const s=STEPS[i];
     const done=isDone(i);
     const active=i===currentStep;
     const cls=active?'active':done?'done':'';
     html+=`<div class="step-node ${cls}" role="tab" aria-selected="${active}" onclick="goStep(${i})">
-      <div class="step-num">${done&&!active?'✓':i+1}</div>
+      <div class="step-num">${done&&!active?'✓':pos+1}</div>
       <div class="step-lbl">${t(s)}</div>
     </div>`;
-    if(i<STEPS.length-1) html+=`<div class="step-line"></div>`;
+    if(pos<VISIBLE_STEPS.length-1) html+=`<div class="step-line"></div>`;
   });
   el.innerHTML=html;
 }
@@ -3574,7 +3580,7 @@ function renderNav(){
   const dots=document.getElementById('navDots');
   prev.disabled=currentStep===0;
   next.textContent=currentStep===3?(lang==='ro'?'Capitol următor →':'Next Chapter →'):(lang==='ro'?'Continuă →':'Continue →');
-  dots.innerHTML=STEPS.map((_,i)=>{
+  dots.innerHTML=VISIBLE_STEPS.map(i=>{
     const cls=i===currentStep?'active':isDone(i)?'done':'';
     return `<div class="nav-dot ${cls}"></div>`;
   }).join('');
@@ -3890,8 +3896,8 @@ function renderReview(){
   const ch=CHAPTERS[currentCh];
   const ext=ch.ext;
   let html=`<div class="panel-heading">
-    <h2>${lang==='ro'?'Recapitulare':'Review'}</h2>
-    <p>${lang==='ro'?'Citește traducerea și completează în coreeană.':'Read the translation and write in Korean.'}</p>
+    <h2>${lang==='ro'?'Construiește':'Build'}</h2>
+    <p>${lang==='ro'?'Citește traducerea și scrie propoziția în coreeană. Te-ai blocat? Apasă „Variante” și alege.':'Read the translation and write the sentence in Korean. Stuck? Tap “Options” and pick one.'}</p>
   </div>
   <div class="flow-starts">`;
   ext.starts.forEach(s=>{
@@ -3924,9 +3930,11 @@ function renderReview(){
       </div>
       <div class="fsc-result-trans" style="font-style:italic;margin-bottom:4px">${t(step.res.tr)}</div>
       <div class="review-actions">
+        <button class="sm-variants" onclick="toggleVariants(${si})">${lang==='ro'?'Variante':'Options'}</button>
         <button class="sm-reveal" onclick="revealReview(${si},'${step.res.ko}')">${lang==='ro'?'Arată':'Show'}</button>
         <button class="sm-check" onclick="checkReview(${si})">${lang==='ro'?'Verifică':'Check'}</button>
       </div>
+      <div class="rv-variants" id="rvv-${si}" hidden></div>
     </div>`;
   });
 
@@ -3964,6 +3972,28 @@ function checkReview(si){
   inp.classList.add(v===a?'correct':'wrong');
   if(v===a) focusNextInput(`ri-${si}`);
   checkReviewDone();
+}
+// „Variante”: the three choices (1 right + 2 plausible wrong forms, see
+// buildExtChoices). Picking one fills the input and checks it — a wrong pick
+// is marked wrong and the learner can try again.
+function toggleVariants(si){
+  const box=document.getElementById(`rvv-${si}`);
+  if(!box) return;
+  if(!box.hidden){ box.hidden=true; return; }
+  const step=CHAPTERS[currentCh].ext.steps[si];
+  box.innerHTML=buildExtChoices(step).map(c=>
+    `<button class="ext-choice-btn" data-v="${c.replace(/"/g,'&quot;')}">${c}</button>`).join('');
+  box.querySelectorAll('.ext-choice-btn').forEach(b=>{
+    b.onclick=()=>{
+      const inp=document.getElementById(`ri-${si}`);
+      inp.value=b.dataset.v;
+      checkReview(si);
+      const ok=inp.classList.contains('correct');
+      b.classList.add(ok?'correct':'wrong');
+      if(ok){ box.querySelectorAll('.ext-choice-btn').forEach(x=>x.disabled=true); speakKo(b.dataset.v); }
+    };
+  });
+  box.hidden=false;
 }
 function revealReview(si,ans){
   const id=si==='final'?'ri-final':`ri-${si}`;
@@ -4160,6 +4190,7 @@ function renderPanel(){
 ═══════════════════════════════════════════════ */
 function goStep(n){
   currentStep=Math.max(0,Math.min(3,n));
+  if(STEPS[currentStep].hidden) currentStep=2;
   renderStepper(); renderPanel(); renderNav();
 }
 function navigate(dir){
@@ -4169,9 +4200,11 @@ function navigate(dir){
       if(currentCh<CHAPTERS.length-1){ switchChapter(currentCh+1); return; }
       currentStep=0; renderStepper(); renderPanel(); renderNav(); return;
     }
-    goStep(currentStep+1);
+    const pos=VISIBLE_STEPS.indexOf(currentStep);
+    goStep(VISIBLE_STEPS[Math.min(pos+1,VISIBLE_STEPS.length-1)]);
   } else {
-    goStep(currentStep-1);
+    const pos=VISIBLE_STEPS.indexOf(currentStep);
+    goStep(VISIBLE_STEPS[Math.max(pos-1,0)]);
   }
 }
 function switchChapter(idx){

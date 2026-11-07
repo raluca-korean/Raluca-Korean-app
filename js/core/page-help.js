@@ -399,8 +399,8 @@
         lead: 'Atelier ghidat, pas cu pas, de formare a propozițiilor, pe capitole.',
         steps: [
           'Alege un capitol din meniul „Capitole”.',
-          'Parcurge etapele indicate (conjugare, extindere, recapitulare).',
-          'Completează exercițiile fiecărei etape pentru a avansa.'
+          'Parcurge cele 3 etape: Conjugare → Construiește → Conversație.',
+          'La „Construiește” scrii singur propoziția în coreeană; dacă te blochezi, apasă „Variante” și alege dintre 3 forme.'
         ]
       },
       en: {
@@ -408,8 +408,8 @@
         lead: 'A guided, step-by-step sentence-building workshop, by chapter.',
         steps: [
           'Pick a chapter from the "Chapters" menu.',
-          'Go through the indicated stages (conjugation, extension, review).',
-          'Complete each stage’s exercises to move forward.'
+          'Go through the 3 stages: Conjugation → Build → Dialogue.',
+          'In “Build” you write the sentence in Korean yourself; if you get stuck, tap “Options” and pick one of 3 forms.'
         ]
       }
     },
