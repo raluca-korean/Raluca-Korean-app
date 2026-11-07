@@ -114,6 +114,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 - Buton home `🏠` pe toate paginile, prin unul din cele două mecanisme — nu se scrie markup de mână:
   - pagini mai vechi: `<div id="pageControls"></div>` + `js/core/lang-picker.js` → injectează automat `.homeBtn` + selector ro/en
   - hub-urile din bottom nav (`index`/`learn`/`play`/`profile`/`review`): `<div id="rkBottomNav"></div>` + `js/core/bottom-nav.js` → `RKNav.init('home'|'learn'|'practice'|'speak'|'progress')`
+- **Butoane — un aspect pe ROL**, din `rk-buttons.css` (inclus la finalul `<head>` pe toate paginile): 1) principal (gradient violet→roz: Start, Verifică, Salvează), 2) secundar (contur violet: Din nou, Indiciu, Anterioara), 3) ieșire (pastilă cu contur: ← Înapoi, ← Alte jocuri), 4) variantă de răspuns (card cu contur; stări sel/correct/wrong), 5) selector (pastilă; activ = umplut cu gradient), 6) iconiță (🔊, limbă, temă, 🏠). Un buton nou: dă-i o clasă existentă din rolul potrivit sau adaug-o în lista rolului din `rk-buttons.css` — nu-i scrie culori proprii. Selectorii din fișier se scriu pe un singur rând per regulă compusă (un rând nou între `:is(...)` și `:not(...)` devine combinator descendent).
 - Hints **nu** se afișează la particle/particlePlus (dau răspunsul)
 - Badge-uri header: Mod, Corecte, Total, Streak + progress bar
 

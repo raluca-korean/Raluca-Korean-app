@@ -1,4 +1,4 @@
-const CACHE = 'rk-v200';
+const CACHE = 'rk-v201';
 
 const STATIC = [
   './',
@@ -41,6 +41,7 @@ const STATIC = [
   './listening.html',
   './journal.html',
   './theme-anime.css',
+  './rk-buttons.css',
   './theme-cyber-seoul.css',
   './builder.css',
   './exercises.css',
