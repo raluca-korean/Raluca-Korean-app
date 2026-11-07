@@ -769,7 +769,21 @@
     return [];
   }
 
+  // Option lists are rebuilt from DATA on every call otherwise — with the whole
+  // app dictionary that is ~2000 items per lookup, dozens of lookups per keystroke.
+  var OPT_CACHE = {};
+  function clearOptionCache(){ OPT_CACHE = {}; }
   function getOptionsForField(fieldKey, isLast){
+    var ck = fieldKey + (isLast ? '|L' : '');
+    if(!OPT_CACHE[ck]) OPT_CACHE[ck] = buildOptionsForField(fieldKey, isLast);
+    return OPT_CACHE[ck];
+  }
+  // normalised match candidates of an item, computed once
+  function itemCands(item){
+    if(!item.__nc) item.__nc = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []).map(normalizeLatin);
+    return item.__nc;
+  }
+  function buildOptionsForField(fieldKey, isLast){
     var sourceKey = fieldKey;
     if(fieldKey === 'topic2') sourceKey = 'topic';
     if(fieldKey === 'adverb2') sourceKey = 'adverb';
@@ -2194,10 +2208,10 @@
       // app-dictionary words: in the pickers, but matched in typed text only by the
       // context-aware dictionary fallback (so "pot" stays a modal, not 냄비)
       if(item && item.fromDictionary) continue;
-      var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
+      var candidates = itemCands(item);
 
       for(var j=0;j<candidates.length;j++){
-        var candidate = normalizeLatin(candidates[j]);
+        var candidate = candidates[j];
         if(!candidate) continue;
 
         var pos = normalizedText.indexOf(' ' + candidate + ' ');
@@ -2258,12 +2272,12 @@
       var item = options[i];
       if(!item || !item.ko || item.fromDictionary) continue;
 
-      var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
+      var candidates = itemCands(item);
       var bestPos = -1;
       var bestLen = 0;
 
       for(var j=0;j<candidates.length;j++){
-        var candidate = normalizeLatin(candidates[j]);
+        var candidate = candidates[j];
         if(!candidate) continue;
 
         var pos = normalizedText.indexOf(' ' + candidate + ' ');
@@ -2333,10 +2347,10 @@
     for(var i=0;i<options.length;i++){
       var item = options[i];
       if(!item || !item.ko || item.fromDictionary) continue;
-      var candidates = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []);
+      var candidates = itemCands(item);
       var bestPos = -1, bestLen = 0;
       for(var j=0;j<candidates.length;j++){
-        var candidate = normalizeLatin(candidates[j]);
+        var candidate = candidates[j];
         if(!candidate) continue;
         var pos = normalizedText.indexOf(' ' + candidate + ' ');
         if(pos !== -1 && candidate.length > bestLen){ bestPos = pos; bestLen = candidate.length; }
@@ -3075,6 +3089,7 @@
       known[e.ko] = 1;
     });
     ALIAS_SET = null;
+    clearOptionCache();
   }
 
   function parseTextIntoClauses(){
@@ -3960,9 +3975,12 @@
     }
 
     if(els.freeText){
+      // parse once the user pauses typing (on a phone every keystroke would re-parse)
+      var _parseTimer = null;
       els.freeText.addEventListener('input', function(){
         state.text = els.freeText.value || '';
-        parseTextIntoClauses();
+        clearTimeout(_parseTimer);
+        _parseTimer = setTimeout(parseTextIntoClauses, 160);
       });
     }
 
