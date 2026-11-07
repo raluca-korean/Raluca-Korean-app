@@ -4,7 +4,8 @@
    each carry a copy of the markup — see index.html for the original,
    hand-tuned version this was lifted from. */
 (function(){
-  if(document.getElementById('rkSeoulBg')) return;
+  if(window.__rkSeoulBg) return;
+  window.__rkSeoulBg = true;
 
   var STYLE =
     '.rk-seoul-bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;opacity:.32;transition:opacity .25s ease}' +
@@ -58,6 +59,118 @@
     document.body.insertBefore(wrap.firstChild, document.body.firstChild);
   }
 
-  if(document.body) inject();
-  else document.addEventListener('DOMContentLoaded', inject);
+  /* ── keep the drawing BEHIND the content ─────────────────────────────
+     Cards, panels and buttons on these pages are translucent (glass look),
+     so the drawing showed through them as if it were on top. Instead of
+     restyling every page, the drawing masks itself out wherever such a box
+     is: an SVG mask with a hole per box, rebuilt on scroll, resize, theme
+     change and DOM changes. Boxes are only measured, never restyled, so
+     their colours and states (selected / correct / wrong…) stay untouched. */
+  var boxes = [];
+  var SKIP_TAGS = { HTML:1, BODY:1, SCRIPT:1, STYLE:1, SVG:1, svg:1, CANVAS:1, PATH:1, SPAN:1, B:1, I:1, SMALL:1, STRONG:1, EM:1, BR:1, IMG:1 };
+
+  function alphaOf(c){
+    if(!c || c === 'transparent') return 0;
+    var m = /rgba?\(([^)]+)\)/.exec(c);
+    if(!m) return 1;
+    var parts = m[1].split(/[\s,\/]+/).filter(Boolean);
+    return parts.length > 3 ? parseFloat(parts[3]) : 1;
+  }
+  function isBox(el, cs, vw, vh){
+    if(SKIP_TAGS[el.tagName] || el.id === 'rkSeoulBg') return false;
+    if(cs.display === 'none' || cs.visibility === 'hidden') return false;
+    var hasBg = alphaOf(cs.backgroundColor) > 0.01 || cs.backgroundImage !== 'none' ||
+                (cs.backdropFilter && cs.backdropFilter !== 'none') || (cs.webkitBackdropFilter && cs.webkitBackdropFilter !== 'none');
+    var hasFrame = parseFloat(cs.borderTopWidth) > 0 && alphaOf(cs.borderTopColor) > 0.05;
+    if(!hasBg && !hasFrame && el.tagName !== 'IFRAME') return false;
+    var w = el.offsetWidth, h = el.offsetHeight;
+    if(w < 24 || h < 18) return false;
+    // full-screen overlays / page wrappers are meant to show what is behind them
+    if(w * h > vw * vh * 0.7) return false;
+    return true;
+  }
+  function collect(){
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var all = document.body ? document.body.getElementsByTagName('*') : [];
+    var out = [];
+    for(var i = 0; i < all.length && out.length < 600; i++){
+      var el = all[i];
+      if(SKIP_TAGS[el.tagName]) continue;
+      var cs = getComputedStyle(el);
+      if(isBox(el, cs, vw, vh)) out.push({ el: el, r: parseFloat(cs.borderTopLeftRadius) || 0 });
+    }
+    boxes = out;
+    schedule();
+  }
+
+  var svgEl = null, rafId = 0, lastMask = '';
+  function draw(){
+    rafId = 0;
+    if(!svgEl) return;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var holes = '';
+    for(var i = 0; i < boxes.length; i++){
+      var el = boxes[i].el;
+      if(!el.isConnected) continue;
+      var b = el.getBoundingClientRect();
+      if(b.width < 2 || b.height < 2 || b.bottom < 0 || b.top > vh || b.right < 0 || b.left > vw) continue;
+      var r = Math.min(boxes[i].r, b.width / 2, b.height / 2);
+      holes += '<rect x="' + b.left.toFixed(1) + '" y="' + b.top.toFixed(1) + '" width="' + b.width.toFixed(1) +
+               '" height="' + b.height.toFixed(1) + '" rx="' + r.toFixed(1) + '" fill="black"/>';
+    }
+    var mask = holes
+      ? 'url("data:image/svg+xml;utf8,' + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="' + vw + '" height="' + vh + '">' +
+          '<mask id="m"><rect width="100%" height="100%" fill="white"/>' + holes + '</mask>' +
+          '<rect width="100%" height="100%" fill="white" mask="url(#m)"/></svg>') + '")'
+      : 'none';
+    if(mask === lastMask) return;
+    lastMask = mask;
+    svgEl.style.webkitMaskImage = mask;
+    svgEl.style.maskImage = mask;
+    svgEl.style.webkitMaskSize = '100% 100%';
+    svgEl.style.maskSize = '100% 100%';
+    svgEl.style.webkitMaskRepeat = 'no-repeat';
+    svgEl.style.maskRepeat = 'no-repeat';
+  }
+  function schedule(){ if(!rafId) rafId = requestAnimationFrame(draw); }
+
+  // throttled (not debounced): pages that change all the time still get re-measured
+  var collectTimer = 0;
+  function scheduleCollect(){
+    if(collectTimer) return;
+    collectTimer = setTimeout(function(){ collectTimer = 0; collect(); }, 250);
+  }
+  function onlyText(m){
+    if(m.type !== 'childList') return false;
+    var lists = [m.addedNodes, m.removedNodes];
+    for(var a = 0; a < 2; a++) for(var i = 0; i < lists[a].length; i++) if(lists[a][i].nodeType !== 3) return false;
+    return true;   // a timer / counter changing its text does not move any box
+  }
+
+  function startMasking(){
+    svgEl = document.getElementById('rkSeoulBg');
+    if(!svgEl) return;
+    collect();
+    window.addEventListener('scroll', schedule, { passive: true, capture: true });
+    window.addEventListener('resize', scheduleCollect);
+    window.addEventListener('load', scheduleCollect);
+    // content rendered later, tabs switched, theme toggled, cards selected…
+    new MutationObserver(function(muts){
+      for(var i = 0; i < muts.length; i++){
+        if(muts[i].target === svgEl || (svgEl.contains && svgEl.contains(muts[i].target)) || onlyText(muts[i])) continue;
+        scheduleCollect(); return;
+      }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden'] });
+    // horizontally scrolling rows (builder table, chips…) move boxes without a window scroll
+    document.addEventListener('scroll', schedule, { passive: true, capture: true });
+    // CSS transitions / animations end in new positions
+    document.addEventListener('transitionend', schedule, true);
+    document.addEventListener('animationend', schedule, true);
+  }
+
+  // index.html carries its own hand-tuned copy (id="rkSeoulBg"): only mask it
+  function boot(){ if(!document.getElementById('rkSeoulBg')) inject(); startMasking(); }
+  if(document.body) boot();
+  else document.addEventListener('DOMContentLoaded', boot);
 })();
