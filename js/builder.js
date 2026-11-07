@@ -1299,6 +1299,55 @@
     return String(ko || '').replace(/(는|은|이|가)$/,'');
   }
 
+  // ---- shared conjugation helpers for the TOPIK grammar frames ----
+  function _jong(ch){ var c = String(ch || '').charCodeAt(0); return (c >= 0xAC00 && c <= 0xD7A3) ? (c - 0xAC00) % 28 : -1; }
+  function _fuse(syl, jong){ return String.fromCharCode(syl.charCodeAt(0) + jong); }
+  // future attributive: 갈 / 먹을 / 만들
+  function futAttr(v){ return window.Conjugation.future(v).replace(/\s*거예요$/, ''); }
+  // past attributive -(으)ㄴ for action verbs: 간 / 먹은 / 만든
+  function pastAttr(v){
+    var fa = futAttr(v), last = fa.slice(-1);
+    return _jong(last) === 8 ? fa.slice(0, -1) + String.fromCharCode(last.charCodeAt(0) - 4) : fa;
+  }
+  // past stem: 갔 / 먹었 / 했
+  function pastStem(v){ return window.Conjugation.past(v).replace(/어요$/, ''); }
+  var DESCRIPTIVE_KO = {'기쁘다':1,'슬프다':1,'피곤하다':1,'크다':1,'작다':1,'좋다':1,'바쁘다':1,'춥다':1,'덥다':1,'아프다':1,'예쁘다':1,'많다':1,'적다':1,'비싸다':1,'싸다':1,'어렵다':1,'쉽다':1,'맛있다':1,'맛없다':1,'재미있다':1,'재미없다':1,'멋있다':1};
+  function isDescriptive(item){
+    if(!item || !item.ko) return false;
+    var ko = item.ko.split(' ').pop();
+    return !!DESCRIPTIVE_KO[ko] || /^a fi\b/.test(normalizeLatin(item.ro || ''));
+  }
+  // reported statement: 온다고 / 먹는다고 / 갔다고 / 갈 거라고 / 좋다고
+  function reportedKo(item, sub){
+    var v = item.ko, conj = window.Conjugation;
+    if(sub === 'past')   return pastStem(v) + '다고';
+    if(sub === 'future') return futAttr(v) + ' 거라고';
+    var st = conj.stem(v);
+    if(isDescriptive(item) || /(있|없)$/.test(st)) return st + '다고';
+    var last = st.slice(-1), j = _jong(last);
+    if(j === 0) return st.slice(0, -1) + _fuse(last, 4) + '다고';
+    if(j === 8) return st.slice(0, -1) + String.fromCharCode(last.charCodeAt(0) - 4) + '다고';
+    return st + '는다고';
+  }
+  // -(으)ㅂ시다: 갑시다 / 먹읍시다 / 만듭시다 / 도웁시다
+  function letsKo(v){
+    var s = window.Conjugation.euAttach(v, '#').slice(0, -1);
+    if(/으$/.test(s)) return s.slice(0, -1) + '읍시다';
+    return s.slice(0, -1) + _fuse(s.slice(-1), 17) + '시다';
+  }
+  // -(으)라고 했어요: 먹으라고 / 가라고 / 만들라고
+  function commandQuoteKo(v){
+    var st = window.Conjugation.stem(v);
+    if(_jong(st.slice(-1)) === 8) return st + '라고 했어요';
+    return window.Conjugation.euAttach(v, '라고 했어요');
+  }
+  // honorific imperative -(으)세요, with the special honorific verbs
+  var HONORIFIC_IMP = {'먹다':'드세요','마시다':'드세요','자다':'주무세요','있다':'있으세요','말하다':'말씀하세요'};
+  function imperativeKo(v){
+    if(HONORIFIC_IMP[v]) return HONORIFIC_IMP[v];
+    return window.Conjugation.euAttach(v, '세요');
+  }
+
   function renderVerbKo(clause){
     var verb = itemOf(clause, 'verb');
     if(!verb || !verb.ko) return '';
@@ -1313,8 +1362,11 @@
     if(cKey === 'tense_pres' || cKey === 'none') return conj ? conj.present(verb.ko) : (verb.final || verb.ko);
 
     // Clause connectors — return verb in connector form (stem + suffix)
+    if(cKey === 'so') cKey = 'cause1';   // "plouă, așa că…" = reason first, then -아/어서
     if(conj){
       var stem = conj.stem(verb.ko);
+      if(cKey === 'fear') return futAttr(verb.ko) + '까 봐';
+      if(cKey === 'because_of' && !clause.negated) return (clause.tenseOverride === 'past' ? pastStem(verb.ko) : stem) + '기 때문에';
 
       // Negated PAST connector: e.g. "deoarece nu am mâncat" → 먹지 않았기에
       if(clause.negated && clause.tenseOverride === 'past'){
@@ -1330,7 +1382,7 @@
         if(cKey === 'after')          return nb2 + '고 나서';
         if(cKey === 'before')         return nb2 + '기 전에';
         if(cKey === 'informal_cause') return nb2 + '길래';
-        if(cKey === 'because_of')     return nb2 + '는 탓에';
+        if(cKey === 'because_of')     return nb2 + '기 때문에';
         if(cKey === 'concede2')       return nb2 + '는데도';
         if(cKey === 'formal_result')  return nb2 + '므로';
       }
@@ -1351,7 +1403,7 @@
         if(cKey === 'before')         return nb + '기 전에';
         if(cKey === 'formal_cause')   return nb + '기에';
         if(cKey === 'informal_cause') return nb + '길래';
-        if(cKey === 'because_of')     return nb + '는 탓에';
+        if(cKey === 'because_of')     return nb + '기 때문에';
         if(cKey === 'concede2')       return nb + '는데도';
         if(cKey === 'formal_result')  return nb + '므로';
       }
@@ -1421,7 +1473,38 @@
     }
 
     if(cKey === 'tense_progressive') return conj ? conj.stem(verb.ko) + '고 있어요' : (verb.final || verb.ko);
-    if(cKey === 'tense_wish')        return conj ? conj.stem(verb.ko) + '고 싶어요' : (verb.final || verb.ko);
+    if(cKey === 'tense_wish'){
+      if(!conj) return verb.final || verb.ko;
+      // "fratele meu vrea să…" — someone else's wish: -고 싶어 해요
+      var wTopic = itemOf(clause, 'topic');
+      var thirdP = wTopic && wTopic.ko && !/^(저|나|너|우리|여러분|당신)/.test(wTopic.ko);
+      return conj.stem(verb.ko) + (thirdP ? '고 싶어 해요' : '고 싶어요');
+    }
+    if(conj){
+      var v0 = verb.ko;
+      if(cKey === 'tense_neg_past')     return conj.stem(v0) + '지 않았어요';
+      if(cKey === 'tense_decide')       return conj.stem(v0) + '기로 했어요';
+      if(cKey === 'tense_consider')     return futAttr(v0) + '까 해요';
+      if(cKey === 'tense_exp_yes')      return conj.aeo(v0) + ' 본 적이 있어요';
+      if(cKey === 'tense_exp_no')       return conj.aeo(v0) + ' 본 적이 없어요';
+      if(cKey === 'tense_knowhow')      return futAttr(v0) + ' 줄 알아요';
+      if(cKey === 'tense_knowhow_not')  return futAttr(v0) + ' 줄 몰라요';
+      if(cKey === 'tense_noneed')       return conj.stem(v0) + '지 않아도 돼요';
+      if(cKey === 'tense_may')          return conj.aeo(v0) + '도 돼요';
+      if(cKey === 'tense_try')          return conj.aeo(v0) + ' 봐요';
+      if(cKey === 'tense_try_past')     return conj.aeo(v0) + ' 봤어요';
+      if(cKey === 'tense_seem')         return conj.dropRieul(conj.stem(v0)) + '나 봐요';
+      if(cKey === 'tense_seem_past')    return pastStem(v0) + '나 봐요';
+      if(cKey === 'tense_said')         return reportedKo(verb, clause.__reportSub) + ' 했어요';
+      if(cKey === 'tense_said_cmd')     return commandQuoteKo(v0);
+      if(cKey === 'tense_lets')         return letsKo(v0);
+      if(cKey === 'tense_suggest')      return futAttr(v0) + '까요?';
+      if(cKey === 'tense_offer')        return futAttr(v0) + '래요?';
+      if(cKey === 'tense_please')       return conj.aeo(v0) + ' 주세요';
+      if(cKey === 'tense_dont')         return conj.stem(v0) + '지 마세요';
+      if(cKey === 'tense_imp')          return imperativeKo(v0);
+      if(cKey === 'tense_like_doing')   return conj.dropRieul(conj.stem(v0)) + '는 것을 좋아해요';
+    }
     if(cKey === 'tense_neg')          return conj ? conj.stem(verb.ko) + '지 않아요' : (verb.final || verb.ko);
     if(cKey === 'tense_notwish')      return conj ? conj.stem(verb.ko) + '고 싶지 않아요' : (verb.final || verb.ko);
     if(cKey === 'tense_mot_neg')      return conj ? conj.stem(verb.ko) + '지 못해요' : (verb.final || verb.ko);
@@ -1498,6 +1581,8 @@
       }
     }
     if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
+    // "datorită prietenului" / "din cauza ploii" → 친구 덕분에 / 비 때문에
+    if(clause.__prefixKo) parts.push(clause.__prefixKo);
     // Comitative (와/과): person you do the action with — placed right after topic
     if(associate && associate.ko) parts.push(associate.ko);
     else if(clause.__companion) parts.push(hangulName(clause.__companion) + '하고 같이');
@@ -1506,11 +1591,19 @@
     var MOTION_TO = { '가다': 1, '오다': 1, '도착하다': 1 };
     var verbItem = itemOf(clause, 'verb');
     var isMotionTo = verbItem && MOTION_TO[verbItem.ko];
+    // 있다/없다 (and "stau acasă") take 에 for the place, and 이/가 for the possessed thing
+    var isExist = verbItem && /(^| )(있다|없다)$/.test(verbItem.ko);
     // When verb-gapping a motion clause, chain locations with 하고 (시장하고 식당에 가요)
     // instead of a comma (시장에, 식당에 가요) which is unnatural Korean.
     var useLocChain = skipVerb && isMotionTo && !!(departure && departure.ko) && !(transit && transit.ko);
     if(departure && departure.ko){
-      var depKo = isMotionTo ? departure.ko.replace(/에서$/, '에') : departure.ko;
+      var depKo = (isMotionTo || isExist) ? departure.ko.replace(/에서$/, '에') : departure.ko;
+      // 이사하다 = move TO a place: 서울로 이사했어요
+      if(verbItem && verbItem.ko === '이사하다' && /에서$/.test(departure.ko)){
+        var mvB = departure.ko.replace(/에서$/, '');
+        var mvJ = _jong(mvB.slice(-1));
+        depKo = mvB + (mvJ > 0 && mvJ !== 8 ? '으로' : '로');
+      }
       if(useLocChain) depKo = depKo.replace(/에$/, '하고');
       if(transit && transit.ko){
         var depBase = depKo.replace(/에서$|에$/, '');
@@ -1534,8 +1627,16 @@
     }
     // Indirect object / recipient (에게): placed before the direct object
     if(beneficiary && beneficiary.ko) parts.push(beneficiary.ko);
-    if(object1 && object1.ko){
-      parts.push(object1.ko);
+    var _subjP = function(base){ return base + ((window.Conjugation && window.Conjugation.hasBatchim(base)) ? '이' : '가'); };
+    var _objP  = function(base){ return base + ((window.Conjugation && window.Conjugation.hasBatchim(base)) ? '을' : '를'); };
+    if(object1 && object1.ko && clause.__count){
+      // "două pisici" → 고양이 두 마리가 / "trei cărți" → 책 세 권을
+      var cBase = object1.ko.replace(/(을|를|이|가|은|는)$/, '');
+      var cnt = clause.__count.num + ' ' + clause.__count.counter;
+      parts.push(cBase);
+      parts.push(isExist ? _subjP(cnt) : _objP(cnt));
+    } else if(object1 && object1.ko){
+      parts.push(isExist && /(을|를)$/.test(object1.ko) ? _subjP(object1.ko.replace(/(을|를)$/, '')) : object1.ko);
       // numeral + quantifier follow the object they quantify (커피를 한 잔 마셔요)
       if(numeral && numeral.ko) parts.push(numeral.ko);
       if(quantifier && quantifier.ko) parts.push(quantifier.ko);
@@ -1554,6 +1655,13 @@
       parts.push(pvStem + purposeSuffix);
     }
     if(!skipVerb && verbKo) parts.push(verbKo);
+    // copula: "sunt student" → 학생이에요 ; "nu sunt profesor" → 선생님이 아니에요
+    if(!skipVerb && !verbKo && clause.__copula){
+      var cp = clause.__copula, cb = cp.base;
+      var hb = window.Conjugation && window.Conjugation.hasBatchim(cb);
+      parts.push(cp.neg ? cb + (hb ? '이' : '가') + (cp.past ? ' 아니었어요' : ' 아니에요')
+                        : cb + (cp.past ? (hb ? '이었어요' : '였어요') : (hb ? '이에요' : '예요')));
+    }
 
     var result = cleanSentenceText(parts.join(' '));
     return (skipVerb && !useLocChain) ? result + ',' : result;
@@ -1586,8 +1694,10 @@
       if(lineKo) ko.push(lineKo);
     }
 
+    var koOut = cleanSentenceText(ko.join(' '));
+    if(state.__question && koOut && !/\?$/.test(koOut)) koOut += '?';
     return {
-      korean: cleanSentenceText(ko.join(' ')),
+      korean: koOut,
       translation: (state.text || '').trim()
     };
   }
@@ -1621,7 +1731,7 @@
         if(!vb || !vb.ko) return;
         var o1 = itemOf(clause, 'object1');
         var o2 = itemOf(clause, 'object2');
-        if(EXISTENTIAL_VERBS[vb.ko] && (hasAccObj(o1) || hasAccObj(o2))){
+        if(EXISTENTIAL_VERBS[vb.ko] && hasAccObj(o2)){
           conflictVerb = vb; conflictType = 'existential';
         } else if(INTRANSITIVE_VERBS[vb.ko] && (hasAccObj(o1) || hasAccObj(o2))){
           if(!clause.__purposeVerbItem){
@@ -2204,6 +2314,8 @@
       {key:'because_of',    phrases:['din cauza ca','din cauza că','due to','because of']},
       {key:'cause1',        phrases:['pentru ca','pentru că','because']},
       {key:'cause2',        phrases:['fiindca','fiindcă','since']},
+      {key:'fear',          phrases:['xfearx']},
+      {key:'so',            phrases:['asa ca','așa că','de aceea','that s why','xcommax so','and so','deci']},
       {key:'condition',     phrases:['daca','dacă','if']},
       {key:'contrast1',     phrases:['dar','insa','însă','but','however']},
       {key:'contrast2',     phrases:['iar']},
@@ -2312,7 +2424,7 @@
     // the wrong text in the main clause slot.
     var SWAP_KEYS = {
       cause1:true, cause2:true,
-      after:true, before:true, concede:true, concede2:true, while:true, asap:true
+      after:true, before:true, concede:true, concede2:true, while:true, asap:true, fear:true, because_of:true
     };
     for(var pi = 0; pi < segments.length - 1; pi++){
       if(!segments[pi].leadingConnector && SWAP_KEYS[segments[pi].connector]){
@@ -2355,7 +2467,7 @@
     if(/\b(nu vreau|nu doresc|nu vrei|don't want|do not want|dont want)\b/.test(n)) return 'notwish';
     if(/\b(nu trebuie|nu ar trebui|must not|mustn't|mustnt)\b/.test(n)) return 'mustnot';
     // Exclude 'nu numai' (not only…) — that 'nu' is not a negation
-    if((/\bnu\b/.test(n) && !/\bnu numai\b/.test(n)) || /\b(don't|doesn't|do not|does not|dont|doesnt)\b/.test(n)) return 'neg';
+    if((/\bnu\b/.test(n) && !/\bnu numai\b/.test(n)) || /\b(don't|doesn't|do not|does not|dont|doesnt|didn t|didnt|did not)\b/.test(n) || /(^| )n (am|ai|a|au|ati|o)\b/.test(n)) return 'neg';
 
     // Obligations
     if(/\b(ar trebui|should|ought to)\b/.test(n)) return 'should';
@@ -2382,7 +2494,10 @@
                    // verbe TOPIK 5-6
                    'reusit','esuat','predat','renuntat','progresat','schimbat','decis','devenit',
                    'trebuit','muncit','obtinut','rezolvat','participat','contribuit',
-                   'trezit','inteles','stat'];
+                   'trezit','inteles','stat',
+                   'mutat','intarziat','luat','fumat','locuit','terminat','hotarat','incercat',
+                   'zis','spus','condus','inotat','trait','condus','pierdut','trecut','vizitat',
+                   'mers','fost','cerut','auzit','uitat','sosit','castigat','mancat'];
     // Word-boundary check: prevents 'studiat' matching inside 'studiati', etc.
     var _nn = ' ' + n + ' ';
     for(var i=0;i<roParts.length;i++){
@@ -2406,14 +2521,149 @@
     if(/\bwill\b/.test(n)) return 'future';
 
     // Past English: forme neregulate/regulate cunoscute
-    var enPast = ['went','ate','came','saw','wrote','met','rested','worked',
+    var enPast = ['went','ate','came','saw','wrote','met','rested','worked','was','were','eaten','been','did',
                   'exercised','prepared','learned','listened','made','bought',
                   'gave','studied','read ','read,','read.'];
+    // regular English past in -ed ("finished", "visited") for a known, non-adjective verb
+    var edWords = n.match(/\b[a-z]{3,}ed\b/g) || [];
+    for(var ew = 0; ew < edWords.length; ew++){
+      var edV = findBestMatch('verb', edWords[ew]);
+      if(edV && !isDescriptive(edV)) return 'past';
+    }
     for(var j=0;j<enPast.length;j++){
-      if(n.indexOf(enPast[j].trim()) !== -1) return 'past';
+      if(_nn.indexOf(' ' + enPast[j].replace(/[ ,.]/g, '') + ' ') !== -1) return 'past';
     }
 
     return 'present';
+  }
+
+  // ---- TOPIK grammar frames ------------------------------------------------
+  // Romanian/English constructions that map to one Korean ending
+  // ("am hotărât să X" → X-기로 했어요). The frame words are cut out of the text,
+  // so the rest parses as a plain sentence, and the frame picks the final ending.
+  // Length-preserving fold (lowercase, no diacritics), so a match index in the
+  // folded text is also valid in the original text.
+  function foldKeep(str){
+    return String(str || '').toLowerCase()
+      .replace(/[ăâ]/g, 'a').replace(/î/g, 'i').replace(/[șş]/g, 's').replace(/[țţ]/g, 't').replace(/[’`]/g, "'");
+  }
+  function cutFolded(raw, re, repl){
+    var m = re.exec(foldKeep(raw));
+    if(!m) return null;
+    return { text: raw.slice(0, m.index) + (repl == null ? ' ' : repl) + raw.slice(m.index + m[0].length), m: m };
+  }
+  var NUM_RE = '\\d{1,3}|unu|una|doi|doua|trei|patru|cinci|sase|sapte|opt|noua|zece|unsprezece|doisprezece|douasprezece|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve';
+  var NUM_WORDS = { un:1, o:1, a:1, an:1, unu:1, una:1, one:1, doi:2, doua:2, two:2, trei:3, three:3, patru:4, four:4, cinci:5, five:5, sase:6, six:6,
+                    sapte:7, seven:7, opt:8, eight:8, noua:9, nine:9, zece:10, ten:10, unsprezece:11, eleven:11, doisprezece:12, douasprezece:12, twelve:12 };
+  function numVal(w){ return /^\d+$/.test(w) ? Number(w) : (NUM_WORDS[w] || 0); }
+  var NATIVE_NUM = ['', '한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열', '열한', '열두'];
+  var COUNTERS = { '고양이':'마리', '개':'마리', '강아지':'마리', '새':'마리', '물고기':'마리', '책':'권', '공책':'권',
+                   '친구':'명', '사람':'명', '학생':'명', '아이':'명', '커피':'잔', '맥주':'잔', '주스':'잔', '표':'장', '사진':'장', '티켓':'장', '종이':'장' };
+  var GRAMMAR_FRAMES = [
+    { re: /\bnu (?:e|este|i) (?:nevoie|necesar|obligatoriu) (?:ca )?sa\b|\b(?:don'?t|do not|doesn'?t|does not) (?:have|need) to\b/, t: 'tense_noneed' },
+    { re: /\bnu (?:ai|aveti|am|are|avem|au) voie(?: sa)?\b|\bnu (?:e|este) voie(?: sa)?\b|\b(?:is |are )?not allowed to\b/, t: 'tense_mustnot' },
+    { re: /\b(?:ai|aveti|am|are|avem|au) voie(?: sa)?\b|\b(?:e|este) voie(?: sa)?\b|\b(?:is |are )?allowed to\b|\byou may\b/, t: 'tense_may' },
+    { re: /\bnu (?:stiu|stii|stie|stim|stiti) (?:cum )?sa\b|\b(?:don'?t|doesn'?t|do not|does not) know how to\b/, t: 'tense_knowhow_not' },
+    { re: /\b(?:stiu|stii|stie|stim|stiti) (?:cum )?sa\b|\bknows? how to\b/, t: 'tense_knowhow' },
+    { re: /\b(?:(?:am|ai|a|ati|au|m-am|ne-am|s-a|s-au) (?:hotarat|decis)|(?:hotarasc|hotaram|decid|decidem)) sa\b|\bdecided to\b/, t: 'tense_decide' },
+    { re: /\b(?:ma|ne|te|se) gand(?:esc|im|esti|este|iti) (?:daca )?sa\b|\b(?:thinking|think) (?:of|about)\b/, t: 'tense_consider' },
+    { re: /\b(?:am|ai|a|ati|au) incercat sa\b|\btried to\b/, t: 'tense_try_past' },
+    { re: /\b(?:incerc|incerci|incearca|incercam|incercati) sa\b|\b(?:try|tries) to\b/, t: 'tense_try' },
+    { re: /\bse pare ca\b|\bit seems(?: that| like)?\b|\bseems? (?:that|like)\b/, t: 'seem' },
+    { re: /\b(?:cred|credem|crezi|credeti) ca\b|\bprobabil(?: ca)?\b|\bi think(?: that)?\b|\bi guess\b|\bprobably\b/, t: 'guess', unless: /\bnu cred\b|\bdon'?t think\b/ },
+    { re: /\b(?:mi-a|mi-au|ne-a|ne-au|i-a|i-au|ti-a|v-a) (?:zis|spus|cerut) sa\b|\bm-a rugat sa\b|\b(?:told|asked) (?:me|us|him|her|you) to\b/, t: 'tense_said_cmd' },
+    { re: /\b(?:a|am|ai|au|ati|mi-a|ne-a) (?:zis|spus) ca\b|\b(?:spune|zice|spun|zic) ca\b|\b(?:said|says|told me)(?: that)?\b/, t: 'said' },
+    { re: /^\s*(?:hai(?:deti)?(?: sa)?|let'?s|let us)\b/, t: 'tense_lets' },
+    { re: /\b(?:va|te) rog(?: frumos)?(?: sa)?\b|\bplease\b/, t: 'tense_please' },
+    { re: /\b(?:imi|iti|ii|ne|va|le) (?:place|plac|placea) sa\b|\b(?:like|likes|love|loves) to\b/, t: 'tense_like_doing', subj: true }
+  ];
+  var FRAME_SUBJ = { imi: 'eu', iti: 'tu', ne: 'noi', va: 'voi', le: 'ei', i: 'eu', we: 'noi', you: 'tu' };
+  var NOUN_EXTRA = { ploii: '비', ploaia: '비', ploaie: '비', rain: '비', 'the rain': '비', zapezii: '눈', zapada: '눈', snow: '눈', 'the snow': '눈',
+                     traficului: '교통 체증', traffic: '교통 체증', 'the traffic': '교통 체증', vremii: '날씨', weather: '날씨', 'the weather': '날씨',
+                     bolii: '병', racelii: '감기', tie: '', tine: '', voua: '', you: '', lui: '그 사람', ei: '그 사람' };
+  var IMP_WORDS = /(^|, ?)\s*(vino|veniti|du-te|asteapta|asteptati|citeste|cititi|scrie|scrieti|asculta|ascultati|spune|spuneti|deschide|deschideti|inchide|inchideti|intra|intrati|mananca|mancati|bea|beti|dormi|odihneste-te|ajuta-ma|ajutati-ma|suna-ma|uita-te)\b/;
+  var IMP_EN = /^\s*(come|go|eat|drink|sit|wait|read|write|listen|look|open|close|call|help|sleep|study)\b/;
+
+  function nounKoBase(phrase){
+    var p = normalizeLatin(phrase).replace(/^(the|a|an|my|your|our|his|her) /, '');
+    var first = p.split(' ')[0];
+    if(NOUN_EXTRA.hasOwnProperty(p)) return NOUN_EXTRA[p];
+    if(NOUN_EXTRA.hasOwnProperty(first)) return NOUN_EXTRA[first];
+    var hit = findBestMatch('object1', p) || findBestMatch('topic', p) || findBestMatch('departure', p);
+    return hit && hit.ko ? hit.ko.replace(/(에서|에|을|를|이|가|은|는)$/, '') : null;
+  }
+
+  function applyGrammarFrames(raw){
+    var out = { text: raw, frame: null, prefix: null, question: /\?\s*$/.test(raw), exclaim: /!\s*$/.test(raw) };
+    var f, r;
+    // English question auxiliary: "Do you want…?" — 'do' is not the verb 하다
+    if(out.question) out.text = out.text.replace(/^\s*(do|does|did)\s+(?=\w)/i, '');
+    // "datorită prietenului meu" / "din cauza ploii" / "thanks to you" → N 덕분에 / N 때문에
+    f = /\b(datorita|multumita|thanks to|din cauza|because of|due to)\s+(?!ca\b|that\b)((?:the |a |an |my |your |our |his |her )?[a-z-]+(?: (?:meu|mea|mei|mele|tau|ta|lui|ei|nostru|noastre))?)\s*,?/.exec(foldKeep(out.text));
+    if(f){
+      var nb = nounKoBase(f[2]);
+      if(nb != null){
+        var thanks = /^(datorita|multumita|thanks to)$/.test(f[1]);
+        out.prefix = (nb ? nb + ' ' : '') + (thanks ? '덕분에' : '때문에');
+        out.text = out.text.slice(0, f.index) + ' ' + out.text.slice(f.index + f[0].length);
+      }
+    }
+    // "de teamă să nu X" → X-(으)ㄹ까 봐 (handled as a clause connector)
+    r = cutFolded(out.text, /\b(?:de teama|de frica|ca nu cumva)(?: ca)? sa nu\b|\bfor fear(?: that)?\b|\bin case\b/, ' xfearx ');
+    if(r) out.text = r.text;
+    // "am fost în Coreea" = went there → parse as a motion verb
+    r = cutFolded(out.text, /\b(am|ai|a|ati|au) fost ((?:vreodata |o data |deja )?(?:in|la))\b/, null);
+    if(r) out.text = out.text.slice(0, r.m.index) + r.m[1] + ' mers ' + r.m[2] + out.text.slice(r.m.index + r.m[0].length);
+    r = cutFolded(out.text, /\b(?:have|has) been to\b/, ' went to ');
+    if(r) out.text = r.text;
+    // experience: "n-am mâncat niciodată" / "am fost o dată"
+    var fl = foldKeep(out.text);
+    if(/\b(niciodata|never)\b/.test(fl)){
+      var stripped = out.text;
+      r = cutFolded(stripped, /\b(?:niciodata|never)\b/, ' '); if(r) stripped = r.text;
+      r = cutFolded(stripped, /(^|\s)n-(?=(am|ai|a|au|ati)\b)/, ' '); if(r) stripped = r.text;
+      r = cutFolded(stripped, /\bnu (?=(am|ai|a|au|ati)\b)/, ''); if(r) stripped = r.text;
+      r = cutFolded(stripped, /\b(?:have|has)\s+/, ''); if(r) stripped = r.text;
+      if(detectTenseFromText(stripped) === 'past'){ out.text = stripped; out.frame = 'tense_exp_no'; }
+    } else if(/\b(o data|vreodata|ever|de doua ori|de multe ori)\b/.test(fl)){
+      var st2 = out.text;
+      r = cutFolded(st2, /\b(?:o data|vreodata|ever|de doua ori|de multe ori)\b/, ' '); if(r) st2 = r.text;
+      if(detectTenseFromText(st2) === 'past'){ out.text = st2; out.frame = 'tense_exp_yes'; }
+    }
+    // modal / quotative frames — first match wins
+    if(!out.frame){
+      for(var i = 0; i < GRAMMAR_FRAMES.length; i++){
+        var G = GRAMMAR_FRAMES[i];
+        if(G.unless && G.unless.test(foldKeep(out.text))) continue;
+        r = cutFolded(out.text, G.re, ' ');
+        if(!r) continue;
+        out.text = r.text;
+        out.frame = G.t;
+        if(G.subj){
+          var pron = (r.m[0].split(' ')[0] || '');
+          if(FRAME_SUBJ[pron]) out.text = FRAME_SUBJ[pron] + ' ' + out.text;
+        }
+        break;
+      }
+    }
+    // "Îmi place muzica" (no verb after it) → eu + place
+    r = cutFolded(out.text, /\b(imi|iti|ne) (place|plac|placea)\b/, null);
+    if(r && !/\b(eu|tu|noi|voi|ei)\s*$/.test(foldKeep(out.text.slice(0, r.m.index)))) out.text = out.text.slice(0, r.m.index) + FRAME_SUBJ[r.m[1]] + ' ' + out.text.slice(r.m.index);
+    fl = foldKeep(out.text);
+    // prohibition: "Nu mâncați aici", "Nu fuma!", "Don't eat here"
+    if(!out.frame && !out.question){
+      var dm = /^\s*nu\s+([a-z-]+)/.exec(fl);
+      if(dm && findBestMatch('verb', dm[1]) && (/ti$/.test(dm[1]) || out.exclaim)){
+        out.text = out.text.replace(/^\s*\S+\s+/, ''); out.frame = 'tense_dont';
+      } else if(/^\s*(?:don'?t|do not)\s+\w/.test(fl)){
+        out.text = out.text.replace(/^\s*(?:don['’]?t|do not)\s+/i, ''); out.frame = 'tense_dont';
+      }
+    }
+    // imperative: "Vino la mine", "Citește!", "Come here"
+    if(!out.frame && !out.question && (IMP_WORDS.test(fl) || IMP_EN.test(fl) || (out.exclaim && !/\b(eu|tu|el|ea|noi|voi|ei|ele|i|we|he|she|they)\b/.test(fl)))){
+      out.frame = 'tense_imp';
+    }
+    return out;
   }
 
   function parseTextIntoClauses(){
@@ -2425,6 +2675,10 @@
       renderAll();
       return;
     }
+
+    var FR = applyGrammarFrames(raw);
+    raw = FR.text;
+    state.__question = FR.question;
 
     var detectedTense = detectTenseFromText(raw);
     var detectedTenseKey = detectedTense === 'past'     ? 'tense_past'
@@ -2516,6 +2770,50 @@
         verb = findBestMatch('verb', clauseData[ci - 1].text);
       }
 
+      // ---- hour ("la ora șapte" → 일곱 시에), duration ("de doi ani" → 2년 동안), counted nouns ("două pisici" → 고양이 두 마리) ----
+      var _ct = ' ' + cd.text + ' ';
+      var _timeExtra = [];
+      var hm = new RegExp('\\b(?:la ora|ora|at)\\s+(' + NUM_RE + ')(\\s+(?:si\\s+)?jumatate|\\s+thirty|\\s+30)?(?:\\s+o\\s*clock)?\\b').exec(_ct);
+      if(hm){
+        var hn = numVal(hm[1]);
+        if(hn >= 1 && hn <= 12){ _timeExtra.push(NATIVE_NUM[hn] + ' 시' + (hm[2] ? ' 반' : '') + '에'); _ct = _ct.replace(hm[0], ' '); }
+      }
+      var dm2 = new RegExp('\\b(?:de|for|timp de)\\s+(' + NUM_RE + '|un|o|a|an)\\s+(ani|an|anul|years?|luni|luna|months?|zile|zi|days?|saptamani|saptamana|weeks?|ore|hours?)\\b').exec(_ct);
+      if(dm2){
+        var dn = numVal(dm2[1]) || 1;
+        var du = /^(ani|an|anul|year)/.test(dm2[2]) ? '년' : /^(luni|luna|month)/.test(dm2[2]) ? '개월' : /^(zile|zi|day)/.test(dm2[2]) ? '일' : /^(saptaman|week)/.test(dm2[2]) ? '주' : '시간';
+        _timeExtra.push(dn + du + ' 동안'); _ct = _ct.replace(dm2[0], ' ');
+      }
+      if(_timeExtra.length){
+        var tBase = times[0] ? times[0].ko + ' ' : '';
+        times = [{ key:'time', kind:'time', ko: tBase + _timeExtra.join(' '), ro: cd.text, en: cd.text }];
+      }
+      var cm2 = new RegExp('\\b(' + NUM_RE + ')\\s+([a-z]+)').exec(_ct);
+      if(cm2 && numVal(cm2[1]) >= 2){
+        var cObj = findBestMatch('object1', cm2[2]);
+        if(cObj && cObj.ko){
+          objects = [cObj].concat(objects.filter(function(o){ return o.ko !== cObj.ko; }));
+          var cBase0 = cObj.ko.replace(/(을|를|이|가|은|는)$/, '');
+          var cn = numVal(cm2[1]);
+          clause.__count = { num: cn <= 12 ? NATIVE_NUM[cn] : String(cn), counter: COUNTERS[cBase0] || '개' };
+        }
+      }
+      // copula: "sunt student" → 학생이에요, "Ana nu e profesoară" → 아나는 선생님이 아니에요
+      var _copulaFirstPerson = false;
+      if(!verb){
+        var cpm = /\b(nu\s+)?(sunt|esti|e|este|suntem|sunteti|i m|i am|you are|he is|she is|it is|is|are|am fost|ai fost|a fost|au fost|ati fost|was|were)\b(\s+not)?/.exec(_ct);
+        if(cpm){
+          var after = _ct.slice(cpm.index + cpm[0].length);
+          var pn = findBestMatch('topic', after) || findBestMatch('object1', after);
+          if(pn && pn.ko && !/^(저는|나는|너는|우리는|그는|그녀는|그들은)$/.test(pn.ko)){
+            clause.__copula = { base: pn.ko.replace(/(을|를|이|가|은|는)$/, ''), neg: !!(cpm[1] || cpm[3]), past: /fost|was|were/.test(cpm[2]) };
+            subjects = subjects.filter(function(x){ return x.ko !== pn.ko; });
+            objects  = objects.filter(function(x){ return x.ko !== pn.ko; });
+            _copulaFirstPerson = /^(sunt|i m|i am)$/.test(cpm[2]);
+          }
+        }
+      }
+
       // "cu Mihai" / "with Mihai" → companion (Mihai하고 같이), never the subject
       var cmp = String(raw).match(/(?:^|\s)(?:cu|with)\s+([A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ\-]+)/);
       if(cmp && !/^(cred|sper|azi|maine|ieri)$/.test(normalizeLatin(cmp[1]))) clause.__companion = cmp[1];
@@ -2528,7 +2826,7 @@
           var ow = rawWords[pw];
           if(ow && /^[A-ZĂÎȘȚ]/.test(ow)){
             var owNorm = normalizeLatin(ow);
-            if(owNorm.length < 2 || /^(cred|sper|stiu|poate|azi|maine|ieri|acum|apoi|dar|deci|in|la|pe|cu|si|pot|poti|putem|vreau|vrei|vrem|nu|da|am|ai|ne|ma|te|eu|tu|el|ea|noi|voi|ei|ele|trebuie|vom|vor|va|to|the|a|an|my|we|he|she|it|they|you|this|that)$/.test(owNorm)) continue;
+            if(owNorm.length < 2 || /^(cred|sper|stiu|poate|azi|maine|ieri|acum|apoi|dar|deci|in|la|pe|cu|si|pot|poti|putem|vreau|vrei|vrem|nu|da|am|ai|ne|ma|te|eu|tu|el|ea|noi|voi|ei|ele|trebuie|vom|vor|va|to|the|a|an|my|we|he|she|it|they|you|this|that|sunt|esti|e|este|suntem|sunteti|imi|iti|ii|mi|ti|se|si|probabil|datorita|multumita|din|hai|haideti|asa|niciodata|vreodata|please|let|lets|im|dont|do|does|did|is|are|was|n|de|ca|o|un|una|daca|cand|fiindca|pentru|dupa|inainte|imediat|chiar|desi|mai|foarte|tot|toti|fiecare|ce|cine|unde|cum|de ce|care|aici|acolo|sa)$/.test(owNorm)) continue;
             if(clause.__companion && owNorm === normalizeLatin(clause.__companion)) continue;
             if(cd.text.indexOf(owNorm) !== -1 &&
                !findBestMatch('departure', owNorm) &&
@@ -2555,6 +2853,16 @@
           }
         }
       }
+
+      if(_copulaFirstPerson && !subjects.length) subjects = [{ key:'topic', kind:'topic', ko:'저는', ro:'eu', en:'I' }];
+      // adjective predicate: "Mâncarea e gustoasă" → 음식이 맛있어요 (the noun is the subject, not an object)
+      if(verb && isDescriptive(verb) && !subjects.length && objects[0] && !clause.__count){
+        var dBase = objects[0].ko.replace(/(을|를|이|가|은|는)$/, '');
+        var dHb = window.Conjugation && window.Conjugation.hasBatchim(dBase);
+        subjects = [{ key:'topic', kind:'topic', ko: dBase + (dHb ? '이' : '가'), ro: objects[0].ro, en: objects[0].en }];
+        objects = objects.slice(1);
+      }
+      if(ci === 0 && FR.prefix) clause.__prefixKo = FR.prefix;
 
       // Topic drop: only set subject if different from previous clause's subject
       if(subjects[0] && subjects[0].ko !== lastSubjectKo){
@@ -2618,7 +2926,8 @@
             for(var sai2 = 0; sai2 < saAll2.length && !purposeVerbItem; sai2++){
               var pvW2 = saAll2[sai2].replace(/^sa\s+/, '').replace(/[!?.,;]/g,'');
               var pvC2 = findBestMatch('verb', pvW2);
-              if(pvC2 && pvC2.ko !== verb.ko) purposeVerbItem = pvC2;
+              // "vrei să bei cafea" — 'bei' is the main compound verb (커피를 마시다), not a purpose
+              if(pvC2 && pvC2.ko !== verb.ko && verb.ko.slice(-pvC2.ko.length) !== pvC2.ko) purposeVerbItem = pvC2;
             }
           }
           // Inline "to + verb" (English, e.g. "I work to earn money")
@@ -2631,6 +2940,8 @@
             }
           }
         }
+        // a compound main verb already contains it ("bei cafea" = 커피를 마시다 + "să bei")
+        if(purposeVerbItem && verb && verb.ko.slice(-purposeVerbItem.ko.length) === purposeVerbItem.ko) purposeVerbItem = null;
         if(purposeVerbItem) clause.__purposeVerbItem = purposeVerbItem;
 
         // "go home": the same noun as place and object (집에 + 집을) → keep only the place
@@ -2638,7 +2949,7 @@
         if(objects[0] && places[0] && _base(objects[0].ko) === _base(places[0].ko)) objects = objects.slice(1);
         if(objects[1] && objects[0] && objects[1].ko === objects[0].ko) objects = [objects[0]];   // same word matched twice
         // compound verbs that already contain their object ("커피를 마시다") — don't repeat it
-        if(verb && verb.ko) objects = objects.filter(function(o){ return !(o && o.ko && verb.ko.indexOf(o.ko + ' ') === 0); });
+        if(verb && verb.ko) objects = objects.filter(function(o){ return !(o && o.ko && verb.ko.indexOf(' ') > 0 && verb.ko.indexOf(_base(o.ko)) === 0); });
         if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
         if(objects[1])  setFieldItem(clause, 'object2', objects[1]);
         if(descs[0])    setFieldItem(clause, 'adverb', descs[0]);
@@ -2719,8 +3030,29 @@
       }
     }
 
-    // Set detected tense on the last clause
+    // Grammar frames / questions decide the final ending
     var lastParsed = state.clauses[state.clauses.length - 1];
+    var lastTxt = clauseData[clauseData.length - 1].text;
+    if(detectedTenseKey === 'tense_neg'){
+      var _ns = normalizeLatin(lastTxt).replace(/\bnu\b/g, ' ').replace(/(^| )n (?=(am|ai|a|au|ati)\b)/g, ' ');
+      if(detectTenseFromText(_ns) === 'past') detectedTenseKey = 'tense_neg_past';
+    }
+    if(FR.frame){
+      var _sub = detectTenseFromText(lastTxt);
+      if(FR.frame === 'guess')      detectedTenseKey = _sub === 'past' ? 'tense_guess_past' : _sub === 'future' ? 'tense_guess' : 'tense_guess_now';
+      else if(FR.frame === 'seem')  detectedTenseKey = _sub === 'past' ? 'tense_seem_past' : 'tense_seem';
+      else if(FR.frame === 'said'){ detectedTenseKey = 'tense_said'; lastParsed.__reportSub = _sub; }
+      else detectedTenseKey = FR.frame;
+    } else if(FR.question){
+      var _fq = foldKeep(raw);
+      if(detectedTenseKey === 'tense_wish' && /\b(vrei|vreti|want|would you like)\b/.test(_fq)) detectedTenseKey = 'tense_offer';
+      else if(detectedTenseKey === 'tense_pres' && (/\b(noi|shall we|should we)\b/.test(_fq) ||
+              _fq.split(/[^a-z]+/).some(function(w){ return /^[a-z]{2,}(em|am|im)$/.test(w) && !!findBestMatch('verb', w); }))){
+        detectedTenseKey = 'tense_suggest';
+      }
+    }
+
+    // Set detected tense on the last clause
     var tenseEntry = null;
     for(var tt = 0; tt < DATA.connector.length; tt++){
       if(DATA.connector[tt].id === detectedTenseKey){ tenseEntry = DATA.connector[tt]; break; }
