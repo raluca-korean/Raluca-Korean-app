@@ -55,10 +55,19 @@
     var base = document.createElement('base');
     base.target = '_top';
     document.head.appendChild(base);
+    // The host page changes language / theme → follow it right away.
+    // (localStorage writes in the host fire a 'storage' event in this frame.)
+    window.addEventListener('storage', function (e) {
+      if (e.key === 'RK_THEME' && document.body) {
+        document.body.classList.toggle('dark-mode', e.newValue === 'dark');
+      } else if (e.key === 'RK_LANG' && e.newValue && e.newValue !== e.oldValue) {
+        location.reload();          // every page builds its texts at load
+      }
+    });
   }
 
   function lang() {
-    try { return (window.RKLang && RKLang.get()) || localStorage.getItem('RK_LANG') || 'ro'; } catch (e) { return 'ro'; }
+    try { return localStorage.getItem('RK_LANG') || (window.RKLang && RKLang.get()) || 'ro'; } catch (e) { return 'ro'; }
   }
 
   function init(opts) {
@@ -129,6 +138,18 @@
       history.replaceState(null, '', u.pathname + u.search);
     }
     show(params.get('tab') || tabs[0].id);
+
+    // tab labels follow the host's language switch (same document: no storage event)
+    var shownLang = lang();
+    setInterval(function () {
+      var l = lang();
+      if (l === shownLang) return;
+      shownLang = l;
+      bar.querySelectorAll('.rk-tab').forEach(function (b) {
+        var t = tabs.filter(function (x) { return x.id === b.dataset.tab; })[0];
+        if (t) b.textContent = t[l] || t.ro;
+      });
+    }, 600);
     return { show: show };
   }
 
