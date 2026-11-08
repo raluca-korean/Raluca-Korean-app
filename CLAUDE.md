@@ -49,7 +49,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 - `tools/`: scripturi Python de generare a exercițiilor (nu fac parte din aplicație).
 - **Lecțiile** se deschid în `lesson-neural.html` (stilul interactiv), în două moduri:
   - `?lesson=T1-03` / `?topik=<nivel>` / `?topik` — **Gramatică TOPIK**: citește `data/lessons.json`, o convertește prin `fromLessonsJson()` (romanizare automată, plăcuțe gramaticale din `structure`), iar „Gata” scrie în `RK_LESSON_DONE` + `RK_LESSON_TODAY` (progresul principal). Butonul „Exersează” → `exercises.html?lesson=ID`.
-  - fără parametri — **Fraze utile**: cele 100 de lecții-tipar scrise în `LESSONS` din pagină, progres separat în `RK_DONE_NEURAL`.
+  - fără parametri — **Tipare de conversație** (fost „Fraze utile”): cele 100 de lecții-tipar scrise în `LESSONS` din pagină, fiecare cu 10 exemple, progres separat în `RK_DONE_NEURAL`. Nu dublează `basics.html` (doar 14 din 1000 de exemple coincid) — sunt lecții de tipare, nu liste de fraze.
   - `lessons.html` rămâne ca „Toate lecțiile” (vedere de ansamblu + quiz), cu buton spre modul interactiv.
 - `word-context.html` = **Harta Cuvintelor**, cu 2 taburi: căutare cuvânt + Constelații (`?view=stars`). (fostul `word-map.html` a fost șters).
 
