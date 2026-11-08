@@ -198,10 +198,11 @@ function buildWords(vocab) {
   flat.forEach(raw => {
     const ko = (raw.ko || "").trim();
     if (!ko) return;
-    if (!map.has(ko)) map.set(ko, { ko, ro: raw.ro || "", en: raw.en || "", categoriesRo: new Set(), categoriesEn: new Set() });
+    if (!map.has(ko)) map.set(ko, { ko, ro: raw.ro || "", en: raw.en || "", emoji: raw.emoji || "", categoriesRo: new Set(), categoriesEn: new Set() });
     const c = map.get(ko);
     if (!c.ro && raw.ro) c.ro = raw.ro;
     if (!c.en && raw.en) c.en = raw.en;
+    if (!c.emoji && raw.emoji) c.emoji = raw.emoji;
     (raw.categories || []).forEach(catKey => {
       if (CAT_LABELS[catKey]) {
         c.categoriesRo.add(CAT_LABELS[catKey].ro);
@@ -211,7 +212,7 @@ function buildWords(vocab) {
   });
 
   return Array.from(map.values())
-    .map(w => ({ ko: w.ko, ro: w.ro, en: w.en, categoriesRo: [...w.categoriesRo], categoriesEn: [...w.categoriesEn] }))
+    .map(w => ({ ko: w.ko, ro: w.ro, en: w.en, emoji: w.emoji, categoriesRo: [...w.categoriesRo], categoriesEn: [...w.categoriesEn] }))
     .sort((a, b) => a.ko.localeCompare(b.ko, "ko"));
 }
 
@@ -394,7 +395,7 @@ function _makeRow(word) {
   el.innerHTML =
     `<div class="gls-row-text">` +
       `<span class="gls-row-ko" style="color:${color}">${sanitizeHTML(word.ko)}</span>` +
-      `<span class="gls-row-tr">${sanitizeHTML(getMeaning(word))}</span>` +
+      `<span class="gls-row-tr">${word.emoji ? sanitizeHTML(word.emoji) + " " : ""}${sanitizeHTML(getMeaning(word))}</span>` +
     `</div>` +
     `<div class="gls-row-end">` +
       `<button class="gls-row-speak" type="button" aria-label="${t('speak')}" title="${t('speak')}">🔊</button>` +

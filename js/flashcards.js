@@ -724,7 +724,7 @@ async function loadVocab() {
     );
     flat.forEach(e => {
       if (!e.ko) return;
-      if (!map.has(e.ko)) map.set(e.ko, {ko:e.ko, ro:e.ro||"", en:e.en||"", categoriesRo:[], categoriesEn:[]});
+      if (!map.has(e.ko)) map.set(e.ko, {ko:e.ko, ro:e.ro||"", en:e.en||"", emoji:e.emoji||"", categoriesRo:[], categoriesEn:[]});
       const w = map.get(e.ko);
       (e.categories||[]).forEach(cat => {
         const lbl = catLabels[cat];
@@ -836,6 +836,7 @@ const WORD_EMOJI = {
   "오리":"🦆"
 };
 function getWordEmoji(word) {
+  if (word.emoji) return word.emoji;                 // from data/vocab-korean.json (`emoji`)
   if (word.ko && WORD_EMOJI[word.ko]) return WORD_EMOJI[word.ko];
   const cat = getCat(word);
   return cat ? (CAT_EMOJI[cat] || "💬") : "💬";
