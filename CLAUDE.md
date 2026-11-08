@@ -8,7 +8,7 @@ Stack: **Vanilla JS, HTML, CSS** — fără build tools, fără npm.
 
 ## Structura fișierelor
 
-Aplicația a crescut mult peste cele 5 pagini inițiale — sunt ~37 pagini `.html` la rădăcină. Nu toate importă `theme-anime.css`: hub-urile din navigarea de jos (`index`, `learn`, `play`, `profile`, `review`) au stiluri proprii inline în `<style>` (aceleași token-uri: violet `#6C5CE7`, roz `#E96A9A`, auriu `#F4C95D`, fundal întunecat `#101426`). Restul paginilor (cele mai vechi) importă `theme-anime.css`. Paleta veche verde/auriu (`#1c4a3a`/`#c9922e`) și tonurile maro/crem au fost retrase — nu le reintroduce.
+Aplicația a crescut mult peste cele 5 pagini inițiale — sunt 35 de pagini `.html` la rădăcină (după curățenia din noiembrie 2026: șterse `planner`, `word-map`, `exam`, `phrases`; perechi unite prin taburi, vezi mai jos). Nu toate importă `theme-anime.css`: hub-urile din navigarea de jos (`index`, `learn`, `play`, `profile`, `review`) au stiluri proprii inline în `<style>` (aceleași token-uri: violet `#6C5CE7`, roz `#E96A9A`, auriu `#F4C95D`, fundal întunecat `#101426`). Restul paginilor (cele mai vechi) importă `theme-anime.css`. Paleta veche verde/auriu (`#1c4a3a`/`#c9922e`) și tonurile maro/crem au fost retrase — nu le reintroduce.
 
 ### Navigare (bottom nav, 5 taburi)
 
@@ -21,7 +21,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 - `today.html` — **Planul TOPIK** (nivel, data examenului, ritm zilnic, card de streak; a înglobat fostul `planner.html`, șters). Legat din Progres. **Misiunea zilnică există doar pe `index.html`** (un singur bonus/zi: `RK_DAILY_MISSION_AWARDED`).
 - `explore.html` — index complet al tuturor funcțiilor (catch-all, util când o pagină nouă nu e încă în niciun meniu)
 - `onboarding.html` — flow de prim-contact (Student/Adult, focus, timp disponibil), cu buton „Sari peste"
-- `review.html`, `mistakes.html` — recapitulare greșeli/SRS; `review.html` include și propozițiile salvate din builder (SRS în `RK_SENT_SRS`, repetate în `builder.html?review=1`)
+- `review.html` (cu tabul `mistakes.html`) — recapitulare greșeli/SRS; `review.html` include și propozițiile salvate din builder (SRS în `RK_SENT_SRS`, repetate în `builder.html?review=1`)
 
 ### Pagini de conținut/exerciții (reprezentativ, nu exhaustiv)
 
@@ -39,7 +39,7 @@ Nav-ul de jos e injectat de `js/core/bottom-nav.js` (`RKNav.init('home'|'learn'|
 
 `exercises.json` (7 tipuri; fiecare exercițiu are `lessonId` = lecția din `lessons.json` pe care o exersează — nu folosi ID-uri fără lecție, răspunsul marchează lecția ca făcută; dialogurile generale `chain` n-au `lessonId`), `lessons.json`, `vocab-korean.json`, `stories.json`, `hanja.json`, `reading-texts.json`, `listening.json`, `numbers.json`, `honorifics.json`, `journal-prompts.json`, `composition-prompts.json`, `context-words.json`, `word-clusters.json`, `builder-vocab.json`, `extra-generated-sentences.json`, `basic-sentences.json`.
 
-**Un singur dicționar:** `vocab-korean.json` e dicționarul întregii aplicații (glosar, flashcards, memory, slot, harta cuvintelor **și builder** — builderul îl încarcă integral). `builder-vocab.json` adaugă doar stratul gramatical al builderului (particule, forme conjugate ca alias-uri, conectori). După ce adaugi cuvinte în `builder-vocab.json`, rulează `python3 tools/sync_builder_vocab.py`, ca să ajungă și în dicționar. După orice modificare a builderului rulează `node tools/builder-tests/run.js` (162 de propoziții de regresie).
+**Un singur dicționar:** `vocab-korean.json` e dicționarul întregii aplicații (glosar, flashcards, memory, slot, harta cuvintelor **și builder** — builderul îl încarcă integral). `builder-vocab.json` adaugă doar stratul gramatical al builderului (particule, forme conjugate ca alias-uri, conectori). După ce adaugi cuvinte în `builder-vocab.json`, rulează `python3 tools/sync_builder_vocab.py`, ca să ajungă și în dicționar. După orice modificare a builderului rulează `node tools/builder-tests/run.js` (188 de propoziții de regresie; o propoziție nouă se adaugă în `tools/builder-tests/cases.tsv`, apoi `--update` și verifici diff-ul).
 
 ### Hub-uri: structură
 
@@ -69,6 +69,7 @@ Paginile din tab 2 nu se leagă direct din hub-uri. Pentru o pereche nouă: incl
 
 - Nu adăuga pagini noi fără să le legi în cel puțin un hub (`index`/`learn`/`play`/`explore`) — o pagină nelegată nicăieri devine moartă (așa a rămas orfană `stats.html`, ștearsă ulterior).
 - Orice pagină nouă care trebuie cache-uită offline se adaugă în `STATIC` din `sw.js`, cu bump de versiune la `CACHE`.
+- **Înainte de push**, după orice modificare de pagini, linkuri, `sw.js` sau `data/`: `node tools/smoke-test/run.js` (JSON valid, fișierele din `STATIC` există, nicio pagină orfană, fiecare pagină se încarcă fără erori JS / 404 / linkuri moarte). Necesită Playwright.
 
 ---
 
