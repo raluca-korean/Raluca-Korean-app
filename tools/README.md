@@ -18,3 +18,11 @@ node tools/builder-tests/run.js --update   # acceptă rezultatul curent ca „a�
 ```
 
 Rulează testele după orice modificare în `js/builder.js` sau `data/builder-vocab.json`. O propoziție nouă se adaugă în `cases.tsv` (doar textul, fără coloana a doua), apoi `--update`; verifică în diff că rezultatul e corect.
+
+## Test general (toată aplicația)
+
+```bash
+node tools/smoke-test/run.js
+```
+
+Verifică, fără să modifice date: toate `data/*.json` sunt valide; tot ce e în `STATIC` din `sw.js` există; nicio pagină nu e orfană (nelegată de nicăieri); fiecare pagină se încarcă pe ecran de telefon fără erori JS, fără fișiere lipsă (404) și fără linkuri spre pagini inexistente. Rulează-l înainte de push după orice modificare de pagini, linkuri sau `sw.js`.
