@@ -2519,6 +2519,7 @@
       {key:'before',        phrases:['inainte sa','înainte să','inainte de a','înainte de a','before doing']},
       {key:'asap',          phrases:['imediat ce','as soon as']},
       {key:'aslong',        phrases:['atat timp cat','atât timp cât','as long as']},
+      {key:'during',        phrases:['cat timp','cât timp','for as long as']},
       {key:'formal_cause',  phrases:['deoarece','given that']},
       // TOPIK 5-6: must be before 'cause1'('ca'), 'contrast1'('dar'), 'seq'('si')
       {key:'proportion',    phrases:['cu atat','cu atât']},
@@ -2641,7 +2642,7 @@
     // the wrong text in the main clause slot.
     var SWAP_KEYS = {
       cause1:true, cause2:true,
-      after:true, before:true, concede:true, concede2:true, while:true, asap:true, fear:true, because_of:true, when:true, condition:true
+      after:true, before:true, concede:true, concede2:true, while:true, asap:true, fear:true, because_of:true, when:true, condition:true, during:true
     };
     for(var pi = 0; pi < segments.length - 1; pi++){
       if(!segments[pi].leadingConnector && SWAP_KEYS[segments[pi].connector]){
@@ -3304,6 +3305,8 @@
       var segText = pendingText ? (pendingText + ' ' + (cleanText || seg.text)) : (cleanText || seg.text);
       pendingText = '';
       var segVerb = findBestMatch('verb', segText);
+      // "mama e la muncă" — "a fi" + a place is a predicate too (→ 있다)
+      if(!segVerb && /\b(e|este|sunt|esti|suntem|sunteti|era|erau)\b/.test(segText) && findBestMatch('departure', segText)) segVerb = { ko: '있다' };
       // A verb-less segment that has its own time/place/object signals a new
       // predicate with an implied verb (e.g. "și seara la restaurant" after
       // "dimineața merg la piață"). Create a separate clause that inherits
@@ -3386,6 +3389,24 @@
           break;
         }
       })();
+
+      // "mă uit după copii / după bunica / după câine" = look after → 돌보다, not 찾다 (search)
+      if(verb && verb.ko === '찾다' && /\buit\w* dupa\b/.test(normalizeLatin(cd.text))){
+        var _after = normalizeLatin(cd.text).split(/\bdupa\b/)[1] || '';
+        var _who = findBestMatch('topic', _after);
+        var _pet = /\b(caine|cainele|catel|pisica|pisicile|copii|copiii|copil|copilul|bebe|bebelus|bebelusul|animale)\b/.test(_after);
+        if((_who && !/^(저는|나는|우리는)$/.test(_who.ko)) || _pet){
+          var _care = null;
+          (DATA.verb || []).forEach(function(v){ if(v.ko === '돌보다') _care = v; });
+          if(_care) verb = _care;
+          // the cared-for person is the object here, not the subject
+          if(_who){
+            subjects = subjects.filter(function(x){ return x.ko !== _who.ko; });
+            var _wb = koBase(_who.ko);
+            objects = [{ key:'object1', kind:'object1', ko: _wb + ((window.Conjugation && window.Conjugation.hasBatchim(_wb)) ? '을' : '를'), ro: _who.ro, en: _who.en }].concat(objects.filter(function(o){ return koBase(o.ko) !== _wb; }));
+          }
+        }
+      }
 
       // "vorbesc coreeana" → 한국어를 해요 (with a language, 하다 is the natural verb)
       if(verb && verb.ko === '말하다' && objects[0] && /어를$/.test(objects[0].ko)) verb = speakLang(verb);
@@ -3484,6 +3505,25 @@
         }
       }
 
+      // "un cadou pentru mama" → 엄마를 위한 선물 ; "gătesc pentru prieteni" → 친구들을 위해
+      var _pf = /\bpentru (\S+)/.exec(cd.text);
+      if(_pf && !/^(a|ca|ce|cine|asta|aceasta)$/.test(_pf[1])){
+        var _ben = findBestMatch('topic', _pf[1]);
+        if(_ben && !/^(저는|나는|너는|우리는)$/.test(_ben.ko)){
+          var _bb = koBase(_ben.ko);
+          var _bp = _bb + ((window.Conjugation && window.Conjugation.hasBatchim(_bb)) ? '을' : '를');
+          subjects = subjects.filter(function(x){ return x.ko !== _ben.ko; });
+          objects = objects.filter(function(o){ return koBase(o.ko) !== _bb; });
+          if(objects[0]){
+            var _oc = {}; for(var ok3 in objects[0]) _oc[ok3] = objects[0][ok3];
+            _oc.ko = _bp + ' 위한 ' + objects[0].ko;
+            objects = [_oc].concat(objects.slice(1));
+          } else {
+            clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + _bp + ' 위해';
+          }
+        }
+      }
+
       // means of transport: "cu trenul" → 기차로
       var _tr = /\b(?:cu|by|with the|with)\s+(trenul|tren|train|autobuzul|autobuz|bus|avionul|avion|plane|masina|masinii|car|metroul|metrou|subway|taxiul|taxi|bicicleta|bicicleta|bike|bicycle|vaporul|vapor|ship)\b/.exec(' ' + cd.text + ' ');
       if(_tr){
@@ -3544,6 +3584,15 @@
           var pn = findBestMatch('topic', after) || findBestMatch('object1', after);
           if(!pn) pn = objects.filter(function(o){ return o.fromLexicon && (' ' + after + ' ').indexOf(' ' + o.srcTok + ' ') !== -1; })[0] || null;
           if(!pn && _colorPred) pn = { ko: _colorPred };
+          // "mama e la muncă" — "a fi" + a place = to be somewhere → 있다
+          if(!pn && places.length){
+            (DATA.verb || []).forEach(function(v){ if(v.ko === '있다' && !verb) verb = v; });
+            if(verb && !subjects.length && objects.length){
+              subjects = [{ key:'topic', kind:'topic', ko: koNom(objects[0].ko), ro: objects[0].ro, en: objects[0].en }];
+              objects = objects.slice(1);
+            }
+            if(/^nu\s/.test(cpm[0])) clause.negated = true;
+          }
           if(pn && pn.ko && !/^(저는|나는|너는|우리는|그는|그녀는|그들은)$/.test(pn.ko)){
             clause.__copula = { base: pn.ko.replace(/(을|를|이|가|은|는)$/, ''), neg: !!(cpm[1] || cpm[3]), past: /fost|was|were/.test(cpm[2]) };
             subjects = subjects.filter(function(x){ return x.ko !== pn.ko; });
