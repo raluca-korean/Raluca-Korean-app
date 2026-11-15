@@ -1758,7 +1758,8 @@
     // instead of a comma (시장에, 식당에 가요) which is unnatural Korean.
     var useLocChain = skipVerb && isMotionTo && !!(departure && departure.ko) && !(transit && transit.ko);
     if(departure && departure.ko){
-      var depKo = (isMotionTo || isExist) ? departure.ko.replace(/에서$/, '에') : departure.ko;
+      var appearAt = verbItem && /(^| )(나타나다|사라지다)$/.test(verbItem.ko);
+      var depKo = (isMotionTo || isExist || appearAt) ? departure.ko.replace(/에서$/, '에') : departure.ko;
       // 이사하다 = move TO a place: 서울로 이사했어요
       if(verbItem && verbItem.ko === '이사하다' && /에서$/.test(departure.ko)){
         var mvB = departure.ko.replace(/에서$/, '');
@@ -1872,7 +1873,7 @@
   var INTRANSITIVE_VERBS = {
     '가다':1,'오다':1,'도착하다':1,'떠나다':1,'돌아오다':1,
     '자다':1,'쉬다':1,'울다':1,'웃다':1,'달리다':1,'산책하다':1,'일어나다':1,
-    '기쁘다':1,'슬프다':1,'화나다':1,'피곤하다':1,'매달려 있다':1
+    '기쁘다':1,'슬프다':1,'화나다':1,'피곤하다':1,'매달려 있다':1,'나타나다':1,'사라지다':1
   };
   // 있다 takes 이/가 (subject marker) for the possessed item, not 를/을
   var EXISTENTIAL_VERBS = { '있다':1 };
@@ -2715,7 +2716,8 @@
                    'trezit','inteles','stat',
                    'mutat','intarziat','luat','fumat','locuit','terminat','hotarat','incercat',
                    'zis','spus','condus','inotat','trait','condus','pierdut','trecut','vizitat',
-                   'mers','fost','cerut','auzit','uitat','sosit','castigat','mancat'];
+                   'mers','fost','cerut','auzit','uitat','sosit','castigat','mancat',
+                   'aparut','disparut','aparu','disparu','sunat'];
     // Word-boundary check: prevents 'studiat' matching inside 'studiati', etc.
     var _nn = ' ' + n + ' ';
     for(var i=0;i<roParts.length;i++){
@@ -2739,7 +2741,7 @@
     if(/\bwill\b/.test(n)) return 'future';
 
     // Past English: forme neregulate/regulate cunoscute
-    var enPast = ['went','ate','came','saw','wrote','met','rested','worked','was','were','eaten','been','did',
+    var enPast = ['went','ate','came','saw','wrote','met','rested','worked','was','were','eaten','been','did','appeared','disappeared','vanished',
                   'exercised','prepared','learned','listened','made','bought',
                   'gave','studied','read ','read,','read.'];
     // regular English past in -ed ("finished", "visited") for a known, non-adjective verb
@@ -2802,7 +2804,7 @@
   var NOUN_EXTRA = { ploii: '비', ploaia: '비', ploaie: '비', rain: '비', 'the rain': '비', zapezii: '눈', zapada: '눈', snow: '눈', 'the snow': '눈',
                      traficului: '교통 체증', traffic: '교통 체증', 'the traffic': '교통 체증', vremii: '날씨', weather: '날씨', 'the weather': '날씨',
                      bolii: '병', racelii: '감기', tie: '', tine: '', voua: '', you: '', lui: '그 사람', ei: '그 사람' };
-  var IMP_WORDS = /(^|, ?)\s*(vino|veniti|du-te|asteapta|asteptati|citeste|cititi|scrie|scrieti|asculta|ascultati|spune|spuneti|deschide|deschideti|inchide|inchideti|intra|intrati|mananca|mancati|bea|beti|dormi|odihneste-te|ajuta-ma|ajutati-ma|suna-ma|uita-te)\b/;
+  var IMP_WORDS = /(^|, ?)\s*(vino|veniti|du-te|asteapta|asteptati|citeste|cititi|scrie|scrieti|asculta|ascultati|spune|spuneti|deschide|deschideti|inchide|inchideti|intra|intrati|mananca|mancati|bea|beti|dormi|odihneste-te|ajuta-ma|ajutati-ma|suna-ma|sun-o|suna-l|suna-o|sunati-ma|uita-te)\b/;
   var IMP_EN = /^\s*(come|go|eat|drink|sit|wait|read|write|listen|look|open|close|call|help|sleep|study)\b/;
 
   function nounKoBase(phrase){
@@ -3505,6 +3507,28 @@
         }
       }
 
+      // "o sun pe mama" / "o ajut pe Ana": "pe + persoană" is the object (엄마한테 전화해요, 엄마를 도와요)
+      var _pe = /\bpe (\S+)/.exec(cd.text);
+      if(_pe && verb){
+        var _pp = findBestMatch('topic', _pe[1]);
+        if(_pp && !/^(저는|나는|너는|우리는)$/.test(_pp.ko)){
+          var _ppb = koBase(_pp.ko);
+          var _toWhom = /(^| )(전화하다|말하다|이야기하다|묻다|물어보다|주다|보내다|가르치다)$/.test(verb.ko);
+          subjects = subjects.filter(function(x){ return x.ko !== _pp.ko; });
+          objects = [{ key:'object1', kind:'object1', ko: _ppb + (_toWhom ? '한테' : ((window.Conjugation && window.Conjugation.hasBatchim(_ppb)) ? '을' : '를')), ro: _pp.ro, en: _pp.en }]
+            .concat(objects.filter(function(o){ return koBase(o.ko) !== _ppb; }));
+        }
+      }
+
+      // "i-am spus lui Mihai" / "îi dau Anei": a name in the dative → 미하이한테
+      var _lui = String(raw).match(/(?:^|\s)lui\s+([A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ\-]+)/);
+      if(_lui && verb && /(^| )(전화하다|말하다|이야기하다|묻다|물어보다|주다|보내다|가르치다|선물하다)$/.test(verb.ko)){
+        var _ln = normalizeLatin(_lui[1]);
+        subjects = subjects.filter(function(x){ return normalizeLatin(x.ro || '') !== _ln; });
+        objects = [{ key:'object1', kind:'object1', ko: hangulName(_lui[1]) + '한테', ro: _lui[1], en: _lui[1] }].concat(objects);
+        _rawCaps[_ln] = 1;
+      }
+
       // "un cadou pentru mama" → 엄마를 위한 선물 ; "gătesc pentru prieteni" → 친구들을 위해
       var _pf = /\bpentru (\S+)/.exec(cd.text);
       if(_pf && !/^(a|ca|ce|cine|asta|aceasta)$/.test(_pf[1])){
@@ -3520,6 +3544,18 @@
             objects = [_oc].concat(objects.slice(1));
           } else {
             clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + _bp + ' 위해';
+          }
+        }
+      }
+
+      // "ies din casă" → 집에서 나와요 (leaving FROM a place)
+      if(verb && /(^| )(나오다|나가다|떠나다|출발하다|내리다)$/.test(verb.ko)){
+        var _din = /\b(?:din|de la|from|out of) (\S+)/.exec(cd.text);
+        if(_din){
+          var _dn = findBestMatch('object1', _din[1]) || findBestMatch('departure', _din[1]);
+          if(_dn){
+            objects = objects.filter(function(o){ return koBase(o.ko) !== koBase(_dn.ko); });
+            if(!places.length || koBase(places[0].ko) === koBase(_dn.ko)) places = [{ key:'departure', kind:'departure', ko: koBase(_dn.ko) + '에서', ro: _dn.ro, en: _dn.en }].concat(places.slice(1));
           }
         }
       }
@@ -3777,6 +3813,7 @@
         // "go home": the same noun as place and object (집에 + 집을) → keep only the place
         var _base = function(k){ return String(k || '').replace(/(에서|에|을|를|이|가|은|는)$/, ''); };
         if(objects[0] && places[0] && _base(objects[0].ko) === _base(places[0].ko)) objects = objects.slice(1);
+        if(places[0]) objects = objects.filter(function(o){ return _base(places[0].ko).indexOf(_base(o.ko) + ' ') !== 0; });   // 문 앞 + 문
         if(objects[1] && objects[0] && objects[1].ko === objects[0].ko) objects = [objects[0]];   // same word matched twice
         // compound verbs that already contain their object ("커피를 마시다") — don't repeat it
         if(verb && verb.ko) objects = objects.filter(function(o){ return !(o && o.ko && verb.ko.indexOf(' ') > 0 && verb.ko.indexOf(_base(o.ko)) === 0); });

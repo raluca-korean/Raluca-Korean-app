@@ -122,6 +122,7 @@ FIX = {
   '남다': ('a rămâne (a fi rest)', 'to remain, be left'),
   '머무르다': ('a sta, a rămâne (undeva)', 'to stay (somewhere)'),
   '토마토': ('roșie (legumă)', 'tomato'),
+  '문 앞': ('în fața ușii, la ușă', 'in front of the door'),
   '경찰관': ('polițist (persoana)', 'police officer'),
   '경찰': ('poliție, polițist', 'police'),
   '그림': ('desen, pictură (tabloul)', 'drawing, painting'),
