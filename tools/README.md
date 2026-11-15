@@ -17,7 +17,13 @@ node tools/builder-tests/run.js            # verifică toate propozițiile (are 
 node tools/builder-tests/run.js --update   # acceptă rezultatul curent ca „așteptat”
 ```
 
-Rulează testele după orice modificare în `js/builder.js` sau `data/builder-vocab.json`. O propoziție nouă se adaugă în `cases.tsv` (doar textul, fără coloana a doua), apoi `--update`; verifică în diff că rezultatul e corect.
+Rulează testele după orice modificare în `js/builder.js` sau `data/builder-vocab.json`.
+
+```bash
+node tools/builder-tests/audit.js              # verifică TOATE verbele: trecutul („Ieri am X”) și subiectul („Pisica a X” → 고양이가, nu 고양이를)
+node tools/builder-tests/audit.js --conflicts  # forme românești/engleze comune mai multor verbe (câștigă primul din listă)
+python3 tools/fix_builder_alias_conflicts.py   # corecturile pentru conflictele în care câștiga verbul greșit
+``` O propoziție nouă se adaugă în `cases.tsv` (doar textul, fără coloana a doua), apoi `--update`; verifică în diff că rezultatul e corect.
 
 ## Test general (toată aplicația)
 

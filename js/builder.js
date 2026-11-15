@@ -1644,6 +1644,10 @@
       if(cKey === 'tense_neg_past')     return conj.stem(v0) + '지 않았어요';
       if(cKey === 'tense_decide')       return conj.stem(v0) + '기로 했어요';
       if(cKey === 'tense_prepare')      return futAttr(v0) + ' 준비를 해요';
+      if(cKey === 'tense_gi_adj'){
+        var ga = clause.__giAdj || '어렵다';
+        return conj.stem(v0) + '기가 ' + (clause.__giPast ? conj.past(ga) : conj.present(ga));
+      }
       if(cKey === 'tense_prepare_past') return futAttr(v0) + ' 준비를 했어요';
       if(cKey === 'tense_consider')     return futAttr(v0) + '까 해요';
       if(cKey === 'tense_exp_yes')      return conj.aeo(v0) + ' 본 적이 있어요';
@@ -1758,7 +1762,7 @@
     // instead of a comma (시장에, 식당에 가요) which is unnatural Korean.
     var useLocChain = skipVerb && isMotionTo && !!(departure && departure.ko) && !(transit && transit.ko);
     if(departure && departure.ko){
-      var appearAt = verbItem && /(^| )(나타나다|사라지다)$/.test(verbItem.ko);
+      var appearAt = verbItem && /(^| )(나타나다|사라지다|머무르다|들어가다|들어오다)$/.test(verbItem.ko);
       var depKo = (isMotionTo || isExist || appearAt) ? departure.ko.replace(/에서$/, '에') : departure.ko;
       // 이사하다 = move TO a place: 서울로 이사했어요
       if(verbItem && verbItem.ko === '이사하다' && /에서$/.test(departure.ko)){
@@ -2667,6 +2671,30 @@
     return n || text;
   }
 
+  // Romanian past participles of every verb in the vocabulary, read from its forms
+  // ("am apărut" → apărut). Built once; replaces a hand-kept list that kept missing verbs.
+  var PAST_PARTICIPLES = null;
+  function pastParticiples(){
+    if(PAST_PARTICIPLES) return PAST_PARTICIPLES;
+    PAST_PARTICIPLES = {};
+    (DATA && DATA.verb || []).forEach(function(v){
+      (v.aliases || []).forEach(function(a){
+        var m = /^(?:am|ai|a|ati|au|m am|te ai|s a|ne am|v ati|s au) ([a-z]+)$/.exec(normalizeLatin(a));
+        if(m && m[1].length >= 3 && !/^(fost|avut)$/.test(m[1])) PAST_PARTICIPLES[m[1]] = 1;
+      });
+    });
+    return PAST_PARTICIPLES;
+  }
+  // verbs that never take a direct object: what "happens" is the subject (해가 나타나요, 고양이가 자요)
+  var TRANSITIVE_EXCEPT = { '만나다':1, '가지다':1, '지다':1, '찾아가다':1, '찾아오다':1, '가져가다':1, '가져오다':1, '데려가다':1, '데려오다':1 };
+  function isIntransitive(ko){
+    if(!ko) return false;
+    if(INTRANSITIVE_VERBS[ko]) return true;
+    var last = String(ko).split(' ').pop();
+    if(TRANSITIVE_EXCEPT[last] || String(ko).indexOf(' ') > 0) return false;   // compounds carry their own object
+    return /(지다|나다|생기다|자다|눕다|앉다|서다|울다|웃다|걷다|뛰다|쉬다|피다|죽다|붙다|늦다|살다|놀다|흐르다|자라다|되다)$/.test(last);
+  }
+
   function detectTenseFromText(text){
     var n = normalizeLatin(text);
 
@@ -2723,6 +2751,10 @@
     for(var i=0;i<roParts.length;i++){
       if(_nn.indexOf(' '+roParts[i]+' ') !== -1) return 'past';
     }
+    // any participle the vocabulary knows ("am apărut", "a atârnat"…), after a past auxiliary
+    var _pp = pastParticiples();
+    var _auxRe = /\b(?:am|ai|a|ati|au|m am|te ai|s a|ne am|v ati|s au|n am|n a|n au)\s+(\S+)/g, _am;
+    while((_am = _auxRe.exec(_nn))){ if(_pp[_am[1]]) return 'past'; _auxRe.lastIndex = _am.index + 1; }
     // Past Romanian: auxiliare de perfect compus — forme cu cratimă și "ați"
     // "ati" (normalizat din "ați") = aux pl.2 distinctiv românesc, nu apare în engleză
     if(/\b(ati|ne-am|m-am|te-ai|s-a|s-au|v-ati)\b/.test(n)) return 'past';
@@ -2788,6 +2820,7 @@
     { re: /\b(?:stiu|stii|stie|stim|stiti) (?:cum )?sa\b|\bknows? how to\b/, t: 'tense_knowhow' },
     { re: /\b(?:(?:am|ai|a|ati|au|m-am|ne-am|s-a|s-au) (?:hotarat|decis)|(?:hotarasc|hotaram|decid|decidem)) sa\b|\bdecided to\b/, t: 'tense_decide' },
     { re: /\b(?:ma|ne|te|se) gand(?:esc|im|esti|este|iti) (?:daca )?sa\b|\b(?:thinking|think) (?:of|about)\b/, t: 'tense_consider' },
+    { re: /\b(?:e|este|a fost|era) (greu|dificil|usor|simplu|important|interesant|placut|distractiv|bine|obositor|periculos)(?: sa| de)\b|\bit(?: is|'s| was) (hard|difficult|easy|important|interesting|fun|good|dangerous) to\b/, t: 'tense_gi_adj', adj: true },
     { re: /\b(?:m-am|te-ai|s-a|ne-am|v-ati|s-au) pregatit (?:sa|de)\b|\bgot ready to\b|\bprepared to\b/, t: 'tense_prepare_past' },
     { re: /\b(?:ma|te|se|ne|va) pregat(?:esc|esti|este|im|iti) (?:sa|de)\b|\b(?:getting|get) ready to\b|\bpreparing to\b/, t: 'tense_prepare' },
     { re: /\b(?:am|ai|a|ati|au) incercat sa\b|\btried to\b/, t: 'tense_try_past' },
@@ -2862,6 +2895,13 @@
         if(!r) continue;
         out.text = r.text;
         out.frame = G.t;
+        if(G.adj){
+          var GI_ADJ = { greu:'어렵다', dificil:'어렵다', hard:'어렵다', difficult:'어렵다', usor:'쉽다', simplu:'쉽다', easy:'쉽다',
+                         important:'중요하다', interesant:'재미있다', interesting:'재미있다', placut:'즐겁다', distractiv:'재미있다', fun:'재미있다',
+                         bine:'좋다', good:'좋다', obositor:'힘들다', periculos:'위험하다', dangerous:'위험하다' };
+          out.giAdj = GI_ADJ[r.m[1] || r.m[2]] || '어렵다';
+          out.giPast = /\b(a fost|era|was)\b/.test(r.m[0]);
+        }
         if(G.subj){
           var pron = (r.m[0].split(' ')[0] || '');
           if(FRAME_SUBJ[pron]) out.text = FRAME_SUBJ[pron] + ' ' + out.text;
@@ -3410,6 +3450,15 @@
         }
       }
 
+      // "copilul / pisica / floarea a crescut" → 자라다 ; 늘다 stays for numbers, prices…
+      if(verb && /^(늘다|늘어나다)$/.test(verb.ko)){
+        var _ct0 = normalizeLatin(cd.text);
+        var _pick = /\b(pret|preturile|pretul|preturi|temperatura|chiria|costul|costurile|salariul|salariile)\b/.test(_ct0) ? '오르다'   // prices / temperature rise
+                  : /\b(numar|numarul|populatia|vanzarile|vanzari|cifra)\b/.test(_ct0) ? null                                 // numbers increase: 늘다
+                  : '자라다';                                                                                                      // children, plants, animals grow
+        if(_pick){ (DATA.verb || []).forEach(function(v){ if(v.ko === _pick) verb = v; }); }
+      }
+
       // "vorbesc coreeana" → 한국어를 해요 (with a language, 하다 is the natural verb)
       if(verb && verb.ko === '말하다' && objects[0] && /어를$/.test(objects[0].ko)) verb = speakLang(verb);
       // Inherit verb from previous clause when this segment had none explicitly
@@ -3544,6 +3593,18 @@
             objects = [_oc].concat(objects.slice(1));
           } else {
             clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + _bp + ' 위해';
+          }
+        }
+      }
+
+      // "a intrat în casă" → 집에 들어갔어요 (the noun after în/la/into is the destination, not an object)
+      if(verb && /(^| )(들어가다|들어오다|가다|오다|도착하다|돌아가다|돌아오다|올라가다|내려가다)$/.test(verb.ko) && !places.length){
+        var _into = /\b(?:in|la|into|to) (\S+)/.exec(cd.text);
+        if(_into){
+          var _in = findBestMatch('object1', _into[1]);
+          if(_in && objects.some(function(o){ return o.ko === _in.ko; }) && !/\bsa\b/.test(cd.text)){
+            objects = objects.filter(function(o){ return o.ko !== _in.ko; });
+            places = [{ key:'departure', kind:'departure', ko: koBase(_in.ko) + '에서', ro: _in.ro, en: _in.en }];
           }
         }
       }
@@ -3718,7 +3779,43 @@
         if(_vs.length >= 3) _vs = _vs.slice(0, -1);      // 깨끗하 → 깨끗 (깨끗이)
         descs = descs.filter(function(d){ return !(d && d.ko && d.ko.indexOf(_vs) === 0 && d.ko !== verb.ko); });
       }
-      if(verb && INTRANSITIVE_VERBS[verb.ko] && !MOTION_NOOBJ[verb.ko] && !subjects.length && objects[0] && !clause.__count){
+      // Romanian / English are subject–verb–object: with no subject found, a noun BEFORE the verb
+      // is the subject ("Pisica a plecat" → 고양이가 떠났어요), one after it stays the object.
+      if(verb && !subjects.length && objects[0] && !clause.__count && !clause.__copula){
+        var _tks = relTokens(cd.text), _vp = -1, _op = -1;
+        var _o0 = objects[0];
+        for(var _q = 0; _q < _tks.length; _q++){
+          var _tn = normalizeLatin(_tks[_q].w);
+          if(_vp < 0){
+            var _pair = _q + 1 < _tks.length ? _tn + ' ' + normalizeLatin(_tks[_q + 1].w) : '';
+            if((!REL_AUX[_tn] && findBestMatch('verb', _tn)) || (REL_AUX[_tn] && _pair && findBestMatch('verb', _pair))) _vp = _q;
+          }
+          if(_op < 0){
+            var _ob = findBestMatch('object1', _tn);
+            if((_ob && _ob.ko === _o0.ko) || (_o0.srcTok && _o0.srcTok === _tn)) _op = _q;
+          }
+        }
+        if(_op >= 0 && _vp > _op && !(times[0] && koBase(times[0].ko) === koBase(_o0.ko))){
+          subjects = [{ key:'topic', kind:'topic', ko: koNom(_o0.ko), ro: _o0.ro, en: _o0.en }];
+          objects = objects.slice(1);
+        }
+      }
+      if(verb && subjects.length === 1 && !subjects[0].isProperName && !isIntransitive(verb.ko) && !MOTION_NOOBJ[verb.ko] && !isDescriptive(verb) &&
+         !/^(저는|나는|너는|우리는|그는|그녀는|그들은|여러분은)$/.test(subjects[0].ko)){
+        var _tk2 = relTokens(cd.text), _vp2 = -1, _sp2 = -1, _sb2 = koBase(subjects[0].ko);
+        for(var _q2 = 0; _q2 < _tk2.length; _q2++){
+          var _tn2 = normalizeLatin(_tk2[_q2].w);
+          if(_vp2 < 0 && !REL_AUX[_tn2] && findBestMatch('verb', _tn2)) _vp2 = _q2;
+          var _st2 = findBestMatch('topic', _tn2);
+          if(_sp2 < 0 && _st2 && koBase(_st2.ko) === _sb2) _sp2 = _q2;
+        }
+        if(_vp2 >= 0 && _sp2 > _vp2){
+          var _toWhom2 = /(^| )(전화하다|말하다|이야기하다|묻다|물어보다|주다|보내다|가르치다|선물하다)$/.test(verb.ko);
+          objects = [{ key:'object1', kind:'object1', ko: _sb2 + (_toWhom2 ? '한테' : ((window.Conjugation && window.Conjugation.hasBatchim(_sb2)) ? '을' : '를')), ro: subjects[0].ro, en: subjects[0].en }].concat(objects);
+          subjects = [];
+        }
+      }
+      if(verb && isIntransitive(verb.ko) && !MOTION_NOOBJ[verb.ko] && !subjects.length && objects[0] && !clause.__count){
         subjects = [{ key:'topic', kind:'topic', ko: koNom(objects[0].ko), ro: objects[0].ro, en: objects[0].en }];
         objects = objects.slice(1);
       }
@@ -3814,6 +3911,7 @@
         var _base = function(k){ return String(k || '').replace(/(에서|에|을|를|이|가|은|는)$/, ''); };
         if(objects[0] && places[0] && _base(objects[0].ko) === _base(places[0].ko)) objects = objects.slice(1);
         if(places[0]) objects = objects.filter(function(o){ return _base(places[0].ko).indexOf(_base(o.ko) + ' ') !== 0; });   // 문 앞 + 문
+        if(times[0]) objects = objects.filter(function(o){ return _base(o.ko) !== _base(times[0].ko); });   // "la prânz" = 점심에, not also 점심을
         if(objects[1] && objects[0] && objects[1].ko === objects[0].ko) objects = [objects[0]];   // same word matched twice
         // compound verbs that already contain their object ("커피를 마시다") — don't repeat it
         if(verb && verb.ko) objects = objects.filter(function(o){ return !(o && o.ko && verb.ko.indexOf(' ') > 0 && verb.ko.indexOf(_base(o.ko)) === 0); });
@@ -3933,6 +4031,7 @@
       else if(FR.frame === 'seem')  detectedTenseKey = _sub === 'past' ? 'tense_seem_past' : 'tense_seem';
       else if(FR.frame === 'said'){ detectedTenseKey = 'tense_said'; lastParsed.__reportSub = _sub; }
       else detectedTenseKey = FR.frame;
+      if(FR.giAdj){ lastParsed.__giAdj = FR.giAdj; lastParsed.__giPast = FR.giPast; }
     } else if(FR.question){
       var _fq = foldKeep(raw);
       if(detectedTenseKey === 'tense_wish' && /\b(vrei|vreti|want|would you like)\b/.test(_fq)) detectedTenseKey = 'tense_offer';
