@@ -2930,8 +2930,8 @@
     fl = foldKeep(out.text);
     // prohibition: "Nu mâncați aici", "Nu fuma!", "Don't eat here"
     if(!out.frame && !out.question){
-      var dm = /^\s*nu\s+([a-z-]+)/.exec(fl);
-      if(dm && findBestMatch('verb', dm[1]) && (/ti$/.test(dm[1]) || out.exclaim)){
+      var dm = /^\s*nu\s+(?:(?:ma|te|ne|va|il|o|le|ii|mi|ti)\s+)?([a-z-]+)/.exec(fl);
+      if(dm && findBestMatch('verb', dm[1] + ' ' + (fl.slice(dm.index + dm[0].length).trim().split(/\s+/).slice(0, 2).join(' '))) && (/ti$/.test(dm[1]) || out.exclaim)){
         out.text = out.text.replace(/^\s*\S+\s+/, ''); out.frame = 'tense_dont';
       } else if(/^\s*(?:don'?t|do not)\s+\w/.test(fl)){
         out.text = out.text.replace(/^\s*(?:don['’]?t|do not)\s+/i, ''); out.frame = 'tense_dont';
@@ -3474,6 +3474,31 @@
         if(_pick){ (DATA.verb || []).forEach(function(v){ if(v.ko === _pick) verb = v; }); }
       }
 
+      // "te aștept / te iubesc / o ajut": a clitic right before a transitive verb is its object (너를 기다려요)
+      if(verb && verb.ko !== '웃음거리로 만들다' && !objects.length && !/\bpe \S+/.test(normalizeLatin(cd.text)) && !isIntransitive(verb.ko) && !isDescriptive(verb) && !MOTION_NOOBJ[verb.ko]){
+        var _ctx = ' ' + normalizeLatin(cd.text) + ' ';
+        // only clitics that clearly mean a person: te / mă / ne, and „vă” only when written with ă
+        // („va” is also the future auxiliary; „o / îl / le” are just as often „it / them” — Korean drops those)
+        var _cm = /\s(te|ma|ne|va)\s+(\S+)/.exec(_ctx);
+        if(_cm && _cm[1] === 'va' && !/(^|\s)vă\s/i.test(String(raw))) _cm = null;
+        if(_cm && findBestMatch('verb', _cm[2]) && findBestMatch('verb', _cm[2]).ko === verb.ko &&
+           !itemCands(verb).some(function(a){ return a.indexOf(_cm[1] + ' ') === 0; })){          // reflexive verbs keep their clitic
+          var CLO = { te:'너', ma:'저', ne:'우리', va:'여러분', il:'그', o:'그녀', ii:'그들', le:'그들' };
+          var _who2 = CLO[_cm[1]], _hb2 = window.Conjugation && window.Conjugation.hasBatchim(_who2);
+          var _dat = /(^| )(전화하다|말하다|이야기하다|묻다|물어보다|주다|보내다|가르치다|선물하다)$/.test(verb.ko);
+          clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + _who2 + (_dat ? '한테' : (_hb2 ? '을' : '를'));
+        }
+      }
+
+      // "mă faci de râs" / "m-ai făcut de râs": the clitic says who → 저를 웃음거리로 만들어요
+      if(verb && verb.ko === '웃음거리로 만들다'){
+        var _cl = /(?:^|\s)(m-ai|m-a|m-ati|m-au|ma|te-am|te-a|te-au|te|ne-ai|ne-a|ne-au|ne|v-am|v-a|va|l-am|l-ai|l-a|il|o|i-am|i-a|ii)\s+(?:f|a f|am f|ai f|au f)/i.exec(' ' + foldKeep(raw));
+        var CL_OBJ = { 'm-ai':'저를','m-a':'저를','m-ati':'저를','m-au':'저를','ma':'저를','te-am':'너를','te-a':'너를','te-au':'너를','te':'너를',
+                       'ne-ai':'우리를','ne-a':'우리를','ne-au':'우리를','ne':'우리를','v-am':'여러분을','v-a':'여러분을','va':'여러분을',
+                       'l-am':'그를','l-ai':'그를','l-a':'그를','il':'그를','o':'그녀를','i-am':'그들을','i-a':'그들을','ii':'그들을' };
+        if(_cl && CL_OBJ[_cl[1]]) clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + CL_OBJ[_cl[1]];
+      }
+
       // "vorbesc coreeana" → 한국어를 해요 (with a language, 하다 is the natural verb)
       if(verb && verb.ko === '말하다' && objects[0] && /어를$/.test(objects[0].ko)) verb = speakLang(verb);
       // Inherit verb from previous clause when this segment had none explicitly
@@ -3624,6 +3649,32 @@
         }
       }
 
+      // "în fața școlii / casei" → 학교 앞에서 ("fața" = front, not "fata" = girl 소녀)
+      var _front = /\bin fata (\S+)/.exec(cd.text);
+      if(_front){
+        subjects = subjects.filter(function(x){ return koBase(x.ko) !== '소녀'; });
+        objects = objects.filter(function(x){ return koBase(x.ko) !== '소녀'; });
+        // the place was already found from the genitive ("școlii" → 학교에서): put it in front → 학교 앞에서
+        if(places.length && places[0].ko !== '모두 앞에서' && !/ 앞에서$/.test(places[0].ko)){
+          var _pf2 = findBestMatch('departure', _front[1]);
+          if(_pf2 && _pf2.ko === places[0].ko){
+            var _pc2 = {}; for(var _k2 in places[0]) _pc2[_k2] = places[0][_k2];
+            _pc2.ko = koBase(places[0].ko) + ' 앞에서';
+            places = [_pc2].concat(places.slice(1));
+          }
+        }
+        if(!places.length || places[0].ko === '모두 앞에서'){
+          if(!places.length){
+            var _fn = findBestMatch('object1', _front[1]) || findBestMatch('departure', _front[1]);
+            if(!_fn){ var _fl = lexLookup(_front[1]); if(_fl && (_fl.kind === 'noun' || _fl.kind === 'place')) _fn = lexItem(_fl, 'object1'); }
+            if(_fn){
+              objects = objects.filter(function(o){ return koBase(o.ko) !== koBase(_fn.ko); });
+              places = [{ key:'departure', kind:'departure', ko: koBase(_fn.ko) + ' 앞에서', ro: 'în fața ' + _front[1], en: 'in front of' }];
+            }
+          }
+        }
+      }
+
       // "ies din casă" → 집에서 나와요 (leaving FROM a place)
       if(verb && /(^| )(나오다|나가다|떠나다|출발하다|내리다)$/.test(verb.ko)){
         var _din = /\b(?:din|de la|from|out of) (\S+)/.exec(cd.text);
@@ -3732,6 +3783,7 @@
           var ow = rawWords[pw];
           if(ow && /^[A-ZĂÎȘȚ]/.test(ow)){
             var owNorm = normalizeLatin(ow);
+            if(/^(mi|ti|ii|ne|va|le) e$/.test(owNorm) || /^(mi|ti|ii|ne|va|le)-e$/i.test(ow)) continue;   // "Mi-e rușine"
             if(owNorm.length < 2 || /^(cred|sper|stiu|poate|azi|maine|ieri|acum|apoi|dar|deci|in|la|pe|cu|si|pot|poti|putem|vreau|vrei|vrem|nu|da|am|ai|ne|ma|te|eu|tu|el|ea|noi|voi|ei|ele|trebuie|vom|vor|va|to|the|a|an|my|we|he|she|it|they|you|this|that|sunt|esti|e|este|suntem|sunteti|imi|iti|ii|mi|ti|se|si|probabil|datorita|multumita|din|hai|haideti|asa|niciodata|vreodata|please|let|lets|im|dont|do|does|did|is|are|was|n|de|ca|o|un|una|daca|cand|fiindca|pentru|dupa|inainte|imediat|chiar|desi|mai|foarte|tot|toti|fiecare|ce|cine|unde|cum|de ce|care|aici|acolo|sa)$/.test(owNorm)) continue;
             if(clause.__companion && owNorm === normalizeLatin(clause.__companion)) continue;
             if(places.some(function(p){ return p.isProperName && normalizeLatin(p.ro) === owNorm; })) continue;
