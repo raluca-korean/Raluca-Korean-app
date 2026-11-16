@@ -201,6 +201,10 @@ window.Conjugation = {
     if(stem.endsWith("하")) return stem.slice(0, -1) + "할 거예요";
     const d = this.decompose(stem.at(-1));
     if(!d) return stem + "을 거예요";
+    // ㅅ-irregular: 낫다 → 나을 거예요, 짓다 → 지을 거예요
+    if(d.jong === 19 && window.VerbConjugator && window.VerbConjugator.S_IRREGULAR.includes(verb)){
+      return stem.slice(0, -1) + String.fromCharCode(stem.charCodeAt(stem.length - 1) - 19) + "을 거예요";
+    }
     // ㄹ batchim (jong=8): already ends in ㄹ → 만들 거예요, 살 거예요
     if(d.jong === 8) return stem + " 거예요";
     // other batchim: add 을 → 먹을 거예요, 읽을 거예요
@@ -232,6 +236,10 @@ window.Conjugation = {
     if(VC && d && d.jong === 27 && VC.H_IRREGULAR.includes(verb)){
       const open = String.fromCharCode(last.charCodeAt(0) - d.jong);
       return stem.slice(0, -1) + open + ending; // open syllable, no 으 needed
+    }
+    if(VC && d && d.jong === 19 && VC.S_IRREGULAR && VC.S_IRREGULAR.includes(verb)){
+      const open = String.fromCharCode(last.charCodeAt(0) - d.jong);
+      return stem.slice(0, -1) + open + "으" + ending;   // 나으니까, 지으면
     }
     return this.euOrNot(stem) ? stem + "으" + ending : this.dropRieul(stem) + ending;
   },

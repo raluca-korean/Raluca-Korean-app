@@ -919,14 +919,15 @@
   function englishForms(en){
     var out = [];
     String(en || '').split(/[\/,;]/).forEach(function(g){
-      var m = /^\s*to ([a-z]+)\s*$/i.exec(g.replace(/\([^)]*\)/g, ''));
+      if(/\(/.test(g)) return;                 // "to take (time)": a narrow sense, not the everyday word
+      var m = /^\s*to ([a-z]+)\s*$/i.exec(g);
       if(!m) return;
       var v = m[1].toLowerCase();
       if(v.length < 3) return;
       var ing = /ie$/.test(v) ? v.slice(0, -2) + 'ying' : /[^aeiou]e$/.test(v) ? v.slice(0, -1) + 'ing' : v + 'ing';
-      var ed  = /e$/.test(v) ? v + 'd' : /[^aeiou]y$/.test(v) ? v.slice(0, -1) + 'ied' : v + 'ed';
+      var ed  = /ee$/.test(v) ? '' : /e$/.test(v) ? v + 'd' : /[^aeiou]y$/.test(v) ? v.slice(0, -1) + 'ied' : v + 'ed';
       var s3  = /(s|x|z|ch|sh|o)$/.test(v) ? v + 'es' : /[^aeiou]y$/.test(v) ? v.slice(0, -1) + 'ies' : v + 's';
-      out.push(v, s3, ed, ing);
+      out.push(v, s3, ing); if(ed) out.push(ed);
     });
     return out;
   }
@@ -2724,6 +2725,7 @@
     // Opinion / guess: "cred că…", "probabil", "I think…" → -것 같아요
     if(/\b(cred ca|credem ca|crezi ca|probabil|i think|i guess|probably)\b/.test(n) && !/\bnu cred\b/.test(n)){
       var _rest = n.replace(/\b(cred|credem|crezi) ca\b|\bprobabil\b|\bi think\b|\bi guess\b|\bprobably\b/g, ' ');
+      if(!hasVerbLike(_rest) && !/\b(will|va|vor)\b/.test(_rest)) return 'present';   // "I think" alone = 생각해요
       var _t = detectTenseFromText(_rest);
       return _t === 'past' ? 'guess_past' : _t === 'future' ? 'guess' : 'guess_now';
     }
@@ -2804,7 +2806,7 @@
                   'exercised','prepared','learned','listened','made','bought',
                   'gave','studied','read ','read,','read.'];
     // regular English past in -ed ("finished", "visited") for a known, non-adjective verb
-    var edWords = n.match(/\b[a-z]{3,}ed\b/g) || [];
+    var edWords = n.match(/\b[a-z]{2,}ed\b/g) || [];
     for(var ew = 0; ew < edWords.length; ew++){
       var edV = findBestMatch('verb', edWords[ew]);
       if(edV && !isDescriptive(edV)) return 'past';
@@ -2879,6 +2881,13 @@
     return hit && hit.ko ? hit.ko.replace(/(에서|에|을|를|이|가|은|는)$/, '') : null;
   }
 
+  // is there still a verb (builder vocabulary, app dictionary, or a copula) in this text?
+  function hasVerbLike(text){
+    var n = normalizeLatin(text);
+    if(!n) return false;
+    if(findBestMatch('verb', n) || /\b(e|este|sunt|is|are|was|were)\b/.test(n)) return true;
+    return n.split(' ').some(function(t){ var h = lexLookup(t); return h && (h.kind === 'verb' || h.kind === 'adj'); });
+  }
   function applyGrammarFrames(raw){
     var out = { text: raw, frame: null, prefix: null, question: /\?\s*$/.test(raw), exclaim: /!\s*$/.test(raw) };
     var f, r;
@@ -2927,6 +2936,7 @@
         if(G.unless && G.unless.test(foldKeep(out.text))) continue;
         r = cutFolded(out.text, G.re, ' ');
         if(!r) continue;
+        if(!hasVerbLike(r.text)) continue;   // nothing left to apply it to
         out.text = r.text;
         out.frame = G.t;
         if(G.cause){
@@ -3491,7 +3501,7 @@
       }
 
       // "copilul / pisica / floarea a crescut" → 자라다 ; 늘다 stays for numbers, prices…
-      if(verb && /^(늘다|늘어나다)$/.test(verb.ko)){
+      if(verb && /^(늘다|늘어나다)$/.test(verb.ko) && /\b(cresc|cresti|creste|crestem|cresteti|cresc|crescut|grow|grows|grew|grown|growing)\b/.test(normalizeLatin(cd.text))){
         var _ct0 = normalizeLatin(cd.text);
         var _pick = /\b(pret|preturile|pretul|preturi|temperatura|chiria|costul|costurile|salariul|salariile)\b/.test(_ct0) ? '오르다'   // prices / temperature rise
                   : /\b(numar|numarul|populatia|vanzarile|vanzari|cifra)\b/.test(_ct0) ? null                                 // numbers increase: 늘다
@@ -3793,6 +3803,14 @@
         _timeExtra.push(dn + du + ' 동안'); _ct = _ct.replace(dm2[0], ' ');
         if(/^(de|for)\s/.test(dm2[0].trim())) clause.__ongoing = true;
       }
+      // how long something takes: "it takes two hours" → 두 시간 (no "for")
+      if(!_timeExtra.length && verb && /^(걸리다)$/.test(verb.ko)){
+        var _tk3 = new RegExp('\\b(' + NUM_RE + '|an|a|o|un|one)\\s+(hours?|ore|ora|minutes?|minute|minut|days?|zile|zi)\\b').exec(_ct);
+        if(_tk3){
+          var _tn3 = numVal(_tk3[1]) || 1;
+          _timeExtra.push(/^(hour|ore|ora)/.test(_tk3[2]) ? (_tn3 <= 12 ? NATIVE_NUM[_tn3] : _tn3) + ' 시간' : /^(minut)/.test(_tk3[2]) ? _tn3 + '분' : _tn3 + '일');
+        }
+      }
       if(_timeExtra.length){
         times = findAllMatches('time', _ct, 1);           // "de trei luni" is a duration, not Monday
         var tBase = times[0] ? times[0].ko + ' ' : '';
@@ -3910,6 +3928,11 @@
         objects = [{ key:'object1', kind:'object1', ko: koBase(places[0].ko), ro: places[0].ro, en: places[0].en }];
         places = places.slice(1);
       }
+      // an adverb that is part of the verb's own expression ("mă simt bine" = 기분이 좋다): don't add 잘 again
+      if(verb && descs.length){
+        var _vin = itemCands(verb).filter(function(a){ return a && a.indexOf(' ') > 0 && (' ' + normalizeLatin(cd.text) + ' ').indexOf(' ' + a + ' ') !== -1; });
+        if(_vin.length) descs = descs.filter(function(d){ return !itemCands(d).some(function(w){ return w && _vin.some(function(a){ return (' ' + a + ' ').indexOf(' ' + w + ' ') !== -1; }); }); });
+      }
       // "frumoasă" read both as adverb (예쁘게) and predicate (예쁘다): keep the predicate
       if(verb && verb.ko && window.Conjugation){
         var _vs = window.Conjugation.stem(verb.ko);
@@ -3922,22 +3945,26 @@
         var _tks = relTokens(cd.text), _vp = -1, _op = -1;
         var _o0 = objects[0], _firstPos = 1e9;
         // whichever object noun comes first in the sentence is the candidate subject
+        // a noun may be one word ("pisica") or two ("the cat", "micul dejun")
+        var _objAt = function(z, o){
+          var one = normalizeLatin(_tks[z].w), two = z + 1 < _tks.length ? one + ' ' + normalizeLatin(_tks[z + 1].w) : '';
+          var a = findBestMatch('object1', one), b2 = two ? findBestMatch('object1', two) : null;
+          return (a && a.ko === o.ko) || (b2 && b2.ko === o.ko) || (o.srcTok && o.srcTok === one);
+        };
         objects.forEach(function(o){
           for(var _z = 0; _z < _tks.length; _z++){
-            var _zn = normalizeLatin(_tks[_z].w), _zb = findBestMatch('object1', _zn);
-            if(((_zb && _zb.ko === o.ko) || (o.srcTok && o.srcTok === _zn)) && _z < _firstPos){ _firstPos = _z; _o0 = o; }
+            if(_objAt(_z, o) && _z < _firstPos){ _firstPos = _z; _o0 = o; }
           }
         });
         for(var _q = 0; _q < _tks.length; _q++){
           var _tn = normalizeLatin(_tks[_q].w);
           if(_vp < 0){
             var _pair = _q + 1 < _tks.length ? _tn + ' ' + normalizeLatin(_tks[_q + 1].w) : '';
-            if((!REL_AUX[_tn] && findBestMatch('verb', _tn)) || (REL_AUX[_tn] && _pair && findBestMatch('verb', _pair))) _vp = _q;
+            // an English article is never the verb — but Romanian "a" is also the past auxiliary ("a plecat")
+            var _det = /^(the|an|my|your|his|her|our|their)$/.test(_tn) || (_tn === 'a' && !(_pair && findBestMatch('verb', _pair)));
+            if(!_det && ((!REL_AUX[_tn] && findBestMatch('verb', _tn)) || (REL_AUX[_tn] && _pair && findBestMatch('verb', _pair)))) _vp = _q;
           }
-          if(_op < 0){
-            var _ob = findBestMatch('object1', _tn);
-            if((_ob && _ob.ko === _o0.ko) || (_o0.srcTok && _o0.srcTok === _tn)) _op = _q;
-          }
+          if(_op < 0 && _objAt(_q, _o0)) _op = _q;
         }
         if(_op >= 0 && _vp > _op && !(times[0] && koBase(times[0].ko) === koBase(_o0.ko))){
           subjects = [{ key:'topic', kind:'topic', ko: koNom(_o0.ko), ro: _o0.ro, en: _o0.en }];

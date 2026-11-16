@@ -4,6 +4,7 @@
  *   1. past tense: for each verb with an "am X" form, "Ieri am X" must come out in the past
  *   2. subject vs object: for each verb with an "a X" form, "Pisica a X" must make the cat
  *      the subject (고양이가/는), never the object (고양이를)
+ *   + the same two checks in English: "Yesterday I waited" (past), "The cat waits" (subject)
  *   3. form conflicts: Romanian/English forms shared by several verbs (the first verb in
  *      data/builder-vocab.json wins) — printed with --conflicts, to review by eye
  *
@@ -49,7 +50,22 @@ if (process.argv.includes('--conflicts')) {
   // 2. subject before the verb
   const svo = vocab.verb.filter(v => v.ko && !v.ko.includes(' ')).map(v => { const a = (v.aliases || []).find(x => /^a [a-zăâîșț]+$/i.test(x)); return a && { ko: v.ko, s: 'Pisica ' + a }; }).filter(Boolean);
   for (const r of await run(svo)) if (/고양이를/.test(r.got)) { problems++; console.log('✗ subject', r.s.padEnd(28), '→', r.got, `  [${r.ko}]`); }
+  // 3. the same two checks in English ("Yesterday I waited", "The cat waits")
+  const enCases = vocab.verb.map(v => {
+    const g = String(v.en || '').split(/[\/,;]/)[0];
+    const m = /^\s*to ([a-z]+)\s*$/i.exec(g);
+    if (!m || m[1].length < 3 || /\(/.test(g)) return null;
+    const b0 = m[1].toLowerCase();
+    if (/ee$/.test(b0)) return null;
+    const ed = /e$/.test(b0) ? b0 + 'd' : /[^aeiou]y$/.test(b0) ? b0.slice(0, -1) + 'ied' : b0 + 'ed';
+    const s3 = /(s|x|z|ch|sh|o)$/.test(b0) ? b0 + 'es' : /[^aeiou]y$/.test(b0) ? b0.slice(0, -1) + 'ies' : b0 + 's';
+    return { ko: v.ko, past: 'Yesterday I ' + ed, subj: 'The cat ' + s3 };
+  }).filter(Boolean);
+  const enPast = await run(enCases.map(c => ({ ko: c.ko, s: c.past })));
+  // irregular verbs (go → *goed) are not English, so only count it when the builder found that very verb
+  for (const r of enPast) if (!isPast(r.got) && !/(gived|goed|eated|seed|teached|buyed|bringed|thinked|catched|runned|sitted|writed|readed|speaked|taked|maked|comed|knowed|drinked|singed|swimmed|meeted|leaved|feeled|keeped|sleeped|selled|telled|winned|losed|payed|sayed|standed|understanded|throwed|growed|drived|choosed|forgetted|getted|hided|holded|meaned|rided|rised|shaked|stealed|striked|weared|waked|hanged|bited|blowed|breaked|builded|spended|flied|falled|fighted|finded|feeded|hurted|letted|lended|putted|quitted|setted|shutted|spreaded)$/.test(r.s.split(' ').pop())) { problems++; console.log('✗ EN past', r.s.padEnd(28), '→', r.got, `  [${r.ko}]`); }
+  for (const r of await run(enCases.map(c => ({ ko: c.ko, s: c.subj })))) if (/고양이를/.test(r.got)) { problems++; console.log('✗ EN subj', r.s.padEnd(28), '→', r.got, `  [${r.ko}]`); }
   await browser.close(); server.close();
-  console.log(`\n${past.length} verbs checked for the past, ${svo.length} for subject/object: ${problems ? problems + ' problem(s)' : 'all fine'}`);
+  console.log(`\nRO: ${past.length} verbs checked for the past, ${svo.length} for subject/object; EN: ${enCases.length} for each — ${problems ? problems + ' problem(s)' : 'all fine'}`);
   process.exit(problems ? 1 : 0);
 })();

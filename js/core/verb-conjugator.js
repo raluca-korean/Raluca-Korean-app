@@ -18,6 +18,9 @@ window.VerbConjugator = {
   I_VERB_EXCEPTIONS: ['끓이다','덮이다','모이다','보이다','쌓이다','줄이다'], // real verbs, not the 이다 copula
   REUL_REGULAR: ['따르다', '들르다', '치르다'],
   D_IRREGULAR: ['걷다', '듣다'],
+  // ㅅ-irregular: the ㅅ batchim drops before a vowel, with NO contraction (낫다→나아요, 짓다→지어요);
+  // 씻다 / 웃다 / 벗다 are regular and are deliberately not listed
+  S_IRREGULAR: ['낫다', '짓다', '붓다', '잇다', '긋다', '젓다'],
   H_IRREGULAR: ['하얗다','빨갛다','파랗다','까맣다','노랗다','그렇다','이렇다','저렇다','어떻다'],
 
   hasBatchim(word) {
@@ -87,6 +90,11 @@ window.VerbConjugator = {
       const base = preStem.slice(0, -1) + doubled + newSyl;
       return [{ro:'prezent',en:'present', form: base+'요'}, {ro:'trecut',en:'past', form: base.slice(0,-1)+(preBright?'랐':'렀')+'어요'}];
     }
+    if (jong === 19 && this.S_IRREGULAR.some(b => word === b || word.endsWith(b))) {
+      const base = stem.slice(0,-1) + String.fromCharCode(code - jong);
+      const bright = jung === 0 || jung === 8;
+      return [{ro:'prezent',en:'present', form: base+(bright?'아요':'어요')}, {ro:'trecut',en:'past', form: base+(bright?'았어요':'었어요')}];
+    }
     if (jong === 7 && this.D_IRREGULAR.some(b => word === b || word.endsWith(b))) {
       const base = stem.slice(0,-1) + String.fromCharCode(code + 1);
       const bright = jung === 0 || jung === 8;
@@ -119,6 +127,9 @@ window.VerbConjugator = {
         // ㅚ + 어 → 왜 contraction (되다→돼요)
         pres = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+10*28) + '요';
         past = stem.slice(0,-1) + String.fromCharCode(0xAC00+cho*588+10*28+20) + '어요';
+      } else if (jung===4 || jung===6) {
+        // ㅓ/ㅕ + 어 → the 어 is absorbed (서다→서요/섰어요, 건너다→건너요, 켜다→켜요/켰어요, 펴다→펴요)
+        pres = stem+'요'; past = stem.slice(0,-1) + String.fromCharCode(code+20) + '어요';
       } else if (jung===1 || jung===5) {
         // ㅐ/ㅔ + 어 → merges into the same vowel, written form unchanged
         // (보내다→보내요/보냈어요, 매다→매요/맸어요, not 보내어요/매어요)
