@@ -908,8 +908,27 @@
   }
   // normalised match candidates of an item, computed once
   function itemCands(item){
-    if(!item.__nc) item.__nc = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []).map(normalizeLatin);
+    if(!item.__nc){
+      item.__nc = [item.ko, item.ro, item.en, item.key].concat(item.aliases || []).map(normalizeLatin);
+      item.__nExplicit = item.__nc.length;            // generated forms come after this index
+      if(item.bucket === 'verb') item.__nc = item.__nc.concat(englishForms(item.en));
+    }
     return item.__nc;
+  }
+  // regular English forms of a verb gloss: "to wait" → wait, waits, waited, waiting
+  function englishForms(en){
+    var out = [];
+    String(en || '').split(/[\/,;]/).forEach(function(g){
+      var m = /^\s*to ([a-z]+)\s*$/i.exec(g.replace(/\([^)]*\)/g, ''));
+      if(!m) return;
+      var v = m[1].toLowerCase();
+      if(v.length < 3) return;
+      var ing = /ie$/.test(v) ? v.slice(0, -2) + 'ying' : /[^aeiou]e$/.test(v) ? v.slice(0, -1) + 'ing' : v + 'ing';
+      var ed  = /e$/.test(v) ? v + 'd' : /[^aeiou]y$/.test(v) ? v.slice(0, -1) + 'ied' : v + 'ed';
+      var s3  = /(s|x|z|ch|sh|o)$/.test(v) ? v + 'es' : /[^aeiou]y$/.test(v) ? v.slice(0, -1) + 'ies' : v + 's';
+      out.push(v, s3, ed, ing);
+    });
+    return out;
   }
   function buildOptionsForField(fieldKey, isLast){
     var sourceKey = fieldKey;
@@ -2350,6 +2369,8 @@
       for(var j=0;j<candidates.length;j++){
         var candidate = candidates[j];
         if(!candidate) continue;
+        // a generated English form ("appeared" from "to appear") loses a tie against a hand-written one
+        var _genPenalty = (item.__nExplicit != null && j >= item.__nExplicit) ? 0.5 : 0;
 
         var pos = normalizedText.indexOf(' ' + candidate + ' ');
         if(pos === -1) pos = strippedText.indexOf(' ' + candidate + ' ');
@@ -2389,9 +2410,9 @@
           }
         }
 
-        if(candidate.length > bestLen){
+        if(candidate.length - _genPenalty > bestLen){
           best = item;
-          bestLen = candidate.length;
+          bestLen = candidate.length - _genPenalty;
         }
       }
     }
@@ -2688,7 +2709,7 @@
     return PAST_PARTICIPLES;
   }
   // verbs that never take a direct object: what "happens" is the subject (해가 나타나요, 고양이가 자요)
-  var TRANSITIVE_EXCEPT = { '만나다':1, '가지다':1, '지다':1, '찾아가다':1, '찾아오다':1, '가져가다':1, '가져오다':1, '데려가다':1, '데려오다':1 };
+  var TRANSITIVE_EXCEPT = { '보살피다':1, '살피다':1, '만나다':1, '가지다':1, '지다':1, '찾아가다':1, '찾아오다':1, '가져가다':1, '가져오다':1, '데려가다':1, '데려오다':1 };
   function isIntransitive(ko){
     if(!ko) return false;
     if(INTRANSITIVE_VERBS[ko]) return true;
@@ -2776,6 +2797,10 @@
 
     // Past English: forme neregulate/regulate cunoscute
     var enPast = ['went','ate','came','saw','wrote','met','rested','worked','was','were','eaten','been','did','appeared','disappeared','vanished',
+                  'told','said','grew','hung','ran','took','found','felt','kept','left','lost','paid','put','sent','sat','slept','spent','stood',
+                  'thought','understood','won','wore','brought','caught','taught','fought','built','chose','drove','fell','forgot','got','heard',
+                  'knew','sold','sang','swam','threw','began','broke','drank','flew','gave','hid','held','meant','rode','rose','shook','spoke',
+                  'stole','struck','swore','woke','entered','made','became',
                   'exercised','prepared','learned','listened','made','bought',
                   'gave','studied','read ','read,','read.'];
     // regular English past in -ed ("finished", "visited") for a known, non-adjective verb
@@ -3474,6 +3499,45 @@
         if(_pick){ (DATA.verb || []).forEach(function(v){ if(v.ko === _pick) verb = v; }); }
       }
 
+      // English is S-V-O: a pronoun / person / name AFTER the verb is its object
+      // ("I love you" → 너를 사랑해요, "I call my mom" → 엄마한테 전화해요, "I told Mihai" → 미하이한테 말했어요)
+      if(verb && !isIntransitive(verb.ko) && !isDescriptive(verb) && !MOTION_NOOBJ[verb.ko]){
+        var _etk = relTokens(cd.text), _evp = -1;
+        for(var _ei = 0; _ei < _etk.length; _ei++){
+          var _ew = normalizeLatin(_etk[_ei].w);
+          var _ew2 = _ei + 1 < _etk.length ? _ew + ' ' + normalizeLatin(_etk[_ei + 1].w) : '';
+          if(!/^(i|you|he|she|we|they|it|my|the|a|an|i m|im)$/.test(_ew) && (findBestMatch('verb', _ew) || (_ew2 && findBestMatch('verb', _ew2)))){
+            _evp = (_ew2 && findBestMatch('verb', _ew2) && !findBestMatch('verb', _ew)) ? _ei + 1 : _ei; break;
+          }
+        }
+        if(_evp >= 0){
+          var _toW = /(^| )(전화하다|말하다|이야기하다|묻다|물어보다|주다|보내다|가르치다|선물하다)$/.test(verb.ko);
+          var _part = function(base){ return base + (_toW ? '한테' : ((window.Conjugation && window.Conjugation.hasBatchim(base)) ? '을' : '를')); };
+          var EN_OBJ = { me:'저', you:'너', him:'그', her:'그녀', us:'우리', them:'그들' };
+          for(var _ej = _evp + 1; _ej < _etk.length; _ej++){
+            var _ow = normalizeLatin(_etk[_ej].w);
+            if(EN_OBJ[_ow] && !clause.__enObj){
+              clause.__enObj = true;
+              subjects = subjects.filter(function(x){ return !(_ow === 'you' && x.ko === '너는') && !(_ow === 'her' && x.ko === '그녀는'); });
+              clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + _part(EN_OBJ[_ow]);
+              break;
+            }
+            var _sp = findBestMatch('topic', _ow);
+            if(_sp && subjects.some(function(x){ return x.ko === _sp.ko; }) && subjects[0].ko !== _sp.ko){
+              var _sb = koBase(_sp.ko);
+              subjects = subjects.filter(function(x){ return x.ko !== _sp.ko; });
+              objects = [{ key:'object1', kind:'object1', ko: _part(_sb), ro: _sp.ro, en: _sp.en }].concat(objects.filter(function(o){ return koBase(o.ko) !== _sb; }));
+              break;
+            }
+            var _capName = (String(raw).match(new RegExp('(?:^|\\s)(' + _ow.charAt(0).toUpperCase() + _ow.slice(1) + ')(?=[\\s.,!?]|$)')) || [])[1];
+            if(_toW && _capName && !findBestMatch('topic', _ow) && !findBestMatch('object1', _ow)){
+              objects = [{ key:'object1', kind:'object1', ko: hangulName(_capName) + '한테', ro: _capName, en: _capName }].concat(objects);
+              break;
+            }
+          }
+        }
+      }
+
       // "te aștept / te iubesc / o ajut": a clitic right before a transitive verb is its object (너를 기다려요)
       if(verb && verb.ko !== '웃음거리로 만들다' && !objects.length && !/\bpe \S+/.test(normalizeLatin(cd.text)) && !isIntransitive(verb.ko) && !isDescriptive(verb) && !MOTION_NOOBJ[verb.ko]){
         var _ctx = ' ' + normalizeLatin(cd.text) + ' ';
@@ -3638,8 +3702,8 @@
       }
 
       // "a intrat în casă" → 집에 들어갔어요 (the noun after în/la/into is the destination, not an object)
-      if(verb && /(^| )(들어가다|들어오다|가다|오다|도착하다|돌아가다|돌아오다|올라가다|내려가다)$/.test(verb.ko) && !places.length){
-        var _into = /\b(?:in|la|into|to) (\S+)/.exec(cd.text);
+      if(verb && /(^| )(들어가다|들어오다|가다|오다|도착하다|돌아가다|돌아오다|올라가다|내려가다)$/.test(verb.ko) && (!places.length || /^(the|a|my)$/.test(normalizeLatin(places[0].ro || '')))){
+        var _into = /\b(?:in|la|into|to)\s+(?:the\s+|a\s+|my\s+)?(\S+)/.exec(cd.text);
         if(_into){
           var _in = findBestMatch('object1', _into[1]);
           if(_in && objects.some(function(o){ return o.ko === _in.ko; }) && !/\bsa\b/.test(cd.text)){
@@ -3650,7 +3714,7 @@
       }
 
       // "în fața școlii / casei" → 학교 앞에서 ("fața" = front, not "fata" = girl 소녀)
-      var _front = /\bin fata (\S+)/.exec(cd.text);
+      var _front = /\bin fata (\S+)/.exec(cd.text) || /\bin front of\s+(?:the\s+|my\s+)?(\S+)/.exec(cd.text);
       if(_front){
         subjects = subjects.filter(function(x){ return koBase(x.ko) !== '소녀'; });
         objects = objects.filter(function(x){ return koBase(x.ko) !== '소녀'; });
@@ -3675,9 +3739,15 @@
         }
       }
 
+      // "I entered the house" / "intru în casă": what you enter is a place (집에 들어갔어요)
+      if(verb && /(^| )(들어가다|들어오다|도착하다)$/.test(verb.ko) && !places.length && objects[0] && !/\b(sa|to)\b/.test(cd.text)){
+        places = [{ key:'departure', kind:'departure', ko: koBase(objects[0].ko) + '에서', ro: objects[0].ro, en: objects[0].en }];
+        objects = objects.slice(1);
+      }
+
       // "ies din casă" → 집에서 나와요 (leaving FROM a place)
       if(verb && /(^| )(나오다|나가다|떠나다|출발하다|내리다)$/.test(verb.ko)){
-        var _din = /\b(?:din|de la|from|out of) (\S+)/.exec(cd.text);
+        var _din = /\b(?:din|de la|from|out of)\s+(?:the\s+|a\s+|my\s+)?(\S+)/.exec(cd.text);
         if(_din){
           var _dn = findBestMatch('object1', _din[1]) || findBestMatch('departure', _din[1]);
           if(_dn){
@@ -3721,7 +3791,7 @@
         var dn = numVal(dm2[1]) || 1;
         var du = /^(ani|an|anul|year)/.test(dm2[2]) ? '년' : /^(luni|luna|month)/.test(dm2[2]) ? '개월' : /^(zile|zi|day)/.test(dm2[2]) ? '일' : /^(saptaman|week)/.test(dm2[2]) ? '주' : '시간';
         _timeExtra.push(dn + du + ' 동안'); _ct = _ct.replace(dm2[0], ' ');
-        if(/^de\s/.test(dm2[0].trim())) clause.__ongoing = true;
+        if(/^(de|for)\s/.test(dm2[0].trim())) clause.__ongoing = true;
       }
       if(_timeExtra.length){
         times = findAllMatches('time', _ct, 1);           // "de trei luni" is a duration, not Monday
@@ -3986,6 +4056,7 @@
         if(objects[0] && places[0] && _base(objects[0].ko) === _base(places[0].ko)) objects = objects.slice(1);
         if(places[0]) objects = objects.filter(function(o){ return _base(places[0].ko).indexOf(_base(o.ko) + ' ') !== 0; });   // 문 앞 + 문
         if(times[0]) objects = objects.filter(function(o){ return _base(o.ko) !== _base(times[0].ko); });   // "la prânz" = 점심에, not also 점심을
+        if(verb && /하다$/.test(verb.ko)) objects = objects.filter(function(o){ var bb = _base(o.ko); return !(bb.length >= 2 && verb.ko.indexOf(bb + '하다') === 0); });   // "call" = 전화 + 전화하다
         // "merg pe stradă": a noun right after pe/în/la/prin is the place found above, not also an object
         if(places[0]){
           var _ctn = ' ' + normalizeLatin(cd.text) + ' ';
