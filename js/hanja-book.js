@@ -400,6 +400,13 @@ function render(animate) {
   if (qlb) qlb.title = lang === 'en' ? 'Practice this lesson' : 'Exersează lecția asta';
   var plb = document.getElementById('puzzleLessonBtn');
   if (plb) plb.title = lang === 'en' ? "Build this lesson's words" : 'Formează cuvintele lecției';
+
+  /* Optional hook for js/hanja-studio.js (loaded after this file) — a
+     no-op when that module isn't present. Lets Studio's trigger button
+     re-gate itself (enabled only for a hanja with verified decomposition
+     data) every time the Learn page re-renders, without this file
+     needing to know anything about Hanja Studio's internals. */
+  if (window.HanjaStudio && window.HanjaStudio.onRender) window.HanjaStudio.onRender(item);
 }
 
 /* ── WORD BLOOM ────────────────────────────────────────── */

@@ -1,0 +1,340 @@
+/* ══════════════════════════════════════════════════════════
+   HANJA STUDIO — Deconstruct, Build & Play
+   A self-contained extension of hanja-book.html's own design
+   tokens (--bg/--bg3/--nuke/--tx/--bd/--c0.. from hanja-book.css).
+   This file only adds new rules; it never overrides anything in
+   hanja-book.css, so the existing page is untouched.
+   ══════════════════════════════════════════════════════════ */
+
+/* ── trigger button (topActions row) ─────────────────────── */
+#studioBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  color: var(--tx);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c0) 18%, transparent), color-mix(in srgb, var(--nuke) 14%, transparent));
+  border: 1px solid color-mix(in srgb, var(--c0) 45%, transparent);
+  border-radius: 999px;
+  padding: 8px 22px;
+  transition: box-shadow .22s, opacity .22s, border-color .22s, transform .15s;
+}
+#studioBtn:hover {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--c0) 35%, transparent);
+  transform: translateY(-1px);
+}
+#studioBtn:disabled { opacity: .3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── modal shell (mirrors #puzzlePanel's pattern) ─────────── */
+#studioPanel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: min(460px, 94vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg3);
+  border: 1.5px solid var(--bd);
+  border-radius: 24px;
+  padding: 30px 22px 26px;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  box-shadow: 0 12px 60px rgba(0,0,0,.55);
+  transition: opacity var(--t) var(--ease), transform var(--t) var(--ease);
+}
+#studioPanel.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(.9);
+}
+#studioPanel::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: -1;
+  pointer-events: none;
+}
+body.light-mode #studioPanel::before { background: rgba(0,0,0,.3); }
+#studioClose {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--bd);
+  background: none;
+  color: var(--tx3);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+#studioClose:hover { border-color: var(--c0); color: var(--c0); }
+
+#studioHead { width: 100%; padding-top: 6px; }
+#studioHanja {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--tx);
+  line-height: 1;
+}
+#studioSub { font-size: 13px; color: var(--tx2); margin-top: 4px; }
+
+/* ── tab nav ───────────────────────────────────────────────── */
+#studioTabs {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  background: var(--s1);
+  border-radius: 999px;
+  padding: 4px;
+}
+.studioTab {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 4px;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  color: var(--tx2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s, color .2s;
+}
+.studioTab.active {
+  background: var(--c0);
+  color: #fff;
+}
+
+.studioSection { display: none; width: 100%; flex-direction: column; align-items: center; gap: 14px; }
+.studioSection.active { display: flex; }
+
+/* ══════════════════ DECONSTRUCT ══════════════════ */
+#deStage {
+  position: relative;
+  width: 220px;
+  height: 160px;
+}
+#deWhole {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 96px;
+  font-weight: 900;
+  color: var(--tx);
+  transition: opacity .4s var(--ease);
+}
+#deWhole.deHidden { opacity: 0; }
+.dePart {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: transform .7s var(--ease), opacity .4s var(--ease);
+}
+.dePart.deShow { opacity: 1; }
+.dePartGlyph {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 80px;
+  font-weight: 900;
+  color: var(--c0);
+  line-height: 1;
+}
+#dePart1 .dePartGlyph { color: var(--c1); }
+
+#deLabels { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%; opacity: 0; transition: opacity .4s var(--ease); }
+#deLabels.deShow { opacity: 1; }
+.deLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--s1);
+  border: 1px solid var(--bd);
+  min-width: 90px;
+}
+.deLGlyph { font-family: 'Noto Sans KR', sans-serif; font-size: 26px; font-weight: 900; color: var(--c0); }
+#deLabel1 .deLGlyph { color: var(--c1); }
+.deLReading { font-size: 13px; font-weight: 700; color: var(--tx); }
+.deLMeaning { font-size: 11px; color: var(--tx2); }
+
+#deControls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+#dePlay, #deReplay, #deSlow, #stPlay, #stSlow, #stQuiz {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--c0);
+  background: none;
+  color: var(--c0);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+#dePlay:hover, #deReplay:hover, #stPlay:hover, #stQuiz:hover { background: var(--c0); color: #fff; }
+.toggleBtn.active { background: var(--c0); color: #fff; }
+
+/* ══════════════════ BUILD ══════════════════ */
+#buildDiff { display: flex; gap: 6px; }
+.buildDiffBtn {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--bd);
+  background: none;
+  color: var(--tx2);
+  cursor: pointer;
+}
+.buildDiffBtn.active { border-color: var(--c0); color: var(--c0); background: color-mix(in srgb, var(--c0) 12%, transparent); }
+
+#buildStage {
+  position: relative;
+  width: 220px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#buildGuide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 96px;
+  font-weight: 900;
+  color: var(--tx3);
+  opacity: .18;
+  pointer-events: none;
+}
+#buildGuide.hidden { display: none; }
+#buildSlots {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 10px;
+}
+.buildSlot {
+  width: 86px;
+  height: 86px;
+  border-radius: 16px;
+  border: 2px dashed var(--bd);
+  background: var(--s1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--tx);
+  transition: border-color .2s, background .2s, transform .15s;
+}
+.buildSlot.dragOver { border-color: var(--c0); background: color-mix(in srgb, var(--c0) 14%, transparent); transform: scale(1.04); }
+.buildSlot.filled { border-style: solid; }
+.buildSlot.correct { border-color: #4DFFB8; background: rgba(77,255,184,.14); }
+.buildSlot.wrong   { border-color: #FF6B8A; background: rgba(255,107,138,.14); }
+.buildSlot.reunite { animation: buildReunite .6s var(--ease-b); }
+@keyframes buildReunite {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+#buildTray { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; min-height: 70px; }
+.buildTile {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  border: 1px solid var(--bd);
+  background: var(--bg2);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--tx);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow .15s, border-color .15s;
+}
+.buildTile.selected { border-color: var(--c0); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c0) 55%, transparent); }
+.buildTile.placed { visibility: hidden; }
+.buildTile.dragging { opacity: .35; }
+#buildFeedback { min-height: 20px; font-size: 14px; font-weight: 700; }
+#buildFeedback.ok  { color: #4DFFB8; }
+#buildFeedback.bad { color: #FF6B8A; }
+
+/* ══════════════════ STROKE ORDER ══════════════════ */
+#stStrokeCount { font-size: 13px; font-weight: 700; color: var(--tx2); }
+#stWriter { width: 200px; height: 200px; }
+#stControls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+#stFeedback { min-height: 18px; font-size: 13px; font-weight: 700; color: var(--c0); }
+
+/* ══════════════════ MEMORY CHALLENGE ══════════════════ */
+#memScoreRow { display: flex; gap: 10px; align-items: center; font-weight: 800; }
+#memScore { font-size: 20px; color: var(--tx); }
+#memCombo { font-size: 13px; color: var(--c3); }
+#memPrompt { font-size: 13px; color: var(--tx2); }
+#memParts { display: flex; gap: 14px; }
+.memPartGlyph {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 54px;
+  font-weight: 900;
+  color: var(--c0);
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: var(--s1);
+}
+#memOptions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.memOptBtn {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--bd);
+  background: var(--s1);
+  color: var(--tx);
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.memOptBtn:hover:not(:disabled) { border-color: var(--c0); }
+.memOptBtn.correct { border-color: #4DFFB8; background: rgba(77,255,184,.16); color: #4DFFB8; }
+.memOptBtn.wrong   { border-color: #FF6B8A; background: rgba(255,107,138,.16); color: #FF6B8A; }
+.memOptBtn:disabled { cursor: default; }
+#memFeedback { min-height: 18px; font-size: 13px; font-weight: 700; }
+
+/* ══════════════════ NO-DATA STATE ══════════════════ */
+#studioNoData { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 10px; }
+#studioNoDataIcon { font-size: 36px; opacity: .5; }
+#studioNoDataMsg { font-size: 14px; color: var(--tx2); max-width: 300px; }
+
+/* ── small screens ─────────────────────────────────────────── */
+@media (max-width: 380px) {
+  #deStage, #buildStage { width: 190px; }
+  #deWhole, #buildGuide { font-size: 80px; }
+  .buildSlot { width: 72px; height: 72px; font-size: 46px; }
+  .buildTile { width: 56px; height: 56px; font-size: 34px; }
+}

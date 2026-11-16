@@ -1,4 +1,4 @@
-const CACHE = 'rk-v240';
+const CACHE = 'rk-v241';
 
 const STATIC = [
   './',
@@ -45,6 +45,7 @@ const STATIC = [
   './glossary.css',
   './hangul.css',
   './hanja-book.css',
+  './hanja-studio.css',
   './caiet.css',
   './lessons.css',
   './stories.css',
@@ -63,6 +64,7 @@ const STATIC = [
   './js/caiet.js',
   './js/stroke-order.js',
   './js/hanja-book.js',
+  './js/hanja-studio.js',
   './js/stories.js',
   './js/writing.js',
   './js/pronunciation.js',
@@ -101,6 +103,7 @@ const STATIC = [
   './data/context-words.json',
   './data/extra-generated-sentences.json',
   './data/hanja.json',
+  './data/hanja-studio.json',
   './data/extra-hanja.js',
   './data/verified-breakdowns.js',
   './data/builder-vocab.json',
