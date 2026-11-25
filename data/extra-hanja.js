@@ -293,5 +293,19 @@ var EXTRA_HANJA = {
   '牛': { reading: '우', meaning: { ro: 'vacă, bou', en: 'cow, ox' } },
   '勿': { reading: '물', meaning: { ro: 'nu, fără', en: 'do not, without' } },
   '穴': { reading: '혈', meaning: { ro: 'peșteră, gaură', en: 'cave, hole' } },
-  '犬': { reading: '견', meaning: { ro: 'câine', en: 'dog' } }
+  '犬': { reading: '견', meaning: { ro: 'câine', en: 'dog' } },
+
+  /* A doua rundă de adăugiri pentru Hanja Studio. */
+  '夕': { reading: '석', meaning: { ro: 'seară', en: 'evening' } },
+  '羊': { reading: '양', meaning: { ro: 'oaie', en: 'sheep' } },
+  '去': { reading: '거', meaning: { ro: 'a pleca, a merge', en: 'to go, leave' } },
+  '巾': { reading: '건', meaning: { ro: 'pânză, material', en: 'cloth, towel' } },
+  '召': { reading: '소', meaning: { ro: 'a chema, a convoca', en: 'to summon' } },
+  '非': { reading: '비', meaning: { ro: 'nu, greșit', en: 'not, wrong' } },
+  '吾': { reading: '오', meaning: { ro: 'eu, al meu (arhaic)', en: 'I, my (archaic)' } },
+  '寺': { reading: '사', meaning: { ro: 'templu', en: 'temple' } },
+  '也': { reading: '야', meaning: { ro: 'de asemenea (particulă clasică)', en: 'also, too (classical particle)' } },
+  '申': { reading: '신', meaning: { ro: 'a declara, a extinde', en: 'to state, extend' } },
+  '石': { reading: '석', meaning: { ro: 'piatră', en: 'stone' } },
+  '更': { reading: '경', meaning: { ro: 'din nou, a schimba', en: 'again, to change' } }
 };
