@@ -48,41 +48,33 @@ window.HanjaStudio = (function () {
   /* ── gating (called by hanja-book.js's render(), see the hook
      added there) ─────────────────────────────────────────────── */
   function onRender(item) {
+    // Hanja Studio is open to every one of the 214 taught characters now —
+    // Stroke Order only ever needed HanziWriter's own data, never a
+    // verified decomposition, so there was no real reason to gate the
+    // whole button on STUDIO_DATA. Deconstruct/Build/Memory stay gated
+    // per-tab inside switchTab() instead (see "fără date").
     var btn = $('studioBtn');
     if (!btn) return;
-    var avail = hasDecomp(item.hanja);
-    btn.disabled = !avail;
-    btn.title = avail ? '' : (lang === 'en' ? 'No verified breakdown data for this character yet' : 'Nu există încă date verificate de descompunere pentru acest caracter');
+    btn.disabled = false;
+    btn.title = '';
   }
 
   /* ── open / close / tabs ─────────────────────────────────── */
   function open() {
     state.item = DATA[idx];
     state.decomp = STUDIO_DATA[state.item.hanja] || null;
+    state.parts = state.decomp ? state.decomp.parts.map(function (ch) { return resolveHanja(ch); }) : null;
     $('studioHanja').textContent = state.item.hanja;
     $('studioSub').textContent = primaryReading(state.item) + ' · ' + (state.item.meaning[lang] || state.item.meaning.ro);
 
-    var noData = $('studioNoData');
-    if (!state.decomp) {
-      noData.classList.remove('hidden');
-      $('studioTabs').classList.add('hidden');
-      document.querySelectorAll('.studioSection').forEach(function (s) { s.classList.remove('active'); });
-      $('studioNoDataMsg').textContent = lang === 'en'
-        ? 'Hanja Studio needs a verified graphical breakdown for this character — not available yet. Try 明 (명) for the working prototype.'
-        : 'Hanja Studio are nevoie de o descompunere grafică verificată pentru acest caracter — nu există încă. Încearcă 明 (명) pentru prototipul funcțional.';
-      $('studioPanel').classList.remove('hidden');
-      return;
-    }
-
-    noData.classList.add('hidden');
     $('studioTabs').classList.remove('hidden');
+    _prepareStroke(); // never gated — valid for any of the 214
 
-    state.parts = state.decomp.parts.map(function (ch) { return resolveHanja(ch); });
-
-    _prepareDeconstruct();
-    _prepareBuild();
-    _prepareStroke();
-    _prepareMemory();
+    if (state.decomp) {
+      _prepareDeconstruct();
+      _prepareBuild();
+      _prepareMemory();
+    }
 
     $('studioPanel').classList.remove('hidden');
     switchTab(state.tab);
@@ -100,27 +92,54 @@ window.HanjaStudio = (function () {
     document.querySelectorAll('.studioTab').forEach(function (b) {
       b.classList.toggle('active', b.dataset.tab === tab);
     });
+
+    // Stroke Order is never gated; Deconstruct/Build/Memory need a
+    // verified decomposition (state.decomp) — show "fără date" in their
+    // place instead of real (and empty) section content when missing.
+    var gated = tab !== 'stroke' && !state.decomp;
     document.querySelectorAll('.studioSection').forEach(function (s) {
-      s.classList.toggle('active', s.dataset.section === tab);
+      s.classList.toggle('active', !gated && s.dataset.section === tab);
     });
+    $('studioNoData').classList.toggle('active', gated);
+    if (gated) {
+      $('studioNoDataMsg').textContent = lang === 'en'
+        ? 'Hanja Studio needs a verified graphical breakdown for this character — not available yet. Try 明 (명) for the working prototype.'
+        : 'Hanja Studio are nevoie de o descompunere grafică verificată pentru acest caracter — nu există încă. Încearcă 明 (명) pentru prototipul funcțional.';
+    }
+
     if (tab === 'stroke' && !state.hwWriter) _initStrokeWriter();
   }
+
+  /* Fixed dePart0/1/2 + deLabel0/1/2 elements (not dynamically generated —
+     3 is the practical ceiling for a taught character's components, since
+     anything genuinely needing more is either a bound-radical cluster or a
+     nested structure we don't try to force-fit here, see data/hanja-studio.json
+     comment). _dePartEls()/_deLabelEls() return exactly state.parts.length
+     of them, in order, so every other function stays part-count-agnostic. */
+  function _dePartEls() { return [$('dePart0'), $('dePart1'), $('dePart2')].slice(0, state.parts.length); }
+  function _deLabelEls() { return [$('deLabel0'), $('deLabel1'), $('deLabel2')].slice(0, state.parts.length); }
 
   /* ══════════════════ DECONSTRUCT ══════════════════ */
   function _prepareDeconstruct() {
     _deStop();
-    var whole = $('deWhole'), p0 = $('dePart0'), p1 = $('dePart1');
+    var whole = $('deWhole');
     whole.textContent = state.item.hanja;
     whole.classList.remove('deHidden');
-    p0.classList.remove('deShow'); p1.classList.remove('deShow');
-    p0.style.transform = 'translate(-50%,-50%)';
-    p1.style.transform = 'translate(-50%,-50%)';
-    p0.querySelector('.dePartGlyph').textContent = state.parts[0].hanja;
-    p1.querySelector('.dePartGlyph').textContent = state.parts[1].hanja;
 
-    var lbl0 = $('deLabel0'), lbl1 = $('deLabel1');
-    [[lbl0, state.parts[0]], [lbl1, state.parts[1]]].forEach(function (pair) {
-      var el = pair[0], part = pair[1];
+    [$('dePart0'), $('dePart1'), $('dePart2')].forEach(function (el, i) {
+      el.classList.toggle('hidden', i >= state.parts.length);
+    });
+    [$('deLabel0'), $('deLabel1'), $('deLabel2')].forEach(function (el, i) {
+      el.classList.toggle('hidden', i >= state.parts.length);
+    });
+
+    _dePartEls().forEach(function (p, i) {
+      p.classList.remove('deShow');
+      p.style.transform = 'translate(-50%,-50%)';
+      p.querySelector('.dePartGlyph').textContent = state.parts[i].hanja;
+    });
+    _deLabelEls().forEach(function (el, i) {
+      var part = state.parts[i];
       el.querySelector('.deLGlyph').textContent = part.hanja;
       el.querySelector('.deLReading').textContent = part.reading;
       el.querySelector('.deLMeaning').textContent = part.meaning[lang] || part.meaning.ro;
@@ -129,6 +148,7 @@ window.HanjaStudio = (function () {
   }
 
   function _deOffsets() {
+    if (state.decomp.layout === 'tb3') return [{ x: 0, y: -72 }, { x: 0, y: 0 }, { x: 0, y: 72 }];
     if (state.decomp.layout === 'tb') return [{ x: 0, y: -40 }, { x: 0, y: 40 }];
     return [{ x: -56, y: 0 }, { x: 56, y: 0 }]; // 'lr', the default/original layout
   }
@@ -144,23 +164,22 @@ window.HanjaStudio = (function () {
   function _dePlay() {
     _deStop();
     var speed = state.hwSlow ? 2.2 : 1;
-    var whole = $('deWhole'), p0 = $('dePart0'), p1 = $('dePart1'), labels = $('deLabels');
+    var whole = $('deWhole'), parts = _dePartEls(), labels = $('deLabels');
     var off = _deOffsets();
 
     whole.classList.remove('deHidden');
-    p0.classList.remove('deShow'); p1.classList.remove('deShow');
+    parts.forEach(function (p) { p.classList.remove('deShow'); p.style.transform = 'translate(-50%,-50%)'; });
     labels.classList.remove('deShow');
-    p0.style.transform = 'translate(-50%,-50%)';
-    p1.style.transform = 'translate(-50%,-50%)';
 
     _deSchedule(function () {
       whole.classList.add('deHidden');
-      p0.classList.add('deShow'); p1.classList.add('deShow');
+      parts.forEach(function (p) { p.classList.add('deShow'); });
     }, 500 * speed);
 
     _deSchedule(function () {
-      p0.style.transform = 'translate(calc(-50% + ' + off[0].x + 'px), calc(-50% + ' + off[0].y + 'px))';
-      p1.style.transform = 'translate(calc(-50% + ' + off[1].x + 'px), calc(-50% + ' + off[1].y + 'px))';
+      parts.forEach(function (p, i) {
+        p.style.transform = 'translate(calc(-50% + ' + off[i].x + 'px), calc(-50% + ' + off[i].y + 'px))';
+      });
     }, 900 * speed);
 
     _deSchedule(function () {
@@ -168,21 +187,26 @@ window.HanjaStudio = (function () {
       _speak(state.parts[0].hanja);
     }, 1700 * speed);
 
-    _deSchedule(function () {
-      _speak(state.parts[1].hanja);
-    }, 2500 * speed);
+    // One extra 800ms beat per additional part, so each glyph gets spoken in
+    // turn — for the original 2-part case this reduces exactly to the
+    // original fixed schedule (part[1] at 1700+800=2500).
+    for (var i = 1; i < state.parts.length; i++) {
+      (function (partIdx, atMs) {
+        _deSchedule(function () { _speak(state.parts[partIdx].hanja); }, atMs * speed);
+      })(i, 1700 + i * 800);
+    }
+    var lastSpeakMs = 1700 + (state.parts.length - 1) * 800;
 
     _deSchedule(function () {
-      p0.style.transform = 'translate(-50%,-50%)';
-      p1.style.transform = 'translate(-50%,-50%)';
+      parts.forEach(function (p) { p.style.transform = 'translate(-50%,-50%)'; });
       labels.classList.remove('deShow');
-    }, 3800 * speed);
+    }, (lastSpeakMs + 1300) * speed);
 
     _deSchedule(function () {
-      p0.classList.remove('deShow'); p1.classList.remove('deShow');
+      parts.forEach(function (p) { p.classList.remove('deShow'); });
       whole.classList.remove('deHidden');
       _speak(state.item.hanja);
-    }, 4600 * speed);
+    }, (lastSpeakMs + 2100) * speed);
   }
 
   /* ══════════════════ BUILD ══════════════════ */
@@ -213,14 +237,14 @@ window.HanjaStudio = (function () {
     $('buildFeedback').className = '';
     var slotsEl = $('buildSlots');
     slotsEl.innerHTML = '';
-    for (var i = 0; i < 2; i++) {
+    for (var i = 0; i < state.parts.length; i++) {
       var slot = document.createElement('div');
       slot.className = 'buildSlot';
       slot.dataset.slot = i;
       slotsEl.appendChild(slot);
     }
 
-    var order = Math.random() < 0.5 ? [0, 1] : [1, 0];
+    var order = RKUtils.shuffle(state.parts.map(function (_, i) { return i; }));
     var trayEl = $('buildTray');
     trayEl.innerHTML = '';
     order.forEach(function (partIdx) {
