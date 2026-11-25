@@ -1,4 +1,4 @@
-const CACHE = 'rk-v244';
+const CACHE = 'rk-v245';
 
 const STATIC = [
   './',
@@ -56,6 +56,10 @@ const STATIC = [
   './flag.svg',
   './manifest.json',
   './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png',
+  './favicon.ico',
   './js/builder.js',
   './js/exercises.js',
   './js/flashcards.js',
@@ -247,15 +251,19 @@ self.addEventListener('fetch', event => {
       fetch(request).then(resp => {
         if (resp.ok) caches.open(CACHE).then(c => c.put(request, resp.clone()));
         return resp;
-      }).catch(() => caches.match(request))
+      }).catch(() => caches.match(request, { ignoreSearch: true }))
     );
     return;
   }
 
-  // Stale-while-revalidate for HTML, CSS, JS
+  // Stale-while-revalidate for HTML, CSS, JS. ignoreSearch matters a lot
+  // here — most real navigation in this app carries a query string
+  // (exercises.html?type=…&level=…, lesson-neural.html?lesson=…, …tab=…)
+  // while STATIC only ever caches the bare page, so without it every
+  // parameterized URL would miss the cache and 503 offline.
   event.respondWith(
     caches.open(CACHE).then(cache =>
-      cache.match(request).then(cached => {
+      cache.match(request, { ignoreSearch: true }).then(cached => {
         const networkFetch = fetch(request).then(resp => {
           if (resp.ok) cache.put(request, resp.clone());
           return resp;
