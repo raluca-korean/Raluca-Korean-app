@@ -388,9 +388,9 @@ function renderFC() {
   const diffEl = document.getElementById("crfDiffDot");
   if (diffEl) diffEl.innerHTML = getDiffDot(word.ko);
 
-  // Hint hidden
+  // Romanization — a reading aid for anyone who hasn't learned Hangul yet
   const hintEl = document.getElementById("crfCoreHint");
-  if (hintEl) hintEl.textContent = "";
+  if (hintEl) hintEl.textContent = window.RKRomanize ? RKRomanize.toRoman(word.ko) : "";
 
   // Meaning
   const meaningEl = document.getElementById("crfMeaning");

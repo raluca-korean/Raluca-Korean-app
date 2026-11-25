@@ -395,6 +395,7 @@ function _makeRow(word) {
   el.innerHTML =
     `<div class="gls-row-text">` +
       `<span class="gls-row-ko" style="color:${color}">${sanitizeHTML(word.ko)}</span>` +
+      `<span class="gls-row-rom">${sanitizeHTML(window.RKRomanize ? RKRomanize.toRoman(word.ko) : "")}</span>` +
       `<span class="gls-row-tr">${word.emoji ? sanitizeHTML(word.emoji) + " " : ""}${sanitizeHTML(getMeaning(word))}</span>` +
     `</div>` +
     `<div class="gls-row-end">` +
@@ -540,6 +541,7 @@ function _renderPanel(word) {
     `</button>` +
 
     `<div class="gls-panel-ko" style="color:${color}">${sanitizeHTML(word.ko)}</div>` +
+    `<div class="gls-panel-rom">${sanitizeHTML(window.RKRomanize ? RKRomanize.toRoman(word.ko) : "")}</div>` +
     `<div class="gls-panel-tr">${sanitizeHTML(getMeaning(word))}</div>` +
 
     `<div class="gls-panel-cats">${cats.map(c => {
