@@ -27,6 +27,7 @@ let recent       = RKStorage.get(RECENT_KEY, []);
 let currentLang  = RKLang.get();
 let filterCat    = "";
 let filterFavs   = false;
+let filterLevel  = false; // "doar nivelul meu" — vezi getFiltered()
 let focusedKo    = null;
 let panelHistory = [];   // navigation stack for associated words
 let currentPage  = 1;
@@ -94,7 +95,8 @@ const UI = {
     sortCat:     "După categorie",
     example:     "EXEMPLU",
     conjug:      "CONJUGARE",
-    recent:      "CĂUTĂRI RECENTE"
+    recent:      "CĂUTĂRI RECENTE",
+    levelFilter: "Doar nivelul meu"
   },
   en: {
     search:  "Search",
@@ -119,7 +121,8 @@ const UI = {
     sortCat:     "By category",
     example:     "EXAMPLE",
     conjug:      "CONJUGATION",
-    recent:      "RECENT SEARCHES"
+    recent:      "RECENT SEARCHES",
+    levelFilter: "My level only"
   }
 };
 
@@ -198,11 +201,12 @@ function buildWords(vocab) {
   flat.forEach(raw => {
     const ko = (raw.ko || "").trim();
     if (!ko) return;
-    if (!map.has(ko)) map.set(ko, { ko, ro: raw.ro || "", en: raw.en || "", emoji: raw.emoji || "", categoriesRo: new Set(), categoriesEn: new Set() });
+    if (!map.has(ko)) map.set(ko, { ko, ro: raw.ro || "", en: raw.en || "", emoji: raw.emoji || "", topik: raw.topik, categoriesRo: new Set(), categoriesEn: new Set() });
     const c = map.get(ko);
     if (!c.ro && raw.ro) c.ro = raw.ro;
     if (!c.en && raw.en) c.en = raw.en;
     if (!c.emoji && raw.emoji) c.emoji = raw.emoji;
+    if (raw.topik != null) c.topik = c.topik == null ? raw.topik : Math.min(c.topik, raw.topik);
     (raw.categories || []).forEach(catKey => {
       if (CAT_LABELS[catKey]) {
         c.categoriesRo.add(CAT_LABELS[catKey].ro);
@@ -212,7 +216,7 @@ function buildWords(vocab) {
   });
 
   return Array.from(map.values())
-    .map(w => ({ ko: w.ko, ro: w.ro, en: w.en, emoji: w.emoji, categoriesRo: [...w.categoriesRo], categoriesEn: [...w.categoriesEn] }))
+    .map(w => ({ ko: w.ko, ro: w.ro, en: w.en, emoji: w.emoji, topik: w.topik, categoriesRo: [...w.categoriesRo], categoriesEn: [...w.categoriesEn] }))
     .sort((a, b) => a.ko.localeCompare(b.ko, "ko"));
 }
 
@@ -309,10 +313,15 @@ function sortWords(words) {
 // ── Filter ──
 function getFiltered() {
   const q = searchInput.value.trim().toLowerCase();
+  // Words with no derived topik (most of the dictionary — see tools that
+  // tag vocab-korean.json) always pass: we only hide words we have real
+  // evidence sit above the learner's current level, never guess at one.
+  const userLevel = window.RKLevelProgress ? RKLevelProgress.getLevel() : 1;
   const base = WORDS.filter(w => {
     const ok = !q || w.ko.toLowerCase().includes(q) ||
       (w.ro||"").toLowerCase().includes(q) || (w.en||"").toLowerCase().includes(q);
-    return ok && (!filterCat || getCats(w).includes(filterCat)) && (!filterFavs || isFav(w.ko));
+    return ok && (!filterCat || getCats(w).includes(filterCat)) && (!filterFavs || isFav(w.ko)) &&
+      (!filterLevel || w.topik == null || w.topik <= userLevel);
   });
   return sortWords(base);
 }
@@ -722,6 +731,7 @@ function setLanguage(lang) {
   filterCat   = "";
   currentPage = 1;
   searchInput.placeholder = t("search");
+  if (levelFilterBtn) levelFilterBtn.title = t("levelFilter");
   buildCatDots();
   renderDailyView();
   renderRecentView();
@@ -743,6 +753,17 @@ favFilterBtn.addEventListener("click", () => {
   favFilterBtn.classList.toggle("on", filterFavs);
   render(false);
 });
+
+const levelFilterBtn = document.getElementById("levelFilterBtn");
+if (levelFilterBtn) {
+  levelFilterBtn.title = t("levelFilter");
+  levelFilterBtn.addEventListener("click", () => {
+    filterLevel = !filterLevel;
+    currentPage = 1;
+    levelFilterBtn.classList.toggle("on", filterLevel);
+    render(false);
+  });
+}
 
 glsVeil.addEventListener("click", closePanel);
 

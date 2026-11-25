@@ -891,6 +891,19 @@ function getFilteredList(){
   if(currentLevel !== "test"){
     list = list.filter(item => String(item.topik) === currentLevel);
   }
+
+  // Daily-mission exercises (no ?lesson= param, e.g. index.html's "Drumul de
+  // azi" tasks): restrict to lessons already finished, so a vocab/grammar
+  // task never surfaces grammar the learner hasn't seen yet. Items with no
+  // lessonId (general `chain` dialogues) stay eligible either way. Fall back
+  // to the whole level only when that would leave nothing — a brand-new
+  // learner who hasn't finished any lesson at this level yet.
+  if(currentLevel !== "test"){
+    const doneLessons = RKStorage.get("RK_LESSON_DONE", []);
+    const seen = list.filter(item => !item.lessonId || doneLessons.indexOf(item.lessonId) !== -1);
+    if(seen.length > 0) list = seen;
+  }
+
   // SRS ordering: due → new (capped) → learning → manually-learned
   const srs = exSrsLoad();
   const now = Date.now();
