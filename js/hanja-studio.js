@@ -129,11 +129,8 @@ window.HanjaStudio = (function () {
   }
 
   function _deOffsets() {
-    // Only "lr" (left-right) is implemented for this prototype — the
-    // one real layout 明 (⿰日月) needs. A future "tb" (top-bottom)
-    // entry would need its own offsets added here, not guessed.
-    if (state.decomp.layout === 'lr') return [{ x: -56, y: 0 }, { x: 56, y: 0 }];
-    return [{ x: 0, y: -40 }, { x: 0, y: 40 }];
+    if (state.decomp.layout === 'tb') return [{ x: 0, y: -40 }, { x: 0, y: 40 }];
+    return [{ x: -56, y: 0 }, { x: 56, y: 0 }]; // 'lr', the default/original layout
   }
 
   function _deStop() {

@@ -75,7 +75,7 @@ Paginile din tab 2 nu se leagă direct din hub-uri. Pentru o pereche nouă: incl
 
 ## Exerciții (`data/exercises.json`)
 
-7 tipuri, fiecare cu **30 exerciții** (5 per nivel TOPIK 1–6):
+7 tipuri (~2994 exerciții în total, crescut organic — nu 5/nivel fix; vezi numărul real per tip cu `python3 -c "import json; d=json.load(open('data/exercises.json')); print({k: len(v) for k,v in d.items()})"`):
 
 | Cheie | Tip | Descriere |
 |-------|-----|-----------|

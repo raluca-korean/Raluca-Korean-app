@@ -277,5 +277,21 @@ var EXTRA_HANJA = {
   '豐': { reading: '풍', meaning: { ro: 'abundent', en: 'abundant' } },
   '裝': { reading: '장', meaning: { ro: 'a se îmbrăca; echipament', en: 'to dress; equipment' } },
   '比': { reading: '비', meaning: { ro: 'a compara', en: 'to compare' } },
-  '庶': { reading: '서', meaning: { ro: 'obișnuit, popor', en: 'common, populace' } }
+  '庶': { reading: '서', meaning: { ro: 'obișnuit, popor', en: 'common, populace' } },
+
+  /* Adăugate pentru Hanja Studio — radicali/caractere de sine stătătoare,
+     cu citire proprie, necesare ca părți componente reale pentru caractere
+     din cele 214 (vezi data/hanja-studio.json). */
+  '田': { reading: '전', meaning: { ro: 'câmp, ogor', en: 'field' } },
+  '土': { reading: '토', meaning: { ro: 'pământ, sol', en: 'earth, soil' } },
+  '禾': { reading: '화', meaning: { ro: 'cereală, grâu', en: 'grain, cereal' } },
+  '斗': { reading: '두', meaning: { ro: 'măsură, polonic', en: 'measure, dipper' } },
+  '必': { reading: '필', meaning: { ro: 'neapărat, sigur', en: 'must, surely' } },
+  '言': { reading: '언', meaning: { ro: 'cuvânt, vorbă', en: 'word, speech' } },
+  '舌': { reading: '설', meaning: { ro: 'limbă (organ)', en: 'tongue' } },
+  '忍': { reading: '인', meaning: { ro: 'a îndura, a răbda', en: 'to endure, bear' } },
+  '牛': { reading: '우', meaning: { ro: 'vacă, bou', en: 'cow, ox' } },
+  '勿': { reading: '물', meaning: { ro: 'nu, fără', en: 'do not, without' } },
+  '穴': { reading: '혈', meaning: { ro: 'peșteră, gaură', en: 'cave, hole' } },
+  '犬': { reading: '견', meaning: { ro: 'câine', en: 'dog' } }
 };
