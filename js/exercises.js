@@ -1296,7 +1296,7 @@ function checkCurrentAnswer(){
     }
     total++;
     if(effectiveRight){ correct++; streak++; if(streak >= 2) showHeartFx(); if(!isWrongMode) markLessonDone(item.lessonId); }
-    else { if(streak > 0) launchFireworks(); streak = 0; if(!isWrongMode && !type.startsWith('drill-')) trackWrong(item, puzzleLine.join(sep), item.correct.join(sep)); }
+    else { streak = 0; if(!isWrongMode && !type.startsWith('drill-')) trackWrong(item, puzzleLine.join(sep), item.correct.join(sep)); }
     if(!isWrongMode && lessonParam) lessonMasteryRecord(type, item, effectiveRight);
     if(!isWrongMode) saveStats(effectiveRight, type);
     recordCheck(elapsed, type, effectiveRight);
@@ -1344,7 +1344,6 @@ function checkCurrentAnswer(){
     if(streak >= 2) showHeartFx();
     if(!isWrongMode) markLessonDone(item.lessonId);
   } else {
-    if(streak > 0) launchFireworks();
     streak = 0;
     if(!isWrongMode) trackWrong(item, selectedAnswer, correctAnswer);
   }
