@@ -134,7 +134,7 @@ function renderDailyChallenge() {
   wrap.innerHTML =
     '<div class="card daily-card">' +
       '<div class="daily-head">' +
-        '<span class="daily-icon">🎧</span>' +
+        '<span class="daily-icon rk-float">🎧</span>' +
         '<div>' +
           '<div class="daily-title">' + t('dailyTitle') + '</div>' +
           '<div class="daily-sub">' + t('dailySub') + '</div>' +
@@ -348,7 +348,7 @@ function renderSummary() {
   var emoji = ratio >= 0.8 ? '🏆' : ratio >= 0.5 ? '🎉' : '🎧';
   var msg = ratio >= 0.8 ? t('msgGreat') : ratio >= 0.5 ? t('msgGood') : t('msgTry');
   var html = '<div class="l-card l-summary">' +
-    '<div class="l-sum-emoji">' + emoji + '</div>' +
+    '<div class="l-sum-emoji rk-pop-in">' + emoji + '</div>' +
     '<div class="l-sum-title">' + esc(t('doneTitle')(lvl, rnd)) + '</div>' +
     '<div class="l-sum-score"><b>' + c + '</b> / ' + n + '</div>' +
     '<div class="l-sum-bar"><i style="width:' + Math.round(ratio * 100) + '%"></i></div>' +

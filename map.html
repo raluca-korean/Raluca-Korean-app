@@ -70,6 +70,7 @@ body.dark-mode .mp-node-line{background:rgba(139,124,255,.25)}
 }
 </style>
 <link rel="stylesheet" href="./rk-buttons.css">
+<link rel="stylesheet" href="./rk-motion.css">
 </head>
 <body class="theme-anime">
 <div class="app">
@@ -181,14 +182,16 @@ function skillRow(label, data){
   '</div>';
 }
 
-function renderZone(zone, progress){
+function renderZone(zone, progress, i, isCurrent){
   var l = L();
   var pct = progress.pct;
   var name = LANG === 'ro' ? zone.ro : zone.en;
   var theme = LANG === 'ro' ? zone.theme_ro : zone.theme_en;
+  var nodeClass = 'mp-node rk-pop-in rk-d' + (((i || 0) % 10) + 1) +
+    (pct === 100 ? ' mp-node-done' : '') + (isCurrent ? ' rk-pulse-ring' : '');
   return '<div class="mp-stop">' +
     '<div class="mp-node-wrap">' +
-      '<div class="mp-node' + (pct === 100 ? ' mp-node-done' : '') + '" style="background:' + zone.color + '">' + zone.icon + '</div>' +
+      '<div class="' + nodeClass + '" style="background:' + zone.color + '">' + zone.icon + '</div>' +
       '<div class="mp-node-line"></div>' +
     '</div>' +
     '<div class="mp-card">' +
@@ -216,7 +219,7 @@ function renderCapstone(avgPct){
   var l = L();
   return '<div class="mp-stop mp-capstone">' +
     '<div class="mp-node-wrap">' +
-      '<div class="mp-node">🌸</div>' +
+      '<div class="mp-node rk-pop-in rk-d10">🌸</div>' +
     '</div>' +
     '<div class="mp-card">' +
       '<div class="mp-card-head">' +
@@ -247,11 +250,14 @@ function render(){
     var html = '';
     var completedZones = 0;
     var lastPct = 0;
-    ZONES.forEach(function(zone){
+    var currentFound = false;
+    ZONES.forEach(function(zone, i){
       var progress = computeZoneProgress(zone, lessons, exJson, doneLessons, exSrs);
       if(progress.pct === 100) completedZones++;
       lastPct = progress.pct;
-      html += renderZone(zone, progress);
+      var isCurrent = !currentFound && progress.pct < 100;
+      if(isCurrent) currentFound = true;
+      html += renderZone(zone, progress, i, isCurrent);
     });
     html += renderCapstone(lastPct);
 

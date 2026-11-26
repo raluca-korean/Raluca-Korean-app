@@ -927,7 +927,11 @@ function _showQuizResult(kind, ok, total) {
   for (var i = 0; i < msgs.length; i++) {
     if (pct >= msgs[i].min) { found = msgs[i]; break; }
   }
-  document.getElementById('qrEmoji').textContent = found.emoji;
+  var qrEmojiEl = document.getElementById('qrEmoji');
+  qrEmojiEl.textContent = found.emoji;
+  qrEmojiEl.classList.remove('rk-pop-in');
+  void qrEmojiEl.offsetWidth;
+  qrEmojiEl.classList.add('rk-pop-in');
   document.getElementById('qrMsg').textContent   = found.msg;
   document.getElementById('qrScore').textContent = ok + ' / ' + total;
   document.getElementById('qrRetry').textContent = lang === 'en' ? '↺ Again'  : '↺ Din nou';

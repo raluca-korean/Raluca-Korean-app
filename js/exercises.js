@@ -463,7 +463,11 @@ function showXPToast(amount, coins, boosted){
 function showBadgeNotif(badge){
   const el = document.getElementById('badgeNotif');
   if(!el) return;
-  document.getElementById('badgeNotifIcon').textContent = badge.icon;
+  const iconEl = document.getElementById('badgeNotifIcon');
+  iconEl.textContent = badge.icon;
+  iconEl.classList.remove('rk-pop-in');
+  void iconEl.offsetWidth;
+  iconEl.classList.add('rk-pop-in');
   document.getElementById('badgeNotifLabel').textContent = currentLang === 'ro' ? '🏅 Badge obținut!' : '🏅 Badge unlocked!';
   document.getElementById('badgeNotifTitle').textContent = badge['title_' + currentLang] || badge.title_ro;
   retriggerShow(el, 3400);
