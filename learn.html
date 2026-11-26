@@ -64,6 +64,7 @@ body.dark-mode .rk-logo .ascent{stroke:#F3CB69}
 
 </style>
 <link rel="stylesheet" href="./rk-buttons.css">
+<link rel="stylesheet" href="./rk-motion.css">
 </head>
 <body class="theme-anime">
 
@@ -169,18 +170,21 @@ function render(){
     document.getElementById('more').innerHTML = l.items.filter(function(it){ return !it.main; }).map(function(it){
       return '<a class="chip" href="' + it.href + '" title="' + it.desc + '"><span>' + it.icon + '</span>' + it.title + '</a>';
     }).join('');
-    document.getElementById('grid').innerHTML = l.items.filter(function(it){ return it.main; }).map(function(it){
+    document.getElementById('grid').innerHTML = l.items.filter(function(it){ return it.main; }).map(function(it, i){
       var extra = '';
+      var needsWork = false;
       if(it.key === 'grammar'){
         extra = '<div class="item-bar-bg"><div class="item-bar" style="width:' + lessonsPct + '%"></div></div>' +
                 '<div class="item-count">' + doneLessons.length + '/' + lessons.length + '</div>';
+        needsWork = lessonsPct < 100;
       } else if(it.key === 'vocab' && vocabTouched > 0){
         extra = '<div class="item-count">' + vocabTouched + ' ' + (LANG === 'ro' ? 'cuvinte în progres' : 'words in progress') + '</div>';
       } else if(it.key === 'hanja' && hanjaTouched > 0){
         extra = '<div class="item-count">' + hanjaTouched + ' ' + (LANG === 'ro' ? 'caractere în progres' : 'characters in progress') + '</div>';
       }
+      var iconClass = 'item-icon rk-pop-in rk-d' + ((i % 10) + 1) + (needsWork ? ' rk-pulse-ring' : '');
       return '<a class="item" href="' + it.href + '">' +
-        '<span class="item-icon">' + it.icon + '</span>' +
+        '<span class="' + iconClass + '">' + it.icon + '</span>' +
         '<span class="item-body">' +
           '<span class="item-title">' + it.title + '</span>' +
           '<div class="item-desc">' + it.desc + '</div>' +
