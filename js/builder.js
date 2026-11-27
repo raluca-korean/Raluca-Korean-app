@@ -1901,6 +1901,8 @@
     return s.replace(/\s+/g, ' ').trim();
   }
 
+  function trRaw(it){ return it && it.raw && typeof it.raw === 'object' ? it.raw : (it || {}); }
+
   function trSubjectInfo(item){
     var last = String(item && item.ko || '').trim().split(' ').pop();
     var b = last.replace(/(께서는|께서|은|는|이|가)$/, '');
@@ -1910,9 +1912,11 @@
     else if(b === '우리') person = 'we';
     else if(b === '여러분') person = 'you_pl';
     else if(/들$/.test(b)) person = 'third_pl';
-    var ro = trClean(item && item.ro || '');
-    var fem = TR_FEM_KO.test(b) || (person === 'third' && /[aă]$/.test(ro) && !/^(tata|papa|nenea|Luca|Toma|Mircea|Horia)$/.test(ro));
-    return { k: TR_PERSON[person], fem: fem, pronoun: /^(저|제|나|내|너|네|당신|우리|여러분|그|그녀|그들)$/.test(b) };
+    var ro = trClean(item && item.ro || ''), raw = trRaw(item);
+    if(raw.num === 'pl' && person === 'third') person = 'third_pl';
+    // gender from the vocabulary (g), else from the word: Korean (그녀, 엄마…) or the Romanian article (-a)
+    var fem = raw.g ? raw.g === 'f' : (TR_FEM_KO.test(b) || (person === 'third' && /[aă]$/.test(ro) && !/^(tata|papa|nenea|Luca|Toma|Mircea|Horia)$/.test(ro)));
+    return { k: TR_PERSON[person], fem: fem, dat: raw.ro_dat || '', pronoun: /^(저|제|나|내|너|네|당신|우리|여러분|그|그녀|그들)$/.test(b) };
   }
 
   // ---- Romanian verb forms (via RoConjugator, fallback VERB_FINITE_MAP) ----
@@ -2052,7 +2056,7 @@
     if(lang !== 'en'){
       var v = trRoVerb(verb, fem);
       var S = function(kk){ return 'să ' + v.subj[kk]; };
-      if(v.dative && opts.pronoun) out.dropSubject = true;
+
       if(opts.mode === 'subj'){ out.text = S(k); return out; }
       if(opts.mode === 'inf'){ out.text = 'a ' + v.inf; return out; }
       var A = TR_RO_AUXV;
@@ -2101,14 +2105,15 @@
         case 'tense_dont': out.dropSubject = true; out.text = 'nu ' + (/^fi\b/.test(v.inf) ? v.subj[4] : v.pres[4]); out.end = '!'; break;
         case 'tense_imp': out.dropSubject = true; out.text = (/^fi\b/.test(v.inf) ? v.subj[4] : v.pres[4]); out.end = '!'; break;
         case 'tense_like_doing':
-          if(opts.pronoun) out.dropSubject = true;
+          out.dative = true;
           out.text = TR_DAT[k] + ' place ' + S(k); break;
         case 'tense_prepare': out.text = A.pregatiRefl[k] + ' ' + S(k); break;
         case 'tense_prepare_past': out.text = A.pregatiReflPast[k] + ' ' + S(k); break;
         case 'tense_gi_adj':
           var adj = opts.giAdj ? trClean(opts.giAdj.ro).replace(/^a fi /, '') : 'greu';
-          if(opts.pronoun){
-            out.dropSubject = true;
+          if(opts.pronoun || opts.nounDat){
+            // "mi-e greu să…" / "mamei îi e greu să…"
+            out.dative = true;
             out.text = (opts.giPast ? TR_DAT_PAST[k] + ' fost ' : TR_DAT_E[k] + ' ') + adj + ' ' + S(k);
           } else {
             out.subjectAsPrefix = 'pentru';
@@ -2118,6 +2123,14 @@
         case 'tense_make_do': out.text = A.face[k] + ' ' + S(2); break;
         case 'tense_make_do_past': out.text = TR_AUX[k] + ' făcut ' + S(2); break;
         default: out.text = v.pres[k];
+      }
+      // the experiencer is in the dative only when the finite verb itself is the dative one ("îmi place",
+      // "mi-e greu"), not under a modal ("vreau să îmi placă")
+      if((v.dative || out.dative) && /^(nu )?(îmi|îți|îi|ne|vă|le|mi-|ți-|i-|ne-|v-|le-)/.test(out.text)){
+        out.dative = true;
+        if(opts.pronoun) out.dropSubject = true;
+      } else if(v.dative){
+        out.dative = false;
       }
       return out;
     }
@@ -2221,7 +2234,7 @@
   // "cafeaua" → "cafea", "ceaiul" → "ceai", "berea" → "bere", "ciocolata" → "ciocolată"
   function trRoBare(n){
     if(/\s/.test(n)) return n;
-    if(/ua$/.test(n)) return n.slice(0, -1);
+    if(/ua$/.test(n)) return n.slice(0, -2);   // cafeaua → cafea
     if(/ul$/.test(n)) return n.slice(0, -2);
     if(/[^e]ea$/.test(n)) return n.slice(0, -1);
     if(/ia$/.test(n)) return n.slice(0, -1) + 'e';
@@ -2238,23 +2251,35 @@
       n = NAT.indexOf(count.num) > 0 ? NAT.indexOf(count.num) : (parseInt(count.num, 10) || 0);
     }
     if(!n) return o;
+    var raw = trRaw(obj);
     var q = quantifier ? TR_QTY[quantifier.ko] : null;
     if(q && q.skip) q = null;
-    var plural = /[^s]s$/.test(trClean(obj.en || '')) || /^(fruit|grapes|vegetables)$/.test(trClean(obj.en || ''));
+    var enBare = o.replace(/^(the|a|an|my) /, '');
     if(lang === 'en'){
       var EN_NUM = ['', 'one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
       var en = EN_NUM[n] || String(n);
-      if(q) return en + ' ' + q.en[n === 1 ? 0 : 1] + ' of ' + o.replace(/^(the|a|an) /, '');
-      if(n === 1) return plural ? en + ' ' + o : (/^(the|a|an) /.test(o) ? o : (/^[aeiou]/.test(o) ? 'an ' : 'a ') + o);
-      return en + ' ' + (plural ? o : trEn3(o.replace(/^(the|a|an) /, '')));
+      var enPl = raw.en_pl || (raw.num === 'pl' ? enBare : '');
+      if(q) return en + ' ' + q.en[n === 1 ? 0 : 1] + ' of ' + enBare;
+      if(n === 1){
+        if(raw.num === 'pl') return enBare;
+        return (/^[aeiou]/i.test(enBare) ? 'an ' : 'a ') + enBare;
+      }
+      if(enPl) return en + ' ' + enPl;
+      if(raw.g && !raw.ro_pl) return enBare + ' (×' + n + ')';      // uncountable: "coffee ×2" stays honest
+      return en + ' ' + trEn3(enBare);
     }
-    var roWord = numeral ? trClean(numeral.ro) : String(n);
-    if(q){
-      var qNum = n === 1 ? (q.g === 'n' ? 'un' : 'o') : n === 2 ? 'două' : roWord;
-      return qNum + ' ' + q.ro[n === 1 ? 0 : 1] + ' de ' + trRoBare(o);
-    }
-    if(n === 1) return plural || /^(o|un) /.test(o) ? o : (/a$/.test(o) ? 'o ' : 'un ') + trRoBare(o);
-    if(plural) return (n === 2 ? (/^(struguri|pantofi|bani|cartofi|ardei|copii)$/.test(o) ? 'doi' : 'două') : roWord) + ' ' + o;
+    var sg = raw.ro_sg || trRoBare(o);
+    var pl = raw.ro_pl || (raw.num === 'pl' ? o : '');
+    var g = raw.g || (/[aă]$/.test(o) ? 'f' : 'n');
+    // un / o · doi / două (neuter plurals take the feminine "două") · trei, patru…
+    var numWord = function(gen){
+      if(n === 1) return gen === 'f' ? 'o' : 'un';
+      if(n === 2) return gen === 'm' ? 'doi' : 'două';
+      return numeral ? trClean(numeral.ro) : (['','unu','doi','trei','patru','cinci','șase','șapte','opt','nouă','zece','unsprezece','douăsprezece'][n] || String(n));
+    };
+    if(q) return numWord(q.g) + ' ' + q.ro[n === 1 ? 0 : 1] + ' de ' + (raw.num === 'pl' ? pl : sg);
+    if(n === 1) return numWord(g) + ' ' + sg;
+    if(pl) return numWord(g) + ' ' + pl;
     return o + ' (×' + n + ')';
   }
 
@@ -2363,7 +2388,8 @@
       }
       var addressee = /^tense_(lets|suggest|offer|please|dont|imp)$/.test(key);
       vp = trVerbPhrase(lang, verb, key, k, addressee ? false : info.fem, {
-        mode: mode, pronoun: !topic || info.pronoun, reportSub: clause.__reportSub, giAdj: giAdj, giPast: clause.__giPast
+        mode: mode, pronoun: !topic || info.pronoun, nounDat: topic && !info.pronoun && !topic2 ? info.dat : '',
+        reportSub: clause.__reportSub, giAdj: giAdj, giPast: clause.__giPast
       });
       // "nu … niciodată": 절대 needs a negated verb in Romanian
       if(lang !== 'en' && mode === 'finite' && advs.some(function(a){ return a.ko === '절대'; }) && !/^nu\b/.test(vp.text)) vp.text = 'nu ' + vp.text;
@@ -2397,7 +2423,7 @@
     if(has(embSub) && has(embPred)){
       var ep = L(embPred);
       // "coreeana e grea": the predicate adjective agrees with a feminine embedded subject
-      if(lang !== 'en' && /a$/.test(L(embSub)) && window.RoConjugator) ep = ep.replace(/^(e|nu e) ([a-zăâîșț]+)$/, function(m, cop, adj){ return cop + ' ' + window.RoConjugator.feminineSingular(adj); });
+      if(lang !== 'en' && (trRaw(embSub).g ? trRaw(embSub).g === 'f' : /a$/.test(L(embSub))) && window.RoConjugator) ep = ep.replace(/^(e|nu e) ([a-zăâîșț]+)$/, function(m, cop, adj){ return cop + ' ' + window.RoConjugator.feminineSingular(adj); });
       objs.push((lang === 'en' ? 'that ' : 'că ') + L(embSub) + ' ' + ep);
     }
     if(has(o1)) objs.push(trObjectText(lang, o1, has(numeral) ? numeral : null, has(quantifier) ? quantifier : null, clause.__count));
@@ -2428,9 +2454,10 @@
     // omitted when repeated from the previous clause or when the frame has none (imperatives…)
     var subj = '';
     if(topic && !vp.dropSubject && !(sameSubject && ctx.index > 0)) subj = trSubjectText(lang, topic, topic2, subjAttrs, info.fem);
-    if(lang !== 'en' && topic && vp.dropSubject && info.pronoun && (k === 2 || k === 5) && !(sameSubject && ctx.index > 0) &&
-       /^(îi|le|i-a|le-a|nu îi|nu le|nu i-a|nu le-a)\b/.test(vp.text.replace(/^(cred că|se pare că) /, ''))){
-      subj = k === 5 ? 'lor' : info.fem ? 'ei' : 'lui';
+    // dative constructions name the experiencer in the dative: "Ei îi place", "Mamei i-a plăcut", "Lor le e greu"
+    if(lang !== 'en' && topic && vp.dative && !topic2 && !(sameSubject && ctx.index > 0)){
+      if(info.pronoun && (k === 2 || k === 5)) subj = k === 5 ? 'lor' : info.fem ? 'ei' : 'lui';
+      else if(!info.pronoun && info.dat) subj = info.dat;
     }
     if(lang === 'en' && !subj && !vp.dropSubject && mode === 'finite' && !ctx.allowEnDrop && verb){
       subj = impersonal ? 'it' : info.implicit ? 'I' : (k === 2 ? (info.fem ? 'she' : 'he') : TR_EN_PRON[k]);
