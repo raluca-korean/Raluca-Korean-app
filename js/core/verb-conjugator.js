@@ -13,7 +13,8 @@ window.VerbConjugator = {
   // used by callers building a reverse lookup (surface form -> headword).
   B_IRREGULAR: ['고맙다','춥다','덥다','쉽다','어렵다','가깝다','아름답다','반갑다','귀엽다','무겁다','가볍다',
     '그립다','놀랍다','두껍다','뜨겁다','맵다','무섭다','미끄럽다','부끄럽다','부드럽다','부럽다','새롭다',
-    '시끄럽다','싱겁다','아쉽다','어둡다','외롭다','자연스럽다','즐겁다','차갑다','굽다','눕다'],
+    '시끄럽다','싱겁다','아쉽다','어둡다','외롭다','자연스럽다','즐겁다','차갑다','굽다','눕다',
+    '더럽다','어지럽다','밉다','간지럽다'],
   BO_WA_EXCEPTIONS: ['돕다', '곱다'], // ㅂ-irregular but use 와 (not 워) since the vowel is ㅗ
   I_VERB_EXCEPTIONS: ['끓이다','덮이다','모이다','보이다','쌓이다','줄이다'], // real verbs, not the 이다 copula
   REUL_REGULAR: ['따르다', '들르다', '치르다'],
