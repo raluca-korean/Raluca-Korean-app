@@ -5442,6 +5442,35 @@
     window.ralucaBuilderState = state;
     if(/[?&]review=1\b/.test(location.search)) setTimeout(startSentenceReview, 300);
     window.ralucaBuilderRender = renderAll;
+    // hooks for tools/builder-tests: build the table from cards, read the generated translation
+    window.ralucaBuilderTest = {
+      translate: function(lang){ return buildTableTranslation(lang); },
+      setTable: function(spec){
+        state.text = '';
+        state.__parsedKo = null;
+        state.__question = false;
+        if(els.freeText) els.freeText.value = '';
+        var used = [];
+        state.clauses = spec.map(function(cs){
+          var clause = makeEmptyLayoutClause();
+          Object.keys(cs).forEach(function(field){
+            var bucket = { topic:'subject', topic2:'subject', departure:'location', transit:'location', object1:'object', object2:'object',
+                           adverb:'description', adverb2:'description', embSub:'emb_subject', embPred:'emb_pred' }[field] || field;
+            var list = DATA[bucket] || [], idx = -1;
+            for(var i = 0; i < list.length; i++){
+              if(field === 'connector' ? list[i].id === cs[field] : list[i].ko === cs[field]){ idx = i; break; }
+            }
+            if(idx < 0) throw new Error('no ' + bucket + ' "' + cs[field] + '"');
+            setFieldItem(clause, field, normalizeItem(list[idx], bucket, idx));
+            if(used.indexOf(field) < 0) used.push(field);
+          });
+          return clause;
+        });
+        state.detectedFields = used;
+        ensureChainLength();
+        renderAll();
+      }
+    };
   }
 
   // DATA used to be a ~850-line vocabulary literal baked into this file; it
