@@ -23,6 +23,18 @@
 window.RoConjugator = (function() {
 
 const RO_VERB_CONJ = {
+  "lucra": ["lucrează", "lucreze", "lucrat"],
+  "zâmbi": ["zâmbește", "zâmbească", "zâmbit"],
+  "vrea": ["vrea", "vrea", "vrut"],
+  "rămâne": ["rămâne", "rămână", "rămas"],
+  "progresa": ["progresează", "progreseze", "progresat"],
+  "strădui": ["străduiește", "străduiască", "străduit"],
+  "evita": ["evită", "evite", "evitat"],
+  "păstra": ["păstrează", "păstreze", "păstrat"],
+  "strânge": ["strânge", "strângă", "strâns"],
+  "părea": ["pare", "pară", "părut"],
+  "fuma": ["fumează", "fumeze", "fumat"],
+  "atârna": ["atârnă", "atârne", "atârnat"],
   "absolvi": ["absolvă", "absolve", "absolvit"],
   "acoperi": ["acoperă", "acopere", "acoperit"],
   "adormi": ["adoarme", "adoarmă", "adormit"],
@@ -265,6 +277,8 @@ const IRREGULAR = {
   'bea':    { pres: ['beau','bei','bea','bem','beți','beau'], part: 'băut' },
   'da':     { pres: ['dau','dai','dă','dăm','dați','dau'], part: 'dat' },
   'lua':    { pres: ['iau','iei','ia','luăm','luați','iau'], part: 'luat' },
+  'rămâne': { pres: ['rămân','rămâi','rămâne','rămânem','rămâneți','rămân'], part: 'rămas' },
+  'părea':  { pres: ['par','pari','pare','părem','păreți','par'], part: 'părut' },
   'sta':    { pres: ['stau','stai','stă','stăm','stați','stau'], part: 'stat' },
   'mânca':  { pres: ['mănânc','mănânci','mănâncă','mâncăm','mâncați','mănâncă'], part: 'mâncat' },
   'spune':  { pres: ['spun','spui','spune','spunem','spuneți','spun'], part: 'spus' },
