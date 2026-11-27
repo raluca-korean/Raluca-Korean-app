@@ -1380,6 +1380,15 @@
     if(/ (?:ne am|am fost noi|noi am) /.test(t)) return 3;
     var m = / (ai|ati|au|vei|veti|vom|vor) (?=\S)/.exec(t) || / (?:m|l|i|s|v|te|ne) (a) (?=\S)/.exec(t);
     if(m) return { ai:1, ati:4, au:5, vei:1, veti:4, vom:3, vor:5, a:2 }[m[1]];
+    // present tense: the 1st / 2nd person plural endings are unambiguous ("ne uităm", "mergem", "mâncați")
+    var toks = t.trim().split(' ');
+    for(var i = 0; i < toks.length; i++){
+      var w = toks[i];
+      if(w.length > 3 && /(am|em|im)$/.test(w) && w !== 'avem' && tokenVerb(w)) return 3;
+      if(w === 'avem' || w === 'suntem') return 3;
+      if(w.length > 4 && /(ati|eti|iti)$/.test(w) && tokenVerb(w)) return 4;
+      if(w === 'aveti' || w === 'sunteti') return 4;
+    }
     return null;
   }
   function koPronPerson(ko){
@@ -2134,6 +2143,7 @@
       case 'tense_make_do_past': out.text = 'made {causee} ' + V; break;
       default: out.text = e.pres(k);
     }
+    out.text = out.text.replace(/\bone's\b/, ['my', 'your', fem ? 'her' : 'his', 'our', 'your', 'their'][k]);
     return out;
   }
 
@@ -2347,6 +2357,16 @@
     var subjAttrs = advs.filter(function(a){ return a.modifiesSubject; });
     var manner = advs.filter(function(a){ return !a.modifiesSubject; });
 
+    // washing a body part is reflexive in Romanian and possessive in English:
+    // 손을 씻어요 → "mă spăl pe mâini" / "I wash my hands"; 이를 닦아요 → "mă spăl pe dinți" / "I brush my teeth"
+    var BODY = { '손':['mâini','hands'], '발':['picioare','feet'], '얼굴':['față','face'], '이':['dinți','teeth'], '치아':['dinți','teeth'], '머리':['cap','hair'], '몸':['','body'] };
+    var bodyPart = null;
+    if(verb && /^(씻다|감다|닦다)$/.test(verb.ko) && has(o1) && BODY[koBase(o1.ko)]) bodyPart = BODY[koBase(o1.ko)];
+    else if(verb && /^(머리를 감다|이를 닦다)$/.test(verb.ko)) bodyPart = BODY[verb.ko.split('를')[0]];
+    if(bodyPart){
+      var brush = /닦다$/.test(verb.ko) && bodyPart[1] === 'teeth';
+      verb = { ko: verb.ko, ro: 'a se spăla', en: brush ? 'to brush' : 'to wash' };
+    }
     var SCREEN = { '텔레비전을':1, '영화를':1, '영상을':1, '뉴스를':1 };
     var watching = verb && verb.ko === '보다' && has(o1) && SCREEN[o1.ko];
     if(watching) verb = { ko: verb.ko, ro: 'a se uita la', en: 'to watch' };
@@ -2425,7 +2445,11 @@
       if(lang !== 'en' && (trRaw(embSub).g ? trRaw(embSub).g === 'f' : /a$/.test(L(embSub))) && window.RoConjugator) ep = ep.replace(/^(e|nu e) ([a-zăâîșț]+)$/, function(m, cop, adj){ return cop + ' ' + window.RoConjugator.feminineSingular(adj); });
       objs.push((lang === 'en' ? 'that ' : 'că ') + L(embSub) + ' ' + ep);
     }
-    if(has(o1)){
+    if(bodyPart){
+      var POSS = ['my', 'your', info.fem ? 'her' : 'his', 'our', 'your', 'their'];
+      if(lang === 'en') objs.push(POSS[k] + ' ' + bodyPart[1]);
+      else if(bodyPart[0]) objs.push('pe ' + bodyPart[0]);
+    } else if(has(o1)){
       var o1tx = trObjectText(lang, o1, has(numeral) ? numeral : null, has(quantifier) ? quantifier : null, clause.__count);
       // after "mă uit la" the noun is bare: "la televizor", "la un film"
       if(watching && lang !== 'en' && !o1.indef && trRaw(o1).ro_sg) o1tx = trRaw(o1).num === 'pl' ? trRaw(o1).ro_pl : trRaw(o1).ro_sg;
@@ -2545,6 +2569,56 @@
     // a subordinate "să" clause with its own subject: "ca mama să gătească"
     var text = words.filter(Boolean).join(' ');
     return { text: text, end: vp.end || '', hasVerb: !!(verb || clause.__copula), empty: !verb && !clause.__copula && !comp.length && !subj && !timeTx };
+  }
+
+  // A relative clause in the other language than the one typed, from what the parser read in it:
+  // "care locuiește în Seul" → "who lives in Seoul", "that you gave me" → "pe care mi-ai dat-o"
+  function trRelative(lang, R, head){
+    if(!R || !R.verb) return '';
+    var hr = trRaw(head), headPl = hr.num === 'pl' || /들/.test(head.ko || '');
+    var headFem = hr.g ? hr.g === 'f' : /a$/.test(trClean(head.ro || '').split(' ')[0]);
+    var L = function(it){ return it ? (lang === 'en' ? trClean(it.en || it.ro) : trClean(it.ro || it.en)) : ''; };
+    var key = R.neg ? (R.tense === 'past' ? 'tense_neg_past' : 'tense_neg')
+            : R.tense === 'past' ? 'tense_past' : R.tense === 'future' ? 'tense_fut' : 'tense_pres';
+    var k, fem = false, subjTx = '';
+    if(R.kind === 'subj'){ k = headPl ? 5 : 2; fem = headFem; }
+    else if(R.subj){ var si = trSubjectInfo(R.subj); k = si.k; fem = si.fem; subjTx = trSubjectText(lang, R.subj, null, [], si.fem); }
+    else k = R.personK != null ? R.personK : 2;
+    var verb = R.verb;
+    if(verb.ko === '있다' && !R.obj) verb = { ko: '있다', ro: 'a fi', en: 'to be' };
+    var vp = trVerbPhrase(lang, verb, key, k, fem, { pronoun: true }).text;
+    if(!vp) return '';
+    var rest = [];
+    if(R.kind === 'subj' && R.obj) rest.push(trObjectText(lang, R.obj, null, null, null));
+    var subjPron = R.subj && trSubjectInfo(R.subj).pronoun;
+    if(lang !== 'en' && subjPron) subjTx = '';            // pe care ai dat-o, not … tu
+    if(R.loc){
+      var lt = L(R.loc);
+      if(R.langa) lt = (lang === 'en' ? 'next to ' : 'lângă ') + lt.replace(/^(la|în|pe|at|in|on) /, '');
+      rest.push(lt);
+    }
+    if(R.time) rest.push(L(R.time));
+    if(lang === 'en'){
+      if(R.kind === 'subj'){
+        var person = /^(I|you|he|she|we|they|my |the (friend|teacher|student|girl|boy|woman|man|person|children)|mom|dad)/i.test(trClean(head.en || '')) ||
+                     /^(친구|선생님|학생|소녀|소년|아이|엄마|아빠|형|동생|언니|여자|남자|사람)/.test(head.ko || '');
+        return [person ? 'who' : 'that', vp].concat(rest).join(' ');
+      }
+      var who = subjTx || (k === 2 ? 'he' : TR_EN_PRON[k]);
+      var toWhom = R.datK != null ? [R.datK === 2 ? (R.datFem ? 'her' : 'him') : TR_EN_OBJ_PRON[R.datK]] : [];
+      return [R.kind === 'place' ? 'where' : 'that', who, vp].concat(toWhom).concat(rest).join(' ');
+    }
+    if(R.kind === 'subj') return ['care', vp].concat(rest).join(' ');
+    if(R.kind === 'place') return ['unde', vp].concat(subjTx ? [subjTx] : []).concat(rest).join(' ');
+    // "pe care o citesc" / "pe care l-am văzut" / "pe care le-am cumpărat": the clitic repeats the head
+    var cv = trRoClitic(vp, { person: headPl ? 5 : 2, fem: headFem, dat: false }, false);
+    if(headPl && headFem) cv = cv.replace(/^((?:nu )?)îi /, '$1le ').replace(/^((?:nu )?)i-/, '$1le-');
+    if(R.datK != null){
+      // "mi-ai dat-o" (the feminine -o sits after the participle, so both clitics fit); otherwise "… mie"
+      if(headFem && !headPl && /-o\b/.test(cv)) cv = cv.replace(/^((?:nu )?)(am|ai|a|ați|au) /, function(m, n0, aux){ return n0 + TR_RO_DAT_H[R.datK] + aux + ' '; });
+      else cv += ' ' + TR_RO_STRONG.dat[R.datK];
+    }
+    return ['pe care', cv].concat(subjTx ? [subjTx] : []).concat(rest).join(' ');
   }
 
   function buildTableTranslation(lang){
@@ -3891,7 +3965,9 @@
     }
     return null;
   }
+  var _lastRel = null;
   function buildRelKo(relText, head, marker){
+    _lastRel = null;
     // a relative inside the relative ("cartea pe care am scris-o" inside "omul care a citit …")
     var inner = extractRelatives(relText);
     relText = inner.text;
@@ -3941,8 +4017,16 @@
     if(loc && obj && koBase(loc.ko) === koBase(obj.ko)) obj = null;
     var parts = [];
     subj = withMods(subj); loc = withMods(loc); obj = withMods(obj);
+    var ps = null;
     if(subj) parts.push(subj.ko.indexOf(' ') > 0 ? subj.ko.replace(/(\S+)$/, function(w){ return koNom(w); }) : koNom(subj.ko));
-    else if(marker && marker !== 'care' && marker !== 'who'){ var ps = personSubject(rn); if(ps) parts.push(ps); }
+    else if(marker && marker !== 'care' && marker !== 'who'){ ps = personSubject(rn); if(ps) parts.push(ps); }
+    // what the relative says, for translating it into the other language (trRelative)
+    // to whom: "pe care mi-ai dat-o", "that you gave me"
+    var _dm = / (mi|ti|i|ne|v|le) (?:ai|a|am|ati|au|aveti) /.exec(rn) || / (?:gave|give|gives|sent|send|told|showed|bought) (me|you|him|her|us|them) /.exec(rn);
+    var datK = _dm ? { mi:0, me:0, ti:1, you:1, i:2, him:2, her:2, ne:3, us:3, v:4, le:5, them:5 }[_dm[1]] : null;
+    _lastRel = { verb: verb, tense: tense, neg: neg, subj: subj, time: time, loc: loc, obj: obj, langa: langa, datK: datK, datFem: _dm && _dm[1] === 'her',
+                 personK: ps ? ({ '제가':0, '내가':0, '네가':1, '우리가':3, '여러분이':4 }[ps]) : null,
+                 kind: /^(unde|where)$/.test(marker) ? 'place' : /^(pe care|whom)$/.test(marker) || subj || ps ? 'obj' : 'subj' };
     if(time && time.ko) parts.push(time.ko);
     if(loc){
       var toEi = { '가다':1, '오다':1, '있다':1, '살다':1, '도착하다':1 };
@@ -4003,7 +4087,7 @@
       var rest = res.text.slice(afterStart + endIdx).replace(/^\s*,\s*/, ' ');
       res.text = res.text.slice(0, mk.index) + ' ' + rest;
       var headSrc = res.text.substr(preToks[hIdx].i, preToks[hIdx].w.length);
-      res.mods.push({ base: koBase(head.ko), ko: relKo, src: relSrc.replace(/[\s,]+$/, ''), head: headSrc, en: /^(who|whom|which|that|where)$/.test(mk[1]) });
+      res.mods.push({ base: koBase(head.ko), ko: relKo, rel: _lastRel, headItem: head, src: relSrc.replace(/[\s,]+$/, ''), head: headSrc, en: /^(who|whom|which|that|where)$/.test(mk[1]) });
     }
     return res;
   }
@@ -5045,10 +5129,24 @@
             var headLbl = (md.en ? it.en : it.ro) || '';
             if(f !== 'departure' && f !== 'transit' && /^(la|în|in|pe|at|in|on) /i.test(headLbl)) headLbl = md.head.toLowerCase();
             if(md.en) cp.en = headLbl + ' ' + md.src; else cp.ro = headLbl + ' ' + md.src;
+            // the other language: the relative rebuilt from what the parser understood of it
+            var otherLang = md.en ? 'ro' : 'en';
+            var genRel = md.rel ? trRelative(otherLang, md.rel, it) : '';
+            if(genRel){
+              var otherLbl = (otherLang === 'en' ? it.en : it.ro) || '';
+              if(f !== 'departure' && f !== 'transit') otherLbl = otherLbl.replace(/^(la|în|in|pe|at|on) (the )?/i, otherLang === 'en' ? 'the ' : '');
+              cp[otherLang] = otherLbl + ' ' + genRel;
+            }
             setFieldItem(cl, f, cp); done = true;
           }
         });
-        if(!done && cl.__copula && cl.__copula.base === md.base){ cl.__copula.base = md.ko + ' ' + cl.__copula.base; cl.__copula[md.en ? 'relEn' : 'relRo'] = md.src; done = true; }
+        if(!done && cl.__copula && cl.__copula.base === md.base){
+          cl.__copula.base = md.ko + ' ' + cl.__copula.base;
+          cl.__copula[md.en ? 'relEn' : 'relRo'] = md.src;
+          var genC = md.rel ? trRelative(md.en ? 'ro' : 'en', md.rel, md.headItem) : '';
+          if(genC) cl.__copula[md.en ? 'relRo' : 'relEn'] = genC;
+          done = true;
+        }
       });
     });
 
