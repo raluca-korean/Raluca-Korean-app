@@ -1380,8 +1380,22 @@
     if(/ (?:ne am|am fost noi|noi am) /.test(t)) return 3;
     var m = / (ai|ati|au|vei|veti|vom|vor) (?=\S)/.exec(t) || / (?:m|l|i|s|v|te|ne) (a) (?=\S)/.exec(t);
     if(m) return { ai:1, ati:4, au:5, vei:1, veti:4, vom:3, vor:5, a:2 }[m[1]];
-    // present tense: the 1st / 2nd person plural endings are unambiguous ("ne uităm", "mergem", "mâncați")
+    // present tense: the verb's own paradigm says which persons a form can be — "mergi" / "te uiți" can only
+    // be tu, "merge" only el/ea; "merg" (eu or ei) stays open
     var toks = t.trim().split(' ');
+    for(var j = 0; j < toks.length; j++){
+      var vb = tokenVerb(toks[j]);
+      if(!vb || !vb.ro) continue;
+      // after "voi / va / a" the verb is an infinitive ("voi merge" = eu), not a 3rd-person present
+      if(toks[j - 1] === 'voi') return 0;
+      if(/^(va|a|o)$/.test(toks[j - 1] || '')) continue;
+      var pres = trRoVerb(vb, false).pres.map(function(f){ return normalizeLatin(f); });
+      var one = toks[j], two = j > 0 ? toks[j - 1] + ' ' + toks[j] : '';
+      var hits = [];
+      pres.forEach(function(f, k){ if((f === one || f === two) && hits.indexOf(k) < 0) hits.push(k); });
+      if(hits.length === 1) return hits[0];
+      if(hits.length) break;
+    }
     for(var i = 0; i < toks.length; i++){
       var w = toks[i];
       if(w.length > 3 && /(am|em|im)$/.test(w) && w !== 'avem' && tokenVerb(w)) return 3;
@@ -3977,7 +3991,8 @@
     var withMods = function(it){
       if(!it || !it.ko) return it;
       for(var mi = 0; mi < inner.mods.length; mi++){
-        if(koBase(it.ko) === inner.mods[mi].base){ var c = {}; for(var k in it) c[k] = it[k]; c.ko = inner.mods[mi].ko + ' ' + it.ko; return c; }
+        // a relative inside the relative: Korean, label and translation all keep it
+        if(koBase(it.ko) === inner.mods[mi].base) return relModItem(it, inner.mods[mi], 'object1');
       }
       return it;
     };
@@ -4035,6 +4050,24 @@
     if(obj) parts.push(verb.ko === '있다' ? koNom(obj.ko) : obj.ko);
     parts.push(relAttr(verb, tense, neg));
     return parts.join(' ');
+  }
+  // the head noun with its relative: Korean attributive before it, the relative as written in the
+  // typed language, and rebuilt (trRelative) in the other one
+  function relModItem(it, md, f){
+    var cp = {}; for(var key in it) cp[key] = it[key];
+    cp.ko = md.ko + ' ' + it.ko;
+    // a place word used as subject / object ("restaurantul unde mâncăm") keeps the noun as written, not "la restaurant"
+    var headLbl = (md.en ? it.en : it.ro) || '';
+    if(f !== 'departure' && f !== 'transit' && /^(la|în|in|pe|at|in|on) /i.test(headLbl)) headLbl = md.head.toLowerCase();
+    if(md.en) cp.en = headLbl + ' ' + md.src; else cp.ro = headLbl + ' ' + md.src;
+    var otherLang = md.en ? 'ro' : 'en';
+    var genRel = md.rel ? trRelative(otherLang, md.rel, it) : '';
+    if(genRel){
+      var otherLbl = (otherLang === 'en' ? it.en : it.ro) || '';
+      if(f !== 'departure' && f !== 'transit') otherLbl = otherLbl.replace(/^(la|în|in|pe|at|on) (the )?/i, otherLang === 'en' ? 'the ' : '');
+      cp[otherLang] = otherLbl + ' ' + genRel;
+    }
+    return cp;
   }
   function extractRelatives(raw){
     var res = { text: raw, mods: [] };
@@ -5123,21 +5156,7 @@
           if(done) return;
           var it = itemOf(cl, f);
           if(it && it.ko && koBase(it.ko) === md.base){
-            var cp = {}; for(var key in it) cp[key] = it[key];
-            cp.ko = md.ko + ' ' + it.ko;
-            // a place word used as subject / object ("restaurantul unde mâncăm") keeps the noun as written, not "la restaurant"
-            var headLbl = (md.en ? it.en : it.ro) || '';
-            if(f !== 'departure' && f !== 'transit' && /^(la|în|in|pe|at|in|on) /i.test(headLbl)) headLbl = md.head.toLowerCase();
-            if(md.en) cp.en = headLbl + ' ' + md.src; else cp.ro = headLbl + ' ' + md.src;
-            // the other language: the relative rebuilt from what the parser understood of it
-            var otherLang = md.en ? 'ro' : 'en';
-            var genRel = md.rel ? trRelative(otherLang, md.rel, it) : '';
-            if(genRel){
-              var otherLbl = (otherLang === 'en' ? it.en : it.ro) || '';
-              if(f !== 'departure' && f !== 'transit') otherLbl = otherLbl.replace(/^(la|în|in|pe|at|on) (the )?/i, otherLang === 'en' ? 'the ' : '');
-              cp[otherLang] = otherLbl + ' ' + genRel;
-            }
-            setFieldItem(cl, f, cp); done = true;
+            setFieldItem(cl, f, relModItem(it, md, f)); done = true;
           }
         });
         if(!done && cl.__copula && cl.__copula.base === md.base){
