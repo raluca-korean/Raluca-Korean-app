@@ -1458,6 +1458,23 @@
       : (verb.ro || verb.en || verb.ko || '');
   }
 
+  // Parts the free-text parser adds that have no card of their own ("datorită prietenului", "cu trenul",
+  // "te aștept" → 너를, "pentru mama"). Kept as a list so the table shows them, the translation has them
+  // and the learner can remove them: { type:'cause'|'obj'|'for'|'means', pos:'prefix'|'means', ko, ro, en, person?, dat?, fem? }
+  function addExtra(clause, x){
+    if(!clause.__extras) clause.__extras = [];
+    clause.__extras.push(x);
+  }
+  function extrasKo(clause, pos){
+    return (clause.__extras || []).filter(function(x){ return x.pos === pos; }).map(function(x){ return x.ko; }).join(' ');
+  }
+  // 저를 / 너한테 / 그녀를 … → person 0–5 (+ feminine)
+  function koPronPerson(ko){
+    var b = String(ko || '').replace(/(을|를|한테|에게)$/, '');
+    var P = { '저':0, '나':0, '너':1, '그':2, '그녀':2, '우리':3, '여러분':4, '그들':5 };
+    return P.hasOwnProperty(b) ? { person: P[b], fem: b === '그녀' } : null;
+  }
+
   function removeTopicParticle(ko){
     return String(ko || '').replace(/(는|은|이|가)$/,'');
   }
@@ -1769,7 +1786,8 @@
     }
     if(topic2 && topic2.ko) parts.push(removeTopicParticle(topic2.ko) + '하고');
     // "datorită prietenului" / "din cauza ploii" → 친구 덕분에 / 비 때문에
-    if(clause.__prefixKo) parts.push(clause.__prefixKo);
+    var _pre = extrasKo(clause, 'prefix');
+    if(_pre) parts.push(_pre);
     // Comitative (와/과): person you do the action with — placed right after topic
     if(associate && associate.ko) parts.push(associate.ko);
     else if(clause.__companion) parts.push(hangulName(clause.__companion) + '하고 같이');
@@ -1832,7 +1850,8 @@
     if(object2 && object2.ko) parts.push(object2.ko);
     // "ne ducem puțin" = go for a bit: with a motion verb 조금 (a small amount) → 잠깐
     mannerAdvs.forEach(function(ko){ parts.push(isMotionTo && ko === '조금' ? '잠깐' : ko); });
-    if(clause.__meansKo) parts.push(clause.__meansKo);
+    var _means = extrasKo(clause, 'means');
+    if(_means) parts.push(_means);
     // Purpose clause: motion verb → -(으)러 (보러 가다); other → -(으)려고 (벌려고 일하다)
     if(!skipVerb && clause.__purposeVerbItem){
       var pv = clause.__purposeVerbItem;
@@ -1915,7 +1934,8 @@
     var ro = trClean(item && item.ro || ''), raw = trRaw(item);
     if(raw.num === 'pl' && person === 'third') person = 'third_pl';
     // gender from the vocabulary (g), else from the word: Korean (그녀, 엄마…) or the Romanian article (-a)
-    var fem = raw.g ? raw.g === 'f' : (TR_FEM_KO.test(b) || (person === 'third' && /[aă]$/.test(ro) && !/^(tata|papa|nenea|Luca|Toma|Mircea|Horia)$/.test(ro)));
+    var head = ro.split(' ')[0];   // "cartea pe care o citesc" → cartea
+    var fem = raw.g ? raw.g === 'f' : (TR_FEM_KO.test(b) || (person === 'third' && /[aă]$/.test(head) && !/^(tata|papa|nenea|Luca|Toma|Mircea|Horia)$/.test(head)));
     return { k: TR_PERSON[person], fem: fem, dat: raw.ro_dat || '', pronoun: /^(저|제|나|내|너|네|당신|우리|여러분|그|그녀|그들)$/.test(b) };
   }
 
@@ -2040,6 +2060,7 @@
       part: trEnPart(h) + rest, ing: trEnIng(h) + rest
     };
   }
+  function enVerbHead(verb){ return verb ? trClean(verb.en || '').replace(/^to /, '') : ''; }
   function trEnDo(k){ return k === 2 ? "doesn't" : "don't"; }
   function trEnHave(k){ return k === 2 ? 'has' : 'have'; }
   function trEnBe(k){ return ['am','are','is','are','are','are'][k]; }
@@ -2120,8 +2141,8 @@
             out.text = (opts.giPast ? 'a fost ' : 'e ') + adj + ' ' + S(k);
           }
           break;
-        case 'tense_make_do': out.text = A.face[k] + ' ' + S(2); break;
-        case 'tense_make_do_past': out.text = TR_AUX[k] + ' făcut ' + S(2); break;
+        case 'tense_make_do': out.text = A.face[k] + ' ' + S(opts.causee != null ? opts.causee : 2); break;
+        case 'tense_make_do_past': out.text = TR_AUX[k] + ' făcut ' + S(opts.causee != null ? opts.causee : 2); break;
         default: out.text = v.pres[k];
       }
       // the experiencer is in the dative only when the finite verb itself is the dative one ("îmi place",
@@ -2191,14 +2212,43 @@
         out.subjectAsPrefix = 'for';
         out.text = (opts.giPast ? 'it was ' : "it's ") + adjEn + ' {for} to ' + V;
         break;
-      case 'tense_make_do': out.text = trEnS('make', k) + ' someone ' + V; break;
-      case 'tense_make_do_past': out.text = 'made someone ' + V; break;
+      case 'tense_make_do': out.text = trEnS('make', k) + ' {causee} ' + V; break;
+      case 'tense_make_do_past': out.text = 'made {causee} ' + V; break;
       default: out.text = e.pres(k);
     }
     return out;
   }
 
   var TR_EN_OBJ_PRON = ['me','you','him','us','you','them'];
+  var TR_RO_ACC = ['mă','te','îl','ne','vă','îi'], TR_RO_ACC_H = ['m-','te-','l-','ne-','v-','i-'];
+  var TR_RO_DAT_H = ['mi-','ți-','i-','ne-','v-','le-'];
+  var TR_RO_STRONG = { acc:['pe mine','pe tine','pe el','pe noi','pe voi','pe ei'], dat:['mie','ție','lui','nouă','vouă','lor'] };
+  // a person object as a Romanian clitic: "te aștept", "te-am așteptat", "vreau să te aștept", "am văzut-o", "îți dau"
+  function trRoClitic(vtext, x, atStart){
+    var k = x.person, fem = x.fem && k === 2;
+    var words = vtext.split(' ');
+    var i = 0;
+    if(!atStart){
+      for(var j = words.length - 1; j >= 0; j--) if(words[j] === 'să'){ i = j + 1; break; }
+    }
+    if(words[i] === 'nu') i++;
+    var w = words[i] || '';
+    // a verb that already carries a clitic (reflexive / dative) takes the strong form after it
+    if(/^(mă|te|se|ne|vă|îmi|îți|își|îi|le)$/.test(w) || /^(mi|ți|și|i|m|s|v|te|ne|le)-/.test(w)){
+      var strong = TR_RO_STRONG[x.dat ? 'dat' : 'acc'][k];
+      if(fem) strong = x.dat ? 'ei' : 'pe ea';
+      return vtext + ' ' + strong;
+    }
+    var isAux = /^(am|ai|a|ați|au)$/.test(w) && words[i + 1];
+    if(x.dat){
+      words[i] = isAux ? TR_RO_DAT_H[k] + w : TR_DAT[k] + ' ' + w;
+    } else if(fem){
+      if(isAux) words[i + 1] = words[i + 1] + '-o'; else words[i] = 'o ' + w;
+    } else {
+      words[i] = isAux ? TR_RO_ACC_H[k] + w : TR_RO_ACC[k] + ' ' + w;
+    }
+    return words.join(' ');
+  }
 
   function trSubjectText(lang, topic, topic2, attrs, fem){
     if(!topic) return '';
@@ -2368,6 +2418,8 @@
 
     // 있다 / 없다: "am bani" / "nu am bani" with a thing, "sunt acasă" / "nu sunt acasă" with only a place
     var key = ctx.key, forceNeg = false;
+    var extras = clause.__extras || [];
+    var causee = extras.filter(function(x){ return x.type === 'obj' && x.causee; })[0] || null;
     // 생각하다 + "că …" is "a crede", not "a gândi"
     if(verb && verb.ko === '생각하다' && has(embSub) && has(embPred)) verb = { ko: verb.ko, ro: 'a crede', en: 'to think' };
     if(verb && /(^| )없다$/.test(verb.ko)){
@@ -2389,6 +2441,7 @@
       var addressee = /^tense_(lets|suggest|offer|please|dont|imp)$/.test(key);
       vp = trVerbPhrase(lang, verb, key, k, addressee ? false : info.fem, {
         mode: mode, pronoun: !topic || info.pronoun, nounDat: topic && !info.pronoun && !topic2 ? info.dat : '',
+        causee: causee ? causee.person : null,
         reportSub: clause.__reportSub, giAdj: giAdj, giPast: clause.__giPast
       });
       // "nu … niciodată": 절대 needs a negated verb in Romanian
@@ -2405,10 +2458,11 @@
         return false;
       });
     } else if(clause.__copula){
-      var cp = clause.__copula, cpIt = trCopulaItem(cp.base);
+      var cp = clause.__copula, cpIt = trCopulaItem(cp.base.split(' ').pop());
       var pred = cpIt ? L(cpIt) : cp.base;
       if(lang === 'en' && cpIt) pred = /^[a-z]/.test(pred) && !/^(the|a|an|my) /.test(pred) ? (/^[aeiou]/.test(pred) ? 'an ' : 'a ') + pred : pred;
       else if(cpIt) pred = trRoBare(pred);
+      if(lang === 'en' ? cp.relEn : cp.relRo) pred += ' ' + (lang === 'en' ? cp.relEn : cp.relRo);
       if(lang === 'en'){
         vp = { text: (cp.past ? ['was','were','was','were','were','were'][k] : trEnBe(k)) + (cp.neg ? ' not ' : ' ') + pred, prefix:'' };
       } else {
@@ -2449,6 +2503,28 @@
       comp.push((lang === 'en' ? '' : 'ca ') + trVerbPhrase(lang, clause.__purposeVerbItem, 'tense_pres', k, info.fem, { mode:'subj' }).text);
       comp = comp.concat(objs);
     }
+    // parser-only parts: "pentru mama", "cu trenul" go with the complements;
+    // "datorită prietenului" opens the clause; a person object is a clitic (RO) / pronoun after the verb (EN)
+    var causeTx = [];
+    extras.forEach(function(x){
+      if(x.type === 'for' || x.type === 'means') comp.push(lang === 'en' ? x.en : x.ro);
+      else if(x.type === 'cause') causeTx.push(lang === 'en' ? x.en : x.ro);
+      else if(x.type === 'obj' && vp.text){
+        if(lang === 'en'){
+          var op = x.person === 2 ? (x.fem ? 'her' : 'him') : TR_EN_OBJ_PRON[x.person];
+          if(x.causee) vp.text = vp.text.replace('{causee}', op);
+          else {
+            // "wait for you", "listen to me"; "give me", "tell you" take the pronoun directly
+            var EN_PREP = { wait:'for ', listen:'to ', look:'at ', talk:'to ', speak:'to ', call:'' };
+            var vh = enVerbHead(verb).split(' ')[0];
+            comp.unshift((EN_PREP.hasOwnProperty(vh) ? EN_PREP[vh] : x.dat && !/^(give|send|tell|teach|show|ask|buy)$/.test(vh) ? 'to ' : '') + op);
+          }
+        } else {
+          vp.text = trRoClitic(vp.text, x, !!x.causee);
+        }
+      }
+    });
+    if(lang === 'en' && vp.text) vp.text = vp.text.replace('{causee}', 'someone');
 
     // subject: shown when chosen in the table (RO keeps the pronoun the learner picked),
     // omitted when repeated from the previous clause or when the frame has none (imperatives…)
@@ -2484,6 +2560,7 @@
       vtext = 'nu e nevoie ' + vtext;
     }
     if(lang === 'en'){
+      if(causeTx.length) words.push(causeTx.join(' ') + ',');
       if(vp.prefix) words.push(vp.prefix);
       if(vp.end === '?' && /^(shall|do) /.test(vtext)){ words.push(vtext); }
       else {
@@ -2494,6 +2571,7 @@
       if(vp.after) words.push(vp.after);
       if(timeTx) words.push(timeTx);
     } else {
+      if(causeTx.length) words.push(causeTx.join(' ') + ',');
       if(vp.prefix) words.push(vp.prefix);
       if(timeTx) words.push(timeTx);
       if(subj) words.push(subj);
@@ -2915,6 +2993,7 @@
     if(colCount > 1){
       html += '<div class="tableScrollDots" id="tableScrollDots"></div>';
     }
+    html += renderHiddenParts();
     els.clauseList.innerHTML = html;
 
     var wrap = els.clauseList.querySelector('.builderTableWrap');
@@ -2924,6 +3003,56 @@
         updateScrollIndicators(wrap, colCount);
       }, { passive: true });
     }
+  }
+
+  // Parts of the Korean sentence that came from the typed text but have no card
+  // ("cu trenul" → 기차로, "te aștept" → 너를, "datorită prietenului", "două pisici", "ca să cumpăr").
+  // Shown under the cards so nothing in the sentence is invisible, each removable with ×.
+  function hiddenPartsOf(clause){
+    var lang = state.lang === 'en' ? 'en' : 'ro', out = [];
+    (clause.__extras || []).forEach(function(x, i){
+      var tr = x.type === 'obj'
+        ? (lang === 'en' ? (x.person === 2 ? (x.fem ? 'her' : 'him') : TR_EN_OBJ_PRON[x.person])
+                         : (x.person === 2 && x.fem ? (x.dat ? 'ei' : 'pe ea') : TR_RO_STRONG[x.dat ? 'dat' : 'acc'][x.person]))
+        : (lang === 'en' ? x.en : x.ro);
+      out.push({ id: 'extra:' + i, ko: x.ko, tr: tr });
+    });
+    if(clause.__companion) out.push({ id: 'companion', ko: hangulName(clause.__companion) + '하고 같이', tr: (lang === 'en' ? 'with ' : 'cu ') + clause.__companion });
+    if(clause.__count) out.push({ id: 'count', ko: clause.__count.num + ' ' + clause.__count.counter, tr: '×' + (NATIVE_NUM.indexOf(clause.__count.num) > 0 ? NATIVE_NUM.indexOf(clause.__count.num) : clause.__count.num) });
+    if(clause.__purposeVerbItem){
+      var pv = clause.__purposeVerbItem;
+      out.push({ id: 'purpose', ko: pv.ko, tr: (lang === 'en' ? '' : 'ca ') + trVerbPhrase(lang, pv, 'tense_pres', 0, false, { mode:'subj' }).text });
+    }
+    if(clause.__copula && !itemOf(clause, 'verb')){
+      var cpIt = trCopulaItem(clause.__copula.base.split(' ').pop());
+      out.push({ id: 'copula', ko: clause.__copula.base + (clause.__copula.neg ? ' 아니에요' : '이에요'),
+                 tr: (lang === 'en' ? 'be ' : 'a fi ') + (cpIt ? trClean(lang === 'en' ? cpIt.en : cpIt.ro) : clause.__copula.base) });
+    }
+    return out;
+  }
+  function renderHiddenParts(){
+    var rows = [];
+    state.clauses.forEach(function(clause, r){
+      hiddenPartsOf(clause).forEach(function(p){
+        rows.push('<span class="hiddenPart"><span class="hpKo">' + escapeHtml(p.ko) + '</span>' +
+                  (p.tr ? '<span class="hpTr">' + escapeHtml(p.tr) + '</span>' : '') +
+                  '<button type="button" class="hpDel" data-hidden-remove="' + r + ':' + p.id + '" aria-label="' +
+                  (state.lang === 'en' ? 'Remove' : 'Șterge') + '">×</button></span>');
+      });
+    });
+    if(!rows.length) return '';
+    return '<div class="hiddenParts"><span class="hpLabel">' + (state.lang === 'en' ? 'also in the sentence' : 'tot în propoziție') + '</span>' + rows.join('') + '</div>';
+  }
+  function removeHiddenPart(r, id){
+    var clause = state.clauses[r];
+    if(!clause) return;
+    var m = /^extra:(\d+)$/.exec(id);
+    if(m && clause.__extras) clause.__extras.splice(Number(m[1]), 1);
+    else if(id === 'companion') clause.__companion = null;
+    else if(id === 'count') clause.__count = null;
+    else if(id === 'purpose') clause.__purposeVerbItem = null;
+    else if(id === 'copula') clause.__copula = null;
+    renderAll();
   }
 
   function updateScrollIndicators(wrap, colCount){
@@ -3621,6 +3750,32 @@
       if(nb != null){
         var thanks = /^(datorita|multumita|thanks to)$/.test(f[1]);
         out.prefix = (nb ? nb + ' ' : '') + (thanks ? '덕분에' : '때문에');
+        // the phrase as written, and in the other language from the noun's own label
+        var srcPh = out.text.slice(f.index, f.index + f[0].length).replace(/[\s,]+$/, '').trim();
+        srcPh = srcPh.charAt(0).toLowerCase() + srcPh.slice(1);
+        var isEn = /^(thanks to|because of|due to)$/.test(f[1]);
+        var PRON_RO_EN = { tie:'you', mie:'me', lui:'him', ei:'her', noua:'us', voua:'you', lor:'them' };
+        var PRON_EN_RO = { you:'ție', me:'mie', him:'lui', her:'ei', us:'nouă', them:'lor' };
+        var nWord = normalizeLatin(f[2]).replace(/^(the|a|an|my|your|our|his|her) (?=\S)/, '').replace(/ (meu|mea|mei|mele|tau|ta|lui|ei|nostru|noastre)$/, '');
+        var mine = /^my | (meu|mea|mei|mele)$/.test(normalizeLatin(f[2]));
+        var nHit = PRON_RO_EN[nWord] || PRON_EN_RO[nWord] ? null : (findBestMatch('topic', nWord) || findBestMatch('object1', nWord));
+        var nRaw = nHit ? (nHit.raw && typeof nHit.raw === 'object' ? nHit.raw : nHit) : null;
+        // the few causes outside the vocabulary (NOUN_EXTRA), in the genitive / with an article
+        var EXTRA_TR = { '비':['ploii','the rain'], '눈':['zăpezii','the snow'], '교통 체증':['traficului','the traffic'],
+                         '날씨':['vremii','the weather'], '병':['bolii','the illness'], '감기':['răcelii','the cold'] };
+        var other;
+        if(EXTRA_TR[nb]){
+          other = isEn ? (thanks ? 'datorită ' : 'din cauza ') + EXTRA_TR[nb][0] : (thanks ? 'thanks to ' : 'because of ') + EXTRA_TR[nb][1];
+        } else if(isEn){
+          other = PRON_EN_RO[nWord] ? PRON_EN_RO[nWord]
+                : nRaw && nRaw.ro_dat ? nRaw.ro_dat + (mine ? (nRaw.g === 'f' ? ' mele' : ' meu') : '') : '';
+          other = other ? (thanks ? 'datorită ' : 'din cauza ') + other : srcPh;
+        } else {
+          var enN = PRON_RO_EN[nWord] || (nHit ? trClean(nHit.en).replace(/^(the|a|an|my) /, '') : '');
+          if(enN && !PRON_RO_EN[nWord]) enN = (mine || /^(mom|dad|older|younger|parents)/.test(enN) ? 'my ' : 'the ') + enN;
+          other = enN ? (thanks ? 'thanks to ' : 'because of ') + enN : srcPh;
+        }
+        out.prefixItem = { type:'cause', pos:'prefix', ko: out.prefix, ro: isEn ? other : srcPh, en: isEn ? srcPh : other };
         out.text = out.text.slice(0, f.index) + ' ' + out.text.slice(f.index + f[0].length);
       }
     }
@@ -3867,9 +4022,11 @@
       var relText = afterF.slice(0, endIdx);
       var relKo = relText.trim() ? buildRelKo(relText, head, mk[1]) : null;
       if(!relKo) break;
+      // the relative as written, so the card and the translation keep it ("prietenul care locuiește în Seul")
+      var relSrc = res.text.substr(mk.index + 1, mk[1].length) + ' ' + res.text.slice(afterStart, afterStart + endIdx).trim();
       var rest = res.text.slice(afterStart + endIdx).replace(/^\s*,\s*/, ' ');
       res.text = res.text.slice(0, mk.index) + ' ' + rest;
-      res.mods.push({ base: koBase(head.ko), ko: relKo });
+      res.mods.push({ base: koBase(head.ko), ko: relKo, src: relSrc.replace(/[\s,]+$/, ''), en: /^(who|whom|which|that|where)$/.test(mk[1]) });
     }
     return res;
   }
@@ -4246,7 +4403,8 @@
             if(EN_OBJ[_ow] && !clause.__enObj){
               clause.__enObj = true;
               subjects = subjects.filter(function(x){ return !(_ow === 'you' && x.ko === '너는') && !(_ow === 'her' && x.ko === '그녀는'); });
-              clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + _part(EN_OBJ[_ow]);
+              var _eko = _part(EN_OBJ[_ow]), _ep = koPronPerson(_eko);
+              addExtra(clause, { type:'obj', pos:'prefix', ko:_eko, person:_ep.person, fem:_ep.fem, dat:_toW, src:_ow });
               break;
             }
             var _sp = findBestMatch('topic', _ow);
@@ -4277,7 +4435,8 @@
           var CLO = { te:'너', ma:'저', ne:'우리', va:'여러분', il:'그', o:'그녀', ii:'그들', le:'그들' };
           var _who2 = CLO[_cm[1]], _hb2 = window.Conjugation && window.Conjugation.hasBatchim(_who2);
           var _dat = /(^| )(전화하다|말하다|이야기하다|묻다|물어보다|주다|보내다|가르치다|선물하다)$/.test(verb.ko);
-          clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + _who2 + (_dat ? '한테' : (_hb2 ? '을' : '를'));
+          var _cko = _who2 + (_dat ? '한테' : (_hb2 ? '을' : '를')), _cp = koPronPerson(_cko);
+          addExtra(clause, { type:'obj', pos:'prefix', ko:_cko, person:_cp.person, fem:_cp.fem, dat:_dat });
         }
       }
 
@@ -4287,7 +4446,10 @@
         var CL_OBJ = { 'm-ai':'저를','m-a':'저를','m-ati':'저를','m-au':'저를','ma':'저를','te-am':'너를','te-a':'너를','te-au':'너를','te':'너를',
                        'ne-ai':'우리를','ne-a':'우리를','ne-au':'우리를','ne':'우리를','v-am':'여러분을','v-a':'여러분을','va':'여러분을',
                        'l-am':'그를','l-ai':'그를','l-a':'그를','il':'그를','o':'그녀를','i-am':'그들을','i-a':'그들을','ii':'그들을' };
-        if(_cl && CL_OBJ[_cl[1]]) clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + CL_OBJ[_cl[1]];
+        if(_cl && CL_OBJ[_cl[1]]){
+          var _clp = koPronPerson(CL_OBJ[_cl[1]]);
+          addExtra(clause, { type:'obj', pos:'prefix', ko:CL_OBJ[_cl[1]], person:_clp.person, fem:_clp.fem, dat:false });
+        }
       }
 
       // "vorbesc coreeana" → 한국어를 해요 (with a language, 하다 is the natural verb)
@@ -4421,9 +4583,14 @@
           if(objects[0]){
             var _oc = {}; for(var ok3 in objects[0]) _oc[ok3] = objects[0][ok3];
             _oc.ko = _bp + ' 위한 ' + objects[0].ko;
+            _oc.ro = (objects[0].ro || '') + ' pentru ' + trClean(_ben.ro);
+            _oc.en = (objects[0].en || '') + ' for ' + trClean(_ben.en);
             objects = [_oc].concat(objects.slice(1));
           } else {
-            clause.__prefixKo = (clause.__prefixKo ? clause.__prefixKo + ' ' : '') + _bp + ' 위해';
+            // after "pentru" a plural subject loses its article: prietenii → prieteni, copiii → copii
+            var _bro = trClean(_ben.ro), _braw = _ben.raw && typeof _ben.raw === 'object' ? _ben.raw : _ben;
+            if(_braw.num === 'pl' && /ii$/.test(_bro)) _bro = _bro.slice(0, -1);
+            addExtra(clause, { type:'for', pos:'prefix', ko:_bp + ' 위해', ro:'pentru ' + _bro, en:'for ' + trClean(_ben.en) });
           }
         }
       }
@@ -4491,10 +4658,12 @@
                 : /^masin|^car/.test(_tr[1]) ? '차' : /^metro|^subway/.test(_tr[1]) ? '지하철' : /^taxi/.test(_tr[1]) ? '택시'
                 : /^bicicl|^bike|^bicycle/.test(_tr[1]) ? '자전거' : '배';
         var _tj = _jong(_tk.slice(-1));
-        clause.__meansKo = _tk + (_tj > 0 && _tj !== 8 ? '으로' : '로');
+        var MEANS_TR = { '기차':['cu trenul','by train'], '버스':['cu autobuzul','by bus'], '비행기':['cu avionul','by plane'], '차':['cu mașina','by car'],
+                         '지하철':['cu metroul','by subway'], '택시':['cu taxiul','by taxi'], '자전거':['cu bicicleta','by bike'], '배':['cu vaporul','by ship'] };
+        addExtra(clause, { type:'means', pos:'means', ko:_tk + (_tj > 0 && _tj !== 8 ? '으로' : '로'), ro:MEANS_TR[_tk][0], en:MEANS_TR[_tk][1] });
         objects = objects.filter(function(o){ return koBase(o.ko) !== _tk; });
       } else if(/\b(pe jos|on foot)\b/.test(cd.text)){
-        clause.__meansKo = '걸어서';
+        addExtra(clause, { type:'means', pos:'means', ko:'걸어서', ro:'pe jos', en:'on foot' });
       }
       // a city / country the vocabulary doesn't know: "la Busan" → 부산에
       if(!places.length){
@@ -4723,7 +4892,7 @@
         subjects = [{ key:'topic', kind:'topic', ko: dBase + (dHb ? '이' : '가'), ro: objects[0].ro, en: objects[0].en }];
         objects = objects.slice(1);
       }
-      if(ci === 0 && FR.prefix) clause.__prefixKo = FR.prefix;
+      if(ci === 0 && FR.prefixItem) addExtra(clause, FR.prefixItem);
 
       // Topic drop: only set subject if different from previous clause's subject
       if(subjects[0] && subjects[0].ko !== lastSubjectKo){
@@ -4866,10 +5035,11 @@
           if(it && it.ko && koBase(it.ko) === md.base){
             var cp = {}; for(var key in it) cp[key] = it[key];
             cp.ko = md.ko + ' ' + it.ko;
+            if(md.en) cp.en = (it.en || '') + ' ' + md.src; else cp.ro = (it.ro || '') + ' ' + md.src;
             setFieldItem(cl, f, cp); done = true;
           }
         });
-        if(!done && cl.__copula && cl.__copula.base === md.base){ cl.__copula.base = md.ko + ' ' + cl.__copula.base; done = true; }
+        if(!done && cl.__copula && cl.__copula.base === md.base){ cl.__copula.base = md.ko + ' ' + cl.__copula.base; cl.__copula[md.en ? 'relEn' : 'relRo'] = md.src; done = true; }
       });
     });
 
@@ -4938,7 +5108,10 @@
       else if(FR.frame === 'said'){ detectedTenseKey = 'tense_said'; lastParsed.__reportSub = _sub; }
       else detectedTenseKey = FR.frame;
       if(FR.giAdj){ lastParsed.__giAdj = FR.giAdj; lastParsed.__giPast = FR.giPast; }
-      if(FR.causeObj) lastParsed.__prefixKo = (lastParsed.__prefixKo ? lastParsed.__prefixKo + ' ' : '') + FR.causeObj;
+      if(FR.causeObj){
+        var _cop = koPronPerson(FR.causeObj);
+        addExtra(lastParsed, { type:'obj', pos:'prefix', ko:FR.causeObj, person:_cop ? _cop.person : 2, fem:_cop ? _cop.fem : false, dat:false, causee:true });
+      }
     } else if(FR.question){
       var _fq = foldKeep(raw);
       if(detectedTenseKey === 'tense_wish' && /\b(vrei|vreti|want|would you like)\b/.test(_fq)) detectedTenseKey = 'tense_offer';
@@ -5334,6 +5507,14 @@
 
     if(els.clauseList){
       els.clauseList.addEventListener('click', function(event){
+        var hpBtn = event.target.closest('[data-hidden-remove]');
+        if(hpBtn){
+          event.preventDefault();
+          event.stopPropagation();
+          var hp = hpBtn.getAttribute('data-hidden-remove'), cut = hp.indexOf(':');
+          removeHiddenPart(Number(hp.slice(0, cut)), hp.slice(cut + 1));
+          return;
+        }
         var toggleBtn = event.target.closest('[data-toggle-cell]');
         if(toggleBtn){
           event.preventDefault();
