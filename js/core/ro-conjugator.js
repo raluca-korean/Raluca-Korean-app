@@ -24,6 +24,7 @@ window.RoConjugator = (function() {
 
 const RO_VERB_CONJ = {
   "lucra": ["lucrează", "lucreze", "lucrat"],
+  "dura": ["durează", "dureze", "durat"],
   "zâmbi": ["zâmbește", "zâmbească", "zâmbit"],
   "vrea": ["vrea", "vrea", "vrut"],
   "rămâne": ["rămâne", "rămână", "rămas"],
