@@ -1711,6 +1711,8 @@
       else mannerAdvs.push(adv.ko);
     });
 
+    var _lead = extrasKo(clause, 'lead');
+    if(_lead) parts.push(_lead);
     if(topic && topic.ko){
       if(subjectAttrs.length){
         var base = removeTopicParticle(topic.ko);
@@ -2211,7 +2213,7 @@
     }
     if(lang !== 'en' && traw.num === 'pl' && traw.ro_pl && t === traw.ro_pl) t = traw.g === 'm' ? t + 'i' : t + 'le';
     if(lang === 'en') t = t.replace(/^(at|in|on) (?=\S)/, '');   // a place used as subject: the restaurant
-    if(lang === 'en' && t && /^[a-z]/.test(t) && !/^(i|you|he|she|we|they|it|the|a|an|my|your|his|her|our|their)\b/.test(t)){
+    if(lang === 'en' && t && /^[a-z]/.test(t) && !/^(i|you|he|she|we|they|it|the|a|an|my|your|his|her|our|their|nobody|someone|somebody|everyone|everybody|anyone)\b/.test(t)){
       t = (/^(older|younger|mom|dad|mother|father|parents|sister|brother)\b/.test(t) ? 'my ' : 'the ') + t;
     }
     var pre = [], post = [];
@@ -2415,6 +2417,8 @@
 
     // 있다 / 없다: "am bani" / "nu am bani" with a thing, "sunt acasă" / "nu sunt acasă" with only a place
     var key = ctx.key, forceNeg = false;
+    // "Nimeni nu vine" = "Nobody comes": English has no double negative
+    if(lang === 'en' && topic && /^nobody$/.test(trClean(topic.en || '')) && /^tense_neg(_past)?$/.test(key)) key = key === 'tense_neg' ? 'tense_pres' : 'tense_past';
     var extras = clause.__extras || [];
     var causee = extras.filter(function(x){ return x.type === 'obj' && x.causee; })[0] || null;
     // 생각하다 + "că …" is "a crede", not "a gândi"
@@ -2456,7 +2460,11 @@
       });
     } else if(clause.__copula){
       var cp = clause.__copula, cpIt = trCopulaItem(cp.base.split(' ').pop());
-      var pred = cpIt ? L(cpIt) : cp.base;
+      var pred = cpIt ? L(cpIt) : (lang === 'en' ? cp.en : cp.ro) ? trClean(lang === 'en' ? cp.en : cp.ro) : cp.base;
+      if(lang === 'en' && !cpIt && cp.en && /^[a-z]/.test(pred) && !/^(the|a|an|my|your|his|her|our|their) /.test(pred) && !/s$/.test(pred) &&
+         !/^(money|time|food|water|music|weather|homework|work)$/.test(pred)) pred = (/^[aeiou]/.test(pred) ? 'an ' : 'a ') + pred;
+      // "Mâine e ziua mea de naștere": nobody named, 3rd person → "Tomorrow is my birthday"
+      if(!topic && cp.person != null){ k = cp.person; if(k === 2 && info.implicit){ info = { k: 2, fem: false, pronoun: false, copulaIt: true }; } }
       if(lang === 'en' && cpIt) pred = /^[a-z]/.test(pred) && !/^(the|a|an|my) /.test(pred) ? (/^[aeiou]/.test(pred) ? 'an ' : 'a ') + pred : pred;
       else if(cpIt) pred = trRoBare(pred);
       if(lang === 'en' ? cp.relEn : cp.relRo) pred += ' ' + (lang === 'en' ? cp.relEn : cp.relRo);
@@ -2515,6 +2523,8 @@
     });
     var place = function(it){
       var t = L(it);
+      if(lang === 'en' && it.fromLexicon && /^(la|în) /.test(trClean(it.ro || '')) && !/^(at|in|on|to|home)\b/.test(t))
+        return (verb && TR_MOTION_TO[verb.ko] ? 'to the ' : t === 'countryside' ? 'in the ' : 'at the ') + t.replace(/^the /, '');
       if((it.fromLexicon || trRaw(it).categories) && (it.prep || (verb && TR_MOTION_TO[verb.ko])) && !/^(la|în|pe|lângă|acasă|at|in|on|to|home)\b/i.test(t)){
         var bareT = t.replace(/^(the|a|an) /, '');
         t = lang === 'en' ? (verb && TR_MOTION_TO[verb.ko] ? 'to ' : 'at ') + (it.art ? (/^[aeiou]/.test(bareT) ? 'an ' : 'a ') : 'the ') + bareT
@@ -2538,10 +2548,11 @@
     }
     // parser-only parts: "pentru mama", "cu trenul" go with the complements;
     // "datorită prietenului" opens the clause; a person object is a clitic (RO) / pronoun after the verb (EN)
-    var causeTx = [];
+    var causeTx = [], leadTx = '';
     extras.forEach(function(x){
       if(x.type === 'for' || x.type === 'means') comp.push(lang === 'en' ? x.en : x.ro);
       else if(x.type === 'cause') causeTx.push(lang === 'en' ? x.en : x.ro);
+      else if(x.type === 'lead') leadTx = lang === 'en' ? x.en : x.ro;
       else if(x.type === 'obj' && vp.text){
         if(lang === 'en'){
           var op = x.person === 2 ? (x.fem ? 'her' : 'him') : TR_EN_OBJ_PRON[x.person];
@@ -2568,12 +2579,17 @@
       if(info.pronoun && (k === 2 || k === 5)) subj = k === 5 ? 'lor' : info.fem ? 'ei' : 'lui';
       else if(!info.pronoun && info.dat) subj = info.dat;
     }
-    if(lang === 'en' && !subj && !vp.dropSubject && mode === 'finite' && !ctx.allowEnDrop && verb){
+    // "It rains and I go…": after "and" the subject is left out only when it is the same one
+    var enDrop = ctx.allowEnDrop && !ctx.prevImpersonal && ctx.prevK === k && !impersonal && !adjNoSubj;
+    if(lang === 'en' && !subj && !vp.dropSubject && mode === 'finite' && !enDrop && verb){
       // a 3rd-person verb with no subject word ("Merge la piață") doesn't say he or she — neither does the translation
       // "A fost greu" — an adjective with nobody named is about "it", not "I"
       subj = impersonal || adjNoSubj ? 'it' : info.implicit ? 'I' : (k === 2 ? (info.fromVerb ? 'he/she' : info.fem ? 'she' : 'he') : TR_EN_PRON[k]);
     }
     if(mode !== 'finite') subj = (topic && !sameSubject && ctx.index > 0) ? subj : '';
+    ctx.prevK = k; ctx.prevImpersonal = !!(impersonal || adjNoSubj || info.copulaIt);
+    var timeFirst = false;
+    if(lang === 'en' && info.copulaIt && !subj){ subj = 'it'; timeFirst = true; }
 
     var timeTx = has(time) ? L(time) : '';
     // "mă bucur de" with no object left: the preposition goes too
@@ -2597,10 +2613,13 @@
       vtext = 'nu e nevoie ' + vtext;
     }
     if(lang === 'en'){
+      if(leadTx) words.push(leadTx + (/^(și|and|dar|but)$/.test(leadTx) ? '' : ','));
       if(causeTx.length) words.push(causeTx.join(' ') + ',');
       if(vp.prefix) words.push(vp.prefix);
       if(vp.end === '?' && /^(shall|do) /.test(vtext)){ words.push(vtext); }
       else {
+        // "Tomorrow is my birthday": with nobody named, the time is the subject of "is"
+        if(timeFirst && timeTx){ subj = timeTx; timeTx = ''; }
         if(subj) words.push(subj);
         if(vtext) words.push(vtext);
       }
@@ -2608,6 +2627,7 @@
       if(vp.after) words.push(vp.after);
       if(timeTx) words.push(timeTx);
     } else {
+      if(leadTx) words.push(leadTx + (/^(și|and|dar|but)$/.test(leadTx) ? '' : ','));
       if(causeTx.length) words.push(causeTx.join(' ') + ',');
       if(vp.prefix) words.push(vp.prefix);
       if(timeTx) words.push(timeTx);
@@ -3343,6 +3363,9 @@
             if(candidate.length > bestSaLen){ bestSa = item; bestSaLen = candidate.length; }
             continue;
           }
+          // "am un iubit", "a lover", "o iubită": after an article it is a noun, not the verb
+          if(candidate.indexOf(' ') === -1 && (/^(un|niste|a|an|the|my|your|our|his|her|their)$/.test(prevWord) ||
+             (prevWord === 'o' && pastParticiples()[candidate]))) continue;
           var auxBeforeSa = prevWord === 'sa' && /^(o|am|ai|are|avem|aveti|au|vreau|vrei|vrea|vrem|vreti|vor|pot|poti|poate|putem|puteti|trebuie|incerc|incerci|incearca|reusesc|sper|vom|voi|vei|va|vor)$/.test(beforeWords[beforeWords.length - 1] || '');
           if((prevWord === 'sa' || prevWord === 'to') && !auxBeforeSa){
             if(candidate.length > bestSaLen){ bestSa = item; bestSaLen = candidate.length; }
@@ -3713,7 +3736,9 @@
     // Word-boundary check: prevents 'studiat' matching inside 'studiati', etc.
     var _nn = ' ' + n + ' ';
     for(var i=0;i<roParts.length;i++){
-      if(_nn.indexOf(' '+roParts[i]+' ') !== -1) return 'past';
+      var _pi = _nn.indexOf(' '+roParts[i]+' ');
+      // "am un iubit": after an article the participle is a noun
+      if(_pi !== -1 && !/ (un|niste|the|an|my)$/.test(_nn.slice(0, _pi))) return 'past';
     }
     // any participle the vocabulary knows ("am apărut", "a atârnat"…), after a past auxiliary
     var _pp = pastParticiples();
@@ -4166,6 +4191,15 @@
   // under the sentence instead of being silently dropped.
   var LEX = null;
   var ALIAS_SET = null;
+  var NOT_NAMES = {};
+  ('totusi toata toate toti nimeni nimic cineva ceva oricine orice oare numai doar oricum altfel cativa cateva ambii ambele ' +
+   'ultima ultimul ultimii primul prima primii fiecare niciun nicio insa totodata adica anume macar cumva undeva candva ' +
+   'atat atata atatia atatea asa astfel aproape departe afara inauntru sus jos inapoi inainte iarasi eventual neaparat ' +
+   'bineinteles evident firește fireste pesemne parca tocmai abia destul extrem mult multi multe putin putini putine ' +
+   'alt alta alti alte celalalt cealalta unii unele anumiti anumite intreg intreaga majoritatea jumatate ' +
+   'anyway otherwise somebody someone anybody anyone nobody nothing something everything everyone everybody each every ' +
+   'last first next another other others several few many much most both either neither whatever whoever however')
+    .split(' ').forEach(function(w){ if(w) NOT_NAMES[w] = 1; });
   var FUNC_WORDS = {};
   ('eu tu el ea noi voi ei ele ma te se ne va il o ii le mi ti si sau dar iar ca sa de la in pe cu din pentru prin spre fara dupa pana langa ' +
    'un una niste acest aceasta acel aceea acesta asta ala foarte mai tot toti toate nu da cel cea cei cele al ai ale lui lor meu mea mei mele tau ta ' +
@@ -4186,14 +4220,50 @@
           // a lone counter ("pahar") or clause subject ("vis", "munca") only counts in its construction —
           // on its own the word is an ordinary noun and the dictionary must still see it
           if(n && (b === 'quantifier' || b === 'emb_subject') && n.indexOf(' ') === -1) return;
-          if(n) ALIAS_SET[n] = 1;
+          // remember which aliases belong only to verbs: once the clause's verb is known, another
+          // verb's form ("pui" of a pune, "vin" of a veni) may be an ordinary noun (pui, vin)
+          if(n){ ALIAS_SET[n] = ALIAS_SET[n] === 1 || b !== 'verb' ? 1 : 'verb'; }
         });
       });
     });
   }
+  // Replace dictionary nouns written as phrases ("ziua mea de naștere", "la țară", "parcul de distracții")
+  // by one token the lexicon knows, so their words are not read separately (naștere → 태어나다, țară → 나라).
+  // Phrases the builder vocabulary itself knows ("anul trecut", "limba coreeană") are left alone.
+  var MW_SEQ = 0;
+  function markMultiwordNouns(raw){
+    if(!LEX || !LEX.multi || !LEX.multi.length) return raw;
+    if(!ALIAS_SET) buildAliasSet();
+    var list = LEX.multi.slice().sort(function(a, b){ return b.words.join(' ').length - a.words.join(' ').length; });
+    // words the builder vocabulary has its own entry for (모두 앞에서 "în fața tuturor") are its business
+    var own = {};
+    Object.keys(DATA || {}).forEach(function(b){ (Array.isArray(DATA[b]) ? DATA[b] : []).forEach(function(it){ if(it && it.ko && !it.fromDictionary) own[koBase(it.ko)] = 1; }); });
+    list.forEach(function(m){
+      if(ALIAS_SET[m.words.join(' ')] || own[koBase(m.entry.e.ko)]) return;
+      var esc = function(w){ return w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+      var w0 = m.words[0], prep = /^(la|in|pe)$/.test(w0);
+      var stem = prep ? w0 : /[aeiu]$/.test(w0) && w0.length > 3 ? w0.slice(0, -1) : w0;
+      var re = new RegExp('(^|[^a-z])(' + esc(stem) + (prep ? '' : '[a-z]{0,4}') + ')((?: (?:meu|mea|mei|mele|tau|ta|lui|ei|nostru|noastra|lor))?) ' +
+                          m.words.slice(1).map(esc).join(' ') + '(?=$|[^a-z])');
+      var F = foldKeep(raw), mm = re.exec(F);
+      if(!mm) return;
+      var tok = 'zzlx' + (++MW_SEQ);
+      var start = mm.index + mm[1].length, end = mm.index + mm[0].length;
+      // the card and the translation keep the phrase as written ("ziua mea de naștere" / "my birthday")
+      var POSS_EN = { meu:'my', mea:'my', mei:'my', mele:'my', tau:'your', ta:'your', lui:'his', ei:'her', nostru:'our', noastra:'our', lor:'their' };
+      var e0 = m.entry.e, en0 = String(e0.en || '').split(/[,;\/]/)[0].replace(/\([^)]*\)/g, '').trim();
+      var poss = mm[3] ? POSS_EN[mm[3].trim()] : '';
+      var eCopy = {}; for(var ek in e0) eCopy[ek] = e0[ek];
+      eCopy.ro = raw.slice(start, end);
+      eCopy.en = (poss ? poss + ' ' : '') + en0;
+      LEX.word[tok] = { e: eCopy, kind: m.entry.kind };
+      raw = raw.slice(0, start) + tok + raw.slice(end);
+    });
+    return raw;
+  }
   var NOUN_ENDS = ['urilor','urile','ului','ilor','elor','lor','uri','ele','ile','ul','le','ua','ea','ii','a','i','e','s','es'];
   function buildLex(list){
-    var lx = { word: {}, stems: [] };
+    var lx = { word: {}, stems: [], multi: [] };
     (list || []).forEach(function(e){
       if(!e || !e.ko) return;
       var cats = e.categories || [];
@@ -4206,6 +4276,9 @@
       [['ro', e.ro], ['en', e.en]].forEach(function(pair){
         String(pair[1] || '').replace(/\([^)]*\)/g, ' ').split(/[\/,;]/).forEach(function(g){
           var n = normalizeLatin(g);
+          // multi-word nouns ("zi de naștere", "parc de distracții", "la țară") are found as phrases
+          if((kind === 'noun' || kind === 'place' || kind === 'time') && pair[0] === 'ro' && /^\S{2,} \S+( \S+){0,2}$/.test(n) && (!/^(un|o|a|an|the|de|la|in|pe|cu|din|si|sau|ce|cel|cea|al|ale|my|your)$/.test(n.split(' ')[0]) || (kind === 'place' && /^(la|in|pe) /.test(n))))
+            lx.multi.push({ words: n.split(' '), entry: { e: e, kind: kind } });
           if(kind === 'verb' || kind === 'adj') n = n.replace(/^(a fi|a se|a|to be|to)\s+/, '');
           if(!n || (n.length < 3 && kind !== 'noun')) return;   // short nouns too: ou, os, TV
           var entry = { e: e, kind: kind };
@@ -4305,13 +4378,20 @@
     return window.Conjugation ? window.Conjugation.adjAttributive(ko) : ko;
   }
   // tokens of a clause that no builder vocabulary entry covers
-  function uncoveredTokens(text){
+  function uncoveredTokens(text, verb){
     if(!ALIAS_SET) buildAliasSet();
     var toks = String(text || '').split(' ').filter(Boolean);
     var cov = toks.map(function(){ return false; });
+    var own = verb ? itemCands(verb) : null;
+    var covers = function(ph){
+      var a = ALIAS_SET[ph];
+      if(!a) return false;
+      if(a === 'verb' && own && own.indexOf(ph) === -1 && ph.indexOf(' ') === -1 && LEX && LEX.word[ph] && LEX.word[ph].kind === 'noun') return false;
+      return true;
+    };
     for(var i = 0; i < toks.length; i++){
       for(var len = Math.min(6, toks.length - i); len >= 1; len--){
-        if(ALIAS_SET[toks.slice(i, i + len).join(' ')]){ for(var c = i; c < i + len; c++) cov[c] = true; break; }
+        if(covers(toks.slice(i, i + len).join(' '))){ for(var c = i; c < i + len; c++) cov[c] = true; break; }
       }
     }
     var out = [];
@@ -4376,11 +4456,45 @@
       return;
     }
 
+    // several sentences: each full stop joins them as clauses ("Am mâncat. Apoi am dormit." → "am mâncat și apoi am dormit");
+    // a linker opening the next sentence keeps its meaning (". Totuși," → "dar", ". Deci" → "deci")
+    var _isEn = /\b(i|the|is|are|you|we|they|it|my)\b/i.test(foldKeep(raw)) && !/[ăâîșşțţ]/i.test(raw);
+    raw = String(raw).replace(/([.!?;])\s+(\S+)/g, function(m, p, w, off, str){
+      var nw = normalizeLatin(w);
+      if(off + m.length >= str.replace(/\s+$/, '').length && /^[.!?]*$/.test(w)) return m;
+      // the next sentence's first word keeps its capital only if it is a name
+      if(!ALIAS_SET) buildAliasSet();
+      var known = FUNC_WORDS[nw] || NOT_NAMES[nw] || ALIAS_SET[nw] || (LEX && lexLookup(nw)) || /^(apoi|then|totusi|insa|deci|asadar|hai|haide|haideti)$/.test(nw);
+      var word = known ? w.charAt(0).toLowerCase() + w.slice(1) : w;
+      var and = _isEn ? ' and ' : ' și ';
+      if(/^(totusi|insa|dar|but|however)$/.test(nw.replace(/\s.*/, ''))) return (_isEn ? ' but ' : ' dar ');
+      if(/^(deci|asadar|so)$/.test(nw)) return _isEn ? ' so ' : ' deci ';
+      if(/^(apoi|then)$/.test(nw)) return and + (_isEn ? 'then ' : 'apoi ');
+      return and + word;
+    });
     var FR = applyGrammarFrames(raw);
     raw = FR.text;
     var REL = extractRelatives(raw);
     raw = REL.text;
+    raw = markMultiwordNouns(raw);
     var _unknown = [];
+    // a linker opening the sentence ("Totuși, …", "Dar …", "Anyway, …") → 그래도 / 하지만 / 어쨌든 …
+    var LEADS = [
+      [/^\s*(totusi|totodata)\b,?\s*/, '그래도', 'totuși', 'still'],
+      [/^\s*(dar|insa|but|however)\b,?\s*/, '하지만', 'dar', 'but'],
+      [/^\s*(si|and)\s+(?=\S)/, '그리고', 'și', 'and'],
+      [/^\s*(deci|asadar|so|therefore)\b,?\s*/, '그래서', 'deci', 'so'],
+      [/^\s*(oricum|anyway)\b,?\s*/, '어쨌든', 'oricum', 'anyway'],
+      [/^\s*(altfel|otherwise)\b,?\s*/, '그렇지 않으면', 'altfel', 'otherwise']
+    ];
+    var _leadItem = null;
+    for(var _li = 0; _li < LEADS.length && !_leadItem; _li++){
+      var _lm = LEADS[_li][0].exec(foldKeep(raw));
+      if(_lm){
+        _leadItem = { type:'lead', pos:'lead', ko: LEADS[_li][1], ro: LEADS[_li][2], en: LEADS[_li][3] };
+        raw = raw.slice(_lm[0].length);
+      }
+    }
     state.__question = FR.question;
 
     var detectedTense = detectTenseFromText(raw);
@@ -4596,6 +4710,11 @@
         }
       }
 
+      // "mă uit după un apartament" (찾다) / "mă uit după copii" (돌보다): the translation keeps "a se uita după"
+      if(verb && /^(찾다|돌보다)$/.test(verb.ko) && /\buit\S* dupa\b|\buitat dupa\b|\buita dupa\b/.test(normalizeLatin(cd.text))){
+        var _vu = {}; for(var _vk in verb) _vu[_vk] = verb[_vk];
+        _vu.ro = 'a se uita după'; verb = _vu;
+      }
       // "vorbesc coreeana" → 한국어를 해요 (with a language, 하다 is the natural verb)
       if(verb && verb.ko === '말하다' && objects[0] && /어를$/.test(objects[0].ko)) verb = speakLang(verb);
       // Inherit verb from previous clause when this segment had none explicitly
@@ -4608,7 +4727,7 @@
       var _rawCaps = {};
       String(raw).split(/\s+/).forEach(function(w, wi){ if(wi > 0 && /^[A-ZĂÂÎȘŞȚŢ]/.test(w)) _rawCaps[normalizeLatin(w)] = 1; });
       var _nounMods = [], _colorPred = null;
-      uncoveredTokens(cd.text).forEach(function(ut){
+      uncoveredTokens(cd.text, verb).forEach(function(ut){
         var tok = ut.t;
         if(_rawCaps[tok]) return;                       // a name in mid-sentence
         // adjective right after a noun → modifier ("rochie roșie" → 빨간 원피스)
@@ -4624,7 +4743,9 @@
         var hit = lexLookup(tok);
         if(hit && (hit.kind === 'verb' || hit.kind === 'adj')){ if(!verb){ verb = lexItem(hit, 'verb'); return; } }
         else if(hit && hit.kind === 'adv'){ if(descs.length < 2){ descs.push(lexItem(hit, 'adverb')); return; } }
-        else if(hit && hit.kind === 'time'){ if(!times.length){ times.push(lexItem(hit, 'time')); return; } }
+        else if(hit && hit.kind === 'time' && !times.length){ times.push(lexItem(hit, 'time')); return; }
+        // a second time word is a thing being talked about: "Mâine e ziua mea de naștere" (생일)
+        else if(hit && hit.kind === 'time'){ if(objects.length < 2){ var lt = lexItem(hit, 'object1'); lt.srcTok = tok; objects.push(lt); return; } }
         else if(hit && hit.kind === 'place'){ if(!places.length){ places.push(lexItem(hit, 'departure')); return; } }
         // "la petrecere", "la nuntă": a noun after "la" is where it happens (파티에서), not an object
         else if(hit && !places.length && (hit.e.categories || []).indexOf('objects') === -1 &&    // "mă uit la un serial": a thing, not a place
@@ -4831,6 +4952,14 @@
       } else if(/\b(pe jos|on foot)\b/.test(cd.text)){
         addExtra(clause, { type:'means', pos:'means', ko:'걸어서', ro:'pe jos', en:'on foot' });
       }
+      // paying / instrument: "plătesc cu cardul" → 카드로, "cu bani cash" → 현금으로
+      var _pay = /\b(?:cu|by|with)\s+(?:the |a |my )?(cardul|card|carduri|credit card|cash|numerar|bani cash|banii cash)\b/.exec(' ' + cd.text + ' ') ||
+                 /\b(?:in )?(cash|numerar)\b/.exec(' ' + cd.text + ' ');
+      if(_pay){
+        var _isCash = /cash|numerar/.test(_pay[1]);
+        addExtra(clause, { type:'means', pos:'means', ko: _isCash ? '현금으로' : '카드로', ro: _isCash ? 'cash' : 'cu cardul', en: _isCash ? 'in cash' : 'by card' });
+        objects = objects.filter(function(o){ return !/^(신용카드|카드|현금|돈)$/.test(koBase(o.ko)); });
+      }
       // a city / country the vocabulary doesn't know: "la Busan" → 부산에
       if(!places.length){
         var _pl = String(raw).match(/(?:^|\s)(?:la|în|in|to|din|from|spre)\s+([A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ\-]+)/);
@@ -4925,7 +5054,12 @@
             if(/^nu\s/.test(cpm[0])) clause.negated = true;
           }
           if(pn && pn.ko && !/^(저는|나는|너는|우리는|그는|그녀는|그들은)$/.test(pn.ko)){
-            clause.__copula = { base: pn.ko.replace(/(을|를|이|가|은|는)$/, ''), neg: !!(cpm[1] || cpm[3]), past: /fost|was|were/.test(cpm[2]) };
+            // what the predicate is (for words outside the builder vocabulary) and who "is"
+            var CP_PERSON = { 'e':2, 'este':2, 'is':2, 'it is':2, 'he is':2, 'she is':2, 'a fost':2, 'was':2, 'esti':1, 'you are':1, 'ai fost':1,
+                              'suntem':3, 'sunteti':4, 'ati fost':4, 'au fost':5, 'i m':0, 'i am':0, 'am fost':0 };
+            clause.__copula = { base: pn.ko.replace(/(을|를|이|가|은|는)$/, ''), neg: !!(cpm[1] || cpm[3]), past: /fost|was|were/.test(cpm[2]),
+                                ro: pn.fromLexicon ? pn.ro : '', en: pn.fromLexicon ? pn.en : '',
+                                person: CP_PERSON.hasOwnProperty(cpm[2]) ? CP_PERSON[cpm[2]] : null };
             subjects = subjects.filter(function(x){ return x.ko !== pn.ko; });
             objects  = objects.filter(function(x){ return x.ko !== pn.ko; });
             _copulaFirstPerson = /^(sunt|i m|i am)$/.test(cpm[2]);
@@ -4954,6 +5088,8 @@
             if(/^(mi|ti|ii|ne|va|le) e$/.test(owNorm) || /^(mi|ti|ii|ne|va|le)-e$/i.test(ow)) continue;   // "Mi-e rușine"
             if(owNorm.length < 2 || /^(cred|sper|stiu|poate|azi|maine|ieri|acum|apoi|dar|deci|in|la|pe|cu|si|pot|poti|putem|vreau|vrei|vrem|nu|da|am|ai|ne|ma|te|eu|tu|el|ea|noi|voi|ei|ele|trebuie|vom|vor|va|to|the|a|an|my|we|he|she|it|they|you|this|that|sunt|esti|e|este|suntem|sunteti|imi|iti|ii|mi|ti|se|si|probabil|datorita|multumita|din|hai|haideti|asa|niciodata|vreodata|please|let|lets|im|dont|do|does|did|is|are|was|n|de|ca|o|un|una|daca|cand|fiindca|pentru|dupa|inainte|imediat|chiar|desi|mai|foarte|tot|toti|fiecare|ce|cine|unde|cum|de ce|care|aici|acolo|sa)$/.test(owNorm)) continue;
             if(clause.__companion && owNorm === normalizeLatin(clause.__companion)) continue;
+            // capitalised only because it starts the sentence: function words, indefinites, adverbs
+            if(FUNC_WORDS[owNorm] || NOT_NAMES[owNorm]) continue;
             if(places.some(function(p){ return p.isProperName && normalizeLatin(p.ro) === owNorm; })) continue;
             // a word that belongs to a known phrase ("Anul trecut", "Săptămâna viitoare") is not a name
             if(uncoveredTokens(cd.text).every(function(ut){ return ut.t !== owNorm; })) continue;
@@ -5079,6 +5215,7 @@
         objects = objects.slice(1);
       }
       if(ci === 0 && FR.prefixItem) addExtra(clause, FR.prefixItem);
+      if(ci === 0 && _leadItem) addExtra(clause, _leadItem);
 
       // Topic drop: only set subject if different from previous clause's subject
       if(subjects[0] && subjects[0].ko !== lastSubjectKo){
@@ -5179,6 +5316,21 @@
         if(objects[1] && objects[0] && objects[1].ko === objects[0].ko) objects = [objects[0]];   // same word matched twice
         // compound verbs that already contain their object ("커피를 마시다") — don't repeat it
         if(verb && verb.ko) objects = objects.filter(function(o){ return !(o && o.ko && verb.ko.indexOf(' ') > 0 && verb.ko.indexOf(_base(o.ko)) === 0); });
+        // "pun cartea pe masă" / "pun cheile în sertar": the second thing is where it goes (테이블 위에, 서랍 안에)
+        if(verb && /^(놓다|두다|넣다)$/.test(verb.ko) && objects[1] && !places.length){
+          var _pt = ' ' + normalizeLatin(cd.text) + ' ';
+          var _o2 = objects[1], _o2w = [_o2.srcTok, normalizeLatin(trClean(_o2.ro || '')).split(' ')[0]].filter(Boolean);
+          var _pm = null;
+          _o2w.some(function(w){ _pm = new RegExp(' (pe|in|on|in the|on the) ' + w.slice(0, Math.max(3, w.length - 2))).exec(_pt); return !!_pm; });
+          if(_pm){
+            var _inside = /^in/.test(_pm[1]);
+            var _r2 = _o2.raw && typeof _o2.raw === 'object' ? _o2.raw : _o2;
+            places = [{ key:'departure', kind:'departure', ko: koBase(_o2.ko) + (_inside ? ' 안에' : ' 위에'),
+                        ro: (_inside ? 'în ' : 'pe ') + (_r2.ro_sg || trClean(_o2.ro)), en: (_inside ? 'in ' : 'on ') + trClean(_o2.en).replace(/^(the|a|an) /, 'the ').replace(/^(?!the )/, 'the ') }];
+            objects = [objects[0]];
+            setFieldItem(clause, 'departure', places[0]);
+          }
+        }
         // "o carte" / "a book": the learner used the indefinite article — the translation keeps it
         objects = objects.map(function(o){ return markIndefinite(o, cd.text); });
         if(objects[0])  setFieldItem(clause, 'object1', objects[0]);
