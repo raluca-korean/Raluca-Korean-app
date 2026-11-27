@@ -2361,7 +2361,7 @@
     if(!has(verb)) verb = null;
 
     var info = topic ? trSubjectInfo(topic)
-             : clause.__person != null && !(ctx.subject && ctx.subject.k === clause.__person) ? { k: clause.__person, fem: false, pronoun: true }
+             : clause.__person != null && !(ctx.subject && ctx.subject.k === clause.__person) ? { k: clause.__person, fem: false, pronoun: true, fromVerb: true }
              : (ctx.subject || { k: 0, fem: false, pronoun: true, implicit: true });
     if(!topic && clause.__person != null) ctx.subject = info;
     var k = info.k;
@@ -2468,6 +2468,13 @@
       // after "mă uit la" the noun is bare: "la televizor", "la un film"
       if(watching && lang !== 'en' && !o1.indef && trRaw(o1).ro_sg) o1tx = trRaw(o1).num === 'pl' ? trRaw(o1).ro_pl : trRaw(o1).ro_sg;
       if(watching && lang === 'en' && o1.ko === '텔레비전을') o1tx = 'TV';
+      // a verb ending in a preposition ("a avea grijă de", "a se bucura de", "a se gândi la") takes the noun
+      // without article when nothing else modifies it: "am grijă de copii", not "de copiii"
+      if(lang !== 'en' && !watching && !o1.indef && /\s(de|la|pe|în|despre|după|din|spre)$/.test(trClean(verb && verb.ro || '')) && /^\S+$/.test(o1tx)){
+        var r1 = trRaw(o1);
+        o1tx = r1.ro_sg ? (r1.num === 'pl' ? r1.ro_pl : r1.ro_sg)
+             : /ii$/.test(o1tx) ? o1tx.slice(0, -1) : /(ele|ile)$/.test(o1tx) ? o1tx.slice(0, -2) : trRoBare(o1tx);
+      }
       // EN verbs that need a preposition before their object
       var enPrep = { graduate:'from' }[enVerbHead(verb).split(' ')[0]];
       if(lang === 'en' && enPrep) o1tx = enPrep + ' ' + o1tx;
@@ -2538,11 +2545,14 @@
       else if(!info.pronoun && info.dat) subj = info.dat;
     }
     if(lang === 'en' && !subj && !vp.dropSubject && mode === 'finite' && !ctx.allowEnDrop && verb){
-      subj = impersonal ? 'it' : info.implicit ? 'I' : (k === 2 ? (info.fem ? 'she' : 'he') : TR_EN_PRON[k]);
+      // a 3rd-person verb with no subject word ("Merge la piață") doesn't say he or she — neither does the translation
+      subj = impersonal ? 'it' : info.implicit ? 'I' : (k === 2 ? (info.fromVerb ? 'he/she' : info.fem ? 'she' : 'he') : TR_EN_PRON[k]);
     }
     if(mode !== 'finite') subj = (topic && !sameSubject && ctx.index > 0) ? subj : '';
 
     var timeTx = has(time) ? L(time) : '';
+    // "mă bucur de" with no object left: the preposition goes too
+    if(lang !== 'en' && vp.text && !objs.length && !clause.__purposeVerbItem) vp.text = vp.text.replace(/\s(de|la|pe|în|despre|după|din|spre)$/, '');
     // "Ana a zis că vine mâine": the time belongs to the reported verb
     if(timeTx && key === 'tense_said' && lang !== 'en'){ comp.push(timeTx); timeTx = ''; }
     // clock times and durations follow the verb: "mă trezesc la ora 7", "locuiesc aici de 2 ani"
